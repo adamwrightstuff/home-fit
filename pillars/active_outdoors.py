@@ -1,26 +1,26 @@
 """
-Recreation & Outdoors Pillar
-Scores access to parks, beaches, trails, and outdoor activities
+Active Outdoors Pillar
+Scores access to outdoor activities and recreation
 """
 
 from typing import Dict, Tuple, Optional
-from data_sources import osm_api, nyc_api, census_api
+from data_sources import osm_api
 
 
-def get_recreation_outdoors_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
+def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
     """
-    Calculate recreation & outdoors score (0-100) based on access to outdoor activities.
+    Calculate active outdoors score (0-100) based on access to outdoor activities.
 
-    Scoring:
-    - Local Parks & Playgrounds: 0-40 points (within 1km)
-    - Water Access (beaches, lakes): 0-30 points (within 15km)
-    - Trail Access (hiking, nature reserves): 0-20 points (within 15km)
-    - Camping: 0-10 points (within 15km)
+    Scoring (EQUAL WEIGHTS for regional activities):
+    - Local Parks & Playgrounds: 0-40 points (within 1km - daily use)
+    - Water Access: 0-20 points (beaches, lakes within 15km)
+    - Trail Access: 0-20 points (hiking, nature reserves within 15km)
+    - Camping Access: 0-20 points (campsites within 15km)
 
     Returns:
         (total_score, detailed_breakdown)
     """
-    print(f"🌳 Analyzing recreation & outdoors access...")
+    print(f"🏃 Analyzing active outdoors access...")
 
     # Get local green spaces (1km)
     print(f"   📍 Querying local parks & playgrounds (1km)...")
@@ -42,11 +42,11 @@ def get_recreation_outdoors_score(lat: float, lon: float, city: Optional[str] = 
     swimming = regional_data.get("swimming", []) if regional_data else []
     camping = regional_data.get("camping", []) if regional_data else []
 
-    # Score components
-    local_score = _score_local_recreation(parks, playgrounds)
-    water_score = _score_water_access(swimming)
-    trail_score = _score_trail_access(hiking)
-    camping_score = _score_camping(camping)
+    # Score components with NEW WEIGHTS
+    local_score = _score_local_recreation(parks, playgrounds)  # 0-40
+    water_score = _score_water_access(swimming)  # 0-20
+    trail_score = _score_trail_access(hiking)  # 0-20
+    camping_score = _score_camping(camping)  # 0-20
 
     total_score = local_score + water_score + trail_score + camping_score
 
@@ -54,20 +54,20 @@ def get_recreation_outdoors_score(lat: float, lon: float, city: Optional[str] = 
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
-            "local_recreation": round(local_score, 1),
+            "local_parks_playgrounds": round(local_score, 1),
             "water_access": round(water_score, 1),
             "trail_access": round(trail_score, 1),
-            "camping": round(camping_score, 1)
+            "camping_access": round(camping_score, 1)
         },
         "summary": _build_summary(parks, playgrounds, swimming, hiking, camping)
     }
 
     # Log results
-    print(f"✅ Recreation & Outdoors Score: {total_score:.0f}/100")
+    print(f"✅ Active Outdoors Score: {total_score:.0f}/100")
     print(f"   🏞️  Local Parks & Playgrounds: {local_score:.0f}/40")
-    print(f"   🏊 Water Access: {water_score:.0f}/30")
+    print(f"   🏊 Water Access: {water_score:.0f}/20")
     print(f"   🥾 Trail Access: {trail_score:.0f}/20")
-    print(f"   🏕️  Camping: {camping_score:.0f}/10")
+    print(f"   🏕️  Camping: {camping_score:.0f}/20")
 
     return round(total_score, 1), breakdown
 
@@ -115,7 +115,7 @@ def _score_playgrounds(playgrounds: list) -> float:
 
 
 def _score_water_access(swimming: list) -> float:
-    """Score water access (0-30 points) based on beaches, lakes, etc."""
+    """Score water access (0-20 points) based on beaches, lakes, etc."""
     if not swimming:
         return 0.0
 
@@ -124,36 +124,36 @@ def _score_water_access(swimming: list) -> float:
     dist = closest["distance_m"]
     feature_type = closest["type"]
 
-    # Score based on type and distance
+    # Score based on type and distance (MAX 20 points)
     if feature_type == "beach":
         if dist <= 2000:
-            return 30.0
+            return 20.0
         elif dist <= 5000:
-            return 28.0
+            return 18.0
         elif dist <= 10000:
-            return 25.0
+            return 16.0
         elif dist <= 15000:
-            return 22.0
+            return 14.0
 
     elif feature_type in ["lake", "swimming_area"]:
         if dist <= 2000:
-            return 28.0
-        elif dist <= 5000:
-            return 25.0
-        elif dist <= 10000:
-            return 22.0
-        elif dist <= 15000:
             return 18.0
+        elif dist <= 5000:
+            return 16.0
+        elif dist <= 10000:
+            return 14.0
+        elif dist <= 15000:
+            return 12.0
 
     elif feature_type in ["coastline", "bay"]:
         if dist <= 2000:
-            return 15.0
+            return 10.0
         elif dist <= 5000:
-            return 18.0
+            return 12.0
         elif dist <= 10000:
-            return 20.0
+            return 14.0
         elif dist <= 15000:
-            return 22.0
+            return 16.0
 
     return 0.0
 
@@ -178,20 +178,20 @@ def _score_trail_access(hiking: list) -> float:
 
 
 def _score_camping(camping: list) -> float:
-    """Score camping access (0-10 points) based on distance."""
+    """Score camping access (0-20 points) based on distance."""
     if not camping:
         return 0.0
 
     closest = min(f["distance_m"] for f in camping)
 
     if closest <= 5000:
-        return 10.0
+        return 20.0
     elif closest <= 10000:
-        return 8.0
+        return 16.0
     elif closest <= 15000:
-        return 6.0
+        return 12.0
     else:
-        return 3.0
+        return 6.0
 
 
 def _build_summary(parks: list, playgrounds: list, swimming: list, hiking: list, camping: list) -> Dict:
@@ -257,10 +257,10 @@ def _estimated_breakdown() -> Dict:
     return {
         "score": 50,
         "breakdown": {
-            "local_recreation": 20,
-            "water_access": 15,
+            "local_parks_playgrounds": 20,
+            "water_access": 10,
             "trail_access": 10,
-            "camping": 5
+            "camping_access": 10
         },
         "summary": {
             "local_recreation": {

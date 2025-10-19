@@ -13,6 +13,7 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Query OSM for parks, playgrounds, and tree features.
+    INCLUDES RELATIONS to catch all parks!
 
     Returns:
         {
@@ -24,21 +25,36 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     query = f"""
     [out:json][timeout:25];
     (
-      // PARKS & GREEN SPACES
+      // PARKS & GREEN SPACES - INCLUDING RELATIONS!
       way["leisure"="park"](around:{radius_m},{lat},{lon});
+      relation["leisure"="park"](around:{radius_m},{lat},{lon});
+      
       way["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
+      relation["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
+      
       way["leisure"="dog_park"](around:{radius_m},{lat},{lon});
+      relation["leisure"="dog_park"](around:{radius_m},{lat},{lon});
+      
       way["landuse"="recreation_ground"](around:{radius_m},{lat},{lon});
+      relation["landuse"="recreation_ground"](around:{radius_m},{lat},{lon});
+      
       way["landuse"="village_green"](around:{radius_m},{lat},{lon});
+      relation["landuse"="village_green"](around:{radius_m},{lat},{lon});
       
       // LOCAL NATURE
       way["natural"="wood"](around:{radius_m},{lat},{lon});
+      relation["natural"="wood"](around:{radius_m},{lat},{lon});
+      
       way["natural"="forest"](around:{radius_m},{lat},{lon});
+      relation["natural"="forest"](around:{radius_m},{lat},{lon});
+      
       way["natural"="scrub"](around:{radius_m},{lat},{lon});
+      relation["natural"="scrub"](around:{radius_m},{lat},{lon});
       
       // PLAYGROUNDS
       node["leisure"="playground"](around:{radius_m},{lat},{lon});
       way["leisure"="playground"](around:{radius_m},{lat},{lon});
+      relation["leisure"="playground"](around:{radius_m},{lat},{lon});
       
       // TREES
       way["natural"="tree_row"](around:{radius_m},{lat},{lon});
@@ -151,21 +167,6 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
         return None
 
 
-def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
-    """
-    Query OSM for indie local businesses within walking distance.
-    Focuses on non-chain establishments.
-
-    Returns:
-        {
-            "tier1_daily": [...],      # Coffee, bakeries, groceries
-            "tier2_social": [...],     # Restaurants, bars, ice cream
-            "tier3_culture": [...],    # Books, galleries, theaters, museums, markets
-            "tier4_services": [...]    # Boutiques, salons, record stores, fitness, gardens
-        }
-    """
-
-
 def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optional[Dict]:
     """
     Query OSM for neighborhood charm features (historic buildings, fountains, public art).
@@ -227,10 +228,10 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Opti
 
     Returns:
         {
-            "tier1_daily": [...],      # Coffee, bakeries, groceries
-            "tier2_social": [...],     # Restaurants, bars, ice cream
-            "tier3_culture": [...],    # Books, galleries, theaters, museums, markets
-            "tier4_services": [...]    # Boutiques, salons, record stores, fitness, gardens
+            "tier1_daily": [...],
+            "tier2_social": [...],
+            "tier3_culture": [...],
+            "tier4_services": [...]
         }
     """
     query = f"""
@@ -324,13 +325,16 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
     playgrounds = []
     tree_features = []
     nodes_dict = {}
+    ways_dict = {}
     seen_park_ids = set()
     seen_playground_ids = set()
 
-    # Build nodes dict
+    # Build nodes and ways dicts
     for elem in elements:
         if elem.get("type") == "node":
             nodes_dict[elem["id"]] = elem
+        elif elem.get("type") == "way":
+            ways_dict[elem["id"]] = elem
 
     # Process features
     for elem in elements:
@@ -343,6 +347,7 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         landuse = tags.get("landuse")
         natural = tags.get("natural")
         highway = tags.get("highway")
+        elem_type = elem.get("type")
 
         # Parks
         if leisure in ["park", "dog_park"] or \
@@ -354,7 +359,14 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 continue
             seen_park_ids.add(osm_id)
 
-            elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
+            elem_lat, elem_lon, area_sqm = None, None, 0
+            
+            if elem_type == "way":
+                elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
+            elif elem_type == "relation":
+                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+                area_sqm = 0
+            
             if elem_lat is None:
                 continue
 
@@ -379,8 +391,10 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
             elem_lat = elem.get("lat")
             elem_lon = elem.get("lon")
 
-            if elem.get("type") == "way":
+            if elem_type == "way":
                 elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+            elif elem_type == "relation":
+                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
             if elem_lat is None:
                 continue
@@ -432,7 +446,6 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         osm_id = elem.get("id")
         elem_type = elem.get("type")
         
-        # Only process ways and relations, skip nodes
         if elem_type not in ["way", "relation"] or not osm_id or osm_id in seen_ids:
             continue
 
@@ -447,7 +460,6 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         feature = None
         category = None
 
-        # Categorize
         if route == "hiking":
             feature = {"type": "hiking_route", "name": tags.get("name")}
             category = "hiking"
@@ -484,14 +496,12 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
 
         seen_ids.add(osm_id)
 
-        # Get coordinates based on element type
         elem_lat = None
         elem_lon = None
         
         if elem_type == "way":
             elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
         elif elem_type == "relation":
-            # For relations, get centroid from outer member ways
             elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
         if elem_lat is None:
@@ -511,10 +521,6 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
     return hiking, swimming, camping
 
 
-def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float) -> Dict:
-    """Process OSM elements into categorized businesses by tier."""
-
-
 def _process_charm_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict]]:
     """Process OSM elements into historic buildings and artwork."""
     historic = []
@@ -522,12 +528,10 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
     nodes_dict = {}
     seen_ids = set()
 
-    # Build nodes dict
     for elem in elements:
         if elem.get("type") == "node":
             nodes_dict[elem["id"]] = elem
 
-    # Process features
     for elem in elements:
         osm_id = elem.get("id")
         if not osm_id or osm_id in seen_ids:
@@ -541,7 +545,6 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
         feature = None
         category = None
 
-        # Categorize
         if historic_tag:
             feature = {
                 "type": historic_tag,
@@ -567,7 +570,6 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
 
         seen_ids.add(osm_id)
 
-        # Get coordinates
         elem_lat = elem.get("lat")
         elem_lon = elem.get("lon")
 
@@ -598,12 +600,10 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
     seen_ids = set()
     nodes_dict = {}
 
-    # Build nodes dict
     for elem in elements:
         if elem.get("type") == "node":
             nodes_dict[elem["id"]] = elem
 
-    # Process each business
     for elem in elements:
         osm_id = elem.get("id")
         if not osm_id or osm_id in seen_ids:
@@ -612,13 +612,11 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         tags = elem.get("tags", {})
         name = tags.get("name")
 
-        # Skip if no name or is a chain
         if not name or tags.get("brand"):
             continue
 
         seen_ids.add(osm_id)
 
-        # Get coordinates
         elem_lat = elem.get("lat")
         elem_lon = elem.get("lon")
 
@@ -643,8 +641,6 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             "distance_m": round(distance_m, 0)
         }
 
-        # Categorize into tiers
-        # TIER 1: Daily Essentials
         if amenity == "cafe":
             business["type"] = "cafe"
             tier1_daily.append(business)
@@ -654,8 +650,6 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         elif shop in ["supermarket", "convenience", "greengrocer"]:
             business["type"] = "grocery"
             tier1_daily.append(business)
-
-        # TIER 2: Social & Dining
         elif amenity == "restaurant":
             business["type"] = "restaurant"
             tier2_social.append(business)
@@ -665,8 +659,6 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         elif amenity == "ice_cream" or shop == "ice_cream":
             business["type"] = "ice_cream"
             tier2_social.append(business)
-
-        # TIER 3: Culture & Leisure
         elif shop == "books":
             business["type"] = "bookstore"
             tier3_culture.append(business)
@@ -682,8 +674,6 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         elif amenity == "marketplace":
             business["type"] = "market"
             tier3_culture.append(business)
-
-        # TIER 4: Services & Retail
         elif shop in ["clothes", "fashion", "boutique"]:
             business["type"] = "boutique"
             tier4_services.append(business)
@@ -723,11 +713,9 @@ def _get_way_geometry(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Op
     if not coords:
         return None, None, 0
 
-    # Centroid
     lat = sum(c[0] for c in coords) / len(coords)
     lon = sum(c[1] for c in coords) / len(coords)
 
-    # Area (shoelace formula)
     area = 0
     if len(coords) >= 3:
         for i in range(len(coords)):
@@ -749,7 +737,6 @@ def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tup
     if not members:
         return None, None
     
-    # Collect coordinates from all outer member ways
     all_coords = []
     for member in members:
         if member.get("role") == "outer" and member.get("type") == "way":
@@ -762,7 +749,6 @@ def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tup
                         if "lat" in node and "lon" in node:
                             all_coords.append((node["lat"], node["lon"]))
     
-    # If no outer members found, try any member way
     if not all_coords:
         for member in members:
             if member.get("type") == "way":
@@ -778,7 +764,6 @@ def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tup
     if not all_coords:
         return None, None
     
-    # Calculate centroid
     lat = sum(c[0] for c in all_coords) / len(all_coords)
     lon = sum(c[1] for c in all_coords) / len(all_coords)
     

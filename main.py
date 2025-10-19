@@ -2,30 +2,29 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-# UPDATED IMPORTS - New pillar structure
+# UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from pillars.schools import get_school_data
-from pillars.recreation_outdoors import get_recreation_outdoors_score
-from pillars.neighborhood_charm import get_neighborhood_charm_score
+from pillars.active_outdoors import get_active_outdoors_score
+from pillars.neighborhood_beauty import get_neighborhood_beauty_score
 from pillars.walkable_town import get_walkable_town_score
+from pillars.air_travel_access import get_air_travel_score
+from pillars.public_transit_access import get_public_transit_score
+from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
 
 ##########################
 # CONFIGURATION FLAGS
 ##########################
 ENABLE_SCHOOL_SCORING = False  # Set to True to enable school API calls
-ENABLE_RECREATION_OUTDOORS = True
-ENABLE_NEIGHBORHOOD_CHARM = True
-ENABLE_WALKABLE_TOWN = True
-ENABLE_HOUSING_VALUE = True
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI(
     title="HomeFit API",
-    description="Geospatial livability scoring API with multiple pillars",
-    version="2.0.0"
+    description="Purpose-driven livability scoring API with 8 pillars",
+    version="3.0.0"
 )
 
 # CORS middleware
@@ -44,8 +43,17 @@ def root():
     return {
         "service": "HomeFit API",
         "status": "running",
-        "version": "2.0.0",
-        "pillars": ["schools", "recreation_outdoors", "neighborhood_charm", "walkable_town", "housing_value"],
+        "version": "3.0.0",
+        "pillars": [
+            "active_outdoors",
+            "neighborhood_beauty",
+            "neighborhood_amenities",
+            "air_travel_access",
+            "public_transit_access",
+            "healthcare_access",
+            "quality_education",
+            "housing_value"
+        ],
         "endpoints": {
             "score": "/score?location=ADDRESS",
             "docs": "/docs"
@@ -58,12 +66,15 @@ def get_livability_score(location: str):
     """
     Calculate livability score for a given address.
 
-    Returns scores across multiple pillars:
-    - Schools: Quality and variety of nearby schools
-    - Recreation & Outdoors: Parks, beaches, trails, outdoor activities
-    - Neighborhood Charm: Tree canopy, historic architecture, public art
-    - Walkable Town: Indie businesses, downtown walkability
-    - Housing Value: Affordability and space relative to local income
+    Returns scores across 8 purpose-driven pillars:
+    - Active Outdoors: Can I be active outside regularly?
+    - Neighborhood Beauty: Is my environment beautiful and charming?
+    - Neighborhood Amenities: Can I walk to great local spots?
+    - Air Travel Access: How easily can I fly somewhere?
+    - Public Transit Access: Can I get around without a car?
+    - Healthcare Access: Can I get medical care when needed?
+    - Quality Education: Can I raise kids with good schools?
+    - Housing Value: Can I afford a spacious home here?
 
     Parameters:
         location: Address or ZIP code
@@ -91,7 +102,25 @@ def get_livability_score(location: str):
     # Step 2: Calculate all pillar scores
     print("📊 Calculating pillar scores...\n")
 
-    # Schools pillar
+    # Pillar 1: Active Outdoors
+    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city)
+
+    # Pillar 2: Neighborhood Beauty
+    beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city)
+
+    # Pillar 3: Neighborhood Amenities (walkable town)
+    amenities_score, amenities_details = get_walkable_town_score(lat, lon)
+
+    # Pillar 4: Air Travel Access
+    air_travel_score, air_travel_details = get_air_travel_score(lat, lon)
+
+    # Pillar 5: Public Transit Access
+    transit_score, transit_details = get_public_transit_score(lat, lon)
+
+    # Pillar 6: Healthcare Access
+    healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon)
+
+    # Pillar 7: Quality Education (schools)
     if ENABLE_SCHOOL_SCORING:
         print("📚 Fetching school data from SchoolDigger API...")
         school_avg, schools_by_level = get_school_data(
@@ -108,43 +137,43 @@ def get_livability_score(location: str):
             "high": []
         }
 
-    # Recreation & Outdoors pillar (merged green_neighborhood + nature_access)
-    recreation_score, recreation_details = get_recreation_outdoors_score(lat, lon, city=city)
-
-    # Neighborhood Charm pillar (NEW - aesthetic appeal)
-    charm_score, charm_details = get_neighborhood_charm_score(lat, lon, city=city)
-
-    # Walkable Town pillar
-    walkable_score, walkable_details = get_walkable_town_score(lat, lon)
-
-    # Housing Value pillar
+    # Pillar 8: Housing Value
     housing_score, housing_details = get_housing_value_score(lat, lon)
 
-    # Step 3: Calculate weighted total (default weights)
+    # Step 3: Calculate weighted total (EQUAL WEIGHTS)
     default_weights = {
-        "schools": 30,
-        "recreation_outdoors": 20,
-        "neighborhood_charm": 10,
-        "walkable_town": 20,
-        "housing_value": 20
+        "active_outdoors": 12.5,
+        "neighborhood_beauty": 12.5,
+        "neighborhood_amenities": 12.5,
+        "air_travel_access": 12.5,
+        "public_transit_access": 12.5,
+        "healthcare_access": 12.5,
+        "quality_education": 12.5,
+        "housing_value": 12.5
     }
 
     total_score = (
-        (school_avg * default_weights["schools"] / 100) +
-        (recreation_score * default_weights["recreation_outdoors"] / 100) +
-        (charm_score * default_weights["neighborhood_charm"] / 100) +
-        (walkable_score * default_weights["walkable_town"] / 100) +
+        (active_outdoors_score * default_weights["active_outdoors"] / 100) +
+        (beauty_score * default_weights["neighborhood_beauty"] / 100) +
+        (amenities_score * default_weights["neighborhood_amenities"] / 100) +
+        (air_travel_score * default_weights["air_travel_access"] / 100) +
+        (transit_score * default_weights["public_transit_access"] / 100) +
+        (healthcare_score * default_weights["healthcare_access"] / 100) +
+        (school_avg * default_weights["quality_education"] / 100) +
         (housing_score * default_weights["housing_value"] / 100)
     )
 
     print(f"\n{'='*60}")
     print(f"🎯 Final Livability Score: {total_score:.1f}/100")
     print(f"{'='*60}")
-    print(f"   🎓 Schools: {school_avg:.1f}/100 (weight: {default_weights['schools']}%)")
-    print(f"   🌳 Recreation & Outdoors: {recreation_score:.1f}/100 (weight: {default_weights['recreation_outdoors']}%)")
-    print(f"   ✨ Neighborhood Charm: {charm_score:.1f}/100 (weight: {default_weights['neighborhood_charm']}%)")
-    print(f"   🚶 Walkable Town: {walkable_score:.1f}/100 (weight: {default_weights['walkable_town']}%)")
-    print(f"   🏠 Housing Value: {housing_score:.1f}/100 (weight: {default_weights['housing_value']}%)")
+    print(f"   🏃 Active Outdoors: {active_outdoors_score:.1f}/100")
+    print(f"   ✨ Neighborhood Beauty: {beauty_score:.1f}/100")
+    print(f"   🍽️  Neighborhood Amenities: {amenities_score:.1f}/100")
+    print(f"   ✈️  Air Travel Access: {air_travel_score:.1f}/100")
+    print(f"   🚇 Public Transit Access: {transit_score:.1f}/100")
+    print(f"   🏥 Healthcare Access: {healthcare_score:.1f}/100")
+    print(f"   🎓 Quality Education: {school_avg:.1f}/100")
+    print(f"   🏠 Housing Value: {housing_score:.1f}/100")
     print(f"{'='*60}\n")
 
     # Count total schools
@@ -167,37 +196,60 @@ def get_livability_score(location: str):
             "zip": zip_code
         },
         "livability_pillars": {
-            "schools": {
+            "active_outdoors": {
+                "score": active_outdoors_score,
+                "weight": default_weights["active_outdoors"],
+                "contribution": round(active_outdoors_score * default_weights["active_outdoors"] / 100, 2),
+                "breakdown": active_outdoors_details["breakdown"],
+                "summary": active_outdoors_details["summary"]
+            },
+            "neighborhood_beauty": {
+                "score": beauty_score,
+                "weight": default_weights["neighborhood_beauty"],
+                "contribution": round(beauty_score * default_weights["neighborhood_beauty"] / 100, 2),
+                "breakdown": beauty_details["breakdown"],
+                "summary": beauty_details["summary"],
+                "scoring_note": beauty_details.get("scoring_note", "")
+            },
+            "neighborhood_amenities": {
+                "score": amenities_score,
+                "weight": default_weights["neighborhood_amenities"],
+                "contribution": round(amenities_score * default_weights["neighborhood_amenities"] / 100, 2),
+                "breakdown": amenities_details["breakdown"],
+                "summary": amenities_details["summary"]
+            },
+            "air_travel_access": {
+                "score": air_travel_score,
+                "weight": default_weights["air_travel_access"],
+                "contribution": round(air_travel_score * default_weights["air_travel_access"] / 100, 2),
+                "primary_airport": air_travel_details.get("primary_airport"),
+                "nearest_airports": air_travel_details.get("nearest_airports", []),
+                "summary": air_travel_details.get("summary", {})
+            },
+            "public_transit_access": {
+                "score": transit_score,
+                "weight": default_weights["public_transit_access"],
+                "contribution": round(transit_score * default_weights["public_transit_access"] / 100, 2),
+                "breakdown": transit_details["breakdown"],
+                "summary": transit_details["summary"]
+            },
+            "healthcare_access": {
+                "score": healthcare_score,
+                "weight": default_weights["healthcare_access"],
+                "contribution": round(healthcare_score * default_weights["healthcare_access"] / 100, 2),
+                "breakdown": healthcare_details["breakdown"],
+                "summary": healthcare_details["summary"]
+            },
+            "quality_education": {
                 "score": school_avg,
-                "weight": default_weights["schools"],
-                "contribution": round(school_avg * default_weights["schools"] / 100, 2),
+                "weight": default_weights["quality_education"],
+                "contribution": round(school_avg * default_weights["quality_education"] / 100, 2),
                 "by_level": {
                     "elementary": schools_by_level.get("elementary", []),
                     "middle": schools_by_level.get("middle", []),
                     "high": schools_by_level.get("high", [])
                 },
                 "total_schools_rated": total_schools
-            },
-            "recreation_outdoors": {
-                "score": recreation_score,
-                "weight": default_weights["recreation_outdoors"],
-                "contribution": round(recreation_score * default_weights["recreation_outdoors"] / 100, 2),
-                "breakdown": recreation_details["breakdown"],
-                "summary": recreation_details["summary"]
-            },
-            "neighborhood_charm": {
-                "score": charm_score,
-                "weight": default_weights["neighborhood_charm"],
-                "contribution": round(charm_score * default_weights["neighborhood_charm"] / 100, 2),
-                "breakdown": charm_details["breakdown"],
-                "summary": charm_details["summary"]
-            },
-            "walkable_town": {
-                "score": walkable_score,
-                "weight": default_weights["walkable_town"],
-                "contribution": round(walkable_score * default_weights["walkable_town"] / 100, 2),
-                "breakdown": walkable_details["breakdown"],
-                "summary": walkable_details["summary"]
             },
             "housing_value": {
                 "score": housing_score,
@@ -210,23 +262,28 @@ def get_livability_score(location: str):
         "total_score": round(total_score, 2),
         "default_weights": default_weights,
         "metadata": {
-            "version": "2.0.0",
-            "architecture": "Refactored pillars: Recreation & Outdoors + Neighborhood Charm",
+            "version": "3.0.0",
+            "architecture": "8 Purpose-Driven Pillars",
             "pillars": {
-                "schools": "Quality and variety of nearby schools (Elementary, Middle, High)",
-                "recreation_outdoors": "Parks, playgrounds, beaches, trails, and outdoor activities",
-                "neighborhood_charm": "Tree canopy, historic architecture, and public art",
-                "walkable_town": "Indie businesses, downtown walkability, and local character",
-                "housing_value": "Housing affordability and space relative to local income"
+                "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
+                "neighborhood_beauty": "Is my environment beautiful? (Trees, green space, historic buildings, art)",
+                "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
+                "air_travel_access": "How easily can I fly? (Airport proximity and type)",
+                "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
+                "healthcare_access": "Can I get medical care? (Hospitals, clinics, pharmacies)",
+                "quality_education": "Can I raise kids well? (School ratings by level)",
+                "housing_value": "Can I afford space? (Affordability relative to local income)"
             },
             "data_sources": [
                 "Nominatim (geocoding)",
                 "SchoolDigger API (schools)",
-                "OpenStreetMap Overpass API (recreation, charm, walkability)",
-                "Census Bureau (tree canopy, housing)",
-                "NYC Open Data (street trees)"
+                "OpenStreetMap Overpass API (recreation, beauty, amenities, healthcare)",
+                "Census Bureau ACS (housing, building age, tree canopy)",
+                "NYC Open Data (street trees)",
+                "OurAirports (airport database)",
+                "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of pillars. Weights can be customized in scoring layer."
+            "note": "Total score = weighted average of 8 pillars. Equal weights by default (12.5% each). User can customize weights via token allocation system (future feature)."
         }
     }
 
@@ -241,10 +298,11 @@ def health_check():
     checks = {
         "geocoding": "✅ Nominatim (no credentials required)",
         "schools": "❌ SchoolDigger credentials missing",
-        "recreation": "✅ OpenStreetMap (no credentials required)",
-        "charm": "✅ OpenStreetMap (no credentials required)",
+        "osm": "✅ OpenStreetMap (no credentials required)",
         "census": "❌ Census API key missing",
-        "nyc_trees": "✅ NYC Open Data (no credentials required)"
+        "nyc_trees": "✅ NYC Open Data (no credentials required)",
+        "airports": "✅ OurAirports database (static data)",
+        "transit": "✅ Transitland API (no credentials required)"
     }
 
     # Check SchoolDigger credentials
@@ -258,9 +316,18 @@ def health_check():
     return {
         "status": "healthy",
         "checks": checks,
-        "version": "2.0.0",
-        "architecture": "Refactored: Recreation & Outdoors + Neighborhood Charm pillars",
-        "pillars": ["schools", "recreation_outdoors", "neighborhood_charm", "walkable_town", "housing_value"]
+        "version": "3.0.0",
+        "architecture": "8 Purpose-Driven Pillars",
+        "pillars": [
+            "active_outdoors",
+            "neighborhood_beauty", 
+            "neighborhood_amenities",
+            "air_travel_access",
+            "public_transit_access",
+            "healthcare_access",
+            "quality_education",
+            "housing_value"
+        ]
     }
 
 

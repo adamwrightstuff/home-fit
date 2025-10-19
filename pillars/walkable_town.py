@@ -13,7 +13,7 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
 
     Rewards dense, diverse downtowns with:
     - Density (0-40): Total count of indie businesses
-    - Variety (0-30): Balance across 4 tiers
+    - Variety (0-30): Balance across 4 categories (EQUAL WEIGHTS)
     - Proximity (0-30): How close is the downtown cluster
 
     Returns:
@@ -95,50 +95,47 @@ def _score_density(businesses: List[Dict]) -> float:
 def _score_variety(tier1: List, tier2: List, tier3: List, tier4: List) -> float:
     """
     Score business variety (0-30 points).
-    Rewards balanced mix across all tiers.
+    Rewards balanced mix across all 4 categories with EQUAL WEIGHTS.
 
-    Tier 1 (Daily): Coffee, bakery, grocery - need 2/3 types → 10 pts
-    Tier 2 (Social): Restaurant, bar, ice cream - need 2/3 types → 8 pts
-    Tier 3 (Culture): Books, gallery, theater, museum, market - need 2/5 types → 7 pts
-    Tier 4 (Services): Boutique, salon, records, fitness, garden - need 2/5 types → 5 pts
+    Each category worth 7.5 pts if it has 2+ types present:
+    - Daily Essentials (cafe, bakery, grocery)
+    - Social & Dining (restaurant, bar, ice cream)
+    - Culture & Leisure (bookstore, gallery, theater, museum, market)
+    - Services & Retail (boutique, salon, records, fitness, garden)
     """
     score = 0
 
-    # Tier 1: Daily Essentials (10 pts max)
+    # Category 1: Daily Essentials (7.5 pts if 2+ types)
     tier1_types = set(b["type"] for b in tier1)
     tier1_variety = len(tier1_types)
-
     if tier1_variety >= 2:
-        score += 10
+        score += 7.5
     elif tier1_variety == 1:
-        score += 5
+        score += 3.75
 
-    # Tier 2: Social & Dining (8 pts max)
+    # Category 2: Social & Dining (7.5 pts if 2+ types)
     tier2_types = set(b["type"] for b in tier2)
     tier2_variety = len(tier2_types)
-
     if tier2_variety >= 2:
-        score += 8
+        score += 7.5
     elif tier2_variety == 1:
-        score += 4
+        score += 3.75
 
-    # Tier 3: Culture & Leisure (7 pts max)
+    # Category 3: Culture & Leisure (7.5 pts if 2+ types)
     tier3_types = set(b["type"] for b in tier3)
     tier3_variety = len(tier3_types)
-
     if tier3_variety >= 2:
-        score += 7
+        score += 7.5
     elif tier3_variety == 1:
-        score += 3
+        score += 3.75
 
-    # Tier 4: Services & Retail (5 pts max)
+    # Category 4: Services & Retail (7.5 pts if 2+ types)
     tier4_types = set(b["type"] for b in tier4)
     tier4_variety = len(tier4_types)
-
     if tier4_variety >= 2:
-        score += 5
+        score += 7.5
     elif tier4_variety == 1:
-        score += 2
+        score += 3.75
 
     return score
 
