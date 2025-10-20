@@ -30,37 +30,33 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     """
     print(f"🚇 Analyzing public transit access...")
 
-    # Query Transitland for nearby stops
-    stops = _get_nearby_stops(lat, lon, radius_m=1500)
-
-    if not stops:
-        print("⚠️  No transit stops found nearby")
+    # Query for routes near location
+    routes_data = _get_nearby_routes(lat, lon, radius_m=1500)
+    
+    if not routes_data:
+        print("⚠️  No transit routes found nearby")
         return 0, _empty_breakdown()
 
-    # Categorize stops by mode
-    heavy_rail_stops = []
-    light_rail_stops = []
-    bus_stops = []
+    # Categorize routes by type
+    heavy_rail_routes = []
+    light_rail_routes = []
+    bus_routes = []
 
-    for stop in stops:
-        route_types = stop.get("route_types", [])
-        distance_m = stop.get("distance_m", 9999)
-
-        # Categorize by route type (GTFS route_type codes)
-        # 0=Tram/Light Rail, 1=Subway/Metro, 2=Rail/Commuter, 3=Bus
-        # 4=Ferry, 5=Cable car, 6=Gondola, 7=Funicular
-
-        if any(rt in [1, 2] for rt in route_types):  # Subway/Metro/Commuter Rail
-            heavy_rail_stops.append(stop)
-        elif any(rt in [0, 5, 7] for rt in route_types):  # Light rail/Tram/Cable car
-            light_rail_stops.append(stop)
-        elif 3 in route_types:  # Bus
-            bus_stops.append(stop)
+    for route in routes_data:
+        route_type = route.get("route_type")
+        
+        # GTFS route types: 0=Tram, 1=Subway, 2=Rail, 3=Bus
+        if route_type in [1, 2]:  # Subway/Metro or Commuter Rail
+            heavy_rail_routes.append(route)
+        elif route_type == 0:  # Light rail/Tram
+            light_rail_routes.append(route)
+        elif route_type == 3:  # Bus
+            bus_routes.append(route)
 
     # Score each component
-    heavy_rail_score = _score_heavy_rail(heavy_rail_stops)
-    light_rail_score = _score_light_rail(light_rail_stops)
-    bus_score = _score_bus(bus_stops)
+    heavy_rail_score = _score_heavy_rail_routes(heavy_rail_routes)
+    light_rail_score = _score_light_rail_routes(light_rail_routes)
+    bus_score = _score_bus_routes(bus_routes)
 
     total_score = heavy_rail_score + light_rail_score + bus_score
 
@@ -72,254 +68,167 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
             "light_rail": round(light_rail_score, 1),
             "bus": round(bus_score, 1)
         },
-        "summary": _build_summary(heavy_rail_stops, light_rail_stops, bus_stops, stops)
+        "summary": _build_summary_from_routes(
+            heavy_rail_routes, light_rail_routes, bus_routes, routes_data
+        )
     }
 
     # Log results
     print(f"✅ Public Transit Score: {total_score:.0f}/100")
-    print(f"   🚇 Heavy Rail: {heavy_rail_score:.0f}/50 ({len(heavy_rail_stops)} stops)")
-    print(f"   🚊 Light Rail: {light_rail_score:.0f}/25 ({len(light_rail_stops)} stops)")
-    print(f"   🚌 Bus: {bus_score:.0f}/25 ({len(bus_stops)} stops)")
+    print(f"   🚇 Heavy Rail: {heavy_rail_score:.0f}/50 ({len(heavy_rail_routes)} routes)")
+    print(f"   🚊 Light Rail: {light_rail_score:.0f}/25 ({len(light_rail_routes)} routes)")
+    print(f"   🚌 Bus: {bus_score:.0f}/25 ({len(bus_routes)} routes)")
 
     return round(total_score, 1), breakdown
 
 
-def _get_nearby_stops(lat: float, lon: float, radius_m: int = 1500) -> List[Dict]:
+def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dict]:
     """
-    Query Transitland API for nearby transit stops.
-
-    Args:
-        lat: Latitude
-        lon: Longitude
-        radius_m: Search radius in meters (default 1500m = ~15 min walk)
-
-    Returns:
-        List of stops with distance and route types
+    Query Transitland API for nearby transit routes.
+    
+    Returns list of routes with their types and distances.
     """
     if not TRANSITLAND_API_KEY:
         print("   ⚠️  TRANSITLAND_API_KEY not found in .env")
         return []
     
     try:
-        # Transitland v2 API endpoint for stops
-        url = f"{TRANSITLAND_API}/stops"
-
+        url = f"{TRANSITLAND_API}/routes"
+        
         params = {
             "lat": lat,
             "lon": lon,
             "radius": radius_m,
-            "include_alerts": "false",
-            "include_geometries": "false",
-            "limit": 1000,  # Get many stops to analyze
-            "apikey": TRANSITLAND_API_KEY  # Add API key
+            "limit": 500,
+            "apikey": TRANSITLAND_API_KEY
         }
-
+        
         response = requests.get(url, params=params, timeout=15)
-
+        
         if response.status_code != 200:
             print(f"   ⚠️  Transitland API returned status {response.status_code}")
-            if response.status_code == 401:
-                print(f"   ⚠️  API key authentication failed")
             return []
-
+        
         data = response.json()
-        stops_data = data.get("stops", [])
-
-        if not stops_data:
+        routes = data.get("routes", [])
+        
+        if not routes:
+            print("   ℹ️  No routes found")
             return []
-
-        # Process stops
-        stops = []
-        for stop in stops_data:
-            stop_lat = stop.get("geometry", {}).get("coordinates", [None, None])[1]
-            stop_lon = stop.get("geometry", {}).get("coordinates", [None, None])[0]
-
-            if not stop_lat or not stop_lon:
+        
+        # Process routes
+        processed_routes = []
+        for route in routes:
+            route_type = route.get("route_type")
+            if route_type is None:
                 continue
-
-            distance_m = _haversine_distance(lat, lon, stop_lat, stop_lon)
-
-            # Get route types from served routes
-            route_types = []
-            for route in stop.get("route_stops", []):
-                rt = route.get("route", {}).get("route_type")
-                if rt is not None:
-                    route_types.append(rt)
-
-            route_types = list(set(route_types))  # Deduplicate
-
-            stops.append({
-                "name": stop.get("stop_name", "Unknown"),
-                "distance_m": round(distance_m, 0),
-                "route_types": route_types,
-                "lat": stop_lat,
-                "lon": stop_lon
+            
+            processed_routes.append({
+                "name": route.get("route_long_name") or route.get("route_short_name", "Unknown"),
+                "short_name": route.get("route_short_name"),
+                "route_type": route_type,
+                "agency": route.get("agency", {}).get("agency_name", "Unknown")
             })
-
-        # Sort by distance
-        stops.sort(key=lambda x: x["distance_m"])
-
-        return stops
-
+        
+        print(f"   ℹ️  Found {len(processed_routes)} transit routes")
+        
+        return processed_routes
+        
     except Exception as e:
         print(f"   ⚠️  Transit query error: {e}")
         return []
 
 
-def _score_heavy_rail(stops: List[Dict]) -> float:
-    """
-    Score heavy rail access (0-50 points).
-    Subway, metro, commuter rail.
-    """
-    if not stops:
+def _score_heavy_rail_routes(routes: List[Dict]) -> float:
+    """Score heavy rail access based on route availability."""
+    if not routes:
         return 0.0
-
-    closest = min(stops, key=lambda x: x["distance_m"])
-    dist = closest["distance_m"]
-    count = len(stops)
-
-    # Distance score (0-30)
-    if dist <= 400:  # 5 min walk
-        distance_score = 30.0
-    elif dist <= 800:  # 10 min walk
-        distance_score = 25.0
-    elif dist <= 1200:  # 15 min walk
-        distance_score = 18.0
-    elif dist <= 1500:
-        distance_score = 12.0
-    else:
-        distance_score = 5.0
-
-    # Density score (0-20) - more stops = better coverage
-    if count >= 10:
-        density_score = 20.0
-    elif count >= 5:
-        density_score = 15.0
-    elif count >= 3:
-        density_score = 10.0
-    elif count >= 2:
-        density_score = 5.0
-    else:
-        density_score = 2.0
-
-    return min(50, distance_score + density_score)
-
-
-def _score_light_rail(stops: List[Dict]) -> float:
-    """
-    Score light rail access (0-25 points).
-    Streetcar, light rail, cable car.
-    """
-    if not stops:
-        return 0.0
-
-    closest = min(stops, key=lambda x: x["distance_m"])
-    dist = closest["distance_m"]
-    count = len(stops)
-
-    # Distance score (0-15)
-    if dist <= 400:
-        distance_score = 15.0
-    elif dist <= 800:
-        distance_score = 12.0
-    elif dist <= 1200:
-        distance_score = 8.0
-    else:
-        distance_score = 4.0
-
-    # Density score (0-10)
+    
+    count = len(routes)
+    
+    # Presence of heavy rail is huge (30 pts base)
+    base_score = 30.0
+    
+    # Bonus for multiple lines (0-20 pts)
     if count >= 5:
-        density_score = 10.0
+        density_score = 20.0
     elif count >= 3:
-        density_score = 7.0
+        density_score = 15.0
     elif count >= 2:
-        density_score = 4.0
+        density_score = 10.0
     else:
-        density_score = 2.0
+        density_score = 5.0
+    
+    return min(50, base_score + density_score)
 
-    return min(25, distance_score + density_score)
 
-
-def _score_bus(stops: List[Dict]) -> float:
-    """
-    Score bus access (0-25 points).
-    Traditional bus service.
-    """
-    if not stops:
+def _score_light_rail_routes(routes: List[Dict]) -> float:
+    """Score light rail access based on route availability."""
+    if not routes:
         return 0.0
+    
+    count = len(routes)
+    
+    # Presence of light rail (15 pts base)
+    base_score = 15.0
+    
+    # Bonus for multiple lines (0-10 pts)
+    if count >= 3:
+        density_score = 10.0
+    elif count >= 2:
+        density_score = 7.0
+    else:
+        density_score = 3.0
+    
+    return min(25, base_score + density_score)
 
-    count_within_400m = len([s for s in stops if s["distance_m"] <= 400])
 
-    # Bus scoring based on density (buses are everywhere in cities)
-    if count_within_400m >= 10:
+def _score_bus_routes(routes: List[Dict]) -> float:
+    """Score bus access based on route availability."""
+    if not routes:
+        return 0.0
+    
+    count = len(routes)
+    
+    # Bus scoring based on route count
+    if count >= 20:
         return 25.0
-    elif count_within_400m >= 7:
-        return 22.0
-    elif count_within_400m >= 5:
+    elif count >= 15:
+        return 23.0
+    elif count >= 10:
         return 20.0
-    elif count_within_400m >= 3:
+    elif count >= 7:
+        return 17.0
+    elif count >= 5:
         return 15.0
-    elif count_within_400m >= 2:
+    elif count >= 3:
+        return 12.0
+    elif count >= 2:
         return 10.0
-    elif count_within_400m >= 1:
-        return 7.0
     else:
-        # Has bus stops but farther away
-        if stops:
-            return 3.0
-        return 0.0
+        return 7.0
 
 
-def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate distance between two points in meters."""
-    R = 6371000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * \
-        math.cos(phi2) * math.sin(delta_lambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
-    return R * c
-
-
-def _build_summary(heavy_rail: List, light_rail: List, bus: List, all_stops: List) -> Dict:
-    """Build summary of transit access."""
+def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List) -> Dict:
+    """Build summary of transit access from routes."""
     summary = {
-        "total_stops": len(all_stops),
+        "total_stops": len(all_routes),  # Using route count as proxy
         "heavy_rail_stops": len(heavy_rail),
         "light_rail_stops": len(light_rail),
         "bus_stops": len(bus),
-        "nearest_heavy_rail": None,
-        "nearest_light_rail": None,
-        "nearest_bus": None,
+        "nearest_heavy_rail": heavy_rail[0] if heavy_rail else None,
+        "nearest_light_rail": light_rail[0] if light_rail else None,
+        "nearest_bus": bus[0] if bus else None,
         "transit_modes_available": []
     }
 
     if heavy_rail:
-        closest = min(heavy_rail, key=lambda x: x["distance_m"])
-        summary["nearest_heavy_rail"] = {
-            "name": closest["name"],
-            "distance_m": closest["distance_m"]
-        }
         summary["transit_modes_available"].append("Heavy Rail (Subway/Metro)")
 
     if light_rail:
-        closest = min(light_rail, key=lambda x: x["distance_m"])
-        summary["nearest_light_rail"] = {
-            "name": closest["name"],
-            "distance_m": closest["distance_m"]
-        }
         summary["transit_modes_available"].append("Light Rail/Streetcar")
 
     if bus:
-        closest = min(bus, key=lambda x: x["distance_m"])
-        summary["nearest_bus"] = {
-            "name": closest["name"],
-            "distance_m": closest["distance_m"]
-        }
         summary["transit_modes_available"].append("Bus")
 
     # Access level description
@@ -358,3 +267,4 @@ def _empty_breakdown() -> Dict:
             "access_level": "None - No transit service"
         }
     }
+    

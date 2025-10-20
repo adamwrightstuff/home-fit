@@ -303,6 +303,107 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         return None
 
 
+def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Get year built data from Census ACS 5-Year.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        tract: Optional pre-fetched tract data
+    
+    Returns:
+        {
+            "median_year_built": int,
+            "pre_1940_pct": float,
+            "vintage_pct": float,
+            "historic_character_score": float
+        }
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+
+    try:
+        print("🏛️ Fetching year built data from Census ACS...")
+
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        
+        # Get year built variables + median
+        variables = [
+            "B25034_001E",  # Total
+            "B25034_010E",  # Pre-1940
+            "B25034_009E",  # 1940s
+            "B25034_008E",  # 1950s
+            "B25035_001E",  # Median year
+            "NAME"
+        ]
+        
+        params = {
+            "get": ",".join(variables),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code != 200:
+            print(f"   ⚠️  ACS API returned status {response.status_code}")
+            return None
+
+        data = response.json()
+        if len(data) < 2:
+            print("   ⚠️  No year built data returned")
+            return None
+
+        # Parse values
+        row = data[1]
+        total_units = int(row[0]) if row[0] else 0
+        
+        if total_units == 0:
+            return None
+            
+        pre_1940 = int(row[1]) if row[1] else 0
+        decade_1940s = int(row[2]) if row[2] else 0
+        decade_1950s = int(row[3]) if row[3] else 0
+        median_year = int(row[4]) if row[4] and row[4] != "-666666666" else None
+
+        # Calculate vintage housing percentage (pre-1960)
+        vintage_units = pre_1940 + decade_1940s + decade_1950s
+        vintage_pct = (vintage_units / total_units) * 100
+        
+        # Score historic character (0-100)
+        if vintage_pct >= 60:
+            historic_score = 100.0
+        elif vintage_pct >= 40:
+            historic_score = 85.0
+        elif vintage_pct >= 25:
+            historic_score = 70.0
+        elif vintage_pct >= 15:
+            historic_score = 55.0
+        elif vintage_pct >= 10:
+            historic_score = 40.0
+        else:
+            historic_score = 25.0
+
+        result = {
+            "median_year_built": median_year,
+            "pre_1940_pct": round((pre_1940 / total_units) * 100, 1),
+            "vintage_pct": round(vintage_pct, 1),
+            "historic_character_score": historic_score
+        }
+
+        print(f"   ✅ Median year built: {median_year}")
+        print(f"   🏛️ Vintage housing (pre-1960): {result['vintage_pct']}%")
+        
+        return result
+
+    except Exception as e:
+        print(f"   ⚠️  Year built lookup failed: {e}")
+        return None
+
+
 def classify_area_by_density(density: float) -> Dict[str, str]:
     """
     Classify area type based on population density.
