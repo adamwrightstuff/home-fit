@@ -7,6 +7,7 @@ from data_sources.geocoding import geocode
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
 from pillars.neighborhood_beauty import get_neighborhood_beauty_score
+from pillars.neighborhood_beauty_enhanced import get_enhanced_neighborhood_beauty_score
 from pillars.walkable_town import get_walkable_town_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -17,6 +18,7 @@ from pillars.housing_value import get_housing_value_score
 # CONFIGURATION FLAGS
 ##########################
 ENABLE_SCHOOL_SCORING = False  # Set to True to enable school API calls
+ENABLE_ENHANCED_BEAUTY = True  # Set to True to use enhanced neighborhood beauty scoring
 
 # Load environment variables
 load_dotenv()
@@ -105,8 +107,11 @@ def get_livability_score(location: str):
     # Pillar 1: Active Outdoors
     active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city)
 
-    # Pillar 2: Neighborhood Beauty
-    beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city)
+    # Pillar 2: Neighborhood Beauty (Enhanced)
+    if ENABLE_ENHANCED_BEAUTY:
+        beauty_score, beauty_details = get_enhanced_neighborhood_beauty_score(lat, lon, city=city)
+    else:
+        beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city)
 
     # Pillar 3: Neighborhood Amenities (walkable town)
     amenities_score, amenities_details = get_walkable_town_score(lat, lon)
@@ -207,8 +212,10 @@ def get_livability_score(location: str):
                 "score": beauty_score,
                 "weight": default_weights["neighborhood_beauty"],
                 "contribution": round(beauty_score * default_weights["neighborhood_beauty"] / 100, 2),
-                "breakdown": beauty_details["breakdown"],
-                "summary": beauty_details["summary"],
+                "breakdown": beauty_details.get("breakdown", {}),
+                "summary": beauty_details.get("summary", {}),
+                "details": beauty_details.get("details", {}),
+                "enhanced": ENABLE_ENHANCED_BEAUTY,
                 "scoring_note": beauty_details.get("scoring_note", "")
             },
             "neighborhood_amenities": {

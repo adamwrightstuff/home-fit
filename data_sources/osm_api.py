@@ -167,6 +167,151 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
         return None
 
 
+def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Enhanced tree query with comprehensive tree data from OSM.
+    
+    Returns:
+        {
+            "tree_rows": [...],
+            "street_trees": [...],
+            "individual_trees": [...],
+            "tree_areas": [...]
+        }
+    """
+    query = f"""
+    [out:json][timeout:30];
+    (
+      // TREE ROWS
+      way["natural"="tree_row"](around:{radius_m},{lat},{lon});
+      
+      // STREET TREES
+      way["highway"]["trees"="yes"](around:{radius_m},{lat},{lon});
+      way["highway"]["trees:both"="yes"](around:{radius_m},{lat},{lon});
+      way["highway"]["trees:left"="yes"](around:{radius_m},{lat},{lon});
+      way["highway"]["trees:right"="yes"](around:{radius_m},{lat},{lon});
+      
+      // INDIVIDUAL TREES
+      node["natural"="tree"](around:{radius_m},{lat},{lon});
+      
+      // TREE AREAS
+      way["natural"="wood"](around:{radius_m},{lat},{lon});
+      way["landuse"="forest"](around:{radius_m},{lat},{lon});
+      way["leisure"="park"]["trees"="yes"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+
+    try:
+        resp = requests.post(
+            OVERPASS_URL,
+            data={"data": query},
+            timeout=40,
+            headers={"User-Agent": "HomeFit/1.0"}
+        )
+
+        if resp.status_code != 200:
+            return None
+
+        data = resp.json()
+        elements = data.get("elements", [])
+
+        tree_rows, street_trees, individual_trees, tree_areas = _process_enhanced_trees(
+            elements, lat, lon)
+
+        return {
+            "tree_rows": tree_rows,
+            "street_trees": street_trees,
+            "individual_trees": individual_trees,
+            "tree_areas": tree_areas
+        }
+
+    except Exception as e:
+        print(f"OSM enhanced tree query error: {e}")
+        return None
+
+
+def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Query OSM for cultural and artistic assets.
+    
+    Returns:
+        {
+            "museums": [...],
+            "galleries": [...],
+            "theaters": [...],
+            "public_art": [...],
+            "cultural_venues": [...]
+        }
+    """
+    query = f"""
+    [out:json][timeout:35];
+    (
+      // MUSEUMS
+      node["tourism"="museum"](around:{radius_m},{lat},{lon});
+      way["tourism"="museum"](around:{radius_m},{lat},{lon});
+      
+      // GALLERIES & ART SPACES
+      node["tourism"="gallery"](around:{radius_m},{lat},{lon});
+      way["tourism"="gallery"](around:{radius_m},{lat},{lon});
+      node["shop"="art"](around:{radius_m},{lat},{lon});
+      way["shop"="art"](around:{radius_m},{lat},{lon});
+      
+      // THEATERS & PERFORMANCE
+      node["amenity"~"theatre|cinema"](around:{radius_m},{lat},{lon});
+      way["amenity"~"theatre|cinema"](around:{radius_m},{lat},{lon});
+      node["leisure"="arts_centre"](around:{radius_m},{lat},{lon});
+      way["leisure"="arts_centre"](around:{radius_m},{lat},{lon});
+      
+      // PUBLIC ART
+      node["tourism"="artwork"](around:{radius_m},{lat},{lon});
+      way["tourism"="artwork"](around:{radius_m},{lat},{lon});
+      node["amenity"="fountain"](around:{radius_m},{lat},{lon});
+      way["amenity"="fountain"](around:{radius_m},{lat},{lon});
+      
+      // CULTURAL VENUES
+      node["amenity"="community_centre"](around:{radius_m},{lat},{lon});
+      way["amenity"="community_centre"](around:{radius_m},{lat},{lon});
+      node["amenity"="library"](around:{radius_m},{lat},{lon});
+      way["amenity"="library"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+
+    try:
+        resp = requests.post(
+            OVERPASS_URL,
+            data={"data": query},
+            timeout=45,
+            headers={"User-Agent": "HomeFit/1.0"}
+        )
+
+        if resp.status_code != 200:
+            return None
+
+        data = resp.json()
+        elements = data.get("elements", [])
+
+        museums, galleries, theaters, public_art, cultural_venues = _process_cultural_assets(
+            elements, lat, lon)
+
+        return {
+            "museums": museums,
+            "galleries": galleries,
+            "theaters": theaters,
+            "public_art": public_art,
+            "cultural_venues": cultural_venues
+        }
+
+    except Exception as e:
+        print(f"OSM cultural assets query error: {e}")
+        return None
+
+
 def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optional[Dict]:
     """
     Query OSM for neighborhood charm features (historic buildings, fountains, public art).
@@ -806,6 +951,137 @@ def _get_park_type_name(leisure, landuse, natural):
     elif natural == "scrub":
         return "Natural Area"
     return "Green Space"
+
+
+def _process_enhanced_trees(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict]]:
+    """Process OSM elements into enhanced tree categories."""
+    tree_rows = []
+    street_trees = []
+    individual_trees = []
+    tree_areas = []
+    nodes_dict = {}
+    ways_dict = {}
+    seen_ids = set()
+
+    # Build nodes and ways dicts
+    for elem in elements:
+        if elem.get("type") == "node":
+            nodes_dict[elem["id"]] = elem
+        elif elem.get("type") == "way":
+            ways_dict[elem["id"]] = elem
+
+    for elem in elements:
+        osm_id = elem.get("id")
+        if not osm_id or osm_id in seen_ids:
+            continue
+
+        tags = elem.get("tags", {})
+        natural = tags.get("natural")
+        highway = tags.get("highway")
+        leisure = tags.get("leisure")
+        landuse = tags.get("landuse")
+        elem_type = elem.get("type")
+
+        seen_ids.add(osm_id)
+
+        elem_lat = None
+        elem_lon = None
+
+        if elem_type == "node":
+            elem_lat = elem.get("lat")
+            elem_lon = elem.get("lon")
+        elif elem_type == "way":
+            elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+
+        if elem_lat is None:
+            continue
+
+        distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+
+        tree_feature = {
+            "name": tags.get("name"),
+            "lat": elem_lat,
+            "lon": elem_lon,
+            "distance_m": round(distance_m, 0),
+            "type": natural or highway or leisure or landuse
+        }
+
+        # Categorize trees
+        if natural == "tree_row":
+            tree_rows.append(tree_feature)
+        elif highway and any(tags.get(k) == "yes" for k in ["trees", "trees:both", "trees:left", "trees:right"]):
+            street_trees.append(tree_feature)
+        elif natural == "tree":
+            individual_trees.append(tree_feature)
+        elif natural in ["wood", "forest"] or landuse == "forest" or (leisure == "park" and tags.get("trees") == "yes"):
+            tree_areas.append(tree_feature)
+
+    return tree_rows, street_trees, individual_trees, tree_areas
+
+
+def _process_cultural_assets(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], List[Dict]]:
+    """Process OSM elements into cultural asset categories."""
+    museums = []
+    galleries = []
+    theaters = []
+    public_art = []
+    cultural_venues = []
+    nodes_dict = {}
+    seen_ids = set()
+
+    for elem in elements:
+        if elem.get("type") == "node":
+            nodes_dict[elem["id"]] = elem
+
+    for elem in elements:
+        osm_id = elem.get("id")
+        if not osm_id or osm_id in seen_ids:
+            continue
+
+        tags = elem.get("tags", {})
+        tourism = tags.get("tourism")
+        amenity = tags.get("amenity")
+        shop = tags.get("shop")
+        leisure = tags.get("leisure")
+        elem_type = elem.get("type")
+
+        seen_ids.add(osm_id)
+
+        elem_lat = None
+        elem_lon = None
+
+        if elem_type == "node":
+            elem_lat = elem.get("lat")
+            elem_lon = elem.get("lon")
+        elif elem_type == "way":
+            elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+
+        if elem_lat is None:
+            continue
+
+        distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+
+        cultural_feature = {
+            "name": tags.get("name"),
+            "lat": elem_lat,
+            "lon": elem_lon,
+            "distance_m": round(distance_m, 0),
+            "type": tourism or amenity or shop or leisure
+        }
+
+        # Categorize cultural assets
+        if tourism == "museum":
+            museums.append(cultural_feature)
+        elif tourism == "gallery" or shop == "art":
+            galleries.append(cultural_feature)
+        elif amenity in ["theatre", "cinema"] or leisure == "arts_centre":
+            theaters.append(cultural_feature)
+        elif tourism == "artwork" or amenity == "fountain":
+            public_art.append(cultural_feature)
+        elif amenity in ["community_centre", "library"]:
+            cultural_venues.append(cultural_feature)
+
+    return museums, galleries, theaters, public_art, cultural_venues
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
