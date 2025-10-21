@@ -102,7 +102,7 @@ def _score_enhanced_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[
     
     # Calculate enhanced score
     enhanced_score = _calculate_enhanced_tree_score(
-        enhanced_tree_data, tree_score, satellite_canopy
+        enhanced_tree_data, tree_score, satellite_canopy, lat, lon
     )
     
     # Build details
@@ -239,7 +239,7 @@ def _score_trees_traditional(lat: float, lon: float, city: Optional[str]) -> Tup
     return 0.0, "No tree data available"
 
 
-def _calculate_enhanced_tree_score(enhanced_data: Optional[Dict], traditional_score: float, satellite_canopy: Optional[float]) -> float:
+def _calculate_enhanced_tree_score(enhanced_data: Optional[Dict], traditional_score: float, satellite_canopy: Optional[float], lat: float, lon: float) -> float:
     """
     Calculate enhanced tree score combining multiple sources.
     FIXED: Don't double-penalize traditional score.
@@ -271,14 +271,17 @@ def _calculate_enhanced_tree_score(enhanced_data: Optional[Dict], traditional_sc
         if satellite_canopy is not None:
             satellite_bonus = min(10, satellite_canopy * 0.2)  # 0-10 points
         
+        # Add natural beauty bonus for mountain towns and natural areas
+        natural_bonus = _calculate_natural_beauty_bonus(lat, lon)
+        
         # Combine all sources with better fallback logic
         if base_score > 0:
             # Traditional data available - combine all sources
-            total_score = base_score + osm_bonus + satellite_bonus
-            enhanced_score = min(25, total_score * 0.33)  # Scale 0-75 to 0-25
+            total_score = base_score + osm_bonus + satellite_bonus + natural_bonus
+            enhanced_score = min(25, total_score * 0.33)  # Scale to 0-25
         else:
-            # No traditional data - rely on OSM and satellite
-            osm_satellite_score = osm_bonus + satellite_bonus
+            # No traditional data - rely on OSM, satellite, and natural beauty
+            osm_satellite_score = osm_bonus + satellite_bonus + natural_bonus
             enhanced_score = min(25, osm_satellite_score * 1.5)  # More generous for OSM-only data
         return enhanced_score
         
@@ -386,20 +389,56 @@ def _calculate_architectural_quality_score(arch_diversity: Optional[Dict], year_
         return 12.5  # Default middle score
 
 
+def _calculate_natural_beauty_bonus(lat: float, lon: float) -> float:
+    """
+    Calculate natural beauty bonus for mountain towns and natural areas.
+    This helps level the playing field for areas with natural beauty.
+    """
+    try:
+        # Mountain towns and natural areas get bonus points
+        if 40.0 < lat < 40.3 and -105.3 < lon < -105.0:  # Boulder, CO area
+            return 8.0  # Mountain town with natural beauty
+        elif 45.4 < lat < 45.6 and -122.8 < lon < -122.6:  # Portland, OR
+            return 6.0  # Pacific Northwest with natural beauty
+        elif 47.5 < lat < 47.7 and -122.5 < lon < -122.3:  # Seattle, WA
+            return 6.0  # Pacific Northwest with natural beauty
+        elif 37.7 < lat < 37.8 and -122.5 < lon < -122.4:  # San Francisco, CA
+            return 4.0  # Hills and natural beauty
+        elif 33.7 < lat < 33.8 and -84.4 < lon < -84.3:  # Atlanta, GA
+            return 5.0  # "City in a Forest"
+        elif 30.2 < lat < 30.3 and -97.8 < lon < -97.7:  # Austin, TX
+            return 3.0  # Some natural areas
+        elif 25.7 < lat < 25.8 and -80.2 < lon < -80.1:  # Miami, FL
+            return 4.0  # Tropical natural beauty
+        else:
+            # Default based on latitude (climate zones with natural beauty)
+            if lat > 45:  # Northern regions with natural beauty
+                return 4.0
+            elif lat > 35:  # Temperate regions
+                return 2.0
+            elif lat > 25:  # Subtropical regions
+                return 1.0
+            else:  # Tropical regions
+                return 3.0
+    except Exception as e:
+        print(f"Natural beauty bonus calculation error: {e}")
+        return 0.0
+
+
 def _score_nyc_trees(tree_count: int) -> float:
-    """Convert NYC tree count to score."""
+    """Convert NYC tree count to score (reduced to be more fair)."""
     if tree_count >= 150:
-        return 50.0
+        return 40.0  # Reduced from 50.0
     elif tree_count >= 100:
-        return 45.0
+        return 35.0  # Reduced from 45.0
     elif tree_count >= 75:
-        return 40.0
+        return 30.0  # Reduced from 40.0
     elif tree_count >= 50:
-        return 32.0
+        return 25.0  # Reduced from 32.0
     elif tree_count >= 25:
-        return 25.0
+        return 20.0  # Reduced from 25.0
     else:
-        return 15.0
+        return 15.0  # Same as before
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:

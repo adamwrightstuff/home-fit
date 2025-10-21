@@ -9,19 +9,30 @@ from typing import Optional, Dict, Tuple
 import math
 
 # Initialize GEE (will need authentication)
-try:
-    ee.Initialize()
-    GEE_AVAILABLE = True
-except Exception as e:
-    print(f"⚠️  Google Earth Engine not initialized: {e}")
-    GEE_AVAILABLE = False
+def _initialize_gee():
+    """Initialize GEE with your existing project."""
+    try:
+        # Use your existing GEE project
+        ee.Initialize(project='homefit-475718')
+        return True
+    except Exception as e1:
+        try:
+            # Fallback: try without project
+            ee.Initialize()
+            return True
+        except Exception as e2:
+            print(f"⚠️  Google Earth Engine not initialized: {e2}")
+            print("💡 Try running: earthengine authenticate --project homefit-475718")
+            return False
+
+GEE_AVAILABLE = _initialize_gee()
 
 
 def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optional[float]:
     """
     Get tree canopy percentage using Google Earth Engine.
     
-    Uses Landsat 8/9 and Sentinel-2 data to calculate NDVI and tree canopy coverage.
+    Uses Sentinel-2 data to calculate NDVI and tree canopy coverage.
     
     Args:
         lat: Latitude
@@ -41,53 +52,40 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         point = ee.Geometry.Point([lon, lat])
         buffer = point.buffer(radius_m)
         
-        # Get recent Landsat 8/9 data (2020-2024)
-        landsat = (ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
-                  .merge(ee.ImageCollection('LANDSAT/LC09/C02/T1_L2'))
-                  .filterDate('2020-01-01', '2024-12-31')
-                  .filterBounds(buffer)
-                  .filter(ee.Filter.lt('CLOUD_COVER', 20)))
-        
-        # Get recent Sentinel-2 data as backup
+        # Use Sentinel-2 data (more reliable and recent)
         sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                   .filterDate('2020-01-01', '2024-12-31')
+                   .filterDate('2023-01-01', '2024-12-31')
                    .filterBounds(buffer)
                    .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20)))
         
-        # Function to calculate NDVI
-        def add_ndvi(image):
-            if 'LANDSAT' in image.get('system:id').getInfo():
-                # Landsat 8/9: Red = B4, NIR = B5
-                ndvi = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
-            else:
-                # Sentinel-2: Red = B4, NIR = B8
-                ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
-            return image.addBands(ndvi)
+        # Check if we have data
+        count = sentinel.size().getInfo()
+        if count == 0:
+            print(f"   ⚠️  No Sentinel-2 data available for this location")
+            return None
         
-        # Process both collections
-        landsat_ndvi = landsat.map(add_ndvi).select('NDVI').median()
-        sentinel_ndvi = sentinel.map(add_ndvi).select('NDVI').median()
+        # Get the most recent image
+        image = sentinel.sort('system:time_start', False).first()
         
-        # Combine both sources (prefer Landsat, fallback to Sentinel)
-        combined_ndvi = landsat_ndvi.unmask(sentinel_ndvi)
+        # Calculate NDVI
+        ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
         
         # Calculate tree canopy using NDVI thresholds
-        # NDVI > 0.6 = dense vegetation (trees)
-        # NDVI > 0.4 = moderate vegetation
-        # NDVI > 0.2 = sparse vegetation
-        tree_mask = combined_ndvi.gt(0.4)  # Moderate to dense vegetation
+        # NDVI > 0.4 = moderate to dense vegetation (trees)
+        tree_mask = ndvi.gt(0.4)
         
         # Calculate percentage within buffer
         tree_area = tree_mask.reduceRegion(
             reducer=ee.Reducer.sum(),
             geometry=buffer,
-            scale=30,  # 30m resolution
+            scale=20,  # 20m resolution for Sentinel-2
             maxPixels=1e9
         ).get('NDVI')
         
+        # Get total area
         total_area = buffer.area().getInfo()  # Total area in square meters
         tree_pixels = tree_area.getInfo() if tree_area else 0
-        pixel_area = 30 * 30  # 30m x 30m pixel
+        pixel_area = 20 * 20  # 20m x 20m pixel for Sentinel-2
         tree_area_sqm = tree_pixels * pixel_area
         
         canopy_percentage = (tree_area_sqm / total_area) * 100 if total_area > 0 else 0
@@ -281,17 +279,24 @@ def get_building_density_gee(lat: float, lon: float, radius_m: int = 1000) -> Op
 
 def authenticate_gee():
     """
-    Authenticate with Google Earth Engine.
+    Authenticate with Google Earth Engine using your existing project.
     This will open a browser window for authentication.
     """
     try:
         ee.Authenticate()
-        ee.Initialize()
-        print("✅ Google Earth Engine authenticated successfully")
+        ee.Initialize(project='homefit-475718')
+        print("✅ Google Earth Engine authenticated successfully with homefit-475718")
         return True
     except Exception as e:
-        print(f"❌ GEE authentication failed: {e}")
-        return False
+        try:
+            # Fallback: try without project
+            ee.Initialize()
+            print("✅ Google Earth Engine authenticated successfully (default project)")
+            return True
+        except Exception as e2:
+            print(f"❌ GEE authentication failed: {e2}")
+            print("💡 Make sure Earth Engine API is enabled in your Google Cloud project")
+            return False
 
 
 # Test function
