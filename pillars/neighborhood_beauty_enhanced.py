@@ -98,7 +98,7 @@ def _score_enhanced_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[
     tree_score, tree_note = _score_trees_traditional(lat, lon, city)
     
     # Get satellite tree canopy data
-    satellite_canopy = satellite_api.get_sentinel_tree_canopy(lat, lon)
+    satellite_canopy = satellite_api.get_tree_canopy_satellite(lat, lon)
     
     # Calculate enhanced score
     enhanced_score = _calculate_enhanced_tree_score(
@@ -166,7 +166,7 @@ def _score_visual_aesthetics(lat: float, lon: float) -> Tuple[float, Dict]:
     print(f"      📊 Analyzing visual aesthetics...")
     
     # Get satellite-based visual analysis
-    satellite_analysis = satellite_api.get_visual_aesthetics_score(lat, lon)
+    satellite_analysis = satellite_api.get_visual_aesthetics_satellite(lat, lon)
     
     # Get street-level analysis
     street_analysis = streetview_api.analyze_street_aesthetics(lat, lon)
@@ -256,18 +256,30 @@ def _calculate_enhanced_tree_score(enhanced_data: Optional[Dict], traditional_sc
             individual_trees = len(enhanced_data.get("individual_trees", []))
             tree_areas = len(enhanced_data.get("tree_areas", []))
             
-            # Calculate OSM bonus (0-15 points)
-            total_osm_features = tree_rows + street_trees + individual_trees + tree_areas
-            osm_bonus = min(15, total_osm_features * 0.3)
+            # Calculate OSM bonus with better weighting
+            # Tree rows and areas are more valuable than individual trees
+            weighted_osm_features = (
+                tree_rows * 3 +           # Tree rows are very valuable
+                tree_areas * 5 +          # Tree areas are most valuable
+                street_trees * 2 +       # Street trees are valuable
+                individual_trees * 1      # Individual trees are least valuable
+            )
+            osm_bonus = min(15, weighted_osm_features * 0.5)  # More generous scaling
         
         # Add satellite bonus (0-10 points)
         satellite_bonus = 0
         if satellite_canopy is not None:
             satellite_bonus = min(10, satellite_canopy * 0.2)  # 0-10 points
         
-        # Combine all sources (0-75 total, then scale to 25)
-        total_score = base_score + osm_bonus + satellite_bonus
-        enhanced_score = min(25, total_score * 0.33)  # Scale 0-75 to 0-25
+        # Combine all sources with better fallback logic
+        if base_score > 0:
+            # Traditional data available - combine all sources
+            total_score = base_score + osm_bonus + satellite_bonus
+            enhanced_score = min(25, total_score * 0.33)  # Scale 0-75 to 0-25
+        else:
+            # No traditional data - rely on OSM and satellite
+            osm_satellite_score = osm_bonus + satellite_bonus
+            enhanced_score = min(25, osm_satellite_score * 1.5)  # More generous for OSM-only data
         return enhanced_score
         
     except Exception as e:
