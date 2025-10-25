@@ -25,7 +25,12 @@ def _initialize_gee():
             print("💡 Try running: earthengine authenticate --project homefit-475718")
             return False
 
-GEE_AVAILABLE = _initialize_gee()
+# Initialize GEE safely - don't crash the app if it fails
+try:
+    GEE_AVAILABLE = _initialize_gee()
+except Exception as e:
+    print(f"⚠️  Failed to initialize Google Earth Engine: {e}")
+    GEE_AVAILABLE = False
 
 
 def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optional[float]:
