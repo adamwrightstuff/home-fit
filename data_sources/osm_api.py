@@ -5,11 +5,17 @@ Queries Overpass API for green spaces and nature features
 
 import requests
 import math
+import time
 from typing import Dict, List, Tuple, Optional
+from .cache import cached, CACHE_TTL
+from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=30)
 def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Query OSM for parks, playgrounds, and tree features.
@@ -96,6 +102,9 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=40)
 def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
     """
     Query OSM for outdoor recreation (hiking, swimming, camping).
@@ -366,6 +375,9 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=60)
 def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Query OSM for indie local businesses within walking distance.

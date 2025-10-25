@@ -7,6 +7,8 @@ import os
 import requests
 from typing import Dict, Optional
 from dotenv import load_dotenv
+from .cache import cached, CACHE_TTL
+from .error_handling import with_fallback, safe_api_call, handle_api_timeout, check_api_credentials
 
 load_dotenv()
 
@@ -14,10 +16,14 @@ CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
 
+# Check if Census API key is available
 if not CENSUS_API_KEY:
-    raise ValueError("CENSUS_API_KEY not found in .env file")
+    print("⚠️  CENSUS_API_KEY not found - Census-dependent pillars will use fallback scores")
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
 def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
     """
     Convert lat/lon to Census tract FIPS codes.
@@ -237,6 +243,9 @@ def get_tree_canopy(lat: float, lon: float, tract: Optional[Dict] = None) -> Opt
     return get_tree_canopy_usfs(lat, lon, tract)
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=20)
 def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
     Get housing value metrics from Census ACS 5-Year data.

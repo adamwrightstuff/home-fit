@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
+from data_sources.cache import clear_cache, get_cache_stats, cleanup_expired_cache
+from data_sources.error_handling import check_api_credentials, get_fallback_score
+from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
 from pillars.neighborhood_beauty import get_neighborhood_beauty_score
@@ -84,6 +87,7 @@ def get_livability_score(location: str):
     Returns:
         JSON with pillar scores and weighted total
     """
+    start_time = time.time()
     print(f"\n{'='*60}")
     print(f"🏠 HomeFit Score Request: {location}")
     print(f"{'='*60}")
@@ -188,7 +192,7 @@ def get_livability_score(location: str):
         len(schools_by_level.get("high", []))
     ])
 
-    # Build response
+    # Build response with enhanced metadata
     response = {
         "input": location,
         "coordinates": {
@@ -206,7 +210,10 @@ def get_livability_score(location: str):
                 "weight": default_weights["active_outdoors"],
                 "contribution": round(active_outdoors_score * default_weights["active_outdoors"] / 100, 2),
                 "breakdown": active_outdoors_details["breakdown"],
-                "summary": active_outdoors_details["summary"]
+                "summary": active_outdoors_details["summary"],
+                "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": active_outdoors_details.get("data_quality", {}),
+                "area_classification": active_outdoors_details.get("area_classification", {})
             },
             "neighborhood_beauty": {
                 "score": beauty_score,
@@ -216,14 +223,20 @@ def get_livability_score(location: str):
                 "summary": beauty_details.get("summary", {}),
                 "details": beauty_details.get("details", {}),
                 "enhanced": ENABLE_ENHANCED_BEAUTY,
-                "scoring_note": beauty_details.get("scoring_note", "")
+                "scoring_note": beauty_details.get("scoring_note", ""),
+                "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": beauty_details.get("data_quality", {}),
+                "area_classification": beauty_details.get("area_classification", {})
             },
             "neighborhood_amenities": {
                 "score": amenities_score,
                 "weight": default_weights["neighborhood_amenities"],
                 "contribution": round(amenities_score * default_weights["neighborhood_amenities"] / 100, 2),
                 "breakdown": amenities_details["breakdown"],
-                "summary": amenities_details["summary"]
+                "summary": amenities_details["summary"],
+                "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": amenities_details.get("data_quality", {}),
+                "area_classification": amenities_details.get("area_classification", {})
             },
             "air_travel_access": {
                 "score": air_travel_score,
@@ -231,21 +244,30 @@ def get_livability_score(location: str):
                 "contribution": round(air_travel_score * default_weights["air_travel_access"] / 100, 2),
                 "primary_airport": air_travel_details.get("primary_airport"),
                 "nearest_airports": air_travel_details.get("nearest_airports", []),
-                "summary": air_travel_details.get("summary", {})
+                "summary": air_travel_details.get("summary", {}),
+                "confidence": air_travel_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": air_travel_details.get("data_quality", {}),
+                "area_classification": air_travel_details.get("area_classification", {})
             },
             "public_transit_access": {
                 "score": transit_score,
                 "weight": default_weights["public_transit_access"],
                 "contribution": round(transit_score * default_weights["public_transit_access"] / 100, 2),
                 "breakdown": transit_details["breakdown"],
-                "summary": transit_details["summary"]
+                "summary": transit_details["summary"],
+                "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": transit_details.get("data_quality", {}),
+                "area_classification": transit_details.get("area_classification", {})
             },
             "healthcare_access": {
                 "score": healthcare_score,
                 "weight": default_weights["healthcare_access"],
                 "contribution": round(healthcare_score * default_weights["healthcare_access"] / 100, 2),
                 "breakdown": healthcare_details["breakdown"],
-                "summary": healthcare_details["summary"]
+                "summary": healthcare_details["summary"],
+                "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": healthcare_details.get("data_quality", {}),
+                "area_classification": healthcare_details.get("area_classification", {})
             },
             "quality_education": {
                 "score": school_avg,
@@ -256,18 +278,28 @@ def get_livability_score(location: str):
                     "middle": schools_by_level.get("middle", []),
                     "high": schools_by_level.get("high", [])
                 },
-                "total_schools_rated": total_schools
+                "total_schools_rated": total_schools,
+                "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
+                "data_quality": {
+                    "fallback_used": not ENABLE_SCHOOL_SCORING,
+                    "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else "School data available"
+                }
             },
             "housing_value": {
                 "score": housing_score,
                 "weight": default_weights["housing_value"],
                 "contribution": round(housing_score * default_weights["housing_value"] / 100, 2),
                 "breakdown": housing_details["breakdown"],
-                "summary": housing_details["summary"]
+                "summary": housing_details["summary"],
+                "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": housing_details.get("data_quality", {}),
+                "area_classification": housing_details.get("area_classification", {})
             }
         },
         "total_score": round(total_score, 2),
         "default_weights": default_weights,
+        "overall_confidence": _calculate_overall_confidence(response["livability_pillars"]),
+        "data_quality_summary": _calculate_data_quality_summary(response["livability_pillars"]),
         "metadata": {
             "version": "3.0.0",
             "architecture": "8 Purpose-Driven Pillars",
@@ -294,35 +326,111 @@ def get_livability_score(location: str):
         }
     }
 
+    # Record telemetry metrics
+    try:
+        response_time = time.time() - start_time
+        record_request_metrics(location, lat, lon, response, response_time)
+    except Exception as e:
+        print(f"⚠️  Failed to record telemetry: {e}")
+
     return response
+
+
+def _calculate_overall_confidence(pillars: Dict) -> Dict:
+    """Calculate overall confidence metrics for the response."""
+    confidences = []
+    fallback_count = 0
+    quality_tiers = []
+    
+    for pillar_name, pillar_data in pillars.items():
+        confidence = pillar_data.get("confidence", 0)
+        confidences.append(confidence)
+        
+        data_quality = pillar_data.get("data_quality", {})
+        if data_quality.get("fallback_used", False):
+            fallback_count += 1
+        
+        quality_tier = data_quality.get("quality_tier", "unknown")
+        quality_tiers.append(quality_tier)
+    
+    # Calculate overall metrics
+    avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+    fallback_percentage = (fallback_count / len(pillars)) * 100
+    
+    # Quality tier distribution
+    tier_counts = {}
+    for tier in quality_tiers:
+        tier_counts[tier] = tier_counts.get(tier, 0) + 1
+    
+    return {
+        "average_confidence": round(avg_confidence, 1),
+        "pillars_using_fallback": fallback_count,
+        "fallback_percentage": round(fallback_percentage, 1),
+        "quality_tier_distribution": tier_counts,
+        "overall_quality": "excellent" if avg_confidence >= 85 else "good" if avg_confidence >= 70 else "fair" if avg_confidence >= 50 else "poor"
+    }
+
+
+def _calculate_data_quality_summary(pillars: Dict) -> Dict:
+    """Calculate data quality summary for the response."""
+    data_sources_used = set()
+    area_classifications = []
+    
+    for pillar_name, pillar_data in pillars.items():
+        data_quality = pillar_data.get("data_quality", {})
+        area_classification = pillar_data.get("area_classification", {})
+        
+        # Collect data sources
+        sources = data_quality.get("data_sources", [])
+        data_sources_used.update(sources)
+        
+        # Collect area classifications
+        if area_classification:
+            area_classifications.append(area_classification)
+    
+    # Get most common area classification
+    if area_classifications:
+        area_types = [ac.get("area_type", "unknown") for ac in area_classifications]
+        most_common_area = max(set(area_types), key=area_types.count)
+        metro_name = area_classifications[0].get("metro_name") if area_classifications else None
+    else:
+        most_common_area = "unknown"
+        metro_name = None
+    
+    return {
+        "data_sources_used": list(data_sources_used),
+        "area_classification": {
+            "type": most_common_area,
+            "metro_name": metro_name
+        },
+        "total_pillars": len(pillars),
+        "data_completeness": "high" if len(data_sources_used) >= 3 else "medium" if len(data_sources_used) >= 2 else "low"
+    }
 
 
 @app.get("/health")
 def health_check():
     """Detailed health check with API credential validation."""
-    import os
-
+    credentials = check_api_credentials()
+    cache_stats = get_cache_stats()
+    
+    # Clean up expired cache entries
+    cleanup_expired_cache()
+    
     checks = {
         "geocoding": "✅ Nominatim (no credentials required)",
-        "schools": "❌ SchoolDigger credentials missing",
+        "schools": "✅ SchoolDigger credentials configured" if credentials["schools"] else "❌ SchoolDigger credentials missing",
         "osm": "✅ OpenStreetMap (no credentials required)",
-        "census": "❌ Census API key missing",
+        "census": "✅ Census API key configured" if credentials["census"] else "❌ Census API key missing",
         "nyc_trees": "✅ NYC Open Data (no credentials required)",
         "airports": "✅ OurAirports database (static data)",
         "transit": "✅ Transitland API (no credentials required)"
     }
 
-    # Check SchoolDigger credentials
-    if os.getenv("SCHOOLDIGGER_APPID") and os.getenv("SCHOOLDIGGER_APPKEY"):
-        checks["schools"] = "✅ SchoolDigger credentials configured"
-
-    # Check Census API key
-    if os.getenv("CENSUS_API_KEY"):
-        checks["census"] = "✅ Census API key configured"
-
     return {
         "status": "healthy",
         "checks": checks,
+        "cache_stats": cache_stats,
         "version": "3.0.0",
         "architecture": "8 Purpose-Driven Pillars",
         "pillars": [
@@ -336,6 +444,45 @@ def health_check():
             "housing_value"
         ]
     }
+
+
+@app.post("/cache/clear")
+def clear_cache_endpoint(cache_type: str = None):
+    """Clear cache entries."""
+    try:
+        clear_cache(cache_type)
+        return {
+            "status": "success",
+            "message": f"Cache cleared for {cache_type or 'all'}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache clear failed: {e}")
+
+
+@app.get("/cache/stats")
+def cache_stats_endpoint():
+    """Get cache statistics."""
+    try:
+        stats = get_cache_stats()
+        return {
+            "status": "success",
+            "cache_stats": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache stats failed: {e}")
+
+
+@app.get("/telemetry")
+def telemetry_endpoint():
+    """Get telemetry and analytics data."""
+    try:
+        stats = get_telemetry_stats()
+        return {
+            "status": "success",
+            "telemetry": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telemetry failed: {e}")
 
 
 if __name__ == "__main__":

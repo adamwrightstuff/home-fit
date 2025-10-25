@@ -3,11 +3,27 @@ Air Travel Access Pillar
 Scores access to airports for air travel
 """
 
+import json
 import math
 from typing import Dict, Tuple, List, Optional
+from data_sources.data_quality import assess_pillar_data_quality
+from data_sources.regional_baselines import get_area_classification, get_contextual_expectations
 
-# Major US airports database
-# Data from OurAirports.com (simplified for key US airports)
+# Load comprehensive airport database
+def _load_airport_database() -> List[Dict]:
+    """Load comprehensive airport database from JSON file."""
+    try:
+        with open('data_sources/static/airports.json', 'r') as f:
+            data = json.load(f)
+            return data.get('airports', [])
+    except FileNotFoundError:
+        # Fallback to hardcoded data if JSON not available
+        return []
+
+# Load airports on module import
+AIRPORT_DATABASE = _load_airport_database()
+
+# Legacy airport data for backward compatibility
 MAJOR_AIRPORTS = [
     # Format: (code, name, lat, lon, type)
     # Type: "large_airport" = international hub, "medium_airport" = regional
@@ -86,73 +102,81 @@ MAJOR_AIRPORTS = [
 
 def get_air_travel_score(lat: float, lon: float) -> Tuple[float, Dict]:
     """
-    Calculate air travel access score (0-100) based on airport proximity.
+    Calculate air travel access score (0-100) based on multi-airport proximity.
 
     Scoring:
-    - International hub <30km (25km): 100 points
-    - International hub 30-50km: 80 points
-    - International hub 50-75km: 60 points
-    - International hub 75-100km: 40 points
-    - Regional airport only: 30-40 points based on distance
-    - >100km to any airport: 20 points
+    - Considers best 3 airports within 100km
+    - Weights by airport size and distance
+    - Bonus for airport choice/redundancy
+    - Smooth distance decay curves
 
     Returns:
         (total_score, detailed_breakdown)
     """
     print(f"✈️  Analyzing air travel access...")
 
-    # Find nearest airports
+    # Get area classification for contextual scoring
+    area_type, metro_name, area_metadata = get_area_classification(lat, lon)
+    expectations = get_contextual_expectations(area_type, 'air_travel_access')
+
+    # Find all airports within 100km
     airports_with_distance = []
-    for code, name, apt_lat, apt_lon, apt_type in MAJOR_AIRPORTS:
+    
+    # Use comprehensive database if available, otherwise fallback to legacy
+    airport_list = AIRPORT_DATABASE if AIRPORT_DATABASE else MAJOR_AIRPORTS
+    
+    for airport in airport_list:
+        if isinstance(airport, dict):
+            # New format from JSON
+            apt_lat = airport.get('lat')
+            apt_lon = airport.get('lon')
+            code = airport.get('code')
+            name = airport.get('name')
+            apt_type = airport.get('type')
+        else:
+            # Legacy format
+            code, name, apt_lat, apt_lon, apt_type = airport
+        
         distance_km = _haversine_distance(lat, lon, apt_lat, apt_lon) / 1000
-        airports_with_distance.append({
-            "code": code,
-            "name": name,
-            "type": apt_type,
-            "distance_km": round(distance_km, 1),
-            "lat": apt_lat,
-            "lon": apt_lon
-        })
+        
+        # Only include airports within 100km
+        if distance_km <= 100:
+            airports_with_distance.append({
+                "code": code,
+                "name": name,
+                "type": apt_type,
+                "distance_km": round(distance_km, 1),
+                "lat": apt_lat,
+                "lon": apt_lon,
+                "service_level": airport.get('service_level', 'unknown') if isinstance(airport, dict) else 'unknown'
+            })
 
     # Sort by distance
     airports_with_distance.sort(key=lambda x: x["distance_km"])
 
-    # Get nearest of each type
-    nearest_large = next((a for a in airports_with_distance if a["type"] == "large_airport"), None)
-    nearest_medium = next((a for a in airports_with_distance if a["type"] == "medium_airport"), None)
-    nearest_any = airports_with_distance[0] if airports_with_distance else None
+    # Assess data quality
+    airport_data = {'airports': airports_with_distance}
+    quality_metrics = assess_pillar_data_quality('air_travel_access', airport_data, lat, lon, area_type)
+    
+    if quality_metrics['needs_fallback']:
+        print("⚠️  Using fallback scoring due to poor data quality")
+        fallback_score = quality_metrics['fallback_score']
+        
+        breakdown = {
+            "score": round(fallback_score, 1),
+            "primary_airport": None,
+            "nearest_airports": [],
+            "summary": _build_summary(None, None, fallback_score),
+            "data_quality": quality_metrics,
+            "area_classification": area_metadata
+        }
+        
+        return round(fallback_score, 1), breakdown
 
-    # Calculate score
-    if nearest_large:
-        dist = nearest_large["distance_km"]
-        if dist <= 25:
-            score = 100.0
-        elif dist <= 50:
-            score = 80.0
-        elif dist <= 75:
-            score = 60.0
-        elif dist <= 100:
-            score = 40.0
-        else:
-            score = 20.0
-        primary_airport = nearest_large
-        airport_category = "International hub"
-    elif nearest_medium:
-        dist = nearest_medium["distance_km"]
-        if dist <= 25:
-            score = 40.0
-        elif dist <= 50:
-            score = 35.0
-        elif dist <= 75:
-            score = 30.0
-        else:
-            score = 20.0
-        primary_airport = nearest_medium
-        airport_category = "Regional airport"
-    else:
-        score = 0.0
-        primary_airport = None
-        airport_category = "No nearby airports"
+    # Multi-airport scoring
+    score, primary_airport, airport_category = _calculate_multi_airport_score(
+        airports_with_distance, expectations
+    )
 
     # Build response
     breakdown = {
@@ -164,7 +188,13 @@ def get_air_travel_score(lat: float, lon: float) -> Tuple[float, Dict]:
             "type": airport_category
         } if primary_airport else None,
         "nearest_airports": airports_with_distance[:5],  # Top 5 nearest
-        "summary": _build_summary(nearest_large, nearest_medium, score)
+        "summary": _build_summary(
+            next((a for a in airports_with_distance if a["type"] == "large_airport"), None),
+            next((a for a in airports_with_distance if a["type"] == "medium_airport"), None),
+            score
+        ),
+        "data_quality": quality_metrics,
+        "area_classification": area_metadata
     }
 
     # Log results
@@ -173,10 +203,122 @@ def get_air_travel_score(lat: float, lon: float) -> Tuple[float, Dict]:
         print(f"   ✈️  Nearest: {primary_airport['name']} ({primary_airport['code']})")
         print(f"   📍 Distance: {primary_airport['distance_km']:.1f}km")
         print(f"   🏢 Type: {airport_category}")
+        print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
     else:
         print(f"⚠️  Air Travel Score: 0/100 - No major airports nearby")
 
     return round(score, 1), breakdown
+
+
+def _calculate_multi_airport_score(airports: List[Dict], expectations: Dict) -> Tuple[float, Optional[Dict], str]:
+    """
+    Calculate score considering multiple airports with smooth decay curves.
+    
+    Args:
+        airports: List of airports with distance information
+        expectations: Contextual expectations for the area
+    
+    Returns:
+        Tuple of (score, primary_airport, airport_category)
+    """
+    if not airports:
+        return 0.0, None, "No nearby airports"
+    
+    # Score the best 3 airports within 100km
+    best_airports = airports[:3]
+    
+    total_score = 0.0
+    primary_airport = None
+    airport_category = "Unknown"
+    
+    for i, airport in enumerate(best_airports):
+        distance_km = airport["distance_km"]
+        apt_type = airport["type"]
+        service_level = airport.get("service_level", "unknown")
+        
+        # Weight decreases for further airports
+        weight = 1.0 / (i + 1)  # 1.0, 0.5, 0.33
+        
+        # Calculate individual airport score
+        if apt_type == "large_airport":
+            base_score = _score_large_airport_smooth(distance_km, service_level)
+            if i == 0:  # Primary airport
+                primary_airport = airport
+                airport_category = "International hub" if service_level == "international_hub" else "Major hub"
+        elif apt_type == "medium_airport":
+            base_score = _score_medium_airport_smooth(distance_km, service_level)
+            if i == 0 and not primary_airport:  # Primary if no large airport
+                primary_airport = airport
+                airport_category = "Regional hub" if service_level == "regional_hub" else "Regional airport"
+        else:
+            base_score = _score_small_airport_smooth(distance_km)
+            if i == 0 and not primary_airport:  # Primary if no better options
+                primary_airport = airport
+                airport_category = "Small airport"
+        
+        # Apply weight and add to total
+        weighted_score = base_score * weight
+        total_score += weighted_score
+    
+    # Bonus for multiple airport options (redundancy)
+    if len(best_airports) >= 2:
+        redundancy_bonus = min(10, len(best_airports) * 3)  # Up to 10 point bonus
+        total_score += redundancy_bonus
+    
+    # Cap at 100
+    final_score = min(100, total_score)
+    
+    return final_score, primary_airport, airport_category
+
+
+def _score_large_airport_smooth(distance_km: float, service_level: str) -> float:
+    """Score large airport using smooth decay curve."""
+    # Base scores by service level
+    base_scores = {
+        "international_hub": 100.0,
+        "major_hub": 90.0,
+        "regional_hub": 80.0
+    }
+    
+    max_score = base_scores.get(service_level, 85.0)
+    optimal_distance = 25.0  # km
+    decay_rate = 0.02  # Steeper decay for airports
+    
+    if distance_km <= optimal_distance:
+        score = max_score
+    else:
+        # Exponential decay beyond optimal distance
+        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    
+    return min(max_score, max(0, score))
+
+
+def _score_medium_airport_smooth(distance_km: float, service_level: str) -> float:
+    """Score medium airport using smooth decay curve."""
+    max_score = 60.0
+    optimal_distance = 30.0  # km
+    decay_rate = 0.015
+    
+    if distance_km <= optimal_distance:
+        score = max_score
+    else:
+        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    
+    return min(max_score, max(0, score))
+
+
+def _score_small_airport_smooth(distance_km: float) -> float:
+    """Score small airport using smooth decay curve."""
+    max_score = 40.0
+    optimal_distance = 20.0  # km
+    decay_rate = 0.01
+    
+    if distance_km <= optimal_distance:
+        score = max_score
+    else:
+        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    
+    return min(max_score, max(0, score))
 
 
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
