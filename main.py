@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import time
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
@@ -336,7 +337,7 @@ def get_livability_score(location: str):
     return response
 
 
-def _calculate_overall_confidence(pillars: Dict) -> Dict:
+def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict to dict
     """Calculate overall confidence metrics for the response."""
     confidences = []
     fallback_count = 0
@@ -371,7 +372,7 @@ def _calculate_overall_confidence(pillars: Dict) -> Dict:
     }
 
 
-def _calculate_data_quality_summary(pillars: Dict) -> Dict:
+def _calculate_data_quality_summary(pillars: dict) -> dict:  # Changed from Dict to dict
     """Calculate data quality summary for the response."""
     data_sources_used = set()
     area_classifications = []
