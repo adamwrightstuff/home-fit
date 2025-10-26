@@ -19,6 +19,13 @@ def _initialize_gee():
         credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         
         if credentials_json:
+            # Parse to get the email for debugging
+            try:
+                creds_dict = json.loads(credentials_json)
+                client_email = creds_dict.get('client_email', 'unknown')
+                print(f"🔑 Found GEE service account: {client_email}")
+            except:
+                pass
             # Create a temporary file with the service account credentials
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
                 f.write(credentials_json)
@@ -31,10 +38,27 @@ def _initialize_gee():
                     key_file=temp_credentials_file
                 )
                 ee.Initialize(credentials, project='homefit-475718')
-                print("✅ Google Earth Engine initialized with service account credentials")
+                
+                # Test the connection by checking if we can access basic GEE functionality
+                try:
+                    # Try a simple operation to verify GEE is working
+                    test_point = ee.Geometry.Point([0, 0])
+                    _ = test_point.getInfo()
+                    print("✅ Google Earth Engine initialized and working with service account credentials")
+                except Exception as test_error:
+                    print(f"⚠️  GEE initialized but may have limited access: {test_error}")
+                
+                # Clean up temp file after successful initialization
+                try:
+                    os.unlink(temp_credentials_file)
+                except:
+                    pass
                 return True
             except Exception as e3:
                 print(f"⚠️  Failed to initialize GEE with service account: {e3}")
+                print("💡 The service account may need the 'roles/serviceusage.serviceUsageConsumer' role")
+                print("💡 Visit: https://console.cloud.google.com/iam-admin/iam/project?project=homefit-475718")
+                
                 # Clean up temp file
                 try:
                     os.unlink(temp_credentials_file)
