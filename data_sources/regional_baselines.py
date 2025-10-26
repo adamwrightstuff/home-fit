@@ -136,6 +136,13 @@ class RegionalBaselineManager:
             area_type = 'suburban'
         elif density and density > 1000:
             area_type = 'exurban'
+        elif density is None and metro_name:
+            # Fallback: if we can detect a major metro but density is unavailable, use suburban
+            metro_data = self.major_metros.get(metro_name, {})
+            if metro_data:
+                area_type = 'suburban'
+            else:
+                area_type = 'rural'
         else:
             area_type = 'rural'
         
