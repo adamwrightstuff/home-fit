@@ -33,8 +33,12 @@ def _initialize_gee():
             
             try:
                 # Initialize with the credentials file
+                # Parse client_email from the credentials
+                creds_dict = json.loads(credentials_json)
+                client_email = creds_dict.get('client_email')
+                
                 credentials = ee.ServiceAccountCredentials(
-                    email=None,  # Will be read from the file
+                    email=client_email,
                     key_file=temp_credentials_file
                 )
                 ee.Initialize(credentials, project='homefit-475718')
