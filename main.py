@@ -193,6 +193,100 @@ def get_livability_score(location: str):
         len(schools_by_level.get("high", []))
     ])
 
+    # Build livability_pillars dict first
+    livability_pillars = {
+        "active_outdoors": {
+            "score": active_outdoors_score,
+            "weight": default_weights["active_outdoors"],
+            "contribution": round(active_outdoors_score * default_weights["active_outdoors"] / 100, 2),
+            "breakdown": active_outdoors_details["breakdown"],
+            "summary": active_outdoors_details["summary"],
+            "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": active_outdoors_details.get("data_quality", {}),
+            "area_classification": active_outdoors_details.get("area_classification", {})
+        },
+        "neighborhood_beauty": {
+            "score": beauty_score,
+            "weight": default_weights["neighborhood_beauty"],
+            "contribution": round(beauty_score * default_weights["neighborhood_beauty"] / 100, 2),
+            "breakdown": beauty_details.get("breakdown", {}),
+            "summary": beauty_details.get("summary", {}),
+            "details": beauty_details.get("details", {}),
+            "enhanced": ENABLE_ENHANCED_BEAUTY,
+            "scoring_note": beauty_details.get("scoring_note", ""),
+            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": beauty_details.get("data_quality", {}),
+            "area_classification": beauty_details.get("area_classification", {})
+        },
+        "neighborhood_amenities": {
+            "score": amenities_score,
+            "weight": default_weights["neighborhood_amenities"],
+            "contribution": round(amenities_score * default_weights["neighborhood_amenities"] / 100, 2),
+            "breakdown": amenities_details["breakdown"],
+            "summary": amenities_details["summary"],
+            "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": amenities_details.get("data_quality", {}),
+            "area_classification": amenities_details.get("area_classification", {})
+        },
+        "air_travel_access": {
+            "score": air_travel_score,
+            "weight": default_weights["air_travel_access"],
+            "contribution": round(air_travel_score * default_weights["air_travel_access"] / 100, 2),
+            "primary_airport": air_travel_details.get("primary_airport"),
+            "nearest_airports": air_travel_details.get("nearest_airports", []),
+            "summary": air_travel_details.get("summary", {}),
+            "confidence": air_travel_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": air_travel_details.get("data_quality", {}),
+            "area_classification": air_travel_details.get("area_classification", {})
+        },
+        "public_transit_access": {
+            "score": transit_score,
+            "weight": default_weights["public_transit_access"],
+            "contribution": round(transit_score * default_weights["public_transit_access"] / 100, 2),
+            "breakdown": transit_details["breakdown"],
+            "summary": transit_details["summary"],
+            "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": transit_details.get("data_quality", {}),
+            "area_classification": transit_details.get("area_classification", {})
+        },
+        "healthcare_access": {
+            "score": healthcare_score,
+            "weight": default_weights["healthcare_access"],
+            "contribution": round(healthcare_score * default_weights["healthcare_access"] / 100, 2),
+            "breakdown": healthcare_details["breakdown"],
+            "summary": healthcare_details["summary"],
+            "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": healthcare_details.get("data_quality", {}),
+            "area_classification": healthcare_details.get("area_classification", {})
+        },
+        "quality_education": {
+            "score": school_avg,
+            "weight": default_weights["quality_education"],
+            "contribution": round(school_avg * default_weights["quality_education"] / 100, 2),
+            "by_level": {
+                "elementary": schools_by_level.get("elementary", []),
+                "middle": schools_by_level.get("middle", []),
+                "high": schools_by_level.get("high", [])
+            },
+            "total_schools_rated": total_schools,
+            "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
+            "data_quality": {
+                "fallback_used": not ENABLE_SCHOOL_SCORING,
+                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else "School data available"
+            }
+        },
+        "housing_value": {
+            "score": housing_score,
+            "weight": default_weights["housing_value"],
+            "contribution": round(housing_score * default_weights["housing_value"] / 100, 2),
+            "breakdown": housing_details["breakdown"],
+            "summary": housing_details["summary"],
+            "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": housing_details.get("data_quality", {}),
+            "area_classification": housing_details.get("area_classification", {})
+        }
+    }
+
     # Build response with enhanced metadata
     response = {
         "input": location,
@@ -205,102 +299,11 @@ def get_livability_score(location: str):
             "state": state,
             "zip": zip_code
         },
-        "livability_pillars": {
-            "active_outdoors": {
-                "score": active_outdoors_score,
-                "weight": default_weights["active_outdoors"],
-                "contribution": round(active_outdoors_score * default_weights["active_outdoors"] / 100, 2),
-                "breakdown": active_outdoors_details["breakdown"],
-                "summary": active_outdoors_details["summary"],
-                "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": active_outdoors_details.get("data_quality", {}),
-                "area_classification": active_outdoors_details.get("area_classification", {})
-            },
-            "neighborhood_beauty": {
-                "score": beauty_score,
-                "weight": default_weights["neighborhood_beauty"],
-                "contribution": round(beauty_score * default_weights["neighborhood_beauty"] / 100, 2),
-                "breakdown": beauty_details.get("breakdown", {}),
-                "summary": beauty_details.get("summary", {}),
-                "details": beauty_details.get("details", {}),
-                "enhanced": ENABLE_ENHANCED_BEAUTY,
-                "scoring_note": beauty_details.get("scoring_note", ""),
-                "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": beauty_details.get("data_quality", {}),
-                "area_classification": beauty_details.get("area_classification", {})
-            },
-            "neighborhood_amenities": {
-                "score": amenities_score,
-                "weight": default_weights["neighborhood_amenities"],
-                "contribution": round(amenities_score * default_weights["neighborhood_amenities"] / 100, 2),
-                "breakdown": amenities_details["breakdown"],
-                "summary": amenities_details["summary"],
-                "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": amenities_details.get("data_quality", {}),
-                "area_classification": amenities_details.get("area_classification", {})
-            },
-            "air_travel_access": {
-                "score": air_travel_score,
-                "weight": default_weights["air_travel_access"],
-                "contribution": round(air_travel_score * default_weights["air_travel_access"] / 100, 2),
-                "primary_airport": air_travel_details.get("primary_airport"),
-                "nearest_airports": air_travel_details.get("nearest_airports", []),
-                "summary": air_travel_details.get("summary", {}),
-                "confidence": air_travel_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": air_travel_details.get("data_quality", {}),
-                "area_classification": air_travel_details.get("area_classification", {})
-            },
-            "public_transit_access": {
-                "score": transit_score,
-                "weight": default_weights["public_transit_access"],
-                "contribution": round(transit_score * default_weights["public_transit_access"] / 100, 2),
-                "breakdown": transit_details["breakdown"],
-                "summary": transit_details["summary"],
-                "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": transit_details.get("data_quality", {}),
-                "area_classification": transit_details.get("area_classification", {})
-            },
-            "healthcare_access": {
-                "score": healthcare_score,
-                "weight": default_weights["healthcare_access"],
-                "contribution": round(healthcare_score * default_weights["healthcare_access"] / 100, 2),
-                "breakdown": healthcare_details["breakdown"],
-                "summary": healthcare_details["summary"],
-                "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": healthcare_details.get("data_quality", {}),
-                "area_classification": healthcare_details.get("area_classification", {})
-            },
-            "quality_education": {
-                "score": school_avg,
-                "weight": default_weights["quality_education"],
-                "contribution": round(school_avg * default_weights["quality_education"] / 100, 2),
-                "by_level": {
-                    "elementary": schools_by_level.get("elementary", []),
-                    "middle": schools_by_level.get("middle", []),
-                    "high": schools_by_level.get("high", [])
-                },
-                "total_schools_rated": total_schools,
-                "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
-                "data_quality": {
-                    "fallback_used": not ENABLE_SCHOOL_SCORING,
-                    "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else "School data available"
-                }
-            },
-            "housing_value": {
-                "score": housing_score,
-                "weight": default_weights["housing_value"],
-                "contribution": round(housing_score * default_weights["housing_value"] / 100, 2),
-                "breakdown": housing_details["breakdown"],
-                "summary": housing_details["summary"],
-                "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": housing_details.get("data_quality", {}),
-                "area_classification": housing_details.get("area_classification", {})
-            }
-        },
+        "livability_pillars": livability_pillars,
         "total_score": round(total_score, 2),
         "default_weights": default_weights,
-        "overall_confidence": _calculate_overall_confidence(response["livability_pillars"]),
-        "data_quality_summary": _calculate_data_quality_summary(response["livability_pillars"]),
+        "overall_confidence": _calculate_overall_confidence(livability_pillars),
+        "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
         "metadata": {
             "version": "3.0.0",
             "architecture": "8 Purpose-Driven Pillars",
