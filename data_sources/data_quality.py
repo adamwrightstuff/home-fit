@@ -58,8 +58,9 @@ class DataQualityManager:
         camping = data.get('camping', [])
         
         # Calculate completeness
-        local_score = min(1.0, (len(parks) + len(playgrounds)) / expected.get('local_facilities', 5))
-        regional_score = min(1.0, (len(hiking) + len(swimming) + len(camping)) / expected.get('regional_facilities', 3))
+        # Prevent division by zero
+        local_score = min(1.0, (len(parks) + len(playgrounds)) / max(1, expected.get('local_facilities', 5)))
+        regional_score = min(1.0, (len(hiking) + len(swimming) + len(camping)) / max(1, expected.get('regional_facilities', 3)))
         
         completeness = (local_score * 0.6) + (regional_score * 0.4)
         return completeness, self._get_quality_tier(completeness)
@@ -71,10 +72,11 @@ class DataQualityManager:
         pharmacies = data.get('pharmacies', [])
         clinics = data.get('clinics', [])
         
-        hospital_score = min(1.0, len(hospitals) / expected.get('hospitals', 1))
-        urgent_score = min(1.0, len(urgent_care) / expected.get('urgent_care', 3))
-        pharmacy_score = min(1.0, len(pharmacies) / expected.get('pharmacies', 2))
-        clinic_score = min(1.0, len(clinics) / expected.get('clinics', 2))
+        # Prevent division by zero
+        hospital_score = min(1.0, len(hospitals) / max(1, expected.get('hospitals', 1)))
+        urgent_score = min(1.0, len(urgent_care) / max(1, expected.get('urgent_care', 3)))
+        pharmacy_score = min(1.0, len(pharmacies) / max(1, expected.get('pharmacies', 2)))
+        clinic_score = min(1.0, len(clinics) / max(1, expected.get('clinics', 2)))
         
         completeness = (hospital_score * 0.4) + (urgent_score * 0.3) + (pharmacy_score * 0.2) + (clinic_score * 0.1)
         return completeness, self._get_quality_tier(completeness)
@@ -89,8 +91,9 @@ class DataQualityManager:
         major_airports = [a for a in airports if a.get('type') == 'large_airport' and a.get('distance_km', 999) <= 100]
         regional_airports = [a for a in airports if a.get('type') == 'medium_airport' and a.get('distance_km', 999) <= 50]
         
-        major_score = min(1.0, len(major_airports) / expected.get('major_airports', 1))
-        regional_score = min(1.0, len(regional_airports) / expected.get('regional_airports', 1))
+        # Prevent division by zero - use max(1, value) to ensure minimum divisor of 1
+        major_score = min(1.0, len(major_airports) / max(1, expected.get('major_airports', 1)))
+        regional_score = min(1.0, len(regional_airports) / max(1, expected.get('regional_airports', 1)))
         
         completeness = (major_score * 0.7) + (regional_score * 0.3)
         return completeness, self._get_quality_tier(completeness)
@@ -103,8 +106,9 @@ class DataQualityManager:
         
         # Check variety and density
         unique_types = len(set(b.get('type', 'unknown') for b in businesses))
-        density_score = min(1.0, len(businesses) / expected.get('business_count', 20))
-        variety_score = min(1.0, unique_types / expected.get('business_types', 8))
+        # Prevent division by zero
+        density_score = min(1.0, len(businesses) / max(1, expected.get('business_count', 20)))
+        variety_score = min(1.0, unique_types / max(1, expected.get('business_types', 8)))
         
         completeness = (density_score * 0.6) + (variety_score * 0.4)
         return completeness, self._get_quality_tier(completeness)
