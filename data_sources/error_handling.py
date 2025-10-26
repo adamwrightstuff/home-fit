@@ -5,6 +5,7 @@ Provides graceful degradation when external APIs fail
 
 import os
 import logging
+import time
 from typing import Any, Optional, Dict, Tuple, Callable
 from functools import wraps
 
@@ -196,35 +197,14 @@ def validate_required_data(data: Any, data_name: str) -> bool:
 def handle_api_timeout(timeout_seconds: int = 30):
     """
     Decorator to handle API timeouts gracefully.
+    NOTE: Signal-based timeouts don't work in threaded environments like FastAPI.
+    This decorator is currently a no-op and timeouts are handled by the requests library.
     
     Args:
-        timeout_seconds: Timeout in seconds
+        timeout_seconds: Timeout in seconds (passed to requests library)
     """
     def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                import signal
-                
-                def timeout_handler(signum, frame):
-                    raise TimeoutError(f"API call timed out after {timeout_seconds} seconds")
-                
-                # Set up timeout
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(timeout_seconds)
-                
-                try:
-                    result = func(*args, **kwargs)
-                    return result
-                finally:
-                    signal.alarm(0)
-                    signal.signal(signal.SIGALRM, old_handler)
-                    
-            except TimeoutError as e:
-                logger.warning(f"API call timed out: {e}")
-                return None
-            except Exception as e:
-                logger.error(f"Unexpected error in timeout handler: {e}")
-                return None
-        return wrapper
+        # Don't wrap the function - signal.alarm() doesn't work in threads
+        # The actual timeout is handled by the requests library's timeout parameter
+        return func
     return decorator
