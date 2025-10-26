@@ -5,25 +5,42 @@ Provides satellite-based tree canopy and environmental analysis.
 
 import ee
 import os
+import json
 from typing import Optional, Dict, Tuple
 import math
 
-# Initialize GEE (will need authentication)
+# Initialize GEE with service account credentials
 def _initialize_gee():
-    """Initialize GEE with your existing project."""
+    """Initialize GEE with service account credentials from environment variable."""
     try:
-        # Use your existing GEE project
-        ee.Initialize(project='homefit-475718')
-        return True
-    except Exception as e1:
-        try:
-            # Fallback: try without project
-            ee.Initialize()
+        # Try to get service account credentials from environment variable
+        credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        
+        if credentials_json:
+            # Parse the JSON credentials
+            credentials_dict = json.loads(credentials_json)
+            
+            # Initialize with service account credentials
+            ee.Initialize(credentials=ee.ServiceAccountCredentials(
+                credentials_dict['client_email'],
+                credentials_dict['private_key']
+            ), project='homefit-475718')
+            print("✅ Google Earth Engine initialized with service account credentials")
             return True
-        except Exception as e2:
-            print(f"⚠️  Google Earth Engine not initialized: {e2}")
-            print("💡 Try running: earthengine authenticate --project homefit-475718")
-            return False
+        else:
+            # Fallback: try to initialize without credentials (for local development)
+            try:
+                ee.Initialize(project='homefit-475718')
+                print("✅ Google Earth Engine initialized with default credentials")
+                return True
+            except Exception as e2:
+                print(f"⚠️  Google Earth Engine not initialized: {e2}")
+                print("💡 Set GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable")
+                return False
+                
+    except Exception as e1:
+        print(f"⚠️  Google Earth Engine initialization failed: {e1}")
+        return False
 
 # Initialize GEE safely - don't crash the app if it fails
 try:
