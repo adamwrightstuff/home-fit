@@ -194,7 +194,8 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
             ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
             date = ee.Date(image.get('system:time_start'))
             season = date.get('month').subtract(1).divide(3).floor().add(1)
-            return image.addBands(ndvi).addBands(season.rename('season'))
+            season_image = ee.Image.constant(season).rename('season')
+            return image.addBands(ndvi).addBands(season_image)
         
         seasonal_data = sentinel.map(add_seasonal_ndvi)
         
