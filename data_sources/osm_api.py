@@ -6,7 +6,7 @@ Queries Overpass API for green spaces and nature features
 import requests
 import math
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 
