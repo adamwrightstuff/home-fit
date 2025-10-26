@@ -6,6 +6,7 @@ Provides graceful degradation when external APIs fail
 import os
 import logging
 import time
+import asyncio
 from typing import Any, Optional, Dict, Tuple, Callable
 from functools import wraps
 
@@ -197,14 +198,34 @@ def validate_required_data(data: Any, data_name: str) -> bool:
 def handle_api_timeout(timeout_seconds: int = 30):
     """
     Decorator to handle API timeouts gracefully.
-    NOTE: Signal-based timeouts don't work in threaded environments like FastAPI.
-    This decorator is currently a no-op and timeouts are handled by the requests library.
+    For async functions, uses asyncio.wait_for for proper timeout handling.
+    For sync functions, relies on the underlying HTTP library timeout.
     
     Args:
-        timeout_seconds: Timeout in seconds (passed to requests library)
+        timeout_seconds: Timeout in seconds
     """
     def decorator(func: Callable) -> Callable:
-        # Don't wrap the function - signal.alarm() doesn't work in threads
-        # The actual timeout is handled by the requests library's timeout parameter
-        return func
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout_seconds)
+            except asyncio.TimeoutError:
+                logger.warning(f"Function {func.__name__} timed out after {timeout_seconds}s")
+                raise APIError(f"Request timed out after {timeout_seconds} seconds", func.__name__, 408)
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if "timeout" in str(e).lower() or "timed out" in str(e).lower():
+                    logger.warning(f"Function {func.__name__} timed out")
+                    raise APIError(f"Request timed out after {timeout_seconds} seconds", func.__name__, 408)
+                raise
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
     return decorator
