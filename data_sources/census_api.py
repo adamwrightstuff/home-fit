@@ -5,6 +5,7 @@ Pure API wrapper for Census Bureau data sources
 
 import os
 import requests
+import time
 from typing import Dict, Optional
 from dotenv import load_dotenv
 from .cache import cached, CACHE_TTL
@@ -19,6 +20,61 @@ GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinate
 # Check if Census API key is available
 if not CENSUS_API_KEY:
     print("⚠️  CENSUS_API_KEY not found - Census-dependent pillars will use fallback scores")
+
+
+def _make_request_with_retry(url: str, params: Dict, timeout: int = 10, max_retries: int = 3):
+    """
+    Make an HTTP request with retry logic and rate limit handling.
+    
+    Args:
+        url: URL to request
+        params: Request parameters
+        timeout: Request timeout in seconds
+        max_retries: Maximum number of retry attempts
+        
+    Returns:
+        Response object or None if all retries fail
+    """
+    last_exception = None
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, params=params, timeout=timeout)
+            
+            # Check for rate limiting (429 status code)
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('Retry-After', 2 ** attempt))
+                print(f"⚠️  Census API rate limited, waiting {retry_after}s...")
+                time.sleep(retry_after)
+                continue  # Retry
+            
+            # Other errors
+            if response.status_code != 200:
+                print(f"⚠️  Census API returned status {response.status_code}")
+                if response.status_code >= 500 and attempt < max_retries - 1:
+                    # Server error, retry with backoff
+                    time.sleep(2 ** attempt)
+                    continue
+                return None
+            
+            return response
+            
+        except requests.exceptions.Timeout:
+            last_exception = "timeout"
+            if attempt < max_retries - 1:
+                print(f"⚠️  Census API timeout, retrying... ({attempt + 1}/{max_retries})")
+                time.sleep(2 ** attempt)
+            continue
+            
+        except requests.exceptions.RequestException as e:
+            last_exception = str(e)
+            if attempt < max_retries - 1:
+                print(f"⚠️  Census API error: {e}, retrying... ({attempt + 1}/{max_retries})")
+                time.sleep(2 ** attempt)
+            continue
+    
+    print(f"⚠️  Census API failed after {max_retries} attempts: {last_exception}")
+    return None
 
 
 @cached(ttl_seconds=CACHE_TTL['census_data'])
@@ -47,8 +103,8 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
             "format": "json",
         }
 
-        response = requests.get(GEOCODER_URL, params=params, timeout=10)
-        if response.status_code != 200:
+        response = _make_request_with_retry(GEOCODER_URL, params, timeout=10)
+        if response is None:
             return None
 
         data = response.json()
@@ -103,8 +159,8 @@ def get_land_area(tract: Dict) -> Optional[float]:
             "f": "json",
         }
 
-        response = requests.get(base_url, params=params, timeout=10)
-        if response.status_code != 200:
+        response = _make_request_with_retry(base_url, params, timeout=10)
+        if response is None:
             return None
 
         data = response.json()
@@ -144,8 +200,8 @@ def get_population(tract: Dict) -> Optional[int]:
             "key": CENSUS_API_KEY,
         }
 
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code != 200:
+        response = _make_request_with_retry(url, params, timeout=10)
+        if response is None:
             return None
 
         data = response.json()

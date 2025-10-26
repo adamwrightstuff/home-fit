@@ -5,10 +5,24 @@ Provides in-memory caching for expensive operations like OSM queries and API cal
 
 import time
 import hashlib
+import os
+import json
 from typing import Any, Optional, Dict
 from functools import wraps
 
-# Simple in-memory cache
+# Try to import and initialize Redis
+_redis_client = None
+try:
+    import redis
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    _redis_client = redis.from_url(redis_url, decode_responses=True)
+    _redis_client.ping()
+    print("✅ Redis connected for distributed caching")
+except Exception as e:
+    print(f"⚠️  Redis not available, using in-memory cache: {e}")
+    _redis_client = None
+
+# Simple in-memory cache (fallback when Redis is unavailable)
 _cache: Dict[str, Dict[str, Any]] = {}
 _cache_ttl: Dict[str, float] = {}
 
@@ -33,7 +47,7 @@ def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
 
 def cached(ttl_seconds: int = 3600):
     """
-    Decorator to cache function results.
+    Decorator to cache function results with Redis (if available) or in-memory cache.
     
     Args:
         ttl_seconds: Time to live for cached results in seconds
@@ -44,20 +58,48 @@ def cached(ttl_seconds: int = 3600):
             cache_key = _generate_cache_key(func.__name__, *args, **kwargs)
             current_time = time.time()
             
-            # Check if we have a valid cached result
-            if cache_key in _cache:
+            # Try Redis first, fall back to in-memory
+            cache_entry = None
+            cache_time = 0
+            
+            if _redis_client:
+                try:
+                    # Try Redis
+                    cached_data = _redis_client.get(cache_key)
+                    if cached_data:
+                        data = json.loads(cached_data)
+                        cache_entry = data['value']
+                        cache_time = data['timestamp']
+                except Exception as e:
+                    print(f"⚠️  Redis read error, falling back to in-memory: {e}")
+            
+            # Fall back to in-memory cache if Redis failed or not available
+            if cache_entry is None and cache_key in _cache:
                 cache_entry = _cache[cache_key]
                 cache_time = _cache_ttl.get(cache_key, 0)
-                
-                if current_time - cache_time < ttl_seconds:
-                    print(f"🔄 Cache hit for {func.__name__}")
-                    return cache_entry
+            
+            # Check if cached entry is still valid
+            if cache_entry is not None and (current_time - cache_time) < ttl_seconds:
+                print(f"🔄 Cache hit for {func.__name__}")
+                return cache_entry
             
             # Cache miss or expired - execute function
             print(f"💾 Cache miss for {func.__name__} - executing")
             result = func(*args, **kwargs)
             
-            # Store result in cache
+            # Store in both Redis (if available) and in-memory
+            cache_data = {
+                'value': result,
+                'timestamp': current_time
+            }
+            
+            if _redis_client:
+                try:
+                    _redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
+                except Exception as e:
+                    print(f"⚠️  Redis write error: {e}")
+            
+            # Also store in in-memory cache
             _cache[cache_key] = result
             _cache_ttl[cache_key] = current_time
             
@@ -69,13 +111,31 @@ def cached(ttl_seconds: int = 3600):
 
 def clear_cache(cache_type: Optional[str] = None):
     """
-    Clear cache entries.
+    Clear cache entries from both Redis (if available) and in-memory cache.
     
     Args:
         cache_type: If provided, only clear entries matching this type
     """
     global _cache, _cache_ttl
     
+    # Clear Redis if available
+    if _redis_client:
+        try:
+            if cache_type is None:
+                # Clear all Redis keys
+                keys = _redis_client.keys("*")
+                if keys:
+                    _redis_client.delete(*keys)
+            else:
+                # Clear specific cache type
+                pattern = f"*{cache_type}:*"
+                keys = _redis_client.keys(pattern)
+                if keys:
+                    _redis_client.delete(*keys)
+        except Exception as e:
+            print(f"⚠️  Error clearing Redis cache: {e}")
+    
+    # Clear in-memory cache
     if cache_type is None:
         _cache.clear()
         _cache_ttl.clear()
@@ -89,8 +149,10 @@ def clear_cache(cache_type: Optional[str] = None):
 
 
 def get_cache_stats() -> Dict[str, Any]:
-    """Get cache statistics."""
+    """Get cache statistics from both Redis (if available) and in-memory cache."""
     current_time = time.time()
+    
+    # In-memory cache stats
     total_entries = len(_cache)
     expired_entries = 0
     
@@ -98,12 +160,25 @@ def get_cache_stats() -> Dict[str, Any]:
         if current_time - cache_time > 3600:  # Assume 1 hour TTL for stats
             expired_entries += 1
     
-    return {
+    stats = {
         "total_entries": total_entries,
         "expired_entries": expired_entries,
         "active_entries": total_entries - expired_entries,
-        "cache_size_mb": sum(len(str(v)) for v in _cache.values()) / (1024 * 1024)
+        "cache_size_mb": sum(len(str(v)) for v in _cache.values()) / (1024 * 1024),
+        "redis_available": _redis_client is not None
     }
+    
+    # Add Redis stats if available
+    if _redis_client:
+        try:
+            redis_keys = _redis_client.keys("*")
+            stats["redis_keys"] = len(redis_keys)
+            info = _redis_client.info("memory")
+            stats["redis_memory_mb"] = info.get("used_memory", 0) / (1024 * 1024)
+        except Exception as e:
+            stats["redis_error"] = str(e)
+    
+    return stats
 
 
 def cleanup_expired_cache():

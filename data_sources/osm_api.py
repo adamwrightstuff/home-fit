@@ -1109,3 +1109,84 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
     return R * c
+
+
+def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
+    """
+    Validate OSM data completeness for a location.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        
+    Returns:
+        {
+            "parks_coverage": bool,
+            "businesses_coverage": bool,
+            "healthcare_coverage": bool,
+            "transport_coverage": bool,
+            "overall_coverage": str  # "excellent", "good", "fair", "poor"
+        }
+    """
+    coverage = {
+        "parks_coverage": False,
+        "businesses_coverage": False,
+        "healthcare_coverage": False,
+        "transport_coverage": False
+    }
+    
+    # Test parks coverage
+    try:
+        parks_data = query_green_spaces(lat, lon, radius_m=1000)
+        coverage["parks_coverage"] = bool(parks_data and (parks_data.get("parks") or parks_data.get("playgrounds")))
+    except:
+        pass
+    
+    # Test businesses coverage
+    try:
+        businesses_data = query_local_businesses(lat, lon, radius_m=1000)
+        coverage["businesses_coverage"] = bool(businesses_data and len(businesses_data.get("businesses", [])) > 0)
+    except:
+        pass
+    
+    # Test healthcare coverage
+    try:
+        healthcare_data = query_healthcare(lat, lon, radius_m=5000)
+        coverage["healthcare_coverage"] = bool(healthcare_data and len(healthcare_data.get("facilities", [])) > 0)
+    except:
+        pass
+    
+    # Test transport coverage
+    try:
+        # Simple check for nearby roads
+        query = f"""
+        [out:json][timeout:10];
+        (
+          way["highway"~"^(primary|secondary|tertiary|residential)$"](around:500,{lat},{lon});
+        );
+        out count;
+        """
+        resp = requests.post(
+            OVERPASS_URL,
+            data={"data": query},
+            timeout=15,
+            headers={"User-Agent": "HomeFit/1.0"}
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            coverage["transport_coverage"] = len(data.get("elements", [])) > 5
+    except:
+        pass
+    
+    # Calculate overall coverage
+    coverage_count = sum(1 for v in coverage.values() if v)
+    if coverage_count >= 3:
+        coverage["overall_coverage"] = "excellent"
+    elif coverage_count == 2:
+        coverage["overall_coverage"] = "good"
+    elif coverage_count == 1:
+        coverage["overall_coverage"] = "fair"
+    else:
+        coverage["overall_coverage"] = "poor"
+    
+    return coverage
