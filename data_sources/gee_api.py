@@ -12,21 +12,35 @@ import math
 # Initialize GEE with service account credentials
 def _initialize_gee():
     """Initialize GEE with service account credentials from environment variable."""
+    import tempfile
+    
     try:
         # Try to get service account credentials from environment variable
         credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         
         if credentials_json:
-            # Parse the JSON credentials
-            credentials_dict = json.loads(credentials_json)
+            # Create a temporary file with the service account credentials
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                f.write(credentials_json)
+                temp_credentials_file = f.name
             
-            # Initialize with service account credentials
-            ee.Initialize(credentials=ee.ServiceAccountCredentials(
-                credentials_dict['client_email'],
-                credentials_dict['private_key']
-            ), project='homefit-475718')
-            print("✅ Google Earth Engine initialized with service account credentials")
-            return True
+            try:
+                # Initialize with the credentials file
+                credentials = ee.ServiceAccountCredentials(
+                    email=None,  # Will be read from the file
+                    key_file=temp_credentials_file
+                )
+                ee.Initialize(credentials, project='homefit-475718')
+                print("✅ Google Earth Engine initialized with service account credentials")
+                return True
+            except Exception as e3:
+                print(f"⚠️  Failed to initialize GEE with service account: {e3}")
+                # Clean up temp file
+                try:
+                    os.unlink(temp_credentials_file)
+                except:
+                    pass
+                return False
         else:
             # Fallback: try to initialize without credentials (for local development)
             try:
