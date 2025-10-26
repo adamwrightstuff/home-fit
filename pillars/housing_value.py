@@ -4,7 +4,7 @@ Scores housing value based on local affordability, space, and cost efficiency
 """
 
 from typing import Dict, Tuple, Optional
-from data_sources import census_api
+from data_sources import census_api, data_quality
 
 
 def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
@@ -40,6 +40,16 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
 
     total_score = affordability_score + space_score + efficiency_score
 
+    # Assess data quality
+    combined_data = {
+        'housing_data': housing_data,
+        'total_score': total_score
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
+
     # Build response
     breakdown = {
         "score": round(total_score, 1),
@@ -48,7 +58,8 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
             "space": round(space_score, 1),
             "value_efficiency": round(efficiency_score, 1)
         },
-        "summary": _build_summary(median_value, median_income, median_rooms)
+        "summary": _build_summary(median_value, median_income, median_rooms),
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -56,6 +67,7 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
     print(f"   💰 Local Affordability: {affordability_score:.0f}/50")
     print(f"   🏡 Space: {space_score:.0f}/30")
     print(f"   📊 Value Efficiency: {efficiency_score:.0f}/20")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 

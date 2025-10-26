@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import time
+from typing import Optional, Dict
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
@@ -26,6 +27,57 @@ ENABLE_ENHANCED_BEAUTY = True  # Set to True to use enhanced neighborhood beauty
 
 # Load environment variables
 load_dotenv()
+
+
+def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
+    """
+    Parse token allocation string or return default equal distribution.
+    
+    Format: "active_outdoors:5,neighborhood_beauty:4,air_travel:3,..."
+    Default: Equal distribution across all 8 pillars (2.5 tokens each)
+    """
+    pillar_names = [
+        "active_outdoors", "neighborhood_beauty", "neighborhood_amenities",
+        "air_travel_access", "public_transit_access", "healthcare_access", 
+        "quality_education", "housing_value"
+    ]
+    
+    if tokens is None:
+        # Default equal distribution
+        equal_tokens = 20.0 / 8  # 2.5 tokens each
+        return {pillar: equal_tokens for pillar in pillar_names}
+    
+    # Parse custom allocation
+    token_dict = {}
+    total_allocated = 0.0
+    
+    try:
+        for pair in tokens.split(','):
+            pillar, count = pair.split(':')
+            pillar = pillar.strip()
+            count = float(count.strip())
+            
+            if pillar in pillar_names:
+                token_dict[pillar] = count
+                total_allocated += count
+        
+        # Auto-normalize to 20 tokens (preserve user intent ratios)
+        if total_allocated > 0:
+            normalization_factor = 20.0 / total_allocated
+            token_dict = {k: v * normalization_factor for k, v in token_dict.items()}
+        
+        # Fill missing pillars with 0
+        for pillar in pillar_names:
+            if pillar not in token_dict:
+                token_dict[pillar] = 0.0
+                
+    except Exception:
+        # Fallback to equal distribution on parsing error
+        equal_tokens = 20.0 / 8
+        token_dict = {pillar: equal_tokens for pillar in pillar_names}
+    
+    return token_dict
+
 
 app = FastAPI(
     title="HomeFit API",
@@ -68,7 +120,7 @@ def root():
 
 
 @app.get("/score")
-def get_livability_score(location: str):
+def get_livability_score(location: str, tokens: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -84,9 +136,11 @@ def get_livability_score(location: str):
 
     Parameters:
         location: Address or ZIP code
+        tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
+                Default: Equal distribution across all pillars
 
     Returns:
-        JSON with pillar scores and weighted total
+        JSON with pillar scores, token allocation, and weighted total
     """
     start_time = time.time()
     print(f"\n{'='*60}")
@@ -150,27 +204,18 @@ def get_livability_score(location: str):
     # Pillar 8: Housing Value
     housing_score, housing_details = get_housing_value_score(lat, lon)
 
-    # Step 3: Calculate weighted total (EQUAL WEIGHTS)
-    default_weights = {
-        "active_outdoors": 12.5,
-        "neighborhood_beauty": 12.5,
-        "neighborhood_amenities": 12.5,
-        "air_travel_access": 12.5,
-        "public_transit_access": 12.5,
-        "healthcare_access": 12.5,
-        "quality_education": 12.5,
-        "housing_value": 12.5
-    }
+    # Step 3: Calculate weighted total using token allocation
+    token_allocation = parse_token_allocation(tokens)
 
     total_score = (
-        (active_outdoors_score * default_weights["active_outdoors"] / 100) +
-        (beauty_score * default_weights["neighborhood_beauty"] / 100) +
-        (amenities_score * default_weights["neighborhood_amenities"] / 100) +
-        (air_travel_score * default_weights["air_travel_access"] / 100) +
-        (transit_score * default_weights["public_transit_access"] / 100) +
-        (healthcare_score * default_weights["healthcare_access"] / 100) +
-        (school_avg * default_weights["quality_education"] / 100) +
-        (housing_score * default_weights["housing_value"] / 100)
+        (active_outdoors_score * token_allocation["active_outdoors"] / 20) +
+        (beauty_score * token_allocation["neighborhood_beauty"] / 20) +
+        (amenities_score * token_allocation["neighborhood_amenities"] / 20) +
+        (air_travel_score * token_allocation["air_travel_access"] / 20) +
+        (transit_score * token_allocation["public_transit_access"] / 20) +
+        (healthcare_score * token_allocation["healthcare_access"] / 20) +
+        (school_avg * token_allocation["quality_education"] / 20) +
+        (housing_score * token_allocation["housing_value"] / 20)
     )
 
     print(f"\n{'='*60}")
@@ -197,8 +242,8 @@ def get_livability_score(location: str):
     livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,
-            "weight": default_weights["active_outdoors"],
-            "contribution": round(active_outdoors_score * default_weights["active_outdoors"] / 100, 2),
+            "weight": token_allocation["active_outdoors"],
+            "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 20, 2),
             "breakdown": active_outdoors_details["breakdown"],
             "summary": active_outdoors_details["summary"],
             "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
@@ -207,8 +252,8 @@ def get_livability_score(location: str):
         },
         "neighborhood_beauty": {
             "score": beauty_score,
-            "weight": default_weights["neighborhood_beauty"],
-            "contribution": round(beauty_score * default_weights["neighborhood_beauty"] / 100, 2),
+            "weight": token_allocation["neighborhood_beauty"],
+            "contribution": round(beauty_score * token_allocation["neighborhood_beauty"] / 20, 2),
             "breakdown": beauty_details.get("breakdown", {}),
             "summary": beauty_details.get("summary", {}),
             "details": beauty_details.get("details", {}),
@@ -220,8 +265,8 @@ def get_livability_score(location: str):
         },
         "neighborhood_amenities": {
             "score": amenities_score,
-            "weight": default_weights["neighborhood_amenities"],
-            "contribution": round(amenities_score * default_weights["neighborhood_amenities"] / 100, 2),
+            "weight": token_allocation["neighborhood_amenities"],
+            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 20, 2),
             "breakdown": amenities_details["breakdown"],
             "summary": amenities_details["summary"],
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
@@ -230,8 +275,8 @@ def get_livability_score(location: str):
         },
         "air_travel_access": {
             "score": air_travel_score,
-            "weight": default_weights["air_travel_access"],
-            "contribution": round(air_travel_score * default_weights["air_travel_access"] / 100, 2),
+            "weight": token_allocation["air_travel_access"],
+            "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 20, 2),
             "primary_airport": air_travel_details.get("primary_airport"),
             "nearest_airports": air_travel_details.get("nearest_airports", []),
             "summary": air_travel_details.get("summary", {}),
@@ -241,8 +286,8 @@ def get_livability_score(location: str):
         },
         "public_transit_access": {
             "score": transit_score,
-            "weight": default_weights["public_transit_access"],
-            "contribution": round(transit_score * default_weights["public_transit_access"] / 100, 2),
+            "weight": token_allocation["public_transit_access"],
+            "contribution": round(transit_score * token_allocation["public_transit_access"] / 20, 2),
             "breakdown": transit_details["breakdown"],
             "summary": transit_details["summary"],
             "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
@@ -251,8 +296,8 @@ def get_livability_score(location: str):
         },
         "healthcare_access": {
             "score": healthcare_score,
-            "weight": default_weights["healthcare_access"],
-            "contribution": round(healthcare_score * default_weights["healthcare_access"] / 100, 2),
+            "weight": token_allocation["healthcare_access"],
+            "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 20, 2),
             "breakdown": healthcare_details["breakdown"],
             "summary": healthcare_details["summary"],
             "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
@@ -261,8 +306,8 @@ def get_livability_score(location: str):
         },
         "quality_education": {
             "score": school_avg,
-            "weight": default_weights["quality_education"],
-            "contribution": round(school_avg * default_weights["quality_education"] / 100, 2),
+            "weight": token_allocation["quality_education"],
+            "contribution": round(school_avg * token_allocation["quality_education"] / 20, 2),
             "by_level": {
                 "elementary": schools_by_level.get("elementary", []),
                 "middle": schools_by_level.get("middle", []),
@@ -277,8 +322,8 @@ def get_livability_score(location: str):
         },
         "housing_value": {
             "score": housing_score,
-            "weight": default_weights["housing_value"],
-            "contribution": round(housing_score * default_weights["housing_value"] / 100, 2),
+            "weight": token_allocation["housing_value"],
+            "contribution": round(housing_score * token_allocation["housing_value"] / 20, 2),
             "breakdown": housing_details["breakdown"],
             "summary": housing_details["summary"],
             "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
@@ -301,7 +346,8 @@ def get_livability_score(location: str):
         },
         "livability_pillars": livability_pillars,
         "total_score": round(total_score, 2),
-        "default_weights": default_weights,
+        "token_allocation": token_allocation,
+        "allocation_type": "custom" if tokens else "default_equal",
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
         "metadata": {
@@ -326,7 +372,7 @@ def get_livability_score(location: str):
                 "OurAirports (airport database)",
                 "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of 8 pillars. Equal weights by default (12.5% each). User can customize weights via token allocation system (future feature)."
+            "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter."
         }
     }
 

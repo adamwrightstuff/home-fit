@@ -4,7 +4,7 @@ Comprehensive visual appeal and distinctive character scoring with expanded data
 """
 
 from typing import Dict, Tuple, Optional
-from data_sources import osm_api, nyc_api, census_api, satellite_api, streetview_api
+from data_sources import osm_api, nyc_api, census_api, satellite_api, streetview_api, data_quality
 
 
 def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
@@ -41,6 +41,19 @@ def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optiona
     # Calculate total score
     total_score = tree_score + historic_score + visual_score + arch_score
 
+    # Assess data quality
+    combined_data = {
+        'tree_details': tree_details,
+        'historic_details': historic_details,
+        'visual_details': visual_details,
+        'arch_details': arch_details,
+        'total_score': total_score
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
+
     # Build comprehensive response
     breakdown = {
         "score": round(total_score, 1),
@@ -72,7 +85,8 @@ def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optiona
                 "Satellite-based visual analysis",
                 "Architectural quality assessment"
             ]
-        }
+        },
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -81,6 +95,7 @@ def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optiona
     print(f"   🏛️  Historic Character: {historic_score:.0f}/25")
     print(f"   🎨 Visual Aesthetics: {visual_score:.0f}/25")
     print(f"   🏗️  Architectural Quality: {arch_score:.0f}/25")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 

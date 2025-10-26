@@ -4,7 +4,7 @@ Scores visual appeal and distinctive character of the area
 """
 
 from typing import Dict, Tuple, Optional
-from data_sources import osm_api, nyc_api, census_api
+from data_sources import osm_api, nyc_api, census_api, data_quality
 
 
 def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
@@ -32,10 +32,25 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     print(f"   🏛️  Checking historic housing stock...")
     year_built_data = census_api.get_year_built_data(lat, lon)
 
+    # Assess data quality
+    combined_data = {
+        'charm_data': charm_data,
+        'year_built_data': year_built_data,
+        'tree_score': tree_score,
+        'tree_note': tree_note
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
+
     if charm_data is None:
         print("⚠️  OSM data unavailable")
         historic_score = _score_historic_from_census_only(year_built_data)
-        return tree_score + historic_score, _estimated_breakdown(tree_score, tree_note, historic_score, year_built_data)
+        total_score = tree_score + historic_score
+        breakdown = _estimated_breakdown(tree_score, tree_note, historic_score, year_built_data)
+        breakdown["data_quality"] = quality_metrics
+        return total_score, breakdown
 
     historic = charm_data.get("historic", [])
     artwork = charm_data.get("artwork", [])
@@ -60,7 +75,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "median_year_built": year_built_data.get("median_year_built") if year_built_data else None,
             "closest_historic": _get_closest(historic) if historic else None,
             "closest_monument": _get_closest(artwork) if artwork else None
-        }
+        },
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -72,6 +88,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         print(f"      • Median year built: {median_year} (primary signal)")
         print(f"      • Vintage housing: {year_built_data.get('vintage_pct', 0)}%")
         print(f"      • Historic buildings (OSM): {len(historic)} (bonus)")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 

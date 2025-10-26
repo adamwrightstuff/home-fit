@@ -4,7 +4,7 @@ Scores local indie business districts for walkability and variety
 """
 
 from typing import Dict, Tuple, List
-from data_sources import osm_api
+from data_sources import osm_api, data_quality
 
 
 def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
@@ -46,6 +46,17 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
 
     total_score = density_score + variety_score + proximity_score
 
+    # Assess data quality
+    combined_data = {
+        'business_data': business_data,
+        'all_businesses': all_businesses,
+        'total_score': total_score
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('walkable_town', combined_data, lat, lon, area_type)
+
     # Build response
     breakdown = {
         "score": round(total_score, 1),
@@ -54,7 +65,8 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
             "variety": round(variety_score, 1),
             "proximity": round(proximity_score, 1)
         },
-        "summary": _build_summary(tier1, tier2, tier3, tier4, all_businesses)
+        "summary": _build_summary(tier1, tier2, tier3, tier4, all_businesses),
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -63,6 +75,7 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
         f"   🏙️  Density: {density_score:.0f}/40 ({len(all_businesses)} businesses)")
     print(f"   🎨 Variety: {variety_score:.0f}/30")
     print(f"   🚶 Proximity: {proximity_score:.0f}/30")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 

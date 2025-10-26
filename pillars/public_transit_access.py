@@ -8,6 +8,7 @@ import requests
 import math
 from typing import Dict, Tuple, List, Optional
 from dotenv import load_dotenv
+from data_sources import data_quality
 
 load_dotenv()
 
@@ -60,6 +61,19 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
 
     total_score = heavy_rail_score + light_rail_score + bus_score
 
+    # Assess data quality
+    combined_data = {
+        'routes_data': routes_data,
+        'heavy_rail_routes': heavy_rail_routes,
+        'light_rail_routes': light_rail_routes,
+        'bus_routes': bus_routes,
+        'total_score': total_score
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type)
+
     # Build response
     breakdown = {
         "score": round(total_score, 1),
@@ -70,7 +84,8 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
         },
         "summary": _build_summary_from_routes(
             heavy_rail_routes, light_rail_routes, bus_routes, routes_data
-        )
+        ),
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -78,6 +93,7 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     print(f"   🚇 Heavy Rail: {heavy_rail_score:.0f}/50 ({len(heavy_rail_routes)} routes)")
     print(f"   🚊 Light Rail: {light_rail_score:.0f}/25 ({len(light_rail_routes)} routes)")
     print(f"   🚌 Bus: {bus_score:.0f}/25 ({len(bus_routes)} routes)")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 

@@ -5,7 +5,7 @@ Scores access to hospitals, clinics, pharmacies, and emergency services
 
 import math
 from typing import Dict, Tuple, List, Optional
-from data_sources import osm_api
+from data_sources import osm_api, data_quality
 
 # Comprehensive US hospitals database - major medical centers and regional hospitals
 # Covers all major metropolitan areas and many mid-size cities
@@ -206,6 +206,19 @@ def get_healthcare_access_score(lat: float, lon: float) -> Tuple[float, Dict]:
 
     total_score = hospital_score + urgent_care_score + pharmacy_score + clinic_score
 
+    # Assess data quality
+    combined_data = {
+        'hospitals': [nearest_hospital] if nearest_hospital else [],
+        'urgent_care': urgent_care,
+        'pharmacies': pharmacies,
+        'clinics': clinics,
+        'total_score': total_score
+    }
+    
+    # Get area classification for data quality assessment
+    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type)
+
     # Build response
     breakdown = {
         "score": round(total_score, 1),
@@ -217,7 +230,8 @@ def get_healthcare_access_score(lat: float, lon: float) -> Tuple[float, Dict]:
         },
         "summary": _build_summary(
             nearest_hospital, urgent_care, pharmacies, clinics
-        )
+        ),
+        "data_quality": quality_metrics
     }
 
     # Log results
@@ -226,6 +240,7 @@ def get_healthcare_access_score(lat: float, lon: float) -> Tuple[float, Dict]:
     print(f"   🚑 Urgent Care: {urgent_care_score:.0f}/30 ({len(urgent_care)} facilities)")
     print(f"   💊 Pharmacies: {pharmacy_score:.0f}/20 ({len(pharmacies)} nearby)")
     print(f"   🩺 Clinic Density: {clinic_score:.0f}/10 ({len(clinics)} clinics)")
+    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
 
