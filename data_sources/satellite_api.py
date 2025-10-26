@@ -6,20 +6,34 @@ Integrates with Google Earth Engine and other satellite imagery sources for envi
 from typing import Optional, Dict
 import requests
 
-# Import GEE API functions
-try:
-    from .gee_api import get_tree_canopy_gee, get_urban_greenness_gee
-    _GEE_FUNCTIONS_AVAILABLE = True
-except ImportError:
-    _GEE_FUNCTIONS_AVAILABLE = False
+# Import GEE API functions (lazy import to avoid circular dependency)
+_GEE_FUNCTIONS_AVAILABLE = None
 
 def _is_gee_available() -> bool:
     """Check if GEE is available and initialized."""
+    global _GEE_FUNCTIONS_AVAILABLE
+    if _GEE_FUNCTIONS_AVAILABLE is None:
+        try:
+            from . import gee_api
+            _GEE_FUNCTIONS_AVAILABLE = getattr(gee_api, 'GEE_AVAILABLE', False)
+        except (ImportError, AttributeError):
+            _GEE_FUNCTIONS_AVAILABLE = False
+    return _GEE_FUNCTIONS_AVAILABLE
+
+def _get_gee_function(func_name: str):
+    """Lazily import GEE functions to avoid circular dependencies."""
     try:
-        from .gee_api import GEE_AVAILABLE
-        return GEE_AVAILABLE
+        from .gee_api import get_tree_canopy_gee, get_urban_greenness_gee
+        if func_name == 'get_tree_canopy_gee':
+            return get_tree_canopy_gee
+        elif func_name == 'get_urban_greenness_gee':
+            return get_urban_greenness_gee
+        elif func_name == 'get_building_density_gee':
+            from .gee_api import get_building_density_gee
+            return get_building_density_gee
     except ImportError:
-        return False
+        return None
+    return None
 
 def get_tree_canopy_satellite(lat: float, lon: float) -> Optional[float]:
     """
@@ -30,14 +44,16 @@ def get_tree_canopy_satellite(lat: float, lon: float) -> Optional[float]:
     print(f"🛰️ Querying satellite imagery for tree canopy at {lat}, {lon}...")
     
     # Try Google Earth Engine first
-    if _GEE_FUNCTIONS_AVAILABLE and _is_gee_available():
+    if _is_gee_available():
         print("   ✅ GEE is available, attempting to use it...")
-        gee_result = get_tree_canopy_gee(lat, lon)
-        if gee_result is not None:
-            print(f"   ✅ Got GEE result: {gee_result}% tree canopy")
-            return gee_result
-        else:
-            print("   ⚠️ GEE returned None, falling back to regional estimates")
+        get_tree_canopy = _get_gee_function('get_tree_canopy_gee')
+        if get_tree_canopy:
+            gee_result = get_tree_canopy(lat, lon)
+            if gee_result is not None:
+                print(f"   ✅ Got GEE result: {gee_result}% tree canopy")
+                return gee_result
+            else:
+                print("   ⚠️ GEE returned None, falling back to regional estimates")
     else:
         print("   ⚠️ GEE not available, using regional estimates")
     
@@ -83,17 +99,18 @@ def get_building_footprint_density(lat: float, lon: float) -> Optional[float]:
     print(f"🛰️ Analyzing satellite imagery for building footprint density at {lat}, {lon}...")
     
     # Try Google Earth Engine first
-    if _GEE_FUNCTIONS_AVAILABLE and _is_gee_available():
+    if _is_gee_available():
         try:
-            from .gee_api import get_building_density_gee
-            print("   ✅ GEE is available for building density analysis")
-            gee_result = get_building_density_gee(lat, lon)
-            if gee_result:
-                density = gee_result.get("building_density")
-                print(f"   ✅ Got GEE building density: {density}%")
-                return density
-        except ImportError:
-            pass
+            get_building_density = _get_gee_function('get_building_density_gee')
+            if get_building_density:
+                print("   ✅ GEE is available for building density analysis")
+                gee_result = get_building_density(lat, lon)
+                if gee_result:
+                    density = gee_result.get("building_density")
+                    print(f"   ✅ Got GEE building density: {density}%")
+                    return density
+        except Exception as e:
+            print(f"   ⚠️ Error getting building density from GEE: {e}")
     
     # Fallback to regional estimates
     print(f"   📊 Using regional estimates (GEE not available)")
