@@ -200,7 +200,7 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         seasonal_data = sentinel.map(add_seasonal_ndvi)
         
         # Calculate seasonal NDVI statistics
-        seasonal_stats = seasonal_data.select(['NDVI', 'season']).reduceRegion(
+        seasonal_stats = seasonal_data.select(['NDVI', 'season']).median().reduceRegion(
             reducer=ee.Reducer.mean().group(0, 'season'),
             geometry=buffer,
             scale=20,
