@@ -50,8 +50,9 @@ def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optiona
         'total_score': total_score
     }
     
-    # Get area classification for data quality assessment
-    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    # Detect actual area type for data quality assessment
+    density = census_api.get_population_density(lat, lon)
+    area_type = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
 
     # Build comprehensive response

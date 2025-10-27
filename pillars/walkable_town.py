@@ -53,8 +53,10 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
         'total_score': total_score
     }
     
-    # Get area classification for data quality assessment
-    area_type = "urban_core"  # Default, could be enhanced with actual area detection
+    # Detect actual area type for data quality assessment
+    from data_sources import census_api
+    density = census_api.get_population_density(lat, lon)
+    area_type = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('walkable_town', combined_data, lat, lon, area_type)
 
     # Build response

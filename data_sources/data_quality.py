@@ -9,6 +9,37 @@ from .census_api import get_population_density, get_census_tract
 from .error_handling import get_fallback_score
 
 
+def detect_area_type(lat: float, lon: float, density: Optional[float] = None) -> str:
+    """
+    Detect area type based on population density.
+    
+    Args:
+        lat, lon: Coordinates
+        density: Optional pre-fetched density (for efficiency)
+    
+    Returns:
+        'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
+    """
+    if density is None:
+        density = get_population_density(lat, lon)
+    
+    if not density:
+        return "unknown"
+    
+    # Urban core: >10,000 people/sq mi (e.g., Manhattan, Brooklyn)
+    if density > 10000:
+        return "urban_core"
+    # Suburban: 2,500-10,000 people/sq mi (e.g., Westchester, Long Island suburbs)
+    elif density > 2500:
+        return "suburban"
+    # Exurban: 500-2,500 people/sq mi (e.g., outer suburbs)
+    elif density > 500:
+        return "exurban"
+    # Rural: <500 people/sq mi (e.g., rural towns, Marfa TX)
+    else:
+        return "rural"
+
+
 class DataQualityManager:
     """Manages data quality assessment and fallback strategies."""
     
