@@ -26,16 +26,22 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     print(f"🏃 Analyzing active outdoors access...")
 
     # Get area classification for contextual scoring
-    area_type, metro_name, area_metadata = get_area_classification(lat, lon, city)
+    area_type, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
     expectations = get_contextual_expectations(area_type, 'active_outdoors')
     
-    # Get local green spaces (1km)
-    print(f"   📍 Querying local parks & playgrounds (1km)...")
-    local_data = osm_api.query_green_spaces(lat, lon, radius_m=1000)
+    # Context-aware radius: urban centers need nearby parks, rural/Mountain West need regional access
+    from data_sources import census_api
+    density = census_api.get_population_density(lat, lon)
+    is_rural_or_exurban = (density and density < 1000) or (density is None) or area_type in ['exurban', 'rural']
     
-    # Get regional outdoor activities (15km)
-    print(f"   🏔️  Querying regional outdoor activities (15km)...")
-    regional_data = osm_api.query_nature_features(lat, lon, radius_m=15000)
+    local_radius = 2000 if is_rural_or_exurban else 1000      # 1-2km for local parks
+    regional_radius = 50000 if is_rural_or_exurban else 15000  # 15-50km for trails/water
+    
+    print(f"   📍 Querying local parks & playgrounds ({local_radius/1000:.0f}km)...")
+    local_data = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+    
+    print(f"   🏔️  Querying regional outdoor activities ({regional_radius/1000:.0f}km)...")
+    regional_data = osm_api.query_nature_features(lat, lon, radius_m=regional_radius)
 
     # Combine data for quality assessment
     combined_data = {

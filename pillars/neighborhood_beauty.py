@@ -97,11 +97,12 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
 def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, str]:
     """
     Score tree canopy using waterfall approach:
-    1. NYC → Street Tree Census
-    2. Other cities → Census USFS canopy
-    3. Fallback → No data
+    1. NYC → Street Tree Census (individual tree locations)
+    2. OSM → Enhanced tree query (tree rows, areas, street trees)
+    3. Census → USFS canopy % (coarse but nationwide)
+    4. Fallback → No data
     """
-    # Priority 1: NYC Street Tree Census
+    # Priority 1: NYC Street Tree Census (most detailed)
     if (city and "new york" in city.lower()) or nyc_api.is_nyc(lat, lon):
         trees = nyc_api.get_street_trees(lat, lon)
         if trees is not None:
@@ -109,7 +110,33 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, st
             score = _score_nyc_trees(tree_count)
             return score, f"NYC Census: {tree_count} trees"
 
-    # Priority 2: Census USFS tree canopy
+    # Priority 2: OSM enhanced tree data (many cities have this)
+    try:
+        from data_sources import osm_api
+        osm_data = osm_api.query_enhanced_trees(lat, lon, radius_m=500)
+        if osm_data:
+            tree_rows = len(osm_data.get('tree_rows', []))
+            street_trees = len(osm_data.get('street_trees', []))
+            individual_trees = len(osm_data.get('individual_trees', []))
+            tree_areas = len(osm_data.get('tree_areas', []))
+            total_tree_features = tree_rows + street_trees + individual_trees + tree_areas
+            
+            if total_tree_features >= 50:
+                return 50.0, f"OSM: {total_tree_features} tree features (excellent)"
+            elif total_tree_features >= 30:
+                return 45.0, f"OSM: {total_tree_features} tree features (very good)"
+            elif total_tree_features >= 20:
+                return 38.0, f"OSM: {total_tree_features} tree features (good)"
+            elif total_tree_features >= 10:
+                return 28.0, f"OSM: {total_tree_features} tree features (fair)"
+            elif total_tree_features >= 5:
+                return 18.0, f"OSM: {total_tree_features} tree features (limited)"
+            elif total_tree_features > 0:
+                return 8.0, f"OSM: {total_tree_features} tree features (minimal)"
+    except Exception as e:
+        print(f"   ⚠️  OSM tree query failed: {e}")
+
+    # Priority 3: Census USFS tree canopy (coarse nationwide data)
     canopy_pct = census_api.get_tree_canopy(lat, lon)
     if canopy_pct is not None:
         score = _score_tree_canopy(canopy_pct)

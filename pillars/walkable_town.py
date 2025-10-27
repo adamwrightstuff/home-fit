@@ -113,49 +113,59 @@ def _score_density(businesses: List[Dict]) -> float:
 def _score_variety(tier1: List, tier2: List, tier3: List, tier4: List) -> float:
     """
     Score business variety (0-30 points).
-    Rewards balanced mix across all 4 categories with EQUAL WEIGHTS.
+    Rewards practical walkability first, cultural amenities second.
 
-    Each category worth 7.5 pts if it has 2+ types present:
-    - Daily Essentials (cafe, bakery, grocery)
-    - Social & Dining (restaurant, bar, ice cream)
-    - Culture & Leisure (bookstore, gallery, theater, museum, market)
-    - Services & Retail (boutique, salon, records, fitness, garden)
+    Weighted by walkability importance:
+    - Daily Essentials: 12 pts (CRITICAL - cafes, groceries)
+    - Social & Dining: 10 pts (Important - restaurants, bars)
+    - Culture & Leisure: 5 pts (Nice-to-have - bookstores, galleries)
+    - Services & Retail: 3 pts (Bonus - salons, boutiques)
+
+    This favors small-town main streets over requiring urban cultural amenities.
     """
     score = 0
 
-    # Category 1: Daily Essentials (7.5 pts if 2+ types)
+    # Tier 1: Daily Essentials (12 pts max - CRITICAL for walkability)
     tier1_types = set(b["type"] for b in tier1)
     tier1_variety = len(tier1_types)
-    if tier1_variety >= 2:
-        score += 7.5
-    elif tier1_variety == 1:
-        score += 3.75
+    if tier1_variety >= 3:
+        score += 12  # Full credit: grocery + cafe + bakery
+    elif tier1_variety >= 2:
+        score += 8   # Good: two of three
+    elif tier1_variety >= 1:
+        score += 4   # Basic: at least one
 
-    # Category 2: Social & Dining (7.5 pts if 2+ types)
+    # Tier 2: Social & Dining (10 pts max - Important for walkability)
     tier2_types = set(b["type"] for b in tier2)
     tier2_variety = len(tier2_types)
     if tier2_variety >= 2:
-        score += 7.5
-    elif tier2_variety == 1:
-        score += 3.75
+        score += 10  # Full credit: restaurant + bar or ice cream
+    elif tier2_variety >= 1:
+        score += 6   # Good: at least a restaurant or bar
+    else:
+        score += 0
 
-    # Category 3: Culture & Leisure (7.5 pts if 2+ types)
+    # Tier 3: Culture & Leisure (5 pts max - Nice-to-have)
     tier3_types = set(b["type"] for b in tier3)
     tier3_variety = len(tier3_types)
     if tier3_variety >= 2:
-        score += 7.5
-    elif tier3_variety == 1:
-        score += 3.75
+        score += 5   # Full credit: bookstore + gallery or theater
+    elif tier3_variety >= 1:
+        score += 3   # Good: at least one cultural amenity
+    else:
+        score += 0   # Optional - small towns can score well without this
 
-    # Category 4: Services & Retail (7.5 pts if 2+ types)
+    # Tier 4: Services & Retail (3 pts max - Bonus)
     tier4_types = set(b["type"] for b in tier4)
     tier4_variety = len(tier4_types)
     if tier4_variety >= 2:
-        score += 7.5
-    elif tier4_variety == 1:
-        score += 3.75
+        score += 3   # Full credit: salon + boutique or fitness
+    elif tier4_variety >= 1:
+        score += 1   # Minor bonus
+    else:
+        score += 0
 
-    return score
+    return min(30, score)
 
 
 def _score_proximity(businesses: List[Dict]) -> float:
