@@ -7,7 +7,7 @@ from typing import Dict, Tuple, List
 from data_sources import osm_api, data_quality
 
 
-def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
+def get_walkable_town_score(lat: float, lon: float, include_chains: bool = False) -> Tuple[float, Dict]:
     """
     Calculate walkable town score (0-100) based on indie businesses.
 
@@ -16,13 +16,16 @@ def get_walkable_town_score(lat: float, lon: float) -> Tuple[float, Dict]:
     - Variety (0-30): Balance across 4 categories (EQUAL WEIGHTS)
     - Proximity (0-30): How close is the downtown cluster
 
+    Args:
+        include_chains: If True, include chain/franchise businesses
+
     Returns:
         (total_score, detailed_breakdown)
     """
     print(f"🏘️  Analyzing walkable downtown within 1km...")
 
     # Get businesses from OSM
-    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000, include_chains=include_chains)
 
     if business_data is None:
         print("⚠️  OSM business data unavailable")

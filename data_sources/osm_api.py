@@ -378,10 +378,13 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
-def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = False) -> Optional[Dict]:
     """
-    Query OSM for indie local businesses within walking distance.
-    Focuses on non-chain establishments.
+    Query OSM for local businesses within walking distance.
+    By default focuses on non-chain establishments.
+
+    Args:
+        include_chains: If True, include chain/franchise businesses
 
     Returns:
         {
@@ -391,33 +394,36 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Opti
             "tier4_services": [...]
         }
     """
+    # Brand filter: exclude chains by default
+    brand_filter = '["brand"!~"."]' if not include_chains else ''
+    
     query = f"""
     [out:json][timeout:60];
     (
       // TIER 1: DAILY ESSENTIALS
-      node["amenity"="cafe"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["amenity"="cafe"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["amenity"="cafe"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"="cafe"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"="bakery"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"="bakery"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"="bakery"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="bakery"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"supermarket|convenience|greengrocer"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"~"supermarket|convenience|greengrocer"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"~"supermarket|convenience|greengrocer"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"supermarket|convenience|greengrocer"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
       // TIER 2: SOCIAL & DINING
-      node["amenity"="restaurant"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["amenity"="restaurant"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["amenity"="restaurant"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"="restaurant"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["amenity"~"bar|pub"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["amenity"~"bar|pub"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["amenity"~"bar|pub"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"~"bar|pub"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["amenity"="ice_cream"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      node["shop"="ice_cream"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"="ice_cream"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["amenity"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
       // TIER 3: CULTURE & LEISURE
-      node["shop"="books"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"="books"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"="books"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="books"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
       node["tourism"="gallery"]["name"](around:{radius_m},{lat},{lon});
       way["tourism"="gallery"]["name"](around:{radius_m},{lat},{lon});
@@ -434,20 +440,20 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Opti
       way["amenity"="marketplace"]["name"](around:{radius_m},{lat},{lon});
       
       // TIER 4: SERVICES & RETAIL
-      node["shop"~"clothes|fashion|boutique"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"~"clothes|fashion|boutique"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"~"clothes|fashion|boutique"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"clothes|fashion|boutique"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"hairdresser|beauty"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"~"hairdresser|beauty"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"~"hairdresser|beauty"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"hairdresser|beauty"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"="music"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"="music"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"="music"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="music"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["leisure"="fitness_centre"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["leisure"="fitness_centre"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["leisure"="fitness_centre"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["leisure"="fitness_centre"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"garden_centre|florist"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
-      way["shop"~"garden_centre|florist"]["name"]["brand"!~"."](around:{radius_m},{lat},{lon});
+      node["shop"~"garden_centre|florist"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"garden_centre|florist"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -468,7 +474,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000) -> Opti
         data = resp.json()
         elements = data.get("elements", [])
 
-        businesses = _process_business_features(elements, lat, lon)
+        businesses = _process_business_features(elements, lat, lon, include_chains)
         return businesses
 
     except Exception as e:
@@ -747,7 +753,7 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
     return historic, artwork
 
 
-def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float) -> Dict:
+def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float, include_chains: bool = False) -> Dict:
     """Process OSM elements into categorized businesses by tier."""
     tier1_daily = []
     tier2_social = []
@@ -769,7 +775,7 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         tags = elem.get("tags", {})
         name = tags.get("name")
 
-        if not name or tags.get("brand"):
+        if not name or (not include_chains and tags.get("brand")):
             continue
 
         seen_ids.add(osm_id)

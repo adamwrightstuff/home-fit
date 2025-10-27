@@ -75,7 +75,7 @@ def root():
 
 
 @app.get("/score")
-async def get_livability_score(location: str):
+async def get_livability_score(location: str, include_chains: bool = False):
     """
     Calculate livability score for a given address.
 
@@ -91,6 +91,7 @@ async def get_livability_score(location: str):
 
     Parameters:
         location: Address or ZIP code
+        include_chains: Include chain/franchise businesses in amenities score (default: False)
 
     Returns:
         JSON with pillar scores and weighted total
@@ -137,7 +138,7 @@ async def get_livability_score(location: str):
         _calculate_pillar_score("neighborhood_beauty", 
                                get_enhanced_neighborhood_beauty_score if ENABLE_ENHANCED_BEAUTY else get_neighborhood_beauty_score, 
                                lat, lon, city),
-        _calculate_pillar_score("neighborhood_amenities", get_walkable_town_score, lat, lon),
+        _calculate_pillar_score("neighborhood_amenities", get_walkable_town_score, lat, lon, include_chains),
         _calculate_pillar_score("air_travel_access", get_air_travel_score, lat, lon),
         _calculate_pillar_score("public_transit_access", get_public_transit_score, lat, lon),
         _calculate_pillar_score("healthcare_access", get_healthcare_access_score, lat, lon),
