@@ -151,23 +151,71 @@ class DataQualityManager:
     
     def _assess_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Assess neighborhood beauty data completeness."""
-        # Check for tree data and historic data
+        # Check for both traditional and enhanced data sources
         charm_data = data.get('charm_data', {})
         year_built_data = data.get('year_built_data', {})
         tree_data = data.get('tree_score', 0)
         
-        # Tree data available
-        tree_score = min(1.0, tree_data / 50.0) if tree_data > 0 else 0.0
+        # Check for enhanced tree data sources (OSM enhanced trees)
+        enhanced_tree_data = data.get('enhanced_tree_data', {})
+        satellite_canopy = data.get('satellite_canopy')
+        
+        # Tree data available - check multiple sources
+        tree_score = 0.0
+        if tree_data > 0:
+            tree_score = min(1.0, tree_data / 50.0)
+        elif enhanced_tree_data:
+            # OSM tree data available
+            tree_rows = len(enhanced_tree_data.get('tree_rows', []))
+            street_trees = len(enhanced_tree_data.get('street_trees', []))
+            individual_trees = len(enhanced_tree_data.get('individual_trees', []))
+            tree_areas = len(enhanced_tree_data.get('tree_areas', []))
+            total_trees = tree_rows + street_trees + individual_trees + tree_areas
+            if total_trees > 20:
+                tree_score = 0.9  # Excellent OSM data
+            elif total_trees > 10:
+                tree_score = 0.8  # Good OSM data
+            elif total_trees > 5:
+                tree_score = 0.6  # Fair OSM data
+            elif total_trees > 0:
+                tree_score = 0.4  # Limited OSM data
+        elif satellite_canopy is not None and satellite_canopy > 0:
+            tree_score = 0.6  # Satellite canopy data available
         
         # Historic landmarks
         historic_count = len(charm_data.get('historic', [])) if charm_data else 0
         artwork_count = len(charm_data.get('artwork', [])) if charm_data else 0
-        landmark_score = min(1.0, (historic_count + artwork_count) / 5.0)
+        
+        # Check for architectural diversity data
+        arch_diversity = data.get('architectural_diversity', {})
+        if arch_diversity and arch_diversity.get('diversity_score', 0) > 70:
+            landmark_score = 0.9  # Excellent architectural data
+        elif arch_diversity and arch_diversity.get('diversity_score', 0) > 50:
+            landmark_score = 0.7  # Good architectural data
+        else:
+            # Fall back to historic landmark count
+            total_landmarks = historic_count + artwork_count
+            if total_landmarks >= 15:
+                landmark_score = 1.0
+            elif total_landmarks >= 10:
+                landmark_score = 0.8
+            elif total_landmarks >= 5:
+                landmark_score = 0.6
+            elif total_landmarks >= 2:
+                landmark_score = 0.4
+            else:
+                landmark_score = 0.1
         
         # Year built data
         year_built_score = 1.0 if year_built_data else 0.0
         
-        completeness = (tree_score * 0.5) + (landmark_score * 0.3) + (year_built_score * 0.2)
+        # Check for visual analysis data (satellite/street view)
+        visual_analysis = data.get('visual_analysis', {})
+        has_satellite = bool(visual_analysis.get('satellite_analysis'))
+        has_street = bool(visual_analysis.get('street_analysis'))
+        visual_bonus = 0.15 if (has_satellite and has_street) else 0.08 if (has_satellite or has_street) else 0
+        
+        completeness = (tree_score * 0.4) + (landmark_score * 0.35) + (year_built_score * 0.1) + visual_bonus
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_housing_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:

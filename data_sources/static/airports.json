@@ -706,6 +706,20 @@
       "runways": 2,
       "airlines": 6,
       "destinations": 15
+    },
+    {
+      "code": "MSN",
+      "name": "Dane County Regional Airport",
+      "city": "Madison",
+      "state": "WI",
+      "lat": 43.1399,
+      "lon": -89.3375,
+      "type": "medium_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "medium",
+      "runways": 2,
+      "airlines": 8,
+      "destinations": 20
     }
   ]
 }
