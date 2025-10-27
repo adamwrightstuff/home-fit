@@ -24,7 +24,7 @@ from pillars.housing_value import get_housing_value_score
 ##########################
 # CONFIGURATION FLAGS
 ##########################
-ENABLE_SCHOOL_SCORING = False  # Set to True to enable school API calls
+ENABLE_SCHOOL_SCORING = True  # Set to True to enable school API calls
 ENABLE_ENHANCED_BEAUTY = True  # Set to True to use enhanced neighborhood beauty scoring
 
 # Load environment variables
