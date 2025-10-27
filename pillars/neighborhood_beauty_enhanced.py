@@ -42,12 +42,12 @@ def get_enhanced_neighborhood_beauty_score(lat: float, lon: float, city: Optiona
     total_score = tree_score + historic_score + visual_score + arch_score
 
     # Assess data quality
+    # Reconstruct the data structure to match what _assess_beauty_completeness expects
     combined_data = {
-        'tree_details': tree_details,
-        'historic_details': historic_details,
-        'visual_details': visual_details,
-        'arch_details': arch_details,
-        'total_score': total_score
+        'charm_data': historic_details.get('charm_data', {}),
+        'year_built_data': historic_details.get('year_built_data', {}),
+        'tree_score': tree_details.get('traditional_score', 0),
+        'tree_note': tree_details.get('traditional_note', '')
     }
     
     # Detect actual area type for data quality assessment
