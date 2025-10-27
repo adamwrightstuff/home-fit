@@ -120,7 +120,7 @@ def root():
 
 
 @app.get("/score")
-def get_livability_score(location: str, tokens: Optional[str] = None):
+def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False):
     """
     Calculate livability score for a given address.
 
@@ -138,6 +138,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None):
         location: Address or ZIP code
         tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
                 Default: Equal distribution across all pillars
+        include_chains: Include chain/franchise businesses in amenities score (default: False)
 
     Returns:
         JSON with pillar scores, token allocation, and weighted total
@@ -173,7 +174,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None):
         beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city)
 
     # Pillar 3: Neighborhood Amenities (walkable town)
-    amenities_score, amenities_details = get_walkable_town_score(lat, lon)
+    amenities_score, amenities_details = get_walkable_town_score(lat, lon, include_chains=include_chains)
 
     # Pillar 4: Air Travel Access
     air_travel_score, air_travel_details = get_air_travel_score(lat, lon)
