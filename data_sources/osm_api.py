@@ -1028,6 +1028,10 @@ def _process_enhanced_trees(elements: List[Dict], center_lat: float, center_lon:
         elif natural in ["wood", "forest"] or landuse == "forest" or (leisure == "park" and tags.get("trees") == "yes"):
             tree_areas.append(tree_feature)
 
+    # Limit individual trees to top 50 closest to prevent response bloat
+    # This doesn't affect scoring since only count matters, not coordinates
+    individual_trees = sorted(individual_trees, key=lambda x: x['distance_m'])[:50]
+    
     return tree_rows, street_trees, individual_trees, tree_areas
 
 
