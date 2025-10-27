@@ -46,6 +46,10 @@ class DataQualityManager:
             return self._assess_airport_completeness(data, expected_minimums)
         elif pillar_name == 'walkable_town':
             return self._assess_business_completeness(data, expected_minimums)
+        elif pillar_name == 'neighborhood_beauty':
+            return self._assess_beauty_completeness(data, expected_minimums)
+        elif pillar_name == 'housing_value':
+            return self._assess_housing_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
     
@@ -100,7 +104,8 @@ class DataQualityManager:
     
     def _assess_business_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Assess business/amenity data completeness."""
-        businesses = data.get('businesses', [])
+        # Try 'businesses' first, then 'all_businesses'
+        businesses = data.get('businesses', []) or data.get('all_businesses', [])
         if not businesses:
             return 0.0, 'very_poor'
         
@@ -111,6 +116,45 @@ class DataQualityManager:
         variety_score = min(1.0, unique_types / max(1, expected.get('business_types', 8)))
         
         completeness = (density_score * 0.6) + (variety_score * 0.4)
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess neighborhood beauty data completeness."""
+        # Check for tree data and historic data
+        charm_data = data.get('charm_data', {})
+        year_built_data = data.get('year_built_data', {})
+        tree_data = data.get('tree_score', 0)
+        
+        # Tree data available
+        tree_score = min(1.0, tree_data / 50.0) if tree_data > 0 else 0.0
+        
+        # Historic landmarks
+        historic_count = len(charm_data.get('historic', [])) if charm_data else 0
+        artwork_count = len(charm_data.get('artwork', [])) if charm_data else 0
+        landmark_score = min(1.0, (historic_count + artwork_count) / 5.0)
+        
+        # Year built data
+        year_built_score = 1.0 if year_built_data else 0.0
+        
+        completeness = (tree_score * 0.5) + (landmark_score * 0.3) + (year_built_score * 0.2)
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_housing_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess housing value data completeness."""
+        housing_data = data.get('housing_data', {})
+        
+        if not housing_data:
+            return 0.0, 'very_poor'
+        
+        # Check for key housing metrics
+        has_median_value = 'median_home_value' in housing_data
+        has_median_income = 'median_household_income' in housing_data
+        has_median_rooms = 'median_rooms' in housing_data
+        
+        # Calculate completeness based on available metrics
+        metric_score = sum([has_median_value, has_median_income, has_median_rooms]) / 3.0
+        
+        completeness = metric_score
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_generic_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
