@@ -6,6 +6,7 @@ Scores access to hospitals, clinics, pharmacies, and emergency services
 import math
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
+from data_sources.radius_profiles import get_radius_profile
 
 # Comprehensive US hospitals database - major medical centers and regional hospitals
 # Covers all major metropolitan areas and many mid-size cities
@@ -164,7 +165,9 @@ def _get_fallback_urgent_care(lat: float, lon: float) -> List[Dict]:
     return urgent_care_facilities
 
 
-def get_healthcare_access_score(lat: float, lon: float) -> Tuple[float, Dict]:
+def get_healthcare_access_score(lat: float, lon: float,
+                                area_type: Optional[str] = None,
+                                location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate healthcare access score (0-100).
 
@@ -179,69 +182,129 @@ def get_healthcare_access_score(lat: float, lon: float) -> Tuple[float, Dict]:
     """
     print(f"🏥 Analyzing healthcare access...")
 
-    # Score hospitals (using static database for major hospitals)
-    hospital_score, nearest_hospital = _score_hospitals(lat, lon)
-
-    # Query OSM for urgent care, pharmacies, clinics
+    # Query OSM for healthcare facilities (hospitals, clinics, doctors, pharmacies, urgent/emergency)
     print(f"   💊 Querying pharmacies and clinics...")
     healthcare_facilities = _get_osm_healthcare(lat, lon)
 
+    hospitals = healthcare_facilities.get("hospitals", [])
     urgent_care = healthcare_facilities.get("urgent_care", [])
     pharmacies = healthcare_facilities.get("pharmacies", [])
     clinics = healthcare_facilities.get("clinics", [])
+    doctors = healthcare_facilities.get("doctors", [])
     
-    print(f"   🔍 FINAL COUNTS: {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics")
-    
-    # Add fallback urgent care data if OSM data is sparse
-    if len(urgent_care) < 3:  # If we have fewer than 3 urgent care facilities from OSM
-        print(f"   🔄 Adding fallback urgent care data (OSM returned {len(urgent_care)})...")
-        fallback_urgent_care = _get_fallback_urgent_care(lat, lon)
-        urgent_care.extend(fallback_urgent_care)
-        print(f"   ✅ Total urgent care after fallback: {len(urgent_care)}")
+    print(f"   🔍 FINAL COUNTS (raw): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors")
 
-    # Score components
-    urgent_care_score = _score_urgent_care(urgent_care)
-    pharmacy_score = _score_pharmacies(pharmacies)
-    clinic_score = _score_clinics(clinics)
+    # Determine area type for radius tuning (allow centrally provided override)
+    from data_sources import census_api
+    pop_density = census_api.get_population_density(lat, lon) or 0.0
+    from data_sources import data_quality as dq
+    detected_area_type = dq.detect_area_type(lat, lon, pop_density)
+    area_type = area_type or detected_area_type
 
-    total_score = hospital_score + urgent_care_score + pharmacy_score + clinic_score
+    # Radius profiles (meters) via centralized helper
+    rp = get_radius_profile('healthcare_access', area_type, location_scope)
+    fac_radius_m = int(rp.get('fac_radius_m', 10000))
+    pharm_radius_m = int(rp.get('pharm_radius_m', 3000))
+    print(f"   🔧 Radius profile (healthcare): area_type={area_type}, scope={location_scope}, facilities={fac_radius_m}m, pharmacies={pharm_radius_m}m")
+
+    # Filter per-category by distance thresholds
+    def _within(dist_km: float, radius_m: int) -> bool:
+        try:
+            return (dist_km * 1000.0) <= float(radius_m)
+        except Exception:
+            return True
+
+    hospitals = [f for f in hospitals if _within(f.get('distance_km', 0.0), fac_radius_m)]
+    urgent_care = [f for f in urgent_care if _within(f.get('distance_km', 0.0), fac_radius_m)]
+    clinics = [f for f in clinics if _within(f.get('distance_km', 0.0), fac_radius_m)]
+    doctors = [f for f in doctors if _within(f.get('distance_km', 0.0), fac_radius_m)]
+    pharmacies = [f for f in pharmacies if _within(f.get('distance_km', 0.0), pharm_radius_m)]
+
+    print(f"   🔍 FINAL COUNTS (filtered): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors | area={area_type}")
+
+    # Population density (proxy) for normalization (per 10k)
+    # pop_density already computed
+    denom = max(1.0, (pop_density / 10000.0))
+
+    # 1) Hospital presence (40 points)
+    has_er_hospital = any((f.get('amenity') == 'hospital' and (f.get('emergency') == 'yes' or (f.get('tags', {}).get('emergency') == 'yes'))) for f in hospitals)
+    hospital_score = 0.0
+    if has_er_hospital:
+        hospital_score = 40.0
+    elif len(hospitals) > 0:
+        hospital_score = 20.0
+    # Small bonus for additional hospitals (max +10)
+    if len(hospitals) > 1:
+        hospital_score += min(10.0, float(len(hospitals) - 1) * 2.0)
+    hospital_score = min(50.0, hospital_score)  # safety cap
+
+    # 2) Primary care access (30 points)
+    has_clinic = len(clinics) > 0
+    has_doctors = len(doctors) > 0
+    primary_score = (10.0 if has_clinic else 0.0) + (10.0 if has_doctors else 0.0)
+    primary_count = len(clinics) + len(doctors)
+    primary_per_10k = primary_count / denom
+    primary_score += max(0.0, min(10.0, primary_per_10k))
+
+    # 3) Specialized care (15 points)
+    import re
+    specialties = set()
+    for f in (hospitals + clinics + doctors):
+        spec = (f.get('tags', {}).get('healthcare:speciality') or '')
+        for part in re.split(r"[;,|]", spec):
+            s = part.strip().lower()
+            if s:
+                specialties.add(s)
+    specialty_score = max(0.0, min(15.0, float(len(specialties))))
+
+    # 4) Emergency services (10 points)
+    has_emergency_entrance = any((f.get('tags', {}).get('emergency') == 'emergency_ward_entrance') for f in (hospitals + clinics + urgent_care))
+    emergency_bonus = 10.0 if has_emergency_entrance else 0.0
+
+    # 5) Pharmacy access (5 points)
+    pharm_per_10k = len(pharmacies) / denom
+    pharmacy_score = max(0.0, min(5.0, pharm_per_10k))
+
+    total_score = hospital_score + primary_score + specialty_score + emergency_bonus + pharmacy_score
+    total_score = max(0.0, min(100.0, total_score))
 
     # Assess data quality
     combined_data = {
-        'hospitals': [nearest_hospital] if nearest_hospital else [],
+        'hospitals': hospitals,
         'urgent_care': urgent_care,
         'pharmacies': pharmacies,
         'clinics': clinics,
+        'doctors': doctors,
         'total_score': total_score
     }
     
     # Detect actual area type for data quality assessment
-    from data_sources import census_api
-    density = census_api.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density)
-    quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type)
+    area_type_dq = data_quality.detect_area_type(lat, lon, pop_density)
+    quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type_dq)
 
     # Build response
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
-            "hospital_access": round(hospital_score, 1),
-            "urgent_care": round(urgent_care_score, 1),
-            "pharmacies": round(pharmacy_score, 1),
-            "clinic_density": round(clinic_score, 1)
+            "hospital_presence": round(hospital_score, 1),
+            "primary_care": round(primary_score, 1),
+            "specialized_care": round(specialty_score, 1),
+            "emergency_services": round(emergency_bonus, 1),
+            "pharmacies": round(pharmacy_score, 1)
         },
         "summary": _build_summary(
-            nearest_hospital, urgent_care, pharmacies, clinics
+            None, urgent_care, pharmacies, clinics
         ),
         "data_quality": quality_metrics
     }
 
     # Log results
     print(f"✅ Healthcare Access Score: {total_score:.0f}/100")
-    print(f"   🏥 Hospital Access: {hospital_score:.0f}/40")
-    print(f"   🚑 Urgent Care: {urgent_care_score:.0f}/30 ({len(urgent_care)} facilities)")
-    print(f"   💊 Pharmacies: {pharmacy_score:.0f}/20 ({len(pharmacies)} nearby)")
-    print(f"   🩺 Clinic Density: {clinic_score:.0f}/10 ({len(clinics)} clinics)")
+    print(f"   🏥 Hospital Presence: {hospital_score:.0f}/40 ({len(hospitals)} hospitals; ER present: {has_er_hospital})")
+    print(f"   🩺 Primary Care: {primary_score:.0f}/30 (clinics={len(clinics)}, doctors={len(doctors)})")
+    print(f"   🧠 Specialized Care: {specialty_score:.0f}/15 (specialties={len(specialties)})")
+    print(f"   🚨 Emergency Services: {emergency_bonus:.0f}/10 (entrance={has_emergency_entrance})")
+    print(f"   💊 Pharmacies: {pharmacy_score:.0f}/5 ({len(pharmacies)} nearby)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown

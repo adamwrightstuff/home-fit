@@ -9,6 +9,7 @@ import math
 from typing import Dict, Tuple, List, Optional
 from dotenv import load_dotenv
 from data_sources import data_quality
+from data_sources.radius_profiles import get_radius_profile
 
 load_dotenv()
 
@@ -66,7 +67,9 @@ def _find_nearest_metro(lat: float, lon: float) -> float:
     return min_distance
 
 
-def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
+def get_public_transit_score(lat: float, lon: float,
+                             area_type: Optional[str] = None,
+                             location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate public transit access score (0-100).
 
@@ -80,8 +83,12 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     """
     print(f"🚇 Analyzing public transit access...")
 
-    # Query for routes near location
-    routes_data = _get_nearby_routes(lat, lon, radius_m=1500)
+    # Query for routes near location using centralized radius profile
+    rp = get_radius_profile('public_transit_access', area_type, location_scope)
+    nearby_radius = int(rp.get('routes_radius_m', 1500))
+    routes_data = _get_nearby_routes(lat, lon, radius_m=nearby_radius)
+    # Log chosen radius profile
+    print(f"   🔧 Radius profile (transit): area_type={area_type}, scope={location_scope}, routes_radius={nearby_radius}m")
     
     # If no Transitland routes, try OSM railway stations as fallback
     osm_stations = None
@@ -143,8 +150,38 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     # Detect actual area type for data quality assessment
     from data_sources import census_api
     density = census_api.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density)
-    quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type)
+    area_type_dq = data_quality.detect_area_type(lat, lon, density)
+    quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
+
+    # Suburban/Exurban/Rural weighting: emphasize heavy rail for non-urban commuter contexts
+    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural') and heavy_rail_score > 0:
+        heavy_rail_score = min(50.0, heavy_rail_score * 1.25)
+        # Recompute total with updated heavy rail
+        if heavy_rail_score >= 40 and (light_rail_score == 0 or bus_score < 15):
+            base_score = min(70, heavy_rail_score + 10)
+            bonus_score = light_rail_score + bus_score
+            total_score = min(100, base_score + (bonus_score * 0.4))
+        else:
+            total_score = heavy_rail_score + light_rail_score + bus_score
+
+    # Correct data_quality fallback flags and record data sources used
+    try:
+        found_any = (len(heavy_rail_routes) + len(light_rail_routes) + len(bus_routes)) > 0
+        quality_metrics['needs_fallback'] = not found_any
+        quality_metrics['fallback_score'] = 30.0 if not found_any else None
+        fm = quality_metrics.get('fallback_metadata', {}) or {}
+        fm['fallback_used'] = not found_any
+        quality_metrics['fallback_metadata'] = fm
+        ds = quality_metrics.get('data_sources', []) or []
+        # Prefer Transitland when routes_data came from API; if we used OSM stations, include 'osm'
+        if routes_data and not ds:
+            ds.append('transitland')
+        if osm_stations:
+            if 'osm' not in ds:
+                ds.append('osm')
+        quality_metrics['data_sources'] = ds
+    except Exception:
+        pass
 
     # Build response
     breakdown = {

@@ -8,9 +8,12 @@ from typing import Dict, Tuple, Optional
 from data_sources import osm_api
 from data_sources.data_quality import assess_pillar_data_quality
 from data_sources.regional_baselines import get_area_classification, get_contextual_expectations
+from data_sources.radius_profiles import get_radius_profile
 
 
-def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
+def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None,
+                              area_type: Optional[str] = None,
+                              location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate active outdoors score (0-100) based on access to outdoor activities.
 
@@ -25,17 +28,16 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     """
     print(f"🏃 Analyzing active outdoors access...")
 
-    # Get area classification for contextual scoring
-    area_type, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
+    # Get area classification for contextual scoring (allow override for consistency across pillars)
+    detected_area_type, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
+    area_type = area_type or detected_area_type
     expectations = get_contextual_expectations(area_type, 'active_outdoors')
     
-    # Context-aware radius: urban centers need nearby parks, rural/Mountain West need regional access
-    from data_sources import census_api
-    density = census_api.get_population_density(lat, lon)
-    is_rural_or_exurban = (density and density < 1000) or (density is None) or area_type in ['exurban', 'rural']
-    
-    local_radius = 2000 if is_rural_or_exurban else 1000      # 1-2km for local parks
-    regional_radius = 50000 if is_rural_or_exurban else 15000  # 15-50km for trails/water
+    # Use centralized radius profiles for unified defaults
+    profile = get_radius_profile('active_outdoors', area_type, location_scope)
+    local_radius = int(profile.get('local_radius_m', 1000))
+    regional_radius = int(profile.get('regional_radius_m', 15000))
+    print(f"   🔧 Radius profile (active_outdoors): area_type={area_type}, scope={location_scope}, local={local_radius}m, regional={regional_radius}m")
     
     print(f"   📍 Querying local parks & playgrounds ({local_radius/1000:.0f}km)...")
     local_data = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)

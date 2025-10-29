@@ -1,0 +1,587 @@
+{
+  "input": "Larchmont, NY",
+  "coordinates": {
+    "lat": 40.9278769,
+    "lon": -73.7517983
+  },
+  "location_info": {
+    "city": "Village of Larchmont",
+    "state": "New York",
+    "zip": "10538"
+  },
+  "livability_pillars": {
+    "active_outdoors": {
+      "score": 70.0,
+      "weight": 2.0,
+      "contribution": 7.0,
+      "breakdown": {
+        "local_parks_playgrounds": 34.0,
+        "water_access": 16.0,
+        "trail_access": 20.0,
+        "camping_access": 0.0
+      },
+      "summary": {
+        "local_recreation": {
+          "total_parks": 1,
+          "total_playgrounds": 1,
+          "closest_park": {
+            "name": "Flint Park",
+            "distance_m": 1.0,
+            "area_sqm": 96951.0
+          },
+          "total_park_area_hectares": 9.7
+        },
+        "water_access": {
+          "available": true,
+          "nearest": {
+            "type": "coastline",
+            "name": null,
+            "distance_km": 0.0
+          }
+        },
+        "trail_access": {
+          "available": true,
+          "nearest": {
+            "type": "nature_reserve",
+            "name": "Leatherstocking Trail",
+            "distance_km": 0.0
+          }
+        },
+        "camping": {
+          "available": false,
+          "nearest": null
+        }
+      },
+      "confidence": 57,
+      "data_quality": {
+        "completeness": 0.64,
+        "quality_tier": "fair",
+        "needs_fallback": false,
+        "fallback_score": null,
+        "fallback_metadata": {
+          "fallback_used": false
+        },
+        "confidence": 57,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {
+        "density": 5976.710367614388,
+        "metro_name": null,
+        "area_type": "suburban",
+        "classification_confidence": 0.8
+      }
+    },
+    "neighborhood_beauty": {
+      "score": 95.0,
+      "weight": 4.0,
+      "contribution": 19.0,
+      "breakdown": {
+        "trees": 45.0,
+        "historic_character": 50.0
+      },
+      "summary": {},
+      "details": {
+        "tree_analysis": {
+          "gee_canopy_pct": 29.154347422446875,
+          "sources": [
+            "GEE: 29.2% canopy"
+          ],
+          "total_score": 45.0
+        },
+        "historic_analysis": {
+          "median_year_built": 1938,
+          "vintage_pct": 32.6,
+          "historic_landmarks": [],
+          "total_score": 50.0
+        }
+      },
+      "enhanced": false,
+      "scoring_note": "",
+      "confidence": 28,
+      "data_quality": {
+        "completeness": 0.395,
+        "quality_tier": "poor",
+        "needs_fallback": true,
+        "fallback_score": 38.5,
+        "fallback_metadata": {
+          "fallback_used": true,
+          "quality_tier": "poor",
+          "area_type": "suburban",
+          "base_score": 55,
+          "adjustment_factor": 0.7,
+          "reason": "Data quality poor in suburban area"
+        },
+        "confidence": 28,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {}
+    },
+    "neighborhood_amenities": {
+      "score": 100.0,
+      "weight": 2.0,
+      "contribution": 10.0,
+      "breakdown": {
+        "home_walkability": {
+          "score": 60.0,
+          "breakdown": {
+            "density": 25.0,
+            "variety": 20.0,
+            "proximity": 15.0
+          },
+          "businesses_within_1km": 88
+        },
+        "location_quality": 40.0
+      },
+      "summary": {
+        "total_businesses": 88,
+        "by_tier": {
+          "daily_essentials": {
+            "count": 11,
+            "types": [
+              "cafe",
+              "bakery",
+              "grocery"
+            ]
+          },
+          "social_dining": {
+            "count": 40,
+            "types": [
+              "bar",
+              "ice_cream",
+              "restaurant"
+            ]
+          },
+          "culture_leisure": {
+            "count": 4,
+            "types": [
+              "gallery",
+              "bookstore"
+            ]
+          },
+          "services_retail": {
+            "count": 33,
+            "types": [
+              "garden",
+              "boutique",
+              "salon",
+              "fitness"
+            ]
+          }
+        },
+        "downtown_center_distance_m": 1.0,
+        "closest_business": {
+          "name": "Bread & Cocoa",
+          "type": "bakery",
+          "distance_m": 0.0
+        },
+        "within_5min_walk": 88,
+        "within_10min_walk": 88,
+        "score_breakdown": {
+          "home_walkability": 60.0,
+          "location_quality": 40.0
+        }
+      },
+      "confidence": 90,
+      "data_quality": {
+        "completeness": 1.0,
+        "quality_tier": "excellent",
+        "needs_fallback": false,
+        "fallback_score": null,
+        "fallback_metadata": {
+          "fallback_used": false
+        },
+        "confidence": 90,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {}
+    },
+    "air_travel_access": {
+      "score": 100,
+      "weight": 1.0,
+      "contribution": 5.0,
+      "primary_airport": {
+        "code": "LGA",
+        "name": "LaGuardia",
+        "distance_km": 19.7,
+        "type": "Major hub"
+      },
+      "nearest_airports": [
+        {
+          "code": "LGA",
+          "name": "LaGuardia",
+          "type": "large_airport",
+          "distance_km": 19.7,
+          "lat": 40.7769,
+          "lon": -73.874,
+          "service_level": "major_hub"
+        },
+        {
+          "code": "JFK",
+          "name": "John F Kennedy International",
+          "type": "large_airport",
+          "distance_km": 31.9,
+          "lat": 40.6413,
+          "lon": -73.7781,
+          "service_level": "international_hub"
+        }
+      ],
+      "summary": {
+        "has_international_hub": true,
+        "has_regional_airport": false,
+        "access_level": "Excellent - Major hub nearby",
+        "nearest_international": {
+          "name": "LaGuardia",
+          "code": "LGA",
+          "distance_km": 19.7
+        }
+      },
+      "confidence": 63,
+      "data_quality": {
+        "completeness": 0.7,
+        "quality_tier": "good",
+        "needs_fallback": false,
+        "fallback_score": null,
+        "fallback_metadata": {
+          "fallback_used": false
+        },
+        "confidence": 63,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {
+        "density": 5976.710367614388,
+        "metro_name": null,
+        "area_type": "suburban",
+        "classification_confidence": 0.8
+      }
+    },
+    "public_transit_access": {
+      "score": 56.0,
+      "weight": 2.0,
+      "contribution": 5.6,
+      "breakdown": {
+        "heavy_rail": 40.0,
+        "light_rail": 0.0,
+        "bus": 15.0
+      },
+      "summary": {
+        "total_stops": 7,
+        "heavy_rail_stops": 2,
+        "light_rail_stops": 0,
+        "bus_stops": 5,
+        "nearest_heavy_rail": {
+          "name": "New Haven",
+          "short_name": null,
+          "route_type": 2,
+          "agency": "Metro-North Railroad"
+        },
+        "nearest_light_rail": null,
+        "nearest_bus": {
+          "name": "60 -BRONX-NEW ROCHELLE-WHITE PLAINS",
+          "short_name": "0060",
+          "route_type": 3,
+          "agency": "Bee-Line Bus"
+        },
+        "transit_modes_available": [
+          "Heavy Rail (Subway/Metro)",
+          "Bus"
+        ],
+        "access_level": "Very Good - Rail transit available"
+      },
+      "confidence": 19,
+      "data_quality": {
+        "completeness": 0.2777777777777778,
+        "quality_tier": "very_poor",
+        "needs_fallback": true,
+        "fallback_score": 30.0,
+        "fallback_metadata": {
+          "fallback_used": true,
+          "quality_tier": "very_poor",
+          "area_type": "suburban",
+          "metro_distance_km": 32.1,
+          "reason": "Within 32km of major metro"
+        },
+        "confidence": 19,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {}
+    },
+    "healthcare_access": {
+      "score": 76.0,
+      "weight": 1.0,
+      "contribution": 3.8,
+      "breakdown": {
+        "hospital_access": 25.0,
+        "urgent_care": 25.0,
+        "pharmacies": 20,
+        "clinic_density": 6.0
+      },
+      "summary": {
+        "nearest_hospital": {
+          "name": "Mount Sinai Hospital",
+          "distance_km": 22.8,
+          "size": "large"
+        },
+        "urgent_care_count": 2,
+        "pharmacy_count": 22,
+        "clinic_count": 6,
+        "nearest_urgent_care": {
+          "name": "PhysicianOne Urgent Care",
+          "distance_km": 1.5
+        },
+        "nearest_pharmacy": {
+          "name": "CVS Pharmacy",
+          "distance_km": 0.0
+        }
+      },
+      "confidence": 76,
+      "data_quality": {
+        "completeness": 0.85,
+        "quality_tier": "good",
+        "needs_fallback": false,
+        "fallback_score": null,
+        "fallback_metadata": {
+          "fallback_used": false
+        },
+        "confidence": 76,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {}
+    },
+    "quality_education": {
+      "score": 71.67,
+      "weight": 4.0,
+      "contribution": 14.33,
+      "by_level": {
+        "elementary": [
+          {
+            "name": "School #378316162",
+            "rating": 80.0,
+            "state_percentile": 16.5,
+            "student_teacher_ratio": 14.8,
+            "trend": "improving",
+            "enrollment": 348,
+            "rank_movement": 24
+          },
+          {
+            "name": "School #849960328",
+            "rating": 40.0,
+            "state_percentile": 5.3,
+            "student_teacher_ratio": 13.7,
+            "trend": "declining",
+            "enrollment": 547,
+            "rank_movement": -62
+          }
+        ],
+        "middle": [
+          {
+            "name": "School #503093768",
+            "rating": 80.0,
+            "state_percentile": 94.6,
+            "student_teacher_ratio": 11.3,
+            "trend": "declining",
+            "enrollment": 261,
+            "rank_movement": -64
+          }
+        ],
+        "high": []
+      },
+      "total_schools_rated": 3,
+      "confidence": 85,
+      "data_quality": {
+        "fallback_used": false,
+        "reason": "School data available"
+      }
+    },
+    "housing_value": {
+      "score": 43.0,
+      "weight": 4.0,
+      "contribution": 8.6,
+      "breakdown": {
+        "local_affordability": 10.0,
+        "space": 25.0,
+        "value_efficiency": 8.0
+      },
+      "summary": {
+        "median_home_value": 1361400,
+        "median_household_income": 220714,
+        "median_rooms": 7.4,
+        "price_to_income_ratio": 6.17,
+        "cost_per_room": 183972,
+        "housing_type": "Large single-family home",
+        "affordability_rating": "Expensive"
+      },
+      "confidence": 90,
+      "data_quality": {
+        "completeness": 1.0,
+        "quality_tier": "excellent",
+        "needs_fallback": false,
+        "fallback_score": null,
+        "fallback_metadata": {
+          "fallback_used": false
+        },
+        "confidence": 90,
+        "expected_minimums": {
+          "local_facilities": 5,
+          "regional_facilities": 3,
+          "hospitals": 1,
+          "urgent_care": 4,
+          "pharmacies": 3,
+          "clinics": 3,
+          "major_airports": 1,
+          "regional_airports": 1,
+          "business_count": 25,
+          "business_types": 8
+        },
+        "data_sources": [
+          "osm"
+        ]
+      },
+      "area_classification": {}
+    }
+  },
+  "total_score": 73.33,
+  "token_allocation": {
+    "housing_value": 4.0,
+    "quality_education": 4.0,
+    "neighborhood_beauty": 4.0,
+    "active_outdoors": 2.0,
+    "neighborhood_amenities": 2.0,
+    "public_transit_access": 2.0,
+    "healthcare_access": 1.0,
+    "air_travel_access": 1.0
+  },
+  "allocation_type": "custom",
+  "overall_confidence": {
+    "average_confidence": 63.5,
+    "pillars_using_fallback": 0,
+    "fallback_percentage": 0.0,
+    "quality_tier_distribution": {
+      "fair": 1,
+      "poor": 1,
+      "excellent": 2,
+      "good": 2,
+      "very_poor": 1,
+      "unknown": 1
+    },
+    "overall_quality": "fair"
+  },
+  "data_quality_summary": {
+    "data_sources_used": [
+      "osm"
+    ],
+    "area_classification": {
+      "type": "suburban",
+      "metro_name": null
+    },
+    "total_pillars": 8,
+    "data_completeness": "low"
+  },
+  "metadata": {
+    "version": "3.0.0",
+    "architecture": "8 Purpose-Driven Pillars",
+    "pillars": {
+      "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
+      "neighborhood_beauty": "Is my environment beautiful? (Trees, green space, historic buildings, art)",
+      "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
+      "air_travel_access": "How easily can I fly? (Airport proximity and type)",
+      "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
+      "healthcare_access": "Can I get medical care? (Hospitals, clinics, pharmacies)",
+      "quality_education": "Can I raise kids well? (School ratings by level)",
+      "housing_value": "Can I afford space? (Affordability relative to local income)"
+    },
+    "data_sources": [
+      "Nominatim (geocoding)",
+      "SchoolDigger API (schools)",
+      "OpenStreetMap Overpass API (recreation, beauty, amenities, healthcare)",
+      "Census Bureau ACS (housing, building age, tree canopy)",
+      "NYC Open Data (street trees)",
+      "OurAirports (airport database)",
+      "Transitland API (public transit GTFS)"
+    ],
+    "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter."
+  }
+}

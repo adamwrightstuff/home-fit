@@ -6,6 +6,7 @@ Removed fake components (visual aesthetics, architectural quality)
 
 from typing import Dict, Tuple, Optional
 from data_sources import osm_api, census_api, data_quality
+from data_sources.radius_profiles import get_radius_profile
 
 # Try to import NYC API (only available for NYC addresses)
 try:
@@ -16,7 +17,8 @@ except ImportError:
 
 def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None, 
                                    beauty_weights: Optional[str] = None,
-                                   location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+                                   location_scope: Optional[str] = None,
+                                   area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate neighborhood beauty score (0-100) using only real data.
     
@@ -38,7 +40,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Component 1: Trees (0-50)
     print(f"   🌳 Analyzing tree canopy...")
-    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope)
+    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=area_type)
     
     # Component 2: Historic Character (0-50)
     print(f"   🏛️  Analyzing historic character...")
@@ -63,6 +65,24 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     density = ca.get_population_density(lat, lon)
     area_type = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
+
+    # If GEE canopy succeeded, reflect that in data_quality (no fallback; include source)
+    try:
+        tree_sources = tree_details.get('sources', [])
+        used_gee = any(isinstance(s, str) and s.lower().startswith('gee') for s in tree_sources)
+        if used_gee:
+            quality_metrics['needs_fallback'] = False
+            quality_metrics['fallback_score'] = None
+            fm = quality_metrics.get('fallback_metadata', {}) or {}
+            fm['fallback_used'] = False
+            quality_metrics['fallback_metadata'] = fm
+            # ensure data_sources lists gee
+            ds = quality_metrics.get('data_sources', []) or []
+            if 'gee' not in ds:
+                ds.append('gee')
+            quality_metrics['data_sources'] = ds
+    except Exception:
+        pass
     
     # Build response
     breakdown = {
@@ -114,7 +134,7 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
         return {'trees': 0.5, 'historic': 0.5}
 
 
-def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None, area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     score = 0.0
     sources = []
@@ -125,19 +145,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     try:
         from data_sources import census_api, data_quality
         density = census_api.get_population_density(lat, lon)
-        area_type = data_quality.detect_area_type(lat, lon, density)
+        detected_area_type = data_quality.detect_area_type(lat, lon, density)
+        area_type = area_type or detected_area_type
         
-        # Adjust radius based on area type and location scope
-        if area_type in ['rural', 'exurban']:
-            radius_m = 2000  # 2km for rural/exurban
-        elif area_type == 'suburban':
-            radius_m = 2000  # 2km for suburban (increased from 1.5km for better coverage)
-        else:
-            # Urban core: use smaller radius for neighborhoods to avoid capturing adjacent areas
-            if location_scope == 'neighborhood':
-                radius_m = 1000  # 1km for neighborhoods (don't expand)
-            else:
-                radius_m = 1000  # 1km for cities (may expand)
+        # Adjust radius based on centralized profile
+        rp = get_radius_profile('neighborhood_beauty', area_type, location_scope)
+        radius_m = int(rp.get('tree_canopy_radius_m', 1000))
+        print(f"   🔧 Radius profile (beauty): area_type={area_type}, scope={location_scope}, tree_canopy_radius={radius_m}m")
         
         from data_sources.gee_api import get_tree_canopy_gee
         gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
@@ -272,22 +286,7 @@ def _score_nyc_trees(tree_count: int) -> float:
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:
-    """Score tree canopy percentage with more generous suburban scoring."""
-    if canopy_pct >= 30:
-        return 50.0
-    elif canopy_pct >= 20:
-        return 45.0
-    elif canopy_pct >= 15:
-        return 40.0
-    elif canopy_pct >= 10:
-        return 35.0
-    elif canopy_pct >= 5:
-        return 25.0
-    elif canopy_pct >= 2:
-        return 15.0
-    elif canopy_pct >= 1:
-        return 10.0
-    elif canopy_pct >= 0.5:
-        return 5.0
-    else:
-        return canopy_pct * 5.0  # Less harsh penalty for very low values
+    """Score tree canopy percentage linearly up to 50 points at ~45% canopy."""
+    canopy = max(0.0, min(100.0, canopy_pct))
+    # 45% -> 50 points; linear scale, cap at 50
+    return min(50.0, (canopy / 45.0) * 50.0)

@@ -168,29 +168,40 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     location_scope = detect_location_scope(lat, lon, geocode_data)
     print(f"📍 Location scope: {location_scope}\n")
 
+    # Compute a single area_type centrally for consistent radius profiles
+    try:
+        from data_sources import census_api as _ca
+        from data_sources import data_quality as _dq
+        _density = _ca.get_population_density(lat, lon) or 0.0
+        area_type = _dq.detect_area_type(lat, lon, _density)
+    except Exception:
+        area_type = "unknown"
+
     # Step 2: Calculate all pillar scores
     print("📊 Calculating pillar scores...\n")
 
     # Pillar 1: Active Outdoors
-    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city)
+    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city, area_type=area_type, location_scope=location_scope)
 
     # Pillar 2: Neighborhood Beauty (Simplified - real data only)
     beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city, 
                                                                    beauty_weights=beauty_weights,
-                                                                   location_scope=location_scope)
+                                                                   location_scope=location_scope,
+                                                                   area_type=area_type)
 
     # Pillar 3: Neighborhood Amenities
     amenities_score, amenities_details = get_neighborhood_amenities_score(lat, lon, include_chains=include_chains,
-                                                                           location_scope=location_scope)
+                                                                           location_scope=location_scope,
+                                                                           area_type=area_type)
 
     # Pillar 4: Air Travel Access
     air_travel_score, air_travel_details = get_air_travel_score(lat, lon)
 
     # Pillar 5: Public Transit Access
-    transit_score, transit_details = get_public_transit_score(lat, lon)
+    transit_score, transit_details = get_public_transit_score(lat, lon, area_type=area_type, location_scope=location_scope)
 
     # Pillar 6: Healthcare Access
-    healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon)
+    healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon, area_type=area_type, location_scope=location_scope)
 
     # Pillar 7: Quality Education (schools)
     schools_found = False

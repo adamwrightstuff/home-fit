@@ -10,6 +10,7 @@ New Approach (2025):
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 import math
+from data_sources.radius_profiles import get_radius_profile
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -27,7 +28,8 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = False, 
-                                     location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+                                     location_scope: Optional[str] = None,
+                                     area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate neighborhood amenities score (0-100) using dual scoring:
     
@@ -42,9 +44,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     """
     print(f"🍽️  Analyzing neighborhood amenities and walkability...")
     
-    # Query businesses with radius adjusted for location scope
-    # Neighborhoods use smaller radius to avoid capturing adjacent areas
-    query_radius = 1000 if location_scope == 'neighborhood' else 1500
+    # Query businesses with centralized radius profile
+    profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
+    query_radius = int(profile.get('query_radius_m', 1500))
+    print(f"   🔧 Radius profile (amenities): area_type={area_type}, scope={location_scope}, query_radius={query_radius}m")
     business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains)
     
     if business_data is None:
@@ -62,8 +65,9 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         return 0, _empty_breakdown()
     
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
-    # Use tighter filter for neighborhoods to avoid capturing adjacent areas
-    walkable_distance = 800 if location_scope == 'neighborhood' else 1000
+    profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
+    walkable_distance = int(profile.get('walkable_distance_m', 1000))
+    print(f"   🔧 Walkability window (amenities): walkable={walkable_distance}m")
     nearby = [b for b in all_businesses if b["distance_m"] <= walkable_distance]
     tier1_near = [b for b in tier1_all if b["distance_m"] <= walkable_distance]
     tier2_near = [b for b in tier2_all if b["distance_m"] <= walkable_distance]
