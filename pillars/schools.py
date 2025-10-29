@@ -133,11 +133,22 @@ def get_school_data(
     # Calculate average with quality boost for high-performing districts
     avg_rating = sum(all_ratings) / len(all_ratings)
     
+    # Count excellent schools (80+) and apply district quality boost
+    excellent_schools = sum(1 for r in all_ratings if r >= 80)
+    majority_excellent = excellent_schools >= len(all_ratings) * 0.6  # 60%+
+    
     # Boost for districts with multiple highly-rated schools
-    # Larchmont-style districts with 80+ average should score 80-100
+    # This handles cases where one outlier drags down average
     if avg_rating >= 80 and len(all_ratings) >= 3:
         # Excellent district with multiple top schools
         avg_rating = min(100, avg_rating + 10)
+    elif avg_rating >= 70 and excellent_schools >= 3:
+        # Very good district: 70+ average with 3+ excellent schools
+        # One outlier shouldn't penalize top-tier districts
+        avg_rating = min(95, avg_rating + 8)
+    elif avg_rating >= 65 and majority_excellent and len(all_ratings) >= 3:
+        # Good district: 65+ average with majority excellent
+        avg_rating = min(90, avg_rating + 5)
     elif avg_rating >= 70 and len(all_ratings) >= 4:
         # Very good district
         avg_rating = min(95, avg_rating + 5)

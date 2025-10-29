@@ -6,6 +6,7 @@ Queries school ratings and data
 import os
 import requests
 from typing import List, Optional, Dict
+from .cache import cached, CACHE_TTL
 
 SCHOOLDIGGER_BASE = "https://api.schooldigger.com/v2.1"
 
@@ -31,6 +32,7 @@ STATE_ABBREVIATIONS = {
 }
 
 
+@cached(ttl_seconds=CACHE_TTL['school_data'])
 def get_schools(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
@@ -38,6 +40,8 @@ def get_schools(
 ) -> Optional[List[Dict]]:
     """
     Query SchoolDigger API for schools.
+    
+    Results are cached for 30 days to preserve API quota.
 
     Returns:
         List of school dicts or None if API fails
