@@ -151,13 +151,13 @@ def _get_fallback_urgent_care(lat: float, lon: float) -> List[Dict]:
     urgent_care_facilities = []
     
     for name, facility_lat, facility_lon, facility_type in MAJOR_URGENT_CARE_CHAINS:
-        distance_m = _haversine_distance(lat, lon, facility_lat, facility_lon)
+        distance_km = _haversine_distance(lat, lon, facility_lat, facility_lon)
         
         # Only include facilities within 10km
-        if distance_m <= 10000:
+        if distance_km <= 10000:
             urgent_care_facilities.append({
                 "name": name,
-                "distance_m": round(distance_m, 0),
+                "distance_km": round(distance_km, 0),
                 "source": "fallback_database"
             })
     
@@ -255,12 +255,12 @@ def _score_hospitals(lat: float, lon: float) -> Tuple[float, Optional[Dict]]:
     min_distance = float('inf')
 
     for name, hosp_lat, hosp_lon, size in MAJOR_HOSPITALS:
-        distance_m = _haversine_distance(lat, lon, hosp_lat, hosp_lon)
-        if distance_m < min_distance:
-            min_distance = distance_m
+        distance_km = _haversine_distance(lat, lon, hosp_lat, hosp_lon)
+        if distance_km < min_distance:
+            min_distance = distance_km
             nearest = {
                 "name": name,
-                "distance_km": round(distance_m / 1000, 1),
+                "distance_km": round(distance_km / 1000, 1),
                 "size": size
             }
 
@@ -329,8 +329,8 @@ def _score_urgent_care(urgent_care: List[Dict]) -> float:
     if not urgent_care:
         return 0.0
 
-    closest = min(urgent_care, key=lambda x: x["distance_m"])
-    dist = closest["distance_m"]
+    closest = min(urgent_care, key=lambda x: x["distance_km"])
+    dist = closest["distance_km"]
     count = len(urgent_care)
 
     # Distance score (0-20)
@@ -361,8 +361,8 @@ def _score_pharmacies(pharmacies: List[Dict]) -> float:
     if not pharmacies:
         return 0.0
 
-    closest = min(pharmacies, key=lambda x: x["distance_m"])
-    dist = closest["distance_m"]
+    closest = min(pharmacies, key=lambda x: x["distance_km"])
+    dist = closest["distance_km"]
     count = len(pharmacies)
 
     # More generous distance scoring
@@ -459,17 +459,17 @@ def _build_summary(nearest_hospital: Optional[Dict], urgent_care: List,
     }
 
     if urgent_care:
-        closest = min(urgent_care, key=lambda x: x["distance_m"])
+        closest = min(urgent_care, key=lambda x: x["distance_km"])
         summary["nearest_urgent_care"] = {
             "name": closest["name"],
-            "distance_m": closest["distance_m"]
+            "distance_km": closest["distance_km"]
         }
 
     if pharmacies:
-        closest = min(pharmacies, key=lambda x: x["distance_m"])
+        closest = min(pharmacies, key=lambda x: x["distance_km"])
         summary["nearest_pharmacy"] = {
             "name": closest["name"],
-            "distance_m": closest["distance_m"]
+            "distance_km": closest["distance_km"]
         }
 
     return summary
