@@ -52,6 +52,12 @@ def get_school_data(
     all_ratings = []
 
     for school in schools:
+        # Exclude private schools - SchoolDigger doesn't have quality/rating data for private schools
+        is_private = school.get("isPrivate", False)
+        if is_private:
+            print(f"   ⚠️  Excluding {school.get('schoolName', 'Unknown')} - private school (no quality data available)")
+            continue
+        
         # Get school info - prioritize schoolName, fallback to name, avoid using IDs
         name = school.get("schoolName")
         if not name:
