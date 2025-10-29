@@ -128,10 +128,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
         elif area_type == 'suburban':
             radius_m = 2000  # 2km for suburban (increased from 1.5km for better coverage)
         else:
-            radius_m = 1000  # 1km for urban
+            radius_m = 1000  # 1km for urban (downtown core)
         
         from data_sources.gee_api import get_tree_canopy_gee
         gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
+        
+        # Fallback: If urban core returns 0% or very low, try larger radius
+        # Downtown cores may be concrete but surrounding neighborhoods have trees
+        if (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
+            print(f"   🔄 Urban core returned {gee_canopy if gee_canopy else 'None'}% - trying larger radius...")
+            gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+            if gee_canopy is not None and gee_canopy >= 0.1:
+                print(f"   ✅ Larger radius (2km) found {gee_canopy:.1f}% canopy")
+        
         if gee_canopy is not None and gee_canopy >= 0.1:  # Threshold to avoid false zeros
             canopy_score = _score_tree_canopy(gee_canopy)
             score = canopy_score
