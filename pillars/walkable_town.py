@@ -7,7 +7,7 @@ New Approach (2025):
 - Location Quality (0-40): Am I in a vibrant, walkable location?
 """
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 import math
 
