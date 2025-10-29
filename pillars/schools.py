@@ -52,12 +52,6 @@ def get_school_data(
     all_ratings = []
 
     for school in schools:
-        # Exclude private schools - SchoolDigger doesn't have quality/rating data for private schools
-        is_private = school.get("isPrivate", False)
-        if is_private:
-            print(f"   ⚠️  Excluding {school.get('schoolName', 'Unknown')} - private school (no quality data available)")
-            continue
-        
         # Get school info - prioritize schoolName, fallback to name, avoid using IDs
         name = school.get("schoolName")
         if not name:
@@ -85,7 +79,14 @@ def get_school_data(
             if rank_stars is not None:
                 rating = float(rank_stars) * 20  # Convert 0-5 stars to 0-100
 
+        # Exclude schools without valid ratings (includes private schools without rankHistory)
+        # Private schools CAN have ratings in SchoolDigger, but if they don't, exclude them
+        is_private = school.get("isPrivate", False)
         if rating is None or rating == 0:
+            if is_private:
+                print(f"   ⚠️  Excluding {name} - private school with no quality data")
+            else:
+                print(f"   ⚠️  Excluding {name} - no rating data available")
             continue
             
         # Filter out schools with suspiciously low ratings (likely outside the area or data errors)
