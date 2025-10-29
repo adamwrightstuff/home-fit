@@ -15,7 +15,7 @@ from pillars.neighborhood_beauty import get_neighborhood_beauty_score
 from pillars.walkable_town import get_walkable_town_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
-from pillars.healthcare_access import get_healthcare_access_score
+# from pillars.healthcare_access import get_healthcare_access_score  # Temporarily disabled
 from pillars.housing_value import get_housing_value_score
 
 ##########################
@@ -182,7 +182,8 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     transit_score, transit_details = get_public_transit_score(lat, lon)
 
     # Pillar 6: Healthcare Access
-    healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon)
+    # healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon)  # Temporarily disabled
+    healthcare_score, healthcare_details = 50.0, {"breakdown": {}, "summary": "Healthcare temporarily disabled", "data_quality": {"confidence": 0}}
 
     # Pillar 7: Quality Education (schools)
     schools_found = False
