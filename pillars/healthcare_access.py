@@ -386,15 +386,6 @@ def _score_urgent_care(urgent_care: List[Dict]) -> float:
                   "dental" in name_lower):
                 clinics.append(facility)
 
-        # Debug output
-        print(f"   🔍 DEBUG: OSM returned {len(elements)} total elements")
-        print(f"   🔍 DEBUG: Found {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics")
-        if len(elements) > 0:
-            print(f"   🔍 DEBUG: Sample OSM elements (first 3):")
-            for i, elem in enumerate(elements[:3]):
-                tags = elem.get("tags", {})
-                print(f"      Element {i+1}: {tags.get('name', 'Unnamed')} - amenity={tags.get('amenity')}, healthcare={tags.get('healthcare')}")
-        
         return {
             "urgent_care": urgent_care,
             "pharmacies": pharmacies,
