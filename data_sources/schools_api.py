@@ -4,6 +4,7 @@ Queries school ratings and data
 """
 
 import os
+import time
 import requests
 from typing import List, Optional, Dict
 from .cache import cached, CACHE_TTL
@@ -11,7 +12,6 @@ from .cache import cached, CACHE_TTL
 SCHOOLDIGGER_BASE = "https://api.schooldigger.com/v2.1"
 
 # Track API usage for quota management
-import time
 _request_count = 0
 _last_request_time = 0
 QUOTA_WARNING_THRESHOLD = 15  # Warn before 20/day limit
