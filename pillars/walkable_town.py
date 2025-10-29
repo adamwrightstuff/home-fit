@@ -26,7 +26,8 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return R * c
 
 
-def get_walkable_town_score(lat: float, lon: float, include_chains: bool = False) -> Tuple[float, Dict]:
+def get_walkable_town_score(lat: float, lon: float, include_chains: bool = False, 
+                             location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate walkable town score (0-100) using dual scoring:
     
@@ -41,8 +42,10 @@ def get_walkable_town_score(lat: float, lon: float, include_chains: bool = False
     """
     print(f"🏘️  Analyzing walkability and town vibrancy...")
     
-    # Query businesses once with larger radius (to detect town centers)
-    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1500, include_chains=include_chains)
+    # Query businesses with radius adjusted for location scope
+    # Neighborhoods use smaller radius to avoid capturing adjacent areas
+    query_radius = 1000 if location_scope == 'neighborhood' else 1500
+    business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains)
     
     if business_data is None:
         print("⚠️  OSM business data unavailable")
@@ -58,12 +61,14 @@ def get_walkable_town_score(lat: float, lon: float, include_chains: bool = False
         print("⚠️  No indie businesses found")
         return 0, _empty_breakdown()
     
-    # Step 1: Home Walkability (0-60) - What's within 1km?
-    nearby = [b for b in all_businesses if b["distance_m"] <= 1000]
-    tier1_near = [b for b in tier1_all if b["distance_m"] <= 1000]
-    tier2_near = [b for b in tier2_all if b["distance_m"] <= 1000]
-    tier3_near = [b for b in tier3_all if b["distance_m"] <= 1000]
-    tier4_near = [b for b in tier4_all if b["distance_m"] <= 1000]
+    # Step 1: Home Walkability (0-60) - What's within walkable distance?
+    # Use tighter filter for neighborhoods to avoid capturing adjacent areas
+    walkable_distance = 800 if location_scope == 'neighborhood' else 1000
+    nearby = [b for b in all_businesses if b["distance_m"] <= walkable_distance]
+    tier1_near = [b for b in tier1_all if b["distance_m"] <= walkable_distance]
+    tier2_near = [b for b in tier2_all if b["distance_m"] <= walkable_distance]
+    tier3_near = [b for b in tier3_all if b["distance_m"] <= walkable_distance]
+    tier4_near = [b for b in tier4_all if b["distance_m"] <= walkable_distance]
     
     density_score = _score_density(nearby, max_points=25)  # Scaled to 25
     variety_score = _score_variety(tier1_near, tier2_near, tier3_near, tier4_near, max_points=20)

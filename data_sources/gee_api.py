@@ -131,9 +131,9 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
             nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
             # Use 2021 data (most recent complete year at time of writing)
             nlcd_tcc = nlcd_collection.filter(ee.Filter.eq('year', 2021)).first().select('NLCD_Percent_Tree_Canopy_Cover')
-            # Use median reducer for robustness (less affected by water/buildings)
+            # Use mean reducer for accurate percentage coverage calculation
             tcc_stats = nlcd_tcc.reduceRegion(
-                reducer=ee.Reducer.median(),
+                reducer=ee.Reducer.mean(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
@@ -151,9 +151,9 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
         hansen_result = None
         try:
             hansen = ee.Image('UMD/hansen/global_forest_change_2024_v1_12').select('treecover2000')
-            # Use median reducer for robustness
+            # Use mean reducer for accurate percentage coverage calculation
             h_stats = hansen.reduceRegion(
-                reducer=ee.Reducer.median(),
+                reducer=ee.Reducer.mean(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
@@ -174,9 +174,9 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
             landcover = nlcd.select('landcover')
             # Classes: 40 Deciduous, 41 Evergreen, 42 Mixed, 43 Shrub/Scrub
             tree_classes = landcover.eq(40).Or(landcover.eq(41)).Or(landcover.eq(42)).Or(landcover.eq(43))
-            # Use median reducer for robustness
+            # Use mean reducer for accurate percentage coverage calculation
             canopy_stats = tree_classes.reduceRegion(
-                reducer=ee.Reducer.median(),
+                reducer=ee.Reducer.mean(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9

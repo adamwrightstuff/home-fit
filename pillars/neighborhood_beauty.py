@@ -15,7 +15,8 @@ except ImportError:
 
 
 def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None, 
-                                   beauty_weights: Optional[str] = None) -> Tuple[float, Dict]:
+                                   beauty_weights: Optional[str] = None,
+                                   location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate neighborhood beauty score (0-100) using only real data.
     
@@ -37,11 +38,11 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Component 1: Trees (0-50)
     print(f"   🌳 Analyzing tree canopy...")
-    tree_score, tree_details = _score_trees(lat, lon, city)
+    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope)
     
     # Component 2: Historic Character (0-50)
     print(f"   🏛️  Analyzing historic character...")
-    historic_score, historic_details = _score_historic(lat, lon)
+    historic_score, historic_details = _score_historic(lat, lon, location_scope=location_scope)
     
     # Apply weights
     weighted_score = (tree_score * weights['trees']) + (historic_score * weights['historic'])
@@ -109,7 +110,7 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
         return {'trees': 0.5, 'historic': 0.5}
 
 
-def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Dict]:
+def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     score = 0.0
     sources = []
@@ -122,20 +123,36 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
         density = census_api.get_population_density(lat, lon)
         area_type = data_quality.detect_area_type(lat, lon, density)
         
-        # Adjust radius based on area type: suburban/rural need larger buffers
+        # Adjust radius based on area type and location scope
         if area_type in ['rural', 'exurban']:
             radius_m = 2000  # 2km for rural/exurban
         elif area_type == 'suburban':
             radius_m = 2000  # 2km for suburban (increased from 1.5km for better coverage)
         else:
-            radius_m = 1000  # 1km for urban (downtown core)
+            # Urban core: use smaller radius for neighborhoods to avoid capturing adjacent areas
+            if location_scope == 'neighborhood':
+                radius_m = 1000  # 1km for neighborhoods (don't expand)
+            else:
+                radius_m = 1000  # 1km for cities (may expand)
         
         from data_sources.gee_api import get_tree_canopy_gee
         gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
         
-        # Fallback: If urban core returns 0% or very low, try larger radius
-        # Downtown cores may be concrete but surrounding neighborhoods have trees
-        if (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
+        # Fallback: Only expand radius for cities (not neighborhoods)
+        # Neighborhoods should stay within their boundaries
+        if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
+            print(f"   🔄 Urban core returned {gee_canopy:.1f}% - trying larger radius to capture residential neighborhoods...")
+            gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+            if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
+                print(f"   ✅ Larger radius (2km) found {gee_canopy_larger:.1f}% canopy (vs {gee_canopy:.1f}% at 1km)")
+                gee_canopy = gee_canopy_larger
+                # If still below 30%, try 3km (closer to city-wide assessments, only for cities)
+                if gee_canopy < 30.0:
+                    gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
+                    if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
+                        print(f"   ✅ Even larger radius (3km) found {gee_canopy_3km:.1f}% canopy (vs {gee_canopy:.1f}% at 2km)")
+                        gee_canopy = gee_canopy_3km
+        elif location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
             print(f"   🔄 Urban core returned {gee_canopy if gee_canopy else 'None'}% - trying larger radius...")
             gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
             if gee_canopy is not None and gee_canopy >= 0.1:
@@ -167,7 +184,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
     
     # Priority 3: OSM parks as proxy (fallback)
     if score == 0.0:
-        tree_data = osm_api.query_green_spaces(lat, lon, radius_m=500)
+        # Use appropriate radius based on location scope
+        parks_radius = 800 if location_scope == 'neighborhood' else 500
+        tree_data = osm_api.query_green_spaces(lat, lon, radius_m=parks_radius)
         if tree_data:
             parks = tree_data.get('parks', [])
             if parks:
@@ -187,7 +206,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
     return score, details
 
 
-def _score_historic(lat: float, lon: float) -> Tuple[float, Dict]:
+def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None) -> Tuple[float, Dict]:
     """Score historic character (0-50) based on building age and landmarks."""
     
     # Get building age from Census
@@ -212,8 +231,9 @@ def _score_historic(lat: float, lon: float) -> Tuple[float, Dict]:
     else:
         score = 10.0
     
-    # Get OSM historic landmarks
-    charm_data = osm_api.query_charm_features(lat, lon, radius_m=500)
+    # Get OSM historic landmarks - expand radius to 1km for better coverage
+    landmarks_radius = 1000  # Increased from 500m for both neighborhoods and cities
+    charm_data = osm_api.query_charm_features(lat, lon, radius_m=landmarks_radius)
     if charm_data and charm_data.get('historic'):
         landmarks_count = len(charm_data['historic'])
         if landmarks_count > 0:

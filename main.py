@@ -149,8 +149,9 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     print(f"🏠 HomeFit Score Request: {location}")
     print(f"{'='*60}")
 
-    # Step 1: Geocode the location
-    geo_result = geocode(location)
+    # Step 1: Geocode the location (with full result for neighborhood detection)
+    from data_sources.geocoding import geocode_with_full_result
+    geo_result = geocode_with_full_result(location)
 
     if not geo_result:
         raise HTTPException(
@@ -158,9 +159,14 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             detail="Could not geocode the provided location. Please check the address."
         )
 
-    lat, lon, zip_code, state, city = geo_result
+    lat, lon, zip_code, state, city, geocode_data = geo_result
     print(f"✅ Coordinates: {lat}, {lon}")
-    print(f"📮 Location: {city}, {state} {zip_code}\n")
+    print(f"📮 Location: {city}, {state} {zip_code}")
+    
+    # Detect if this is a neighborhood vs. standalone city
+    from data_sources.data_quality import detect_location_scope
+    location_scope = detect_location_scope(lat, lon, geocode_data)
+    print(f"📍 Location scope: {location_scope}\n")
 
     # Step 2: Calculate all pillar scores
     print("📊 Calculating pillar scores...\n")
@@ -170,10 +176,12 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
 
     # Pillar 2: Neighborhood Beauty (Simplified - real data only)
     beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city, 
-                                                                   beauty_weights=beauty_weights)
+                                                                   beauty_weights=beauty_weights,
+                                                                   location_scope=location_scope)
 
     # Pillar 3: Neighborhood Amenities (walkable town)
-    amenities_score, amenities_details = get_walkable_town_score(lat, lon, include_chains=include_chains)
+    amenities_score, amenities_details = get_walkable_town_score(lat, lon, include_chains=include_chains,
+                                                                  location_scope=location_scope)
 
     # Pillar 4: Air Travel Access
     air_travel_score, air_travel_details = get_air_travel_score(lat, lon)

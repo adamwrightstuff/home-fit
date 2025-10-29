@@ -40,6 +40,49 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None) ->
         return "rural"
 
 
+def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict] = None) -> str:
+    """
+    Detect if location is a neighborhood within a larger city vs. standalone city.
+    
+    Uses Nominatim address structure + density - NO hardcoded city lists.
+    
+    Args:
+        lat, lon: Coordinates
+        geocode_result: Optional full Nominatim geocoding result (for efficiency)
+    
+    Returns:
+        'neighborhood' or 'city' (American spelling)
+    """
+    # Method 1: Check Nominatim address structure (most reliable)
+    if geocode_result and 'address' in geocode_result:
+        address = geocode_result.get('address', {})
+        
+        # Nominatim uses British spelling "neighbourhood" in responses, but we check both
+        if address.get('neighbourhood') or address.get('neighborhood') or address.get('suburb'):
+            # Double-check: if there's also a city field above it, definitely a neighborhood
+            if address.get('city') or address.get('town'):
+                return "neighborhood"  # American spelling for our code
+    
+    # Method 2: Very high density (>30k) suggests neighborhood in major city
+    density = get_population_density(lat, lon)
+    if density and density > 30000:
+        return "neighborhood"
+    
+    # Method 3: Check Census tract - neighborhoods often have smaller tracts
+    tract = get_census_tract(lat, lon)
+    if tract:
+        props = tract.get('properties', {})
+        tract_area_sqm = props.get('ALAND', 0)  # Area in sq meters
+        if tract_area_sqm > 0:
+            tract_area_sqkm = tract_area_sqm / 1_000_000
+            # Very small tracts (<2 sq km) with high density = likely neighborhood
+            if tract_area_sqkm < 2 and density and density > 15000:
+                return "neighborhood"
+    
+    # Default: assume standalone city
+    return "city"
+
+
 class DataQualityManager:
     """Manages data quality assessment and fallback strategies."""
     
