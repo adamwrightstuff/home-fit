@@ -44,8 +44,12 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     print(f"   🏛️  Analyzing historic character...")
     historic_score, historic_details = _score_historic(lat, lon, location_scope=location_scope)
     
-    # Apply weights
-    weighted_score = (tree_score * weights['trees']) + (historic_score * weights['historic'])
+    # Apply weights: Scale each component's max points based on weight
+    # Example: weights={'trees': 0.6, 'historic': 0.4} means trees out of 60, historic out of 40
+    # Both components currently return 0-50, so we scale them to their weighted max:
+    max_tree_points = weights['trees'] * 100  # e.g., 0.6 * 100 = 60
+    max_historic_points = weights['historic'] * 100  # e.g., 0.4 * 100 = 40
+    total_score = (tree_score * (max_tree_points / 50)) + (historic_score * (max_historic_points / 50))
     
     # Assess data quality
     combined_data = {
@@ -62,7 +66,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Build response
     breakdown = {
-        "score": round(weighted_score, 1),
+        "score": round(total_score, 1),
         "breakdown": {
             "trees": round(tree_score, 1),
             "historic_character": round(historic_score, 1)
@@ -76,12 +80,12 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     }
     
     # Log results
-    print(f"✅ Neighborhood Beauty Score: {weighted_score:.0f}/100")
-    print(f"   🌳 Trees: {tree_score:.0f}/50 (weight: {weights['trees']})")
-    print(f"   🏛️  Historic: {historic_score:.0f}/50 (weight: {weights['historic']})")
+    print(f"✅ Neighborhood Beauty Score: {total_score:.0f}/100")
+    print(f"   🌳 Trees: {tree_score:.0f}/50")
+    print(f"   🏛️  Historic: {historic_score:.0f}/50")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
     
-    return round(weighted_score, 1), breakdown
+    return round(total_score, 1), breakdown
 
 
 def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
@@ -239,6 +243,9 @@ def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None
         if landmarks_count > 0:
             # Bonus for historic landmarks (up to 10 points)
             score += min(10, landmarks_count * 2)
+    
+    # Cap historic score at 50 (it's a 0-50 component)
+    score = min(50.0, score)
     
     details = {
         "median_year_built": median_year,
