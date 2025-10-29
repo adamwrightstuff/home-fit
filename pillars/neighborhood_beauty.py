@@ -223,16 +223,22 @@ def _score_nyc_trees(tree_count: int) -> float:
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:
-    """Score tree canopy percentage."""
-    if canopy_pct >= 50:
+    """Score tree canopy percentage with more generous suburban scoring."""
+    if canopy_pct >= 30:
         return 50.0
-    elif canopy_pct >= 40:
-        return 45.0
-    elif canopy_pct >= 30:
-        return 40.0
     elif canopy_pct >= 20:
-        return 30.0
+        return 45.0
+    elif canopy_pct >= 15:
+        return 40.0
     elif canopy_pct >= 10:
-        return 20.0
+        return 35.0
+    elif canopy_pct >= 5:
+        return 25.0
+    elif canopy_pct >= 2:
+        return 15.0
+    elif canopy_pct >= 1:
+        return 10.0
+    elif canopy_pct >= 0.5:
+        return 5.0
     else:
-        return canopy_pct * 1.5
+        return canopy_pct * 5.0  # Less harsh penalty for very low values

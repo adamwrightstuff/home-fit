@@ -1225,10 +1225,24 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     query = f"""
     [out:json][timeout:40];
     (
-      // HOSPITALS & MAJOR MEDICAL CENTERS
+      // HOSPITALS & MAJOR MEDICAL CENTERS - EXPANDED DETECTION
       node["amenity"="hospital"](around:{radius_m},{lat},{lon});
       way["amenity"="hospital"](around:{radius_m},{lat},{lon});
       relation["amenity"="hospital"](around:{radius_m},{lat},{lon});
+      
+      // Additional hospital tags
+      node["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+      way["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+      relation["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+      
+      // Medical centers and health centers
+      node["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
+      way["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
+      relation["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
+      
+      node["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
+      way["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
+      relation["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
       
       // URGENT CARE & EMERGENCY CARE
       node["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
@@ -1301,16 +1315,27 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                     "tags": tags
                 }
                 
-                # Categorize facilities
-                if amenity == "hospital":
+                # Categorize facilities - IMPROVED LOGIC
+                healthcare = tags.get("healthcare", "")
+                
+                # Hospitals and major medical centers
+                if (amenity == "hospital" or 
+                    healthcare == "hospital" or 
+                    amenity == "medical_centre" or 
+                    healthcare == "medical_centre"):
                     hospitals.append(facility)
-                elif amenity == "emergency_ward" or tags.get("emergency") == "yes":
+                # Emergency care and urgent care
+                elif (amenity == "emergency_ward" or 
+                      tags.get("emergency") == "yes" or
+                      healthcare == "emergency"):
                     urgent_care.append(facility)
+                # Clinics and medical centers
                 elif amenity in ["clinic", "doctors"]:
                     if amenity == "clinic":
                         clinics.append(facility)
                     else:
                         doctors.append(facility)
+                # Pharmacies
                 elif amenity == "pharmacy" or tags.get("shop") == "pharmacy":
                     pharmacies.append(facility)
             

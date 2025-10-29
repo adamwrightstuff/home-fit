@@ -135,7 +135,25 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         except Exception as nlcd_tcc_error:
             print(f"   ⚠️  NLCD TCC unavailable: {nlcd_tcc_error}")
 
-        # Priority 2: NLCD Land Cover forest classes (rural/forested, USA-only)
+        # Priority 2: Hansen Global Tree Cover (more reliable, global coverage)
+        try:
+            hansen = ee.Image('UMD/hansen/global_forest_change_2022_v1_10').select('treecover2000')
+            h_stats = hansen.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=30,
+                maxPixels=1e9
+            )
+            h_mean = h_stats.get('treecover2000').getInfo()
+            if h_mean is not None and h_mean >= 0.1:
+                print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
+                return min(100, max(0, h_mean))
+            else:
+                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (too low or unavailable)")
+        except Exception as hansen_error:
+            print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
+
+        # Priority 3: NLCD Land Cover forest classes (rural/forested, USA-only)
         try:
             nlcd = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021')
             landcover = nlcd.select('landcover')
@@ -156,24 +174,6 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
                 print("   ⚠️  NLCD Land Cover forest classes indicate ~0% within buffer")
         except Exception as nlcd_error:
             print(f"   ⚠️  NLCD Land Cover unavailable: {nlcd_error}")
-
-        # Priority 3: Hansen/UMD global tree cover (international/global fallback)
-        try:
-            hansen = ee.Image('UMD/hansen/global_forest_change_2022_v1_10').select('treecover2000')
-            h_stats = hansen.reduceRegion(
-                reducer=ee.Reducer.mean(),
-                geometry=buffer,
-                scale=30,
-                maxPixels=1e9
-            )
-            h_mean = h_stats.get('treecover2000').getInfo()
-            if h_mean is not None and h_mean >= 0.1:
-                print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
-                return min(100, max(0, h_mean))
-            else:
-                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (too low or unavailable)")
-        except Exception as hansen_error:
-            print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
         
         # Priority 4: Sentinel-2 NDVI fallback (recent imagery, cloud-limited)
         try:
