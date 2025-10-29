@@ -92,7 +92,7 @@ except Exception as e:
     GEE_AVAILABLE = False
 
 
-def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optional[float]:
+def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type: Optional[str] = None) -> Optional[float]:
     """
     Get tree canopy percentage using Google Earth Engine.
     
@@ -103,6 +103,7 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         lat: Latitude
         lon: Longitude  
         radius_m: Analysis radius in meters
+        area_type: Optional area type ('urban_core', 'suburban', 'rural', etc.) for adjustments
         
     Returns:
         Tree canopy percentage (0-100) or None if unavailable
@@ -119,30 +120,40 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         
         # Priority 1: NLCD/USGS Tree Canopy Cover (urban/suburban, USA-only, CONUS coverage)
         # This is the official USGS NLCD TCC dataset (2023 release with data 1985-2023)
+        nlcd_tcc_result = None
         try:
             nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
             # Use 2021 data (most recent complete year at time of writing)
             nlcd_tcc = nlcd_collection.filter(ee.Filter.eq('year', 2021)).first().select('NLCD_Percent_Tree_Canopy_Cover')
+            # Use median reducer for robustness (less affected by water/buildings)
             tcc_stats = nlcd_tcc.reduceRegion(
-                reducer=ee.Reducer.mean(),
+                reducer=ee.Reducer.median(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
             )
             tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
             if tcc_pct is not None and tcc_pct >= 0.1:
-                print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
-                return min(100, max(0, tcc_pct))
+                # Compensate for known NLCD underestimation in suburban areas
+                # Research shows ~10-15% underestimation, but higher for leafy suburbs like Westchester
+                if area_type == 'suburban':
+                    tcc_pct = tcc_pct * 1.20  # Add 20% compensation for suburban (increased from 15%)
+                    print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021, suburban adj): {tcc_pct:.1f}%")
+                else:
+                    print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
+                nlcd_tcc_result = min(100, max(0, tcc_pct))
             else:
                 print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (too low or unavailable)")
         except Exception as nlcd_tcc_error:
             print(f"   ⚠️  NLCD TCC unavailable: {nlcd_tcc_error}")
 
         # Priority 2: Hansen Global Tree Cover (more reliable, global coverage)
+        hansen_result = None
         try:
             hansen = ee.Image('UMD/hansen/global_forest_change_2024_v1_12').select('treecover2000')
+            # Use median reducer for robustness
             h_stats = hansen.reduceRegion(
-                reducer=ee.Reducer.mean(),
+                reducer=ee.Reducer.median(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
@@ -150,20 +161,22 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
             h_mean = h_stats.get('treecover2000').getInfo()
             if h_mean is not None and h_mean >= 0.1:
                 print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
-                return min(100, max(0, h_mean))
+                hansen_result = min(100, max(0, h_mean))
             else:
                 print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (too low or unavailable)")
         except Exception as hansen_error:
             print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
 
         # Priority 3: NLCD Land Cover forest classes (rural/forested, USA-only)
+        nlcd_landcover_result = None
         try:
             nlcd = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021')
             landcover = nlcd.select('landcover')
             # Classes: 40 Deciduous, 41 Evergreen, 42 Mixed, 43 Shrub/Scrub
             tree_classes = landcover.eq(40).Or(landcover.eq(41)).Or(landcover.eq(42)).Or(landcover.eq(43))
+            # Use median reducer for robustness
             canopy_stats = tree_classes.reduceRegion(
-                reducer=ee.Reducer.mean(),
+                reducer=ee.Reducer.median(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
@@ -172,11 +185,35 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
             if canopy_mean is not None and canopy_mean > 0:
                 canopy_percentage = canopy_mean * 100
                 print(f"   ✅ GEE Tree Canopy (NLCD Land Cover): {canopy_percentage:.1f}%")
-                return min(100, max(0, canopy_percentage))
+                nlcd_landcover_result = min(100, max(0, canopy_percentage))
             else:
                 print("   ⚠️  NLCD Land Cover forest classes indicate ~0% within buffer")
         except Exception as nlcd_error:
             print(f"   ⚠️  NLCD Land Cover unavailable: {nlcd_error}")
+        
+        # Prioritize NLCD TCC for suburban areas (most accurate), otherwise combine sources
+        if nlcd_tcc_result:
+            if area_type == 'suburban':
+                # For suburban areas, trust NLCD TCC as most accurate (already has adjustment)
+                print(f"   📊 Using NLCD TCC as primary source for suburban area")
+                return nlcd_tcc_result
+        
+        # For other areas or when NLCD unavailable, combine multiple sources
+        sources = []
+        if nlcd_tcc_result:
+            sources.append(nlcd_tcc_result)
+        if hansen_result:
+            sources.append(hansen_result)
+        if nlcd_landcover_result:
+            sources.append(nlcd_landcover_result)
+        
+        if len(sources) > 1:
+            # Average multiple sources for more robust estimate
+            combined_result = sum(sources) / len(sources)
+            print(f"   📊 Combined result (averaged {len(sources)} sources): {combined_result:.1f}%")
+            return min(100, max(0, combined_result))
+        elif len(sources) == 1:
+            return sources[0]
         
         # Priority 4: Sentinel-2 NDVI fallback (recent imagery, cloud-limited)
         try:
