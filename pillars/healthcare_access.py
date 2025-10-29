@@ -317,15 +317,10 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
         print(f"   ⚠️  Healthcare query error: {e}")
         return {
             "hospitals": [],
-            "urgent_care": [],
-            "pharmacies": [],
-            "clinics": [],
             "doctors": []
+        }
 
 def _score_urgent_care(urgent_care: List[Dict]) -> float:
-
-        # Build nodes dict
-        for elem in elements:
             if elem.get("type") == "node":
                 nodes_dict[elem["id"]] = elem
 
