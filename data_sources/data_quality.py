@@ -124,7 +124,7 @@ class DataQualityManager:
                 'active_outdoors': 60,
                 'healthcare_access': 70,
                 'air_travel_access': 80,
-                'walkable_town': 75,
+                'neighborhood_amenities': 75,
                 'neighborhood_beauty': 50,
                 'public_transit_access': 65,
                 'quality_education': 60,
@@ -134,7 +134,7 @@ class DataQualityManager:
                 'active_outdoors': 50,
                 'healthcare_access': 60,
                 'air_travel_access': 60,
-                'walkable_town': 45,
+                'neighborhood_amenities': 45,
                 'neighborhood_beauty': 55,
                 'public_transit_access': 40,
                 'quality_education': 65,
@@ -144,7 +144,7 @@ class DataQualityManager:
                 'active_outdoors': 40,
                 'healthcare_access': 45,
                 'air_travel_access': 30,
-                'walkable_town': 25,
+                'neighborhood_amenities': 25,
                 'neighborhood_beauty': 60,
                 'public_transit_access': 20,
                 'quality_education': 55,
@@ -154,7 +154,7 @@ class DataQualityManager:
                 'active_outdoors': 30,
                 'healthcare_access': 30,
                 'air_travel_access': 20,
-                'walkable_town': 15,
+                'neighborhood_amenities': 15,
                 'neighborhood_beauty': 70,
                 'public_transit_access': 10,
                 'quality_education': 45,
@@ -208,7 +208,7 @@ class DataQualityManager:
             return self._assess_healthcare_completeness(data, expected_minimums)
         elif pillar_name == 'air_travel_access':
             return self._assess_airport_completeness(data, expected_minimums)
-        elif pillar_name == 'walkable_town':
+        elif pillar_name == 'neighborhood_amenities':
             return self._assess_business_completeness(data, expected_minimums)
         elif pillar_name == 'neighborhood_beauty':
             return self._assess_beauty_completeness(data, expected_minimums)

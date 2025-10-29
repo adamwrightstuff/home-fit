@@ -74,7 +74,7 @@ class RegionalBaselineManager:
                 'active_outdoors': 45,      # Limited green space
                 'healthcare_access': 85,    # Excellent healthcare
                 'air_travel_access': 90,    # Major airports
-                'walkable_town': 80,        # Dense amenities
+                'neighborhood_amenities': 80,        # Dense amenities
                 'neighborhood_beauty': 40,  # Urban environment
                 'public_transit_access': 85, # Excellent transit
                 'quality_education': 70,    # Good schools
@@ -84,7 +84,7 @@ class RegionalBaselineManager:
                 'active_outdoors': 65,      # Good parks
                 'healthcare_access': 75,    # Good healthcare
                 'air_travel_access': 70,    # Regional airports
-                'walkable_town': 50,        # Moderate amenities
+                'neighborhood_amenities': 50,        # Moderate amenities
                 'neighborhood_beauty': 60,  # Mixed environment
                 'public_transit_access': 45, # Limited transit
                 'quality_education': 80,    # Excellent schools
@@ -94,7 +94,7 @@ class RegionalBaselineManager:
                 'active_outdoors': 75,      # Excellent outdoor access
                 'healthcare_access': 55,    # Limited healthcare
                 'air_travel_access': 40,    # Limited air access
-                'walkable_town': 25,        # Few amenities
+                'neighborhood_amenities': 25,        # Few amenities
                 'neighborhood_beauty': 75,  # Natural beauty
                 'public_transit_access': 20, # No transit
                 'quality_education': 65,    # Decent schools
@@ -104,7 +104,7 @@ class RegionalBaselineManager:
                 'active_outdoors': 85,      # Excellent outdoor access
                 'healthcare_access': 35,   # Limited healthcare
                 'air_travel_access': 20,    # No air access
-                'walkable_town': 10,        # No amenities
+                'neighborhood_amenities': 10,        # No amenities
                 'neighborhood_beauty': 90,  # Natural beauty
                 'public_transit_access': 5, # No transit
                 'quality_education': 50,    # Limited schools
@@ -210,13 +210,13 @@ class RegionalBaselineManager:
             # Major metros get slight adjustments
             if population > 5000000:  # Very large metros
                 adjustments = {
-                    'walkable_town': 1.1,      # More amenities
+                    'neighborhood_amenities': 1.1,      # More amenities
                     'public_transit_access': 1.15,  # Better transit
                     'housing_value': 0.8       # More expensive
                 }
             elif population > 2000000:  # Large metros
                 adjustments = {
-                    'walkable_town': 1.05,
+                    'neighborhood_amenities': 1.05,
                     'public_transit_access': 1.1,
                     'housing_value': 0.9
                 }
@@ -250,7 +250,7 @@ class RegionalBaselineManager:
             if pillar_name == 'active_outdoors':
                 adjusted['park_distance_threshold'] *= 0.7  # Closer parks expected
                 adjusted['park_count_threshold'] *= 1.5    # More parks expected
-            elif pillar_name == 'walkable_town':
+            elif pillar_name == 'neighborhood_amenities':
                 adjusted['business_count_threshold'] *= 1.5  # More businesses expected
                 adjusted['variety_threshold'] *= 1.2         # More variety expected
             elif pillar_name == 'housing_value':
@@ -261,7 +261,7 @@ class RegionalBaselineManager:
             if pillar_name == 'active_outdoors':
                 adjusted['park_distance_threshold'] *= 1.5  # Further parks acceptable
                 adjusted['park_count_threshold'] *= 0.5     # Fewer parks acceptable
-            elif pillar_name == 'walkable_town':
+            elif pillar_name == 'neighborhood_amenities':
                 adjusted['business_count_threshold'] *= 0.3  # Fewer businesses acceptable
                 adjusted['variety_threshold'] *= 0.5         # Less variety acceptable
             elif pillar_name == 'housing_value':
@@ -294,7 +294,7 @@ class RegionalBaselineManager:
                     'expected_urgent_care_within_5km': 5,
                     'expected_pharmacies_within_2km': 3
                 },
-                'walkable_town': {
+                'neighborhood_amenities': {
                     'expected_businesses_within_1km': 50,
                     'expected_business_types': 12,
                     'expected_restaurants_within_1km': 15
@@ -313,7 +313,7 @@ class RegionalBaselineManager:
                     'expected_urgent_care_within_5km': 3,
                     'expected_pharmacies_within_2km': 2
                 },
-                'walkable_town': {
+                'neighborhood_amenities': {
                     'expected_businesses_within_1km': 25,
                     'expected_business_types': 8,
                     'expected_restaurants_within_1km': 8
@@ -332,7 +332,7 @@ class RegionalBaselineManager:
                     'expected_urgent_care_within_5km': 1,
                     'expected_pharmacies_within_2km': 1
                 },
-                'walkable_town': {
+                'neighborhood_amenities': {
                     'expected_businesses_within_1km': 10,
                     'expected_business_types': 4,
                     'expected_restaurants_within_1km': 3
@@ -351,7 +351,7 @@ class RegionalBaselineManager:
                     'expected_urgent_care_within_5km': 0,
                     'expected_pharmacies_within_2km': 0
                 },
-                'walkable_town': {
+                'neighborhood_amenities': {
                     'expected_businesses_within_1km': 3,
                     'expected_business_types': 2,
                     'expected_restaurants_within_1km': 1

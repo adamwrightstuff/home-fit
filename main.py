@@ -12,7 +12,7 @@ from data_sources.telemetry import record_request_metrics, record_error, get_tel
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
 from pillars.neighborhood_beauty import get_neighborhood_beauty_score
-from pillars.walkable_town import get_walkable_town_score
+from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
@@ -179,9 +179,9 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
                                                                    beauty_weights=beauty_weights,
                                                                    location_scope=location_scope)
 
-    # Pillar 3: Neighborhood Amenities (walkable town)
-    amenities_score, amenities_details = get_walkable_town_score(lat, lon, include_chains=include_chains,
-                                                                  location_scope=location_scope)
+    # Pillar 3: Neighborhood Amenities
+    amenities_score, amenities_details = get_neighborhood_amenities_score(lat, lon, include_chains=include_chains,
+                                                                           location_scope=location_scope)
 
     # Pillar 4: Air Travel Access
     air_travel_score, air_travel_details = get_air_travel_score(lat, lon)
