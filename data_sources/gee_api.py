@@ -117,18 +117,21 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         point = ee.Geometry.Point([lon, lat])
         buffer = point.buffer(radius_m)
         
-        # Priority 1: NLCD Tree Canopy Cover (urban/suburban, USA-only)
+        # Priority 1: NLCD/USGS Tree Canopy Cover (urban/suburban, USA-only, CONUS coverage)
+        # This is the official USGS NLCD TCC dataset (2023 release with data 1985-2023)
         try:
-            nlcd_tcc = ee.Image('USGS/NLCD_RELEASES/2021_REL/TCC/2021').select('tree_canopy_cover')
+            nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
+            # Use 2021 data (most recent complete year at time of writing)
+            nlcd_tcc = nlcd_collection.filter(ee.Filter.eq('year', 2021)).first().select('NLCD_Percent_Tree_Canopy_Cover')
             tcc_stats = nlcd_tcc.reduceRegion(
                 reducer=ee.Reducer.mean(),
                 geometry=buffer,
                 scale=30,
                 maxPixels=1e9
             )
-            tcc_pct = tcc_stats.get('tree_canopy_cover').getInfo()
+            tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
             if tcc_pct is not None and tcc_pct >= 0.1:
-                print(f"   ✅ GEE Tree Canopy (NLCD TCC): {tcc_pct:.1f}%")
+                print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
                 return min(100, max(0, tcc_pct))
             else:
                 print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (too low or unavailable)")
@@ -137,7 +140,7 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
 
         # Priority 2: Hansen Global Tree Cover (more reliable, global coverage)
         try:
-            hansen = ee.Image('UMD/hansen/global_forest_change_2022_v1_10').select('treecover2000')
+            hansen = ee.Image('UMD/hansen/global_forest_change_2024_v1_12').select('treecover2000')
             h_stats = hansen.reduceRegion(
                 reducer=ee.Reducer.mean(),
                 geometry=buffer,
