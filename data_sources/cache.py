@@ -28,9 +28,9 @@ _cache_ttl: Dict[str, float] = {}
 
 # Cache TTL settings (in seconds)
 CACHE_TTL = {
-    'osm_queries': 3600,      # 1 hour for OSM data
+    'osm_queries': 7 * 24 * 3600,      # 7 days for OSM data
     'census_data': 86400,     # 24 hours for Census data
-    'school_data': 86400,     # 24 hours for school data
+    'school_data': 30 * 24 * 3600,     # 30 days for school data (extended to preserve quota)
     'airport_distances': 86400,  # 24 hours for airport calculations
     'geocoding': 86400,       # 24 hours for geocoding
 }

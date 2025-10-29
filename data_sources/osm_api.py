@@ -1200,3 +1200,169 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
         coverage["overall_coverage"] = "poor"
     
     return coverage
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=30)
+def query_hospitals(lat: float, lon: float, radius_m: int = 50000) -> Optional[List[Dict]]:
+    """
+    Query OSM for hospitals and medical facilities.
+    
+    Args:
+        lat, lon: Coordinates
+        radius_m: Search radius in meters (default 50km)
+    
+    Returns:
+        List of hospitals with name, lat, lon, and tags
+    """
+    query = f"""
+    [out:json][timeout:25];
+    (
+      // Hospitals
+      node["amenity"="hospital"](around:{radius_m},{lat},{lon});
+      way["amenity"="hospital"](around:{radius_m},{lat},{lon});
+      relation["amenity"="hospital"](around:{radius_m},{lat},{lon});
+      
+      // Medical centers
+      node["amenity"="clinic"](around:{radius_m},{lat},{lon});
+      way["amenity"="clinic"](around:{radius_m},{lat},{lon});
+      
+      node["amenity"="doctors"](around:{radius_m},{lat},{lon});
+      way["amenity"="doctors"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    
+    try:
+        print(f"🏥 Querying OSM for hospitals within {radius_m/1000:.0f}km...")
+        resp = requests.post(OVERPASS_URL, data=query, timeout=30)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            elements = data.get("elements", [])
+            
+            hospitals = []
+            for elem in elements:
+                if "lat" in elem and "lon" in elem:
+                    tags = elem.get("tags", {})
+                    name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
+                    
+                    # Calculate distance
+                    distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
+                    
+                    hospitals.append({
+                        "name": name,
+                        "lat": elem["lat"],
+                        "lon": elem["lon"],
+                        "distance_km": round(distance_km, 1),
+                        "amenity": tags.get("amenity"),
+                        "emergency": tags.get("emergency"),
+                        "beds": tags.get("beds"),
+                        "tags": tags
+                    })
+            
+            return hospitals
+        else:
+            print(f"⚠️  OSM hospital query failed: {resp.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Error querying OSM for hospitals: {e}")
+        return None
+
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance between two points in kilometers."""
+    R = 6371  # Earth radius in km
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=30)
+def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Optional[List[Dict]]:
+    """
+    Query OSM for railway stations within radius.
+    
+    Args:
+        lat, lon: Coordinates
+        radius_m: Search radius in meters (default 2km)
+    
+    Returns:
+        List of railway stations with name, lat, lon, distance
+    """
+    query = f"""
+    [out:json][timeout:25];
+    (
+      // Railway stations
+      node["railway"="station"](around:{radius_m},{lat},{lon});
+      node["railway"="halt"](around:{radius_m},{lat},{lon});
+      
+      // Metro/subway stations
+      node["railway"="subway_entrance"](around:{radius_m},{lat},{lon});
+      node["station"="subway"](around:{radius_m},{lat},{lon});
+      
+      // Tram stations
+      node["railway"="tram_stop"](around:{radius_m},{lat},{lon});
+      
+      // Bus stations
+      node["public_transport"="station"](around:{radius_m},{lat},{lon});
+      node["amenity"="bus_station"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    
+    try:
+        print(f"🚂 Querying OSM for railway stations within {radius_m/1000:.1f}km...")
+        resp = requests.post(OVERPASS_URL, data=query, timeout=30)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            elements = data.get("elements", [])
+            
+            stations = []
+            for elem in elements:
+                if "lat" in elem and "lon" in elem:
+                    tags = elem.get("tags", {})
+                    name = tags.get("name") or tags.get("operator") or "Unnamed Station"
+                    railway_type = tags.get("railway") or tags.get("public_transport") or "station"
+                    
+                    # Calculate distance
+                    distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
+                    distance_m = distance_km * 1000
+                    
+                    stations.append({
+                        "name": name,
+                        "lat": elem["lat"],
+                        "lon": elem["lon"],
+                        "distance_m": round(distance_m),
+                        "distance_km": round(distance_km, 2),
+                        "railway_type": railway_type,
+                        "tags": tags
+                    })
+            
+            # Sort by distance
+            stations.sort(key=lambda x: x["distance_m"])
+            
+            print(f"   Found {len(stations)} railway stations")
+            return stations
+        else:
+            print(f"⚠️  OSM railway station query failed: {resp.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Error querying OSM for railway stations: {e}")
+        return None

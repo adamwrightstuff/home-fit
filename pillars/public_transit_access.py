@@ -16,6 +16,55 @@ load_dotenv()
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 
+# Major metro centers for proximity-based fallback scoring
+MAJOR_METROS = {
+    "New York": (40.7128, -74.0060),
+    "Los Angeles": (34.0522, -118.2437),
+    "Chicago": (41.8781, -87.6298),
+    "Houston": (29.7604, -95.3698),
+    "Phoenix": (33.4484, -112.0740),
+    "Philadelphia": (39.9526, -75.1652),
+    "San Antonio": (29.4241, -98.4936),
+    "San Diego": (32.7157, -117.1611),
+    "Dallas": (32.7767, -96.7970),
+    "San Jose": (37.3382, -121.8863),
+    "Austin": (30.2672, -97.7431),
+    "Jacksonville": (30.3322, -81.6557),
+    "San Francisco": (37.7749, -122.4194),
+    "Columbus": (39.9612, -82.9988),
+    "Seattle": (47.6062, -122.3321),
+    "Boston": (42.3601, -71.0589),
+    "Miami": (25.7617, -80.1918),
+    "Portland": (45.5152, -122.6784),
+    "Denver": (39.7392, -104.9903),
+    "Atlanta": (33.7490, -84.3880),
+}
+
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance between two points in kilometers."""
+    R = 6371  # Earth radius in km
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+
+def _find_nearest_metro(lat: float, lon: float) -> float:
+    """Find distance to nearest major metro center in kilometers."""
+    min_distance = float('inf')
+    
+    for metro_name, (metro_lat, metro_lon) in MAJOR_METROS.items():
+        distance = haversine_distance(lat, lon, metro_lat, metro_lon)
+        min_distance = min(min_distance, distance)
+    
+    return min_distance
+
 
 def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     """
@@ -34,9 +83,20 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     # Query for routes near location
     routes_data = _get_nearby_routes(lat, lon, radius_m=1500)
     
+    # If no Transitland routes, try OSM railway stations as fallback
+    osm_stations = None
     if not routes_data:
-        print("⚠️  No transit routes found nearby")
-        return 0, _empty_breakdown()
+        print("⚠️  No Transitland routes found, checking OSM railway stations...")
+        from data_sources import osm_api as osm
+        osm_stations = osm.query_railway_stations(lat, lon, radius_m=2000)
+        
+        if osm_stations and len(osm_stations) > 0:
+            # Convert OSM stations to route-like format for scoring
+            routes_data = _convert_osm_stations_to_routes(osm_stations)
+            print(f"   Found {len(routes_data)} railway stations via OSM")
+        else:
+            print("⚠️  No transit routes found nearby")
+            return 0, _empty_breakdown()
 
     # Categorize routes by type
     heavy_rail_routes = []
@@ -262,6 +322,42 @@ def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, al
         summary["access_level"] = "Limited - No transit nearby"
 
     return summary
+
+
+def _convert_osm_stations_to_routes(osm_stations: List[Dict]) -> List[Dict]:
+    """
+    Convert OSM railway stations to route-like format for scoring.
+    
+    Args:
+        osm_stations: List of OSM station dictionaries
+    
+    Returns:
+        List of route-like dictionaries
+    """
+    routes = []
+    
+    for station in osm_stations:
+        railway_type = station.get("railway_type", "").lower()
+        
+        # Map railway types to GTFS route types
+        if railway_type in ["station", "halt"]:
+            route_type = 2  # Rail
+        elif railway_type in ["subway_entrance", "subway"]:
+            route_type = 1  # Subway/Metro
+        elif railway_type in ["tram_stop"]:
+            route_type = 0  # Tram/Light Rail
+        else:
+            route_type = 3  # Bus (default fallback)
+        
+        routes.append({
+            "name": station.get("name", "Unknown Station"),
+            "short_name": None,
+            "route_type": route_type,
+            "agency": "Unknown Agency",
+            "distance_m": station.get("distance_m", 0)
+        })
+    
+    return routes
 
 
 def _empty_breakdown() -> Dict:

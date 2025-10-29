@@ -1,334 +1,235 @@
 """
-Neighborhood Beauty Pillar
-Scores visual appeal and distinctive character of the area
+Neighborhood Beauty Pillar - Simplified
+Uses only objective, real data sources (trees + historic character)
+Removed fake components (visual aesthetics, architectural quality)
 """
 
 from typing import Dict, Tuple, Optional
-from data_sources import osm_api, nyc_api, census_api, data_quality
+from data_sources import osm_api, census_api, data_quality
+
+# Try to import NYC API (only available for NYC addresses)
+try:
+    from data_sources import nyc_api as nyc_api
+except ImportError:
+    nyc_api = None
 
 
-def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None) -> Tuple[float, Dict]:
+def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None, 
+                                   beauty_weights: Optional[str] = None) -> Tuple[float, Dict]:
     """
-    Calculate neighborhood beauty score (0-100) based on aesthetic appeal.
-
-    Scoring:
-    - Tree Canopy Coverage: 0-50 points
-    - Historic Character: 0-50 points (primarily median year built, OSM bonus)
-
+    Calculate neighborhood beauty score (0-100) using only real data.
+    
+    Simplified scoring components:
+    - Trees (0-50): OSM tree count + Census canopy percentage
+    - Historic Character (0-50): Census building age + OSM landmarks
+    
+    Args:
+        beauty_weights: Custom weights (e.g., "trees:0.6,historic:0.4")
+                       Default: trees=0.5, historic=0.5
+    
     Returns:
         (total_score, detailed_breakdown)
     """
     print(f"✨ Analyzing neighborhood beauty...")
-
-    # Get charm features from OSM (500m radius for aesthetic features)
-    print(f"   🏛️  Querying historic & aesthetic features...")
-    charm_data = osm_api.query_charm_features(lat, lon, radius_m=500)
-
-    # Get tree canopy data
-    print(f"   🌳 Checking tree canopy coverage...")
-    tree_score, tree_note = _score_trees(lat, lon, city)
-
-    # Get year built data from Census
-    print(f"   🏛️  Checking historic housing stock...")
-    year_built_data = census_api.get_year_built_data(lat, lon)
-
+    
+    # Parse custom weights or use defaults
+    weights = _parse_beauty_weights(beauty_weights)
+    
+    # Component 1: Trees (0-50)
+    print(f"   🌳 Analyzing tree canopy...")
+    tree_score, tree_details = _score_trees(lat, lon, city)
+    
+    # Component 2: Historic Character (0-50)
+    print(f"   🏛️  Analyzing historic character...")
+    historic_score, historic_details = _score_historic(lat, lon)
+    
+    # Apply weights
+    weighted_score = (tree_score * weights['trees']) + (historic_score * weights['historic'])
+    
     # Assess data quality
     combined_data = {
-        'charm_data': charm_data,
-        'year_built_data': year_built_data,
         'tree_score': tree_score,
-        'tree_note': tree_note
+        'historic_score': historic_score,
+        'tree_details': tree_details,
+        'historic_details': historic_details
     }
     
-    # Detect actual area type for data quality assessment
-    density = census_api.get_population_density(lat, lon)
+    from data_sources import census_api as ca
+    density = ca.get_population_density(lat, lon)
     area_type = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
-
-    if charm_data is None:
-        print("⚠️  OSM data unavailable")
-        historic_score = _score_historic_from_census_only(year_built_data)
-        total_score = tree_score + historic_score
-        breakdown = _estimated_breakdown(tree_score, tree_note, historic_score, year_built_data)
-        breakdown["data_quality"] = quality_metrics
-        return total_score, breakdown
-
-    historic = charm_data.get("historic", [])
-    artwork = charm_data.get("artwork", [])
-
-    # Score historic character (median year as primary signal)
-    historic_score = _score_historic_character(historic, artwork, year_built_data)
-
-    total_score = tree_score + historic_score
-
+    
     # Build response
     breakdown = {
-        "score": round(total_score, 1),
+        "score": round(weighted_score, 1),
         "breakdown": {
-            "tree_canopy": round(tree_score, 1),
+            "trees": round(tree_score, 1),
             "historic_character": round(historic_score, 1)
         },
-        "summary": {
-            "tree_canopy_note": tree_note,
-            "historic_buildings": len(historic),
-            "monuments_fountains": len(artwork),
-            "vintage_housing_pct": year_built_data.get("vintage_pct") if year_built_data else None,
-            "median_year_built": year_built_data.get("median_year_built") if year_built_data else None,
-            "closest_historic": _get_closest(historic) if historic else None,
-            "closest_monument": _get_closest(artwork) if artwork else None
+        "details": {
+            "tree_analysis": tree_details,
+            "historic_analysis": historic_details
         },
+        "weights": weights,
         "data_quality": quality_metrics
     }
-
+    
     # Log results
-    print(f"✅ Neighborhood Beauty Score: {total_score:.0f}/100")
-    print(f"   🌳 Tree Canopy: {tree_score:.0f}/50 - {tree_note}")
-    print(f"   🏛️  Historic Character: {historic_score:.0f}/50")
-    if year_built_data:
-        median_year = year_built_data.get("median_year_built")
-        print(f"      • Median year built: {median_year} (primary signal)")
-        print(f"      • Vintage housing: {year_built_data.get('vintage_pct', 0)}%")
-        print(f"      • Historic buildings (OSM): {len(historic)} (bonus)")
+    print(f"✅ Neighborhood Beauty Score: {weighted_score:.0f}/100")
+    print(f"   🌳 Trees: {tree_score:.0f}/50 (weight: {weights['trees']})")
+    print(f"   🏛️  Historic: {historic_score:.0f}/50 (weight: {weights['historic']})")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
+    
+    return round(weighted_score, 1), breakdown
 
-    return round(total_score, 1), breakdown
 
-
-def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, str]:
-    """
-    Score tree canopy using waterfall approach:
-    1. NYC → Street Tree Census (individual tree locations)
-    2. OSM → Enhanced tree query (tree rows, areas, street trees)
-    3. Census → USFS canopy % (coarse but nationwide)
-    4. Fallback → No data
-    """
-    # Priority 1: NYC Street Tree Census (most detailed)
-    if (city and "new york" in city.lower()) or nyc_api.is_nyc(lat, lon):
-        trees = nyc_api.get_street_trees(lat, lon)
-        if trees is not None:
-            tree_count = len(trees)
-            score = _score_nyc_trees(tree_count)
-            return score, f"NYC Census: {tree_count} trees"
-
-    # Priority 2: OSM enhanced tree data (many cities have this)
+def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
+    """Parse custom beauty weights or return defaults."""
+    if weights_str is None:
+        return {'trees': 0.5, 'historic': 0.5}
+    
     try:
-        from data_sources import osm_api
-        osm_data = osm_api.query_enhanced_trees(lat, lon, radius_m=500)
-        if osm_data:
-            tree_rows = len(osm_data.get('tree_rows', []))
-            street_trees = len(osm_data.get('street_trees', []))
-            individual_trees = len(osm_data.get('individual_trees', []))
-            tree_areas = len(osm_data.get('tree_areas', []))
-            total_tree_features = tree_rows + street_trees + individual_trees + tree_areas
+        weights = {}
+        total = 0.0
+        
+        for pair in weights_str.split(','):
+            component, weight = pair.split(':')
+            weight = float(weight.strip())
             
-            if total_tree_features >= 50:
-                return 50.0, f"OSM: {total_tree_features} tree features (excellent)"
-            elif total_tree_features >= 30:
-                return 45.0, f"OSM: {total_tree_features} tree features (very good)"
-            elif total_tree_features >= 20:
-                return 38.0, f"OSM: {total_tree_features} tree features (good)"
-            elif total_tree_features >= 10:
-                return 28.0, f"OSM: {total_tree_features} tree features (fair)"
-            elif total_tree_features >= 5:
-                return 18.0, f"OSM: {total_tree_features} tree features (limited)"
-            elif total_tree_features > 0:
-                return 8.0, f"OSM: {total_tree_features} tree features (minimal)"
+            if component in ['trees', 'historic']:
+                weights[component.strip()] = weight
+                total += weight
+        
+        # Normalize to sum to 1.0
+        if total > 0:
+            weights = {k: v / total for k, v in weights.items()}
+        
+        return weights
+    except:
+        return {'trees': 0.5, 'historic': 0.5}
+
+
+def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Dict]:
+    """Score trees from multiple real data sources (0-50)."""
+    score = 0.0
+    sources = []
+    details = {}
+    
+    # Priority 1: GEE satellite tree canopy (most comprehensive)
+    try:
+        from data_sources import satellite_api
+        gee_canopy = satellite_api.get_tree_canopy_satellite(lat, lon)
+        if gee_canopy is not None and gee_canopy >= 0.1:  # Threshold to avoid false zeros
+            canopy_score = _score_tree_canopy(gee_canopy)
+            score = canopy_score
+            sources.append(f"GEE: {gee_canopy:.1f}% canopy")
+            details['gee_canopy_pct'] = gee_canopy
+            print(f"   ✅ Using GEE satellite data: {gee_canopy:.1f}%")
+        else:
+            print(f"   ⚠️  GEE not available or returned no data")
     except Exception as e:
-        print(f"   ⚠️  OSM tree query failed: {e}")
+        print(f"   ⚠️  GEE import error: {e}")
+    
+    # Priority 2: Census USFS Tree Canopy (if GEE unavailable)
+    if score == 0.0:
+        canopy_pct = census_api.get_tree_canopy(lat, lon)
+        if canopy_pct is not None and canopy_pct > 0:
+            canopy_score = _score_tree_canopy(canopy_pct)
+            score = canopy_score
+            sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
+            details['census_canopy_pct'] = canopy_pct
+            print(f"   📊 Using Census canopy data: {canopy_pct:.1f}%")
+    
+    # Priority 3: OSM parks as proxy (fallback)
+    if score == 0.0:
+        tree_data = osm_api.query_green_spaces(lat, lon, radius_m=500)
+        if tree_data:
+            parks = tree_data.get('parks', [])
+            if parks:
+                park_count = len(parks)
+                park_score = min(30, park_count * 5)  # 6 parks = 30 pts
+                score = park_score
+                sources.append(f"OSM: {park_count} parks/green spaces")
+                details['osm_parks'] = park_count
+                print(f"   📊 Using OSM park data: {park_count} parks")
+            else:
+                print(f"   ⚠️  No tree data available from any source")
+                sources.append("No tree data available")
+    
+    details['sources'] = sources
+    details['total_score'] = score
+    
+    return score, details
 
-    # Priority 3: Census USFS tree canopy (coarse nationwide data)
-    canopy_pct = census_api.get_tree_canopy(lat, lon)
-    if canopy_pct is not None:
-        score = _score_tree_canopy(canopy_pct)
-        return score, f"Census USFS: {canopy_pct:.1f}% canopy"
 
-    # No data available
-    return 0.0, "No tree data available"
+def _score_historic(lat: float, lon: float) -> Tuple[float, Dict]:
+    """Score historic character (0-50) based on building age and landmarks."""
+    
+    # Get building age from Census
+    year_built_data = census_api.get_year_built_data(lat, lon)
+    
+    if year_built_data is None:
+        return 0.0, {"note": "No building age data available"}
+    
+    # Calculate historic score from year built
+    median_year = year_built_data.get('median_year_built', 2000)
+    vintage_pct = year_built_data.get('vintage_pct', 0)  # Pre-1960 buildings
+    
+    # Score based on age and vintage percentage
+    if median_year < 1940:
+        score = 50.0
+    elif median_year < 1960:
+        score = 40.0 + min(10, vintage_pct)
+    elif median_year < 1980:
+        score = 30.0 + min(10, vintage_pct * 0.5)
+    elif median_year < 2000:
+        score = 20.0
+    else:
+        score = 10.0
+    
+    # Get OSM historic landmarks
+    charm_data = osm_api.query_charm_features(lat, lon, radius_m=500)
+    if charm_data and charm_data.get('historic'):
+        landmarks_count = len(charm_data['historic'])
+        if landmarks_count > 0:
+            # Bonus for historic landmarks (up to 10 points)
+            score += min(10, landmarks_count * 2)
+    
+    details = {
+        "median_year_built": median_year,
+        "vintage_pct": vintage_pct,
+        "historic_landmarks": charm_data.get('historic', []) if charm_data else [],
+        "total_score": score
+    }
+    
+    return score, details
 
 
 def _score_nyc_trees(tree_count: int) -> float:
-    """Convert NYC tree count to score (0-50 points)."""
-    if tree_count >= 150:
+    """Score NYC street trees."""
+    if tree_count >= 50:
         return 50.0
-    elif tree_count >= 100:
-        return 45.0
-    elif tree_count >= 75:
+    elif tree_count >= 30:
         return 40.0
-    elif tree_count >= 50:
-        return 32.0
-    elif tree_count >= 25:
-        return 25.0
+    elif tree_count >= 20:
+        return 30.0
+    elif tree_count >= 10:
+        return 20.0
     else:
-        return 15.0
+        return tree_count * 1.5
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:
-    """Convert Census tree canopy % to score (0-50 points)."""
-    if canopy_pct >= 40:
+    """Score tree canopy percentage."""
+    if canopy_pct >= 50:
         return 50.0
+    elif canopy_pct >= 40:
+        return 45.0
     elif canopy_pct >= 30:
-        return 45.0
-    elif canopy_pct >= 20:
-        return 38.0
-    elif canopy_pct >= 10:
-        return 28.0
-    elif canopy_pct >= 5:
-        return 18.0
-    else:
-        return 8.0
-
-
-def _score_historic_character(historic_buildings: list, monuments: list, year_built_data: Optional[Dict]) -> float:
-    """
-    Score historic character (0-50 points) with median year as PRIMARY signal:
-    - Census median year built (0-35 pts) - PRIMARY
-    - OSM historic buildings (0-10 pts) - BONUS
-    - OSM monuments/fountains (0-5 pts) - BONUS
-    """
-    # Component 1: Median year built from Census (0-35 pts) - PRIMARY
-    median_score = _score_median_year_built(year_built_data)
-    
-    # Component 2: Historic buildings from OSM (0-10 pts) - BONUS
-    building_score = _score_osm_buildings(historic_buildings)
-    
-    # Component 3: Monuments & fountains from OSM (0-5 pts) - BONUS
-    monument_score = _score_monuments_fountains(monuments)
-    
-    total = median_score + building_score + monument_score
-    return min(50, total)
-
-
-def _score_median_year_built(year_built_data: Optional[Dict]) -> float:
-    """
-    Score based on median year built (0-35 points) - PRIMARY METRIC.
-    
-    Median year is more reliable than tract vintage % for historic neighborhoods.
-    """
-    if not year_built_data:
-        return 0.0
-    
-    median_year = year_built_data.get("median_year_built")
-    if not median_year:
-        return 0.0
-    
-    # Score based on median year built
-    if median_year <= 1900:
-        return 35.0  # Very historic (pre-1900)
-    elif median_year <= 1920:
-        return 33.0  # Early 20th century
-    elif median_year <= 1940:
-        return 30.0  # Pre-WWII
-    elif median_year <= 1960:
-        return 25.0  # Mid-century
-    elif median_year <= 1980:
-        return 18.0  # Later 20th century
-    elif median_year <= 2000:
-        return 12.0  # Recent
-    else:
-        return 5.0   # Modern (post-2000)
-
-
-def _score_osm_buildings(historic: list) -> float:
-    """Score OSM historic buildings (0-10 points) - BONUS."""
-    if not historic:
-        return 0.0
-
-    count = len(historic)
-    
-    # Count score (0-7)
-    if count >= 10:
-        count_score = 7
-    elif count >= 5:
-        count_score = 5
-    elif count >= 3:
-        count_score = 4
-    else:
-        count_score = count * 1
-
-    # Proximity bonus (0-3)
-    closest = min(h["distance_m"] for h in historic)
-    if closest <= 100:
-        proximity_score = 3
-    elif closest <= 200:
-        proximity_score = 2
-    else:
-        proximity_score = 1
-
-    return min(10, count_score + proximity_score)
-
-
-def _score_monuments_fountains(monuments: list) -> float:
-    """Score monuments, fountains, memorials (0-5 points) - BONUS."""
-    if not monuments:
-        return 0.0
-
-    count = len(monuments)
-    
-    # Simple count score
-    if count >= 5:
-        return 5.0
-    elif count >= 3:
-        return 4.0
-    elif count >= 2:
-        return 3.0
-    else:
-        return 2.0
-
-
-def _score_historic_from_census_only(year_built_data: Optional[Dict]) -> float:
-    """Fallback: score only from Census when OSM unavailable."""
-    if not year_built_data:
-        return 0.0
-    
-    median_year = year_built_data.get("median_year_built")
-    if not median_year:
-        return 0.0
-    
-    # Use full 50 pt range when OSM unavailable
-    if median_year <= 1900:
-        return 50.0
-    elif median_year <= 1920:
-        return 45.0
-    elif median_year <= 1940:
         return 40.0
-    elif median_year <= 1960:
-        return 32.0
-    elif median_year <= 1980:
-        return 24.0
-    elif median_year <= 2000:
-        return 16.0
+    elif canopy_pct >= 20:
+        return 30.0
+    elif canopy_pct >= 10:
+        return 20.0
     else:
-        return 8.0
-
-
-def _get_closest(features: list) -> Dict:
-    """Get info about closest feature."""
-    if not features:
-        return None
-    
-    closest = min(features, key=lambda x: x["distance_m"])
-    return {
-        "name": closest.get("name"),
-        "type": closest.get("type"),
-        "distance_m": closest["distance_m"]
-    }
-
-
-def _estimated_breakdown(tree_score: float, tree_note: str, historic_score: float, year_built_data: Optional[Dict]) -> Dict:
-    """Return estimated breakdown when API fails."""
-    return {
-        "score": tree_score + historic_score,
-        "breakdown": {
-            "tree_canopy": tree_score,
-            "historic_character": historic_score
-        },
-        "summary": {
-            "tree_canopy_note": tree_note,
-            "historic_buildings": 0,
-            "monuments_fountains": 0,
-            "vintage_housing_pct": year_built_data.get("vintage_pct") if year_built_data else None,
-            "median_year_built": year_built_data.get("median_year_built") if year_built_data else None,
-            "closest_historic": None,
-            "closest_monument": None
-        }
-    }
+        return canopy_pct * 1.5

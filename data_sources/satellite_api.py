@@ -16,7 +16,7 @@ def get_tree_canopy_satellite(lat: float, lon: float) -> Optional[float]:
     """
     Get tree canopy percentage from satellite imagery analysis using Google Earth Engine.
     
-    Falls back to regional estimates if GEE is not available.
+    Returns None if GEE is not available (no fake fallback data).
     """
     print(f"🛰️ Querying satellite imagery for tree canopy at {lat}, {lon}...")
     
@@ -26,38 +26,9 @@ def get_tree_canopy_satellite(lat: float, lon: float) -> Optional[float]:
         if gee_result is not None:
             return gee_result
     
-    # Fallback to regional estimates based on known patterns
-    print(f"   📊 Using regional estimates (GEE not available)")
-    
-    # Regional tree canopy estimates based on climate and urban development
-    if 40.7 < lat < 40.8 and -74.0 < lon < -73.9:  # NYC area
-        return 20.0  # Urban with some parks
-    elif 47.5 < lat < 47.7 and -122.5 < lon < -122.3:  # Seattle area
-        return 40.0  # Pacific Northwest, very green (increased)
-    elif 45.4 < lat < 45.6 and -122.8 < lon < -122.6:  # Portland area
-        return 45.0  # Very green city (increased)
-    elif 37.7 < lat < 37.8 and -122.5 < lon < -122.4:  # San Francisco area
-        return 20.0  # Urban with some hills (increased)
-    elif 40.0 < lat < 40.2 and -105.2 < lon < -105.0:  # Boulder area
-        return 35.0  # Mountain town with trees (increased)
-    elif 30.2 < lat < 30.3 and -97.8 < lon < -97.7:  # Austin area
-        return 25.0  # Texas with some trees (increased)
-    elif 33.7 < lat < 33.8 and -84.4 < lon < -84.3:  # Atlanta area
-        return 50.0  # "City in a Forest" (increased)
-    elif 41.8 < lat < 41.9 and -87.6 < lon < -87.5:  # Chicago area
-        return 25.0  # Urban with lakefront parks (increased)
-    elif 25.7 < lat < 25.8 and -80.2 < lon < -80.1:  # Miami area
-        return 35.0  # Tropical with palm trees (increased)
-    else:
-        # Default regional estimate based on latitude (climate zone)
-        if lat > 45:  # Northern regions
-            return 35.0  # Increased
-        elif lat > 35:  # Temperate regions
-            return 30.0  # Increased
-        elif lat > 25:  # Subtropical regions
-            return 25.0  # Increased
-        else:  # Tropical regions
-            return 40.0  # Increased
+    # Return None if GEE not available - no fake data
+    print(f"   ⚠️  GEE not available - skipping satellite analysis")
+    return None
 
 
 def get_building_footprint_density(lat: float, lon: float) -> Optional[float]:

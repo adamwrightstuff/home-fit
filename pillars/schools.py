@@ -28,6 +28,20 @@ def get_school_data(
         return 0.0, {"elementary": [], "middle": [], "high": []}
 
     print(f"📦 {len(schools)} schools found")
+    
+    # Check if any schools have rating data
+    schools_with_ratings = 0
+    for school in schools:
+        rank_history = school.get("rankHistory", [])
+        if rank_history and len(rank_history) > 0:
+            rank_stars = rank_history[0].get("rankStars")
+            if rank_stars is not None and rank_stars > 0:
+                schools_with_ratings += 1
+    
+    if schools_with_ratings == 0:
+        print(f"⚠️  Found {len(schools)} schools but none have rating data")
+        print("   Sample school data:", school.get("schoolName", "Unknown") if schools else "No schools")
+        return 0.0, {"elementary": [], "middle": [], "high": []}
 
     # Process and score schools
     schools_by_level = {

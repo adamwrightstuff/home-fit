@@ -12,7 +12,6 @@ from data_sources.telemetry import record_request_metrics, record_error, get_tel
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
 from pillars.neighborhood_beauty import get_neighborhood_beauty_score
-from pillars.neighborhood_beauty_enhanced import get_enhanced_neighborhood_beauty_score
 from pillars.walkable_town import get_walkable_town_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -23,7 +22,6 @@ from pillars.housing_value import get_housing_value_score
 # CONFIGURATION FLAGS
 ##########################
 ENABLE_SCHOOL_SCORING = True  # Set to True to enable school API calls
-ENABLE_ENHANCED_BEAUTY = True  # Set to True to use enhanced neighborhood beauty scoring
 
 # Load environment variables
 load_dotenv()
@@ -120,7 +118,8 @@ def root():
 
 
 @app.get("/score")
-def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False):
+def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False, 
+                          beauty_weights: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -139,6 +138,8 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
                 Default: Equal distribution across all pillars
         include_chains: Include chain/franchise businesses in amenities score (default: False)
+        beauty_weights: Optional beauty component weights (format: "trees:0.6,historic:0.4")
+                       Default: trees=0.5, historic=0.5
 
     Returns:
         JSON with pillar scores, token allocation, and weighted total
@@ -167,11 +168,9 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     # Pillar 1: Active Outdoors
     active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city)
 
-    # Pillar 2: Neighborhood Beauty (Enhanced)
-    if ENABLE_ENHANCED_BEAUTY:
-        beauty_score, beauty_details = get_enhanced_neighborhood_beauty_score(lat, lon, city=city)
-    else:
-        beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city)
+    # Pillar 2: Neighborhood Beauty (Simplified - real data only)
+    beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city, 
+                                                                   beauty_weights=beauty_weights)
 
     # Pillar 3: Neighborhood Amenities (walkable town)
     amenities_score, amenities_details = get_walkable_town_score(lat, lon, include_chains=include_chains)
@@ -186,6 +185,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon)
 
     # Pillar 7: Quality Education (schools)
+    schools_found = False
     if ENABLE_SCHOOL_SCORING:
         print("📚 Fetching school data from SchoolDigger API...")
         school_avg, schools_by_level = get_school_data(
@@ -232,12 +232,13 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     print(f"   🏠 Housing Value: {housing_score:.1f}/100")
     print(f"{'='*60}\n")
 
-    # Count total schools
+    # Count total schools and check if any were found
     total_schools = sum([
         len(schools_by_level.get("elementary", [])),
         len(schools_by_level.get("middle", [])),
         len(schools_by_level.get("high", []))
     ])
+    schools_found = total_schools > 0
 
     # Build livability_pillars dict first
     livability_pillars = {
@@ -258,7 +259,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             "breakdown": beauty_details.get("breakdown", {}),
             "summary": beauty_details.get("summary", {}),
             "details": beauty_details.get("details", {}),
-            "enhanced": ENABLE_ENHANCED_BEAUTY,
+            "enhanced": False,
             "scoring_note": beauty_details.get("scoring_note", ""),
             "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": beauty_details.get("data_quality", {}),
@@ -317,8 +318,8 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             "total_schools_rated": total_schools,
             "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
             "data_quality": {
-                "fallback_used": not ENABLE_SCHOOL_SCORING,
-                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else "School data available"
+                "fallback_used": not ENABLE_SCHOOL_SCORING or not schools_found,
+                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else ("No schools with ratings found" if not schools_found else "School data available")
             }
         },
         "housing_value": {

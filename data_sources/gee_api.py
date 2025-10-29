@@ -96,7 +96,8 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
     """
     Get tree canopy percentage using Google Earth Engine.
     
-    Uses Sentinel-2 data to calculate NDVI and tree canopy coverage.
+    Uses NLCD Tree Canopy Cover dataset (30m resolution, USA only) for accurate data.
+    Falls back to Sentinel-2 NDVI analysis if NLCD unavailable.
     
     Args:
         lat: Latitude
@@ -116,46 +117,96 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000) -> Optiona
         point = ee.Geometry.Point([lon, lat])
         buffer = point.buffer(radius_m)
         
-        # Use Sentinel-2 data (more reliable and recent)
-        sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                   .filterDate('2023-01-01', '2024-12-31')
-                   .filterBounds(buffer)
-                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20)))
+        # Priority 1: NLCD Tree Canopy Cover (urban/suburban, USA-only)
+        try:
+            nlcd_tcc = ee.Image('USGS/NLCD_RELEASES/2021_REL/TCC/2021').select('tree_canopy_cover')
+            tcc_stats = nlcd_tcc.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=30,
+                maxPixels=1e9
+            )
+            tcc_pct = tcc_stats.get('tree_canopy_cover').getInfo()
+            if tcc_pct is not None and tcc_pct >= 0.1:
+                print(f"   ✅ GEE Tree Canopy (NLCD TCC): {tcc_pct:.1f}%")
+                return min(100, max(0, tcc_pct))
+            else:
+                print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (too low or unavailable)")
+        except Exception as nlcd_tcc_error:
+            print(f"   ⚠️  NLCD TCC unavailable: {nlcd_tcc_error}")
+
+        # Priority 2: NLCD Land Cover forest classes (rural/forested, USA-only)
+        try:
+            nlcd = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021')
+            landcover = nlcd.select('landcover')
+            # Classes: 40 Deciduous, 41 Evergreen, 42 Mixed, 43 Shrub/Scrub
+            tree_classes = landcover.eq(40).Or(landcover.eq(41)).Or(landcover.eq(42)).Or(landcover.eq(43))
+            canopy_stats = tree_classes.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=30,
+                maxPixels=1e9
+            )
+            canopy_mean = canopy_stats.get('landcover').getInfo()
+            if canopy_mean is not None and canopy_mean > 0:
+                canopy_percentage = canopy_mean * 100
+                print(f"   ✅ GEE Tree Canopy (NLCD Land Cover): {canopy_percentage:.1f}%")
+                return min(100, max(0, canopy_percentage))
+            else:
+                print("   ⚠️  NLCD Land Cover forest classes indicate ~0% within buffer")
+        except Exception as nlcd_error:
+            print(f"   ⚠️  NLCD Land Cover unavailable: {nlcd_error}")
+
+        # Priority 3: Hansen/UMD global tree cover (international/global fallback)
+        try:
+            hansen = ee.Image('UMD/hansen/global_forest_change_2022_v1_10').select('treecover2000')
+            h_stats = hansen.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=30,
+                maxPixels=1e9
+            )
+            h_mean = h_stats.get('treecover2000').getInfo()
+            if h_mean is not None and h_mean >= 0.1:
+                print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
+                return min(100, max(0, h_mean))
+            else:
+                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (too low or unavailable)")
+        except Exception as hansen_error:
+            print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
         
-        # Check if we have data
-        count = sentinel.size().getInfo()
-        if count == 0:
-            print(f"   ⚠️  No Sentinel-2 data available for this location")
+        # Priority 4: Sentinel-2 NDVI fallback (recent imagery, cloud-limited)
+        try:
+            sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                       .filterDate('2023-01-01', '2024-12-31')
+                       .filterBounds(buffer)
+                       .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20)))
+            
+            count = sentinel.size().getInfo()
+            if count == 0:
+                print(f"   ⚠️  No Sentinel-2 data available for this location")
+                return None
+            
+            image = sentinel.sort('system:time_start', False).first()
+            ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            tree_mask = ndvi.gt(0.4)  # NDVI > 0.4 = trees
+            
+            tree_stats = tree_mask.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=20,
+                maxPixels=1e9
+            )
+            
+            tree_ratio = tree_stats.get('NDVI').getInfo()
+            canopy_percentage = (tree_ratio * 100) if tree_ratio else 0
+            
+            print(f"   ✅ GEE Tree Canopy (Sentinel-2): {canopy_percentage:.1f}%")
+            return min(100, max(0, canopy_percentage))
+            
+        except Exception as sentinel_error:
+            print(f"   ⚠️  Sentinel-2 fallback failed: {sentinel_error}")
             return None
-        
-        # Get the most recent image
-        image = sentinel.sort('system:time_start', False).first()
-        
-        # Calculate NDVI
-        ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
-        
-        # Calculate tree canopy using NDVI thresholds
-        # NDVI > 0.4 = moderate to dense vegetation (trees)
-        tree_mask = ndvi.gt(0.4)
-        
-        # Calculate percentage within buffer
-        tree_area = tree_mask.reduceRegion(
-            reducer=ee.Reducer.sum(),
-            geometry=buffer,
-            scale=20,  # 20m resolution for Sentinel-2
-            maxPixels=1e9
-        ).get('NDVI')
-        
-        # Get total area
-        total_area = buffer.area().getInfo()  # Total area in square meters
-        tree_pixels = tree_area.getInfo() if tree_area else 0
-        pixel_area = 20 * 20  # 20m x 20m pixel for Sentinel-2
-        tree_area_sqm = tree_pixels * pixel_area
-        
-        canopy_percentage = (tree_area_sqm / total_area) * 100 if total_area > 0 else 0
-        
-        print(f"   ✅ GEE Tree Canopy: {canopy_percentage:.1f}%")
-        return min(100, max(0, canopy_percentage))
         
     except Exception as e:
         print(f"   ⚠️  GEE tree canopy analysis error: {e}")

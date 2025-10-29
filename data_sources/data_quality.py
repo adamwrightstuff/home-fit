@@ -43,6 +43,28 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None) ->
 class DataQualityManager:
     """Manages data quality assessment and fallback strategies."""
     
+    # Major metro centers for transit fallback
+    MAJOR_METROS = {
+        "New York": (40.7128, -74.0060),
+        "Los Angeles": (34.0522, -118.2437),
+        "Chicago": (41.8781, -87.6298),
+        "Houston": (29.7604, -95.3698),
+        "Phoenix": (33.4484, -112.0740),
+        "Philadelphia": (39.9526, -75.1652),
+        "San Diego": (32.7157, -117.1611),
+        "Dallas": (32.7767, -96.7970),
+        "San Jose": (37.3382, -121.8863),
+        "Austin": (30.2672, -97.7431),
+        "San Francisco": (37.7749, -122.4194),
+        "Columbus": (39.9612, -82.9988),
+        "Seattle": (47.6062, -122.3321),
+        "Boston": (42.3601, -71.0589),
+        "Miami": (25.7617, -80.1918),
+        "Portland": (45.5152, -122.6784),
+        "Denver": (39.7392, -104.9903),
+        "Atlanta": (33.7490, -84.3880),
+    }
+    
     def __init__(self):
         self.quality_thresholds = {
             'excellent': 0.9,    # 90%+ data completeness
@@ -51,6 +73,74 @@ class DataQualityManager:
             'poor': 0.3,         # 30-49% data completeness
             'very_poor': 0.0     # <30% data completeness
         }
+    
+    def _get_base_scores(self) -> Dict:
+        """Get base fallback scores by area type."""
+        return {
+            'urban_core': {
+                'active_outdoors': 60,
+                'healthcare_access': 70,
+                'air_travel_access': 80,
+                'walkable_town': 75,
+                'neighborhood_beauty': 50,
+                'public_transit_access': 65,
+                'quality_education': 60,
+                'housing_value': 40
+            },
+            'suburban': {
+                'active_outdoors': 50,
+                'healthcare_access': 60,
+                'air_travel_access': 60,
+                'walkable_town': 45,
+                'neighborhood_beauty': 55,
+                'public_transit_access': 40,
+                'quality_education': 65,
+                'housing_value': 60
+            },
+            'exurban': {
+                'active_outdoors': 40,
+                'healthcare_access': 45,
+                'air_travel_access': 30,
+                'walkable_town': 25,
+                'neighborhood_beauty': 60,
+                'public_transit_access': 20,
+                'quality_education': 55,
+                'housing_value': 70
+            },
+            'rural': {
+                'active_outdoors': 30,
+                'healthcare_access': 30,
+                'air_travel_access': 20,
+                'walkable_town': 15,
+                'neighborhood_beauty': 70,
+                'public_transit_access': 10,
+                'quality_education': 45,
+                'housing_value': 80
+            }
+        }
+    
+    def _find_nearest_metro(self, lat: float, lon: float) -> float:
+        """Find distance to nearest major metro center in kilometers."""
+        min_distance = float('inf')
+        
+        for metro_name, (metro_lat, metro_lon) in self.MAJOR_METROS.items():
+            distance = self._haversine_distance(lat, lon, metro_lat, metro_lon)
+            min_distance = min(min_distance, distance)
+        
+        return min_distance
+    
+    def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Calculate distance between two points in kilometers."""
+        R = 6371  # Earth radius in km
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_phi = math.radians(lat2 - lat1)
+        delta_lambda = math.radians(lon2 - lon1)
+        
+        a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        
+        return R * c
     
     def assess_data_completeness(self, pillar_name: str, data: Dict, 
                                expected_minimums: Dict) -> Tuple[float, str]:
@@ -323,7 +413,8 @@ class DataQualityManager:
             }
     
     def get_fallback_strategy(self, pillar_name: str, quality_tier: str, 
-                            area_type: str) -> Tuple[float, Dict]:
+                            area_type: str, lat: Optional[float] = None, 
+                            lon: Optional[float] = None) -> Tuple[float, Dict]:
         """
         Get fallback strategy based on data quality and area type.
         
@@ -331,53 +422,38 @@ class DataQualityManager:
             pillar_name: Name of the pillar
             quality_tier: Quality assessment result
             area_type: Area classification
+            lat, lon: Optional coordinates for metro proximity checks
         
         Returns:
             Tuple of (fallback_score, fallback_metadata)
         """
-        # Base fallback scores by area type
-        base_scores = {
-            'urban_core': {
-                'active_outdoors': 60,
-                'healthcare_access': 70,
-                'air_travel_access': 80,
-                'walkable_town': 75,
-                'neighborhood_beauty': 50,
-                'public_transit_access': 65,
-                'quality_education': 60,
-                'housing_value': 40
-            },
-            'suburban': {
-                'active_outdoors': 50,
-                'healthcare_access': 60,
-                'air_travel_access': 60,
-                'walkable_town': 45,
-                'neighborhood_beauty': 55,
-                'public_transit_access': 40,
-                'quality_education': 65,
-                'housing_value': 60
-            },
-            'exurban': {
-                'active_outdoors': 40,
-                'healthcare_access': 45,
-                'air_travel_access': 30,
-                'walkable_town': 25,
-                'neighborhood_beauty': 60,
-                'public_transit_access': 20,
-                'quality_education': 55,
-                'housing_value': 70
-            },
-            'rural': {
-                'active_outdoors': 30,
-                'healthcare_access': 30,
-                'air_travel_access': 20,
-                'walkable_town': 15,
-                'neighborhood_beauty': 70,
-                'public_transit_access': 10,
-                'quality_education': 45,
-                'housing_value': 80
+        # Special handling for transit pillar with metro proximity
+        if pillar_name == 'public_transit_access' and quality_tier == 'very_poor' and lat and lon:
+            metro_dist = self._find_nearest_metro(lat, lon)
+            
+            if metro_dist < 30:  # km
+                fallback_score = 40.0
+                reason = f"Within {metro_dist:.0f}km of major metro"
+            elif metro_dist < 50:
+                fallback_score = 30.0
+                reason = f"Within {metro_dist:.0f}km of major metro"
+            else:
+                # Use standard suburban fallback
+                base_scores = self._get_base_scores()
+                base_score = base_scores.get(area_type, {}).get(pillar_name, 40)
+                fallback_score = base_score * 0.6
+                reason = "Standard suburban fallback"
+            
+            return fallback_score, {
+                'fallback_used': True,
+                'quality_tier': quality_tier,
+                'area_type': area_type,
+                'metro_distance_km': round(metro_dist, 1),
+                'reason': reason
             }
-        }
+        
+        # Base fallback scores by area type
+        base_scores = self._get_base_scores()
         
         # Adjust based on quality tier
         quality_adjustments = {
@@ -468,7 +544,7 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
     
     if needs_fallback:
         fallback_score, fallback_metadata = data_quality_manager.get_fallback_strategy(
-            pillar_name, quality_tier, area_type
+            pillar_name, quality_tier, area_type, lat=lat, lon=lon
         )
     else:
         fallback_score = None
