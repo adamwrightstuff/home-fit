@@ -394,8 +394,12 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
             "tier4_services": [...]
         }
     """
-    # Brand filter: exclude chains by default
-    brand_filter = '["brand"!~"."]' if not include_chains else ''
+    # Brand filter: exclude known chains by default
+    if not include_chains:
+        # Exclude major chains/franchises but allow local businesses with brand tags
+        brand_filter = '''["brand"!~"McDonald's|Starbucks|Subway|KFC|Burger King|Pizza Hut|Domino's|Taco Bell|Wendy's|Dunkin'|Dunkin Donuts|7-Eleven|CVS|Walgreens|Rite Aid|Target|Walmart|Home Depot|Lowe's|Best Buy|Apple Store|AT&T|Verizon|T-Mobile|Chase|Bank of America|Wells Fargo|Citibank|FedEx|UPS|DHL|UPS Store|FedEx Office"]'''
+    else:
+        brand_filter = ''
     
     query = f"""
     [out:json][timeout:60];
@@ -1204,32 +1208,56 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=30)
-def query_hospitals(lat: float, lon: float, radius_m: int = 50000) -> Optional[List[Dict]]:
+@handle_api_timeout(timeout_seconds=40)
+def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -> Optional[Dict]:
     """
-    Query OSM for hospitals and medical facilities.
-    
-    Args:
-        lat, lon: Coordinates
-        radius_m: Search radius in meters (default 50km)
+    Query OSM for comprehensive healthcare facilities.
     
     Returns:
-        List of hospitals with name, lat, lon, and tags
+        {
+            "hospitals": [...],
+            "urgent_care": [...],
+            "clinics": [...],
+            "pharmacies": [...],
+            "doctors": [...]
+        }
     """
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:40];
     (
-      // Hospitals
+      // HOSPITALS & MAJOR MEDICAL CENTERS
       node["amenity"="hospital"](around:{radius_m},{lat},{lon});
       way["amenity"="hospital"](around:{radius_m},{lat},{lon});
       relation["amenity"="hospital"](around:{radius_m},{lat},{lon});
       
-      // Medical centers
+      // URGENT CARE & EMERGENCY CARE
+      node["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
+      way["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
+      
+      node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
+      way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
+      
+      // CLINICS & MEDICAL CENTERS
       node["amenity"="clinic"](around:{radius_m},{lat},{lon});
       way["amenity"="clinic"](around:{radius_m},{lat},{lon});
+      relation["amenity"="clinic"](around:{radius_m},{lat},{lon});
       
       node["amenity"="doctors"](around:{radius_m},{lat},{lon});
       way["amenity"="doctors"](around:{radius_m},{lat},{lon});
+      
+      // PHARMACIES & DRUGSTORES
+      node["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
+      way["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
+      
+      node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
+      way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
+      
+      // DENTAL & SPECIALTY CARE
+      node["amenity"="dentist"](around:{radius_m},{lat},{lon});
+      way["amenity"="dentist"](around:{radius_m},{lat},{lon});
+      
+      node["amenity"="veterinary"](around:{radius_m},{lat},{lon});
+      way["amenity"="veterinary"](around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -1237,41 +1265,70 @@ def query_hospitals(lat: float, lon: float, radius_m: int = 50000) -> Optional[L
     """
     
     try:
-        print(f"🏥 Querying OSM for hospitals within {radius_m/1000:.0f}km...")
-        resp = requests.post(OVERPASS_URL, data=query, timeout=30)
+        print(f"🏥 Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
+        resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=45)
         
         if resp.status_code == 200:
             data = resp.json()
             elements = data.get("elements", [])
             
             hospitals = []
-            for elem in elements:
-                if "lat" in elem and "lon" in elem:
-                    tags = elem.get("tags", {})
-                    name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
-                    
-                    # Calculate distance
-                    distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
-                    
-                    hospitals.append({
-                        "name": name,
-                        "lat": elem["lat"],
-                        "lon": elem["lon"],
-                        "distance_km": round(distance_km, 1),
-                        "amenity": tags.get("amenity"),
-                        "emergency": tags.get("emergency"),
-                        "beds": tags.get("beds"),
-                        "tags": tags
-                    })
+            urgent_care = []
+            clinics = []
+            pharmacies = []
+            doctors = []
             
-            return hospitals
+            for elem in elements:
+                tags = elem.get("tags", {})
+                amenity = tags.get("amenity", "")
+                name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
+                
+                # Calculate distance
+                if "lat" in elem and "lon" in elem:
+                    distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
+                else:
+                    # For ways/relations, use center point
+                    distance_km = 0.0
+                
+                facility = {
+                    "name": name,
+                    "lat": elem.get("lat"),
+                    "lon": elem.get("lon"),
+                    "distance_km": round(distance_km, 1),
+                    "amenity": amenity,
+                    "emergency": tags.get("emergency"),
+                    "beds": tags.get("beds"),
+                    "tags": tags
+                }
+                
+                # Categorize facilities
+                if amenity == "hospital":
+                    hospitals.append(facility)
+                elif amenity == "emergency_ward" or tags.get("emergency") == "yes":
+                    urgent_care.append(facility)
+                elif amenity in ["clinic", "doctors"]:
+                    if amenity == "clinic":
+                        clinics.append(facility)
+                    else:
+                        doctors.append(facility)
+                elif amenity == "pharmacy" or tags.get("shop") == "pharmacy":
+                    pharmacies.append(facility)
+            
+            return {
+                "hospitals": hospitals,
+                "urgent_care": urgent_care,
+                "clinics": clinics,
+                "pharmacies": pharmacies,
+                "doctors": doctors
+            }
         else:
-            print(f"⚠️  OSM hospital query failed: {resp.status_code}")
+            print(f"⚠️  Healthcare query failed: {resp.status_code}")
             return None
             
     except Exception as e:
-        print(f"Error querying OSM for hospitals: {e}")
+        print(f"Error querying healthcare facilities: {e}")
         return None
+
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

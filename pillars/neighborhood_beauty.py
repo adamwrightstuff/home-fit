@@ -126,19 +126,22 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
             details['gee_canopy_pct'] = gee_canopy
             print(f"   ✅ Using GEE satellite data: {gee_canopy:.1f}%")
         else:
-            print(f"   ⚠️  GEE not available or returned no data")
+            print(f"   ⚠️  GEE returned {gee_canopy} - trying Census fallback")
     except Exception as e:
         print(f"   ⚠️  GEE import error: {e}")
     
-    # Priority 2: Census USFS Tree Canopy (if GEE unavailable)
+    # Priority 2: Census USFS Tree Canopy (if GEE unavailable or low)
     if score == 0.0:
+        print(f"   📊 Trying Census USFS tree canopy data...")
         canopy_pct = census_api.get_tree_canopy(lat, lon)
         if canopy_pct is not None and canopy_pct > 0:
             canopy_score = _score_tree_canopy(canopy_pct)
             score = canopy_score
             sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
             details['census_canopy_pct'] = canopy_pct
-            print(f"   📊 Using Census canopy data: {canopy_pct:.1f}%")
+            print(f"   ✅ Using Census canopy data: {canopy_pct:.1f}%")
+        else:
+            print(f"   ⚠️  Census canopy returned {canopy_pct}")
     
     # Priority 3: OSM parks as proxy (fallback)
     if score == 0.0:

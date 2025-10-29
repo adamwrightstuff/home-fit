@@ -293,68 +293,38 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
     Query OSM for healthcare facilities with comprehensive coverage.
     """
     try:
-        # Ultra-simplified Overpass query for fast response
-        query = f"""
-        [out:json][timeout:15];
-        (
-          node["healthcare"~"clinic|doctor|urgent_care"](around:5000,{lat},{lon});
-          node["amenity"~"clinic|doctors|pharmacy|dentist"](around:3000,{lat},{lon});
-        );
-        out body;
-        """
-
-        import requests
-        resp = requests.post(
-            "https://overpass-api.de/api/interpreter",
-            data={"data": query},
-            timeout=20,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
-
-        if resp.status_code != 200:
-            return {"urgent_care": [], "pharmacies": [], "clinics": []}
-
-        data = resp.json()
-        elements = data.get("elements", [])
-
-        # Process elements
-        urgent_care = []
-        pharmacies = []
-        clinics = []
-        nodes_dict = {}
-
-        # Build nodes dict
-        for elem in elements:
-            if elem.get("type") == "node":
-                nodes_dict[elem["id"]] = elem
-
-        for elem in elements:
-            tags = elem.get("tags", {})
-            if not tags:
-                continue
-
-            amenity = tags.get("amenity")
-            emergency = tags.get("emergency")
-            healthcare = tags.get("healthcare")
-
-            # Get coordinates
-            elem_lat = elem.get("lat")
-            elem_lon = elem.get("lon")
-
-            if elem.get("type") == "way":
-                elem_lat, elem_lon = _get_way_center(elem, nodes_dict)
-
-            if not elem_lat or not elem_lon:
-                continue
-
-            distance_m = _haversine_distance(lat, lon, elem_lat, elem_lon)
-
-            facility = {
-                "name": tags.get("name", "Unnamed"),
-                "distance_m": round(distance_m, 0)
+        # Use the new comprehensive healthcare query
+        healthcare_data = osm_api.query_healthcare_facilities(lat, lon, radius_m=10000)
+        
+        if healthcare_data:
+            return {
+                "hospitals": healthcare_data.get("hospitals", []),
+                "urgent_care": healthcare_data.get("urgent_care", []),
+                "pharmacies": healthcare_data.get("pharmacies", []),
+                "clinics": healthcare_data.get("clinics", []),
+                "doctors": healthcare_data.get("doctors", [])
             }
+        else:
+            print(f"   ⚠️  No healthcare data returned from OSM")
+            return {
+                "hospitals": [],
+                "urgent_care": [],
+                "pharmacies": [],
+                "clinics": [],
+                "doctors": []
+            }
+    except Exception as e:
+        print(f"   ⚠️  Healthcare query error: {e}")
+        return {
+            "hospitals": [],
+            "urgent_care": [],
+            "pharmacies": [],
+            "clinics": [],
+            "doctors": []
+        }
 
-            # Enhanced categorization logic
+
+def _score_urgent_care(urgent_care: List[Dict]) -> float:
             name_lower = facility["name"].lower()
             
             # DEBUG: Print first 5 facilities to see what's happening
