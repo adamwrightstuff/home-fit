@@ -1244,12 +1244,22 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
       way["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
       relation["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
       
-      // URGENT CARE & EMERGENCY CARE
+      // URGENT CARE & EMERGENCY CARE - EXPANDED DETECTION
       node["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
       way["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
       
       node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
       way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
+      
+      // Urgent care specific tags
+      node["healthcare"="urgent_care"](around:{radius_m},{lat},{lon});
+      way["healthcare"="urgent_care"](around:{radius_m},{lat},{lon});
+      node["healthcare"="emergency"](around:{radius_m},{lat},{lon});
+      way["healthcare"="emergency"](around:{radius_m},{lat},{lon});
+      
+      // Walk-in clinics (often urgent care)
+      node["amenity"="clinic"]["healthcare:speciality"~"urgent|emergency|walk.*in|walk-in"](around:{radius_m},{lat},{lon});
+      way["amenity"="clinic"]["healthcare:speciality"~"urgent|emergency|walk.*in|walk-in"](around:{radius_m},{lat},{lon});
       
       // CLINICS & MEDICAL CENTERS
       node["amenity"="clinic"](around:{radius_m},{lat},{lon});
@@ -1317,19 +1327,28 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 
                 # Categorize facilities - IMPROVED LOGIC
                 healthcare = tags.get("healthcare", "")
+                healthcare_specialty = tags.get("healthcare:speciality", "").lower()
+                name_lower = name.lower()
                 
-                # Hospitals and major medical centers
-                if (amenity == "hospital" or 
-                    healthcare == "hospital" or 
-                    amenity == "medical_centre" or 
-                    healthcare == "medical_centre"):
+                # Hospitals and major medical centers (exclude if it's urgent care branded)
+                if (amenity == "hospital" or healthcare == "hospital" or 
+                    (amenity == "medical_centre" and healthcare != "urgent_care")):
                     hospitals.append(facility)
-                # Emergency care and urgent care
+                # Urgent care - check multiple indicators
                 elif (amenity == "emergency_ward" or 
-                      tags.get("emergency") == "yes" or
-                      healthcare == "emergency"):
+                      healthcare == "urgent_care" or
+                      healthcare == "emergency" or
+                      (amenity == "clinic" and (
+                          "urgent" in name_lower or
+                          "walk-in" in name_lower or
+                          "walk in" in name_lower or
+                          "immediate" in name_lower or
+                          "urgent" in healthcare_specialty or
+                          "emergency" in healthcare_specialty
+                      )) or
+                      tags.get("emergency") == "yes"):
                     urgent_care.append(facility)
-                # Clinics and medical centers
+                # Regular clinics and medical centers
                 elif amenity in ["clinic", "doctors"]:
                     if amenity == "clinic":
                         clinics.append(facility)

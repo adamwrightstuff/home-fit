@@ -52,12 +52,27 @@ def get_school_data(
     all_ratings = []
 
     for school in schools:
-        # Get school info - prioritize schoolName, fallback to name, avoid using IDs
-        name = school.get("schoolName")
-        if not name:
-            name = school.get("name")
-        if not name:
-            # Only use ID as last resort with "School #" prefix
+        # Get school info - SchoolDigger API sometimes returns generic "School #ID" in schoolName field
+        # Try to construct a more readable name using available data
+        name = school.get("schoolName") or school.get("name")
+        
+        # Check if schoolName is a generic ID format (School #number)
+        if name and isinstance(name, str) and name.startswith("School #"):
+            # Try to use district + level for better identification
+            district = school.get("district", {})
+            district_name = district.get("districtName", "") if isinstance(district, dict) else ""
+            school_level = school.get("schoolLevel", "")
+            
+            # If district name exists and isn't also generic, use it
+            if district_name and not district_name.startswith("School District #"):
+                # Format: "District Name - Level School"
+                name = f"{district_name.split(' School')[0]} - {school_level} School" if school_level else district_name.split(' School')[0]
+            else:
+                # Keep the generic ID format if no better option
+                pass
+        
+        # Final fallback to generic ID if name is still missing
+        if not name or (isinstance(name, str) and name.strip() == ""):
             school_id = school.get("schoolid") or school.get("schoolId") or school.get("id")
             if school_id:
                 name = f"School #{school_id}"
@@ -76,8 +91,14 @@ def get_school_data(
             rank_stars = latest_rank.get("rankStars")
             state_percentile = latest_rank.get("rankStatewidePercentage")
 
+            # Use rankStars as primary (most reliable - derived from test scores and comprehensive data)
+            # rankStars is SchoolDigger's composite rating (0-5 stars)
             if rank_stars is not None:
                 rating = float(rank_stars) * 20  # Convert 0-5 stars to 0-100
+            elif state_percentile is not None:
+                # Fallback: use state_percentile directly if stars unavailable
+                # Higher percentile = better performance
+                rating = float(state_percentile)  # Use percentile as score directly
 
         # Exclude schools without valid ratings (includes private schools without rankHistory)
         # Private schools CAN have ratings in SchoolDigger, but if they don't, exclude them

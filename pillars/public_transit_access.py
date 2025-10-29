@@ -191,7 +191,29 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             "apikey": TRANSITLAND_API_KEY
         }
         
-        response = requests.get(url, params=params, timeout=15)
+        # Increase timeout and add retry for reliability
+        response = None
+        for attempt in range(2):  # 2 attempts
+            try:
+                response = requests.get(url, params=params, timeout=30)  # Increased to 30s
+                if response.status_code == 200:
+                    break
+            except requests.exceptions.Timeout:
+                if attempt < 1:  # Retry once
+                    print(f"   ⚠️  Transitland API timeout (attempt {attempt + 1}/2), retrying...")
+                    continue
+                else:
+                    print(f"   ⚠️  Transitland API timeout after 2 attempts")
+                    raise
+            except Exception as e:
+                if attempt < 1:
+                    print(f"   ⚠️  Transitland API error (attempt {attempt + 1}/2): {e}, retrying...")
+                    continue
+                else:
+                    raise
+        
+        if response is None:
+            return []
         
         if response.status_code != 200:
             print(f"   ⚠️  Transitland API returned status {response.status_code}")

@@ -87,21 +87,25 @@ def cached(ttl_seconds: int = 3600):
             print(f"💾 Cache miss for {func.__name__} - executing")
             result = func(*args, **kwargs)
             
-            # Store in both Redis (if available) and in-memory
-            cache_data = {
-                'value': result,
-                'timestamp': current_time
-            }
-            
-            if _redis_client:
-                try:
-                    _redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
-                except Exception as e:
-                    print(f"⚠️  Redis write error: {e}")
-            
-            # Also store in in-memory cache
-            _cache[cache_key] = result
-            _cache_ttl[cache_key] = current_time
+            # Only cache non-None results (None indicates error/obfuscated data that shouldn't be cached)
+            if result is not None:
+                # Store in both Redis (if available) and in-memory
+                cache_data = {
+                    'value': result,
+                    'timestamp': current_time
+                }
+                
+                if _redis_client:
+                    try:
+                        _redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
+                    except Exception as e:
+                        print(f"⚠️  Redis write error: {e}")
+                
+                # Also store in in-memory cache
+                _cache[cache_key] = result
+                _cache_ttl[cache_key] = current_time
+            else:
+                print(f"⚠️  Result is None - not caching (allows retry)")
             
             return result
         

@@ -11,8 +11,11 @@ from .cache import cached, CACHE_TTL
 SCHOOLDIGGER_BASE = "https://api.schooldigger.com/v2.1"
 
 # Track API usage for quota management
+import time
 _request_count = 0
-QUOTA_WARNING_THRESHOLD = 50
+_last_request_time = 0
+QUOTA_WARNING_THRESHOLD = 15  # Warn before 20/day limit
+RATE_LIMIT_SECONDS = 65  # 1 request per minute (65s to be safe)
 
 # State name to abbreviation mapping
 STATE_ABBREVIATIONS = {
@@ -42,6 +45,9 @@ def get_schools(
     Query SchoolDigger API for schools.
     
     Results are cached for 30 days to preserve API quota.
+    
+    NOTE: If data is obfuscated (generic IDs), it will NOT be cached
+    to allow retry with valid rate limits.
 
     Returns:
         List of school dicts or None if API fails
@@ -66,28 +72,40 @@ def get_schools(
     if city:
         city = city.strip()
 
+    # CRITICAL: 'st' (state) parameter is REQUIRED for SchoolDigger API
+    # Without it, or if rate limits exceeded, data is obfuscated (generic IDs)
+    if not state:
+        print("⚠️  State parameter required for SchoolDigger API - data may be obfuscated")
+        return None
+    
     params = {
         "appID": app_id,
         "appKey": app_key,
+        "st": state,  # State is REQUIRED
         "perPage": 50
     }
 
-    # Try ZIP + State first
-    if zip_code and state:
-        params_zip = {**params, "zip": zip_code, "st": state}
+    # Try ZIP + State (most specific, includes required 'st')
+    if zip_code:
+        params_zip = {**params, "zip": zip_code}
         schools = _fetch_schools(params_zip)
         if schools:
             return schools
 
-    # Try City + State
-    if city and state:
-        params_city = {**params, "city": city, "st": state}
+    # Try City + State (includes required 'st')
+    if city:
+        params_city = {**params, "city": city}
+        # Also try with 'q' parameter for name/city search
+        params_city_q = {**params, "q": city}
         schools = _fetch_schools(params_city)
+        if not schools:
+            schools = _fetch_schools(params_city_q)
         if schools:
             return schools
-
-    # Try ZIP only
-    if zip_code:
+    
+    # ZIP only without state will be obfuscated, but try if no other option
+    if zip_code and not state:
+        print("⚠️  Warning: ZIP-only query without state may return obfuscated data")
         params_zip_only = {**params, "zip": zip_code}
         schools = _fetch_schools(params_zip_only)
         if schools:
@@ -97,12 +115,35 @@ def get_schools(
 
 
 def _fetch_schools(params: Dict) -> Optional[List[Dict]]:
-    """Helper to fetch schools with error handling."""
-    global _request_count
+    """
+    Helper to fetch schools with error handling.
+    
+    NOTE: SchoolDigger free plan limits:
+    - 20 requests per day
+    - 1 request per minute
+    Exceeding limits causes data obfuscation (generic IDs, no school names)
+    """
+    global _request_count, _last_request_time
+    
+    # Rate limiting: respect 1 request per minute limit
+    current_time = time.time()
+    time_since_last = current_time - _last_request_time
+    if _last_request_time > 0 and time_since_last < RATE_LIMIT_SECONDS:
+        wait_time = RATE_LIMIT_SECONDS - time_since_last
+        print(f"⏳ Rate limiting: waiting {wait_time:.1f}s (1 req/min limit)...")
+        time.sleep(wait_time)
+    
     _request_count += 1
+    _last_request_time = time.time()
     
     if _request_count >= QUOTA_WARNING_THRESHOLD:
         print(f"⚠️  SchoolDigger quota warning: {_request_count} API requests this session")
+        print(f"⚠️  Free plan limit: 20/day, 1/min. Exceeding causes obfuscated data (generic IDs).")
+    
+    # Verify 'st' parameter is included (REQUIRED)
+    if 'st' not in params or not params.get('st'):
+        print(f"⚠️  ERROR: 'st' (state) parameter missing - request will fail or return obfuscated data")
+        return None
     
     try:
         url = f"{SCHOOLDIGGER_BASE}/schools"
@@ -110,27 +151,39 @@ def _fetch_schools(params: Dict) -> Optional[List[Dict]]:
 
         if resp.status_code == 200:
             data = resp.json()
-            
-            # DEBUG: Log what we're getting
-            print(f"📊 SchoolDigger API Response:")
-            print(f"   - Total schools: {len(data.get('schoolList', []))}")
-            
-            # Check a sample school if available
             schools = data.get("schoolList", [])
+            
+            # Check if data is obfuscated (generic IDs indicate rate limit exceeded)
             if schools and len(schools) > 0:
                 sample = schools[0]
-                print(f"   - Sample school: {sample.get('schoolName', 'Unknown')}")
-                print(f"   - Has rankHistory: {'rankHistory' in sample}")
+                sample_name = sample.get('schoolName', '')
+                
+                # DEBUG: Log what we're getting
+                print(f"📊 SchoolDigger API Response:")
+                print(f"   - Total schools: {len(schools)}")
+                print(f"   - Sample school: {sample_name}")
+                
+                # Check for obfuscation (generic School #ID format)
+                is_obfuscated = sample_name and sample_name.startswith("School #")
+                if is_obfuscated:
+                    print(f"   ⚠️  WARNING: Data appears obfuscated (generic IDs)")
+                    print(f"   ⚠️  Possible causes: Rate limit exceeded (free plan: 20/day, 1/min)")
+                    print(f"   ⚠️  Or: Missing required 'st' (state) parameter")
+                    print(f"   ⚠️  Solution: Wait 1+ minute between requests or upgrade plan")
+                    print(f"   ⚠️  NOTE: Obfuscated data will NOT be cached - will retry next call")
+                    # Don't cache obfuscated data - return None to allow retry
+                    # The @cached decorator won't cache None results
+                    return None
+                else:
+                    print(f"   ✅ School names appear valid (not obfuscated)")
+                
+                # Log rank info
                 if 'rankHistory' in sample:
                     rank_history = sample.get('rankHistory')
-                    if rank_history is not None:
-                        print(f"   - rankHistory length: {len(rank_history)}")
-                        if len(rank_history) > 0:
-                            print(f"   - First rank entry: {rank_history[0]}")
-                    else:
-                        print(f"   - rankHistory is None")
-                print(f"   - School level: {sample.get('schoolLevel', 'Unknown')}")
-                print(f"   - Available keys: {', '.join(sample.keys())}")
+                    if rank_history is not None and len(rank_history) > 0:
+                        rank_stars = rank_history[0].get('rankStars', 'N/A')
+                        print(f"   - Sample rating: {rank_stars} stars")
+                    print(f"   - School level: {sample.get('schoolLevel', 'Unknown')}")
             
             return schools
         else:
