@@ -559,8 +559,8 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
     return {
         'completeness': completeness,
         'quality_tier': quality_tier,
-        'needs_fallback': needs_fallback,
-        'fallback_score': fallback_score,
+        'needs_fallback': needs_fallback,  # Indicates data quality; actual score uses real data when available
+        'fallback_score': fallback_score,  # Only used if actual data unavailable; shown for transparency
         'fallback_metadata': fallback_metadata,
         'confidence': confidence,
         'expected_minimums': expected_minimums,

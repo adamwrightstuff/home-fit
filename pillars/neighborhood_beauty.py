@@ -116,9 +116,22 @@ def _score_trees(lat: float, lon: float, city: Optional[str]) -> Tuple[float, Di
     details = {}
     
     # Priority 1: GEE satellite tree canopy (most comprehensive)
+    # Use larger radius for suburban/rural areas to capture neighborhood tree coverage
     try:
-        from data_sources import satellite_api
-        gee_canopy = satellite_api.get_tree_canopy_satellite(lat, lon)
+        from data_sources import census_api, data_quality
+        density = census_api.get_population_density(lat, lon)
+        area_type = data_quality.detect_area_type(lat, lon, density)
+        
+        # Adjust radius based on area type: suburban/rural need larger buffers
+        if area_type in ['rural', 'exurban']:
+            radius_m = 2000  # 2km for rural/exurban
+        elif area_type == 'suburban':
+            radius_m = 1500  # 1.5km for suburban (better coverage)
+        else:
+            radius_m = 1000  # 1km for urban
+        
+        from data_sources.gee_api import get_tree_canopy_gee
+        gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m)
         if gee_canopy is not None and gee_canopy >= 0.1:  # Threshold to avoid false zeros
             canopy_score = _score_tree_canopy(gee_canopy)
             score = canopy_score

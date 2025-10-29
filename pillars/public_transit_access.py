@@ -119,7 +119,17 @@ def get_public_transit_score(lat: float, lon: float) -> Tuple[float, Dict]:
     light_rail_score = _score_light_rail_routes(light_rail_routes)
     bus_score = _score_bus_routes(bus_routes)
 
-    total_score = heavy_rail_score + light_rail_score + bus_score
+    # Adaptive scoring: For commuter towns with excellent heavy rail access,
+    # don't penalize for missing light rail/bus. Heavy rail alone can achieve high scores.
+    if heavy_rail_score >= 40 and (light_rail_score == 0 or bus_score < 15):
+        # Excellent heavy rail in commuter town - scale up to 80-100 range
+        # Heavy rail gets 60-70, light rail/bus are bonus (not required)
+        base_score = min(70, heavy_rail_score + 10)  # Heavy rail worth more
+        bonus_score = light_rail_score + bus_score
+        total_score = min(100, base_score + (bonus_score * 0.4))  # Bus/LR are bonus
+    else:
+        # Urban areas or areas with multiple modes - use additive scoring
+        total_score = heavy_rail_score + light_rail_score + bus_score
 
     # Assess data quality
     combined_data = {
