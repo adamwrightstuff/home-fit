@@ -96,14 +96,20 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
     """
     Get tree canopy percentage using Google Earth Engine.
     
-    Uses NLCD Tree Canopy Cover dataset (30m resolution, USA only) for accurate data.
-    Falls back to Sentinel-2 NDVI analysis if NLCD unavailable.
+    Uses NLCD Tree Canopy Cover dataset (30m resolution, USA only) as primary source.
+    Validates against other sources for quality assurance. No data fabrication - uses real measurements only.
+    
+    Priority:
+    1. NLCD TCC (2021) - Primary source, designed for urban/suburban areas
+    2. NLCD Land Cover - Validation source
+    3. Hansen Global Forest - Fallback only (measures woody vegetation, not just canopy)
+    4. Sentinel-2 NDVI - Final fallback
     
     Args:
         lat: Latitude
         lon: Longitude  
         radius_m: Analysis radius in meters
-        area_type: Optional area type ('urban_core', 'suburban', 'rural', etc.) for adjustments
+        area_type: Optional area type for logging/debugging (no adjustments applied)
         
     Returns:
         Tree canopy percentage (0-100) or None if unavailable
@@ -134,13 +140,7 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
             )
             tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
             if tcc_pct is not None and tcc_pct >= 0.1:
-                # Compensate for known NLCD underestimation in suburban areas
-                # Research shows ~10-15% underestimation, but higher for leafy suburbs like Westchester
-                if area_type == 'suburban':
-                    tcc_pct = tcc_pct * 1.20  # Add 20% compensation for suburban (increased from 15%)
-                    print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021, suburban adj): {tcc_pct:.1f}%")
-                else:
-                    print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
+                print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
                 nlcd_tcc_result = min(100, max(0, tcc_pct))
             else:
                 print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (too low or unavailable)")
@@ -191,29 +191,54 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
         except Exception as nlcd_error:
             print(f"   ⚠️  NLCD Land Cover unavailable: {nlcd_error}")
         
-        # Prioritize NLCD TCC for suburban areas (most accurate), otherwise combine sources
+        # Validation-based multi-source approach: Use NLCD TCC as primary, validate with others
         if nlcd_tcc_result:
-            if area_type == 'suburban':
-                # For suburban areas, trust NLCD TCC as most accurate (already has adjustment)
-                print(f"   📊 Using NLCD TCC as primary source for suburban area")
-                return nlcd_tcc_result
+            # NLCD TCC is designed for urban/suburban - prioritize it
+            primary_result = nlcd_tcc_result
+            
+            # Validate against other sources (don't blindly average - check agreement)
+            validation_sources = []
+            if nlcd_landcover_result:
+                validation_sources.append(('NLCD Land Cover', nlcd_landcover_result))
+            # Note: Hansen measures different things (woody vegetation vs tree canopy) - use cautiously
+            
+            # Check agreement with validation sources
+            if validation_sources:
+                agreements = []
+                for source_name, source_value in validation_sources:
+                    diff = abs(primary_result - source_value)
+                    if diff <= 5:  # Within 5% = good agreement
+                        agreements.append(source_name)
+                        print(f"   ✓ {source_name} validates NLCD TCC (diff: {diff:.1f}%)")
+                    elif diff <= 10:  # Within 10% = acceptable
+                        agreements.append(source_name)
+                        print(f"   ~ {source_name} roughly agrees with NLCD TCC (diff: {diff:.1f}%)")
+                    else:
+                        print(f"   ⚠️  {source_name} differs significantly from NLCD TCC ({diff:.1f}% diff)")
+                
+                if agreements:
+                    print(f"   📊 NLCD TCC validated by {len(agreements)} source(s)")
+                else:
+                    print(f"   ⚠️  Validation sources disagree - using NLCD TCC as primary")
+            
+            return primary_result
         
-        # For other areas or when NLCD unavailable, combine multiple sources
+        # Fallback: If NLCD unavailable, try other sources
         sources = []
-        if nlcd_tcc_result:
-            sources.append(nlcd_tcc_result)
-        if hansen_result:
-            sources.append(hansen_result)
         if nlcd_landcover_result:
-            sources.append(nlcd_landcover_result)
+            sources.append(('NLCD Land Cover', nlcd_landcover_result))
+        if hansen_result:
+            sources.append(('Hansen', hansen_result))
         
-        if len(sources) > 1:
-            # Average multiple sources for more robust estimate
-            combined_result = sum(sources) / len(sources)
-            print(f"   📊 Combined result (averaged {len(sources)} sources): {combined_result:.1f}%")
+        if len(sources) == 1:
+            return sources[0][1]
+        elif len(sources) > 1:
+            # If multiple fallback sources, average them
+            values = [s[1] for s in sources]
+            combined_result = sum(values) / len(values)
+            source_names = ', '.join([s[0] for s in sources])
+            print(f"   📊 Combined fallback result ({source_names}): {combined_result:.1f}%")
             return min(100, max(0, combined_result))
-        elif len(sources) == 1:
-            return sources[0]
         
         # Priority 4: Sentinel-2 NDVI fallback (recent imagery, cloud-limited)
         try:
