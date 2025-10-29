@@ -473,6 +473,13 @@ def health_check():
     """Detailed health check with API credential validation."""
     credentials = check_api_credentials()
     cache_stats = get_cache_stats()
+    # GEE status
+    try:
+        from data_sources.gee_api import GEE_AVAILABLE
+    except Exception:
+        GEE_AVAILABLE = False
+    import os
+    gee_env_present = bool(os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON"))
     
     # Clean up expired cache entries
     cleanup_expired_cache()
@@ -484,7 +491,8 @@ def health_check():
         "census": "✅ Census API key configured" if credentials["census"] else "❌ Census API key missing",
         "nyc_trees": "✅ NYC Open Data (no credentials required)",
         "airports": "✅ OurAirports database (static data)",
-        "transit": "✅ Transitland API (no credentials required)"
+        "transit": "✅ Transitland API (no credentials required)",
+        "gee": ("✅ Google Earth Engine initialized" if GEE_AVAILABLE else ("⚠️ GEE disabled - set GOOGLE_APPLICATION_CREDENTIALS_JSON" if not gee_env_present else "⚠️ GEE not initialized - check credentials / roles"))
     }
 
     return {
