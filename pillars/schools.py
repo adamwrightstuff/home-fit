@@ -81,6 +81,21 @@ def get_school_data(
 
         if rating is None or rating == 0:
             continue
+            
+        # Filter out schools with suspiciously low ratings (likely outside the area or data errors)
+        # Only exclude very low ratings (1 star = 20) if we have other schools with better ratings
+        # This prevents including schools from neighboring areas that don't represent the district
+        # Check if there are other schools in the list with ratings > 20
+        has_better_schools = any(
+            s.get("rankHistory") and 
+            len(s.get("rankHistory", [])) > 0 and
+            s["rankHistory"][0].get("rankStars", 0) > 1
+            for s in schools if s != school
+        )
+        
+        if rating <= 20 and has_better_schools:
+            print(f"   ⚠️  Excluding {name} - rating {rating:.0f}/100 (likely outside query area or data quality issue)")
+            continue
 
         # Get additional details
         rank_movement = school.get("rankMovement")

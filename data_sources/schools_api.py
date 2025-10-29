@@ -122,10 +122,13 @@ def _fetch_schools(params: Dict) -> Optional[List[Dict]]:
                 print(f"   - Sample school: {sample.get('schoolName', 'Unknown')}")
                 print(f"   - Has rankHistory: {'rankHistory' in sample}")
                 if 'rankHistory' in sample:
-                    rank_history = sample.get('rankHistory', [])
-                    print(f"   - rankHistory length: {len(rank_history)}")
-                    if rank_history:
-                        print(f"   - First rank entry: {rank_history[0]}")
+                    rank_history = sample.get('rankHistory')
+                    if rank_history is not None:
+                        print(f"   - rankHistory length: {len(rank_history)}")
+                        if len(rank_history) > 0:
+                            print(f"   - First rank entry: {rank_history[0]}")
+                    else:
+                        print(f"   - rankHistory is None")
                 print(f"   - School level: {sample.get('schoolLevel', 'Unknown')}")
                 print(f"   - Available keys: {', '.join(sample.keys())}")
             
