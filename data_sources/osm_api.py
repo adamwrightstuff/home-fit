@@ -953,7 +953,7 @@ def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tup
 
 
 def _deduplicate_by_proximity(features: List[Dict], max_distance_m: float) -> List[Dict]:
-    """Remove duplicates within max_distance_m."""
+    """Remove duplicates within max_distance_m. Keep both if names differ and are both non-empty."""
     if len(features) <= 1:
         return features
 
@@ -963,15 +963,17 @@ def _deduplicate_by_proximity(features: List[Dict], max_distance_m: float) -> Li
         for existing in unique:
             dist = haversine_distance(
                 feature["lat"], feature["lon"],
-                existing["lat"], existing["lon"]
+                existing["lat"], existing["lon"])
+            names_differ = (
+                (feature.get("name") or "").strip() != (existing.get("name") or "").strip()
+                and (feature.get("name") or "").strip()
+                and (existing.get("name") or "").strip()
             )
-            if dist < max_distance_m:
+            if dist < max_distance_m and not names_differ:
                 is_duplicate = True
                 break
-
         if not is_duplicate:
             unique.append(feature)
-
     return unique
 
 
