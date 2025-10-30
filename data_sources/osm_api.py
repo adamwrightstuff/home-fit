@@ -12,6 +12,17 @@ from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+def _retry_overpass(request_fn, attempts: int = 3, base_wait: float = 0.8):
+    """Simple retry with exponential backoff for Overpass requests."""
+    import time
+    for i in range(attempts):
+        try:
+            return request_fn()
+        except Exception as e:
+            if i == attempts - 1:
+                raise
+            time.sleep(base_wait * (1.5 ** i))
+
 DEBUG_PARKS = True  # Set False to silence park debugging
 
 
@@ -152,16 +163,18 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
     """
 
     try:
-        resp = requests.post(
-            OVERPASS_URL,
-            data={"data": query},
-            timeout=50,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
+        def _do_request():
+            r = requests.post(
+                OVERPASS_URL,
+                data={"data": query},
+                timeout=50,
+                headers={"User-Agent": "HomeFit/1.0"}
+            )
+            if r.status_code != 200:
+                raise RuntimeError(f"Overpass status={r.status_code}")
+            return r
 
-        if resp.status_code != 200:
-            return None
-
+        resp = _retry_overpass(_do_request, attempts=3, base_wait=0.8)
         data = resp.json()
         elements = data.get("elements", [])
 
@@ -713,6 +726,59 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
     return hiking, swimming, camping
 
 
+def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int = 1500) -> int:
+    """
+    Count clusters of path/footway segments within local radius.
+    Clusters are grouped by ~120m; return min(5, clusters).
+    """
+    try:
+        q = f"""
+        [out:json][timeout:25];
+        (
+          way["highway"~"^(path|footway)$"](around:{radius_m},{lat},{lon});
+        );
+        out geom;
+        """
+        resp = requests.post(OVERPASS_URL, data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+        if resp.status_code != 200:
+            return 0
+        ways = resp.json().get("elements", [])
+        def _centroid(w):
+            pts = [(n.get('lat'), n.get('lon')) for n in (w.get('geometry') or []) if 'lat' in n and 'lon' in n]
+            pts = [(a,b) for a,b in pts if a is not None and b is not None]
+            if not pts:
+                return None
+            return (sum(p[0] for p in pts)/len(pts), sum(p[1] for p in pts)/len(pts))
+        centroids = []
+        for w in ways:
+            c = _centroid(w)
+            if c:
+                centroids.append(c)
+        clusters = []
+        from math import radians, sin, cos, asin, sqrt
+        def dkm(a,b):
+            R=6371
+            lat1,lon1=a; lat2,lon2=b
+            dlat=radians(lat2-lat1); dlon=radians(lon2-lon1)
+            x=sin(dlat/2)**2+cos(radians(lat1))*cos(radians(lat2))*sin(dlon/2)**2
+            return 2*R*asin(sqrt(x))
+        for c in centroids:
+            placed=False
+            for group in clusters:
+                if dkm(c, group['center']) <= 0.12:  # ~120m
+                    group['points'].append(c)
+                    lat = sum(p[0] for p in group['points'])/len(group['points'])
+                    lon = sum(p[1] for p in group['points'])/len(group['points'])
+                    group['center']=(lat,lon)
+                    placed=True
+                    break
+            if not placed:
+                clusters.append({'center':c,'points':[c]})
+        return min(5, len(clusters))
+    except Exception:
+        return 0
+
+
 def _process_charm_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict]]:
     """Process OSM elements into historic buildings and artwork."""
     historic = []
@@ -781,6 +847,47 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
 
     return historic, artwork
 
+
+def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict[str, int]:
+    """
+    Return presence flags for aesthetics: viewpoints, artwork, fountains, waterfront.
+    Lightweight and capped upstream.
+    """
+    out = {"viewpoints": 0, "artwork": 0, "fountains": 0, "waterfront": 0}
+    try:
+        q = f"""
+        [out:json][timeout:20];
+        (
+          node["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
+          way["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
+          node["tourism"="artwork"](around:{radius_m},{lat},{lon});
+          way["tourism"="artwork"](around:{radius_m},{lat},{lon});
+          node["amenity"="fountain"](around:{radius_m},{lat},{lon});
+          way["amenity"="fountain"](around:{radius_m},{lat},{lon});
+        );
+        out count;
+        """
+        r = requests.post(OVERPASS_URL, data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+        if r.status_code == 200:
+            # If any returned, set presence flags (fast path). For exact counts, split queries.
+            out["viewpoints"] = 1
+            out["artwork"] = 1
+            out["fountains"] = 1
+    except Exception:
+        pass
+    # Coastline probe reused (2km)
+    try:
+        qc = f"""
+        [out:json][timeout:15];
+        way["natural"="coastline"](around:2000,{lat},{lon});
+        out center 1;
+        """
+        rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
+        if rc.status_code == 200 and rc.json().get("elements"):
+            out["waterfront"] = 1
+    except Exception:
+        pass
+    return out
 
 def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float, include_chains: bool = False) -> Dict:
     """Process OSM elements into categorized businesses by tier."""

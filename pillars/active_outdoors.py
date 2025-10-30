@@ -44,6 +44,33 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     
     print(f"   🏔️  Querying regional outdoor activities ({regional_radius/1000:.0f}km)...")
     regional_data = osm_api.query_nature_features(lat, lon, radius_m=regional_radius)
+    # Coastline fallback if nature query returns empty
+    if not regional_data or (not regional_data.get('hiking') and not regional_data.get('swimming') and not regional_data.get('camping')):
+        try:
+            qc = f"""
+            [out:json][timeout:15];
+            way["natural"="coastline"](around:2000,{lat},{lon});
+            out center 1;
+            """
+            from data_sources.osm_api import OVERPASS_URL, requests
+            rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
+            if rc.status_code == 200 and rc.json().get("elements"):
+                regional_data = regional_data or {"hiking": [], "swimming": [], "camping": []}
+                regional_data["swimming"].append({"type":"coastline","name":None,"distance_m":0})
+        except Exception:
+            pass
+
+    # Local path cluster bonus (small, capped)
+    try:
+        from data_sources.osm_api import query_local_paths_within_green_areas
+        local_clusters = query_local_paths_within_green_areas(lat, lon, radius_m=local_radius)
+        if regional_data is None:
+            regional_data = {"hiking": [], "swimming": [], "camping": []}
+        # Add synthetic local hiking entries to avoid scoring zero when trails exist informally
+        for _ in range(min(5, int(local_clusters))):
+            regional_data["hiking"].append({"type":"local_path_cluster","name":None,"distance_m":0})
+    except Exception:
+        pass
 
     # Combine data for quality assessment
     combined_data = {

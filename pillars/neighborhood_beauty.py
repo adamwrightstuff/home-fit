@@ -84,6 +84,16 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     except Exception:
         pass
     
+    # Small beauty enhancers (viewpoints/artwork/fountains/waterfront)
+    try:
+        from data_sources.osm_api import query_beauty_enhancers
+        enhancers = query_beauty_enhancers(lat, lon, radius_m=1500)
+        beauty_bonus = min(8.0, enhancers.get('viewpoints',0)*2 + enhancers.get('artwork',0)*3 + enhancers.get('fountains',0)*1 + enhancers.get('waterfront',0)*2)
+        total_score = min(100.0, total_score + beauty_bonus)
+    except Exception:
+        enhancers = {"viewpoints":0, "artwork":0, "fountains":0, "waterfront":0}
+        beauty_bonus = 0.0
+
     # Build response
     breakdown = {
         "score": round(total_score, 1),
@@ -93,7 +103,9 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         },
         "details": {
             "tree_analysis": tree_details,
-            "historic_analysis": historic_details
+            "historic_analysis": historic_details,
+            "enhancers": enhancers,
+            "enhancer_bonus": beauty_bonus
         },
         "weights": weights,
         "data_quality": quality_metrics
