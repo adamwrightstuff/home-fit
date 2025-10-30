@@ -119,7 +119,7 @@ def root():
 
 @app.get("/score")
 def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False, 
-                          beauty_weights: Optional[str] = None):
+                         beauty_weights: Optional[str] = None, diagnostics: Optional[bool] = False):
     """
     Calculate livability score for a given address.
 
@@ -181,7 +181,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     print("📊 Calculating pillar scores...\n")
 
     # Pillar 1: Active Outdoors
-    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city, area_type=area_type, location_scope=location_scope)
+    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city, area_type=area_type, location_scope=location_scope, include_diagnostics=bool(diagnostics))
 
     # Pillar 2: Neighborhood Beauty (Simplified - real data only)
     beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city, 
@@ -396,6 +396,25 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter."
         }
     }
+
+    if diagnostics:
+        # Surface pillar diagnostics when available
+        diag = {}
+        try:
+            parks_diag = active_outdoors_details.get("diagnostics", {})
+            if parks_diag:
+                diag["active_outdoors"] = parks_diag
+        except Exception:
+            pass
+        try:
+            beauty_diag = beauty_details.get("details", {}).get("enhancers", {})
+            if beauty_diag:
+                diag.setdefault("neighborhood_beauty", {})["enhancers"] = beauty_diag
+                diag["neighborhood_beauty"]["enhancer_bonus"] = beauty_details.get("details", {}).get("enhancer_bonus", 0)
+        except Exception:
+            pass
+        if diag:
+            response["diagnostics"] = diag
 
     # Record telemetry metrics
     try:

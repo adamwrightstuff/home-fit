@@ -348,7 +348,13 @@ class DataQualityManager:
         has_street = bool(visual_analysis.get('street_analysis'))
         visual_bonus = 0.15 if (has_satellite and has_street) else 0.08 if (has_satellite or has_street) else 0
         
-        completeness = (tree_score * 0.4) + (landmark_score * 0.35) + (year_built_score * 0.1) + visual_bonus
+        # Rebalance weights so trees + year built provide a stronger completeness signal
+        # New weights: trees 0.45, landmarks 0.25, year_built 0.2, visual bonus up to ~0.15
+        completeness = (tree_score * 0.45) + (landmark_score * 0.25) + (year_built_score * 0.2) + visual_bonus
+
+        # Floor completeness when both trees and year built are present (good objective coverage)
+        if tree_score >= 0.5 and year_built_score >= 1.0:
+            completeness = max(completeness, 0.5)
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_housing_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:

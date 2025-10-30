@@ -13,7 +13,8 @@ from data_sources.radius_profiles import get_radius_profile
 
 def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None,
                               area_type: Optional[str] = None,
-                              location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+                              location_scope: Optional[str] = None,
+                              include_diagnostics: bool = False) -> Tuple[float, Dict]:
     """
     Calculate active outdoors score (0-100) based on access to outdoor activities.
 
@@ -132,6 +133,18 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
         "data_quality": quality_metrics,
         "area_classification": area_metadata
     }
+
+    if include_diagnostics:
+        try:
+            kept_parks = parks or []
+            breakdown["diagnostics"] = {
+                "parks_kept": [
+                    {"name": p.get("name"), "osm_id": p.get("osm_id"), "distance_m": p.get("distance_m"), "area_sqm": p.get("area_sqm")}
+                    for p in kept_parks
+                ][:50]
+            }
+        except Exception:
+            pass
 
     # Log results
     print(f"✅ Active Outdoors Score: {total_score:.0f}/100")
