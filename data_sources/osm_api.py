@@ -12,6 +12,8 @@ from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+DEBUG_PARKS = True  # Set False to silence park debugging
+
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
@@ -504,6 +506,10 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         elif elem.get("type") == "way":
             ways_dict[elem["id"]] = elem
 
+    debug_raw_candidates = []
+    debug_kept_parks = []
+    debug_skipped_parks = []
+
     # Process features
     for elem in elements:
         osm_id = elem.get("id")
@@ -528,71 +534,75 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
             seen_park_ids.add(osm_id)
 
             elem_lat, elem_lon, area_sqm = None, None, 0
-            
+            centroid_reason = "ok"
             if elem_type == "way":
                 elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
+                if elem_lat is None:
+                    centroid_reason = "way-geometry-fail"
             elif elem_type == "relation":
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
                 area_sqm = 0
+                if elem_lat is None:
+                    centroid_reason = "relation-centroid-fail"
             elif elem_type == "node" and leisure == "park":
                 elem_lat = elem.get("lat")
                 elem_lon = elem.get("lon")
                 area_sqm = 0
-            
+                if elem_lat is None or elem_lon is None:
+                    centroid_reason = "node-coords-missing"
+
+            distance_m = None
+            if elem_lat is not None:
+                distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+
+            park_debug = {
+                "osm_id": osm_id,
+                "name": tags.get("name"),
+                "elem_type": elem_type,
+                "centroid_reason": centroid_reason,
+                "lat": elem_lat,
+                "lon": elem_lon,
+                "area_sqm": area_sqm,
+                "distance_m": distance_m
+            }
+
             if elem_lat is None:
+                debug_skipped_parks.append(park_debug)
+                if DEBUG_PARKS:
+                    print(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason={centroid_reason}")
                 continue
 
-            distance_m = haversine_distance(
-                center_lat, center_lon, elem_lat, elem_lon)
+            debug_raw_candidates.append(park_debug)
 
             parks.append({
                 "name": tags.get("name", _get_park_type_name(leisure, landuse, natural)),
                 "type": leisure or landuse or natural,
                 "lat": elem_lat,
                 "lon": elem_lon,
-                "distance_m": round(distance_m, 0),
-                "area_sqm": round(area_sqm, 0) if area_sqm else 0
+                "distance_m": round(distance_m, 0) if distance_m is not None else None,
+                "area_sqm": round(area_sqm, 0) if area_sqm else 0,
+                "osm_id": osm_id
             })
-
-        # Playgrounds
-        elif leisure == "playground":
-            if osm_id in seen_playground_ids:
-                continue
-            seen_playground_ids.add(osm_id)
-
-            elem_lat = elem.get("lat")
-            elem_lon = elem.get("lon")
-
-            if elem_type == "way":
-                elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
-            elif elem_type == "relation":
-                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
-
-            if elem_lat is None:
-                continue
-
-            distance_m = haversine_distance(
-                center_lat, center_lon, elem_lat, elem_lon)
-
-            playgrounds.append({
-                "name": tags.get("name"),
-                "lat": elem_lat,
-                "lon": elem_lon,
-                "distance_m": round(distance_m, 0)
-            })
-
-        # Trees
-        elif natural == "tree_row" or \
-                (highway and any(tags.get(k) == "yes" for k in ["trees", "trees:both", "trees:left", "trees:right"])):
-
-            tree_features.append({
-                "type": "tree_row" if natural == "tree_row" else "street_trees",
-                "name": tags.get("name")
-            })
-
     # Deduplicate
+    pre_dedup_count = len(parks)
     parks = _deduplicate_by_proximity(parks, 10)
-    playgrounds = _deduplicate_by_proximity(playgrounds, 50)
+    post_dedup_count = len(parks)
+    for p in parks:
+        debug_kept_parks.append({k: p[k] for k in ["osm_id", "name", "lat", "lon", "distance_m", "area_sqm"]})
+
+    if DEBUG_PARKS:
+        print("========= PARK DEBUG REPORT =========")
+        print(f"Pre-dedup candidates: {pre_dedup_count}")
+        for c in debug_raw_candidates:
+            print(f"[CANDIDATE] id={c['osm_id']} name={c['name']} type={c['elem_type']} lat={c['lat']} lon={c['lon']} dist={c['distance_m']} area={c['area_sqm']}")
+        print(f"Kept after dedup: {post_dedup_count}")
+        for p in debug_kept_parks:
+            print(f"[KEPT    ] id={p['osm_id']} name={p['name']} lat={p['lat']} lon={p['lon']} dist={p['distance_m']} area={p['area_sqm']}")
+        if debug_skipped_parks:
+            print(f"Skipped parks (centroid unavailable): {len(debug_skipped_parks)}")
+            for s in debug_skipped_parks:
+                print(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
+        print("=====================================")
 
     return parks, playgrounds, tree_features
 
