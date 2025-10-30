@@ -39,7 +39,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     if p == "active_outdoors":
         # Matches existing logic: urban/suburban tighter local and regional; rural/exurban wider
         if a in {"urban_core", "suburban"}:
-            return {"local_radius_m": 1000, "regional_radius_m": 15000}
+            return {"local_radius_m": 1500, "regional_radius_m": 15000}
         else:  # exurban, rural, unknown
             return {"local_radius_m": 2000, "regional_radius_m": 50000}
 

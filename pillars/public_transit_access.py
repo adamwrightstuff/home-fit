@@ -18,7 +18,8 @@ load_dotenv()
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> float:
-    """Find nearest heavy rail/subway distance using Transitland stops API (km)."""
+    """Find nearest heavy rail/subway distance using Transitland stops API (km),
+    falling back to coordinate distance and OSM stations when needed."""
     try:
         stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
         # stops may be shaped as {"stops": [...]} or {"items": [...]}
@@ -27,10 +28,30 @@ def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> floa
         for s in items:
             rt = s.get("route_type")
             if rt in (1, 2):  # 1=subway/metro, 2=rail (commuter)
+                # Prefer server-provided distance if present
                 dist_m = s.get("distance") or s.get("distance_m")
                 if isinstance(dist_m, (int, float)):
                     distances_km.append(dist_m / 1000.0)
-        return min(distances_km) if distances_km else float('inf')
+                    continue
+                # Otherwise compute from coordinates when available
+                stop_lat = s.get("lat") or (s.get("stop") or {}).get("lat")
+                stop_lon = s.get("lon") or (s.get("stop") or {}).get("lon")
+                if isinstance(stop_lat, (int, float)) and isinstance(stop_lon, (int, float)):
+                    distances_km.append(haversine_distance(lat, lon, float(stop_lat), float(stop_lon)))
+        if distances_km:
+            return min(distances_km)
+        # Fallback to OSM railway stations if Transitland stop distances unavailable
+        try:
+            from data_sources import osm_api as osm
+            stations = osm.query_railway_stations(lat, lon, radius_m=search_m)
+            if stations:
+                # stations include distance_m already
+                station_dists_km = [st.get("distance_m", 1e12) / 1000.0 for st in stations if isinstance(st.get("distance_m"), (int, float))]
+                if station_dists_km:
+                    return min(station_dists_km)
+        except Exception:
+            pass
+        return float('inf')
     except Exception:
         return float('inf')
 
