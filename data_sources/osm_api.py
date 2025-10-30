@@ -523,11 +523,10 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         highway = tags.get("highway")
         elem_type = elem.get("type")
 
-        # Parks
+        # Parks (exclude natural woods/forests/scrub from parks)
         if leisure in ["park", "dog_park", "recreation_ground"] or \
            (leisure == "garden" and tags.get("garden:type") != "private") or \
-           landuse in ["park", "recreation_ground", "village_green"] or \
-           natural in ["wood", "forest", "scrub"]:
+           landuse in ["park", "recreation_ground", "village_green"]:
 
             if osm_id in seen_park_ids:
                 continue
@@ -566,6 +565,17 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 "distance_m": distance_m
             }
 
+            # Exclude marinas/clubs from parks
+            name_val = (tags.get("name") or "").lower()
+            is_marina = (tags.get("leisure") == "marina") or (tags.get("amenity") == "marina")
+            has_club_tag = any(k == "club" for k in tags.keys())
+            name_is_club = any(term in name_val for term in ["yacht club", "shore club", "country club", "beach club"]) if name_val else False
+            if is_marina or has_club_tag or name_is_club:
+                debug_skipped_parks.append({**park_debug, "centroid_reason": "excluded-nonpublic"})
+                if DEBUG_PARKS:
+                    print(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason=excluded-nonpublic")
+                continue
+
             if elem_lat is None:
                 debug_skipped_parks.append(park_debug)
                 if DEBUG_PARKS:
@@ -583,9 +593,9 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 "area_sqm": round(area_sqm, 0) if area_sqm else 0,
                 "osm_id": osm_id
             })
-    # Deduplicate
+    # Deduplicate (increase to 150m to collapse same-name multi-polygons)
     pre_dedup_count = len(parks)
-    parks = _deduplicate_by_proximity(parks, 10)
+    parks = _deduplicate_by_proximity(parks, 150)
     post_dedup_count = len(parks)
     for p in parks:
         debug_kept_parks.append({k: p[k] for k in ["osm_id", "name", "lat", "lon", "distance_m", "area_sqm"]})
@@ -599,7 +609,7 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         for p in debug_kept_parks:
             print(f"[KEPT    ] id={p['osm_id']} name={p['name']} lat={p['lat']} lon={p['lon']} dist={p['distance_m']} area={p['area_sqm']}")
         if debug_skipped_parks:
-            print(f"Skipped parks (centroid unavailable): {len(debug_skipped_parks)}")
+            print(f"Skipped parks (not kept): {len(debug_skipped_parks)}")
             for s in debug_skipped_parks:
                 print(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
         print("=====================================")
