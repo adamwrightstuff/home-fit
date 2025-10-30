@@ -10,12 +10,40 @@ from typing import Dict, Tuple, List, Optional
 from dotenv import load_dotenv
 from data_sources import data_quality
 from data_sources.radius_profiles import get_radius_profile
+from data_sources.transitland_api import get_nearby_transit_stops
 
 load_dotenv()
 
 # Transitland API v2 endpoint
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
+def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> float:
+    """Find nearest heavy rail/subway distance using Transitland stops API (km)."""
+    try:
+        stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+        # stops may be shaped as {"stops": [...]} or {"items": [...]}
+        items = stops.get("stops", []) or stops.get("items", []) or []
+        distances_km = []
+        for s in items:
+            rt = s.get("route_type")
+            if rt in (1, 2):  # 1=subway/metro, 2=rail (commuter)
+                dist_m = s.get("distance") or s.get("distance_m")
+                if isinstance(dist_m, (int, float)):
+                    distances_km.append(dist_m / 1000.0)
+        return min(distances_km) if distances_km else float('inf')
+    except Exception:
+        return float('inf')
+
+
+def _frequency_tier_heavy_rail(heavy_routes_count: int) -> int:
+    """Simple proxy frequency tier from distinct heavy rail routes nearby (0-3)."""
+    if heavy_routes_count >= 3:
+        return 3
+    if heavy_routes_count == 2:
+        return 2
+    if heavy_routes_count == 1:
+        return 1
+    return 0
 
 # Major metro centers for proximity-based fallback scoring
 MAJOR_METROS = {
@@ -153,16 +181,39 @@ def get_public_transit_score(lat: float, lon: float,
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
 
-    # Suburban/Exurban/Rural weighting: emphasize heavy rail for non-urban commuter contexts
-    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural') and heavy_rail_score > 0:
-        heavy_rail_score = min(50.0, heavy_rail_score * 1.25)
-        # Recompute total with updated heavy rail
-        if heavy_rail_score >= 40 and (light_rail_score == 0 or bus_score < 15):
-            base_score = min(70, heavy_rail_score + 10)
-            bonus_score = light_rail_score + bus_score
-            total_score = min(100, base_score + (bonus_score * 0.4))
+    # Suburban/Exurban/Rural commuter-centric layer: nearest rail + frequency tier
+    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural'):
+        nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
+        freq_tier = _frequency_tier_heavy_rail(len(heavy_rail_routes))
+
+        # Distance-based base (max ~70)
+        if nearest_hr_km <= 0.5:
+            base = 70
+        elif nearest_hr_km <= 1.0:
+            base = 65
+        elif nearest_hr_km <= 2.0:
+            base = 60
+        elif nearest_hr_km <= 3.0:
+            base = 50
+        elif nearest_hr_km < float('inf'):
+            base = 40
         else:
-            total_score = heavy_rail_score + light_rail_score + bus_score
+            base = 20  # no rail nearby
+
+        # Frequency bonus (0-15)
+        freq_bonus = {0: 0, 1: 6, 2: 10, 3: 15}[freq_tier]
+        # Bus bonus (0-15) proxy
+        bus_bonus = min(15.0, max(0.0, len(bus_routes) * 3.0))
+
+        total_score = max(total_score, min(100.0, base + freq_bonus + bus_bonus))
+
+        # Augment quality to reflect successful data retrieval, not mode variety
+        try:
+            if (routes_data and len(routes_data) > 0) or nearest_hr_km < float('inf'):
+                quality_metrics['quality_tier'] = 'good'
+                quality_metrics['confidence'] = max(quality_metrics.get('confidence', 0), 70)
+        except Exception:
+            pass
 
     # Correct data_quality fallback flags and record data sources used
     try:
@@ -196,6 +247,14 @@ def get_public_transit_score(lat: float, lon: float,
         ),
         "data_quality": quality_metrics
     }
+
+    # Add commuter-centric fields to summary
+    try:
+        nearest_hr_km_val = _nearest_heavy_rail_km(lat, lon, search_m=2500)
+        breakdown["summary"]["nearest_heavy_rail_distance_km"] = None if nearest_hr_km_val == float('inf') else round(nearest_hr_km_val, 2)
+        breakdown["summary"]["heavy_rail_frequency_tier"] = _frequency_tier_heavy_rail(len(heavy_rail_routes))
+    except Exception:
+        pass
 
     # Log results
     print(f"✅ Public Transit Score: {total_score:.0f}/100")

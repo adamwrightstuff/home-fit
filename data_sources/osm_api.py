@@ -34,6 +34,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       // PARKS & GREEN SPACES - INCLUDING RELATIONS!
       way["leisure"="park"](around:{radius_m},{lat},{lon});
       relation["leisure"="park"](around:{radius_m},{lat},{lon});
+      node["leisure"="park"](around:{radius_m},{lat},{lon});
       
       way["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       relation["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
@@ -517,9 +518,9 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         elem_type = elem.get("type")
 
         # Parks
-        if leisure in ["park", "dog_park"] or \
+        if leisure in ["park", "dog_park", "recreation_ground"] or \
            (leisure == "garden" and tags.get("garden:type") != "private") or \
-           landuse in ["recreation_ground", "village_green"] or \
+           landuse in ["park", "recreation_ground", "village_green"] or \
            natural in ["wood", "forest", "scrub"]:
 
             if osm_id in seen_park_ids:
@@ -532,6 +533,10 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
             elif elem_type == "relation":
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+                area_sqm = 0
+            elif elem_type == "node" and leisure == "park":
+                elem_lat = elem.get("lat")
+                elem_lon = elem.get("lon")
                 area_sqm = 0
             
             if elem_lat is None:

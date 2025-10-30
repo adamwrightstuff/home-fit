@@ -21,7 +21,7 @@ from pillars.housing_value import get_housing_value_score
 ##########################
 # CONFIGURATION FLAGS
 ##########################
-ENABLE_SCHOOL_SCORING = True  # Set to True to enable school API calls
+ENABLE_SCHOOL_SCORING = False  # Set to False to skip SchoolDigger API calls
 
 # Load environment variables
 load_dotenv()

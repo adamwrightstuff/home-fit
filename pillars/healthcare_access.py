@@ -227,12 +227,9 @@ def get_healthcare_access_score(lat: float, lon: float,
     denom = max(1.0, (pop_density / 10000.0))
 
     # 1) Hospital presence (40 points)
-    has_er_hospital = any((f.get('amenity') == 'hospital' and (f.get('emergency') == 'yes' or (f.get('tags', {}).get('emergency') == 'yes'))) for f in hospitals)
-    hospital_score = 0.0
-    if has_er_hospital:
-        hospital_score = 40.0
-    elif len(hospitals) > 0:
-        hospital_score = 20.0
+    # Do NOT require emergency tag for base presence. Any hospital within radius grants base points.
+    has_hospital = len(hospitals) > 0
+    hospital_score = 40.0 if has_hospital else 0.0
     # Small bonus for additional hospitals (max +10)
     if len(hospitals) > 1:
         hospital_score += min(10.0, float(len(hospitals) - 1) * 2.0)
@@ -258,8 +255,12 @@ def get_healthcare_access_score(lat: float, lon: float,
     specialty_score = max(0.0, min(15.0, float(len(specialties))))
 
     # 4) Emergency services (10 points)
-    has_emergency_entrance = any((f.get('tags', {}).get('emergency') == 'emergency_ward_entrance') for f in (hospitals + clinics + urgent_care))
-    emergency_bonus = 10.0 if has_emergency_entrance else 0.0
+    # Use emergency=yes on hospitals as the signal for ER capability
+    has_emergency_hospital = any(
+        (f.get('tags', {}).get('emergency') == 'yes') or (f.get('emergency') == 'yes')
+        for f in hospitals
+    )
+    emergency_bonus = 10.0 if has_emergency_hospital else 0.0
 
     # 5) Pharmacy access (5 points)
     pharm_per_10k = len(pharmacies) / denom
@@ -283,6 +284,18 @@ def get_healthcare_access_score(lat: float, lon: float,
     quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type_dq)
 
     # Build response
+    # Identify nearest hospital for summary (by reported distance_km)
+    nearest_hospital = None
+    if hospitals:
+        try:
+            nearest = min(hospitals, key=lambda x: x.get('distance_km', float('inf')))
+            nearest_hospital = {
+                "name": nearest.get('name', 'Unknown Hospital'),
+                "distance_km": nearest.get('distance_km', 0)
+            }
+        except Exception:
+            nearest_hospital = None
+
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
@@ -293,17 +306,23 @@ def get_healthcare_access_score(lat: float, lon: float,
             "pharmacies": round(pharmacy_score, 1)
         },
         "summary": _build_summary(
-            None, urgent_care, pharmacies, clinics
+            nearest_hospital, urgent_care, pharmacies, clinics
         ),
         "data_quality": quality_metrics
     }
 
+    # Enrich summary with counts
+    try:
+        breakdown["summary"]["hospital_count"] = len(hospitals)
+    except Exception:
+        pass
+
     # Log results
     print(f"✅ Healthcare Access Score: {total_score:.0f}/100")
-    print(f"   🏥 Hospital Presence: {hospital_score:.0f}/40 ({len(hospitals)} hospitals; ER present: {has_er_hospital})")
+    print(f"   🏥 Hospital Presence: {hospital_score:.0f}/40 ({len(hospitals)} hospitals)")
     print(f"   🩺 Primary Care: {primary_score:.0f}/30 (clinics={len(clinics)}, doctors={len(doctors)})")
     print(f"   🧠 Specialized Care: {specialty_score:.0f}/15 (specialties={len(specialties)})")
-    print(f"   🚨 Emergency Services: {emergency_bonus:.0f}/10 (entrance={has_emergency_entrance})")
+    print(f"   🚨 Emergency Services: {emergency_bonus:.0f}/10 (hospital_emergency_tag={has_emergency_hospital})")
     print(f"   💊 Pharmacies: {pharmacy_score:.0f}/5 ({len(pharmacies)} nearby)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
