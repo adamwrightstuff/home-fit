@@ -304,13 +304,14 @@ def score_architectural_diversity_as_beauty(
     Returns:
         Beauty score out of 33 points
     """
-    # Subtype detection: urban_residential as tilt
-    effective = area_type
-    if area_type == "urban_core" and density:
-        if density > 10000 and levels_entropy < 20 and building_type_diversity < 30:
-            effective = "urban_residential"
-        elif 2500 <= density < 10000:
-            effective = "urban_core_lowrise"
+    # Subtype detection: use centralized helper function
+    from .data_quality import get_effective_area_type
+    effective = get_effective_area_type(
+        area_type,
+        density,
+        levels_entropy,
+        building_type_diversity
+    )
     
     # Get context-biased targets
     targets = CONTEXT_TARGETS.get(effective, CONTEXT_TARGETS["urban_core"])

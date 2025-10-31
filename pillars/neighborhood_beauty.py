@@ -61,9 +61,16 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         'historic_details': historic_details
     }
     
-    from data_sources import census_api as ca
-    density = ca.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density)
+    # Use passed area_type if available, otherwise detect it with city context
+    if area_type is None:
+        from data_sources import census_api as ca
+        density = ca.get_population_density(lat, lon)
+        area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+    else:
+        # Still need density for quality assessment
+        from data_sources import census_api as ca
+        density = ca.get_population_density(lat, lon)
+    
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_beauty', combined_data, lat, lon, area_type)
 
     # If GEE canopy succeeded, reflect that in data_quality (no fallback; include source)

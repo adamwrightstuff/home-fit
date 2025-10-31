@@ -47,8 +47,10 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
     }
     
     # Detect actual area type for data quality assessment
+    # Note: housing_value doesn't receive city parameter, so we detect without it
+    # This is fine as it's only used for data quality assessment, not classification logic
     density = census_api.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density)
+    area_type = data_quality.detect_area_type(lat, lon, density, city=None)
     quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
 
     # Build response

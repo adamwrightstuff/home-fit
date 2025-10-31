@@ -64,6 +64,56 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
         return "rural"
 
 
+def get_effective_area_type(area_type: str, density: Optional[float],
+                           levels_entropy: Optional[float] = None,
+                           building_type_diversity: Optional[float] = None) -> str:
+    """
+    Determine effective area type including architectural subtypes.
+    
+    This function handles architectural beauty-specific subtypes:
+    - urban_residential: Dense urban core with uniform architecture (Park Slope brownstones)
+    - urban_core_lowrise: Dense urban but not skyscraper dense (Old Town Alexandria, Santa Barbara)
+    
+    The urban_core_lowrise subtype works for both:
+    - "urban_core" areas with density 2500-10000 (major metros with low-rise downtowns)
+    - "suburban" areas with density 2500-10000 (dense small cities that should be treated as urban)
+    
+    Priority order:
+    1. urban_residential (takes precedence - dense + uniform)
+    2. urban_core_lowrise (dense but not skyscraper dense)
+    3. Original area_type
+    
+    Args:
+        area_type: Base area type from detect_area_type() ('urban_core', 'suburban', etc.)
+        density: Population density (people/sq mi)
+        levels_entropy: Optional height diversity metric (for urban_residential detection)
+        building_type_diversity: Optional type diversity metric (for urban_residential detection)
+    
+    Returns:
+        Effective area type, which may be:
+        - 'urban_residential': If urban_core with high density + uniform architecture
+        - 'urban_core_lowrise': If urban_core OR suburban with density 2500-10000
+        - Original area_type: Otherwise
+    """
+    effective = area_type
+    
+    # Priority 1: Urban residential: dense + uniform architecture (Park Slope pattern)
+    # This takes precedence over urban_core_lowrise
+    if area_type == "urban_core" and density and levels_entropy is not None and building_type_diversity is not None:
+        if density > 10000 and levels_entropy < 20 and building_type_diversity < 30:
+            return "urban_residential"
+    
+    # Priority 2: Urban core lowrise: dense urban but not skyscraper dense
+    # Works for both "urban_core" (major metros) AND "suburban" (dense small cities)
+    # Only applies if not already urban_residential
+    if density and 2500 <= density < 10000:
+        if effective in ("urban_core", "suburban"):
+            # Dense areas that should use urban_core_lowrise scoring for architectural beauty
+            effective = "urban_core_lowrise"
+    
+    return effective
+
+
 def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict] = None) -> str:
     """
     Detect if location is a neighborhood within a larger city vs. standalone city.

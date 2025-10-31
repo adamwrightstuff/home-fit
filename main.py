@@ -618,12 +618,14 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         area_type = data_quality.detect_area_type(lat, lon, density, city_for_classification)
         
         # Determine effective area type (may be urban_residential or urban_core_lowrise)
-        effective_area_type = area_type
-        if area_type == "urban_core" and density:
-            if density > 10000 and diversity_metrics["levels_entropy"] < 20 and diversity_metrics["building_type_diversity"] < 30:
-                effective_area_type = "urban_residential"
-            elif 2500 <= density < 10000:
-                effective_area_type = "urban_core_lowrise"
+        # Use centralized helper function for consistency
+        from data_sources.data_quality import get_effective_area_type
+        effective_area_type = get_effective_area_type(
+            area_type,
+            density,
+            diversity_metrics["levels_entropy"],
+            diversity_metrics["building_type_diversity"]
+        )
         
         # Calculate beauty score using context-aware scoring
         # Note: Tree coverage and historic preservation are handled by neighborhood_beauty pillar
