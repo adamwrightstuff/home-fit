@@ -205,9 +205,10 @@ def score_architectural_diversity_as_beauty(
     footprint_beauty = _score_footprint_variation(footprint_area_cv, effective_area_type)
     
     # Cap single-metric dominance: no single factor > 40% of total (13.2/33)
+    # Footprint is capped at 25% (8.25/33) to prevent it from dominating when CV is always maxed
     height_beauty = min(13.2, height_beauty)
     type_beauty = min(13.2, type_beauty)
-    footprint_beauty = min(13.2, footprint_beauty)
+    footprint_beauty = min(8.25, footprint_beauty)  # 25% cap instead of 40%
     
     total_beauty = height_beauty + type_beauty + footprint_beauty
     
@@ -687,8 +688,11 @@ def _calculate_sprawl_penalty(
     
     # Urban sprawl: Low diversity in urban context without the density/coherence of urban_residential
     elif effective_area_type == "urban_core" or effective_area_type == "urban_core_lowrise":
-        # Houston pattern: Moderate diversity but lacks coherence, generic urban
-        if building_type_diversity < 40 and levels_entropy < 30 and (not density or density < 5000):
+        # Houston pattern: High footprint variation + moderate diversity + low density = fragmentation
+        if footprint_area_cv >= 80 and building_type_diversity < 45 and (not density or density < 5000):
+            # High footprint variation (sprawling) + moderate diversity + low density = fragmented urban
+            penalty = 3.0
+        elif building_type_diversity < 40 and levels_entropy < 30 and (not density or density < 5000):
             # Low diversity, low height variation, low density = generic urban sprawl
             penalty = 3.0
         elif building_type_diversity < 35 and levels_entropy < 25:
@@ -727,11 +731,12 @@ def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
     # Top performers in each context should be able to score ~27-30/33
     
     # Context adjustment factors (multipliers to help lower contexts reach high scores)
+    # Suburban normalization slightly reduced so great suburbs score ~30/33 instead of perfect 33/33
     context_factors = {
         "urban_core": 1.0,           # No adjustment - already at full potential
         "urban_core_lowrise": 1.0,   # Same as urban_core
         "urban_residential": 1.0,    # Same as urban_core (dense residential)
-        "suburban": 1.1,             # +10% to help great suburbs reach high scores
+        "suburban": 1.05,            # +5% (reduced from 1.1) - great suburbs ~30/33 instead of 33/33
         "exurban": 1.15,             # +15% to help great exurban areas
         "rural": 1.2,                # +20% to help great rural towns
         "unknown": 1.0               # No adjustment if unknown
