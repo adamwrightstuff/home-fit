@@ -66,7 +66,9 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
 
 def get_effective_area_type(area_type: str, density: Optional[float],
                            levels_entropy: Optional[float] = None,
-                           building_type_diversity: Optional[float] = None) -> str:
+                           building_type_diversity: Optional[float] = None,
+                           historic_landmarks: Optional[int] = None,
+                           median_year_built: Optional[int] = None) -> str:
     """
     Determine effective area type including architectural subtypes.
     
@@ -88,20 +90,37 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         density: Population density (people/sq mi)
         levels_entropy: Optional height diversity metric (for urban_residential detection)
         building_type_diversity: Optional type diversity metric (for urban_residential detection)
+        historic_landmarks: Optional count of historic landmarks from OSM (for historic district detection)
+        median_year_built: Optional median year buildings were built (for historic district detection)
     
     Returns:
         Effective area type, which may be:
-        - 'urban_residential': If urban_core with high density + uniform architecture
-        - 'urban_core_lowrise': If urban_core OR suburban with density 2500-10000
+        - 'urban_residential': If urban_core with high density + uniform architecture, OR historic district with uniform architecture
+        - 'urban_core_lowrise': If urban_core OR suburban with density 2500-10000 and moderate diversity
         - Original area_type: Otherwise
     """
     effective = area_type
     
     # Priority 1: Urban residential: dense + uniform architecture (Park Slope pattern)
+    # Also applies to historic districts (French Quarter) with intentional uniformity
     # This takes precedence over urban_core_lowrise
     if area_type == "urban_core" and density and levels_entropy is not None and building_type_diversity is not None:
+        # Standard case: Very dense (>)10000) with uniform architecture
         if density > 10000 and levels_entropy < 20 and building_type_diversity < 30:
             return "urban_residential"
+        # Historic district case: Moderate density (2500-10000) with very low diversity + historic markers
+        # French Quarter pattern: intentionally uniform historic district
+        if density and 2500 <= density < 10000:
+            if levels_entropy < 15 and building_type_diversity < 20:
+                # Check for historic markers (if provided)
+                is_historic = False
+                if historic_landmarks is not None and historic_landmarks >= 10:
+                    is_historic = True
+                if median_year_built is not None and median_year_built < 1950:
+                    is_historic = True
+                # Historic districts with very uniform architecture should use urban_residential targets
+                if is_historic:
+                    return "urban_residential"
     
     # Priority 2: Urban core lowrise: dense urban but not skyscraper dense
     # Works for both "urban_core" (major metros) AND "suburban" (dense small cities)

@@ -619,12 +619,23 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         
         # Determine effective area type (may be urban_residential or urban_core_lowrise)
         # Use centralized helper function for consistency
+        # Fetch historic data to help detect historic districts (e.g., French Quarter)
         from data_sources.data_quality import get_effective_area_type
+        from data_sources import osm_api, census_api
+        
+        # Get historic markers for historic district detection
+        charm_data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
+        historic_landmarks = len(charm_data.get('historic', [])) if charm_data else None
+        year_built_data = census_api.get_year_built_data(lat, lon)
+        median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+        
         effective_area_type = get_effective_area_type(
             area_type,
             density,
             diversity_metrics["levels_entropy"],
-            diversity_metrics["building_type_diversity"]
+            diversity_metrics["building_type_diversity"],
+            historic_landmarks=historic_landmarks,
+            median_year_built=median_year_built
         )
         
         # Calculate beauty score using context-aware scoring
@@ -643,7 +654,9 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["footprint_area_cv"],
             area_type,
             density,
-            diversity_metrics.get("built_coverage_ratio")
+            diversity_metrics.get("built_coverage_ratio"),
+            historic_landmarks=historic_landmarks,
+            median_year_built=median_year_built
         )
         
         # Calculate individual components for breakdown (using simplified helpers)

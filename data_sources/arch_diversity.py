@@ -281,7 +281,9 @@ def score_architectural_diversity_as_beauty(
     footprint_area_cv: float,
     area_type: str,
     density: Optional[float] = None,
-    built_coverage_ratio: Optional[float] = None
+    built_coverage_ratio: Optional[float] = None,
+    historic_landmarks: Optional[int] = None,
+    median_year_built: Optional[int] = None
 ) -> float:
     """
     Convert architectural diversity metrics to beauty score (0-33 points).
@@ -310,7 +312,9 @@ def score_architectural_diversity_as_beauty(
         area_type,
         density,
         levels_entropy,
-        building_type_diversity
+        building_type_diversity,
+        historic_landmarks=historic_landmarks,
+        median_year_built=median_year_built
     )
     
     # Get context-biased targets
