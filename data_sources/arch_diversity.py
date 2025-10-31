@@ -169,8 +169,12 @@ def score_architectural_diversity_as_beauty(
     Core principle: Beauty emerges when variety and coherence are in equilibrium,
     scaled appropriately to the density of place.
     
-    As density increases → coherence matters more
-    As density decreases → variation matters more
+    Improvements:
+    - Broader sweet spot tolerance bands
+    - Softer penalty curves (gradual decline)
+    - Coherence bonus for architecturally consistent areas
+    - Balanced weighting to prevent single-metric dominance
+    - Normalized scale across contexts
     
     Args:
         levels_entropy: Height diversity (0-100)
@@ -183,167 +187,346 @@ def score_architectural_diversity_as_beauty(
         Beauty score out of 33 points (can be added as 3rd component to beauty pillar)
     """
     
-    height_beauty = _score_height_diversity(levels_entropy, area_type)
-    type_beauty = _score_type_diversity(building_type_diversity, area_type)
-    footprint_beauty = _score_footprint_variation(footprint_area_cv, area_type)
+    # Detect urban_core_lowrise for places like Santa Barbara
+    effective_area_type = area_type
+    if area_type == "urban_core" and density and 2500 <= density < 10000:
+        # Low-rise urban core - use modified expectations
+        effective_area_type = "urban_core_lowrise"
+    
+    height_beauty = _score_height_diversity(levels_entropy, effective_area_type)
+    type_beauty = _score_type_diversity(building_type_diversity, effective_area_type)
+    footprint_beauty = _score_footprint_variation(footprint_area_cv, effective_area_type)
+    
+    # Cap single-metric dominance: no single factor > 40% of total (13.2/33)
+    height_beauty = min(13.2, height_beauty)
+    type_beauty = min(13.2, type_beauty)
+    footprint_beauty = min(13.2, footprint_beauty)
     
     total_beauty = height_beauty + type_beauty + footprint_beauty
-    return min(33.0, max(0.0, total_beauty))
+    
+    # Add coherence bonus for architecturally consistent areas
+    # Low height entropy + low footprint variation + moderate density = cohesive
+    coherence_bonus = _calculate_coherence_bonus(levels_entropy, footprint_area_cv, area_type, density)
+    
+    total_beauty += coherence_bonus
+    
+    # Normalize scale across contexts: ensure top performers can reach similar high scores
+    # Context normalization factor based on area type expectations
+    normalized_beauty = _normalize_score_by_context(total_beauty, effective_area_type)
+    
+    return min(33.0, max(0.0, normalized_beauty))
 
 
 def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
     """
-    Score height diversity with context-aware sweet spots.
+    Score height diversity with broadened sweet spots and softer penalties.
     
-    Urban: Some height variation adds visual rhythm (sweet spot ~40-70)
-    Suburban: Less variation feels calmer (sweet spot ~20-50)
-    Rural: Minimal diversity looks most natural (sweet spot ~0-30)
+    Urban: Moderate height variation adds visual rhythm (sweet spot 30-80, wider tolerance)
+    Suburban: Low variation is beautiful (sweet spot 0-50, rewards consistency)
+    Rural: Minimal diversity is beautiful (sweet spot 0-40, rewards simplicity)
     """
-    if area_type == "urban_core":
-        # Urban: Moderate to high variation is beautiful
-        # Sweet spot around 50-70, penalize too uniform (<20) or too chaotic (>80)
-        if 40 <= levels_entropy <= 80:
-            score = 11.0 * (1 - abs(levels_entropy - 60) / 40)
-        elif levels_entropy < 20:
-            score = levels_entropy * 0.3  # Too uniform = low beauty
-        elif 20 <= levels_entropy < 40:
-            # Moderate-low diversity - still some beauty but less optimal
-            score = 11.0 * (levels_entropy - 20) / 20  # Linear interpolation from 0 to 11
-        else:  # >80, too chaotic
-            score = 11.0 - (levels_entropy - 80) * 0.2
-        return max(0.0, min(11.0, score))  # Cap at 11.0
+    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+        # Urban: Broader sweet spot 30-80 (was 40-80)
+        # Softer penalties - gradual decline instead of cliff
+        if 30 <= levels_entropy <= 80:
+            # Broad sweet spot with gentle peak
+            if 40 <= levels_entropy <= 70:
+                score = 11.0  # Full score in peak range
+            elif 30 <= levels_entropy < 40:
+                # Gradual ramp up
+                score = 11.0 * (levels_entropy - 30) / 10
+            else:  # 70 < levels_entropy <= 80
+                # Gradual ramp down
+                score = 11.0 * (80 - levels_entropy) / 10
+        elif levels_entropy < 30:
+            # Too uniform - but softer penalty (was 0.3x, now gradual)
+            score = 11.0 * (levels_entropy / 30) * 0.7  # Still get some points for uniformity
+        else:  # >80
+            # Too chaotic - gradual decline
+            score = max(0.0, 11.0 - (levels_entropy - 80) * 0.15)  # Softer than 0.2
+        return max(0.0, min(13.2, score))  # Cap at 40% of total
     
     elif area_type == "suburban":
-        # Suburban: Less variation is more cohesive and beautiful
-        # Sweet spot around 20-50, penalize high variation (>70)
-        if 20 <= levels_entropy <= 50:
-            score = 11.0 * (1 - abs(levels_entropy - 35) / 30)
-        elif levels_entropy < 20:
-            score = levels_entropy * 0.4  # Very uniform = moderate beauty
-        else:  # >50, too varied
-            score = 11.0 - (levels_entropy - 50) * 0.15
-        return max(0.0, min(11.0, score))
+        # Suburban: Broader sweet spot 0-50 (was 20-50)
+        # Low variation is beautiful and rewarded
+        if 0 <= levels_entropy <= 50:
+            if 10 <= levels_entropy <= 40:
+                score = 11.0  # Peak range
+            elif levels_entropy < 10:
+                # Very uniform is beautiful in suburbs
+                score = 11.0 * (1 - levels_entropy / 20)  # More uniform = higher score
+            else:  # 40 < levels_entropy <= 50
+                # Gradual decline
+                score = 11.0 * (50 - levels_entropy) / 10
+        else:  # >50
+            # Too varied - gradual decline
+            score = max(0.0, 11.0 - (levels_entropy - 50) * 0.1)  # Softer penalty
+        return max(0.0, min(13.2, score))
     
     elif area_type == "exurban":
-        # Exurban: Similar to suburban but even lower variation preferred
-        if 10 <= levels_entropy <= 40:
-            score = 11.0 * (1 - abs(levels_entropy - 25) / 30)
-        elif levels_entropy < 10:
-            score = levels_entropy * 0.5  # Very uniform = moderate beauty
-        else:  # >40
-            score = 11.0 - (levels_entropy - 40) * 0.2
-        return max(0.0, min(11.0, score))
+        # Exurban: Broader sweet spot 0-40 (was 10-40)
+        if 0 <= levels_entropy <= 40:
+            if 5 <= levels_entropy <= 35:
+                score = 11.0
+            elif levels_entropy < 5:
+                score = 11.0 * (1 - levels_entropy / 10)
+            else:  # 35 < levels_entropy <= 40
+                score = 11.0 * (40 - levels_entropy) / 5
+        else:
+            score = max(0.0, 11.0 - (levels_entropy - 40) * 0.15)
+        return max(0.0, min(13.2, score))
     
     else:  # rural or unknown
-        # Rural: Minimal diversity looks most natural
-        # Sweet spot very low (0-30), penalize any significant variation
-        if levels_entropy <= 30:
-            score = 11.0 * (1 - levels_entropy / 30)
+        # Rural: Broader sweet spot 0-40 (was 0-30)
+        # Simplicity and restraint rewarded
+        if levels_entropy <= 40:
+            if levels_entropy <= 20:
+                score = 11.0 * (1 - levels_entropy / 25)  # Very low is best
+            else:  # 20 < levels_entropy <= 40
+                score = 11.0 * (40 - levels_entropy) / 20
         else:
-            score = max(0.0, 11.0 - (levels_entropy - 30) * 0.3)
-        return max(0.0, min(11.0, score))
+            # Extreme variation - but softer penalty
+            score = max(0.0, 11.0 - (levels_entropy - 40) * 0.2)
+        return max(0.0, min(13.2, score))
 
 
 def _score_type_diversity(building_type_diversity: float, area_type: str) -> float:
     """
-    Score building type diversity with context-aware expectations.
+    Score building type diversity with broadened sweet spots and softer penalties.
     
-    Urban: High diversity is beautiful (shops, homes, civic buildings)
-    Suburban: Moderate diversity within shared language
-    Rural: Low diversity with typological consistency
+    Urban: High diversity is beautiful (sweet spot 50-95, wider tolerance)
+    Suburban: Moderate diversity within shared language (sweet spot 20-70)
+    Rural: Low diversity with typological consistency (sweet spot 0-50)
     """
-    if area_type == "urban_core":
-        # Urban: Higher diversity is beautiful, but cap around 80-90
-        # Sweet spot 60-90
-        if 60 <= building_type_diversity <= 90:
-            score = 11.0
-        elif building_type_diversity < 60:
-            # Lower diversity still valuable in cities, but less optimal
-            score = 11.0 * (building_type_diversity / 60)
-        else:  # >90, slightly chaotic
-            score = 11.0 - (building_type_diversity - 90) * 0.1
-        return max(0.0, min(11.0, score))
+    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+        # Urban: Broader sweet spot 50-95 (was 60-90)
+        if 50 <= building_type_diversity <= 95:
+            if 60 <= building_type_diversity <= 85:
+                score = 11.0  # Peak range
+            elif 50 <= building_type_diversity < 60:
+                # Gradual ramp up
+                score = 11.0 * (building_type_diversity - 50) / 10
+            else:  # 85 < building_type_diversity <= 95
+                # Gradual ramp down
+                score = 11.0 * (95 - building_type_diversity) / 10
+        elif building_type_diversity < 50:
+            # Lower diversity - softer penalty, still get some points
+            score = 11.0 * (building_type_diversity / 50) * 0.8  # Softer than linear
+        else:  # >95
+            # Very chaotic - gradual decline
+            score = max(0.0, 11.0 - (building_type_diversity - 95) * 0.08)
+        return max(0.0, min(13.2, score))
     
     elif area_type == "suburban":
-        # Suburban: Moderate diversity within shared language
-        # Sweet spot around 40-70
-        if 40 <= building_type_diversity <= 70:
-            score = 11.0 * (1 - abs(building_type_diversity - 55) / 30)
-        elif building_type_diversity < 40:
-            score = building_type_diversity * 0.25
-        else:  # >70, too varied for suburban character
-            score = 11.0 - (building_type_diversity - 70) * 0.2
-        return max(0.0, min(11.0, score))
+        # Suburban: Broader sweet spot 20-70 (was 40-70)
+        if 20 <= building_type_diversity <= 70:
+            if 35 <= building_type_diversity <= 55:
+                score = 11.0  # Peak range
+            elif 20 <= building_type_diversity < 35:
+                # Gradual ramp up
+                score = 11.0 * (building_type_diversity - 20) / 15
+            else:  # 55 < building_type_diversity <= 70
+                # Gradual ramp down
+                score = 11.0 * (70 - building_type_diversity) / 15
+        elif building_type_diversity < 20:
+            # Low diversity is okay in suburbs - softer penalty
+            score = 11.0 * (building_type_diversity / 20) * 0.6
+        else:  # >70
+            # Too varied - gradual decline
+            score = max(0.0, 11.0 - (building_type_diversity - 70) * 0.15)
+        return max(0.0, min(13.2, score))
     
     elif area_type == "exurban":
-        # Exurban: Lower diversity preferred
-        if 20 <= building_type_diversity <= 50:
-            score = 11.0 * (1 - abs(building_type_diversity - 35) / 30)
-        elif building_type_diversity < 20:
-            score = building_type_diversity * 0.4
+        # Exurban: Broader sweet spot 10-50 (was 20-50)
+        if 10 <= building_type_diversity <= 50:
+            if 20 <= building_type_diversity <= 40:
+                score = 11.0
+            elif 10 <= building_type_diversity < 20:
+                score = 11.0 * (building_type_diversity - 10) / 10
+            else:  # 40 < building_type_diversity <= 50
+                score = 11.0 * (50 - building_type_diversity) / 10
+        elif building_type_diversity < 10:
+            score = 11.0 * (building_type_diversity / 10) * 0.7
         else:  # >50
-            score = 11.0 - (building_type_diversity - 50) * 0.25
-        return max(0.0, score)
+            score = max(0.0, 11.0 - (building_type_diversity - 50) * 0.2)
+        return max(0.0, min(13.2, score))
     
     else:  # rural or unknown
-        # Rural: Low diversity with typological consistency is beautiful
-        # Sweet spot very low (0-40)
-        if building_type_diversity <= 40:
-            score = 11.0 * (1 - building_type_diversity / 40)
+        # Rural: Broader sweet spot 0-50 (was 0-40)
+        if building_type_diversity <= 50:
+            if building_type_diversity <= 25:
+                score = 11.0 * (1 - building_type_diversity / 30)  # Very low is best
+            else:  # 25 < building_type_diversity <= 50
+                score = 11.0 * (50 - building_type_diversity) / 25
         else:
-            score = max(0.0, 11.0 - (building_type_diversity - 40) * 0.3)
-        return max(0.0, min(11.0, score))
+            # Extreme variation - softer penalty
+            score = max(0.0, 11.0 - (building_type_diversity - 50) * 0.25)
+        return max(0.0, min(13.2, score))
 
 
 def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> float:
     """
-    Score footprint variation with context-aware expectations.
+    Score footprint variation with broadened sweet spots and softer penalties.
     
-    Urban: Moderate variation is balanced; too much disrupts walkability
-    Suburban: Variation adds richness and individuality
-    Rural: Large variation (barns, cottages, outbuildings) feels organic
+    Urban: Moderate variation is balanced (sweet spot 30-70, wider tolerance)
+    Suburban: Variation adds richness (sweet spot 40-90)
+    Rural: Large variation feels organic (sweet spot 50-100)
     """
-    if area_type == "urban_core":
-        # Urban: Moderate variation is balanced
-        # Sweet spot around 40-60, penalize too uniform or too chaotic
-        if 40 <= footprint_area_cv <= 60:
-            score = 11.0
-        elif footprint_area_cv < 40:
-            # Too uniform = lower beauty
-            score = 11.0 * (footprint_area_cv / 40)
-        else:  # >60, too chaotic, disrupts walkability
-            score = 11.0 - (footprint_area_cv - 60) * 0.2
-        return max(0.0, min(11.0, score))
+    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+        # Urban: Broader sweet spot 30-70 (was 40-60)
+        # Softer penalties for walkability disruption
+        if 30 <= footprint_area_cv <= 70:
+            if 40 <= footprint_area_cv <= 60:
+                score = 11.0  # Peak range
+            elif 30 <= footprint_area_cv < 40:
+                # Gradual ramp up
+                score = 11.0 * (footprint_area_cv - 30) / 10
+            else:  # 60 < footprint_area_cv <= 70
+                # Gradual ramp down (walkability still okay)
+                score = 11.0 * (70 - footprint_area_cv) / 10
+        elif footprint_area_cv < 30:
+            # Too uniform - softer penalty
+            score = 11.0 * (footprint_area_cv / 30) * 0.7
+        else:  # >70
+            # Disrupts walkability - but gradual decline
+            score = max(0.0, 11.0 - (footprint_area_cv - 70) * 0.15)  # Softer than 0.2
+        return max(0.0, min(13.2, score))
     
     elif area_type == "suburban":
-        # Suburban: Variation adds richness
-        # Sweet spot around 50-80
-        if 50 <= footprint_area_cv <= 80:
-            score = 11.0 * (1 - abs(footprint_area_cv - 65) / 30)
-        elif footprint_area_cv < 50:
-            score = footprint_area_cv * 0.18
-        else:  # >80, too much
-            score = 11.0 - (footprint_area_cv - 80) * 0.15
-        return max(0.0, min(11.0, score))
+        # Suburban: Broader sweet spot 40-90 (was 50-80)
+        if 40 <= footprint_area_cv <= 90:
+            if 55 <= footprint_area_cv <= 75:
+                score = 11.0  # Peak range
+            elif 40 <= footprint_area_cv < 55:
+                # Gradual ramp up
+                score = 11.0 * (footprint_area_cv - 40) / 15
+            else:  # 75 < footprint_area_cv <= 90
+                # Gradual ramp down
+                score = 11.0 * (90 - footprint_area_cv) / 15
+        elif footprint_area_cv < 40:
+            # Too uniform - softer penalty
+            score = 11.0 * (footprint_area_cv / 40) * 0.5
+        else:  # >90
+            # Too much variation - gradual decline
+            score = max(0.0, 11.0 - (footprint_area_cv - 90) * 0.1)  # Softer penalty
+        return max(0.0, min(13.2, score))
     
     elif area_type == "exurban":
-        # Exurban: Moderate to high variation can be beautiful
-        if 40 <= footprint_area_cv <= 90:
-            score = 11.0 * (1 - abs(footprint_area_cv - 65) / 50)
-        elif footprint_area_cv < 40:
-            score = footprint_area_cv * 0.2
-        else:  # >90
-            score = 11.0 - (footprint_area_cv - 90) * 0.1
-        return max(0.0, score)
+        # Exurban: Broader sweet spot 30-95 (was 40-90)
+        if 30 <= footprint_area_cv <= 95:
+            if 50 <= footprint_area_cv <= 80:
+                score = 11.0
+            elif 30 <= footprint_area_cv < 50:
+                score = 11.0 * (footprint_area_cv - 30) / 20
+            else:  # 80 < footprint_area_cv <= 95
+                score = 11.0 * (95 - footprint_area_cv) / 15
+        elif footprint_area_cv < 30:
+            score = 11.0 * (footprint_area_cv / 30) * 0.6
+        else:  # >95
+            score = max(0.0, 11.0 - (footprint_area_cv - 95) * 0.08)
+        return max(0.0, min(13.2, score))
     
     else:  # rural or unknown
-        # Rural: Large variation feels organic and fitting
-        # Sweet spot higher (60-100)
-        if 60 <= footprint_area_cv <= 100:
-            score = 11.0 * (1 - abs(footprint_area_cv - 80) / 40)
-        elif footprint_area_cv < 60:
-            score = footprint_area_cv * 0.15
+        # Rural: Broader sweet spot 50-100 (was 60-100)
+        if 50 <= footprint_area_cv <= 100:
+            if 65 <= footprint_area_cv <= 95:
+                score = 11.0  # Peak range
+            elif 50 <= footprint_area_cv < 65:
+                # Gradual ramp up
+                score = 11.0 * (footprint_area_cv - 50) / 15
+            else:  # 95 < footprint_area_cv <= 100
+                score = 11.0
+        elif footprint_area_cv < 50:
+            # Too uniform for rural - but softer penalty
+            score = 11.0 * (footprint_area_cv / 50) * 0.4
         else:
             score = 11.0
-        return max(0.0, min(11.0, score))
+        return max(0.0, min(13.2, score))
+
+
+def _calculate_coherence_bonus(
+    levels_entropy: float,
+    footprint_area_cv: float,
+    area_type: str,
+    density: Optional[float] = None
+) -> float:
+    """
+    Calculate coherence bonus for architecturally consistent areas.
+    
+    Rewards places like Park Slope brownstones where low height entropy
+    + low footprint variation + moderate density = visually cohesive.
+    
+    Args:
+        levels_entropy: Height diversity (0-100)
+        footprint_area_cv: Size variation (0-100)
+        area_type: Area type
+        density: Optional population density
+    
+    Returns:
+        Bonus points (0-3 max)
+    """
+    bonus = 0.0
+    
+    # Conditions for coherence bonus:
+    # 1. Low height entropy (consistent heights) - < 15 for bonus
+    # 2. Low footprint variation (consistent sizes) - < 30 for bonus
+    # 3. Moderate to high density (urban/suburban context)
+    
+    height_coherent = levels_entropy < 15
+    footprint_coherent = footprint_area_cv < 30
+    
+    if height_coherent and footprint_coherent:
+        # Both conditions met - strong coherence
+        if area_type == "urban_core" or area_type == "urban_core_lowrise":
+            # Urban consistency is valuable (e.g., Park Slope)
+            bonus = 3.0
+        elif area_type == "suburban":
+            # Suburban consistency is expected but still valuable
+            bonus = 2.0
+        elif area_type in ["exurban", "rural"]:
+            # Rural consistency is very natural
+            bonus = 1.5
+    elif height_coherent or footprint_coherent:
+        # Partial coherence - smaller bonus
+        if area_type == "urban_core" or area_type == "urban_core_lowrise":
+            bonus = 1.5
+        elif area_type == "suburban":
+            bonus = 1.0
+    
+    return min(3.0, bonus)
+
+
+def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
+    """
+    Normalize beauty score across contexts so top performers in each
+    context can reach similar high scores.
+    
+    A great rural town should be able to hit "9/10" just like a great
+    urban core, even if the morphology is simpler.
+    
+    Args:
+        beauty_score: Raw beauty score before normalization
+        area_type: Area type for context adjustment
+    
+    Returns:
+        Normalized beauty score (0-33)
+    """
+    # Base normalization: ensure scores can reach similar peaks
+    # Top performers in each context should be able to score ~27-30/33
+    
+    # Context adjustment factors (multipliers to help lower contexts reach high scores)
+    context_factors = {
+        "urban_core": 1.0,           # No adjustment - already at full potential
+        "urban_core_lowrise": 1.0,   # Same as urban_core
+        "suburban": 1.1,             # +10% to help great suburbs reach high scores
+        "exurban": 1.15,             # +15% to help great exurban areas
+        "rural": 1.2,                # +20% to help great rural towns
+        "unknown": 1.0               # No adjustment if unknown
+    }
+    
+    factor = context_factors.get(area_type, 1.0)
+    normalized = beauty_score * factor
+    
+    # Ensure normalized score doesn't exceed max (33)
+    return min(33.0, normalized)
 

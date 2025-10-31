@@ -617,8 +617,13 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         city_for_classification = geocoding.reverse_geocode(lat, lon)
         area_type = data_quality.detect_area_type(lat, lon, density, city_for_classification)
         
+        # Determine effective area type (may be urban_core_lowrise for places like Santa Barbara)
+        effective_area_type = area_type
+        if area_type == "urban_core" and density and 2500 <= density < 10000:
+            effective_area_type = "urban_core_lowrise"
+        
         # Calculate beauty score using context-aware scoring
-        from data_sources.arch_diversity import score_architectural_diversity_as_beauty
+        from data_sources.arch_diversity import score_architectural_diversity_as_beauty, _calculate_coherence_bonus, _normalize_score_by_context
         beauty_score = score_architectural_diversity_as_beauty(
             diversity_metrics["levels_entropy"],
             diversity_metrics["building_type_diversity"],
@@ -627,20 +632,45 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             density
         )
         
+        # Calculate individual components for breakdown
+        height_beauty = _score_height_diversity(diversity_metrics["levels_entropy"], effective_area_type)
+        type_beauty = _score_type_diversity(diversity_metrics["building_type_diversity"], effective_area_type)
+        footprint_beauty = _score_footprint_variation(diversity_metrics["footprint_area_cv"], effective_area_type)
+        
+        # Cap single-metric dominance (40% max)
+        height_beauty = min(13.2, height_beauty)
+        type_beauty = min(13.2, type_beauty)
+        footprint_beauty = min(13.2, footprint_beauty)
+        
+        # Calculate bonuses
+        coherence_bonus = _calculate_coherence_bonus(
+            diversity_metrics["levels_entropy"],
+            diversity_metrics["footprint_area_cv"],
+            area_type,
+            density
+        )
+        
+        raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus
+        normalized_score = _normalize_score_by_context(raw_total, effective_area_type)
+        
         return {
             "status": "success",
             "input": {"lat": lat, "lon": lon, "radius_m": radius_m},
             "context": {
                 "area_type": area_type,
+                "effective_area_type": effective_area_type,
                 "density": density
             },
             "diversity_metrics": diversity_metrics,
-            "beauty_score": round(beauty_score, 1),
+            "beauty_score": round(normalized_score, 1),
             "beauty_max": 33.0,
             "beauty_breakdown": {
-                "height_diversity": round(_score_height_diversity(diversity_metrics["levels_entropy"], area_type), 1),
-                "type_diversity": round(_score_type_diversity(diversity_metrics["building_type_diversity"], area_type), 1),
-                "footprint_variation": round(_score_footprint_variation(diversity_metrics["footprint_area_cv"], area_type), 1)
+                "height_diversity": round(height_beauty, 1),
+                "type_diversity": round(type_beauty, 1),
+                "footprint_variation": round(footprint_beauty, 1),
+                "coherence_bonus": round(coherence_bonus, 1),
+                "raw_total": round(raw_total, 1),
+                "normalization_factor": round(normalized_score / raw_total if raw_total > 0 else 1.0, 2)
             }
         }
     except Exception as e:
