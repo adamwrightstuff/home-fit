@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import time
 from typing import Optional, Dict
+import os
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
@@ -17,6 +18,7 @@ from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
+from data_sources.arch_diversity import compute_arch_diversity, score_architectural_diversity_as_beauty, _score_height_diversity, _score_type_diversity, _score_footprint_variation
 
 ##########################
 # CONFIGURATION FLAGS
@@ -586,3 +588,58 @@ def telemetry_endpoint():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Sandbox endpoint (env-gated) for architectural diversity testing
+@app.get("/sandbox/arch_diversity")
+def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
+    """
+    Architectural Diversity (Sandbox)
+    Enables testing on Railway/GitHub without wiring into pillar scoring.
+    
+    Returns diversity metrics and context-aware beauty score (0-33 points).
+
+    Query params:
+      - lat, lon (required)
+      - radius_m (optional, default 1000)
+    """
+    enabled = os.getenv("SANDBOX_ARCH_ENABLED", "false").lower() == "true"
+    if not enabled:
+        raise HTTPException(status_code=403, detail="Sandbox endpoint disabled. Set SANDBOX_ARCH_ENABLED=true to enable.")
+
+    try:
+        # Get diversity metrics
+        diversity_metrics = compute_arch_diversity(lat, lon, radius_m=radius_m)
+        
+        # Get area type for beauty scoring
+        from data_sources import census_api, data_quality
+        density = census_api.get_population_density(lat, lon)
+        area_type = data_quality.detect_area_type(lat, lon, density)
+        
+        # Calculate beauty score using context-aware scoring
+        from data_sources.arch_diversity import score_architectural_diversity_as_beauty
+        beauty_score = score_architectural_diversity_as_beauty(
+            diversity_metrics["levels_entropy"],
+            diversity_metrics["building_type_diversity"],
+            diversity_metrics["footprint_area_cv"],
+            area_type,
+            density
+        )
+        
+        return {
+            "status": "success",
+            "input": {"lat": lat, "lon": lon, "radius_m": radius_m},
+            "context": {
+                "area_type": area_type,
+                "density": density
+            },
+            "diversity_metrics": diversity_metrics,
+            "beauty_score": round(beauty_score, 1),
+            "beauty_max": 33.0,
+            "beauty_breakdown": {
+                "height_diversity": round(_score_height_diversity(diversity_metrics["levels_entropy"], area_type), 1),
+                "type_diversity": round(_score_type_diversity(diversity_metrics["building_type_diversity"], area_type), 1),
+                "footprint_variation": round(_score_footprint_variation(diversity_metrics["footprint_area_cv"], area_type), 1)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Architectural diversity computation failed: {e}")
