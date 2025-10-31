@@ -188,7 +188,7 @@ CONTEXT_TARGETS = {
     "urban_residential": {
         "height": (0, 0, 15, 30),      # uniform best
         "type": (0, 0, 20, 40),        # uniform types best
-        "footprint": (20, 40, 60, 80), # low/moderate variation best
+        "footprint": (20, 40, 60, 95), # low/moderate variation best (broadened to 95)
     },
     "urban_core": {
         "height": (30, 40, 70, 80),    # moderate variation best
