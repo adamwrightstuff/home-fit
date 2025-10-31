@@ -161,9 +161,7 @@ def score_architectural_diversity_as_beauty(
     building_type_diversity: float,
     footprint_area_cv: float,
     area_type: str,
-    density: Optional[float] = None,
-    tree_coverage: Optional[float] = None,
-    historic_score: Optional[float] = None
+    density: Optional[float] = None
 ) -> float:
     """
     Convert architectural diversity metrics to beauty score (0-33 points).
@@ -186,8 +184,6 @@ def score_architectural_diversity_as_beauty(
         footprint_area_cv: Size variation (0-100)
         area_type: 'urban_core', 'suburban', 'exurban', 'rural', 'unknown'
         density: Optional population density for fine-tuning
-        tree_coverage: Optional tree canopy percentage (0-100) to amplify coherence
-        historic_score: Optional historic preservation score (0-100) to amplify coherence
     
     Returns:
         Beauty score out of 33 points (can be added as 3rd component to beauty pillar)
@@ -220,17 +216,27 @@ def score_architectural_diversity_as_beauty(
     coherence_bonus = _calculate_coherence_bonus(levels_entropy, footprint_area_cv, area_type, density)
     
     # Add fabric integrity bonus for dense residential districts
-    # Rewards alignment, scale, and material consistency
+    # Rewards alignment, scale, and material consistency (based on architectural metrics only)
     fabric_bonus = _calculate_fabric_integrity_bonus(
         levels_entropy,
         building_type_diversity,
         footprint_area_cv,
-        effective_area_type,
-        tree_coverage,
-        historic_score
+        effective_area_type
     )
     
     total_beauty += coherence_bonus + fabric_bonus
+    
+    # Penalize monotonous sprawl: places with huge uniform buildings and little variation
+    # Distinguish between cohesive fabric (Park Slope) and generic sprawl (Katy, Houston)
+    sprawl_penalty = _calculate_sprawl_penalty(
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv,
+        effective_area_type,
+        density
+    )
+    
+    total_beauty -= sprawl_penalty
     
     # Normalize scale across contexts: ensure top performers can reach similar high scores
     # Context normalization factor based on area type expectations
@@ -578,9 +584,7 @@ def _calculate_fabric_integrity_bonus(
     levels_entropy: float,
     building_type_diversity: float,
     footprint_area_cv: float,
-    effective_area_type: str,
-    tree_coverage: Optional[float] = None,
-    historic_score: Optional[float] = None
+    effective_area_type: str
 ) -> float:
     """
     Calculate fabric integrity bonus for cohesive architectural fabrics.
@@ -590,15 +594,14 @@ def _calculate_fabric_integrity_bonus(
     - Scale (low footprint variation)
     - Materials (low type diversity)
     
-    Tree coverage and historic preservation amplify the bonus.
+    This bonus is based purely on architectural metrics to maintain modularity.
+    Other factors (trees, historic preservation) are handled by the neighborhood_beauty pillar.
     
     Args:
         levels_entropy: Height diversity (0-100)
         building_type_diversity: Type diversity (0-100)
         footprint_area_cv: Size variation (0-100)
         effective_area_type: Effective area type (may be urban_residential)
-        tree_coverage: Optional tree canopy percentage (0-100)
-        historic_score: Optional historic preservation score (0-100)
     
     Returns:
         Bonus points (0-4 max)
@@ -637,21 +640,72 @@ def _calculate_fabric_integrity_bonus(
         if effective_area_type == "urban_residential":
             bonus = 1.0
     
-    # Amplify with tree coverage (mature greenery enhances coherence)
-    if bonus > 0 and tree_coverage:
-        if tree_coverage >= 30:
-            bonus *= 1.2  # +20% for high tree coverage
-        elif tree_coverage >= 15:
-            bonus *= 1.1  # +10% for moderate tree coverage
-    
-    # Amplify with historic preservation (historic age enhances coherence)
-    if bonus > 0 and historic_score:
-        if historic_score >= 70:
-            bonus *= 1.2  # +20% for high historic score
-        elif historic_score >= 40:
-            bonus *= 1.1  # +10% for moderate historic score
-    
     return min(4.0, bonus)
+
+
+def _calculate_sprawl_penalty(
+    levels_entropy: float,
+    building_type_diversity: float,
+    footprint_area_cv: float,
+    effective_area_type: str,
+    density: Optional[float] = None
+) -> float:
+    """
+    Calculate penalty for monotonous sprawl or generic uniformity.
+    
+    Penalizes places with huge uniform buildings and little variation that indicate
+    cookie-cutter development rather than intentional cohesive design.
+    
+    Key distinction:
+    - Cohesive fabric (Park Slope): Low diversity + high density + intentional design
+    - Generic sprawl (Katy): Low diversity + low density + cookie-cutter
+    
+    Args:
+        levels_entropy: Height diversity (0-100)
+        building_type_diversity: Type diversity (0-100)
+        footprint_area_cv: Size variation (0-100)
+        effective_area_type: Effective area type
+        density: Optional population density
+    
+    Returns:
+        Penalty points (0-5 max)
+    """
+    penalty = 0.0
+    
+    # Suburban sprawl: Very low diversity suggests cookie-cutter subdivisions
+    if effective_area_type == "suburban":
+        # Katy pattern: Very low type diversity (<20) + very low height entropy (<5)
+        if building_type_diversity < 20 and levels_entropy < 5:
+            # Cookie-cutter suburbia - penalize
+            penalty = 4.0
+        elif building_type_diversity < 15 and levels_entropy < 10:
+            # Very uniform suburb - moderate penalty
+            penalty = 2.5
+        elif building_type_diversity < 25 and levels_entropy < 5:
+            # Low type diversity with perfect height uniformity
+            penalty = 2.0
+    
+    # Urban sprawl: Low diversity in urban context without the density/coherence of urban_residential
+    elif effective_area_type == "urban_core" or effective_area_type == "urban_core_lowrise":
+        # Houston pattern: Moderate diversity but lacks coherence, generic urban
+        if building_type_diversity < 40 and levels_entropy < 30 and (not density or density < 5000):
+            # Low diversity, low height variation, low density = generic urban sprawl
+            penalty = 3.0
+        elif building_type_diversity < 35 and levels_entropy < 25:
+            # Very uniform urban area without density justification
+            penalty = 2.0
+    
+    # Exurban/rural: Extreme uniformity might be okay, but if it's very low type diversity
+    # in an exurban context, it could be sprawl
+    elif effective_area_type == "exurban":
+        if building_type_diversity < 15 and levels_entropy < 5:
+            # Very uniform exurban might be cookie-cutter
+            penalty = 1.5
+    
+    # Don't penalize urban_residential - these are intentional cohesive designs
+    # (Park Slope gets fabric_integrity_bonus instead)
+    
+    return min(5.0, penalty)
 
 
 def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:

@@ -617,26 +617,6 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         city_for_classification = geocoding.reverse_geocode(lat, lon)
         area_type = data_quality.detect_area_type(lat, lon, density, city_for_classification)
         
-        # Get tree coverage for fabric integrity bonus amplification
-        tree_coverage = None
-        try:
-            from data_sources.gee_api import get_tree_canopy_gee
-            tree_coverage = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
-            if tree_coverage is None:
-                # Fallback to Census/USFS tree canopy
-                tree_coverage = census_api.get_tree_canopy(lat, lon)
-        except Exception:
-            tree_coverage = census_api.get_tree_canopy(lat, lon)
-        
-        # Get historic score for fabric integrity bonus amplification
-        historic_score = None
-        try:
-            from pillars.neighborhood_beauty import get_neighborhood_beauty_score
-            _, beauty_breakdown = get_neighborhood_beauty_score(lat, lon, city=city_for_classification, area_type=area_type)
-            historic_score = beauty_breakdown.get("breakdown", {}).get("historic_character", None)
-        except Exception:
-            pass
-        
         # Determine effective area type (may be urban_residential or urban_core_lowrise)
         effective_area_type = area_type
         if area_type == "urban_core" and density:
@@ -646,10 +626,12 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
                 effective_area_type = "urban_core_lowrise"
         
         # Calculate beauty score using context-aware scoring
+        # Note: Tree coverage and historic preservation are handled by neighborhood_beauty pillar
         from data_sources.arch_diversity import (
             score_architectural_diversity_as_beauty, 
             _calculate_coherence_bonus, 
             _calculate_fabric_integrity_bonus,
+            _calculate_sprawl_penalty,
             _normalize_score_by_context,
             _score_height_diversity,
             _score_type_diversity,
@@ -660,9 +642,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["building_type_diversity"],
             diversity_metrics["footprint_area_cv"],
             area_type,
-            density,
-            tree_coverage,
-            historic_score
+            density
         )
         
         # Calculate individual components for breakdown
@@ -687,12 +667,18 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["levels_entropy"],
             diversity_metrics["building_type_diversity"],
             diversity_metrics["footprint_area_cv"],
-            effective_area_type,
-            tree_coverage,
-            historic_score
+            effective_area_type
         )
         
-        raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus + fabric_bonus
+        sprawl_penalty = _calculate_sprawl_penalty(
+            diversity_metrics["levels_entropy"],
+            diversity_metrics["building_type_diversity"],
+            diversity_metrics["footprint_area_cv"],
+            effective_area_type,
+            density
+        )
+        
+        raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus + fabric_bonus - sprawl_penalty
         normalized_score = _normalize_score_by_context(raw_total, effective_area_type)
         
         return {
@@ -701,9 +687,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             "context": {
                 "area_type": area_type,
                 "effective_area_type": effective_area_type,
-                "density": density,
-                "tree_coverage": round(tree_coverage, 1) if tree_coverage else None,
-                "historic_score": round(historic_score, 1) if historic_score else None
+                "density": density
             },
             "diversity_metrics": diversity_metrics,
             "beauty_score": round(normalized_score, 1),
@@ -714,6 +698,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
                 "footprint_variation": round(footprint_beauty, 1),
                 "coherence_bonus": round(coherence_bonus, 1),
                 "fabric_integrity_bonus": round(fabric_bonus, 1),
+                "sprawl_penalty": round(sprawl_penalty, 1),
                 "raw_total": round(raw_total, 1),
                 "normalization_factor": round(normalized_score / raw_total if raw_total > 0 else 1.0, 2)
             }
