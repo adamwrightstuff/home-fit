@@ -465,18 +465,24 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
     if area_type == "urban_residential":
         # Urban residential: Similar footprints are beautiful (consistent scale)
         # Broadened sweet spot: uniform ≠ punished, allow more variation
-        if footprint_area_cv < 40:
+        # Create peak range where variation is acceptable
+        if footprint_area_cv < 30:
             # Very consistent footprints = peak beauty
-            score = 11.0 * (1 - footprint_area_cv / 50)  # More consistent = higher score
-        elif 40 <= footprint_area_cv < 70:
-            # Still coherent - broad sweet spot allows variation
-            score = 11.0 * (70 - footprint_area_cv) / 30
-        elif 70 <= footprint_area_cv <= 85:
+            score = 11.0 * (1 - footprint_area_cv / 35)  # More consistent = higher score
+        elif 30 <= footprint_area_cv <= 65:
+            # Peak range - still beautiful, variation acceptable
+            if 40 <= footprint_area_cv <= 60:
+                score = 11.0  # Full score in peak range
+            elif 30 <= footprint_area_cv < 40:
+                score = 11.0 * (1 - (40 - footprint_area_cv) / 15)  # Gradual ramp up
+            else:  # 60 < footprint_area_cv <= 65
+                score = 11.0 * (1 - (footprint_area_cv - 60) / 10)  # Gradual ramp down
+        elif 65 < footprint_area_cv <= 80:
             # Moderate variation - still acceptable, soft penalty
-            score = 11.0 * (85 - footprint_area_cv) / 15 * 0.8
-        else:  # >85
+            score = 11.0 * (80 - footprint_area_cv) / 15 * 0.8
+        else:  # >80
             # Too varied for residential fabric - gradual decline
-            score = max(0.0, 11.0 - (footprint_area_cv - 85) * 0.08)
+            score = max(0.0, 11.0 - (footprint_area_cv - 80) * 0.08)
         return max(0.0, min(13.2, score))
     
     elif area_type == "urban_core" or area_type == "urban_core_lowrise":
