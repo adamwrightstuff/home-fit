@@ -9,17 +9,17 @@ from .census_api import get_population_density, get_census_tract
 from .error_handling import get_fallback_score
 
 
-def detect_area_type(lat: float, lon: float, density: Optional[float] = None) -> str:
+def detect_area_type(lat: float, lon: float, density: Optional[float] = None, city: Optional[str] = None) -> str:
     """
-    Detect area type based on population density and urban indicators.
+    Detect area type based on population density and city context.
     
-    Uses additional signals (building density, architectural diversity) to identify
-    urban cores even when residential population density is lower (historic downtowns,
-    commercial districts, etc.).
+    Uses city name to identify major metros' downtowns even when residential
+    population density is lower (historic downtowns, commercial districts, etc.).
     
     Args:
         lat, lon: Coordinates
         density: Optional pre-fetched density (for efficiency)
+        city: Optional city name (used to identify major metros)
     
     Returns:
         'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
@@ -34,17 +34,18 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None) ->
     if density > 10000:
         return "urban_core"
     
-    # For areas with density 2,500-10,000 (typically suburban), check for urban indicators
+    # For areas with density 2,500-10,000 (typically suburban), check if it's a major city
     # Historic downtowns and commercial cores often have lower residential density
-    # but high building density and architectural diversity
     elif density > 2500:
-        # Check for urban indicators (building density, architectural diversity)
-        urban_indicators = _check_urban_indicators(lat, lon)
-        
-        # If strong urban indicators exist, classify as urban_core
-        # (e.g., historic downtown Charleston, commercial cores)
-        if urban_indicators >= 2:
-            return "urban_core"
+        # Check if city matches a major metro (downtowns of major cities are urban_core)
+        if city:
+            from .regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            # Check if city name matches any major metro (case-insensitive)
+            city_lower = city.lower().strip()
+            for metro_name in baseline_mgr.major_metros.keys():
+                if metro_name.lower() == city_lower:
+                    return "urban_core"
         return "suburban"
     # Exurban: 500-2,500 people/sq mi (e.g., outer suburbs)
     elif density > 500:
@@ -52,54 +53,6 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None) ->
     # Rural: <500 people/sq mi (e.g., rural towns, Marfa TX)
     else:
         return "rural"
-
-
-def _check_urban_indicators(lat: float, lon: float) -> int:
-    """
-    Check for indicators of urban core (beyond residential population density).
-    
-    Returns count of urban indicators (0-3):
-    - High building density (many buildings in small area)
-    - High architectural diversity (varied building types/heights)
-    - Historic/commercial character (landmarks, commercial amenities)
-    
-    Args:
-        lat, lon: Coordinates
-    
-    Returns:
-        Integer 0-3 indicating strength of urban indicators
-    """
-    indicators = 0
-    
-    try:
-        # Indicator 1: Check building density via architectural diversity query
-        # This is fast and gives us building count + diversity
-        from .arch_diversity import compute_arch_diversity
-        arch_metrics = compute_arch_diversity(lat, lon, radius_m=500)  # Smaller radius for density check
-        
-        # High building type diversity suggests urban mix (residential + commercial)
-        if arch_metrics.get("building_type_diversity", 0) > 50:
-            indicators += 1
-        
-        # Good height variation suggests urban development pattern
-        if arch_metrics.get("levels_entropy", 0) > 40:
-            indicators += 1
-        
-        # Indicator 2: Check for historic/commercial character
-        try:
-            from .osm_api import query_charm_features
-            charm = query_charm_features(lat, lon, radius_m=500)
-            if charm:
-                # Historic landmarks or commercial presence
-                if charm.get("historic") or charm.get("artwork"):
-                    indicators += 1
-        except Exception:
-            pass  # Don't fail if OSM query fails
-        
-    except Exception:
-        pass  # Don't fail if diversity query fails
-    
-    return indicators
 
 
 def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict] = None) -> str:

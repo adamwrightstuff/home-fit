@@ -175,7 +175,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         from data_sources import census_api as _ca
         from data_sources import data_quality as _dq
         _density = _ca.get_population_density(lat, lon) or 0.0
-        area_type = _dq.detect_area_type(lat, lon, _density)
+        area_type = _dq.detect_area_type(lat, lon, _density, city)
     except Exception:
         area_type = "unknown"
 
@@ -610,10 +610,12 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         # Get diversity metrics
         diversity_metrics = compute_arch_diversity(lat, lon, radius_m=radius_m)
         
-        # Get area type for beauty scoring
-        from data_sources import census_api, data_quality
+        # Get area type for beauty scoring (reverse geocode to get city for classification)
+        from data_sources import census_api, data_quality, geocoding
         density = census_api.get_population_density(lat, lon)
-        area_type = data_quality.detect_area_type(lat, lon, density)
+        # Reverse geocode to get city name for better classification
+        city_for_classification = geocoding.reverse_geocode(lat, lon)
+        area_type = data_quality.detect_area_type(lat, lon, density, city_for_classification)
         
         # Calculate beauty score using context-aware scoring
         from data_sources.arch_diversity import score_architectural_diversity_as_beauty
