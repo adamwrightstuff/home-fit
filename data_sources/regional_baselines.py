@@ -66,7 +66,8 @@ class RegionalBaselineManager:
             'Tampa': {'state': 'FL', 'population': 3209489, 'density_threshold': 4000},
             'New Orleans': {'state': 'LA', 'population': 1271651, 'density_threshold': 2500},
             'Wichita': {'state': 'KS', 'population': 647610, 'density_threshold': 1500},
-            'Charleston': {'state': 'SC', 'population': 799636, 'density_threshold': 2500}
+            'Charleston': {'state': 'SC', 'population': 799636, 'density_threshold': 2500},
+            'Santa Barbara': {'state': 'CA', 'population': 446475, 'density_threshold': 2500}
         }
         
         # Baseline scores by area type and pillar

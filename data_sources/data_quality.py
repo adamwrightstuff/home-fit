@@ -27,6 +27,25 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
     if density is None:
         density = get_population_density(lat, lon)
     
+    # First check if city is a major metro (even if density is missing)
+    if city:
+        from .regional_baselines import RegionalBaselineManager
+        baseline_mgr = RegionalBaselineManager()
+        # Check if city name matches any major metro (case-insensitive)
+        city_lower = city.lower().strip()
+        for metro_name in baseline_mgr.major_metros.keys():
+            if metro_name.lower() == city_lower:
+                # If density is available, use it; otherwise default to urban_core for major cities
+                if density and density > 10000:
+                    return "urban_core"
+                elif density and density > 2500:
+                    return "urban_core"  # Major city downtown with moderate density
+                elif not density:
+                    return "urban_core"  # Major city, assume urban_core even without density data
+                else:
+                    return "urban_core"  # Major city, low density but still urban core
+    
+    # If density is missing and not a major city, return unknown
     if not density:
         return "unknown"
     
@@ -34,18 +53,8 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
     if density > 10000:
         return "urban_core"
     
-    # For areas with density 2,500-10,000 (typically suburban), check if it's a major city
-    # Historic downtowns and commercial cores often have lower residential density
+    # For areas with density 2,500-10,000 (typically suburban)
     elif density > 2500:
-        # Check if city matches a major metro (downtowns of major cities are urban_core)
-        if city:
-            from .regional_baselines import RegionalBaselineManager
-            baseline_mgr = RegionalBaselineManager()
-            # Check if city name matches any major metro (case-insensitive)
-            city_lower = city.lower().strip()
-            for metro_name in baseline_mgr.major_metros.keys():
-                if metro_name.lower() == city_lower:
-                    return "urban_core"
         return "suburban"
     # Exurban: 500-2,500 people/sq mi (e.g., outer suburbs)
     elif density > 500:
