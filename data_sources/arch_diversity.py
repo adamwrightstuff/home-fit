@@ -161,7 +161,9 @@ def score_architectural_diversity_as_beauty(
     building_type_diversity: float,
     footprint_area_cv: float,
     area_type: str,
-    density: Optional[float] = None
+    density: Optional[float] = None,
+    tree_coverage: Optional[float] = None,
+    historic_score: Optional[float] = None
 ) -> float:
     """
     Convert architectural diversity metrics to beauty score (0-33 points).
@@ -175,6 +177,8 @@ def score_architectural_diversity_as_beauty(
     - Coherence bonus for architecturally consistent areas
     - Balanced weighting to prevent single-metric dominance
     - Normalized scale across contexts
+    - Urban residential detection (dense residential neighborhoods like Park Slope)
+    - Fabric integrity bonus for cohesive architectural fabrics
     
     Args:
         levels_entropy: Height diversity (0-100)
@@ -182,16 +186,23 @@ def score_architectural_diversity_as_beauty(
         footprint_area_cv: Size variation (0-100)
         area_type: 'urban_core', 'suburban', 'exurban', 'rural', 'unknown'
         density: Optional population density for fine-tuning
+        tree_coverage: Optional tree canopy percentage (0-100) to amplify coherence
+        historic_score: Optional historic preservation score (0-100) to amplify coherence
     
     Returns:
         Beauty score out of 33 points (can be added as 3rd component to beauty pillar)
     """
     
-    # Detect urban_core_lowrise for places like Santa Barbara
+    # Detect urban_residential: dense residential districts (e.g., Park Slope)
+    # Conditions: High density (>10,000) + Low height diversity (<20) + Low type diversity (<30)
     effective_area_type = area_type
-    if area_type == "urban_core" and density and 2500 <= density < 10000:
-        # Low-rise urban core - use modified expectations
-        effective_area_type = "urban_core_lowrise"
+    if area_type == "urban_core" and density:
+        if density > 10000 and levels_entropy < 20 and building_type_diversity < 30:
+            # Dense residential district - coherence is beautiful
+            effective_area_type = "urban_residential"
+        elif 2500 <= density < 10000:
+            # Low-rise urban core - use modified expectations
+            effective_area_type = "urban_core_lowrise"
     
     height_beauty = _score_height_diversity(levels_entropy, effective_area_type)
     type_beauty = _score_type_diversity(building_type_diversity, effective_area_type)
@@ -208,7 +219,18 @@ def score_architectural_diversity_as_beauty(
     # Low height entropy + low footprint variation + moderate density = cohesive
     coherence_bonus = _calculate_coherence_bonus(levels_entropy, footprint_area_cv, area_type, density)
     
-    total_beauty += coherence_bonus
+    # Add fabric integrity bonus for dense residential districts
+    # Rewards alignment, scale, and material consistency
+    fabric_bonus = _calculate_fabric_integrity_bonus(
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv,
+        effective_area_type,
+        tree_coverage,
+        historic_score
+    )
+    
+    total_beauty += coherence_bonus + fabric_bonus
     
     # Normalize scale across contexts: ensure top performers can reach similar high scores
     # Context normalization factor based on area type expectations
@@ -225,7 +247,24 @@ def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
     Suburban: Low variation is beautiful (sweet spot 0-50, rewards consistency)
     Rural: Minimal diversity is beautiful (sweet spot 0-40, rewards simplicity)
     """
-    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+    if area_type == "urban_residential":
+        # Urban residential: Uniform heights are beautiful (Park Slope brownstones)
+        # Low diversity = high beauty (inverted scoring)
+        if levels_entropy < 15:
+            # Very uniform = peak beauty
+            score = 11.0 * (1 - levels_entropy / 20)  # More uniform = higher score
+        elif 15 <= levels_entropy < 30:
+            # Still coherent but some variation
+            score = 11.0 * (30 - levels_entropy) / 15
+        elif 30 <= levels_entropy <= 50:
+            # Moderate variation - reduced beauty but not penalized harshly
+            score = 11.0 * (50 - levels_entropy) / 20 * 0.7
+        else:  # >50
+            # Too varied for residential fabric - gradual decline
+            score = max(0.0, 11.0 - (levels_entropy - 50) * 0.1)
+        return max(0.0, min(13.2, score))
+    
+    elif area_type == "urban_core" or area_type == "urban_core_lowrise":
         # Urban: Broader sweet spot 30-80 (was 40-80)
         # Softer penalties - gradual decline instead of cliff
         if 30 <= levels_entropy <= 80:
@@ -298,7 +337,24 @@ def _score_type_diversity(building_type_diversity: float, area_type: str) -> flo
     Suburban: Moderate diversity within shared language (sweet spot 20-70)
     Rural: Low diversity with typological consistency (sweet spot 0-50)
     """
-    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+    if area_type == "urban_residential":
+        # Urban residential: Low type diversity is beautiful (consistent building types)
+        # Residential fabric thrives on typological consistency
+        if building_type_diversity < 20:
+            # Very consistent types = peak beauty
+            score = 11.0 * (1 - building_type_diversity / 25)  # More consistent = higher score
+        elif 20 <= building_type_diversity < 40:
+            # Still coherent but some variation
+            score = 11.0 * (40 - building_type_diversity) / 20
+        elif 40 <= building_type_diversity <= 60:
+            # Moderate variation - reduced beauty but soft penalty
+            score = 11.0 * (60 - building_type_diversity) / 20 * 0.6
+        else:  # >60
+            # Too varied for residential fabric - gradual decline
+            score = max(0.0, 11.0 - (building_type_diversity - 60) * 0.15)
+        return max(0.0, min(13.2, score))
+    
+    elif area_type == "urban_core" or area_type == "urban_core_lowrise":
         # Urban: Broader sweet spot 50-95 (was 60-90)
         if 50 <= building_type_diversity <= 95:
             if 60 <= building_type_diversity <= 85:
@@ -372,7 +428,24 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
     Suburban: Variation adds richness (sweet spot 40-90)
     Rural: Large variation feels organic (sweet spot 50-100)
     """
-    if area_type == "urban_core" or area_type == "urban_core_lowrise":
+    if area_type == "urban_residential":
+        # Urban residential: Similar footprints are beautiful (consistent scale)
+        # Uniform footprints create visual rhythm
+        if footprint_area_cv < 30:
+            # Very consistent footprints = peak beauty
+            score = 11.0 * (1 - footprint_area_cv / 35)  # More consistent = higher score
+        elif 30 <= footprint_area_cv < 60:
+            # Still coherent but some variation
+            score = 11.0 * (60 - footprint_area_cv) / 30
+        elif 60 <= footprint_area_cv <= 80:
+            # Moderate variation - reduced beauty but soft penalty
+            score = 11.0 * (80 - footprint_area_cv) / 20 * 0.6
+        else:  # >80
+            # Too varied for residential fabric - gradual decline
+            score = max(0.0, 11.0 - (footprint_area_cv - 80) * 0.1)
+        return max(0.0, min(13.2, score))
+    
+    elif area_type == "urban_core" or area_type == "urban_core_lowrise":
         # Urban: Broader sweet spot 30-70 (was 40-60)
         # Softer penalties for walkability disruption
         if 30 <= footprint_area_cv <= 70:
@@ -477,8 +550,11 @@ def _calculate_coherence_bonus(
     
     if height_coherent and footprint_coherent:
         # Both conditions met - strong coherence
-        if area_type == "urban_core" or area_type == "urban_core_lowrise":
-            # Urban consistency is valuable (e.g., Park Slope)
+        if area_type == "urban_residential":
+            # Urban residential consistency is highly valuable (e.g., Park Slope)
+            bonus = 3.5
+        elif area_type == "urban_core" or area_type == "urban_core_lowrise":
+            # Urban consistency is valuable
             bonus = 3.0
         elif area_type == "suburban":
             # Suburban consistency is expected but still valuable
@@ -488,12 +564,94 @@ def _calculate_coherence_bonus(
             bonus = 1.5
     elif height_coherent or footprint_coherent:
         # Partial coherence - smaller bonus
-        if area_type == "urban_core" or area_type == "urban_core_lowrise":
+        if area_type == "urban_residential":
+            bonus = 2.0
+        elif area_type == "urban_core" or area_type == "urban_core_lowrise":
             bonus = 1.5
         elif area_type == "suburban":
             bonus = 1.0
     
     return min(3.0, bonus)
+
+
+def _calculate_fabric_integrity_bonus(
+    levels_entropy: float,
+    building_type_diversity: float,
+    footprint_area_cv: float,
+    effective_area_type: str,
+    tree_coverage: Optional[float] = None,
+    historic_score: Optional[float] = None
+) -> float:
+    """
+    Calculate fabric integrity bonus for cohesive architectural fabrics.
+    
+    Rewards places like Park Slope where buildings share similar:
+    - Alignment (low height entropy)
+    - Scale (low footprint variation)
+    - Materials (low type diversity)
+    
+    Tree coverage and historic preservation amplify the bonus.
+    
+    Args:
+        levels_entropy: Height diversity (0-100)
+        building_type_diversity: Type diversity (0-100)
+        footprint_area_cv: Size variation (0-100)
+        effective_area_type: Effective area type (may be urban_residential)
+        tree_coverage: Optional tree canopy percentage (0-100)
+        historic_score: Optional historic preservation score (0-100)
+    
+    Returns:
+        Bonus points (0-4 max)
+    """
+    bonus = 0.0
+    
+    # Conditions for fabric integrity:
+    # 1. Low height entropy (< 20) - consistent heights
+    # 2. Low footprint variation (< 40) - consistent scale
+    # 3. Low type diversity (< 35) - consistent materials
+    
+    height_consistent = levels_entropy < 20
+    footprint_consistent = footprint_area_cv < 40
+    type_consistent = building_type_diversity < 35
+    
+    # Base bonus for architectural consistency
+    if height_consistent and footprint_consistent and type_consistent:
+        # All three conditions met - strong fabric integrity
+        if effective_area_type == "urban_residential":
+            # Urban residential gets highest bonus (e.g., Park Slope)
+            bonus = 3.0
+        elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
+            # Urban cores get moderate bonus
+            bonus = 2.0
+        elif effective_area_type == "suburban":
+            # Suburban gets smaller bonus (consistency expected)
+            bonus = 1.5
+    elif (height_consistent and footprint_consistent) or (height_consistent and type_consistent):
+        # Two conditions met - partial fabric integrity
+        if effective_area_type == "urban_residential":
+            bonus = 2.0
+        elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
+            bonus = 1.0
+    elif height_consistent:
+        # Only height consistent - minimal bonus
+        if effective_area_type == "urban_residential":
+            bonus = 1.0
+    
+    # Amplify with tree coverage (mature greenery enhances coherence)
+    if bonus > 0 and tree_coverage:
+        if tree_coverage >= 30:
+            bonus *= 1.2  # +20% for high tree coverage
+        elif tree_coverage >= 15:
+            bonus *= 1.1  # +10% for moderate tree coverage
+    
+    # Amplify with historic preservation (historic age enhances coherence)
+    if bonus > 0 and historic_score:
+        if historic_score >= 70:
+            bonus *= 1.2  # +20% for high historic score
+        elif historic_score >= 40:
+            bonus *= 1.1  # +10% for moderate historic score
+    
+    return min(4.0, bonus)
 
 
 def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
@@ -518,6 +676,7 @@ def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
     context_factors = {
         "urban_core": 1.0,           # No adjustment - already at full potential
         "urban_core_lowrise": 1.0,   # Same as urban_core
+        "urban_residential": 1.0,    # Same as urban_core (dense residential)
         "suburban": 1.1,             # +10% to help great suburbs reach high scores
         "exurban": 1.15,             # +15% to help great exurban areas
         "rural": 1.2,                # +20% to help great rural towns
