@@ -203,7 +203,7 @@ CONTEXT_TARGETS = {
     "suburban": {
         "height": (0, 10, 40, 50),     # lower variation best
         "type": (18, 35, 55, 70),      # moderate best (relaxed from 20 to help Carmel)
-        "footprint": (40, 55, 75, 90), # moderate-high best
+        "footprint": (25, 40, 55, 90), # moderate-high best (relaxed lower threshold for cohesive uniformity)
     },
     "exurban": {
         "height": (0, 5, 35, 40),

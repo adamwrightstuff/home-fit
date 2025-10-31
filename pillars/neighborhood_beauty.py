@@ -201,12 +201,43 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             sources.append(f"GEE: {gee_canopy:.1f}% canopy")
             details['gee_canopy_pct'] = gee_canopy
             print(f"   ✅ Using GEE satellite data: {gee_canopy:.1f}%")
+            
+            # For NYC: Check if GEE canopy is suspiciously low (<15%) and supplement with street trees
+            # GEE canopy misses individual street trees in dense urban areas
+            if nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city):
+                if gee_canopy < 15.0:
+                    print(f"   🗽 NYC location with low GEE canopy ({gee_canopy:.1f}%) - checking street trees...")
+                    street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009)  # ~1000m
+                    if street_trees:
+                        tree_count = len(street_trees)
+                        street_tree_score = _score_nyc_trees(tree_count)
+                        # Use the higher of the two scores (street trees are more accurate for NYC)
+                        if street_tree_score > score:
+                            print(f"   ✅ NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (using street trees)")
+                            score = street_tree_score
+                            sources.append(f"NYC Street Trees: {tree_count} trees")
+                            details['nyc_street_trees'] = tree_count
+                        else:
+                            print(f"   📊 NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (GEE canopy higher)")
         else:
             print(f"   ⚠️  GEE returned {gee_canopy} - trying Census fallback")
     except Exception as e:
         print(f"   ⚠️  GEE import error: {e}")
     
-    # Priority 2: Census USFS Tree Canopy (if GEE unavailable or low)
+    # Priority 2: NYC Street Trees (if NYC and no score yet, or GEE was low)
+    if score == 0.0 or (score < 30.0 and nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city)):
+        print(f"   🗽 Checking NYC Street Tree Census...")
+        street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009)  # ~1000m
+        if street_trees:
+            tree_count = len(street_trees)
+            street_tree_score = _score_nyc_trees(tree_count)
+            if street_tree_score > score:
+                print(f"   ✅ Using NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
+                score = street_tree_score
+                sources.append(f"NYC Street Trees: {tree_count} trees")
+                details['nyc_street_trees'] = tree_count
+    
+    # Priority 3: Census USFS Tree Canopy (if GEE unavailable or low)
     if score == 0.0:
         print(f"   📊 Trying Census USFS tree canopy data...")
         canopy_pct = census_api.get_tree_canopy(lat, lon)

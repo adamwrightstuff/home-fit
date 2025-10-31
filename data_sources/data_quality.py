@@ -110,17 +110,31 @@ def get_effective_area_type(area_type: str, density: Optional[float],
             return "urban_residential"
         # Historic district case: Moderate density (2500-10000) with very low diversity + historic markers
         # French Quarter pattern: intentionally uniform historic district
+        # Georgetown pattern: very historic (<1940) with uniform height but mixed types
         if density and 2500 <= density < 10000:
-            if levels_entropy < 15 and building_type_diversity < 20:
-                # Check for historic markers (if provided)
-                is_historic = False
-                if historic_landmarks is not None and historic_landmarks >= 10:
-                    is_historic = True
-                if median_year_built is not None and median_year_built < 1950:
-                    is_historic = True
-                # Historic districts with very uniform architecture should use urban_residential targets
-                if is_historic:
+            # For very historic areas (<1940), allow higher type diversity (mixed-use historic neighborhoods)
+            # Standard historic: height <15 AND type <20
+            # Very historic: height <20 AND type <35 (relaxed for Georgetown-style neighborhoods)
+            is_very_historic = False
+            if median_year_built is not None and median_year_built < 1940:
+                is_very_historic = True
+            
+            if is_very_historic:
+                # Very historic areas: uniform height + moderate type diversity acceptable
+                if levels_entropy < 20 and building_type_diversity < 35:
                     return "urban_residential"
+            else:
+                # Standard historic areas: stricter requirements
+                if levels_entropy < 15 and building_type_diversity < 20:
+                    # Check for historic markers (if provided)
+                    is_historic = False
+                    if historic_landmarks is not None and historic_landmarks >= 10:
+                        is_historic = True
+                    if median_year_built is not None and median_year_built < 1950:
+                        is_historic = True
+                    # Historic districts with very uniform architecture should use urban_residential targets
+                    if is_historic:
+                        return "urban_residential"
     
     # Priority 2: Urban core lowrise: dense urban but not skyscraper dense
     # Works for both "urban_core" (major metros) AND "suburban" (dense small cities)
