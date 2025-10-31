@@ -243,18 +243,72 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     return score, details
 
 
-def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None) -> Tuple[float, Dict]:
-    """Score historic character (0-50) based on building age and landmarks."""
+def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
+    """
+    Fetch historic data once (OSM landmarks + Census building age).
     
-    # Get building age from Census
+    This helper avoids duplicate API calls when historic data is needed
+    for both scoring (beauty pillar) and classification (architectural diversity).
+    
+    Args:
+        lat, lon: Coordinates
+        radius_m: Radius for OSM historic landmarks query (default 1000m)
+    
+    Returns:
+        {
+            'year_built_data': Optional[Dict],  # Full Census data or None
+            'median_year_built': Optional[int],  # Extracted for convenience
+            'vintage_pct': Optional[float],     # Extracted for convenience
+            'charm_data': Optional[Dict],        # Full OSM data or None
+            'historic_landmarks': List,          # Extracted landmarks list
+            'historic_landmarks_count': int      # Extracted count (0 if None)
+        }
+    """
+    # Fetch building age from Census
     year_built_data = census_api.get_year_built_data(lat, lon)
+    median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+    vintage_pct = year_built_data.get('vintage_pct', 0) if year_built_data else None
     
+    # Fetch OSM historic landmarks
+    charm_data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
+    historic_landmarks = charm_data.get('historic', []) if charm_data else []
+    historic_landmarks_count = len(historic_landmarks)
+    
+    return {
+        'year_built_data': year_built_data,
+        'median_year_built': median_year_built,
+        'vintage_pct': vintage_pct,
+        'charm_data': charm_data,
+        'historic_landmarks': historic_landmarks,
+        'historic_landmarks_count': historic_landmarks_count
+    }
+
+
+def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None,
+                   historic_data: Optional[Dict] = None) -> Tuple[float, Dict]:
+    """
+    Score historic character (0-50) based on building age and landmarks.
+    
+    Args:
+        lat, lon: Coordinates
+        location_scope: Optional location scope (not currently used)
+        historic_data: Optional pre-fetched historic data from _fetch_historic_data()
+                      If None, will fetch the data
+    
+    Returns:
+        (score, details_dict)
+    """
+    # Use pre-fetched data if provided, otherwise fetch it
+    if historic_data is None:
+        historic_data = _fetch_historic_data(lat, lon, radius_m=1000)
+    
+    year_built_data = historic_data.get('year_built_data')
     if year_built_data is None:
         return 0.0, {"note": "No building age data available"}
     
     # Calculate historic score from year built
-    median_year = year_built_data.get('median_year_built', 2000)
-    vintage_pct = year_built_data.get('vintage_pct', 0)  # Pre-1960 buildings
+    median_year = historic_data.get('median_year_built', 2000)
+    vintage_pct = historic_data.get('vintage_pct', 0)
     
     # Score based on age and vintage percentage
     if median_year < 1940:
@@ -268,14 +322,11 @@ def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None
     else:
         score = 10.0
     
-    # Get OSM historic landmarks - expand radius to 1km for better coverage
-    landmarks_radius = 1000  # Increased from 500m for both neighborhoods and cities
-    charm_data = osm_api.query_charm_features(lat, lon, radius_m=landmarks_radius)
-    if charm_data and charm_data.get('historic'):
-        landmarks_count = len(charm_data['historic'])
-        if landmarks_count > 0:
-            # Bonus for historic landmarks (up to 10 points)
-            score += min(10, landmarks_count * 2)
+    # Add bonus for historic landmarks
+    historic_landmarks_count = historic_data.get('historic_landmarks_count', 0)
+    if historic_landmarks_count > 0:
+        # Bonus for historic landmarks (up to 10 points)
+        score += min(10, historic_landmarks_count * 2)
     
     # Cap historic score at 50 (it's a 0-50 component)
     score = min(50.0, score)
@@ -283,7 +334,7 @@ def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None
     details = {
         "median_year_built": median_year,
         "vintage_pct": vintage_pct,
-        "historic_landmarks": charm_data.get('historic', []) if charm_data else [],
+        "historic_landmarks": historic_data.get('historic_landmarks', []),
         "total_score": score
     }
     

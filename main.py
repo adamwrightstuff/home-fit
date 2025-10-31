@@ -619,15 +619,14 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         
         # Determine effective area type (may be urban_residential or urban_core_lowrise)
         # Use centralized helper function for consistency
-        # Fetch historic data to help detect historic districts (e.g., French Quarter)
+        # Fetch historic data using shared helper to avoid duplicate API calls
         from data_sources.data_quality import get_effective_area_type
-        from data_sources import osm_api, census_api
+        from pillars.neighborhood_beauty import _fetch_historic_data
         
-        # Get historic markers for historic district detection
-        charm_data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
-        historic_landmarks = len(charm_data.get('historic', [])) if charm_data else None
-        year_built_data = census_api.get_year_built_data(lat, lon)
-        median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+        # Get historic markers for historic district detection using shared helper
+        historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)
+        historic_landmarks = historic_data.get('historic_landmarks_count')
+        median_year_built = historic_data.get('median_year_built')
         
         effective_area_type = get_effective_area_type(
             area_type,
