@@ -142,7 +142,15 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         mean_area = sum(areas)/len(areas)
         var = sum((a-mean_area)**2 for a in areas)/len(areas)
         cv = (var ** 0.5) / mean_area
-        area_cv = max(0.0, min(1.0, cv)) * 100
+        # Rescale CV based on observed distribution (95th percentile ~3.0 CV in practice)
+        # This makes 100 truly mean "extremely inconsistent" not just "maxed out"
+        # Typical CV values: 0.0-0.5 = very consistent, 0.5-1.5 = moderate, 1.5-3.0 = high, 3.0+ = extreme
+        # Map to 0-100 scale where ~95th percentile (CV=3.0) maps to 95
+        if cv <= 3.0:
+            area_cv = (cv / 3.0) * 95  # Scale 0-3.0 CV to 0-95
+        else:
+            area_cv = 95 + min(5.0, (cv - 3.0) / 3.0 * 5.0)  # Scale 3.0+ CV to 95-100
+        area_cv = max(0.0, min(100.0, area_cv))
     else:
         area_cv = 0.0
 
@@ -674,30 +682,41 @@ def _calculate_sprawl_penalty(
     penalty = 0.0
     
     # Suburban sprawl: Very low diversity suggests cookie-cutter subdivisions
+    # Scale penalty proportionally based on how extreme the uniformity is
     if effective_area_type == "suburban":
         # Katy pattern: Very low type diversity (<20) + very low height entropy (<5)
         if building_type_diversity < 20 and levels_entropy < 5:
-            # Cookie-cutter suburbia - penalize
-            penalty = 4.0
+            # Cookie-cutter suburbia - scale penalty by how extreme (max 5.0)
+            # Lower diversity + lower entropy = higher penalty
+            diversity_factor = (20 - building_type_diversity) / 20  # 0-1 scale
+            entropy_factor = (5 - levels_entropy) / 5  # 0-1 scale
+            penalty = 4.0 + (diversity_factor + entropy_factor) / 2 * 1.0  # 4.0-5.0 range
         elif building_type_diversity < 15 and levels_entropy < 10:
-            # Very uniform suburb - moderate penalty
-            penalty = 2.5
+            # Very uniform suburb - moderate penalty, scaled
+            diversity_factor = (15 - building_type_diversity) / 15
+            entropy_factor = (10 - levels_entropy) / 10
+            penalty = 2.0 + (diversity_factor + entropy_factor) / 2 * 0.5  # 2.0-2.5 range
         elif building_type_diversity < 25 and levels_entropy < 5:
             # Low type diversity with perfect height uniformity
-            penalty = 2.0
+            diversity_factor = (25 - building_type_diversity) / 25
+            entropy_factor = (5 - levels_entropy) / 5
+            penalty = 1.5 + (diversity_factor + entropy_factor) / 2 * 0.5  # 1.5-2.0 range
     
     # Urban sprawl: Low diversity in urban context without the density/coherence of urban_residential
+    # Scale penalty proportionally based on footprint CV exceeding threshold
     elif effective_area_type == "urban_core" or effective_area_type == "urban_core_lowrise":
         # Houston pattern: High footprint variation + moderate diversity + low density = fragmentation
         if footprint_area_cv >= 80 and building_type_diversity < 45 and (not density or density < 5000):
             # High footprint variation (sprawling) + moderate diversity + low density = fragmented urban
-            penalty = 3.0
+            # Scale penalty: up to 4.0 points, proportional to how far CV exceeds 80
+            cv_excess = min(20.0, footprint_area_cv - 80)  # How much CV exceeds 80 (max 20)
+            penalty = 2.5 + (cv_excess / 20.0) * 1.5  # 2.5-4.0 range, scaled by CV magnitude
         elif building_type_diversity < 40 and levels_entropy < 30 and (not density or density < 5000):
             # Low diversity, low height variation, low density = generic urban sprawl
-            penalty = 3.0
+            penalty = 2.5  # Moderate fixed penalty
         elif building_type_diversity < 35 and levels_entropy < 25:
             # Very uniform urban area without density justification
-            penalty = 2.0
+            penalty = 2.0  # Smaller fixed penalty
     
     # Exurban/rural: Extreme uniformity might be okay, but if it's very low type diversity
     # in an exurban context, it could be sprawl
@@ -731,12 +750,12 @@ def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
     # Top performers in each context should be able to score ~27-30/33
     
     # Context adjustment factors (multipliers to help lower contexts reach high scores)
-    # Suburban normalization slightly reduced so great suburbs score ~30/33 instead of perfect 33/33
+    # Suburban normalization capped at 1.0 (no boost) so great suburbs score ~30/33 instead of perfect 33/33
     context_factors = {
         "urban_core": 1.0,           # No adjustment - already at full potential
         "urban_core_lowrise": 1.0,   # Same as urban_core
         "urban_residential": 1.0,    # Same as urban_core (dense residential)
-        "suburban": 1.05,            # +5% (reduced from 1.1) - great suburbs ~30/33 instead of 33/33
+        "suburban": 1.0,             # No boost - great suburbs ~30/33, not perfect 33/33
         "exurban": 1.15,             # +15% to help great exurban areas
         "rural": 1.2,                # +20% to help great rural towns
         "unknown": 1.0               # No adjustment if unknown
