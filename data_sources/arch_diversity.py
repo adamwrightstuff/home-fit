@@ -247,7 +247,8 @@ def _coherence_bonus(levels_entropy: float, footprint_cv: float, area_type: str)
 
 
 def _context_penalty(area_type: str, built_cov: Optional[float],
-                     levels_entropy: float, type_div: float) -> float:
+                     levels_entropy: float, type_div: float,
+                     footprint_cv: Optional[float] = None) -> float:
     """Exactly one penalty by context."""
     if area_type in ("urban_core", "urban_core_lowrise"):
         if built_cov is None:
@@ -261,12 +262,14 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
             return 1.5
         return 0.0
     if area_type == "suburban":
-        # Cookie-cutter signal: very uniform height + very uniform types
-        # Threshold aligned with type target lower bound (18)
-        if levels_entropy < 5 and type_div < 18:
-            return 4.5
-        if levels_entropy < 10 and type_div < 22:
-            return 2.5
+        # Cookie-cutter signal: very uniform height + very uniform types + HIGH footprint CV (fragmented)
+        # Only penalize if footprint CV is high (>80) = fragmented sprawl, not cohesive
+        # Low footprint CV = cohesive/intentional uniformity (e.g., Carmel-by-the-Sea)
+        if footprint_cv is not None and footprint_cv > 80:
+            if levels_entropy < 5 and type_div < 18:
+                return 4.5
+            if levels_entropy < 10 and type_div < 22:
+                return 2.5
         return 0.0
     # No penalties for urban_residential, rural, exurban
     return 0.0
@@ -325,10 +328,18 @@ def score_architectural_diversity_as_beauty(
     # Base total
     base = height_pts + type_pts + foot_pts
     
+    # Base floor for suburban: if very uniform (cohesive), give small base score
+    if effective == "suburban":
+        if levels_entropy < 10 and footprint_area_cv < 40:
+            # Very uniform height + footprint = intentional cohesion, not cookie-cutter
+            base_floor = 5.0
+            base = max(base, base_floor)
+    
     # One bonus, one penalty
     bonus = _coherence_bonus(levels_entropy, footprint_area_cv, effective)
     penalty = _context_penalty(effective, built_coverage_ratio,
-                               levels_entropy, building_type_diversity)
+                               levels_entropy, building_type_diversity,
+                               footprint_area_cv)
     
     total = base + bonus - penalty
     

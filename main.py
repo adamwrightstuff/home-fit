@@ -661,7 +661,8 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             effective_area_type,
             diversity_metrics.get("built_coverage_ratio"),
             diversity_metrics["levels_entropy"],
-            diversity_metrics["building_type_diversity"]
+            diversity_metrics["building_type_diversity"],
+            diversity_metrics["footprint_area_cv"]
         )
         
         # Split penalty for display
