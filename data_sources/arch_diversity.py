@@ -571,7 +571,7 @@ def _calculate_coherence_bonus(
         elif area_type == "suburban":
             bonus = 1.0
     
-    return min(3.0, bonus)
+    return min(3.5, bonus)
 
 
 def _calculate_fabric_integrity_bonus(
