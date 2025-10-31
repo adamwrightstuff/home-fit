@@ -144,14 +144,17 @@ def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
     """
     if area_type == "urban_core":
         # Urban: Moderate to high variation is beautiful
-        # Sweet spot around 50-70, penalize too uniform (<20) or too chaotic (>90)
+        # Sweet spot around 50-70, penalize too uniform (<20) or too chaotic (>80)
         if 40 <= levels_entropy <= 80:
             score = 11.0 * (1 - abs(levels_entropy - 60) / 40)
         elif levels_entropy < 20:
             score = levels_entropy * 0.3  # Too uniform = low beauty
+        elif 20 <= levels_entropy < 40:
+            # Moderate-low diversity - still some beauty but less optimal
+            score = 11.0 * (levels_entropy - 20) / 20  # Linear interpolation from 0 to 11
         else:  # >80, too chaotic
             score = 11.0 - (levels_entropy - 80) * 0.2
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))  # Cap at 11.0
     
     elif area_type == "suburban":
         # Suburban: Less variation is more cohesive and beautiful
@@ -162,7 +165,7 @@ def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
             score = levels_entropy * 0.4  # Very uniform = moderate beauty
         else:  # >50, too varied
             score = 11.0 - (levels_entropy - 50) * 0.15
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     elif area_type == "exurban":
         # Exurban: Similar to suburban but even lower variation preferred
@@ -172,7 +175,7 @@ def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
             score = levels_entropy * 0.5  # Very uniform = moderate beauty
         else:  # >40
             score = 11.0 - (levels_entropy - 40) * 0.2
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     else:  # rural or unknown
         # Rural: Minimal diversity looks most natural
@@ -181,7 +184,7 @@ def _score_height_diversity(levels_entropy: float, area_type: str) -> float:
             score = 11.0 * (1 - levels_entropy / 30)
         else:
             score = max(0.0, 11.0 - (levels_entropy - 30) * 0.3)
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
 
 
 def _score_type_diversity(building_type_diversity: float, area_type: str) -> float:
@@ -202,7 +205,7 @@ def _score_type_diversity(building_type_diversity: float, area_type: str) -> flo
             score = 11.0 * (building_type_diversity / 60)
         else:  # >90, slightly chaotic
             score = 11.0 - (building_type_diversity - 90) * 0.1
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     elif area_type == "suburban":
         # Suburban: Moderate diversity within shared language
@@ -213,7 +216,7 @@ def _score_type_diversity(building_type_diversity: float, area_type: str) -> flo
             score = building_type_diversity * 0.25
         else:  # >70, too varied for suburban character
             score = 11.0 - (building_type_diversity - 70) * 0.2
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     elif area_type == "exurban":
         # Exurban: Lower diversity preferred
@@ -232,7 +235,7 @@ def _score_type_diversity(building_type_diversity: float, area_type: str) -> flo
             score = 11.0 * (1 - building_type_diversity / 40)
         else:
             score = max(0.0, 11.0 - (building_type_diversity - 40) * 0.3)
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
 
 
 def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> float:
@@ -253,7 +256,7 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
             score = 11.0 * (footprint_area_cv / 40)
         else:  # >60, too chaotic, disrupts walkability
             score = 11.0 - (footprint_area_cv - 60) * 0.2
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     elif area_type == "suburban":
         # Suburban: Variation adds richness
@@ -264,7 +267,7 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
             score = footprint_area_cv * 0.18
         else:  # >80, too much
             score = 11.0 - (footprint_area_cv - 80) * 0.15
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
     
     elif area_type == "exurban":
         # Exurban: Moderate to high variation can be beautiful
@@ -285,5 +288,5 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
             score = footprint_area_cv * 0.15
         else:
             score = 11.0
-        return max(0.0, score)
+        return max(0.0, min(11.0, score))
 
