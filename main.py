@@ -628,15 +628,12 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         # Calculate beauty score using context-aware scoring
         # Note: Tree coverage and historic preservation are handled by neighborhood_beauty pillar
         from data_sources.arch_diversity import (
-            score_architectural_diversity_as_beauty, 
-            _calculate_coherence_bonus, 
-            _calculate_fabric_integrity_bonus,
-            _calculate_sprawl_penalty,
-            _calculate_urban_coverage_penalty,
-            _normalize_score_by_context,
-            _score_height_diversity,
-            _score_type_diversity,
-            _score_footprint_variation
+            score_architectural_diversity_as_beauty,
+            _score_band,
+            _coherence_bonus,
+            _context_penalty,
+            CONTEXT_TARGETS,
+            DENSITY_MULTIPLIER
         )
         beauty_score = score_architectural_diversity_as_beauty(
             diversity_metrics["levels_entropy"],
