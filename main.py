@@ -632,6 +632,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             _calculate_coherence_bonus, 
             _calculate_fabric_integrity_bonus,
             _calculate_sprawl_penalty,
+            _calculate_urban_coverage_penalty,
             _normalize_score_by_context,
             _score_height_diversity,
             _score_type_diversity,
@@ -642,7 +643,8 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["building_type_diversity"],
             diversity_metrics["footprint_area_cv"],
             area_type,
-            density
+            density,
+            diversity_metrics.get("built_coverage_ratio")
         )
         
         # Calculate individual components for breakdown
@@ -650,10 +652,10 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         type_beauty = _score_type_diversity(diversity_metrics["building_type_diversity"], effective_area_type)
         footprint_beauty = _score_footprint_variation(diversity_metrics["footprint_area_cv"], effective_area_type)
         
-        # Cap single-metric dominance (40% max)
+        # Cap single-metric dominance (40% max, footprint capped at 25% = 8.25)
         height_beauty = min(13.2, height_beauty)
         type_beauty = min(13.2, type_beauty)
-        footprint_beauty = min(13.2, footprint_beauty)
+        footprint_beauty = min(8.25, footprint_beauty)  # Footprint capped at 25% (8.25/33)
         
         # Calculate bonuses
         coherence_bonus = _calculate_coherence_bonus(
@@ -678,7 +680,13 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             density
         )
         
-        raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus + fabric_bonus - sprawl_penalty
+        coverage_penalty = _calculate_urban_coverage_penalty(
+            effective_area_type,
+            diversity_metrics.get("built_coverage_ratio"),
+            density
+        )
+        
+        raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus + fabric_bonus - sprawl_penalty - coverage_penalty
         normalized_score = _normalize_score_by_context(raw_total, effective_area_type)
         
         return {
@@ -699,6 +707,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
                 "coherence_bonus": round(coherence_bonus, 1),
                 "fabric_integrity_bonus": round(fabric_bonus, 1),
                 "sprawl_penalty": round(sprawl_penalty, 1),
+                "coverage_penalty": round(coverage_penalty, 1),
                 "raw_total": round(raw_total, 1),
                 "normalization_factor": round(normalized_score / raw_total if raw_total > 0 else 1.0, 2)
             }

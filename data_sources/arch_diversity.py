@@ -155,12 +155,19 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         area_cv = 0.0
 
     diversity_score = min(100.0, 0.4*levels_entropy + 0.4*type_div + 0.2*area_cv)
+    
+    # Calculate built coverage ratio: sum of building areas / circle land area
+    # This helps identify urban areas with lots of voids (low coverage = fragmented, less beautiful)
+    circle_area_sqm = math.pi * (radius_m ** 2)
+    total_built_area_sqm = sum(areas) if areas else 0.0
+    built_coverage_ratio = (total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
 
     return {
         "levels_entropy": round(levels_entropy, 1),
         "building_type_diversity": round(type_div, 1),
         "footprint_area_cv": round(area_cv, 1),
-        "diversity_score": round(diversity_score, 1)
+        "diversity_score": round(diversity_score, 1),
+        "built_coverage_ratio": round(built_coverage_ratio, 3)  # 0.0-1.0 scale
     }
 
 
@@ -169,7 +176,8 @@ def score_architectural_diversity_as_beauty(
     building_type_diversity: float,
     footprint_area_cv: float,
     area_type: str,
-    density: Optional[float] = None
+    density: Optional[float] = None,
+    built_coverage_ratio: Optional[float] = None
 ) -> float:
     """
     Convert architectural diversity metrics to beauty score (0-33 points).
@@ -246,6 +254,16 @@ def score_architectural_diversity_as_beauty(
     )
     
     total_beauty -= sprawl_penalty
+    
+    # Add urban coverage penalty: penalize urban areas with low built coverage (lots of voids)
+    # This catches Houston-style fragmentation without touching dense areas like Park Slope/Charleston
+    coverage_penalty = _calculate_urban_coverage_penalty(
+        effective_area_type,
+        built_coverage_ratio,
+        density
+    )
+    
+    total_beauty -= coverage_penalty
     
     # Normalize scale across contexts: ensure top performers can reach similar high scores
     # Context normalization factor based on area type expectations
@@ -729,6 +747,53 @@ def _calculate_sprawl_penalty(
     # (Park Slope gets fabric_integrity_bonus instead)
     
     return min(5.0, penalty)
+
+
+def _calculate_urban_coverage_penalty(
+    effective_area_type: str,
+    built_coverage_ratio: Optional[float],
+    density: Optional[float] = None
+) -> float:
+    """
+    Calculate penalty for urban areas with low built coverage (lots of voids/empty space).
+    
+    Direction: the emptier the ground plane, the lower the beauty.
+    This dings Houston (lots of voids) without touching Charleston/Park Slope (high coverage).
+    
+    Args:
+        effective_area_type: Effective area type
+        built_coverage_ratio: Ratio of building area to total circle area (0.0-1.0)
+        density: Optional population density
+    
+    Returns:
+        Penalty points (0-3 max)
+    """
+    if built_coverage_ratio is None:
+        return 0.0
+    
+    penalty = 0.0
+    
+    # Only apply to urban contexts (not suburban/rural where lower coverage is expected)
+    if effective_area_type in ["urban_core", "urban_core_lowrise"]:
+        # Urban areas with low built coverage = fragmented, less walkable, less beautiful
+        # High coverage (0.4-0.6+) = dense, vibrant urban fabric
+        # Low coverage (<0.2) = lots of voids, parking lots, fragmented
+        
+        if built_coverage_ratio < 0.15:
+            # Very low coverage (<15%) = significant voids, penalize more
+            penalty = 2.5 + (0.15 - built_coverage_ratio) / 0.15 * 0.5  # 2.5-3.0 range
+        elif built_coverage_ratio < 0.25:
+            # Low coverage (15-25%) = some voids, moderate penalty
+            penalty = 1.5 + (0.25 - built_coverage_ratio) / 0.1 * 1.0  # 1.5-2.5 range
+        elif built_coverage_ratio < 0.35:
+            # Moderate coverage (25-35%) = slight voids, small penalty
+            penalty = (0.35 - built_coverage_ratio) / 0.1 * 1.5  # 0-1.5 range
+        # Coverage >= 0.35 = good urban fabric, no penalty
+    
+    # Don't penalize urban_residential - these are intentionally dense
+    # Don't penalize suburban/rural where lower coverage is normal
+    
+    return min(3.0, penalty)
 
 
 def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
