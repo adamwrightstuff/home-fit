@@ -652,10 +652,11 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         type_beauty = _score_type_diversity(diversity_metrics["building_type_diversity"], effective_area_type)
         footprint_beauty = _score_footprint_variation(diversity_metrics["footprint_area_cv"], effective_area_type)
         
-        # Cap single-metric dominance (40% max, footprint capped at 25% = 8.25)
+        # Cap single-metric dominance (40% max)
+        # Footprint cap removed - CV rescaling now makes this unnecessary
         height_beauty = min(13.2, height_beauty)
         type_beauty = min(13.2, type_beauty)
-        footprint_beauty = min(8.25, footprint_beauty)  # Footprint capped at 25% (8.25/33)
+        footprint_beauty = min(13.2, footprint_beauty)  # Removed 25% cap - CV rescaling handles it
         
         # Calculate bonuses
         coherence_bonus = _calculate_coherence_bonus(
@@ -672,19 +673,26 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             effective_area_type
         )
         
-        sprawl_penalty = _calculate_sprawl_penalty(
-            diversity_metrics["levels_entropy"],
-            diversity_metrics["building_type_diversity"],
-            diversity_metrics["footprint_area_cv"],
-            effective_area_type,
-            density
-        )
-        
-        coverage_penalty = _calculate_urban_coverage_penalty(
-            effective_area_type,
-            diversity_metrics.get("built_coverage_ratio"),
-            density
-        )
+        # Simplified: Urban → use coverage penalty, Suburban → use sprawl penalty
+        if effective_area_type == "suburban":
+            sprawl_penalty = _calculate_sprawl_penalty(
+                diversity_metrics["levels_entropy"],
+                diversity_metrics["building_type_diversity"],
+                diversity_metrics["footprint_area_cv"],
+                effective_area_type,
+                density
+            )
+            coverage_penalty = 0.0
+        elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
+            sprawl_penalty = 0.0
+            coverage_penalty = _calculate_urban_coverage_penalty(
+                effective_area_type,
+                diversity_metrics.get("built_coverage_ratio"),
+                density
+            )
+        else:  # urban_residential or others
+            sprawl_penalty = 0.0
+            coverage_penalty = 0.0
         
         raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus + fabric_bonus - sprawl_penalty - coverage_penalty
         normalized_score = _normalize_score_by_context(raw_total, effective_area_type)

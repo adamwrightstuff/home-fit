@@ -221,10 +221,10 @@ def score_architectural_diversity_as_beauty(
     footprint_beauty = _score_footprint_variation(footprint_area_cv, effective_area_type)
     
     # Cap single-metric dominance: no single factor > 40% of total (13.2/33)
-    # Footprint is capped at 25% (8.25/33) to prevent it from dominating when CV is always maxed
+    # Footprint cap removed - CV rescaling now makes this unnecessary
     height_beauty = min(13.2, height_beauty)
     type_beauty = min(13.2, type_beauty)
-    footprint_beauty = min(8.25, footprint_beauty)  # 25% cap instead of 40%
+    footprint_beauty = min(13.2, footprint_beauty)  # Removed 25% cap - CV rescaling handles it
     
     total_beauty = height_beauty + type_beauty + footprint_beauty
     
@@ -243,27 +243,28 @@ def score_architectural_diversity_as_beauty(
     
     total_beauty += coherence_bonus + fabric_bonus
     
-    # Penalize monotonous sprawl: places with huge uniform buildings and little variation
-    # Distinguish between cohesive fabric (Park Slope) and generic sprawl (Katy, Houston)
-    sprawl_penalty = _calculate_sprawl_penalty(
-        levels_entropy,
-        building_type_diversity,
-        footprint_area_cv,
-        effective_area_type,
-        density
-    )
-    
-    total_beauty -= sprawl_penalty
-    
-    # Add urban coverage penalty: penalize urban areas with low built coverage (lots of voids)
-    # This catches Houston-style fragmentation without touching dense areas like Park Slope/Charleston
-    coverage_penalty = _calculate_urban_coverage_penalty(
-        effective_area_type,
-        built_coverage_ratio,
-        density
-    )
-    
-    total_beauty -= coverage_penalty
+    # Penalize monotonous sprawl (suburban only) or urban coverage issues
+    # Simplified: Urban → use coverage penalty, Suburban → use sprawl penalty
+    if effective_area_type == "suburban":
+        # Suburban sprawl: cookie-cutter subdivisions (Katy pattern)
+        sprawl_penalty = _calculate_sprawl_penalty(
+            levels_entropy,
+            building_type_diversity,
+            footprint_area_cv,
+            effective_area_type,
+            density
+        )
+        total_beauty -= sprawl_penalty
+    elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
+        # Urban coverage penalty: penalize low built coverage (voids/parking lots)
+        # This catches Houston-style fragmentation without touching dense areas like Park Slope/Charleston
+        coverage_penalty = _calculate_urban_coverage_penalty(
+            effective_area_type,
+            built_coverage_ratio,
+            density
+        )
+        total_beauty -= coverage_penalty
+    # urban_residential: No penalties (intentionally dense, gets bonuses instead)
     
     # Normalize scale across contexts: ensure top performers can reach similar high scores
     # Context normalization factor based on area type expectations
@@ -463,19 +464,19 @@ def _score_footprint_variation(footprint_area_cv: float, area_type: str) -> floa
     """
     if area_type == "urban_residential":
         # Urban residential: Similar footprints are beautiful (consistent scale)
-        # Uniform footprints create visual rhythm
-        if footprint_area_cv < 30:
+        # Broadened sweet spot: uniform ≠ punished, allow more variation
+        if footprint_area_cv < 40:
             # Very consistent footprints = peak beauty
-            score = 11.0 * (1 - footprint_area_cv / 35)  # More consistent = higher score
-        elif 30 <= footprint_area_cv < 60:
-            # Still coherent but some variation
-            score = 11.0 * (60 - footprint_area_cv) / 30
-        elif 60 <= footprint_area_cv <= 80:
-            # Moderate variation - reduced beauty but soft penalty
-            score = 11.0 * (80 - footprint_area_cv) / 20 * 0.6
-        else:  # >80
+            score = 11.0 * (1 - footprint_area_cv / 50)  # More consistent = higher score
+        elif 40 <= footprint_area_cv < 70:
+            # Still coherent - broad sweet spot allows variation
+            score = 11.0 * (70 - footprint_area_cv) / 30
+        elif 70 <= footprint_area_cv <= 85:
+            # Moderate variation - still acceptable, soft penalty
+            score = 11.0 * (85 - footprint_area_cv) / 15 * 0.8
+        else:  # >85
             # Too varied for residential fabric - gradual decline
-            score = max(0.0, 11.0 - (footprint_area_cv - 80) * 0.1)
+            score = max(0.0, 11.0 - (footprint_area_cv - 85) * 0.08)
         return max(0.0, min(13.2, score))
     
     elif area_type == "urban_core" or area_type == "urban_core_lowrise":
@@ -578,33 +579,35 @@ def _calculate_coherence_bonus(
     # 2. Low footprint variation (consistent sizes) - < 30 for bonus
     # 3. Moderate to high density (urban/suburban context)
     
+    # Broadened thresholds to match footprint sweet spot expansion
     height_coherent = levels_entropy < 15
-    footprint_coherent = footprint_area_cv < 30
+    footprint_coherent = footprint_area_cv < 50  # Broadened from <30 to allow more variation
     
+    # Raised bonuses to let good places breathe
     if height_coherent and footprint_coherent:
         # Both conditions met - strong coherence
         if area_type == "urban_residential":
             # Urban residential consistency is highly valuable (e.g., Park Slope)
-            bonus = 3.5
+            bonus = 4.0  # Raised from 3.5
         elif area_type == "urban_core" or area_type == "urban_core_lowrise":
-            # Urban consistency is valuable
-            bonus = 3.0
+            # Urban consistency is valuable (e.g., Charleston)
+            bonus = 3.5  # Raised from 3.0
         elif area_type == "suburban":
-            # Suburban consistency is expected but still valuable
-            bonus = 2.0
+            # Suburban consistency is expected but still valuable (e.g., Larchmont)
+            bonus = 2.5  # Raised from 2.0
         elif area_type in ["exurban", "rural"]:
             # Rural consistency is very natural
             bonus = 1.5
     elif height_coherent or footprint_coherent:
         # Partial coherence - smaller bonus
         if area_type == "urban_residential":
-            bonus = 2.0
+            bonus = 2.5  # Raised from 2.0
         elif area_type == "urban_core" or area_type == "urban_core_lowrise":
-            bonus = 1.5
+            bonus = 2.0  # Raised from 1.5
         elif area_type == "suburban":
-            bonus = 1.0
+            bonus = 1.5  # Raised from 1.0
     
-    return min(3.5, bonus)
+    return min(4.5, bonus)  # Increased max from 3.5 to 4.5
 
 
 def _calculate_fabric_integrity_bonus(
@@ -640,34 +643,40 @@ def _calculate_fabric_integrity_bonus(
     # 2. Low footprint variation (< 40) - consistent scale
     # 3. Low type diversity (< 35) - consistent materials
     
+    # Broadened thresholds to match footprint sweet spot expansion
     height_consistent = levels_entropy < 20
-    footprint_consistent = footprint_area_cv < 40
+    footprint_consistent = footprint_area_cv < 70  # Broadened from <40 to match new sweet spot
     type_consistent = building_type_diversity < 35
     
     # Base bonus for architectural consistency
+    # Raised bonuses for good places (Park Slope, Charleston, Larchmont)
     if height_consistent and footprint_consistent and type_consistent:
         # All three conditions met - strong fabric integrity
         if effective_area_type == "urban_residential":
             # Urban residential gets highest bonus (e.g., Park Slope)
-            bonus = 3.0
+            bonus = 4.5  # Raised from 3.0
         elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
-            # Urban cores get moderate bonus
-            bonus = 2.0
+            # Urban cores get moderate bonus (e.g., Charleston)
+            bonus = 2.5  # Raised from 2.0
         elif effective_area_type == "suburban":
-            # Suburban gets smaller bonus (consistency expected)
-            bonus = 1.5
+            # Suburban gets bonus (e.g., Larchmont)
+            bonus = 2.0  # Raised from 1.5
     elif (height_consistent and footprint_consistent) or (height_consistent and type_consistent):
         # Two conditions met - partial fabric integrity
         if effective_area_type == "urban_residential":
-            bonus = 2.0
+            bonus = 3.0  # Raised from 2.0
         elif effective_area_type in ["urban_core", "urban_core_lowrise"]:
-            bonus = 1.0
+            bonus = 1.5  # Raised from 1.0
+        elif effective_area_type == "suburban":
+            bonus = 1.5  # Raised from 0
     elif height_consistent:
         # Only height consistent - minimal bonus
         if effective_area_type == "urban_residential":
-            bonus = 1.0
+            bonus = 1.5  # Raised from 1.0
+        elif effective_area_type == "suburban":
+            bonus = 1.0  # New bonus for suburban
     
-    return min(4.0, bonus)
+    return min(5.0, bonus)  # Increased max from 4.0 to 5.0
 
 
 def _calculate_sprawl_penalty(
@@ -699,6 +708,7 @@ def _calculate_sprawl_penalty(
     """
     penalty = 0.0
     
+    # Simplified: Suburban only (urban uses coverage penalty instead)
     # Suburban sprawl: Very low diversity suggests cookie-cutter subdivisions
     # Scale penalty proportionally based on how extreme the uniformity is
     if effective_area_type == "suburban":
@@ -720,31 +730,9 @@ def _calculate_sprawl_penalty(
             entropy_factor = (5 - levels_entropy) / 5
             penalty = 1.5 + (diversity_factor + entropy_factor) / 2 * 0.5  # 1.5-2.0 range
     
-    # Urban sprawl: Low diversity in urban context without the density/coherence of urban_residential
-    # Scale penalty proportionally based on footprint CV exceeding threshold
-    elif effective_area_type == "urban_core" or effective_area_type == "urban_core_lowrise":
-        # Houston pattern: High footprint variation + moderate diversity + low density = fragmentation
-        if footprint_area_cv >= 80 and building_type_diversity < 45 and (not density or density < 5000):
-            # High footprint variation (sprawling) + moderate diversity + low density = fragmented urban
-            # Scale penalty: up to 4.0 points, proportional to how far CV exceeds 80
-            cv_excess = min(20.0, footprint_area_cv - 80)  # How much CV exceeds 80 (max 20)
-            penalty = 2.5 + (cv_excess / 20.0) * 1.5  # 2.5-4.0 range, scaled by CV magnitude
-        elif building_type_diversity < 40 and levels_entropy < 30 and (not density or density < 5000):
-            # Low diversity, low height variation, low density = generic urban sprawl
-            penalty = 2.5  # Moderate fixed penalty
-        elif building_type_diversity < 35 and levels_entropy < 25:
-            # Very uniform urban area without density justification
-            penalty = 2.0  # Smaller fixed penalty
-    
-    # Exurban/rural: Extreme uniformity might be okay, but if it's very low type diversity
-    # in an exurban context, it could be sprawl
-    elif effective_area_type == "exurban":
-        if building_type_diversity < 15 and levels_entropy < 5:
-            # Very uniform exurban might be cookie-cutter
-            penalty = 1.5
-    
+    # Urban areas use coverage penalty instead (handled separately)
     # Don't penalize urban_residential - these are intentional cohesive designs
-    # (Park Slope gets fabric_integrity_bonus instead)
+    # Don't penalize exurban/rural - different expectations
     
     return min(5.0, penalty)
 
