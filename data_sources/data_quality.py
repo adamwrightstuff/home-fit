@@ -105,11 +105,28 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     
     # Priority 2: Urban core lowrise: dense urban but not skyscraper dense
     # Works for both "urban_core" (major metros) AND "suburban" (dense small cities)
-    # Only applies if not already urban_residential
+    # Only applies if not already urban_residential AND if metrics fit the pattern
+    # urban_core_lowrise expects moderate diversity (not uniform like Levittown/Carmel)
     if density and 2500 <= density < 10000:
         if effective in ("urban_core", "suburban"):
-            # Dense areas that should use urban_core_lowrise scoring for architectural beauty
-            effective = "urban_core_lowrise"
+            # Only convert if metrics suggest actual low-rise urban character:
+            # - Height entropy > 15 (some variation, not cookie-cutter uniform)
+            # - Type diversity > 20 (some variety, not completely uniform)
+            # This avoids converting very uniform suburbs (Levittown, Carmel) 
+            # which should use suburban targets instead
+            if levels_entropy is not None and building_type_diversity is not None:
+                if levels_entropy > 15 and building_type_diversity > 20:
+                    # Metrics suggest actual low-rise urban area with moderate diversity
+                    effective = "urban_core_lowrise"
+            elif levels_entropy is not None:
+                # If we only have height entropy, check if it's moderate (not uniform)
+                if levels_entropy > 15:
+                    effective = "urban_core_lowrise"
+            elif building_type_diversity is not None:
+                # If we only have type diversity, check if it's moderate (not uniform)
+                if building_type_diversity > 20:
+                    effective = "urban_core_lowrise"
+            # If neither metric available, be conservative and keep original type
     
     return effective
 
