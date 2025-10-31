@@ -202,7 +202,7 @@ CONTEXT_TARGETS = {
     },
     "suburban": {
         "height": (0, 10, 40, 50),     # lower variation best
-        "type": (20, 35, 55, 70),      # moderate best
+        "type": (18, 35, 55, 70),      # moderate best (relaxed from 20 to help Carmel)
         "footprint": (40, 55, 75, 90), # moderate-high best
     },
     "exurban": {
@@ -262,9 +262,10 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
         return 0.0
     if area_type == "suburban":
         # Cookie-cutter signal: very uniform height + very uniform types
-        if levels_entropy < 5 and type_div < 20:
+        # Threshold aligned with type target lower bound (18)
+        if levels_entropy < 5 and type_div < 18:
             return 4.5
-        if levels_entropy < 10 and type_div < 25:
+        if levels_entropy < 10 and type_div < 22:
             return 2.5
         return 0.0
     # No penalties for urban_residential, rural, exurban
