@@ -22,16 +22,37 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         q = f"""
         [out:json][timeout:30];
         (
+          node["building"](around:{radius_m},{lat},{lon});
           way["building"](around:{radius_m},{lat},{lon});
+          relation["building"](around:{radius_m},{lat},{lon});
         );
         out tags bb;
         """
-        resp = requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
-        if resp.status_code != 200:
-            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0}
+        # Retry logic similar to other OSM queries
+        import time
+        resp = None
+        for attempt in range(3):
+            try:
+                resp = requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
+                if resp.status_code == 200:
+                    break
+                elif attempt < 2:
+                    time.sleep(0.8 * (1.5 ** attempt))  # Exponential backoff
+            except Exception as retry_e:
+                if attempt == 2:
+                    raise retry_e
+                time.sleep(0.8 * (1.5 ** attempt))
+        
+        if not resp or resp.status_code != 200:
+            print(f"⚠️  Overpass API returned status {resp.status_code}")
+            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"API status {resp.status_code}"}
         elements = resp.json().get("elements", [])
-    except Exception:
-        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0}
+        if not elements:
+            print(f"⚠️  No building elements found in OSM query (radius: {radius_m}m)")
+            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "note": "No buildings found in OSM"}
+    except Exception as e:
+        print(f"⚠️  OSM building query error: {e}")
+        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": str(e)}
 
     import math
     def entropy(counts):
