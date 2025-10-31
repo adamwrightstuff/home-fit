@@ -760,7 +760,7 @@ def _calculate_urban_coverage_penalty(
         density: Optional population density
     
     Returns:
-        Penalty points (0-3 max)
+        Penalty points (0-6 max)
     """
     if built_coverage_ratio is None:
         return 0.0
@@ -774,20 +774,20 @@ def _calculate_urban_coverage_penalty(
         # Low coverage (<0.2) = lots of voids, parking lots, fragmented
         
         if built_coverage_ratio < 0.15:
-            # Very low coverage (<15%) = significant voids, penalize more
-            penalty = 2.5 + (0.15 - built_coverage_ratio) / 0.15 * 0.5  # 2.5-3.0 range
+            # Very low coverage (<15%) = significant voids, penalize heavily
+            penalty = 4.0 + (0.15 - built_coverage_ratio) / 0.15 * 2.0  # 4.0-6.0 range
         elif built_coverage_ratio < 0.25:
-            # Low coverage (15-25%) = some voids, moderate penalty
-            penalty = 1.5 + (0.25 - built_coverage_ratio) / 0.1 * 1.0  # 1.5-2.5 range
+            # Low coverage (15-25%) = some voids, strong penalty
+            penalty = 2.5 + (0.25 - built_coverage_ratio) / 0.1 * 2.0  # 2.5-4.5 range
         elif built_coverage_ratio < 0.35:
-            # Moderate coverage (25-35%) = slight voids, small penalty
-            penalty = (0.35 - built_coverage_ratio) / 0.1 * 1.5  # 0-1.5 range
+            # Moderate coverage (25-35%) = slight voids, moderate penalty
+            penalty = (0.35 - built_coverage_ratio) / 0.1 * 2.5  # 0-2.5 range
         # Coverage >= 0.35 = good urban fabric, no penalty
     
     # Don't penalize urban_residential - these are intentionally dense
     # Don't penalize suburban/rural where lower coverage is normal
     
-    return min(3.0, penalty)
+    return min(6.0, penalty)
 
 
 def _normalize_score_by_context(beauty_score: float, area_type: str) -> float:
