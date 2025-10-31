@@ -19,14 +19,15 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     - diversity_score (aggregated, naive)
     """
     try:
+        # Query for ways (buildings are usually ways with geometry)
         q = f"""
         [out:json][timeout:30];
         (
-          node["building"](around:{radius_m},{lat},{lon});
           way["building"](around:{radius_m},{lat},{lon});
-          relation["building"](around:{radius_m},{lat},{lon});
         );
-        out tags bb;
+        out body;
+        >;
+        out skel qt;
         """
         # Retry logic similar to other OSM queries
         import time
@@ -70,14 +71,20 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             e /= math.log(len(counts), 2)
         return max(0.0, min(1.0, e))
 
+    # Separate ways and nodes
+    ways = [e for e in elements if e.get("type") == "way"]
+    nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
+    
     # Building levels histogram (bins)
     bins = {"1":0, "2":0, "3-4":0, "5-8":0, "9+":0}
     types = {}
     areas = []
-    for e in elements:
+    
+    for e in ways:
         tags = e.get("tags", {})
         btype = tags.get("building") or "unknown"
         types[btype] = types.get(btype, 0) + 1
+        
         lv_raw = tags.get("building:levels")
         try:
             lv = int(lv_raw) if lv_raw is not None else None
@@ -95,11 +102,39 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             bins["5-8"] += 1
         else:
             bins["9+"] += 1
-        # Approx area from bbox if present
-        if all(k in e for k in ("minlat","minlon","maxlat","maxlon")):
-            dlat = abs(e["maxlat"] - e["minlat"]) * 111000
-            dlon = abs(e["maxlon"] - e["minlon"]) * 85000  # rough at mid-lat
-            areas.append(max(1.0, dlat * dlon))
+        
+        # Calculate area from way geometry (polygon)
+        if "geometry" in e and e["geometry"]:
+            coords = [(point.get("lat"), point.get("lon")) for point in e["geometry"] 
+                     if "lat" in point and "lon" in point]
+            if len(coords) >= 3:
+                # Calculate polygon area using shoelace formula
+                area = 0.0
+                for i in range(len(coords)):
+                    j = (i + 1) % len(coords)
+                    area += coords[i][0] * coords[j][1]
+                    area -= coords[j][0] * coords[i][1]
+                area = abs(area) / 2.0
+                # Convert to square meters (approximate at this latitude)
+                # Using average of lat/lon degrees to meters at this latitude
+                area_sqm = area * 111000 * 111000 * math.cos(math.radians(lat))
+                if area_sqm > 1.0:  # Only include if area is reasonable
+                    areas.append(area_sqm)
+        elif "nodes" in e:
+            # Fallback: try to calculate from node coordinates
+            way_nodes = [nodes_dict.get(nid) for nid in e.get("nodes", []) if nid in nodes_dict]
+            coords = [(n.get("lat"), n.get("lon")) for n in way_nodes 
+                     if "lat" in n and "lon" in n]
+            if len(coords) >= 3:
+                area = 0.0
+                for i in range(len(coords)):
+                    j = (i + 1) % len(coords)
+                    area += coords[i][0] * coords[j][1]
+                    area -= coords[j][0] * coords[i][1]
+                area = abs(area) / 2.0
+                area_sqm = area * 111000 * 111000 * math.cos(math.radians(lat))
+                if area_sqm > 1.0:
+                    areas.append(area_sqm)
 
     levels_entropy = entropy(list(bins.values())) * 100
     type_div = entropy(list(types.values())) * 100
