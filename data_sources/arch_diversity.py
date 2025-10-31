@@ -44,8 +44,9 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 time.sleep(0.8 * (1.5 ** attempt))
         
         if not resp or resp.status_code != 200:
-            print(f"⚠️  Overpass API returned status {resp.status_code}")
-            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"API status {resp.status_code}"}
+            status_msg = f"status {resp.status_code}" if resp else "no response"
+            print(f"⚠️  Overpass API returned {status_msg}")
+            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"API {status_msg}"}
         elements = resp.json().get("elements", [])
         if not elements:
             print(f"⚠️  No building elements found in OSM query (radius: {radius_m}m)")
