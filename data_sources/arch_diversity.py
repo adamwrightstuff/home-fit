@@ -175,10 +175,11 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
 DENSITY_MULTIPLIER = {
     "urban_core": 1.00,
     "urban_residential": 1.00,
+    "urban_core_lowrise": 1.00,
+    "historic_urban": 1.00,  # NEW: Organic diversity historic neighborhoods
     "suburban": 1.00,
     "exurban": 1.15,
     "rural": 1.20,
-    "urban_core_lowrise": 1.00,
     "unknown": 1.00,
 }
 
@@ -188,7 +189,7 @@ CONTEXT_TARGETS = {
     "urban_residential": {
         "height": (0, 0, 15, 30),      # uniform best
         "type": (0, 0, 20, 40),        # uniform types best
-        "footprint": (20, 40, 60, 95), # low/moderate variation best (broadened to 95)
+        "footprint": (20, 40, 70, 85), # low/moderate variation best (expanded to help historic areas)
     },
     "urban_core": {
         "height": (30, 40, 70, 80),    # moderate variation best
@@ -199,6 +200,11 @@ CONTEXT_TARGETS = {
         "height": (20, 30, 60, 80),
         "type": (40, 55, 80, 95),
         "footprint": (30, 40, 60, 75),
+    },
+    "historic_urban": {  # NEW: Organic diversity historic neighborhoods
+        "height": (15, 20, 50, 70),      # Moderate variation (organic growth pattern)
+        "type": (25, 30, 65, 85),        # Mixed-use historic neighborhoods
+        "footprint": (35, 45, 70, 85),   # Organic variation (broader than urban_core)
     },
     "suburban": {
         "height": (0, 10, 40, 50),     # lower variation best
@@ -261,6 +267,9 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
         if built_cov < 0.35:
             return 1.5
         return 0.0
+    # historic_urban: No coverage penalty (organic voids like courtyards/gardens are beautiful)
+    if area_type == "historic_urban":
+        return 0.0
     if area_type == "suburban":
         # Cookie-cutter signal: very uniform height + very uniform types + HIGH footprint CV (fragmented)
         # Only penalize if footprint CV is high (>80) = fragmented sprawl, not cohesive
@@ -290,6 +299,7 @@ def score_architectural_diversity_as_beauty(
     
     Simplified approach:
     - Context-biased scoring (different targets per area type)
+    - Conditional adjustments for historic organic development
     - One coherence bonus (works across all types)
     - One penalty per area type context
     - Density multiplier for rural/exurban
@@ -302,6 +312,8 @@ def score_architectural_diversity_as_beauty(
         area_type: 'urban_core', 'suburban', 'exurban', 'rural', 'unknown'
         density: Optional population density for fine-tuning
         built_coverage_ratio: Optional built coverage ratio (0.0-1.0)
+        historic_landmarks: Optional count of historic landmarks from OSM
+        median_year_built: Optional median year buildings were built
     
     Returns:
         Beauty score out of 33 points
@@ -317,10 +329,55 @@ def score_architectural_diversity_as_beauty(
         median_year_built=median_year_built
     )
     
-    # Get context-biased targets
+    # Get base context-biased targets
     targets = CONTEXT_TARGETS.get(effective, CONTEXT_TARGETS["urban_core"])
+    targets = dict(targets)  # Copy to avoid mutating original
     
-    # Score each metric
+    # CONTEXTUAL ADJUSTMENTS: Apply in order of specificity (most specific last)
+    # These adjustments handle historic organic development patterns
+    
+    # Detect historic status
+    is_historic = False
+    is_very_historic = False
+    
+    if historic_landmarks is not None and historic_landmarks >= 10:
+        is_historic = True
+    if median_year_built is not None and median_year_built < 1960:
+        is_historic = True
+    
+    if historic_landmarks is not None and historic_landmarks >= 15:
+        is_very_historic = True
+    if median_year_built is not None and median_year_built < 1940:
+        is_very_historic = True
+    
+    # Adjustment 1: Historic organic growth
+    # Historic areas with high footprint CV = organic irregular lots = beautiful
+    # Examples: Georgetown (93.3%), French Quarter (~85%), Old Town Alexandria
+    # High footprint CV in historic areas reflects centuries of organic growth
+    if is_historic and footprint_area_cv > 70:
+        targets["footprint"] = (50, 65, 95, 100)  # HIGH CV is GOOD for historic areas
+    
+    # Adjustment 2: Very historic urban_residential
+    # Very old neighborhoods can have slightly higher type diversity and still be beautiful
+    # Examples: Georgetown (1938, type 31.8)
+    # This aligns scoring with classification logic (allows type < 35 for very historic)
+    if is_very_historic and effective == "urban_residential":
+        targets["type"] = (0, 0, 35, 50)  # Allow up to 35 in sweet spot (expanded from 20)
+    
+    # Adjustment 3: Historic urban_core/lowrise with moderate diversity
+    # Historic areas with moderate architectural diversity need more forgiving targets
+    # Examples: Greenwich Village (height 22.9, type 27.2, footprint 66.2%)
+    if is_historic and effective in ["urban_core_lowrise", "urban_core"]:
+        # Check if moderate diversity pattern (not uniform, not extreme)
+        if 15 < levels_entropy < 50 and 20 < building_type_diversity < 60:
+            # Historic with moderate diversity - more forgiving targets
+            targets["height"] = (10, 20, 50, 70)  # More forgiving height range
+            targets["type"] = (20, 30, 65, 85)    # More forgiving type range
+            # Also reward organic growth if present
+            if footprint_area_cv and footprint_area_cv > 50:
+                targets["footprint"] = (50, 60, 90, 100)  # High CV is good for historic
+    
+    # Score each metric using adjusted targets
     height_pts = _score_band(levels_entropy, targets["height"])
     type_pts = _score_band(building_type_diversity, targets["type"])
     foot_pts = _score_band(footprint_area_cv, targets["footprint"])
