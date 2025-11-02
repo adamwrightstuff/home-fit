@@ -203,7 +203,7 @@ CONTEXT_TARGETS = {
     "suburban": {
         "height": (0, 10, 40, 50),     # lower variation best
         "type": (18, 35, 55, 70),      # moderate best (relaxed from 20 to help Carmel)
-        "footprint": (25, 40, 55, 90), # moderate-high best (relaxed lower threshold for cohesive uniformity)
+        "footprint": (30, 40, 65, 80), # moderate-high best (expanded sweet spot 40-65% for suburban patterns)
     },
     "exurban": {
         "height": (0, 5, 35, 40),
@@ -333,10 +333,15 @@ def score_architectural_diversity_as_beauty(
     # Base total
     base = height_pts + type_pts + foot_pts
     
-    # Base floor for suburban: if very uniform (cohesive), give small base score
+    # SUBURBAN BASE FLOOR BONUS
+    # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
+    # vs. chaotic sprawl. Very uniform suburban development can indicate
+    # intentional planning and cohesive design standards.
+    # This distinguishes intentional uniformity (beautiful) from cookie-cutter chaos (ugly).
     if effective == "suburban":
         if levels_entropy < 10 and footprint_area_cv < 40:
             # Very uniform height + footprint = intentional cohesion, not cookie-cutter
+            # This rewards planned communities with consistent architecture
             base_floor = 5.0
             base = max(base, base_floor)
     
