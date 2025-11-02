@@ -7,12 +7,10 @@ import os
 import requests
 import time
 from typing import Dict, Optional
-from dotenv import load_dotenv
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout, check_api_credentials
 
-load_dotenv()
-
+# Note: load_dotenv() called in main.py - no need to call here
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"

@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
@@ -18,7 +19,7 @@ from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
-from data_sources.arch_diversity import compute_arch_diversity, score_architectural_diversity_as_beauty, _score_height_diversity, _score_type_diversity, _score_footprint_variation
+from data_sources.arch_diversity import compute_arch_diversity, score_architectural_diversity_as_beauty
 
 ##########################
 # CONFIGURATION FLAGS
@@ -171,60 +172,142 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     print(f"📍 Location scope: {location_scope}\n")
 
     # Compute a single area_type centrally for consistent radius profiles
+    # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+    census_tract = None
+    density = 0.0
     try:
         from data_sources import census_api as _ca
         from data_sources import data_quality as _dq
-        _density = _ca.get_population_density(lat, lon) or 0.0
-        area_type = _dq.detect_area_type(lat, lon, _density, city)
+        density = _ca.get_population_density(lat, lon) or 0.0
+        area_type = _dq.detect_area_type(lat, lon, density, city)
+        
+        # Pre-compute census tract for pillars (used by housing, beauty, etc.)
+        try:
+            census_tract = _ca.get_census_tract(lat, lon)
+        except Exception as e:
+            print(f"⚠️  Census tract lookup failed: {e}")
+            census_tract = None
     except Exception:
         area_type = "unknown"
 
-    # Step 2: Calculate all pillar scores
-    print("📊 Calculating pillar scores...\n")
+    # Step 2: Calculate all pillar scores in parallel
+    print("📊 Calculating pillar scores in parallel...\n")
 
-    # Pillar 1: Active Outdoors
-    active_outdoors_score, active_outdoors_details = get_active_outdoors_score(lat, lon, city=city, area_type=area_type, location_scope=location_scope, include_diagnostics=bool(diagnostics))
+    # Pillar execution wrapper with error handling
+    def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
+        """
+        Execute a pillar function with error handling.
+        Returns: (pillar_name, (score, details) or None, exception or None)
+        """
+        try:
+            result = func(**kwargs)
+            return (name, result, None)
+        except Exception as e:
+            print(f"⚠️  {name} pillar failed: {e}")
+            return (name, None, e)
 
-    # Pillar 2: Neighborhood Beauty (Simplified - real data only)
-    beauty_score, beauty_details = get_neighborhood_beauty_score(lat, lon, city=city, 
-                                                                   beauty_weights=beauty_weights,
-                                                                   location_scope=location_scope,
-                                                                   area_type=area_type)
+    # Prepare all pillar tasks
+    pillar_tasks = [
+        ('active_outdoors', get_active_outdoors_score, {
+            'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+            'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
+        }),
+        ('neighborhood_beauty', get_neighborhood_beauty_score, {
+            'lat': lat, 'lon': lon, 'city': city, 'beauty_weights': beauty_weights,
+            'location_scope': location_scope, 'area_type': area_type
+        }),
+        ('neighborhood_amenities', get_neighborhood_amenities_score, {
+            'lat': lat, 'lon': lon, 'include_chains': include_chains,
+            'location_scope': location_scope, 'area_type': area_type
+        }),
+        ('air_travel_access', get_air_travel_score, {
+            'lat': lat, 'lon': lon
+        }),
+        ('public_transit_access', get_public_transit_score, {
+            'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
+        }),
+        ('healthcare_access', get_healthcare_access_score, {
+            'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
+        }),
+        ('housing_value', get_housing_value_score, {
+            'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+        }),
+    ]
 
-    # Pillar 3: Neighborhood Amenities
-    amenities_score, amenities_details = get_neighborhood_amenities_score(lat, lon, include_chains=include_chains,
-                                                                           location_scope=location_scope,
-                                                                           area_type=area_type)
+    # Add school scoring if enabled
+    if ENABLE_SCHOOL_SCORING:
+        pillar_tasks.append(
+            ('quality_education', get_school_data, {
+                'zip_code': zip_code, 'state': state, 'city': city
+            })
+        )
 
-    # Pillar 4: Air Travel Access
-    air_travel_score, air_travel_details = get_air_travel_score(lat, lon)
+    # Execute all pillars in parallel
+    pillar_results = {}
+    exceptions = {}
 
-    # Pillar 5: Public Transit Access
-    transit_score, transit_details = get_public_transit_score(lat, lon, area_type=area_type, location_scope=location_scope)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        # Submit all tasks
+        future_to_pillar = {
+            executor.submit(_execute_pillar, name, func, **kwargs): name
+            for name, func, kwargs in pillar_tasks
+        }
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_pillar):
+            pillar_name = future_to_pillar[future]
+            name, result, error = future.result()
+            
+            if error:
+                exceptions[pillar_name] = error
+                pillar_results[pillar_name] = None
+            else:
+                pillar_results[pillar_name] = result
 
-    # Pillar 6: Healthcare Access
-    healthcare_score, healthcare_details = get_healthcare_access_score(lat, lon, area_type=area_type, location_scope=location_scope)
-
-    # Pillar 7: Quality Education (schools)
+    # Handle school scoring separately (conditional)
     schools_found = False
     if ENABLE_SCHOOL_SCORING:
-        print("📚 Fetching school data from SchoolDigger API...")
-        school_avg, schools_by_level = get_school_data(
-            zip_code=zip_code,
-            state=state,
-            city=city
-        )
+        if 'quality_education' in pillar_results and pillar_results['quality_education']:
+            school_avg, schools_by_level = pillar_results['quality_education']
+        else:
+            school_avg = None  # Real failure, not fake score
+            schools_by_level = {"elementary": [], "middle": [], "high": []}
     else:
         print("📚 School scoring disabled (preserving API quota)")
-        school_avg = 50  # Neutral default
-        schools_by_level = {
-            "elementary": [],
-            "middle": [],
-            "high": []
-        }
+        school_avg = None  # Not computed, don't use fake score
+        schools_by_level = {"elementary": [], "middle": [], "high": []}
 
-    # Pillar 8: Housing Value
-    housing_score, housing_details = get_housing_value_score(lat, lon)
+    # Extract results with error handling (no fallback scores - use 0.0 if failed)
+    active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    beauty_score, beauty_details = pillar_results.get('neighborhood_beauty') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
+    transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+    # Note: For school_avg, if None (not computed or failed), set to 0 for calculation
+    # but mark in response that it wasn't computed
+    if school_avg is None:
+        school_avg = 0.0
+
+    # Count total schools if available
+    if schools_by_level:
+        total_schools = sum([
+            len(schools_by_level.get("elementary", [])),
+            len(schools_by_level.get("middle", [])),
+            len(schools_by_level.get("high", []))
+        ])
+        schools_found = total_schools > 0
+    else:
+        total_schools = 0
+        schools_found = False
+
+    # Log any pillar failures
+    if exceptions:
+        print(f"\n⚠️  {len(exceptions)} pillar(s) failed:")
+        for pillar_name, error in exceptions.items():
+            print(f"   - {pillar_name}: {error}")
 
     # Step 3: Calculate weighted total using token allocation
     token_allocation = parse_token_allocation(tokens)
@@ -340,8 +423,10 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
             "data_quality": {
                 "fallback_used": not ENABLE_SCHOOL_SCORING or not schools_found,
-                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else ("No schools with ratings found" if not schools_found else "School data available")
-            }
+                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else ("No schools with ratings found" if not schools_found else "School data available"),
+                "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+            },
+            "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
         },
         "housing_value": {
             "score": housing_score,

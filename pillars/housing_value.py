@@ -7,7 +7,10 @@ from typing import Dict, Tuple, Optional
 from data_sources import census_api, data_quality
 
 
-def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
+def get_housing_value_score(lat: float, lon: float, 
+                           census_tract: Optional[Dict] = None,
+                           density: Optional[float] = None,
+                           city: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate housing value score (0-100) based on affordability and space.
 
@@ -16,13 +19,18 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
     - Space/Size (0-30): Median rooms per unit
     - Value Efficiency (0-20): Cost per room
 
+    Args:
+        census_tract: Pre-computed census tract data (optional, will fetch if None)
+        density: Pre-computed population density (optional, will fetch if None)
+        city: City name for data quality assessment (optional)
+
     Returns:
         (total_score, detailed_breakdown)
     """
     print(f"🏠 Analyzing housing value...")
 
-    # Get housing data from Census
-    housing_data = census_api.get_housing_data(lat, lon)
+    # Get housing data from Census (pass pre-computed tract if available)
+    housing_data = census_api.get_housing_data(lat, lon, tract=census_tract)
 
     if housing_data is None:
         print("⚠️  Housing data unavailable")
@@ -46,11 +54,13 @@ def get_housing_value_score(lat: float, lon: float) -> Tuple[float, Dict]:
         'total_score': total_score
     }
     
+    # Use pre-computed density if provided, otherwise fetch
+    if density is None:
+        density = census_api.get_population_density(lat, lon) or 0.0
+    
     # Detect actual area type for data quality assessment
-    # Note: housing_value doesn't receive city parameter, so we detect without it
-    # This is fine as it's only used for data quality assessment, not classification logic
-    density = census_api.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density, city=None)
+    # Use provided city if available for better classification
+    area_type = data_quality.detect_area_type(lat, lon, density, city=city)
     quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
 
     # Build response

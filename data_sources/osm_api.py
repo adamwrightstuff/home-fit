@@ -17,7 +17,20 @@ def _retry_overpass(request_fn, attempts: int = 3, base_wait: float = 0.8):
     import time
     for i in range(attempts):
         try:
-            return request_fn()
+            resp = request_fn()
+            # Handle 429 rate limiting specifically
+            if resp is not None and hasattr(resp, 'status_code'):
+                if resp.status_code == 429:
+                    # Rate limited - wait longer and retry
+                    retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
+                    if i < attempts - 1:
+                        print(f"⚠️  OSM rate limited (429), waiting {retry_after}s before retry...")
+                        time.sleep(retry_after)
+                        continue
+                    else:
+                        print(f"⚠️  OSM rate limited (429), max retries reached")
+                        return resp
+            return resp
         except Exception as e:
             if i == attempts - 1:
                 raise
@@ -480,15 +493,20 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
     out skel qt;
     """
 
-    try:
-        resp = requests.post(
+    def _do_request():
+        return requests.post(
             OVERPASS_URL,
             data={"data": query},
             timeout=70,
             headers={"User-Agent": "HomeFit/1.0"}
         )
+    
+    try:
+        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
 
-        if resp.status_code != 200:
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                print(f"⚠️  OSM business query rate limited (429)")
             return None
 
         data = resp.json()
@@ -1422,86 +1440,90 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     out skel qt;
     """
     
+    def _do_request():
+        return requests.post(OVERPASS_URL, data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
+    
     try:
         print(f"🏥 Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
-        resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=45)
+        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
         
-        if resp.status_code == 200:
-            data = resp.json()
-            elements = data.get("elements", [])
-            
-            hospitals = []
-            urgent_care = []
-            clinics = []
-            pharmacies = []
-            doctors = []
-            
-            for elem in elements:
-                tags = elem.get("tags", {})
-                amenity = tags.get("amenity", "")
-                name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
-                
-                # Calculate distance
-                if "lat" in elem and "lon" in elem:
-                    distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
-                else:
-                    # For ways/relations, use center point
-                    distance_km = 0.0
-                
-                facility = {
-                    "name": name,
-                    "lat": elem.get("lat"),
-                    "lon": elem.get("lon"),
-                    "distance_km": round(distance_km, 1),
-                    "amenity": amenity,
-                    "emergency": tags.get("emergency"),
-                    "beds": tags.get("beds"),
-                    "tags": tags
-                }
-                
-                # Categorize facilities - IMPROVED LOGIC
-                healthcare = tags.get("healthcare", "")
-                healthcare_specialty = tags.get("healthcare:speciality", "").lower()
-                name_lower = name.lower()
-                
-                # Hospitals and major medical centers (exclude if it's urgent care branded)
-                if (amenity == "hospital" or healthcare == "hospital" or 
-                    (amenity == "medical_centre" and healthcare != "urgent_care")):
-                    hospitals.append(facility)
-                # Urgent care - check multiple indicators
-                elif (amenity == "emergency_ward" or 
-                      healthcare == "urgent_care" or
-                      healthcare == "emergency" or
-                      (amenity == "clinic" and (
-                          "urgent" in name_lower or
-                          "walk-in" in name_lower or
-                          "walk in" in name_lower or
-                          "immediate" in name_lower or
-                          "urgent" in healthcare_specialty or
-                          "emergency" in healthcare_specialty
-                      )) or
-                      tags.get("emergency") == "yes"):
-                    urgent_care.append(facility)
-                # Regular clinics and medical centers
-                elif amenity in ["clinic", "doctors"]:
-                    if amenity == "clinic":
-                        clinics.append(facility)
-                    else:
-                        doctors.append(facility)
-                # Pharmacies
-                elif amenity == "pharmacy" or tags.get("shop") == "pharmacy":
-                    pharmacies.append(facility)
-            
-            return {
-                "hospitals": hospitals,
-                "urgent_care": urgent_care,
-                "clinics": clinics,
-                "pharmacies": pharmacies,
-                "doctors": doctors
-            }
-        else:
-            print(f"⚠️  Healthcare query failed: {resp.status_code}")
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                print(f"⚠️  Healthcare query rate limited (429) - max retries reached")
             return None
+
+        data = resp.json()
+        elements = data.get("elements", [])
+        
+        hospitals = []
+        urgent_care = []
+        clinics = []
+        pharmacies = []
+        doctors = []
+        
+        for elem in elements:
+            tags = elem.get("tags", {})
+            amenity = tags.get("amenity", "")
+            name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
+            
+            # Calculate distance
+            if "lat" in elem and "lon" in elem:
+                distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
+            else:
+                # For ways/relations, use center point
+                distance_km = 0.0
+            
+            facility = {
+                "name": name,
+                "lat": elem.get("lat"),
+                "lon": elem.get("lon"),
+                "distance_km": round(distance_km, 1),
+                "amenity": amenity,
+                "emergency": tags.get("emergency"),
+                "beds": tags.get("beds"),
+                "tags": tags
+            }
+            
+            # Categorize facilities - IMPROVED LOGIC
+            healthcare = tags.get("healthcare", "")
+            healthcare_specialty = tags.get("healthcare:speciality", "").lower()
+            name_lower = name.lower()
+            
+            # Hospitals and major medical centers (exclude if it's urgent care branded)
+            if (amenity == "hospital" or healthcare == "hospital" or 
+                (amenity == "medical_centre" and healthcare != "urgent_care")):
+                hospitals.append(facility)
+            # Urgent care - check multiple indicators
+            elif (amenity == "emergency_ward" or 
+                  healthcare == "urgent_care" or
+                  healthcare == "emergency" or
+                  (amenity == "clinic" and (
+                      "urgent" in name_lower or
+                      "walk-in" in name_lower or
+                      "walk in" in name_lower or
+                      "immediate" in name_lower or
+                      "urgent" in healthcare_specialty or
+                      "emergency" in healthcare_specialty
+                  )) or
+                  tags.get("emergency") == "yes"):
+                urgent_care.append(facility)
+            # Regular clinics and medical centers
+            elif amenity in ["clinic", "doctors"]:
+                if amenity == "clinic":
+                    clinics.append(facility)
+                else:
+                    doctors.append(facility)
+            # Pharmacies
+            elif amenity == "pharmacy" or tags.get("shop") == "pharmacy":
+                pharmacies.append(facility)
+        
+        return {
+            "hospitals": hospitals,
+            "urgent_care": urgent_care,
+            "clinics": clinics,
+            "pharmacies": pharmacies,
+            "doctors": doctors
+        }
             
     except Exception as e:
         print(f"Error querying healthcare facilities: {e}")

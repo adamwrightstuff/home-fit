@@ -6,10 +6,8 @@ Queries transit stops using Transitland v2 REST API
 import os
 import requests
 from typing import Dict, List, Optional
-from dotenv import load_dotenv
 
-load_dotenv()
-
+# Note: load_dotenv() called in main.py - no need to call here
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 TRANSITLAND_BASE_URL = "https://transit.land/api/v2"
 
