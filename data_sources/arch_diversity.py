@@ -176,7 +176,7 @@ DENSITY_MULTIPLIER = {
     "urban_core": 1.00,
     "urban_residential": 1.00,
     "urban_core_lowrise": 1.00,
-    "historic_urban": 1.00,  # NEW: Organic diversity historic neighborhoods
+    "historic_urban": 1.00,  # Organic diversity historic neighborhoods
     "suburban": 1.00,
     "exurban": 1.15,
     "rural": 1.20,
@@ -201,7 +201,7 @@ CONTEXT_TARGETS = {
         "type": (40, 55, 80, 95),
         "footprint": (30, 40, 60, 75),
     },
-    "historic_urban": {  # NEW: Organic diversity historic neighborhoods
+    "historic_urban": {  # Organic diversity historic neighborhoods
         "height": (15, 20, 50, 70),      # Moderate variation (organic growth pattern)
         "type": (25, 30, 65, 85),        # Mixed-use historic neighborhoods
         "footprint": (35, 45, 70, 85),   # Organic variation (broader than urban_core)
