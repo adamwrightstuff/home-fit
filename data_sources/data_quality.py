@@ -74,92 +74,98 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     
     This function handles architectural beauty-specific subtypes:
     - urban_residential: Dense urban core with uniform architecture (Park Slope brownstones)
-    - urban_core_lowrise: Dense urban but not skyscraper dense (Old Town Alexandria, Santa Barbara)
+    - historic_urban: Organic diversity historic neighborhoods (Greenwich Village, Georgetown)
+    - urban_core_lowrise: Dense urban but not skyscraper dense (Santa Barbara, Old Town Alexandria)
     
-    The urban_core_lowrise subtype works for both:
-    - "urban_core" areas with density 2500-10000 (major metros with low-rise downtowns)
-    - "suburban" areas with density 2500-10000 (dense small cities that should be treated as urban)
-    
-    Priority order:
-    1. urban_residential (takes precedence - dense + uniform)
-    2. urban_core_lowrise (dense but not skyscraper dense)
-    3. Original area_type
+    Priority order (first match wins):
+    1. urban_residential (dense + uniform)
+    2. historic_urban (historic + organic diversity)
+    3. urban_core_lowrise (dense + moderate diversity)
+    4. Original area_type
     
     Args:
         area_type: Base area type from detect_area_type() ('urban_core', 'suburban', etc.)
-        density: Population density (people/sq mi)
-        levels_entropy: Optional height diversity metric (for urban_residential detection)
-        building_type_diversity: Optional type diversity metric (for urban_residential detection)
-        historic_landmarks: Optional count of historic landmarks from OSM (for historic district detection)
-        median_year_built: Optional median year buildings were built (for historic district detection)
+        density: Population density (people/km²)
+        levels_entropy: Optional height diversity metric (for subtype detection)
+        building_type_diversity: Optional type diversity metric (for subtype detection)
+        historic_landmarks: Optional count of historic landmarks from OSM
+        median_year_built: Optional median year buildings were built
     
     Returns:
         Effective area type, which may be:
-        - 'urban_residential': If urban_core with high density + uniform architecture, OR historic district with uniform architecture
-        - 'urban_core_lowrise': If urban_core OR suburban with density 2500-10000 and moderate diversity
+        - 'urban_residential': Dense + uniform architecture
+        - 'historic_urban': Historic + organic diversity (moderate variation)
+        - 'urban_core_lowrise': Dense + moderate diversity (not uniform)
         - Original area_type: Otherwise
     """
     effective = area_type
     
-    # Priority 1: Urban residential: dense + uniform architecture (Park Slope pattern)
-    # Also applies to historic districts (French Quarter) with intentional uniformity
-    # This takes precedence over urban_core_lowrise
-    if area_type == "urban_core" and density and levels_entropy is not None and building_type_diversity is not None:
-        # Standard case: Very dense (>)10000) with uniform architecture
-        if density > 10000 and levels_entropy < 20 and building_type_diversity < 30:
-            return "urban_residential"
-        # Historic district case: Moderate density (2500-10000) with very low diversity + historic markers
-        # French Quarter pattern: intentionally uniform historic district
-        # Georgetown pattern: very historic (<1940) with uniform height but mixed types
-        if density and 2500 <= density < 10000:
-            # For very historic areas (<1940), allow higher type diversity (mixed-use historic neighborhoods)
-            # Standard historic: height <15 AND type <20
-            # Very historic: height <20 AND type <35 (relaxed for Georgetown-style neighborhoods)
-            is_very_historic = False
-            if median_year_built is not None and median_year_built < 1940:
-                is_very_historic = True
-            
-            if is_very_historic:
-                # Very historic areas: uniform height + moderate type diversity acceptable
+    # Helper: Check if area is historic
+    def is_historic() -> bool:
+        if historic_landmarks is not None and historic_landmarks >= 10:
+            return True
+        if median_year_built is not None and median_year_built < 1950:
+            return True
+        return False
+    
+    # Helper: Check if area is very historic (pre-1940)
+    def is_very_historic() -> bool:
+        if median_year_built is not None and median_year_built < 1940:
+            return True
+        return False
+    
+    # Only proceed if we have required metrics for architectural subtypes
+    if not (levels_entropy is not None and building_type_diversity is not None):
+        return effective
+    
+    # Priority 1: Urban residential (uniform architecture)
+    # Applies to dense urban areas with uniform architecture (Park Slope pattern)
+    # Also applies to historic districts with intentional uniformity
+    if effective == "urban_core" and density:
+        # Very dense (>)10000) with uniform architecture
+        if density > 10000:
+            if levels_entropy < 20 and building_type_diversity < 30:
+                return "urban_residential"
+        
+        # Historic districts: Moderate density (2500-10000) with uniform architecture
+        if 2500 <= density < 10000 and is_historic():
+            if is_very_historic():
+                # Very historic (<1940): uniform height + moderate type diversity acceptable
                 if levels_entropy < 20 and building_type_diversity < 35:
                     return "urban_residential"
             else:
-                # Standard historic areas: stricter requirements
+                # Standard historic: stricter uniformity requirements
                 if levels_entropy < 15 and building_type_diversity < 20:
-                    # Check for historic markers (if provided)
-                    is_historic = False
-                    if historic_landmarks is not None and historic_landmarks >= 10:
-                        is_historic = True
-                    if median_year_built is not None and median_year_built < 1950:
-                        is_historic = True
-                    # Historic districts with very uniform architecture should use urban_residential targets
-                    if is_historic:
-                        return "urban_residential"
+                    return "urban_residential"
     
-    # Priority 2: Urban core lowrise: dense urban but not skyscraper dense
-    # Works for both "urban_core" (major metros) AND "suburban" (dense small cities)
-    # Only applies if not already urban_residential AND if metrics fit the pattern
-    # urban_core_lowrise expects moderate diversity (not uniform like Levittown/Carmel)
-    if density and 2500 <= density < 10000:
-        if effective in ("urban_core", "suburban"):
-            # Only convert if metrics suggest actual low-rise urban character:
-            # - Height entropy > 15 (some variation, not cookie-cutter uniform)
-            # - Type diversity > 20 (some variety, not completely uniform)
-            # This avoids converting very uniform suburbs (Levittown, Carmel) 
-            # which should use suburban targets instead
-            if levels_entropy is not None and building_type_diversity is not None:
-                if levels_entropy > 15 and building_type_diversity > 20:
-                    # Metrics suggest actual low-rise urban area with moderate diversity
-                    effective = "urban_core_lowrise"
-            elif levels_entropy is not None:
-                # If we only have height entropy, check if it's moderate (not uniform)
-                if levels_entropy > 15:
-                    effective = "urban_core_lowrise"
-            elif building_type_diversity is not None:
-                # If we only have type diversity, check if it's moderate (not uniform)
-                if building_type_diversity > 20:
-                    effective = "urban_core_lowrise"
-            # If neither metric available, be conservative and keep original type
+    # Priority 2: Historic urban (organic diversity in historic neighborhoods)
+    # Applies to historic areas with moderate diversity (not uniform like Park Slope)
+    # Examples: Greenwich Village, Georgetown (organic growth patterns)
+    if effective in ("urban_core", "urban_core_lowrise", "suburban") and density and density > 2500:
+        if is_historic():
+            # Organic historic pattern: moderate diversity from centuries of growth
+            # Height: 15-70 (moderate variation, 2-6 stories)
+            # Type: 25-85 (mixed-use historic neighborhoods)
+            # Not uniform enough for urban_residential, not skyscraper diverse
+            if 15 < levels_entropy < 70 and 25 < building_type_diversity < 85:
+                # Don't override if already classified as uniform (urban_residential)
+                if effective != "urban_residential":
+                    return "historic_urban"
+    
+    # Priority 3: Urban core lowrise (moderate diversity, not uniform)
+    # Applies to dense areas with moderate diversity (not uniform like Levittown/Carmel)
+    # Only if not already classified as uniform or historic
+    if effective in ("urban_core", "suburban") and density:
+        # Case 1: High density (>10000) with moderate diversity
+        if density > 10000:
+            if 20 < levels_entropy < 60 and 20 < building_type_diversity < 80:
+                if effective not in ("urban_residential", "historic_urban"):
+                    return "urban_core_lowrise"
+        # Case 2: Moderate density (2500-10000) with moderate diversity
+        elif 2500 <= density < 10000:
+            if levels_entropy > 15 and building_type_diversity > 20:
+                if effective not in ("urban_residential", "historic_urban"):
+                    return "urban_core_lowrise"
     
     return effective
 
