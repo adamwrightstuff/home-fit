@@ -30,7 +30,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     - neighborhood_amenities: {query_radius_m, walkable_distance_m}
     - public_transit_access: {routes_radius_m}
     - healthcare_access: {fac_radius_m, pharm_radius_m}
-    - neighborhood_beauty: {tree_canopy_radius_m}
+    - neighborhood_beauty: {tree_canopy_radius_m, architectural_diversity_radius_m}
     - air_travel_access: {search_radius_km}
     """
     a, s = _normalize(area_type, scope)
@@ -67,10 +67,10 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     if p == "neighborhood_beauty":
         # Urban base radius 1km; suburban/exurban/rural 2km; neighborhood scope sticks to 1km
         if s == "neighborhood":
-            return {"tree_canopy_radius_m": 1000}
+            return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
         if a == "urban_core":
-            return {"tree_canopy_radius_m": 1000}
-        return {"tree_canopy_radius_m": 2000}
+            return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
+        return {"tree_canopy_radius_m": 2000, "architectural_diversity_radius_m": 2000}
 
     if p == "air_travel_access":
         # Search within 100km for airports by default

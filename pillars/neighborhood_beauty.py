@@ -366,10 +366,12 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         from data_sources.data_quality import get_effective_area_type
         
         # Get radius profile for architectural diversity
-        radius_m = 1000  # Default radius
+        # Standardize on 2km for neighborhood-level context (scales from address to city)
+        # This captures neighborhood character and reduces coordinate variance
+        radius_m = 2000  # Default radius for neighborhood-level context
         if area_type:
             rp = get_radius_profile('neighborhood_beauty', area_type, location_scope)
-            radius_m = int(rp.get('architectural_diversity_radius_m', 1000))
+            radius_m = int(rp.get('architectural_diversity_radius_m', 2000))
         
         # Compute architectural diversity metrics
         diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)

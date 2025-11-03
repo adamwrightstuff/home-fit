@@ -141,16 +141,32 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     # Priority 2: Historic urban (organic diversity in historic neighborhoods)
     # Applies to historic areas with moderate diversity (not uniform like Park Slope)
     # Examples: Greenwich Village, Georgetown (organic growth patterns)
+    # PRIORITIZED: If Census indicates historic (more reliable than OSM), be more forgiving
     if effective in ("urban_core", "urban_core_lowrise", "suburban") and density and density > 2500:
         if is_historic():
+            # Prioritize Census data for historic detection (more stable than OSM landmarks)
+            census_historic = median_year_built is not None and median_year_built < 1950
+            
             # Organic historic pattern: moderate diversity from centuries of growth
             # Height: 15-70 (moderate variation, 2-6 stories)
             # Type: 25-85 (mixed-use historic neighborhoods)
             # Not uniform enough for urban_residential, not skyscraper diverse
-            if 15 < levels_entropy < 70 and 25 < building_type_diversity < 85:
-                # Don't override if already classified as uniform (urban_residential)
-                if effective != "urban_residential":
-                    return "historic_urban"
+            
+            # If Census confirms historic, be more forgiving with diversity thresholds
+            # This handles neighborhoods where OSM diversity metrics vary slightly
+            if census_historic:
+                # Census-based historic: More forgiving thresholds for coordinate variance
+                # Allow slightly wider range to handle block-to-block variation
+                if (10 < levels_entropy < 75 and 20 < building_type_diversity < 90):
+                    # Don't override if already classified as uniform (urban_residential)
+                    if effective != "urban_residential":
+                        return "historic_urban"
+            else:
+                # OSM landmark-based historic: Use stricter thresholds (original logic)
+                if (15 < levels_entropy < 70 and 25 < building_type_diversity < 85):
+                    # Don't override if already classified as uniform (urban_residential)
+                    if effective != "urban_residential":
+                        return "historic_urban"
     
     # Priority 3: Urban core lowrise (moderate diversity, not uniform)
     # Applies to dense areas with moderate diversity (not uniform like Levittown/Carmel)
