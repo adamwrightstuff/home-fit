@@ -220,6 +220,24 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             details['gee_canopy_pct'] = gee_canopy
             print(f"   ✅ Using GEE satellite data: {gee_canopy:.1f}%")
             
+            # For dense urban areas, validate low GEE results with Census/USFS
+            # GEE can underestimate in dense urban areas (buildings block satellite view)
+            if gee_canopy < 15.0 and area_type in ['urban_core', 'urban_residential']:
+                print(f"   🔄 Dense urban area with low GEE canopy ({gee_canopy:.1f}%) - validating with Census/USFS...")
+                census_canopy = census_api.get_tree_canopy(lat, lon)
+                if census_canopy is not None and census_canopy > gee_canopy:
+                    # Use the higher of the two (Census might be more accurate for dense urban)
+                    census_score = _score_tree_canopy(census_canopy)
+                    if census_score > score:
+                        print(f"   ✅ Census/USFS canopy ({census_canopy:.1f}%) is higher than GEE ({gee_canopy:.1f}%) - using Census")
+                        score = census_score
+                        sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
+                        details['census_canopy_pct'] = census_canopy
+                    else:
+                        print(f"   📊 Census/USFS canopy ({census_canopy:.1f}%) confirms low coverage")
+                elif census_canopy is not None:
+                    print(f"   📊 Census/USFS canopy ({census_canopy:.1f}%) confirms GEE result")
+            
             # For NYC: Check if GEE canopy is suspiciously low (<15%) and supplement with street trees
             # GEE canopy misses individual street trees in dense urban areas
             if nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city):
@@ -237,6 +255,33 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             details['nyc_street_trees'] = tree_count
                         else:
                             print(f"   📊 NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (GEE canopy higher)")
+            
+            # For dense urban areas with low canopy, try OSM individual trees as fallback
+            # Only if still low after Census validation
+            if score < 20.0 and area_type in ['urban_core', 'urban_residential']:
+                print(f"   🌳 Checking OSM individual trees/tree rows for dense urban area...")
+                try:
+                    from data_sources.osm_api import query_enhanced_trees
+                    osm_trees = query_enhanced_trees(lat, lon, radius_m=1000)
+                    if osm_trees:
+                        individual_trees = len(osm_trees.get('individual_trees', []))
+                        tree_rows = len(osm_trees.get('tree_rows', []))
+                        street_tree_ways = len(osm_trees.get('street_trees', []))
+                        # Tree rows represent ~10 trees each, street tree ways represent ~10 trees each
+                        total_osm_trees = individual_trees + (tree_rows * 10) + (street_tree_ways * 10)
+                        
+                        if total_osm_trees > 0:
+                            # Score OSM trees similar to NYC street trees
+                            osm_tree_score = _score_nyc_trees(total_osm_trees)
+                            if osm_tree_score > score:
+                                print(f"   ✅ OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (using OSM trees)")
+                                score = osm_tree_score
+                                sources.append(f"OSM: {total_osm_trees} individual trees/tree rows")
+                                details['osm_individual_trees'] = total_osm_trees
+                            else:
+                                print(f"   📊 OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (current score higher)")
+                except Exception as e:
+                    print(f"   ⚠️  OSM tree query failed: {e}")
         else:
             print(f"   ⚠️  GEE returned {gee_canopy} - trying Census fallback")
     except Exception as e:
@@ -272,15 +317,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     details[f'{city_key.lower()}_street_trees'] = tree_count
     
     # Priority 3: Census USFS Tree Canopy (if GEE unavailable or low)
-    if score == 0.0:
+    # Also check for dense urban areas when score is suspiciously low (< 20)
+    if score == 0.0 or (score < 20.0 and area_type in ['urban_core', 'urban_residential']):
         print(f"   📊 Trying Census USFS tree canopy data...")
         canopy_pct = census_api.get_tree_canopy(lat, lon)
         if canopy_pct is not None and canopy_pct > 0:
             canopy_score = _score_tree_canopy(canopy_pct)
-            score = canopy_score
-            sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
-            details['census_canopy_pct'] = canopy_pct
-            print(f"   ✅ Using Census canopy data: {canopy_pct:.1f}%")
+            if canopy_score > score:
+                score = canopy_score
+                sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
+                details['census_canopy_pct'] = canopy_pct
+                print(f"   ✅ Using Census canopy data: {canopy_pct:.1f}%")
+            else:
+                print(f"   📊 Census canopy ({canopy_pct:.1f}%) confirms low coverage")
         else:
             print(f"   ⚠️  Census canopy returned {canopy_pct}")
     
