@@ -377,6 +377,20 @@ def score_architectural_diversity_as_beauty(
             if footprint_area_cv and footprint_area_cv > 50:
                 targets["footprint"] = (50, 60, 90, 100)  # High CV is good for historic
     
+    # Adjustment 4: Historic suburban uniformity with low footprint CV
+    # Historic suburban areas with uniform architecture + LOW footprint CV = beautiful planned uniformity
+    # Examples: Carmel-by-the-Sea (height 0.4, type 19.8, footprint 27.1%)
+    # This is different from degraded sprawl (uniform + HIGH footprint CV like Levittown 95.3%)
+    # Key distinction: LOW footprint CV = planned/preserved, HIGH footprint CV = degraded sprawl
+    if is_historic and effective == "suburban":
+        # Check for beautiful planned uniformity: uniform height + uniform type + LOW footprint CV
+        if levels_entropy < 10 and building_type_diversity < 25 and footprint_area_cv < 40:
+            # Beautiful planned uniformity (like Carmel) - reward it
+            # Adjust targets to match uniform pattern (similar to urban_residential)
+            targets["height"] = (0, 0, 15, 30)  # More forgiving for very uniform (like urban_residential)
+            targets["type"] = (0, 0, 25, 40)   # More forgiving for very uniform (allow up to 25 in sweet spot)
+            targets["footprint"] = (20, 25, 40, 50)  # LOW footprint CV is GOOD for planned uniformity
+    
     # Score each metric using adjusted targets
     height_pts = _score_band(levels_entropy, targets["height"])
     type_pts = _score_band(building_type_diversity, targets["type"])
