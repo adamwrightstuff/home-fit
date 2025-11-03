@@ -192,6 +192,13 @@ def get_healthcare_access_score(lat: float, lon: float,
     clinics = healthcare_facilities.get("clinics", [])
     doctors = healthcare_facilities.get("doctors", [])
     
+    # Log warning if no data found (could indicate OSM failure)
+    if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
+        print(f"   ⚠️  WARNING: No healthcare facilities found. This may indicate:")
+        print(f"      - OSM query failed (rate limit, timeout, or network error)")
+        print(f"      - No healthcare facilities in OSM for this location")
+        print(f"      - Query radius too small or location data incomplete")
+    
     print(f"   🔍 FINAL COUNTS (raw): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors")
 
     # Determine area type for radius tuning (allow centrally provided override)
@@ -387,7 +394,8 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
                 "doctors": healthcare_data.get("doctors", [])
             }
         else:
-            print(f"   ⚠️  No healthcare data returned from OSM")
+            print(f"   ⚠️  No healthcare data returned from OSM (query returned None)")
+            print(f"   ⚠️  This may indicate: OSM rate limit, timeout, or query failure")
             return {
                 "hospitals": [],
                 "urgent_care": [],
@@ -397,6 +405,8 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
             }
     except Exception as e:
         print(f"   ⚠️  Healthcare query error: {e}")
+        import traceback
+        print(f"   ⚠️  Traceback: {traceback.format_exc()}")
         return {
             "hospitals": [],
             "urgent_care": [],

@@ -1450,6 +1450,12 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
                 print(f"⚠️  Healthcare query rate limited (429) - max retries reached")
+                print(f"   Consider: Increasing retry attempts or adding delay between requests")
+            elif resp:
+                print(f"⚠️  Healthcare query failed: HTTP {resp.status_code}")
+                print(f"   Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
+            else:
+                print(f"⚠️  Healthcare query failed: No response (timeout or network error)")
             return None
 
         data = resp.json()

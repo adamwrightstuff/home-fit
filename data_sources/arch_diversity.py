@@ -7,7 +7,7 @@ This module is sandbox-only and not wired into scoring by default.
 from typing import Dict, Optional
 import requests
 
-from .osm_api import OVERPASS_URL
+from .osm_api import OVERPASS_URL, _retry_overpass
 
 
 def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict[str, float]:
@@ -29,31 +29,34 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         >;
         out skel qt;
         """
-        # Retry logic similar to other OSM queries
-        import time
-        resp = None
-        for attempt in range(3):
-            try:
-                resp = requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
-                if resp.status_code == 200:
-                    break
-                elif attempt < 2:
-                    time.sleep(0.8 * (1.5 ** attempt))  # Exponential backoff
-            except Exception as retry_e:
-                if attempt == 2:
-                    raise retry_e
-                time.sleep(0.8 * (1.5 ** attempt))
+        def _do_request():
+            return requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
         
-        if not resp or resp.status_code != 200:
+        # Use centralized retry logic with proper rate limit handling (aligned with other OSM queries)
+        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        
+        if resp is None or resp.status_code != 200:
             status_msg = f"status {resp.status_code}" if resp else "no response"
-            print(f"⚠️  Overpass API returned {status_msg}")
-            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"API {status_msg}"}
+            error_detail = f"API {status_msg}"
+            if resp and resp.status_code == 429:
+                error_detail = f"Rate limited (429) - max retries reached"
+            print(f"⚠️  Overpass API returned {error_detail} for architectural diversity query")
+            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": error_detail}
+        
         elements = resp.json().get("elements", [])
         if not elements:
             print(f"⚠️  No building elements found in OSM query (radius: {radius_m}m)")
             return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "note": "No buildings found in OSM"}
+    except requests.exceptions.Timeout as e:
+        print(f"⚠️  OSM building query timeout: {e}")
+        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"Timeout: {str(e)}"}
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️  OSM building query network error: {e}")
+        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"Network error: {str(e)}"}
     except Exception as e:
         print(f"⚠️  OSM building query error: {e}")
+        import traceback
+        print(f"   Traceback: {traceback.format_exc()}")
         return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": str(e)}
 
     import math
