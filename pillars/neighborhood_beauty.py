@@ -2,8 +2,8 @@
 Neighborhood Beauty Pillar
 Uses objective, real data sources:
 - Trees (0-50): OSM tree count + Census canopy percentage
-- Historic Character (0-50): Census building age + OSM landmarks
 - Architectural Diversity (0-33): Building height, type, and footprint variation
+  (Architectural diversity uses historic context to adjust scoring targets)
 """
 
 from typing import Dict, Tuple, Optional
@@ -26,12 +26,12 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     Scoring components:
     - Trees (0-50): OSM tree count + Census canopy percentage
-    - Historic Character (0-50): Census building age + OSM landmarks
-    - Architectural Diversity (0-33): Building height, type, and footprint variation
+    - Architectural Diversity (0-50): Building height, type, and footprint variation
+      (Raw score 0-33 scaled to 0-50. Uses historic context to adjust scoring targets)
     
     Args:
-        beauty_weights: Custom weights (e.g., "trees:0.33,historic:0.33,architecture:0.34")
-                       Default: trees=0.33, historic=0.33, architecture=0.34
+        beauty_weights: Custom weights (e.g., "trees:0.5,architecture:0.5")
+                       Default: trees=0.5, architecture=0.5
     
     Returns:
         (total_score, detailed_breakdown)
@@ -45,33 +45,28 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     print(f"   🌳 Analyzing tree canopy...")
     tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=area_type)
     
-    # Component 2: Historic Character (0-50)
-    print(f"   🏛️  Analyzing historic character...")
-    historic_score, historic_details = _score_historic(lat, lon, location_scope=location_scope)
-    
-    # Component 3: Architectural Diversity (0-33)
+    # Component 2: Architectural Diversity (0-33 raw, scaled to 0-50)
     print(f"   🏗️  Analyzing architectural diversity...")
-    arch_score, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
+    arch_score_raw, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
+    # Scale architectural diversity from 0-33 to 0-50 to match Trees (so components sum to 100)
+    arch_score = arch_score_raw * (50.0 / 33.0)
     
     # Apply weights: Scale each component to its weighted max points
-    # Default: trees=33, historic=33, architecture=34 (out of 100)
-    max_tree_points = weights.get('trees', 0.33) * 100  # Scale from 50
-    max_historic_points = weights.get('historic', 0.33) * 100  # Scale from 50
-    max_arch_points = weights.get('architecture', 0.34) * 100  # Scale from 33
+    # Default: trees=0.5 (50 points), architecture=0.5 (50 points) out of 100
+    # Both components now have same max (50 each), so weights directly apply
+    max_tree_points = weights.get('trees', 0.5) * 100
+    max_arch_points = weights.get('architecture', 0.5) * 100
     
     total_score = (
         (tree_score * (max_tree_points / 50)) +
-        (historic_score * (max_historic_points / 50)) +
-        (arch_score * (max_arch_points / 33))
+        (arch_score * (max_arch_points / 50))
     )
     
     # Assess data quality
     combined_data = {
         'tree_score': tree_score,
-        'historic_score': historic_score,
         'architectural_score': arch_score,
         'tree_details': tree_details,
-        'historic_details': historic_details,
         'architectural_details': arch_details
     }
     
@@ -120,12 +115,10 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         "score": round(total_score, 1),
         "breakdown": {
             "trees": round(tree_score, 1),
-            "historic_character": round(historic_score, 1),
-            "architectural_diversity": round(arch_score, 1)
+            "architectural_diversity": round(arch_score, 1)  # Scaled to 0-50 to match Trees
         },
         "details": {
             "tree_analysis": tree_details,
-            "historic_analysis": historic_details,
             "architectural_analysis": arch_details,
             "enhancers": enhancers,
             "enhancer_bonus": beauty_bonus
@@ -137,8 +130,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     # Log results
     print(f"✅ Neighborhood Beauty Score: {total_score:.0f}/100")
     print(f"   🌳 Trees: {tree_score:.0f}/50")
-    print(f"   🏛️  Historic: {historic_score:.0f}/50")
-    print(f"   🏗️  Architectural Diversity: {arch_score:.0f}/33")
+    print(f"   🏗️  Architectural Diversity: {arch_score:.0f}/50 (raw: {arch_details.get('score', 0):.0f}/33)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
     
     return round(total_score, 1), breakdown
@@ -147,7 +139,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
 def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
     """Parse custom beauty weights or return defaults."""
     if weights_str is None:
-        return {'trees': 0.33, 'historic': 0.33, 'architecture': 0.34}
+        return {'trees': 0.5, 'architecture': 0.5}
     
     try:
         weights = {}
@@ -157,7 +149,7 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
             component, weight = pair.split(':')
             weight = float(weight.strip())
             
-            if component.strip() in ['trees', 'historic', 'architecture']:
+            if component.strip() in ['trees', 'architecture']:
                 weights[component.strip()] = weight
                 total += weight
         
@@ -166,11 +158,11 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
             weights = {k: v / total for k, v in weights.items()}
         else:
             # Fallback if no valid weights
-            weights = {'trees': 0.33, 'historic': 0.33, 'architecture': 0.34}
+            weights = {'trees': 0.5, 'architecture': 0.5}
         
         return weights
     except:
-        return {'trees': 0.33, 'historic': 0.33, 'architecture': 0.34}
+        return {'trees': 0.5, 'architecture': 0.5}
 
 
 def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None, area_type: Optional[str] = None) -> Tuple[float, Dict]:
@@ -298,8 +290,9 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
     """
     Fetch historic data once (OSM landmarks + Census building age).
     
-    This helper avoids duplicate API calls when historic data is needed
-    for both scoring (beauty pillar) and classification (architectural diversity).
+    Used by architectural diversity component to adjust scoring targets based on historic context.
+    Historic data helps determine appropriate architectural scoring targets (e.g., historic areas
+    get more forgiving targets for organic growth patterns).
     
     Args:
         lat, lon: Coordinates
@@ -335,73 +328,16 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
     }
 
 
-def _score_historic(lat: float, lon: float, location_scope: Optional[str] = None,
-                   historic_data: Optional[Dict] = None) -> Tuple[float, Dict]:
-    """
-    Score historic character (0-50) based on building age and landmarks.
-    
-    Args:
-        lat, lon: Coordinates
-        location_scope: Optional location scope (not currently used)
-        historic_data: Optional pre-fetched historic data from _fetch_historic_data()
-                      If None, will fetch the data
-    
-    Returns:
-        (score, details_dict)
-    """
-    # Use pre-fetched data if provided, otherwise fetch it
-    if historic_data is None:
-        historic_data = _fetch_historic_data(lat, lon, radius_m=1000)
-    
-    year_built_data = historic_data.get('year_built_data')
-    if year_built_data is None:
-        return 0.0, {"note": "No building age data available"}
-    
-    # Calculate historic score from year built
-    median_year = historic_data.get('median_year_built', 2000)
-    vintage_pct = historic_data.get('vintage_pct', 0)
-    
-    # Score based on age and vintage percentage
-    if median_year < 1940:
-        score = 50.0
-    elif median_year < 1960:
-        score = 40.0 + min(10, vintage_pct)
-    elif median_year < 1980:
-        score = 30.0 + min(10, vintage_pct * 0.5)
-    elif median_year < 2000:
-        score = 20.0
-    else:
-        score = 10.0
-    
-    # Add bonus for historic landmarks
-    historic_landmarks_count = historic_data.get('historic_landmarks_count', 0)
-    if historic_landmarks_count > 0:
-        # Bonus for historic landmarks (up to 10 points)
-        score += min(10, historic_landmarks_count * 2)
-    
-    # Cap historic score at 50 (it's a 0-50 component)
-    score = min(50.0, score)
-    
-    details = {
-        "median_year_built": median_year,
-        "vintage_pct": vintage_pct,
-        "historic_landmarks": historic_data.get('historic_landmarks', []),
-        "total_score": score
-    }
-    
-    return score, details
-
-
 def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] = None,
                                     location_scope: Optional[str] = None,
                                     area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
-    Score architectural diversity (0-33 points).
+    Score architectural diversity (0-33 points raw, scaled to 0-50 in main function).
     
     Uses conditional adjustments for historic organic development patterns.
     
     Returns:
-        (score, details_dict)
+        (raw_score_0-33, details_dict)
     """
     try:
         from data_sources import arch_diversity, census_api, data_quality, geocoding

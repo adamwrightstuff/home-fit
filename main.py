@@ -141,8 +141,8 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
                 Default: Equal distribution across all pillars
         include_chains: Include chain/franchise businesses in amenities score (default: False)
-        beauty_weights: Optional beauty component weights (format: "trees:0.6,historic:0.4")
-                       Default: trees=0.5, historic=0.5
+        beauty_weights: Optional beauty component weights (format: "trees:0.5,architecture:0.5")
+                       Default: trees=0.5, architecture=0.5
 
     Returns:
         JSON with pillar scores, token allocation, and weighted total
@@ -463,7 +463,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             "architecture": "8 Purpose-Driven Pillars",
             "pillars": {
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
-                "neighborhood_beauty": "Is my environment beautiful? (Trees, green space, historic buildings, art)",
+                "neighborhood_beauty": "Is my environment beautiful? (Trees, green space, architectural diversity, art)",
                 "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
                 "air_travel_access": "How easily can I fly? (Airport proximity and type)",
                 "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
@@ -723,7 +723,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         )
         
         # Calculate beauty score using context-aware scoring
-        # Note: Tree coverage and historic preservation are handled by neighborhood_beauty pillar
+        # Note: Tree coverage is handled by neighborhood_beauty pillar; architectural diversity uses historic context for scoring adjustments
         from data_sources.arch_diversity import (
             score_architectural_diversity_as_beauty,
             _score_band,

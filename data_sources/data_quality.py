@@ -158,7 +158,14 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     if effective in ("urban_core", "suburban") and density:
         # Case 1: High density (>10000) with moderate diversity
         if density > 10000:
+            # Standard: Moderate height diversity (20-60)
             if 20 < levels_entropy < 60 and 20 < building_type_diversity < 80:
+                if effective not in ("urban_residential", "historic_urban"):
+                    return "urban_core_lowrise"
+            # Low-rise variant: Low height diversity (<20) but moderate type diversity
+            # Catches coastal cities, edge cities, and other dense low-rise areas
+            # Examples: Redondo Beach (height 12.7, type 40.8, density 12001)
+            if levels_entropy < 20 and 20 < building_type_diversity < 80:
                 if effective not in ("urban_residential", "historic_urban"):
                     return "urban_core_lowrise"
         # Case 2: Moderate density (2500-10000) with moderate diversity

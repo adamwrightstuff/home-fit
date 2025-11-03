@@ -197,9 +197,9 @@ CONTEXT_TARGETS = {
         "footprint": (30, 40, 60, 70), # moderate variation best
     },
     "urban_core_lowrise": {
-        "height": (20, 30, 60, 80),
+        "height": (10, 20, 60, 80),  # Lower minimum to catch coastal/low-rise areas (e.g., Redondo Beach)
         "type": (40, 55, 80, 95),
-        "footprint": (30, 40, 60, 75),
+        "footprint": (30, 40, 70, 90),  # More forgiving for coastal/edge city areas with varied building sizes
     },
     "historic_urban": {  # Organic diversity historic neighborhoods
         "height": (15, 20, 50, 70),      # Moderate variation (organic growth pattern)
@@ -260,13 +260,23 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
         if built_cov is None:
             return 0.0
         # Stronger penalty the emptier the ground plane
-        if built_cov < 0.15:
-            return 5.0
-        if built_cov < 0.25:
-            return 3.5
-        if built_cov < 0.35:
-            return 1.5
-        return 0.0
+        # urban_core_lowrise gets slightly more lenient penalties (coastal/edge cities often have lower coverage)
+        if area_type == "urban_core_lowrise":
+            if built_cov < 0.15:
+                return 4.5  # Slightly more lenient
+            if built_cov < 0.25:
+                return 2.5  # More lenient for low-rise areas
+            if built_cov < 0.35:
+                return 1.0
+            return 0.0
+        else:  # urban_core
+            if built_cov < 0.15:
+                return 5.0
+            if built_cov < 0.25:
+                return 3.5
+            if built_cov < 0.35:
+                return 1.5
+            return 0.0
     # historic_urban: No coverage penalty (organic voids like courtyards/gardens are beautiful)
     if area_type == "historic_urban":
         return 0.0
@@ -377,19 +387,47 @@ def score_architectural_diversity_as_beauty(
             if footprint_area_cv and footprint_area_cv > 50:
                 targets["footprint"] = (50, 60, 90, 100)  # High CV is good for historic
     
-    # Adjustment 4: Historic suburban uniformity with low footprint CV
-    # Historic suburban areas with uniform architecture + LOW footprint CV = beautiful planned uniformity
-    # Examples: Carmel-by-the-Sea (height 0.4, type 19.8, footprint 27.1%)
+    # Adjustment 4: Historic suburban/exurban uniformity with low footprint CV
+    # Historic suburban/exurban areas with uniform architecture + LOW footprint CV = beautiful planned uniformity
+    # Examples: Carmel-by-the-Sea (height 0.4, type 19.8, footprint 27.1%), Nantucket (height 0.0, type 1.6, footprint 39.1%)
     # This is different from degraded sprawl (uniform + HIGH footprint CV like Levittown 95.3%)
     # Key distinction: LOW footprint CV = planned/preserved, HIGH footprint CV = degraded sprawl
-    if is_historic and effective == "suburban":
+    if is_historic and effective in ("suburban", "exurban"):
         # Check for beautiful planned uniformity: uniform height + uniform type + LOW footprint CV
         if levels_entropy < 10 and building_type_diversity < 25 and footprint_area_cv < 40:
-            # Beautiful planned uniformity (like Carmel) - reward it
+            # Beautiful planned uniformity (like Carmel, Nantucket) - reward it
             # Adjust targets to match uniform pattern (similar to urban_residential)
             targets["height"] = (0, 0, 15, 30)  # More forgiving for very uniform (like urban_residential)
             targets["type"] = (0, 0, 25, 40)   # More forgiving for very uniform (allow up to 25 in sweet spot)
             targets["footprint"] = (20, 25, 40, 50)  # LOW footprint CV is GOOD for planned uniformity
+    
+    # Adjustment 5: Uniform coastal beach towns (urban_core_lowrise with low footprint CV)
+    # Well-planned coastal beach towns often have uniform architecture (planned, not sprawl)
+    # Examples: Manhattan Beach (height 9.9, type 32.5, footprint 21.5%)
+    # Low footprint CV in coastal urban areas = intentional uniformity, not cookie-cutter chaos
+    if effective == "urban_core_lowrise":
+        # Check for planned uniformity: uniform height + uniform type + LOW footprint CV
+        if levels_entropy < 15 and building_type_diversity < 40 and footprint_area_cv < 30:
+            # Planned uniformity (like Manhattan Beach, Hermosa Beach) - reward it
+            # Adjust targets to match uniform pattern (similar to urban_residential)
+            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
+            targets["type"] = (0, 0, 35, 50)   # More forgiving for uniform coastal areas
+            targets["footprint"] = (15, 20, 30, 40)  # LOW footprint CV is GOOD for planned uniformity
+    
+    # Adjustment 6: Coastal towns with uniform architecture (suburban/exurban, low footprint CV)
+    # Well-planned coastal towns often have uniform architecture even if not historic
+    # Examples: Cape May (height 0.4, type 7.1, footprint 44.7%), Sausalito (height 0.8, type 14.5, footprint 63.9%)
+    # Low footprint CV in coastal contexts = intentional uniformity, not sprawl
+    # Note: Cape May's footprint 44.7% is slightly above 40%, but still indicates planned uniformity
+    if effective in ("suburban", "exurban"):
+        # Check for planned uniformity: uniform height + uniform type + LOW to moderate footprint CV
+        if levels_entropy < 10 and building_type_diversity < 20 and footprint_area_cv < 70:
+            # Planned uniformity (like Cape May, Sausalito) - reward it
+            # Adjust targets to match uniform pattern (similar to historic uniformity)
+            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
+            targets["type"] = (0, 0, 25, 40)   # More forgiving for uniform coastal areas
+            # Footprint: Allow wider range for coastal areas (some variation in lot sizes is natural)
+            targets["footprint"] = (20, 30, 50, 65)  # Moderate variation is OK for coastal towns
     
     # Score each metric using adjusted targets
     height_pts = _score_band(levels_entropy, targets["height"])
@@ -416,7 +454,7 @@ def score_architectural_diversity_as_beauty(
             base_floor = 5.0
             base = max(base, base_floor)
     
-    # One bonus, one penalty
+    # One bonus, one penalty (use effective area type for context-aware penalties)
     bonus = _coherence_bonus(levels_entropy, footprint_area_cv, effective)
     penalty = _context_penalty(effective, built_coverage_ratio,
                                levels_entropy, building_type_diversity,
