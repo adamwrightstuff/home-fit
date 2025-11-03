@@ -16,6 +16,12 @@ try:
 except ImportError:
     nyc_api = None
 
+# Try to import Street Tree API (for multiple cities)
+try:
+    from data_sources import street_tree_api
+except ImportError:
+    street_tree_api = None
+
 
 def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None, 
                                    beauty_weights: Optional[str] = None,
@@ -248,6 +254,22 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 score = street_tree_score
                 sources.append(f"NYC Street Trees: {tree_count} trees")
                 details['nyc_street_trees'] = tree_count
+    
+    # Priority 2b: Other Cities Street Trees (if city has street tree API and score is low)
+    if (score == 0.0 or score < 30.0) and street_tree_api and city:
+        city_key = street_tree_api.is_city_with_street_trees(city, lat, lon)
+        if city_key:
+            print(f"   🌳 Checking {city_key} Street Tree API...")
+            street_trees = street_tree_api.get_street_trees(city, lat, lon, radius_m=1000)
+            if street_trees:
+                tree_count = len(street_trees)
+                # Reuse NYC tree scoring function (same scoring logic)
+                street_tree_score = _score_nyc_trees(tree_count)
+                if street_tree_score > score:
+                    print(f"   ✅ Using {city_key} Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
+                    score = street_tree_score
+                    sources.append(f"{city_key} Street Trees: {tree_count} trees")
+                    details[f'{city_key.lower()}_street_trees'] = tree_count
     
     # Priority 3: Census USFS Tree Canopy (if GEE unavailable or low)
     if score == 0.0:
