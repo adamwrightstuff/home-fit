@@ -180,26 +180,25 @@ def get_public_transit_score(lat: float, lon: float,
     
     # Apply area-type-specific weighting
     # Note: Individual mode scores are on 0-100 scale, but we want final score 0-100
-    # So we need to normalize the weighted sum appropriately
+    # Heavy rail (subways/trains) is primary in US - most cities don't have light rail
+    # So we prioritize heavy rail by default, not just when light rail is missing
     if area_type == 'urban_core':
-        # Urban: Heavy rail 50%, Light rail 30%, Bus 20%
-        # Normalize: if all modes perfect (100 each), weighted sum = 100
-        weighted_sum = (heavy_rail_score * 0.5) + (light_rail_score * 0.3) + (bus_score * 0.2)
-        # For urban areas with excellent heavy rail but no light rail (e.g., NYC subway),
-        # don't penalize for missing light rail - many cities don't have separate streetcar systems
-        # If heavy rail is strong (50+) and light rail is 0, use heavy rail + bus weighting
-        if heavy_rail_score >= 50 and light_rail_score == 0:
-            # Reallocate light rail weight to heavy rail: 50% + 30% = 80% for heavy rail
+        # Urban: Heavy rail 70%, Light rail 10%, Bus 20%
+        # Heavy rail is primary (subways/trains are most common in US cities)
+        weighted_sum = (heavy_rail_score * 0.7) + (light_rail_score * 0.1) + (bus_score * 0.2)
+        # If no light rail, reallocate that weight to heavy rail
+        if light_rail_score == 0:
             total_score = (heavy_rail_score * 0.8) + (bus_score * 0.2)
         else:
             total_score = weighted_sum
         total_score = min(100.0, total_score)
     elif area_type in ('suburban', 'exurban'):
-        # Suburban: Heavy rail (commuter) 60%, Light rail 20%, Bus 20%
-        weighted_sum = (heavy_rail_score * 0.6) + (light_rail_score * 0.2) + (bus_score * 0.2)
-        # For suburban with excellent commuter rail but no light rail, be forgiving
-        if heavy_rail_score >= 50 and light_rail_score == 0:
-            total_score = max(weighted_sum, heavy_rail_score * 0.7 + bus_score * 0.2)
+        # Suburban: Heavy rail (commuter) 75%, Light rail 5%, Bus 20%
+        # Commuter rail is primary for suburban areas
+        weighted_sum = (heavy_rail_score * 0.75) + (light_rail_score * 0.05) + (bus_score * 0.2)
+        # If no light rail, reallocate that weight to heavy rail
+        if light_rail_score == 0:
+            total_score = (heavy_rail_score * 0.8) + (bus_score * 0.2)
         else:
             total_score = weighted_sum
         total_score = min(100.0, total_score)

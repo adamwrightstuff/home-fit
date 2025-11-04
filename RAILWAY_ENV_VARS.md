@@ -19,8 +19,34 @@ These enhance functionality but aren't critical:
 
 | Variable | Purpose | Fallback |
 |----------|---------|----------|
-| `REDIS_URL` | Redis cache connection string | Uses in-memory cache |
+| `REDIS_URL` | Redis cache connection string | Uses in-memory cache (lost on restart) |
 | `TRANSITLAND_API_KEY` | Transitland API for transit data | May work without it (some features limited) |
+
+### Redis Setup (Recommended)
+
+Redis provides persistent caching that survives Railway restarts. Without Redis, cache is lost on deploy/restart.
+
+**How to Set Up Redis on Railway:**
+
+1. **Option 1: Add Redis Service (Recommended)**
+   - In your Railway project, click "New" → "Database" → "Add Redis"
+   - Railway will automatically create Redis and set `REDIS_URL` in your app service
+   - No manual configuration needed
+
+2. **Option 2: Use Railway Redis Template**
+   - Click "New" → "Template" → search for "Redis"
+   - Add the Redis template
+   - In your app service, go to "Variables" → "Reference Variable"
+   - Select the Redis service and reference `REDIS_URL`
+
+**Verification:**
+- Check app logs for: `✅ Redis connected for distributed caching`
+- If you see: `⚠️  Redis not available, using in-memory cache` → Redis isn't connected yet
+
+**Benefits:**
+- Cache persists across restarts/deploys
+- Cache shared across multiple instances (if you scale)
+- Better reliability during API outages (stale cache fallback)
 
 ## How to Set in Railway
 

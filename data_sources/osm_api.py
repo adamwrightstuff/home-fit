@@ -152,6 +152,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
     """
     Query OSM for outdoor recreation (hiking, swimming, camping).
+    Includes trails within large parks (>50 hectares) to catch urban parks like Prospect Park.
 
     Returns:
         {
@@ -210,6 +211,14 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
 
         hiking, swimming, camping = _process_nature_features(
             elements, lat, lon)
+
+        # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park
+        # This is a separate query to avoid overcounting urban sidewalks
+        try:
+            large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
+            hiking.extend(large_park_trails)
+        except Exception as e:
+            print(f"   ⚠️  Large park trail query failed: {e}")
 
         return {
             "hiking": hiking,
@@ -759,6 +768,93 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             camping.append(feature)
 
     return hiking, swimming, camping
+
+
+def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) -> List[Dict]:
+    """
+    Query for trails within large parks (>50 hectares) to catch urban parks like Prospect Park.
+    This avoids overcounting urban sidewalks by only looking at paths within large parks.
+    
+    Uses park data from query_green_spaces which already has area information.
+    
+    Returns:
+        List of trail features from large parks
+    """
+    try:
+        # Get parks data (which already has area information)
+        parks_data = query_green_spaces(lat, lon, radius_m=radius_m)
+        if not parks_data or not parks_data.get("parks"):
+            return []
+        
+        parks = parks_data.get("parks", [])
+        
+        # Filter for large parks (>50 hectares = 500,000 sqm)
+        # Also filter for parks within reasonable distance (not too far)
+        LARGE_PARK_THRESHOLD_SQM = 500000  # 50 hectares
+        large_parks_trails = []
+        
+        for park in parks:
+            park_area_sqm = park.get("area_sqm", 0)
+            park_name = park.get("name", "Unknown Park")
+            park_lat = park.get("lat")
+            park_lon = park.get("lon")
+            park_distance_m = park.get("distance_m", float('inf'))
+            
+            # Skip if park is too small or missing coordinates
+            if park_area_sqm < LARGE_PARK_THRESHOLD_SQM or park_lat is None or park_lon is None:
+                continue
+            
+            # Skip if park is too far (beyond regional radius)
+            if park_distance_m > radius_m:
+                continue
+            
+            # Query paths within the large park
+            # Use park area to estimate radius for path query (heuristic: radius ≈ sqrt(area/π))
+            # For large parks, query paths within a reasonable radius (500m-1km depending on park size)
+            park_radius_estimate = min(1000, max(300, (park_area_sqm / 3.14159) ** 0.5))
+            
+            paths_query = f"""
+            [out:json][timeout:20];
+            (
+              way["highway"~"^(path|footway|track)$"]["access"!="private"](around:{int(park_radius_estimate)},{park_lat},{park_lon});
+            );
+            out geom;
+            """
+            
+            try:
+                paths_resp = requests.post(
+                    OVERPASS_URL,
+                    data={"data": paths_query},
+                    timeout=25,
+                    headers={"User-Agent": "HomeFit/1.0"}
+                )
+                if paths_resp.status_code == 200:
+                    paths_data = paths_resp.json()
+                    paths = paths_data.get("elements", [])
+                    
+                    # Only count if park has multiple paths (indicating it's a substantial park with trails)
+                    # This is a safeguard to avoid counting small parks with just one path
+                    if len(paths) >= 2:  # At least 2 paths suggests a substantial park
+                        # Count paths as trails (cap at 3 per park to avoid overcounting)
+                        # This prevents urban parks from inflating scores too much
+                        trail_count = min(3, len(paths))
+                        distance_m = park_distance_m
+                        large_parks_trails.append({
+                            "type": "park_trail",
+                            "name": f"{park_name} (trails)",
+                            "distance_m": round(distance_m, 0),
+                            "park_name": park_name,
+                            "trail_count": trail_count
+                        })
+            except Exception as e:
+                # Continue to next park if path query fails
+                continue
+        
+        return large_parks_trails
+    
+    except Exception as e:
+        print(f"   ⚠️  Large park trail query error: {e}")
+        return []
 
 
 def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int = 1500) -> int:

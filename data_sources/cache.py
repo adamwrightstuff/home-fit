@@ -87,6 +87,18 @@ def cached(ttl_seconds: int = 3600):
             print(f"💾 Cache miss for {func.__name__} - executing")
             result = func(*args, **kwargs)
             
+            # If API call failed (result is None), try using stale cache as fallback
+            if result is None and cache_entry is not None:
+                # Cache is expired but exists - use it as fallback
+                age_hours = (current_time - cache_time) / 3600
+                print(f"⚠️  API failed, using stale cache (age: {age_hours:.1f} hours) for {func.__name__}")
+                # Mark stale cache in result (if it's a dict, add flag)
+                if isinstance(cache_entry, dict):
+                    cache_entry = cache_entry.copy()
+                    cache_entry['_stale_cache'] = True
+                    cache_entry['_cache_age_hours'] = round(age_hours, 1)
+                return cache_entry
+            
             # Only cache non-None results (None indicates error/obfuscated data that shouldn't be cached)
             if result is not None:
                 # Store in both Redis (if available) and in-memory
