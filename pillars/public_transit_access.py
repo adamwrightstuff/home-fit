@@ -179,18 +179,32 @@ def get_public_transit_score(lat: float, lon: float,
     bus_score = _score_bus_routes(bus_routes, lat, lon, area_type)
     
     # Apply area-type-specific weighting
+    # Note: Individual mode scores are on 0-100 scale, but we want final score 0-100
+    # So we need to normalize the weighted sum appropriately
     if area_type == 'urban_core':
         # Urban: Heavy rail 50%, Light rail 30%, Bus 20%
-        total_score = (heavy_rail_score * 0.5) + (light_rail_score * 0.3) + (bus_score * 0.2)
-        # Scale to 0-100 range
-        total_score = total_score * (100.0 / 100.0)  # Already in 0-100 range
+        # Normalize: if all modes perfect (100 each), weighted sum = 100
+        weighted_sum = (heavy_rail_score * 0.5) + (light_rail_score * 0.3) + (bus_score * 0.2)
+        # For urban areas with excellent heavy rail but no light rail (e.g., NYC subway),
+        # don't penalize for missing light rail - many cities don't have separate streetcar systems
+        # If heavy rail is strong (50+) and light rail is 0, use heavy rail + bus weighting
+        if heavy_rail_score >= 50 and light_rail_score == 0:
+            # Reallocate light rail weight to heavy rail: 50% + 30% = 80% for heavy rail
+            total_score = (heavy_rail_score * 0.8) + (bus_score * 0.2)
+        else:
+            total_score = weighted_sum
+        total_score = min(100.0, total_score)
     elif area_type in ('suburban', 'exurban'):
         # Suburban: Heavy rail (commuter) 60%, Light rail 20%, Bus 20%
-        total_score = (heavy_rail_score * 0.6) + (light_rail_score * 0.2) + (bus_score * 0.2)
-        # Scale to 0-100 range
-        total_score = total_score * (100.0 / 100.0)  # Already in 0-100 range
+        weighted_sum = (heavy_rail_score * 0.6) + (light_rail_score * 0.2) + (bus_score * 0.2)
+        # For suburban with excellent commuter rail but no light rail, be forgiving
+        if heavy_rail_score >= 50 and light_rail_score == 0:
+            total_score = max(weighted_sum, heavy_rail_score * 0.7 + bus_score * 0.2)
+        else:
+            total_score = weighted_sum
+        total_score = min(100.0, total_score)
     elif area_type == 'rural':
-        # Rural: Any service valued equally (30% each, max 90, bonus for multiple modes)
+        # Rural: Any service valued equally (33% each, max 90, bonus for multiple modes)
         total_score = (heavy_rail_score * 0.33) + (light_rail_score * 0.33) + (bus_score * 0.33)
         # Bonus for having multiple modes (any combination)
         mode_count = sum([1 for score in [heavy_rail_score, light_rail_score, bus_score] if score > 0])
@@ -198,7 +212,7 @@ def get_public_transit_score(lat: float, lon: float,
             total_score += 10.0  # Bonus for multimodal access in rural areas
         total_score = min(100.0, total_score)
     else:
-        # Default: balanced weighting
+        # Default: balanced weighting (simple sum, each mode 0-100, cap at 100)
         total_score = heavy_rail_score + light_rail_score + bus_score
         total_score = min(100.0, total_score)
 
