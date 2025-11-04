@@ -33,15 +33,32 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             return requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
         
         # Use centralized retry logic with proper rate limit handling (aligned with other OSM queries)
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.5)
         
         if resp is None or resp.status_code != 200:
             status_msg = f"status {resp.status_code}" if resp else "no response"
             error_detail = f"API {status_msg}"
+            
+            # Determine user-friendly message based on error type
             if resp and resp.status_code == 429:
-                error_detail = f"Rate limited (429) - max retries reached"
+                error_detail = "Rate limited (429) - max retries reached"
+                user_message = "OSM API temporarily rate limited. Please try again in a few seconds."
+            elif resp is None:
+                error_detail = "API no response"
+                user_message = "OSM API temporarily unavailable. Please try again in a few seconds."
+            else:
+                user_message = "OSM API temporarily unavailable. Please try again in a few seconds."
+            
             print(f"⚠️  Overpass API returned {error_detail} for architectural diversity query")
-            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": error_detail}
+            return {
+                "levels_entropy": 0, 
+                "building_type_diversity": 0, 
+                "footprint_area_cv": 0, 
+                "diversity_score": 0, 
+                "error": error_detail,
+                "user_message": user_message,
+                "retry_suggested": True
+            }
         
         elements = resp.json().get("elements", [])
         if not elements:

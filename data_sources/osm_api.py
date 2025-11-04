@@ -12,9 +12,10 @@ from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-def _retry_overpass(request_fn, attempts: int = 3, base_wait: float = 0.8):
+def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
     """Simple retry with exponential backoff for Overpass requests."""
     import time
+    import requests
     for i in range(attempts):
         try:
             resp = request_fn()
@@ -24,13 +25,29 @@ def _retry_overpass(request_fn, attempts: int = 3, base_wait: float = 0.8):
                     # Rate limited - wait longer and retry
                     retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
                     if i < attempts - 1:
-                        print(f"⚠️  OSM rate limited (429), waiting {retry_after}s before retry...")
+                        print(f"⚠️  OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{attempts})...")
                         time.sleep(retry_after)
                         continue
                     else:
                         print(f"⚠️  OSM rate limited (429), max retries reached")
                         return resp
             return resp
+        except requests.exceptions.Timeout as e:
+            if i < attempts - 1:
+                wait_time = base_wait * (2 ** i)
+                print(f"⚠️  OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+                time.sleep(wait_time)
+                continue
+            else:
+                raise
+        except requests.exceptions.RequestException as e:
+            if i < attempts - 1:
+                wait_time = base_wait * (1.5 ** i)
+                print(f"⚠️  OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+                time.sleep(wait_time)
+                continue
+            else:
+                raise
         except Exception as e:
             if i == attempts - 1:
                 raise

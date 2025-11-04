@@ -427,7 +427,14 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         
         if 'error' in diversity_metrics:
             print(f"   ⚠️  Architectural diversity computation failed: {diversity_metrics.get('error')}")
-            return 0.0, {"error": diversity_metrics.get('error'), "note": "OSM building data unavailable"}
+            user_message = diversity_metrics.get('user_message', 'OSM building data temporarily unavailable. Please try again.')
+            retry_suggested = diversity_metrics.get('retry_suggested', False)
+            return 0.0, {
+                "error": diversity_metrics.get('error'), 
+                "note": "OSM building data unavailable",
+                "user_message": user_message,
+                "retry_suggested": retry_suggested
+            }
         
         # Get area type and density for classification
         if area_type is None:
