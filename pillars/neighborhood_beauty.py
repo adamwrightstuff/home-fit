@@ -2,8 +2,9 @@
 Neighborhood Beauty Pillar
 Uses objective, real data sources:
 - Trees (0-50): OSM tree count + Census canopy percentage
-- Architectural Diversity (0-33): Building height, type, and footprint variation
-  (Architectural diversity uses historic context to adjust scoring targets)
+- Architectural Beauty (0-50): Building height, type, and footprint variation
+  (Architectural beauty uses historic context to adjust scoring targets)
+  Both components use native 0-50 ranges (no scaling needed)
 """
 
 from typing import Dict, Tuple, Optional
@@ -32,12 +33,12 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     Scoring components:
     - Trees (0-50): OSM tree count + Census canopy percentage
-    - Architectural Diversity (0-50): Building height, type, and footprint variation
-      (Raw score 0-33 scaled to 0-50. Uses historic context to adjust scoring targets)
+    - Architectural Beauty (0-50): Building height, type, and footprint variation
+      (Both components use native 0-50 ranges. Uses historic context to adjust scoring targets)
     
     Args:
         beauty_weights: Custom weights (e.g., "trees:0.5,architecture:0.5")
-                       Default: trees=0.5, architecture=0.5
+                       Default: trees=0.5, architecture=0.5 (context-aware by area type)
     
     Returns:
         (total_score, detailed_breakdown)
@@ -45,17 +46,31 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     print(f"✨ Analyzing neighborhood beauty...")
     
     # Parse custom weights or use defaults
+    # If no weights provided, use context-aware defaults based on area type
+    if beauty_weights is None:
+        # Detect area type for context-aware defaults
+        from data_sources import census_api as ca
+        density = ca.get_population_density(lat, lon) or 0.0
+        detected_area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+        area_type_for_weights = area_type or detected_area_type
+        
+        # Context-aware defaults: emphasize trees in suburban/rural, architecture in urban
+        if area_type_for_weights in ('suburban', 'exurban', 'rural'):
+            beauty_weights = "trees:0.6,architecture:0.4"  # Emphasize trees
+        elif area_type_for_weights == 'urban_core':
+            beauty_weights = "trees:0.4,architecture:0.6"  # Emphasize architecture
+        else:
+            beauty_weights = "trees:0.5,architecture:0.5"  # Balanced
+    
     weights = _parse_beauty_weights(beauty_weights)
     
     # Component 1: Trees (0-50)
     print(f"   🌳 Analyzing tree canopy...")
     tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=area_type)
     
-    # Component 2: Architectural Diversity (0-33 raw, scaled to 0-50)
-    print(f"   🏗️  Analyzing architectural diversity...")
-    arch_score_raw, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
-    # Scale architectural diversity from 0-33 to 0-50 to match Trees (so components sum to 100)
-    arch_score = arch_score_raw * (50.0 / 33.0)
+    # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
+    print(f"   🏗️  Analyzing architectural beauty...")
+    arch_score, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
     
     # Apply weights: Scale each component to its weighted max points
     # Default: trees=0.5 (50 points), architecture=0.5 (50 points) out of 100
@@ -121,7 +136,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         "score": round(total_score, 1),
         "breakdown": {
             "trees": round(tree_score, 1),
-            "architectural_diversity": round(arch_score, 1),  # Scaled to 0-50 to match Trees
+            "architectural_beauty": round(arch_score, 1),  # Native 0-50 range
             "enhancer_bonus": round(beauty_bonus, 1)  # Add enhancer bonus to breakdown so components sum to total
         },
         "details": {
@@ -137,7 +152,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     # Log results
     print(f"✅ Neighborhood Beauty Score: {total_score:.0f}/100")
     print(f"   🌳 Trees: {tree_score:.0f}/50")
-    print(f"   🏗️  Architectural Diversity: {arch_score:.0f}/50 (raw: {arch_details.get('score', 0):.0f}/33)")
+    print(f"   🏗️  Architectural Beauty: {arch_score:.0f}/50")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
     
     return round(total_score, 1), breakdown
@@ -404,12 +419,12 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                     location_scope: Optional[str] = None,
                                     area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
-    Score architectural diversity (0-33 points raw, scaled to 0-50 in main function).
+    Score architectural beauty (0-50 points native range).
     
     Uses conditional adjustments for historic organic development patterns.
     
     Returns:
-        (raw_score_0-33, details_dict)
+        (score_0-50, details_dict)
     """
     try:
         from data_sources import arch_diversity, census_api, data_quality, geocoding
@@ -475,7 +490,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         
         details = {
             "score": round(beauty_score, 1),
-            "max_score": 33.0,
+            "max_score": 50.0,
             "metrics": {
                 "height_diversity": diversity_metrics.get("levels_entropy", 0),
                 "type_diversity": diversity_metrics.get("building_type_diversity", 0),
@@ -494,7 +509,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "sources": ["OSM"]
         }
         
-        print(f"   ✅ Architectural diversity: {beauty_score:.1f}/33.0 (effective: {effective_area_type})")
+        print(f"   ✅ Architectural beauty: {beauty_score:.1f}/50.0 (effective: {effective_area_type})")
         
         return round(beauty_score, 1), details
         

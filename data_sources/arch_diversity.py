@@ -244,8 +244,11 @@ CONTEXT_TARGETS = {
 }
 
 
-def _score_band(value: float, band: tuple, max_points: float = 11.0) -> float:
-    """Score a value within a context band. Plateau range gets full points."""
+def _score_band(value: float, band: tuple, max_points: float = 16.67) -> float:
+    """Score a value within a context band. Plateau range gets full points.
+    
+    Default max_points is 16.67 so 3 metrics = ~50 points total (native 0-50 range).
+    """
     lo, p_lo, p_hi, hi = band
     if p_lo <= value <= p_hi:
         return max_points
@@ -348,7 +351,7 @@ def score_architectural_diversity_as_beauty(
     median_year_built: Optional[int] = None
 ) -> float:
     """
-    Convert architectural diversity metrics to beauty score (0-33 points).
+    Convert architectural diversity metrics to beauty score (0-50 points).
     
     Simplified approach:
     - Context-biased scoring (different targets per area type)
@@ -356,7 +359,7 @@ def score_architectural_diversity_as_beauty(
     - One coherence bonus (works across all types)
     - One penalty per area type context
     - Density multiplier for rural/exurban
-    - Cap at 33
+    - Cap at 50 (native 0-50 range, no scaling needed)
     
     Args:
         levels_entropy: Height diversity (0-100)
@@ -369,7 +372,7 @@ def score_architectural_diversity_as_beauty(
         median_year_built: Optional median year buildings were built
     
     Returns:
-        Beauty score out of 33 points
+        Beauty score out of 50 points (native range, no scaling)
     """
     # Subtype detection: use centralized helper function
     from .data_quality import get_effective_area_type
@@ -506,10 +509,10 @@ def score_architectural_diversity_as_beauty(
     type_pts = _score_band(building_type_diversity, targets["type"])
     foot_pts = _score_band(footprint_area_cv, targets["footprint"])
     
-    # Cap single-metric dominance (max 13.2 each = 40% of 33)
-    height_pts = min(13.2, height_pts)
-    type_pts = min(13.2, type_pts)
-    foot_pts = min(13.2, foot_pts)
+    # Cap single-metric dominance (max 20 each = 40% of 50)
+    height_pts = min(20.0, height_pts)
+    type_pts = min(20.0, type_pts)
+    foot_pts = min(20.0, foot_pts)
     
     # Base total
     base = height_pts + type_pts + foot_pts
@@ -523,14 +526,17 @@ def score_architectural_diversity_as_beauty(
         if levels_entropy < 10 and footprint_area_cv < 40:
             # Very uniform height + footprint = intentional cohesion, not cookie-cutter
             # This rewards planned communities with consistent architecture
-            base_floor = 5.0
+            base_floor = 7.5  # Scaled proportionally from 5.0 to 7.5 (50/33 ratio)
             base = max(base, base_floor)
     
     # One bonus, one penalty (use effective area type for context-aware penalties)
+    # Scale bonus proportionally for 0-50 range
     bonus = _coherence_bonus(levels_entropy, footprint_area_cv, effective)
+    bonus = bonus * (50.0 / 33.0)  # Scale from 0-33 to 0-50 range
     penalty = _context_penalty(effective, built_coverage_ratio,
                                levels_entropy, building_type_diversity,
                                footprint_area_cv)
+    penalty = penalty * (50.0 / 33.0)  # Scale from 0-33 to 0-50 range
     
     total = base + bonus - penalty
     
@@ -538,5 +544,5 @@ def score_architectural_diversity_as_beauty(
     mult = DENSITY_MULTIPLIER.get(effective, 1.0)
     total *= mult
     
-    # Cap at 33
-    return max(0.0, min(33.0, total))
+    # Cap at 50 (native range)
+    return max(0.0, min(50.0, total))

@@ -1,6 +1,7 @@
 """
 Schools Pillar
 Scores school quality and variety
+Includes K-12 core scoring with small bonuses for early education and nearby colleges
 """
 
 from typing import Dict, Tuple, Optional, List
@@ -10,13 +11,24 @@ from data_sources import schools_api
 def get_school_data(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
-    city: Optional[str] = None
+    city: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None
 ) -> Tuple[float, Dict[str, List[Dict]]]:
     """
     Calculate school score (0-100) and return schools by level.
+    
+    Core K-12 scoring (0-100) with small bonuses:
+    - Early education access: +5 points (max)
+    - Nearby college/university: +5 points (max)
+    - Total capped at 100 after bonuses
+
+    Args:
+        zip_code, state, city: For SchoolDigger API
+        lat, lon: For OSM queries for early education and colleges
 
     Returns:
-        (average_rating, schools_by_level)
+        (average_rating_with_bonuses, schools_by_level)
     """
     print(f"📚 Fetching school data...")
 
@@ -210,5 +222,127 @@ def get_school_data(
 
     print(
         f"\n✅ Overall avg rating: {avg_rating:.2f} (from {len(all_ratings)} schools)")
+    
+    # Add bonuses for early education and nearby colleges (if coordinates provided)
+    early_ed_bonus = 0.0
+    college_bonus = 0.0
+    
+    if lat is not None and lon is not None:
+        try:
+            from data_sources import osm_api
+            import math
+            
+            # Query for early education (kindergarten, preschool) within 2km
+            early_ed_query = f"""
+            [out:json][timeout:20];
+            (
+              node["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+              way["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+              relation["amenity"~"kindergarten|preschool|nursery"](around:2000,{lat},{lon});
+            );
+            out body;
+            >;
+            out skel qt;
+            """
+            
+            try:
+                from data_sources.osm_api import OVERPASS_URL, requests, _retry_overpass
+                def _do_request():
+                    return requests.post(OVERPASS_URL, data={"data": early_ed_query}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+                resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+                
+                if resp and resp.status_code == 200:
+                    data = resp.json()
+                    elements = data.get("elements", [])
+                    early_ed_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
+                    
+                    if early_ed_count > 0:
+                        # Score based on count and proximity
+                        closest_distance = float('inf')
+                        for elem in elements:
+                            if elem.get("type") == "node":
+                                elem_lat = elem.get("lat")
+                                elem_lon = elem.get("lon")
+                                if elem_lat and elem_lon:
+                                    dist = math.sqrt((elem_lat - lat)**2 + (elem_lon - lon)**2) * 111000  # rough meters
+                                    closest_distance = min(closest_distance, dist)
+                        
+                        # Bonus: 0-5 points based on count and distance
+                        if early_ed_count >= 3:
+                            early_ed_bonus = 5.0
+                        elif early_ed_count >= 2:
+                            early_ed_bonus = 3.0
+                        elif early_ed_count >= 1:
+                            early_ed_bonus = 2.0
+                        
+                        # Reduce bonus if far away
+                        if closest_distance < float('inf') and closest_distance > 1000:
+                            early_ed_bonus *= 0.7  # 30% reduction if >1km away
+                        
+                        print(f"   🎓 Early education bonus: +{early_ed_bonus:.1f} ({early_ed_count} facilities)")
+            except Exception as e:
+                print(f"   ⚠️  Early education query failed: {e}")
+            
+            # Query for colleges/universities within 10km
+            college_query = f"""
+            [out:json][timeout:20];
+            (
+              node["amenity"~"university|college"](around:10000,{lat},{lon});
+              way["amenity"~"university|college"](around:10000,{lat},{lon});
+              relation["amenity"~"university|college"](around:10000,{lat},{lon});
+            );
+            out body;
+            >;
+            out skel qt;
+            """
+            
+            try:
+                def _do_request():
+                    return requests.post(OVERPASS_URL, data={"data": college_query}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+                resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+                
+                if resp and resp.status_code == 200:
+                    data = resp.json()
+                    elements = data.get("elements", [])
+                    college_count = len([e for e in elements if e.get("type") in ("node", "way", "relation")])
+                    
+                    if college_count > 0:
+                        # Score based on count and proximity
+                        closest_distance = float('inf')
+                        for elem in elements:
+                            if elem.get("type") == "node":
+                                elem_lat = elem.get("lat")
+                                elem_lon = elem.get("lon")
+                                if elem_lat and elem_lon:
+                                    dist = math.sqrt((elem_lat - lat)**2 + (elem_lon - lon)**2) * 111000  # rough meters
+                                    closest_distance = min(closest_distance, dist)
+                        
+                        # Bonus: 0-5 points based on count and distance
+                        if college_count >= 2:
+                            college_bonus = 5.0
+                        elif college_count >= 1:
+                            # Distance-based scoring
+                            if closest_distance < float('inf'):
+                                if closest_distance <= 2000:
+                                    college_bonus = 5.0
+                                elif closest_distance <= 5000:
+                                    college_bonus = 3.0
+                                elif closest_distance <= 10000:
+                                    college_bonus = 2.0
+                            else:
+                                college_bonus = 3.0
+                        
+                        print(f"   🎓 College/university bonus: +{college_bonus:.1f} ({college_count} institutions)")
+            except Exception as e:
+                print(f"   ⚠️  College query failed: {e}")
+        except Exception as e:
+            print(f"   ⚠️  Bonus calculation failed: {e}")
+    
+    # Apply bonuses (capped at 100)
+    total_score = avg_rating + early_ed_bonus + college_bonus
+    total_score = min(100.0, total_score)
+    
+    if early_ed_bonus > 0 or college_bonus > 0:
+        print(f"   📈 Score with bonuses: {total_score:.2f} (base: {avg_rating:.2f}, bonuses: +{early_ed_bonus + college_bonus:.1f})")
 
-    return round(avg_rating, 2), schools_by_level
+    return round(total_score, 2), schools_by_level

@@ -18,11 +18,11 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     """
     Calculate active outdoors score (0-100) based on access to outdoor activities.
 
-    Scoring (EQUAL WEIGHTS for regional activities):
+    Scoring:
     - Local Parks & Playgrounds: 0-40 points (within 1km - daily use)
+    - Trail Access: 0-30 points (hiking, nature reserves within 15km)
     - Water Access: 0-20 points (beaches, lakes within 15km)
-    - Trail Access: 0-20 points (hiking, nature reserves within 15km)
-    - Camping Access: 0-20 points (campsites within 15km)
+    - Camping Access: 0-10 points (campsites within 15km)
 
     Returns:
         (total_score, detailed_breakdown)
@@ -94,9 +94,9 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
 
     # Score components with smooth curves and contextual adjustments
     local_score = _score_local_recreation_smooth(parks, playgrounds, expectations)  # 0-40
+    trail_score = _score_trail_access_smooth(hiking, expectations)  # 0-30
     water_score = _score_water_access_smooth(swimming, expectations)  # 0-20
-    trail_score = _score_trail_access_smooth(hiking, expectations)  # 0-20
-    camping_score = _score_camping_smooth(camping, expectations)  # 0-20
+    camping_score = _score_camping_smooth(camping, expectations)  # 0-10
 
     total_score = local_score + water_score + trail_score + camping_score
 
@@ -129,9 +129,9 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     # Log results
     print(f"✅ Active Outdoors Score: {total_score:.0f}/100")
     print(f"   🏞️  Local Parks & Playgrounds: {local_score:.0f}/40")
+    print(f"   🥾 Trail Access: {trail_score:.0f}/30")
     print(f"   🏊 Water Access: {water_score:.0f}/20")
-    print(f"   🥾 Trail Access: {trail_score:.0f}/20")
-    print(f"   🏕️  Camping: {camping_score:.0f}/20")
+    print(f"   🏕️  Camping: {camping_score:.0f}/10")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
@@ -298,14 +298,14 @@ def _score_water_access(swimming: list) -> float:
 
 
 def _score_trail_access_smooth(hiking: list, expectations: Dict) -> float:
-    """Score trail access (0-20 points) using smooth decay curves."""
+    """Score trail access (0-30 points) using smooth decay curves."""
     if not hiking:
         return 0.0
 
     closest = min(f["distance_m"] for f in hiking)
     
     # Smooth distance decay
-    max_score = 20.0
+    max_score = 30.0
     optimal_distance = 2000  # meters
     decay_rate = 0.0002
     
@@ -338,14 +338,14 @@ def _score_trail_access(hiking: list) -> float:
 
 
 def _score_camping_smooth(camping: list, expectations: Dict) -> float:
-    """Score camping access (0-20 points) using smooth decay curves."""
+    """Score camping access (0-10 points) using smooth decay curves."""
     if not camping:
         return 0.0
 
     closest = min(f["distance_m"] for f in camping)
     
     # Smooth distance decay
-    max_score = 20.0
+    max_score = 10.0
     optimal_distance = 5000  # meters
     decay_rate = 0.0001
     

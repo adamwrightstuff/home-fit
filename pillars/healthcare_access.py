@@ -172,10 +172,12 @@ def get_healthcare_access_score(lat: float, lon: float,
     Calculate healthcare access score (0-100).
 
     Scoring:
-    - Hospital Access (0-40): Distance to nearest major hospital
-    - Urgent Care (0-30): Clinics within 5km
-    - Pharmacies (0-20): Pharmacies within 1km
-    - Clinic Density (0-10): General healthcare facilities
+    - Hospital Access (0-35): Distance to nearest major hospital
+    - Primary Care (0-25): Clinics and doctors within radius
+    - Specialized Care (0-15): Specialty services available
+    - Emergency Services (0-10): Emergency room capability
+    - Pharmacies (0-15): Pharmacies within radius
+    - Bonuses shown separately (cap at 100)
 
     Returns:
         (total_score, detailed_breakdown)
@@ -233,22 +235,24 @@ def get_healthcare_access_score(lat: float, lon: float,
     # pop_density already computed
     denom = max(1.0, (pop_density / 10000.0))
 
-    # 1) Hospital presence (40 points)
-    # Do NOT require emergency tag for base presence. Any hospital within radius grants base points.
+    # 1) Hospital presence (35 points base)
     has_hospital = len(hospitals) > 0
-    hospital_score = 40.0 if has_hospital else 0.0
-    # Small bonus for additional hospitals (max +10)
+    hospital_base = 35.0 if has_hospital else 0.0
+    # Bonus for additional hospitals (shown separately)
+    hospital_bonus = 0.0
     if len(hospitals) > 1:
-        hospital_score += min(10.0, float(len(hospitals) - 1) * 2.0)
-    hospital_score = min(50.0, hospital_score)  # safety cap
+        hospital_bonus = min(10.0, float(len(hospitals) - 1) * 2.0)
+    hospital_score = min(35.0, hospital_base)  # Base score capped at 35
 
-    # 2) Primary care access (30 points)
+    # 2) Primary care access (25 points)
     has_clinic = len(clinics) > 0
     has_doctors = len(doctors) > 0
-    primary_score = (10.0 if has_clinic else 0.0) + (10.0 if has_doctors else 0.0)
+    primary_base = (10.0 if has_clinic else 0.0) + (10.0 if has_doctors else 0.0)
     primary_count = len(clinics) + len(doctors)
     primary_per_10k = primary_count / denom
-    primary_score += max(0.0, min(10.0, primary_per_10k))
+    primary_density = max(0.0, min(5.0, primary_per_10k))
+    primary_score = primary_base + primary_density
+    primary_score = min(25.0, primary_score)  # Cap at 25
 
     # 3) Specialized care (15 points)
     import re
@@ -267,13 +271,17 @@ def get_healthcare_access_score(lat: float, lon: float,
         (f.get('tags', {}).get('emergency') == 'yes') or (f.get('emergency') == 'yes')
         for f in hospitals
     )
-    emergency_bonus = 10.0 if has_emergency_hospital else 0.0
+    emergency_score = 10.0 if has_emergency_hospital else 0.0
 
-    # 5) Pharmacy access (5 points)
+    # 5) Pharmacy access (15 points) - increased from 5
     pharm_per_10k = len(pharmacies) / denom
-    pharmacy_score = max(0.0, min(5.0, pharm_per_10k))
+    pharmacy_score = max(0.0, min(15.0, pharm_per_10k * 3.0))  # Scale up from 5 to 15
 
-    total_score = hospital_score + primary_score + specialty_score + emergency_bonus + pharmacy_score
+    # Base total (without bonuses)
+    base_total = hospital_score + primary_score + specialty_score + emergency_score + pharmacy_score
+    
+    # Total with bonuses (cap at 100)
+    total_score = base_total + hospital_bonus
     total_score = max(0.0, min(100.0, total_score))
 
     # Assess data quality
@@ -306,11 +314,14 @@ def get_healthcare_access_score(lat: float, lon: float,
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
-            "hospital_presence": round(hospital_score, 1),
+            "hospital_access": round(hospital_score, 1),
             "primary_care": round(primary_score, 1),
             "specialized_care": round(specialty_score, 1),
-            "emergency_services": round(emergency_bonus, 1),
+            "emergency_services": round(emergency_score, 1),
             "pharmacies": round(pharmacy_score, 1)
+        },
+        "bonuses": {
+            "hospital_bonus": round(hospital_bonus, 1)  # Additional hospitals beyond first
         },
         "summary": _build_summary(
             nearest_hospital, urgent_care, pharmacies, clinics
@@ -326,11 +337,13 @@ def get_healthcare_access_score(lat: float, lon: float,
 
     # Log results
     print(f"✅ Healthcare Access Score: {total_score:.0f}/100")
-    print(f"   🏥 Hospital Presence: {hospital_score:.0f}/40 ({len(hospitals)} hospitals)")
-    print(f"   🩺 Primary Care: {primary_score:.0f}/30 (clinics={len(clinics)}, doctors={len(doctors)})")
+    print(f"   🏥 Hospital Access: {hospital_score:.0f}/35 ({len(hospitals)} hospitals)")
+    if hospital_bonus > 0:
+        print(f"      + Hospital Bonus: {hospital_bonus:.0f} (additional hospitals)")
+    print(f"   🩺 Primary Care: {primary_score:.0f}/25 (clinics={len(clinics)}, doctors={len(doctors)})")
     print(f"   🧠 Specialized Care: {specialty_score:.0f}/15 (specialties={len(specialties)})")
-    print(f"   🚨 Emergency Services: {emergency_bonus:.0f}/10 (hospital_emergency_tag={has_emergency_hospital})")
-    print(f"   💊 Pharmacies: {pharmacy_score:.0f}/5 ({len(pharmacies)} nearby)")
+    print(f"   🚨 Emergency Services: {emergency_score:.0f}/10 (hospital_emergency_tag={has_emergency_hospital})")
+    print(f"   💊 Pharmacies: {pharmacy_score:.0f}/15 ({len(pharmacies)} nearby)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
