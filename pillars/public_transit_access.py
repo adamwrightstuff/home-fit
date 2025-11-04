@@ -275,14 +275,18 @@ def get_public_transit_score(lat: float, lon: float,
             total_score = max(bus_score, light_rail_score)
         total_score = min(100.0, total_score)
     elif area_type in ('suburban', 'exurban'):
-        # Suburban: Heavy rail (commuter) 75%, Light rail 5%, Bus 20%
-        # Commuter rail is primary for suburban areas
-        weighted_sum = (heavy_rail_score * 0.75) + (light_rail_score * 0.05) + (bus_score * 0.2)
-        # If no light rail, reallocate that weight to heavy rail
-        if light_rail_score == 0:
-            total_score = (heavy_rail_score * 0.8) + (bus_score * 0.2)
+        # Suburban: Use best mode (usually commuter rail if available)
+        # If commuter rail is excellent (70+), use it - bus doesn't matter
+        # Only consider bus if commuter rail is weak/missing
+        if heavy_rail_score >= 70.0:
+            # Excellent commuter rail = you can get everywhere, bus is redundant
+            total_score = heavy_rail_score
+        elif heavy_rail_score > 0:
+            # Some commuter rail but not excellent - use best of heavy rail or bus
+            total_score = max(heavy_rail_score, bus_score)
         else:
-            total_score = weighted_sum
+            # No commuter rail - use best available (bus or light rail)
+            total_score = max(bus_score, light_rail_score)
         total_score = min(100.0, total_score)
     elif area_type == 'rural':
         # Rural: Any service valued equally (33% each, max 90, bonus for multiple modes)
