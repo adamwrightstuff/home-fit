@@ -7,11 +7,14 @@ import os
 import requests
 import math
 from typing import Dict, Tuple, List, Optional
+from dotenv import load_dotenv
 from data_sources import data_quality
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.transitland_api import get_nearby_transit_stops
 
-# Note: load_dotenv() called in main.py - no need to call here
+# Load environment variables from .env file
+load_dotenv()
+
 # Transitland API v2 endpoint
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
