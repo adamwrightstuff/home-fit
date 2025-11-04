@@ -410,8 +410,15 @@ def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float =
     else:
         density_score = 5.0
     
-    # Frequency bonus: more routes = higher frequency (0-10 pts)
-    frequency_bonus = min(10.0, count * 2.0)
+    # Frequency bonus: more routes = higher frequency (0-20 pts)
+    # Cap at 20 to reward exceptional transit access (e.g., NYC with 12+ stops)
+    # Linear scaling: 1-5 stops → 2-10 pts, 6-10 stops → 12-20 pts, 10+ stops → 20 pts
+    if count >= 10:
+        frequency_bonus = 20.0
+    elif count >= 5:
+        frequency_bonus = 10.0 + ((count - 5) * 2.0)  # 10-20 pts for 5-10 stops
+    else:
+        frequency_bonus = min(10.0, count * 2.0)  # 2-10 pts for 1-5 stops
     
     # Proximity bonus: calculate distance to nearest stop (0-10 pts)
     proximity_bonus = 0.0
