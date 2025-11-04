@@ -173,13 +173,48 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
 
     # Compute a single area_type centrally for consistent radius profiles
     # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+    # Use multi-factor classification: business density, building coverage, density, keywords
     census_tract = None
     density = 0.0
     try:
         from data_sources import census_api as _ca
         from data_sources import data_quality as _dq
+        from data_sources import osm_api
+        from data_sources.arch_diversity import compute_arch_diversity
+        
         density = _ca.get_population_density(lat, lon) or 0.0
-        area_type = _dq.detect_area_type(lat, lon, density, city)
+        
+        # Get business count for classification (will be cached for amenities pillar)
+        business_count = 0
+        try:
+            business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+            if business_data:
+                all_businesses = (business_data.get("tier1_daily", []) + 
+                                business_data.get("tier2_social", []) +
+                                business_data.get("tier3_culture", []) +
+                                business_data.get("tier4_services", []))
+                business_count = len(all_businesses)
+        except Exception as e:
+            print(f"⚠️  Business count query failed (non-fatal): {e}")
+        
+        # Get built coverage for classification (will be cached for beauty pillar)
+        built_coverage = None
+        try:
+            arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+            if arch_diversity:
+                built_coverage = arch_diversity.get("built_coverage_ratio")
+        except Exception as e:
+            print(f"⚠️  Built coverage query failed (non-fatal): {e}")
+        
+        # Enhanced multi-factor classification
+        area_type = _dq.detect_area_type(
+            lat, lon, 
+            density=density, 
+            city=city,
+            location_input=location,  # For "downtown" keyword check
+            business_count=business_count,  # For business density
+            built_coverage=built_coverage  # For building coverage
+        )
         
         # Pre-compute census tract for pillars (used by housing, beauty, etc.)
         try:

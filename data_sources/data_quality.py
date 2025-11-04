@@ -9,17 +9,25 @@ from .census_api import get_population_density, get_census_tract
 from .error_handling import get_fallback_score
 
 
-def detect_area_type(lat: float, lon: float, density: Optional[float] = None, city: Optional[str] = None) -> str:
+def detect_area_type(lat: float, lon: float, density: Optional[float] = None, 
+                     city: Optional[str] = None, location_input: Optional[str] = None,
+                     business_count: Optional[int] = None,
+                     built_coverage: Optional[float] = None) -> str:
     """
-    Detect area type based on population density and city context.
-    
-    Uses city name to identify major metros' downtowns even when residential
-    population density is lower (historic downtowns, commercial districts, etc.).
+    Detect area type using multi-factor classification:
+    1. "Downtown" keyword check
+    2. Business density (high = urban core)
+    3. Building coverage (high = urban core)
+    4. Population density with city-size adjusted thresholds
+    5. Standard density thresholds (fallback)
     
     Args:
         lat, lon: Coordinates
         density: Optional pre-fetched density (for efficiency)
         city: Optional city name (used to identify major metros)
+        location_input: Optional raw location input string (for "downtown" keyword check)
+        business_count: Optional count of businesses in 1km radius (for business density)
+        built_coverage: Optional building coverage ratio 0.0-1.0 (for building density)
     
     Returns:
         'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
@@ -27,7 +35,32 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
     if density is None:
         density = get_population_density(lat, lon)
     
-    # First check if city is a major metro (even if density is missing)
+    # Factor 1: "Downtown" keyword check = urban core
+    # Even if density is low, downtown areas are urban cores
+    if location_input and "downtown" in location_input.lower():
+        if density and density > 2000:
+            return "urban_core"
+        elif density:
+            # Even low density downtowns are urban cores (commercial districts)
+            return "urban_core"
+    
+    # Factor 2: High business density = urban core (downtown/commercial district)
+    # 150+ businesses in 1km = clearly downtown/urban core
+    if business_count is not None and business_count > 150:
+        return "urban_core"
+    # 75-150 businesses = likely urban core, but check density
+    elif business_count is not None and business_count > 75:
+        if density and density > 2000:
+            return "urban_core"
+    
+    # Factor 3: High building coverage = urban core
+    # 20%+ building coverage = dense urban form
+    if built_coverage is not None and built_coverage > 0.20:
+        if density and density > 2000:
+            return "urban_core"
+    
+    # Factor 4: City-size adjusted density thresholds
+    # Check if city is a major metro (even if density is missing)
     if city:
         from .regional_baselines import RegionalBaselineManager
         baseline_mgr = RegionalBaselineManager()
@@ -35,16 +68,18 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
         city_lower = city.lower().strip()
         for metro_name in baseline_mgr.major_metros.keys():
             if metro_name.lower() == city_lower:
-                # If density is available, use it; otherwise default to urban_core for major cities
-                if density and density > 10000:
+                # Major metros: lower threshold for urban core
+                if density and density > 2500:
                     return "urban_core"
-                elif density and density > 2500:
-                    return "urban_core"  # Major city downtown with moderate density
+                elif density and density > 2000 and business_count and business_count > 50:
+                    # Major metro with moderate density + businesses = urban core
+                    return "urban_core"
                 elif not density:
                     return "urban_core"  # Major city, assume urban_core even without density data
                 else:
                     return "urban_core"  # Major city, low density but still urban core
     
+    # Factor 5: Standard density thresholds (for non-major metros)
     # If density is missing and not a major city, return unknown
     if not density:
         return "unknown"
@@ -54,7 +89,10 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None, ci
         return "urban_core"
     
     # For areas with density 2,500-10,000 (typically suburban)
+    # But check if it's downtown-like (high business density)
     elif density > 2500:
+        if business_count and business_count > 100:
+            return "urban_core"  # High business density = downtown
         return "suburban"
     # Exurban: 500-2,500 people/sq mi (e.g., outer suburbs)
     elif density > 500:
