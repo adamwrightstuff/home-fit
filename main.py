@@ -24,7 +24,7 @@ from data_sources.arch_diversity import compute_arch_diversity, score_architectu
 ##########################
 # CONFIGURATION FLAGS
 ##########################
-ENABLE_SCHOOL_SCORING = False  # Set to False to skip SchoolDigger API calls
+ENABLE_SCHOOL_SCORING = True  # Set to False to skip SchoolDigger API calls
 
 # Load environment variables
 load_dotenv()
