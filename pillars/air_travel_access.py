@@ -12,8 +12,14 @@ from data_sources.regional_baselines import get_area_classification, get_context
 # Load comprehensive airport database
 def _load_airport_database() -> List[Dict]:
     """Load comprehensive airport database from JSON file."""
+    import os
+    # Get the path relative to this file's location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)  # Go up from 'pillars' to project root
+    airport_file = os.path.join(project_root, 'data_sources', 'static', 'airports.json')
+    
     try:
-        with open('data_sources/static/airports.json', 'r') as f:
+        with open(airport_file, 'r') as f:
             data = json.load(f)
             return data.get('airports', [])
     except FileNotFoundError:
