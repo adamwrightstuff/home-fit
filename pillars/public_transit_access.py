@@ -234,14 +234,8 @@ def get_public_transit_score(lat: float, lon: float,
         except Exception:
             pass
 
-    # Correct data_quality fallback flags and record data sources used
+    # Record data sources used
     try:
-        found_any = (len(heavy_rail_routes) + len(light_rail_routes) + len(bus_routes)) > 0
-        quality_metrics['needs_fallback'] = not found_any
-        quality_metrics['fallback_score'] = 30.0 if not found_any else None
-        fm = quality_metrics.get('fallback_metadata', {}) or {}
-        fm['fallback_used'] = not found_any
-        quality_metrics['fallback_metadata'] = fm
         ds = quality_metrics.get('data_sources', []) or []
         # Prefer Transitland when routes_data came from API; if we used OSM stations, include 'osm'
         if routes_data and not ds:

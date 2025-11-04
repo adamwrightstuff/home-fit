@@ -9,7 +9,7 @@ import os
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from data_sources.cache import clear_cache, get_cache_stats, cleanup_expired_cache
-from data_sources.error_handling import check_api_credentials, get_fallback_score
+from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score

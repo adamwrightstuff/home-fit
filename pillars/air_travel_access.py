@@ -176,21 +176,6 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     airport_data = {'airports': airports_with_distance}
     quality_metrics = assess_pillar_data_quality('air_travel_access', airport_data, lat, lon, area_type)
     
-    if quality_metrics['needs_fallback']:
-        print("⚠️  Using fallback scoring due to poor data quality")
-        fallback_score = quality_metrics['fallback_score']
-        
-        breakdown = {
-            "score": round(fallback_score, 1),
-            "primary_airport": None,
-            "nearest_airports": [],
-            "summary": _build_summary(None, None, fallback_score),
-            "data_quality": quality_metrics,
-            "area_classification": area_metadata
-        }
-        
-        return round(fallback_score, 1), breakdown
-
     # Multi-airport scoring
     score, primary_airport, airport_category = _calculate_multi_airport_score(
         airports_with_distance, expectations

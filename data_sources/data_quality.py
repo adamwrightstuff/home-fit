@@ -6,7 +6,6 @@ Provides tiered fallback mechanisms and data completeness scoring
 import math
 from typing import Dict, List, Tuple, Optional, Any
 from .census_api import get_population_density, get_census_tract
-from .error_handling import get_fallback_score
 
 
 def detect_area_type(lat: float, lon: float, density: Optional[float] = None, 
@@ -275,29 +274,7 @@ def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict]
 
 
 class DataQualityManager:
-    """Manages data quality assessment and fallback strategies."""
-    
-    # Major metro centers for transit fallback
-    MAJOR_METROS = {
-        "New York": (40.7128, -74.0060),
-        "Los Angeles": (34.0522, -118.2437),
-        "Chicago": (41.8781, -87.6298),
-        "Houston": (29.7604, -95.3698),
-        "Phoenix": (33.4484, -112.0740),
-        "Philadelphia": (39.9526, -75.1652),
-        "San Diego": (32.7157, -117.1611),
-        "Dallas": (32.7767, -96.7970),
-        "San Jose": (37.3382, -121.8863),
-        "Austin": (30.2672, -97.7431),
-        "San Francisco": (37.7749, -122.4194),
-        "Columbus": (39.9612, -82.9988),
-        "Seattle": (47.6062, -122.3321),
-        "Boston": (42.3601, -71.0589),
-        "Miami": (25.7617, -80.1918),
-        "Portland": (45.5152, -122.6784),
-        "Denver": (39.7392, -104.9903),
-        "Atlanta": (33.7490, -84.3880),
-    }
+    """Manages data quality assessment."""
     
     def __init__(self):
         self.quality_thresholds = {
@@ -307,74 +284,6 @@ class DataQualityManager:
             'poor': 0.3,         # 30-49% data completeness
             'very_poor': 0.0     # <30% data completeness
         }
-    
-    def _get_base_scores(self) -> Dict:
-        """Get base fallback scores by area type."""
-        return {
-            'urban_core': {
-                'active_outdoors': 60,
-                'healthcare_access': 70,
-                'air_travel_access': 80,
-                'neighborhood_amenities': 75,
-                'neighborhood_beauty': 50,
-                'public_transit_access': 65,
-                'quality_education': 60,
-                'housing_value': 40
-            },
-            'suburban': {
-                'active_outdoors': 50,
-                'healthcare_access': 60,
-                'air_travel_access': 60,
-                'neighborhood_amenities': 45,
-                'neighborhood_beauty': 55,
-                'public_transit_access': 40,
-                'quality_education': 65,
-                'housing_value': 60
-            },
-            'exurban': {
-                'active_outdoors': 40,
-                'healthcare_access': 45,
-                'air_travel_access': 30,
-                'neighborhood_amenities': 25,
-                'neighborhood_beauty': 60,
-                'public_transit_access': 20,
-                'quality_education': 55,
-                'housing_value': 70
-            },
-            'rural': {
-                'active_outdoors': 30,
-                'healthcare_access': 30,
-                'air_travel_access': 20,
-                'neighborhood_amenities': 15,
-                'neighborhood_beauty': 70,
-                'public_transit_access': 10,
-                'quality_education': 45,
-                'housing_value': 80
-            }
-        }
-    
-    def _find_nearest_metro(self, lat: float, lon: float) -> float:
-        """Find distance to nearest major metro center in kilometers."""
-        min_distance = float('inf')
-        
-        for metro_name, (metro_lat, metro_lon) in self.MAJOR_METROS.items():
-            distance = self._haversine_distance(lat, lon, metro_lat, metro_lon)
-            min_distance = min(min_distance, distance)
-        
-        return min_distance
-    
-    def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        """Calculate distance between two points in kilometers."""
-        R = 6371  # Earth radius in km
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        delta_phi = math.radians(lat2 - lat1)
-        delta_lambda = math.radians(lon2 - lon1)
-        
-        a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-        
-        return R * c
     
     def assess_data_completeness(self, pillar_name: str, data: Dict, 
                                expected_minimums: Dict) -> Tuple[float, str]:
@@ -652,74 +561,6 @@ class DataQualityManager:
                 'business_types': 3
             }
     
-    def get_fallback_strategy(self, pillar_name: str, quality_tier: str, 
-                            area_type: str, lat: Optional[float] = None, 
-                            lon: Optional[float] = None) -> Tuple[float, Dict]:
-        """
-        Get fallback strategy based on data quality and area type.
-        
-        Args:
-            pillar_name: Name of the pillar
-            quality_tier: Quality assessment result
-            area_type: Area classification
-            lat, lon: Optional coordinates for metro proximity checks
-        
-        Returns:
-            Tuple of (fallback_score, fallback_metadata)
-        """
-        # Special handling for transit pillar with metro proximity
-        if pillar_name == 'public_transit_access' and quality_tier == 'very_poor' and lat and lon:
-            metro_dist = self._find_nearest_metro(lat, lon)
-            
-            if metro_dist < 30:  # km
-                fallback_score = 40.0
-                reason = f"Within {metro_dist:.0f}km of major metro"
-            elif metro_dist < 50:
-                fallback_score = 30.0
-                reason = f"Within {metro_dist:.0f}km of major metro"
-            else:
-                # Use standard suburban fallback
-                base_scores = self._get_base_scores()
-                base_score = base_scores.get(area_type, {}).get(pillar_name, 40)
-                fallback_score = base_score * 0.6
-                reason = "Standard suburban fallback"
-            
-            return fallback_score, {
-                'fallback_used': True,
-                'quality_tier': quality_tier,
-                'area_type': area_type,
-                'metro_distance_km': round(metro_dist, 1),
-                'reason': reason
-            }
-        
-        # Base fallback scores by area type
-        base_scores = self._get_base_scores()
-        
-        # Adjust based on quality tier
-        quality_adjustments = {
-            'excellent': 1.0,
-            'good': 0.9,
-            'fair': 0.8,
-            'poor': 0.7,
-            'very_poor': 0.6
-        }
-        
-        base_score = base_scores.get(area_type, {}).get(pillar_name, 50)
-        adjustment = quality_adjustments.get(quality_tier, 0.6)
-        
-        fallback_score = base_score * adjustment
-        
-        metadata = {
-            'fallback_used': True,
-            'quality_tier': quality_tier,
-            'area_type': area_type,
-            'base_score': base_score,
-            'adjustment_factor': adjustment,
-            'reason': f'Data quality {quality_tier} in {area_type} area'
-        }
-        
-        return fallback_score, metadata
-    
     def create_confidence_score(self, data_completeness: float, 
                               data_sources: List[str], 
                               fallback_used: bool) -> int:
@@ -779,29 +620,21 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
         pillar_name, data, expected_minimums
     )
     
-    # Determine if fallback is needed
-    needs_fallback = quality_tier in ['poor', 'very_poor']
-    
-    if needs_fallback:
-        fallback_score, fallback_metadata = data_quality_manager.get_fallback_strategy(
-            pillar_name, quality_tier, area_type, lat=lat, lon=lon
-        )
-    else:
-        fallback_score = None
-        fallback_metadata = {'fallback_used': False}
+    # Never use fallback - always calculate from real data
+    # Fallback scoring removed - scores must be based on actual data
     
     # Create confidence score
-    data_sources = ['osm'] if data else ['fallback']
+    data_sources = ['osm'] if data else []
     confidence = data_quality_manager.create_confidence_score(
-        completeness, data_sources, needs_fallback
+        completeness, data_sources, False  # needs_fallback always False
     )
     
     return {
         'completeness': completeness,
         'quality_tier': quality_tier,
-        'needs_fallback': needs_fallback,  # Indicates data quality; actual score uses real data when available
-        'fallback_score': fallback_score,  # Only used if actual data unavailable; shown for transparency
-        'fallback_metadata': fallback_metadata,
+        'needs_fallback': False,  # Always False - no fallback scoring
+        'fallback_score': None,  # Always None - no fallback scoring
+        'fallback_metadata': {'fallback_used': False},
         'confidence': confidence,
         'expected_minimums': expected_minimums,
         'data_sources': data_sources

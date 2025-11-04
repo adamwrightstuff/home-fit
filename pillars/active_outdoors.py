@@ -85,26 +85,6 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     # Assess data quality
     quality_metrics = assess_pillar_data_quality('active_outdoors', combined_data, lat, lon, area_type)
     
-    if quality_metrics['needs_fallback']:
-        print("⚠️  Using fallback scoring due to poor data quality")
-        fallback_score = quality_metrics['fallback_score']
-        fallback_metadata = quality_metrics['fallback_metadata']
-        
-        breakdown = {
-            "score": round(fallback_score, 1),
-            "breakdown": {
-                "local_parks_playgrounds": round(fallback_score * 0.4, 1),
-                "water_access": round(fallback_score * 0.2, 1),
-                "trail_access": round(fallback_score * 0.2, 1),
-                "camping_access": round(fallback_score * 0.2, 1)
-            },
-            "summary": _build_summary([], [], [], [], []),
-            "data_quality": quality_metrics,
-            "area_classification": area_metadata
-        }
-        
-        return round(fallback_score, 1), breakdown
-
     # Extract data
     parks = combined_data['parks']
     playgrounds = combined_data['playgrounds']

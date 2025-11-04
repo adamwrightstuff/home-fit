@@ -128,47 +128,6 @@ def safe_api_call(api_name: str, required: bool = True):
     return decorator
 
 
-def get_fallback_score(pillar_name: str, reason: str = "API unavailable") -> Tuple[float, Dict]:
-    """
-    Get a fallback score when data is unavailable.
-    
-    Args:
-        pillar_name: Name of the pillar
-        reason: Reason for fallback
-    
-    Returns:
-        Tuple of (score, breakdown)
-    """
-    fallback_scores = {
-        "active_outdoors": 30,  # Conservative score for outdoor access
-        "neighborhood_beauty": 40,  # Moderate score for beauty
-        "neighborhood_amenities": 25,  # Low score for amenities
-        "air_travel_access": 20,  # Low score for air travel
-        "public_transit_access": 15,  # Low score for transit
-        "healthcare_access": 35,  # Moderate score for healthcare
-        "quality_education": 50,  # Neutral score for education
-        "housing_value": 45,  # Moderate score for housing
-    }
-    
-    score = fallback_scores.get(pillar_name, 30)
-    
-    breakdown = {
-        "score": score,
-        "breakdown": {
-            "fallback": score,
-            "reason": reason
-        },
-        "summary": {
-            "fallback_used": True,
-            "reason": reason,
-            "note": f"Data unavailable for {pillar_name} pillar"
-        }
-    }
-    
-    logger.warning(f"Using fallback score {score} for {pillar_name}: {reason}")
-    return score, breakdown
-
-
 def validate_required_data(data: Any, data_name: str) -> bool:
     """
     Validate that required data is present and valid.
