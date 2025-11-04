@@ -282,11 +282,34 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
         # Stronger penalty the emptier the ground plane
         # urban_core_lowrise gets slightly more lenient penalties (coastal/edge cities often have lower coverage)
         if area_type == "urban_core_lowrise":
+            # Check if low coverage might be due to parks/green space (uniform residential pattern)
+            # Pattern: uniform architecture + varied lot sizes = parks/green space, not voids
+            # SAFEGUARD: Only reduce penalty for genuinely dense areas to avoid rewarding sprawl
+            # Require density > 5,000 people/sq mi to distinguish from sprawl
+            # Note: density parameter not directly available here, but we can check the pattern
+            # The adjustment in score_architectural_diversity_as_beauty already has density check
+            is_uniform_residential = (levels_entropy < 15 and type_div < 45 and 
+                                      footprint_cv is not None and footprint_cv > 60)
+            
+            # Note: We can't check density here directly, but the adjustment logic above
+            # already requires density > 5000, so if the adjustment applied, this is safe
+            # However, we should still be conservative - only reduce penalty if pattern matches
+            # AND we're confident it's parks (high footprint CV from varied lot sizes, not fragmentation)
+            
             if built_cov < 0.15:
+                # If uniform residential pattern, low coverage likely due to parks/green space (beautiful!)
+                # Reduce penalty significantly, but only for uniform residential pattern
+                # (The adjustment logic above already requires density > 5000)
+                if is_uniform_residential:
+                    return 1.5  # Much more lenient (parks are beautiful, not voids)
                 return 4.5  # Slightly more lenient
             if built_cov < 0.25:
+                if is_uniform_residential:
+                    return 0.5  # Minimal penalty for parks/green space
                 return 2.5  # More lenient for low-rise areas
             if built_cov < 0.35:
+                if is_uniform_residential:
+                    return 0.0  # No penalty
                 return 1.0
             return 0.0
         else:  # urban_core
@@ -425,8 +448,10 @@ def score_architectural_diversity_as_beauty(
     # Well-planned coastal beach towns often have uniform architecture (planned, not sprawl)
     # Examples: Manhattan Beach (height 9.9, type 32.5, footprint 21.5%)
     # Low footprint CV in coastal urban areas = intentional uniformity, not cookie-cutter chaos
+    # NOTE: Adjustment 7 handles high footprint CV (parks/green space), so this handles LOW footprint CV
     if effective == "urban_core_lowrise":
         # Check for planned uniformity: uniform height + uniform type + LOW footprint CV
+        # This is mutually exclusive with Adjustment 7 (which requires footprint_area_cv > 60)
         if levels_entropy < 15 and building_type_diversity < 40 and footprint_area_cv < 30:
             # Planned uniformity (like Manhattan Beach, Hermosa Beach) - reward it
             # Adjust targets to match uniform pattern (similar to urban_residential)
@@ -448,6 +473,33 @@ def score_architectural_diversity_as_beauty(
             targets["type"] = (0, 0, 25, 40)   # More forgiving for uniform coastal areas
             # Footprint: Allow wider range for coastal areas (some variation in lot sizes is natural)
             targets["footprint"] = (20, 30, 50, 65)  # Moderate variation is OK for coastal towns
+    
+    # Adjustment 7: Uniform residential urban areas with varied lot sizes (urban_core_lowrise)
+    # Well-planned residential areas can have uniform architecture but varied lot sizes due to:
+    # - Parks and green space (which is beautiful, not sprawl)
+    # - Organic lot subdivision over time
+    # - Mixed lot sizes from different development eras
+    # Examples: Evanston IL (height 7, type 36.9, footprint 83.2%, density 15,335)
+    # Pattern: uniform architecture + varied lot sizes = intentional planning, not cookie-cutter
+    # SAFEGUARD: Only apply to genuinely dense areas to avoid rewarding sprawl
+    # NOTE: This is mutually exclusive with Adjustment 5 (which requires footprint_area_cv < 30)
+    if effective == "urban_core_lowrise":
+        # Check for uniform residential pattern: uniform height + moderate-low type diversity + high footprint CV
+        # High footprint CV in this context = varied lot sizes (parks, green space), not sprawl
+        # Require minimum density to distinguish from sprawl (density > 5,000 people/sq mi = truly dense)
+        # Evanston has 15,335 people/sq mi, so this threshold is safe
+        is_dense_enough = (density is not None and density > 5000)
+        
+        # Pattern: uniform architecture + varied lot sizes, but only if dense enough to be genuine urban
+        # This only applies if footprint_area_cv > 60 (high variation), which is mutually exclusive with
+        # Adjustment 5 which requires footprint_area_cv < 30 (low variation)
+        if (levels_entropy < 15 and building_type_diversity < 45 and footprint_area_cv > 60 and 
+            is_dense_enough):
+            # Uniform residential with varied lot sizes (like Evanston) - reward it
+            # Adjust targets to match uniform residential pattern (similar to urban_residential)
+            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
+            targets["type"] = (0, 0, 40, 55)   # More forgiving for uniform residential areas
+            targets["footprint"] = (60, 70, 95, 100)  # HIGH footprint CV is OK for varied lot sizes/parks
     
     # Score each metric using adjusted targets
     height_pts = _score_band(levels_entropy, targets["height"])

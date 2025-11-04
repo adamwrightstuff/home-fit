@@ -121,7 +121,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         "score": round(total_score, 1),
         "breakdown": {
             "trees": round(tree_score, 1),
-            "architectural_diversity": round(arch_score, 1)  # Scaled to 0-50 to match Trees
+            "architectural_diversity": round(arch_score, 1),  # Scaled to 0-50 to match Trees
+            "enhancer_bonus": round(beauty_bonus, 1)  # Add enhancer bonus to breakdown so components sum to total
         },
         "details": {
             "tree_analysis": tree_details,
