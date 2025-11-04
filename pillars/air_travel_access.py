@@ -21,9 +21,14 @@ def _load_airport_database() -> List[Dict]:
     try:
         with open(airport_file, 'r') as f:
             data = json.load(f)
-            return data.get('airports', [])
+            airports = data.get('airports', [])
+            print(f"✅ Loaded {len(airports)} airports from {airport_file}")
+            return airports
     except FileNotFoundError:
-        # Fallback to hardcoded data if JSON not available
+        print(f"⚠️  Airport database not found at {airport_file}, using fallback")
+        return []
+    except Exception as e:
+        print(f"⚠️  Error loading airport database: {e}, using fallback")
         return []
 
 # Load airports on module import
@@ -160,6 +165,10 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
         else:
             # Legacy format
             code, name, apt_lat, apt_lon, apt_type = airport
+        
+        # Skip if coordinates are missing
+        if apt_lat is None or apt_lon is None:
+            continue
         
         distance_km = _haversine_distance(lat, lon, apt_lat, apt_lon) / 1000
         
