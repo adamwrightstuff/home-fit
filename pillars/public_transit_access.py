@@ -672,10 +672,11 @@ def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float =
         except Exception:
             pass
     
-    # Exceptional transit bonus: 10+ routes AND very close (<0.5km) = exceptional access
-    # This rewards places like Park Slope with excellent subway access
+    # Exceptional transit bonus: 7+ routes AND very close (<0.5km) = exceptional access
+    # This rewards places like Park Slope (12 routes) and Carroll Gardens (8 routes) with excellent subway access
+    # Lowered from 10+ to 7+ to capture excellent transit areas (WalkScore 90-100 range)
     exceptional_bonus = 0.0
-    if count >= 10 and proximity_bonus >= 10.0:
+    if count >= 7 and proximity_bonus >= 10.0:
         exceptional_bonus = 10.0  # Bonus for exceptional transit access
     
     # Don't cap at 100 - allow scores above 100 for exceptional transit
