@@ -3,7 +3,7 @@
     "version": "1.0",
     "source": "OurAirports.com + FAA data",
     "last_updated": "2024-01-15",
-    "total_airports": 52,
+    "total_airports": 53,
     "description": "Comprehensive US commercial airports database with service levels and metadata"
   },
   "airports": [
@@ -734,6 +734,20 @@
       "runways": 2,
       "airlines": 8,
       "destinations": 20
+    },
+    {
+      "code": "SAV",
+      "name": "Savannah/Hilton Head International Airport",
+      "city": "Savannah",
+      "state": "GA",
+      "lat": 32.1276,
+      "lon": -81.2021,
+      "type": "medium_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "medium",
+      "runways": 2,
+      "airlines": 6,
+      "destinations": 15
     }
   ]
 }
