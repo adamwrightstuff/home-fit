@@ -122,7 +122,8 @@ def root():
 
 @app.get("/score")
 def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False, 
-                         beauty_weights: Optional[str] = None, diagnostics: Optional[bool] = False):
+                         beauty_weights: Optional[str] = None, diagnostics: Optional[bool] = False,
+                         enable_schools: Optional[bool] = None):
     """
     Calculate livability score for a given address.
 
@@ -143,13 +144,21 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         include_chains: Include chain/franchise businesses in amenities score (default: False)
         beauty_weights: Optional beauty component weights (format: "trees:0.5,architecture:0.5")
                        Default: trees=0.5, architecture=0.5
+        enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
+                       Set to False to disable school scoring and preserve API quota
 
     Returns:
         JSON with pillar scores, token allocation, and weighted total
     """
+    # Determine if school scoring should be enabled for this request
+    # Use query parameter if provided, otherwise fall back to global flag
+    use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+    
     start_time = time.time()
     print(f"\n{'='*60}")
     print(f"🏠 HomeFit Score Request: {location}")
+    if enable_schools is not None:
+        print(f"📚 School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
     print(f"{'='*60}")
 
     # Step 1: Geocode the location (with full result for neighborhood detection)
@@ -269,8 +278,8 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         }),
     ]
 
-    # Add school scoring if enabled
-    if ENABLE_SCHOOL_SCORING:
+    # Add school scoring if enabled (check per-request parameter)
+    if use_school_scoring:
         pillar_tasks.append(
             ('quality_education', get_school_data, {
                 'zip_code': zip_code, 'state': state, 'city': city
@@ -301,7 +310,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
 
     # Handle school scoring separately (conditional)
     schools_found = False
-    if ENABLE_SCHOOL_SCORING:
+    if use_school_scoring:
         if 'quality_education' in pillar_results and pillar_results['quality_education']:
             school_avg, schools_by_level = pillar_results['quality_education']
         else:
@@ -455,10 +464,10 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
                 "high": schools_by_level.get("high", [])
             },
             "total_schools_rated": total_schools,
-            "confidence": 50 if not ENABLE_SCHOOL_SCORING else 85,  # Lower confidence when disabled
+            "confidence": 50 if not use_school_scoring else 85,  # Lower confidence when disabled
             "data_quality": {
-                "fallback_used": not ENABLE_SCHOOL_SCORING or not schools_found,
-                "reason": "School scoring disabled" if not ENABLE_SCHOOL_SCORING else ("No schools with ratings found" if not schools_found else "School data available"),
+                "fallback_used": not use_school_scoring or not schools_found,
+                "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
                 "error": "Pillar execution failed" if 'quality_education' in exceptions else None
             },
             "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
