@@ -100,7 +100,7 @@ MAJOR_AIRPORTS = [
 ]
 
 
-def get_air_travel_score(lat: float, lon: float) -> Tuple[float, Dict]:
+def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate air travel access score (0-100) based on multi-airport proximity.
 
@@ -110,13 +110,31 @@ def get_air_travel_score(lat: float, lon: float) -> Tuple[float, Dict]:
     - Bonus for airport choice/redundancy
     - Smooth distance decay curves
 
+    Args:
+        area_type: Optional pre-computed area type (for consistency across pillars)
+
     Returns:
         (total_score, detailed_breakdown)
     """
     print(f"✈️  Analyzing air travel access...")
 
-    # Get area classification for contextual scoring
-    area_type, metro_name, area_metadata = get_area_classification(lat, lon)
+    # Get area classification for contextual scoring (use provided if available)
+    if area_type:
+        # Use provided area_type, but still need metro_name for metadata
+        from data_sources.regional_baselines import regional_baseline_manager
+        from data_sources.census_api import get_population_density
+        density = get_population_density(lat, lon)
+        metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
+        area_metadata = {
+            'density': density,
+            'metro_name': metro_name,
+            'area_type': area_type,
+            'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
+        }
+    else:
+        # Fallback to computing classification if not provided
+        area_type, metro_name, area_metadata = get_area_classification(lat, lon)
+    
     expectations = get_contextual_expectations(area_type, 'air_travel_access')
 
     # Find all airports within 100km

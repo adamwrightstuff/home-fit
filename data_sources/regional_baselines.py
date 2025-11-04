@@ -368,18 +368,73 @@ class RegionalBaselineManager:
 regional_baseline_manager = RegionalBaselineManager()
 
 
-def get_area_classification(lat: float, lon: float, city: str = None) -> Tuple[str, str, Dict]:
+def get_area_classification(lat: float, lon: float, city: str = None, 
+                           location_input: Optional[str] = None,
+                           business_count: Optional[int] = None,
+                           built_coverage: Optional[float] = None) -> Tuple[str, str, Dict]:
     """
-    Get area classification for a location.
+    Get area classification for a location using enhanced multi-factor classification.
     
     Args:
         lat, lon: Coordinates
         city: Optional city name
+        location_input: Optional raw location input string (for "downtown" keyword check)
+        business_count: Optional count of businesses in 1km radius (for business density)
+        built_coverage: Optional building coverage ratio 0.0-1.0 (for building density)
     
     Returns:
         Tuple of (area_type, metro_name, metadata)
     """
-    return regional_baseline_manager.classify_area(lat, lon, city)
+    # Use enhanced multi-factor classification
+    from .data_quality import detect_area_type
+    from .census_api import get_population_density
+    
+    density = get_population_density(lat, lon)
+    
+    # Query business_count and built_coverage if not provided (for enhanced classification)
+    if business_count is None:
+        try:
+            from .osm_api import query_local_businesses
+            business_data = query_local_businesses(lat, lon, radius_m=1000)
+            if business_data:
+                all_businesses = (business_data.get("tier1_daily", []) + 
+                                business_data.get("tier2_social", []) +
+                                business_data.get("tier3_culture", []) +
+                                business_data.get("tier4_services", []))
+                business_count = len(all_businesses)
+        except Exception:
+            business_count = None
+    
+    if built_coverage is None:
+        try:
+            from .arch_diversity import compute_arch_diversity
+            arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+            if arch_diversity:
+                built_coverage = arch_diversity.get("built_coverage_ratio")
+        except Exception:
+            built_coverage = None
+    
+    area_type = detect_area_type(
+        lat, lon,
+        density=density,
+        city=city,
+        location_input=location_input,
+        business_count=business_count,
+        built_coverage=built_coverage
+    )
+    
+    # Get metro name using baseline manager's metro detection
+    metro_name = regional_baseline_manager._detect_metro_area(city, lat, lon)
+    
+    # Build metadata
+    metadata = {
+        'density': density,
+        'metro_name': metro_name,
+        'area_type': area_type,
+        'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
+    }
+    
+    return area_type, metro_name, metadata
 
 
 def get_baseline_scores(area_type: str, metro_name: str = None) -> Dict[str, float]:

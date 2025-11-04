@@ -256,7 +256,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             'location_scope': location_scope, 'area_type': area_type
         }),
         ('air_travel_access', get_air_travel_score, {
-            'lat': lat, 'lon': lon
+            'lat': lat, 'lon': lon, 'area_type': area_type
         }),
         ('public_transit_access', get_public_transit_score, {
             'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
