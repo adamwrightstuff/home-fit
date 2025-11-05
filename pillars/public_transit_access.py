@@ -132,8 +132,11 @@ def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict]
     return float('inf')
 
 
-def _frequency_tier_heavy_rail(heavy_routes_count: int) -> int:
-    """Simple proxy frequency tier from distinct heavy rail routes nearby (0-3)."""
+def _connectivity_tier_heavy_rail(heavy_routes_count: int) -> int:
+    """Connectivity tier based on distinct heavy rail routes nearby (0-3).
+    
+    Higher route count = better connectivity (more destinations reachable).
+    """
     if heavy_routes_count >= 3:
         return 3
     if heavy_routes_count == 2:
@@ -251,7 +254,7 @@ def get_public_transit_score(lat: float, lon: float,
     # Suburban areas: emphasize commuter rail (heavy rail)
     # Rural areas: value any service (bus, rail, etc.)
     
-    # Calculate base scores with frequency + proximity enhancements
+    # Calculate base scores with connectivity (route count) + proximity enhancements
     heavy_rail_score = _score_heavy_rail_routes(heavy_rail_routes, lat, lon, area_type)
     light_rail_score = _score_light_rail_routes(light_rail_routes, lat, lon, area_type)
     bus_score = _score_bus_routes(bus_routes, lat, lon, area_type)
@@ -316,10 +319,10 @@ def get_public_transit_score(lat: float, lon: float,
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
 
-    # Suburban/Exurban/Rural commuter-centric layer: nearest rail + frequency tier
+    # Suburban/Exurban/Rural commuter-centric layer: nearest rail + connectivity tier
     if (area_type or 'unknown') in ('suburban', 'exurban', 'rural'):
         nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
-        freq_tier = _frequency_tier_heavy_rail(len(heavy_rail_routes))
+        connectivity_tier = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
 
         # Distance-based base (max ~70)
         if nearest_hr_km <= 0.5:
@@ -335,12 +338,12 @@ def get_public_transit_score(lat: float, lon: float,
         else:
             base = 20  # no rail nearby
 
-        # Frequency bonus (0-15)
-        freq_bonus = {0: 0, 1: 6, 2: 10, 3: 15}[freq_tier]
+        # Connectivity bonus (0-15) - based on route count (more routes = better connectivity)
+        connectivity_bonus = {0: 0, 1: 6, 2: 10, 3: 15}[connectivity_tier]
         # Bus bonus (0-15) proxy
         bus_bonus = min(15.0, max(0.0, len(bus_routes) * 3.0))
 
-        total_score = max(total_score, min(100.0, base + freq_bonus + bus_bonus))
+        total_score = max(total_score, min(100.0, base + connectivity_bonus + bus_bonus))
 
         # Augment quality to reflect successful data retrieval, not mode variety
         try:
@@ -381,7 +384,7 @@ def get_public_transit_score(lat: float, lon: float,
     try:
         nearest_hr_km_val = _nearest_heavy_rail_km(lat, lon, search_m=2500)
         breakdown["summary"]["nearest_heavy_rail_distance_km"] = None if nearest_hr_km_val == float('inf') else round(nearest_hr_km_val, 2)
-        breakdown["summary"]["heavy_rail_frequency_tier"] = _frequency_tier_heavy_rail(len(heavy_rail_routes))
+        breakdown["summary"]["heavy_rail_connectivity_tier"] = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
     except Exception:
         pass
 
@@ -494,128 +497,8 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
         return []
 
 
-def _calculate_distance_factor(distance_km: float) -> float:
-    """
-    Calculate distance decay factor (0-1) using WalkScore-style smooth decay curve.
-    
-    WalkScore uses: 1.0 at 0m, ~0.8 at 400m, ~0.5 at 800m, ~0 at 1600m+
-    """
-    if distance_km <= 0.4:
-        return 1.0 - (distance_km / 0.4) * 0.2  # 1.0 to 0.8
-    elif distance_km <= 0.8:
-        return 0.8 - ((distance_km - 0.4) / 0.4) * 0.3  # 0.8 to 0.5
-    elif distance_km <= 1.6:
-        return 0.5 - ((distance_km - 0.8) / 0.8) * 0.5  # 0.5 to 0
-    else:
-        return 0.0
-
-
-def _calculate_route_type_usefulness(route_count: int, distance_km: float, 
-                                     route_type: int) -> float:
-    """
-    Calculate usefulness for a route type (not per route).
-    
-    Usefulness = Distance_Factor × Route_Count_Factor × Base_Score
-    
-    Args:
-        route_count: Number of routes of this type
-        distance_km: Distance to nearest stop of this type
-        route_type: 0=light rail, 1=subway, 2=rail, 3=bus
-    
-    Returns:
-        Usefulness score (0-100+)
-    """
-    if route_count == 0:
-        return 0.0
-    
-    # 1. Distance decay factor (0-1)
-    distance_factor = _calculate_distance_factor(distance_km)
-    
-    # 2. Route count factor with diminishing returns
-    # More routes = more destinations reachable, but with diminishing returns
-    # sqrt(count) to avoid linear scaling (e.g., 4 routes ≠ 4x usefulness)
-    route_count_factor = min(10.0, (route_count ** 0.5) * 2.0)  # Cap at ~10 routes worth
-    
-    # 3. Base score per route type (frequency proxy)
-    # Heavy rail typically has higher frequency than bus
-    if route_type in (1, 2):  # Heavy rail
-        base_score = 10.0  # Higher base for heavy rail
-    elif route_type == 0:  # Light rail
-        base_score = 8.0
-    else:  # Bus
-        base_score = 6.0
-    
-    # Usefulness = Distance × Route_Count × Base
-    usefulness = distance_factor * route_count_factor * base_score
-    
-    return usefulness
-
-
-def _calculate_urban_transit_score(heavy_rail_routes: List[Dict],
-                                   light_rail_routes: List[Dict],
-                                   bus_routes: List[Dict],
-                                   lat: float, lon: float) -> float:
-    """
-    Calculate urban transit score using route-type-based usefulness with area-type weighting.
-    
-    Calculate usefulness per route type, then combine with area-type-specific weights
-    (matching suburban/rural logic for consistency).
-    
-    Args:
-        heavy_rail_routes: List of heavy rail route dicts
-        light_rail_routes: List of light rail route dicts
-        bus_routes: List of bus route dicts
-        lat, lon: Location coordinates
-    
-    Returns:
-        Transit score (0-100)
-    """
-    # Get nearest stop distances for each route type
-    # Use route coordinates if available, fallback to stops API
-    nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
-    nearest_lr_km = _nearest_light_rail_km(lat, lon, light_rail_routes, search_m=2000)
-    nearest_bus_km = _nearest_bus_km(lat, lon, bus_routes, search_m=2000)
-    
-    # Calculate usefulness per route type
-    heavy_rail_usefulness = _calculate_route_type_usefulness(
-        len(heavy_rail_routes), 
-        nearest_hr_km if nearest_hr_km < float('inf') else 2.0,
-        1  # Heavy rail type
-    )
-    
-    light_rail_usefulness = _calculate_route_type_usefulness(
-        len(light_rail_routes),
-        nearest_lr_km if nearest_lr_km < float('inf') else 2.0,
-        0  # Light rail type
-    )
-    
-    bus_usefulness = _calculate_route_type_usefulness(
-        len(bus_routes),
-        nearest_bus_km if nearest_bus_km < float('inf') else 2.0,
-        3  # Bus type
-    )
-    
-    # Normalize each usefulness to 0-100 scale
-    # Useful values typically range 0-150+, so we normalize
-    max_usefulness = 150.0  # Typical max for excellent transit
-    heavy_rail_score = min(100.0, (heavy_rail_usefulness / max_usefulness) * 100.0)
-    light_rail_score = min(100.0, (light_rail_usefulness / max_usefulness) * 100.0)
-    bus_score = min(100.0, (bus_usefulness / max_usefulness) * 100.0)
-    
-    # Apply area-type-specific percentage weights (matching suburban logic)
-    # Urban: Heavy rail 80%, Light rail 10%, Bus 20%
-    # This matches suburban's emphasis on rail (75%/5%/20%)
-    if light_rail_score == 0:
-        # If no light rail, reallocate that weight to heavy rail
-        total_score = (heavy_rail_score * 0.8) + (bus_score * 0.2)
-    else:
-        total_score = (heavy_rail_score * 0.8) + (light_rail_score * 0.1) + (bus_score * 0.2)
-    
-    return min(100.0, total_score)
-
-
 def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None) -> float:
-    """Score heavy rail access based on route availability, frequency, and proximity."""
+    """Score heavy rail access based on route availability, connectivity (route count), and proximity."""
     if not routes:
         return 0.0
     
@@ -637,18 +520,19 @@ def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float =
     else:
         density_score = 5.0
     
-    # Frequency bonus: more routes = higher frequency (0-30 pts)
-    # Higher cap to reward exceptional transit access (e.g., NYC with 12+ stops)
+    # Connectivity bonus: more routes = more destinations reachable (0-30 pts)
+    # Based on route count (more routes = better connectivity, not actual frequency)
+    # Higher cap to reward exceptional transit access (e.g., NYC with 12+ routes)
     # Allows scores to reach 90-100 range when combined with other factors
-    # Linear scaling: 1-5 stops → 2-10 pts, 6-10 stops → 12-20 pts, 10-15 stops → 20-30 pts, 15+ stops → 30 pts
+    # Linear scaling: 1-5 routes → 2-10 pts, 6-10 routes → 12-20 pts, 10-15 routes → 20-30 pts, 15+ routes → 30 pts
     if count >= 15:
-        frequency_bonus = 30.0
+        connectivity_bonus = 30.0
     elif count >= 10:
-        frequency_bonus = 20.0 + ((count - 10) * 2.0)  # 20-30 pts for 10-15 stops
+        connectivity_bonus = 20.0 + ((count - 10) * 2.0)  # 20-30 pts for 10-15 routes
     elif count >= 5:
-        frequency_bonus = 10.0 + ((count - 5) * 2.0)  # 10-20 pts for 5-10 stops
+        connectivity_bonus = 10.0 + ((count - 5) * 2.0)  # 10-20 pts for 5-10 routes
     else:
-        frequency_bonus = min(10.0, count * 2.0)  # 2-10 pts for 1-5 stops
+        connectivity_bonus = min(10.0, count * 2.0)  # 2-10 pts for 1-5 routes
     
     # Proximity bonus: calculate distance to nearest stop (0-15 pts)
     # Higher bonus for very close stops (walking distance)
@@ -681,7 +565,7 @@ def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float =
     
     # Don't cap at 100 - allow scores above 100 for exceptional transit
     # This enables final weighted scores to reach 90-100 range (matching WalkScore)
-    return base_score + density_score + frequency_bonus + proximity_bonus + exceptional_bonus
+    return base_score + density_score + connectivity_bonus + proximity_bonus + exceptional_bonus
 
 
 def _score_light_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None) -> float:
