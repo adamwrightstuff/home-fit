@@ -197,7 +197,8 @@ def _find_nearest_metro(lat: float, lon: float) -> float:
 
 def get_public_transit_score(lat: float, lon: float,
                              area_type: Optional[str] = None,
-                             location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+                             location_scope: Optional[str] = None,
+                             city: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate public transit access score (0-100).
 
@@ -255,23 +256,31 @@ def get_public_transit_score(lat: float, lon: float,
     # Rural areas: value any service (bus, rail, etc.)
     
     # Calculate base scores with connectivity (route count) + proximity enhancements
-    heavy_rail_score = _score_heavy_rail_routes(heavy_rail_routes, lat, lon, area_type)
+    heavy_rail_score = _score_heavy_rail_routes(heavy_rail_routes, lat, lon, area_type, city)
     light_rail_score = _score_light_rail_routes(light_rail_routes, lat, lon, area_type)
     bus_score = _score_bus_routes(bus_routes, lat, lon, area_type)
+    
+    # Check if we have commuter rail (route_type 2) vs subway (route_type 1)
+    has_commuter_rail = any(r.get("route_type") == 2 for r in heavy_rail_routes)
+    has_subway = any(r.get("route_type") == 1 for r in heavy_rail_routes)
     
     # Apply area-type-specific weighting
     # Note: Individual mode scores are on 0-100 scale, but we want final score 0-100
     # If you can get everywhere by one mode (e.g., subway), other modes are redundant
     # Score based on best mode, not weighted average of all modes
     if area_type == 'urban_core':
-        # Urban: Use best mode (usually heavy rail if available)
-        # If heavy rail is excellent (70+), use it - bus doesn't matter
-        # Only consider bus if heavy rail is weak/missing
-        if heavy_rail_score >= 70.0:
-            # Excellent heavy rail = you can get everywhere, bus is redundant
+        # Urban: Different logic for subway vs commuter rail
+        if has_subway and heavy_rail_score >= 70.0:
+            # Excellent subway = you can get everywhere, bus is redundant
             total_score = heavy_rail_score
+        elif has_commuter_rail:
+            # Commuter rail + bus = multimodal access (combine them)
+            # Commuter rail gets you downtown, bus gets you local
+            # Use weighted combination: 70% commuter rail + 30% bus
+            total_score = (heavy_rail_score * 0.7) + (bus_score * 0.3)
+            total_score = min(100.0, total_score)
         elif heavy_rail_score > 0:
-            # Some heavy rail but not excellent - use best of heavy rail or bus
+            # Some heavy rail but not commuter rail - use best of heavy rail or bus
             total_score = max(heavy_rail_score, bus_score)
         else:
             # No heavy rail - use best available (bus or light rail)
@@ -497,14 +506,37 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
         return []
 
 
-def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None) -> float:
-    """Score heavy rail access based on route availability, connectivity (route count), and proximity."""
+def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None, city: Optional[str] = None) -> float:
+    """
+    Score heavy rail access, differentiating subway (route_type 1) from commuter rail (route_type 2).
+    
+    Subway: Many routes, frequent service, local trips (NYC subway, Boston T)
+    Commuter rail: Fewer routes, connects to downtown, longer-distance trips (Metro-North, Metra)
+    """
+    if not routes:
+        return 0.0
+    
+    # Separate subway (route_type 1) from commuter rail (route_type 2)
+    subway_routes = [r for r in routes if r.get("route_type") == 1]
+    commuter_routes = [r for r in routes if r.get("route_type") == 2]
+    
+    # Score each separately
+    subway_score = _score_subway_routes(subway_routes, lat, lon, area_type) if subway_routes else 0.0
+    commuter_score = _score_commuter_rail_routes(commuter_routes, lat, lon, area_type, city) if commuter_routes else 0.0
+    
+    # Use best of subway or commuter rail (they serve different purposes)
+    # If both exist, subway typically dominates (more routes, better connectivity)
+    return max(subway_score, commuter_score)
+
+
+def _score_subway_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None) -> float:
+    """Score subway/metro access (route_type 1) based on route availability, connectivity, and proximity."""
     if not routes:
         return 0.0
     
     count = len(routes)
     
-    # Presence of heavy rail is huge (30 pts base)
+    # Presence of subway is huge (30 pts base)
     base_score = 30.0
     
     # Bonus for multiple lines (0-25 pts)
@@ -566,6 +598,87 @@ def _score_heavy_rail_routes(routes: List[Dict], lat: float = None, lon: float =
     # Don't cap at 100 - allow scores above 100 for exceptional transit
     # This enables final weighted scores to reach 90-100 range (matching WalkScore)
     return base_score + density_score + connectivity_bonus + proximity_bonus + exceptional_bonus
+
+
+def _score_commuter_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None, city: Optional[str] = None) -> float:
+    """
+    Score commuter rail access (route_type 2) with metro connectivity bonus.
+    
+    Commuter rail typically has fewer routes but connects to major metros.
+    Examples: Metro-North, Metra, MBTA Commuter Rail
+    """
+    if not routes:
+        return 0.0
+    
+    count = len(routes)
+    
+    # Base score (higher than subway base because commuter rail is valuable even with few routes)
+    base_score = 35.0
+    
+    # Density score (commuter rail typically has fewer routes than subway)
+    if count >= 3:
+        density_score = 15.0
+    elif count >= 2:
+        density_score = 12.0
+    else:
+        density_score = 8.0
+    
+    # Connectivity bonus (fewer routes needed for good score)
+    if count >= 3:
+        connectivity_bonus = 15.0
+    elif count >= 2:
+        connectivity_bonus = 12.0
+    else:
+        connectivity_bonus = 8.0
+    
+    # Proximity bonus (commuter rail stations are typically farther than subway stops)
+    proximity_bonus = 0.0
+    if lat and lon:
+        try:
+            nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
+            if nearest_hr_km < float('inf'):
+                if nearest_hr_km <= 0.5:
+                    proximity_bonus = 12.0  # Very close for commuter rail
+                elif nearest_hr_km <= 1.0:
+                    proximity_bonus = 10.0  # Good proximity
+                elif nearest_hr_km <= 2.0:
+                    proximity_bonus = 8.0
+                elif nearest_hr_km <= 3.0:
+                    proximity_bonus = 5.0
+        except Exception:
+            pass
+    
+    # Metro connectivity bonus: If commuter rail serves a major metro, add bonus
+    # This rewards network connectivity (access to downtown, major transit hub)
+    metro_connectivity_bonus = 0.0
+    if area_type in ('urban_core', 'suburban') and city:
+        try:
+            from data_sources.regional_baselines import regional_baseline_manager
+            metro_name = regional_baseline_manager._detect_metro_area(city, lat, lon)
+            if metro_name:
+                metro_data = regional_baseline_manager.major_metros.get(metro_name, {})
+                if metro_data:
+                    population = metro_data.get('population', 0)
+                    # Different bonuses by metro size and area type
+                    if population > 5000000:  # Very large metros (NYC, LA, Chicago)
+                        if area_type == 'suburban':
+                            metro_connectivity_bonus = 8.0  # Modest bonus for suburbs (commuter rail is expected)
+                        else:
+                            metro_connectivity_bonus = 15.0  # Higher bonus for urban areas (commuter rail is valuable)
+                    elif population > 2000000:  # Large metros
+                        if area_type == 'suburban':
+                            metro_connectivity_bonus = 5.0
+                        else:
+                            metro_connectivity_bonus = 12.0
+                    else:  # Smaller metros
+                        if area_type == 'suburban':
+                            metro_connectivity_bonus = 3.0
+                        else:
+                            metro_connectivity_bonus = 8.0
+        except Exception:
+            pass
+    
+    return base_score + density_score + connectivity_bonus + proximity_bonus + metro_connectivity_bonus
 
 
 def _score_light_rail_routes(routes: List[Dict], lat: float = None, lon: float = None, area_type: str = None) -> float:
