@@ -119,14 +119,23 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     """
 
     try:
-        resp = requests.post(
-            OVERPASS_URL,
-            data={"data": query},
-            timeout=35,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
+        def _do_request():
+            return requests.post(
+                OVERPASS_URL,
+                data={"data": query},
+                timeout=40,
+                headers={"User-Agent": "HomeFit/1.0"}
+            )
 
-        if resp.status_code != 200:
+        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.0)
+
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                print(f"⚠️  OSM parks query rate limited (429)")
+            elif resp:
+                print(f"⚠️  OSM parks query failed with status {resp.status_code}")
+            else:
+                print(f"⚠️  OSM parks query returned no response")
             return None
 
         data = resp.json()
@@ -135,6 +144,9 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         parks, playgrounds, tree_features = _process_green_features(
             elements, lat, lon)
 
+        if DEBUG_PARKS:
+            print(f"   ✅ Found {len(parks)} parks, {len(playgrounds)} playgrounds")
+
         return {
             "parks": parks,
             "playgrounds": playgrounds,
@@ -142,7 +154,9 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         }
 
     except Exception as e:
-        print(f"OSM query error: {e}")
+        print(f"⚠️  OSM parks query error: {e}")
+        import traceback
+        print(f"   Traceback: {traceback.format_exc()}")
         return None
 
 
