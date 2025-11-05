@@ -210,9 +210,11 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                         return "historic_urban"
     
     # Priority 3: Urban core lowrise (moderate diversity, not uniform)
-    # Applies to dense areas with moderate diversity (not uniform like Levittown/Carmel)
-    # Only if not already classified as uniform or historic
-    if effective in ("urban_core", "suburban") and density:
+    # Applies to dense urban areas with moderate diversity (not uniform like Levittown/Carmel)
+    # Only applies to urban_core base (not suburban) - respects base classification
+    # Dense suburbs (Bronxville, Redondo Beach, Manhattan Beach) should stay as suburban
+    # Urban core lowrise (Santa Barbara, Old Town Alexandria) start as urban_core
+    if effective == "urban_core" and density:
         # Case 1: High density (>10000) with moderate diversity
         if density > 10000:
             # Standard: Moderate height diversity (20-60)
@@ -221,7 +223,7 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                     return "urban_core_lowrise"
             # Low-rise variant: Low height diversity (<20) but moderate type diversity
             # Catches coastal cities, edge cities, and other dense low-rise areas
-            # Examples: Redondo Beach (height 12.7, type 40.8, density 12001)
+            # Examples: Santa Barbara, Old Town Alexandria (dense urban, not suburbs)
             if levels_entropy < 20 and 20 < building_type_diversity < 80:
                 if effective not in ("urban_residential", "historic_urban"):
                     return "urban_core_lowrise"
