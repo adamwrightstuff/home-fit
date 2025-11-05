@@ -84,8 +84,12 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         return "unknown"
     
     # Urban core: >10,000 people/sq mi (e.g., Manhattan, Brooklyn)
+    # But check business density first - dense suburbs can have high density but lower business density
     if density > 10000:
-        return "urban_core"
+        if business_count and business_count > 75:
+            return "urban_core"  # High density + businesses = urban core
+        # High density but lower business = likely dense suburb, not urban core
+        return "suburban"
     
     # For areas with density 2,500-10,000 (typically suburban)
     # But check if it's downtown-like (high business density)
