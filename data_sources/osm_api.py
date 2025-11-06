@@ -16,8 +16,17 @@ logger = get_logger(__name__)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
-    """Simple retry with exponential backoff for Overpass requests."""
+def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0, fail_fast: bool = False):
+    """
+    Simple retry with exponential backoff for Overpass requests.
+    
+    Args:
+        request_fn: Function that makes the request
+        attempts: Number of retry attempts
+        base_wait: Base wait time in seconds
+        fail_fast: If True, give up after 2 attempts on rate limit (for non-critical queries like Phase 2/3 metrics)
+                   If False, retry all attempts (for critical queries like parks)
+    """
     import time
     import requests
     
@@ -30,9 +39,10 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
                     # Rate limited - wait longer and retry
                     retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
                     
-                    # If rate limited on second attempt or later, give up faster to avoid long delays
-                    if i >= 1:
-                        logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays")
+                    # If fail_fast is True and rate limited on second attempt or later, give up faster
+                    # This is for non-critical queries (Phase 2/3 beauty metrics) to avoid long hangs
+                    if fail_fast and i >= 1:
+                        logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
                         return None  # Fail fast instead of waiting more
                     
                     if i < attempts - 1:
@@ -149,7 +159,8 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
-        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.0)
+        # Parks are critical - don't fail fast, retry all attempts
+        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.0, fail_fast=False)
 
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:

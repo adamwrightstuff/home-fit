@@ -47,7 +47,8 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
                                headers={"User-Agent": "HomeFit/1.0"})
         
         fetch_start = time.time()
-        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+        # Phase 2/3 metrics are non-critical - fail fast on rate limits to avoid long hangs
+        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0, fail_fast=True)
         fetch_time = time.time() - fetch_start
         
         if resp is None or resp.status_code != 200:
@@ -171,7 +172,8 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
                                headers={"User-Agent": "HomeFit/1.0"})
         
         fetch_start = time.time()
-        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+        # Phase 2/3 metrics are non-critical - fail fast on rate limits to avoid long hangs
+        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0, fail_fast=True)
         fetch_time = time.time() - fetch_start
         
         if resp is None or resp.status_code != 200:
