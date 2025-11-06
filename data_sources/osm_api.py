@@ -6,6 +6,7 @@ Queries Overpass API for green spaces and nature features
 import requests
 import math
 import time
+import threading
 from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
@@ -16,6 +17,11 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+# Global query throttling to avoid rate limiting
+_last_query_time = 0
+_query_lock = threading.Lock()
+_min_query_interval = 0.5  # Minimum 500ms between queries
 
 def _retry_overpass(
     request_fn,
@@ -73,6 +79,16 @@ def _retry_overpass(
     fail_fast = retry_config.fail_fast
     max_wait = retry_config.max_wait
     
+    # Throttle queries to avoid rate limiting
+    global _last_query_time, _query_lock, _min_query_interval
+    with _query_lock:
+        time_since_last = time.time() - _last_query_time
+        if time_since_last < _min_query_interval:
+            sleep_time = _min_query_interval - time_since_last
+            logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s to avoid rate limits")
+            time.sleep(sleep_time)
+        _last_query_time = time.time()
+    
     for i in range(max_attempts):
         try:
             resp = request_fn()
@@ -89,15 +105,16 @@ def _retry_overpass(
                     else:
                         retry_after = int(resp.headers.get('Retry-After', base_wait))
                     
+                    # Respect Retry-After header, but cap at max_wait (now 30s for CRITICAL)
+                    retry_after = min(retry_after, retry_config.max_wait)
+                    
                     # If fail_fast is True and rate limited on second attempt or later, give up faster
-                    # This is for non-critical queries (Phase 2/3 beauty metrics) to avoid long hangs
+                    # NOTE: Since all queries are now CRITICAL, fail_fast should be False
                     if fail_fast and i >= 1:
                         logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
                         return None  # Fail fast instead of waiting more
                     
                     if i < max_attempts - 1:
-                        # Cap wait time at max_wait
-                        retry_after = min(retry_after, max_wait)
                         logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
                         time.sleep(retry_after)
                         continue
@@ -1652,8 +1669,8 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
                 elem_lat, elem_lon = elem["lat"], elem["lon"]
             elif elem.get("type") == "way":
-                # Calculate way center point
-                elem_lat, elem_lon = get_way_center(elem, nodes_dict)
+                # Calculate way center point (get_way_center returns lat, lon, area_sqm)
+                elem_lat, elem_lon, _ = get_way_center(elem, nodes_dict)
                 if elem_lat and elem_lon:
                     distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
                 else:

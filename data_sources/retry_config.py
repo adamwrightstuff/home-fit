@@ -44,10 +44,10 @@ class RetryConfig:
 # Retry profiles for different query types
 RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
     RetryProfile.CRITICAL: RetryConfig(
-        max_attempts=4,
+        max_attempts=6,  # Increased from 4 to 6
         base_wait=1.0,
         fail_fast=False,  # Critical queries should retry all attempts
-        max_wait=10.0,
+        max_wait=30.0,  # Increased from 10.0 to respect Retry-After headers
         exponential_backoff=True,
         retry_on_timeout=True,
         retry_on_429=True,
@@ -93,7 +93,7 @@ RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
 
 # Query type to profile mapping
 QUERY_TYPE_PROFILES: Dict[str, RetryProfile] = {
-    # Critical queries - essential for pillar scoring
+    # ALL queries are CRITICAL for scoring
     "parks": RetryProfile.CRITICAL,
     "green_spaces": RetryProfile.CRITICAL,
     "healthcare": RetryProfile.CRITICAL,
@@ -101,21 +101,17 @@ QUERY_TYPE_PROFILES: Dict[str, RetryProfile] = {
     "transit": RetryProfile.CRITICAL,
     "transit_routes": RetryProfile.CRITICAL,
     "transit_stops": RetryProfile.CRITICAL,
-    
-    # Standard queries - important but not critical
-    "amenities": RetryProfile.STANDARD,
-    "businesses": RetryProfile.STANDARD,
-    "housing": RetryProfile.STANDARD,
+    "amenities": RetryProfile.CRITICAL,  # Changed from STANDARD
+    "businesses": RetryProfile.CRITICAL,  # Changed from STANDARD
+    "housing": RetryProfile.CRITICAL,  # Changed from STANDARD
     "census": RetryProfile.CENSUS,
     "schools": RetryProfile.SCHOOLS,
-    "architectural_diversity": RetryProfile.STANDARD,  # Phase 1 beauty metrics
-    
-    # Non-critical queries - can fail without blocking
-    "block_grain": RetryProfile.NON_CRITICAL,
-    "streetwall_continuity": RetryProfile.NON_CRITICAL,
-    "setback_consistency": RetryProfile.NON_CRITICAL,
-    "facade_rhythm": RetryProfile.NON_CRITICAL,
-    "nature_features": RetryProfile.NON_CRITICAL,  # Trails, camping - nice to have
+    "architectural_diversity": RetryProfile.CRITICAL,  # Changed from STANDARD
+    "block_grain": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
+    "streetwall_continuity": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
+    "setback_consistency": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
+    "facade_rhythm": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
+    "nature_features": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
 }
 
 
