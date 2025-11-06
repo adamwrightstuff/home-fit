@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from data_sources import data_quality
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.transitland_api import get_nearby_transit_stops
+from data_sources.utils import haversine_distance as haversine_meters
 
 # Load environment variables from .env file
 load_dotenv()
@@ -172,16 +173,8 @@ MAJOR_METROS = {
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance between two points in kilometers."""
-    R = 6371  # Earth radius in km
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-    
-    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    
-    return R * c
+    # Use utils.haversine_distance (returns meters) and convert to km
+    return haversine_meters(lat1, lon1, lat2, lon2) / 1000.0
 
 
 def _find_nearest_metro(lat: float, lon: float) -> float:

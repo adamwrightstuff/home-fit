@@ -215,14 +215,25 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         except Exception as e:
             print(f"⚠️  Built coverage query failed (non-fatal): {e}")
         
-        # Enhanced multi-factor classification
+        # Get distance to principal city for classification
+        metro_distance_km = None
+        try:
+            from data_sources.regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            # Pass city parameter to help with metro detection, but geographic detection will work as fallback
+            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+        except Exception as e:
+            print(f"⚠️  Metro distance calculation failed (non-fatal): {e}")
+        
+        # Enhanced multi-factor classification with principal city distance
         area_type = _dq.detect_area_type(
             lat, lon, 
             density=density, 
             city=city,
             location_input=location,  # For "downtown" keyword check
             business_count=business_count,  # For business density
-            built_coverage=built_coverage  # For building coverage
+            built_coverage=built_coverage,  # For building coverage
+            metro_distance_km=metro_distance_km  # Distance to principal city
         )
         
         # Pre-compute census tract for pillars (used by housing, beauty, etc.)

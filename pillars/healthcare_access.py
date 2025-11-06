@@ -7,6 +7,7 @@ import math
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 from data_sources.radius_profiles import get_radius_profile
+from data_sources.utils import get_way_center
 
 # Comprehensive US hospitals database - major medical centers and regional hospitals
 # Covers all major metropolitan areas and many mid-size cities
@@ -532,23 +533,9 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
 
 
 def _get_way_center(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float]]:
-    """Get center point of a way."""
-    if "nodes" not in elem:
-        return None, None
-
-    lats = []
-    lons = []
-    for node_id in elem["nodes"]:
-        if node_id in nodes_dict:
-            node = nodes_dict[node_id]
-            if "lat" in node and "lon" in node:
-                lats.append(node["lat"])
-                lons.append(node["lon"])
-
-    if not lats:
-        return None, None
-
-    return sum(lats) / len(lats), sum(lons) / len(lons)
+    """Get center point of a way (returns only lat, lon, not area)."""
+    lat, lon, _ = get_way_center(elem, nodes_dict)
+    return lat, lon
 
 
 def _build_summary(nearest_hospital: Optional[Dict], urgent_care: List,

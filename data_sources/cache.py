@@ -85,6 +85,10 @@ def cached(ttl_seconds: int = 3600):
             
             # Cache miss or expired - execute function
             print(f"💾 Cache miss for {func.__name__} - executing")
+            # Periodic cleanup to prevent memory bloat (every 100 cache operations)
+            if len(_cache) > 100 and len(_cache) % 100 == 0:
+                _cleanup_expired_cache()
+            
             result = func(*args, **kwargs)
             
             # If API call failed (result is None), try using stale cache as fallback
@@ -164,8 +168,33 @@ def clear_cache(cache_type: Optional[str] = None):
         print(f"🧹 Cleared {len(keys_to_remove)} {cache_type} cache entries")
 
 
+def _cleanup_expired_cache():
+    """Clean up expired entries from in-memory cache to prevent memory bloat."""
+    global _cache, _cache_ttl
+    current_time = time.time()
+    keys_to_remove = []
+    
+    # Find expired entries (check against max TTL which is 7 days for OSM)
+    max_ttl = max(CACHE_TTL.values())
+    
+    for key, cache_time in _cache_ttl.items():
+        if current_time - cache_time > max_ttl:
+            keys_to_remove.append(key)
+    
+    # Remove expired entries
+    for key in keys_to_remove:
+        _cache.pop(key, None)
+        _cache_ttl.pop(key, None)
+    
+    if keys_to_remove:
+        print(f"🧹 Cleaned up {len(keys_to_remove)} expired cache entries")
+
+
 def get_cache_stats() -> Dict[str, Any]:
     """Get cache statistics from both Redis (if available) and in-memory cache."""
+    # Clean up expired entries periodically
+    _cleanup_expired_cache()
+    
     current_time = time.time()
     
     # In-memory cache stats

@@ -67,7 +67,7 @@ def get_nearby_transit_stops(
         processed_stops = []
         for stop in stops:
             # Calculate distance
-            from data_sources.osm_api import haversine_distance
+            from data_sources.utils import haversine_distance
             stop_lat = stop["geometry"]["coordinates"][1]
             stop_lon = stop["geometry"]["coordinates"][0]
             distance = haversine_distance(lat, lon, stop_lat, stop_lon)

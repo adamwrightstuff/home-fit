@@ -7,6 +7,22 @@ import json
 import math
 from typing import Dict, List, Tuple, Optional
 from .census_api import get_population_density, get_census_tract
+from .utils import haversine_distance as haversine_meters
+
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calculate the great circle distance between two points on Earth (in kilometers).
+    
+    Args:
+        lat1, lon1: Latitude and longitude of first point
+        lat2, lon2: Latitude and longitude of second point
+    
+    Returns:
+        Distance in kilometers
+    """
+    # Use utils.haversine_distance (returns meters) and convert to km
+    return haversine_meters(lat1, lon1, lat2, lon2) / 1000.0
 
 
 class RegionalBaselineManager:
@@ -14,28 +30,156 @@ class RegionalBaselineManager:
     
     def __init__(self):
         # Top 50 US Metropolitan Statistical Areas (MSAs) by population
+        # Includes principal city coordinates (lat, lon) for geographic distance calculation
+        # Coordinates represent downtown/central business district of principal city
         self.major_metros = {
-            'New York': {'state': 'NY', 'population': 20153634, 'density_threshold': 15000},
-            'Los Angeles': {'state': 'CA', 'population': 13214799, 'density_threshold': 12000},
-            'Chicago': {'state': 'IL', 'population': 9522434, 'density_threshold': 10000},
-            'Houston': {'state': 'TX', 'population': 7047490, 'density_threshold': 8000},
-            'Phoenix': {'state': 'AZ', 'population': 4864298, 'density_threshold': 6000},
-            'Philadelphia': {'state': 'PA', 'population': 6107009, 'density_threshold': 9000},
-            'San Antonio': {'state': 'TX', 'population': 2553853, 'density_threshold': 4000},
-            'San Diego': {'state': 'CA', 'population': 3286069, 'density_threshold': 5000},
-            'Dallas': {'state': 'TX', 'population': 7614347, 'density_threshold': 7000},
-            'San Jose': {'state': 'CA', 'population': 2013502, 'density_threshold': 6000},
-            'Austin': {'state': 'TX', 'population': 2163051, 'density_threshold': 4000},
-            'Jacksonville': {'state': 'FL', 'population': 1555038, 'density_threshold': 3000},
-            'Fort Worth': {'state': 'TX', 'population': 918915, 'density_threshold': 2500},
-            'Columbus': {'state': 'OH', 'population': 2103093, 'density_threshold': 3500},
-            'Charlotte': {'state': 'NC', 'population': 2648654, 'density_threshold': 4000},
-            'San Francisco': {'state': 'CA', 'population': 4727357, 'density_threshold': 12000},
-            'Indianapolis': {'state': 'IN', 'population': 2088452, 'density_threshold': 3000},
-            'Seattle': {'state': 'WA', 'population': 4017693, 'density_threshold': 6000},
-            'Denver': {'state': 'CO', 'population': 2968420, 'density_threshold': 4500},
-            'Washington': {'state': 'DC', 'population': 6303090, 'density_threshold': 10000},
-            'Boston': {'state': 'MA', 'population': 4953275, 'density_threshold': 8000},
+            'New York': {
+                'state': 'NY', 
+                'population': 20153634, 
+                'density_threshold': 15000,
+                'principal_city_lat': 40.7589,  # Manhattan center
+                'principal_city_lon': -73.9851
+            },
+            'Los Angeles': {
+                'state': 'CA', 
+                'population': 13214799, 
+                'density_threshold': 12000,
+                'principal_city_lat': 34.0522,  # Downtown LA
+                'principal_city_lon': -118.2437
+            },
+            'Chicago': {
+                'state': 'IL', 
+                'population': 9522434, 
+                'density_threshold': 10000,
+                'principal_city_lat': 41.8781,  # Chicago Loop
+                'principal_city_lon': -87.6298
+            },
+            'Houston': {
+                'state': 'TX', 
+                'population': 7047490, 
+                'density_threshold': 8000,
+                'principal_city_lat': 29.7604,  # Downtown Houston
+                'principal_city_lon': -95.3698
+            },
+            'Phoenix': {
+                'state': 'AZ', 
+                'population': 4864298, 
+                'density_threshold': 6000,
+                'principal_city_lat': 33.4484,  # Downtown Phoenix
+                'principal_city_lon': -112.0740
+            },
+            'Philadelphia': {
+                'state': 'PA', 
+                'population': 6107009, 
+                'density_threshold': 9000,
+                'principal_city_lat': 39.9526,  # Center City Philadelphia
+                'principal_city_lon': -75.1652
+            },
+            'San Antonio': {
+                'state': 'TX', 
+                'population': 2553853, 
+                'density_threshold': 4000,
+                'principal_city_lat': 29.4241,  # Downtown San Antonio
+                'principal_city_lon': -98.4936
+            },
+            'San Diego': {
+                'state': 'CA', 
+                'population': 3286069, 
+                'density_threshold': 5000,
+                'principal_city_lat': 32.7157,  # Downtown San Diego
+                'principal_city_lon': -117.1611
+            },
+            'Dallas': {
+                'state': 'TX', 
+                'population': 7614347, 
+                'density_threshold': 7000,
+                'principal_city_lat': 32.7767,  # Downtown Dallas
+                'principal_city_lon': -96.7970
+            },
+            'San Jose': {
+                'state': 'CA', 
+                'population': 2013502, 
+                'density_threshold': 6000,
+                'principal_city_lat': 37.3382,  # Downtown San Jose
+                'principal_city_lon': -121.8863
+            },
+            'Austin': {
+                'state': 'TX', 
+                'population': 2163051, 
+                'density_threshold': 4000,
+                'principal_city_lat': 30.2672,  # Downtown Austin
+                'principal_city_lon': -97.7431
+            },
+            'Jacksonville': {
+                'state': 'FL', 
+                'population': 1555038, 
+                'density_threshold': 3000,
+                'principal_city_lat': 30.3322,  # Downtown Jacksonville
+                'principal_city_lon': -81.6557
+            },
+            'Fort Worth': {
+                'state': 'TX', 
+                'population': 918915, 
+                'density_threshold': 2500,
+                'principal_city_lat': 32.7555,  # Downtown Fort Worth
+                'principal_city_lon': -97.3308
+            },
+            'Columbus': {
+                'state': 'OH', 
+                'population': 2103093, 
+                'density_threshold': 3500,
+                'principal_city_lat': 39.9612,  # Downtown Columbus
+                'principal_city_lon': -82.9988
+            },
+            'Charlotte': {
+                'state': 'NC', 
+                'population': 2648654, 
+                'density_threshold': 4000,
+                'principal_city_lat': 35.2271,  # Uptown Charlotte
+                'principal_city_lon': -80.8431
+            },
+            'San Francisco': {
+                'state': 'CA', 
+                'population': 4727357, 
+                'density_threshold': 12000,
+                'principal_city_lat': 37.7749,  # Downtown San Francisco
+                'principal_city_lon': -122.4194
+            },
+            'Indianapolis': {
+                'state': 'IN', 
+                'population': 2088452, 
+                'density_threshold': 3000,
+                'principal_city_lat': 39.7684,  # Downtown Indianapolis
+                'principal_city_lon': -86.1581
+            },
+            'Seattle': {
+                'state': 'WA', 
+                'population': 4017693, 
+                'density_threshold': 6000,
+                'principal_city_lat': 47.6062,  # Downtown Seattle
+                'principal_city_lon': -122.3321
+            },
+            'Denver': {
+                'state': 'CO', 
+                'population': 2968420, 
+                'density_threshold': 4500,
+                'principal_city_lat': 39.7392,  # Downtown Denver
+                'principal_city_lon': -104.9903
+            },
+            'Washington': {
+                'state': 'DC', 
+                'population': 6303090, 
+                'density_threshold': 10000,
+                'principal_city_lat': 38.9072,  # Downtown DC
+                'principal_city_lon': -77.0369
+            },
+            'Boston': {
+                'state': 'MA', 
+                'population': 4953275, 
+                'density_threshold': 8000,
+                'principal_city_lat': 42.3601,  # Downtown Boston
+                'principal_city_lon': -71.0589
+            },
             'El Paso': {'state': 'TX', 'population': 868859, 'density_threshold': 2000},
             'Nashville': {'state': 'TN', 'population': 1967890, 'density_threshold': 3000},
             'Detroit': {'state': 'MI', 'population': 4322056, 'density_threshold': 5000},
@@ -165,18 +309,75 @@ class RegionalBaselineManager:
         return area_type, metro_name, metadata
     
     def _detect_metro_area(self, city: str, lat: float, lon: float) -> Optional[str]:
-        """Detect which major metro area the location belongs to."""
-        if not city:
+        """
+        Detect which major metro area the location belongs to.
+        
+        Uses geographic distance to principal city centers for more accurate detection,
+        especially for suburbs and edge cities that may not match city name exactly.
+        
+        Args:
+            city: City name (for name matching fallback)
+            lat, lon: Coordinates of location
+        
+        Returns:
+            Metro name if detected, None otherwise
+        """
+        # First try name matching (fast path for exact matches)
+        if city:
+            city_lower = city.lower()
+            for metro_name, metro_data in self.major_metros.items():
+                if metro_name.lower() in city_lower or city_lower in metro_name.lower():
+                    return metro_name
+        
+        # Geographic detection: find closest principal city within 50km
+        # This catches suburbs and edge cities that don't match by name
+        closest_metro = None
+        closest_distance = float('inf')
+        max_distance_km = 50.0  # Maximum distance to consider
+        
+        for metro_name, metro_data in self.major_metros.items():
+            # Check if metro has principal city coordinates
+            pc_lat = metro_data.get('principal_city_lat')
+            pc_lon = metro_data.get('principal_city_lon')
+            
+            if pc_lat is not None and pc_lon is not None:
+                distance = haversine_distance(lat, lon, pc_lat, pc_lon)
+                if distance < closest_distance and distance <= max_distance_km:
+                    closest_distance = distance
+                    closest_metro = metro_name
+        
+        if closest_metro:
+            return closest_metro
+        
+        return None
+    
+    def get_distance_to_principal_city(self, lat: float, lon: float, metro_name: Optional[str] = None, city: Optional[str] = None) -> Optional[float]:
+        """
+        Get distance from location to principal city center (in kilometers).
+        
+        Args:
+            lat, lon: Coordinates of location
+            metro_name: Optional metro name (if None, will detect automatically)
+            city: Optional city name (for metro detection if metro_name not provided)
+        
+        Returns:
+            Distance in kilometers, or None if metro not found or no principal city coordinates
+        """
+        if metro_name is None:
+            # Use geographic detection (works even if city name doesn't match metro)
+            metro_name = self._detect_metro_area(city, lat, lon)
+        
+        if not metro_name or metro_name not in self.major_metros:
             return None
         
-        # Simple name matching for major metros
-        city_lower = city.lower()
-        for metro_name, metro_data in self.major_metros.items():
-            if metro_name.lower() in city_lower or city_lower in metro_name.lower():
-                return metro_name
+        metro_data = self.major_metros[metro_name]
+        pc_lat = metro_data.get('principal_city_lat')
+        pc_lon = metro_data.get('principal_city_lon')
         
-        # Could add more sophisticated geographic detection here
-        return None
+        if pc_lat is None or pc_lon is None:
+            return None
+        
+        return haversine_distance(lat, lon, pc_lat, pc_lon)
     
     def _get_classification_confidence(self, density: Optional[float], metro_name: Optional[str]) -> float:
         """Get confidence in area classification."""

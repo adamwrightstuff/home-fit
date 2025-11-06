@@ -64,13 +64,20 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     weights = _parse_beauty_weights(beauty_weights)
     
-    # Component 1: Trees (0-50)
-    print(f"   🌳 Analyzing tree canopy...")
-    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=area_type)
-    
     # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
+    # Get this first to determine effective area type for tree radius
     print(f"   🏗️  Analyzing architectural beauty...")
     arch_score, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
+    
+    # Get effective area type for tree radius and calibration guardrails
+    effective_area_type = arch_details.get("classification", {}).get("effective_area_type") if arch_details else None
+    if effective_area_type is None and area_type:
+        effective_area_type = area_type
+    
+    # Component 1: Trees (0-50)
+    # Use effective area type for radius if available (urban_historic/urban_residential get 800m)
+    print(f"   🌳 Analyzing tree canopy...")
+    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=effective_area_type or area_type)
     
     # Apply weights: Scale each component to its weighted max points
     # Default: trees=0.5 (50 points), architecture=0.5 (50 points) out of 100
@@ -83,12 +90,20 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         (arch_score * (max_arch_points / 50))
     )
     
+    # Calibration guardrails: Flag results outside expected ranges
+    calibration_alert = _check_calibration_guardrails(
+        effective_area_type or area_type,
+        arch_score,
+        tree_score
+    )
+    
     # Assess data quality
     combined_data = {
         'tree_score': tree_score,
         'architectural_score': arch_score,
         'tree_details': tree_details,
-        'architectural_details': arch_details
+        'architectural_details': arch_details,
+        'calibration_alert': calibration_alert
     }
     
     # Use passed area_type if available, otherwise detect it with city context
@@ -145,6 +160,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "enhancers": enhancers,
             "enhancer_bonus": beauty_bonus
         },
+        "calibration_alert": calibration_alert,  # Flag if scores are outside expected ranges
         "weights": weights,
         "data_quality": quality_metrics
     }
@@ -202,6 +218,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         area_type = area_type or detected_area_type
         
         # Adjust radius based on centralized profile
+        # area_type could be urban_historic, historic_urban, or urban_residential for 800m radius
         rp = get_radius_profile('neighborhood_beauty', area_type, location_scope)
         radius_m = int(rp.get('tree_canopy_radius_m', 1000))
         print(f"   🔧 Radius profile (beauty): area_type={area_type}, scope={location_scope}, tree_canopy_radius={radius_m}m")
@@ -449,7 +466,11 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "error": diversity_metrics.get('error'), 
                 "note": "OSM building data unavailable",
                 "user_message": user_message,
-                "retry_suggested": retry_suggested
+                "retry_suggested": retry_suggested,
+                # Include validation metadata even on error
+                "beauty_valid": diversity_metrics.get("beauty_valid", False),
+                "data_warning": diversity_metrics.get("data_warning", "api_error"),
+                "confidence_0_1": diversity_metrics.get("confidence_0_1", 0.0)
             }
         
         # Get area type and density for classification
@@ -467,7 +488,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         median_year_built = historic_data.get('median_year_built')
         
         # Calculate beauty score using conditional adjustments
-        beauty_score = arch_diversity.score_architectural_diversity_as_beauty(
+        # Returns (score, metadata) tuple with coverage cap info
+        beauty_score_result = arch_diversity.score_architectural_diversity_as_beauty(
             diversity_metrics.get("levels_entropy", 0),
             diversity_metrics.get("building_type_diversity", 0),
             diversity_metrics.get("footprint_area_cv", 0),
@@ -475,8 +497,17 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             density,
             diversity_metrics.get("built_coverage_ratio"),
             historic_landmarks=historic_landmarks,
-            median_year_built=median_year_built
+            median_year_built=median_year_built,
+            lat=lat,
+            lon=lon
         )
+        
+        # Handle both old (float) and new (tuple) return formats for backward compatibility
+        if isinstance(beauty_score_result, tuple):
+            beauty_score, coverage_cap_metadata = beauty_score_result
+        else:
+            beauty_score = beauty_score_result
+            coverage_cap_metadata = {}
         
         # Get effective area type for details
         effective_area_type = get_effective_area_type(
@@ -495,7 +526,13 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "height_diversity": diversity_metrics.get("levels_entropy", 0),
                 "type_diversity": diversity_metrics.get("building_type_diversity", 0),
                 "footprint_variation": diversity_metrics.get("footprint_area_cv", 0),
-                "built_coverage_ratio": diversity_metrics.get("built_coverage_ratio", 0)
+                "built_coverage_ratio": diversity_metrics.get("built_coverage_ratio", 0),
+                # Phase 2 metrics
+                "block_grain": coverage_cap_metadata.get("block_grain", 0),
+                "streetwall_continuity": coverage_cap_metadata.get("streetwall_continuity", 0),
+                # Phase 3 metrics
+                "setback_consistency": coverage_cap_metadata.get("setback_consistency", 0),
+                "facade_rhythm": coverage_cap_metadata.get("facade_rhythm", 0)
             },
             "classification": {
                 "base_area_type": area_type,
@@ -506,7 +543,26 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "landmarks": historic_landmarks,
                 "median_year_built": median_year_built
             },
-            "sources": ["OSM"]
+            "sources": ["OSM"],
+            # Pass through validation metadata from diversity metrics
+            # beauty_valid is always True now (no hard failure)
+            "beauty_valid": diversity_metrics.get("beauty_valid") if "beauty_valid" in diversity_metrics else True,
+            "data_warning": diversity_metrics.get("data_warning"),
+            "confidence_0_1": diversity_metrics.get("confidence_0_1") if "confidence_0_1" in diversity_metrics else 1.0,
+            "osm_building_coverage": diversity_metrics.get("osm_building_coverage") or diversity_metrics.get("built_coverage_ratio", 0),
+            # Include coverage cap metadata
+            "coverage_cap_applied": coverage_cap_metadata.get("coverage_cap_applied", False),
+            "original_score_before_cap": coverage_cap_metadata.get("original_score_before_cap"),
+            "cap_reason": coverage_cap_metadata.get("cap_reason"),
+            # Phase 2 & Phase 3 confidence metrics
+            "phase2_confidence": {
+                "block_grain": coverage_cap_metadata.get("block_grain_confidence", 0),
+                "streetwall_continuity": coverage_cap_metadata.get("streetwall_confidence", 0)
+            },
+            "phase3_confidence": {
+                "setback_consistency": coverage_cap_metadata.get("setback_confidence", 0),
+                "facade_rhythm": coverage_cap_metadata.get("facade_rhythm_confidence", 0)
+            }
         }
         
         print(f"   ✅ Architectural beauty: {beauty_score:.1f}/50.0 (effective: {effective_area_type})")
@@ -516,6 +572,63 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
     except Exception as e:
         print(f"   ⚠️  Architectural diversity scoring failed: {e}")
         return 0.0, {"error": str(e), "note": "Architectural diversity unavailable"}
+
+
+def _check_calibration_guardrails(area_type: str, arch_score: float, tree_score: float) -> bool:
+    """
+    Check if beauty scores are outside expected calibration ranges.
+    
+    Returns True if scores are outside expected bands (calibration_alert).
+    
+    Expected ranges by classification:
+    - Urban Historic: Architecture 38-50, Trees 12-28
+    - Suburban: Architecture 28-45, Trees 22-40
+    - Estate Suburbs (Beverly Hills, River Oaks): Architecture 22-38, Trees 25-40
+    """
+    if not area_type:
+        return False
+    
+    # Define expected calibration ranges
+    calibration_ranges = {
+        "urban_historic": {
+            "arch": (38, 50),
+            "trees": (12, 28)
+        },
+        "historic_urban": {  # Alias for urban_historic
+            "arch": (38, 50),
+            "trees": (12, 28)
+        },
+        "suburban": {
+            "arch": (28, 45),
+            "trees": (22, 40)
+        },
+        "urban_residential": {
+            "arch": (38, 50),  # Similar to urban_historic
+            "trees": (12, 28)
+        },
+        "urban_core": {
+            # For estate suburbs like Beverly Hills, River Oaks
+            # We'll check density/built_coverage to distinguish
+            # For now, use broader range for urban_core
+            "arch": (22, 50),
+            "trees": (10, 50)
+        },
+    }
+    
+    # Get expected range for this area type
+    ranges = calibration_ranges.get(area_type)
+    if not ranges:
+        # Unknown area type - no calibration check
+        return False
+    
+    arch_min, arch_max = ranges["arch"]
+    trees_min, trees_max = ranges["trees"]
+    
+    # Check if scores are outside expected ranges
+    arch_out_of_range = arch_score < arch_min or arch_score > arch_max
+    trees_out_of_range = tree_score < trees_min or tree_score > trees_max
+    
+    return arch_out_of_range or trees_out_of_range
 
 
 def _score_nyc_trees(tree_count: int) -> float:

@@ -11,14 +11,20 @@ from .census_api import get_population_density, get_census_tract
 def detect_area_type(lat: float, lon: float, density: Optional[float] = None, 
                      city: Optional[str] = None, location_input: Optional[str] = None,
                      business_count: Optional[int] = None,
-                     built_coverage: Optional[float] = None) -> str:
+                     built_coverage: Optional[float] = None,
+                     metro_distance_km: Optional[float] = None) -> str:
     """
     Detect area type using multi-factor classification:
     1. "Downtown" keyword check
-    2. Business density (high = urban core)
-    3. Building coverage (high = urban core)
-    4. Population density with city-size adjusted thresholds
-    5. Standard density thresholds (fallback)
+    2. Distance to principal city + density (geographic relationship)
+    3. Business density (high = urban core)
+    4. Building coverage (high = urban core)
+    5. Population density with city-size adjusted thresholds
+    6. Standard density thresholds (fallback)
+    
+    Uses multi-factor approach: distance alone doesn't determine classification - density is required.
+    Reference: Bureau of Justice Statistics and Esri Urbanicity criteria use density thresholds
+    (>3,000 to >5,000 housing units/sq mi or equivalent people/sq mi) combined with principal city status.
     
     Args:
         lat, lon: Coordinates
@@ -27,12 +33,22 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         location_input: Optional raw location input string (for "downtown" keyword check)
         business_count: Optional count of businesses in 1km radius (for business density)
         built_coverage: Optional building coverage ratio 0.0-1.0 (for building density)
+        metro_distance_km: Optional distance to principal city in km (if None, will calculate)
     
     Returns:
         'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
     """
     if density is None:
         density = get_population_density(lat, lon)
+    
+    # Get distance to principal city if not provided
+    if metro_distance_km is None:
+        try:
+            from .regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city)
+        except Exception:
+            metro_distance_km = None
     
     # Factor 1: "Downtown" keyword check = urban core
     # Even if density is low, downtown areas are urban cores
@@ -43,7 +59,58 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
             # Even low density downtowns are urban cores (commercial districts)
             return "urban_core"
     
-    # Factor 2: High business density = urban core (downtown/commercial district)
+    # Factor 2: Distance to principal city + density (geographic relationship)
+    # Multi-factor approach: distance alone doesn't determine classification - density is required
+    # Handles edge cases like large low-density principal cities (e.g., Jacksonville, FL)
+    if metro_distance_km is not None and density is not None:
+        # Very close to principal city (<10km) + high density = urban_core
+        # Examples: Hoboken (2km from NYC), Jersey City (5km from NYC), Santa Monica (15km from LA)
+        if metro_distance_km < 10.0:
+            if density > 5000:
+                return "urban_core"  # High density + very close = urban extension
+            elif density > 2500:
+                return "urban_core"  # Moderate-high density + very close = urban vicinity
+            elif density < 2500:
+                # Low density even if close = exurban/rural (handles large low-density cities)
+                if density > 1000:
+                    return "exurban"
+                else:
+                    return "rural"
+        
+        # Close to principal city (10-20km) + high density = urban_core or suburban
+        # Examples: Santa Monica (15km from LA) should be urban_core
+        elif metro_distance_km < 20.0:
+            if density > 5000:
+                return "urban_core"  # High density + close = functional urban core
+            elif density > 2500:
+                return "suburban"  # Moderate density + close = suburban
+            elif density > 1000:
+                return "exurban"
+            else:
+                return "rural"
+        
+        # Medium distance (20-30km) + high density = suburban
+        # Examples: Manhattan Beach (25km from LA) should be suburban
+        elif metro_distance_km < 30.0:
+            if density > 5000:
+                return "suburban"  # High density but medium distance = suburban
+            elif density > 2500:
+                return "suburban"
+            elif density > 1000:
+                return "exurban"
+            else:
+                return "rural"
+        
+        # Far from principal city (30-50km) = suburban/exurban
+        elif metro_distance_km < 50.0:
+            if density > 2500:
+                return "suburban"
+            elif density > 1000:
+                return "exurban"
+            else:
+                return "rural"
+    
+    # Factor 3: High business density = urban core (downtown/commercial district)
     # 150+ businesses in 1km = clearly downtown/urban core
     if business_count is not None and business_count > 150:
         return "urban_core"
@@ -52,13 +119,27 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         if density and density > 2000:
             return "urban_core"
     
-    # Factor 3: High building coverage = urban core
+    # Factor 4: High building coverage = urban core (deprioritized for distance-based classification)
     # 20%+ building coverage = dense urban form
+    # NOTE: This can misclassify beach towns - distance to principal city should take priority
+    # Only apply if distance factor didn't already classify (i.e., metro_distance_km was None)
+    # AND location is close to principal city (<=25km) OR no metro detected
     if built_coverage is not None and built_coverage > 0.20:
-        if density and density > 2000:
-            return "urban_core"
+        # Only apply if distance factor didn't classify (metro_distance_km was None)
+        # OR if very close to principal city (<=15km) where high building coverage is expected
+        # If far from principal city (>25km), building coverage alone shouldn't make it urban_core
+        if metro_distance_km is None:
+            # No metro detected - use building coverage as fallback
+            if density and density > 2000:
+                return "urban_core"
+        elif metro_distance_km <= 15.0:
+            # Very close to principal city - high building coverage is expected
+            if density and density > 2000:
+                return "urban_core"
+        # If 15-25km from principal city, distance factor should have already classified
+        # If >25km, building coverage alone shouldn't make it urban_core
     
-    # Factor 4: City-size adjusted density thresholds
+    # Factor 5: City-size adjusted density thresholds
     # Check if city is a major metro (even if density is missing)
     if city:
         from .regional_baselines import RegionalBaselineManager
@@ -78,7 +159,7 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                 else:
                     return "urban_core"  # Major city, low density but still urban core
     
-    # Factor 5: Standard density thresholds (for non-major metros)
+    # Factor 6: Standard density thresholds (for non-major metros)
     # If density is missing and not a major city, return unknown
     if not density:
         return "unknown"
@@ -229,7 +310,13 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                     return "urban_core_lowrise"
         # Case 2: Moderate density (2500-10000) with moderate diversity
         elif 2500 <= density < 10000:
-            if levels_entropy > 15 and building_type_diversity > 20:
+            # Standard: Moderate height diversity (15-60)
+            if 15 < levels_entropy < 60 and 20 < building_type_diversity < 80:
+                if effective not in ("urban_residential", "historic_urban"):
+                    return "urban_core_lowrise"
+            # Low-rise variant: Low height diversity (<15) but moderate type diversity
+            # Catches estate suburbs and other dense low-rise areas (e.g., Beverly Hills)
+            if levels_entropy < 15 and 20 < building_type_diversity < 80:
                 if effective not in ("urban_residential", "historic_urban"):
                     return "urban_core_lowrise"
     

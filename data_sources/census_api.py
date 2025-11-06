@@ -117,7 +117,16 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
             return None
 
         tract_data = geographies["Census Tracts"][0]
-        return {
+        
+        # Extract CBSA data if available (Combined Statistical Areas or Metropolitan Statistical Areas)
+        cbsa_code = None
+        cbsa_name = None
+        if "Combined Statistical Areas" in geographies and geographies["Combined Statistical Areas"]:
+            csa_data = geographies["Combined Statistical Areas"][0]
+            cbsa_code = csa_data.get("GEOID")
+            cbsa_name = csa_data.get("NAME")
+        
+        result = {
             "state_fips": tract_data["STATE"],
             "county_fips": tract_data["COUNTY"],
             "tract_fips": tract_data["TRACT"],
@@ -125,6 +134,13 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
             "name": tract_data.get("NAME", "Unknown"),
             "basename": tract_data.get("BASENAME", ""),
         }
+        
+        # Add CBSA data if available
+        if cbsa_code:
+            result["cbsa_code"] = cbsa_code
+            result["cbsa_name"] = cbsa_name
+        
+        return result
 
     except Exception as e:
         print(f"Census tract lookup error: {e}")

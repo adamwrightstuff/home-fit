@@ -14,8 +14,8 @@ from typing import Dict
 def _normalize(area_type: str | None, scope: str | None) -> tuple[str, str]:
     a = (area_type or "unknown").lower()
     s = (scope or "unknown").lower()
-    if a not in {"urban_core", "suburban", "exurban", "rural", "unknown"}:
-        a = "unknown"
+    # Keep original area_type for beauty radius checks (needs to preserve subtypes)
+    # Only normalize scope
     if s not in {"neighborhood", "city", "unknown"}:
         s = "unknown"
     return a, s
@@ -65,11 +65,21 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
         return {"fac_radius_m": 20000, "pharm_radius_m": 8000}
 
     if p == "neighborhood_beauty":
-        # Urban base radius 1km; suburban/exurban/rural 2km; neighborhood scope sticks to 1km
+        # Tree radius adjustments:
+        # - urban_historic and urban_residential: 800m (tighter for dense urban areas)
+        # - urban_core: 1000m
+        # - suburban: 1000-2000m (keep wider for suburban)
+        # - neighborhood scope: 1000m (stays within neighborhood boundaries)
         if s == "neighborhood":
             return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
-        if a == "urban_core":
+        # Check for urban_historic/urban_residential first (before urban_core check)
+        # Use original area_type (a) which may be lowercase, check both cases
+        a_lower = a.lower()
+        if a_lower in ("urban_historic", "historic_urban", "urban_residential"):
+            return {"tree_canopy_radius_m": 800, "architectural_diversity_radius_m": 2000}
+        if a_lower == "urban_core":
             return {"tree_canopy_radius_m": 1000, "architectural_diversity_radius_m": 2000}
+        # suburban, exurban, rural: keep 1-2km radius
         return {"tree_canopy_radius_m": 2000, "architectural_diversity_radius_m": 2000}
 
     if p == "air_travel_access":

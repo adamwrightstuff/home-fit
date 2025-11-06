@@ -8,8 +8,10 @@ from typing import Dict, Optional
 import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
+from .cache import cached, CACHE_TTL
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
 def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict[str, float]:
     """
     Return a dict with sandbox metrics (0-100 scaled where applicable):
@@ -55,6 +57,11 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 "building_type_diversity": 0, 
                 "footprint_area_cv": 0, 
                 "diversity_score": 0, 
+                "built_coverage_ratio": 0.0,
+                "osm_building_coverage": 0.0,
+                "beauty_valid": True,  # Always true - no hard failure
+                "data_warning": "api_error",
+                "confidence_0_1": 0.0,  # Very low confidence for API errors
                 "error": error_detail,
                 "user_message": user_message,
                 "retry_suggested": True
@@ -63,18 +70,62 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         elements = resp.json().get("elements", [])
         if not elements:
             print(f"⚠️  No building elements found in OSM query (radius: {radius_m}m)")
-            return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "note": "No buildings found in OSM"}
+            return {
+                "levels_entropy": 0,
+                "building_type_diversity": 0,
+                "footprint_area_cv": 0,
+                "diversity_score": 0,
+                "built_coverage_ratio": 0.0,
+                "osm_building_coverage": 0.0,
+                "beauty_valid": True,  # Always true - no hard failure
+                "data_warning": "no_buildings",
+                "confidence_0_1": 0.0,  # Very low confidence for no buildings
+                "note": "No buildings found in OSM"
+            }
     except requests.exceptions.Timeout as e:
         print(f"⚠️  OSM building query timeout: {e}")
-        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"Timeout: {str(e)}"}
+        return {
+            "levels_entropy": 0,
+            "building_type_diversity": 0,
+            "footprint_area_cv": 0,
+            "diversity_score": 0,
+            "built_coverage_ratio": 0.0,
+            "osm_building_coverage": 0.0,
+            "beauty_valid": True,  # Always true - no hard failure
+            "data_warning": "timeout",
+            "confidence_0_1": 0.0,  # Very low confidence for timeouts
+            "error": f"Timeout: {str(e)}"
+        }
     except requests.exceptions.RequestException as e:
         print(f"⚠️  OSM building query network error: {e}")
-        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": f"Network error: {str(e)}"}
+        return {
+            "levels_entropy": 0,
+            "building_type_diversity": 0,
+            "footprint_area_cv": 0,
+            "diversity_score": 0,
+            "built_coverage_ratio": 0.0,
+            "osm_building_coverage": 0.0,
+            "beauty_valid": True,  # Always true - no hard failure
+            "data_warning": "network_error",
+            "confidence_0_1": 0.0,  # Very low confidence for network errors
+            "error": f"Network error: {str(e)}"
+        }
     except Exception as e:
         print(f"⚠️  OSM building query error: {e}")
         import traceback
         print(f"   Traceback: {traceback.format_exc()}")
-        return {"levels_entropy":0, "building_type_diversity":0, "footprint_area_cv":0, "diversity_score":0, "error": str(e)}
+        return {
+            "levels_entropy": 0,
+            "building_type_diversity": 0,
+            "footprint_area_cv": 0,
+            "diversity_score": 0,
+            "built_coverage_ratio": 0.0,
+            "osm_building_coverage": 0.0,
+            "beauty_valid": True,  # Always true - no hard failure
+            "data_warning": "error",
+            "confidence_0_1": 0.0,  # Very low confidence for errors
+            "error": str(e)
+        }
 
     import math
     def entropy(counts):
@@ -182,12 +233,32 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     total_built_area_sqm = sum(areas) if areas else 0.0
     built_coverage_ratio = (total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
 
+    # Calculate OSM coverage validation
+    # No hard failure - always report coverage and confidence
+    # Apply score caps based on coverage level
+    beauty_valid = True  # Always true - no hard failure
+    data_warning = None
+    confidence_0_1 = 1.0
+    
+    if built_coverage_ratio < 0.30:
+        # Very low coverage: cap architecture at 25/50, lower confidence
+        confidence_0_1 = 0.4
+        data_warning = "low_building_coverage"
+    elif built_coverage_ratio < 0.50:
+        # Low coverage: cap architecture at 35/50, moderate confidence
+        confidence_0_1 = 0.6
+        data_warning = "low_building_coverage"
+    
     return {
         "levels_entropy": round(levels_entropy, 1),
         "building_type_diversity": round(type_div, 1),
         "footprint_area_cv": round(area_cv, 1),
         "diversity_score": round(diversity_score, 1),
-        "built_coverage_ratio": round(built_coverage_ratio, 3)  # 0.0-1.0 scale
+        "built_coverage_ratio": round(built_coverage_ratio, 3),  # 0.0-1.0 scale
+        "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
+        "beauty_valid": beauty_valid,  # Always True - no hard failure
+        "data_warning": data_warning,  # "low_building_coverage" if coverage < 50%
+        "confidence_0_1": confidence_0_1  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
     }
 
 
@@ -201,6 +272,101 @@ DENSITY_MULTIPLIER = {
     "exurban": 1.15,
     "rural": 1.20,
     "unknown": 1.00,
+}
+
+# Area-type-specific weights for beauty metrics (sum = 50 points)
+# Phase 1 metrics:
+#   height_diversity → Height variation (entropy)
+#   historic_era_integrity → Type diversity
+#   footprint_diversity → Footprint CV
+# Phase 2 metrics (now active):
+#   block_grain → Street network fineness
+#   streetwall_continuity → Building facade continuity along streets
+# Phase 3 metrics (now active):
+#   setback_consistency → Building setback consistency (uniformity of setbacks)
+#   facade_rhythm → Facade alignment (proportion of buildings aligned with mean setback)
+AREA_TYPE_WEIGHTS = {
+    "urban_core": {
+        "height_diversity": 18,         # Phase 1: height variation (reduced from 20)
+        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "footprint_diversity": 0,       # Phase 1: footprint CV (not used for urban_core)
+        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
+        "streetwall_continuity": 8,     # Phase 2: facade continuity (reduced from 10)
+        "setback_consistency": 4,        # Phase 3: setback uniformity
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "urban_historic": {
+        "height_diversity": 16,         # Phase 1: height variation (reduced from 18)
+        "historic_era_integrity": 17,   # Phase 1: type diversity (emphasized)
+        "footprint_diversity": 0,
+        "block_grain": 6,               # Phase 2: street network fineness (reduced from 8)
+        "streetwall_continuity": 5,      # Phase 2: facade continuity (reduced from 7)
+        "setback_consistency": 4,       # Phase 3: setback uniformity
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "historic_urban": {  # Alias for urban_historic (uses same weights)
+        "height_diversity": 16,
+        "historic_era_integrity": 17,
+        "footprint_diversity": 0,
+        "block_grain": 6,
+        "streetwall_continuity": 5,
+        "setback_consistency": 4,
+        "facade_rhythm": 2,
+    },
+    "urban_residential": {
+        "height_diversity": 13,         # Phase 1: height variation (reduced from 15)
+        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "footprint_diversity": 5,       # Phase 1: footprint CV
+        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
+        "streetwall_continuity": 8,     # Phase 2: facade continuity (reduced from 10)
+        "setback_consistency": 4,       # Phase 3: setback uniformity
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "urban_core_lowrise": {
+        "height_diversity": 16,         # Phase 1: height variation (reduced from 18)
+        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "footprint_diversity": 0,
+        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
+        "streetwall_continuity": 10,    # Phase 2: facade continuity (reduced from 12)
+        "setback_consistency": 4,       # Phase 3: setback uniformity
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "suburban": {
+        "height_diversity": 5,          # Phase 1: height variation (less important)
+        "historic_era_integrity": 12,   # Phase 1: type diversity (reduced from 13)
+        "footprint_diversity": 0,
+        "block_grain": 17,              # Phase 2: street network fineness (reduced from 20)
+        "streetwall_continuity": 10,    # Phase 2: facade continuity (reduced from 12)
+        "setback_consistency": 4,       # Phase 3: setback uniformity (important for suburban)
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "exurban": {
+        "height_diversity": 0,          # Phase 1: height variation (not relevant)
+        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "footprint_diversity": 0,
+        "block_grain": 22,              # Phase 2: street network fineness (reduced from 25)
+        "streetwall_continuity": 13,    # Phase 2: facade continuity (reduced from 15)
+        "setback_consistency": 3,       # Phase 3: setback uniformity (less important)
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "rural": {
+        "height_diversity": 0,          # Phase 1: height variation (not relevant)
+        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "footprint_diversity": 0,
+        "block_grain": 22,              # Phase 2: street network fineness (reduced from 25)
+        "streetwall_continuity": 13,    # Phase 2: facade continuity (reduced from 15)
+        "setback_consistency": 3,       # Phase 3: setback uniformity (less important)
+        "facade_rhythm": 2,             # Phase 3: facade alignment
+    },
+    "unknown": {
+        "height_diversity": 10,          # Equal weights as fallback
+        "historic_era_integrity": 10,
+        "footprint_diversity": 10,
+        "block_grain": 8,
+        "streetwall_continuity": 8,
+        "setback_consistency": 2,
+        "facade_rhythm": 2,
+    },
 }
 
 # Context-biased target bands: (good_low, plateau_low, plateau_high, good_high)
@@ -242,6 +408,85 @@ CONTEXT_TARGETS = {
         "footprint": (50, 70, 100, 100),
     },
 }
+
+
+def _is_historic_organic(median_year_built: Optional[int]) -> bool:
+    """Detect Historic Organic pattern: median_year_built < 1940."""
+    return median_year_built is not None and median_year_built < 1940
+
+
+def _apply_historic_organic_adjustment(targets: Dict, is_historic_organic_flag: bool, 
+                                       is_historic: bool, footprint_area_cv: float,
+                                       effective: str) -> None:
+    """Adjustment 1: Historic organic growth - widen variance bands for organic neighborhoods."""
+    if is_historic_organic_flag or (is_historic and footprint_area_cv > 70):
+        targets["footprint"] = (50, 65, 95, 100)  # HIGH CV is GOOD for historic areas
+        if is_historic_organic_flag:
+            if effective in ["urban_core", "urban_core_lowrise", "historic_urban"]:
+                targets["height"] = (10, 15, 70, 85)
+                targets["type"] = (20, 25, 85, 95)
+
+
+def _apply_very_historic_adjustment(targets: Dict, is_very_historic: bool, effective: str) -> None:
+    """Adjustment 2: Very historic urban_residential - allow higher type diversity."""
+    if is_very_historic and effective == "urban_residential":
+        targets["type"] = (0, 0, 35, 50)  # Allow up to 35 in sweet spot
+
+
+def _apply_historic_moderate_diversity_adjustment(targets: Dict, is_historic: bool, effective: str,
+                                                  levels_entropy: float, building_type_diversity: float,
+                                                  footprint_area_cv: float) -> None:
+    """Adjustment 3: Historic urban_core/lowrise with moderate diversity."""
+    if is_historic and effective in ["urban_core_lowrise", "urban_core"]:
+        if 15 < levels_entropy < 50 and 20 < building_type_diversity < 60:
+            targets["height"] = (10, 20, 50, 70)
+            targets["type"] = (20, 30, 65, 85)
+            if footprint_area_cv and footprint_area_cv > 50:
+                targets["footprint"] = (50, 60, 90, 100)
+
+
+def _apply_historic_uniformity_adjustment(targets: Dict, is_historic: bool, effective: str,
+                                          levels_entropy: float, building_type_diversity: float,
+                                          footprint_area_cv: float) -> None:
+    """Adjustment 4: Historic suburban/exurban uniformity with low footprint CV."""
+    if is_historic and effective in ("suburban", "exurban"):
+        if levels_entropy < 10 and building_type_diversity < 25 and footprint_area_cv < 40:
+            targets["height"] = (0, 0, 15, 30)
+            targets["type"] = (0, 0, 25, 40)
+            targets["footprint"] = (20, 25, 40, 50)
+
+
+def _apply_coastal_uniformity_adjustment(targets: Dict, effective: str, levels_entropy: float,
+                                         building_type_diversity: float, footprint_area_cv: float) -> None:
+    """Adjustment 5: Uniform coastal beach towns (urban_core_lowrise with low footprint CV)."""
+    if effective == "urban_core_lowrise":
+        if levels_entropy < 15 and building_type_diversity < 40 and footprint_area_cv < 30:
+            targets["height"] = (0, 0, 15, 30)
+            targets["type"] = (0, 0, 35, 50)
+            targets["footprint"] = (15, 20, 30, 40)
+
+
+def _apply_coastal_town_adjustment(targets: Dict, effective: str, levels_entropy: float,
+                                   building_type_diversity: float, footprint_area_cv: float) -> None:
+    """Adjustment 6: Coastal towns with uniform architecture (suburban/exurban, low footprint CV)."""
+    if effective in ("suburban", "exurban"):
+        if levels_entropy < 10 and building_type_diversity < 20 and footprint_area_cv < 70:
+            targets["height"] = (0, 0, 15, 30)
+            targets["type"] = (0, 0, 25, 40)
+            targets["footprint"] = (20, 30, 50, 65)
+
+
+def _apply_residential_varied_lots_adjustment(targets: Dict, effective: str, levels_entropy: float,
+                                             building_type_diversity: float, footprint_area_cv: float,
+                                             density: Optional[float]) -> None:
+    """Adjustment 7: Uniform residential urban areas with varied lot sizes (urban_core_lowrise)."""
+    if effective == "urban_core_lowrise":
+        is_dense_enough = (density is not None and density > 5000)
+        if (levels_entropy < 15 and building_type_diversity < 45 and footprint_area_cv > 60 and 
+            is_dense_enough):
+            targets["height"] = (0, 0, 15, 30)
+            targets["type"] = (0, 0, 40, 55)
+            targets["footprint"] = (60, 70, 95, 100)
 
 
 def _score_band(value: float, band: tuple, max_points: float = 16.67) -> float:
@@ -348,18 +593,15 @@ def score_architectural_diversity_as_beauty(
     density: Optional[float] = None,
     built_coverage_ratio: Optional[float] = None,
     historic_landmarks: Optional[int] = None,
-    median_year_built: Optional[int] = None
-) -> float:
+    median_year_built: Optional[int] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None
+) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
     
-    Simplified approach:
-    - Context-biased scoring (different targets per area type)
-    - Conditional adjustments for historic organic development
-    - One coherence bonus (works across all types)
-    - One penalty per area type context
-    - Density multiplier for rural/exurban
-    - Cap at 50 (native 0-50 range, no scaling needed)
+    Now includes Phase 2 metrics: block_grain and streetwall_continuity.
+    Now includes Phase 3 metrics: setback_consistency and facade_rhythm.
     
     Args:
         levels_entropy: Height diversity (0-100)
@@ -370,6 +612,8 @@ def score_architectural_diversity_as_beauty(
         built_coverage_ratio: Optional built coverage ratio (0.0-1.0)
         historic_landmarks: Optional count of historic landmarks from OSM
         median_year_built: Optional median year buildings were built
+        lat: Optional latitude for Phase 2 & Phase 3 metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
+        lon: Optional longitude for Phase 2 & Phase 3 metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
     
     Returns:
         Beauty score out of 50 points (native range, no scaling)
@@ -406,116 +650,130 @@ def score_architectural_diversity_as_beauty(
     if median_year_built is not None and median_year_built < 1940:
         is_very_historic = True
     
-    # Adjustment 1: Historic organic growth
-    # Historic areas with high footprint CV = organic irregular lots = beautiful
-    # Examples: Georgetown (93.3%), French Quarter (~85%), Old Town Alexandria
-    # High footprint CV in historic areas reflects centuries of organic growth
-    if is_historic and footprint_area_cv > 70:
-        targets["footprint"] = (50, 65, 95, 100)  # HIGH CV is GOOD for historic areas
+    # Use Historic Organic flag for additional adjustments
+    is_historic_organic_flag = _is_historic_organic(median_year_built)
     
-    # Adjustment 2: Very historic urban_residential
-    # Very old neighborhoods can have slightly higher type diversity and still be beautiful
-    # Examples: Georgetown (1938, type 31.8)
-    # This aligns scoring with classification logic (allows type < 35 for very historic)
-    if is_very_historic and effective == "urban_residential":
-        targets["type"] = (0, 0, 35, 50)  # Allow up to 35 in sweet spot (expanded from 20)
+    # Apply all adjustments in order (most specific last)
+    _apply_historic_organic_adjustment(targets, is_historic_organic_flag, is_historic, 
+                                       footprint_area_cv, effective)
+    _apply_very_historic_adjustment(targets, is_very_historic, effective)
+    _apply_historic_moderate_diversity_adjustment(targets, is_historic, effective,
+                                                   levels_entropy, building_type_diversity,
+                                                   footprint_area_cv)
+    _apply_historic_uniformity_adjustment(targets, is_historic, effective,
+                                          levels_entropy, building_type_diversity,
+                                          footprint_area_cv)
+    _apply_coastal_uniformity_adjustment(targets, effective, levels_entropy,
+                                         building_type_diversity, footprint_area_cv)
+    _apply_coastal_town_adjustment(targets, effective, levels_entropy,
+                                   building_type_diversity, footprint_area_cv)
+    _apply_residential_varied_lots_adjustment(targets, effective, levels_entropy,
+                                              building_type_diversity, footprint_area_cv,
+                                              density)
     
-    # Adjustment 3: Historic urban_core/lowrise with moderate diversity
-    # Historic areas with moderate architectural diversity need more forgiving targets
-    # Examples: Greenwich Village (height 22.9, type 27.2, footprint 66.2%)
-    if is_historic and effective in ["urban_core_lowrise", "urban_core"]:
-        # Check if moderate diversity pattern (not uniform, not extreme)
-        if 15 < levels_entropy < 50 and 20 < building_type_diversity < 60:
-            # Historic with moderate diversity - more forgiving targets
-            targets["height"] = (10, 20, 50, 70)  # More forgiving height range
-            targets["type"] = (20, 30, 65, 85)    # More forgiving type range
-            # Also reward organic growth if present
-            if footprint_area_cv and footprint_area_cv > 50:
-                targets["footprint"] = (50, 60, 90, 100)  # High CV is good for historic
+    # Get area-type-specific weights for this effective area type
+    weights = AREA_TYPE_WEIGHTS.get(effective, AREA_TYPE_WEIGHTS.get("unknown", AREA_TYPE_WEIGHTS["unknown"]))
     
-    # Adjustment 4: Historic suburban/exurban uniformity with low footprint CV
-    # Historic suburban/exurban areas with uniform architecture + LOW footprint CV = beautiful planned uniformity
-    # Examples: Carmel-by-the-Sea (height 0.4, type 19.8, footprint 27.1%), Nantucket (height 0.0, type 1.6, footprint 39.1%)
-    # This is different from degraded sprawl (uniform + HIGH footprint CV like Levittown 95.3%)
-    # Key distinction: LOW footprint CV = planned/preserved, HIGH footprint CV = degraded sprawl
-    if is_historic and effective in ("suburban", "exurban"):
-        # Check for beautiful planned uniformity: uniform height + uniform type + LOW footprint CV
-        if levels_entropy < 10 and building_type_diversity < 25 and footprint_area_cv < 40:
-            # Beautiful planned uniformity (like Carmel, Nantucket) - reward it
-            # Adjust targets to match uniform pattern (similar to urban_residential)
-            targets["height"] = (0, 0, 15, 30)  # More forgiving for very uniform (like urban_residential)
-            targets["type"] = (0, 0, 25, 40)   # More forgiving for very uniform (allow up to 25 in sweet spot)
-            targets["footprint"] = (20, 25, 40, 50)  # LOW footprint CV is GOOD for planned uniformity
+    # Score each metric using adjusted targets, then apply area-type-specific weights
+    # Phase 1 metrics:
+    # - levels_entropy → height_diversity weight
+    # - building_type_diversity → historic_era_integrity weight
+    # - footprint_area_cv → footprint_diversity weight
+    # Phase 2 metrics (from street_geometry module):
+    # - block_grain → block_grain weight
+    # - streetwall_continuity → streetwall_continuity weight
     
-    # Adjustment 5: Uniform coastal beach towns (urban_core_lowrise with low footprint CV)
-    # Well-planned coastal beach towns often have uniform architecture (planned, not sprawl)
-    # Examples: Manhattan Beach (height 9.9, type 32.5, footprint 21.5%)
-    # Low footprint CV in coastal urban areas = intentional uniformity, not cookie-cutter chaos
-    # NOTE: Adjustment 7 handles high footprint CV (parks/green space), so this handles LOW footprint CV
-    if effective == "urban_core_lowrise":
-        # Check for planned uniformity: uniform height + uniform type + LOW footprint CV
-        # This is mutually exclusive with Adjustment 7 (which requires footprint_area_cv > 60)
-        if levels_entropy < 15 and building_type_diversity < 40 and footprint_area_cv < 30:
-            # Planned uniformity (like Manhattan Beach, Hermosa Beach) - reward it
-            # Adjust targets to match uniform pattern (similar to urban_residential)
-            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
-            targets["type"] = (0, 0, 35, 50)   # More forgiving for uniform coastal areas
-            targets["footprint"] = (15, 20, 30, 40)  # LOW footprint CV is GOOD for planned uniformity
+    # Import Phase 2 and Phase 3 metrics
+    from .street_geometry import (
+        compute_block_grain, compute_streetwall_continuity,
+        compute_setback_consistency, compute_facade_rhythm
+    )
+    from concurrent.futures import ThreadPoolExecutor
     
-    # Adjustment 6: Coastal towns with uniform architecture (suburban/exurban, low footprint CV)
-    # Well-planned coastal towns often have uniform architecture even if not historic
-    # Examples: Cape May (height 0.4, type 7.1, footprint 44.7%), Sausalito (height 0.8, type 14.5, footprint 63.9%)
-    # Low footprint CV in coastal contexts = intentional uniformity, not sprawl
-    # Note: Cape May's footprint 44.7% is slightly above 40%, but still indicates planned uniformity
-    if effective in ("suburban", "exurban"):
-        # Check for planned uniformity: uniform height + uniform type + LOW to moderate footprint CV
-        if levels_entropy < 10 and building_type_diversity < 20 and footprint_area_cv < 70:
-            # Planned uniformity (like Cape May, Sausalito) - reward it
-            # Adjust targets to match uniform pattern (similar to historic uniformity)
-            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
-            targets["type"] = (0, 0, 25, 40)   # More forgiving for uniform coastal areas
-            # Footprint: Allow wider range for coastal areas (some variation in lot sizes is natural)
-            targets["footprint"] = (20, 30, 50, 65)  # Moderate variation is OK for coastal towns
+    # Calculate Phase 1 raw scores (0-100 scale, normalized to 0-16.67 for weighting)
+    height_raw = _score_band(levels_entropy, targets["height"], max_points=16.67)
+    type_raw = _score_band(building_type_diversity, targets["type"], max_points=16.67)
+    foot_raw = _score_band(footprint_area_cv, targets["footprint"], max_points=16.67)
     
-    # Adjustment 7: Uniform residential urban areas with varied lot sizes (urban_core_lowrise)
-    # Well-planned residential areas can have uniform architecture but varied lot sizes due to:
-    # - Parks and green space (which is beautiful, not sprawl)
-    # - Organic lot subdivision over time
-    # - Mixed lot sizes from different development eras
-    # Examples: Evanston IL (height 7, type 36.9, footprint 83.2%, density 15,335)
-    # Pattern: uniform architecture + varied lot sizes = intentional planning, not cookie-cutter
-    # SAFEGUARD: Only apply to genuinely dense areas to avoid rewarding sprawl
-    # NOTE: This is mutually exclusive with Adjustment 5 (which requires footprint_area_cv < 30)
-    if effective == "urban_core_lowrise":
-        # Check for uniform residential pattern: uniform height + moderate-low type diversity + high footprint CV
-        # High footprint CV in this context = varied lot sizes (parks, green space), not sprawl
-        # Require minimum density to distinguish from sprawl (density > 5,000 people/sq mi = truly dense)
-        # Evanston has 15,335 people/sq mi, so this threshold is safe
-        is_dense_enough = (density is not None and density > 5000)
+    # Calculate Phase 2 and Phase 3 metrics (0-100 scale, normalized to 0-16.67 for weighting)
+    # OPTIMIZATION: Run all Phase 2 & Phase 3 metrics in parallel for better performance
+    block_grain_value = 0.0
+    streetwall_value = 0.0
+    setback_value = 0.0
+    facade_rhythm_value = 0.0
+    block_grain_confidence = 0.0
+    streetwall_confidence = 0.0
+    setback_confidence = 0.0
+    facade_rhythm_confidence = 0.0
+    
+    if lat is not None and lon is not None:
+        # Use 2km radius for Phase 2 & Phase 3 metrics (same as architectural diversity)
+        # OPTIMIZATION: Fetch shared OSM data once for all Phase 2 & Phase 3 metrics
+        from .street_geometry import _fetch_roads_and_buildings
+        shared_osm_data = _fetch_roads_and_buildings(lat, lon, 2000)
         
-        # Pattern: uniform architecture + varied lot sizes, but only if dense enough to be genuine urban
-        # This only applies if footprint_area_cv > 60 (high variation), which is mutually exclusive with
-        # Adjustment 5 which requires footprint_area_cv < 30 (low variation)
-        if (levels_entropy < 15 and building_type_diversity < 45 and footprint_area_cv > 60 and 
-            is_dense_enough):
-            # Uniform residential with varied lot sizes (like Evanston) - reward it
-            # Adjust targets to match uniform residential pattern (similar to urban_residential)
-            targets["height"] = (0, 0, 15, 30)  # Reward uniformity
-            targets["type"] = (0, 0, 40, 55)   # More forgiving for uniform residential areas
-            targets["footprint"] = (60, 70, 95, 100)  # HIGH footprint CV is OK for varied lot sizes/parks
+        # Run all 4 metrics in parallel, passing shared OSM data where applicable
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_block = executor.submit(compute_block_grain, lat, lon, 2000)
+            future_streetwall = executor.submit(compute_streetwall_continuity, lat, lon, 2000, shared_osm_data)
+            future_setback = executor.submit(compute_setback_consistency, lat, lon, 2000, shared_osm_data)
+            future_facade = executor.submit(compute_facade_rhythm, lat, lon, 2000, shared_osm_data)
+            
+            # Wait for all to complete
+            block_grain_data = future_block.result()
+            streetwall_data = future_streetwall.result()
+            setback_data = future_setback.result()
+            facade_rhythm_data = future_facade.result()
+        
+        block_grain_value = block_grain_data.get("block_grain", 0.0)
+        block_grain_confidence = block_grain_data.get("coverage_confidence", 0.0)
+        
+        streetwall_value = streetwall_data.get("streetwall_continuity", 0.0)
+        streetwall_confidence = streetwall_data.get("coverage_confidence", 0.0)
+        
+        setback_value = setback_data.get("setback_consistency", 0.0)
+        setback_confidence = setback_data.get("coverage_confidence", 0.0)
+        
+        facade_rhythm_value = facade_rhythm_data.get("facade_rhythm", 0.0)
+        facade_rhythm_confidence = facade_rhythm_data.get("coverage_confidence", 0.0)
     
-    # Score each metric using adjusted targets
-    height_pts = _score_band(levels_entropy, targets["height"])
-    type_pts = _score_band(building_type_diversity, targets["type"])
-    foot_pts = _score_band(footprint_area_cv, targets["footprint"])
+    # Normalize Phase 2 & Phase 3 metrics to 0-16.67 scale (same as Phase 1)
+    block_grain_raw = (block_grain_value / 100.0) * 16.67
+    streetwall_raw = (streetwall_value / 100.0) * 16.67
+    setback_raw = (setback_value / 100.0) * 16.67
+    facade_rhythm_raw = (facade_rhythm_value / 100.0) * 16.67
+    
+    # Apply area-type-specific weights
+    # Scale each metric's raw score (0-16.67) to its weighted max (0-weight)
+    height_weight = weights.get("height_diversity", 0)
+    historic_weight = weights.get("historic_era_integrity", 0)
+    footprint_weight = weights.get("footprint_diversity", 0)
+    block_grain_weight = weights.get("block_grain", 0)
+    streetwall_weight = weights.get("streetwall_continuity", 0)
+    setback_weight = weights.get("setback_consistency", 0)
+    facade_rhythm_weight = weights.get("facade_rhythm", 0)
+    
+    # Scale raw scores to weighted points
+    # Formula: weighted_pts = raw_score * (weight / 16.67)
+    height_pts = height_raw * (height_weight / 16.67) if height_weight > 0 else 0.0
+    type_pts = type_raw * (historic_weight / 16.67) if historic_weight > 0 else 0.0
+    foot_pts = foot_raw * (footprint_weight / 16.67) if footprint_weight > 0 else 0.0
+    block_grain_pts = block_grain_raw * (block_grain_weight / 16.67) if block_grain_weight > 0 else 0.0
+    streetwall_pts = streetwall_raw * (streetwall_weight / 16.67) if streetwall_weight > 0 else 0.0
+    setback_pts = setback_raw * (setback_weight / 16.67) if setback_weight > 0 else 0.0
+    facade_rhythm_pts = facade_rhythm_raw * (facade_rhythm_weight / 16.67) if facade_rhythm_weight > 0 else 0.0
     
     # Cap single-metric dominance (max 20 each = 40% of 50)
     height_pts = min(20.0, height_pts)
     type_pts = min(20.0, type_pts)
     foot_pts = min(20.0, foot_pts)
+    block_grain_pts = min(20.0, block_grain_pts)
+    streetwall_pts = min(20.0, streetwall_pts)
+    setback_pts = min(20.0, setback_pts)
+    facade_rhythm_pts = min(20.0, facade_rhythm_pts)
     
-    # Base total
-    base = height_pts + type_pts + foot_pts
+    # Base total (sum of weighted metrics)
+    base = height_pts + type_pts + foot_pts + block_grain_pts + streetwall_pts + setback_pts + facade_rhythm_pts
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -544,5 +802,83 @@ def score_architectural_diversity_as_beauty(
     mult = DENSITY_MULTIPLIER.get(effective, 1.0)
     total *= mult
     
+    # Apply coverage-based score caps (graceful degradation)
+    # If OSM coverage is low, cap the score to prevent over-confidence
+    # However, Phase 2 metrics (block_grain, streetwall_continuity) are independent of building coverage
+    # So we adjust caps to be less aggressive when Phase 2 metrics have good confidence
+    coverage_cap_info = {"capped": False, "original_score": total, "cap_reason": None}
+    
+    # Calculate average Phase 2 & Phase 3 confidence (if available)
+    avg_phase23_confidence = 0.0
+    if (block_grain_confidence > 0 or streetwall_confidence > 0 or 
+        setback_confidence > 0 or facade_rhythm_confidence > 0):
+        confidence_sum = 0.0
+        confidence_count = 0
+        if block_grain_confidence > 0:
+            confidence_sum += block_grain_confidence
+            confidence_count += 1
+        if streetwall_confidence > 0:
+            confidence_sum += streetwall_confidence
+            confidence_count += 1
+        if setback_confidence > 0:
+            confidence_sum += setback_confidence
+            confidence_count += 1
+        if facade_rhythm_confidence > 0:
+            confidence_sum += facade_rhythm_confidence
+            confidence_count += 1
+        if confidence_count > 0:
+            avg_phase23_confidence = confidence_sum / confidence_count
+    
+    # Adjust caps based on Phase 2 & Phase 3 confidence
+    # If Phase 2 & Phase 3 metrics have good confidence (>0.5), we can be less aggressive with caps
+    # since block_grain, streetwall_continuity, setback_consistency, and facade_rhythm 
+    # don't depend on building coverage (or depend less directly)
+    phase23_confidence_bonus = 0.0
+    if avg_phase23_confidence > 0.5:
+        # Phase 2 & Phase 3 metrics provide independent value, so reduce cap aggressiveness
+        phase23_confidence_bonus = (avg_phase23_confidence - 0.5) * 10.0  # Add up to 5 points to cap threshold
+    
+    if built_coverage_ratio is not None:
+        if built_coverage_ratio < 0.20:
+            # Very low coverage: cap at 30/50 (raised from 25/50)
+            # With Phase 2 & Phase 3 bonus, can go up to 35/50
+            cap_threshold = 30.0 + phase23_confidence_bonus
+            if total > cap_threshold:
+                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_20pct"}
+                total = min(cap_threshold, total)
+        elif built_coverage_ratio < 0.30:
+            # Low coverage: cap at 40/50 (raised from 25/50)
+            # With Phase 2 & Phase 3 bonus, can go up to 45/50
+            cap_threshold = 40.0 + phase23_confidence_bonus
+            if total > cap_threshold:
+                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_30pct"}
+                total = min(cap_threshold, total)
+        elif built_coverage_ratio < 0.50:
+            # Moderate coverage: cap at 45/50 (raised from 35/50)
+            # With Phase 2 & Phase 3 bonus, can go up to 47/50
+            cap_threshold = 45.0 + min(2.0, phase23_confidence_bonus)
+            if total > cap_threshold:
+                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_50pct"}
+                total = min(cap_threshold, total)
+    
     # Cap at 50 (native range)
-    return max(0.0, min(50.0, total))
+    final_score = max(0.0, min(50.0, total))
+    
+    # Return score with metadata about coverage caps and Phase 2 & Phase 3 metrics
+    metadata = {
+        "coverage_cap_applied": coverage_cap_info["capped"],
+        "original_score_before_cap": coverage_cap_info["original_score"] if coverage_cap_info["capped"] else None,
+        "cap_reason": coverage_cap_info["cap_reason"],
+        # Phase 2 metrics
+        "block_grain": block_grain_value,
+        "block_grain_confidence": block_grain_confidence,
+        "streetwall_continuity": streetwall_value,
+        "streetwall_confidence": streetwall_confidence,
+        # Phase 3 metrics
+        "setback_consistency": setback_value,
+        "setback_confidence": setback_confidence,
+        "facade_rhythm": facade_rhythm_value,
+        "facade_rhythm_confidence": facade_rhythm_confidence
+    }
+    
+    return final_score, metadata

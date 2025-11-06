@@ -9,6 +9,7 @@ import time
 from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
+from .utils import haversine_distance, get_way_center
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -1142,34 +1143,8 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
     }
 
 
-def _get_way_geometry(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float], float]:
-    """Calculate centroid and area of a way."""
-    if elem.get("type") != "way" or "nodes" not in elem:
-        return None, None, 0
-
-    coords = []
-    for node_id in elem["nodes"]:
-        if node_id in nodes_dict:
-            node = nodes_dict[node_id]
-            if "lat" in node and "lon" in node:
-                coords.append((node["lat"], node["lon"]))
-
-    if not coords:
-        return None, None, 0
-
-    lat = sum(c[0] for c in coords) / len(coords)
-    lon = sum(c[1] for c in coords) / len(coords)
-
-    area = 0
-    if len(coords) >= 3:
-        for i in range(len(coords)):
-            j = (i + 1) % len(coords)
-            area += coords[i][0] * coords[j][1]
-            area -= coords[j][0] * coords[i][1]
-        area = abs(area) / 2
-        area = area * 111000 * 111000 * math.cos(math.radians(lat))
-
-    return lat, lon, area
+# Alias get_way_center for backward compatibility
+_get_way_geometry = get_way_center
 
 
 def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float]]:
@@ -1387,22 +1362,6 @@ def _process_cultural_assets(elements: List[Dict], center_lat: float, center_lon
             cultural_venues.append(cultural_feature)
 
     return museums, galleries, theaters, public_art, cultural_venues
-
-
-def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate distance between two points in meters."""
-    R = 6371000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * \
-        math.cos(phi2) * math.sin(delta_lambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
-    return R * c
-
 
 def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
     """
@@ -1662,20 +1621,6 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         print(f"Error querying healthcare facilities: {e}")
         return None
 
-
-
-def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate distance between two points in kilometers."""
-    R = 6371  # Earth radius in km
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-    
-    a = math.sin(delta_phi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    
-    return R * c
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
