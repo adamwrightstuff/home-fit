@@ -889,28 +889,48 @@ def score_architectural_diversity_as_beauty(
         # Phase 2 & Phase 3 metrics provide independent value, so reduce cap aggressiveness
         phase23_confidence_bonus = (avg_phase23_confidence - 0.5) * 10.0  # Add up to 5 points to cap threshold
     
+    def _scaled_relief(ratio: float, low: float, high: float, max_bonus: float) -> float:
+        """Linearly scale relief between low/high coverage bands."""
+        if high <= low or max_bonus <= 0:
+            return 0.0
+        if ratio <= low:
+            return 0.0
+        if ratio >= high:
+            return max_bonus
+        return ((ratio - low) / (high - low)) * max_bonus
+
     if built_coverage_ratio is not None:
-        if built_coverage_ratio < 0.15:
-            # Very low coverage: cap at 30/50 (raised from 25/50)
-            # With Phase 2 & Phase 3 bonus, can go up to 35/50
-            cap_threshold = 30.0 + phase23_confidence_bonus
-            if total > cap_threshold:
-                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_15pct"}
-                total = min(cap_threshold, total)
-        elif built_coverage_ratio < 0.30:
-            # Low coverage: cap at 40/50 (raised from 25/50)
-            # With Phase 2 & Phase 3 bonus, can go up to 45/50
-            cap_threshold = 40.0 + phase23_confidence_bonus
-            if total > cap_threshold:
-                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_30pct"}
-                total = min(cap_threshold, total)
+        relief_from_phase = max(0.0, phase23_confidence_bonus)
+        cap_threshold = None
+        cap_reason = None
+
+        if built_coverage_ratio < 0.12:
+            cap_threshold = 32.0 + min(4.0, relief_from_phase)
+            cap_reason = "coverage_lt_12pct"
+        elif built_coverage_ratio < 0.15:
+            coverage_relief = _scaled_relief(built_coverage_ratio, 0.12, 0.15, 3.0)
+            cap_threshold = 34.0 + coverage_relief + min(5.0, relief_from_phase)
+            cap_reason = "coverage_12_to_15pct"
+        elif built_coverage_ratio < 0.25:
+            coverage_relief = _scaled_relief(built_coverage_ratio, 0.15, 0.25, 5.0)
+            cap_threshold = 45.0 + coverage_relief + min(5.0, relief_from_phase)
+            cap_reason = "coverage_15_to_25pct"
+        elif built_coverage_ratio < 0.35:
+            coverage_relief = _scaled_relief(built_coverage_ratio, 0.25, 0.35, 3.0)
+            cap_threshold = 47.0 + coverage_relief + min(3.0, relief_from_phase)
+            cap_reason = "coverage_25_to_35pct"
         elif built_coverage_ratio < 0.50:
-            # Moderate coverage: cap at 45/50 (raised from 35/50)
-            # With Phase 2 & Phase 3 bonus, can go up to 47/50
-            cap_threshold = 45.0 + min(2.0, phase23_confidence_bonus)
-            if total > cap_threshold:
-                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_50pct"}
-                total = min(cap_threshold, total)
+            coverage_relief = _scaled_relief(built_coverage_ratio, 0.35, 0.50, 2.0)
+            cap_threshold = 48.0 + coverage_relief + min(2.0, relief_from_phase)
+            cap_reason = "coverage_35_to_50pct"
+
+        if cap_threshold is not None and total > cap_threshold:
+            coverage_cap_info = {
+                "capped": True,
+                "original_score": total,
+                "cap_reason": cap_reason
+            }
+            total = min(cap_threshold, total)
     
     # Cap at 50 (native range)
     final_score = max(0.0, min(50.0, total))

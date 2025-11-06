@@ -101,11 +101,22 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     )
     
     # Assess data quality
+    arch_diversity_summary = {}
+    arch_score_native = arch_details.get("score")
+    if isinstance(arch_score_native, (int, float)):
+        arch_diversity_summary = {
+            "diversity_score": max(0.0, min(100.0, arch_score_native * 2.0)),
+            "phase2_confidence": arch_details.get("phase2_confidence"),
+            "phase3_confidence": arch_details.get("phase3_confidence"),
+            "coverage_cap_applied": arch_details.get("coverage_cap_applied", False)
+        }
+
     combined_data = {
         'tree_score': tree_score,
         'architectural_score': arch_score,
         'tree_details': tree_details,
         'architectural_details': arch_details,
+        'architectural_diversity': arch_diversity_summary,
         'calibration_alert': calibration_alert
     }
     

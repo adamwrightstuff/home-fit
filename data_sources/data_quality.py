@@ -514,6 +514,19 @@ class DataQualityManager:
         
         # Check for architectural diversity data
         arch_diversity = data.get('architectural_diversity', {})
+        if (not arch_diversity) and data.get('architectural_details'):
+            arch_details = data.get('architectural_details') or {}
+            arch_score_0_50 = arch_details.get('score')
+            if isinstance(arch_score_0_50, (int, float)):
+                arch_diversity = {
+                    "diversity_score": max(0.0, min(100.0, arch_score_0_50 * 2.0)),
+                    "phase2_confidence": arch_details.get('phase2_confidence'),
+                    "phase3_confidence": arch_details.get('phase3_confidence'),
+                    "coverage_cap_applied": arch_details.get('coverage_cap_applied', False)
+                }
+        coverage_cap_applied = False
+        if arch_diversity:
+            coverage_cap_applied = bool(arch_diversity.get('coverage_cap_applied'))
         if arch_diversity and arch_diversity.get('diversity_score', 0) > 70:
             landmark_score = 0.9  # Excellent architectural data
         elif arch_diversity and arch_diversity.get('diversity_score', 0) > 50:
@@ -531,6 +544,23 @@ class DataQualityManager:
                 landmark_score = 0.4
             else:
                 landmark_score = 0.1
+
+        # Boost completeness if Phase 2/3 confidence is strong (independent of coverage)
+        phase_conf_values = []
+        if arch_diversity:
+            for conf_bucket in ("phase2_confidence", "phase3_confidence"):
+                conf_dict = arch_diversity.get(conf_bucket) or {}
+                if isinstance(conf_dict, dict):
+                    phase_conf_values.extend(
+                        v for v in conf_dict.values() if isinstance(v, (int, float))
+                    )
+        if phase_conf_values:
+            avg_conf = sum(phase_conf_values) / len(phase_conf_values)
+            # Normalize (values already 0-1) and ensure meaningful boost
+            landmark_score = max(landmark_score, min(1.0, 0.5 + avg_conf * 0.5))
+
+        if coverage_cap_applied:
+            landmark_score = max(0.3, landmark_score - 0.1)
         
         # Year built data
         year_built_score = 1.0 if year_built_data else 0.0
