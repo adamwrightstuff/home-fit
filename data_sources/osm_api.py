@@ -7,6 +7,7 @@ import requests
 import math
 import time
 import threading
+import random
 from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
@@ -19,9 +20,10 @@ logger = get_logger(__name__)
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 # Global query throttling to avoid rate limiting
-_last_query_time = 0
+_last_query_time = 0.0
 _query_lock = threading.Lock()
-_min_query_interval = 0.5  # Minimum 500ms between queries
+_BASE_MIN_QUERY_INTERVAL = 0.5  # Minimum 500ms between queries under normal conditions
+_current_min_query_interval = _BASE_MIN_QUERY_INTERVAL
 
 def _retry_overpass(
     request_fn,
@@ -79,17 +81,21 @@ def _retry_overpass(
     fail_fast = retry_config.fail_fast
     max_wait = retry_config.max_wait
     
-    # Throttle queries to avoid rate limiting
-    global _last_query_time, _query_lock, _min_query_interval
-    with _query_lock:
-        time_since_last = time.time() - _last_query_time
-        if time_since_last < _min_query_interval:
-            sleep_time = _min_query_interval - time_since_last
-            logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s to avoid rate limits")
-            time.sleep(sleep_time)
-        _last_query_time = time.time()
-    
     for i in range(max_attempts):
+        # Throttle queries to avoid rate limiting *per attempt*
+        global _last_query_time, _current_min_query_interval, _query_lock
+        with _query_lock:
+            time_since_last = time.time() - _last_query_time
+            min_interval = _current_min_query_interval
+            if time_since_last < min_interval:
+                remaining = min_interval - time_since_last
+                # Add small jitter to avoid aligned bursts
+                jitter = random.uniform(0, 0.25 * min_interval)
+                sleep_time = remaining + jitter
+                logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s (interval={min_interval:.2f}s, jitter={jitter:.2f}s)")
+                time.sleep(sleep_time)
+            _last_query_time = time.time()
+        
         try:
             resp = request_fn()
             # Handle 429 rate limiting specifically
@@ -108,6 +114,13 @@ def _retry_overpass(
                     # Respect Retry-After header, but cap at max_wait (now 30s for CRITICAL)
                     retry_after = min(retry_after, retry_config.max_wait)
                     
+                    # Increase minimum query interval adaptively
+                    with _query_lock:
+                        new_interval = min(_current_min_query_interval * 1.5, _BASE_MIN_QUERY_INTERVAL * 6)
+                        if new_interval != _current_min_query_interval:
+                            logger.debug(f"Increasing OSM min query interval to {new_interval:.2f}s due to 429")
+                        _current_min_query_interval = new_interval
+                    
                     # If fail_fast is True and rate limited on second attempt or later, give up faster
                     # NOTE: Since all queries are now CRITICAL, fail_fast should be False
                     if fail_fast and i >= 1:
@@ -121,6 +134,13 @@ def _retry_overpass(
                     else:
                         logger.warning(f"OSM rate limited (429), max retries reached")
                         return None  # Return None instead of resp on final failure
+            # Successful response - gently relax throttling back toward base
+            with _query_lock:
+                if _current_min_query_interval > _BASE_MIN_QUERY_INTERVAL:
+                    new_interval = max(_BASE_MIN_QUERY_INTERVAL, _current_min_query_interval * 0.85)
+                    if new_interval != _current_min_query_interval:
+                        logger.debug(f"Reducing OSM min query interval to {new_interval:.2f}s after successful response")
+                    _current_min_query_interval = new_interval
             return resp
         except requests.exceptions.Timeout as e:
             if not retry_config.retry_on_timeout:
@@ -1174,10 +1194,23 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
 
     seen_ids = set()
     nodes_dict = {}
+    ways_dict = {}
 
     for elem in elements:
         if elem.get("type") == "node":
             nodes_dict[elem["id"]] = elem
+        elif elem.get("type") == "way":
+            ways_dict[elem["id"]] = elem
+        elif elem.get("type") == "relation":
+            members = elem.get("members", [])
+            for member in members:
+                if member.get("type") == "way":
+                    way_id = member.get("ref")
+                    if way_id not in ways_dict:
+                        for e in elements:
+                            if e.get("type") == "way" and e.get("id") == way_id:
+                                ways_dict[way_id] = e
+                                break
 
     for elem in elements:
         osm_id = elem.get("id")
@@ -1192,17 +1225,21 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
 
         seen_ids.add(osm_id)
 
-        elem_lat = elem.get("lat")
-        elem_lon = elem.get("lon")
-
-        if elem.get("type") == "way":
-            elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
-
-        if elem_lat is None:
+        elem_lat, elem_lon, coord_source = _resolve_element_coordinates(elem, nodes_dict, ways_dict)
+        if elem_lat is None or elem_lon is None:
+            logger.warning(
+                "Amenity feature missing coordinates; skipping",
+                extra={
+                    "osm_id": osm_id,
+                    "name": name,
+                    "amenity": tags.get("amenity"),
+                    "shop": tags.get("shop"),
+                    "reason": coord_source
+                }
+            )
             continue
 
-        distance_m = haversine_distance(
-            center_lat, center_lon, elem_lat, elem_lon)
+        distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
 
         amenity = tags.get("amenity", "")
         shop = tags.get("shop", "")
@@ -1213,7 +1250,9 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             "name": name,
             "lat": elem_lat,
             "lon": elem_lon,
-            "distance_m": round(distance_m, 0)
+            "distance_m": round(distance_m, 0),
+            "osm_id": osm_id,
+            "coordinate_source": coord_source
         }
 
         if amenity == "cafe":
@@ -1275,6 +1314,41 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
 
 # Alias get_way_center for backward compatibility
 _get_way_geometry = get_way_center
+
+
+def _resolve_element_coordinates(elem: Dict, nodes_dict: Dict, ways_dict: Dict) -> Tuple[Optional[float], Optional[float], str]:
+    """
+    Resolve coordinates for an OSM element using multiple fallbacks.
+
+    Returns (lat, lon, source) where source indicates which fallback succeeded.
+    """
+    if not elem:
+        return None, None, "missing-element"
+    
+    elem_type = elem.get("type")
+    lat = elem.get("lat")
+    lon = elem.get("lon")
+    if lat is not None and lon is not None:
+        return lat, lon, "direct"
+    
+    center = elem.get("center")
+    if center:
+        center_lat = center.get("lat")
+        center_lon = center.get("lon")
+        if center_lat is not None and center_lon is not None:
+            return center_lat, center_lon, "center"
+    
+    if elem_type == "way":
+        way_lat, way_lon, _ = get_way_center(elem, nodes_dict)
+        if way_lat is not None and way_lon is not None:
+            return way_lat, way_lon, "way-centroid"
+    
+    if elem_type == "relation":
+        rel_lat, rel_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+        if rel_lat is not None and rel_lon is not None:
+            return rel_lat, rel_lon, "relation-centroid"
+    
+    return None, None, "unresolved"
 
 
 def _get_relation_centroid(elem: Dict, ways_dict: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float]]:
@@ -1689,48 +1763,34 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             amenity = tags.get("amenity", "")
             name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
             
-            # Calculate distance
-            if "lat" in elem and "lon" in elem:
-                # Node has direct coordinates
-                distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
-                elem_lat, elem_lon = elem["lat"], elem["lon"]
-            elif elem.get("type") == "way":
-                # Calculate way center point (get_way_center returns lat, lon, area_sqm)
-                elem_lat, elem_lon, _ = get_way_center(elem, nodes_dict)
-                if elem_lat and elem_lon:
-                    distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
-                else:
-                    logger.debug(
-                        "Healthcare way geometry missing coordinates",
-                        extra={
-                            "way_id": elem.get("id"),
-                            "node_refs": len(elem.get("nodes", [])),
-                            "resolved_nodes": len(
-                                [n_id for n_id in elem.get("nodes", []) if nodes_dict.get(n_id) and "lat" in nodes_dict[n_id] and "lon" in nodes_dict[n_id]]
-                            )
-                        }
-                    )
-                    distance_km = 0.0
-            elif elem.get("type") == "relation":
-                # Calculate relation centroid
-                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
-                if elem_lat and elem_lon:
-                    distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
-                else:
-                    distance_km = 0.0
+            elem_lat, elem_lon, coord_source = _resolve_element_coordinates(elem, nodes_dict, ways_dict)
+            if elem_lat is None or elem_lon is None:
+                logger.warning(
+                    "Healthcare facility missing coordinates after resolution",
+                    extra={
+                        "facility_id": elem.get("id"),
+                        "elem_type": elem.get("type"),
+                        "amenity": amenity,
+                        "healthcare": tags.get("healthcare"),
+                        "name": name,
+                        "reason": coord_source
+                    }
+                )
+                distance_km = None
             else:
-                distance_km = 0.0
-                elem_lat, elem_lon = None, None
+                distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
             
             facility = {
                 "name": name,
-                "lat": elem_lat if elem_lat else elem.get("lat"),
-                "lon": elem_lon if elem_lon else elem.get("lon"),
-                "distance_km": round(distance_km, 1),
+                "lat": elem_lat,
+                "lon": elem_lon,
+                "distance_km": round(distance_km, 1) if isinstance(distance_km, (int, float)) else None,
+                "osm_id": elem.get("id"),
                 "amenity": amenity,
                 "emergency": tags.get("emergency"),
                 "beds": tags.get("beds"),
-                "tags": tags
+                "tags": tags,
+                "coordinate_source": coord_source
             }
             
             # Categorize facilities - IMPROVED LOGIC

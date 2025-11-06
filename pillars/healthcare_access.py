@@ -7,7 +7,9 @@ import math
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 from data_sources.radius_profiles import get_radius_profile
-from data_sources.utils import get_way_center
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # Comprehensive US hospitals database - major medical centers and regional hospitals
 # Covers all major metropolitan areas and many mid-size cities
@@ -217,18 +219,45 @@ def get_healthcare_access_score(lat: float, lon: float,
     pharm_radius_m = int(rp.get('pharm_radius_m', 3000))
     print(f"   🔧 Radius profile (healthcare): area_type={area_type}, scope={location_scope}, facilities={fac_radius_m}m, pharmacies={pharm_radius_m}m")
 
-    # Filter per-category by distance thresholds
-    def _within(dist_km: float, radius_m: int) -> bool:
-        try:
-            return (dist_km * 1000.0) <= float(radius_m)
-        except Exception:
-            return True
-
-    hospitals = [f for f in hospitals if _within(f.get('distance_km', 0.0), fac_radius_m)]
-    urgent_care = [f for f in urgent_care if _within(f.get('distance_km', 0.0), fac_radius_m)]
-    clinics = [f for f in clinics if _within(f.get('distance_km', 0.0), fac_radius_m)]
-    doctors = [f for f in doctors if _within(f.get('distance_km', 0.0), fac_radius_m)]
-    pharmacies = [f for f in pharmacies if _within(f.get('distance_km', 0.0), pharm_radius_m)]
+    def _filter_by_radius(features: List[Dict], radius_m: int, category: str) -> List[Dict]:
+        kept = []
+        dropped = []
+        radius_m = float(radius_m or 0)
+        for feature in features:
+            dist_km = feature.get("distance_km")
+            name = feature.get("name")
+            if dist_km is None:
+                logger.warning(
+                    "Healthcare feature missing distance; keeping in results",
+                    extra={"category": category, "name": name, "facility_id": feature.get("osm_id")}
+                )
+                kept.append(feature)
+                continue
+            try:
+                dist_m = float(dist_km) * 1000.0
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Healthcare feature distance could not be parsed; keeping in results",
+                    extra={"category": category, "name": name, "distance_value": dist_km}
+                )
+                kept.append(feature)
+                continue
+            if dist_m <= radius_m:
+                kept.append(feature)
+            else:
+                dropped.append(feature)
+        if dropped and not kept:
+            logger.warning(
+                "All healthcare features filtered out by radius",
+                extra={"category": category, "radius_m": radius_m, "dropped_count": len(dropped)}
+            )
+        return kept
+    
+    hospitals = _filter_by_radius(hospitals, fac_radius_m, "hospitals")
+    urgent_care = _filter_by_radius(urgent_care, fac_radius_m, "urgent_care")
+    clinics = _filter_by_radius(clinics, fac_radius_m, "clinics")
+    doctors = _filter_by_radius(doctors, fac_radius_m, "doctors")
+    pharmacies = _filter_by_radius(pharmacies, pharm_radius_m, "pharmacies")
 
     print(f"   🔍 FINAL COUNTS (filtered): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors | area={area_type}")
 
@@ -315,15 +344,13 @@ def get_healthcare_access_score(lat: float, lon: float,
     # Build response
     # Identify nearest hospital for summary (by reported distance_km)
     nearest_hospital = None
-    if hospitals:
-        try:
-            nearest = min(hospitals, key=lambda x: x.get('distance_km', float('inf')))
-            nearest_hospital = {
-                "name": nearest.get('name', 'Unknown Hospital'),
-                "distance_km": nearest.get('distance_km', 0)
-            }
-        except Exception:
-            nearest_hospital = None
+    numeric_hospitals = _with_numeric_distance(hospitals)
+    if numeric_hospitals:
+        nearest = min(numeric_hospitals, key=lambda x: x["distance_km"])
+        nearest_hospital = {
+            "name": nearest.get('name', 'Unknown Hospital'),
+            "distance_km": nearest.get('distance_km')
+        }
 
     breakdown = {
         "score": round(total_score, 1),
@@ -452,12 +479,14 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
 
 def _score_urgent_care(urgent_care: List[Dict]) -> float:
     """Score urgent care access (0-30 points)."""
-    if not urgent_care:
+    valid = _with_numeric_distance(urgent_care)
+    if not valid:
+        logger.warning("No urgent care facilities with numeric distance; score defaults to 0")
         return 0.0
 
-    closest = min(urgent_care, key=lambda x: x["distance_km"])
+    closest = min(valid, key=lambda x: x["distance_km"])
     dist = closest["distance_km"]
-    count = len(urgent_care)
+    count = len(valid)
 
     # Distance score (0-20)
     if dist <= 2000:
@@ -484,10 +513,12 @@ def _score_urgent_care(urgent_care: List[Dict]) -> float:
 
 def _score_pharmacies(pharmacies: List[Dict]) -> float:
     """Score pharmacy access (0-20 points) - improved scoring."""
-    if not pharmacies:
+    valid = _with_numeric_distance(pharmacies)
+    if not valid:
+        logger.warning("No pharmacies with numeric distance; score defaults to 0")
         return 0.0
 
-    closest = min(pharmacies, key=lambda x: x["distance_km"])
+    closest = min(valid, key=lambda x: x["distance_km"])
     dist = closest["distance_km"]
     count = len(pharmacies)
 
@@ -552,10 +583,9 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
     return R * c
 
 
-def _get_way_center(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optional[float]]:
-    """Get center point of a way (returns only lat, lon, not area)."""
-    lat, lon, _ = get_way_center(elem, nodes_dict)
-    return lat, lon
+def _with_numeric_distance(features: List[Dict]) -> List[Dict]:
+    """Return only features that have a numeric distance_km value."""
+    return [f for f in features if isinstance(f.get("distance_km"), (int, float))]
 
 
 def _build_summary(nearest_hospital: Optional[Dict], urgent_care: List,
@@ -570,15 +600,21 @@ def _build_summary(nearest_hospital: Optional[Dict], urgent_care: List,
         "nearest_pharmacy": None
     }
 
-    if urgent_care:
-        closest = min(urgent_care, key=lambda x: x["distance_km"])
+    def _nearest_with_distance(features: List[Dict]) -> Optional[Dict]:
+        numeric = [f for f in features if isinstance(f.get("distance_km"), (int, float))]
+        if not numeric:
+            return None
+        return min(numeric, key=lambda x: x["distance_km"])
+
+    closest = _nearest_with_distance(urgent_care)
+    if closest:
         summary["nearest_urgent_care"] = {
             "name": closest["name"],
             "distance_km": closest["distance_km"]
         }
 
-    if pharmacies:
-        closest = min(pharmacies, key=lambda x: x["distance_km"])
+    closest = _nearest_with_distance(pharmacies)
+    if closest:
         summary["nearest_pharmacy"] = {
             "name": closest["name"],
             "distance_km": closest["distance_km"]
