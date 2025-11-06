@@ -9,6 +9,9 @@ import os
 import json
 from typing import Any, Optional, Dict
 from functools import wraps
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # Try to import and initialize Redis
 _redis_client = None
@@ -17,9 +20,9 @@ try:
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
     _redis_client = redis.from_url(redis_url, decode_responses=True)
     _redis_client.ping()
-    print("✅ Redis connected for distributed caching")
+    logger.info("Redis connected for distributed caching")
 except Exception as e:
-    print(f"⚠️  Redis not available, using in-memory cache: {e}")
+    logger.warning(f"Redis not available, using in-memory cache: {e}")
     _redis_client = None
 
 # Simple in-memory cache (fallback when Redis is unavailable)
@@ -71,7 +74,7 @@ def cached(ttl_seconds: int = 3600):
                         cache_entry = data['value']
                         cache_time = data['timestamp']
                 except Exception as e:
-                    print(f"⚠️  Redis read error, falling back to in-memory: {e}")
+                    logger.warning(f"Redis read error, falling back to in-memory: {e}")
             
             # Fall back to in-memory cache if Redis failed or not available
             if cache_entry is None and cache_key in _cache:
@@ -80,11 +83,11 @@ def cached(ttl_seconds: int = 3600):
             
             # Check if cached entry is still valid
             if cache_entry is not None and (current_time - cache_time) < ttl_seconds:
-                print(f"🔄 Cache hit for {func.__name__}")
+                logger.debug(f"Cache hit for {func.__name__}")
                 return cache_entry
             
             # Cache miss or expired - execute function
-            print(f"💾 Cache miss for {func.__name__} - executing")
+            logger.debug(f"Cache miss for {func.__name__} - executing")
             # Periodic cleanup to prevent memory bloat (every 100 cache operations)
             if len(_cache) > 100 and len(_cache) % 100 == 0:
                 _cleanup_expired_cache()
@@ -95,7 +98,7 @@ def cached(ttl_seconds: int = 3600):
             if result is None and cache_entry is not None:
                 # Cache is expired but exists - use it as fallback
                 age_hours = (current_time - cache_time) / 3600
-                print(f"⚠️  API failed, using stale cache (age: {age_hours:.1f} hours) for {func.__name__}")
+                logger.warning(f"API failed, using stale cache (age: {age_hours:.1f} hours) for {func.__name__}")
                 # Mark stale cache in result (if it's a dict, add flag)
                 if isinstance(cache_entry, dict):
                     cache_entry = cache_entry.copy()
@@ -115,13 +118,13 @@ def cached(ttl_seconds: int = 3600):
                     try:
                         _redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
                     except Exception as e:
-                        print(f"⚠️  Redis write error: {e}")
+                        logger.warning(f"Redis write error: {e}")
                 
                 # Also store in in-memory cache
                 _cache[cache_key] = result
                 _cache_ttl[cache_key] = current_time
             else:
-                print(f"⚠️  Result is None - not caching (allows retry)")
+                logger.debug(f"Result is None - not caching (allows retry)")
             
             return result
         
@@ -153,19 +156,19 @@ def clear_cache(cache_type: Optional[str] = None):
                 if keys:
                     _redis_client.delete(*keys)
         except Exception as e:
-            print(f"⚠️  Error clearing Redis cache: {e}")
+            logger.warning(f"Error clearing Redis cache: {e}")
     
     # Clear in-memory cache
     if cache_type is None:
         _cache.clear()
         _cache_ttl.clear()
-        print("🧹 Cleared all cache")
+        logger.info("Cleared all cache")
     else:
         keys_to_remove = [key for key in _cache.keys() if key.startswith(f"{cache_type}:")]
         for key in keys_to_remove:
             _cache.pop(key, None)
             _cache_ttl.pop(key, None)
-        print(f"🧹 Cleared {len(keys_to_remove)} {cache_type} cache entries")
+        logger.info(f"Cleared {len(keys_to_remove)} {cache_type} cache entries")
 
 
 def _cleanup_expired_cache():
@@ -187,7 +190,7 @@ def _cleanup_expired_cache():
         _cache_ttl.pop(key, None)
     
     if keys_to_remove:
-        print(f"🧹 Cleaned up {len(keys_to_remove)} expired cache entries")
+        logger.debug(f"Cleaned up {len(keys_to_remove)} expired cache entries")
 
 
 def get_cache_stats() -> Dict[str, Any]:
@@ -242,4 +245,4 @@ def cleanup_expired_cache():
         _cache_ttl.pop(key, None)
     
     if expired_keys:
-        print(f"🧹 Cleaned up {len(expired_keys)} expired cache entries")
+        logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")

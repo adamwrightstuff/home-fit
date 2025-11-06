@@ -19,7 +19,7 @@ from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
-from data_sources.arch_diversity import compute_arch_diversity, score_architectural_diversity_as_beauty
+from data_sources.arch_diversity import compute_arch_diversity
 
 ##########################
 # CONFIGURATION FLAGS
