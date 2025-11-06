@@ -694,8 +694,10 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
             }
         
         parse_time = time.time() - parse_start
+        logger.info(f"[SETBACK] Parse complete at {parse_time:.2f}s: #roads={len(road_ways)} #buildings={len(building_ways)}")
         
         compute_start = time.time()
+        logger.info(f"[SETBACK] Starting compute at {compute_start - step_start:.2f}s")
         # Pre-compute road segments
         road_segments_precomputed = []
         for road_way in road_ways:
@@ -960,8 +962,10 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
             }
         
         parse_time = time.time() - parse_start
+        logger.info(f"[FACADE] Parse complete at {parse_time:.2f}s: #roads={len(road_ways)} #buildings={len(building_ways)}")
         
         compute_start = time.time()
+        logger.info(f"[FACADE] Starting compute at {compute_start - step_start:.2f}s")
         # Pre-compute road segments
         road_segments_precomputed = []
         for road_way in road_ways:
