@@ -598,7 +598,8 @@ def score_architectural_diversity_as_beauty(
     historic_landmarks: Optional[int] = None,
     median_year_built: Optional[int] = None,
     lat: Optional[float] = None,
-    lon: Optional[float] = None
+    lon: Optional[float] = None,
+    metric_overrides: Optional[Dict[str, float]] = None
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -621,6 +622,37 @@ def score_architectural_diversity_as_beauty(
     Returns:
         Beauty score out of 50 points (native range, no scaling)
     """
+    metric_overrides = metric_overrides or {}
+    applied_overrides: List[str] = []
+    override_values: Dict[str, float] = {}
+
+    def _clamp(value: float, lower: float, upper: float) -> float:
+        return max(lower, min(upper, value))
+
+    if "levels_entropy" in metric_overrides:
+        try:
+            levels_entropy = _clamp(float(metric_overrides["levels_entropy"]), 0.0, 100.0)
+            applied_overrides.append("levels_entropy")
+            override_values["levels_entropy"] = levels_entropy
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for levels_entropy: {metric_overrides['levels_entropy']!r}")
+
+    if "building_type_diversity" in metric_overrides:
+        try:
+            building_type_diversity = _clamp(float(metric_overrides["building_type_diversity"]), 0.0, 100.0)
+            applied_overrides.append("building_type_diversity")
+            override_values["building_type_diversity"] = building_type_diversity
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for building_type_diversity: {metric_overrides['building_type_diversity']!r}")
+
+    if "footprint_area_cv" in metric_overrides:
+        try:
+            footprint_area_cv = _clamp(float(metric_overrides["footprint_area_cv"]), 0.0, 100.0)
+            applied_overrides.append("footprint_area_cv")
+            override_values["footprint_area_cv"] = footprint_area_cv
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for footprint_area_cv: {metric_overrides['footprint_area_cv']!r}")
+
     # Subtype detection: use centralized helper function
     from .data_quality import get_effective_area_type
     effective = get_effective_area_type(
@@ -788,6 +820,38 @@ def score_architectural_diversity_as_beauty(
         facade_rhythm_value = facade_rhythm_data.get("facade_rhythm", 0.0)
         facade_rhythm_confidence = facade_rhythm_data.get("coverage_confidence", 0.0)
     
+    if "block_grain" in metric_overrides:
+        try:
+            block_grain_value = _clamp(float(metric_overrides["block_grain"]), 0.0, 100.0)
+            applied_overrides.append("block_grain")
+            override_values["block_grain"] = block_grain_value
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for block_grain: {metric_overrides['block_grain']!r}")
+
+    if "streetwall_continuity" in metric_overrides:
+        try:
+            streetwall_value = _clamp(float(metric_overrides["streetwall_continuity"]), 0.0, 100.0)
+            applied_overrides.append("streetwall_continuity")
+            override_values["streetwall_continuity"] = streetwall_value
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for streetwall_continuity: {metric_overrides['streetwall_continuity']!r}")
+
+    if "setback_consistency" in metric_overrides:
+        try:
+            setback_value = _clamp(float(metric_overrides["setback_consistency"]), 0.0, 100.0)
+            applied_overrides.append("setback_consistency")
+            override_values["setback_consistency"] = setback_value
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for setback_consistency: {metric_overrides['setback_consistency']!r}")
+
+    if "facade_rhythm" in metric_overrides:
+        try:
+            facade_rhythm_value = _clamp(float(metric_overrides["facade_rhythm"]), 0.0, 100.0)
+            applied_overrides.append("facade_rhythm")
+            override_values["facade_rhythm"] = facade_rhythm_value
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
+
     # Normalize Phase 2 & Phase 3 metrics to 0-16.67 scale (same as Phase 1)
     block_grain_raw = (block_grain_value / 100.0) * 16.67
     streetwall_raw = (streetwall_value / 100.0) * 16.67
@@ -934,6 +998,15 @@ def score_architectural_diversity_as_beauty(
     
     # Cap at 50 (native range)
     final_score = max(0.0, min(50.0, total))
+
+    if "architecture_score" in metric_overrides:
+        try:
+            forced_score = _clamp(float(metric_overrides["architecture_score"]), 0.0, 50.0)
+            applied_overrides.append("architecture_score")
+            override_values["architecture_score"] = forced_score
+            final_score = forced_score
+        except (TypeError, ValueError):
+            logger.warning(f"Ignoring invalid override for architecture_score: {metric_overrides['architecture_score']!r}")
     
     # Return score with metadata about coverage caps and Phase 2 & Phase 3 metrics
     metadata = {
@@ -951,5 +1024,9 @@ def score_architectural_diversity_as_beauty(
         "facade_rhythm": facade_rhythm_value,
         "facade_rhythm_confidence": facade_rhythm_confidence
     }
+
+    if applied_overrides:
+        metadata["overrides_applied"] = sorted(set(applied_overrides))
+        metadata["override_values"] = override_values
     
     return final_score, metadata

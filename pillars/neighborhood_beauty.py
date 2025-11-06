@@ -27,10 +27,12 @@ except ImportError:
     street_tree_api = None
 
 
-def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None, 
+def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = None,
                                    beauty_weights: Optional[str] = None,
                                    location_scope: Optional[str] = None,
-                                   area_type: Optional[str] = None) -> Tuple[float, Dict]:
+                                   area_type: Optional[str] = None,
+                                   test_overrides: Optional[Dict[str, float]] = None,
+                                   test_mode: bool = False) -> Tuple[float, Dict]:
     """
     Calculate neighborhood beauty score (0-100) using real data.
     
@@ -70,7 +72,14 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
     # Get this first to determine effective area type for tree radius
     logger.debug("Analyzing architectural beauty...")
-    arch_score, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
+    arch_score, arch_details = _score_architectural_diversity(
+        lat,
+        lon,
+        city,
+        location_scope=location_scope,
+        area_type=area_type,
+        test_overrides=test_overrides
+    )
     
     # Get effective area type for tree radius and calibration guardrails
     effective_area_type = arch_details.get("classification", {}).get("effective_area_type") if arch_details else None
@@ -80,7 +89,14 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     # Component 1: Trees (0-50)
     # Use effective area type for radius if available (urban_historic/urban_residential get 800m)
     logger.debug("Analyzing tree canopy...")
-    tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=effective_area_type or area_type)
+    tree_score, tree_details = _score_trees(
+        lat,
+        lon,
+        city,
+        location_scope=location_scope,
+        area_type=effective_area_type or area_type,
+        overrides=test_overrides
+    )
     
     # Apply weights: Scale each component to its weighted max points
     # Default: trees=0.5 (50 points), architecture=0.5 (50 points) out of 100
@@ -117,7 +133,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         'tree_details': tree_details,
         'architectural_details': arch_details,
         'architectural_diversity': arch_diversity_summary,
-        'calibration_alert': calibration_alert
+        'calibration_alert': calibration_alert,
+        'test_overrides': test_overrides if test_overrides else {}
     }
     
     # Use passed area_type if available, otherwise detect it with city context
@@ -161,6 +178,19 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         beauty_bonus = 0.0
 
     # Build response
+    applied_override_summary = {}
+    if test_overrides:
+        if tree_details.get("overrides_applied"):
+            applied_override_summary["trees"] = {
+                "metrics": tree_details.get("overrides_applied"),
+                "values": tree_details.get("override_values", {})
+            }
+        if arch_details.get("overrides"):
+            applied_override_summary["architecture"] = {
+                "metrics": arch_details.get("overrides"),
+                "values": arch_details.get("override_values", {})
+            }
+
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
@@ -172,12 +202,16 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "tree_analysis": tree_details,
             "architectural_analysis": arch_details,
             "enhancers": enhancers,
-            "enhancer_bonus": beauty_bonus
+            "enhancer_bonus": beauty_bonus,
+            "test_mode": test_mode
         },
         "calibration_alert": calibration_alert,  # Flag if scores are outside expected ranges
         "weights": weights,
         "data_quality": quality_metrics
     }
+
+    if applied_override_summary:
+        breakdown["details"]["test_overrides_applied"] = applied_override_summary
     
     # Log results
     logger.info(f"Neighborhood Beauty Score: {total_score:.0f}/100")
@@ -215,11 +249,39 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
         return {'trees': 0.5, 'architecture': 0.5}
 
 
-def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None, area_type: Optional[str] = None) -> Tuple[float, Dict]:
+def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,
+                 area_type: Optional[str] = None, overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     score = 0.0
     sources = []
     details = {}
+    applied_overrides = []
+
+    overrides = overrides or {}
+
+    def _clamp(value: float, min_val: float, max_val: float) -> float:
+        return max(min_val, min(max_val, value))
+
+    if "tree_score" in overrides:
+        override_score = _clamp(float(overrides["tree_score"]), 0.0, 50.0)
+        score = override_score
+        details["sources"] = [f"override:tree_score={override_score}"]
+        details["total_score"] = score
+        details["override_values"] = {"tree_score": override_score}
+        applied_overrides.append("tree_score")
+        details["overrides_applied"] = applied_overrides
+        return score, details
+
+    if "tree_canopy_pct" in overrides:
+        canopy_pct = _clamp(float(overrides["tree_canopy_pct"]), 0.0, 100.0)
+        score = _score_tree_canopy(canopy_pct)
+        details["gee_canopy_pct"] = canopy_pct
+        details["sources"] = [f"override:tree_canopy_pct={canopy_pct}"]
+        details["total_score"] = score
+        details["override_values"] = {"tree_canopy_pct": canopy_pct}
+        applied_overrides.append("tree_canopy_pct")
+        details["overrides_applied"] = applied_overrides
+        return score, details
     
     # Priority 1: GEE satellite tree canopy (most comprehensive)
     # Use larger radius for suburban/rural areas to capture neighborhood tree coverage
@@ -453,7 +515,8 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
 
 def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] = None,
                                     location_scope: Optional[str] = None,
-                                    area_type: Optional[str] = None) -> Tuple[float, Dict]:
+                                    area_type: Optional[str] = None,
+                                    test_overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
     """
     Score architectural beauty (0-50 points native range).
     
@@ -508,6 +571,25 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         
         # Calculate beauty score using conditional adjustments
         # Returns (score, metadata) tuple with coverage cap info
+        metric_override_keys = {
+            "levels_entropy",
+            "building_type_diversity",
+            "footprint_area_cv",
+            "block_grain",
+            "streetwall_continuity",
+            "setback_consistency",
+            "facade_rhythm",
+            "architecture_score"
+        }
+        metric_overrides: Dict[str, float] = {}
+        if test_overrides:
+            for override_key in metric_override_keys:
+                if override_key in test_overrides and test_overrides[override_key] is not None:
+                    try:
+                        metric_overrides[override_key] = float(test_overrides[override_key])
+                    except (TypeError, ValueError):
+                        logger.warning(f"Ignoring invalid architectural override {override_key}={test_overrides[override_key]!r}")
+
         beauty_score_result = arch_diversity.score_architectural_diversity_as_beauty(
             diversity_metrics.get("levels_entropy", 0),
             diversity_metrics.get("building_type_diversity", 0),
@@ -518,7 +600,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             historic_landmarks=historic_landmarks,
             median_year_built=median_year_built,
             lat=lat,
-            lon=lon
+            lon=lon,
+            metric_overrides=metric_overrides if metric_overrides else None
         )
         
         # Handle both old (float) and new (tuple) return formats for backward compatibility
@@ -583,6 +666,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "facade_rhythm": coverage_cap_metadata.get("facade_rhythm_confidence", 0)
             }
         }
+
+        if coverage_cap_metadata.get("overrides_applied"):
+            details["overrides"] = coverage_cap_metadata.get("overrides_applied", [])
+            details["override_values"] = coverage_cap_metadata.get("override_values", {})
         
         logger.debug(f"Architectural beauty: {beauty_score:.1f}/50.0 (effective: {effective_area_type})")
         

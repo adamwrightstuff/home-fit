@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import time
@@ -124,9 +124,14 @@ def root():
 
 
 @app.get("/score")
-def get_livability_score(location: str, tokens: Optional[str] = None, include_chains: bool = False, 
-                         beauty_weights: Optional[str] = None, diagnostics: Optional[bool] = False,
-                         enable_schools: Optional[bool] = None):
+def get_livability_score(request: Request,
+                         location: str,
+                         tokens: Optional[str] = None,
+                         include_chains: bool = False,
+                         beauty_weights: Optional[str] = None,
+                         diagnostics: Optional[bool] = False,
+                         enable_schools: Optional[bool] = None,
+                         test_mode: Optional[bool] = False):
     """
     Calculate livability score for a given address.
 
@@ -161,6 +166,40 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     logger.info(f"HomeFit Score Request: {location}")
     if enable_schools is not None:
         logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
+
+    test_mode_enabled = bool(test_mode)
+
+    override_params: Dict[str, float] = {}
+    if test_mode_enabled:
+        for key, value in request.query_params.items():
+            if key.startswith("override_"):
+                try:
+                    override_params[key] = float(value)
+                except (TypeError, ValueError):
+                    logger.warning(f"Ignoring invalid override parameter {key}={value!r}")
+
+    beauty_override_map = {
+        "override_tree_canopy": "tree_canopy_pct",
+        "override_tree_canopy_pct": "tree_canopy_pct",
+        "override_tree_score": "tree_score",
+        "override_levels_entropy": "levels_entropy",
+        "override_building_type_diversity": "building_type_diversity",
+        "override_footprint_area_cv": "footprint_area_cv",
+        "override_block_grain": "block_grain",
+        "override_streetwall": "streetwall_continuity",
+        "override_streetwall_continuity": "streetwall_continuity",
+        "override_setback": "setback_consistency",
+        "override_setback_consistency": "setback_consistency",
+        "override_facade": "facade_rhythm",
+        "override_facade_rhythm": "facade_rhythm",
+        "override_architecture_score": "architecture_score"
+    }
+
+    beauty_overrides: Dict[str, float] = {}
+    if test_mode_enabled:
+        for raw_key, mapped_key in beauty_override_map.items():
+            if raw_key in override_params:
+                beauty_overrides[mapped_key] = override_params[raw_key]
 
     # Step 1: Geocode the location (with full result for neighborhood detection)
     from data_sources.geocoding import geocode_with_full_result
@@ -269,8 +308,14 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
         }),
         ('neighborhood_beauty', get_neighborhood_beauty_score, {
-            'lat': lat, 'lon': lon, 'city': city, 'beauty_weights': beauty_weights,
-            'location_scope': location_scope, 'area_type': area_type
+            'lat': lat,
+            'lon': lon,
+            'city': city,
+            'beauty_weights': beauty_weights,
+            'location_scope': location_scope,
+            'area_type': area_type,
+            'test_overrides': beauty_overrides if beauty_overrides else None,
+            'test_mode': test_mode_enabled
         }),
         ('neighborhood_amenities', get_neighborhood_amenities_score, {
             'lat': lat, 'lon': lon, 'include_chains': include_chains,
@@ -533,9 +578,15 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
                 "OurAirports (airport database)",
                 "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter."
+            "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter.",
+            "test_mode": test_mode_enabled
         }
     }
+
+    if test_mode_enabled and beauty_overrides:
+        response["metadata"]["overrides_applied"] = {
+            "neighborhood_beauty": {k: beauty_overrides[k] for k in sorted(beauty_overrides)}
+        }
 
     if diagnostics:
         # Surface pillar diagnostics when available
