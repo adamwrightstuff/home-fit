@@ -9,6 +9,9 @@ import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
 from .cache import cached, CACHE_TTL
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
@@ -712,7 +715,24 @@ def score_architectural_diversity_as_beauty(
         from .street_geometry import _fetch_roads_and_buildings
         from concurrent.futures import TimeoutError as FutureTimeoutError
         
-        shared_osm_data = _fetch_roads_and_buildings(lat, lon, 2000)
+        # Fetch shared OSM data with timeout to prevent hanging
+        # If this fails, Phase 2/3 metrics will still work but may need to fetch their own data
+        shared_osm_data = None
+        try:
+            logger.debug("Fetching shared OSM data for Phase 2/3 metrics...")
+            # Wrap in timeout executor to prevent hanging
+            with ThreadPoolExecutor(max_workers=1) as timeout_executor:
+                future_shared = timeout_executor.submit(_fetch_roads_and_buildings, lat, lon, 2000)
+                try:
+                    shared_osm_data = future_shared.result(timeout=20)  # 20 second timeout for shared fetch
+                    if shared_osm_data is None:
+                        logger.warning("Shared OSM data fetch returned None, Phase 2/3 metrics may fetch their own data")
+                except FutureTimeoutError:
+                    logger.warning("Shared OSM data fetch timed out after 20s, Phase 2/3 metrics will fetch their own data")
+                    shared_osm_data = None
+        except Exception as e:
+            logger.warning(f"Shared OSM data fetch failed: {e}, Phase 2/3 metrics will fetch their own data")
+            shared_osm_data = None
         
         # Run all 4 metrics in parallel, but make each one independent
         # If one fails, others can still succeed
