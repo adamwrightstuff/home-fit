@@ -97,6 +97,10 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       relation["leisure"="park"](around:{radius_m},{lat},{lon});
       node["leisure"="park"](around:{radius_m},{lat},{lon});
       
+      // Also check landuse=park (some parks use this tag)
+      way["landuse"="park"](around:{radius_m},{lat},{lon});
+      relation["landuse"="park"](around:{radius_m},{lat},{lon});
+      
       way["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       relation["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       
@@ -158,12 +162,18 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 
         data = resp.json()
         elements = data.get("elements", [])
+        
+        if not elements:
+            logger.warning(f"OSM parks query returned empty results for lat={lat}, lon={lon}, radius={radius_m}m")
 
         parks, playgrounds, tree_features = _process_green_features(
             elements, lat, lon)
 
         if DEBUG_PARKS:
             logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds")
+        elif len(parks) == 0 and len(elements) > 0:
+            # Log warning if we got elements but no parks (might indicate processing issue)
+            logger.warning(f"OSM parks query returned {len(elements)} elements but 0 parks after processing")
 
         return {
             "parks": parks,
