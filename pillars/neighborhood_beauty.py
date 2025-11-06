@@ -10,6 +10,9 @@ Uses objective, real data sources:
 from typing import Dict, Tuple, Optional
 from data_sources import osm_api, census_api, data_quality
 from data_sources.radius_profiles import get_radius_profile
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # Try to import NYC API (only available for NYC addresses)
 try:
@@ -43,7 +46,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     Returns:
         (total_score, detailed_breakdown)
     """
-    print(f"✨ Analyzing neighborhood beauty...")
+    logger.info("Analyzing neighborhood beauty...")
     
     # Parse custom weights or use defaults
     # If no weights provided, use context-aware defaults based on area type
@@ -66,7 +69,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
     # Get this first to determine effective area type for tree radius
-    print(f"   🏗️  Analyzing architectural beauty...")
+    logger.debug("Analyzing architectural beauty...")
     arch_score, arch_details = _score_architectural_diversity(lat, lon, city, location_scope=location_scope, area_type=area_type)
     
     # Get effective area type for tree radius and calibration guardrails
@@ -76,7 +79,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Component 1: Trees (0-50)
     # Use effective area type for radius if available (urban_historic/urban_residential get 800m)
-    print(f"   🌳 Analyzing tree canopy...")
+    logger.debug("Analyzing tree canopy...")
     tree_score, tree_details = _score_trees(lat, lon, city, location_scope=location_scope, area_type=effective_area_type or area_type)
     
     # Apply weights: Scale each component to its weighted max points
@@ -166,10 +169,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     }
     
     # Log results
-    print(f"✅ Neighborhood Beauty Score: {total_score:.0f}/100")
-    print(f"   🌳 Trees: {tree_score:.0f}/50")
-    print(f"   🏗️  Architectural Beauty: {arch_score:.0f}/50")
-    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
+    logger.info(f"Neighborhood Beauty Score: {total_score:.0f}/100")
+    logger.debug(f"Trees: {tree_score:.0f}/50 | Architectural Beauty: {arch_score:.0f}/50 | Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
     
     return round(total_score, 1), breakdown
 
@@ -221,7 +222,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # area_type could be urban_historic, historic_urban, or urban_residential for 800m radius
         rp = get_radius_profile('neighborhood_beauty', area_type, location_scope)
         radius_m = int(rp.get('tree_canopy_radius_m', 1000))
-        print(f"   🔧 Radius profile (beauty): area_type={area_type}, scope={location_scope}, tree_canopy_radius={radius_m}m")
+        logger.debug(f"Radius profile (beauty): area_type={area_type}, scope={location_scope}, tree_canopy_radius={radius_m}m")
         
         from data_sources.gee_api import get_tree_canopy_gee
         gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
@@ -229,70 +230,70 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # Fallback: Only expand radius for cities (not neighborhoods)
         # Neighborhoods should stay within their boundaries
         if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
-            print(f"   🔄 Urban core returned {gee_canopy:.1f}% - trying larger radius to capture residential neighborhoods...")
+            logger.debug(f"Urban core returned {gee_canopy:.1f}% - trying larger radius to capture residential neighborhoods...")
             gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
             if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
-                print(f"   ✅ Larger radius (2km) found {gee_canopy_larger:.1f}% canopy (vs {gee_canopy:.1f}% at 1km)")
+                logger.debug(f"Larger radius (2km) found {gee_canopy_larger:.1f}% canopy (vs {gee_canopy:.1f}% at 1km)")
                 gee_canopy = gee_canopy_larger
                 # If still below 30%, try 3km (closer to city-wide assessments, only for cities)
                 if gee_canopy < 30.0:
                     gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
                     if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
-                        print(f"   ✅ Even larger radius (3km) found {gee_canopy_3km:.1f}% canopy (vs {gee_canopy:.1f}% at 2km)")
+                        logger.debug(f"Even larger radius (3km) found {gee_canopy_3km:.1f}% canopy (vs {gee_canopy:.1f}% at 2km)")
                         gee_canopy = gee_canopy_3km
         elif location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
-            print(f"   🔄 Urban core returned {gee_canopy if gee_canopy else 'None'}% - trying larger radius...")
+            logger.debug(f"Urban core returned {gee_canopy if gee_canopy else 'None'}% - trying larger radius...")
             gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
             if gee_canopy is not None and gee_canopy >= 0.1:
-                print(f"   ✅ Larger radius (2km) found {gee_canopy:.1f}% canopy")
+                logger.debug(f"Larger radius (2km) found {gee_canopy:.1f}% canopy")
         
         if gee_canopy is not None and gee_canopy >= 0.1:  # Threshold to avoid false zeros
             canopy_score = _score_tree_canopy(gee_canopy)
             score = canopy_score
             sources.append(f"GEE: {gee_canopy:.1f}% canopy")
             details['gee_canopy_pct'] = gee_canopy
-            print(f"   ✅ Using GEE satellite data: {gee_canopy:.1f}%")
+            logger.debug(f"Using GEE satellite data: {gee_canopy:.1f}%")
             
             # For dense urban areas, validate low GEE results with Census/USFS
             # GEE can underestimate in dense urban areas (buildings block satellite view)
             if gee_canopy < 15.0 and area_type in ['urban_core', 'urban_residential']:
-                print(f"   🔄 Dense urban area with low GEE canopy ({gee_canopy:.1f}%) - validating with Census/USFS...")
+                logger.debug(f"Dense urban area with low GEE canopy ({gee_canopy:.1f}%) - validating with Census/USFS...")
                 census_canopy = census_api.get_tree_canopy(lat, lon)
                 if census_canopy is not None and census_canopy > gee_canopy:
                     # Use the higher of the two (Census might be more accurate for dense urban)
                     census_score = _score_tree_canopy(census_canopy)
                     if census_score > score:
-                        print(f"   ✅ Census/USFS canopy ({census_canopy:.1f}%) is higher than GEE ({gee_canopy:.1f}%) - using Census")
+                        logger.debug(f"Census/USFS canopy ({census_canopy:.1f}%) is higher than GEE ({gee_canopy:.1f}%) - using Census")
                         score = census_score
                         sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
                         details['census_canopy_pct'] = census_canopy
                     else:
-                        print(f"   📊 Census/USFS canopy ({census_canopy:.1f}%) confirms low coverage")
+                        logger.debug(f"Census/USFS canopy ({census_canopy:.1f}%) confirms low coverage")
                 elif census_canopy is not None:
-                    print(f"   📊 Census/USFS canopy ({census_canopy:.1f}%) confirms GEE result")
+                    logger.debug(f"Census/USFS canopy ({census_canopy:.1f}%) confirms GEE result")
             
             # For NYC: Check if GEE canopy is suspiciously low (<15%) and supplement with street trees
             # GEE canopy misses individual street trees in dense urban areas
             if nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city):
                 if gee_canopy < 15.0:
-                    print(f"   🗽 NYC location with low GEE canopy ({gee_canopy:.1f}%) - checking street trees...")
+                    logger.debug(f"NYC location with low GEE canopy ({gee_canopy:.1f}%) - checking street trees...")
                     street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009)  # ~1000m
                     if street_trees:
                         tree_count = len(street_trees)
                         street_tree_score = _score_nyc_trees(tree_count)
                         # Use the higher of the two scores (street trees are more accurate for NYC)
                         if street_tree_score > score:
-                            print(f"   ✅ NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (using street trees)")
+                            logger.debug(f"NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (using street trees)")
                             score = street_tree_score
                             sources.append(f"NYC Street Trees: {tree_count} trees")
                             details['nyc_street_trees'] = tree_count
                         else:
-                            print(f"   📊 NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (GEE canopy higher)")
+                            logger.debug(f"NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (GEE canopy higher)")
             
             # For dense urban areas with low canopy, try OSM individual trees as fallback
             # Only if still low after Census validation
             if score < 20.0 and area_type in ['urban_core', 'urban_residential']:
-                print(f"   🌳 Checking OSM individual trees/tree rows for dense urban area...")
+                logger.debug("Checking OSM individual trees/tree rows for dense urban area...")
                 try:
                     from data_sources.osm_api import query_enhanced_trees
                     osm_trees = query_enhanced_trees(lat, lon, radius_m=1000)
@@ -307,28 +308,28 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             # Score OSM trees similar to NYC street trees
                             osm_tree_score = _score_nyc_trees(total_osm_trees)
                             if osm_tree_score > score:
-                                print(f"   ✅ OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (using OSM trees)")
+                                logger.debug(f"OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (using OSM trees)")
                                 score = osm_tree_score
                                 sources.append(f"OSM: {total_osm_trees} individual trees/tree rows")
                                 details['osm_individual_trees'] = total_osm_trees
                             else:
-                                print(f"   📊 OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (current score higher)")
+                                logger.debug(f"OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (current score higher)")
                 except Exception as e:
-                    print(f"   ⚠️  OSM tree query failed: {e}")
+                    logger.warning(f"OSM tree query failed: {e}")
         else:
-            print(f"   ⚠️  GEE returned {gee_canopy} - trying Census fallback")
+            logger.warning(f"GEE returned {gee_canopy} - trying Census fallback")
     except Exception as e:
-        print(f"   ⚠️  GEE import error: {e}")
+        logger.warning(f"GEE import error: {e}")
     
     # Priority 2: NYC Street Trees (if NYC and no score yet, or GEE was low)
     if score == 0.0 or (score < 30.0 and nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city)):
-        print(f"   🗽 Checking NYC Street Tree Census...")
+        logger.debug("Checking NYC Street Tree Census...")
         street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009)  # ~1000m
         if street_trees:
             tree_count = len(street_trees)
             street_tree_score = _score_nyc_trees(tree_count)
             if street_tree_score > score:
-                print(f"   ✅ Using NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
+                logger.debug(f"Using NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
                 score = street_tree_score
                 sources.append(f"NYC Street Trees: {tree_count} trees")
                 details['nyc_street_trees'] = tree_count
@@ -337,14 +338,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if (score == 0.0 or score < 30.0) and street_tree_api and city:
         city_key = street_tree_api.is_city_with_street_trees(city, lat, lon)
         if city_key:
-            print(f"   🌳 Checking {city_key} Street Tree API...")
+            logger.debug(f"Checking {city_key} Street Tree API...")
             street_trees = street_tree_api.get_street_trees(city, lat, lon, radius_m=1000)
             if street_trees:
                 tree_count = len(street_trees)
                 # Reuse NYC tree scoring function (same scoring logic)
                 street_tree_score = _score_nyc_trees(tree_count)
                 if street_tree_score > score:
-                    print(f"   ✅ Using {city_key} Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
+                    logger.debug(f"Using {city_key} Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
                     score = street_tree_score
                     sources.append(f"{city_key} Street Trees: {tree_count} trees")
                     details[f'{city_key.lower()}_street_trees'] = tree_count
@@ -352,7 +353,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Priority 3: Census USFS Tree Canopy (if GEE unavailable or low)
     # Also check for dense urban areas when score is suspiciously low (< 20)
     if score == 0.0 or (score < 20.0 and area_type in ['urban_core', 'urban_residential']):
-        print(f"   📊 Trying Census USFS tree canopy data...")
+        logger.debug("Trying Census USFS tree canopy data...")
         canopy_pct = census_api.get_tree_canopy(lat, lon)
         if canopy_pct is not None and canopy_pct > 0:
             canopy_score = _score_tree_canopy(canopy_pct)
@@ -360,11 +361,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 score = canopy_score
                 sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
                 details['census_canopy_pct'] = canopy_pct
-                print(f"   ✅ Using Census canopy data: {canopy_pct:.1f}%")
+                logger.debug(f"Using Census canopy data: {canopy_pct:.1f}%")
             else:
-                print(f"   📊 Census canopy ({canopy_pct:.1f}%) confirms low coverage")
+                logger.debug(f"Census canopy ({canopy_pct:.1f}%) confirms low coverage")
         else:
-            print(f"   ⚠️  Census canopy returned {canopy_pct}")
+            logger.warning(f"Census canopy returned {canopy_pct}")
     
     # Priority 3: OSM parks as proxy (fallback)
     if score == 0.0:
@@ -379,9 +380,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 score = park_score
                 sources.append(f"OSM: {park_count} parks/green spaces")
                 details['osm_parks'] = park_count
-                print(f"   📊 Using OSM park data: {park_count} parks")
+                logger.debug(f"Using OSM park data: {park_count} parks")
             else:
-                print(f"   ⚠️  No tree data available from any source")
+                logger.warning("No tree data available from any source")
                 sources.append("No tree data available")
     
     details['sources'] = sources
@@ -459,7 +460,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)
         
         if 'error' in diversity_metrics:
-            print(f"   ⚠️  Architectural diversity computation failed: {diversity_metrics.get('error')}")
+            logger.warning(f"Architectural diversity computation failed: {diversity_metrics.get('error')}")
             user_message = diversity_metrics.get('user_message', 'OSM building data temporarily unavailable. Please try again.')
             retry_suggested = diversity_metrics.get('retry_suggested', False)
             return 0.0, {
@@ -565,12 +566,12 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             }
         }
         
-        print(f"   ✅ Architectural beauty: {beauty_score:.1f}/50.0 (effective: {effective_area_type})")
+        logger.debug(f"Architectural beauty: {beauty_score:.1f}/50.0 (effective: {effective_area_type})")
         
         return round(beauty_score, 1), details
         
     except Exception as e:
-        print(f"   ⚠️  Architectural diversity scoring failed: {e}")
+        logger.error(f"Architectural diversity scoring failed: {e}", exc_info=True)
         return 0.0, {"error": str(e), "note": "Architectural diversity unavailable"}
 
 
