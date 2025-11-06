@@ -506,16 +506,56 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                     "length": segment_length
                 })
         
-        logger.info(f"[STREETWALL] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
+        # OPTIMIZATION: Build grid-based spatial index for segments
+        # This reduces O(n*m) to roughly O(n*k) where k << m
+        grid_cell_size = 100.0  # meters - segments within 100m cells
+        # Convert to approximate lat/lon degrees (1 degree ≈ 111km)
+        grid_cell_deg = grid_cell_size / 111000.0
+        
+        # Build grid: map (grid_lat, grid_lon) -> list of segment indices
+        segment_grid = {}
+        for seg_idx, segment in enumerate(road_segments_precomputed):
+            # Get bounding box of segment
+            min_lat = min(segment["start"][0], segment["end"][0])
+            max_lat = max(segment["start"][0], segment["end"][0])
+            min_lon = min(segment["start"][1], segment["end"][1])
+            max_lon = max(segment["start"][1], segment["end"][1])
+            
+            # Add segment to all grid cells it might intersect
+            # Use floor division to get grid cell coordinates
+            min_grid_lat = int(min_lat / grid_cell_deg)
+            max_grid_lat = int(max_lat / grid_cell_deg)
+            min_grid_lon = int(min_lon / grid_cell_deg)
+            max_grid_lon = int(max_lon / grid_cell_deg)
+            
+            for grid_lat in range(min_grid_lat, max_grid_lat + 1):
+                for grid_lon in range(min_grid_lon, max_grid_lon + 1):
+                    key = (grid_lat, grid_lon)
+                    if key not in segment_grid:
+                        segment_grid[key] = []
+                    segment_grid[key].append(seg_idx)
+        
+        logger.info(f"[STREETWALL] Built spatial grid: {len(segment_grid)} cells, {len(road_segments_precomputed)} segments")
+        
+        # OPTIMIZATION: Sample buildings if too many (for statistical validity, 2000 is plenty)
+        buildings_to_process = building_ways
+        if len(building_ways) > 2000:
+            import random
+            # Use deterministic sampling for consistency
+            random.seed(42)  # Fixed seed for reproducibility
+            buildings_to_process = random.sample(building_ways, 2000)
+            logger.info(f"[STREETWALL] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
+        
+        logger.info(f"[STREETWALL] Pre-computed {len(road_segments_precomputed)} segments, processing {len(buildings_to_process)} buildings")
         building_count = 0
-        for building in building_ways:
+        for building in buildings_to_process:
             building_count += 1
             if building_count % 50 == 0:
-                logger.info(f"[STREETWALL] Processing building {building_count}/{len(building_ways)} at {time.time() - buffer_start:.2f}s")
+                logger.info(f"[STREETWALL] Processing building {building_count}/{len(buildings_to_process)} at {time.time() - buffer_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
-            
+                
             # Get building centroid
             building_coords = []
             for node_id in nodes:
@@ -543,11 +583,24 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
             if min_node_distance > 50.0:
                 continue
             
-            # Find closest road segment (now only checking precomputed segments)
+            # OPTIMIZATION: Use grid to find nearby segments only
+            grid_lat = int(building_lat / grid_cell_deg)
+            grid_lon = int(building_lon / grid_cell_deg)
+            
+            # Check segments in this cell and adjacent cells (3x3 grid)
+            candidate_segment_indices = set()
+            for dlat in [-1, 0, 1]:
+                for dlon in [-1, 0, 1]:
+                    key = (grid_lat + dlat, grid_lon + dlon)
+                    if key in segment_grid:
+                        candidate_segment_indices.update(segment_grid[key])
+            
+            # Find closest road segment (only checking nearby segments from grid)
             min_distance = float('inf')
             closest_segment_length = 0.0
             
-            for segment in road_segments_precomputed:
+            for seg_idx in candidate_segment_indices:
+                segment = road_segments_precomputed[seg_idx]
                 _, _, dist = _compute_point_on_line(
                     (building_lat, building_lon),
                     segment["start"],
@@ -572,6 +625,10 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                 
                 # Assume ~25% of perimeter faces street (typical for rectangular lots)
                 building_frontage = building_perimeter * 0.25
+                # Scale up if we sampled buildings
+                if len(buildings_to_process) < len(building_ways):
+                    scale_factor = len(building_ways) / len(buildings_to_process)
+                    building_frontage *= scale_factor
                 built_frontage_m += min(building_frontage, closest_segment_length)
         
         buffer_time = time.time() - buffer_start
@@ -738,20 +795,51 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
                 "coverage_confidence": 0.0
             }
         
+        # OPTIMIZATION: Build grid-based spatial index for segments (same as streetwall)
+        grid_cell_size = 100.0  # meters
+        grid_cell_deg = grid_cell_size / 111000.0
+        
+        segment_grid = {}
+        for seg_idx, segment in enumerate(road_segments_precomputed):
+            min_lat = min(segment["start"][0], segment["end"][0])
+            max_lat = max(segment["start"][0], segment["end"][0])
+            min_lon = min(segment["start"][1], segment["end"][1])
+            max_lon = max(segment["start"][1], segment["end"][1])
+            
+            min_grid_lat = int(min_lat / grid_cell_deg)
+            max_grid_lat = int(max_lat / grid_cell_deg)
+            min_grid_lon = int(min_lon / grid_cell_deg)
+            max_grid_lon = int(max_lon / grid_cell_deg)
+            
+            for grid_lat in range(min_grid_lat, max_grid_lat + 1):
+                for grid_lon in range(min_grid_lon, max_grid_lon + 1):
+                    key = (grid_lat, grid_lon)
+                    if key not in segment_grid:
+                        segment_grid[key] = []
+                    segment_grid[key].append(seg_idx)
+        
+        # OPTIMIZATION: Sample buildings if too many
+        buildings_to_process = building_ways
+        if len(building_ways) > 2000:
+            import random
+            random.seed(42)
+            buildings_to_process = random.sample(building_ways, 2000)
+            logger.info(f"[SETBACK] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
+        
         # For each building, find closest road segment and calculate setback
         # Group setbacks by road segment for statistical analysis
-        logger.info(f"[SETBACK] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
+        logger.info(f"[SETBACK] Pre-computed {len(road_segments_precomputed)} segments, processing {len(buildings_to_process)} buildings")
         segment_setbacks = {}  # segment_id -> list of setbacks
         
         building_count = 0
-        for building in building_ways:
+        for building in buildings_to_process:
             building_count += 1
             if building_count % 50 == 0:
-                logger.info(f"[SETBACK] Processing building {building_count}/{len(building_ways)} at {time.time() - compute_start:.2f}s")
+                logger.info(f"[SETBACK] Processing building {building_count}/{len(buildings_to_process)} at {time.time() - compute_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
-            
+                
             # Get building polygon coordinates
             building_coords = []
             for node_id in nodes:
@@ -762,19 +850,32 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
             if len(building_coords) < 3:  # Need at least 3 points for a polygon
                 continue
             
+            # Calculate building centroid for grid lookup
+            building_lat = sum(c[0] for c in building_coords) / len(building_coords)
+            building_lon = sum(c[1] for c in building_coords) / len(building_coords)
+            
+            # OPTIMIZATION: Use grid to find nearby segments only
+            grid_lat = int(building_lat / grid_cell_deg)
+            grid_lon = int(building_lon / grid_cell_deg)
+            
+            candidate_segment_indices = set()
+            for dlat in [-1, 0, 1]:
+                for dlon in [-1, 0, 1]:
+                    key = (grid_lat + dlat, grid_lon + dlon)
+                    if key in segment_grid:
+                        candidate_segment_indices.update(segment_grid[key])
+            
             # Find closest edge of building to nearest road segment
             min_setback = float('inf')
             closest_segment_id = None
             
-            for segment in road_segments_precomputed:
+            for seg_idx in candidate_segment_indices:
+                segment = road_segments_precomputed[seg_idx]
                 # Find closest point on building edge to this road segment
-                # For efficiency, check closest building edge (not all edges)
-                # Find the closest edge of the building polygon to the road segment
                 for i in range(len(building_coords)):
                     edge_start = building_coords[i]
                     edge_end = building_coords[(i + 1) % len(building_coords)]
                     
-                    # Find closest point on building edge to road segment
                     # Use the midpoint of the building edge as proxy
                     edge_mid_lat = (edge_start[0] + edge_end[0]) / 2
                     edge_mid_lon = (edge_start[1] + edge_end[1]) / 2
@@ -1006,16 +1107,47 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
                 "coverage_confidence": 0.0
             }
         
+        # OPTIMIZATION: Build grid-based spatial index for segments (same as streetwall)
+        grid_cell_size = 100.0  # meters
+        grid_cell_deg = grid_cell_size / 111000.0
+        
+        segment_grid = {}
+        for seg_idx, segment in enumerate(road_segments_precomputed):
+            min_lat = min(segment["start"][0], segment["end"][0])
+            max_lat = max(segment["start"][0], segment["end"][0])
+            min_lon = min(segment["start"][1], segment["end"][1])
+            max_lon = max(segment["start"][1], segment["end"][1])
+            
+            min_grid_lat = int(min_lat / grid_cell_deg)
+            max_grid_lat = int(max_lat / grid_cell_deg)
+            min_grid_lon = int(min_lon / grid_cell_deg)
+            max_grid_lon = int(max_lon / grid_cell_deg)
+            
+            for grid_lat in range(min_grid_lat, max_grid_lat + 1):
+                for grid_lon in range(min_grid_lon, max_grid_lon + 1):
+                    key = (grid_lat, grid_lon)
+                    if key not in segment_grid:
+                        segment_grid[key] = []
+                    segment_grid[key].append(seg_idx)
+        
+        # OPTIMIZATION: Sample buildings if too many
+        buildings_to_process = building_ways
+        if len(building_ways) > 2000:
+            import random
+            random.seed(42)
+            buildings_to_process = random.sample(building_ways, 2000)
+            logger.info(f"[FACADE] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
+        
         # For each building, find closest road segment and calculate setback
         # Group setbacks by road segment
-        logger.info(f"[FACADE] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
+        logger.info(f"[FACADE] Pre-computed {len(road_segments_precomputed)} segments, processing {len(buildings_to_process)} buildings")
         segment_setbacks = {}  # segment_id -> list of setbacks
         
         building_count = 0
-        for building in building_ways:
+        for building in buildings_to_process:
             building_count += 1
             if building_count % 50 == 0:
-                logger.info(f"[FACADE] Processing building {building_count}/{len(building_ways)} at {time.time() - compute_start:.2f}s")
+                logger.info(f"[FACADE] Processing building {building_count}/{len(buildings_to_process)} at {time.time() - compute_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
@@ -1030,11 +1162,27 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
             if len(building_coords) < 3:
                 continue
             
+            # Calculate building centroid for grid lookup
+            building_lat = sum(c[0] for c in building_coords) / len(building_coords)
+            building_lon = sum(c[1] for c in building_coords) / len(building_coords)
+            
+            # OPTIMIZATION: Use grid to find nearby segments only
+            grid_lat = int(building_lat / grid_cell_deg)
+            grid_lon = int(building_lon / grid_cell_deg)
+            
+            candidate_segment_indices = set()
+            for dlat in [-1, 0, 1]:
+                for dlon in [-1, 0, 1]:
+                    key = (grid_lat + dlat, grid_lon + dlon)
+                    if key in segment_grid:
+                        candidate_segment_indices.update(segment_grid[key])
+            
             # Find closest edge of building to nearest road segment
             min_setback = float('inf')
             closest_segment_id = None
             
-            for segment in road_segments_precomputed:
+            for seg_idx in candidate_segment_indices:
+                segment = road_segments_precomputed[seg_idx]
                 # Find closest edge of building to road segment
                 for i in range(len(building_coords)):
                     edge_start = building_coords[i]
