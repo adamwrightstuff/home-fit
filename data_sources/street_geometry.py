@@ -5,10 +5,15 @@ from OSM road and building data.
 """
 
 import math
+import time
+import sys
 import requests
 from typing import Dict, List, Tuple, Optional
 from .osm_api import OVERPASS_URL, _retry_overpass, haversine_distance
 from .cache import cached, CACHE_TTL
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
@@ -24,6 +29,7 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
             "elements": List[Dict]  # Full response for caching
         }
     """
+    step_start = time.time()
     try:
         query = f"""
         [out:json][timeout:30];
@@ -40,13 +46,21 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
             return requests.post(OVERPASS_URL, data={"data": query}, timeout=20,
                                headers={"User-Agent": "HomeFit/1.0"})
         
+        fetch_start = time.time()
         resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+        fetch_time = time.time() - fetch_start
         
         if resp is None or resp.status_code != 200:
+            logger.warning(f"[FETCH] OSM query failed after {fetch_time:.2f}s")
             return None
         
+        parse_start = time.time()
         data = resp.json()
         elements = data.get("elements", [])
+        
+        # Calculate geometry size (rough estimate in MB)
+        import json
+        geometry_size_mb = sys.getsizeof(json.dumps(elements)) / (1024 * 1024)
         
         # Separate roads and buildings
         nodes_dict = {}
@@ -63,6 +77,16 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
                 elif "building" in tags:
                     building_ways.append(elem)
         
+        parse_time = time.time() - parse_start
+        total_time = time.time() - step_start
+        
+        # Count segments (approximate: sum of way node counts)
+        total_segments = sum(len(way.get("nodes", [])) - 1 for way in road_ways + building_ways if len(way.get("nodes", [])) > 1)
+        
+        logger.info(f"[FETCH] fetch={fetch_time:.2f}s parse={parse_time:.2f}s total={total_time:.2f}s | "
+                   f"#nodes={len(nodes_dict)} #roads={len(road_ways)} #buildings={len(building_ways)} "
+                   f"#segments={total_segments} geometry={geometry_size_mb:.2f}MB")
+        
         return {
             "nodes_dict": nodes_dict,
             "road_ways": road_ways,
@@ -70,7 +94,7 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
             "elements": elements
         }
     except Exception as e:
-        print(f"⚠️  OSM roads/buildings query error: {e}")
+        logger.error(f"[FETCH] OSM roads/buildings query error: {e}")
         return None
 
 
@@ -129,6 +153,7 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
             "coverage_confidence": float (0.0-1.0)
         }
     """
+    step_start = time.time()
     try:
         # Query OSM for road network (residential, primary, secondary, tertiary, unclassified)
         query = f"""
@@ -145,9 +170,12 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
             return requests.post(OVERPASS_URL, data={"data": query}, timeout=20, 
                                headers={"User-Agent": "HomeFit/1.0"})
         
+        fetch_start = time.time()
         resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+        fetch_time = time.time() - fetch_start
         
         if resp is None or resp.status_code != 200:
+            logger.warning(f"[BLOCK_GRAIN] fetch failed after {fetch_time:.2f}s")
             return {
                 "block_grain": 0.0,
                 "median_block_length_m": 0.0,
@@ -157,6 +185,7 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
                 "coverage_confidence": 0.0
             }
         
+        parse_start = time.time()
         data = resp.json()
         elements = data.get("elements", [])
         
@@ -170,7 +199,10 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
             elif elem["type"] == "way":
                 ways_dict[elem["id"]] = elem
         
+        parse_time = time.time() - parse_start
+        
         if not ways_dict:
+            logger.warning(f"[BLOCK_GRAIN] no ways found after parse={parse_time:.2f}s")
             return {
                 "block_grain": 0.0,
                 "median_block_length_m": 0.0,
@@ -180,6 +212,7 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
                 "coverage_confidence": 0.0
             }
         
+        compute_start = time.time()
         # Reconstruct road segments and find intersections
         road_segments = []
         node_usage_count = {}  # Count how many ways use each node
@@ -312,6 +345,12 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
         expected_road_length = area_sqkm * 10.0  # Typical: 10km roads per sqkm
         coverage_confidence = min(1.0, road_length_km / expected_road_length if expected_road_length > 0 else 0.0)
         
+        compute_time = time.time() - compute_start
+        total_time = time.time() - step_start
+        
+        logger.info(f"[BLOCK_GRAIN] fetch={fetch_time:.2f}s parse={parse_time:.2f}s compute={compute_time:.2f}s total={total_time:.2f}s | "
+                   f"#roads={len(ways_dict)} #segments={len(road_segments)} #intersections={len(intersections)}")
+        
         return {
             "block_grain": round(block_grain, 1),
             "median_block_length_m": round(median_block_length_m, 1),
@@ -322,7 +361,7 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
         }
         
     except Exception as e:
-        print(f"⚠️  Block grain calculation error: {e}")
+        logger.error(f"[BLOCK_GRAIN] calculation error: {e}")
         return {
             "block_grain": 0.0,
             "median_block_length_m": 0.0,
@@ -354,12 +393,19 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
             "coverage_confidence": float (0.0-1.0)
         }
     """
+    step_start = time.time()
+    logger.info(f"[STREETWALL] Starting computation at {time.time() - step_start:.2f}s")
     try:
         # Use shared OSM data if provided, otherwise fetch
+        parse_start = time.time()
         if osm_data is None:
+            logger.info(f"[STREETWALL] Fetching OSM data (shared data not provided)")
             osm_data = _fetch_roads_and_buildings(lat, lon, radius_m)
+        else:
+            logger.info(f"[STREETWALL] Using shared OSM data")
         
         if osm_data is None:
+            logger.warning(f"[STREETWALL] no OSM data available")
             return {
                 "streetwall_continuity": 0.0,
                 "street_frontage_m": 0.0,
@@ -373,6 +419,7 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         building_ways = osm_data["building_ways"]
         
         if not road_ways:
+            logger.warning(f"[STREETWALL] no roads found")
             return {
                 "streetwall_continuity": 0.0,
                 "street_frontage_m": 0.0,
@@ -381,6 +428,11 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                 "coverage_confidence": 0.0
             }
         
+        parse_time = time.time() - parse_start
+        logger.info(f"[STREETWALL] Parse complete at {parse_time:.2f}s: #roads={len(road_ways)} #buildings={len(building_ways)}")
+        
+        buffer_start = time.time()
+        logger.info(f"[STREETWALL] Starting buffer/intersect calculations at {buffer_start - step_start:.2f}s")
         # Calculate total street frontage (sum of road segment lengths, doubled for both sides)
         street_frontage_m = 0.0
         
@@ -426,6 +478,7 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                     all_road_nodes.append((node["lat"], node["lon"]))
         
         # Pre-compute road segments once (instead of recomputing for each building)
+        logger.info(f"[STREETWALL] Pre-computing road segments: {len(road_ways)} roads")
         road_segments_precomputed = []
         for road_way in road_ways:
             road_nodes = road_way.get("nodes", [])
@@ -453,7 +506,12 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                     "length": segment_length
                 })
         
+        logger.info(f"[STREETWALL] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
+        building_count = 0
         for building in building_ways:
+            building_count += 1
+            if building_count % 50 == 0:
+                logger.info(f"[STREETWALL] Processing building {building_count}/{len(building_ways)} at {time.time() - buffer_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
@@ -516,6 +574,8 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                 building_frontage = building_perimeter * 0.25
                 built_frontage_m += min(building_frontage, closest_segment_length)
         
+        buffer_time = time.time() - buffer_start
+        
         # Calculate continuity ratio
         continuity_ratio = built_frontage_m / street_frontage_m if street_frontage_m > 0 else 0.0
         
@@ -546,6 +606,12 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         expected_buildings = 50.0  # Minimum for good coverage
         coverage_confidence = min(1.0, buildings_per_sqkm / expected_buildings if expected_buildings > 0 else 0.0)
         
+        total_time = time.time() - step_start
+        total_segments = len(road_segments_precomputed)
+        
+        logger.info(f"[STREETWALL] parse={parse_time:.2f}s buffer/intersect={buffer_time:.2f}s total={total_time:.2f}s | "
+                   f"#roads={len(road_ways)} #buildings={len(building_ways)} #segments={total_segments}")
+        
         return {
             "streetwall_continuity": round(streetwall_continuity, 1),
             "street_frontage_m": round(street_frontage_m, 1),
@@ -555,7 +621,7 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         }
         
     except Exception as e:
-        print(f"⚠️  Streetwall continuity calculation error: {e}")
+        logger.error(f"[STREETWALL] calculation error: {e}")
         return {
             "streetwall_continuity": 0.0,
             "street_frontage_m": 0.0,
@@ -588,12 +654,19 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
             "coverage_confidence": float (0.0-1.0)
         }
     """
+    step_start = time.time()
+    logger.info(f"[SETBACK] Starting computation at {time.time() - step_start:.2f}s")
     try:
         # Use shared OSM data if provided, otherwise fetch
+        parse_start = time.time()
         if osm_data is None:
+            logger.info(f"[SETBACK] Fetching OSM data (shared data not provided)")
             osm_data = _fetch_roads_and_buildings(lat, lon, radius_m)
+        else:
+            logger.info(f"[SETBACK] Using shared OSM data")
         
         if osm_data is None:
+            logger.warning(f"[SETBACK] no OSM data available")
             return {
                 "setback_consistency": 0.0,
                 "mean_setback_m": 0.0,
@@ -609,6 +682,7 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         building_ways = osm_data["building_ways"]
         
         if not road_ways or not building_ways:
+            logger.warning(f"[SETBACK] no roads or buildings found")
             return {
                 "setback_consistency": 0.0,
                 "mean_setback_m": 0.0,
@@ -619,6 +693,9 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
                 "coverage_confidence": 0.0
             }
         
+        parse_time = time.time() - parse_start
+        
+        compute_start = time.time()
         # Pre-compute road segments
         road_segments_precomputed = []
         for road_way in road_ways:
@@ -661,9 +738,14 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         
         # For each building, find closest road segment and calculate setback
         # Group setbacks by road segment for statistical analysis
+        logger.info(f"[SETBACK] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
         segment_setbacks = {}  # segment_id -> list of setbacks
         
+        building_count = 0
         for building in building_ways:
+            building_count += 1
+            if building_count % 50 == 0:
+                logger.info(f"[SETBACK] Processing building {building_count}/{len(building_ways)} at {time.time() - compute_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
@@ -785,6 +867,13 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         analyzed_segments = len([s for s in segment_setbacks.values() if len(s) >= MIN_BUILDINGS_PER_SEGMENT])
         coverage_confidence = min(1.0, analyzed_segments / max(1, total_segments // 4))  # Expect ~25% of segments to have buildings
         
+        compute_time = time.time() - compute_start
+        total_time = time.time() - step_start
+        
+        logger.info(f"[SETBACK] parse={parse_time:.2f}s compute={compute_time:.2f}s total={total_time:.2f}s | "
+                   f"#roads={len(road_ways)} #buildings={len(building_ways)} #segments={total_segments} "
+                   f"analyzed_segments={analyzed_segments} analyzed_buildings={len(all_setbacks)}")
+        
         return {
             "setback_consistency": round(setback_consistency, 1),
             "mean_setback_m": round(mean_setback, 2),
@@ -796,7 +885,7 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         }
         
     except Exception as e:
-        print(f"⚠️  Setback consistency calculation error: {e}")
+        logger.error(f"[SETBACK] calculation error: {e}")
         return {
             "setback_consistency": 0.0,
             "mean_setback_m": 0.0,
@@ -831,12 +920,19 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
             "coverage_confidence": float (0.0-1.0)
         }
     """
+    step_start = time.time()
+    logger.info(f"[FACADE] Starting computation at {time.time() - step_start:.2f}s")
     try:
         # Use shared OSM data if provided, otherwise fetch
+        parse_start = time.time()
         if osm_data is None:
+            logger.info(f"[FACADE] Fetching OSM data (shared data not provided)")
             osm_data = _fetch_roads_and_buildings(lat, lon, radius_m)
+        else:
+            logger.info(f"[FACADE] Using shared OSM data")
         
         if osm_data is None:
+            logger.warning(f"[FACADE] no OSM data available")
             return {
                 "facade_rhythm": 0.0,
                 "alignment_percentage": 0.0,
@@ -852,6 +948,7 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         building_ways = osm_data["building_ways"]
         
         if not road_ways or not building_ways:
+            logger.warning(f"[FACADE] no roads or buildings found")
             return {
                 "facade_rhythm": 0.0,
                 "alignment_percentage": 0.0,
@@ -862,6 +959,9 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
                 "coverage_confidence": 0.0
             }
         
+        parse_time = time.time() - parse_start
+        
+        compute_start = time.time()
         # Pre-compute road segments
         road_segments_precomputed = []
         for road_way in road_ways:
@@ -904,9 +1004,14 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         
         # For each building, find closest road segment and calculate setback
         # Group setbacks by road segment
+        logger.info(f"[FACADE] Pre-computed {len(road_segments_precomputed)} segments, processing {len(building_ways)} buildings")
         segment_setbacks = {}  # segment_id -> list of setbacks
         
+        building_count = 0
         for building in building_ways:
+            building_count += 1
+            if building_count % 50 == 0:
+                logger.info(f"[FACADE] Processing building {building_count}/{len(building_ways)} at {time.time() - compute_start:.2f}s")
             nodes = building.get("nodes", [])
             if not nodes:
                 continue
@@ -984,6 +1089,13 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
             all_setbacks.extend(setbacks)
         mean_setback = sum(all_setbacks) / len(all_setbacks) if all_setbacks else 0.0
         
+        compute_time = time.time() - compute_start
+        total_time = time.time() - step_start
+        
+        logger.info(f"[FACADE] parse={parse_time:.2f}s compute={compute_time:.2f}s total={total_time:.2f}s | "
+                   f"#roads={len(road_ways)} #buildings={len(building_ways)} #segments={len(road_segments_precomputed)} "
+                   f"analyzed_segments={analyzed_segments} analyzed_buildings={total_buildings}")
+        
         return {
             "facade_rhythm": round(facade_rhythm, 1),
             "alignment_percentage": round(alignment_percentage, 1),
@@ -995,7 +1107,7 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         }
         
     except Exception as e:
-        print(f"⚠️  Facade rhythm calculation error: {e}")
+        logger.error(f"[FACADE] calculation error: {e}")
         return {
             "facade_rhythm": 0.0,
             "alignment_percentage": 0.0,
