@@ -5,6 +5,9 @@ import time
 from typing import Optional, Dict, Tuple, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # UPDATED IMPORTS - 8 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
@@ -155,11 +158,9 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
     use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
     
     start_time = time.time()
-    print(f"\n{'='*60}")
-    print(f"🏠 HomeFit Score Request: {location}")
+    logger.info(f"HomeFit Score Request: {location}")
     if enable_schools is not None:
-        print(f"📚 School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
-    print(f"{'='*60}")
+        logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
 
     # Step 1: Geocode the location (with full result for neighborhood detection)
     from data_sources.geocoding import geocode_with_full_result
@@ -172,13 +173,13 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         )
 
     lat, lon, zip_code, state, city, geocode_data = geo_result
-    print(f"✅ Coordinates: {lat}, {lon}")
-    print(f"📮 Location: {city}, {state} {zip_code}")
+    logger.info(f"Coordinates: {lat}, {lon}")
+    logger.info(f"Location: {city}, {state} {zip_code}")
     
     # Detect if this is a neighborhood vs. standalone city
     from data_sources.data_quality import detect_location_scope
     location_scope = detect_location_scope(lat, lon, geocode_data)
-    print(f"📍 Location scope: {location_scope}\n")
+    logger.info(f"Location scope: {location_scope}")
 
     # Compute a single area_type centrally for consistent radius profiles
     # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
@@ -204,7 +205,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
                                 business_data.get("tier4_services", []))
                 business_count = len(all_businesses)
         except Exception as e:
-            print(f"⚠️  Business count query failed (non-fatal): {e}")
+            logger.warning(f"Business count query failed (non-fatal): {e}")
         
         # Get built coverage for classification (will be cached for beauty pillar)
         built_coverage = None
@@ -213,7 +214,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             if arch_diversity:
                 built_coverage = arch_diversity.get("built_coverage_ratio")
         except Exception as e:
-            print(f"⚠️  Built coverage query failed (non-fatal): {e}")
+            logger.warning(f"Built coverage query failed (non-fatal): {e}")
         
         # Get distance to principal city for classification
         metro_distance_km = None
@@ -223,7 +224,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             # Pass city parameter to help with metro detection, but geographic detection will work as fallback
             metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
         except Exception as e:
-            print(f"⚠️  Metro distance calculation failed (non-fatal): {e}")
+            logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
         
         # Enhanced multi-factor classification with principal city distance
         area_type = _dq.detect_area_type(
@@ -240,13 +241,13 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         try:
             census_tract = _ca.get_census_tract(lat, lon)
         except Exception as e:
-            print(f"⚠️  Census tract lookup failed: {e}")
+            logger.warning(f"Census tract lookup failed: {e}")
             census_tract = None
     except Exception:
         area_type = "unknown"
 
     # Step 2: Calculate all pillar scores in parallel
-    print("📊 Calculating pillar scores in parallel...\n")
+    logger.debug("Calculating pillar scores in parallel...")
 
     # Pillar execution wrapper with error handling
     def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
@@ -258,7 +259,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             result = func(**kwargs)
             return (name, result, None)
         except Exception as e:
-            print(f"⚠️  {name} pillar failed: {e}")
+            logger.error(f"{name} pillar failed: {e}")
             return (name, None, e)
 
     # Prepare all pillar tasks
@@ -328,7 +329,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
             school_avg = None  # Real failure, not fake score
             schools_by_level = {"elementary": [], "middle": [], "high": []}
     else:
-        print("📚 School scoring disabled (preserving API quota)")
+        logger.info("School scoring disabled (preserving API quota)")
         school_avg = None  # Not computed, don't use fake score
         schools_by_level = {"elementary": [], "middle": [], "high": []}
 
@@ -360,9 +361,9 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
 
     # Log any pillar failures
     if exceptions:
-        print(f"\n⚠️  {len(exceptions)} pillar(s) failed:")
+        logger.warning(f"{len(exceptions)} pillar(s) failed:")
         for pillar_name, error in exceptions.items():
-            print(f"   - {pillar_name}: {error}")
+            logger.warning(f"  - {pillar_name}: {error}")
 
     # Step 3: Calculate weighted total using token allocation
     token_allocation = parse_token_allocation(tokens)
@@ -378,18 +379,15 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         (housing_score * token_allocation["housing_value"] / 20)
     )
 
-    print(f"\n{'='*60}")
-    print(f"🎯 Final Livability Score: {total_score:.1f}/100")
-    print(f"{'='*60}")
-    print(f"   🏃 Active Outdoors: {active_outdoors_score:.1f}/100")
-    print(f"   ✨ Neighborhood Beauty: {beauty_score:.1f}/100")
-    print(f"   🍽️  Neighborhood Amenities: {amenities_score:.1f}/100")
-    print(f"   ✈️  Air Travel Access: {air_travel_score:.1f}/100")
-    print(f"   🚇 Public Transit Access: {transit_score:.1f}/100")
-    print(f"   🏥 Healthcare Access: {healthcare_score:.1f}/100")
-    print(f"   🎓 Quality Education: {school_avg:.1f}/100")
-    print(f"   🏠 Housing Value: {housing_score:.1f}/100")
-    print(f"{'='*60}\n")
+    logger.info(f"Final Livability Score: {total_score:.1f}/100")
+    logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
+                f"Neighborhood Beauty: {beauty_score:.1f}/100 | "
+                f"Neighborhood Amenities: {amenities_score:.1f}/100 | "
+                f"Air Travel Access: {air_travel_score:.1f}/100 | "
+                f"Public Transit Access: {transit_score:.1f}/100 | "
+                f"Healthcare Access: {healthcare_score:.1f}/100 | "
+                f"Quality Education: {school_avg:.1f}/100 | "
+                f"Housing Value: {housing_score:.1f}/100")
 
     # Count total schools and check if any were found
     total_schools = sum([
@@ -563,7 +561,7 @@ def get_livability_score(location: str, tokens: Optional[str] = None, include_ch
         response_time = time.time() - start_time
         record_request_metrics(location, lat, lon, response, response_time)
     except Exception as e:
-        print(f"⚠️  Failed to record telemetry: {e}")
+        logger.warning(f"Failed to record telemetry: {e}")
 
     return response
 

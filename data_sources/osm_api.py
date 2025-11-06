@@ -10,6 +10,9 @@ from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 from .utils import haversine_distance, get_way_center
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -26,17 +29,17 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
                     # Rate limited - wait longer and retry
                     retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
                     if i < attempts - 1:
-                        print(f"⚠️  OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{attempts})...")
+                        logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{attempts})...")
                         time.sleep(retry_after)
                         continue
                     else:
-                        print(f"⚠️  OSM rate limited (429), max retries reached")
+                        logger.warning(f"OSM rate limited (429), max retries reached")
                         return resp
             return resp
         except requests.exceptions.Timeout as e:
             if i < attempts - 1:
                 wait_time = base_wait * (2 ** i)
-                print(f"⚠️  OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+                logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
                 time.sleep(wait_time)
                 continue
             else:
@@ -44,7 +47,7 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
         except requests.exceptions.RequestException as e:
             if i < attempts - 1:
                 wait_time = base_wait * (1.5 ** i)
-                print(f"⚠️  OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+                logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
                 time.sleep(wait_time)
                 continue
             else:
@@ -132,11 +135,11 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
-                print(f"⚠️  OSM parks query rate limited (429)")
+                logger.warning("OSM parks query rate limited (429)")
             elif resp:
-                print(f"⚠️  OSM parks query failed with status {resp.status_code}")
+                logger.warning(f"OSM parks query failed with status {resp.status_code}")
             else:
-                print(f"⚠️  OSM parks query returned no response")
+                logger.warning("OSM parks query returned no response")
             return None
 
         data = resp.json()
@@ -146,7 +149,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             elements, lat, lon)
 
         if DEBUG_PARKS:
-            print(f"   ✅ Found {len(parks)} parks, {len(playgrounds)} playgrounds")
+            logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds")
 
         return {
             "parks": parks,
@@ -155,9 +158,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         }
 
     except Exception as e:
-        print(f"⚠️  OSM parks query error: {e}")
-        import traceback
-        print(f"   Traceback: {traceback.format_exc()}")
+        logger.error(f"OSM parks query error: {e}", exc_info=True)
         return None
 
 
@@ -233,7 +234,7 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
             large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
             hiking.extend(large_park_trails)
         except Exception as e:
-            print(f"   ⚠️  Large park trail query failed: {e}")
+            logger.warning(f"Large park trail query failed: {e}")
 
         return {
             "hiking": hiking,
@@ -242,7 +243,7 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
         }
 
     except Exception as e:
-        print(f"OSM nature query error: {e}")
+        logger.error(f"OSM nature query error: {e}", exc_info=True)
         return None
 
 
@@ -308,7 +309,7 @@ def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Option
         }
 
     except Exception as e:
-        print(f"OSM enhanced tree query error: {e}")
+        logger.error(f"OSM enhanced tree query error: {e}", exc_info=True)
         return None
 
 
@@ -387,7 +388,7 @@ def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optio
         }
 
     except Exception as e:
-        print(f"OSM cultural assets query error: {e}")
+        logger.error(f"OSM cultural assets query error: {e}", exc_info=True)
         return None
 
 
@@ -441,7 +442,7 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
         }
 
     except Exception as e:
-        print(f"OSM charm query error: {e}")
+        logger.error(f"OSM charm query error: {e}", exc_info=True)
         return None
 
 
@@ -547,7 +548,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
 
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
-                print(f"⚠️  OSM business query rate limited (429)")
+                logger.warning("OSM business query rate limited (429)")
             return None
 
         data = resp.json()
@@ -557,7 +558,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         return businesses
 
     except Exception as e:
-        print(f"OSM business query error: {e}")
+        logger.error(f"OSM business query error: {e}", exc_info=True)
         return None
 
 
@@ -645,13 +646,13 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
             if is_marina or has_club_tag or name_is_club:
                 debug_skipped_parks.append({**park_debug, "centroid_reason": "excluded-nonpublic"})
                 if DEBUG_PARKS:
-                    print(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason=excluded-nonpublic")
+                    logger.debug(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason=excluded-nonpublic")
                 continue
 
             if elem_lat is None:
                 debug_skipped_parks.append(park_debug)
                 if DEBUG_PARKS:
-                    print(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason={centroid_reason}")
+                    logger.debug(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason={centroid_reason}")
                 continue
 
             debug_raw_candidates.append(park_debug)
@@ -673,18 +674,18 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         debug_kept_parks.append({k: p[k] for k in ["osm_id", "name", "lat", "lon", "distance_m", "area_sqm"]})
 
     if DEBUG_PARKS:
-        print("========= PARK DEBUG REPORT =========")
-        print(f"Pre-dedup candidates: {pre_dedup_count}")
+        logger.debug("========= PARK DEBUG REPORT =========")
+        logger.debug(f"Pre-dedup candidates: {pre_dedup_count}")
         for c in debug_raw_candidates:
-            print(f"[CANDIDATE] id={c['osm_id']} name={c['name']} type={c['elem_type']} lat={c['lat']} lon={c['lon']} dist={c['distance_m']} area={c['area_sqm']}")
-        print(f"Kept after dedup: {post_dedup_count}")
+            logger.debug(f"[CANDIDATE] id={c['osm_id']} name={c['name']} type={c['elem_type']} lat={c['lat']} lon={c['lon']} dist={c['distance_m']} area={c['area_sqm']}")
+        logger.debug(f"Kept after dedup: {post_dedup_count}")
         for p in debug_kept_parks:
-            print(f"[KEPT    ] id={p['osm_id']} name={p['name']} lat={p['lat']} lon={p['lon']} dist={p['distance_m']} area={p['area_sqm']}")
+            logger.debug(f"[KEPT    ] id={p['osm_id']} name={p['name']} lat={p['lat']} lon={p['lon']} dist={p['distance_m']} area={p['area_sqm']}")
         if debug_skipped_parks:
-            print(f"Skipped parks (not kept): {len(debug_skipped_parks)}")
+            logger.debug(f"Skipped parks (not kept): {len(debug_skipped_parks)}")
             for s in debug_skipped_parks:
-                print(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
-        print("=====================================")
+                logger.debug(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
+        logger.debug("=====================================")
 
     return parks, playgrounds, tree_features
 
@@ -868,7 +869,7 @@ def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) 
         return large_parks_trails
     
     except Exception as e:
-        print(f"   ⚠️  Large park trail query error: {e}")
+        logger.warning(f"Large park trail query error: {e}")
         return []
 
 
@@ -1530,18 +1531,18 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         return requests.post(OVERPASS_URL, data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
     
     try:
-        print(f"🏥 Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
+        logger.debug(f"Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
         resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
         
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
-                print(f"⚠️  Healthcare query rate limited (429) - max retries reached")
-                print(f"   Consider: Increasing retry attempts or adding delay between requests")
+                logger.warning("Healthcare query rate limited (429) - max retries reached")
+                logger.warning("Consider: Increasing retry attempts or adding delay between requests")
             elif resp:
-                print(f"⚠️  Healthcare query failed: HTTP {resp.status_code}")
-                print(f"   Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
+                logger.warning(f"Healthcare query failed: HTTP {resp.status_code}")
+                logger.debug(f"Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
             else:
-                print(f"⚠️  Healthcare query failed: No response (timeout or network error)")
+                logger.warning("Healthcare query failed: No response (timeout or network error)")
             return None
 
         data = resp.json()
@@ -1618,7 +1619,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         }
             
     except Exception as e:
-        print(f"Error querying healthcare facilities: {e}")
+        logger.error(f"Error querying healthcare facilities: {e}", exc_info=True)
         return None
 
 
@@ -1661,7 +1662,7 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
     """
     
     try:
-        print(f"🚂 Querying OSM for railway stations within {radius_m/1000:.1f}km...")
+        logger.debug(f"Querying OSM for railway stations within {radius_m/1000:.1f}km...")
         resp = requests.post(OVERPASS_URL, data=query, timeout=30)
         
         if resp.status_code == 200:
@@ -1692,12 +1693,12 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
             # Sort by distance
             stations.sort(key=lambda x: x["distance_m"])
             
-            print(f"   Found {len(stations)} railway stations")
+            logger.debug(f"Found {len(stations)} railway stations")
             return stations
         else:
-            print(f"⚠️  OSM railway station query failed: {resp.status_code}")
+            logger.warning(f"OSM railway station query failed: {resp.status_code}")
             return None
             
     except Exception as e:
-        print(f"Error querying OSM for railway stations: {e}")
+        logger.error(f"Error querying OSM for railway stations: {e}", exc_info=True)
         return None
