@@ -1778,13 +1778,14 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 )
                 distance_km = None
             else:
-                distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
+                distance_m = haversine_distance(lat, lon, elem_lat, elem_lon)
+                distance_km = distance_m / 1000.0 if distance_m is not None else None
             
             facility = {
                 "name": name,
                 "lat": elem_lat,
                 "lon": elem_lon,
-                "distance_km": round(distance_km, 1) if isinstance(distance_km, (int, float)) else None,
+                "distance_km": round(distance_km, 3) if isinstance(distance_km, (int, float)) else None,
                 "osm_id": elem.get("id"),
                 "amenity": amenity,
                 "emergency": tags.get("emergency"),
