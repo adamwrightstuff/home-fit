@@ -285,6 +285,9 @@ def get_healthcare_access_score(lat: float, lon: float,
     total_score = base_total + hospital_bonus
     total_score = max(0.0, min(100.0, total_score))
 
+    # Check if query failed
+    query_failed = healthcare_facilities.get("_query_failed", False)
+    
     # Assess data quality
     combined_data = {
         'hospitals': hospitals,
@@ -298,6 +301,16 @@ def get_healthcare_access_score(lat: float, lon: float,
     # Detect actual area type for data quality assessment
     area_type_dq = data_quality.detect_area_type(lat, lon, pop_density)
     quality_metrics = data_quality.assess_pillar_data_quality('healthcare_access', combined_data, lat, lon, area_type_dq)
+    
+    # If query failed, adjust confidence to indicate API failure (not data absence)
+    if query_failed:
+        # Set confidence to a low but non-zero value to indicate API failure
+        # This distinguishes from "no data found" (which would be 0)
+        quality_metrics['confidence'] = max(10, quality_metrics.get('confidence', 0))
+        quality_metrics['quality_tier'] = 'very_poor'
+        quality_metrics['completeness'] = 0.0
+        quality_metrics['data_warning'] = 'api_error'
+        print(f"   ⚠️  Healthcare query failed - confidence adjusted to {quality_metrics['confidence']}%")
 
     # Build response
     # Identify nearest hospital for summary (by reported distance_km)
@@ -400,13 +413,18 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
         healthcare_data = osm_api.query_healthcare_facilities(lat, lon, radius_m=10000)
         
         if healthcare_data:
-            return {
+            # Check if query failed (indicated by _query_failed flag)
+            query_failed = healthcare_data.get("_query_failed", False)
+            result = {
                 "hospitals": healthcare_data.get("hospitals", []),
                 "urgent_care": healthcare_data.get("urgent_care", []),
                 "pharmacies": healthcare_data.get("pharmacies", []),
                 "clinics": healthcare_data.get("clinics", []),
                 "doctors": healthcare_data.get("doctors", [])
             }
+            if query_failed:
+                result["_query_failed"] = True
+            return result
         else:
             print(f"   ⚠️  No healthcare data returned from OSM (query returned None)")
             print(f"   ⚠️  This may indicate: OSM rate limit, timeout, or query failure")
@@ -415,7 +433,8 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
                 "urgent_care": [],
                 "pharmacies": [],
                 "clinics": [],
-                "doctors": []
+                "doctors": [],
+                "_query_failed": True
             }
     except Exception as e:
         print(f"   ⚠️  Healthcare query error: {e}")
@@ -426,7 +445,8 @@ def _get_osm_healthcare(lat: float, lon: float) -> Dict:
             "urgent_care": [],
             "pharmacies": [],
             "clinics": [],
-            "doctors": []
+            "doctors": [],
+            "_query_failed": True
         }
 
 

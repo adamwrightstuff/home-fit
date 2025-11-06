@@ -1567,66 +1567,28 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             "doctors": [...]
         }
     """
+    # Simplified query - get all healthcare-related amenities
+    # Reduced from 30+ queries to 9 queries for better performance
     query = f"""
     [out:json][timeout:40];
     (
-      // HOSPITALS & MAJOR MEDICAL CENTERS - EXPANDED DETECTION
-      node["amenity"="hospital"](around:{radius_m},{lat},{lon});
-      way["amenity"="hospital"](around:{radius_m},{lat},{lon});
-      relation["amenity"="hospital"](around:{radius_m},{lat},{lon});
+      // Healthcare amenities - nodes, ways, relations
+      node["amenity"~"hospital|medical_centre|clinic|doctors|pharmacy|dentist|veterinary|emergency_ward"](around:{radius_m},{lat},{lon});
+      way["amenity"~"hospital|medical_centre|clinic|doctors|pharmacy|dentist|veterinary|emergency_ward"](around:{radius_m},{lat},{lon});
+      relation["amenity"~"hospital|medical_centre|clinic"](around:{radius_m},{lat},{lon});
       
-      // Additional hospital tags
-      node["healthcare"="hospital"](around:{radius_m},{lat},{lon});
-      way["healthcare"="hospital"](around:{radius_m},{lat},{lon});
-      relation["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+      // Healthcare tag (more specific - only common healthcare values)
+      node["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
+      way["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
+      relation["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
       
-      // Medical centers and health centers
-      node["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
-      way["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
-      relation["amenity"="medical_centre"](around:{radius_m},{lat},{lon});
-      
-      node["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
-      way["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
-      relation["healthcare"="medical_centre"](around:{radius_m},{lat},{lon});
-      
-      // URGENT CARE & EMERGENCY CARE - EXPANDED DETECTION
-      node["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
-      way["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
-      
-      node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
-      way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
-      
-      // Urgent care specific tags
-      node["healthcare"="urgent_care"](around:{radius_m},{lat},{lon});
-      way["healthcare"="urgent_care"](around:{radius_m},{lat},{lon});
-      node["healthcare"="emergency"](around:{radius_m},{lat},{lon});
-      way["healthcare"="emergency"](around:{radius_m},{lat},{lon});
-      
-      // Walk-in clinics (often urgent care)
-      node["amenity"="clinic"]["healthcare:speciality"~"urgent|emergency|walk.*in|walk-in"](around:{radius_m},{lat},{lon});
-      way["amenity"="clinic"]["healthcare:speciality"~"urgent|emergency|walk.*in|walk-in"](around:{radius_m},{lat},{lon});
-      
-      // CLINICS & MEDICAL CENTERS
-      node["amenity"="clinic"](around:{radius_m},{lat},{lon});
-      way["amenity"="clinic"](around:{radius_m},{lat},{lon});
-      relation["amenity"="clinic"](around:{radius_m},{lat},{lon});
-      
-      node["amenity"="doctors"](around:{radius_m},{lat},{lon});
-      way["amenity"="doctors"](around:{radius_m},{lat},{lon});
-      
-      // PHARMACIES & DRUGSTORES
-      node["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
-      way["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
-      
+      // Pharmacies via shop tag
       node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
       way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
       
-      // DENTAL & SPECIALTY CARE
-      node["amenity"="dentist"](around:{radius_m},{lat},{lon});
-      way["amenity"="dentist"](around:{radius_m},{lat},{lon});
-      
-      node["amenity"="veterinary"](around:{radius_m},{lat},{lon});
-      way["amenity"="veterinary"](around:{radius_m},{lat},{lon});
+      // Emergency services (only if also healthcare-related)
+      node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
+      way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -1650,7 +1612,16 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 logger.debug(f"Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
             else:
                 logger.warning("Healthcare query failed: No response (timeout or network error)")
-            return None
+            # Return empty dict with error flag to allow proper error handling upstream
+            logger.error(f"Healthcare query failed - returning empty results. Status: {resp.status_code if resp else 'No response'}")
+            return {
+                "hospitals": [],
+                "urgent_care": [],
+                "clinics": [],
+                "pharmacies": [],
+                "doctors": [],
+                "_query_failed": True  # Flag to indicate query failure
+            }
 
         data = resp.json()
         elements = data.get("elements", [])
@@ -1661,6 +1632,15 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         pharmacies = []
         doctors = []
         
+        # Build nodes/ways/relations dicts for geometry calculation
+        nodes_dict = {}
+        ways_dict = {}
+        for elem in elements:
+            if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
+                nodes_dict[elem["id"]] = elem
+            elif elem.get("type") == "way":
+                ways_dict[elem["id"]] = elem
+        
         for elem in elements:
             tags = elem.get("tags", {})
             amenity = tags.get("amenity", "")
@@ -1668,15 +1648,31 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             
             # Calculate distance
             if "lat" in elem and "lon" in elem:
+                # Node has direct coordinates
                 distance_km = haversine_distance(lat, lon, elem["lat"], elem["lon"])
+                elem_lat, elem_lon = elem["lat"], elem["lon"]
+            elif elem.get("type") == "way":
+                # Calculate way center point
+                elem_lat, elem_lon = get_way_center(elem, nodes_dict)
+                if elem_lat and elem_lon:
+                    distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
+                else:
+                    distance_km = 0.0
+            elif elem.get("type") == "relation":
+                # Calculate relation centroid
+                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+                if elem_lat and elem_lon:
+                    distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
+                else:
+                    distance_km = 0.0
             else:
-                # For ways/relations, use center point
                 distance_km = 0.0
+                elem_lat, elem_lon = None, None
             
             facility = {
                 "name": name,
-                "lat": elem.get("lat"),
-                "lon": elem.get("lon"),
+                "lat": elem_lat if elem_lat else elem.get("lat"),
+                "lon": elem_lon if elem_lon else elem.get("lon"),
                 "distance_km": round(distance_km, 1),
                 "amenity": amenity,
                 "emergency": tags.get("emergency"),
@@ -1727,7 +1723,16 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             
     except Exception as e:
         logger.error(f"Error querying healthcare facilities: {e}", exc_info=True)
-        return None
+        # Return empty dict with error flag to allow proper error handling upstream
+        logger.error(f"Healthcare query exception - returning empty results: {e}")
+        return {
+            "hospitals": [],
+            "urgent_care": [],
+            "clinics": [],
+            "pharmacies": [],
+            "doctors": [],
+            "_query_failed": True  # Flag to indicate query failure
+        }
 
 
 
