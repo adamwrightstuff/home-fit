@@ -249,7 +249,8 @@ def get_school_data(
                 from data_sources.osm_api import OVERPASS_URL, requests, _retry_overpass
                 def _do_request():
                     return requests.post(OVERPASS_URL, data={"data": early_ed_query}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
-                resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+                # Schools are standard (important but not critical) - use STANDARD profile
+                resp = _retry_overpass(_do_request, query_type="schools")
                 
                 if resp and resp.status_code == 200:
                     data = resp.json()
@@ -299,7 +300,8 @@ def get_school_data(
             try:
                 def _do_request():
                     return requests.post(OVERPASS_URL, data={"data": college_query}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
-                resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
+                # Schools are standard (important but not critical) - use STANDARD profile
+                resp = _retry_overpass(_do_request, query_type="schools")
                 
                 if resp and resp.status_code == 200:
                     data = resp.json()

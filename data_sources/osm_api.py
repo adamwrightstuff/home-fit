@@ -10,34 +10,84 @@ from typing import Dict, List, Tuple, Optional, Any
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 from .utils import haversine_distance, get_way_center
+from .retry_config import RetryConfig, get_retry_config, RetryProfile
 from logging_config import get_logger
 
 logger = get_logger(__name__)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0, fail_fast: bool = False):
+def _retry_overpass(
+    request_fn,
+    query_type: Optional[str] = None,
+    profile: Optional[RetryProfile] = None,
+    config: Optional[RetryConfig] = None,
+    # Legacy parameters for backward compatibility
+    attempts: Optional[int] = None,
+    base_wait: Optional[float] = None,
+    fail_fast: Optional[bool] = None
+):
     """
-    Simple retry with exponential backoff for Overpass requests.
+    Retry with exponential backoff for Overpass requests.
+    
+    Uses centralized retry configuration system. Can be called with:
+    1. query_type: "parks", "transit", "block_grain", etc. (uses profile mapping)
+    2. profile: RetryProfile.CRITICAL, RetryProfile.NON_CRITICAL, etc.
+    3. config: Custom RetryConfig object
+    4. Legacy parameters: attempts, base_wait, fail_fast (for backward compatibility)
     
     Args:
         request_fn: Function that makes the request
-        attempts: Number of retry attempts
-        base_wait: Base wait time in seconds
-        fail_fast: If True, give up after 2 attempts on rate limit (for non-critical queries like Phase 2/3 metrics)
-                   If False, retry all attempts (for critical queries like parks)
+        query_type: Type of query (e.g., "parks", "transit", "block_grain")
+        profile: Retry profile to use (overrides query_type if provided)
+        config: Custom retry configuration (overrides profile if provided)
+        attempts: Legacy parameter - number of retry attempts
+        base_wait: Legacy parameter - base wait time in seconds
+        fail_fast: Legacy parameter - if True, give up after 2 attempts on rate limit
     """
     import time
     import requests
     
-    for i in range(attempts):
+    # Determine retry configuration
+    if config is not None:
+        retry_config = config
+    elif profile is not None:
+        from .retry_config import RETRY_PROFILES
+        retry_config = RETRY_PROFILES[profile]
+    elif query_type is not None:
+        retry_config = get_retry_config(query_type)
+    elif attempts is not None or base_wait is not None or fail_fast is not None:
+        # Legacy parameters - create config from them
+        retry_config = RetryConfig(
+            max_attempts=attempts or 4,
+            base_wait=base_wait or 1.0,
+            fail_fast=fail_fast or False,
+            max_wait=10.0
+        )
+    else:
+        # Default to standard profile
+        retry_config = get_retry_config("standard")
+    
+    max_attempts = retry_config.max_attempts
+    base_wait = retry_config.base_wait
+    fail_fast = retry_config.fail_fast
+    max_wait = retry_config.max_wait
+    
+    for i in range(max_attempts):
         try:
             resp = request_fn()
             # Handle 429 rate limiting specifically
             if resp is not None and hasattr(resp, 'status_code'):
                 if resp.status_code == 429:
+                    if not retry_config.retry_on_429:
+                        logger.warning(f"OSM rate limited (429), not retrying (retry_on_429=False)")
+                        return None
+                    
                     # Rate limited - wait longer and retry
-                    retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
+                    if retry_config.exponential_backoff:
+                        retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
+                    else:
+                        retry_after = int(resp.headers.get('Retry-After', base_wait))
                     
                     # If fail_fast is True and rate limited on second attempt or later, give up faster
                     # This is for non-critical queries (Phase 2/3 beauty metrics) to avoid long hangs
@@ -45,10 +95,10 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0, fail_
                         logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
                         return None  # Fail fast instead of waiting more
                     
-                    if i < attempts - 1:
-                        # Cap wait time at 10 seconds max
-                        retry_after = min(retry_after, 10)
-                        logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{attempts})...")
+                    if i < max_attempts - 1:
+                        # Cap wait time at max_wait
+                        retry_after = min(retry_after, max_wait)
+                        logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
                         time.sleep(retry_after)
                         continue
                     else:
@@ -56,28 +106,45 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0, fail_
                         return None  # Return None instead of resp on final failure
             return resp
         except requests.exceptions.Timeout as e:
-            if i < attempts - 1:
-                wait_time = base_wait * (2 ** i)
-                logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+            if not retry_config.retry_on_timeout:
+                logger.warning(f"OSM request timeout, not retrying (retry_on_timeout=False)")
+                return None
+            
+            if i < max_attempts - 1:
+                if retry_config.exponential_backoff:
+                    wait_time = base_wait * (2 ** i)
+                else:
+                    wait_time = base_wait
+                wait_time = min(wait_time, max_wait)
+                logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
                 time.sleep(wait_time)
                 continue
             else:
-                logger.warning(f"OSM request timeout after {attempts} attempts")
+                logger.warning(f"OSM request timeout after {max_attempts} attempts")
                 return None  # Return None on final timeout
         except requests.exceptions.RequestException as e:
-            if i < attempts - 1:
-                wait_time = base_wait * (1.5 ** i)
-                logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{attempts})...")
+            if i < max_attempts - 1:
+                if retry_config.exponential_backoff:
+                    wait_time = base_wait * (1.5 ** i)
+                else:
+                    wait_time = base_wait
+                wait_time = min(wait_time, max_wait)
+                logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
                 time.sleep(wait_time)
                 continue
             else:
-                logger.warning(f"OSM network error after {attempts} attempts: {e}")
+                logger.warning(f"OSM network error after {max_attempts} attempts: {e}")
                 return None  # Return None on final error
         except Exception as e:
-            if i == attempts - 1:
-                logger.warning(f"OSM unexpected error after {attempts} attempts: {e}")
+            if i == max_attempts - 1:
+                logger.warning(f"OSM unexpected error after {max_attempts} attempts: {e}")
                 return None
-            time.sleep(base_wait * (1.5 ** i))
+            if retry_config.exponential_backoff:
+                wait_time = base_wait * (1.5 ** i)
+            else:
+                wait_time = base_wait
+            wait_time = min(wait_time, max_wait)
+            time.sleep(wait_time)
     
     return None
 
@@ -159,8 +226,8 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
-        # Parks are critical - don't fail fast, retry all attempts
-        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.0, fail_fast=False)
+        # Parks are critical - use CRITICAL profile (retry all attempts)
+        resp = _retry_overpass(_do_request, query_type="parks")
 
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
@@ -256,7 +323,10 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
                 raise RuntimeError(f"Overpass status={r.status_code}")
             return r
 
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=0.8)
+        # Nature features are non-critical (nice to have) - use NON_CRITICAL profile
+        resp = _retry_overpass(_do_request, query_type="nature_features")
+        if resp is None:
+            return None
         data = resp.json()
         elements = data.get("elements", [])
 
@@ -579,7 +649,8 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         )
     
     try:
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        # Amenities are standard (important but not critical) - use STANDARD profile
+        resp = _retry_overpass(_do_request, query_type="amenities")
 
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
@@ -1567,7 +1638,8 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     
     try:
         logger.debug(f"Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        # Healthcare is critical - use CRITICAL profile (retry all attempts)
+        resp = _retry_overpass(_do_request, query_type="healthcare")
         
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:

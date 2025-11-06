@@ -37,8 +37,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         def _do_request():
             return requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
         
-        # Use centralized retry logic with proper rate limit handling (aligned with other OSM queries)
-        resp = _retry_overpass(_do_request, attempts=4, base_wait=1.5)
+        # Architectural diversity is standard (important but not critical) - use STANDARD profile
+        resp = _retry_overpass(_do_request, query_type="architectural_diversity")
         
         if resp is None or resp.status_code != 200:
             status_msg = f"status {resp.status_code}" if resp else "no response"
