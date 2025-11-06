@@ -527,9 +527,10 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
     query = f"""
     [out:json][timeout:25];
     (
-      // HISTORIC BUILDINGS
-      node["historic"~"building|castle|church|monument|memorial|ruins|archaeological_site"](around:{radius_m},{lat},{lon});
-      way["historic"~"building|castle|church|monument|memorial|ruins|archaeological_site"](around:{radius_m},{lat},{lon});
+      // HISTORIC BUILDINGS - query any historic tag (simplest approach, catches all)
+      node["historic"](around:{radius_m},{lat},{lon});
+      way["historic"](around:{radius_m},{lat},{lon});
+      relation["historic"](around:{radius_m},{lat},{lon});
       
       // PUBLIC ART & FOUNTAINS
       node["tourism"="artwork"](around:{radius_m},{lat},{lon});
@@ -1054,11 +1055,14 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
     historic = []
     artwork = []
     nodes_dict = {}
+    ways_dict = {}
     seen_ids = set()
 
     for elem in elements:
         if elem.get("type") == "node":
             nodes_dict[elem["id"]] = elem
+        elif elem.get("type") == "way":
+            ways_dict[elem["id"]] = elem
 
     for elem in elements:
         osm_id = elem.get("id")
@@ -1103,6 +1107,8 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
 
         if elem.get("type") == "way":
             elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+        elif elem.get("type") == "relation":
+            elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
         if elem_lat is None:
             continue
@@ -1642,6 +1648,11 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
 
         data = resp.json()
         elements = data.get("elements", [])
+        
+        # Add logging to debug query results
+        logger.debug(f"Healthcare query returned {len(elements)} elements")
+        if len(elements) == 0:
+            logger.warning(f"Healthcare query returned 0 elements for {lat}, {lon} - this may indicate a query issue or no facilities in OSM")
         
         hospitals = []
         urgent_care = []
