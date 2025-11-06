@@ -1665,7 +1665,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         ways_dict = {}
         relations_dict = {}
         for elem in elements:
-            if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
+            if elem.get("type") == "node":
                 nodes_dict[elem["id"]] = elem
             elif elem.get("type") == "way":
                 ways_dict[elem["id"]] = elem
@@ -1700,6 +1700,16 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 if elem_lat and elem_lon:
                     distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
                 else:
+                    logger.debug(
+                        "Healthcare way geometry missing coordinates",
+                        extra={
+                            "way_id": elem.get("id"),
+                            "node_refs": len(elem.get("nodes", [])),
+                            "resolved_nodes": len(
+                                [n_id for n_id in elem.get("nodes", []) if nodes_dict.get(n_id) and "lat" in nodes_dict[n_id] and "lon" in nodes_dict[n_id]]
+                            )
+                        }
+                    )
                     distance_km = 0.0
             elif elem.get("type") == "relation":
                 # Calculate relation centroid
