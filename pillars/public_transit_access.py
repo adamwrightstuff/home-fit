@@ -33,7 +33,11 @@ def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> floa
                 # Prefer server-provided distance if present
                 dist_m = s.get("distance") or s.get("distance_m")
                 if isinstance(dist_m, (int, float)):
-                    distances_km.append(dist_m / 1000.0)
+                    # If distance > 100, assume it's in meters, otherwise assume km
+                    if dist_m > 100:
+                        distances_km.append(dist_m / 1000.0)
+                    else:
+                        distances_km.append(dist_m)
                     continue
                 # Otherwise compute from coordinates when available
                 stop_lat = s.get("lat") or (s.get("stop") or {}).get("lat")
@@ -385,7 +389,14 @@ def get_public_transit_score(lat: float, lon: float,
     # Add commuter-centric fields to summary
     try:
         nearest_hr_km_val = _nearest_heavy_rail_km(lat, lon, search_m=2500)
-        breakdown["summary"]["nearest_heavy_rail_distance_km"] = None if nearest_hr_km_val == float('inf') else round(nearest_hr_km_val, 2)
+        # Ensure distance is in km and handle null properly
+        if nearest_hr_km_val == float('inf') or nearest_hr_km_val is None:
+            breakdown["summary"]["nearest_heavy_rail_distance_km"] = None
+        else:
+            # Ensure it's in km (not meters) - if > 100, assume meters
+            if nearest_hr_km_val > 100:
+                nearest_hr_km_val = nearest_hr_km_val / 1000.0
+            breakdown["summary"]["nearest_heavy_rail_distance_km"] = round(nearest_hr_km_val, 2)
         breakdown["summary"]["heavy_rail_connectivity_tier"] = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
     except Exception:
         pass

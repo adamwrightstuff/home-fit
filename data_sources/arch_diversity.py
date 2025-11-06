@@ -890,12 +890,12 @@ def score_architectural_diversity_as_beauty(
         phase23_confidence_bonus = (avg_phase23_confidence - 0.5) * 10.0  # Add up to 5 points to cap threshold
     
     if built_coverage_ratio is not None:
-        if built_coverage_ratio < 0.20:
+        if built_coverage_ratio < 0.15:
             # Very low coverage: cap at 30/50 (raised from 25/50)
             # With Phase 2 & Phase 3 bonus, can go up to 35/50
             cap_threshold = 30.0 + phase23_confidence_bonus
             if total > cap_threshold:
-                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_20pct"}
+                coverage_cap_info = {"capped": True, "original_score": total, "cap_reason": "coverage_lt_15pct"}
                 total = min(cap_threshold, total)
         elif built_coverage_ratio < 0.30:
             # Low coverage: cap at 40/50 (raised from 25/50)

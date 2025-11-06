@@ -420,7 +420,14 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
     
     # Fetch OSM historic landmarks
     charm_data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
-    historic_landmarks = charm_data.get('historic', []) if charm_data else []
+    if charm_data:
+        historic_landmarks = charm_data.get('historic', []) if charm_data else []
+        # Debug: Log if landmarks are found but filtered
+        if len(historic_landmarks) == 0 and charm_data:
+            logger.warning(f"No historic landmarks found in charm_data for {lat}, {lon}. Available keys: {list(charm_data.keys())}")
+    else:
+        logger.warning(f"charm_data query returned None for {lat}, {lon}")
+        historic_landmarks = []
     historic_landmarks_count = len(historic_landmarks)
     
     return {

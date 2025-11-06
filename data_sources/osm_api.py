@@ -1652,11 +1652,26 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
         # Build nodes/ways/relations dicts for geometry calculation
         nodes_dict = {}
         ways_dict = {}
+        relations_dict = {}
         for elem in elements:
             if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
                 nodes_dict[elem["id"]] = elem
             elif elem.get("type") == "way":
                 ways_dict[elem["id"]] = elem
+            elif elem.get("type") == "relation":
+                relations_dict[elem["id"]] = elem
+                # Extract member ways from relations to ensure they're in ways_dict
+                members = elem.get("members", [])
+                for member in members:
+                    if member.get("type") == "way":
+                        way_id = member.get("ref")
+                        # If way isn't already in ways_dict, we need to find it in elements
+                        if way_id not in ways_dict:
+                            # Search for the way in elements (should be there due to > recursion)
+                            for e in elements:
+                                if e.get("type") == "way" and e.get("id") == way_id:
+                                    ways_dict[way_id] = e
+                                    break
         
         for elem in elements:
             tags = elem.get("tags", {})

@@ -967,10 +967,19 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         
         setback_consistency = max(0.0, min(100.0, setback_consistency))
         
-        # Coverage confidence (based on number of segments with sufficient buildings)
+        # Coverage confidence based on segment coverage (segments with buildings / total segments)
         total_segments = len(road_segments_precomputed)
+        segments_with_buildings = len(segment_setbacks)  # Segments that have at least 1 building
         analyzed_segments = len([s for s in segment_setbacks.values() if len(s) >= MIN_BUILDINGS_PER_SEGMENT])
-        coverage_confidence = min(1.0, analyzed_segments / max(1, total_segments // 4))  # Expect ~25% of segments to have buildings
+        
+        # Coverage confidence based on segment coverage ratio
+        if total_segments > 0:
+            segment_coverage_ratio = segments_with_buildings / total_segments
+            # Also factor in whether segments have enough buildings for statistical validity
+            valid_segment_ratio = analyzed_segments / max(1, segments_with_buildings) if segments_with_buildings > 0 else 0.0
+            coverage_confidence = segment_coverage_ratio * valid_segment_ratio
+        else:
+            coverage_confidence = 0.0
         
         compute_time = time.time() - compute_start
         total_time = time.time() - step_start
@@ -1233,9 +1242,18 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         # Normalize to 0-100 scale (alignment percentage = score)
         facade_rhythm = alignment_percentage
         
-        # Coverage confidence
+        # Coverage confidence based on segment coverage (segments with buildings / total segments)
         total_segments = len(road_segments_precomputed)
-        coverage_confidence = min(1.0, analyzed_segments / max(1, total_segments // 4))
+        segments_with_buildings = len(segment_setbacks)  # Segments that have at least 1 building
+        
+        # Coverage confidence based on segment coverage ratio
+        if total_segments > 0:
+            segment_coverage_ratio = segments_with_buildings / total_segments
+            # Also factor in whether segments have enough buildings for statistical validity
+            valid_segment_ratio = analyzed_segments / max(1, segments_with_buildings) if segments_with_buildings > 0 else 0.0
+            coverage_confidence = segment_coverage_ratio * valid_segment_ratio
+        else:
+            coverage_confidence = 0.0
         
         # Calculate overall mean setback
         all_setbacks = []
