@@ -4,7 +4,7 @@ Computes simple diversity metrics from OSM buildings within a radius.
 This module is sandbox-only and not wired into scoring by default.
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
