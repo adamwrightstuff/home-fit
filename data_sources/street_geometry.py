@@ -37,10 +37,10 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
         """
         
         def _do_request():
-            return requests.post(OVERPASS_URL, data={"data": query}, timeout=40,
+            return requests.post(OVERPASS_URL, data={"data": query}, timeout=20,
                                headers={"User-Agent": "HomeFit/1.0"})
         
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
         
         if resp is None or resp.status_code != 200:
             return None
@@ -142,10 +142,10 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
         """
         
         def _do_request():
-            return requests.post(OVERPASS_URL, data={"data": query}, timeout=35, 
+            return requests.post(OVERPASS_URL, data={"data": query}, timeout=20, 
                                headers={"User-Agent": "HomeFit/1.0"})
         
-        resp = _retry_overpass(_do_request, attempts=3, base_wait=1.0)
+        resp = _retry_overpass(_do_request, attempts=2, base_wait=1.0)
         
         if resp is None or resp.status_code != 200:
             return {

@@ -20,6 +20,7 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
     """Simple retry with exponential backoff for Overpass requests."""
     import time
     import requests
+    
     for i in range(attempts):
         try:
             resp = request_fn()
@@ -28,13 +29,21 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
                 if resp.status_code == 429:
                     # Rate limited - wait longer and retry
                     retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
+                    
+                    # If rate limited on second attempt or later, give up faster to avoid long delays
+                    if i >= 1:
+                        logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays")
+                        return None  # Fail fast instead of waiting more
+                    
                     if i < attempts - 1:
+                        # Cap wait time at 10 seconds max
+                        retry_after = min(retry_after, 10)
                         logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{attempts})...")
                         time.sleep(retry_after)
                         continue
                     else:
                         logger.warning(f"OSM rate limited (429), max retries reached")
-                        return resp
+                        return None  # Return None instead of resp on final failure
             return resp
         except requests.exceptions.Timeout as e:
             if i < attempts - 1:
@@ -43,7 +52,8 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
                 time.sleep(wait_time)
                 continue
             else:
-                raise
+                logger.warning(f"OSM request timeout after {attempts} attempts")
+                return None  # Return None on final timeout
         except requests.exceptions.RequestException as e:
             if i < attempts - 1:
                 wait_time = base_wait * (1.5 ** i)
@@ -51,11 +61,15 @@ def _retry_overpass(request_fn, attempts: int = 4, base_wait: float = 1.0):
                 time.sleep(wait_time)
                 continue
             else:
-                raise
+                logger.warning(f"OSM network error after {attempts} attempts: {e}")
+                return None  # Return None on final error
         except Exception as e:
             if i == attempts - 1:
-                raise
+                logger.warning(f"OSM unexpected error after {attempts} attempts: {e}")
+                return None
             time.sleep(base_wait * (1.5 ** i))
+    
+    return None
 
 DEBUG_PARKS = True  # Set False to silence park debugging
 

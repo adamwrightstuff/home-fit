@@ -710,20 +710,48 @@ def score_architectural_diversity_as_beauty(
         # Use 2km radius for Phase 2 & Phase 3 metrics (same as architectural diversity)
         # OPTIMIZATION: Fetch shared OSM data once for all Phase 2 & Phase 3 metrics
         from .street_geometry import _fetch_roads_and_buildings
+        from concurrent.futures import TimeoutError as FutureTimeoutError
+        
         shared_osm_data = _fetch_roads_and_buildings(lat, lon, 2000)
         
-        # Run all 4 metrics in parallel, passing shared OSM data where applicable
+        # Run all 4 metrics in parallel, but make each one independent
+        # If one fails, others can still succeed
         with ThreadPoolExecutor(max_workers=4) as executor:
             future_block = executor.submit(compute_block_grain, lat, lon, 2000)
             future_streetwall = executor.submit(compute_streetwall_continuity, lat, lon, 2000, shared_osm_data)
             future_setback = executor.submit(compute_setback_consistency, lat, lon, 2000, shared_osm_data)
             future_facade = executor.submit(compute_facade_rhythm, lat, lon, 2000, shared_osm_data)
             
-            # Wait for all to complete
-            block_grain_data = future_block.result()
-            streetwall_data = future_streetwall.result()
-            setback_data = future_setback.result()
-            facade_rhythm_data = future_facade.result()
+            # Each metric has individual timeout of 30 seconds
+            # If one fails, others can still complete
+            def get_with_timeout(future, timeout, name):
+                try:
+                    return future.result(timeout=timeout)
+                except FutureTimeoutError:
+                    logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, using default (0.0)")
+                    if name == "block_grain":
+                        return {"block_grain": 0.0, "coverage_confidence": 0.0}
+                    elif name == "streetwall":
+                        return {"streetwall_continuity": 0.0, "coverage_confidence": 0.0}
+                    elif name == "setback":
+                        return {"setback_consistency": 0.0, "coverage_confidence": 0.0}
+                    else:  # facade_rhythm
+                        return {"facade_rhythm": 0.0, "coverage_confidence": 0.0}
+                except Exception as e:
+                    logger.warning(f"Phase 2/3 metric {name} failed: {e}, using default (0.0)")
+                    if name == "block_grain":
+                        return {"block_grain": 0.0, "coverage_confidence": 0.0}
+                    elif name == "streetwall":
+                        return {"streetwall_continuity": 0.0, "coverage_confidence": 0.0}
+                    elif name == "setback":
+                        return {"setback_consistency": 0.0, "coverage_confidence": 0.0}
+                    else:  # facade_rhythm
+                        return {"facade_rhythm": 0.0, "coverage_confidence": 0.0}
+            
+            block_grain_data = get_with_timeout(future_block, 30, "block_grain")
+            streetwall_data = get_with_timeout(future_streetwall, 30, "streetwall")
+            setback_data = get_with_timeout(future_setback, 30, "setback")
+            facade_rhythm_data = get_with_timeout(future_facade, 30, "facade_rhythm")
         
         block_grain_value = block_grain_data.get("block_grain", 0.0)
         block_grain_confidence = block_grain_data.get("coverage_confidence", 0.0)
