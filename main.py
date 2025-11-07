@@ -201,6 +201,15 @@ def get_livability_score(request: Request,
             if raw_key in override_params:
                 beauty_overrides[mapped_key] = override_params[raw_key]
 
+    only_param = request.query_params.get("only")
+    only_pillars: Optional[set[str]] = None
+    if only_param:
+        only_pillars = {
+            part.strip() for part in only_param.split(",") if part.strip()
+        }
+        if not only_pillars:
+            only_pillars = None
+
     # Step 1: Geocode the location (with full result for neighborhood detection)
     from data_sources.geocoding import geocode_with_full_result
     geo_result = geocode_with_full_result(location)
@@ -233,18 +242,19 @@ def get_livability_score(request: Request,
         
         density = _ca.get_population_density(lat, lon) or 0.0
         
-        # Get business count for classification (will be cached for amenities pillar)
+        # Get business count for classification (skip if amenities pillar not requested)
         business_count = 0
-        try:
-            business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-            if business_data:
-                all_businesses = (business_data.get("tier1_daily", []) + 
-                                business_data.get("tier2_social", []) +
-                                business_data.get("tier3_culture", []) +
-                                business_data.get("tier4_services", []))
-                business_count = len(all_businesses)
-        except Exception as e:
-            logger.warning(f"Business count query failed (non-fatal): {e}")
+        if only_pillars is None or "neighborhood_amenities" in only_pillars:
+            try:
+                business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                if business_data:
+                    all_businesses = (business_data.get("tier1_daily", []) + 
+                                    business_data.get("tier2_social", []) +
+                                    business_data.get("tier3_culture", []) +
+                                    business_data.get("tier4_services", []))
+                    business_count = len(all_businesses)
+            except Exception as e:
+                logger.warning(f"Business count query failed (non-fatal): {e}")
         
         # Get built coverage for classification (will be cached for beauty pillar)
         built_coverage = None
@@ -302,41 +312,64 @@ def get_livability_score(request: Request,
             return (name, None, e)
 
     # Prepare all pillar tasks
-    pillar_tasks = [
-        ('active_outdoors', get_active_outdoors_score, {
-            'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-            'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
-        }),
-        ('neighborhood_beauty', get_neighborhood_beauty_score, {
-            'lat': lat,
-            'lon': lon,
-            'city': city,
-            'beauty_weights': beauty_weights,
-            'location_scope': location_scope,
-            'area_type': area_type,
-            'test_overrides': beauty_overrides if beauty_overrides else None,
-            'test_mode': test_mode_enabled
-        }),
-        ('neighborhood_amenities', get_neighborhood_amenities_score, {
-            'lat': lat, 'lon': lon, 'include_chains': include_chains,
-            'location_scope': location_scope, 'area_type': area_type
-        }),
-        ('air_travel_access', get_air_travel_score, {
-            'lat': lat, 'lon': lon, 'area_type': area_type
-        }),
-        ('public_transit_access', get_public_transit_score, {
-            'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city
-        }),
-        ('healthcare_access', get_healthcare_access_score, {
-            'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
-        }),
-        ('housing_value', get_housing_value_score, {
-            'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
-        }),
-    ]
+    def _include_pillar(name: str) -> bool:
+        return only_pillars is None or name in only_pillars
+
+    pillar_tasks = []
+    if _include_pillar('active_outdoors'):
+        pillar_tasks.append(
+            ('active_outdoors', get_active_outdoors_score, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
+            })
+        )
+    if _include_pillar('neighborhood_beauty'):
+        pillar_tasks.append(
+            ('neighborhood_beauty', get_neighborhood_beauty_score, {
+                'lat': lat,
+                'lon': lon,
+                'city': city,
+                'beauty_weights': beauty_weights,
+                'location_scope': location_scope,
+                'area_type': area_type,
+                'test_overrides': beauty_overrides if beauty_overrides else None,
+                'test_mode': test_mode_enabled
+            })
+        )
+    if _include_pillar('neighborhood_amenities'):
+        pillar_tasks.append(
+            ('neighborhood_amenities', get_neighborhood_amenities_score, {
+                'lat': lat, 'lon': lon, 'include_chains': include_chains,
+                'location_scope': location_scope, 'area_type': area_type
+            })
+        )
+    if _include_pillar('air_travel_access'):
+        pillar_tasks.append(
+            ('air_travel_access', get_air_travel_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type
+            })
+        )
+    if _include_pillar('public_transit_access'):
+        pillar_tasks.append(
+            ('public_transit_access', get_public_transit_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city
+            })
+        )
+    if _include_pillar('healthcare_access'):
+        pillar_tasks.append(
+            ('healthcare_access', get_healthcare_access_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
+            })
+        )
+    if _include_pillar('housing_value'):
+        pillar_tasks.append(
+            ('housing_value', get_housing_value_score, {
+                'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+            })
+        )
 
     # Add school scoring if enabled (check per-request parameter)
-    if use_school_scoring:
+    if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
             ('quality_education', get_school_data, {
                 'zip_code': zip_code, 'state': state, 'city': city
@@ -412,6 +445,22 @@ def get_livability_score(request: Request,
 
     # Step 3: Calculate weighted total using token allocation
     token_allocation = parse_token_allocation(tokens)
+    if only_pillars:
+        # Zero-out tokens for pillars not requested
+        for pillar_name in list(token_allocation.keys()):
+            if pillar_name not in only_pillars:
+                token_allocation[pillar_name] = 0.0
+        # Renormalize to 20 tokens if any remain
+        remaining = sum(token_allocation.values())
+        if remaining > 0:
+            scale = 20.0 / remaining
+            for pillar_name in token_allocation:
+                token_allocation[pillar_name] *= scale
+        else:
+            # Fallback: assign whole budget to requested pillars equally
+            equal = 20.0 / len(only_pillars)
+            for pillar_name in token_allocation:
+                token_allocation[pillar_name] = equal if pillar_name in only_pillars else 0.0
 
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 20) +
@@ -587,6 +636,8 @@ def get_livability_score(request: Request,
         response["metadata"]["overrides_applied"] = {
             "neighborhood_beauty": {k: beauty_overrides[k] for k in sorted(beauty_overrides)}
         }
+    if only_pillars:
+        response["metadata"]["pillars_requested"] = sorted(only_pillars)
 
     if diagnostics:
         # Surface pillar diagnostics when available

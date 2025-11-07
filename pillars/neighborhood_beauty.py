@@ -50,24 +50,14 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     """
     logger.info("Analyzing neighborhood beauty...")
     
-    # Parse custom weights or use defaults
-    # If no weights provided, use context-aware defaults based on area type
-    if beauty_weights is None:
-        # Detect area type for context-aware defaults
+    # Detect base area type up front (used for later defaults)
+    default_area_type_for_weights = None
+    if area_type is not None:
+        default_area_type_for_weights = area_type
+    else:
         from data_sources import census_api as ca
         density = ca.get_population_density(lat, lon) or 0.0
-        detected_area_type = data_quality.detect_area_type(lat, lon, density, city=city)
-        area_type_for_weights = area_type or detected_area_type
-        
-        # Context-aware defaults: emphasize trees in suburban/rural, architecture in urban
-        if area_type_for_weights in ('suburban', 'exurban', 'rural'):
-            beauty_weights = "trees:0.6,architecture:0.4"  # Emphasize trees
-        elif area_type_for_weights == 'urban_core':
-            beauty_weights = "trees:0.4,architecture:0.6"  # Emphasize architecture
-        else:
-            beauty_weights = "trees:0.5,architecture:0.5"  # Balanced
-    
-    weights = _parse_beauty_weights(beauty_weights)
+        default_area_type_for_weights = data_quality.detect_area_type(lat, lon, density, city=city)
     
     # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
     # Get this first to determine effective area type for tree radius
@@ -97,6 +87,14 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         area_type=effective_area_type or area_type,
         overrides=test_overrides
     )
+    
+    # Resolve weights (context-aware defaults if none supplied)
+    resolved_area_type = (effective_area_type or default_area_type_for_weights or "").lower() or None
+    if beauty_weights is None:
+        weights_config = _default_beauty_weights(resolved_area_type)
+    else:
+        weights_config = beauty_weights
+    weights = _parse_beauty_weights(weights_config)
     
     # Apply weights: Scale each component to its weighted max points
     # Default: trees=0.5 (50 points), architecture=0.5 (50 points) out of 100
@@ -247,6 +245,24 @@ def _parse_beauty_weights(weights_str: Optional[str]) -> Dict[str, float]:
         return weights
     except:
         return {'trees': 0.5, 'architecture': 0.5}
+
+
+def _default_beauty_weights(area_type: Optional[str]) -> str:
+    """
+    Return default tree vs. architecture weight string for the supplied area type.
+    """
+    if not area_type:
+        return "trees:0.5,architecture:0.5"
+    
+    area_type = area_type.lower()
+    
+    if area_type in ("urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"):
+        return "trees:0.4,architecture:0.6"
+    if area_type == "suburban":
+        return "trees:0.45,architecture:0.55"
+    if area_type in ("exurban", "rural"):
+        return "trees:0.55,architecture:0.45"
+    return "trees:0.5,architecture:0.5"
 
 
 def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,

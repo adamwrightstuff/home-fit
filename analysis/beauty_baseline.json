@@ -1,0 +1,242 @@
+{
+  "Georgetown DC": {
+    "beauty_score": 92.4,
+    "tree_score": 50.0,
+    "arch_score": 43.7,
+    "enhancer_bonus": 0,
+    "tree_canopy_pct": 16.64489262982776,
+    "tree_sources": [
+      "GEE: 16.6% canopy",
+      "Washington Street Trees: 443 trees"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.182,
+    "metrics": {
+      "height_diversity": 20.8,
+      "type_diversity": 38.7,
+      "footprint_variation": 95.0,
+      "built_coverage_ratio": 0.182,
+      "block_grain": 50.5,
+      "streetwall_continuity": 24.8,
+      "setback_consistency": 74.4,
+      "facade_rhythm": 60.5
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "Back Bay Boston MA": {
+    "beauty_score": 59.0,
+    "tree_score": 7.4,
+    "arch_score": 44.2,
+    "enhancer_bonus": 0,
+    "tree_canopy_pct": 6.687763099935972,
+    "tree_sources": [
+      "GEE: 6.7% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.267,
+    "metrics": {
+      "height_diversity": 48.7,
+      "type_diversity": 36.4,
+      "footprint_variation": 80.4,
+      "built_coverage_ratio": 0.267,
+      "block_grain": 48.6,
+      "streetwall_continuity": 23.2,
+      "setback_consistency": 82.8,
+      "facade_rhythm": 77.1
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "Larchmont NY": {
+    "beauty_score": 63.6,
+    "tree_score": 32.4,
+    "arch_score": 30.9,
+    "enhancer_bonus": 0,
+    "tree_canopy_pct": 29.154347422446875,
+    "tree_sources": [
+      "GEE: 29.2% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.068,
+    "metrics": {
+      "height_diversity": 0.3,
+      "type_diversity": 35.3,
+      "footprint_variation": 57.9,
+      "built_coverage_ratio": 0.068,
+      "block_grain": 53.8,
+      "streetwall_continuity": 18.4,
+      "setback_consistency": 63.8,
+      "facade_rhythm": 33.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Old Town Alexandria VA": {
+    "beauty_score": 60.0,
+    "tree_score": 17.6,
+    "arch_score": 38.3,
+    "enhancer_bonus": 0,
+    "tree_canopy_pct": 15.840469825877236,
+    "tree_sources": [
+      "GEE: 15.8% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.176,
+    "metrics": {
+      "height_diversity": 50.8,
+      "type_diversity": 55.5,
+      "footprint_variation": 95.2,
+      "built_coverage_ratio": 0.176,
+      "block_grain": 56.4,
+      "streetwall_continuity": 22.8,
+      "setback_consistency": 73.8,
+      "facade_rhythm": 58.8
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "Healdsburg CA": {
+    "beauty_score": 43.7,
+    "tree_score": 11.5,
+    "arch_score": 29.9,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 10.36451702060755,
+    "tree_sources": [
+      "GEE: 10.4% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.09,
+    "metrics": {
+      "height_diversity": 0.7,
+      "type_diversity": 36.6,
+      "footprint_variation": 57.7,
+      "built_coverage_ratio": 0.09,
+      "block_grain": 48.4,
+      "streetwall_continuity": 23.3,
+      "setback_consistency": 52.6,
+      "facade_rhythm": 18.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.04,
+      "facade_rhythm": 0.04
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Montclair NJ": {
+    "beauty_score": 86.2,
+    "tree_score": 46.2,
+    "arch_score": 31.0,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 41.580822752429846,
+    "tree_sources": [
+      "GEE: 41.6% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.035,
+    "metrics": {
+      "height_diversity": 6.7,
+      "type_diversity": 42.3,
+      "footprint_variation": 73.6,
+      "built_coverage_ratio": 0.035,
+      "block_grain": 55.8,
+      "streetwall_continuity": 6.7,
+      "setback_consistency": 61.4,
+      "facade_rhythm": 39.3
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Carmel By The Sea CA": {
+    "beauty_score": 61.7,
+    "tree_score": 26.9,
+    "arch_score": 29.3,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 24.19420458062298,
+    "tree_sources": [
+      "GEE: 24.2% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.099,
+    "metrics": {
+      "height_diversity": 0.6,
+      "type_diversity": 14.8,
+      "footprint_variation": 28.0,
+      "built_coverage_ratio": 0.099,
+      "block_grain": 45.5,
+      "streetwall_continuity": 29.2,
+      "setback_consistency": 65.2,
+      "facade_rhythm": 32.2
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  }
+}
+
