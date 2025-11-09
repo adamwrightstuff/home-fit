@@ -67,7 +67,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 "confidence_0_1": 0.0,  # Very low confidence for API errors
                 "error": error_detail,
                 "user_message": user_message,
-                "retry_suggested": True
+                "retry_suggested": True,
+                "_cache_skip": True
             }
         
         elements = resp.json().get("elements", [])
@@ -83,7 +84,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 "beauty_valid": True,  # Always true - no hard failure
                 "data_warning": "no_buildings",
                 "confidence_0_1": 0.0,  # Very low confidence for no buildings
-                "note": "No buildings found in OSM"
+                "note": "No buildings found in OSM",
+                "_cache_skip": True
             }
     except requests.exceptions.Timeout as e:
         print(f"⚠️  OSM building query timeout: {e}")
@@ -97,7 +99,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "beauty_valid": True,  # Always true - no hard failure
             "data_warning": "timeout",
             "confidence_0_1": 0.0,  # Very low confidence for timeouts
-            "error": f"Timeout: {str(e)}"
+            "error": f"Timeout: {str(e)}",
+            "_cache_skip": True
         }
     except requests.exceptions.RequestException as e:
         print(f"⚠️  OSM building query network error: {e}")
@@ -111,7 +114,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "beauty_valid": True,  # Always true - no hard failure
             "data_warning": "network_error",
             "confidence_0_1": 0.0,  # Very low confidence for network errors
-            "error": f"Network error: {str(e)}"
+            "error": f"Network error: {str(e)}",
+            "_cache_skip": True
         }
     except Exception as e:
         print(f"⚠️  OSM building query error: {e}")
@@ -127,7 +131,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "beauty_valid": True,  # Always true - no hard failure
             "data_warning": "error",
             "confidence_0_1": 0.0,  # Very low confidence for errors
-            "error": str(e)
+            "error": str(e),
+            "_cache_skip": True
         }
 
     import math
@@ -308,13 +313,13 @@ AREA_TYPE_WEIGHTS = {
         "facade_rhythm": 2,             # Phase 3: facade alignment
     },
     "historic_urban": {  # Alias for urban_historic (uses same weights)
-        "height_diversity": 16,
-        "historic_era_integrity": 17,
+        "height_diversity": 18,
+        "historic_era_integrity": 18,
         "footprint_diversity": 0,
-        "block_grain": 6,
+        "block_grain": 7,
         "streetwall_continuity": 5,
-        "setback_consistency": 4,
-        "facade_rhythm": 2,
+        "setback_consistency": 2,
+        "facade_rhythm": 0,
     },
     "urban_residential": {
         "height_diversity": 13,         # Phase 1: height variation (reduced from 15)
@@ -335,22 +340,22 @@ AREA_TYPE_WEIGHTS = {
         "facade_rhythm": 2,             # Phase 3: facade alignment
     },
     "suburban": {
-        "height_diversity": 5,          # Phase 1: height variation (less important)
-        "historic_era_integrity": 12,   # Phase 1: type diversity (reduced from 13)
+        "height_diversity": 6,          # Phase 1: height variation (less important)
+        "historic_era_integrity": 14,   # emphasize vernacular variety
         "footprint_diversity": 0,
-        "block_grain": 17,              # Phase 2: street network fineness (reduced from 20)
-        "streetwall_continuity": 10,    # Phase 2: facade continuity (reduced from 12)
-        "setback_consistency": 4,       # Phase 3: setback uniformity (important for suburban)
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "block_grain": 18,              # tighter street planning rewarded
+        "streetwall_continuity": 8,
+        "setback_consistency": 3,
+        "facade_rhythm": 1,
     },
     "exurban": {
-        "height_diversity": 0,          # Phase 1: height variation (not relevant)
-        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "height_diversity": 2,
+        "historic_era_integrity": 12,
         "footprint_diversity": 0,
-        "block_grain": 22,              # Phase 2: street network fineness (reduced from 25)
-        "streetwall_continuity": 13,    # Phase 2: facade continuity (reduced from 15)
-        "setback_consistency": 3,       # Phase 3: setback uniformity (less important)
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "block_grain": 21,
+        "streetwall_continuity": 11,
+        "setback_consistency": 3,
+        "facade_rhythm": 1,
     },
     "rural": {
         "height_diversity": 0,          # Phase 1: height variation (not relevant)
@@ -370,6 +375,17 @@ AREA_TYPE_WEIGHTS = {
         "setback_consistency": 2,
         "facade_rhythm": 2,
     },
+}
+
+DESIGN_FORM_WEIGHTS = {
+    "historic_urban": {"design": 0.7, "form": 0.3},
+    "urban_core": {"design": 0.55, "form": 0.45},
+    "urban_residential": {"design": 0.6, "form": 0.4},
+    "urban_core_lowrise": {"design": 0.6, "form": 0.4},
+    "suburban": {"design": 0.65, "form": 0.35},
+    "exurban": {"design": 0.7, "form": 0.3},
+    "rural": {"design": 0.75, "form": 0.25},
+    "unknown": {"design": 0.6, "form": 0.4},
 }
 
 # Context-biased target bands: (good_low, plateau_low, plateau_high, good_high)
@@ -706,18 +722,8 @@ def score_architectural_diversity_as_beauty(
                                               building_type_diversity, footprint_area_cv,
                                               density)
     
-    # Get area-type-specific weights for this effective area type
-    weights = AREA_TYPE_WEIGHTS.get(effective, AREA_TYPE_WEIGHTS.get("unknown", AREA_TYPE_WEIGHTS["unknown"]))
-    
-    # Score each metric using adjusted targets, then apply area-type-specific weights
-    # Phase 1 metrics:
-    # - levels_entropy → height_diversity weight
-    # - building_type_diversity → historic_era_integrity weight
-    # - footprint_area_cv → footprint_diversity weight
-    # Phase 2 metrics (from street_geometry module):
-    # - block_grain → block_grain weight
-    # - streetwall_continuity → streetwall_continuity weight
-    
+    blend = DESIGN_FORM_WEIGHTS.get(effective, DESIGN_FORM_WEIGHTS["unknown"])
+
     # Import Phase 2 and Phase 3 metrics
     from .street_geometry import (
         compute_block_grain, compute_streetwall_continuity,
@@ -852,43 +858,34 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
 
-    # Normalize Phase 2 & Phase 3 metrics to 0-16.67 scale (same as Phase 1)
-    block_grain_raw = (block_grain_value / 100.0) * 16.67
-    streetwall_raw = (streetwall_value / 100.0) * 16.67
-    setback_raw = (setback_value / 100.0) * 16.67
-    facade_rhythm_raw = (facade_rhythm_value / 100.0) * 16.67
-    
-    # Apply area-type-specific weights
-    # Scale each metric's raw score (0-16.67) to its weighted max (0-weight)
-    height_weight = weights.get("height_diversity", 0)
-    historic_weight = weights.get("historic_era_integrity", 0)
-    footprint_weight = weights.get("footprint_diversity", 0)
-    block_grain_weight = weights.get("block_grain", 0)
-    streetwall_weight = weights.get("streetwall_continuity", 0)
-    setback_weight = weights.get("setback_consistency", 0)
-    facade_rhythm_weight = weights.get("facade_rhythm", 0)
-    
-    # Scale raw scores to weighted points
-    # Formula: weighted_pts = raw_score * (weight / 16.67)
-    height_pts = height_raw * (height_weight / 16.67) if height_weight > 0 else 0.0
-    type_pts = type_raw * (historic_weight / 16.67) if historic_weight > 0 else 0.0
-    foot_pts = foot_raw * (footprint_weight / 16.67) if footprint_weight > 0 else 0.0
-    block_grain_pts = block_grain_raw * (block_grain_weight / 16.67) if block_grain_weight > 0 else 0.0
-    streetwall_pts = streetwall_raw * (streetwall_weight / 16.67) if streetwall_weight > 0 else 0.0
-    setback_pts = setback_raw * (setback_weight / 16.67) if setback_weight > 0 else 0.0
-    facade_rhythm_pts = facade_rhythm_raw * (facade_rhythm_weight / 16.67) if facade_rhythm_weight > 0 else 0.0
-    
-    # Cap single-metric dominance (max 20 each = 40% of 50)
-    height_pts = min(20.0, height_pts)
-    type_pts = min(20.0, type_pts)
-    foot_pts = min(20.0, foot_pts)
-    block_grain_pts = min(20.0, block_grain_pts)
-    streetwall_pts = min(20.0, streetwall_pts)
-    setback_pts = min(20.0, setback_pts)
-    facade_rhythm_pts = min(20.0, facade_rhythm_pts)
-    
-    # Base total (sum of weighted metrics)
-    base = height_pts + type_pts + foot_pts + block_grain_pts + streetwall_pts + setback_pts + facade_rhythm_pts
+    design_components = [
+        height_raw,
+        type_raw,
+        foot_raw,
+        (setback_value / 100.0) * 16.67,
+        (facade_rhythm_value / 100.0) * 16.67
+    ]
+    design_components = [c for c in design_components if c is not None]
+    if design_components:
+        design_total = sum(design_components)
+        design_score = min(50.0, (design_total / (len(design_components) * 16.67)) * 50.0)
+    else:
+        design_score = 0.0
+
+    form_components = [
+        (block_grain_value / 100.0) * 16.67,
+        (streetwall_value / 100.0) * 16.67,
+        ((built_coverage_ratio or 0.0) * 16.67)
+    ]
+    form_components = [c for c in form_components if c is not None]
+    if form_components:
+        form_total = sum(form_components)
+        form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * 50.0)
+    else:
+        form_score = 0.0
+
+    total = (design_score * blend["design"]) + (form_score * blend["form"])
+    base = total
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -953,42 +950,45 @@ def score_architectural_diversity_as_beauty(
         # Phase 2 & Phase 3 metrics provide independent value, so reduce cap aggressiveness
         phase23_confidence_bonus = (avg_phase23_confidence - 0.5) * 10.0  # Add up to 5 points to cap threshold
     
-    def _scaled_relief(ratio: float, low: float, high: float, max_bonus: float) -> float:
-        """Linearly scale relief between low/high coverage bands."""
-        if high <= low or max_bonus <= 0:
-            return 0.0
-        if ratio <= low:
-            return 0.0
-        if ratio >= high:
-            return max_bonus
-        return ((ratio - low) / (high - low)) * max_bonus
-
     if built_coverage_ratio is not None:
         relief_from_phase = max(0.0, phase23_confidence_bonus)
         cap_threshold = None
         cap_reason = None
+        if effective in ("historic_urban", "urban_core"):
+            bands = (0.08, 0.12)
+            first_cap = 45.0
+            second_cap = 50.0
+        elif effective == "suburban":
+            bands = (0.15, 0.20)
+            first_cap = 45.0
+            second_cap = 50.0
+        elif effective in ("exurban", "rural"):
+            bands = (0.25, 0.35)
+            first_cap = 46.0
+            second_cap = 49.0
+        else:
+            bands = (0.12, 0.15)
+            first_cap = 34.0
+            second_cap = 45.0
 
-        if built_coverage_ratio < 0.12:
-            cap_threshold = 32.0 + min(4.0, relief_from_phase)
-            cap_reason = "coverage_lt_12pct"
-        elif built_coverage_ratio < 0.15:
-            coverage_relief = _scaled_relief(built_coverage_ratio, 0.12, 0.15, 3.0)
-            cap_threshold = 34.0 + coverage_relief + min(5.0, relief_from_phase)
-            cap_reason = "coverage_12_to_15pct"
-        elif built_coverage_ratio < 0.25:
-            coverage_relief = _scaled_relief(built_coverage_ratio, 0.15, 0.25, 5.0)
-            cap_threshold = 45.0 + coverage_relief + min(5.0, relief_from_phase)
-            cap_reason = "coverage_15_to_25pct"
-        elif built_coverage_ratio < 0.35:
-            coverage_relief = _scaled_relief(built_coverage_ratio, 0.25, 0.35, 3.0)
-            cap_threshold = 47.0 + coverage_relief + min(3.0, relief_from_phase)
-            cap_reason = "coverage_25_to_35pct"
-        elif built_coverage_ratio < 0.50:
-            coverage_relief = _scaled_relief(built_coverage_ratio, 0.35, 0.50, 2.0)
-            cap_threshold = 48.0 + coverage_relief + min(2.0, relief_from_phase)
-            cap_reason = "coverage_35_to_50pct"
+        lower_band, upper_band = bands
+        effective_label = effective or "unknown"
+        if built_coverage_ratio < lower_band:
+            cap_threshold = first_cap + min(4.0, relief_from_phase)
+            cap_reason = f"{effective_label}_coverage_lt_{int(lower_band*100)}pct"
+        elif built_coverage_ratio < upper_band:
+            cap_threshold = second_cap + min(5.0, relief_from_phase)
+            cap_reason = f"{effective_label}_coverage_lt_{int(upper_band*100)}pct"
 
         if cap_threshold is not None and total > cap_threshold:
+            logger.debug(
+                "Applying coverage cap | area_type=%s ratio=%.3f threshold=%.2f relief=%.2f total_before=%.2f",
+                effective,
+                built_coverage_ratio,
+                cap_threshold,
+                relief_from_phase,
+                total
+            )
             coverage_cap_info = {
                 "capped": True,
                 "original_score": total,
@@ -1013,6 +1013,10 @@ def score_architectural_diversity_as_beauty(
         "coverage_cap_applied": coverage_cap_info["capped"],
         "original_score_before_cap": coverage_cap_info["original_score"] if coverage_cap_info["capped"] else None,
         "cap_reason": coverage_cap_info["cap_reason"],
+        "design_score": round(design_score, 1),
+        "form_score": round(form_score, 1),
+        "design_weight": blend["design"],
+        "form_weight": blend["form"],
         # Phase 2 metrics
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,

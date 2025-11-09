@@ -237,6 +237,1055 @@
     },
     "effective_area_type": "suburban",
     "base_area_type": "suburban"
+  },
+  "Beacon Hill Boston MA": {
+    "beauty_score": 63.4,
+    "tree_score": 8.5,
+    "arch_score": 40.5,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 7.654068193197034,
+    "tree_sources": [
+      "GEE: 7.7% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.268,
+    "metrics": {
+      "height_diversity": 55.1,
+      "type_diversity": 35.8,
+      "footprint_variation": 93.4,
+      "built_coverage_ratio": 0.268,
+      "block_grain": 46.3,
+      "streetwall_continuity": 0.0,
+      "setback_consistency": 81.1,
+      "facade_rhythm": 74.5
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 0.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "Park Slope Brooklyn NY": {
+    "beauty_score": 97.8,
+    "tree_score": 50.0,
+    "arch_score": 41.5,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 0.876072414223898,
+    "tree_sources": [
+      "GEE: 0.9% canopy",
+      "NYC Street Trees: 4597 trees"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.267,
+    "metrics": {
+      "height_diversity": 4.1,
+      "type_diversity": 10.1,
+      "footprint_variation": 89.1,
+      "built_coverage_ratio": 0.267,
+      "block_grain": 47.8,
+      "streetwall_continuity": 33.2,
+      "setback_consistency": 80.0,
+      "facade_rhythm": 76.8
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.03,
+      "facade_rhythm": 0.03
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Upper West Side New York NY": {
+    "beauty_score": 94.4,
+    "tree_score": 50.0,
+    "arch_score": 38.7,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 14.145558658551685,
+    "tree_sources": [
+      "GEE: 14.1% canopy",
+      "NYC Street Trees: 4620 trees"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.173,
+    "metrics": {
+      "height_diversity": 17.6,
+      "type_diversity": 16.7,
+      "footprint_variation": 63.4,
+      "built_coverage_ratio": 0.173,
+      "block_grain": 44.7,
+      "streetwall_continuity": 28.2,
+      "setback_consistency": 87.9,
+      "facade_rhythm": 90.8
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.03,
+      "facade_rhythm": 0.03
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Bronxville NY": {
+    "beauty_score": 81.8,
+    "tree_score": 45.0,
+    "arch_score": 32.1,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 40.50968570571997,
+    "tree_sources": [
+      "GEE: 40.5% canopy"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_lt_12pct",
+    "cap_original": 34.28445454545455,
+    "built_coverage_ratio": 0.101,
+    "metrics": {
+      "height_diversity": 7.8,
+      "type_diversity": 39.4,
+      "footprint_variation": 53.4,
+      "built_coverage_ratio": 0.101,
+      "block_grain": 49.7,
+      "streetwall_continuity": 19.7,
+      "setback_consistency": 66.0,
+      "facade_rhythm": 39.0
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Carmel-by-the-Sea CA": {
+    "beauty_score": 67.5,
+    "tree_score": 26.9,
+    "arch_score": 32.1,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 24.19420458062298,
+    "tree_sources": [
+      "GEE: 24.2% canopy"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_lt_12pct",
+    "cap_original": 35.45245454545454,
+    "built_coverage_ratio": 0.099,
+    "metrics": {
+      "height_diversity": 0.6,
+      "type_diversity": 14.8,
+      "footprint_variation": 28.0,
+      "built_coverage_ratio": 0.099,
+      "block_grain": 45.5,
+      "streetwall_continuity": 29.2,
+      "setback_consistency": 65.2,
+      "facade_rhythm": 32.2
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Venice Beach Los Angeles CA": {
+    "beauty_score": 44.5,
+    "tree_score": 1.2,
+    "arch_score": 32.2,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 1.0414065228098153,
+    "tree_sources": [
+      "GEE: 1.0% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.121,
+    "metrics": {
+      "height_diversity": 4.1,
+      "type_diversity": 46.9,
+      "footprint_variation": 71.0,
+      "built_coverage_ratio": 0.121,
+      "block_grain": 49.0,
+      "streetwall_continuity": 34.2,
+      "setback_consistency": 77.4,
+      "facade_rhythm": 52.5
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.04,
+      "facade_rhythm": 0.04
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Santa Monica CA": {
+    "beauty_score": 49.2,
+    "tree_score": 4.4,
+    "arch_score": 33.8,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 4.003370100565592,
+    "tree_sources": [
+      "GEE: 4.0% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.242,
+    "metrics": {
+      "height_diversity": 4.2,
+      "type_diversity": 47.9,
+      "footprint_variation": 49.8,
+      "built_coverage_ratio": 0.242,
+      "block_grain": 55.0,
+      "streetwall_continuity": 23.9,
+      "setback_consistency": 68.0,
+      "facade_rhythm": 36.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Capitol Hill Seattle WA": {
+    "beauty_score": 97.6,
+    "tree_score": 50.0,
+    "arch_score": 43.0,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 20.196673855511023,
+    "tree_sources": [
+      "GEE: 20.2% canopy",
+      "Seattle Street Trees: 2000 trees"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.258,
+    "metrics": {
+      "height_diversity": 21.9,
+      "type_diversity": 31.8,
+      "footprint_variation": 75.3,
+      "built_coverage_ratio": 0.258,
+      "block_grain": 50.7,
+      "streetwall_continuity": 23.3,
+      "setback_consistency": 68.1,
+      "facade_rhythm": 38.8
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "Ballard Seattle WA": {
+    "beauty_score": 98.8,
+    "tree_score": 50.0,
+    "arch_score": 42.3,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 19.590845388224555,
+    "tree_sources": [
+      "GEE: 19.6% canopy",
+      "Seattle Street Trees: 2000 trees"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.206,
+    "metrics": {
+      "height_diversity": 4.5,
+      "type_diversity": 29.0,
+      "footprint_variation": 66.1,
+      "built_coverage_ratio": 0.206,
+      "block_grain": 53.7,
+      "streetwall_continuity": 25.3,
+      "setback_consistency": 67.5,
+      "facade_rhythm": 36.9
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Downtown Portland OR": {
+    "beauty_score": 73.0,
+    "tree_score": 50.0,
+    "arch_score": 22.5,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 10.211820173274207,
+    "tree_sources": [
+      "GEE: 10.2% canopy",
+      "OSM: 50 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.23,
+    "metrics": {
+      "height_diversity": 77.3,
+      "type_diversity": 48.5,
+      "footprint_variation": 61.6,
+      "built_coverage_ratio": 0.23,
+      "block_grain": 52.5,
+      "streetwall_continuity": 0.0,
+      "setback_consistency": 78.6,
+      "facade_rhythm": 61.9
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 0.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "urban_core",
+    "base_area_type": "urban_core"
+  },
+  "Pearl District Portland OR": {
+    "beauty_score": 56.0,
+    "tree_score": 50.0,
+    "arch_score": 8.3,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 5.061897539277288,
+    "tree_sources": [
+      "GEE: 5.1% canopy",
+      "OSM: 50 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.25,
+    "metrics": {
+      "height_diversity": 79.3,
+      "type_diversity": 46.1,
+      "footprint_variation": 64.1,
+      "built_coverage_ratio": 0.25,
+      "block_grain": 51.2,
+      "streetwall_continuity": 18.2,
+      "setback_consistency": 68.4,
+      "facade_rhythm": 49.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "urban_core",
+    "base_area_type": "urban_core"
+  },
+  "Boulder CO": {
+    "beauty_score": 57.4,
+    "tree_score": 38.5,
+    "arch_score": 10.1,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 34.62164407756678,
+    "tree_sources": [
+      "GEE: 34.6% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.0,
+    "metrics": {
+      "height_diversity": 0.0,
+      "type_diversity": 0.0,
+      "footprint_variation": 21.8,
+      "built_coverage_ratio": 0.0,
+      "block_grain": 7.9,
+      "streetwall_continuity": 1.0,
+      "setback_consistency": 53.6,
+      "facade_rhythm": 18.8
+    },
+    "phase2_confidence": {
+      "block_grain": 0.24,
+      "streetwall_continuity": 0.08
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.0,
+      "facade_rhythm": 0.0
+    },
+    "effective_area_type": "rural",
+    "base_area_type": "rural"
+  },
+  "Telluride CO": {
+    "beauty_score": 74.0,
+    "tree_score": 41.6,
+    "arch_score": 24.8,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 37.41218803259998,
+    "tree_sources": [
+      "GEE: 37.4% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.017,
+    "metrics": {
+      "height_diversity": 0.4,
+      "type_diversity": 3.0,
+      "footprint_variation": 58.5,
+      "built_coverage_ratio": 0.017,
+      "block_grain": 30.0,
+      "streetwall_continuity": 28.7,
+      "setback_consistency": 67.4,
+      "facade_rhythm": 39.4
+    },
+    "phase2_confidence": {
+      "block_grain": 0.28,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.1,
+      "facade_rhythm": 0.1
+    },
+    "effective_area_type": "rural",
+    "base_area_type": "rural"
+  },
+  "Aspen CO": {
+    "beauty_score": 73.6,
+    "tree_score": 35.1,
+    "arch_score": 32.2,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 31.63121824845054,
+    "tree_sources": [
+      "GEE: 31.6% canopy"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_lt_12pct",
+    "cap_original": 36.09534545454545,
+    "built_coverage_ratio": 0.063,
+    "metrics": {
+      "height_diversity": 0.8,
+      "type_diversity": 15.1,
+      "footprint_variation": 33.4,
+      "built_coverage_ratio": 0.063,
+      "block_grain": 46.3,
+      "streetwall_continuity": 22.0,
+      "setback_consistency": 61.8,
+      "facade_rhythm": 31.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.04,
+      "facade_rhythm": 0.04
+    },
+    "effective_area_type": "rural",
+    "base_area_type": "rural"
+  },
+  "Hyde Park Austin TX": {
+    "beauty_score": 92.8,
+    "tree_score": 50.0,
+    "arch_score": 39.0,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 15.013332028057368,
+    "tree_sources": [
+      "GEE: 15.0% canopy",
+      "OSM: 50 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.191,
+    "metrics": {
+      "height_diversity": 2.8,
+      "type_diversity": 7.7,
+      "footprint_variation": 91.1,
+      "built_coverage_ratio": 0.191,
+      "block_grain": 51.4,
+      "streetwall_continuity": 20.8,
+      "setback_consistency": 59.7,
+      "facade_rhythm": 25.8
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Savannah GA Historic District": {
+    "beauty_score": 57.5,
+    "tree_score": 9.1,
+    "arch_score": 36.9,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 8.153722032694805,
+    "tree_sources": [
+      "GEE: 8.2% canopy"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_12_to_15pct",
+    "cap_original": 43.90772727272727,
+    "built_coverage_ratio": 0.148,
+    "metrics": {
+      "height_diversity": 19.9,
+      "type_diversity": 28.6,
+      "footprint_variation": 95.5,
+      "built_coverage_ratio": 0.148,
+      "block_grain": 53.0,
+      "streetwall_continuity": 21.1,
+      "setback_consistency": 79.8,
+      "facade_rhythm": 60.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "suburban"
+  },
+  "Charleston SC Historic District": {
+    "beauty_score": 40.5,
+    "tree_score": 6.0,
+    "arch_score": 28.7,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 5.426224108688685,
+    "tree_sources": [
+      "GEE: 5.4% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.007,
+    "metrics": {
+      "height_diversity": 0.0,
+      "type_diversity": 22.9,
+      "footprint_variation": 53.2,
+      "built_coverage_ratio": 0.007,
+      "block_grain": 31.8,
+      "streetwall_continuity": 7.3,
+      "setback_consistency": 62.4,
+      "facade_rhythm": 30.5
+    },
+    "phase2_confidence": {
+      "block_grain": 0.33,
+      "streetwall_continuity": 0.47
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.03,
+      "facade_rhythm": 0.03
+    },
+    "effective_area_type": "exurban",
+    "base_area_type": "exurban"
+  },
+  "Asheville NC": {
+    "beauty_score": 55.7,
+    "tree_score": 38.6,
+    "arch_score": 13.6,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 34.7799089766654,
+    "tree_sources": [
+      "GEE: 34.8% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.112,
+    "metrics": {
+      "height_diversity": 4.4,
+      "type_diversity": 18.9,
+      "footprint_variation": 86.7,
+      "built_coverage_ratio": 0.112,
+      "block_grain": 52.7,
+      "streetwall_continuity": 0.0,
+      "setback_consistency": 63.9,
+      "facade_rhythm": 36.6
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 0.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Durham NC Downtown": {
+    "beauty_score": 28.7,
+    "tree_score": 14.1,
+    "arch_score": 9.5,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 12.688131577271854,
+    "tree_sources": [
+      "GEE: 12.7% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.139,
+    "metrics": {
+      "height_diversity": 4.3,
+      "type_diversity": 21.2,
+      "footprint_variation": 74.6,
+      "built_coverage_ratio": 0.139,
+      "block_grain": 48.9,
+      "streetwall_continuity": 20.3,
+      "setback_consistency": 66.7,
+      "facade_rhythm": 43.9
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_core_lowrise",
+    "base_area_type": "urban_core"
+  },
+  "Bay View Milwaukee WI": {
+    "beauty_score": 88.0,
+    "tree_score": 50.0,
+    "arch_score": 35.0,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 12.699105862802112,
+    "tree_sources": [
+      "GEE: 12.7% canopy",
+      "OSM: 110 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.147,
+    "metrics": {
+      "height_diversity": 3.3,
+      "type_diversity": 16.9,
+      "footprint_variation": 100.0,
+      "built_coverage_ratio": 0.147,
+      "block_grain": 45.4,
+      "streetwall_continuity": 25.6,
+      "setback_consistency": 73.6,
+      "facade_rhythm": 55.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.03,
+      "facade_rhythm": 0.03
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Chicago IL Lincoln Park": {
+    "beauty_score": 61.1,
+    "tree_score": 50.0,
+    "arch_score": 12.6,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 4.702912010681614,
+    "tree_sources": [
+      "GEE: 4.7% canopy",
+      "OSM: 50 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.112,
+    "metrics": {
+      "height_diversity": 74.1,
+      "type_diversity": 24.8,
+      "footprint_variation": 60.9,
+      "built_coverage_ratio": 0.112,
+      "block_grain": 47.5,
+      "streetwall_continuity": 26.0,
+      "setback_consistency": 71.3,
+      "facade_rhythm": 39.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_core",
+    "base_area_type": "urban_core"
+  },
+  "Chicago IL Andersonville": {
+    "beauty_score": 50.9,
+    "tree_score": 4.7,
+    "arch_score": 34.3,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 4.1892599816976634,
+    "tree_sources": [
+      "GEE: 4.2% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.249,
+    "metrics": {
+      "height_diversity": 64.5,
+      "type_diversity": 22.0,
+      "footprint_variation": 68.6,
+      "built_coverage_ratio": 0.249,
+      "block_grain": 56.6,
+      "streetwall_continuity": 26.3,
+      "setback_consistency": 80.8,
+      "facade_rhythm": 62.1
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "New Orleans LA Garden District": {
+    "beauty_score": 59.2,
+    "tree_score": 7.0,
+    "arch_score": 39.7,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 6.285579463733785,
+    "tree_sources": [],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.239,
+    "metrics": {},
+    "phase2_confidence": {},
+    "phase3_confidence": {},
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Scottsdale AZ Old Town": {
+    "beauty_score": 53.5,
+    "tree_score": 1.6,
+    "arch_score": 38.5,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 1.4176201496641732,
+    "tree_sources": [],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.252,
+    "metrics": {},
+    "phase2_confidence": {},
+    "phase3_confidence": {},
+    "effective_area_type": "urban_core_lowrise",
+    "base_area_type": "urban_core"
+  },
+  "Taos NM": {
+    "beauty_score": 42.2,
+    "tree_score": 6.9,
+    "arch_score": 31.8,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 6.165717588901973,
+    "tree_sources": [],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.02,
+    "metrics": {},
+    "phase2_confidence": {},
+    "phase3_confidence": {},
+    "effective_area_type": "rural",
+    "base_area_type": "rural"
+  },
+  "Minneapolis MN North Loop": {
+    "beauty_score": 51.2,
+    "tree_score": 5.2,
+    "arch_score": 34.2,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 4.662645369451144,
+    "tree_sources": [
+      "GEE: 4.7% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.232,
+    "metrics": {
+      "height_diversity": 17.2,
+      "type_diversity": 34.7,
+      "footprint_variation": 95.6,
+      "built_coverage_ratio": 0.232,
+      "block_grain": 57.5,
+      "streetwall_continuity": 14.4,
+      "setback_consistency": 68.7,
+      "facade_rhythm": 50.6
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "historic_urban",
+    "base_area_type": "urban_core"
+  },
+  "St Paul MN Summit Hill": {
+    "beauty_score": 63.1,
+    "tree_score": 24.6,
+    "arch_score": 31.8,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 22.16803781347183,
+    "tree_sources": [
+      "GEE: 22.2% canopy"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.174,
+    "metrics": {
+      "height_diversity": 3.4,
+      "type_diversity": 39.6,
+      "footprint_variation": 77.7,
+      "built_coverage_ratio": 0.174,
+      "block_grain": 57.9,
+      "streetwall_continuity": 23.9,
+      "setback_consistency": 68.4,
+      "facade_rhythm": 44.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "San Francisco CA Mission District": {
+    "beauty_score": 97.8,
+    "tree_score": 50.0,
+    "arch_score": 43.2,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 1.9392513964575724,
+    "tree_sources": [
+      "GEE: 1.9% canopy",
+      "OSM: 50 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.385,
+    "metrics": {
+      "height_diversity": 8.5,
+      "type_diversity": 12.1,
+      "footprint_variation": 67.6,
+      "built_coverage_ratio": 0.385,
+      "block_grain": 48.6,
+      "streetwall_continuity": 31.5,
+      "setback_consistency": 73.6,
+      "facade_rhythm": 63.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "San Francisco CA Nob Hill": {
+    "beauty_score": 81.7,
+    "tree_score": 50.0,
+    "arch_score": 28.1,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 0.7811126264348216,
+    "tree_sources": [
+      "GEE: 0.8% canopy",
+      "OSM: 60 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.412,
+    "metrics": {
+      "height_diversity": 20.4,
+      "type_diversity": 12.4,
+      "footprint_variation": 66.8,
+      "built_coverage_ratio": 0.412,
+      "block_grain": 45.2,
+      "streetwall_continuity": 0.0,
+      "setback_consistency": 70.9,
+      "facade_rhythm": 67.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 0.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.02,
+      "facade_rhythm": 0.02
+    },
+    "effective_area_type": "urban_core",
+    "base_area_type": "urban_core"
+  },
+  "San Francisco CA Outer Sunset": {
+    "beauty_score": 56.5,
+    "tree_score": 6.0,
+    "arch_score": 36.4,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 0.41963661655852874,
+    "tree_sources": [
+      "GEE: 0.4% canopy",
+      "OSM: 4 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_12_to_15pct",
+    "cap_original": 43.75645454545455,
+    "built_coverage_ratio": 0.143,
+    "metrics": {
+      "height_diversity": 1.8,
+      "type_diversity": 8.4,
+      "footprint_variation": 37.3,
+      "built_coverage_ratio": 0.143,
+      "block_grain": 48.3,
+      "streetwall_continuity": 42.7,
+      "setback_consistency": 77.3,
+      "facade_rhythm": 75.7
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.03,
+      "facade_rhythm": 0.03
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
+  },
+  "Sausalito CA": {
+    "beauty_score": 57.1,
+    "tree_score": 15.4,
+    "arch_score": 32.0,
+    "enhancer_bonus": 8.0,
+    "tree_canopy_pct": 13.893787388403002,
+    "tree_sources": [
+      "GEE: 13.9% canopy"
+    ],
+    "coverage_cap_applied": true,
+    "cap_reason": "coverage_lt_12pct",
+    "cap_original": 35.479454545454544,
+    "built_coverage_ratio": 0.045,
+    "metrics": {
+      "height_diversity": 1.9,
+      "type_diversity": 19.6,
+      "footprint_variation": 57.6,
+      "built_coverage_ratio": 0.045,
+      "block_grain": 46.2,
+      "streetwall_continuity": 30.4,
+      "setback_consistency": 62.0,
+      "facade_rhythm": 28.0
+    },
+    "phase2_confidence": {
+      "block_grain": 0.61,
+      "streetwall_continuity": 1.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.05,
+      "facade_rhythm": 0.05
+    },
+    "effective_area_type": "suburban",
+    "base_area_type": "suburban"
+  },
+  "Palo Alto CA Downtown": {
+    "beauty_score": 91.7,
+    "tree_score": 50.0,
+    "arch_score": 38.1,
+    "enhancer_bonus": 6,
+    "tree_canopy_pct": 11.242319368341843,
+    "tree_sources": [
+      "GEE: 11.2% canopy",
+      "OSM: 300 individual trees/tree rows"
+    ],
+    "coverage_cap_applied": false,
+    "cap_reason": null,
+    "cap_original": null,
+    "built_coverage_ratio": 0.209,
+    "metrics": {
+      "height_diversity": 7.9,
+      "type_diversity": 13.5,
+      "footprint_variation": 71.8,
+      "built_coverage_ratio": 0.209,
+      "block_grain": 62.3,
+      "streetwall_continuity": 0.0,
+      "setback_consistency": 58.2,
+      "facade_rhythm": 26.4
+    },
+    "phase2_confidence": {
+      "block_grain": 1.0,
+      "streetwall_continuity": 0.0
+    },
+    "phase3_confidence": {
+      "setback_consistency": 0.01,
+      "facade_rhythm": 0.01
+    },
+    "effective_area_type": "urban_residential",
+    "base_area_type": "urban_core"
   }
 }
-

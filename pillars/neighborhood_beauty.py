@@ -7,6 +7,7 @@ Uses objective, real data sources:
   Both components use native 0-50 ranges (no scaling needed)
 """
 
+import os
 from typing import Dict, Tuple, Optional
 from data_sources import osm_api, census_api, data_quality
 from data_sources.radius_profiles import get_radius_profile
@@ -70,6 +71,10 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         area_type=area_type,
         test_overrides=test_overrides
     )
+    arch_details = arch_details or {}
+    arch_score_value = arch_score if isinstance(arch_score, (int, float)) else None
+    architecture_unavailable = arch_score_value is None
+    arch_score_for_total = arch_score_value if arch_score_value is not None else 0.0
     
     # Get effective area type for tree radius and calibration guardrails
     effective_area_type = arch_details.get("classification", {}).get("effective_area_type") if arch_details else None
@@ -104,15 +109,17 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     total_score = (
         (tree_score * (max_tree_points / 50)) +
-        (arch_score * (max_arch_points / 50))
+        (arch_score_for_total * (max_arch_points / 50))
     )
     
     # Calibration guardrails: Flag results outside expected ranges
-    calibration_alert = _check_calibration_guardrails(
-        effective_area_type or area_type,
-        arch_score,
-        tree_score
-    )
+    calibration_alert = False
+    if arch_score_value is not None:
+        calibration_alert = _check_calibration_guardrails(
+            effective_area_type or area_type,
+            arch_score_value,
+            tree_score
+        )
     
     # Assess data quality
     arch_diversity_summary = {}
@@ -127,7 +134,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
 
     combined_data = {
         'tree_score': tree_score,
-        'architectural_score': arch_score,
+        'architectural_score': arch_score_value,
         'tree_details': tree_details,
         'architectural_details': arch_details,
         'architectural_diversity': arch_diversity_summary,
@@ -166,10 +173,14 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         pass
     
     # Small beauty enhancers (viewpoints/artwork/fountains/waterfront)
+    disable_enhancers = os.getenv("BEAUTY_DISABLE_ENHANCERS", "false").lower() == "true"
     try:
         from data_sources.osm_api import query_beauty_enhancers
         enhancers = query_beauty_enhancers(lat, lon, radius_m=1500)
-        beauty_bonus = min(8.0, enhancers.get('viewpoints',0)*2 + enhancers.get('artwork',0)*3 + enhancers.get('fountains',0)*1 + enhancers.get('waterfront',0)*2)
+        if disable_enhancers:
+            beauty_bonus = 0.0
+        else:
+            beauty_bonus = min(8.0, enhancers.get('viewpoints',0)*2 + enhancers.get('artwork',0)*3 + enhancers.get('fountains',0)*1 + enhancers.get('waterfront',0)*2)
         total_score = min(100.0, total_score + beauty_bonus)
     except Exception:
         enhancers = {"viewpoints":0, "artwork":0, "fountains":0, "waterfront":0}
@@ -189,11 +200,16 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
                 "values": arch_details.get("override_values", {})
             }
 
+    resolved_weights = {
+        "trees": round(weights.get('trees', 0.5), 4),
+        "architecture": round(weights.get('architecture', 0.5), 4)
+    }
+
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
             "trees": round(tree_score, 1),
-            "architectural_beauty": round(arch_score, 1),  # Native 0-50 range
+            "architectural_beauty": round(arch_score_value, 1) if arch_score_value is not None else None,  # Native 0-50 range
             "enhancer_bonus": round(beauty_bonus, 1)  # Add enhancer bonus to breakdown so components sum to total
         },
         "details": {
@@ -201,12 +217,28 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "architectural_analysis": arch_details,
             "enhancers": enhancers,
             "enhancer_bonus": beauty_bonus,
-            "test_mode": test_mode
+            "test_mode": test_mode,
+            "weights": resolved_weights
         },
         "calibration_alert": calibration_alert,  # Flag if scores are outside expected ranges
-        "weights": weights,
+        "weights": resolved_weights,
+        "weight_metadata": {
+            "input": beauty_weights or "default",
+            "area_type": resolved_area_type
+        },
         "data_quality": quality_metrics
     }
+
+    if architecture_unavailable:
+        breakdown["details"]["architecture_status"] = {
+            "available": False,
+            "reason": arch_details.get("error") or arch_details.get("data_warning") or "unavailable",
+            "retry_suggested": arch_details.get("retry_suggested", False)
+        }
+    else:
+        breakdown["details"]["architecture_status"] = {
+            "available": True
+        }
 
     if applied_override_summary:
         breakdown["details"]["test_overrides_applied"] = applied_override_summary
@@ -256,12 +288,14 @@ def _default_beauty_weights(area_type: Optional[str]) -> str:
     
     area_type = area_type.lower()
     
-    if area_type in ("urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"):
+    if area_type in ("urban_core", "urban_residential", "urban_core_lowrise"):
         return "trees:0.4,architecture:0.6"
-    if area_type == "suburban":
-        return "trees:0.45,architecture:0.55"
-    if area_type in ("exurban", "rural"):
-        return "trees:0.55,architecture:0.45"
+    if area_type in ("historic_urban", "suburban"):
+        return "trees:0.35,architecture:0.65"
+    if area_type == "exurban":
+        return "trees:0.4,architecture:0.6"
+    if area_type == "rural":
+        return "trees:0.5,architecture:0.5"
     return "trees:0.5,architecture:0.5"
 
 
@@ -560,7 +594,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             logger.warning(f"Architectural diversity computation failed: {diversity_metrics.get('error')}")
             user_message = diversity_metrics.get('user_message', 'OSM building data temporarily unavailable. Please try again.')
             retry_suggested = diversity_metrics.get('retry_suggested', False)
-            return 0.0, {
+            details = {
                 "error": diversity_metrics.get('error'), 
                 "note": "OSM building data unavailable",
                 "user_message": user_message,
@@ -568,8 +602,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 # Include validation metadata even on error
                 "beauty_valid": diversity_metrics.get("beauty_valid", False),
                 "data_warning": diversity_metrics.get("data_warning", "api_error"),
-                "confidence_0_1": diversity_metrics.get("confidence_0_1", 0.0)
+                "confidence_0_1": diversity_metrics.get("confidence_0_1", 0.0),
+                "score": None
             }
+            return None, details
         
         # Get area type and density for classification
         if area_type is None:
@@ -768,7 +804,10 @@ def _score_nyc_trees(tree_count: int) -> float:
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:
-    """Score tree canopy percentage linearly up to 50 points at ~45% canopy."""
+    """Score tree canopy with a softened, piecewise-linear curve."""
     canopy = max(0.0, min(100.0, canopy_pct))
-    # 45% -> 50 points; linear scale, cap at 50
-    return min(50.0, (canopy / 45.0) * 50.0)
+    if canopy <= 25.0:
+        return canopy * 1.2
+    if canopy <= 45.0:
+        return 30.0 + (canopy - 25.0) * 0.75
+    return 50.0
