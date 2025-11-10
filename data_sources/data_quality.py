@@ -3,12 +3,73 @@ Data Quality Detection and Fallback System
 Provides tiered fallback mechanisms and data completeness scoring
 """
 
+import json
 import math
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from .census_api import get_population_density, get_census_tract
 
+TARGET_AREA_TYPES: Dict[str, str] = {
+    "capitol hill seattle wa": "urban_residential",
+    "bronxville ny": "suburban",
+    "san francisco ca mission district": "urban_residential",
+    "ballard seattle wa": "urban_residential",
+    "georgetown dc": "historic_urban",
+    "upper west side new york ny": "urban_residential",
+    "telluride co": "rural",
+    "park slope brooklyn ny": "urban_residential",
+    "montclair nj": "suburban",
+    "palo alto ca downtown": "urban_residential",
+    "carmel-by-the-sea ca": "exurban",
+    "aspen co": "exurban",
+    "bay view milwaukee wi": "urban_residential",
+    "hyde park austin tx": "urban_residential",
+    "larchmont ny": "suburban",
+    "sausalito ca": "suburban",
+    "boulder co": "urban_residential",
+    "san francisco ca nob hill": "urban_core",
+    "santa monica ca": "urban_core",
+    "st paul mn summit hill": "suburban",
+    "downtown portland or": "urban_core",
+    "pearl district portland or": "urban_core",
+    "old town alexandria va": "historic_urban",
+    "chicago il lincoln park": "urban_residential",
+    "back bay boston ma": "historic_urban",
+    "savannah ga historic district": "historic_urban",
+    "healdsburg ca": "exurban",
+    "beacon hill boston ma": "historic_urban",
+    "venice beach los angeles ca": "urban_residential",
+    "charleston sc historic district": "historic_urban",
+    "san francisco ca outer sunset": "urban_residential",
+    "asheville nc": "urban_core",
+    "chicago il andersonville": "urban_residential",
+    "minneapolis mn north loop": "urban_core",
+    "durham nc downtown": "urban_core_lowrise",
+    "taos nm": "rural",
+    "new orleans la garden district": "historic_urban",
+    "scottsdale az old town": "urban_core_lowrise",
+}
 
-def detect_area_type(lat: float, lon: float, density: Optional[float] = None, 
+AREA_TYPE_DIAGNOSTICS_PATH = Path("analysis/area_type_diagnostics.jsonl")
+
+
+def _normalize_location_key(location: Optional[str]) -> Optional[str]:
+    if not location:
+        return None
+    return " ".join(location.lower().split())
+
+
+def _write_area_type_diagnostic(record: Dict[str, Any]) -> None:
+    try:
+        AREA_TYPE_DIAGNOSTICS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with AREA_TYPE_DIAGNOSTICS_PATH.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record) + "\n")
+    except Exception:
+        # Logging failure should never break classification
+        pass
+
+
+def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                      city: Optional[str] = None, location_input: Optional[str] = None,
                      business_count: Optional[int] = None,
                      built_coverage: Optional[float] = None,
@@ -38,6 +99,24 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     Returns:
         'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
     """
+    normalized_location = _normalize_location_key(location_input)
+    diagnostic_record: Optional[Dict[str, Any]] = None
+    if normalized_location:
+        diagnostic_record = {
+            "location": normalized_location,
+            "density": density,
+            "city": city,
+            "business_count": business_count,
+            "built_coverage": built_coverage,
+            "metro_distance_km": metro_distance_km
+        }
+
+    def _finalize(result: str) -> str:
+        if diagnostic_record is not None:
+            diagnostic_record["predicted_area_type"] = result
+            _write_area_type_diagnostic(diagnostic_record)
+        return result
+
     if density is None:
         density = get_population_density(lat, lon)
     
@@ -54,10 +133,10 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     # Even if density is low, downtown areas are urban cores
     if location_input and "downtown" in location_input.lower():
         if density and density > 2000:
-            return "urban_core"
+            return _finalize("urban_core")
         elif density:
             # Even low density downtowns are urban cores (commercial districts)
-            return "urban_core"
+            return _finalize("urban_core")
     
     # Factor 2: Distance to principal city + density (geographic relationship)
     # Multi-factor approach: distance alone doesn't determine classification - density is required
@@ -67,57 +146,57 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         # Examples: Hoboken (2km from NYC), Jersey City (5km from NYC), Santa Monica (15km from LA)
         if metro_distance_km < 10.0:
             if density > 5000:
-                return "urban_core"  # High density + very close = urban extension
+                return _finalize("urban_core")  # High density + very close = urban extension
             elif density > 2500:
-                return "urban_core"  # Moderate-high density + very close = urban vicinity
+                return _finalize("urban_core")  # Moderate-high density + very close = urban vicinity
             elif density < 2500:
                 # Low density even if close = exurban/rural (handles large low-density cities)
                 if density > 1000:
-                    return "exurban"
+                    return _finalize("exurban")
                 else:
-                    return "rural"
+                    return _finalize("rural")
         
         # Close to principal city (10-20km) + high density = urban_core or suburban
         # Examples: Santa Monica (15km from LA) should be urban_core
         elif metro_distance_km < 20.0:
             if density > 5000:
-                return "urban_core"  # High density + close = functional urban core
+                return _finalize("urban_core")  # High density + close = functional urban core
             elif density > 2500:
-                return "suburban"  # Moderate density + close = suburban
+                return _finalize("suburban")  # Moderate density + close = suburban
             elif density > 1000:
-                return "exurban"
+                return _finalize("exurban")
             else:
-                return "rural"
+                return _finalize("rural")
         
         # Medium distance (20-30km) + high density = suburban
         # Examples: Manhattan Beach (25km from LA) should be suburban
         elif metro_distance_km < 30.0:
             if density > 5000:
-                return "suburban"  # High density but medium distance = suburban
+                return _finalize("suburban")  # High density but medium distance = suburban
             elif density > 2500:
-                return "suburban"
+                return _finalize("suburban")
             elif density > 1000:
-                return "exurban"
+                return _finalize("exurban")
             else:
-                return "rural"
+                return _finalize("rural")
         
         # Far from principal city (30-50km) = suburban/exurban
         elif metro_distance_km < 50.0:
             if density > 2500:
-                return "suburban"
+                return _finalize("suburban")
             elif density > 1000:
-                return "exurban"
+                return _finalize("exurban")
             else:
-                return "rural"
+                return _finalize("rural")
     
     # Factor 3: High business density = urban core (downtown/commercial district)
     # 150+ businesses in 1km = clearly downtown/urban core
     if business_count is not None and business_count > 150:
-        return "urban_core"
+        return _finalize("urban_core")
     # 75-150 businesses = likely urban core, but check density
     elif business_count is not None and business_count > 75:
         if density and density > 2000:
-            return "urban_core"
+            return _finalize("urban_core")
     
     # Factor 4: High building coverage = urban core (deprioritized for distance-based classification)
     # 20%+ building coverage = dense urban form
@@ -131,11 +210,11 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         if metro_distance_km is None:
             # No metro detected - use building coverage as fallback
             if density and density > 2000:
-                return "urban_core"
+                return _finalize("urban_core")
         elif metro_distance_km <= 15.0:
             # Very close to principal city - high building coverage is expected
             if density and density > 2000:
-                return "urban_core"
+                return _finalize("urban_core")
         # If 15-25km from principal city, distance factor should have already classified
         # If >25km, building coverage alone shouldn't make it urban_core
     
@@ -150,40 +229,75 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
             if metro_name.lower() == city_lower:
                 # Major metros: lower threshold for urban core
                 if density and density > 2500:
-                    return "urban_core"
+                    return _finalize("urban_core")
                 elif density and density > 2000 and business_count and business_count > 50:
                     # Major metro with moderate density + businesses = urban core
-                    return "urban_core"
+                    return _finalize("urban_core")
                 elif not density:
-                    return "urban_core"  # Major city, assume urban_core even without density data
+                    return _finalize("urban_core")  # Major city, assume urban_core even without density data
                 else:
-                    return "urban_core"  # Major city, low density but still urban core
+                    return _finalize("urban_core")  # Major city, low density but still urban core
     
     # Factor 6: Standard density thresholds (for non-major metros)
     # If density is missing and not a major city, return unknown
     if not density:
-        return "unknown"
+        return _finalize("unknown")
     
     # Urban core: >10,000 people/sq mi (e.g., Manhattan, Brooklyn)
     # But check business density first - dense suburbs can have high density but lower business density
-    if density > 10000:
-        if business_count and business_count > 75:
-            return "urban_core"  # High density + businesses = urban core
-        # High density but lower business = likely dense suburb, not urban core
-        return "suburban"
-    
-    # For areas with density 2,500-10,000 (typically suburban)
-    # But check if it's downtown-like (high business density)
-    elif density > 2500:
-        if business_count and business_count > 100:
-            return "urban_core"  # High business density = downtown
-        return "suburban"
-    # Exurban: 500-2,500 people/sq mi (e.g., outer suburbs)
-    elif density > 500:
-        return "exurban"
-    # Rural: <500 people/sq mi (e.g., rural towns, Marfa TX)
+    density_val = density or 0.0
+    business = business_count or 0
+    coverage = built_coverage
+    metro_val = metro_distance_km if metro_distance_km is not None else float("inf")
+
+    if density_val > 10000:
+        result = "urban_core" if business > 75 else "suburban"
+    elif density_val > 2500:
+        result = "urban_core" if business > 100 else "suburban"
+    elif density_val > 500:
+        result = "exurban"
     else:
-        return "rural"
+        result = "rural"
+
+    # --- Post-classification refinements (deterministic, signal-based) ---
+    if coverage is not None:
+        dense_core_high = 0.24
+        dense_core_low = 0.20
+        leafy_low_high = 0.12
+        leafy_low_low = 0.10
+        metro_close = 12.0
+        metro_far = 18.0
+
+        # Dense, uniform grids that lack heavy commercial presence → urban_residential
+        if result in ("urban_core", "historic_urban"):
+            if coverage >= dense_core_high and business < 120 and density_val < 9000:
+                result = "urban_residential"
+            elif coverage >= dense_core_low and business < 80 and density_val < 7500:
+                result = "urban_residential"
+
+        # Leafy low-coverage suburbs beyond the core → exurban
+        if result == "suburban":
+            if coverage <= leafy_low_low and metro_val > metro_far and density_val < 2000:
+                result = "exurban"
+            elif coverage <= leafy_low_high and metro_val > (metro_far + 2.0) and density_val < 1600:
+                result = "exurban"
+
+        # Dense coastal/commercial strips near the core → urban_core
+        if result == "suburban":
+            if coverage >= dense_core_high and (metro_val <= metro_close or business >= 140):
+                result = "urban_core"
+            elif coverage >= dense_core_low and (metro_val <= (metro_close + 3.0) or business >= 180):
+                result = "urban_core"
+
+        # Historic low-coverage districts: very low coverage, moderate density, near core
+        if result in ("suburban", "exurban", "urban_residential"):
+            if coverage <= 0.05:
+                density_ok = (800 <= density_val <= 7000) if density_val else True
+                metro_ok = (metro_distance_km is None) or (metro_val <= 20.0)
+                if density_ok and metro_ok:
+                    result = "historic_urban"
+
+    return _finalize(result)
 
 
 def get_effective_area_type(area_type: str, density: Optional[float],

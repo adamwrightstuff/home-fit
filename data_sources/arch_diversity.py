@@ -378,7 +378,7 @@ AREA_TYPE_WEIGHTS = {
 }
 
 DESIGN_FORM_WEIGHTS = {
-    "historic_urban": {"design": 0.7, "form": 0.3},
+    "historic_urban": {"design": 0.78, "form": 0.22},
     "urban_core": {"design": 0.55, "form": 0.45},
     "urban_residential": {"design": 0.6, "form": 0.4},
     "urban_core_lowrise": {"design": 0.6, "form": 0.4},
@@ -389,7 +389,7 @@ DESIGN_FORM_WEIGHTS = {
 }
 
 DESIGN_FORM_SCALE = {
-    "historic_urban": {"design": 78.0, "form": 60.0},
+    "historic_urban": {"design": 84.0, "form": 62.0},
     "urban_core": {"design": 60.0, "form": 54.0},
     "urban_residential": {"design": 58.0, "form": 48.0},
     "urban_core_lowrise": {"design": 58.0, "form": 50.0},
@@ -942,6 +942,9 @@ def score_architectural_diversity_as_beauty(
             # This rewards planned communities with consistent architecture
             base_floor = 9.0  # Slightly higher baseline for high-quality suburbs
             base = max(base, base_floor)
+    elif effective == "historic_urban":
+        if built_coverage_ratio is not None and built_coverage_ratio < 0.18:
+            base = max(base, 12.0 + serenity_bonus)
     elif effective in ("exurban", "rural"):
         if built_coverage_ratio is not None and built_coverage_ratio < 0.12:
             base = max(base, 11.0 + serenity_bonus)

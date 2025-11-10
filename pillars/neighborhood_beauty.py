@@ -10,7 +10,7 @@ Uses objective, real data sources:
 import os
 from typing import Dict, Tuple, Optional
 AREA_NORMALIZATION = {
-    "historic_urban": {"shift": 8.0, "scale": 1.01, "max": 96.0},
+    "historic_urban": {"shift": 12.0, "scale": 1.03, "max": 97.0},
     "suburban": {"shift": 9.5, "scale": 1.02, "max": 95.0},
     "urban_residential": {"shift": -2.5, "scale": 0.95, "max": 91.0},
     "urban_core": {"shift": -2.5, "scale": 0.95, "max": 93.0},
