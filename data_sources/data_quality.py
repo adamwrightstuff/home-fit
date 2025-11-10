@@ -291,9 +291,14 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
 
         # Historic low-coverage districts: very low coverage, moderate density, near core
         if result in ("suburban", "exurban", "urban_residential"):
-            if coverage <= 0.05:
-                density_ok = (800 <= density_val <= 7000) if density_val else True
-                metro_ok = (metro_distance_km is None) or (metro_val <= 20.0)
+            if coverage <= 0.08:
+                density_ok = (600 <= density_val <= 8000) if density_val else True
+                metro_ok = (metro_distance_km is None) or (metro_val <= 25.0)
+                if density_ok and metro_ok:
+                    result = "historic_urban"
+            elif coverage <= 0.12:
+                density_ok = (600 <= density_val <= 6000) if density_val else True
+                metro_ok = (metro_distance_km is None) or (metro_val <= 15.0)
                 if density_ok and metro_ok:
                     result = "historic_urban"
 

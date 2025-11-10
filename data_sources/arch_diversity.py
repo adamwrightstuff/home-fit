@@ -943,8 +943,11 @@ def score_architectural_diversity_as_beauty(
             base_floor = 9.0  # Slightly higher baseline for high-quality suburbs
             base = max(base, base_floor)
     elif effective == "historic_urban":
-        if built_coverage_ratio is not None and built_coverage_ratio < 0.18:
-            base = max(base, 12.0 + serenity_bonus)
+        if built_coverage_ratio is not None:
+            if built_coverage_ratio < 0.18:
+                base = max(base, 13.0 + serenity_bonus)
+            else:
+                base = max(base, 11.0 + serenity_bonus * 0.5)
     elif effective in ("exurban", "rural"):
         if built_coverage_ratio is not None and built_coverage_ratio < 0.12:
             base = max(base, 11.0 + serenity_bonus)
