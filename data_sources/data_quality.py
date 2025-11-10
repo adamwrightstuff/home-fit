@@ -101,14 +101,15 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     """
     normalized_location = _normalize_location_key(location_input)
     diagnostic_record: Optional[Dict[str, Any]] = None
-    if normalized_location:
+    if normalized_location or built_coverage is not None:
         diagnostic_record = {
-            "location": normalized_location,
+            "location": normalized_location or "(unknown)",
             "density": density,
             "city": city,
             "business_count": business_count,
             "built_coverage": built_coverage,
-            "metro_distance_km": metro_distance_km
+            "metro_distance_km": metro_distance_km,
+            "input": location_input
         }
 
     def _finalize(result: str) -> str:
@@ -290,17 +291,18 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                 result = "urban_core"
 
         # Historic low-coverage districts: very low coverage, moderate density, near core
-        if result in ("suburban", "exurban", "urban_residential"):
-            if coverage <= 0.08:
-                density_ok = (600 <= density_val <= 8000) if density_val else True
-                metro_ok = (metro_distance_km is None) or (metro_val <= 25.0)
-                if density_ok and metro_ok:
-                    result = "historic_urban"
-            elif coverage <= 0.12:
-                density_ok = (600 <= density_val <= 6000) if density_val else True
-                metro_ok = (metro_distance_km is None) or (metro_val <= 15.0)
-                if density_ok and metro_ok:
-                    result = "historic_urban"
+        if coverage <= 0.08:
+            density_ok = (600 <= density_val <= 8000) if density_val else True
+            metro_ok = (metro_distance_km is None) or (metro_val <= 25.0)
+            business_ok = business <= 150
+            if density_ok and metro_ok and business_ok:
+                result = "historic_urban"
+        elif result in ("suburban", "exurban") and 0.09 <= coverage <= 0.13:
+            density_ok = (600 <= density_val <= 6000) if density_val else True
+            metro_ok = (metro_distance_km is None) or (metro_val <= 15.0)
+            business_ok = business <= 120
+            if density_ok and metro_ok and business_ok:
+                result = "historic_urban"
 
     return _finalize(result)
 
