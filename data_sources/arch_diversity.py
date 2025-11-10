@@ -382,11 +382,52 @@ DESIGN_FORM_WEIGHTS = {
     "urban_core": {"design": 0.55, "form": 0.45},
     "urban_residential": {"design": 0.6, "form": 0.4},
     "urban_core_lowrise": {"design": 0.6, "form": 0.4},
-    "suburban": {"design": 0.65, "form": 0.35},
-    "exurban": {"design": 0.7, "form": 0.3},
+    "suburban": {"design": 0.72, "form": 0.28},
+    "exurban": {"design": 0.74, "form": 0.26},
     "rural": {"design": 0.75, "form": 0.25},
     "unknown": {"design": 0.6, "form": 0.4},
 }
+
+DESIGN_FORM_SCALE = {
+    "historic_urban": {"design": 78.0, "form": 60.0},
+    "urban_core": {"design": 60.0, "form": 54.0},
+    "urban_residential": {"design": 58.0, "form": 48.0},
+    "urban_core_lowrise": {"design": 58.0, "form": 50.0},
+    "suburban": {"design": 68.0, "form": 50.0},
+    "exurban": {"design": 75.0, "form": 53.0},
+    "rural": {"design": 70.0, "form": 52.0},
+    "unknown": {"design": 62.0, "form": 52.0},
+}
+
+
+def _serenity_bonus(area_type: str,
+                    built_coverage_ratio: Optional[float],
+                    streetwall_continuity: float,
+                    block_grain: float,
+                    density: Optional[float]) -> float:
+    """Reward intentional openness and calm street rhythm."""
+    if built_coverage_ratio is None:
+        return 0.0
+
+    bonus = 0.0
+    openness = max(0.0, 0.30 - built_coverage_ratio)
+    rhythm = streetwall_continuity / 100.0
+    grain = block_grain / 100.0
+
+    if area_type in ("historic_urban", "suburban", "exurban", "rural"):
+        calm_factor = (0.6 * rhythm) + (0.4 * (1.0 - grain))
+        density_factor = 1.0
+        if density is not None:
+            if area_type in ("exurban", "rural"):
+                density_factor = 0.5 + min(0.5, max(0.0, 3000 - density) / 6000)
+            else:
+                density_factor = 0.5 + min(0.5, max(0.0, 9000 - density) / 9000)
+
+        ceiling = 4.0 if area_type in ("historic_urban", "suburban") else 8.0
+        multiplier = 12.0 if area_type in ("historic_urban", "suburban") else 18.0
+        bonus = min(ceiling, openness * multiplier * calm_factor * density_factor)
+
+    return bonus
 
 # Context-biased target bands: (good_low, plateau_low, plateau_high, good_high)
 # Plateau range gets full points; beyond good_* ramps down to 0
@@ -858,6 +899,8 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
 
+    scale_params = DESIGN_FORM_SCALE.get(effective, DESIGN_FORM_SCALE["unknown"])
+
     design_components = [
         height_raw,
         type_raw,
@@ -868,7 +911,7 @@ def score_architectural_diversity_as_beauty(
     design_components = [c for c in design_components if c is not None]
     if design_components:
         design_total = sum(design_components)
-        design_score = min(50.0, (design_total / (len(design_components) * 16.67)) * 50.0)
+        design_score = min(50.0, (design_total / (len(design_components) * 16.67)) * scale_params["design"])
     else:
         design_score = 0.0
 
@@ -880,12 +923,13 @@ def score_architectural_diversity_as_beauty(
     form_components = [c for c in form_components if c is not None]
     if form_components:
         form_total = sum(form_components)
-        form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * 50.0)
+        form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * scale_params["form"])
     else:
         form_score = 0.0
 
     total = (design_score * blend["design"]) + (form_score * blend["form"])
-    base = total
+    serenity_bonus = _serenity_bonus(effective, built_coverage_ratio, streetwall_value, block_grain_value, density)
+    base = total + serenity_bonus
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -893,11 +937,16 @@ def score_architectural_diversity_as_beauty(
     # intentional planning and cohesive design standards.
     # This distinguishes intentional uniformity (beautiful) from cookie-cutter chaos (ugly).
     if effective == "suburban":
-        if levels_entropy < 10 and footprint_area_cv < 40:
+        if levels_entropy < 12 and footprint_area_cv < 45:
             # Very uniform height + footprint = intentional cohesion, not cookie-cutter
             # This rewards planned communities with consistent architecture
-            base_floor = 7.5  # Scaled proportionally from 5.0 to 7.5 (50/33 ratio)
+            base_floor = 9.0  # Slightly higher baseline for high-quality suburbs
             base = max(base, base_floor)
+    elif effective in ("exurban", "rural"):
+        if built_coverage_ratio is not None and built_coverage_ratio < 0.12:
+            base = max(base, 11.0 + serenity_bonus)
+    if effective in ("exurban", "rural"):
+        base = max(base, 12.0 + serenity_bonus)
     
     # One bonus, one penalty (use effective area type for context-aware penalties)
     # Scale bonus proportionally for 0-50 range
@@ -1017,6 +1066,7 @@ def score_architectural_diversity_as_beauty(
         "form_score": round(form_score, 1),
         "design_weight": blend["design"],
         "form_weight": blend["form"],
+        "serenity_bonus": round(serenity_bonus, 2),
         # Phase 2 metrics
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,

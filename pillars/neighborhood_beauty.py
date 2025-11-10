@@ -9,6 +9,28 @@ Uses objective, real data sources:
 
 import os
 from typing import Dict, Tuple, Optional
+AREA_NORMALIZATION = {
+    "historic_urban": {"shift": 8.0, "scale": 1.01, "max": 96.0},
+    "suburban": {"shift": 9.5, "scale": 1.02, "max": 95.0},
+    "urban_residential": {"shift": -2.5, "scale": 0.95, "max": 91.0},
+    "urban_core": {"shift": -2.5, "scale": 0.95, "max": 93.0},
+    "exurban": {"shift": 13.0, "scale": 1.02, "max": 94.0},
+    "rural": {"shift": 10.0, "scale": 1.02, "max": 93.0},
+    "urban_core_lowrise": {"shift": 3.0, "scale": 0.96, "max": 88.0},
+}
+
+
+def _normalize_beauty_score(score: float, area_type: Optional[str]) -> Tuple[float, Optional[Dict[str, float]]]:
+    if not area_type:
+        return score, None
+    params = AREA_NORMALIZATION.get(area_type)
+    if not params:
+        return score, None
+    scaled = score * params.get("scale", 1.0)
+    shifted = scaled + params.get("shift", 0.0)
+    capped = min(params.get("max", 100.0), shifted)
+    return max(0.0, capped), params
+
 from data_sources import osm_api, census_api, data_quality
 from data_sources.radius_profiles import get_radius_profile
 from logging_config import get_logger
@@ -32,6 +54,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
                                    beauty_weights: Optional[str] = None,
                                    location_scope: Optional[str] = None,
                                    area_type: Optional[str] = None,
+                                   location_name: Optional[str] = None,
                                    test_overrides: Optional[Dict[str, float]] = None,
                                    test_mode: bool = False) -> Tuple[float, Dict]:
     """
@@ -58,7 +81,13 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     else:
         from data_sources import census_api as ca
         density = ca.get_population_density(lat, lon) or 0.0
-        default_area_type_for_weights = data_quality.detect_area_type(lat, lon, density, city=city)
+        default_area_type_for_weights = data_quality.detect_area_type(
+            lat,
+            lon,
+            density,
+            city=city,
+            location_input=location_name
+        )
     
     # Component 2: Architectural Beauty (0-50 native range, no scaling needed)
     # Get this first to determine effective area type for tree radius
@@ -69,6 +98,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         city,
         location_scope=location_scope,
         area_type=area_type,
+        location_name=location_name,
         test_overrides=test_overrides
     )
     arch_details = arch_details or {}
@@ -90,6 +120,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         city,
         location_scope=location_scope,
         area_type=effective_area_type or area_type,
+        location_name=location_name,
         overrides=test_overrides
     )
     
@@ -112,6 +143,11 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
         (arch_score_for_total * (max_arch_points / 50))
     )
     
+    total_score, normalization_params = _normalize_beauty_score(
+        total_score,
+        (effective_area_type or area_type or default_area_type_for_weights or "").lower()
+    )
+
     # Calibration guardrails: Flag results outside expected ranges
     calibration_alert = False
     if arch_score_value is not None:
@@ -146,7 +182,13 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     if area_type is None:
         from data_sources import census_api as ca
         density = ca.get_population_density(lat, lon)
-        area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+        area_type = data_quality.detect_area_type(
+            lat,
+            lon,
+            density,
+            city=city,
+            location_input=location_name
+        )
     else:
         # Still need density for quality assessment
         from data_sources import census_api as ca
@@ -181,6 +223,10 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             beauty_bonus = 0.0
         else:
             beauty_bonus = min(8.0, enhancers.get('viewpoints',0)*2 + enhancers.get('artwork',0)*3 + enhancers.get('fountains',0)*1 + enhancers.get('waterfront',0)*2)
+            arch_conf = arch_details.get("confidence_0_1") if isinstance(arch_details, dict) else None
+            if arch_conf is not None:
+                bonus_scale = 0.5 + 0.5 * max(0.0, min(1.0, arch_conf))
+                beauty_bonus *= bonus_scale
         total_score = min(100.0, total_score + beauty_bonus)
     except Exception:
         enhancers = {"viewpoints":0, "artwork":0, "fountains":0, "waterfront":0}
@@ -226,6 +272,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "input": beauty_weights or "default",
             "area_type": resolved_area_type
         },
+        "normalization": normalization_params,
         "data_quality": quality_metrics
     }
 
@@ -300,12 +347,17 @@ def _default_beauty_weights(area_type: Optional[str]) -> str:
 
 
 def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,
-                 area_type: Optional[str] = None, overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
+                 area_type: Optional[str] = None, location_name: Optional[str] = None,
+                 overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     score = 0.0
     sources = []
     details = {}
     applied_overrides = []
+    canopy_points = None
+    street_tree_points = None
+    osm_tree_points = None
+    census_points = None
 
     overrides = overrides or {}
 
@@ -338,7 +390,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     try:
         from data_sources import census_api, data_quality
         density = census_api.get_population_density(lat, lon)
-        detected_area_type = data_quality.detect_area_type(lat, lon, density)
+        detected_area_type = data_quality.detect_area_type(
+            lat,
+            lon,
+            density,
+            location_input=location_name,
+            city=city
+        )
         area_type = area_type or detected_area_type
         
         # Adjust radius based on centralized profile
@@ -373,6 +431,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if gee_canopy is not None and gee_canopy >= 0.1:  # Threshold to avoid false zeros
             canopy_score = _score_tree_canopy(gee_canopy)
             score = canopy_score
+            canopy_points = canopy_score
             sources.append(f"GEE: {gee_canopy:.1f}% canopy")
             details['gee_canopy_pct'] = gee_canopy
             logger.debug(f"Using GEE satellite data: {gee_canopy:.1f}%")
@@ -388,6 +447,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     if census_score > score:
                         logger.debug(f"Census/USFS canopy ({census_canopy:.1f}%) is higher than GEE ({gee_canopy:.1f}%) - using Census")
                         score = census_score
+                        canopy_points = census_score
                         sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
                         details['census_canopy_pct'] = census_canopy
                     else:
@@ -408,6 +468,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         if street_tree_score > score:
                             logger.debug(f"NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50 (using street trees)")
                             score = street_tree_score
+                            street_tree_points = street_tree_score
                             sources.append(f"NYC Street Trees: {tree_count} trees")
                             details['nyc_street_trees'] = tree_count
                         else:
@@ -433,6 +494,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             if osm_tree_score > score:
                                 logger.debug(f"OSM found {total_osm_trees} trees/tree features → {osm_tree_score:.1f}/50 (using OSM trees)")
                                 score = osm_tree_score
+                                osm_tree_points = osm_tree_score
                                 sources.append(f"OSM: {total_osm_trees} individual trees/tree rows")
                                 details['osm_individual_trees'] = total_osm_trees
                             else:
@@ -454,6 +516,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             if street_tree_score > score:
                 logger.debug(f"Using NYC Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
                 score = street_tree_score
+                street_tree_points = street_tree_score
                 sources.append(f"NYC Street Trees: {tree_count} trees")
                 details['nyc_street_trees'] = tree_count
     
@@ -470,6 +533,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 if street_tree_score > score:
                     logger.debug(f"Using {city_key} Street Trees: {tree_count} trees → {street_tree_score:.1f}/50")
                     score = street_tree_score
+                    street_tree_points = street_tree_score
                     sources.append(f"{city_key} Street Trees: {tree_count} trees")
                     details[f'{city_key.lower()}_street_trees'] = tree_count
     
@@ -482,6 +546,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             canopy_score = _score_tree_canopy(canopy_pct)
             if canopy_score > score:
                 score = canopy_score
+                census_points = canopy_score
                 sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
                 details['census_canopy_pct'] = canopy_pct
                 logger.debug(f"Using Census canopy data: {canopy_pct:.1f}%")
@@ -501,6 +566,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 park_count = len(parks)
                 park_score = min(30, park_count * 5)  # 6 parks = 30 pts
                 score = park_score
+                osm_tree_points = max(osm_tree_points or 0.0, park_score)
                 sources.append(f"OSM: {park_count} parks/green spaces")
                 details['osm_parks'] = park_count
                 logger.debug(f"Using OSM park data: {park_count} parks")
@@ -509,6 +575,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 sources.append("No tree data available")
     
     details['sources'] = sources
+    details['component_scores'] = {
+        "canopy_score": canopy_points,
+        "street_tree_score": street_tree_points,
+        "osm_tree_score": osm_tree_points,
+        "census_score": census_points
+    }
     details['total_score'] = score
     
     return score, details
@@ -566,6 +638,7 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
 def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] = None,
                                     location_scope: Optional[str] = None,
                                     area_type: Optional[str] = None,
+                                    location_name: Optional[str] = None,
                                     test_overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
     """
     Score architectural beauty (0-50 points native range).
@@ -612,7 +685,13 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             density = census_api.get_population_density(lat, lon) or 0.0
             if not city:
                 city = geocoding.reverse_geocode(lat, lon)
-            area_type = data_quality.detect_area_type(lat, lon, density, city)
+            area_type = data_quality.detect_area_type(
+                lat,
+                lon,
+                density,
+                city=city,
+                location_input=location_name
+            )
         else:
             density = census_api.get_population_density(lat, lon) or 0.0
         
