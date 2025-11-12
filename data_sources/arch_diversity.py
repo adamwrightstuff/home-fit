@@ -611,6 +611,7 @@ AGE_CONTEXT_WINDOWS = {
 AGE_BONUS_MAX = 5.5
 AGE_MIX_BONUS_MAX = 2.25
 MODERN_FORM_BONUS_MAX = 4.0
+PHASE23_CONFIDENCE_FLOOR = 0.05
 
 
 def _clamp01(value: float) -> float:
@@ -717,6 +718,68 @@ def _modern_material_share(material_profile: Optional[Dict[str, Any]]) -> float:
         if name in modern_keys:
             share_total += share_val
     return _clamp01(share_total)
+
+
+def _phase23_fallback(metric: str,
+                      coverage: Optional[float],
+                      levels_entropy: Optional[float],
+                      building_type_diversity: Optional[float],
+                      footprint_area_cv: Optional[float]) -> Optional[float]:
+    if coverage is None:
+        return None
+    coverage = max(0.0, coverage)
+    levels_entropy = levels_entropy if levels_entropy is not None else 0.0
+    building_type_diversity = building_type_diversity if building_type_diversity is not None else 0.0
+    footprint_area_cv = footprint_area_cv if footprint_area_cv is not None else 0.0
+
+    if metric == "block_grain":
+        if coverage >= 0.28:
+            return 72.0
+        if coverage >= 0.22:
+            return 60.0
+        if coverage >= 0.16:
+            return 48.0
+        if coverage >= 0.10:
+            return 38.0
+        return 30.0
+    if metric == "streetwall":
+        if coverage >= 0.28:
+            return 78.0
+        if coverage >= 0.22:
+            return 62.0
+        if coverage >= 0.16:
+            return 45.0
+        return 32.0
+    if metric == "setback":
+        if coverage >= 0.26 and levels_entropy < 12:
+            return 82.0
+        if coverage >= 0.22:
+            return 70.0
+        if coverage >= 0.16:
+            return 58.0
+        return 45.0
+    if metric == "facade":
+        if coverage >= 0.28 and building_type_diversity < 30:
+            return 78.0
+        if coverage >= 0.24:
+            return 68.0
+        if coverage >= 0.18:
+            return 55.0
+        return 42.0
+    return None
+
+
+def _apply_phase23_confidence(value: Optional[float],
+                              confidence: Optional[float],
+                              fallback: Optional[float]) -> Tuple[Optional[float], bool, bool, Optional[float], Optional[float]]:
+    raw_value = value
+    if value is not None and confidence is not None and confidence >= PHASE23_CONFIDENCE_FLOOR:
+        return value, False, False, raw_value, confidence
+    if fallback is not None:
+        return fallback, True, False, raw_value, confidence
+    if value is None:
+        return None, False, True, raw_value, confidence
+    return None, False, True, raw_value, confidence
 
 
 def _serenity_bonus(area_type: str,
@@ -1170,10 +1233,10 @@ def score_architectural_diversity_as_beauty(
     
     # Calculate Phase 2 and Phase 3 metrics (0-100 scale, normalized to 0-16.67 for weighting)
     # OPTIMIZATION: Run all Phase 2 & Phase 3 metrics in parallel for better performance
-    block_grain_value = 0.0
-    streetwall_value = 0.0
-    setback_value = 0.0
-    facade_rhythm_value = 0.0
+    block_grain_value: Optional[float] = None
+    streetwall_value: Optional[float] = None
+    setback_value: Optional[float] = None
+    facade_rhythm_value: Optional[float] = None
     block_grain_confidence = 0.0
     streetwall_confidence = 0.0
     setback_confidence = 0.0
@@ -1209,7 +1272,7 @@ def score_architectural_diversity_as_beauty(
         
         # Run all 4 metrics in parallel, but make each one independent
         # If one fails, others can still succeed
-        with ThreadPoolExecutor(max_workers=4) as executor:
+            with ThreadPoolExecutor(max_workers=4) as executor:
             future_block = executor.submit(compute_block_grain, lat, lon, 2000)
             future_streetwall = executor.submit(compute_streetwall_continuity, lat, lon, 2000, shared_osm_data)
             future_setback = executor.submit(compute_setback_consistency, lat, lon, 2000, shared_osm_data)
@@ -1221,42 +1284,50 @@ def score_architectural_diversity_as_beauty(
                 try:
                     return future.result(timeout=timeout)
                 except FutureTimeoutError:
-                    logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, using default (0.0)")
+                        logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, marking as missing")
                     if name == "block_grain":
-                        return {"block_grain": 0.0, "coverage_confidence": 0.0}
+                            return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
-                        return {"streetwall_continuity": 0.0, "coverage_confidence": 0.0}
+                            return {"streetwall_continuity": None, "coverage_confidence": 0.0}
                     elif name == "setback":
-                        return {"setback_consistency": 0.0, "coverage_confidence": 0.0}
+                            return {"setback_consistency": None, "coverage_confidence": 0.0}
                     else:  # facade_rhythm
-                        return {"facade_rhythm": 0.0, "coverage_confidence": 0.0}
+                            return {"facade_rhythm": None, "coverage_confidence": 0.0}
                 except Exception as e:
-                    logger.warning(f"Phase 2/3 metric {name} failed: {e}, using default (0.0)")
+                        logger.warning(f"Phase 2/3 metric {name} failed: {e}, marking as missing")
                     if name == "block_grain":
-                        return {"block_grain": 0.0, "coverage_confidence": 0.0}
+                            return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
-                        return {"streetwall_continuity": 0.0, "coverage_confidence": 0.0}
+                            return {"streetwall_continuity": None, "coverage_confidence": 0.0}
                     elif name == "setback":
-                        return {"setback_consistency": 0.0, "coverage_confidence": 0.0}
+                            return {"setback_consistency": None, "coverage_confidence": 0.0}
                     else:  # facade_rhythm
-                        return {"facade_rhythm": 0.0, "coverage_confidence": 0.0}
+                            return {"facade_rhythm": None, "coverage_confidence": 0.0}
             
             block_grain_data = get_with_timeout(future_block, 30, "block_grain")
             streetwall_data = get_with_timeout(future_streetwall, 30, "streetwall")
             setback_data = get_with_timeout(future_setback, 30, "setback")
             facade_rhythm_data = get_with_timeout(future_facade, 30, "facade_rhythm")
         
-        block_grain_value = block_grain_data.get("block_grain", 0.0)
-        block_grain_confidence = block_grain_data.get("coverage_confidence", 0.0)
+        raw_block = block_grain_data.get("block_grain")
+        block_grain_value = float(raw_block) if isinstance(raw_block, (int, float)) else None
+        raw_block_conf = block_grain_data.get("coverage_confidence")
+        block_grain_confidence = float(raw_block_conf) if isinstance(raw_block_conf, (int, float)) else 0.0
         
-        streetwall_value = streetwall_data.get("streetwall_continuity", 0.0)
-        streetwall_confidence = streetwall_data.get("coverage_confidence", 0.0)
+        raw_streetwall = streetwall_data.get("streetwall_continuity")
+        streetwall_value = float(raw_streetwall) if isinstance(raw_streetwall, (int, float)) else None
+        raw_street_conf = streetwall_data.get("coverage_confidence")
+        streetwall_confidence = float(raw_street_conf) if isinstance(raw_street_conf, (int, float)) else 0.0
         
-        setback_value = setback_data.get("setback_consistency", 0.0)
-        setback_confidence = setback_data.get("coverage_confidence", 0.0)
+        raw_setback = setback_data.get("setback_consistency")
+        setback_value = float(raw_setback) if isinstance(raw_setback, (int, float)) else None
+        raw_setback_conf = setback_data.get("coverage_confidence")
+        setback_confidence = float(raw_setback_conf) if isinstance(raw_setback_conf, (int, float)) else 0.0
         
-        facade_rhythm_value = facade_rhythm_data.get("facade_rhythm", 0.0)
-        facade_rhythm_confidence = facade_rhythm_data.get("coverage_confidence", 0.0)
+        raw_facade = facade_rhythm_data.get("facade_rhythm")
+        facade_rhythm_value = float(raw_facade) if isinstance(raw_facade, (int, float)) else None
+        raw_facade_conf = facade_rhythm_data.get("coverage_confidence")
+        facade_rhythm_confidence = float(raw_facade_conf) if isinstance(raw_facade_conf, (int, float)) else 0.0
     
     if "block_grain" in metric_overrides:
         try:
@@ -1289,6 +1360,89 @@ def score_architectural_diversity_as_beauty(
             override_values["facade_rhythm"] = facade_rhythm_value
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
+
+    phase23_fallback_info: Dict[str, Dict[str, Optional[float]]] = {}
+
+    block_fallback = _phase23_fallback(
+        "block_grain",
+        built_coverage_ratio,
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv
+    )
+    streetwall_fallback = _phase23_fallback(
+        "streetwall",
+        built_coverage_ratio,
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv
+    )
+    setback_fallback = _phase23_fallback(
+        "setback",
+        built_coverage_ratio,
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv
+    )
+    facade_fallback = _phase23_fallback(
+        "facade",
+        built_coverage_ratio,
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv
+    )
+
+    block_grain_value, block_fallback_used, block_dropped, block_raw_value, block_raw_confidence = _apply_phase23_confidence(
+        block_grain_value,
+        block_grain_confidence,
+        block_fallback
+    )
+    phase23_fallback_info["block_grain"] = {
+        "fallback_used": block_fallback_used,
+        "dropped": block_dropped,
+        "fallback_value": block_grain_value if block_fallback_used else None,
+        "raw_value": block_raw_value,
+        "raw_confidence": block_raw_confidence
+    }
+
+    streetwall_value, streetwall_fallback_used, streetwall_dropped, streetwall_raw_value, streetwall_raw_confidence = _apply_phase23_confidence(
+        streetwall_value,
+        streetwall_confidence,
+        streetwall_fallback
+    )
+    phase23_fallback_info["streetwall_continuity"] = {
+        "fallback_used": streetwall_fallback_used,
+        "dropped": streetwall_dropped,
+        "fallback_value": streetwall_value if streetwall_fallback_used else None,
+        "raw_value": streetwall_raw_value,
+        "raw_confidence": streetwall_raw_confidence
+    }
+
+    setback_value, setback_fallback_used, setback_dropped, setback_raw_value, setback_raw_confidence = _apply_phase23_confidence(
+        setback_value,
+        setback_confidence,
+        setback_fallback
+    )
+    phase23_fallback_info["setback_consistency"] = {
+        "fallback_used": setback_fallback_used,
+        "dropped": setback_dropped,
+        "fallback_value": setback_value if setback_fallback_used else None,
+        "raw_value": setback_raw_value,
+        "raw_confidence": setback_raw_confidence
+    }
+
+    facade_rhythm_value, facade_fallback_used, facade_dropped, facade_raw_value, facade_raw_confidence = _apply_phase23_confidence(
+        facade_rhythm_value,
+        facade_rhythm_confidence,
+        facade_fallback
+    )
+    phase23_fallback_info["facade_rhythm"] = {
+        "fallback_used": facade_fallback_used,
+        "dropped": facade_dropped,
+        "fallback_value": facade_rhythm_value if facade_fallback_used else None,
+        "raw_value": facade_raw_value,
+        "raw_confidence": facade_raw_confidence
+    }
 
     scale_params = DESIGN_FORM_SCALE.get(effective, DESIGN_FORM_SCALE["unknown"])
 
@@ -1333,7 +1487,13 @@ def score_architectural_diversity_as_beauty(
         form_score = 0.0
 
     total = (design_score * blend["design"]) + (form_score * blend["form"])
-    serenity_bonus = _serenity_bonus(effective, built_coverage_ratio, streetwall_value, block_grain_value, density)
+    serenity_bonus = _serenity_bonus(
+        effective,
+        built_coverage_ratio,
+        streetwall_value if streetwall_value is not None else 0.0,
+        block_grain_value if block_grain_value is not None else 0.0,
+        density
+    )
     scenic_bonus = _scenic_bonus(
         effective,
         footprint_area_cv if footprint_area_cv is not None else 0.0,
@@ -1362,7 +1522,7 @@ def score_architectural_diversity_as_beauty(
     age_bonus = AGE_BONUS_MAX * age_percentile * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0) * age_presence_factor
 
     street_character_bonus = 0.0
-    if block_grain_value and streetwall_value:
+    if block_grain_value is not None and streetwall_value is not None:
         street_character_bonus = max(0.0, ((block_grain_value + streetwall_value) / 200.0) - 0.35)
         if effective in ("historic_urban", "urban_residential"):
             street_character_bonus *= 1.4
@@ -1590,6 +1750,13 @@ def score_architectural_diversity_as_beauty(
         "setback_confidence": setback_confidence,
         "facade_rhythm": facade_rhythm_value,
         "facade_rhythm_confidence": facade_rhythm_confidence
+    }
+
+    metadata["phase23_fallback"] = {
+        "block_grain": phase23_fallback_info.get("block_grain"),
+        "streetwall_continuity": phase23_fallback_info.get("streetwall_continuity"),
+        "setback_consistency": phase23_fallback_info.get("setback_consistency"),
+        "facade_rhythm": phase23_fallback_info.get("facade_rhythm"),
     }
 
     if applied_overrides:
