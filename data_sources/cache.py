@@ -93,6 +93,11 @@ def cached(ttl_seconds: int = 3600):
                 _cleanup_expired_cache()
             
             result = func(*args, **kwargs)
+
+            skip_cache = False
+            if isinstance(result, dict):
+                skip_cache = bool(result.pop('_cache_skip', False))
+            
             
             # If API call failed (result is None), try using stale cache as fallback
             if result is None and cache_entry is not None:
@@ -107,7 +112,7 @@ def cached(ttl_seconds: int = 3600):
                 return cache_entry
             
             # Only cache non-None results (None indicates error/obfuscated data that shouldn't be cached)
-            if result is not None:
+            if result is not None and not skip_cache:
                 # Store in both Redis (if available) and in-memory
                 cache_data = {
                     'value': result,

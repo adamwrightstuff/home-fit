@@ -4,7 +4,7 @@ Computes simple diversity metrics from OSM buildings within a radius.
 This module is sandbox-only and not wired into scoring by default.
 """
 
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
@@ -150,6 +150,76 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             e /= math.log(len(counts), 2)
         return max(0.0, min(1.0, e))
 
+    def _categorize_building(tags: Dict[str, str]) -> str:
+        btag = (tags.get("building:use") or tags.get("building") or "").lower()
+        amenity = (tags.get("amenity") or "").lower()
+        tourism = (tags.get("tourism") or "").lower()
+        office = (tags.get("office") or "").lower()
+        shop = (tags.get("shop") or "").lower()
+
+        def _match_any(value: str, keywords: tuple) -> bool:
+            return any(k in value for k in keywords if k)
+
+        if _match_any(btag, ("residential", "apart", "house", "condo", "terrace")):
+            return "residential"
+        if _match_any(amenity, ("school", "college", "university")) or _match_any(btag, ("school", "dorm")):
+            return "educational"
+        if _match_any(amenity, ("hospital", "clinic")) or _match_any(btag, ("hospital", "medical")):
+            return "healthcare"
+        if _match_any(amenity, ("church", "synagogue", "mosque", "temple")) or amenity == "place_of_worship":
+            return "religious"
+        if _match_any(amenity, ("museum", "theatre", "library")) or _match_any(tourism, ("museum", "gallery")):
+            return "cultural"
+        if _match_any(amenity, ("park", "community_centre", "social_centre")) or "civic" in btag:
+            return "civic"
+        if _match_any(shop, ("mall", "supermarket", "retail")) or _match_any(btag, ("retail", "commercial", "store")):
+            return "retail"
+        if _match_any(office, ("company", "headquarters")) or "office" in btag:
+            return "office"
+        if _match_any(btag, ("industrial", "warehouse", "manufacture", "factory")):
+            return "industrial"
+        if "historic" in btag or "heritage" in btag or tourism == "attraction":
+            return "landmark"
+        return "other"
+
+    MATERIAL_CANONICAL = {
+        "brick": {"brick", "masonry"},
+        "stone": {"stone"},
+        "wood": {"wood", "timber"},
+        "concrete": {"concrete"},
+        "glass": {"glass"},
+        "steel": {"steel"},
+        "metal": {"metal", "aluminium", "copper"},
+        "stucco": {"stucco", "plaster"},
+        "clay": {"clay", "adobe"},
+        "composite": {"composite", "mixed"},
+    }
+
+    def _normalize_material(value: str) -> str:
+        val = (value or "").lower().strip()
+        for canonical, synonyms in MATERIAL_CANONICAL.items():
+            if val in synonyms:
+                return canonical
+        if "brick" in val:
+            return "brick"
+        if "stone" in val:
+            return "stone"
+        if "wood" in val or "timber" in val:
+            return "wood"
+        if "concrete" in val:
+            return "concrete"
+        if "glass" in val:
+            return "glass"
+        if "steel" in val or "metal" in val:
+            return "metal"
+        if "stucco" in val or "plaster" in val:
+            return "stucco"
+        if "clay" in val or "adobe" in val:
+            return "clay"
+        if not val:
+            return ""
+        return val
+
     # Separate ways and nodes
     ways = [e for e in elements if e.get("type") == "way"]
     nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
@@ -157,17 +227,23 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     # Building levels histogram (bins)
     bins = {"1":0, "2":0, "3-4":0, "5-8":0, "9+":0}
     types = {}
+    type_categories: Dict[str, int] = {}
     areas = []
     materials: Dict[str, int] = {}
+    material_groups: Dict[str, int] = {}
     material_tagged = 0
     heritage_buildings = 0
     heritage_designations: Dict[str, int] = {}
     historic_flags = 0
+    level_values = []
+    inferred_single_story = 0
     
     for e in ways:
         tags = e.get("tags", {})
         btype = tags.get("building") or "unknown"
         types[btype] = types.get(btype, 0) + 1
+        category = _categorize_building(tags)
+        type_categories[category] = type_categories.get(category, 0) + 1
         
         lv_raw = tags.get("building:levels")
         try:
@@ -176,21 +252,31 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             lv = None
         if lv is None:
             bins["1"] += 1
+            inferred_single_story += 1
+            level_values.append(1)
         elif lv == 1:
             bins["1"] += 1
+            level_values.append(1)
         elif lv == 2:
             bins["2"] += 1
+            level_values.append(2)
         elif 3 <= lv <= 4:
             bins["3-4"] += 1
+            level_values.append(lv)
         elif 5 <= lv <= 8:
             bins["5-8"] += 1
+            level_values.append(lv)
         else:
             bins["9+"] += 1
+            level_values.append(lv)
         
         material = tags.get("building:material")
         if material:
             material_tagged += 1
+            normalized_material = _normalize_material(material)
             materials[material] = materials.get(material, 0) + 1
+            if normalized_material:
+                material_groups[normalized_material] = material_groups.get(normalized_material, 0) + 1
         heritage_val = tags.get("heritage")
         if heritage_val:
             heritage_buildings += 1
@@ -233,6 +319,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
 
     levels_entropy = entropy(list(bins.values())) * 100
     type_div = entropy(list(types.values())) * 100
+    type_category_div = entropy(list(type_categories.values())) * 100 if type_categories else 0.0
     if len(areas) >= 2:
         mean_area = sum(areas)/len(areas)
         var = sum((a-mean_area)**2 for a in areas)/len(areas)
@@ -248,6 +335,14 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         area_cv = max(0.0, min(100.0, area_cv))
     else:
         area_cv = 0.0
+    if level_values:
+        mean_levels = sum(level_values) / len(level_values)
+        variance_levels = sum((lv - mean_levels) ** 2 for lv in level_values) / len(level_values)
+        std_levels = variance_levels ** 0.5
+    else:
+        mean_levels = 0.0
+        std_levels = 0.0
+    single_story_share = inferred_single_story / len(ways) if ways else 0.0
 
     diversity_score = min(100.0, 0.4*levels_entropy + 0.4*type_div + 0.2*area_cv)
     
@@ -274,6 +369,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         data_warning = "low_building_coverage"
     
     material_top = sorted(materials.items(), key=lambda item: (-item[1], item[0]))
+    material_entropy = entropy(list(material_groups.values())) * 100 if material_groups else 0.0
     material_profile = [
         {
             "material": name,
@@ -282,19 +378,40 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         }
         for name, count in material_top[:5]
     ]
+    material_summary = [
+        {
+            "material": name,
+            "count": count,
+            "share": round(count / len(ways), 3) if ways else 0.0
+        }
+        for name, count in sorted(material_groups.items(), key=lambda item: (-item[1], item[0]))[:5]
+    ]
+    type_category_profile = [
+        {
+            "category": name,
+            "count": count,
+            "share": round(count / len(ways), 3) if ways else 0.0
+        }
+        for name, count in sorted(type_categories.items(), key=lambda item: (-item[1], item[0]))
+    ]
     heritage_profile = {
         "count": heritage_buildings,
         "designations": sorted(
             [{"value": val, "count": cnt} for val, cnt in heritage_designations.items()],
             key=lambda item: (-item["count"], item["value"])
         )[:5],
-        "historic_tagged": historic_flags
+        "historic_tagged": historic_flags,
+        "significance_score": min(
+            100.0,
+            heritage_buildings * 4 + len(heritage_designations) * 6 + historic_flags * 3
+        )
     }
     
     return {
         "levels_entropy": round(levels_entropy, 1),
         "building_type_diversity": round(type_div, 1),
         "footprint_area_cv": round(area_cv, 1),
+        "type_category_diversity": round(type_category_div, 1),
         "diversity_score": round(diversity_score, 1),
         "built_coverage_ratio": round(built_coverage_ratio, 3),  # 0.0-1.0 scale
         "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
@@ -303,9 +420,17 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "confidence_0_1": confidence_0_1,  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
         "material_profile": {
             "tagged_ratio": round(material_tagged / len(ways), 3) if ways else 0.0,
-            "materials": material_profile
+            "materials": material_profile,
+            "canonical": material_summary,
+            "entropy": round(material_entropy, 1)
         },
-        "heritage_profile": heritage_profile
+        "heritage_profile": heritage_profile,
+        "type_categories": type_category_profile,
+        "height_stats": {
+            "mean_levels": round(mean_levels, 2),
+            "std_levels": round(std_levels, 2),
+            "single_story_share": round(single_story_share, 3)
+        }
     }
 
 
@@ -437,6 +562,46 @@ DESIGN_FORM_SCALE = {
     "rural": {"design": 74.0, "form": 56.0},
     "unknown": {"design": 62.0, "form": 52.0},
 }
+
+COVERAGE_EXPECTATIONS = {
+    "historic_urban": 0.34,
+    "urban_core": 0.42,
+    "urban_residential": 0.30,
+    "urban_core_lowrise": 0.32,
+    "suburban": 0.22,
+    "exurban": 0.14,
+    "rural": 0.10,
+    "unknown": 0.25,
+}
+
+MATERIAL_BONUS_WEIGHTS = {
+    "historic_urban": 1.15,
+    "urban_core": 1.0,
+    "urban_residential": 0.9,
+    "urban_core_lowrise": 0.95,
+    "suburban": 0.85,
+    "exurban": 0.75,
+    "rural": 0.65,
+    "unknown": 0.8,
+}
+
+HERITAGE_BONUS_WEIGHTS = {
+    "historic_urban": 1.3,
+    "urban_core": 1.1,
+    "urban_residential": 1.0,
+    "urban_core_lowrise": 1.05,
+    "suburban": 0.8,
+    "exurban": 0.7,
+    "rural": 0.6,
+    "unknown": 0.75,
+}
+
+AGE_BONUS_BANDS = [
+    (1900, 4.5),
+    (1930, 3.5),
+    (1960, 2.0),
+    (1980, 1.0),
+]
 
 
 def _serenity_bonus(area_type: str,
@@ -715,7 +880,9 @@ def score_architectural_diversity_as_beauty(
     lon: Optional[float] = None,
     metric_overrides: Optional[Dict[str, float]] = None,
     material_profile: Optional[Dict[str, Any]] = None,
-    heritage_profile: Optional[Dict[str, Any]] = None
+    heritage_profile: Optional[Dict[str, Any]] = None,
+    type_category_diversity: Optional[float] = None,
+    height_stats: Optional[Dict[str, Any]] = None
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -741,6 +908,36 @@ def score_architectural_diversity_as_beauty(
     metric_overrides = metric_overrides or {}
     applied_overrides: List[str] = []
     override_values: Dict[str, float] = {}
+    material_entropy = 0.0
+    material_tagged_ratio = 0.0
+    if isinstance(material_profile, dict):
+        try:
+            material_entropy = float(material_profile.get("entropy") or 0.0)
+        except (TypeError, ValueError):
+            material_entropy = 0.0
+        try:
+            material_tagged_ratio = float(material_profile.get("tagged_ratio") or 0.0)
+        except (TypeError, ValueError):
+            material_tagged_ratio = 0.0
+    heritage_significance = 0.0
+    heritage_landmark_count = 0
+    if isinstance(heritage_profile, dict):
+        try:
+            heritage_significance = float(heritage_profile.get("significance_score") or 0.0)
+        except (TypeError, ValueError):
+            heritage_significance = 0.0
+        heritage_landmark_count = heritage_profile.get("count", 0) or 0
+    height_std = None
+    single_story_share = None
+    if isinstance(height_stats, dict):
+        try:
+            height_std = float(height_stats.get("std_levels"))
+        except (TypeError, ValueError):
+            height_std = None
+        try:
+            single_story_share = float(height_stats.get("single_story_share"))
+        except (TypeError, ValueError):
+            single_story_share = None
 
     def _clamp(value: float, lower: float, upper: float) -> float:
         return max(lower, min(upper, value))
@@ -784,6 +981,12 @@ def score_architectural_diversity_as_beauty(
     # Get base context-biased targets
     targets = CONTEXT_TARGETS.get(effective, CONTEXT_TARGETS["urban_core"])
     targets = dict(targets)  # Copy to avoid mutating original
+    type_diversity_used = building_type_diversity
+    if type_category_diversity is not None:
+        try:
+            type_diversity_used = max(type_diversity_used, float(type_category_diversity))
+        except (TypeError, ValueError):
+            pass
     
     # CONTEXTUAL ADJUSTMENTS: Apply in order of specificity (most specific last)
     # These adjustments handle historic organic development patterns
@@ -834,7 +1037,19 @@ def score_architectural_diversity_as_beauty(
     
     # Calculate Phase 1 raw scores (0-100 scale, normalized to 0-16.67 for weighting)
     height_raw = _score_band(levels_entropy, targets["height"], max_points=16.67)
-    type_raw = _score_band(building_type_diversity, targets["type"], max_points=16.67)
+    type_raw = _score_band(type_diversity_used, targets["type"], max_points=16.67)
+    
+    if height_std is not None and height_std > 1.2:
+        height_raw = min(16.67, height_raw + min(2.5, (height_std - 1.2) * 1.4))
+    if single_story_share is not None and single_story_share > 0.65:
+        height_raw *= 0.88
+    if type_category_diversity is not None:
+        try:
+            diversity_gap = max(0.0, float(type_category_diversity) - building_type_diversity)
+            if diversity_gap > 0:
+                type_raw = min(16.67, type_raw + min(2.0, diversity_gap / 15.0 * 2.0))
+        except (TypeError, ValueError):
+            pass
     foot_raw = _score_band(footprint_area_cv, targets["footprint"], max_points=16.67)
     
     # Calculate Phase 2 and Phase 3 metrics (0-100 scale, normalized to 0-16.67 for weighting)
@@ -961,6 +1176,11 @@ def score_architectural_diversity_as_beauty(
 
     scale_params = DESIGN_FORM_SCALE.get(effective, DESIGN_FORM_SCALE["unknown"])
 
+    material_component = None
+    if material_entropy > 0:
+        material_component = (material_entropy / 100.0) * 16.67
+        if material_tagged_ratio < 0.15:
+            material_component *= 0.65
     design_components = [
         height_raw,
         type_raw,
@@ -969,18 +1189,27 @@ def score_architectural_diversity_as_beauty(
         (facade_rhythm_value / 100.0) * 16.67
     ]
     design_components = [c for c in design_components if c is not None]
+    if material_component is not None:
+        design_components.append(material_component)
     if design_components:
         design_total = sum(design_components)
         design_score = min(50.0, (design_total / (len(design_components) * 16.67)) * scale_params["design"])
     else:
         design_score = 0.0
 
+    coverage_component = None
+    if built_coverage_ratio is not None:
+        expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
+        if expected_coverage > 0:
+            normalized_coverage = max(0.0, min(1.2, built_coverage_ratio / expected_coverage))
+            coverage_component = min(16.67, normalized_coverage * 16.67)
     form_components = [
         (block_grain_value / 100.0) * 16.67,
         (streetwall_value / 100.0) * 16.67,
-        ((built_coverage_ratio or 0.0) * 16.67)
     ]
     form_components = [c for c in form_components if c is not None]
+    if coverage_component is not None:
+        form_components.append(coverage_component)
     if form_components:
         form_total = sum(form_components)
         form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * scale_params["form"])
@@ -995,7 +1224,35 @@ def score_architectural_diversity_as_beauty(
         building_type_diversity,
         density
     )
-    base = total + serenity_bonus + scenic_bonus
+    material_bonus = 0.0
+    if material_entropy > 0:
+        material_multiplier = MATERIAL_BONUS_WEIGHTS.get(effective, 0.8)
+        material_bonus = (material_entropy / 100.0) * 4.0 * material_multiplier
+        if material_tagged_ratio < 0.1:
+            material_bonus *= 0.7
+        material_bonus = min(5.0, material_bonus)
+    heritage_bonus = 0.0
+    if heritage_significance > 0:
+        heritage_multiplier = HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
+        heritage_bonus = min(6.0, (heritage_significance / 100.0) * 6.0 * heritage_multiplier)
+        if heritage_landmark_count >= 5:
+            heritage_bonus += min(2.5, heritage_landmark_count * 0.25)
+    age_bonus = 0.0
+    if median_year_built is not None:
+        for cutoff, bonus_value in AGE_BONUS_BANDS:
+            if median_year_built <= cutoff:
+                age_bonus = bonus_value * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
+                break
+    street_character_bonus = 0.0
+    if block_grain_value and streetwall_value:
+        street_character_bonus = max(0.0, ((block_grain_value + streetwall_value) / 200.0) - 0.35)
+        if effective in ("historic_urban", "urban_residential"):
+            street_character_bonus *= 1.4
+        elif effective in ("suburban", "exurban"):
+            street_character_bonus *= 1.1
+        street_character_bonus = min(4.5, street_character_bonus * 6.0)
+
+    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -1075,32 +1332,41 @@ def score_architectural_diversity_as_beauty(
     
     if built_coverage_ratio is not None:
         relief_from_phase = max(0.0, phase23_confidence_bonus)
+        expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
         cap_threshold = None
         cap_reason = None
         if effective in ("historic_urban", "urban_core"):
-            bands = (0.08, 0.12)
+            bands = (0.07, 0.10)
             first_cap = 45.0
             second_cap = 50.0
         elif effective == "suburban":
-            bands = (0.15, 0.20)
-            first_cap = 45.0
-            second_cap = 50.0
-        elif effective in ("exurban", "rural"):
-            bands = (0.25, 0.35)
+            bands = (0.12, 0.18)
             first_cap = 46.0
-            second_cap = 49.0
+            second_cap = 49.5
+        elif effective in ("exurban", "rural"):
+            bands = (0.15, 0.25)
+            first_cap = 47.0
+            second_cap = 49.5
         else:
-            bands = (0.12, 0.15)
-            first_cap = 34.0
-            second_cap = 45.0
+            bands = (0.10, 0.14)
+            first_cap = 40.0
+            second_cap = 47.0
+
+        first_cap += relief_from_phase
+        second_cap += relief_from_phase
 
         lower_band, upper_band = bands
         effective_label = effective or "unknown"
-        if built_coverage_ratio < lower_band:
-            cap_threshold = first_cap + min(4.0, relief_from_phase)
+
+        meets_expectation = expected_coverage and built_coverage_ratio >= expected_coverage * 0.9
+
+        if meets_expectation:
+            cap_threshold = None
+        elif built_coverage_ratio < lower_band:
+            cap_threshold = first_cap
             cap_reason = f"{effective_label}_coverage_lt_{int(lower_band*100)}pct"
         elif built_coverage_ratio < upper_band:
-            cap_threshold = second_cap + min(5.0, relief_from_phase)
+            cap_threshold = second_cap
             cap_reason = f"{effective_label}_coverage_lt_{int(upper_band*100)}pct"
 
         if cap_threshold is not None and total > cap_threshold:
@@ -1142,8 +1408,17 @@ def score_architectural_diversity_as_beauty(
         "form_weight": blend["form"],
         "serenity_bonus": round(serenity_bonus, 2),
         "scenic_bonus": round(scenic_bonus, 2),
+        "material_bonus": round(material_bonus, 2),
+        "heritage_bonus": round(heritage_bonus, 2),
+        "age_bonus": round(age_bonus, 2),
+        "street_character_bonus": round(street_character_bonus, 2),
         "material_profile": material_profile,
         "heritage_profile": heritage_profile,
+        "material_entropy": round(material_entropy, 1),
+        "material_tagged_ratio": round(material_tagged_ratio, 3),
+        "type_category_diversity": round(type_category_diversity, 1) if type_category_diversity is not None else None,
+        "height_stats": height_stats,
+        "expected_coverage": COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"]),
         # Phase 2 metrics
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,

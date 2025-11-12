@@ -1,4 +1,5 @@
 # Deployment Prep
 - Tests not run (pytest/pip unavailable in tuning environment)
-- Pending files staged: data_sources/arch_diversity.py, pillars/neighborhood_beauty.py, analysis/calibration_notes.md, analysis/beauty_baseline.json
-- Untracked analysis artifacts remain; ignore or remove before commit
+- Beauty split refactor: built_beauty/natural_beauty now first-class pillars; legacy neighborhood_beauty retained for compatibility
+- Analysis directory trimmed to diagnostics-only artifacts
+- Natural beauty pillar enhanced with multi-radius canopy sampling, NDVI-based GVI, biodiversity entropy, and canopy expectation adjustments

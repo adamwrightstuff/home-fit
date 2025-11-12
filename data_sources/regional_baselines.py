@@ -221,7 +221,9 @@ class RegionalBaselineManager:
                 'healthcare_access': 85,    # Excellent healthcare
                 'air_travel_access': 90,    # Major airports
                 'neighborhood_amenities': 80,        # Dense amenities
-                'neighborhood_beauty': 40,  # Urban environment
+                'built_beauty': 55,         # Architecture carries more weight than greenery
+                'natural_beauty': 30,       # Limited nature access
+                'neighborhood_beauty': 40,  # Legacy composite (built + natural)
                 'public_transit_access': 85, # Excellent transit
                 'quality_education': 70,    # Good schools
                 'housing_value': 25         # Expensive housing
@@ -231,7 +233,9 @@ class RegionalBaselineManager:
                 'healthcare_access': 75,    # Good healthcare
                 'air_travel_access': 70,    # Regional airports
                 'neighborhood_amenities': 50,        # Moderate amenities
-                'neighborhood_beauty': 60,  # Mixed environment
+                'built_beauty': 55,         # Cohesive but less intricate architecture
+                'natural_beauty': 65,       # Tree canopy and neighborhood greenery
+                'neighborhood_beauty': 60,  # Legacy composite
                 'public_transit_access': 45, # Limited transit
                 'quality_education': 80,    # Excellent schools
                 'housing_value': 60        # Moderate housing
@@ -241,7 +245,9 @@ class RegionalBaselineManager:
                 'healthcare_access': 55,    # Limited healthcare
                 'air_travel_access': 40,    # Limited air access
                 'neighborhood_amenities': 25,        # Few amenities
-                'neighborhood_beauty': 75,  # Natural beauty
+                'built_beauty': 45,         # Quaint main streets, limited variation
+                'natural_beauty': 85,       # Scenic landscape focus
+                'neighborhood_beauty': 75,  # Legacy composite
                 'public_transit_access': 20, # No transit
                 'quality_education': 65,    # Decent schools
                 'housing_value': 75        # Affordable housing
@@ -251,7 +257,9 @@ class RegionalBaselineManager:
                 'healthcare_access': 35,   # Limited healthcare
                 'air_travel_access': 20,    # No air access
                 'neighborhood_amenities': 10,        # No amenities
-                'neighborhood_beauty': 90,  # Natural beauty
+                'built_beauty': 35,         # Sparse historic fabric
+                'natural_beauty': 95,       # Exceptional natural scenery
+                'neighborhood_beauty': 90,  # Legacy composite
                 'public_transit_access': 5, # No transit
                 'quality_education': 50,    # Limited schools
                 'housing_value': 90        # Very affordable

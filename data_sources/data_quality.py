@@ -293,13 +293,13 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         # Historic low-coverage districts: very low coverage, moderate density, near core
         if coverage <= 0.08:
             density_ok = (600 <= density_val <= 8000) if density_val else True
-            metro_ok = (metro_distance_km is None) or (metro_val <= 25.0)
+            metro_ok = (metro_distance_km is not None) and (metro_val <= 25.0)
             business_ok = business <= 150
             if density_ok and metro_ok and business_ok:
                 result = "historic_urban"
         elif result in ("suburban", "exurban") and 0.09 <= coverage <= 0.13:
             density_ok = (600 <= density_val <= 6000) if density_val else True
-            metro_ok = (metro_distance_km is None) or (metro_val <= 15.0)
+            metro_ok = (metro_distance_km is not None) and (metro_val <= 15.0)
             business_ok = business <= 120
             if density_ok and metro_ok and business_ok:
                 result = "historic_urban"
@@ -311,7 +311,8 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                            levels_entropy: Optional[float] = None,
                            building_type_diversity: Optional[float] = None,
                            historic_landmarks: Optional[int] = None,
-                           median_year_built: Optional[int] = None) -> str:
+                           median_year_built: Optional[int] = None,
+                           built_coverage_ratio: Optional[float] = None) -> str:
     """
     Determine effective area type including architectural subtypes.
     
@@ -333,6 +334,7 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         building_type_diversity: Optional type diversity metric (for subtype detection)
         historic_landmarks: Optional count of historic landmarks from OSM
         median_year_built: Optional median year buildings were built
+        built_coverage_ratio: Optional coverage ratio (0-1) to distinguish leafy historic cores
     
     Returns:
         Effective area type, which may be:
@@ -375,6 +377,8 @@ def get_effective_area_type(area_type: str, density: Optional[float],
             if is_very_historic():
                 # Very historic (<1940): uniform height + moderate type diversity acceptable
                 if levels_entropy < 20 and building_type_diversity < 35:
+                    if built_coverage_ratio is not None and built_coverage_ratio <= 0.24:
+                        return "historic_urban"
                     return "urban_residential"
             else:
                 # Standard historic: stricter uniformity requirements
@@ -400,13 +404,13 @@ def get_effective_area_type(area_type: str, density: Optional[float],
             if census_historic:
                 # Census-based historic: More forgiving thresholds for coordinate variance
                 # Allow slightly wider range to handle block-to-block variation
-                if (10 < levels_entropy < 75 and 20 < building_type_diversity < 90):
+                if (5 < levels_entropy < 80 and 15 < building_type_diversity < 92):
                     # Don't override if already classified as uniform (urban_residential)
                     if effective != "urban_residential":
                         return "historic_urban"
             else:
                 # OSM landmark-based historic: Use stricter thresholds (original logic)
-                if (15 < levels_entropy < 70 and 25 < building_type_diversity < 85):
+                if (10 < levels_entropy < 70 and 20 < building_type_diversity < 85):
                     # Don't override if already classified as uniform (urban_residential)
                     if effective != "urban_residential":
                         return "historic_urban"

@@ -13,7 +13,18 @@ Examples of defaults:
 - Neighborhood Amenities: query 1km (neighborhood) or 1.5km (city); walkability 800m/1000m
 - Public Transit: nearby routes within ~1.5km
 - Healthcare: facilities 5–20km and pharmacies 2–8km by area type
-- Neighborhood Beauty (Tree canopy): 1km urban, 2km elsewhere (with city-only fallback expansion)
+- Built Beauty (architecture/form): 2km default context window, area-type adjustments via radius profiles
+- Natural Beauty (trees & scenic context): 1km canopy core (urban core/residential), up to 3km fallback for cities; 2km+ for suburban/exurban contexts
+- Natural Beauty scoring blends multi-radius canopy sampling, NDVI-based green view indices, biodiversity entropy, and area-type canopy expectations to reward both lush streets and regional scenery.
 - Air Travel: airports within 100km
 
 No public parameters are needed to control these; they follow sensible defaults derived from the location.
+
+## Built Beauty Scoring Notes
+
+- Height variety now considers standard deviation and single-story share to better capture subtle differences.
+- Building type diversity blends raw OSM tags with normalized use categories (residential, civic, retail, etc.).
+- Material analysis aggregates canonical groups (brick, wood, stone, concrete, glass, metal, stucco, clay) and factors their entropy into the score.
+- Landmarks incorporate heritage designations and Census vintage data; older fabric receives an age bonus scaled by area type.
+- Street-scale character is reinforced through block grain, streetwall, setback, and facade rhythm, with an added street character bonus when coverage is cohesive.
+- Coverage expectations are area-type specific, so lower-density suburbs and exurbs are not over-penalized for intentional openness.

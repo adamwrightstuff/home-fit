@@ -1144,33 +1144,113 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
     return historic, artwork
 
 
-def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict[str, int]:
+def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict[str, Any]:
     """
-    Return presence flags for aesthetics: viewpoints, artwork, fountains, waterfront.
-    Lightweight and capped upstream.
+    Return lightweight aesthetic enhancers near the location.
+    
+    Keys:
+        - viewpoints: int count of OSM viewpoint features
+        - artwork: int count of art installations
+        - fountains: int count of fountains
+        - waterfront: 1 if coastline present within 2km else 0
+        - viewpoints_details/artwork_details/fountains_details: feature metadata with name + distance
     """
-    out = {"viewpoints": 0, "artwork": 0, "fountains": 0, "waterfront": 0}
+    out: Dict[str, Any] = {
+        "viewpoints": 0,
+        "artwork": 0,
+        "fountains": 0,
+        "waterfront": 0,
+        "viewpoints_details": [],
+        "artwork_details": [],
+        "fountains_details": []
+    }
+
     try:
         q = f"""
-        [out:json][timeout:20];
+        [out:json][timeout:25];
         (
           node["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
           way["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
+          relation["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
           node["tourism"="artwork"](around:{radius_m},{lat},{lon});
           way["tourism"="artwork"](around:{radius_m},{lat},{lon});
+          relation["tourism"="artwork"](around:{radius_m},{lat},{lon});
           node["amenity"="fountain"](around:{radius_m},{lat},{lon});
           way["amenity"="fountain"](around:{radius_m},{lat},{lon});
+          relation["amenity"="fountain"](around:{radius_m},{lat},{lon});
         );
-        out count;
+        out body;
+        >;
+        out skel qt;
         """
-        r = requests.post(OVERPASS_URL, data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+        r = requests.post(
+            OVERPASS_URL,
+            data={"data": q},
+            timeout=35,
+            headers={"User-Agent": "HomeFit/1.0"}
+        )
         if r.status_code == 200:
-            # If any returned, set presence flags (fast path). For exact counts, split queries.
-            out["viewpoints"] = 1
-            out["artwork"] = 1
-            out["fountains"] = 1
+            data = r.json()
+            elements = data.get("elements", [])
+            nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
+            ways_dict = {e.get("id"): e for e in elements if e.get("type") == "way"}
+            center_lat = lat
+            center_lon = lon
+            seen_ids = set()
+
+            for elem in elements:
+                osm_id = elem.get("id")
+                if not osm_id or osm_id in seen_ids:
+                    continue
+                seen_ids.add(osm_id)
+
+                tags = elem.get("tags", {}) or {}
+                category = None
+                if tags.get("tourism") == "viewpoint":
+                    category = "viewpoints"
+                elif tags.get("tourism") == "artwork":
+                    category = "artwork"
+                elif tags.get("amenity") == "fountain":
+                    category = "fountains"
+
+                if not category:
+                    continue
+
+                elem_lat = elem.get("lat")
+                elem_lon = elem.get("lon")
+
+                if elem.get("type") == "way":
+                    elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+                elif elem.get("type") == "relation":
+                    elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+
+                if elem_lat is None or elem_lon is None:
+                    continue
+
+                distance_m = round(haversine_distance(center_lat, center_lon, elem_lat, elem_lon))
+
+                feature = {
+                    "name": tags.get("name"),
+                    "distance_m": distance_m,
+                    "osm_id": osm_id,
+                    "category": category,
+                    "lat": elem_lat,
+                    "lon": elem_lon
+                }
+
+                if category == "viewpoints":
+                    out["viewpoints_details"].append(feature)
+                elif category == "artwork":
+                    out["artwork_details"].append(feature)
+                elif category == "fountains":
+                    out["fountains_details"].append(feature)
+
+            out["viewpoints"] = len(out["viewpoints_details"])
+            out["artwork"] = len(out["artwork_details"])
+            out["fountains"] = len(out["fountains_details"])
     except Exception:
         pass
+
     # Coastline probe reused (2km)
     try:
         qc = f"""
@@ -1178,11 +1258,18 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
         way["natural"="coastline"](around:2000,{lat},{lon});
         out center 1;
         """
-        rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
+        rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent": "HomeFit/1.0"})
         if rc.status_code == 200 and rc.json().get("elements"):
             out["waterfront"] = 1
     except Exception:
         pass
+
+    # Sort details by distance for deterministic output
+    for key in ("viewpoints_details", "artwork_details", "fountains_details"):
+        features = out.get(key)
+        if isinstance(features, list):
+            features.sort(key=lambda f: f.get("distance_m", float("inf")))
+
     return out
 
 def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float, include_chains: bool = False) -> Dict:

@@ -19,6 +19,7 @@ load_dotenv()
 # Transitland API v2 endpoint
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
 TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
+COMMUTE_WEIGHT = 0.10
 def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> float:
     """Find nearest heavy rail/subway distance using Transitland stops API (km),
     falling back to coordinate distance and OSM stations when needed."""
@@ -175,6 +176,47 @@ MAJOR_METROS = {
 }
 
 
+def _score_commute_time(mean_minutes: float, area_type: Optional[str]) -> float:
+    """
+    Convert mean commute minutes into a 0-100 score with context-aware expectations.
+    Shorter commutes boost scores; longer ones reduce them, allowing more leeway outside dense cores.
+    """
+    if mean_minutes is None or mean_minutes <= 0:
+        return 70.0  # Neutral fallback
+
+    area_type = area_type or "unknown"
+
+    def clamp(score: float) -> float:
+        return max(10.0, min(100.0, score))
+
+    if area_type in ("urban_core", "urban_residential", "historic_urban"):
+        if mean_minutes <= 20:
+            return 95.0
+        if mean_minutes <= 30:
+            return clamp(95.0 - (mean_minutes - 20) * 3.0)
+        if mean_minutes <= 40:
+            return clamp(65.0 - (mean_minutes - 30) * 3.5)
+        return clamp(30.0 - (mean_minutes - 40) * 1.5)
+
+    if area_type in ("suburban", "urban_core_lowrise"):
+        if mean_minutes <= 25:
+            return 90.0
+        if mean_minutes <= 40:
+            return clamp(90.0 - (mean_minutes - 25) * 2.0)
+        if mean_minutes <= 55:
+            return clamp(60.0 - (mean_minutes - 40) * 1.5)
+        return clamp(37.5 - (mean_minutes - 55) * 1.0)
+
+    # exurban, rural, unknown – most lenient
+    if mean_minutes <= 30:
+        return 85.0
+    if mean_minutes <= 45:
+        return clamp(85.0 - (mean_minutes - 30) * 1.5)
+    if mean_minutes <= 60:
+        return clamp(62.5 - (mean_minutes - 45) * 1.2)
+    return clamp(44.5 - (mean_minutes - 60) * 0.8)
+
+
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance between two points in kilometers."""
     # Use utils.haversine_distance (returns meters) and convert to km
@@ -325,6 +367,22 @@ def get_public_transit_score(lat: float, lon: float,
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
 
+    # Commute time weighting (ACS mean travel time to work)
+    commute_minutes = census_api.get_commute_time(lat, lon)
+    commute_score = None
+    effective_area_type = area_type or area_type_dq
+    if commute_minutes is not None and commute_minutes > 0:
+        commute_score = _score_commute_time(commute_minutes, effective_area_type)
+        weighted_total = (total_score * (1.0 - COMMUTE_WEIGHT)) + (commute_score * COMMUTE_WEIGHT)
+        total_score = min(100.0, max(0.0, weighted_total))
+        try:
+            dq_sources = quality_metrics.get('data_sources', []) or []
+            if 'census' not in dq_sources:
+                dq_sources.append('census')
+            quality_metrics['data_sources'] = dq_sources
+        except Exception:
+            pass
+
     # Suburban/Exurban/Rural commuter-centric layer: nearest rail + connectivity tier
     if (area_type or 'unknown') in ('suburban', 'exurban', 'rural'):
         nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
@@ -401,6 +459,23 @@ def get_public_transit_score(lat: float, lon: float,
     except Exception:
         pass
 
+    if commute_minutes is not None and commute_score is not None:
+        breakdown["breakdown"]["commute_time"] = round(commute_score, 1)
+        breakdown["summary"]["mean_commute_minutes"] = round(commute_minutes, 1)
+        breakdown.setdefault("details", {})["commute_time"] = {
+            "mean_minutes": round(commute_minutes, 1),
+            "score": round(commute_score, 1),
+            "weight": COMMUTE_WEIGHT,
+            "note": "Mean commute time (ACS) blended into transit score"
+        }
+    else:
+        breakdown.setdefault("details", {})["commute_time"] = {
+            "mean_minutes": None,
+            "score": None,
+            "weight": COMMUTE_WEIGHT,
+            "note": "Commute data unavailable from ACS"
+        }
+
     # Log results
     print(f"✅ Public Transit Score: {total_score:.0f}/100")
     print(f"   🚇 Heavy Rail: {heavy_rail_score:.0f} ({len(heavy_rail_routes)} routes)")
@@ -408,6 +483,8 @@ def get_public_transit_score(lat: float, lon: float,
     print(f"   🚌 Bus: {bus_score:.0f} ({len(bus_routes)} routes)")
     if area_type:
         print(f"   📍 Area type weighting: {area_type}")
+    if commute_minutes is not None and commute_score is not None:
+        print(f"   ⏱️ Commute time: {commute_minutes:.1f} min → score {commute_score:.1f} (weight {COMMUTE_WEIGHT:.0%})")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown

@@ -385,6 +385,56 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[float]:
+    """
+    Get mean travel time to work (minutes) from Census ACS 5-Year profile data.
+    
+    Returns:
+        Mean commute time in minutes, or None if unavailable.
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+
+    try:
+        print("🚆 Fetching commute time from Census ACS profile...")
+
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5/profile"
+        params = {
+            "get": "DP03_0025E,NAME",  # Mean travel time to work
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code != 200:
+            print(f"   ⚠️  ACS profile API returned status {response.status_code}")
+            return None
+
+        data = response.json()
+        if len(data) < 2:
+            print("   ⚠️  No commute data returned")
+            return None
+
+        value = data[1][0]
+        if not value or value in {"-666666666", "-222222222"}:
+            print("   ⚠️  Commute time data is unavailable or suppressed")
+            return None
+
+        commute_minutes = float(value)
+        print(f"   ✅ Mean commute time: {commute_minutes:.1f} minutes")
+        return commute_minutes
+
+    except Exception as e:
+        print(f"   ⚠️  Commute time lookup failed: {e}")
+        return None
+
+
 def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
     Get year built data from Census ACS 5-Year.

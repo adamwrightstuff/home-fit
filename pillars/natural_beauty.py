@@ -1,0 +1,800 @@
+"""
+Natural Beauty pillar implementation (trees, scenic context, and enhancers).
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Dict, List, Optional, Tuple
+
+from logging_config import get_logger
+
+from data_sources import osm_api
+from data_sources.radius_profiles import get_radius_profile
+from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
+
+logger = get_logger(__name__)
+
+# Try optional data sources that are only available in specific cities.
+try:
+    from data_sources import nyc_api as nyc_api
+except ImportError:  # pragma: no cover - optional dependency
+    nyc_api = None  # type: ignore
+
+try:
+    from data_sources import street_tree_api
+except ImportError:  # pragma: no cover - optional dependency
+    street_tree_api = None  # type: ignore
+
+# Natural context scoring constants.
+TOPOGRAPHY_BONUS_MAX = 12.0
+LANDCOVER_BONUS_MAX = 8.0
+WATER_BONUS_MAX = 10.0
+NATURAL_CONTEXT_BONUS_CAP = 20.0
+
+GVI_BONUS_MAX = 8.0
+BIODIVERSITY_BONUS_MAX = 4.0
+CANOPY_EXPECTATION_BONUS_MAX = 6.0
+CANOPY_EXPECTATION_PENALTY_MAX = 6.0
+
+MULTI_RADIUS_CANOPY = {
+    "micro_400m": 400,
+    "neighborhood_1000m": 1000,
+    "macro_2000m": 2000,
+}
+
+CANOPY_EXPECTATIONS = {
+    "urban_core": 18.0,
+    "urban_core_lowrise": 22.0,
+    "historic_urban": 26.0,
+    "urban_residential": 28.0,
+    "suburban": 32.0,
+    "exurban": 36.0,
+    "rural": 38.0,
+    "unknown": 25.0,
+}
+
+GREEN_VIEW_WEIGHTS = {
+    "urban_core": 1.15,
+    "historic_urban": 1.2,
+    "urban_residential": 1.05,
+    "suburban": 1.0,
+    "exurban": 0.9,
+    "rural": 0.85,
+    "urban_core_lowrise": 1.1,
+    "unknown": 1.0,
+}
+
+CONTEXT_SCALERS = {
+    "urban_core": 0.85,
+    "historic_urban": 0.95,
+    "urban_core_lowrise": 0.95,
+    "urban_residential": 1.0,
+    "suburban": 1.05,
+    "exurban": 1.1,
+    "rural": 1.15,
+    "unknown": 1.0,
+}
+
+BIODIVERSITY_WEIGHTS = {
+    "forest": 0.5,
+    "wetland": 0.2,
+    "shrub": 0.2,
+    "grass": 0.1,
+}
+
+
+def _score_tree_canopy(canopy_pct: float) -> float:
+    """Score tree canopy with a softened, piecewise-linear curve."""
+    canopy = max(0.0, min(100.0, canopy_pct))
+    if canopy <= 20.0:
+        return canopy * 1.1
+    if canopy <= 55.0:
+        return 22.0 + (canopy - 20.0) * 0.7
+    if canopy <= 70.0:
+        return 46.5 + (canopy - 55.0) * 0.25
+    return 50.0
+
+
+def _score_nyc_trees(tree_count: int) -> float:
+    """
+    Score street trees using NYC Street Tree Census heuristic.
+    """
+    if tree_count <= 0:
+        return 0.0
+    # Diminishing returns as tree counts grow.
+    score = min(50.0, 12.0 * math.log1p(tree_count))
+    return score
+
+
+def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500) -> Tuple[float, Dict]:
+    """
+    Compute a lightweight scenic bonus based on nearby viewpoint features.
+    """
+    if not viewpoints:
+        return 0.0, {
+            "count": 0,
+            "closest_distance_m": None,
+            "weights_sum": 0.0,
+            "top_viewpoints": []
+        }
+
+    radius_m = max(radius_m, 1)
+    weights_sum = 0.0
+    viewpoint_summaries: List[Dict] = []
+
+    for feature in viewpoints:
+        distance = feature.get("distance_m", radius_m)
+        try:
+            distance = float(distance)
+        except (TypeError, ValueError):
+            distance = radius_m
+        distance = max(0.0, distance)
+
+        normalized = max(0.0, 1.0 - min(distance, radius_m) / radius_m)
+        weight = max(0.05, normalized)
+        weights_sum += weight
+
+        viewpoint_summaries.append({
+            "name": feature.get("name"),
+            "distance_m": round(distance, 1)
+        })
+
+    viewpoint_summaries.sort(key=lambda item: item.get("distance_m", float("inf")))
+    viewpoint_summaries = viewpoint_summaries[:5]
+
+    scenic_bonus = min(6.0, weights_sum * 3.0)
+    metadata = {
+        "count": len(viewpoints),
+        "closest_distance_m": viewpoint_summaries[0]["distance_m"] if viewpoint_summaries else None,
+        "weights_sum": round(weights_sum, 3),
+        "top_viewpoints": viewpoint_summaries
+    }
+    return scenic_bonus, metadata
+
+
+def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,
+                 area_type: Optional[str] = None, location_name: Optional[str] = None,
+                 overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
+    """Score trees from multiple real data sources (0-50)."""
+    score = 0.0
+    sources: List[str] = []
+    details: Dict = {}
+    applied_overrides: List[str] = []
+    canopy_points: Optional[float] = None
+    street_tree_points: Optional[float] = None
+    osm_tree_points: Optional[float] = None
+    census_points: Optional[float] = None
+    tree_radius_used: Optional[int] = None
+    street_tree_feature_total = 0
+    primary_canopy_pct: Optional[float] = None
+    canopy_multi: Dict[str, Optional[float]] = {}
+    gvi_metrics: Optional[Dict[str, float]] = None
+    gvi_bonus = 0.0
+    biodiversity_entropy = 0.0
+    biodiversity_bonus = 0.0
+    expectation_adjustment = 0.0
+    expectation_penalty = 0.0
+    area_type_key = (area_type or "").lower() or "unknown"
+    gvi_radius_used: Optional[int] = None
+
+    overrides = overrides or {}
+
+    def _clamp(value: float, min_val: float, max_val: float) -> float:
+        return max(min_val, min(max_val, value))
+
+    def _score_topography_component(metrics: Dict) -> float:
+        if not metrics:
+            return 0.0
+        relief = float(metrics.get("relief_range_m") or 0.0)
+        slope_mean = float(metrics.get("slope_mean_deg") or 0.0)
+        steep_fraction = float(metrics.get("steep_fraction") or 0.0)
+
+        relief_factor = min(1.0, relief / 600.0)  # 600m relief → full credit
+        slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
+        steep_factor = min(1.0, max(0.0, (steep_fraction - 0.05) / 0.35))  # >40% steep terrain
+
+        combined = max(0.0, min(1.0, (0.5 * relief_factor) + (0.3 * slope_factor) + (0.2 * steep_factor)))
+        return TOPOGRAPHY_BONUS_MAX * combined
+
+    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str]) -> Tuple[float, float]:
+        if not metrics:
+            return 0.0, 0.0
+
+        forest_pct = float(metrics.get("forest_pct") or 0.0)
+        wetland_pct = float(metrics.get("wetland_pct") or 0.0)
+        shrub_pct = float(metrics.get("shrub_pct") or 0.0)
+        grass_pct = float(metrics.get("grass_pct") or 0.0)
+        developed_pct = float(metrics.get("developed_pct") or 0.0)
+        water_pct = float(metrics.get("water_pct") or 0.0)
+
+        forest_factor = min(1.0, forest_pct / 40.0)  # 40% forest → full
+        wetland_factor = min(1.0, wetland_pct / 10.0)
+        shrub_factor = min(1.0, shrub_pct / 25.0)
+        grass_factor = min(1.0, grass_pct / 30.0)
+
+        natural_index = (0.6 * forest_factor) + (0.2 * wetland_factor) + (0.1 * shrub_factor) + (0.1 * grass_factor)
+
+        # Developed land reduces the boost, but not below zero
+        developed_penalty = min(0.8, developed_pct / 120.0)
+        natural_index = max(0.0, natural_index * (1.0 - developed_penalty))
+
+        # Suburban/rural contexts get a small lift
+        if context_area_type in ("rural", "exurban"):
+            natural_index = min(1.0, natural_index * 1.15)
+
+        landcover_score = LANDCOVER_BONUS_MAX * min(1.0, natural_index)
+
+        water_factor = min(1.0, water_pct / 25.0)  # 25% water coverage → full credit
+        if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban"):
+            water_factor = min(1.0, water_factor * 1.1)
+        water_score = WATER_BONUS_MAX * water_factor
+
+        return landcover_score, water_score
+
+    if "tree_score" in overrides:
+        override_score = _clamp(float(overrides["tree_score"]), 0.0, 50.0)
+        score = override_score
+        details["sources"] = [f"override:tree_score={override_score}"]
+        details["total_score"] = score
+        details["override_values"] = {"tree_score": override_score}
+        applied_overrides.append("tree_score")
+        details["overrides_applied"] = applied_overrides
+        return score, details
+
+    if "tree_canopy_pct" in overrides:
+        canopy_pct = _clamp(float(overrides["tree_canopy_pct"]), 0.0, 100.0)
+        score = _score_tree_canopy(canopy_pct)
+        details["gee_canopy_pct"] = canopy_pct
+        details["sources"] = [f"override:tree_canopy_pct={canopy_pct}"]
+        details["total_score"] = score
+        details["override_values"] = {"tree_canopy_pct": canopy_pct}
+        applied_overrides.append("tree_canopy_pct")
+        details["overrides_applied"] = applied_overrides
+        return score, details
+
+    # Priority 1: GEE satellite tree canopy
+    try:
+        from data_sources import census_api, data_quality
+
+        density = census_api.get_population_density(lat, lon)
+        detected_area_type = data_quality.detect_area_type(
+            lat,
+            lon,
+            density,
+            location_input=location_name,
+            city=city
+        )
+        area_type = area_type or detected_area_type
+        area_type_key = (area_type or "").lower() or "unknown"
+
+        radius_profile = get_radius_profile('neighborhood_beauty', area_type, location_scope)
+        radius_m = int(radius_profile.get('tree_canopy_radius_m', 1000))
+        tree_radius_used = radius_m
+        logger.debug("Radius profile (beauty): area_type=%s scope=%s tree_canopy_radius=%sm", area_type, location_scope, radius_m)
+
+        from data_sources.gee_api import get_tree_canopy_gee, get_urban_greenness_gee
+
+        gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
+
+        if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
+            gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+            if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
+                gee_canopy = gee_canopy_larger
+                tree_radius_used = 2000
+                if gee_canopy < 30.0:
+                    gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
+                    if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
+                        gee_canopy = gee_canopy_3km
+                        tree_radius_used = 3000
+        elif location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
+            gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+            if gee_canopy is not None and gee_canopy >= 0.1:
+                tree_radius_used = 2000
+                logger.debug("Larger radius (2km) found %.1f%% canopy", gee_canopy)
+
+        if gee_canopy is not None and gee_canopy >= 0.1:
+            canopy_score = _score_tree_canopy(gee_canopy)
+            score = canopy_score
+            canopy_points = canopy_score
+            sources.append(f"GEE: {gee_canopy:.1f}% canopy")
+            details['gee_canopy_pct'] = gee_canopy
+            primary_canopy_pct = gee_canopy
+            for label, rad in MULTI_RADIUS_CANOPY.items():
+                value = None
+                if tree_radius_used and rad == tree_radius_used:
+                    value = gee_canopy
+                elif rad == radius_m:
+                    value = gee_canopy
+                else:
+                    try:
+                        value = get_tree_canopy_gee(lat, lon, radius_m=rad, area_type=area_type)
+                    except Exception as multi_error:
+                        logger.debug("Optional canopy radius fetch (%s) failed: %s", label, multi_error)
+                        value = None
+                canopy_multi[label] = value
+
+            if gee_canopy < 15.0 and area_type in ['urban_core', 'urban_residential']:
+                logger.debug("Dense urban area with low GEE canopy (%.1f%%) - validating with Census/USFS...", gee_canopy)
+                census_canopy = census_api.get_tree_canopy(lat, lon)
+                if census_canopy is not None and census_canopy > gee_canopy:
+                    census_score = _score_tree_canopy(census_canopy)
+                    if census_score > score:
+                        score = census_score
+                        canopy_points = census_score
+                        sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
+                        details['census_canopy_pct'] = census_canopy
+                        primary_canopy_pct = census_canopy
+                elif census_canopy is not None:
+                    logger.debug("Census/USFS canopy (%.1f%%) confirms GEE result", census_canopy)
+
+            if nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city):
+                if gee_canopy < 15.0:
+                    street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009)
+                    if street_trees:
+                        tree_count = len(street_trees)
+                        street_tree_score = _score_nyc_trees(tree_count)
+                        if street_tree_score > score:
+                            score = street_tree_score
+                            street_tree_points = street_tree_score
+                            sources.append(f"NYC Street Trees: {tree_count} trees")
+                            details['nyc_street_trees'] = tree_count
+                        street_tree_feature_total += len(street_trees)
+        else:
+            logger.warning("GEE returned %s - trying Census fallback", gee_canopy)
+        if tree_radius_used:
+            gvi_radius = min(1200, tree_radius_used)
+        else:
+            gvi_radius = min(1200, radius_m)
+        if gvi_radius and gvi_radius > 0:
+            gvi_radius_used = gvi_radius
+            try:
+                gvi_metrics = get_urban_greenness_gee(lat, lon, radius_m=gvi_radius)
+            except Exception as gvi_error:
+                logger.warning("GEE greenness analysis error: %s", gvi_error)
+                gvi_metrics = None
+    except Exception as exc:
+        logger.warning("GEE canopy lookup failed: %s", exc)
+
+    # Priority 2: NYC Street Trees
+    if score == 0.0 or (score < 30.0 and nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city)):
+        street_trees = nyc_api.get_street_trees(lat, lon, radius_deg=0.009) if nyc_api else None
+        if street_trees:
+            tree_count = len(street_trees)
+            street_tree_score = _score_nyc_trees(tree_count)
+            if street_tree_score > score:
+                score = street_tree_score
+                street_tree_points = street_tree_score
+                sources.append(f"NYC Street Trees: {tree_count} trees")
+                details['nyc_street_trees'] = tree_count
+            street_tree_feature_total += tree_count
+
+    # Priority 2b: Other cities street trees
+    if (score == 0.0 or score < 40.0) and street_tree_api and city:
+        city_key = street_tree_api.is_city_with_street_trees(city, lat, lon)
+        if city_key:
+            street_trees = street_tree_api.get_street_trees(city, lat, lon, radius_m=1000)
+            if street_trees:
+                tree_count = len(street_trees)
+                street_tree_score = _score_nyc_trees(tree_count)
+                if street_tree_score > score:
+                    score = street_tree_score
+                    street_tree_points = street_tree_score
+                    sources.append(f"{city_key} Street Trees: {tree_count} trees")
+                    details[f'{city_key.lower()}_street_trees'] = tree_count
+                street_tree_feature_total += tree_count
+
+    # Priority 3: Census USFS Tree Canopy
+    try:
+        from data_sources import census_api as _census_api
+        if score == 0.0 or (score < 20.0 and area_type in ['urban_core', 'urban_residential']):
+            canopy_pct = _census_api.get_tree_canopy(lat, lon)
+            if canopy_pct is not None and canopy_pct > 0:
+                canopy_score = _score_tree_canopy(canopy_pct)
+                if canopy_score > score:
+                    score = canopy_score
+                    census_points = canopy_score
+                    sources.append(f"USFS Census: {canopy_pct:.1f}% canopy")
+                    details['census_canopy_pct'] = canopy_pct
+                    if primary_canopy_pct is None or canopy_pct > primary_canopy_pct:
+                        primary_canopy_pct = canopy_pct
+    except Exception as exc:
+        logger.warning("Census canopy lookup failed: %s", exc)
+
+    # Priority 4: OSM parks fallback
+    if score == 0.0:
+        parks_radius = 800 if location_scope == 'neighborhood' else 500
+        tree_data = osm_api.query_green_spaces(lat, lon, radius_m=parks_radius)
+        if tree_data:
+            parks = tree_data.get('parks', [])
+            if parks:
+                park_count = len(parks)
+                park_score = min(30.0, park_count * 5.0)
+                score = park_score
+                osm_tree_points = max(osm_tree_points or 0.0, park_score)
+                sources.append(f"OSM: {park_count} parks/green spaces")
+                details['osm_parks'] = park_count
+                street_tree_feature_total += park_count * 10
+            else:
+                sources.append("No tree data available")
+        else:
+            sources.append("No tree data available")
+
+    base_tree_score = max(0.0, min(50.0, score))
+    details['sources'] = sources
+    details['component_scores'] = {
+        "canopy_score": canopy_points,
+        "street_tree_score": street_tree_points,
+        "osm_tree_score": osm_tree_points,
+        "census_score": census_points
+    }
+
+    natural_context_components: Dict[str, float] = {}
+    natural_context_details: Dict[str, Dict] = {}
+    context_bonus_total = 0.0
+
+    try:
+        from data_sources.gee_api import get_topography_context, get_landcover_context_gee
+    except ImportError:  # pragma: no cover - optional dependency
+        get_topography_context = None  # type: ignore
+        get_landcover_context_gee = None  # type: ignore
+
+    topography_metrics = None
+    if get_topography_context:
+        try:
+            topography_metrics = get_topography_context(lat, lon, radius_m=5000)
+        except Exception as exc:
+            logger.warning("Topography context lookup failed: %s", exc)
+    if topography_metrics:
+        topography_score = _score_topography_component(topography_metrics)
+        natural_context_components["topography"] = round(topography_score, 2)
+        natural_context_details["topography_metrics"] = topography_metrics
+        context_bonus_total += topography_score
+
+    landcover_metrics = None
+    landcover_score = 0.0
+    water_score = 0.0
+    if get_landcover_context_gee:
+        try:
+            landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=3000)
+        except Exception as exc:
+            logger.warning("Land cover context lookup failed: %s", exc)
+    if landcover_metrics:
+        natural_context_details["landcover_metrics"] = landcover_metrics
+        natural_context_details["landcover_source"] = landcover_metrics.get("source")
+        landcover_score, water_score = _score_landcover_component(landcover_metrics, area_type)
+        natural_context_components["landcover"] = round(landcover_score, 2)
+        natural_context_components["water"] = round(water_score, 2)
+        context_bonus_total += landcover_score + water_score
+        biodiversity_index = (
+            BIODIVERSITY_WEIGHTS["forest"] * float(landcover_metrics.get("forest_pct", 0.0)) +
+            BIODIVERSITY_WEIGHTS["wetland"] * float(landcover_metrics.get("wetland_pct", 0.0)) +
+            BIODIVERSITY_WEIGHTS["shrub"] * float(landcover_metrics.get("shrub_pct", 0.0)) +
+            BIODIVERSITY_WEIGHTS["grass"] * float(landcover_metrics.get("grass_pct", 0.0))
+        )
+        natural_context_details["biodiversity_index"] = round(min(100.0, biodiversity_index), 2)
+        entropy_components = [
+            float(landcover_metrics.get("forest_pct", 0.0)),
+            float(landcover_metrics.get("wetland_pct", 0.0)),
+            float(landcover_metrics.get("shrub_pct", 0.0)),
+            float(landcover_metrics.get("grass_pct", 0.0))
+        ]
+        positive_components = [p for p in entropy_components if p > 0]
+        if len(positive_components) > 1:
+            total_pct = sum(positive_components)
+            normalized = [p / total_pct for p in positive_components if total_pct > 0]
+            if normalized:
+                entropy_value = 0.0
+                for val in normalized:
+                    entropy_value -= val * math.log(val, 2)
+                entropy_max = math.log(len(normalized), 2) if len(normalized) > 1 else 1.0
+                if entropy_max > 0:
+                    biodiversity_entropy = min(100.0, (entropy_value / entropy_max) * 100.0)
+                    biodiversity_bonus = min(
+                        BIODIVERSITY_BONUS_MAX,
+                        (biodiversity_entropy / 100.0) * BIODIVERSITY_BONUS_MAX * CONTEXT_SCALERS.get(area_type_key, 1.0)
+                    )
+        natural_context_details["biodiversity_entropy"] = round(biodiversity_entropy, 2)
+    else:
+        natural_context_details["biodiversity_index"] = 0.0
+
+    total_context_before_cap = context_bonus_total
+    if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
+        context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
+
+    if natural_context_components:
+        natural_context_details["component_scores"] = natural_context_components
+        natural_context_details["total_bonus"] = round(context_bonus_total, 2)
+        natural_context_details["total_before_cap"] = round(total_context_before_cap, 2)
+        natural_context_details["cap"] = NATURAL_CONTEXT_BONUS_CAP
+        details["natural_context"] = natural_context_details
+    else:
+        details["natural_context"] = {
+            "component_scores": {},
+            "total_bonus": 0.0,
+            "total_before_cap": 0.0,
+            "cap": NATURAL_CONTEXT_BONUS_CAP
+        }
+    normalized_multi = {}
+    for label in MULTI_RADIUS_CANOPY.keys():
+        val = canopy_multi.get(label)
+        normalized_multi[label] = round(val, 2) if isinstance(val, (int, float)) else None
+    details["multi_radius_canopy"] = normalized_multi
+    if gvi_metrics:
+        details["gvi_metrics"] = {
+            "tree_canopy_pct": round(float(gvi_metrics.get("tree_canopy_pct") or 0.0), 2),
+            "green_space_ratio": round(float(gvi_metrics.get("green_space_ratio") or 0.0), 2),
+            "vegetation_health": round(float(gvi_metrics.get("vegetation_health") or 0.0), 3),
+            "seasonal_variation": round(float(gvi_metrics.get("seasonal_variation") or 0.0), 3),
+            "radius_m": gvi_radius_used
+        }
+    else:
+        details["gvi_metrics"] = None
+    details["biodiversity"] = {
+        "entropy": round(biodiversity_entropy, 2),
+        "bonus": round(biodiversity_bonus, 2),
+        "index": natural_context_details.get("biodiversity_index")
+    }
+
+    area_type_key = (area_type or "").lower() or "unknown"
+    expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
+    if primary_canopy_pct is None:
+        primary_canopy_pct = details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0
+    canopy_expectation_ratio = None
+    if expectation > 0:
+        canopy_expectation_ratio = primary_canopy_pct / expectation
+    details["canopy_expectation"] = {
+        "expected_pct": expectation,
+        "observed_pct": round(primary_canopy_pct, 2),
+        "ratio": round(canopy_expectation_ratio, 3) if canopy_expectation_ratio is not None else None
+    }
+    expectation_weight = CONTEXT_SCALERS.get(area_type_key, 1.0)
+    if canopy_expectation_ratio is not None:
+        if canopy_expectation_ratio >= 1.05:
+            expectation_adjustment = min(
+                CANOPY_EXPECTATION_BONUS_MAX,
+                (canopy_expectation_ratio - 1.0) * 20.0 * expectation_weight
+            )
+        elif canopy_expectation_ratio <= 0.85:
+            expectation_penalty = min(
+                CANOPY_EXPECTATION_PENALTY_MAX,
+                (0.85 - canopy_expectation_ratio) * 18.0 / max(expectation_weight, 0.65)
+            )
+    details["canopy_expectation"]["bonus"] = round(expectation_adjustment, 2)
+    details["canopy_expectation"]["penalty"] = round(expectation_penalty, 2)
+    details["expectation_effect"] = {
+        "bonus": round(expectation_adjustment, 2),
+        "penalty": round(expectation_penalty, 2),
+        "net": round(expectation_adjustment - expectation_penalty, 2)
+    }
+
+    tree_radius_km = None
+    if tree_radius_used:
+        tree_radius_km = tree_radius_used / 1000.0
+        details["tree_radius_m"] = tree_radius_used
+
+    green_view_index = 0.0
+    green_view_details: Dict[str, float] = {}
+    gvi_weight = GREEN_VIEW_WEIGHTS.get(area_type_key, 1.0)
+
+    if gvi_metrics:
+        tree_canopy_vis = float(gvi_metrics.get("tree_canopy_pct") or 0.0)
+        green_ratio = float(gvi_metrics.get("green_space_ratio") or 0.0)
+        vegetation_health = float(gvi_metrics.get("vegetation_health") or 0.0) * 100.0
+        seasonal_variation = float(gvi_metrics.get("seasonal_variation") or 0.0)
+        gvi_raw = (
+            tree_canopy_vis * 0.4 +
+            green_ratio * 0.3 +
+            vegetation_health * 0.2 +
+            max(0.0, (1.0 - seasonal_variation)) * 10.0
+        )
+        green_view_index = min(100.0, max(0.0, gvi_raw))
+        gvi_bonus = min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight)
+        green_view_details = {
+            "method": "gee_ndvi",
+            "radius_m": gvi_radius_used,
+            "components": {
+                "tree_canopy_pct": round(tree_canopy_vis, 2),
+                "green_space_ratio": round(green_ratio, 2),
+                "vegetation_health_pct": round(vegetation_health, 2),
+                "seasonal_variation": round(seasonal_variation, 3)
+            },
+            "weight": gvi_weight
+        }
+    else:
+        canopy_component = (primary_canopy_pct or 0.0) * 0.6
+        street_component = 0.0
+        if street_tree_points:
+            street_component += min(40.0, (street_tree_points / 50.0) * 40.0)
+        if osm_tree_points:
+            street_component += min(20.0, (osm_tree_points / 50.0) * 20.0)
+        density_component = 0.0
+        if tree_radius_km and street_tree_feature_total > 0:
+            area_sq_km = math.pi * (tree_radius_km ** 2)
+            density_component = min(20.0, (street_tree_feature_total / max(area_sq_km, 0.1)) * 0.5)
+        green_view_index = min(100.0, max(0.0, canopy_component + street_component + density_component))
+        gvi_bonus = min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight)
+        green_view_details = {
+            "method": "composite",
+            "components": {
+                "canopy_component": round(canopy_component, 2),
+                "street_component": round(street_component, 2),
+                "density_component": round(density_component, 2)
+            },
+            "weight": gvi_weight
+        }
+
+    details["green_view_index"] = round(green_view_index, 2)
+    details["green_view_details"] = green_view_details
+    details["street_tree_feature_total"] = street_tree_feature_total
+    details["gvi_bonus"] = round(gvi_bonus, 2)
+    adjusted_score = base_tree_score + expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus
+    score = max(0.0, min(50.0, adjusted_score))
+    details["tree_base_score"] = round(base_tree_score, 2)
+    details["adjusted_tree_score"] = round(adjusted_score, 2)
+    details["bonus_breakdown"] = {
+        "canopy_expectation_bonus": round(expectation_adjustment, 2),
+        "canopy_expectation_penalty": round(-expectation_penalty, 2) if expectation_penalty else 0.0,
+        "green_view_bonus": round(gvi_bonus, 2),
+        "biodiversity_bonus": round(biodiversity_bonus, 2),
+    }
+    details["bonus_breakdown"]["net"] = round(
+        expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus,
+        2
+    )
+
+    details['context_bonus_applied'] = context_bonus_total
+    details['total_score'] = score
+
+    return score, details
+
+
+def calculate_natural_beauty(lat: float,
+                             lon: float,
+                             city: Optional[str] = None,
+                             area_type: Optional[str] = None,
+                             location_scope: Optional[str] = None,
+                             location_name: Optional[str] = None,
+                             overrides: Optional[Dict[str, float]] = None,
+                             enhancers_data: Optional[Dict] = None,
+                             disable_enhancers: bool = False,
+                             enhancer_radius_m: int = 1500) -> Dict:
+    """
+    Compute natural beauty components prior to normalization.
+    """
+    tree_score, tree_details = _score_trees(
+        lat,
+        lon,
+        city,
+        location_scope=location_scope,
+        area_type=area_type,
+        location_name=location_name,
+        overrides=overrides
+    )
+
+    context_info = tree_details.get("natural_context", {}) or {}
+    tree_bonus_breakdown = tree_details.get("bonus_breakdown", {}) or {}
+    context_bonus_raw = float(context_info.get("total_bonus") or 0.0)
+    natural_bonus_raw = context_bonus_raw
+    natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+    scenic_bonus_raw = 0.0
+    scenic_meta = {
+        "count": 0,
+        "closest_distance_m": None,
+        "weights_sum": 0.0,
+        "top_viewpoints": []
+    }
+
+    if not disable_enhancers:
+        if enhancers_data is None:
+            enhancers_data = osm_api.query_beauty_enhancers(lat, lon, radius_m=enhancer_radius_m)
+        scenic_bonus_raw, scenic_meta = _compute_viewshed_proxy(
+            enhancers_data.get("viewpoints_details", []),
+            radius_m=enhancer_radius_m
+        )
+        natural_bonus_raw = scenic_bonus_raw + context_bonus_raw
+        natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+    else:
+        enhancers_data = enhancers_data or {"viewpoints_details": []}
+
+    tree_details.setdefault("scenic_proxy", scenic_meta)
+    tree_details.setdefault("enhancer_bonus", {})
+    tree_details["enhancer_bonus"].update({
+        "natural_raw": round(natural_bonus_raw, 2),
+        "scenic_raw": round(scenic_bonus_raw, 2),
+        "context_raw": round(context_bonus_raw, 2),
+        "natural_scaled": round(natural_bonus_scaled, 2),
+        "scaled_total": round(natural_bonus_scaled, 2)
+    })
+    tree_details["enhancer_breakdown"] = {
+        "scenic_raw": round(scenic_bonus_raw, 2),
+        "context_raw": round(context_bonus_raw, 2),
+        "raw_total": round(natural_bonus_raw, 2),
+        "scaled_total": round(natural_bonus_scaled, 2),
+        "cap": NATURAL_ENHANCER_CAP,
+        "components": context_info.get("component_scores", {})
+    }
+
+    natural_native = max(0.0, tree_score + natural_bonus_scaled)
+    natural_score_raw = min(100.0, natural_native * 2.0)
+
+    natural_score_norm, natural_norm_meta = normalize_beauty_score(
+        natural_score_raw,
+        area_type
+    )
+
+    return {
+        "tree_score_0_50": tree_score,
+        "details": tree_details,
+        "enhancers": enhancers_data,
+        "natural_bonus_raw": natural_bonus_raw,
+        "natural_bonus_scaled": natural_bonus_scaled,
+        "scenic_bonus_raw": scenic_bonus_raw,
+        "context_bonus_raw": context_bonus_raw,
+        "score_before_normalization": natural_score_raw,
+        "scenic_metadata": scenic_meta,
+        "score": natural_score_norm,
+        "normalization": natural_norm_meta,
+    }
+
+
+def get_natural_beauty_score(lat: float,
+                             lon: float,
+                             city: Optional[str] = None,
+                             area_type: Optional[str] = None,
+                             location_scope: Optional[str] = None,
+                             location_name: Optional[str] = None,
+                             overrides: Optional[Dict[str, float]] = None,
+                             enhancers_data: Optional[Dict] = None,
+                             disable_enhancers: bool = False) -> Tuple[float, Dict]:
+    """
+    Public entry point for the natural beauty pillar.
+    """
+    result = calculate_natural_beauty(
+        lat,
+        lon,
+        city=city,
+        area_type=area_type,
+        location_scope=location_scope,
+        location_name=location_name,
+        overrides=overrides,
+        enhancers_data=enhancers_data,
+        disable_enhancers=disable_enhancers
+    )
+
+    natural_score_raw = result["score_before_normalization"]
+    tree_details = result["details"]
+
+    natural_area_type = area_type
+    if isinstance(tree_details, dict):
+        natural_area_type = tree_details.get("classification", {}).get("effective_area_type", area_type)  # type: ignore
+
+    natural_score_norm, natural_norm_meta = normalize_beauty_score(
+        natural_score_raw,
+        natural_area_type
+    )
+
+    details = {
+        "tree_score_0_50": round(result["tree_score_0_50"], 2),
+        "enhancer_bonus_raw": round(result["natural_bonus_raw"], 2),
+        "enhancer_bonus_scaled": round(result["natural_bonus_scaled"], 2),
+        "context_bonus_raw": round(result["context_bonus_raw"], 2),
+        "score_before_normalization": round(natural_score_raw, 2),
+        "normalization": natural_norm_meta,
+        "tree_analysis": tree_details,
+        "scenic_proxy": result["scenic_metadata"],
+        "enhancer_bonus": {
+            "natural_raw": round(result["natural_bonus_raw"], 2),
+            "natural_scaled": round(result["natural_bonus_scaled"], 2),
+            "scaled_total": round(result["natural_bonus_scaled"], 2)
+        },
+        "context_bonus": tree_details.get("natural_context") if isinstance(tree_details, dict) else {},
+        "bonus_breakdown": tree_details.get("bonus_breakdown", {}),
+        "green_view_index": tree_details.get("green_view_index"),
+        "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
+        "gvi_metrics": tree_details.get("gvi_metrics"),
+        "expectation_effect": tree_details.get("expectation_effect"),
+    }
+
+    return natural_score_norm, details
+
