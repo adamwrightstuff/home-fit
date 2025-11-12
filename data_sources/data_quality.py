@@ -396,29 +396,37 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     # PRIORITIZED: If Census indicates historic (more reliable than OSM), be more forgiving
     if effective in ("urban_core", "urban_core_lowrise", "suburban") and density and density > 2500:
         if is_historic():
-            # Prioritize Census data for historic detection (more stable than OSM landmarks)
-            census_historic = median_year_built is not None and median_year_built < 1950
-            
-            # Organic historic pattern: moderate diversity from centuries of growth
-            # Height: 15-70 (moderate variation, 2-6 stories)
-            # Type: 25-85 (mixed-use historic neighborhoods)
-            # Not uniform enough for urban_residential, not skyscraper diverse
-            
-            # If Census confirms historic, be more forgiving with diversity thresholds
-            # This handles neighborhoods where OSM diversity metrics vary slightly
-            if census_historic:
-                # Census-based historic: More forgiving thresholds for coordinate variance
-                # Allow slightly wider range to handle block-to-block variation
-                if (5 < levels_entropy < 80 and 15 < building_type_diversity < 92):
-                    # Don't override if already classified as uniform (urban_residential)
-                    if effective != "urban_residential":
-                        return "historic_urban"
-            else:
-                # OSM landmark-based historic: Use stricter thresholds (original logic)
-                if (10 < levels_entropy < 70 and 20 < building_type_diversity < 85):
-                    # Don't override if already classified as uniform (urban_residential)
-                    if effective != "urban_residential":
-                        return "historic_urban"
+            allow_historic_upgrade = True
+            if effective == "suburban":
+                landmark_count = historic_landmarks or 0
+                coverage_ratio = built_coverage_ratio or 0.0
+                allow_historic_upgrade = (
+                    density >= 7500 and (landmark_count >= 8 or coverage_ratio >= 0.22)
+                )
+            if allow_historic_upgrade:
+                # Prioritize Census data for historic detection (more stable than OSM landmarks)
+                census_historic = median_year_built is not None and median_year_built < 1950
+
+                # Organic historic pattern: moderate diversity from centuries of growth
+                # Height: 15-70 (moderate variation, 2-6 stories)
+                # Type: 25-85 (mixed-use historic neighborhoods)
+                # Not uniform enough for urban_residential, not skyscraper diverse
+
+                # If Census confirms historic, be more forgiving with diversity thresholds
+                # This handles neighborhoods where OSM diversity metrics vary slightly
+                if census_historic:
+                    # Census-based historic: More forgiving thresholds for coordinate variance
+                    # Allow slightly wider range to handle block-to-block variation
+                    if (5 < levels_entropy < 80 and 15 < building_type_diversity < 92):
+                        # Don't override if already classified as uniform (urban_residential)
+                        if effective != "urban_residential":
+                            return "historic_urban"
+                else:
+                    # OSM landmark-based historic: Use stricter thresholds (original logic)
+                    if (10 < levels_entropy < 70 and 20 < building_type_diversity < 85):
+                        # Don't override if already classified as uniform (urban_residential)
+                        if effective != "urban_residential":
+                            return "historic_urban"
     
     # Priority 3: Urban core lowrise (moderate diversity, not uniform)
     # Applies to dense urban areas with moderate diversity (not uniform like Levittown/Carmel)
