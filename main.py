@@ -9,14 +9,14 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# UPDATED IMPORTS - 8 Purpose-Driven Pillars
+# UPDATED IMPORTS - 9 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from data_sources.cache import clear_cache, get_cache_stats, cleanup_expired_cache
 from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
-from pillars.neighborhood_beauty import get_neighborhood_beauty_score
+from pillars.neighborhood_beauty import get_neighborhood_beauty_score, _normalize_beauty_score
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -38,18 +38,29 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     Parse token allocation string or return default equal distribution.
     
     Format: "active_outdoors:5,neighborhood_beauty:4,air_travel:3,..."
-    Default: Equal distribution across all 8 pillars (2.5 tokens each)
+    Default: Equal distribution across all 9 pillars (~2.22 tokens each)
     """
-    pillar_names = [
-        "active_outdoors", "neighborhood_beauty", "neighborhood_amenities",
-        "air_travel_access", "public_transit_access", "healthcare_access", 
-        "quality_education", "housing_value"
+    primary_pillars = [
+        "active_outdoors",
+        "built_beauty",
+        "natural_beauty",
+        "neighborhood_amenities",
+        "air_travel_access",
+        "public_transit_access",
+        "healthcare_access",
+        "quality_education",
+        "housing_value"
     ]
+    alias_pillars = {"neighborhood_beauty"}
+    pillar_names = primary_pillars + list(alias_pillars)
     
     if tokens is None:
         # Default equal distribution
-        equal_tokens = 20.0 / 8  # 2.5 tokens each
-        return {pillar: equal_tokens for pillar in pillar_names}
+        equal_tokens = 20.0 / len(primary_pillars)
+        default_allocation = {pillar: equal_tokens for pillar in primary_pillars}
+        for alias in alias_pillars:
+            default_allocation[alias] = 0.0
+        return default_allocation
     
     # Parse custom allocation
     token_dict = {}
@@ -61,8 +72,13 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
             pillar = pillar.strip()
             count = float(count.strip())
             
-            if pillar in pillar_names:
-                token_dict[pillar] = count
+            if pillar in primary_pillars:
+                token_dict[pillar] = token_dict.get(pillar, 0.0) + count
+                total_allocated += count
+            elif pillar in alias_pillars:
+                split = count / 2.0
+                token_dict["built_beauty"] = token_dict.get("built_beauty", 0.0) + split
+                token_dict["natural_beauty"] = token_dict.get("natural_beauty", 0.0) + split
                 total_allocated += count
         
         # Auto-normalize to 20 tokens (preserve user intent ratios)
@@ -71,13 +87,14 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
             token_dict = {k: v * normalization_factor for k, v in token_dict.items()}
         
         # Fill missing pillars with 0
-        for pillar in pillar_names:
+        for pillar in primary_pillars:
             if pillar not in token_dict:
                 token_dict[pillar] = 0.0
-                
+        for alias in alias_pillars:
+            token_dict[alias] = 0.0
     except Exception:
         # Fallback to equal distribution on parsing error
-        equal_tokens = 20.0 / 8
+        equal_tokens = 20.0 / len(pillar_names)
         token_dict = {pillar: equal_tokens for pillar in pillar_names}
     
     return token_dict
@@ -85,7 +102,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
 
 app = FastAPI(
     title="HomeFit API",
-    description="Purpose-driven livability scoring API with 8 pillars",
+    description="Purpose-driven livability scoring API with 9 pillars",
     version="3.0.0"
 )
 
@@ -108,6 +125,8 @@ def root():
         "version": "3.0.0",
         "pillars": [
             "active_outdoors",
+            "built_beauty",
+            "natural_beauty",
             "neighborhood_beauty",
             "neighborhood_amenities",
             "air_travel_access",
@@ -135,9 +154,10 @@ def get_livability_score(request: Request,
     """
     Calculate livability score for a given address.
 
-    Returns scores across 8 purpose-driven pillars:
+    Returns scores across 9 purpose-driven pillars:
     - Active Outdoors: Can I be active outside regularly?
-    - Neighborhood Beauty: Is my environment beautiful and charming?
+    - Built Beauty: Are the buildings cohesive, historic, and well-crafted?
+    - Natural Beauty: Is the landscape/tree canopy beautiful and calming?
     - Neighborhood Amenities: Can I walk to great local spots?
     - Air Travel Access: How easily can I fly somewhere?
     - Public Transit Access: Can I get around without a car?
@@ -323,7 +343,8 @@ def get_livability_score(request: Request,
                 'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
             })
         )
-    if _include_pillar('neighborhood_beauty'):
+    need_beauty_pillar = _include_pillar('neighborhood_beauty') or _include_pillar('built_beauty') or _include_pillar('natural_beauty')
+    if need_beauty_pillar:
         pillar_tasks.append(
             ('neighborhood_beauty', get_neighborhood_beauty_score, {
                 'lat': lat,
@@ -332,6 +353,7 @@ def get_livability_score(request: Request,
                 'beauty_weights': beauty_weights,
                 'location_scope': location_scope,
                 'area_type': area_type,
+                'location_name': location,
                 'test_overrides': beauty_overrides if beauty_overrides else None,
                 'test_mode': test_mode_enabled
             })
@@ -413,12 +435,95 @@ def get_livability_score(request: Request,
 
     # Extract results with error handling (no fallback scores - use 0.0 if failed)
     active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-    beauty_score, beauty_details = pillar_results.get('neighborhood_beauty') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    beauty_score, beauty_details = pillar_results.get('neighborhood_beauty') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}, "details": {}})
     amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+    beauty_details_details = beauty_details.get("details", {})
+    enhancer_breakdown = beauty_details_details.get("enhancer_bonus_breakdown", {}) if isinstance(beauty_details_details, dict) else {}
+    arch_enhancer_meta = beauty_details_details.get("architectural_analysis", {}).get("enhancer_bonus", {}) if isinstance(beauty_details_details.get("architectural_analysis"), dict) else {}
+    if not isinstance(arch_enhancer_meta, dict):
+        arch_enhancer_meta = {}
+    built_bonus_raw = arch_enhancer_meta.get("built_raw", enhancer_breakdown.get("built_bonus", 0.0))
+    built_bonus_scaled = enhancer_breakdown.get("built_bonus", built_bonus_raw)
+    natural_breakdown_meta = enhancer_breakdown.get("natural_breakdown", {}) if isinstance(enhancer_breakdown, dict) else {}
+    if not isinstance(natural_breakdown_meta, dict):
+        natural_breakdown_meta = {}
+    natural_bonus_raw = natural_breakdown_meta.get("raw_total", enhancer_breakdown.get("natural_bonus", 0.0))
+    natural_bonus_scaled = natural_breakdown_meta.get("scaled_total", enhancer_breakdown.get("natural_bonus", natural_bonus_raw))
+    scenic_meta = enhancer_breakdown.get("scenic", {})
+
+    arch_component = beauty_details.get("breakdown", {}).get("architectural_beauty") or 0.0
+    tree_component = beauty_details.get("breakdown", {}).get("trees") or 0.0
+
+    built_native = max(0.0, arch_component + built_bonus_scaled)
+    natural_native = max(0.0, tree_component + natural_bonus_scaled)
+
+    beauty_area_type = beauty_details.get("weight_metadata", {}).get("area_type") if isinstance(beauty_details.get("weight_metadata"), dict) else None
+    beauty_area_type = beauty_area_type or area_type
+
+    built_score_raw = min(100.0, built_native * 2.0)
+    natural_score_raw = min(100.0, natural_native * 2.0)
+
+    built_score_norm, built_norm_meta = _normalize_beauty_score(built_score_raw, beauty_area_type)
+    natural_score_norm, natural_norm_meta = _normalize_beauty_score(natural_score_raw, beauty_area_type)
+
+    built_details = {
+        "component_score_0_50": round(arch_component, 2),
+        "enhancer_bonus_raw": round(built_bonus_raw, 2),
+        "enhancer_bonus_scaled": round(built_bonus_scaled, 2),
+        "score_before_normalization": round(built_score_raw, 2),
+        "normalization": built_norm_meta,
+        "source": "neighborhood_beauty",
+        "architectural_analysis": beauty_details_details.get("architectural_analysis", {}),
+        "enhancer_bonus": {
+            "built_raw": round(built_bonus_raw, 2),
+            "built_scaled": round(built_bonus_scaled, 2),
+            "scaled_total": enhancer_breakdown.get("scaled_bonus"),
+        }
+    }
+
+    tree_analysis_data = beauty_details_details.get("tree_analysis", {})
+    if not isinstance(tree_analysis_data, dict):
+        tree_analysis_data = {}
+    natural_context = tree_analysis_data.get("natural_context") if isinstance(tree_analysis_data, dict) else {}
+    if not isinstance(natural_context, dict):
+        natural_context = {}
+    context_bonus_raw = natural_context.get("total_bonus")
+
+    natural_details = {
+        "tree_score_0_50": round(tree_component, 2),
+        "enhancer_bonus_raw": round(natural_bonus_raw, 2),
+        "enhancer_bonus_scaled": round(natural_bonus_scaled, 2),
+        "context_bonus_raw": round(context_bonus_raw, 2) if context_bonus_raw is not None else None,
+        "score_before_normalization": round(natural_score_raw, 2),
+        "normalization": natural_norm_meta,
+        "source": "neighborhood_beauty",
+        "tree_analysis": tree_analysis_data,
+        "scenic_proxy": scenic_meta,
+        "enhancer_bonus": {
+            "natural_raw": round(natural_bonus_raw, 2),
+            "natural_scaled": round(natural_bonus_scaled, 2),
+            "scaled_total": enhancer_breakdown.get("scaled_bonus"),
+        }
+    }
+    natural_details["context_bonus"] = {
+        "components": (natural_context or {}).get("component_scores"),
+        "total_applied": (natural_context or {}).get("total_bonus"),
+        "total_before_cap": (natural_context or {}).get("total_before_cap"),
+        "cap": (natural_context or {}).get("cap"),
+        "metrics": {
+            "topography": (natural_context or {}).get("topography_metrics"),
+            "landcover": (natural_context or {}).get("landcover_metrics"),
+            "landcover_source": (natural_context or {}).get("landcover_source")
+        }
+    }
+
+    pillar_results['built_beauty'] = (built_score_norm, built_details)
+    pillar_results['natural_beauty'] = (natural_score_norm, natural_details)
 
     # Note: For school_avg, if None (not computed or failed), set to 0 for calculation
     # but mark in response that it wasn't computed
@@ -462,8 +567,13 @@ def get_livability_score(request: Request,
             for pillar_name in token_allocation:
                 token_allocation[pillar_name] = equal if pillar_name in only_pillars else 0.0
 
+    built_score = built_score_norm
+    natural_score = natural_score_norm
+
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 20) +
+        (built_score * token_allocation["built_beauty"] / 20) +
+        (natural_score * token_allocation["natural_beauty"] / 20) +
         (beauty_score * token_allocation["neighborhood_beauty"] / 20) +
         (amenities_score * token_allocation["neighborhood_amenities"] / 20) +
         (air_travel_score * token_allocation["air_travel_access"] / 20) +
@@ -475,6 +585,8 @@ def get_livability_score(request: Request,
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
     logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
+                f"Built Beauty: {built_score:.1f}/100 | "
+                f"Natural Beauty: {natural_score:.1f}/100 | "
                 f"Neighborhood Beauty: {beauty_score:.1f}/100 | "
                 f"Neighborhood Amenities: {amenities_score:.1f}/100 | "
                 f"Air Travel Access: {air_travel_score:.1f}/100 | "
@@ -503,6 +615,34 @@ def get_livability_score(request: Request,
             "data_quality": active_outdoors_details.get("data_quality", {}),
             "area_classification": active_outdoors_details.get("area_classification", {})
         },
+        "built_beauty": {
+            "score": built_score,
+            "weight": token_allocation["built_beauty"],
+            "contribution": round(built_score * token_allocation["built_beauty"] / 20, 2),
+            "breakdown": {
+                "component_score_0_50": built_details["component_score_0_50"],
+                "enhancer_bonus_raw": built_details["enhancer_bonus_raw"]
+            },
+            "summary": {},
+            "details": built_details,
+            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": beauty_details.get("data_quality", {}),
+            "area_classification": beauty_details.get("area_classification", {})
+        },
+        "natural_beauty": {
+            "score": natural_score,
+            "weight": token_allocation["natural_beauty"],
+            "contribution": round(natural_score * token_allocation["natural_beauty"] / 20, 2),
+            "breakdown": {
+                "tree_score_0_50": natural_details["tree_score_0_50"],
+                "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
+            },
+            "summary": {},
+            "details": natural_details,
+            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": beauty_details.get("data_quality", {}),
+            "area_classification": beauty_details.get("area_classification", {})
+        },
         "neighborhood_beauty": {
             "score": beauty_score,
             "weight": token_allocation["neighborhood_beauty"],
@@ -510,6 +650,7 @@ def get_livability_score(request: Request,
             "breakdown": beauty_details.get("breakdown", {}),
             "summary": beauty_details.get("summary", {}),
             "details": beauty_details.get("details", {}),
+            "weights": beauty_details.get("weights", {}),
             "enhanced": False,
             "scoring_note": beauty_details.get("scoring_note", ""),
             "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
@@ -543,6 +684,7 @@ def get_livability_score(request: Request,
             "contribution": round(transit_score * token_allocation["public_transit_access"] / 20, 2),
             "breakdown": transit_details["breakdown"],
             "summary": transit_details["summary"],
+            "details": transit_details.get("details", {}),
             "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": transit_details.get("data_quality", {}),
             "area_classification": transit_details.get("area_classification", {})
@@ -607,10 +749,12 @@ def get_livability_score(request: Request,
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
         "metadata": {
             "version": "3.0.0",
-            "architecture": "8 Purpose-Driven Pillars",
+            "architecture": "9 Purpose-Driven Pillars",
             "pillars": {
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
-                "neighborhood_beauty": "Is my environment beautiful? (Trees, green space, architectural diversity, art)",
+                "built_beauty": "Are the buildings and streets visually harmonious? (Architecture, form, materials, heritage)",
+                "natural_beauty": "Is the landscape beautiful and calming? (Tree canopy, scenic adjacency, viewpoints)",
+                "neighborhood_beauty": "Legacy composite of built and natural beauty for compatibility (Trees + architecture + enhancers)",
                 "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
                 "air_travel_access": "How easily can I fly? (Airport proximity and type)",
                 "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
@@ -627,7 +771,7 @@ def get_livability_score(request: Request,
                 "OurAirports (airport database)",
                 "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of 8 pillars. Equal token distribution by default (2.5 tokens each). Custom token allocation available via 'tokens' parameter.",
+            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default (~2.22 tokens each). Custom token allocation available via 'tokens' parameter.",
             "test_mode": test_mode_enabled
         }
     }
@@ -772,7 +916,7 @@ def health_check():
         "checks": checks,
         "cache_stats": cache_stats,
         "version": "3.0.0",
-        "architecture": "8 Purpose-Driven Pillars",
+        "architecture": "9 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
             "neighborhood_beauty", 
@@ -874,7 +1018,8 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["levels_entropy"],
             diversity_metrics["building_type_diversity"],
             historic_landmarks=historic_landmarks,
-            median_year_built=median_year_built
+            median_year_built=median_year_built,
+            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio")
         )
         
         # Calculate beauty score using context-aware scoring

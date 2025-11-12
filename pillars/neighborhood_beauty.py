@@ -8,16 +8,24 @@ Uses objective, real data sources:
 """
 
 import os
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 AREA_NORMALIZATION = {
-    "historic_urban": {"shift": 15.0, "scale": 1.04, "max": 98.0},
-    "suburban": {"shift": 9.5, "scale": 1.02, "max": 95.0},
-    "urban_residential": {"shift": -2.5, "scale": 0.95, "max": 91.0},
-    "urban_core": {"shift": -2.5, "scale": 0.95, "max": 93.0},
-    "exurban": {"shift": 13.0, "scale": 1.02, "max": 94.0},
-    "rural": {"shift": 10.0, "scale": 1.02, "max": 93.0},
-    "urban_core_lowrise": {"shift": 3.0, "scale": 0.96, "max": 88.0},
+    "historic_urban": {"shift": 18.0, "scale": 1.08, "max": 99.0},
+    "suburban": {"shift": 7.5, "scale": 1.0, "max": 94.0},
+    "urban_residential": {"shift": -6.0, "scale": 0.92, "max": 88.0},
+    "urban_core": {"shift": 1.5, "scale": 1.0, "max": 94.0},
+    "exurban": {"shift": 12.5, "scale": 1.02, "max": 95.0},
+    "rural": {"shift": 13.0, "scale": 1.04, "max": 95.0},
+    "urban_core_lowrise": {"shift": 4.0, "scale": 0.98, "max": 90.0},
 }
+
+TOPOGRAPHY_BONUS_MAX = 12.0
+LANDCOVER_BONUS_MAX = 8.0
+WATER_BONUS_MAX = 10.0
+NATURAL_CONTEXT_BONUS_CAP = 20.0
+BUILT_ENHANCER_CAP = 8.0
+NATURAL_ENHANCER_CAP = 18.0
+BEAUTY_BONUS_CAP = BUILT_ENHANCER_CAP + NATURAL_ENHANCER_CAP
 
 
 def _normalize_beauty_score(score: float, area_type: Optional[str]) -> Tuple[float, Optional[Dict[str, float]]]:
@@ -216,21 +224,102 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Small beauty enhancers (viewpoints/artwork/fountains/waterfront)
     disable_enhancers = os.getenv("BEAUTY_DISABLE_ENHANCERS", "false").lower() == "true"
+    built_enhancer_bonus = 0.0
+    scenic_bonus_raw = 0.0
+    context_info = tree_details.get("natural_context", {})
+    context_bonus_raw = float(context_info.get("total_bonus") or 0.0)
+    natural_bonus_raw = context_bonus_raw
+    natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+    beauty_bonus = 0.0
+    scenic_meta = {
+        "count": 0,
+        "closest_distance_m": None,
+        "weights_sum": 0.0,
+        "top_viewpoints": []
+    }
+    enhancer_bonus_breakdown = {
+        "built_bonus": round(built_enhancer_bonus, 2),
+        "natural_bonus": 0.0,
+        "scaled_bonus": 0.0,
+        "scenic": scenic_meta,
+        "natural_breakdown": {
+            "scenic_raw": 0.0,
+            "context_raw": round(context_bonus_raw, 2),
+            "raw_total": round(context_bonus_raw, 2),
+            "scaled_total": 0.0,
+            "cap": NATURAL_ENHANCER_CAP
+        }
+    }
     try:
         from data_sources.osm_api import query_beauty_enhancers
         enhancers = query_beauty_enhancers(lat, lon, radius_m=1500)
         if disable_enhancers:
             beauty_bonus = 0.0
+            context_bonus_raw = 0.0
+            natural_bonus_raw = 0.0
+            natural_bonus_scaled = 0.0
+            built_enhancer_bonus = 0.0
         else:
-            beauty_bonus = min(8.0, enhancers.get('viewpoints',0)*2 + enhancers.get('artwork',0)*3 + enhancers.get('fountains',0)*1 + enhancers.get('waterfront',0)*2)
+            scenic_bonus, scenic_meta = _compute_viewshed_proxy(
+                enhancers.get("viewpoints_details", []),
+                radius_m=1500
+            )
+            scenic_bonus_raw = scenic_bonus
+
+            artwork_count = enhancers.get("artwork", 0)
+            fountain_count = enhancers.get("fountains", 0)
+            built_enhancer_bonus += min(4.5, artwork_count * 1.5)
+            built_enhancer_bonus += min(1.5, fountain_count * 0.5)
+
             arch_conf = arch_details.get("confidence_0_1") if isinstance(arch_details, dict) else None
+            built_scale = 1.0
             if arch_conf is not None:
-                bonus_scale = 0.5 + 0.5 * max(0.0, min(1.0, arch_conf))
-                beauty_bonus *= bonus_scale
+                built_scale = 0.5 + 0.5 * max(0.0, min(1.0, arch_conf))
+            
+            built_bonus_scaled = min(BUILT_ENHANCER_CAP, built_enhancer_bonus * built_scale)
+
+            natural_bonus_raw = scenic_bonus_raw + context_bonus_raw
+            natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+
+            beauty_bonus = min(BEAUTY_BONUS_CAP, built_bonus_scaled + natural_bonus_scaled)
+            
+            built_enhancer_bonus = built_bonus_scaled
+            
         total_score = min(100.0, total_score + beauty_bonus)
     except Exception:
-        enhancers = {"viewpoints":0, "artwork":0, "fountains":0, "waterfront":0}
+        enhancers = {"viewpoints":0, "viewpoints_details": [], "artwork":0, "artwork_details": [], "fountains":0, "fountains_details": [], "waterfront":0}
         beauty_bonus = 0.0
+        natural_bonus_raw = scenic_bonus_raw + context_bonus_raw
+        natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+
+    enhancer_bonus_breakdown["built_bonus"] = round(built_enhancer_bonus, 2)
+    enhancer_bonus_breakdown["natural_bonus"] = round(natural_bonus_scaled, 2)
+    enhancer_bonus_breakdown["scaled_bonus"] = round(beauty_bonus, 2)
+    enhancer_bonus_breakdown["natural_breakdown"] = {
+        "scenic_raw": round(scenic_bonus_raw, 2),
+        "context_raw": round(context_bonus_raw, 2),
+        "raw_total": round(natural_bonus_raw, 2),
+        "scaled_total": round(natural_bonus_scaled, 2),
+        "cap": NATURAL_ENHANCER_CAP,
+        "components": tree_details.get("natural_context", {}).get("component_scores", {})
+    }
+    enhancer_bonus_breakdown["scenic"] = scenic_meta
+
+    tree_details.setdefault("scenic_proxy", scenic_meta)
+    tree_details.setdefault("enhancer_bonus", {})
+    tree_details["enhancer_bonus"].update({
+        "natural_raw": round(natural_bonus_raw, 2),
+        "scenic_raw": round(scenic_bonus_raw, 2),
+        "context_raw": round(context_bonus_raw, 2),
+        "natural_scaled": round(natural_bonus_scaled, 2),
+        "scaled_total": round(beauty_bonus, 2)
+    })
+    if isinstance(arch_details, dict):
+        arch_details.setdefault("enhancer_bonus", {})
+        arch_details["enhancer_bonus"].update({
+            "built_raw": round(built_enhancer_bonus, 2),
+            "scaled_total": round(beauty_bonus, 2)
+        })
 
     # Build response
     applied_override_summary = {}
@@ -263,6 +352,7 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             "architectural_analysis": arch_details,
             "enhancers": enhancers,
             "enhancer_bonus": beauty_bonus,
+            "enhancer_bonus_breakdown": enhancer_bonus_breakdown,
             "test_mode": test_mode,
             "weights": resolved_weights
         },
@@ -292,7 +382,15 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     
     # Log results
     logger.info(f"Neighborhood Beauty Score: {total_score:.0f}/100")
-    logger.debug(f"Trees: {tree_score:.0f}/50 | Architectural Beauty: {arch_score:.0f}/50 | Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
+    tree_debug = f"{tree_score:.0f}" if isinstance(tree_score, (int, float)) else "n/a"
+    arch_debug = f"{arch_score:.0f}" if isinstance(arch_score, (int, float)) else "n/a"
+    logger.debug(
+        "Trees: %s/50 | Architectural Beauty: %s/50 | Data Quality: %s (%s%% confidence)",
+        tree_debug,
+        arch_debug,
+        quality_metrics.get('quality_tier', 'unknown'),
+        quality_metrics.get('confidence', 'n/a')
+    )
     
     return round(total_score, 1), breakdown
 
@@ -363,6 +461,55 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     def _clamp(value: float, min_val: float, max_val: float) -> float:
         return max(min_val, min(max_val, value))
+
+    def _score_topography_component(metrics: Dict) -> float:
+        if not metrics:
+            return 0.0
+        relief = float(metrics.get("relief_range_m") or 0.0)
+        slope_mean = float(metrics.get("slope_mean_deg") or 0.0)
+        steep_fraction = float(metrics.get("steep_fraction") or 0.0)
+
+        relief_factor = min(1.0, relief / 600.0)  # 600m relief → full credit
+        slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
+        steep_factor = min(1.0, max(0.0, (steep_fraction - 0.05) / 0.35))  # >40% steep terrain
+
+        combined = max(0.0, min(1.0, (0.5 * relief_factor) + (0.3 * slope_factor) + (0.2 * steep_factor)))
+        return TOPOGRAPHY_BONUS_MAX * combined
+
+    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str]) -> Tuple[float, float]:
+        if not metrics:
+            return 0.0, 0.0
+
+        forest_pct = float(metrics.get("forest_pct") or 0.0)
+        wetland_pct = float(metrics.get("wetland_pct") or 0.0)
+        shrub_pct = float(metrics.get("shrub_pct") or 0.0)
+        grass_pct = float(metrics.get("grass_pct") or 0.0)
+        developed_pct = float(metrics.get("developed_pct") or 0.0)
+        water_pct = float(metrics.get("water_pct") or 0.0)
+
+        forest_factor = min(1.0, forest_pct / 40.0)  # 40% forest → full
+        wetland_factor = min(1.0, wetland_pct / 10.0)
+        shrub_factor = min(1.0, shrub_pct / 25.0)
+        grass_factor = min(1.0, grass_pct / 30.0)
+
+        natural_index = (0.6 * forest_factor) + (0.2 * wetland_factor) + (0.1 * shrub_factor) + (0.1 * grass_factor)
+
+        # Developed land reduces the boost, but not below zero
+        developed_penalty = min(0.8, developed_pct / 120.0)
+        natural_index = max(0.0, natural_index * (1.0 - developed_penalty))
+
+        # Suburban/rural contexts get a small lift
+        if context_area_type in ("rural", "exurban"):
+            natural_index = min(1.0, natural_index * 1.15)
+
+        landcover_score = LANDCOVER_BONUS_MAX * min(1.0, natural_index)
+
+        water_factor = min(1.0, water_pct / 25.0)  # 25% water coverage → full credit
+        if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban"):
+            water_factor = min(1.0, water_factor * 1.1)
+        water_score = WATER_BONUS_MAX * water_factor
+
+        return landcover_score, water_score
 
     if "tree_score" in overrides:
         override_score = _clamp(float(overrides["tree_score"]), 0.0, 50.0)
@@ -521,7 +668,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 details['nyc_street_trees'] = tree_count
     
     # Priority 2b: Other Cities Street Trees (if city has street tree API and score is low)
-    if (score == 0.0 or score < 30.0) and street_tree_api and city:
+    if (score == 0.0 or score < 40.0) and street_tree_api and city:
         city_key = street_tree_api.is_city_with_street_trees(city, lat, lon)
         if city_key:
             logger.debug(f"Checking {city_key} Street Tree API...")
@@ -581,9 +728,118 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         "osm_tree_score": osm_tree_points,
         "census_score": census_points
     }
+
+    natural_context_components: Dict[str, float] = {}
+    natural_context_details: Dict[str, Dict] = {}
+    context_bonus_total = 0.0
+
+    try:
+        from data_sources.gee_api import get_topography_context, get_landcover_context_gee
+    except ImportError:
+        get_topography_context = None  # type: ignore
+        get_landcover_context_gee = None  # type: ignore
+
+    topography_metrics = None
+    if get_topography_context:
+        try:
+            topography_metrics = get_topography_context(lat, lon, radius_m=5000)
+        except Exception as exc:
+            logger.warning(f"Topography context lookup failed: {exc}")
+    if topography_metrics:
+        topography_score = _score_topography_component(topography_metrics)
+        natural_context_components["topography"] = round(topography_score, 2)
+        natural_context_details["topography_metrics"] = topography_metrics
+        context_bonus_total += topography_score
+
+    landcover_metrics = None
+    landcover_score = 0.0
+    water_score = 0.0
+    if get_landcover_context_gee:
+        try:
+            landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=3000)
+        except Exception as exc:
+            logger.warning(f"Land cover context lookup failed: {exc}")
+    if landcover_metrics:
+        natural_context_details["landcover_metrics"] = landcover_metrics
+        natural_context_details["landcover_source"] = landcover_metrics.get("source")
+        landcover_score, water_score = _score_landcover_component(landcover_metrics, area_type)
+        natural_context_components["landcover"] = round(landcover_score, 2)
+        natural_context_components["water"] = round(water_score, 2)
+        context_bonus_total += landcover_score + water_score
+
+    total_context_before_cap = context_bonus_total
+    if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
+        context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
+
+    if natural_context_components:
+        natural_context_details["component_scores"] = natural_context_components
+        natural_context_details["total_bonus"] = round(context_bonus_total, 2)
+        natural_context_details["total_before_cap"] = round(total_context_before_cap, 2)
+        natural_context_details["cap"] = NATURAL_CONTEXT_BONUS_CAP
+        details["natural_context"] = natural_context_details
+    else:
+        details["natural_context"] = {
+            "component_scores": {},
+            "total_bonus": 0.0,
+            "total_before_cap": 0.0,
+            "cap": NATURAL_CONTEXT_BONUS_CAP
+        }
+
+    details['context_bonus_applied'] = context_bonus_total
     details['total_score'] = score
     
     return score, details
+
+
+def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500) -> Tuple[float, Dict]:
+    """
+    Compute a lightweight scenic bonus based on nearby viewpoint features.
+    
+    Returns:
+        (bonus_points, metadata_dict)
+    """
+    if not viewpoints:
+        return 0.0, {
+            "count": 0,
+            "closest_distance_m": None,
+            "weights_sum": 0.0,
+            "top_viewpoints": []
+        }
+
+    radius_m = max(radius_m, 1)
+    weights_sum = 0.0
+    viewpoint_summaries: List[Dict] = []
+
+    for feature in viewpoints:
+        distance = feature.get("distance_m")
+        if distance is None:
+            distance = radius_m
+        try:
+            distance = float(distance)
+        except (TypeError, ValueError):
+            distance = radius_m
+        distance = max(0.0, distance)
+
+        normalized = max(0.0, 1.0 - min(distance, radius_m) / radius_m)
+        weight = max(0.05, normalized)
+        weights_sum += weight
+
+        viewpoint_summaries.append({
+            "name": feature.get("name"),
+            "distance_m": round(distance, 1)
+        })
+
+    viewpoint_summaries.sort(key=lambda item: item.get("distance_m", float("inf")))
+    viewpoint_summaries = viewpoint_summaries[:5]
+
+    scenic_bonus = min(6.0, weights_sum * 3.0)
+    metadata = {
+        "count": len(viewpoints),
+        "closest_distance_m": viewpoint_summaries[0]["distance_m"] if viewpoint_summaries else None,
+        "weights_sum": round(weights_sum, 3),
+        "top_viewpoints": viewpoint_summaries
+    }
+    return scenic_bonus, metadata
 
 
 def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
@@ -732,7 +988,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             median_year_built=median_year_built,
             lat=lat,
             lon=lon,
-            metric_overrides=metric_overrides if metric_overrides else None
+            metric_overrides=metric_overrides if metric_overrides else None,
+            material_profile=diversity_metrics.get("material_profile"),
+            heritage_profile=diversity_metrics.get("heritage_profile")
         )
         
         # Handle both old (float) and new (tuple) return formats for backward compatibility
@@ -749,7 +1007,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             diversity_metrics.get("levels_entropy"),
             diversity_metrics.get("building_type_diversity"),
             historic_landmarks=historic_landmarks,
-            median_year_built=median_year_built
+            median_year_built=median_year_built,
+            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio")
         )
         
         details = {
@@ -774,8 +1033,13 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             },
             "historic_context": {
                 "landmarks": historic_landmarks,
-                "median_year_built": median_year_built
+                "median_year_built": median_year_built,
+                "heritage_buildings": coverage_cap_metadata.get("heritage_profile", {}).get("count"),
+                "heritage_designations": coverage_cap_metadata.get("heritage_profile", {}).get("designations"),
+                "historic_tagged": coverage_cap_metadata.get("heritage_profile", {}).get("historic_tagged")
             },
+            "material_profile": coverage_cap_metadata.get("material_profile"),
+            "heritage_profile": coverage_cap_metadata.get("heritage_profile"),
             "sources": ["OSM"],
             # Pass through validation metadata from diversity metrics
             # beauty_valid is always True now (no hard failure)
@@ -885,8 +1149,10 @@ def _score_nyc_trees(tree_count: int) -> float:
 def _score_tree_canopy(canopy_pct: float) -> float:
     """Score tree canopy with a softened, piecewise-linear curve."""
     canopy = max(0.0, min(100.0, canopy_pct))
-    if canopy <= 25.0:
-        return canopy * 1.2
-    if canopy <= 45.0:
-        return 30.0 + (canopy - 25.0) * 0.75
+    if canopy <= 20.0:
+        return canopy * 1.1
+    if canopy <= 55.0:
+        return 22.0 + (canopy - 20.0) * 0.7
+    if canopy <= 70.0:
+        return 46.5 + (canopy - 55.0) * 0.25
     return 50.0

@@ -458,6 +458,176 @@ def get_building_density_gee(lat: float, lon: float, radius_m: int = 1000) -> Op
         return None
 
 
+def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Optional[Dict]:
+    """
+    Analyze elevation and slope context around a location.
+
+    Returns statistics describing terrain relief which can be used to boost
+    scenic scoring for hillside and mountain locations.
+    """
+    if not GEE_AVAILABLE:
+        return None
+
+    try:
+        print(f"⛰️  Analyzing topography with GEE at {lat}, {lon} (radius={radius_m}m)")
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+
+        dem = ee.Image('USGS/SRTMGL1_003')
+        slope = ee.Terrain.slope(dem)
+
+        dem_stats = dem.reduceRegion(
+            reducer=(ee.Reducer.mean()
+                     .combine(ee.Reducer.minMax(), sharedInputs=True)
+                     .combine(ee.Reducer.percentile([10, 90]), sharedInputs=True)),
+            geometry=buffer,
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        )
+
+        slope_stats = slope.reduceRegion(
+            reducer=(ee.Reducer.mean()
+                     .combine(ee.Reducer.max(), sharedInputs=True)
+                     .combine(ee.Reducer.stdDev(), sharedInputs=True)
+                     .combine(ee.Reducer.percentile([85]), sharedInputs=True)),
+            geometry=buffer,
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        )
+
+        steep_fraction = slope.gt(15).reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        )
+
+        dem_info = dem_stats.getInfo()
+        slope_info = slope_stats.getInfo()
+        steep_info = steep_fraction.getInfo()
+
+        if not dem_info or not slope_info:
+            return None
+
+        elevation_min = dem_info.get('elevation_min')
+        elevation_max = dem_info.get('elevation_max')
+        elevation_mean = dem_info.get('elevation_mean')
+        relief = None
+        if elevation_min is not None and elevation_max is not None:
+            relief = elevation_max - elevation_min
+
+        topography = {
+            "source": "USGS/SRTMGL1_003",
+            "elevation_mean_m": elevation_mean,
+            "elevation_min_m": elevation_min,
+            "elevation_max_m": elevation_max,
+            "elevation_p10_m": dem_info.get('elevation_p10'),
+            "elevation_p90_m": dem_info.get('elevation_p90'),
+            "relief_range_m": relief,
+            "slope_mean_deg": slope_info.get('slope_mean'),
+            "slope_max_deg": slope_info.get('slope_max'),
+            "slope_std_deg": slope_info.get('slope_stdDev'),
+            "slope_p85_deg": slope_info.get('slope_p85'),
+            "steep_fraction": steep_info.get('slope') if steep_info else None
+        }
+
+        print(f"   ✅ GEE Topography: relief={relief:.1f}m, mean slope={topography['slope_mean_deg']:.1f}°")
+        return topography
+
+    except Exception as e:
+        print(f"⚠️  GEE topography analysis error: {e}")
+        return None
+
+
+def get_landcover_context_gee(lat: float, lon: float, radius_m: int = 3000) -> Optional[Dict]:
+    """
+    Summarize surrounding land cover mix using GEE datasets.
+
+    Attempts NLCD (US-only) first, then falls back to ESA WorldCover for global coverage.
+    """
+    if not GEE_AVAILABLE:
+        return None
+
+    def _compute_histogram(image: ee.Image, band: str, source: str) -> Optional[Dict]:
+        histogram = image.reduceRegion(
+            reducer=ee.Reducer.frequencyHistogram(),
+            geometry=buffer,
+            scale=scale,
+            maxPixels=1e9,
+            bestEffort=True
+        ).get(band)
+        if histogram is None:
+            return None
+        hist = ee.Dictionary(histogram).getInfo()
+        if not hist:
+            return None
+        return {"source": source, "histogram": {int(float(k)): v for k, v in hist.items()}}
+
+    try:
+        print(f"🗺️  Analyzing land cover with GEE at {lat}, {lon} (radius={radius_m}m)")
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+
+        # Try NLCD (USA)
+        scale = 30
+        nlcd_image = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021').select('landcover')
+        hist_info = _compute_histogram(nlcd_image, 'landcover', 'NLCD 2021')
+
+        if hist_info is None:
+            # Fallback to global ESA WorldCover (10m)
+            scale = 10
+            worldcover = ee.ImageCollection('ESA/WorldCover/v200').first().select('Map')
+            hist_info = _compute_histogram(worldcover, 'Map', 'ESA WorldCover v200')
+
+        if hist_info is None:
+            return None
+
+        histogram = hist_info["histogram"]
+        total_pixels = sum(histogram.values())
+        if total_pixels <= 0:
+            return None
+
+        def pct(class_ids):
+            count = sum(histogram.get(cid, 0) for cid in class_ids)
+            return round((count / total_pixels) * 100, 2)
+
+        if hist_info["source"].startswith('NLCD'):
+            forest_pct = pct([41, 42, 43])
+            wetland_pct = pct([90, 95])
+            water_pct = pct([11])
+            shrub_pct = pct([52])
+            grass_pct = pct([71])
+            developed_pct = pct([21, 22, 23, 24])
+        else:
+            # ESA WorldCover class mapping (see https://esa-worldcover.org/en/data-access)
+            forest_pct = pct([10, 20, 30])
+            wetland_pct = pct([90])
+            water_pct = pct([80])
+            shrub_pct = pct([40])
+            grass_pct = pct([60])
+            developed_pct = pct([50])
+
+        result = {
+            "source": hist_info["source"],
+            "forest_pct": forest_pct,
+            "wetland_pct": wetland_pct,
+            "water_pct": water_pct,
+            "shrub_pct": shrub_pct,
+            "grass_pct": grass_pct,
+            "developed_pct": developed_pct
+        }
+
+        print(f"   ✅ GEE Land Cover ({hist_info['source']}): forest={forest_pct}%, water={water_pct}%")
+        return result
+
+    except Exception as e:
+        print(f"⚠️  GEE land cover analysis error: {e}")
+        return None
+
+
 def authenticate_gee():
     """
     Authenticate with Google Earth Engine using your existing project.
