@@ -5,6 +5,7 @@ This module is sandbox-only and not wired into scoring by default.
 """
 
 from typing import Dict, Optional, Tuple, Any, List
+from datetime import datetime
 import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
@@ -596,12 +597,126 @@ HERITAGE_BONUS_WEIGHTS = {
     "unknown": 0.75,
 }
 
-AGE_BONUS_BANDS = [
-    (1900, 4.5),
-    (1930, 3.5),
-    (1960, 2.0),
-    (1980, 1.0),
-]
+AGE_CONTEXT_WINDOWS = {
+    "historic_urban": {"baseline": 55.0, "full": 140.0},
+    "urban_residential": {"baseline": 45.0, "full": 120.0},
+    "urban_core": {"baseline": 40.0, "full": 110.0},
+    "urban_core_lowrise": {"baseline": 40.0, "full": 110.0},
+    "suburban": {"baseline": 32.0, "full": 95.0},
+    "exurban": {"baseline": 40.0, "full": 115.0},
+    "rural": {"baseline": 45.0, "full": 120.0},
+    "unknown": {"baseline": 40.0, "full": 110.0},
+}
+
+AGE_BONUS_MAX = 5.5
+AGE_MIX_BONUS_MAX = 2.25
+MODERN_FORM_BONUS_MAX = 4.0
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def _smoothstep(edge0: float, edge1: float, x: float) -> float:
+    if edge1 <= edge0:
+        return 1.0 if x >= edge1 else 0.0
+    t = _clamp01((x - edge0) / (edge1 - edge0))
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _age_percentile(effective_area_type: str, median_year_built: Optional[int]) -> float:
+    if median_year_built is None:
+        return 0.0
+    try:
+        year_val = float(median_year_built)
+    except (TypeError, ValueError):
+        return 0.0
+    current_year = datetime.utcnow().year
+    age_years = max(0.0, current_year - year_val)
+    window = AGE_CONTEXT_WINDOWS.get(effective_area_type, AGE_CONTEXT_WINDOWS["unknown"])
+    percentile = _smoothstep(window["baseline"], window["full"], age_years)
+    # provide a gentle lift for exceptionally old fabric beyond the window
+    if age_years > window["full"]:
+        overshoot = min(40.0, age_years - window["full"])
+        percentile = min(1.0, percentile + 0.15 * (overshoot / 40.0))
+    return _clamp01(percentile)
+
+
+def _normalize_vintage_share(vintage_share: Optional[float]) -> Optional[float]:
+    if vintage_share is None:
+        return None
+    try:
+        value = float(vintage_share)
+    except (TypeError, ValueError):
+        return None
+    if value < 0:
+        return None
+    if value > 1.0:
+        value = value / 100.0
+    return _clamp01(value)
+
+
+def _age_mix_balance(vintage_ratio: float) -> float:
+    # Reward balanced mix between historic and newer fabric, peak near ~45% pre-war share
+    balance = 1.0 - abs(vintage_ratio - 0.45) / 0.45
+    return _clamp01(balance)
+
+
+def _coherence_signal(setback_value: Optional[float],
+                      facade_rhythm_value: Optional[float],
+                      streetwall_value: Optional[float],
+                      material_entropy: Optional[float],
+                      height_std: Optional[float]) -> float:
+    components: List[float] = []
+    if setback_value is not None:
+        components.append(_clamp01(setback_value / 100.0))
+    if facade_rhythm_value is not None:
+        components.append(_clamp01(facade_rhythm_value / 100.0))
+    if streetwall_value is not None:
+        components.append(_clamp01(streetwall_value / 100.0))
+    if material_entropy is not None:
+        # Lower entropy (more consistent materials) -> stronger coherence
+        material_uniformity = _clamp01(1.0 - (material_entropy / 100.0))
+        components.append(material_uniformity)
+    if height_std is not None:
+        # Lower std -> more uniform
+        components.append(_clamp01(1.0 - min(height_std / 2.5, 1.0)))
+    if not components:
+        return 0.0
+    return sum(components) / len(components)
+
+
+def _confidence_gate(values: List[Optional[float]], floor: float = 0.15) -> float:
+    usable = [v for v in values if v is not None and v > 0.0]
+    if not usable:
+        return 0.0
+    avg = sum(usable) / len(usable)
+    if avg <= floor:
+        return 0.0
+    # Normalize from floor → 1.0 range
+    return _clamp01((avg - floor) / (1.0 - floor))
+
+
+def _modern_material_share(material_profile: Optional[Dict[str, Any]]) -> float:
+    if not isinstance(material_profile, dict):
+        return 0.0
+    buckets = material_profile.get("canonical") or material_profile.get("materials")
+    if not isinstance(buckets, list):
+        return 0.0
+    modern_keys = {"glass", "metal", "steel", "concrete"}
+    share_total = 0.0
+    for item in buckets:
+        if not isinstance(item, dict):
+            continue
+        name = (item.get("material") or "").lower()
+        share = item.get("share")
+        try:
+            share_val = float(share)
+        except (TypeError, ValueError):
+            continue
+        if name in modern_keys:
+            share_total += share_val
+    return _clamp01(share_total)
 
 
 def _serenity_bonus(area_type: str,
@@ -876,6 +991,7 @@ def score_architectural_diversity_as_beauty(
     built_coverage_ratio: Optional[float] = None,
     historic_landmarks: Optional[int] = None,
     median_year_built: Optional[int] = None,
+    vintage_share: Optional[float] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     metric_overrides: Optional[Dict[str, float]] = None,
@@ -1237,12 +1353,14 @@ def score_architectural_diversity_as_beauty(
         heritage_bonus = min(6.0, (heritage_significance / 100.0) * 6.0 * heritage_multiplier)
         if heritage_landmark_count >= 5:
             heritage_bonus += min(2.5, heritage_landmark_count * 0.25)
-    age_bonus = 0.0
-    if median_year_built is not None:
-        for cutoff, bonus_value in AGE_BONUS_BANDS:
-            if median_year_built <= cutoff:
-                age_bonus = bonus_value * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
-                break
+
+    normalized_vintage = _normalize_vintage_share(vintage_share)
+    age_percentile = _age_percentile(effective, median_year_built)
+    age_presence_factor = 1.0
+    if normalized_vintage is not None:
+        age_presence_factor = 0.65 + 0.35 * _clamp01(normalized_vintage * 1.5)
+    age_bonus = AGE_BONUS_MAX * age_percentile * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0) * age_presence_factor
+
     street_character_bonus = 0.0
     if block_grain_value and streetwall_value:
         street_character_bonus = max(0.0, ((block_grain_value + streetwall_value) / 200.0) - 0.35)
@@ -1252,7 +1370,42 @@ def score_architectural_diversity_as_beauty(
             street_character_bonus *= 1.1
         street_character_bonus = min(4.5, street_character_bonus * 6.0)
 
-    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus
+    coherence_signal = _coherence_signal(
+        setback_value,
+        facade_rhythm_value,
+        streetwall_value,
+        material_entropy,
+        height_std
+    )
+    confidence_gate = _confidence_gate(
+        [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
+    )
+    age_mix_bonus = 0.0
+    age_mix_balance = None
+    if normalized_vintage is not None and 0.05 < normalized_vintage < 0.95:
+        age_mix_balance = _age_mix_balance(normalized_vintage)
+        coherence_gate = _clamp01((coherence_signal - 0.35) / 0.65)
+        if coherence_gate > 0.0 and confidence_gate > 0.0:
+            age_mix_bonus = AGE_MIX_BONUS_MAX * age_mix_balance * coherence_gate * confidence_gate
+
+    modern_material_share = _modern_material_share(material_profile)
+    modern_form_bonus = 0.0
+    if median_year_built is not None and median_year_built >= 1990:
+        if effective in ("urban_core", "urban_core_lowrise", "urban_residential"):
+            if age_percentile <= 0.5:
+                coverage_signal = _clamp01(((built_coverage_ratio or 0.0) - 0.22) / 0.18) if built_coverage_ratio is not None else 0.0
+                streetwall_signal = _clamp01((streetwall_value or 0.0) / 100.0)
+                facade_signal = _clamp01((facade_rhythm_value or 0.0) / 100.0)
+                skyline_signal = _clamp01(1.0 - min(levels_entropy / 70.0, 1.0))
+                material_signal = _clamp01((modern_material_share - 0.20) / 0.50)
+                confidence_modern = _confidence_gate(
+                    [streetwall_confidence, setback_confidence, facade_rhythm_confidence]
+                )
+                design_signal = (0.35 * streetwall_signal) + (0.35 * facade_signal) + (0.15 * skyline_signal) + (0.15 * material_signal)
+                if coverage_signal > 0.0 and confidence_modern > 0.0:
+                    modern_form_bonus = MODERN_FORM_BONUS_MAX * _clamp01(design_signal) * coverage_signal * confidence_modern
+
+    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus + age_mix_bonus + modern_form_bonus
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -1411,6 +1564,8 @@ def score_architectural_diversity_as_beauty(
         "material_bonus": round(material_bonus, 2),
         "heritage_bonus": round(heritage_bonus, 2),
         "age_bonus": round(age_bonus, 2),
+        "age_mix_bonus": round(age_mix_bonus, 2),
+        "modern_form_bonus": round(modern_form_bonus, 2),
         "street_character_bonus": round(street_character_bonus, 2),
         "material_profile": material_profile,
         "heritage_profile": heritage_profile,
@@ -1419,6 +1574,12 @@ def score_architectural_diversity_as_beauty(
         "type_category_diversity": round(type_category_diversity, 1) if type_category_diversity is not None else None,
         "height_stats": height_stats,
         "expected_coverage": COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"]),
+        "age_percentile": round(age_percentile, 3),
+        "age_mix_balance": round(age_mix_balance, 3) if age_mix_balance is not None else None,
+        "age_coherence_signal": round(coherence_signal, 3),
+        "age_confidence_gate": round(confidence_gate, 3),
+        "modern_form_bonus": round(modern_form_bonus, 2),
+        "modern_material_share": round(modern_material_share, 3),
         # Phase 2 metrics
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,

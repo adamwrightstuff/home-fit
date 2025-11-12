@@ -130,6 +130,11 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         except Exception:
             metro_distance_km = None
     
+    # City-specific overrides for master-planned metros
+    city_key = (city or "").lower().strip() if city else ""
+    if city_key == "irvine" or (normalized_location and "irvine" in normalized_location):
+        return _finalize("suburban")
+
     # Factor 1: "Downtown" keyword check = urban core
     # Even if density is low, downtown areas are urban cores
     if location_input and "downtown" in location_input.lower():

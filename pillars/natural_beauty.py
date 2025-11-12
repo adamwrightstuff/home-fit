@@ -268,7 +268,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         area_type = area_type or detected_area_type
         area_type_key = (area_type or "").lower() or "unknown"
 
-        radius_profile = get_radius_profile('neighborhood_beauty', area_type, location_scope)
+        radius_profile = get_radius_profile('natural_beauty', area_type, location_scope)
         radius_m = int(radius_profile.get('tree_canopy_radius_m', 1000))
         tree_radius_used = radius_m
         logger.debug("Radius profile (beauty): area_type=%s scope=%s tree_canopy_radius=%sm", area_type, location_scope, radius_m)

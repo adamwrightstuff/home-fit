@@ -59,7 +59,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
 
         radius_m = 2000
         if area_type:
-            rp = get_radius_profile('neighborhood_beauty', area_type, location_scope)
+            rp = get_radius_profile('built_beauty', area_type, location_scope)
             radius_m = int(rp.get('architectural_diversity_radius_m', 2000))
 
         diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)
@@ -126,6 +126,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             diversity_metrics.get("built_coverage_ratio"),
             historic_landmarks=historic_landmarks,
             median_year_built=median_year_built,
+            vintage_share=historic_data.get('vintage_pct'),
             lat=lat,
             lon=lon,
             metric_overrides=metric_overrides if metric_overrides else None,
@@ -207,6 +208,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "material": _r2(coverage_cap_metadata.get("material_bonus")),
                 "heritage": _r2(coverage_cap_metadata.get("heritage_bonus")),
                 "age": _r2(coverage_cap_metadata.get("age_bonus")),
+                "age_mix": _r2(coverage_cap_metadata.get("age_mix_bonus")),
+                "modern_form": _r2(coverage_cap_metadata.get("modern_form_bonus")),
                 "street_character": _r2(coverage_cap_metadata.get("street_character_bonus")),
                 "serenity": _r2(coverage_cap_metadata.get("serenity_bonus")),
                 "scenic": _r2(coverage_cap_metadata.get("scenic_bonus"))

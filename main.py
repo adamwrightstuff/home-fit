@@ -16,7 +16,6 @@ from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score
-from pillars.neighborhood_beauty import get_neighborhood_beauty_score
 from pillars import built_beauty, natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
@@ -39,9 +38,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     Parse token allocation string or return default equal distribution.
     
     Format: "active_outdoors:5,built_beauty:4,natural_beauty:4,air_travel:3,..."
-    Default: Equal distribution across all 9 pillars (~2.22 tokens each). The
-    legacy "neighborhood_beauty" name can still be used and will split tokens
-    evenly between built_beauty and natural_beauty.
+    Default: Equal distribution across all 9 pillars (~2.22 tokens each).
     """
     primary_pillars = [
         "active_outdoors",
@@ -55,14 +52,12 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "housing_value"
     ]
     alias_pillars = {"neighborhood_beauty"}
-    pillar_names = primary_pillars + list(alias_pillars)
+    pillar_names = primary_pillars
     
     if tokens is None:
         # Default equal distribution
         equal_tokens = 20.0 / len(primary_pillars)
         default_allocation = {pillar: equal_tokens for pillar in primary_pillars}
-        for alias in alias_pillars:
-            default_allocation[alias] = 0.0
         return default_allocation
     
     # Parse custom allocation
@@ -93,8 +88,6 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         for pillar in primary_pillars:
             if pillar not in token_dict:
                 token_dict[pillar] = 0.0
-        for alias in alias_pillars:
-            token_dict[alias] = 0.0
     except Exception:
         # Fallback to equal distribution on parsing error
         equal_tokens = 20.0 / len(pillar_names)
@@ -130,7 +123,6 @@ def root():
             "active_outdoors",
             "built_beauty",
             "natural_beauty",
-            "neighborhood_beauty",
             "neighborhood_amenities",
             "air_travel_access",
             "public_transit_access",
@@ -150,7 +142,6 @@ def get_livability_score(request: Request,
                          location: str,
                          tokens: Optional[str] = None,
                          include_chains: bool = False,
-                         beauty_weights: Optional[str] = None,
                          diagnostics: Optional[bool] = False,
                          enable_schools: Optional[bool] = None,
                          test_mode: Optional[bool] = False):
@@ -173,8 +164,6 @@ def get_livability_score(request: Request,
         tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
                 Default: Equal distribution across all pillars
         include_chains: Include chain/franchise businesses in amenities score (default: False)
-        beauty_weights: Optional beauty component weights (format: "trees:0.5,architecture:0.5")
-                       Default: trees=0.5, architecture=0.5
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
                        Set to False to disable school scoring and preserve API quota
 
@@ -227,9 +216,15 @@ def get_livability_score(request: Request,
     only_param = request.query_params.get("only")
     only_pillars: Optional[set[str]] = None
     if only_param:
-        only_pillars = {
-            part.strip() for part in only_param.split(",") if part.strip()
-        }
+        raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
+        if raw_only:
+            expanded_only = set()
+            for name in raw_only:
+                if name == "neighborhood_beauty":
+                    expanded_only.update({"built_beauty", "natural_beauty"})
+                else:
+                    expanded_only.add(name)
+            only_pillars = expanded_only
         if not only_pillars:
             only_pillars = None
 
@@ -346,10 +341,8 @@ def get_livability_score(request: Request,
                 'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
             })
         )
-    need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
-    need_beauty_pillar = need_neighborhood_beauty or need_built_beauty or need_natural_beauty
     if _include_pillar('neighborhood_amenities'):
         pillar_tasks.append(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
@@ -433,8 +426,6 @@ def get_livability_score(request: Request,
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-    beauty_score = 0.0
-    beauty_details = {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}, "details": {}}
     built_score = 0.0
     natural_score = 0.0
     built_details = {
@@ -470,7 +461,7 @@ def get_livability_score(request: Request,
     built_calc = None
     natural_calc = None
 
-    if need_built_beauty or need_neighborhood_beauty:
+    if need_built_beauty:
         built_calc = built_beauty.calculate_built_beauty(
             lat,
             lon,
@@ -481,7 +472,7 @@ def get_livability_score(request: Request,
             test_overrides=beauty_overrides if beauty_overrides else None
         )
 
-    if need_natural_beauty or need_neighborhood_beauty:
+    if need_natural_beauty:
         natural_calc = natural_beauty.calculate_natural_beauty(
             lat,
             lon,
@@ -491,45 +482,6 @@ def get_livability_score(request: Request,
             location_name=location,
             overrides=beauty_overrides if beauty_overrides else None
         )
-
-    if need_neighborhood_beauty:
-        # Ensure both components are available before invoking the legacy aggregate.
-        if built_calc is None:
-            built_calc = built_beauty.calculate_built_beauty(
-                lat,
-                lon,
-                city=city,
-                area_type=area_type,
-                location_scope=location_scope,
-                location_name=location,
-                test_overrides=beauty_overrides if beauty_overrides else None
-            )
-        if natural_calc is None:
-            natural_calc = natural_beauty.calculate_natural_beauty(
-                lat,
-                lon,
-                city=city,
-                area_type=area_type,
-                location_scope=location_scope,
-                location_name=location,
-                overrides=beauty_overrides if beauty_overrides else None
-            )
-
-        beauty_score, beauty_details = get_neighborhood_beauty_score(
-            lat,
-            lon,
-            city=city,
-            beauty_weights=beauty_weights,
-            location_scope=location_scope,
-            area_type=area_type,
-            location_name=location,
-            test_overrides=beauty_overrides if beauty_overrides else None,
-            test_mode=test_mode_enabled,
-            precomputed_built=built_calc,
-            precomputed_natural=natural_calc
-        )
-
-        pillar_results['neighborhood_beauty'] = (beauty_score, beauty_details)
 
     if built_calc:
         built_score = built_calc["score"]
@@ -606,7 +558,6 @@ def get_livability_score(request: Request,
         (active_outdoors_score * token_allocation["active_outdoors"] / 20) +
         (built_score * token_allocation["built_beauty"] / 20) +
         (natural_score * token_allocation["natural_beauty"] / 20) +
-        (beauty_score * token_allocation["neighborhood_beauty"] / 20) +
         (amenities_score * token_allocation["neighborhood_amenities"] / 20) +
         (air_travel_score * token_allocation["air_travel_access"] / 20) +
         (transit_score * token_allocation["public_transit_access"] / 20) +
@@ -619,7 +570,6 @@ def get_livability_score(request: Request,
     logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
                 f"Built Beauty: {built_score:.1f}/100 | "
                 f"Natural Beauty: {natural_score:.1f}/100 | "
-                f"Neighborhood Beauty: {beauty_score:.1f}/100 | "
                 f"Neighborhood Amenities: {amenities_score:.1f}/100 | "
                 f"Air Travel Access: {air_travel_score:.1f}/100 | "
                 f"Public Transit Access: {transit_score:.1f}/100 | "
@@ -657,9 +607,9 @@ def get_livability_score(request: Request,
             },
             "summary": {},
             "details": built_details,
-            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
-            "data_quality": beauty_details.get("data_quality", {}),
-            "area_classification": beauty_details.get("area_classification", {})
+            "confidence": built_details.get("architectural_analysis", {}).get("confidence_0_1", 0) if isinstance(built_details.get("architectural_analysis"), dict) else 0,
+            "data_quality": {},
+            "area_classification": {}
         },
         "natural_beauty": {
             "score": natural_score,
@@ -671,23 +621,9 @@ def get_livability_score(request: Request,
             },
             "summary": {},
             "details": natural_details,
-            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
-            "data_quality": beauty_details.get("data_quality", {}),
-            "area_classification": beauty_details.get("area_classification", {})
-        },
-        "neighborhood_beauty": {
-            "score": beauty_score,
-            "weight": token_allocation["neighborhood_beauty"],
-            "contribution": round(beauty_score * token_allocation["neighborhood_beauty"] / 20, 2),
-            "breakdown": beauty_details.get("breakdown", {}),
-            "summary": beauty_details.get("summary", {}),
-            "details": beauty_details.get("details", {}),
-            "weights": beauty_details.get("weights", {}),
-            "enhanced": False,
-            "scoring_note": beauty_details.get("scoring_note", ""),
-            "confidence": beauty_details.get("data_quality", {}).get("confidence", 0),
-            "data_quality": beauty_details.get("data_quality", {}),
-            "area_classification": beauty_details.get("area_classification", {})
+            "confidence": natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0,
+            "data_quality": {},
+            "area_classification": {}
         },
         "neighborhood_amenities": {
             "score": amenities_score,
@@ -786,7 +722,6 @@ def get_livability_score(request: Request,
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
                 "built_beauty": "Are the buildings and streets visually harmonious? (Architecture, form, materials, heritage)",
                 "natural_beauty": "Is the landscape beautiful and calming? (Tree canopy, scenic adjacency, viewpoints)",
-                "neighborhood_beauty": "Legacy composite of built and natural beauty for compatibility (Trees + architecture + enhancers)",
                 "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
                 "air_travel_access": "How easily can I fly? (Airport proximity and type)",
                 "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
@@ -809,9 +744,29 @@ def get_livability_score(request: Request,
     }
 
     if test_mode_enabled and beauty_overrides:
-        response["metadata"]["overrides_applied"] = {
-            "neighborhood_beauty": {k: beauty_overrides[k] for k in sorted(beauty_overrides)}
+        arch_override_keys = {
+            "levels_entropy",
+            "building_type_diversity",
+            "footprint_area_cv",
+            "block_grain",
+            "streetwall_continuity",
+            "setback_consistency",
+            "facade_rhythm",
+            "architecture_score"
         }
+        tree_override_keys = {
+            "tree_canopy_pct",
+            "tree_score"
+        }
+        overrides_payload = {}
+        built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
+        natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
+        if built_overrides:
+            overrides_payload["built_beauty"] = built_overrides
+        if natural_overrides:
+            overrides_payload["natural_beauty"] = natural_overrides
+        if overrides_payload:
+            response["metadata"]["overrides_applied"] = overrides_payload
     if only_pillars:
         response["metadata"]["pillars_requested"] = sorted(only_pillars)
 
@@ -822,13 +777,6 @@ def get_livability_score(request: Request,
             parks_diag = active_outdoors_details.get("diagnostics", {})
             if parks_diag:
                 diag["active_outdoors"] = parks_diag
-        except Exception:
-            pass
-        try:
-            beauty_diag = beauty_details.get("details", {}).get("enhancers", {})
-            if beauty_diag:
-                diag.setdefault("neighborhood_beauty", {})["enhancers"] = beauty_diag
-                diag["neighborhood_beauty"]["enhancer_bonus"] = beauty_details.get("details", {}).get("enhancer_bonus", 0)
         except Exception:
             pass
         if diag:
@@ -951,7 +899,8 @@ def health_check():
         "architecture": "9 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
-            "neighborhood_beauty", 
+            "built_beauty",
+            "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
             "public_transit_access",

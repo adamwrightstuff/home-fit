@@ -3,7 +3,7 @@ from data_sources.radius_profiles import get_radius_profile
 
 def test_active_outdoors_urban():
     rp = get_radius_profile('active_outdoors', 'urban_core', 'city')
-    assert rp['local_radius_m'] == 1000
+    assert rp['local_radius_m'] == 1500
     assert rp['regional_radius_m'] == 15000
 
 
@@ -30,9 +30,14 @@ def test_healthcare_suburban():
     assert rp['pharm_radius_m'] == 3000
 
 
-def test_beauty_neighborhood_scope():
-    rp = get_radius_profile('neighborhood_beauty', 'urban_core', 'neighborhood')
+def test_built_beauty_neighborhood_scope():
+    rp = get_radius_profile('built_beauty', 'urban_core', 'neighborhood')
     assert rp['tree_canopy_radius_m'] == 1000
+
+
+def test_natural_beauty_neighborhood_scope():
+    rp = get_radius_profile('natural_beauty', 'historic_urban', 'neighborhood')
+    assert rp['tree_canopy_radius_m'] == 800
 
 
 def test_air_travel_default():

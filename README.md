@@ -25,6 +25,8 @@ No public parameters are needed to control these; they follow sensible defaults 
 - Height variety now considers standard deviation and single-story share to better capture subtle differences.
 - Building type diversity blends raw OSM tags with normalized use categories (residential, civic, retail, etc.).
 - Material analysis aggregates canonical groups (brick, wood, stone, concrete, glass, metal, stucco, clay) and factors their entropy into the score.
-- Landmarks incorporate heritage designations and Census vintage data; older fabric receives an age bonus scaled by area type.
+- Landmarks incorporate heritage designations and Census vintage data; median year is now smoothed via area-type percentiles so historic fabric gains credit without sharp cliffs.
+- Diverse eras are rewarded only when setbacks, street rhythm, and material consistency confirm a coherent streetscape; otherwise age variety stays neutral.
+- Modern districts can earn a dedicated form bonus when tower clusters, design review cues, and modern materials create a cohesive skyline.
 - Street-scale character is reinforced through block grain, streetwall, setback, and facade rhythm, with an added street character bonus when coverage is cohesive.
 - Coverage expectations are area-type specific, so lower-density suburbs and exurbs are not over-penalized for intentional openness.
