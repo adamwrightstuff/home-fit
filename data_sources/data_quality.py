@@ -204,27 +204,76 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         if density and density > 2000:
             return _finalize("urban_core")
     
-    # Factor 4: High building coverage = urban core (deprioritized for distance-based classification)
-    # 20%+ building coverage = dense urban form
-    # NOTE: This can misclassify beach towns - distance to principal city should take priority
-    # Only apply if distance factor didn't already classify (i.e., metro_distance_km was None)
-    # AND location is close to principal city (<=25km) OR no metro detected
-    if built_coverage is not None and built_coverage > 0.20:
-        # Only apply if distance factor didn't classify (metro_distance_km was None)
-        # OR if very close to principal city (<=15km) where high building coverage is expected
-        # If far from principal city (>25km), building coverage alone shouldn't make it urban_core
-        if metro_distance_km is None:
-            # No metro detected - use building coverage as fallback
-            if density and density > 2000:
-                return _finalize("urban_core")
-        elif metro_distance_km <= 15.0:
-            # Very close to principal city - high building coverage is expected
-            if density and density > 2000:
-                return _finalize("urban_core")
-        # If 15-25km from principal city, distance factor should have already classified
-        # If >25km, building coverage alone shouldn't make it urban_core
-    
-    # Factor 5: City-size adjusted density thresholds
+    # Composite urban/suburban scoring (structure-first, region-agnostic)
+    def _score_urban() -> int:
+        score = 0
+        if density:
+            if density >= 20000:
+                score += 3
+            elif density >= 12000:
+                score += 2
+            elif density >= 8000:
+                score += 1
+        if business_count:
+            if business_count >= 180:
+                score += 2
+            elif business_count >= 90:
+                score += 1
+        if built_coverage:
+            if built_coverage >= 0.30:
+                score += 2
+            elif built_coverage >= 0.22:
+                score += 1
+        if metro_distance_km is not None and metro_distance_km <= 12.0:
+            score += 1
+        return score
+
+    def _score_suburban() -> int:
+        score = 0
+        if density and 1500 <= density <= 9000:
+            score += 2
+        if built_coverage and 0.12 <= built_coverage <= 0.24:
+            score += 2
+        if business_count and 25 <= business_count <= 140:
+            score += 1
+        if metro_distance_km is not None and metro_distance_km <= 35.0:
+            score += 1
+        return score
+
+    def _score_exurban() -> int:
+        score = 0
+        if density and 600 <= density < 2500:
+            score += 2
+        if built_coverage and 0.06 <= built_coverage < 0.15:
+            score += 1
+        if metro_distance_km is not None and metro_distance_km > 20.0:
+            score += 1
+        return score
+
+    urban_score = _score_urban()
+    suburban_score = _score_suburban()
+    exurban_score = _score_exurban()
+
+    if density and density < 450 and (built_coverage is None or built_coverage < 0.08):
+        return _finalize("rural")
+
+    if urban_score >= 5:
+        return _finalize("urban_core")
+    if urban_score >= 3:
+        if built_coverage is not None and built_coverage < 0.18:
+            return _finalize("urban_core_lowrise")
+        return _finalize("urban_core")
+
+    if suburban_score >= 3:
+        return _finalize("suburban")
+
+    if exurban_score >= 3 or (density and 600 <= density < 1500):
+        return _finalize("exurban")
+
+    if density and density >= 450:
+        return _finalize("suburban")
+
+    # Factor 4: City-size adjusted density thresholds (fallback)
     # Check if city is a major metro (even if density is missing)
     if city:
         from .regional_baselines import RegionalBaselineManager
@@ -244,7 +293,7 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                 else:
                     return _finalize("urban_core")  # Major city, low density but still urban core
     
-    # Factor 6: Standard density thresholds (for non-major metros)
+    # Factor 5: Standard density thresholds (for non-major metros)
     # If density is missing and not a major city, return unknown
     if not density:
         return _finalize("unknown")
@@ -401,7 +450,7 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                 landmark_count = historic_landmarks or 0
                 coverage_ratio = built_coverage_ratio or 0.0
                 allow_historic_upgrade = (
-                    density >= 7500 and (landmark_count >= 8 or coverage_ratio >= 0.22)
+                    density >= 8000 and coverage_ratio >= 0.22 and landmark_count >= 10
                 )
             if allow_historic_upgrade:
                 # Prioritize Census data for historic detection (more stable than OSM landmarks)
