@@ -4,7 +4,7 @@ Computes simple diversity metrics from OSM buildings within a radius.
 This module is sandbox-only and not wired into scoring by default.
 """
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 import requests
 
 from .osm_api import OVERPASS_URL, _retry_overpass
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
-def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict[str, float]:
+def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict[str, Any]:
     """
     Return a dict with sandbox metrics (0-100 scaled where applicable):
     - levels_entropy
@@ -158,6 +158,11 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     bins = {"1":0, "2":0, "3-4":0, "5-8":0, "9+":0}
     types = {}
     areas = []
+    materials: Dict[str, int] = {}
+    material_tagged = 0
+    heritage_buildings = 0
+    heritage_designations: Dict[str, int] = {}
+    historic_flags = 0
     
     for e in ways:
         tags = e.get("tags", {})
@@ -181,6 +186,17 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             bins["5-8"] += 1
         else:
             bins["9+"] += 1
+        
+        material = tags.get("building:material")
+        if material:
+            material_tagged += 1
+            materials[material] = materials.get(material, 0) + 1
+        heritage_val = tags.get("heritage")
+        if heritage_val:
+            heritage_buildings += 1
+            heritage_designations[heritage_val] = heritage_designations.get(heritage_val, 0) + 1
+        if tags.get("historic"):
+            historic_flags += 1
         
         # Calculate area from way geometry (polygon)
         if "geometry" in e and e["geometry"]:
@@ -257,6 +273,24 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         confidence_0_1 = 0.6
         data_warning = "low_building_coverage"
     
+    material_top = sorted(materials.items(), key=lambda item: (-item[1], item[0]))
+    material_profile = [
+        {
+            "material": name,
+            "count": count,
+            "share": round(count / len(ways), 3) if ways else 0.0
+        }
+        for name, count in material_top[:5]
+    ]
+    heritage_profile = {
+        "count": heritage_buildings,
+        "designations": sorted(
+            [{"value": val, "count": cnt} for val, cnt in heritage_designations.items()],
+            key=lambda item: (-item["count"], item["value"])
+        )[:5],
+        "historic_tagged": historic_flags
+    }
+    
     return {
         "levels_entropy": round(levels_entropy, 1),
         "building_type_diversity": round(type_div, 1),
@@ -266,7 +300,12 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
         "beauty_valid": beauty_valid,  # Always True - no hard failure
         "data_warning": data_warning,  # "low_building_coverage" if coverage < 50%
-        "confidence_0_1": confidence_0_1  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
+        "confidence_0_1": confidence_0_1,  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
+        "material_profile": {
+            "tagged_ratio": round(material_tagged / len(ways), 3) if ways else 0.0,
+            "materials": material_profile
+        },
+        "heritage_profile": heritage_profile
     }
 
 
@@ -378,24 +417,24 @@ AREA_TYPE_WEIGHTS = {
 }
 
 DESIGN_FORM_WEIGHTS = {
-    "historic_urban": {"design": 0.78, "form": 0.22},
-    "urban_core": {"design": 0.55, "form": 0.45},
-    "urban_residential": {"design": 0.6, "form": 0.4},
-    "urban_core_lowrise": {"design": 0.6, "form": 0.4},
-    "suburban": {"design": 0.72, "form": 0.28},
-    "exurban": {"design": 0.74, "form": 0.26},
-    "rural": {"design": 0.75, "form": 0.25},
+    "historic_urban": {"design": 0.82, "form": 0.18},
+    "urban_core": {"design": 0.52, "form": 0.48},
+    "urban_residential": {"design": 0.5, "form": 0.5},
+    "urban_core_lowrise": {"design": 0.58, "form": 0.42},
+    "suburban": {"design": 0.78, "form": 0.22},
+    "exurban": {"design": 0.80, "form": 0.20},
+    "rural": {"design": 0.82, "form": 0.18},
     "unknown": {"design": 0.6, "form": 0.4},
 }
 
 DESIGN_FORM_SCALE = {
-    "historic_urban": {"design": 84.0, "form": 62.0},
-    "urban_core": {"design": 60.0, "form": 54.0},
-    "urban_residential": {"design": 58.0, "form": 48.0},
-    "urban_core_lowrise": {"design": 58.0, "form": 50.0},
-    "suburban": {"design": 68.0, "form": 50.0},
-    "exurban": {"design": 75.0, "form": 53.0},
-    "rural": {"design": 70.0, "form": 52.0},
+    "historic_urban": {"design": 92.0, "form": 68.0},
+    "urban_core": {"design": 62.0, "form": 54.0},
+    "urban_residential": {"design": 54.0, "form": 46.0},
+    "urban_core_lowrise": {"design": 60.0, "form": 50.0},
+    "suburban": {"design": 66.0, "form": 48.0},
+    "exurban": {"design": 78.0, "form": 55.0},
+    "rural": {"design": 74.0, "form": 56.0},
     "unknown": {"design": 62.0, "form": 52.0},
 }
 
@@ -428,6 +467,24 @@ def _serenity_bonus(area_type: str,
         bonus = min(ceiling, openness * multiplier * calm_factor * density_factor)
 
     return bonus
+
+
+def _scenic_bonus(area_type: str,
+                 footprint_area_cv: float,
+                 building_type_diversity: float,
+                 density: Optional[float]) -> float:
+    """Additional boost for scenic low-density contexts (mountain/coastal towns)."""
+    if area_type not in ("exurban", "rural"):
+        return 0.0
+
+    scenic = 0.0
+    scenic += max(0.0, (footprint_area_cv - 55.0) / 45.0)
+    scenic += max(0.0, (building_type_diversity - 25.0) / 75.0)
+    if density is not None:
+        scenic += max(0.0, (3500 - density) / 7000)
+
+    return min(4.0, scenic * 4.0)
+
 
 # Context-biased target bands: (good_low, plateau_low, plateau_high, good_high)
 # Plateau range gets full points; beyond good_* ramps down to 0
@@ -656,7 +713,9 @@ def score_architectural_diversity_as_beauty(
     median_year_built: Optional[int] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
-    metric_overrides: Optional[Dict[str, float]] = None
+    metric_overrides: Optional[Dict[str, float]] = None,
+    material_profile: Optional[Dict[str, Any]] = None,
+    heritage_profile: Optional[Dict[str, Any]] = None
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -718,7 +777,8 @@ def score_architectural_diversity_as_beauty(
         levels_entropy,
         building_type_diversity,
         historic_landmarks=historic_landmarks,
-        median_year_built=median_year_built
+        median_year_built=median_year_built,
+        built_coverage_ratio=built_coverage_ratio
     )
     
     # Get base context-biased targets
@@ -929,7 +989,13 @@ def score_architectural_diversity_as_beauty(
 
     total = (design_score * blend["design"]) + (form_score * blend["form"])
     serenity_bonus = _serenity_bonus(effective, built_coverage_ratio, streetwall_value, block_grain_value, density)
-    base = total + serenity_bonus
+    scenic_bonus = _scenic_bonus(
+        effective,
+        footprint_area_cv if footprint_area_cv is not None else 0.0,
+        building_type_diversity,
+        density
+    )
+    base = total + serenity_bonus + scenic_bonus
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -940,14 +1006,16 @@ def score_architectural_diversity_as_beauty(
         if levels_entropy < 12 and footprint_area_cv < 45:
             # Very uniform height + footprint = intentional cohesion, not cookie-cutter
             # This rewards planned communities with consistent architecture
-            base_floor = 9.0  # Slightly higher baseline for high-quality suburbs
+            base_floor = 8.0  # Slightly lower to avoid overscoring exceptional suburbs
             base = max(base, base_floor)
     elif effective == "historic_urban":
         if built_coverage_ratio is not None:
             if built_coverage_ratio < 0.18:
-                base = max(base, 13.0 + serenity_bonus)
+                base = max(base, 15.0 + serenity_bonus * 0.75)
             else:
-                base = max(base, 11.0 + serenity_bonus * 0.5)
+                base = max(base, 12.5 + serenity_bonus * 0.5)
+        else:
+            base = max(base, 12.0 + serenity_bonus * 0.5)
     elif effective in ("exurban", "rural"):
         if built_coverage_ratio is not None and built_coverage_ratio < 0.12:
             base = max(base, 11.0 + serenity_bonus)
@@ -1073,6 +1141,9 @@ def score_architectural_diversity_as_beauty(
         "design_weight": blend["design"],
         "form_weight": blend["form"],
         "serenity_bonus": round(serenity_bonus, 2),
+        "scenic_bonus": round(scenic_bonus, 2),
+        "material_profile": material_profile,
+        "heritage_profile": heritage_profile,
         # Phase 2 metrics
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,
