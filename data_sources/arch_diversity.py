@@ -721,6 +721,38 @@ def _modern_material_share(material_profile: Optional[Dict[str, Any]]) -> float:
     return _clamp01(share_total)
 
 
+def _rowhouse_streetwall_proxy(area_type: str,
+                               coverage: Optional[float],
+                               setback_value: Optional[float],
+                               facade_value: Optional[float],
+                               footprint_cv: Optional[float],
+                               confidence: Optional[float]) -> Optional[float]:
+    """Synthesize streetwall continuity for rowhouse fabrics when direct data is absent."""
+    if area_type not in ("urban_residential", "historic_urban"):
+        return None
+    if confidence is not None and confidence >= PHASE23_CONFIDENCE_FLOOR:
+        return None
+    if coverage is None or coverage < 0.18:
+        return None
+    if setback_value is None or facade_value is None:
+        return None
+
+    footprint_cv = footprint_cv or 0.0
+
+    setback_signal = _clamp01((setback_value - 55.0) / 35.0)
+    facade_signal = _clamp01((facade_value - 55.0) / 35.0)
+    footprint_signal = _clamp01(1.0 - (abs(footprint_cv - 95.0) / 70.0))
+    coverage_signal = _clamp01((coverage - 0.18) / 0.14)
+
+    proxy = 100.0 * (
+        (0.4 * setback_signal) +
+        (0.35 * facade_signal) +
+        (0.15 * footprint_signal) +
+        (0.10 * coverage_signal)
+    )
+    return proxy if proxy >= 55.0 else None
+
+
 def _rowhouse_bonus(area_type: str,
                     built_coverage_ratio: Optional[float],
                     streetwall_value: Optional[float],
@@ -1472,6 +1504,30 @@ def score_architectural_diversity_as_beauty(
         "raw_value": streetwall_raw_value,
         "raw_confidence": streetwall_raw_confidence
     }
+    streetwall_proxy_used = False
+    streetwall_proxy_value = _rowhouse_streetwall_proxy(
+        effective,
+        built_coverage_ratio,
+        setback_value,
+        facade_rhythm_value,
+        footprint_area_cv,
+        streetwall_confidence
+    )
+    if streetwall_proxy_value is not None and (
+        streetwall_value is None or streetwall_confidence is None or streetwall_confidence < PHASE23_CONFIDENCE_FLOOR
+    ):
+        streetwall_value = streetwall_proxy_value
+        streetwall_confidence = max(streetwall_confidence or 0.0, PHASE23_CONFIDENCE_FLOOR + 0.15)
+        streetwall_proxy_used = True
+        proxy_entry = phase23_fallback_info.setdefault("streetwall_continuity", {})
+        proxy_entry.update({
+            "fallback_used": True,
+            "dropped": False,
+            "fallback_value": streetwall_value,
+            "raw_value": streetwall_raw_value,
+            "raw_confidence": streetwall_raw_confidence,
+            "proxy": "rowhouse"
+        })
 
     setback_value, setback_fallback_used, setback_dropped, setback_raw_value, setback_raw_confidence = _apply_phase23_confidence(
         setback_value,
@@ -1832,6 +1888,9 @@ def score_architectural_diversity_as_beauty(
         "setback_confidence": setback_confidence,
         "facade_rhythm": facade_rhythm_value,
         "facade_rhythm_confidence": facade_rhythm_confidence
+    }
+    metadata["synthetic_metrics"] = {
+        "streetwall_proxy_used": streetwall_proxy_used
     }
 
     metadata["phase23_fallback"] = {

@@ -211,6 +211,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "age_mix": _r2(coverage_cap_metadata.get("age_mix_bonus")),
                 "modern_form": _r2(coverage_cap_metadata.get("modern_form_bonus")),
                 "street_character": _r2(coverage_cap_metadata.get("street_character_bonus")),
+                "rowhouse": _r2(coverage_cap_metadata.get("rowhouse_bonus")),
                 "serenity": _r2(coverage_cap_metadata.get("serenity_bonus")),
                 "scenic": _r2(coverage_cap_metadata.get("scenic_bonus"))
             }
