@@ -611,6 +611,7 @@ AGE_CONTEXT_WINDOWS = {
 AGE_BONUS_MAX = 5.5
 AGE_MIX_BONUS_MAX = 2.25
 MODERN_FORM_BONUS_MAX = 4.0
+ROWHOUSE_BONUS_MAX = 6.0
 PHASE23_CONFIDENCE_FLOOR = 0.05
 
 
@@ -718,6 +719,60 @@ def _modern_material_share(material_profile: Optional[Dict[str, Any]]) -> float:
         if name in modern_keys:
             share_total += share_val
     return _clamp01(share_total)
+
+
+def _rowhouse_bonus(area_type: str,
+                    built_coverage_ratio: Optional[float],
+                    streetwall_value: Optional[float],
+                    setback_value: Optional[float],
+                    facade_rhythm_value: Optional[float],
+                    levels_entropy: Optional[float],
+                    building_type_diversity: Optional[float],
+                    footprint_area_cv: Optional[float],
+                    median_year_built: Optional[int],
+                    heritage_landmark_count: int,
+                    coherence_signal: float,
+                    confidence_gate: float) -> float:
+    """Detect cohesive rowhouse/brownstone fabrics and add a targeted bonus."""
+    if area_type not in ("urban_residential", "historic_urban"):
+        return 0.0
+    if confidence_gate <= 0.0 or coherence_signal <= 0.55:
+        return 0.0
+    if built_coverage_ratio is None or not (0.28 <= built_coverage_ratio <= 0.62):
+        return 0.0
+
+    street_vals = [streetwall_value, setback_value, facade_rhythm_value]
+    if any(v is None or v < 60.0 for v in street_vals):
+        return 0.0
+
+    levels_ok = levels_entropy is not None and levels_entropy <= 22.0
+    type_ok = building_type_diversity is not None and building_type_diversity <= 32.0
+    footprint_ok = footprint_area_cv is not None and 70.0 <= footprint_area_cv <= 130.0
+    if not (levels_ok and type_ok and footprint_ok):
+        return 0.0
+
+    pre_war_signal = 0.0
+    if median_year_built is not None and median_year_built <= 1955:
+        pre_war_signal = _clamp01((1955 - median_year_built) / 55.0)
+    heritage_signal = _clamp01(heritage_landmark_count / 30.0)
+
+    def _midpoint_signal(value: float, target: float, tolerance: float) -> float:
+        return _clamp01(1.0 - (abs(value - target) / tolerance))
+
+    coherence_strength = min(street_vals) / 100.0
+    footprint_signal = _midpoint_signal(footprint_area_cv or 0.0, 95.0, 45.0)
+    levels_signal = _midpoint_signal(levels_entropy or 0.0, 12.0, 12.0)
+    age_signal = max(pre_war_signal, heritage_signal)
+
+    composite = (
+        0.4 * coherence_strength +
+        0.25 * footprint_signal +
+        0.2 * levels_signal +
+        0.15 * age_signal
+    )
+    composite *= _clamp01(coherence_signal) * _clamp01(confidence_gate + 0.25)
+
+    return ROWHOUSE_BONUS_MAX * _clamp01(composite)
 
 
 def _phase23_fallback(metric: str,
@@ -1272,38 +1327,38 @@ def score_architectural_diversity_as_beauty(
         
         # Run all 4 metrics in parallel, but make each one independent
         # If one fails, others can still succeed
-            with ThreadPoolExecutor(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             future_block = executor.submit(compute_block_grain, lat, lon, 2000)
             future_streetwall = executor.submit(compute_streetwall_continuity, lat, lon, 2000, shared_osm_data)
             future_setback = executor.submit(compute_setback_consistency, lat, lon, 2000, shared_osm_data)
             future_facade = executor.submit(compute_facade_rhythm, lat, lon, 2000, shared_osm_data)
-            
+
             # Each metric has individual timeout of 30 seconds
             # If one fails, others can still complete
             def get_with_timeout(future, timeout, name):
                 try:
                     return future.result(timeout=timeout)
                 except FutureTimeoutError:
-                        logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, marking as missing")
+                    logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, marking as missing")
                     if name == "block_grain":
-                            return {"block_grain": None, "coverage_confidence": 0.0}
+                        return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
-                            return {"streetwall_continuity": None, "coverage_confidence": 0.0}
+                        return {"streetwall_continuity": None, "coverage_confidence": 0.0}
                     elif name == "setback":
-                            return {"setback_consistency": None, "coverage_confidence": 0.0}
+                        return {"setback_consistency": None, "coverage_confidence": 0.0}
                     else:  # facade_rhythm
-                            return {"facade_rhythm": None, "coverage_confidence": 0.0}
+                        return {"facade_rhythm": None, "coverage_confidence": 0.0}
                 except Exception as e:
-                        logger.warning(f"Phase 2/3 metric {name} failed: {e}, marking as missing")
+                    logger.warning(f"Phase 2/3 metric {name} failed: {e}, marking as missing")
                     if name == "block_grain":
-                            return {"block_grain": None, "coverage_confidence": 0.0}
+                        return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
-                            return {"streetwall_continuity": None, "coverage_confidence": 0.0}
+                        return {"streetwall_continuity": None, "coverage_confidence": 0.0}
                     elif name == "setback":
-                            return {"setback_consistency": None, "coverage_confidence": 0.0}
+                        return {"setback_consistency": None, "coverage_confidence": 0.0}
                     else:  # facade_rhythm
-                            return {"facade_rhythm": None, "coverage_confidence": 0.0}
-            
+                        return {"facade_rhythm": None, "coverage_confidence": 0.0}
+
             block_grain_data = get_with_timeout(future_block, 30, "block_grain")
             streetwall_data = get_with_timeout(future_streetwall, 30, "streetwall")
             setback_data = get_with_timeout(future_setback, 30, "setback")
@@ -1444,6 +1499,22 @@ def score_architectural_diversity_as_beauty(
         "raw_confidence": facade_raw_confidence
     }
 
+    coherence_signal = _coherence_signal(
+        setback_value,
+        facade_rhythm_value,
+        streetwall_value,
+        material_entropy,
+        height_std
+    )
+    confidence_gate = _confidence_gate(
+        [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
+    )
+
+    if effective in ("urban_residential", "historic_urban") and coherence_signal >= 0.6:
+        coherence_floor = (coherence_signal - 0.6) / 0.4
+        coherence_floor = _clamp01(coherence_floor)
+        type_raw = max(type_raw, 8.5 + (coherence_floor * 7.0))
+
     scale_params = DESIGN_FORM_SCALE.get(effective, DESIGN_FORM_SCALE["unknown"])
 
     material_component = None
@@ -1459,6 +1530,11 @@ def score_architectural_diversity_as_beauty(
         (facade_rhythm_value / 100.0) * 16.67
     ]
     design_components = [c for c in design_components if c is not None]
+    if effective in ("urban_residential", "historic_urban") and coherence_signal > 0.0:
+        coherence_component = coherence_signal * 16.0
+        if confidence_gate > 0.0:
+            coherence_component *= 1.0 + (confidence_gate * 0.15)
+        design_components.append(coherence_component)
     if material_component is not None:
         design_components.append(material_component)
     if design_components:
@@ -1530,16 +1606,6 @@ def score_architectural_diversity_as_beauty(
             street_character_bonus *= 1.1
         street_character_bonus = min(4.5, street_character_bonus * 6.0)
 
-    coherence_signal = _coherence_signal(
-        setback_value,
-        facade_rhythm_value,
-        streetwall_value,
-        material_entropy,
-        height_std
-    )
-    confidence_gate = _confidence_gate(
-        [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
-    )
     age_mix_bonus = 0.0
     age_mix_balance = None
     if normalized_vintage is not None and 0.05 < normalized_vintage < 0.95:
@@ -1565,7 +1631,22 @@ def score_architectural_diversity_as_beauty(
                 if coverage_signal > 0.0 and confidence_modern > 0.0:
                     modern_form_bonus = MODERN_FORM_BONUS_MAX * _clamp01(design_signal) * coverage_signal * confidence_modern
 
-    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus + age_mix_bonus + modern_form_bonus
+    rowhouse_bonus = _rowhouse_bonus(
+        effective,
+        built_coverage_ratio,
+        streetwall_value,
+        setback_value,
+        facade_rhythm_value,
+        levels_entropy,
+        building_type_diversity,
+        footprint_area_cv,
+        median_year_built,
+        heritage_landmark_count,
+        coherence_signal,
+        confidence_gate
+    )
+
+    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus + age_mix_bonus + modern_form_bonus + rowhouse_bonus
     
     # SUBURBAN BASE FLOOR BONUS
     # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
@@ -1727,6 +1808,7 @@ def score_architectural_diversity_as_beauty(
         "age_mix_bonus": round(age_mix_bonus, 2),
         "modern_form_bonus": round(modern_form_bonus, 2),
         "street_character_bonus": round(street_character_bonus, 2),
+        "rowhouse_bonus": round(rowhouse_bonus, 2),
         "material_profile": material_profile,
         "heritage_profile": heritage_profile,
         "material_entropy": round(material_entropy, 1),
