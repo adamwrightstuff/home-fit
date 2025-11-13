@@ -188,7 +188,13 @@ class RegionalBaselineManager:
             'Las Vegas': {'state': 'NV', 'population': 2266715, 'density_threshold': 3500},
             'Memphis': {'state': 'TN', 'population': 1356080, 'density_threshold': 2500},
             'Louisville': {'state': 'KY', 'population': 1285729, 'density_threshold': 2000},
-            'Baltimore': {'state': 'MD', 'population': 2807094, 'density_threshold': 4000},
+            'Baltimore': {
+                'state': 'MD',
+                'population': 2807094,
+                'density_threshold': 4000,
+                'principal_city_lat': 39.2904,  # Downtown Baltimore
+                'principal_city_lon': -76.6122
+            },
             'Milwaukee': {'state': 'WI', 'population': 1573704, 'density_threshold': 3000},
             'Albuquerque': {'state': 'NM', 'population': 918018, 'density_threshold': 2000},
             'Tucson': {'state': 'AZ', 'population': 1047279, 'density_threshold': 2000},
