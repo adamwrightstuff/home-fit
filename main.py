@@ -1000,7 +1000,8 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
             diversity_metrics["building_type_diversity"],
             historic_landmarks=historic_landmarks,
             median_year_built=median_year_built,
-            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio")
+            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
         )
         
         # Calculate beauty score using context-aware scoring

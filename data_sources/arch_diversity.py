@@ -1252,7 +1252,8 @@ def score_architectural_diversity_as_beauty(
         building_type_diversity,
         historic_landmarks=historic_landmarks,
         median_year_built=median_year_built,
-        built_coverage_ratio=built_coverage_ratio
+        built_coverage_ratio=built_coverage_ratio,
+        footprint_area_cv=footprint_area_cv
     )
     
     # Get base context-biased targets

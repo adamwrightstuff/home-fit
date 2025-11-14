@@ -366,7 +366,8 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                            building_type_diversity: Optional[float] = None,
                            historic_landmarks: Optional[int] = None,
                            median_year_built: Optional[int] = None,
-                           built_coverage_ratio: Optional[float] = None) -> str:
+                           built_coverage_ratio: Optional[float] = None,
+                           footprint_area_cv: Optional[float] = None) -> str:
     """
     Determine effective area type including architectural subtypes.
     
@@ -389,6 +390,7 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         historic_landmarks: Optional count of historic landmarks from OSM
         median_year_built: Optional median year buildings were built
         built_coverage_ratio: Optional coverage ratio (0-1) to distinguish leafy historic cores
+        footprint_area_cv: Optional coefficient of variation for building footprints (0-100)
     
     Returns:
         Effective area type, which may be:
@@ -523,6 +525,11 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         if census_historic and coverage_ratio >= 0.12 and density_ok:
             return "historic_urban"
         if landmark_count >= 8 and coverage_ratio >= 0.14 and density_ok:
+            return "historic_urban"
+        if landmark_count >= 40 and coverage_ratio >= 0.05:
+            return "historic_urban"
+        if (footprint_area_cv is not None and coverage_ratio >= 0.18
+                and footprint_area_cv >= 85.0):
             return "historic_urban"
 
     return effective
