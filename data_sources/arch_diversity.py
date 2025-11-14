@@ -587,14 +587,14 @@ MATERIAL_BONUS_WEIGHTS = {
 }
 
 HERITAGE_BONUS_WEIGHTS = {
-    "historic_urban": 1.3,
-    "urban_core": 1.1,
-    "urban_residential": 1.0,
-    "urban_core_lowrise": 1.05,
-    "suburban": 0.8,
-    "exurban": 0.7,
+    "historic_urban": 1.15,
+    "urban_core": 1.05,
+    "urban_residential": 0.95,
+    "urban_core_lowrise": 1.0,
+    "suburban": 0.78,
+    "exurban": 0.68,
     "rural": 0.6,
-    "unknown": 0.75,
+    "unknown": 0.72,
 }
 
 AGE_CONTEXT_WINDOWS = {
@@ -608,21 +608,21 @@ AGE_CONTEXT_WINDOWS = {
     "unknown": {"baseline": 40.0, "full": 110.0},
 }
 
-AGE_BONUS_MAX = 5.5
+AGE_BONUS_MAX = 5.0
 AGE_MIX_BONUS_MAX = 2.25
 MODERN_FORM_BONUS_MAX = 4.0
 ROWHOUSE_BONUS_MAX = 6.0
 PHASE23_CONFIDENCE_FLOOR = 0.05
 
 HERITAGE_STACK_CAPS = {
-    "historic_urban": 8.5,
-    "urban_residential": 7.4,
-    "urban_core": 7.0,
-    "urban_core_lowrise": 7.2,
-    "suburban": 6.0,
-    "exurban": 5.5,
-    "rural": 5.5,
-    "unknown": 6.5,
+    "historic_urban": 6.5,
+    "urban_residential": 6.0,
+    "urban_core": 5.8,
+    "urban_core_lowrise": 5.9,
+    "suburban": 5.1,
+    "exurban": 4.9,
+    "rural": 4.9,
+    "unknown": 5.5,
 }
 
 
@@ -1653,12 +1653,15 @@ def score_architectural_diversity_as_beauty(
     heritage_bonus = 0.0
     if heritage_significance > 0:
         heritage_multiplier = HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
-        base_cap = 4.75
-        heritage_bonus = min(base_cap, (heritage_significance / 100.0) * 6.0 * heritage_multiplier)
+        base_cap = 4.0
+        heritage_bonus = min(
+            base_cap,
+            (heritage_significance / 100.0) * 4.8 * heritage_multiplier
+        )
         if heritage_landmark_count >= 6:
-            incremental = (heritage_landmark_count - 5) * 0.18
-            heritage_bonus += min(1.5, max(0.0, incremental))
-        heritage_bonus = min(6.25, heritage_bonus)
+            incremental = (heritage_landmark_count - 5) * 0.15
+            heritage_bonus += min(1.2, max(0.0, incremental))
+        heritage_bonus = min(5.2, heritage_bonus)
 
     normalized_vintage = _normalize_vintage_share(vintage_share)
     age_percentile = _age_percentile(effective, median_year_built)

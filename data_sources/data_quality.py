@@ -461,6 +461,8 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                     density >= 8000 and coverage_ratio >= 0.22 and landmark_count >= 10
                 )
             if allow_historic_upgrade:
+                if median_year_built and median_year_built >= 1980:
+                    allow_historic_upgrade = False
                 # Organic historic pattern: moderate diversity from centuries of growth
                 # Height: 15-70 (moderate variation, 2-6 stories)
                 # Type: 25-85 (mixed-use historic neighborhoods)
@@ -517,9 +519,11 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                     return "urban_core_lowrise"
     
     if effective in ("exurban", "rural"):
-        if is_historic() and landmark_count >= 18 and coverage_ratio >= 0.18:
-            if density is None or density >= 300:
-                return "historic_urban"
+        density_ok = density is None or density >= 250
+        if census_historic and coverage_ratio >= 0.12 and density_ok:
+            return "historic_urban"
+        if landmark_count >= 8 and coverage_ratio >= 0.14 and density_ok:
+            return "historic_urban"
 
     return effective
 

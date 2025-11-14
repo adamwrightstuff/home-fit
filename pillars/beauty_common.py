@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple
 
 # Normalization parameters carried over from legacy neighborhood beauty pillar.
 AREA_NORMALIZATION: Dict[str, Dict[str, float]] = {
-    "historic_urban": {"shift": 18.0, "scale": 1.08, "max": 99.0},
+    "historic_urban": {"shift": 12.0, "scale": 0.96, "max": 95.0},
     "suburban": {"shift": 7.5, "scale": 1.0, "max": 94.0},
     "urban_residential": {"shift": -6.0, "scale": 0.92, "max": 88.0},
     "urban_core": {"shift": 1.5, "scale": 1.0, "max": 94.0},
