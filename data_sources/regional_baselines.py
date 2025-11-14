@@ -214,10 +214,142 @@ class RegionalBaselineManager:
             'Tulsa': {'state': 'OK', 'population': 1004428, 'density_threshold': 2000},
             'Arlington': {'state': 'TX', 'population': 394266, 'density_threshold': 2000},
             'Tampa': {'state': 'FL', 'population': 3209489, 'density_threshold': 4000},
-            'New Orleans': {'state': 'LA', 'population': 1271651, 'density_threshold': 2500},
+            'New Orleans': {
+                'state': 'LA',
+                'population': 1271651,
+                'density_threshold': 2500,
+                'principal_city_lat': 29.9511,
+                'principal_city_lon': -90.0715
+            },
             'Wichita': {'state': 'KS', 'population': 647610, 'density_threshold': 1500},
             'Charleston': {'state': 'SC', 'population': 799636, 'density_threshold': 2500},
-            'Santa Barbara': {'state': 'CA', 'population': 446475, 'density_threshold': 2500}
+            'Santa Barbara': {'state': 'CA', 'population': 446475, 'density_threshold': 2500},
+            'San Juan': {
+                'state': 'PR',
+                'population': 2421061,
+                'density_threshold': 4000,
+                'principal_city_lat': 18.4655,
+                'principal_city_lon': -66.1057
+            },
+            'Honolulu': {
+                'state': 'HI',
+                'population': 1003477,
+                'density_threshold': 3500,
+                'principal_city_lat': 21.3069,
+                'principal_city_lon': -157.8583
+            },
+            'Cleveland': {
+                'state': 'OH',
+                'population': 2054068,
+                'density_threshold': 4000,
+                'principal_city_lat': 41.4993,
+                'principal_city_lon': -81.6944
+            },
+            'Pittsburgh': {
+                'state': 'PA',
+                'population': 2383228,
+                'density_threshold': 3500,
+                'principal_city_lat': 40.4406,
+                'principal_city_lon': -79.9959
+            },
+            'Cincinnati': {
+                'state': 'OH',
+                'population': 2155135,
+                'density_threshold': 3200,
+                'principal_city_lat': 39.1031,
+                'principal_city_lon': -84.5120
+            },
+            'Orlando': {
+                'state': 'FL',
+                'population': 2874420,
+                'density_threshold': 3200,
+                'principal_city_lat': 28.5383,
+                'principal_city_lon': -81.3792
+            },
+            'St. Louis': {
+                'state': 'MO',
+                'population': 2791937,
+                'density_threshold': 3200,
+                'principal_city_lat': 38.6270,
+                'principal_city_lon': -90.1994
+            },
+            'Salt Lake City': {
+                'state': 'UT',
+                'population': 1232509,
+                'density_threshold': 2800,
+                'principal_city_lat': 40.7608,
+                'principal_city_lon': -111.8910
+            },
+            'Providence': {
+                'state': 'RI',
+                'population': 1624578,
+                'density_threshold': 3500,
+                'principal_city_lat': 41.8240,
+                'principal_city_lon': -71.4128
+            },
+            'Richmond': {
+                'state': 'VA',
+                'population': 1302154,
+                'density_threshold': 2800,
+                'principal_city_lat': 37.5407,
+                'principal_city_lon': -77.4360
+            },
+            'Hartford': {
+                'state': 'CT',
+                'population': 1212147,
+                'density_threshold': 3200,
+                'principal_city_lat': 41.7658,
+                'principal_city_lon': -72.6734
+            },
+            'Madison': {
+                'state': 'WI',
+                'population': 680796,
+                'density_threshold': 2500,
+                'principal_city_lat': 43.0731,
+                'principal_city_lon': -89.4012
+            },
+            'Boise': {
+                'state': 'ID',
+                'population': 795268,
+                'density_threshold': 2200,
+                'principal_city_lat': 43.6150,
+                'principal_city_lon': -116.2023
+            },
+            'Anchorage': {
+                'state': 'AK',
+                'population': 399148,
+                'density_threshold': 1800,
+                'principal_city_lat': 61.2181,
+                'principal_city_lon': -149.9003
+            },
+            'Des Moines': {
+                'state': 'IA',
+                'population': 707915,
+                'density_threshold': 2200,
+                'principal_city_lat': 41.5868,
+                'principal_city_lon': -93.6250
+            },
+            'Grand Rapids': {
+                'state': 'MI',
+                'population': 1060804,
+                'density_threshold': 2800,
+                'principal_city_lat': 42.9634,
+                'principal_city_lon': -85.6681
+            },
+            'Buffalo': {
+                'state': 'NY',
+                'population': 1136688,
+                'density_threshold': 3200,
+                'principal_city_lat': 42.8864,
+                'principal_city_lon': -78.8784
+            },
+            'Birmingham': {
+                'state': 'AL',
+                'population': 1084821,
+                'density_threshold': 2500,
+                'principal_city_lat': 33.5186,
+                'principal_city_lon': -86.8104
+            }
         }
         
         # Baseline scores by area type and pillar
