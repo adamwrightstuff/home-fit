@@ -400,10 +400,14 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     effective = area_type
     
     # Helper: Check if area is historic
+    landmark_count = historic_landmarks or 0
+    coverage_ratio = built_coverage_ratio or 0.0
+    census_historic = median_year_built is not None and median_year_built < 1950
+
     def is_historic() -> bool:
-        if historic_landmarks is not None and historic_landmarks >= 10:
+        if census_historic:
             return True
-        if median_year_built is not None and median_year_built < 1950:
+        if landmark_count >= 12:
             return True
         return False
     
@@ -446,16 +450,17 @@ def get_effective_area_type(area_type: str, density: Optional[float],
     if effective in ("urban_core", "urban_core_lowrise", "suburban") and density and density > 2500:
         if is_historic():
             allow_historic_upgrade = True
-            if effective == "suburban":
-                landmark_count = historic_landmarks or 0
-                coverage_ratio = built_coverage_ratio or 0.0
+            if effective in ("urban_core", "urban_core_lowrise"):
+                allow_historic_upgrade = (
+                    census_historic
+                    and landmark_count >= 15
+                    and 0.15 <= coverage_ratio <= 0.42
+                )
+            elif effective == "suburban":
                 allow_historic_upgrade = (
                     density >= 8000 and coverage_ratio >= 0.22 and landmark_count >= 10
                 )
             if allow_historic_upgrade:
-                # Prioritize Census data for historic detection (more stable than OSM landmarks)
-                census_historic = median_year_built is not None and median_year_built < 1950
-
                 # Organic historic pattern: moderate diversity from centuries of growth
                 # Height: 15-70 (moderate variation, 2-6 stories)
                 # Type: 25-85 (mixed-use historic neighborhoods)
@@ -472,7 +477,11 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                             return "historic_urban"
                 else:
                     # OSM landmark-based historic: Use stricter thresholds (original logic)
-                    if (10 < levels_entropy < 70 and 20 < building_type_diversity < 85):
+                    if (
+                        landmark_count >= 12
+                        and (10 < levels_entropy < 70)
+                        and (20 < building_type_diversity < 85)
+                    ):
                         # Don't override if already classified as uniform (urban_residential)
                         if effective != "urban_residential":
                             return "historic_urban"
@@ -507,6 +516,11 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                 if effective not in ("urban_residential", "historic_urban"):
                     return "urban_core_lowrise"
     
+    if effective in ("exurban", "rural"):
+        if is_historic() and landmark_count >= 18 and coverage_ratio >= 0.18:
+            if density is None or density >= 300:
+                return "historic_urban"
+
     return effective
 
 

@@ -614,6 +614,17 @@ MODERN_FORM_BONUS_MAX = 4.0
 ROWHOUSE_BONUS_MAX = 6.0
 PHASE23_CONFIDENCE_FLOOR = 0.05
 
+HERITAGE_STACK_CAPS = {
+    "historic_urban": 8.5,
+    "urban_residential": 7.4,
+    "urban_core": 7.0,
+    "urban_core_lowrise": 7.2,
+    "suburban": 6.0,
+    "exurban": 5.5,
+    "rural": 5.5,
+    "unknown": 6.5,
+}
+
 
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, value))
@@ -1642,9 +1653,12 @@ def score_architectural_diversity_as_beauty(
     heritage_bonus = 0.0
     if heritage_significance > 0:
         heritage_multiplier = HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
-        heritage_bonus = min(6.0, (heritage_significance / 100.0) * 6.0 * heritage_multiplier)
-        if heritage_landmark_count >= 5:
-            heritage_bonus += min(2.5, heritage_landmark_count * 0.25)
+        base_cap = 4.75
+        heritage_bonus = min(base_cap, (heritage_significance / 100.0) * 6.0 * heritage_multiplier)
+        if heritage_landmark_count >= 6:
+            incremental = (heritage_landmark_count - 5) * 0.18
+            heritage_bonus += min(1.5, max(0.0, incremental))
+        heritage_bonus = min(6.25, heritage_bonus)
 
     normalized_vintage = _normalize_vintage_share(vintage_share)
     age_percentile = _age_percentile(effective, median_year_built)
@@ -1652,6 +1666,17 @@ def score_architectural_diversity_as_beauty(
     if normalized_vintage is not None:
         age_presence_factor = 0.65 + 0.35 * _clamp01(normalized_vintage * 1.5)
     age_bonus = AGE_BONUS_MAX * age_percentile * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0) * age_presence_factor
+
+    heritage_stack_cap = HERITAGE_STACK_CAPS.get(effective, HERITAGE_STACK_CAPS["unknown"])
+    heritage_stack = heritage_bonus + age_bonus
+    if heritage_stack > heritage_stack_cap:
+        reduce_amount = heritage_stack - heritage_stack_cap
+        if heritage_bonus >= reduce_amount:
+            heritage_bonus -= reduce_amount
+        else:
+            reduce_amount -= heritage_bonus
+            heritage_bonus = 0.0
+            age_bonus = max(0.0, age_bonus - reduce_amount)
 
     street_character_bonus = 0.0
     if block_grain_value is not None and streetwall_value is not None:
