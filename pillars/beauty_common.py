@@ -6,13 +6,13 @@ from typing import Dict, Optional, Tuple
 
 # Normalization parameters carried over from legacy neighborhood beauty pillar.
 AREA_NORMALIZATION: Dict[str, Dict[str, float]] = {
-    "historic_urban": {"shift": 12.0, "scale": 0.96, "max": 95.0},
-    "suburban": {"shift": 7.5, "scale": 1.0, "max": 94.0},
-    "urban_residential": {"shift": -6.0, "scale": 0.92, "max": 88.0},
-    "urban_core": {"shift": 1.5, "scale": 1.0, "max": 94.0},
-    "exurban": {"shift": 12.5, "scale": 1.02, "max": 95.0},
-    "rural": {"shift": 13.0, "scale": 1.04, "max": 95.0},
-    "urban_core_lowrise": {"shift": 4.0, "scale": 0.98, "max": 90.0},
+    "historic_urban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "suburban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "urban_residential": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "urban_core": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "exurban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "rural": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "urban_core_lowrise": {"shift": 0.0, "scale": 1.0, "max": 100.0},
 }
 
 # Enhancer caps used by both beauty sub-pillars.
