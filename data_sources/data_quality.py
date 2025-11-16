@@ -53,6 +53,498 @@ TARGET_AREA_TYPES: Dict[str, str] = {
 AREA_TYPE_DIAGNOSTICS_PATH = Path("analysis/area_type_diagnostics.jsonl")
 
 
+# ============================================================================
+# NEW MORPHOLOGICAL CLASSIFICATION SYSTEM
+# Replaces hard thresholds with continuous scoring and separates classification
+# from aesthetic scoring via contextual tags.
+# ============================================================================
+
+def _continuous_density_score(density: Optional[float]) -> float:
+    """
+    Convert density to continuous 0.0-1.0 score.
+    Uses smooth transitions instead of hard thresholds.
+    """
+    if density is None:
+        return 0.0
+    
+    # Smooth sigmoid-like transitions
+    if density >= 20000:
+        return 1.0
+    elif density >= 12000:
+        # 12000-20000: linear interpolation
+        return 0.7 + (density - 12000) / 8000 * 0.3
+    elif density >= 8000:
+        # 8000-12000: linear interpolation
+        return 0.5 + (density - 8000) / 4000 * 0.2
+    elif density >= 5000:
+        # 5000-8000: linear interpolation
+        return 0.3 + (density - 5000) / 3000 * 0.2
+    elif density >= 2500:
+        # 2500-5000: linear interpolation
+        return 0.15 + (density - 2500) / 2500 * 0.15
+    elif density >= 1000:
+        # 1000-2500: linear interpolation
+        return 0.05 + (density - 1000) / 1500 * 0.1
+    elif density >= 450:
+        # 450-1000: linear interpolation
+        return 0.0 + (density - 450) / 550 * 0.05
+    else:
+        return 0.0
+
+
+def _continuous_coverage_score(coverage: Optional[float]) -> float:
+    """
+    Convert coverage to continuous 0.0-1.0 score.
+    Uses bands instead of hard 0.18 threshold.
+    """
+    if coverage is None:
+        return 0.0
+    
+    # Smooth transitions around critical bands
+    if coverage >= 0.30:
+        return 1.0
+    elif coverage >= 0.22:
+        # 0.22-0.30: high coverage band
+        return 0.8 + (coverage - 0.22) / 0.08 * 0.2
+    elif coverage >= 0.18:
+        # 0.18-0.22: transition zone (was hard cutoff)
+        return 0.6 + (coverage - 0.18) / 0.04 * 0.2
+    elif coverage >= 0.15:
+        # 0.15-0.18: low-moderate coverage
+        return 0.4 + (coverage - 0.15) / 0.03 * 0.2
+    elif coverage >= 0.12:
+        # 0.12-0.15: moderate-low coverage
+        return 0.2 + (coverage - 0.12) / 0.03 * 0.2
+    elif coverage >= 0.08:
+        # 0.08-0.12: low coverage
+        return 0.1 + (coverage - 0.08) / 0.04 * 0.1
+    elif coverage >= 0.05:
+        # 0.05-0.08: very low coverage
+        return 0.0 + (coverage - 0.05) / 0.03 * 0.1
+    else:
+        return 0.0
+
+
+def _continuous_business_score(business_count: Optional[int]) -> float:
+    """
+    Convert business count to continuous 0.0-1.0 score.
+    Replaces hard 75/150 thresholds.
+    """
+    if business_count is None:
+        return 0.0
+    
+    if business_count >= 180:
+        return 1.0
+    elif business_count >= 150:
+        # 150-180: linear interpolation
+        return 0.85 + (business_count - 150) / 30 * 0.15
+    elif business_count >= 120:
+        # 120-150: linear interpolation
+        return 0.70 + (business_count - 120) / 30 * 0.15
+    elif business_count >= 90:
+        # 90-120: linear interpolation
+        return 0.55 + (business_count - 90) / 30 * 0.15
+    elif business_count >= 75:
+        # 75-90: transition zone (was hard cutoff)
+        return 0.40 + (business_count - 75) / 15 * 0.15
+    elif business_count >= 50:
+        # 50-75: moderate business
+        return 0.25 + (business_count - 50) / 25 * 0.15
+    elif business_count >= 25:
+        # 25-50: low-moderate business
+        return 0.10 + (business_count - 25) / 25 * 0.15
+    elif business_count > 0:
+        # 1-25: low business
+        return business_count / 25 * 0.10
+    else:
+        return 0.0
+
+
+def _continuous_metro_distance_score(metro_distance_km: Optional[float]) -> float:
+    """
+    Convert metro distance to continuous 0.0-1.0 score.
+    Closer = higher score. Replaces hard 10/20/30km bands.
+    """
+    if metro_distance_km is None:
+        return 0.5  # Neutral if unknown
+    
+    # Closer is better (higher score)
+    if metro_distance_km <= 5.0:
+        return 1.0
+    elif metro_distance_km <= 10.0:
+        # 5-10km: very close
+        return 0.9 - (metro_distance_km - 5.0) / 5.0 * 0.1
+    elif metro_distance_km <= 15.0:
+        # 10-15km: close
+        return 0.8 - (metro_distance_km - 10.0) / 5.0 * 0.1
+    elif metro_distance_km <= 20.0:
+        # 15-20km: moderate distance
+        return 0.7 - (metro_distance_km - 15.0) / 5.0 * 0.1
+    elif metro_distance_km <= 30.0:
+        # 20-30km: far
+        return 0.5 - (metro_distance_km - 20.0) / 10.0 * 0.2
+    elif metro_distance_km <= 50.0:
+        # 30-50km: very far
+        return 0.3 - (metro_distance_km - 30.0) / 20.0 * 0.2
+    else:
+        return 0.1  # Extremely far
+
+
+def _calculate_intensity_score(
+    density: Optional[float],
+    coverage: Optional[float],
+    business_count: Optional[int]
+) -> float:
+    """
+    Calculate overall intensity/urbanity score (0.0-1.0).
+    Combines density, coverage, and business count with weighted average.
+    
+    Special handling for high-density, low-coverage cases (e.g., Sea Cliff, Bungalow Heaven):
+    When density is very high (>7k), give it more weight to avoid misclassifying
+    dense urban neighborhoods as suburban.
+    """
+    density_score = _continuous_density_score(density)
+    coverage_score = _continuous_coverage_score(coverage)
+    business_score = _continuous_business_score(business_count)
+    
+    # Adjust weights based on density level
+    # High density (>7k) = more weight to density (handles low-coverage urban neighborhoods)
+    # Moderate density = balanced weights
+    # Low density = more weight to coverage/business (handles sparse areas)
+    if density and density > 7000:
+        # High density: density 60%, coverage 25%, business 15%
+        intensity = (
+            density_score * 0.60 +
+            coverage_score * 0.25 +
+            business_score * 0.15
+        )
+    elif density and density > 3000:
+        # Moderate density: balanced weights
+        intensity = (
+            density_score * 0.50 +
+            coverage_score * 0.30 +
+            business_score * 0.20
+        )
+    else:
+        # Low density: coverage and business more important
+        intensity = (
+            density_score * 0.40 +
+            coverage_score * 0.40 +
+            business_score * 0.20
+        )
+    
+    return min(1.0, max(0.0, intensity))
+
+
+def _calculate_context_score(
+    metro_distance_km: Optional[float],
+    city: Optional[str] = None
+) -> float:
+    """
+    Calculate contextual/metro proximity score (0.0-1.0).
+    Higher score = more urban context.
+    """
+    distance_score = _continuous_metro_distance_score(metro_distance_km)
+    
+    # Boost if in major metro (even if distance unknown)
+    metro_boost = 0.0
+    if city:
+        try:
+            from .regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            city_lower = city.lower().strip()
+            for metro_name in baseline_mgr.major_metros.keys():
+                if metro_name.lower() == city_lower:
+                    metro_boost = 0.2
+                    break
+        except Exception:
+            pass
+    
+    return min(1.0, distance_score + metro_boost)
+
+
+def classify_morphology(
+    density: Optional[float],
+    coverage: Optional[float],
+    business_count: Optional[int],
+    metro_distance_km: Optional[float],
+    city: Optional[str] = None,
+    location_input: Optional[str] = None
+) -> str:
+    """
+    Single, clear morphological classification using continuous scoring.
+    
+    This replaces the overlapping rules (Rule 1, Rule 2, Rule 3) with a unified
+    hierarchy based on intensity and context scores.
+    
+    Args:
+        density: Population density
+        coverage: Building coverage ratio (0.0-1.0)
+        business_count: Number of businesses in 1km radius
+        metro_distance_km: Distance to principal city (km)
+        city: Optional city name for metro detection
+        location_input: Optional location string for "downtown" keyword check
+    
+    Returns:
+        Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural'
+    """
+    # Special case: "downtown" keyword = urban_core
+    if location_input and "downtown" in location_input.lower():
+        if density and density > 2000:
+            return "urban_core"
+        elif density:
+            return "urban_core"
+    
+    # Special case: Irvine override
+    normalized_location = _normalize_location_key(location_input)
+    city_key = (city or "").lower().strip() if city else ""
+    if city_key == "irvine" or (normalized_location and "irvine" in normalized_location):
+        return "suburban"
+    
+    # Calculate intensity and context scores
+    intensity = _calculate_intensity_score(density, coverage, business_count)
+    context = _calculate_context_score(metro_distance_km, city)
+    
+    # Handle missing density explicitly
+    if density is None:
+        # If we have strong coverage/business signals, assume moderate intensity
+        if coverage and coverage >= 0.22:
+            intensity = max(intensity, 0.4)
+        if business_count and business_count >= 75:
+            intensity = max(intensity, 0.5)
+        # If major metro city, assume at least suburban intensity
+        if city:
+            try:
+                from .regional_baselines import RegionalBaselineManager
+                baseline_mgr = RegionalBaselineManager()
+                city_lower = city.lower().strip()
+                for metro_name in baseline_mgr.major_metros.keys():
+                    if metro_name.lower() == city_lower:
+                        intensity = max(intensity, 0.3)
+                        context = max(context, 0.6)
+                        break
+            except Exception:
+                pass
+    
+    # Single decision tree with graded transitions
+    # urban_core: high intensity + urban context
+    if intensity >= 0.75 and context >= 0.5:
+        return "urban_core"
+    elif intensity >= 0.70 and context >= 0.6:
+        return "urban_core"
+    elif intensity >= 0.65 and context >= 0.7:
+        return "urban_core"
+    
+    # urban_residential: high intensity but lower context, or moderate intensity + high context
+    if intensity >= 0.60 and context >= 0.4:
+        return "urban_residential"
+    elif intensity >= 0.55 and context >= 0.5:
+        return "urban_residential"
+    elif intensity >= 0.50 and context >= 0.6:
+        return "urban_residential"
+    
+    # suburban: moderate intensity
+    if intensity >= 0.30:
+        return "suburban"
+    elif intensity >= 0.20 and context >= 0.4:
+        return "suburban"
+    
+    # exurban: low-moderate intensity
+    if intensity >= 0.15:
+        return "exurban"
+    elif intensity >= 0.10:
+        return "exurban"
+    
+    # rural: very low intensity
+    if density and density < 450 and (coverage is None or coverage < 0.08):
+        return "rural"
+    
+    # Default fallback
+    if density is None:
+        return "unknown"
+    
+    return "rural"
+
+
+def get_contextual_tags(
+    base_area_type: str,
+    density: Optional[float],
+    coverage: Optional[float],
+    median_year_built: Optional[int],
+    historic_landmarks: Optional[int],
+    business_count: Optional[int] = None,
+    levels_entropy: Optional[float] = None,
+    building_type_diversity: Optional[float] = None,
+    footprint_area_cv: Optional[float] = None
+) -> List[str]:
+    """
+    Determine contextual tags for a location.
+    
+    Tags are orthogonal attributes that adjust scoring, not separate classes.
+    This separates "what it is" (morphology) from "how good it is" (aesthetic scoring).
+    
+    Args:
+        base_area_type: Base morphological classification
+        density: Population density
+        coverage: Building coverage ratio
+        median_year_built: Median year buildings were built
+        historic_landmarks: Count of historic landmarks from OSM
+        levels_entropy: Optional height diversity metric
+        building_type_diversity: Optional type diversity metric
+        footprint_area_cv: Optional footprint coefficient of variation
+    
+    Returns:
+        List of tags: ['historic', 'coastal', 'lowrise', 'rowhouse', 'uniform', 'mixed_use', 'planned']
+    """
+    tags = []
+    
+    # Historic tag
+    is_historic = False
+    if median_year_built is not None and median_year_built < 1950:
+        is_historic = True
+    if historic_landmarks and historic_landmarks >= 10:
+        is_historic = True
+    if is_historic:
+        tags.append('historic')
+    
+    # Lowrise tag: dense but low height diversity
+    # Applies to urban areas with low height variation (intentional low-rise design)
+    if base_area_type in ('urban_core', 'urban_residential'):
+        if levels_entropy is not None and levels_entropy < 20:
+            # Low coverage suggests intentional spacing (Sea Cliff, Bungalow Heaven pattern)
+            if coverage and coverage < 0.25:
+                tags.append('lowrise')
+            # Or if density is high but coverage moderate (dense low-rise)
+            elif density and density > 7000 and coverage and coverage < 0.28:
+                tags.append('lowrise')
+    
+    # Rowhouse tag: uniform architecture with consistent footprints
+    # Applies to cohesive rowhouse/brownstone districts (Park Slope pattern)
+    if base_area_type in ('urban_residential', 'urban_core'):
+        if (levels_entropy is not None and levels_entropy < 20 and
+            building_type_diversity is not None and building_type_diversity < 35):
+            # Check for consistent footprint pattern (low CV = uniform sizes)
+            if footprint_area_cv is not None and footprint_area_cv < 50:
+                tags.append('rowhouse')
+            # Also tag if very uniform (very low diversity) even without footprint data
+            elif (levels_entropy is not None and levels_entropy < 15 and
+                  building_type_diversity is not None and building_type_diversity < 25):
+                tags.append('rowhouse')
+    
+    # Uniform tag: very low diversity (distinct from rowhouse)
+    if (levels_entropy is not None and levels_entropy < 15 and
+        building_type_diversity is not None and building_type_diversity < 25):
+        if 'rowhouse' not in tags:  # Don't double-tag
+            tags.append('uniform')
+    
+    # Mixed-use tag: high business count relative to density
+    if business_count and density:
+        business_density_ratio = business_count / max(density / 1000, 1)  # businesses per 1k people
+        if business_density_ratio > 15:  # High commercial mix
+            tags.append('mixed_use')
+    
+    # Note: 'coastal' and 'planned' tags would require additional data sources
+    # (coastline proximity, master-planned community detection)
+    # Leaving these for future implementation
+    
+    return tags
+
+
+def get_classification_with_tags(
+    lat: float,
+    lon: float,
+    density: Optional[float] = None,
+    city: Optional[str] = None,
+    location_input: Optional[str] = None,
+    business_count: Optional[int] = None,
+    built_coverage: Optional[float] = None,
+    metro_distance_km: Optional[float] = None,
+    levels_entropy: Optional[float] = None,
+    building_type_diversity: Optional[float] = None,
+    historic_landmarks: Optional[int] = None,
+    median_year_built: Optional[int] = None,
+    footprint_area_cv: Optional[float] = None
+) -> Tuple[str, List[str]]:
+    """
+    Get base morphological classification and contextual tags.
+    
+    This is the new unified interface that separates classification from scoring.
+    
+    Args:
+        lat, lon: Coordinates
+        density: Optional population density
+        city: Optional city name
+        location_input: Optional location string
+        business_count: Optional business count
+        built_coverage: Optional coverage ratio
+        metro_distance_km: Optional metro distance
+        levels_entropy: Optional height diversity
+        building_type_diversity: Optional type diversity
+        historic_landmarks: Optional landmark count
+        median_year_built: Optional median year
+        footprint_area_cv: Optional footprint CV
+    
+    Returns:
+        Tuple of (base_area_type, tags_list)
+    """
+    # Get base morphological classification
+    if density is None:
+        density = get_population_density(lat, lon)
+    
+    if metro_distance_km is None:
+        try:
+            from .regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city)
+        except Exception:
+            metro_distance_km = None
+    
+    base_type = classify_morphology(
+        density, built_coverage, business_count, metro_distance_km, city, location_input
+    )
+    
+    # Get contextual tags
+    tags = get_contextual_tags(
+        base_type, density, built_coverage, median_year_built,
+        historic_landmarks, business_count, levels_entropy,
+        building_type_diversity, footprint_area_cv
+    )
+    
+    return base_type, tags
+
+
+def get_tags_from_effective_type(
+    effective_area_type: str,
+    base_area_type: str
+) -> List[str]:
+    """
+    Infer tags from effective area type (for backward compatibility).
+    
+    When we have an effective_area_type (e.g., 'historic_urban', 'urban_residential'),
+    we can infer the tags that would have produced it.
+    
+    Args:
+        effective_area_type: The effective area type (may include subtypes)
+        base_area_type: The base morphological type
+    
+    Returns:
+        List of inferred tags
+    """
+    tags = []
+    
+    # Infer tags from effective type
+    if effective_area_type == 'historic_urban':
+        tags.append('historic')
+    elif effective_area_type == 'urban_residential':
+        if base_area_type == 'urban_core':
+            tags.append('rowhouse')  # or 'uniform'
+        # If base is already urban_residential, no additional tag needed
+    elif effective_area_type == 'urban_core_lowrise':
+        tags.append('lowrise')
+    
+    return tags
+
+
 def _normalize_location_key(location: Optional[str]) -> Optional[str]:
     if not location:
         return None
@@ -75,17 +567,11 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                      built_coverage: Optional[float] = None,
                      metro_distance_km: Optional[float] = None) -> str:
     """
-    Detect area type using multi-factor classification:
-    1. "Downtown" keyword check
-    2. Distance to principal city + density (geographic relationship)
-    3. Business density (high = urban core)
-    4. Building coverage (high = urban core)
-    5. Population density with city-size adjusted thresholds
-    6. Standard density thresholds (fallback)
+    Detect area type using unified morphological classification.
     
-    Uses multi-factor approach: distance alone doesn't determine classification - density is required.
-    Reference: Bureau of Justice Statistics and Esri Urbanicity criteria use density thresholds
-    (>3,000 to >5,000 housing units/sq mi or equivalent people/sq mi) combined with principal city status.
+    REFACTORED: Now uses continuous scoring instead of hard thresholds.
+    This replaces the overlapping rules (Rule 1, Rule 2, Rule 3) with a single
+    hierarchy based on intensity and context scores.
     
     Args:
         lat, lon: Coordinates
@@ -97,7 +583,7 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         metro_distance_km: Optional distance to principal city in km (if None, will calculate)
     
     Returns:
-        'urban_core', 'suburban', 'exurban', 'rural', or 'unknown'
+        Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural', 'unknown'
     """
     normalized_location = _normalize_location_key(location_input)
     diagnostic_record: Optional[Dict[str, Any]] = None
@@ -118,10 +604,10 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
             _write_area_type_diagnostic(diagnostic_record)
         return result
 
+    # Use new unified classification system
     if density is None:
         density = get_population_density(lat, lon)
     
-    # Get distance to principal city if not provided
     if metro_distance_km is None:
         try:
             from .regional_baselines import RegionalBaselineManager
@@ -130,235 +616,12 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         except Exception:
             metro_distance_km = None
     
-    # City-specific overrides for master-planned metros
-    city_key = (city or "").lower().strip() if city else ""
-    if city_key == "irvine" or (normalized_location and "irvine" in normalized_location):
-        return _finalize("suburban")
-
-    # Factor 1: "Downtown" keyword check = urban core
-    # Even if density is low, downtown areas are urban cores
-    if location_input and "downtown" in location_input.lower():
-        if density and density > 2000:
-            return _finalize("urban_core")
-        elif density:
-            # Even low density downtowns are urban cores (commercial districts)
-            return _finalize("urban_core")
+    # Use new continuous scoring system
+    base_type = classify_morphology(
+        density, built_coverage, business_count, metro_distance_km, city, location_input
+    )
     
-    # Factor 2: Distance to principal city + density (geographic relationship)
-    # Multi-factor approach: distance alone doesn't determine classification - density is required
-    # Handles edge cases like large low-density principal cities (e.g., Jacksonville, FL)
-    if metro_distance_km is not None and density is not None:
-        # Very close to principal city (<10km) + high density = urban_core
-        # Examples: Hoboken (2km from NYC), Jersey City (5km from NYC), Santa Monica (15km from LA)
-        if metro_distance_km < 10.0:
-            if density > 5000:
-                return _finalize("urban_core")  # High density + very close = urban extension
-            elif density > 2500:
-                return _finalize("urban_core")  # Moderate-high density + very close = urban vicinity
-            elif density < 2500:
-                # Low density even if close = exurban/rural (handles large low-density cities)
-                if density > 1000:
-                    return _finalize("exurban")
-                else:
-                    return _finalize("rural")
-        
-        # Close to principal city (10-20km) + high density = urban_core or suburban
-        # Examples: Santa Monica (15km from LA) should be urban_core
-        elif metro_distance_km < 20.0:
-            if density > 5000:
-                return _finalize("urban_core")  # High density + close = functional urban core
-            elif density > 2500:
-                return _finalize("suburban")  # Moderate density + close = suburban
-            elif density > 1000:
-                return _finalize("exurban")
-            else:
-                return _finalize("rural")
-        
-        # Medium distance (20-30km) + high density = suburban
-        # Examples: Manhattan Beach (25km from LA) should be suburban
-        elif metro_distance_km < 30.0:
-            if density > 5000:
-                return _finalize("suburban")  # High density but medium distance = suburban
-            elif density > 2500:
-                return _finalize("suburban")
-            elif density > 1000:
-                return _finalize("exurban")
-            else:
-                return _finalize("rural")
-        
-        # Far from principal city (30-50km) = suburban/exurban
-        elif metro_distance_km < 50.0:
-            if density > 2500:
-                return _finalize("suburban")
-            elif density > 1000:
-                return _finalize("exurban")
-            else:
-                return _finalize("rural")
-    
-    # Factor 3: High business density = urban core (downtown/commercial district)
-    # 150+ businesses in 1km = clearly downtown/urban core
-    if business_count is not None and business_count > 150:
-        return _finalize("urban_core")
-    # 75-150 businesses = likely urban core, but check density
-    elif business_count is not None and business_count > 75:
-        if density and density > 2000:
-            return _finalize("urban_core")
-    
-    # Composite urban/suburban scoring (structure-first, region-agnostic)
-    def _score_urban() -> int:
-        score = 0
-        if density:
-            if density >= 20000:
-                score += 3
-            elif density >= 12000:
-                score += 2
-            elif density >= 8000:
-                score += 1
-        if business_count:
-            if business_count >= 180:
-                score += 2
-            elif business_count >= 90:
-                score += 1
-        if built_coverage:
-            if built_coverage >= 0.30:
-                score += 2
-            elif built_coverage >= 0.22:
-                score += 1
-        if metro_distance_km is not None and metro_distance_km <= 12.0:
-            score += 1
-        return score
-
-    def _score_suburban() -> int:
-        score = 0
-        if density and 1500 <= density <= 9000:
-            score += 2
-        if built_coverage and 0.12 <= built_coverage <= 0.24:
-            score += 2
-        if business_count and 25 <= business_count <= 140:
-            score += 1
-        if metro_distance_km is not None and metro_distance_km <= 35.0:
-            score += 1
-        return score
-
-    def _score_exurban() -> int:
-        score = 0
-        if density and 600 <= density < 2500:
-            score += 2
-        if built_coverage and 0.06 <= built_coverage < 0.15:
-            score += 1
-        if metro_distance_km is not None and metro_distance_km > 20.0:
-            score += 1
-        return score
-
-    urban_score = _score_urban()
-    suburban_score = _score_suburban()
-    exurban_score = _score_exurban()
-
-    if density and density < 450 and (built_coverage is None or built_coverage < 0.08):
-        return _finalize("rural")
-
-    if urban_score >= 5:
-        return _finalize("urban_core")
-    if urban_score >= 3:
-        if built_coverage is not None and built_coverage < 0.18:
-            return _finalize("urban_core_lowrise")
-        return _finalize("urban_core")
-
-    if suburban_score >= 3:
-        return _finalize("suburban")
-
-    if exurban_score >= 3 or (density and 600 <= density < 1500):
-        return _finalize("exurban")
-
-    if density and density >= 450:
-        return _finalize("suburban")
-
-    # Factor 4: City-size adjusted density thresholds (fallback)
-    # Check if city is a major metro (even if density is missing)
-    if city:
-        from .regional_baselines import RegionalBaselineManager
-        baseline_mgr = RegionalBaselineManager()
-        # Check if city name matches any major metro (case-insensitive)
-        city_lower = city.lower().strip()
-        for metro_name in baseline_mgr.major_metros.keys():
-            if metro_name.lower() == city_lower:
-                # Major metros: lower threshold for urban core
-                if density and density > 2500:
-                    return _finalize("urban_core")
-                elif density and density > 2000 and business_count and business_count > 50:
-                    # Major metro with moderate density + businesses = urban core
-                    return _finalize("urban_core")
-                elif not density:
-                    return _finalize("urban_core")  # Major city, assume urban_core even without density data
-                else:
-                    return _finalize("urban_core")  # Major city, low density but still urban core
-    
-    # Factor 5: Standard density thresholds (for non-major metros)
-    # If density is missing and not a major city, return unknown
-    if not density:
-        return _finalize("unknown")
-    
-    # Urban core: >10,000 people/sq mi (e.g., Manhattan, Brooklyn)
-    # But check business density first - dense suburbs can have high density but lower business density
-    density_val = density or 0.0
-    business = business_count or 0
-    coverage = built_coverage
-    metro_val = metro_distance_km if metro_distance_km is not None else float("inf")
-
-    if density_val > 10000:
-        result = "urban_core" if business > 75 else "suburban"
-    elif density_val > 2500:
-        result = "urban_core" if business > 100 else "suburban"
-    elif density_val > 500:
-        result = "exurban"
-    else:
-        result = "rural"
-
-    # --- Post-classification refinements (deterministic, signal-based) ---
-    if coverage is not None:
-        dense_core_high = 0.24
-        dense_core_low = 0.20
-        leafy_low_high = 0.12
-        leafy_low_low = 0.10
-        metro_close = 12.0
-        metro_far = 18.0
-
-        # Dense, uniform grids that lack heavy commercial presence → urban_residential
-        if result in ("urban_core", "historic_urban"):
-            if coverage >= dense_core_high and business < 120 and density_val < 9000:
-                result = "urban_residential"
-            elif coverage >= dense_core_low and business < 80 and density_val < 7500:
-                result = "urban_residential"
-
-        # Leafy low-coverage suburbs beyond the core → exurban
-        if result == "suburban":
-            if coverage <= leafy_low_low and metro_val > metro_far and density_val < 2000:
-                result = "exurban"
-            elif coverage <= leafy_low_high and metro_val > (metro_far + 2.0) and density_val < 1600:
-                result = "exurban"
-
-        # Dense coastal/commercial strips near the core → urban_core
-        if result == "suburban":
-            if coverage >= dense_core_high and (metro_val <= metro_close or business >= 140):
-                result = "urban_core"
-            elif coverage >= dense_core_low and (metro_val <= (metro_close + 3.0) or business >= 180):
-                result = "urban_core"
-
-        # Historic low-coverage districts: very low coverage, moderate density, near core
-        if coverage <= 0.08:
-            density_ok = (600 <= density_val <= 8000) if density_val else True
-            metro_ok = (metro_distance_km is not None) and (metro_val <= 25.0)
-            business_ok = business <= 150
-            if density_ok and metro_ok and business_ok:
-                result = "historic_urban"
-        elif result in ("suburban", "exurban") and 0.09 <= coverage <= 0.13:
-            density_ok = (600 <= density_val <= 6000) if density_val else True
-            metro_ok = (metro_distance_km is not None) and (metro_val <= 15.0)
-            business_ok = business <= 120
-            if density_ok and metro_ok and business_ok:
-                result = "historic_urban"
-
-    return _finalize(result)
+    return _finalize(base_type)
 
 
 def get_effective_area_type(area_type: str, density: Optional[float],
@@ -367,20 +630,19 @@ def get_effective_area_type(area_type: str, density: Optional[float],
                            historic_landmarks: Optional[int] = None,
                            median_year_built: Optional[int] = None,
                            built_coverage_ratio: Optional[float] = None,
-                           footprint_area_cv: Optional[float] = None) -> str:
+                           footprint_area_cv: Optional[float] = None,
+                           business_count: Optional[int] = None,
+                           use_new_system: bool = True) -> str:
     """
     Determine effective area type including architectural subtypes.
     
-    This function handles architectural beauty-specific subtypes:
-    - urban_residential: Dense urban core with uniform architecture (Park Slope brownstones)
-    - historic_urban: Organic diversity historic neighborhoods (Greenwich Village, Georgetown)
-    - urban_core_lowrise: Dense urban but not skyscraper dense (Santa Barbara, Old Town Alexandria)
+    NEW SYSTEM (use_new_system=True, default): Uses contextual tags instead of separate subtypes.
+    OLD SYSTEM (use_new_system=False): Returns legacy subtypes for backward compatibility.
     
-    Priority order (first match wins):
-    1. urban_residential (dense + uniform)
-    2. historic_urban (historic + organic diversity)
-    3. urban_core_lowrise (dense + moderate diversity)
-    4. Original area_type
+    The new system maps tags to legacy effective types for backward compatibility:
+    - urban_residential: Dense + uniform architecture (Park Slope brownstones)
+    - historic_urban: Historic + organic diversity (Greenwich Village, Georgetown)
+    - urban_core_lowrise: Dense + moderate diversity (Santa Barbara, Old Town Alexandria)
     
     Args:
         area_type: Base area type from detect_area_type() ('urban_core', 'suburban', etc.)
@@ -391,14 +653,42 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         median_year_built: Optional median year buildings were built
         built_coverage_ratio: Optional coverage ratio (0-1) to distinguish leafy historic cores
         footprint_area_cv: Optional coefficient of variation for building footprints (0-100)
+        business_count: Optional business count (for mixed-use tag)
+        use_new_system: If True (default), use new tagging system
     
     Returns:
-        Effective area type, which may be:
+        Effective area type string (for backward compatibility):
         - 'urban_residential': Dense + uniform architecture
-        - 'historic_urban': Historic + organic diversity (moderate variation)
-        - 'urban_core_lowrise': Dense + moderate diversity (not uniform)
+        - 'historic_urban': Historic + organic diversity
+        - 'urban_core_lowrise': Dense + moderate diversity
         - Original area_type: Otherwise
     """
+    # NEW SYSTEM: Use tags instead of separate subtypes (default)
+    if use_new_system:
+        tags = get_contextual_tags(
+            area_type, density, built_coverage_ratio, median_year_built,
+            historic_landmarks, business_count, levels_entropy,
+            building_type_diversity, footprint_area_cv
+        )
+        
+        # Map tags to legacy effective types for backward compatibility
+        # This allows gradual migration while using new continuous scoring
+        if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
+            if 'rowhouse' in tags or 'uniform' in tags:
+                # Historic + uniform = urban_residential (Park Slope pattern)
+                return "urban_residential"
+            else:
+                # Historic + diverse = historic_urban (Georgetown pattern)
+                return "historic_urban"
+        elif 'lowrise' in tags and area_type == 'urban_core':
+            return "urban_core_lowrise"
+        elif 'rowhouse' in tags and area_type == 'urban_core':
+            return "urban_residential"
+        
+        # No special tags, return base type
+        return area_type
+    
+    # OLD SYSTEM: Legacy logic for backward compatibility
     effective = area_type
     
     # Helper: Check if area is historic

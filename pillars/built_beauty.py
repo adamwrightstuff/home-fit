@@ -142,6 +142,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
 
+        # Get effective area type (backward compatible)
         effective_area_type = get_effective_area_type(
             area_type,
             density,
@@ -150,6 +151,20 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             historic_landmarks=historic_landmarks,
             median_year_built=median_year_built,
             built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
+        )
+        
+        # Also get contextual tags (new system) for metadata
+        from data_sources.data_quality import get_contextual_tags
+        contextual_tags = get_contextual_tags(
+            area_type,
+            density,
+            diversity_metrics.get("built_coverage_ratio"),
+            median_year_built,
+            historic_landmarks,
+            business_count=None,  # Not available here, but tags will work without it
+            levels_entropy=diversity_metrics.get("levels_entropy"),
+            building_type_diversity=diversity_metrics.get("building_type_diversity"),
             footprint_area_cv=diversity_metrics.get("footprint_area_cv")
         )
 
@@ -173,7 +188,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "classification": {
                 "base_area_type": area_type,
                 "effective_area_type": effective_area_type,
-                "density": density
+                "density": density,
+                "contextual_tags": contextual_tags  # New tagging system
             },
             "historic_context": {
                 "landmarks": historic_landmarks,
