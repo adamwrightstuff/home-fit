@@ -83,35 +83,8 @@ BIODIVERSITY_WEIGHTS = {
     "grass": 0.1,
 }
 
-# Regional climate adjustments for canopy expectations
-# Multipliers applied to base expectations to account for natural vegetation capacity
-CLIMATE_ADJUSTMENTS = {
-    # Desert/Arid regions (low natural canopy capacity)
-    "arid": {
-        "multiplier": 0.65,  # 35% reduction in expectations
-        "metros": ["Phoenix", "Las Vegas", "Tucson", "Albuquerque", "El Paso", "Reno"]
-    },
-    # Semi-arid regions (moderate canopy capacity)
-    "semi_arid": {
-        "multiplier": 0.80,  # 20% reduction
-        "metros": ["Denver", "Salt Lake City", "Sacramento", "Fresno", "Bakersfield", "Colorado Springs"]
-    },
-    # Temperate regions (baseline, no adjustment)
-    "temperate": {
-        "multiplier": 1.0,
-        "metros": []  # Default for most metros
-    },
-    # Humid/Wet regions (higher natural canopy capacity)
-    "humid": {
-        "multiplier": 1.15,  # 15% increase
-        "metros": ["Seattle", "Portland", "Atlanta", "Charlotte", "Raleigh", "Nashville", "Birmingham"]
-    },
-    # Tropical/Subtropical regions (very high canopy capacity)
-    "tropical": {
-        "multiplier": 1.30,  # 30% increase
-        "metros": ["Miami", "Tampa", "Orlando", "Jacksonville", "New Orleans", "Honolulu"]
-    }
-}
+# Climate adjustments are now calculated dynamically based on lat/lon/elevation
+# No hardcoded metro lists required - fully scalable and works globally
 
 # Area-type-specific context bonus weights
 # Adjusts how much topography, landcover, and water contribute to context bonus
@@ -160,55 +133,99 @@ CONTEXT_BONUS_WEIGHTS = {
 }
 
 
-def _get_climate_adjustment(city: Optional[str], lat: Optional[float] = None) -> float:
+def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float] = None) -> float:
     """
-    Get climate adjustment multiplier for canopy expectations.
+    Dynamically determine climate adjustment based on geographic coordinates.
+    Uses simplified Köppen-Geiger climate zone approximation via lat/lon + elevation.
+    
+    Elevation adjustment (applied to base multiplier):
+    - >1500m: 1.10x (higher = cooler, more precipitation potential)
+    - 800-1500m: 1.05x
+    - <800m: 1.00x (default)
+    
+    Base multipliers by region:
+    - Arid/Desert (SW US): 0.65-0.85
+    - Tropical/Subtropical (South): 1.15-1.30
+    - Temperate/Humid (NW, NE): 1.05-1.15
+    - Mid-latitude (default): 0.95-1.05
     
     Args:
-        city: City name for metro-based lookup
-        lat: Optional latitude for geographic-based fallback
+        lat: Latitude (-90 to 90)
+        lon: Longitude (-180 to 180)
+        elevation_m: Optional elevation in meters (clamped 0-8848)
     
     Returns:
-        Multiplier (0.65-1.30) to adjust base canopy expectations
+        Multiplier (0.65-1.43) for canopy expectations
     """
-    if not city:
-        # Use latitude as fallback for geographic climate zones
-        if lat is not None:
-            if lat < 25:  # Tropical/subtropical
-                return 1.30
-            elif lat < 30:  # Semi-arid/southern
-                return 0.80
-            elif lat > 45:  # Northern temperate/humid
-                return 1.15
-        return 1.0  # Default temperate
     
-    city_lower = city.lower()
+    # Clamp and validate inputs
+    lat = max(-90.0, min(90.0, lat))
+    lon = ((lon + 180) % 360) - 180  # Normalize longitude to -180 to 180
+    elevation_m = max(0, min(8848, elevation_m or 0))  # Clamp elevation
     
-    # Check each climate category
-    for climate_type, config in CLIMATE_ADJUSTMENTS.items():
-        for metro in config["metros"]:
-            if metro.lower() in city_lower or city_lower in metro.lower():
-                return config["multiplier"]
+    # Elevation adjustment factor
+    elevation_factor = 1.0
+    if elevation_m > 1500:
+        elevation_factor = 1.10
+    elif elevation_m > 800:
+        elevation_factor = 1.05
     
-    # Default to temperate (no adjustment)
+    # Arid/Desert zones (Southwest US, interior West)
+    if 25 <= lat <= 40 and -125 <= lon <= -100:
+        if elevation_m < 800:
+            return 0.65 * elevation_factor
+        elif elevation_m < 1500:
+            return 0.80 * elevation_factor
+        else:
+            return 0.85 * elevation_factor
+    
+    # Tropical/Subtropical (South Florida, Gulf Coast, Hawaii)
+    if lat < 30:
+        if -100 <= lon <= -80:  # Gulf Coast, Florida
+            return 1.30
+        elif lon < -150 or lon > -120:  # Hawaii, Caribbean periphery
+            return 1.30
+        else:  # Broader subtropical
+            return 1.15
+    
+    # Northern temperate/boreal (lat > 45)
+    if lat > 45:
+        if lon < -100:  # Pacific Northwest
+            return 1.15 * elevation_factor
+        elif lon > -80:  # Northeast
+            return 1.10 * elevation_factor
+        else:  # Interior North
+            return 1.05 * elevation_factor
+    
+    # Mid-latitude temperate (30-45°N, the bulk of continental US)
+    if 30 <= lat <= 45:
+        if lon < -100:  # West Coast (CA, OR)
+            return 1.0
+        elif lon > -85:  # East Coast (more humid/humid subtropical)
+            return 1.05
+        else:  # Interior (less humid)
+            return 0.95
+    
+    # Default fallback (unexpected regions)
     return 1.0
 
 
-def _get_adjusted_canopy_expectation(area_type: str, city: Optional[str] = None, 
-                                     lat: Optional[float] = None) -> float:
+def _get_adjusted_canopy_expectation(area_type: str, lat: float, lon: float, 
+                                     elevation_m: Optional[float] = None) -> float:
     """
     Get canopy expectation adjusted for regional climate.
     
     Args:
         area_type: Base area type
-        city: Optional city name for metro lookup
-        lat: Optional latitude for geographic fallback
+        lat: Latitude
+        lon: Longitude
+        elevation_m: Optional elevation in meters (from topography data)
     
     Returns:
         Adjusted canopy expectation percentage
     """
     base_expectation = CANOPY_EXPECTATIONS.get(area_type.lower(), CANOPY_EXPECTATIONS["unknown"])
-    climate_multiplier = _get_climate_adjustment(city, lat)
+    climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
     adjusted = base_expectation * climate_multiplier
     
     # Ensure reasonable bounds (don't go below 5% or above 60%)
@@ -756,10 +773,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     }
 
     area_type_key = (area_type or "").lower() or "unknown"
-    # Use climate-adjusted expectation
-    expectation = _get_adjusted_canopy_expectation(area_type_key, city, lat)
+    # Extract elevation from topography_metrics if available (for climate adjustment)
+    elevation_m = None
+    if topography_metrics:
+        elevation_m = topography_metrics.get("elevation_mean_m")
+    
+    # Use climate-adjusted expectation (now uses lat/lon/elevation instead of city lookup)
+    expectation = _get_adjusted_canopy_expectation(area_type_key, lat, lon, elevation_m)
     base_expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
-    climate_multiplier = _get_climate_adjustment(city, lat)
+    climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
     if primary_canopy_pct is None:
         primary_canopy_pct = details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0
     canopy_expectation_ratio = None
