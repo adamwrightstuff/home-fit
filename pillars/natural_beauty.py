@@ -36,6 +36,7 @@ GVI_BONUS_MAX = 8.0
 BIODIVERSITY_BONUS_MAX = 4.0
 CANOPY_EXPECTATION_BONUS_MAX = 6.0
 CANOPY_EXPECTATION_PENALTY_MAX = 6.0
+STREET_TREE_BONUS_MAX = 5.0
 
 MULTI_RADIUS_CANOPY = {
     "micro_400m": 400,
@@ -52,6 +53,19 @@ CANOPY_EXPECTATIONS = {
     "exurban": 36.0,
     "rural": 38.0,
     "unknown": 25.0,
+}
+
+# Base water expectations by area type (percentage)
+# Adjusted by climate: arid regions have lower natural water expectations
+WATER_EXPECTATIONS = {
+    "urban_core": 3.0,
+    "urban_core_lowrise": 3.5,
+    "historic_urban": 4.0,
+    "urban_residential": 4.0,
+    "suburban": 5.0,
+    "exurban": 7.0,
+    "rural": 8.0,
+    "unknown": 5.0,
 }
 
 GREEN_VIEW_WEIGHTS = {
@@ -232,6 +246,42 @@ def _get_adjusted_canopy_expectation(area_type: str, lat: float, lon: float,
     return max(5.0, min(60.0, adjusted))
 
 
+def _get_water_expectation(area_type: str, lat: float, lon: float, 
+                          elevation_m: Optional[float] = None) -> float:
+    """
+    Get water expectation adjusted for regional climate.
+    
+    Arid regions have lower natural water expectations, so water presence is rarer and more valuable.
+    Tropical regions have higher natural water expectations, so water is more common.
+    
+    Args:
+        area_type: Base area type
+        lat: Latitude
+        lon: Longitude
+        elevation_m: Optional elevation in meters (from topography data)
+    
+    Returns:
+        Adjusted water expectation percentage
+    """
+    base_expectation = WATER_EXPECTATIONS.get(area_type.lower(), WATER_EXPECTATIONS["unknown"])
+    climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
+    
+    # For water, invert the climate logic: arid = lower expectation (water is rare)
+    # Arid regions (0.65 multiplier) should have 0.5x water expectation
+    # Tropical regions (1.3 multiplier) should have 1.5x water expectation
+    if climate_multiplier < 0.8:  # Arid/semi-arid
+        water_multiplier = 0.5
+    elif climate_multiplier > 1.2:  # Tropical/humid
+        water_multiplier = 1.5
+    else:  # Temperate
+        water_multiplier = 1.0
+    
+    adjusted = base_expectation * water_multiplier
+    
+    # Ensure reasonable bounds (don't go below 1% or above 15%)
+    return max(1.0, min(15.0, adjusted))
+
+
 def _score_tree_canopy(canopy_pct: float) -> float:
     """
     Improved tree canopy scoring curve addressing low-canopy area underestimation.
@@ -264,6 +314,33 @@ def _score_tree_canopy(canopy_pct: float) -> float:
     # Tier 5: Very high (70%+)
     else:
         return 50.0  # Cap at 50
+
+
+def _calculate_street_tree_bonus(canopy_pct: float, street_tree_count: int, area_type: Optional[str] = None) -> float:
+    """
+    Calculate street tree bonus for low-canopy urban areas with mature street trees.
+    
+    Only applies when satellite canopy is very low (<10%) and street trees are present.
+    This helps urban historic places (Garden District, Beacon Hill) get credit for
+    street-level greenery even when satellite canopy is sparse.
+    
+    Args:
+        canopy_pct: Primary canopy percentage from satellite data
+        street_tree_count: Number of street trees found
+        area_type: Optional area type for context
+    
+    Returns:
+        Bonus points (0-5.0), capped at STREET_TREE_BONUS_MAX
+    """
+    # Only apply when canopy is very low (<10%)
+    if canopy_pct >= 10.0 or street_tree_count <= 0:
+        return 0.0
+    
+    # Bonus formula: 20 trees = full 5 points
+    # Linear scaling: 1 tree = 0.25 points, 20 trees = 5.0 points
+    bonus = min(STREET_TREE_BONUS_MAX, (street_tree_count / 20.0) * STREET_TREE_BONUS_MAX)
+    
+    return bonus
 
 
 def _score_nyc_trees(tree_count: int) -> float:
@@ -408,7 +485,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         combined = max(0.0, min(1.0, (0.5 * relief_factor) + (0.3 * slope_factor) + (0.2 * steep_factor)))
         return TOPOGRAPHY_BONUS_MAX * combined
 
-    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str]) -> Tuple[float, float]:
+    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str], 
+                                   lat: Optional[float] = None, lon: Optional[float] = None,
+                                   elevation_m: Optional[float] = None,
+                                   topography_metrics: Optional[Dict] = None) -> Tuple[float, float]:
         if not metrics:
             return 0.0, 0.0
 
@@ -449,9 +529,30 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # Apply area-type boost (existing logic)
         area_boost = 1.1 if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban") else 1.0
         
-        # Calculate water score: base * coastal_multiplier * area_boost, capped at WATER_BONUS_MAX
+        # Climate-calibrated water rarity bonus (3x when water < expected for climate)
+        rarity_multiplier = 1.0
+        if lat is not None and lon is not None and context_area_type:
+            water_expectation = _get_water_expectation(context_area_type, lat, lon, elevation_m)
+            if water_expectation > 0:
+                water_rarity_ratio = water_pct / water_expectation
+                # If water is rarer than expected (ratio < 1.0), apply 3x bonus
+                if water_rarity_ratio < 1.0:
+                    rarity_multiplier = 3.0
+        
+        # Simple water visibility heuristics (elevation + development proxy)
+        visibility_factor = 1.0
+        if topography_metrics:
+            elevation_mean = float(topography_metrics.get("elevation_mean_m", 0.0))
+            elevation_factor = 1.2 if elevation_mean > 50.0 else 1.0
+            # Visibility = (1 - developed_pct/100) * elevation_factor
+            visibility = (1.0 - min(1.0, developed_pct / 100.0)) * elevation_factor
+            # Clamp between 0.5 and 1.2 to avoid extreme adjustments
+            visibility_factor = max(0.5, min(1.2, visibility))
+        
+        # Calculate water score: base * coastal_multiplier * area_boost * rarity_multiplier * visibility_factor
         # Base calculation uses 10.0 as the reference, then applies multipliers
-        water_score = min(WATER_BONUS_MAX, base_water_factor * 10.0 * coastal_multiplier * area_boost)
+        water_score = min(WATER_BONUS_MAX, base_water_factor * 10.0 * coastal_multiplier * 
+                         area_boost * rarity_multiplier * visibility_factor)
 
         return landcover_score, water_score
 
@@ -692,7 +793,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")
-        landcover_score_raw, water_score_raw = _score_landcover_component(landcover_metrics, area_type)
+        # Extract elevation from topography_metrics if available
+        elevation_m_for_water = None
+        if topography_metrics:
+            elevation_m_for_water = topography_metrics.get("elevation_mean_m")
+        
+        landcover_score_raw, water_score_raw = _score_landcover_component(
+            landcover_metrics, area_type, lat, lon, elevation_m_for_water, topography_metrics
+        )
         # Apply area-type-specific weights
         landcover_score = landcover_score_raw * context_weights["landcover"]
         water_score = water_score_raw * context_weights["water"]
@@ -874,7 +982,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     details["green_view_details"] = green_view_details
     details["street_tree_feature_total"] = street_tree_feature_total
     details["gvi_bonus"] = round(gvi_bonus, 2)
-    adjusted_score = base_tree_score + expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus
+    # Calculate street tree bonus (only for low-canopy areas with street trees)
+    street_tree_bonus = 0.0
+    if primary_canopy_pct is not None and street_tree_feature_total > 0:
+        street_tree_bonus = _calculate_street_tree_bonus(primary_canopy_pct, street_tree_feature_total, area_type)
+    
+    adjusted_score = base_tree_score + expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus
     score = max(0.0, min(50.0, adjusted_score))
     details["tree_base_score"] = round(base_tree_score, 2)
     details["adjusted_tree_score"] = round(adjusted_score, 2)
@@ -883,9 +996,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         "canopy_expectation_penalty": round(-expectation_penalty, 2) if expectation_penalty else 0.0,
         "green_view_bonus": round(gvi_bonus, 2),
         "biodiversity_bonus": round(biodiversity_bonus, 2),
+        "street_tree_bonus": round(street_tree_bonus, 2),
     }
     details["bonus_breakdown"]["net"] = round(
-        expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus,
+        expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus,
         2
     )
 
