@@ -83,6 +83,136 @@ BIODIVERSITY_WEIGHTS = {
     "grass": 0.1,
 }
 
+# Regional climate adjustments for canopy expectations
+# Multipliers applied to base expectations to account for natural vegetation capacity
+CLIMATE_ADJUSTMENTS = {
+    # Desert/Arid regions (low natural canopy capacity)
+    "arid": {
+        "multiplier": 0.65,  # 35% reduction in expectations
+        "metros": ["Phoenix", "Las Vegas", "Tucson", "Albuquerque", "El Paso", "Reno"]
+    },
+    # Semi-arid regions (moderate canopy capacity)
+    "semi_arid": {
+        "multiplier": 0.80,  # 20% reduction
+        "metros": ["Denver", "Salt Lake City", "Sacramento", "Fresno", "Bakersfield", "Colorado Springs"]
+    },
+    # Temperate regions (baseline, no adjustment)
+    "temperate": {
+        "multiplier": 1.0,
+        "metros": []  # Default for most metros
+    },
+    # Humid/Wet regions (higher natural canopy capacity)
+    "humid": {
+        "multiplier": 1.15,  # 15% increase
+        "metros": ["Seattle", "Portland", "Atlanta", "Charlotte", "Raleigh", "Nashville", "Birmingham"]
+    },
+    # Tropical/Subtropical regions (very high canopy capacity)
+    "tropical": {
+        "multiplier": 1.30,  # 30% increase
+        "metros": ["Miami", "Tampa", "Orlando", "Jacksonville", "New Orleans", "Honolulu"]
+    }
+}
+
+# Area-type-specific context bonus weights
+# Adjusts how much topography, landcover, and water contribute to context bonus
+CONTEXT_BONUS_WEIGHTS = {
+    "urban_core": {
+        "topography": 0.3,   # Less important in dense urban cores
+        "landcover": 0.4,    # Moderate importance
+        "water": 0.3         # Moderate importance
+    },
+    "urban_core_lowrise": {
+        "topography": 0.35,
+        "landcover": 0.4,
+        "water": 0.25
+    },
+    "historic_urban": {
+        "topography": 0.4,
+        "landcover": 0.35,
+        "water": 0.25
+    },
+    "urban_residential": {
+        "topography": 0.4,
+        "landcover": 0.35,
+        "water": 0.25
+    },
+    "suburban": {
+        "topography": 0.5,   # More important in suburbs
+        "landcover": 0.3,    # Less developed land
+        "water": 0.2
+    },
+    "exurban": {
+        "topography": 0.6,   # Very important in exurban
+        "landcover": 0.25,
+        "water": 0.15
+    },
+    "rural": {
+        "topography": 0.65,  # Most important in rural
+        "landcover": 0.2,
+        "water": 0.15
+    },
+    "unknown": {
+        "topography": 0.4,
+        "landcover": 0.35,
+        "water": 0.25
+    }
+}
+
+
+def _get_climate_adjustment(city: Optional[str], lat: Optional[float] = None) -> float:
+    """
+    Get climate adjustment multiplier for canopy expectations.
+    
+    Args:
+        city: City name for metro-based lookup
+        lat: Optional latitude for geographic-based fallback
+    
+    Returns:
+        Multiplier (0.65-1.30) to adjust base canopy expectations
+    """
+    if not city:
+        # Use latitude as fallback for geographic climate zones
+        if lat is not None:
+            if lat < 25:  # Tropical/subtropical
+                return 1.30
+            elif lat < 30:  # Semi-arid/southern
+                return 0.80
+            elif lat > 45:  # Northern temperate/humid
+                return 1.15
+        return 1.0  # Default temperate
+    
+    city_lower = city.lower()
+    
+    # Check each climate category
+    for climate_type, config in CLIMATE_ADJUSTMENTS.items():
+        for metro in config["metros"]:
+            if metro.lower() in city_lower or city_lower in metro.lower():
+                return config["multiplier"]
+    
+    # Default to temperate (no adjustment)
+    return 1.0
+
+
+def _get_adjusted_canopy_expectation(area_type: str, city: Optional[str] = None, 
+                                     lat: Optional[float] = None) -> float:
+    """
+    Get canopy expectation adjusted for regional climate.
+    
+    Args:
+        area_type: Base area type
+        city: Optional city name for metro lookup
+        lat: Optional latitude for geographic fallback
+    
+    Returns:
+        Adjusted canopy expectation percentage
+    """
+    base_expectation = CANOPY_EXPECTATIONS.get(area_type.lower(), CANOPY_EXPECTATIONS["unknown"])
+    climate_multiplier = _get_climate_adjustment(city, lat)
+    adjusted = base_expectation * climate_multiplier
+    
+    # Ensure reasonable bounds (don't go below 5% or above 60%)
+    return max(5.0, min(60.0, adjusted))
+
 
 def _score_tree_canopy(canopy_pct: float) -> float:
     """Score tree canopy with a softened, piecewise-linear curve."""
@@ -107,16 +237,31 @@ def _score_nyc_trees(tree_count: int) -> float:
     return score
 
 
-def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500) -> Tuple[float, Dict]:
+def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500,
+                            natural_context_bonus: float = 0.0,
+                            landcover_metrics: Optional[Dict] = None) -> Tuple[float, Dict]:
     """
     Compute a lightweight scenic bonus based on nearby viewpoint features.
+    
+    Deduplication: Reduces scenic bonus if natural context already captures
+    similar features (e.g., viewpoints near water/parks already counted in context bonus).
+    
+    Args:
+        viewpoints: List of viewpoint features from OSM
+        radius_m: Search radius
+        natural_context_bonus: Total natural context bonus (for deduplication)
+        landcover_metrics: Optional landcover metrics (to detect water/parks overlap)
+    
+    Returns:
+        Tuple of (scenic_bonus, metadata_dict)
     """
     if not viewpoints:
         return 0.0, {
             "count": 0,
             "closest_distance_m": None,
             "weights_sum": 0.0,
-            "top_viewpoints": []
+            "top_viewpoints": [],
+            "deduplication_applied": False
         }
 
     radius_m = max(radius_m, 1)
@@ -143,12 +288,38 @@ def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500) -> Tup
     viewpoint_summaries.sort(key=lambda item: item.get("distance_m", float("inf")))
     viewpoint_summaries = viewpoint_summaries[:5]
 
-    scenic_bonus = min(6.0, weights_sum * 3.0)
+    scenic_bonus_raw = min(6.0, weights_sum * 3.0)
+    
+    # Deduplication: Reduce scenic bonus if natural context already captures similar features
+    deduplication_factor = 1.0
+    deduplication_reason = None
+    
+    # If we have significant natural context bonus (water, parks, topography),
+    # reduce scenic bonus to avoid double-counting
+    if natural_context_bonus > 8.0:
+        # High context bonus suggests natural features already captured
+        # Reduce scenic bonus by up to 40% if context bonus is very high
+        deduplication_factor = max(0.6, 1.0 - (natural_context_bonus / 20.0) * 0.4)
+        deduplication_reason = f"High natural context bonus ({natural_context_bonus:.1f})"
+    elif landcover_metrics:
+        # Check if viewpoints are near water features (already counted in water bonus)
+        water_pct = float(landcover_metrics.get("water_pct", 0.0))
+        if water_pct > 10.0:
+            # Significant water coverage - viewpoints likely water-related
+            deduplication_factor = max(0.7, 1.0 - (water_pct / 50.0) * 0.3)
+            deduplication_reason = f"Water features present ({water_pct:.1f}%)"
+    
+    scenic_bonus = scenic_bonus_raw * deduplication_factor
+    
     metadata = {
         "count": len(viewpoints),
         "closest_distance_m": viewpoint_summaries[0]["distance_m"] if viewpoint_summaries else None,
         "weights_sum": round(weights_sum, 3),
-        "top_viewpoints": viewpoint_summaries
+        "top_viewpoints": viewpoint_summaries,
+        "scenic_bonus_raw": round(scenic_bonus_raw, 2),
+        "deduplication_factor": round(deduplication_factor, 3),
+        "deduplication_applied": deduplication_factor < 1.0,
+        "deduplication_reason": deduplication_reason
     }
     return scenic_bonus, metadata
 
@@ -439,6 +610,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         get_topography_context = None  # type: ignore
         get_landcover_context_gee = None  # type: ignore
 
+    # Get area-type-specific context bonus weights
+    area_type_key = (area_type or "").lower() or "unknown"
+    context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
+    
     topography_metrics = None
     if get_topography_context:
         try:
@@ -446,8 +621,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         except Exception as exc:
             logger.warning("Topography context lookup failed: %s", exc)
     if topography_metrics:
-        topography_score = _score_topography_component(topography_metrics)
+        topography_score_raw = _score_topography_component(topography_metrics)
+        # Apply area-type-specific weight
+        topography_score = topography_score_raw * context_weights["topography"]
         natural_context_components["topography"] = round(topography_score, 2)
+        natural_context_components["topography_raw"] = round(topography_score_raw, 2)
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
 
@@ -462,9 +640,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")
-        landcover_score, water_score = _score_landcover_component(landcover_metrics, area_type)
+        landcover_score_raw, water_score_raw = _score_landcover_component(landcover_metrics, area_type)
+        # Apply area-type-specific weights
+        landcover_score = landcover_score_raw * context_weights["landcover"]
+        water_score = water_score_raw * context_weights["water"]
         natural_context_components["landcover"] = round(landcover_score, 2)
+        natural_context_components["landcover_raw"] = round(landcover_score_raw, 2)
         natural_context_components["water"] = round(water_score, 2)
+        natural_context_components["water_raw"] = round(water_score_raw, 2)
         context_bonus_total += landcover_score + water_score
         biodiversity_index = (
             BIODIVERSITY_WEIGHTS["forest"] * float(landcover_metrics.get("forest_pct", 0.0)) +
@@ -507,6 +690,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["total_bonus"] = round(context_bonus_total, 2)
         natural_context_details["total_before_cap"] = round(total_context_before_cap, 2)
         natural_context_details["cap"] = NATURAL_CONTEXT_BONUS_CAP
+        natural_context_details["context_weights"] = context_weights  # Show area-type-specific weights
         details["natural_context"] = natural_context_details
     else:
         details["natural_context"] = {
@@ -537,14 +721,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     }
 
     area_type_key = (area_type or "").lower() or "unknown"
-    expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
+    # Use climate-adjusted expectation
+    expectation = _get_adjusted_canopy_expectation(area_type_key, city, lat)
+    base_expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
+    climate_multiplier = _get_climate_adjustment(city, lat)
     if primary_canopy_pct is None:
         primary_canopy_pct = details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0
     canopy_expectation_ratio = None
     if expectation > 0:
         canopy_expectation_ratio = primary_canopy_pct / expectation
     details["canopy_expectation"] = {
-        "expected_pct": expectation,
+        "base_expected_pct": base_expectation,
+        "climate_adjusted_pct": expectation,
+        "climate_multiplier": round(climate_multiplier, 3),
         "observed_pct": round(primary_canopy_pct, 2),
         "ratio": round(canopy_expectation_ratio, 3) if canopy_expectation_ratio is not None else None
     }
@@ -688,9 +877,13 @@ def calculate_natural_beauty(lat: float,
     if not disable_enhancers:
         if enhancers_data is None:
             enhancers_data = osm_api.query_beauty_enhancers(lat, lon, radius_m=enhancer_radius_m)
+        # Pass context bonus and landcover metrics for deduplication
+        landcover_metrics_for_dedup = tree_details.get("natural_context", {}).get("landcover_metrics")
         scenic_bonus_raw, scenic_meta = _compute_viewshed_proxy(
             enhancers_data.get("viewpoints_details", []),
-            radius_m=enhancer_radius_m
+            radius_m=enhancer_radius_m,
+            natural_context_bonus=context_bonus_raw,
+            landcover_metrics=landcover_metrics_for_dedup
         )
         natural_bonus_raw = scenic_bonus_raw + context_bonus_raw
         natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
