@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover - optional dependency
 # Natural context scoring constants.
 TOPOGRAPHY_BONUS_MAX = 12.0
 LANDCOVER_BONUS_MAX = 8.0
-WATER_BONUS_MAX = 10.0
+WATER_BONUS_MAX = 14.0
 NATURAL_CONTEXT_BONUS_CAP = 20.0
 
 GVI_BONUS_MAX = 8.0
@@ -115,41 +115,42 @@ CLIMATE_ADJUSTMENTS = {
 
 # Area-type-specific context bonus weights
 # Adjusts how much topography, landcover, and water contribute to context bonus
+# Updated to increase water weights reflecting its importance for natural beauty
 CONTEXT_BONUS_WEIGHTS = {
     "urban_core": {
-        "topography": 0.3,   # Less important in dense urban cores
-        "landcover": 0.4,    # Moderate importance
-        "water": 0.3         # Moderate importance
+        "topography": 0.30,   # Decreased from 0.3 (maintained)
+        "landcover": 0.35,    # Decreased from 0.4
+        "water": 0.35         # Increased from 0.3
     },
     "urban_core_lowrise": {
-        "topography": 0.35,
-        "landcover": 0.4,
-        "water": 0.25
+        "topography": 0.35,   # Maintained
+        "landcover": 0.30,    # Decreased from 0.4
+        "water": 0.35         # Increased from 0.25
     },
     "historic_urban": {
-        "topography": 0.4,
-        "landcover": 0.35,
-        "water": 0.25
+        "topography": 0.35,   # Decreased from 0.4
+        "landcover": 0.30,    # Decreased from 0.35
+        "water": 0.35         # Increased from 0.25
     },
     "urban_residential": {
-        "topography": 0.4,
-        "landcover": 0.35,
-        "water": 0.25
+        "topography": 0.30,   # Decreased from 0.4
+        "landcover": 0.35,    # Maintained
+        "water": 0.35         # Increased from 0.25
     },
     "suburban": {
-        "topography": 0.5,   # More important in suburbs
-        "landcover": 0.3,    # Less developed land
-        "water": 0.2
+        "topography": 0.35,   # Decreased from 0.5
+        "landcover": 0.35,    # Increased from 0.3
+        "water": 0.30         # CRITICAL: Increased from 0.2
     },
     "exurban": {
-        "topography": 0.6,   # Very important in exurban
-        "landcover": 0.25,
-        "water": 0.15
+        "topography": 0.40,   # Decreased from 0.6
+        "landcover": 0.35,    # Increased from 0.25
+        "water": 0.25         # Increased from 0.15
     },
     "rural": {
-        "topography": 0.65,  # Most important in rural
-        "landcover": 0.2,
-        "water": 0.15
+        "topography": 0.45,   # Decreased from 0.65
+        "landcover": 0.35,    # Increased from 0.2
+        "water": 0.20         # Increased from 0.15 (lower priority in rural)
     },
     "unknown": {
         "topography": 0.4,
@@ -215,15 +216,37 @@ def _get_adjusted_canopy_expectation(area_type: str, city: Optional[str] = None,
 
 
 def _score_tree_canopy(canopy_pct: float) -> float:
-    """Score tree canopy with a softened, piecewise-linear curve."""
+    """
+    Improved tree canopy scoring curve addressing low-canopy area underestimation.
+    
+    Rationale: Arid (Scottsdale, Sedona) and dense urban (Manhattan Beach, Beacon Hill) 
+    areas should not be penalized for inherently low canopy while still rewarding higher coverage.
+    """
     canopy = max(0.0, min(100.0, canopy_pct))
-    if canopy <= 20.0:
-        return canopy * 1.1
-    if canopy <= 55.0:
-        return 22.0 + (canopy - 20.0) * 0.7
-    if canopy <= 70.0:
-        return 46.5 + (canopy - 55.0) * 0.25
-    return 50.0
+    
+    # Tier 1: Very low canopy (0-10%)
+    # More generous for desert and dense urban cores
+    if canopy <= 10.0:
+        return canopy * 1.5  # Increased from 1.1 (0-15 points instead of 0-11)
+    
+    # Tier 2: Low to moderate (10-20%)
+    # Smooth transition with better rewards for marginal increases
+    elif canopy <= 20.0:
+        return 15.0 + (canopy - 10.0) * 0.7  # 15-22 points
+    
+    # Tier 3: Moderate (20-55%)
+    # Original curve, slightly adjusted
+    elif canopy <= 55.0:
+        return 22.0 + (canopy - 20.0) * 0.7  # 22-46.5 points
+    
+    # Tier 4: High (55-70%)
+    # Original curve maintained
+    elif canopy <= 70.0:
+        return 46.5 + (canopy - 55.0) * 0.25  # 46.5-50 points
+    
+    # Tier 5: Very high (70%+)
+    else:
+        return 50.0  # Cap at 50
 
 
 def _score_nyc_trees(tree_count: int) -> float:
@@ -396,10 +419,22 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
         landcover_score = LANDCOVER_BONUS_MAX * min(1.0, natural_index)
 
-        water_factor = min(1.0, water_pct / 25.0)  # 25% water coverage → full credit
-        if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban"):
-            water_factor = min(1.0, water_factor * 1.1)
-        water_score = WATER_BONUS_MAX * water_factor
+        # Base water factor (25% water coverage → full credit for base calculation)
+        base_water_factor = min(1.0, water_pct / 25.0)
+        
+        # Apply coastal multiplier for significant water presence
+        coastal_multiplier = 1.0
+        if water_pct > 25.0:
+            coastal_multiplier = 1.3  # Major waterfront (>25%): 1.3x multiplier
+        elif water_pct > 15.0:
+            coastal_multiplier = 1.2  # Substantial water (15-25%): 1.2x multiplier
+        
+        # Apply area-type boost (existing logic)
+        area_boost = 1.1 if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban") else 1.0
+        
+        # Calculate water score: base * coastal_multiplier * area_boost, capped at WATER_BONUS_MAX
+        # Base calculation uses 10.0 as the reference, then applies multipliers
+        water_score = min(WATER_BONUS_MAX, base_water_factor * 10.0 * coastal_multiplier * area_boost)
 
         return landcover_score, water_score
 
