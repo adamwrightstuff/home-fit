@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover - optional dependency
 # Natural context scoring constants.
 TOPOGRAPHY_BONUS_MAX = 12.0
 LANDCOVER_BONUS_MAX = 8.0
-WATER_BONUS_MAX = 14.0
+WATER_BONUS_MAX = 25.0  # Increased to make water a primary visual element
 NATURAL_CONTEXT_BONUS_CAP = 20.0
 
 GVI_BONUS_MAX = 8.0
@@ -120,14 +120,14 @@ CONTEXT_BONUS_WEIGHTS = {
         "water": 0.35         # Increased from 0.25
     },
     "urban_residential": {
-        "topography": 0.30,   # Decreased from 0.4
-        "landcover": 0.35,    # Maintained
-        "water": 0.35         # Increased from 0.25
+        "topography": 0.25,   # Decreased to prioritize water
+        "landcover": 0.30,    # Decreased to prioritize water
+        "water": 0.45         # CRITICAL: Increased significantly - water as primary visual element
     },
     "suburban": {
-        "topography": 0.35,   # Decreased from 0.5
-        "landcover": 0.35,    # Increased from 0.3
-        "water": 0.30         # CRITICAL: Increased from 0.2
+        "topography": 0.30,   # Decreased to prioritize water
+        "landcover": 0.30,    # Decreased to prioritize water
+        "water": 0.40         # CRITICAL: Increased significantly - water as primary visual element
     },
     "exurban": {
         "topography": 0.40,   # Decreased from 0.6
@@ -516,42 +516,60 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
         landcover_score = LANDCOVER_BONUS_MAX * min(1.0, natural_index)
 
-        # Base water factor (25% water coverage → full credit for base calculation)
-        base_water_factor = min(1.0, water_pct / 25.0)
+        # Climate-calibrated water scoring: use expectation-adjusted base factor
+        # This makes water scoring proportional to what's achievable in each climate
+        water_expectation = 5.0  # Default fallback
+        if lat is not None and lon is not None and context_area_type:
+            water_expectation = _get_water_expectation(context_area_type, lat, lon, elevation_m)
+        
+        # Base water factor: use climate-adjusted expectation as denominator
+        # This means water is scored relative to regional norms, not absolute thresholds
+        if water_expectation > 0:
+            base_water_factor = min(2.0, water_pct / water_expectation)  # Allow up to 2x for abundant water
+        else:
+            base_water_factor = min(1.0, water_pct / 25.0)  # Fallback to old logic
         
         # Apply coastal multiplier for significant water presence
         coastal_multiplier = 1.0
         if water_pct > 25.0:
-            coastal_multiplier = 1.3  # Major waterfront (>25%): 1.3x multiplier
+            coastal_multiplier = 1.5  # Major waterfront (>25%): 1.5x multiplier (increased)
         elif water_pct > 15.0:
-            coastal_multiplier = 1.2  # Substantial water (15-25%): 1.2x multiplier
+            coastal_multiplier = 1.3  # Substantial water (15-25%): 1.3x multiplier (increased)
+        elif water_pct > 5.0:
+            coastal_multiplier = 1.1  # Moderate water (5-15%): 1.1x multiplier
         
         # Apply area-type boost (existing logic)
-        area_boost = 1.1 if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban") else 1.0
+        area_boost = 1.2 if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban", "urban_residential") else 1.0
         
-        # Climate-calibrated water rarity bonus (3x when water < expected for climate)
+        # Climate-calibrated water rarity/abundance bonus
+        # Water is valuable both when rare (arid) and when abundant (coastal)
         rarity_multiplier = 1.0
-        if lat is not None and lon is not None and context_area_type:
-            water_expectation = _get_water_expectation(context_area_type, lat, lon, elevation_m)
-            if water_expectation > 0:
-                water_rarity_ratio = water_pct / water_expectation
-                # If water is rarer than expected (ratio < 1.0), apply 3x bonus
-                if water_rarity_ratio < 1.0:
-                    rarity_multiplier = 3.0
+        if lat is not None and lon is not None and context_area_type and water_expectation > 0:
+            water_rarity_ratio = water_pct / water_expectation
+            # If water is significantly rarer than expected (ratio < 0.5), apply 3x bonus
+            if water_rarity_ratio < 0.5:
+                rarity_multiplier = 3.0
+            # If water is significantly more abundant than expected (ratio > 2.0), apply 1.5x bonus
+            elif water_rarity_ratio > 2.0:
+                rarity_multiplier = 1.5
+            # If water is moderately rare (0.5-1.0), apply 1.5x bonus
+            elif water_rarity_ratio < 1.0:
+                rarity_multiplier = 1.5
         
         # Simple water visibility heuristics (elevation + development proxy)
+        # Reduced penalty impact - don't penalize dense areas as harshly
         visibility_factor = 1.0
         if topography_metrics:
             elevation_mean = float(topography_metrics.get("elevation_mean_m", 0.0))
-            elevation_factor = 1.2 if elevation_mean > 50.0 else 1.0
+            elevation_factor = 1.3 if elevation_mean > 50.0 else 1.0  # Increased boost for elevation
             # Visibility = (1 - developed_pct/100) * elevation_factor
             visibility = (1.0 - min(1.0, developed_pct / 100.0)) * elevation_factor
-            # Clamp between 0.5 and 1.2 to avoid extreme adjustments
-            visibility_factor = max(0.5, min(1.2, visibility))
+            # Clamp between 0.7 and 1.3 to reduce penalty impact (was 0.5-1.2)
+            visibility_factor = max(0.7, min(1.3, visibility))
         
         # Calculate water score: base * coastal_multiplier * area_boost * rarity_multiplier * visibility_factor
-        # Base calculation uses 10.0 as the reference, then applies multipliers
-        water_score = min(WATER_BONUS_MAX, base_water_factor * 10.0 * coastal_multiplier * 
+        # Base calculation uses 12.0 as the reference (increased from 10.0), then applies multipliers
+        water_score = min(WATER_BONUS_MAX, base_water_factor * 12.0 * coastal_multiplier * 
                          area_boost * rarity_multiplier * visibility_factor)
 
         return landcover_score, water_score
