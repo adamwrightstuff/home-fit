@@ -5,14 +5,15 @@ Shared helpers and constants for beauty-related pillars.
 from typing import Dict, Optional, Tuple
 
 # Normalization parameters carried over from legacy neighborhood beauty pillar.
+# Max set to 120 to allow exceptional locations to score above 100 (removed artificial deflation caps)
 AREA_NORMALIZATION: Dict[str, Dict[str, float]] = {
-    "historic_urban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "suburban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "urban_residential": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "urban_core": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "exurban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "rural": {"shift": 0.0, "scale": 1.0, "max": 100.0},
-    "urban_core_lowrise": {"shift": 0.0, "scale": 1.0, "max": 100.0},
+    "historic_urban": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "suburban": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "urban_residential": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "urban_core": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "exurban": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "rural": {"shift": 0.0, "scale": 1.0, "max": 120.0},
+    "urban_core_lowrise": {"shift": 0.0, "scale": 1.0, "max": 120.0},
 }
 
 # Enhancer caps used by both beauty sub-pillars.
