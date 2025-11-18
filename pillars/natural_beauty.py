@@ -26,11 +26,22 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     street_tree_api = None  # type: ignore
 
+# Feature flags for new calibration features
+# Set to False to disable new features for rollback capability
+ENABLE_CANOPY_SATURATION = True  # Reduce returns above 50% canopy
+ENABLE_WATER_TYPE_DIFF = False  # Disabled until OSM water type data validated
+ENABLE_TOPOGRAPHY_BOOST_ARID = True  # Increase topography weight in arid regions
+ENABLE_COMPONENT_DOMINANCE_GUARD = False  # Phase 2: Prevent single component from dominating
+ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coastal areas
+
 # Natural context scoring constants.
 TOPOGRAPHY_BONUS_MAX = 12.0
 LANDCOVER_BONUS_MAX = 8.0
 WATER_BONUS_MAX = 25.0  # Increased to make water a primary visual element
 NATURAL_CONTEXT_BONUS_CAP = 20.0
+
+# Component dominance guard (prevents single component from exceeding 60% of context bonus)
+MAX_COMPONENT_DOMINANCE_RATIO = 0.6
 
 GVI_BONUS_MAX = 8.0
 BIODIVERSITY_BONUS_MAX = 4.0
@@ -1029,6 +1040,86 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     return score, details
 
 
+def _validate_natural_beauty_score(score: float, details: Dict, 
+                                    area_type: Optional[str],
+                                    context_bonus_raw: float,
+                                    component_scores: Dict) -> Dict:
+    """
+    Validate natural beauty score and detect anomalies.
+    
+    Returns:
+        Dict with validation results including warnings and anomalies.
+    """
+    warnings = []
+    anomalies = []
+    
+    # Check for extreme values
+    if score > 95.0:
+        warnings.append("Very high score (>95) - verify components are reasonable")
+    if score < 5.0:
+        warnings.append("Very low score (<5) - verify data quality and expectations")
+    
+    # Check component balance
+    if context_bonus_raw > NATURAL_CONTEXT_BONUS_CAP * 1.1:
+        warnings.append(f"Context bonus ({context_bonus_raw:.1f}) exceeds cap ({NATURAL_CONTEXT_BONUS_CAP}) - check calculation")
+    
+    # Component dominance guard (if enabled)
+    if ENABLE_COMPONENT_DOMINANCE_GUARD and component_scores:
+        max_component = max(component_scores.values()) if component_scores.values() else 0.0
+        if context_bonus_raw > 0 and max_component / context_bonus_raw > MAX_COMPONENT_DOMINANCE_RATIO:
+            dominant_component = max(component_scores.items(), key=lambda x: x[1])[0]
+            anomalies.append({
+                "type": "component_dominance",
+                "component": dominant_component,
+                "ratio": max_component / context_bonus_raw,
+                "threshold": MAX_COMPONENT_DOMINANCE_RATIO
+            })
+    
+    # Check for data quality issues
+    tree_analysis = details.get("tree_analysis", {})
+    if isinstance(tree_analysis, dict):
+        canopy_pct = tree_analysis.get("gee_canopy_pct")
+        if canopy_pct is not None and canopy_pct < 0:
+            warnings.append("Negative canopy percentage detected - data quality issue")
+    
+    return {
+        "valid": len(warnings) == 0 and len(anomalies) == 0,
+        "warnings": warnings,
+        "anomalies": anomalies,
+        "score": score,
+        "context_bonus": context_bonus_raw
+    }
+
+
+def _apply_component_dominance_guard(context_bonus_raw: float,
+                                     component_scores: Dict) -> float:
+    """
+    Apply component dominance guard to prevent single component from exceeding threshold.
+    
+    If enabled, scales down dominant component if it exceeds MAX_COMPONENT_DOMINANCE_RATIO.
+    """
+    if not ENABLE_COMPONENT_DOMINANCE_GUARD or not component_scores:
+        return context_bonus_raw
+    
+    max_component = max(component_scores.values()) if component_scores.values() else 0.0
+    if context_bonus_raw > 0 and max_component / context_bonus_raw > MAX_COMPONENT_DOMINANCE_RATIO:
+        # Scale down the dominant component
+        scale_factor = (context_bonus_raw * MAX_COMPONENT_DOMINANCE_RATIO) / max_component
+        # Apply gentle scaling (10% reduction) to prevent sudden jumps
+        adjusted_bonus = context_bonus_raw * (1.0 - (1.0 - scale_factor) * 0.1)
+        logger.warning(
+            "Component dominance detected: max component %.1f (%.1f%% of total). "
+            "Applying gentle scaling: %.1f -> %.1f",
+            max_component,
+            (max_component / context_bonus_raw) * 100,
+            context_bonus_raw,
+            adjusted_bonus
+        )
+        return adjusted_bonus
+    
+    return context_bonus_raw
+
+
 def calculate_natural_beauty(lat: float,
                              lon: float,
                              city: Optional[str] = None,
@@ -1055,6 +1146,11 @@ def calculate_natural_beauty(lat: float,
     context_info = tree_details.get("natural_context", {}) or {}
     tree_bonus_breakdown = tree_details.get("bonus_breakdown", {}) or {}
     context_bonus_raw = float(context_info.get("total_bonus") or 0.0)
+    
+    # Apply component dominance guard if enabled
+    component_scores = context_info.get("component_scores", {}) or {}
+    context_bonus_raw = _apply_component_dominance_guard(context_bonus_raw, component_scores)
+    
     natural_bonus_raw = context_bonus_raw
     natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
     scenic_bonus_raw = 0.0
@@ -1106,6 +1202,24 @@ def calculate_natural_beauty(lat: float,
         natural_score_raw,
         area_type
     )
+    
+    # Validate score and detect anomalies
+    validation_result = _validate_natural_beauty_score(
+        natural_score_norm,
+        tree_details,
+        area_type,
+        context_bonus_raw,
+        component_scores
+    )
+    
+    # Log warnings if validation detected issues
+    if validation_result["warnings"]:
+        for warning in validation_result["warnings"]:
+            logger.warning("Natural beauty validation: %s", warning)
+    
+    if validation_result["anomalies"]:
+        for anomaly in validation_result["anomalies"]:
+            logger.warning("Natural beauty anomaly: %s", anomaly)
 
     return {
         "tree_score_0_50": tree_score,
@@ -1119,6 +1233,7 @@ def calculate_natural_beauty(lat: float,
         "scenic_metadata": scenic_meta,
         "score": natural_score_norm,
         "normalization": natural_norm_meta,
+        "validation": validation_result,  # Include validation results in response
     }
 
 
