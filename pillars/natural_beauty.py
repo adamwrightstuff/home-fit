@@ -195,15 +195,6 @@ def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float]
     elif elevation_m > 800:
         elevation_factor = 1.05
     
-    # Arid/Desert zones (Southwest US, interior West)
-    if 25 <= lat <= 40 and -125 <= lon <= -100:
-        if elevation_m < 800:
-            return 0.65 * elevation_factor
-        elif elevation_m < 1500:
-            return 0.80 * elevation_factor
-        else:
-            return 0.85 * elevation_factor
-    
     # Tropical/Subtropical (South Florida, Gulf Coast, Hawaii)
     if lat < 30:
         if -100 <= lon <= -80:  # Gulf Coast, Florida
@@ -222,10 +213,28 @@ def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float]
         else:  # Interior North
             return 1.05 * elevation_factor
     
+    # Coastal California and Oregon (30-45°N, west of -117°)
+    # Check this BEFORE arid zone to exclude coastal areas
+    # Includes San Diego (-117°), LA area (-118°), San Francisco (-122°)
+    if 30 <= lat <= 45 and lon <= -117:
+        return 1.0  # Temperate coastal
+    
+    # Arid/Desert zones (Southwest US, interior West)
+    # Includes Arizona, Nevada, interior California, New Mexico, Utah
+    # Excludes coastal California (lon < -120)
+    if 25 <= lat <= 40 and -125 <= lon <= -100:
+        # Interior Southwest (Arizona, Nevada, interior California)
+        if elevation_m < 800:
+            return 0.65 * elevation_factor
+        elif elevation_m < 1500:
+            return 0.80 * elevation_factor
+        else:
+            return 0.85 * elevation_factor
+    
     # Mid-latitude temperate (30-45°N, the bulk of continental US)
     if 30 <= lat <= 45:
-        if lon < -100:  # West Coast (CA, OR)
-            return 1.0
+        if lon >= -118 and lon < -100:  # Interior West (not coastal, not arid)
+            return 0.95
         elif lon > -85:  # East Coast (more humid/humid subtropical)
             return 1.05
         else:  # Interior (less humid)
