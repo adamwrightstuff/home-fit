@@ -575,6 +575,72 @@ COVERAGE_EXPECTATIONS = {
     "unknown": 0.25,
 }
 
+# Spacious historic districts have lower coverage expectations
+# These are historic areas with significant open space (courtyards, gardens, plazas)
+# Examples: Old San Juan (20.9%), Garden District New Orleans (19.8%)
+SPACIOUS_HISTORIC_COVERAGE_EXPECTATION = 0.22  # 22% instead of 34% for historic_urban
+
+
+def _is_spacious_historic_district(
+    area_type: str,
+    built_coverage_ratio: Optional[float],
+    historic_landmarks: Optional[int],
+    median_year_built: Optional[int],
+    material_entropy: Optional[float] = None,
+    footprint_cv: Optional[float] = None
+) -> bool:
+    """
+    Detect spacious historic districts that should have relaxed coverage expectations.
+    
+    Criteria:
+    - Must be historic_urban area type
+    - Low coverage (< 0.25) indicating significant open space
+    - Historic context (landmarks or pre-1950 median year)
+    - Uniform materials (low material entropy) OR low footprint variation (cohesive design)
+    
+    Args:
+        area_type: Area type classification
+        built_coverage_ratio: Building coverage ratio (0.0-1.0)
+        historic_landmarks: Count of historic landmarks
+        median_year_built: Median year buildings were built
+        material_entropy: Material diversity (lower = more uniform)
+        footprint_cv: Footprint variation (lower = more uniform)
+    
+    Returns:
+        True if this is a spacious historic district
+    """
+    if area_type != "historic_urban":
+        return False
+    
+    # Must have low coverage (< 25%) indicating spacious design
+    if built_coverage_ratio is None or built_coverage_ratio >= 0.25:
+        return False
+    
+    # Must have historic context
+    has_historic_context = False
+    if historic_landmarks and historic_landmarks >= 5:
+        has_historic_context = True
+    if median_year_built is not None and median_year_built < 1950:
+        has_historic_context = True
+    if not has_historic_context:
+        return False
+    
+    # Must have uniform materials OR cohesive footprint pattern (intentional design)
+    # Low material entropy = uniform materials (e.g., all brick, all stone)
+    # Low footprint CV = uniform footprint sizes (cohesive design, not fragmented)
+    is_uniform = False
+    if material_entropy is not None and material_entropy < 30:
+        is_uniform = True
+    if footprint_cv is not None and footprint_cv < 50:
+        is_uniform = True
+    
+    # If coverage is very low (< 20%), be more lenient - assume spacious by design
+    if built_coverage_ratio < 0.20:
+        return has_historic_context
+    
+    # For 20-25% coverage, require uniformity signal
+    return has_historic_context and is_uniform
+
 MATERIAL_BONUS_WEIGHTS = {
     "historic_urban": 1.15,
     "urban_core": 1.0,
@@ -1613,7 +1679,22 @@ def score_architectural_diversity_as_beauty(
 
     coverage_component = None
     if built_coverage_ratio is not None:
-        expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
+        # Check if this is a spacious historic district (relaxed expectations)
+        is_spacious_historic = _is_spacious_historic_district(
+            effective,
+            built_coverage_ratio,
+            historic_landmarks,
+            median_year_built,
+            material_entropy=material_entropy,
+            footprint_cv=footprint_area_cv
+        )
+        
+        if is_spacious_historic:
+            # Use relaxed expectation for spacious historic districts
+            expected_coverage = SPACIOUS_HISTORIC_COVERAGE_EXPECTATION
+        else:
+            expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
+        
         if expected_coverage > 0:
             normalized_coverage = max(0.0, min(1.2, built_coverage_ratio / expected_coverage))
             coverage_component = min(16.67, normalized_coverage * 16.67)
@@ -1811,13 +1892,31 @@ def score_architectural_diversity_as_beauty(
     
     if built_coverage_ratio is not None:
         relief_from_phase = max(0.0, phase23_confidence_bonus)
+        
+        # Check if this is a spacious historic district (relaxed coverage cap thresholds)
+        is_spacious_historic = _is_spacious_historic_district(
+            effective,
+            built_coverage_ratio,
+            historic_landmarks,
+            median_year_built,
+            material_entropy=material_entropy,
+            footprint_cv=footprint_area_cv
+        )
+        
         expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
         cap_threshold = None
         cap_reason = None
         if effective in ("historic_urban", "urban_core"):
-            bands = (0.07, 0.10)
-            first_cap = 45.0
-            second_cap = 50.0
+            if is_spacious_historic:
+                # Spacious historic districts: more lenient thresholds
+                # Accept 12-18% as good (instead of 7-10%)
+                bands = (0.12, 0.18)
+                first_cap = 47.0  # Less aggressive cap
+                second_cap = 50.0
+            else:
+                bands = (0.07, 0.10)
+                first_cap = 45.0
+                second_cap = 50.0
         elif effective == "suburban":
             bands = (0.12, 0.18)
             first_cap = 46.0
