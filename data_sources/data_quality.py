@@ -400,10 +400,19 @@ def get_contextual_tags(
     
     # Historic tag
     is_historic = False
+    # Primary signal: Census median year < 1950 (definitely historic)
     if median_year_built is not None and median_year_built < 1950:
         is_historic = True
+    # Secondary signal: Landmark count (only if median year is historic OR unknown)
+    # This handles historic neighborhoods with modern infill (Georgetown, Back Bay)
+    # But prevents modern areas (Downtown Austin 2007, SLU 2012) from being misclassified
     if historic_landmarks and historic_landmarks >= 10:
-        is_historic = True
+        # Only use landmark count if:
+        # 1. Median year is unknown (fallback), OR
+        # 2. Median year is historic (< 1980) - allows historic neighborhoods with infill
+        # Do NOT use landmark count alone for modern areas (>= 1980)
+        if median_year_built is None or median_year_built < 1980:
+            is_historic = True
     if is_historic:
         tags.append('historic')
     
