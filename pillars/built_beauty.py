@@ -298,8 +298,9 @@ def calculate_built_beauty(lat: float,
         enhancers_data = enhancers_data or {"artwork": 0, "fountains": 0}
 
     built_native = max(0.0, arch_component + built_bonus_scaled)
-    # Remove artificial cap - allow natural score distribution (user preference: "caps are artificial deflation")
-    built_score_raw = built_native * 2.0
+    # Cap at 100 to keep scores in 0-100 range while preserving natural distribution below 100
+    # This only affects exceptional locations (built_native > 50) that would score > 100
+    built_score_raw = min(100.0, built_native * 2.0)
 
     built_score_norm, built_norm_meta = normalize_beauty_score(
         built_score_raw,
