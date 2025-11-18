@@ -37,7 +37,7 @@ ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coast
 # Natural context scoring constants.
 TOPOGRAPHY_BONUS_MAX = 12.0
 LANDCOVER_BONUS_MAX = 8.0
-WATER_BONUS_MAX = 25.0  # Increased to make water a primary visual element
+WATER_BONUS_MAX = 40.0  # Increased to make water a primary visual element and prevent capping high-water coastal locations
 NATURAL_CONTEXT_BONUS_CAP = 20.0
 
 # Component dominance guard (prevents single component from exceeding 60% of context bonus)
