@@ -299,32 +299,46 @@ def _score_tree_canopy(canopy_pct: float) -> float:
     
     Rationale: Arid (Scottsdale, Sedona) and dense urban (Manhattan Beach, Beacon Hill) 
     areas should not be penalized for inherently low canopy while still rewarding higher coverage.
+    
+    With ENABLE_CANOPY_SATURATION: Reduces returns above 50% canopy to prevent over-rewarding
+    extremely dense forest areas that may not be more beautiful than well-balanced landscapes.
     """
     canopy = max(0.0, min(100.0, canopy_pct))
     
     # Tier 1: Very low canopy (0-10%)
     # More generous for desert and dense urban cores
     if canopy <= 10.0:
-        return canopy * 1.5  # Increased from 1.1 (0-15 points instead of 0-11)
+        base_score = canopy * 1.5  # Increased from 1.1 (0-15 points instead of 0-11)
     
     # Tier 2: Low to moderate (10-20%)
     # Smooth transition with better rewards for marginal increases
     elif canopy <= 20.0:
-        return 15.0 + (canopy - 10.0) * 0.7  # 15-22 points
+        base_score = 15.0 + (canopy - 10.0) * 0.7  # 15-22 points
     
-    # Tier 3: Moderate (20-55%)
+    # Tier 3: Moderate (20-50%)
     # Original curve, slightly adjusted
-    elif canopy <= 55.0:
-        return 22.0 + (canopy - 20.0) * 0.7  # 22-46.5 points
+    elif canopy <= 50.0:
+        base_score = 22.0 + (canopy - 20.0) * 0.7  # 22-43 points
     
-    # Tier 4: High (55-70%)
-    # Original curve maintained
+    # Tier 4: High (50-70%)
+    # Reduced returns above 50% if saturation enabled
     elif canopy <= 70.0:
-        return 46.5 + (canopy - 55.0) * 0.25  # 46.5-50 points
+        if ENABLE_CANOPY_SATURATION:
+            # Reduced slope: 43-48 points (was 43-50)
+            base_score = 43.0 + (canopy - 50.0) * 0.25  # 43-48 points
+        else:
+            # Original curve: 43-50 points
+            base_score = 43.0 + (canopy - 50.0) * 0.35  # 43-50 points
     
     # Tier 5: Very high (70%+)
     else:
-        return 50.0  # Cap at 50
+        if ENABLE_CANOPY_SATURATION:
+            # Cap at 48 instead of 50 to reduce over-rewarding dense forest
+            base_score = 48.0
+        else:
+            base_score = 50.0  # Cap at 50
+    
+    return base_score
 
 
 def _calculate_street_tree_bonus(canopy_pct: float, street_tree_count: int, area_type: Optional[str] = None) -> float:
@@ -806,10 +820,27 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             logger.warning("Topography context lookup failed: %s", exc)
     if topography_metrics:
         topography_score_raw = _score_topography_component(topography_metrics)
-        # Apply area-type-specific weight
-        topography_score = topography_score_raw * context_weights["topography"]
+        
+        # Apply topography boost for arid regions if enabled
+        topography_multiplier = 1.0
+        if ENABLE_TOPOGRAPHY_BOOST_ARID and lat is not None and lon is not None:
+            # Get climate adjustment to detect arid regions
+            # Arid regions have multipliers < 0.9 (typically 0.65-0.85)
+            try:
+                elevation_m = topography_metrics.get("elevation_mean_m")
+                climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
+                # Arid and semi-arid regions (multiplier < 0.9) get 1.3x boost to topography
+                if climate_multiplier < 0.9:
+                    topography_multiplier = 1.3
+                    logger.debug("Applying arid topography boost (1.3x) for region with climate multiplier %.2f", climate_multiplier)
+            except Exception:
+                pass  # Fallback to 1.0 if climate detection fails
+        
+        # Apply area-type-specific weight, then arid boost
+        topography_score = topography_score_raw * context_weights["topography"] * topography_multiplier
         natural_context_components["topography"] = round(topography_score, 2)
         natural_context_components["topography_raw"] = round(topography_score_raw, 2)
+        natural_context_components["topography_multiplier"] = round(topography_multiplier, 2) if topography_multiplier != 1.0 else None
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
 
