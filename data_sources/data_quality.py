@@ -8,6 +8,9 @@ import math
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from .census_api import get_population_density, get_census_tract
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 TARGET_AREA_TYPES: Dict[str, str] = {
     "capitol hill seattle wa": "urban_residential",
@@ -595,6 +598,13 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
         Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural', 'unknown'
     """
     normalized_location = _normalize_location_key(location_input)
+    
+    # Check for override in TARGET_AREA_TYPES before running classification
+    if normalized_location and normalized_location in TARGET_AREA_TYPES:
+        override_type = TARGET_AREA_TYPES[normalized_location]
+        logger.info(f"Using TARGET_AREA_TYPES override for '{normalized_location}': {override_type}")
+        return override_type
+    
     diagnostic_record: Optional[Dict[str, Any]] = None
     if normalized_location or built_coverage is not None:
         diagnostic_record = {
