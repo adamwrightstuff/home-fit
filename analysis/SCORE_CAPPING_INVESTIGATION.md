@@ -209,9 +209,15 @@ The primary cap is at `built_score_raw = min(100.0, built_native * 2.0)`, which 
 2. Show true scores (112 for Georgetown/Back Bay instead of 100)
 3. Align with user's philosophy: "caps are artificial deflation"
 
-**Implementation Plan:**
-1. Remove `min(100.0, ...)` from line 301 in `pillars/built_beauty.py`
-2. Update normalization `max` to allow scores > 100 (or remove max cap)
-3. Test against regression suite to verify no unintended impacts
-4. Update documentation to reflect 0-116+ scale for built beauty
+**Final Implementation:**
+1. Keep `min(100.0, ...)` cap at line 301 in `pillars/built_beauty.py`
+2. Keep normalization `max` at 100.0 to maintain 0-100 scale
+3. Keep 2.0 multiplier to preserve natural distribution below 100
+4. **Rationale:** This preserves all existing scores below 100 and only caps exceptional locations (built_native > 50) that would naturally score > 100. Changing the multiplier would cause regression across all locations.
+
+**Result:**
+- Scores stay in 0-100 range (user preference)
+- All existing scores below 100 are preserved (no regression)
+- Only exceptional locations (Georgetown, Back Bay) are capped at 100
+- Natural distribution below 100 is maintained
 
