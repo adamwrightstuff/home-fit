@@ -522,55 +522,57 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if lat is not None and lon is not None and context_area_type:
             water_expectation = _get_water_expectation(context_area_type, lat, lon, elevation_m)
         
-        # Base water factor: use climate-adjusted expectation as denominator
+        # Base water score: use climate-adjusted expectation as denominator
         # This means water is scored relative to regional norms, not absolute thresholds
         if water_expectation > 0:
             base_water_factor = min(2.0, water_pct / water_expectation)  # Allow up to 2x for abundant water
         else:
             base_water_factor = min(1.0, water_pct / 25.0)  # Fallback to old logic
         
-        # Apply coastal multiplier for significant water presence
-        coastal_multiplier = 1.0
+        base_water_score = base_water_factor * 12.0
+        
+        # Coastal bonus (additive, capped) - consistent with built beauty pattern
+        coastal_bonus = 0.0
         if water_pct > 25.0:
-            coastal_multiplier = 1.5  # Major waterfront (>25%): 1.5x multiplier (increased)
+            coastal_bonus = 6.0  # Major waterfront (>25%): 6.0 bonus
         elif water_pct > 15.0:
-            coastal_multiplier = 1.3  # Substantial water (15-25%): 1.3x multiplier (increased)
+            coastal_bonus = 4.0  # Substantial water (15-25%): 4.0 bonus
         elif water_pct > 5.0:
-            coastal_multiplier = 1.1  # Moderate water (5-15%): 1.1x multiplier
+            coastal_bonus = 2.0  # Moderate water (5-15%): 2.0 bonus
         
-        # Apply area-type boost (existing logic)
-        area_boost = 1.2 if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban", "urban_residential") else 1.0
+        # Area-type bonus (additive, capped) - consistent with built beauty pattern
+        area_bonus = 0.0
+        if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban", "urban_residential"):
+            area_bonus = 3.0  # Fixed bonus for these area types
         
-        # Climate-calibrated water rarity/abundance bonus
+        # Climate-calibrated water rarity/abundance bonus (additive, capped)
         # Water is valuable both when rare (arid) and when abundant (coastal)
-        rarity_multiplier = 1.0
+        rarity_bonus = 0.0
         if lat is not None and lon is not None and context_area_type and water_expectation > 0:
             water_rarity_ratio = water_pct / water_expectation
-            # If water is significantly rarer than expected (ratio < 0.5), apply 3x bonus
+            # If water is significantly rarer than expected (ratio < 0.5), apply large bonus
             if water_rarity_ratio < 0.5:
-                rarity_multiplier = 3.0
-            # If water is significantly more abundant than expected (ratio > 2.0), apply 1.5x bonus
+                rarity_bonus = 8.0  # Very rare (arid regions with water)
+            # If water is significantly more abundant than expected (ratio > 2.0), apply bonus
             elif water_rarity_ratio > 2.0:
-                rarity_multiplier = 1.5
-            # If water is moderately rare (0.5-1.0), apply 1.5x bonus
+                rarity_bonus = 4.0  # Abundant (coastal areas)
+            # If water is moderately rare (0.5-1.0), apply smaller bonus
             elif water_rarity_ratio < 1.0:
-                rarity_multiplier = 1.5
+                rarity_bonus = 3.0  # Moderately rare
         
-        # Simple water visibility heuristics (elevation + development proxy)
-        # Reduced penalty impact - don't penalize dense areas as harshly
-        visibility_factor = 1.0
+        # Visibility bonus/penalty (additive, can be negative) - consistent with built beauty pattern
+        visibility_bonus = 0.0
         if topography_metrics:
             elevation_mean = float(topography_metrics.get("elevation_mean_m", 0.0))
-            elevation_factor = 1.3 if elevation_mean > 50.0 else 1.0  # Increased boost for elevation
-            # Visibility = (1 - developed_pct/100) * elevation_factor
-            visibility = (1.0 - min(1.0, developed_pct / 100.0)) * elevation_factor
-            # Clamp between 0.7 and 1.3 to reduce penalty impact (was 0.5-1.2)
-            visibility_factor = max(0.7, min(1.3, visibility))
+            # Elevation bonus: higher elevation = better visibility
+            elevation_bonus = 2.0 if elevation_mean > 50.0 else 0.0
+            # Development penalty: dense development = reduced visibility
+            developed_penalty = -3.0 if developed_pct > 80.0 else (-1.5 if developed_pct > 60.0 else 0.0)
+            visibility_bonus = elevation_bonus + developed_penalty
         
-        # Calculate water score: base * coastal_multiplier * area_boost * rarity_multiplier * visibility_factor
-        # Base calculation uses 12.0 as the reference (increased from 10.0), then applies multipliers
-        water_score = min(WATER_BONUS_MAX, base_water_factor * 12.0 * coastal_multiplier * 
-                         area_boost * rarity_multiplier * visibility_factor)
+        # Calculate water score: base + bonuses (additive, like built beauty)
+        # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
+        water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus)
 
         return landcover_score, water_score
 
