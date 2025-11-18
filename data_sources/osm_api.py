@@ -547,10 +547,16 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
     query = f"""
     [out:json][timeout:25];
     (
-      // HISTORIC BUILDINGS - query any historic tag (simplest approach, catches all)
+      // HISTORIC BUILDINGS - primary query (standard historic tag)
       node["historic"](around:{radius_m},{lat},{lon});
       way["historic"](around:{radius_m},{lat},{lon});
       relation["historic"](around:{radius_m},{lat},{lon});
+      
+      // HISTORIC BUILDINGS - alternative tags (for better coverage, especially in PR/international)
+      node["heritage"](around:{radius_m},{lat},{lon});
+      way["heritage"](around:{radius_m},{lat},{lon});
+      node["building:historic"="yes"](around:{radius_m},{lat},{lon});
+      way["building:historic"="yes"](around:{radius_m},{lat},{lon});
       
       // PUBLIC ART & FOUNTAINS
       node["tourism"="artwork"](around:{radius_m},{lat},{lon});
