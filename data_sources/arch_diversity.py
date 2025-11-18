@@ -1921,17 +1921,18 @@ def score_architectural_diversity_as_beauty(
         expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
         cap_threshold = None
         cap_reason = None
-        if effective in ("historic_urban", "urban_core"):
-            if is_spacious_historic:
-                # Spacious historic districts: more lenient thresholds
-                # Accept 12-18% as good (instead of 7-10%)
-                bands = (0.12, 0.18)
-                first_cap = 47.0  # Less aggressive cap
-                second_cap = 50.0
-            else:
-                bands = (0.07, 0.10)
-                first_cap = 45.0
-                second_cap = 50.0
+        
+        # Apply spacious historic district logic to all area types, not just historic_urban
+        if is_spacious_historic:
+            # Spacious historic districts: more lenient thresholds regardless of area type
+            # Accept 12-18% as good (instead of 7-10% for historic_urban/urban_core)
+            bands = (0.12, 0.18)
+            first_cap = 47.0  # Less aggressive cap
+            second_cap = 50.0
+        elif effective in ("historic_urban", "urban_core"):
+            bands = (0.07, 0.10)
+            first_cap = 45.0
+            second_cap = 50.0
         elif effective == "suburban":
             bands = (0.12, 0.18)
             first_cap = 46.0
