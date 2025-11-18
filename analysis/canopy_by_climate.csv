@@ -1,0 +1,48 @@
+name,lat,lon,area_type,climate_zone,climate_multiplier,canopy_pct,expectation,ratio
+Phoenix AZ,33.4484,-112.074,exurban,arid,0.65,0.25,23.4,0.011
+Tucson AZ,32.2226,-110.9747,rural,arid,0.65,1.12,24.7,0.045
+Las Vegas NV,36.1699,-115.1398,suburban,arid,0.65,0.13,20.8,0.006
+Scottsdale AZ,33.4995,-111.9117,suburban,arid,0.65,1.63,20.8,0.078
+Palm Springs CA,33.8303,-116.5453,exurban,arid,0.65,2.19,23.4,0.093
+Albuquerque NM,35.0844,-106.6504,exurban,arid,0.65,1.07,23.4,0.046
+Reno NV,39.5296,-119.8138,exurban,temperate,1.0,3.78,36.0,0.105
+Los Angeles CA,34.0522,-118.2437,exurban,temperate,1.0,1.45,36.0,0.04
+San Diego CA,32.7157,-117.1611,urban_residential,temperate,1.0,1.21,28.0,0.043
+Santa Barbara CA,34.4208,-119.6982,exurban,temperate,1.0,5.34,36.0,0.148
+San Francisco CA,37.7749,-122.4194,urban_residential,temperate,1.0,0.58,28.0,0.021
+Santa Monica CA,34.0195,-118.4912,suburban,temperate,1.0,1.99,32.0,0.062
+Monterey CA,36.6002,-121.8947,exurban,temperate,1.0,6.13,36.0,0.17
+San Luis Obispo CA,35.2828,-120.6596,exurban,temperate,1.0,6.5,36.0,0.181
+Seattle WA,47.6062,-122.3321,suburban,humid_temperate,1.15,4.27,36.8,0.116
+Portland OR,45.5152,-122.6784,exurban,humid_temperate,1.15,8.75,41.4,0.211
+Boston MA,42.3601,-71.0589,suburban,humid_temperate,1.05,4.34,33.6,0.129
+New York NY,40.7128,-74.006,urban_residential,humid_temperate,1.05,2.18,29.4,0.074
+Chicago IL,41.8781,-87.6298,urban_residential,temperate,0.95,2.24,26.6,0.084
+Philadelphia PA,39.9526,-75.1652,urban_residential,humid_temperate,1.05,1.13,29.4,0.039
+Washington DC,38.9072,-77.0369,urban_residential,humid_temperate,1.05,2.16,29.4,0.073
+Baltimore MD,39.2904,-76.6122,suburban,humid_temperate,1.05,0.72,33.6,0.022
+Minneapolis MN,44.9778,-93.265,suburban,temperate,0.95,2.51,30.4,0.082
+Milwaukee WI,43.0389,-87.9065,suburban,temperate,0.95,1.24,30.4,0.041
+Miami FL,25.7617,-80.1918,urban_residential,tropical,1.3,3.54,36.4,0.097
+Key West FL,24.5551,-81.7826,suburban,tropical,1.3,3.61,41.6,0.087
+Tampa FL,27.9506,-82.4572,exurban,tropical,1.3,3.34,46.8,0.071
+Orlando FL,28.5383,-81.3792,suburban,tropical,1.3,5.08,41.6,0.122
+New Orleans LA,29.9511,-90.0715,rural,tropical,1.3,0.57,49.4,0.012
+Houston TX,29.7604,-95.3698,rural,tropical,1.3,2.86,49.4,0.058
+Atlanta GA,33.749,-84.388,exurban,humid_temperate,1.05,2.65,37.8,0.07
+Charleston SC,32.7765,-79.9311,exurban,humid_temperate,1.05,7.04,37.8,0.186
+Denver CO,39.7392,-104.9903,suburban,arid,0.65,3.15,20.8,0.152
+Salt Lake City UT,40.7608,-111.891,rural,temperate,0.95,2.0,36.1,0.056
+Boise ID,43.615,-116.2023,rural,temperate,0.95,6.09,36.1,0.169
+Kansas City MO,39.0997,-94.5786,suburban,temperate,0.95,1.88,30.4,0.062
+St. Louis MO,38.627,-90.1994,suburban,temperate,0.95,1.11,30.4,0.037
+Detroit MI,42.3314,-83.0458,exurban,humid_temperate,1.05,0.68,37.8,0.018
+Cleveland OH,41.4993,-81.6944,exurban,humid_temperate,1.05,1.68,37.8,0.044
+Pittsburgh PA,40.4406,-79.9959,suburban,humid_temperate,1.05,2.01,33.6,0.06
+Austin TX,30.2672,-97.7431,suburban,temperate,0.95,4.67,30.4,0.154
+Dallas TX,32.7767,-96.797,rural,temperate,0.95,1.19,36.1,0.033
+Nashville TN,36.1627,-86.7816,exurban,temperate,0.95,3.31,34.2,0.097
+Raleigh NC,35.7796,-78.6382,suburban,humid_temperate,1.05,10.38,33.6,0.309
+Richmond VA,37.5407,-77.436,exurban,humid_temperate,1.05,5.58,37.8,0.148
+Columbus OH,39.9612,-82.9988,exurban,humid_temperate,1.05,2.4,37.8,0.064
+Indianapolis IN,39.7684,-86.1581,suburban,temperate,0.95,0.69,30.4,0.023

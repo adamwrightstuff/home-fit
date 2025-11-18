@@ -55,6 +55,7 @@ MULTI_RADIUS_CANOPY = {
     "macro_2000m": 2000,
 }
 
+# Legacy: Area-type-based expectations (deprecated - use climate-first approach)
 CANOPY_EXPECTATIONS = {
     "urban_core": 18.0,
     "urban_core_lowrise": 22.0,
@@ -64,6 +65,31 @@ CANOPY_EXPECTATIONS = {
     "exurban": 36.0,
     "rural": 38.0,
     "unknown": 25.0,
+}
+
+# Climate-first base expectations (from research synthesis)
+# These represent achievable targets by climate zone, not current state
+CLIMATE_BASE_EXPECTATIONS = {
+    "arid": 8.0,           # Research: 1.5-10% urban, 7-15% suburban (mid-point)
+    "mediterranean": 25.0,  # Research: 20-30% typical, target 25-35% (lower end)
+    "temperate": 35.0,      # Research: 30-40% typical (mid-point)
+    "humid_temperate": 40.0, # Research: 30-40% + humid boost
+    "tropical": 35.0,       # Research: 30%+ (mid-range)
+    "continental": 32.0,    # Research: 25-40% (mid-point)
+    "unknown": 30.0,        # Default fallback
+}
+
+# Area type adjustments within climate zones
+# Applied as multipliers to climate base expectations
+AREA_TYPE_ADJUSTMENTS = {
+    "urban_core": 0.75,         # Denser, less space for trees
+    "urban_core_lowrise": 0.80, # Slightly more space
+    "historic_urban": 0.85,     # Moderate density
+    "urban_residential": 0.85,  # Moderate density
+    "suburban": 1.0,            # Baseline
+    "exurban": 1.15,            # More space, higher canopy
+    "rural": 1.25,              # Most space, highest potential
+    "unknown": 1.0,             # Default
 }
 
 # Base water expectations by area type (percentage)
@@ -244,13 +270,60 @@ def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float]
     return 1.0
 
 
+def _get_climate_zone_name(lat: float, lon: float, elevation_m: Optional[float] = None) -> str:
+    """
+    Get climate zone name for climate-first expectation calculation.
+    
+    Returns simplified climate zone name based on multiplier value.
+    This enables climate-first architecture where climate determines base expectations.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        elevation_m: Optional elevation in meters
+    
+    Returns:
+        Climate zone name: "arid", "mediterranean", "temperate", "humid_temperate", "tropical", "continental", "unknown"
+    """
+    multiplier = _get_climate_adjustment(lat, lon, elevation_m)
+    
+    # Mediterranean climate detection (coastal California, 30-40°N, west of -117°)
+    # Characterized by dry summers, wet winters, moderate canopy expectations
+    if 30 <= lat <= 40 and lon <= -117:
+        return "mediterranean"
+    
+    # Classify by multiplier ranges
+    if multiplier < 0.75:
+        return "arid"
+    elif multiplier < 0.90:
+        return "semi_arid"  # Falls back to arid in expectations
+    elif multiplier < 1.05:
+        return "temperate"
+    elif multiplier < 1.20:
+        return "humid_temperate"
+    elif multiplier >= 1.20:
+        return "tropical"
+    else:
+        # Continental climates (interior, seasonal extremes)
+        # Typically 0.95-1.05 multiplier range
+        if 40 <= lat <= 50:
+            return "continental"
+        return "unknown"
+
+
 def _get_adjusted_canopy_expectation(area_type: str, lat: float, lon: float, 
                                      elevation_m: Optional[float] = None) -> float:
     """
-    Get canopy expectation adjusted for regional climate.
+    Get canopy expectation using climate-first architecture.
+    
+    CLIMATE-FIRST APPROACH:
+    1. Climate determines base expectation (what's achievable in that climate)
+    2. Area type adjusts within climate (urban core lower, rural higher)
+    
+    This is more scalable and fair than area-type-first approach.
     
     Args:
-        area_type: Base area type
+        area_type: Base area type (for adjustment factor)
         lat: Latitude
         lon: Longitude
         elevation_m: Optional elevation in meters (from topography data)
@@ -258,12 +331,24 @@ def _get_adjusted_canopy_expectation(area_type: str, lat: float, lon: float,
     Returns:
         Adjusted canopy expectation percentage
     """
-    base_expectation = CANOPY_EXPECTATIONS.get(area_type.lower(), CANOPY_EXPECTATIONS["unknown"])
-    climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
-    adjusted = base_expectation * climate_multiplier
+    # Step 1: Get climate zone and base expectation
+    climate_zone = _get_climate_zone_name(lat, lon, elevation_m)
     
-    # Ensure reasonable bounds (don't go below 5% or above 60%)
-    return max(5.0, min(60.0, adjusted))
+    # Handle semi-arid as arid (similar expectations)
+    if climate_zone == "semi_arid":
+        climate_zone = "arid"
+    
+    climate_base = CLIMATE_BASE_EXPECTATIONS.get(climate_zone, CLIMATE_BASE_EXPECTATIONS["unknown"])
+    
+    # Step 2: Apply area type adjustment within climate
+    area_type_key = area_type.lower() if area_type else "unknown"
+    area_adjustment = AREA_TYPE_ADJUSTMENTS.get(area_type_key, AREA_TYPE_ADJUSTMENTS["unknown"])
+    
+    # Step 3: Calculate final expectation
+    expectation = climate_base * area_adjustment
+    
+    # Ensure reasonable bounds (don't go below 3% or above 60%)
+    return max(3.0, min(60.0, expectation))
 
 
 def _get_water_expectation(area_type: str, lat: float, lon: float, 
@@ -957,17 +1042,30 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if topography_metrics:
         elevation_m = topography_metrics.get("elevation_mean_m")
     
-    # Use climate-adjusted expectation (now uses lat/lon/elevation instead of city lookup)
+    # Use climate-first expectation architecture
     expectation = _get_adjusted_canopy_expectation(area_type_key, lat, lon, elevation_m)
-    base_expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
+    climate_zone = _get_climate_zone_name(lat, lon, elevation_m)
+    climate_base = CLIMATE_BASE_EXPECTATIONS.get(climate_zone, CLIMATE_BASE_EXPECTATIONS["unknown"])
+    if climate_zone == "semi_arid":
+        climate_base = CLIMATE_BASE_EXPECTATIONS["arid"]
+    area_adjustment = AREA_TYPE_ADJUSTMENTS.get(area_type_key, AREA_TYPE_ADJUSTMENTS["unknown"])
+    
+    # Legacy: Keep for backward compatibility
+    legacy_base_expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
     climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
+    
     if primary_canopy_pct is None:
         primary_canopy_pct = details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0
     canopy_expectation_ratio = None
     if expectation > 0:
         canopy_expectation_ratio = primary_canopy_pct / expectation
     details["canopy_expectation"] = {
-        "base_expected_pct": base_expectation,
+        "climate_zone": climate_zone,
+        "climate_base_pct": round(climate_base, 1),
+        "area_type_adjustment": round(area_adjustment, 2),
+        "final_expectation_pct": round(expectation, 1),
+        # Legacy fields for backward compatibility
+        "base_expected_pct": legacy_base_expectation,
         "climate_adjusted_pct": expectation,
         "climate_multiplier": round(climate_multiplier, 3),
         "observed_pct": round(primary_canopy_pct, 2),
