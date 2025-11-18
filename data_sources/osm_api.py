@@ -1097,15 +1097,18 @@ def _process_charm_features(elements: List[Dict], center_lat: float, center_lon:
 
         tags = elem.get("tags", {})
         historic_tag = tags.get("historic")
+        heritage_tag = tags.get("heritage")
+        building_historic_tag = tags.get("building:historic")
         tourism_tag = tags.get("tourism")
         amenity_tag = tags.get("amenity")
 
         feature = None
         category = None
 
-        if historic_tag:
+        # Accept any historic indicator (historic, heritage, building:historic)
+        if historic_tag or heritage_tag or building_historic_tag:
             feature = {
-                "type": historic_tag,
+                "type": historic_tag or heritage_tag or "historic_building",
                 "name": tags.get("name")
             }
             category = "historic"
