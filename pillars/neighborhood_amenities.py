@@ -56,19 +56,27 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     walkable_distance = int(profile.get('walkable_distance_m', 1000))
     print(f"   🔧 Walkability window (amenities): walkable={walkable_distance}m")
     nearby = [b for b in all_businesses if b["distance_m"] <= walkable_distance]
+    
+    # Ensure area_type is detected if not provided (needed for context-aware scoring)
+    from data_sources import census_api, data_quality
+    if area_type is None:
+        density = census_api.get_population_density(lat, lon)
+        area_type = data_quality.detect_area_type(lat, lon, density)
+    
     tier1_near = [b for b in tier1_all if b["distance_m"] <= walkable_distance]
     tier2_near = [b for b in tier2_all if b["distance_m"] <= walkable_distance]
     tier3_near = [b for b in tier3_all if b["distance_m"] <= walkable_distance]
     tier4_near = [b for b in tier4_all if b["distance_m"] <= walkable_distance]
     
-    density_score = _score_density(nearby, max_points=25)  # Scaled to 25
+    # Pass area_type to scoring functions for context-aware adjustments
+    density_score = _score_density(nearby, max_points=25, area_type=area_type)
     variety_score = _score_variety(tier1_near, tier2_near, tier3_near, tier4_near, max_points=20)
     proximity_score = _score_proximity(nearby, max_points=15)
     
     home_score = density_score + variety_score + proximity_score  # 0-60
     
     # Step 2: Location Quality (0-40) - Is there a vibrant town nearby?
-    location_score = _score_location_quality(all_businesses, lat, lon, max_points=40)
+    location_score = _score_location_quality(all_businesses, lat, lon, max_points=40, area_type=area_type)
     
     # Final score
     total_score = home_score + location_score  # 0-100
@@ -82,9 +90,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         'total_score': total_score
     }
     
-    from data_sources import census_api
-    density = census_api.get_population_density(lat, lon)
-    area_type = data_quality.detect_area_type(lat, lon, density)
+    # Assess data quality (re-use area_type if already detected)
+    density = census_api.get_population_density(lat, lon) or 0.0
+    if area_type is None:  # Only detect if not already set
+        area_type = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type)
     
     # Build response with enhanced breakdown
@@ -115,27 +124,52 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     return round(total_score, 1), breakdown
 
 
-def _score_density(businesses: List[Dict], max_points: float = 40) -> float:
-    """Score business density with adjustable max."""
-    count = len(businesses)
-    scale = max_points / 40
+def _score_density(businesses: List[Dict], max_points: float = 25, 
+                   area_type: Optional[str] = None) -> float:
+    """
+    Score business density with adjustable max and context-aware thresholds.
     
-    if count >= 50:
-        return 40.0 * scale
-    elif count >= 40:
-        return 38.0 * scale
-    elif count >= 30:
-        return 35.0 * scale
+    Uses contextual expectations to adjust thresholds by area type:
+    - Urban core: Higher expectations (60+ for excellent)
+    - Suburban: Base expectations (50+ for excellent)
+    - Exurban/Rural: Lower expectations (35+ for excellent)
+    """
+    count = len(businesses)
+    scale = max_points / 25  # Adjusted for 25 max points (was 40)
+    
+    # Context-aware thresholds based on research
+    # Research: 50+ excellent, 30+ good, 15+ adequate
+    # Adjust for area type: urban needs 20% more, small towns 30% less
+    if area_type == "urban_core":
+        excellent_threshold = 60  # 20% higher than base 50
+        good_threshold = 36       # 20% higher than base 30
+        adequate_threshold = 18    # 20% higher than base 15
+    elif area_type in ["exurban", "rural"]:
+        excellent_threshold = 35   # 30% lower than base 50
+        good_threshold = 21        # 30% lower than base 30
+        adequate_threshold = 11    # 30% lower than base 15
+    else:  # suburban (baseline)
+        excellent_threshold = 50
+        good_threshold = 30
+        adequate_threshold = 15
+    
+    # Score with context-aware thresholds
+    if count >= excellent_threshold:
+        return 25.0 * scale  # Excellent
+    elif count >= 40:  # NEW: Add explicit 40-business tier
+        return 24.0 * scale  # Very good (between 30 and 50)
+    elif count >= good_threshold:
+        return 20.0 * scale  # Good
     elif count >= 20:
-        return 30.0 * scale
-    elif count >= 15:
-        return 25.0 * scale
+        return 15.0 * scale
+    elif count >= adequate_threshold:
+        return 12.0 * scale  # Adequate
     elif count >= 10:
-        return 20.0 * scale
+        return 10.0 * scale
     elif count >= 5:
-        return 12.0 * scale
+        return 6.0 * scale
     else:
-        return count * 2 * scale
+        return count * 1.2 * scale
 
 
 def _score_variety(tier1: List, tier2: List, tier3: List, tier4: List, max_points: float = 30) -> float:
@@ -185,8 +219,17 @@ def _score_variety(tier1: List, tier2: List, tier3: List, tier4: List, max_point
     return score
 
 
-def _score_proximity(businesses: List[Dict], max_points: float = 30) -> float:
-    """Score proximity to downtown cluster."""
+def _score_proximity(businesses: List[Dict], max_points: float = 15) -> float:
+    """
+    Score proximity to downtown cluster.
+    
+    Research-backed thresholds:
+    - ≤200m: Optimal (15 points)
+    - ≤400m: Good (13 points)
+    - ≤800m: Adequate (10 points)
+    - ≤1000m: Acceptable (7 points)
+    - >1000m: Poor (2.5 points)
+    """
     if not businesses:
         return 0.0
     
@@ -194,23 +237,42 @@ def _score_proximity(businesses: List[Dict], max_points: float = 30) -> float:
     median_idx = len(distances) // 2
     median_distance = distances[median_idx]
     
-    scale = max_points / 30
+    scale = max_points / 15  # Adjusted for 15 max points (was 30)
     
     if median_distance <= 200:
-        return 30.0 * scale
+        return 15.0 * scale  # Optimal
     elif median_distance <= 400:
-        return 28.0 * scale
+        return 13.0 * scale  # Good (reduced from 14)
     elif median_distance <= 600:
-        return 25.0 * scale
+        return 11.0 * scale  # Good-Adequate transition
     elif median_distance <= 800:
-        return 20.0 * scale
+        return 10.0 * scale  # Adequate
     elif median_distance <= 1000:
-        return 15.0 * scale
+        return 7.0 * scale   # Acceptable (reduced from 15)
     else:
-        return 5.0 * scale
+        return 2.5 * scale   # Poor (reduced from 5)
 
 
-def _score_location_quality(all_businesses: List[Dict], lat: float, lon: float, max_points: float = 40) -> float:
+def _score_cultural_bonus(tier3_cluster: List[Dict]) -> float:
+    """
+    Bonus points for cultural amenities in downtown cluster.
+    
+    Research: Cultural venues strongly correlate with vibrancy and property values.
+    Bonus rewards exceptional cultural offerings.
+    
+    Returns:
+        0.0, 1.0, or 2.0 bonus points
+    """
+    cultural_count = len(tier3_cluster)
+    if cultural_count >= 5:
+        return 2.0  # +2 bonus for 5+ cultural venues
+    elif cultural_count >= 3:
+        return 1.0  # +1 bonus for 3-4 venues
+    return 0.0
+
+
+def _score_location_quality(all_businesses: List[Dict], lat: float, lon: float, 
+                           max_points: float = 40, area_type: Optional[str] = None) -> float:
     """
     Score location quality (0-40): Is there a vibrant town center nearby?
     
@@ -297,11 +359,26 @@ def _score_location_quality(all_businesses: List[Dict], lat: float, lon: float, 
     
     variety_pts = min(variety_pts, 20)  # Cap at 20
     
-    # Density bonus (0-8)
-    density_pts = min(8, len(cluster_all) / 5)  # 40 businesses = 8 pts
+    # Context-aware vibrancy thresholds
+    if area_type == "urban_core":
+        vibrant_threshold = 50  # Urban: 50+ businesses for vibrant downtown
+        density_divisor = 6.25  # 50 businesses = 8 pts (50/6.25 = 8)
+    elif area_type in ["exurban", "rural"]:
+        vibrant_threshold = 30  # Small towns: 30+ businesses for vibrant downtown
+        density_divisor = 3.75  # 30 businesses = 8 pts (30/3.75 = 8)
+    else:  # suburban (baseline)
+        vibrant_threshold = 40  # Base: 40+ businesses for vibrant downtown
+        density_divisor = 5.0   # 40 businesses = 8 pts (40/5 = 8)
+    
+    # Density bonus (0-8) - context-aware
+    density_pts = min(8, len(cluster_all) / density_divisor)
     
     vibrancy_pts = variety_pts + density_pts
     vibrancy_pts = min(vibrancy_pts, 20)  # Cap at 20
+    
+    # Add cultural bonus for exceptional cultural offerings
+    cultural_bonus = _score_cultural_bonus(tier3_cluster)
+    vibrancy_pts = min(20, vibrancy_pts + cultural_bonus)  # Cap at 20 (bonus can push to 20)
     
     # Only give vibrancy points if within reasonable distance
     if distance_to_center > 1600:

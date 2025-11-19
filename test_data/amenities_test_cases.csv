@@ -1,0 +1,45 @@
+Location,City,State,Area Type,Expected Amenities Score,Notes
+Park Slope Brooklyn NY,Brooklyn,NY,urban_core,90-100,Highly walkable with vibrant commercial district
+Williamsburg Brooklyn NY,Brooklyn,NY,urban_core,85-95,Trendy neighborhood with cafes, restaurants, shops
+West Village Manhattan NY,New York,NY,urban_core,95-100,Premier walkable neighborhood
+North Beach San Francisco CA,San Francisco,CA,urban_core,90-95,Little Italy with cafes and restaurants
+Old Town Pasadena CA,Pasadena,CA,urban_core,85-95,Historic downtown with shops and dining
+Downtown Boulder CO,Boulder,CO,urban_core,90-95,Walkable downtown with independent businesses
+Pearl District Portland OR,Portland,OR,urban_core,85-95,Converted warehouse district with galleries and cafes
+Downtown Santa Monica CA,Santa Monica,CA,urban_core,90-100,Pedestrian-friendly with 3rd Street Promenade
+Gaslamp Quarter San Diego CA,San Diego,CA,urban_core,85-95,Historic district with restaurants and nightlife
+Downtown Charleston SC,Charleston,SC,urban_core,90-95,Historic walkable downtown
+Downtown Savannah GA,Savannah,GA,urban_core,85-95,Historic squares with cafes and shops
+Downtown Asheville NC,Asheville,NC,urban_core,85-90,Artsy downtown with local businesses
+Old Town Alexandria VA,Alexandria,VA,urban_core,85-95,Historic waterfront with shops and restaurants
+Downtown Annapolis MD,Annapolis,MD,urban_core,80-90,Historic waterfront downtown
+Main Street Bozeman MT,Bozeman,MT,suburban,75-85,Mountain town with vibrant Main Street
+Downtown Burlington VT,Burlington,VT,urban_core,85-90,Lakefront downtown with Church Street Marketplace
+Downtown Madison WI,Madison,WI,urban_core,80-90,State Capitol with pedestrian-friendly downtown
+Downtown Traverse City MI,Traverse City,MI,suburban,75-85,Waterfront downtown with shops and restaurants
+Downtown Greenville SC,Greenville,SC,urban_core,85-95,Revitalized downtown with Falls Park
+Downtown Bend OR,Bend,OR,suburban,75-85,Outdoor recreation town with walkable downtown
+Main Street Park City UT,Park City,UT,suburban,75-85,Ski resort town with historic Main Street
+Downtown Durango CO,Durango,CO,suburban,70-80,Mountain town with independent businesses
+Downtown Jackson WY,Jackson,WY,suburban,70-80,Tourist town with western-themed shops
+Downtown Telluride CO,Telluride,CO,suburban,75-85,Ski town with pedestrian-friendly downtown
+Downtown Sun Valley ID,Sun Valley,ID,suburban,65-75,Small resort town
+Downtown Aspen CO,Aspen,CO,suburban,80-90,High-end resort town with luxury shops
+Downtown Carmel CA,Carmel,CA,suburban,85-95,Charming village with art galleries and shops
+Downtown Sausalito CA,Sausalito,CA,suburban,75-85,Waterfront town with galleries and restaurants
+Downtown Healdsburg CA,Healdsburg,CA,suburban,80-90,Wine country town with shops and restaurants
+Downtown St Helena CA,St Helena,CA,suburban,75-85,Napa Valley town
+Downtown Sonoma CA,Sonoma,CA,suburban,75-85,Wine country town with historic plaza
+Downtown Napa CA,Napa,CA,suburban,80-90,Revitalized downtown
+Downtown Santa Barbara CA,Santa Barbara,CA,urban_core,85-95,Spanish colonial downtown
+Downtown Monterey CA,Monterey,CA,suburban,80-90,Waterfront with Cannery Row
+Downtown Ojai CA,Ojai,CA,suburban,70-80,Small artsy town
+Downtown Sedona AZ,Sedona,AZ,suburban,70-80,Red rock destination with galleries
+Downtown Taos NM,Taos,NM,suburban,65-75,Southwestern art town
+Downtown Key West FL,Key West,FL,suburban,85-95,Tropical destination with Duval Street
+Downtown Marblehead MA,Marblehead,MA,suburban,75-85,Historic New England town
+Downtown Newport RI,Newport,RI,suburban,85-95,Historic waterfront with Thames Street
+Downtown Bar Harbor ME,Bar Harbor,ME,suburban,75-85,Acadia gateway with shops and restaurants
+Downtown Camden ME,Camden,ME,suburban,75-85,Coastal Maine village
+Downtown Edgartown MA,Edgartown,MA,suburban,75-85,Martha's Vineyard town
+
