@@ -45,7 +45,7 @@ class RetryConfig:
 RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
     RetryProfile.CRITICAL: RetryConfig(
         max_attempts=6,  # Increased from 4 to 6
-        base_wait=1.0,
+        base_wait=2.0,
         fail_fast=False,  # Critical queries should retry all attempts
         max_wait=30.0,  # Increased from 10.0 to respect Retry-After headers
         exponential_backoff=True,

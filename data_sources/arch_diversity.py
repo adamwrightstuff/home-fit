@@ -8,7 +8,7 @@ from typing import Dict, Optional, Tuple, Any, List
 from datetime import datetime
 import requests
 
-from .osm_api import OVERPASS_URL, _retry_overpass
+from .osm_api import get_overpass_url, _retry_overpass
 from .cache import cached, CACHE_TTL
 from logging_config import get_logger
 
@@ -36,7 +36,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         out skel qt;
         """
         def _do_request():
-            return requests.post(OVERPASS_URL, data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
+            return requests.post(get_overpass_url(), data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
         
         # Architectural diversity is standard (important but not critical) - use STANDARD profile
         resp = _retry_overpass(_do_request, query_type="architectural_diversity")

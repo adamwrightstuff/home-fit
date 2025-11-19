@@ -62,8 +62,8 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
             way["natural"="coastline"](around:2000,{lat},{lon});
             out center 1;
             """
-            from data_sources.osm_api import OVERPASS_URL, requests
-            rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
+            from data_sources.osm_api import get_overpass_url, requests
+            rc = requests.post(get_overpass_url(), data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
             if rc.status_code == 200 and rc.json().get("elements"):
                 regional_swimming.append({"type":"coastline","name":None,"distance_m":0})
         except Exception:
@@ -373,8 +373,8 @@ def _score_camping_smooth(camping: list, expectations: Dict, area_type: str) -> 
         decay_rate = 0.0002
     elif area_type == "suburban":
         optimal_distance = 15000  # 15km
-        max_score = 10.0
-        decay_rate = 0.0001
+    max_score = 10.0
+    decay_rate = 0.0001
     else:  # exurban, rural
         optimal_distance = 25000  # 25km (research: 10-50 miles)
         max_score = 10.0

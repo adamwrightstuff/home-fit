@@ -3,6 +3,7 @@ OpenStreetMap API Client
 Queries Overpass API for green spaces and nature features
 """
 
+import os
 import requests
 import math
 import time
@@ -17,7 +18,50 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+# Build list of Overpass endpoints (primary + fallbacks)
+_default_overpass = os.environ.get("OVERPASS_URL")
+_fallback_endpoints = [
+    endpoint for endpoint in [
+        _default_overpass.strip() if _default_overpass else None,
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://z.overpass-api.de/api/interpreter",
+    ] if endpoint
+]
+
+# Deduplicate while preserving order
+OVERPASS_URLS: List[str] = []
+for endpoint in _fallback_endpoints:
+    if endpoint not in OVERPASS_URLS:
+        OVERPASS_URLS.append(endpoint)
+
+if not OVERPASS_URLS:
+    OVERPASS_URLS = ["https://overpass-api.de/api/interpreter"]
+
+OVERPASS_URL = OVERPASS_URLS[0]
+_overpass_thread_state = threading.local()
+
+
+def _set_overpass_url_for_request(url: str) -> None:
+    """Set the active Overpass endpoint for the current thread."""
+    global OVERPASS_URL
+    OVERPASS_URL = url
+    _overpass_thread_state.current_url = url
+
+
+def get_overpass_url() -> str:
+    """Expose the currently active Overpass endpoint."""
+    return getattr(_overpass_thread_state, "current_url", OVERPASS_URLS[0])
+
+
+def _rotate_overpass_endpoint(current_index: int) -> int:
+    """Select the next Overpass endpoint when the current one fails."""
+    if len(OVERPASS_URLS) <= 1:
+        return current_index
+    next_index = (current_index + 1) % len(OVERPASS_URLS)
+    if next_index != current_index:
+        logger.warning(f"Switching Overpass endpoint to {OVERPASS_URLS[next_index]}")
+    return next_index
 
 # Global query throttling to avoid rate limiting
 _last_query_time = 0.0
@@ -80,24 +124,29 @@ def _retry_overpass(
     base_wait = retry_config.base_wait
     fail_fast = retry_config.fail_fast
     max_wait = retry_config.max_wait
+    endpoint_count = len(OVERPASS_URLS)
+    endpoint_idx = 0
     
-    for i in range(max_attempts):
-        # Throttle queries to avoid rate limiting *per attempt*
-        global _last_query_time, _current_min_query_interval, _query_lock
-        with _query_lock:
-            time_since_last = time.time() - _last_query_time
-            min_interval = _current_min_query_interval
-            if time_since_last < min_interval:
-                remaining = min_interval - time_since_last
-                # Add small jitter to avoid aligned bursts
-                jitter = random.uniform(0, 0.25 * min_interval)
-                sleep_time = remaining + jitter
-                logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s (interval={min_interval:.2f}s, jitter={jitter:.2f}s)")
-                time.sleep(sleep_time)
-            _last_query_time = time.time()
-        
-        try:
-            resp = request_fn()
+    try:
+        for i in range(max_attempts):
+            current_endpoint = OVERPASS_URLS[endpoint_idx]
+            _set_overpass_url_for_request(current_endpoint)
+            # Throttle queries to avoid rate limiting *per attempt*
+            global _last_query_time, _current_min_query_interval, _query_lock
+            with _query_lock:
+                time_since_last = time.time() - _last_query_time
+                min_interval = _current_min_query_interval
+                if time_since_last < min_interval:
+                    remaining = min_interval - time_since_last
+                    # Add small jitter to avoid aligned bursts
+                    jitter = random.uniform(0, 0.25 * min_interval)
+                    sleep_time = remaining + jitter
+                    logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s (interval={min_interval:.2f}s, jitter={jitter:.2f}s)")
+                    time.sleep(sleep_time)
+                _last_query_time = time.time()
+            
+            try:
+                resp = request_fn()
             # Handle 429 rate limiting specifically
             if resp is not None and hasattr(resp, 'status_code'):
                 if resp.status_code == 429:
@@ -130,6 +179,7 @@ def _retry_overpass(
                     if i < max_attempts - 1:
                         logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
                         time.sleep(retry_after)
+                        endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
                         continue
                     else:
                         logger.warning(f"OSM rate limited (429), max retries reached")
@@ -142,7 +192,7 @@ def _retry_overpass(
                         logger.debug(f"Reducing OSM min query interval to {new_interval:.2f}s after successful response")
                     _current_min_query_interval = new_interval
             return resp
-        except requests.exceptions.Timeout as e:
+            except requests.exceptions.Timeout as e:
             if not retry_config.retry_on_timeout:
                 logger.warning(f"OSM request timeout, not retrying (retry_on_timeout=False)")
                 return None
@@ -155,11 +205,12 @@ def _retry_overpass(
                 wait_time = min(wait_time, max_wait)
                 logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
                 time.sleep(wait_time)
+                endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
                 continue
             else:
                 logger.warning(f"OSM request timeout after {max_attempts} attempts")
                 return None  # Return None on final timeout
-        except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException as e:
             if i < max_attempts - 1:
                 if retry_config.exponential_backoff:
                     wait_time = base_wait * (1.5 ** i)
@@ -168,11 +219,12 @@ def _retry_overpass(
                 wait_time = min(wait_time, max_wait)
                 logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
                 time.sleep(wait_time)
+                endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
                 continue
             else:
                 logger.warning(f"OSM network error after {max_attempts} attempts: {e}")
                 return None  # Return None on final error
-        except Exception as e:
+            except Exception as e:
             if i == max_attempts - 1:
                 logger.warning(f"OSM unexpected error after {max_attempts} attempts: {e}")
                 return None
@@ -182,6 +234,9 @@ def _retry_overpass(
                 wait_time = base_wait
             wait_time = min(wait_time, max_wait)
             time.sleep(wait_time)
+                endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
+    finally:
+        _set_overpass_url_for_request(OVERPASS_URLS[0])
     
     return None
 
@@ -257,7 +312,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     try:
         def _do_request():
             return requests.post(
-                OVERPASS_URL,
+                get_overpass_url(),
                 data={"data": query},
                 timeout=40,
                 headers={"User-Agent": "HomeFit/1.0"}
@@ -351,7 +406,7 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
     try:
         def _do_request():
             r = requests.post(
-                OVERPASS_URL,
+                get_overpass_url(),
                 data={"data": query},
                 timeout=50,
                 headers={"User-Agent": "HomeFit/1.0"}
@@ -428,7 +483,7 @@ def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Option
 
     try:
         resp = requests.post(
-            OVERPASS_URL,
+            get_overpass_url(),
             data={"data": query},
             timeout=40,
             headers={"User-Agent": "HomeFit/1.0"}
@@ -1036,7 +1091,7 @@ def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int =
         );
         out geom;
         """
-        resp = requests.post(OVERPASS_URL, data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+        resp = requests.post(get_overpass_url(), data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
         if resp.status_code != 200:
             return 0
         ways = resp.json().get("elements", [])
@@ -1267,7 +1322,7 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
         way["natural"="coastline"](around:2000,{lat},{lon});
         out center 1;
         """
-        rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent": "HomeFit/1.0"})
+        rc = requests.post(get_overpass_url(), data={"data": qc}, timeout=20, headers={"User-Agent": "HomeFit/1.0"})
         if rc.status_code == 200 and rc.json().get("elements"):
             out["waterfront"] = 1
     except Exception:
@@ -1789,7 +1844,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     """
     
     def _do_request():
-        return requests.post(OVERPASS_URL, data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
+        return requests.post(get_overpass_url(), data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
     
     try:
         logger.debug(f"Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
@@ -1985,7 +2040,7 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
     
     try:
         logger.debug(f"Querying OSM for railway stations within {radius_m/1000:.1f}km...")
-        resp = requests.post(OVERPASS_URL, data=query, timeout=30)
+        resp = requests.post(get_overpass_url(), data=query, timeout=30)
         
         if resp.status_code == 200:
             data = resp.json()

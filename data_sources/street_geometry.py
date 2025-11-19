@@ -9,7 +9,7 @@ import time
 import sys
 import requests
 from typing import Dict, List, Tuple, Optional
-from .osm_api import OVERPASS_URL, _retry_overpass, haversine_distance
+from .osm_api import get_overpass_url, _retry_overpass, haversine_distance
 from .cache import cached, CACHE_TTL
 from logging_config import get_logger
 
@@ -43,7 +43,7 @@ def _fetch_roads_and_buildings(lat: float, lon: float, radius_m: int = 1000) -> 
         """
         
         def _do_request():
-            return requests.post(OVERPASS_URL, data={"data": query}, timeout=20,
+            return requests.post(get_overpass_url(), data={"data": query}, timeout=20,
                                headers={"User-Agent": "HomeFit/1.0"})
         
         fetch_start = time.time()
@@ -168,7 +168,7 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
         """
         
         def _do_request():
-            return requests.post(OVERPASS_URL, data={"data": query}, timeout=20, 
+            return requests.post(get_overpass_url(), data={"data": query}, timeout=20, 
                                headers={"User-Agent": "HomeFit/1.0"})
         
         fetch_start = time.time()
