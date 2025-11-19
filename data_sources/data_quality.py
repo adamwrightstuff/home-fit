@@ -362,9 +362,23 @@ def classify_morphology(
     if density and density < 450 and (coverage is None or coverage < 0.08):
         return "rural"
     
-    # Default fallback
+    # Default fallback when density is None
+    # Use other signals to make a reasonable guess instead of "unknown"
     if density is None:
-        return "unknown"
+        # If we have business or coverage data, use that to classify
+        if business_count is not None or coverage is not None:
+            # Use the intensity score we calculated (which uses coverage/business)
+            if intensity >= 0.15:
+                return "exurban"
+            elif intensity >= 0.10:
+                return "exurban"
+            elif intensity >= 0.05:
+                return "rural"
+            else:
+                return "rural"
+        # If no signals at all, default to exurban (better than unknown)
+        # Most small towns without census data are exurban/rural
+        return "exurban"
     
     return "rural"
 
