@@ -1,6 +1,6 @@
 """
 Geocoding API Client
-Uses Nominatim (OpenStreetMap) for address geocoding
+Uses Census API (for US addresses) with Nominatim fallback
 """
 
 import re
@@ -9,6 +9,7 @@ from typing import Optional, Tuple, Dict
 from .cache import cached, CACHE_TTL
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address"
 
 # Keywords that suggest user is looking for a neighborhood, not a city
 NEIGHBORHOOD_KEYWORDS = [
@@ -114,10 +115,102 @@ def _validate_state_match(query_state: Optional[str], result_state: str) -> bool
     return False
 
 
+def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]]:
+    """
+    Geocode using Census API (US addresses only).
+    More accurate for US addresses than Nominatim.
+    
+    Args:
+        address: Address string
+        
+    Returns:
+        (lat, lon, zip_code, state, city) or None if failed
+    """
+    try:
+        # Census API requires structured address components
+        # For now, try to parse the address or use it as-is
+        # Census API format: street, city, state, zip (all optional)
+        
+        # Extract state code if available
+        query_state = _extract_state_from_query(address)
+        
+        # Parse address - try to extract components
+        # Simple approach: if it looks like "City, State" or "City State", use that
+        address_parts = address.split(',')
+        if len(address_parts) >= 2:
+            # Likely "City, State" format
+            city_part = address_parts[0].strip()
+            state_part = address_parts[1].strip()
+            if state_part.upper() in VALID_STATE_CODES:
+                query_state = state_part.upper()
+                address = city_part
+        
+        params = {
+            "street": "",  # Census API prefers structured, but we can try with full address
+            "city": address if not query_state else address.split(',')[0].strip(),
+            "state": query_state if query_state else "",
+            "zip": "",
+            "benchmark": "Public_AR_Current",
+            "vintage": "Current_Current",
+            "format": "json"
+        }
+        
+        # If we have a state, use structured format
+        if query_state:
+            # Try structured format first
+            if ',' in address:
+                parts = [p.strip() for p in address.split(',')]
+                params["city"] = parts[0]
+                if len(parts) > 1:
+                    params["state"] = parts[1] if parts[1].upper() in VALID_STATE_CODES else query_state
+            else:
+                params["city"] = address
+                params["state"] = query_state
+        else:
+            # No state - try with full address as city
+            params["city"] = address
+        
+        response = requests.get(
+            CENSUS_GEOCODER_URL, params=params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10)
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        if not data or "result" not in data:
+            return None
+        
+        result = data["result"]
+        if "addressMatches" not in result or not result["addressMatches"]:
+            return None
+        
+        match = result["addressMatches"][0]
+        coordinates = match.get("coordinates", {})
+        
+        if "y" not in coordinates or "x" not in coordinates:
+            return None
+        
+        lat = float(coordinates["y"])
+        lon = float(coordinates["x"])
+        
+        # Extract address components
+        address_components = match.get("addressComponents", {})
+        zip_code = address_components.get("zip", "")
+        state = address_components.get("state", query_state or "")
+        city = address_components.get("city", "")
+        
+        return lat, lon, zip_code, state, city
+        
+    except Exception as e:
+        # Census API failed - will fall back to Nominatim
+        return None
+
+
 @cached(ttl_seconds=CACHE_TTL['geocoding'])
 def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     """
     Geocode an address to coordinates.
+    Uses Census API first (for US addresses), falls back to Nominatim.
 
     Args:
         address: Address string or ZIP code
@@ -125,6 +218,14 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     Returns:
         (lat, lon, zip_code, state, city) or None if failed
     """
+    # Try Census API first (for US addresses)
+    query_state = _extract_state_from_query(address)
+    if query_state:  # If we can extract a US state, try Census first
+        census_result = _geocode_census(address)
+        if census_result:
+            return census_result
+    
+    # Fall back to Nominatim
     try:
         # Extract state code from query to prioritize results from that state
         query_state = _extract_state_from_query(address)
@@ -260,14 +361,13 @@ def _find_best_neighborhood_match(results: list) -> Optional[Dict]:
 @cached(ttl_seconds=CACHE_TTL['geocoding'])
 def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, str, str, Dict]]:
     """
-    Geocode with full Nominatim response for neighborhood detection.
+    Geocode with full response for neighborhood detection.
     
     Uses hybrid approach:
-    1. Extract state code from query to prioritize results from that state
-    2. Normal query with limit=1 (fast, works for most cases)
+    1. Try Census API first (for US addresses with state)
+    2. Fall back to Nominatim with state prioritization
     3. If query suggests neighborhood but result is city, retry with limit=5
     4. Validate state match to prevent state mismatches
-    5. Only retries when there's a clear mismatch
     
     Cached to avoid rate limits.
 
@@ -276,8 +376,30 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
 
     Returns:
         (lat, lon, zip_code, state, city, full_result) or None if failed
-        full_result: Complete Nominatim response including address structure
+        full_result: Complete geocoding response including address structure
     """
+    # Try Census API first (for US addresses)
+    query_state = _extract_state_from_query(address)
+    if query_state:  # If we can extract a US state, try Census first
+        census_result = _geocode_census(address)
+        if census_result:
+            lat, lon, zip_code, state, city = census_result
+            # Create a Nominatim-like result structure for compatibility
+            full_result = {
+                "lat": str(lat),
+                "lon": str(lon),
+                "address": {
+                    "postcode": zip_code,
+                    "state": state,
+                    "city": city or "",
+                    "town": city or "",
+                    "village": ""
+                },
+                "type": "city"  # Census doesn't provide type, default to city
+            }
+            return lat, lon, zip_code, state, city, full_result
+    
+    # Fall back to Nominatim
     try:
         # Extract state code from query to prioritize results from that state
         query_state = _extract_state_from_query(address)

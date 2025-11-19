@@ -259,48 +259,29 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     query = f"""
     [out:json][timeout:25];
     (
-      // PARKS & GREEN SPACES - INCLUDING RELATIONS!
-      way["leisure"="park"](around:{radius_m},{lat},{lon});
-      relation["leisure"="park"](around:{radius_m},{lat},{lon});
-      node["leisure"="park"](around:{radius_m},{lat},{lon});
+      // PARKS & GREEN SPACES - Optimized: skip nodes (most parks are ways/relations)
+      // Combined similar tags using regex for efficiency
+      way["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
+      relation["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
+      way["landuse"~"^(park|recreation_ground|village_green)$"](around:{radius_m},{lat},{lon});
+      relation["landuse"~"^(park|recreation_ground|village_green)$"](around:{radius_m},{lat},{lon});
       
-      // Also check landuse=park (some parks use this tag)
-      way["landuse"="park"](around:{radius_m},{lat},{lon});
-      relation["landuse"="park"](around:{radius_m},{lat},{lon});
-      
+      // Gardens (exclude private)
       way["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       relation["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       
-      way["leisure"="dog_park"](around:{radius_m},{lat},{lon});
-      relation["leisure"="dog_park"](around:{radius_m},{lat},{lon});
-      
-      way["landuse"="recreation_ground"](around:{radius_m},{lat},{lon});
-      relation["landuse"="recreation_ground"](around:{radius_m},{lat},{lon});
-      
-      way["landuse"="village_green"](around:{radius_m},{lat},{lon});
-      relation["landuse"="village_green"](around:{radius_m},{lat},{lon});
-      
-      // LOCAL NATURE
-      way["natural"="wood"](around:{radius_m},{lat},{lon});
-      relation["natural"="wood"](around:{radius_m},{lat},{lon});
-      
-      way["natural"="forest"](around:{radius_m},{lat},{lon});
-      relation["natural"="forest"](around:{radius_m},{lat},{lon});
-      
-      way["natural"="scrub"](around:{radius_m},{lat},{lon});
-      relation["natural"="scrub"](around:{radius_m},{lat},{lon});
-      
-      // PLAYGROUNDS
+      // Playgrounds - keep nodes as they're often point features
       node["leisure"="playground"](around:{radius_m},{lat},{lon});
       way["leisure"="playground"](around:{radius_m},{lat},{lon});
       relation["leisure"="playground"](around:{radius_m},{lat},{lon});
       
-      // TREES
+      // LOCAL NATURE - Combined natural tags
+      way["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
+      relation["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
+      
+      // TREES - Combined highway tree tags
+      way["highway"]["trees"~"^(yes|both|left|right)$"](around:{radius_m},{lat},{lon});
       way["natural"="tree_row"](around:{radius_m},{lat},{lon});
-      way["highway"]["trees"="yes"](around:{radius_m},{lat},{lon});
-      way["highway"]["trees:both"="yes"](around:{radius_m},{lat},{lon});
-      way["highway"]["trees:left"="yes"](around:{radius_m},{lat},{lon});
-      way["highway"]["trees:right"="yes"](around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -372,23 +353,18 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
     query = f"""
     [out:json][timeout:35];
     (
-      // HIKING
+      // HIKING - Optimized: combined boundary types
       relation["route"="hiking"](around:{radius_m},{lat},{lon});
-      way["boundary"="national_park"](around:{radius_m},{lat},{lon});
-      relation["boundary"="national_park"](around:{radius_m},{lat},{lon});
+      way["boundary"~"^(national_park|protected_area)$"](around:{radius_m},{lat},{lon});
+      relation["boundary"~"^(national_park|protected_area)$"](around:{radius_m},{lat},{lon});
       way["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
       relation["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
-      way["boundary"="protected_area"](around:{radius_m},{lat},{lon});
-      relation["boundary"="protected_area"](around:{radius_m},{lat},{lon});
       
-      // SWIMMING
-      way["natural"="beach"](around:{radius_m},{lat},{lon});
+      // SWIMMING - Optimized: combined water types
+      way["natural"~"^(beach|coastline)$"](around:{radius_m},{lat},{lon});
       relation["natural"="beach"](around:{radius_m},{lat},{lon});
-      way["natural"="water"]["water"="lake"](around:{radius_m},{lat},{lon});
-      relation["natural"="water"]["water"="lake"](around:{radius_m},{lat},{lon});
-      way["natural"="coastline"](around:{radius_m},{lat},{lon});
-      way["natural"="water"]["water"="bay"](around:{radius_m},{lat},{lon});
-      relation["natural"="water"]["water"="bay"](around:{radius_m},{lat},{lon});
+      way["natural"="water"]["water"~"^(lake|bay)$"](around:{radius_m},{lat},{lon});
+      relation["natural"="water"]["water"~"^(lake|bay)$"](around:{radius_m},{lat},{lon});
       way["leisure"="swimming_area"](around:{radius_m},{lat},{lon});
       relation["leisure"="swimming_area"](around:{radius_m},{lat},{lon});
       
