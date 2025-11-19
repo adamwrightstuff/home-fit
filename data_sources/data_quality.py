@@ -358,9 +358,21 @@ def classify_morphology(
     elif intensity >= 0.10:
         return "exurban"
     
-    # rural: very low intensity
+    # Special case: Small towns with businesses should be exurban, not rural
+    # Even if density is low, the presence of businesses indicates an established town
+    if business_count is not None and business_count >= 3:
+        # Has some commercial activity = exurban (small town), not rural
+        return "exurban"
+    
+    # rural: very low intensity AND no businesses
+    # Only classify as rural if density is very low AND no commercial activity
     if density and density < 450 and (coverage is None or coverage < 0.08):
-        return "rural"
+        # If there are businesses, it's exurban (small town), not rural
+        if business_count is None or business_count == 0:
+            return "rural"
+        else:
+            # Has businesses but low density = exurban small town
+            return "exurban"
     
     # Default fallback when density is None
     # Use other signals to make a reasonable guess instead of "unknown"
@@ -372,12 +384,19 @@ def classify_morphology(
                 return "exurban"
             elif intensity >= 0.10:
                 return "exurban"
+            elif business_count is not None and business_count >= 3:
+                # Has businesses = exurban small town
+                return "exurban"
             elif intensity >= 0.05:
                 return "rural"
             else:
                 return "rural"
         # If no signals at all, default to exurban (better than unknown)
         # Most small towns without census data are exurban/rural
+        return "exurban"
+    
+    # Final fallback: if we have any businesses, it's exurban, not rural
+    if business_count is not None and business_count > 0:
         return "exurban"
     
     return "rural"
