@@ -115,6 +115,121 @@ def _validate_state_match(query_state: Optional[str], result_state: str) -> bool
     return False
 
 
+def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, float, str]]:
+    """
+    Query OSM Overpass to get the best city center point from a relation.
+    
+    Priority:
+    1. admin_centre or label node (official city center - preferred)
+    2. relation geometric center (fallback)
+    
+    Args:
+        osm_id: OSM relation ID
+        
+    Returns:
+        (lat, lon, source) where source is "admin_centre", "label", or "center", or None if failed
+    """
+    try:
+        from data_sources.osm_api import get_overpass_url
+        
+        # Query Overpass for relation with full members
+        # Use 'out body' to get relation with members, then recurse to get member nodes
+        query = f"""
+        [out:json][timeout:10];
+        relation({osm_id});
+        out body;
+        >;
+        out skel qt;
+        """
+        
+        response = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=15
+        )
+        
+        if response.status_code != 200:
+            return None
+            
+        data = response.json()
+        if not data or "elements" not in data:
+            return None
+        
+        elements = data["elements"]
+        
+        # First, look for relation element to get members
+        relation = None
+        for elem in elements:
+            if elem.get("type") == "relation" and elem.get("id") == osm_id:
+                relation = elem
+                break
+        
+        if not relation:
+            return None
+        
+        # Check for admin_centre or label members
+        members = relation.get("members", [])
+        admin_centre_id = None
+        label_id = None
+        
+        for member in members:
+            role = member.get("role", "")
+            ref = member.get("ref")
+            mtype = member.get("type")
+            
+            if role == "admin_centre" and mtype == "node" and ref:
+                admin_centre_id = ref
+            elif role == "label" and mtype == "node" and ref:
+                label_id = ref
+        
+        # Look for admin_centre node in elements
+        if admin_centre_id:
+            for elem in elements:
+                if elem.get("type") == "node" and elem.get("id") == admin_centre_id:
+                    if "lat" in elem and "lon" in elem:
+                        return float(elem["lat"]), float(elem["lon"]), "admin_centre"
+        
+        # Look for label node in elements
+        if label_id:
+            for elem in elements:
+                if elem.get("type") == "node" and elem.get("id") == label_id:
+                    if "lat" in elem and "lon" in elem:
+                        return float(elem["lat"]), float(elem["lon"]), "label"
+        
+        # Fallback to relation center - query separately for center
+        center_query = f"""
+        [out:json][timeout:10];
+        relation({osm_id});
+        out center;
+        """
+        
+        center_response = requests.post(
+            get_overpass_url(),
+            data={"data": center_query},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=15
+        )
+        
+        if center_response.status_code == 200:
+            center_data = center_response.json()
+            if center_data and "elements" in center_data:
+                for elem in center_data["elements"]:
+                    if elem.get("type") == "relation" and elem.get("id") == osm_id:
+                        if "center" in elem:
+                            center = elem["center"]
+                            if "lat" in center and "lon" in center:
+                                return float(center["lat"]), float(center["lon"]), "center"
+                        elif "lat" in elem and "lon" in elem:
+                            # Some relations have lat/lon directly
+                            return float(elem["lat"]), float(elem["lon"]), "center"
+            
+        return None
+    except Exception as e:
+        print(f"Error getting relation center for OSM ID {osm_id}: {e}")
+        return None
+
+
 def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     """
     Geocode using Census API (US addresses only).
@@ -263,6 +378,29 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
 
         result = data[0]
         
+        # Check if this is a relation (city boundary) - if so, get better coordinates from OSM
+        osm_type = result.get("osm_type")
+        osm_id = result.get("osm_id")
+        
+        # Default to Nominatim coordinates
+        lat = float(result["lat"])
+        lon = float(result["lon"])
+        coordinate_source = "nominatim"
+        
+        if osm_type == "relation" and osm_id:
+            # This is likely a city boundary - get accurate center from OSM
+            relation_coords = _get_relation_center_or_admin_centre(osm_id)
+            if relation_coords:
+                rel_lat, rel_lon, source = relation_coords
+                # Use relation coordinates (admin_centre/label preferred, center as fallback)
+                lat = rel_lat
+                lon = rel_lon
+                coordinate_source = source
+                print(f"📍 Using OSM relation {source} for '{address}': {lat}, {lon}")
+            else:
+                # Fall back to Nominatim coordinates if relation query fails
+                print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
+        
         # Validate state match if we extracted a state from query
         address_details = result.get("address", {})
         result_state = address_details.get("state", "")
@@ -270,9 +408,6 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
             # State mismatch - this shouldn't happen with state prioritization,
             # but log it for debugging
             print(f"⚠️  State mismatch: query had '{query_state}' but got '{result_state}' for '{address}'")
-        
-        lat = float(result["lat"])
-        lon = float(result["lon"])
 
         zip_code = address_details.get("postcode", "")
         state = result_state
@@ -477,10 +612,33 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                             result = best_match
                     # If no better match found, keep original result
 
-        # Extract coordinates and address details
+        # Check if this is a relation (city boundary) - if so, get better coordinates from OSM
+        osm_type = result.get("osm_type")
+        osm_id = result.get("osm_id")
+        
+        # Default to Nominatim coordinates
         lat = float(result["lat"])
         lon = float(result["lon"])
+        coordinate_source = "nominatim"
+        
+        if osm_type == "relation" and osm_id:
+            # This is likely a city boundary - get accurate center from OSM
+            relation_coords = _get_relation_center_or_admin_centre(osm_id)
+            if relation_coords:
+                rel_lat, rel_lon, source = relation_coords
+                # Use relation coordinates (admin_centre/label preferred, center as fallback)
+                lat = rel_lat
+                lon = rel_lon
+                coordinate_source = source
+                print(f"📍 Using OSM relation {source} for '{address}': {lat}, {lon}")
+                # Update result dict with new coordinates for consistency
+                result["lat"] = str(lat)
+                result["lon"] = str(lon)
+            else:
+                # Fall back to Nominatim coordinates if relation query fails
+                print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
 
+        # Extract address details
         address_details = result.get("address", {})
         zip_code = address_details.get("postcode", "")
         state = address_details.get("state", "")
