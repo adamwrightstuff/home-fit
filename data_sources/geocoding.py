@@ -392,7 +392,7 @@ def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['geocoding'])
+@cached(ttl_seconds=CACHE_TTL['geocoding'], key_prefix="geocode_v2")
 def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     """
     Geocode an address to coordinates.
@@ -449,6 +449,9 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
 
         result = data[0]
         
+        # Log what Nominatim returned for debugging
+        print(f"🔍 Nominatim result for '{address}': type={result.get('osm_type')}, id={result.get('osm_id')}, coords={result.get('lat')},{result.get('lon')}")
+        
         # Check if this is a relation (city boundary) - if so, get better coordinates from OSM
         osm_type = result.get("osm_type")
         osm_id = result.get("osm_id")
@@ -460,6 +463,7 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         
         if osm_type == "relation" and osm_id:
             # This is likely a city boundary - get accurate center from OSM
+            print(f"🔍 Found relation {osm_id} for '{address}', querying admin_centre...")
             relation_coords = _get_relation_center_or_admin_centre(osm_id)
             if relation_coords:
                 rel_lat, rel_lon, source = relation_coords
@@ -467,19 +471,22 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                 lat = rel_lat
                 lon = rel_lon
                 coordinate_source = source
-                print(f"📍 Using OSM relation {source} for '{address}': {lat}, {lon}")
+                print(f"✅ Using OSM relation {source} for '{address}': {lat}, {lon}")
             else:
                 # Fall back to Nominatim coordinates if relation query fails
-                print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
+                print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates: {lat}, {lon}")
         elif osm_type in ("node", "way") and osm_id:
             # Nominatim returned a node/way - try to find the city relation containing it
+            print(f"🔍 Found {osm_type} {osm_id} for '{address}', searching for city relation...")
             relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
             if relation_coords:
                 rel_lat, rel_lon, source = relation_coords
                 lat = rel_lat
                 lon = rel_lon
                 coordinate_source = source
-                print(f"📍 Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+                print(f"✅ Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+            else:
+                print(f"⚠️  No city relation found for {osm_type} {osm_id}, using Nominatim coordinates: {lat}, {lon}")
         
         # Validate state match if we extracted a state from query
         address_details = result.get("address", {})
@@ -573,7 +580,7 @@ def _find_best_neighborhood_match(results: list) -> Optional[Dict]:
     return None
 
 
-@cached(ttl_seconds=CACHE_TTL['geocoding'])
+@cached(ttl_seconds=CACHE_TTL['geocoding'], key_prefix="geocode_full_v2")
 def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, str, str, Dict]]:
     """
     Geocode with full response for neighborhood detection.
