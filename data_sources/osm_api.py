@@ -124,7 +124,6 @@ def _retry_overpass(
     base_wait = retry_config.base_wait
     fail_fast = retry_config.fail_fast
     max_wait = retry_config.max_wait
-    endpoint_count = len(OVERPASS_URLS)
     endpoint_idx = 0
     
     try:
@@ -147,93 +146,92 @@ def _retry_overpass(
             
             try:
                 resp = request_fn()
-            # Handle 429 rate limiting specifically
-            if resp is not None and hasattr(resp, 'status_code'):
-                if resp.status_code == 429:
-                    if not retry_config.retry_on_429:
-                        logger.warning(f"OSM rate limited (429), not retrying (retry_on_429=False)")
-                        return None
-                    
-                    # Rate limited - wait longer and retry
-                    if retry_config.exponential_backoff:
-                        retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
-                    else:
-                        retry_after = int(resp.headers.get('Retry-After', base_wait))
-                    
-                    # Respect Retry-After header, but cap at max_wait (now 30s for CRITICAL)
-                    retry_after = min(retry_after, retry_config.max_wait)
-                    
-                    # Increase minimum query interval adaptively
-                    with _query_lock:
-                        new_interval = min(_current_min_query_interval * 1.5, _BASE_MIN_QUERY_INTERVAL * 6)
+                # Handle 429 rate limiting specifically
+                if resp is not None and hasattr(resp, 'status_code'):
+                    if resp.status_code == 429:
+                        if not retry_config.retry_on_429:
+                            logger.warning(f"OSM rate limited (429), not retrying (retry_on_429=False)")
+                            return None
+                        
+                        # Rate limited - wait longer and retry
+                        if retry_config.exponential_backoff:
+                            retry_after = int(resp.headers.get('Retry-After', base_wait * (2 ** i)))
+                        else:
+                            retry_after = int(resp.headers.get('Retry-After', base_wait))
+                        
+                        # Respect Retry-After header, but cap at max_wait (now 30s for CRITICAL)
+                        retry_after = min(retry_after, retry_config.max_wait)
+                        
+                        # Increase minimum query interval adaptively
+                        with _query_lock:
+                            new_interval = min(_current_min_query_interval * 1.5, _BASE_MIN_QUERY_INTERVAL * 6)
+                            if new_interval != _current_min_query_interval:
+                                logger.debug(f"Increasing OSM min query interval to {new_interval:.2f}s due to 429")
+                            _current_min_query_interval = new_interval
+                        
+                        # If fail_fast is True and rate limited on second attempt or later, give up faster
+                        if fail_fast and i >= 1:
+                            logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
+                            return None  # Fail fast instead of waiting more
+                        
+                        if i < max_attempts - 1:
+                            logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
+                            time.sleep(retry_after)
+                            endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
+                            continue
+                        else:
+                            logger.warning(f"OSM rate limited (429), max retries reached")
+                            return None  # Return None instead of resp on final failure
+                # Successful response - gently relax throttling back toward base
+                with _query_lock:
+                    if _current_min_query_interval > _BASE_MIN_QUERY_INTERVAL:
+                        new_interval = max(_BASE_MIN_QUERY_INTERVAL, _current_min_query_interval * 0.85)
                         if new_interval != _current_min_query_interval:
-                            logger.debug(f"Increasing OSM min query interval to {new_interval:.2f}s due to 429")
+                            logger.debug(f"Reducing OSM min query interval to {new_interval:.2f}s after successful response")
                         _current_min_query_interval = new_interval
-                    
-                    # If fail_fast is True and rate limited on second attempt or later, give up faster
-                    # NOTE: Since all queries are now CRITICAL, fail_fast should be False
-                    if fail_fast and i >= 1:
-                        logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
-                        return None  # Fail fast instead of waiting more
-                    
-                    if i < max_attempts - 1:
-                        logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
-                        time.sleep(retry_after)
-                        endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
-                        continue
+                return resp
+            except requests.exceptions.Timeout:
+                if not retry_config.retry_on_timeout:
+                    logger.warning(f"OSM request timeout, not retrying (retry_on_timeout=False)")
+                    return None
+                
+                if i < max_attempts - 1:
+                    if retry_config.exponential_backoff:
+                        wait_time = base_wait * (2 ** i)
                     else:
-                        logger.warning(f"OSM rate limited (429), max retries reached")
-                        return None  # Return None instead of resp on final failure
-            # Successful response - gently relax throttling back toward base
-            with _query_lock:
-                if _current_min_query_interval > _BASE_MIN_QUERY_INTERVAL:
-                    new_interval = max(_BASE_MIN_QUERY_INTERVAL, _current_min_query_interval * 0.85)
-                    if new_interval != _current_min_query_interval:
-                        logger.debug(f"Reducing OSM min query interval to {new_interval:.2f}s after successful response")
-                    _current_min_query_interval = new_interval
-            return resp
-            except requests.exceptions.Timeout as e:
-            if not retry_config.retry_on_timeout:
-                logger.warning(f"OSM request timeout, not retrying (retry_on_timeout=False)")
-                return None
-            
-            if i < max_attempts - 1:
-                if retry_config.exponential_backoff:
-                    wait_time = base_wait * (2 ** i)
+                        wait_time = base_wait
+                    wait_time = min(wait_time, max_wait)
+                    logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
+                    time.sleep(wait_time)
+                    endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
+                    continue
                 else:
-                    wait_time = base_wait
-                wait_time = min(wait_time, max_wait)
-                logger.warning(f"OSM request timeout, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
-                time.sleep(wait_time)
-                endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
-                continue
-            else:
-                logger.warning(f"OSM request timeout after {max_attempts} attempts")
-                return None  # Return None on final timeout
+                    logger.warning(f"OSM request timeout after {max_attempts} attempts")
+                    return None  # Return None on final timeout
             except requests.exceptions.RequestException as e:
-            if i < max_attempts - 1:
+                if i < max_attempts - 1:
+                    if retry_config.exponential_backoff:
+                        wait_time = base_wait * (1.5 ** i)
+                    else:
+                        wait_time = base_wait
+                    wait_time = min(wait_time, max_wait)
+                    logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
+                    time.sleep(wait_time)
+                    endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
+                    continue
+                else:
+                    logger.warning(f"OSM network error after {max_attempts} attempts: {e}")
+                    return None  # Return None on final error
+            except Exception as e:
+                if i == max_attempts - 1:
+                    logger.warning(f"OSM unexpected error after {max_attempts} attempts: {e}")
+                    return None
                 if retry_config.exponential_backoff:
                     wait_time = base_wait * (1.5 ** i)
                 else:
                     wait_time = base_wait
                 wait_time = min(wait_time, max_wait)
-                logger.warning(f"OSM network error, waiting {wait_time:.1f}s before retry ({i+1}/{max_attempts})...")
                 time.sleep(wait_time)
-                endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
-                continue
-            else:
-                logger.warning(f"OSM network error after {max_attempts} attempts: {e}")
-                return None  # Return None on final error
-            except Exception as e:
-            if i == max_attempts - 1:
-                logger.warning(f"OSM unexpected error after {max_attempts} attempts: {e}")
-                return None
-            if retry_config.exponential_backoff:
-                wait_time = base_wait * (1.5 ** i)
-            else:
-                wait_time = base_wait
-            wait_time = min(wait_time, max_wait)
-            time.sleep(wait_time)
                 endpoint_idx = _rotate_overpass_endpoint(endpoint_idx)
     finally:
         _set_overpass_url_for_request(OVERPASS_URLS[0])
