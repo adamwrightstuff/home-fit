@@ -39,14 +39,13 @@ CACHE_TTL = {
 }
 
 
-def _generate_cache_key(func_name: str, *args, key_prefix: Optional[str] = None, **kwargs) -> str:
+def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
     """Generate a cache key from function name and arguments."""
     # Create a string representation of the arguments
     args_str = str(args) + str(sorted(kwargs.items()))
     # Hash the string to create a shorter key
     key_hash = hashlib.md5(args_str.encode()).hexdigest()
-    prefix = f"{key_prefix}:" if key_prefix else ""
-    return f"{prefix}{func_name}:{key_hash}"
+    return f"{func_name}:{key_hash}"
 
 
 def cached(ttl_seconds: int = 3600, key_prefix: Optional[str] = None):

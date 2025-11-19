@@ -392,7 +392,7 @@ def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['geocoding'], key_prefix="geocode_v2")
+@cached(ttl_seconds=CACHE_TTL['geocoding'])
 def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     """
     Geocode an address to coordinates.
@@ -580,7 +580,7 @@ def _find_best_neighborhood_match(results: list) -> Optional[Dict]:
     return None
 
 
-@cached(ttl_seconds=CACHE_TTL['geocoding'], key_prefix="geocode_full_v2")
+@cached(ttl_seconds=CACHE_TTL['geocoding'])
 def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, str, str, Dict]]:
     """
     Geocode with full response for neighborhood detection.
