@@ -739,7 +739,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
 
     def _do_request():
         return requests.post(
-            OVERPASS_URL,
+            get_overpass_url(),
             data={"data": query},
             timeout=70,
             headers={"User-Agent": "HomeFit/1.0"}
