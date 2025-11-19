@@ -373,8 +373,8 @@ def _score_camping_smooth(camping: list, expectations: Dict, area_type: str) -> 
         decay_rate = 0.0002
     elif area_type == "suburban":
         optimal_distance = 15000  # 15km
-    max_score = 10.0
-    decay_rate = 0.0001
+        max_score = 10.0
+        decay_rate = 0.0001
     else:  # exurban, rural
         optimal_distance = 25000  # 25km (research: 10-50 miles)
         max_score = 10.0
