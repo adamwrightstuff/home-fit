@@ -26,7 +26,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     Return a dict of default radii for a pillar given area/context.
 
     The returned keys are pillar-specific:
-    - active_outdoors: {local_radius_m, regional_radius_m}
+    - active_outdoors: {local_radius_m, trail_radius_m, regional_radius_m}
     - neighborhood_amenities: {query_radius_m, walkable_distance_m}
     - public_transit_access: {routes_radius_m}
     - healthcare_access: {fac_radius_m, pharm_radius_m}
@@ -38,11 +38,28 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     p = (pillar or "").lower()
 
     if p == "active_outdoors":
-        # Matches existing logic: urban/suburban tighter local and regional; rural/exurban wider
-        if a in {"urban_core", "suburban"}:
-            return {"local_radius_m": 1500, "regional_radius_m": 15000}
+        # Research-based radii: parks (local), trails (separate), water/camping (regional)
+        # Urban parks: 800m = 10-minute walk (research: 70-80% within 800m)
+        # Urban trails: 2km = walkable urban trails/greenways (research: <0.5 mile)
+        # Suburban trails: 5km = regional trail networks (research: 1-2 miles)
+        if a == "urban_core":
+            return {
+                "local_radius_m": 800,      # Parks: 10-minute walk
+                "trail_radius_m": 2000,     # Trails: Urban trails/greenways
+                "regional_radius_m": 15000  # Water/camping: Unchanged
+            }
+        elif a == "suburban":
+            return {
+                "local_radius_m": 1500,     # Parks: Car-oriented access
+                "trail_radius_m": 5000,     # Trails: Regional trail networks
+                "regional_radius_m": 15000  # Water/camping: Unchanged
+            }
         else:  # exurban, rural, unknown
-            return {"local_radius_m": 2000, "regional_radius_m": 50000}
+            return {
+                "local_radius_m": 2000,     # Parks: Wider search
+                "trail_radius_m": 15000,     # Trails: Natural trail access
+                "regional_radius_m": 50000  # Water/camping: Wider for rural
+            }
 
     if p == "neighborhood_amenities":
         # Neighborhood scope uses smaller radii to avoid bleeding into adjacent areas

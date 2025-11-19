@@ -37,16 +37,25 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     # Use centralized radius profiles for unified defaults
     profile = get_radius_profile('active_outdoors', area_type, location_scope)
     local_radius = int(profile.get('local_radius_m', 1000))
+    trail_radius = int(profile.get('trail_radius_m', 2000))  # Separate trail radius
     regional_radius = int(profile.get('regional_radius_m', 15000))
-    print(f"   🔧 Radius profile (active_outdoors): area_type={area_type}, scope={location_scope}, local={local_radius}m, regional={regional_radius}m")
+    print(f"   🔧 Radius profile (active_outdoors): area_type={area_type}, scope={location_scope}, local={local_radius}m, trail={trail_radius}m, regional={regional_radius}m")
     
     print(f"   📍 Querying local parks & playgrounds ({local_radius/1000:.0f}km)...")
     local_data = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
     
+    print(f"   🥾 Querying trail access ({trail_radius/1000:.0f}km)...")
+    # Query trails separately with trail_radius
+    trail_data = osm_api.query_nature_features(lat, lon, radius_m=trail_radius)
+    trail_hiking = trail_data.get('hiking', []) if trail_data else []
+    
     print(f"   🏔️  Querying regional outdoor activities ({regional_radius/1000:.0f}km)...")
+    # Query water and camping with regional_radius
     regional_data = osm_api.query_nature_features(lat, lon, radius_m=regional_radius)
-    # Coastline fallback if nature query returns empty
-    if not regional_data or (not regional_data.get('hiking') and not regional_data.get('swimming') and not regional_data.get('camping')):
+    regional_swimming = regional_data.get('swimming', []) if regional_data else []
+    regional_camping = regional_data.get('camping', []) if regional_data else []
+    # Coastline fallback if regional query returns empty
+    if not regional_swimming and not regional_camping:
         try:
             qc = f"""
             [out:json][timeout:15];
@@ -56,30 +65,30 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
             from data_sources.osm_api import OVERPASS_URL, requests
             rc = requests.post(OVERPASS_URL, data={"data": qc}, timeout=20, headers={"User-Agent":"HomeFit/1.0"})
             if rc.status_code == 200 and rc.json().get("elements"):
-                regional_data = regional_data or {"hiking": [], "swimming": [], "camping": []}
-                regional_data["swimming"].append({"type":"coastline","name":None,"distance_m":0})
+                regional_swimming.append({"type":"coastline","name":None,"distance_m":0})
         except Exception:
             pass
 
-    # Local path cluster bonus (small, capped)
+    # Local path cluster bonus (small, capped) - add to hiking
     try:
         from data_sources.osm_api import query_local_paths_within_green_areas
         local_clusters = query_local_paths_within_green_areas(lat, lon, radius_m=local_radius)
-        if regional_data is None:
-            regional_data = {"hiking": [], "swimming": [], "camping": []}
         # Add synthetic local hiking entries to avoid scoring zero when trails exist informally
         for _ in range(min(5, int(local_clusters))):
-            regional_data["hiking"].append({"type":"local_path_cluster","name":None,"distance_m":0})
+            trail_hiking.append({"type":"local_path_cluster","name":None,"distance_m":0})
     except Exception:
         pass
+
+    # Combine hiking from trail query with any local path clusters
+    hiking = trail_hiking
 
     # Combine data for quality assessment
     combined_data = {
         'parks': local_data.get("parks", []) if local_data else [],
         'playgrounds': local_data.get("playgrounds", []) if local_data else [],
-        'hiking': regional_data.get("hiking", []) if regional_data else [],
-        'swimming': regional_data.get("swimming", []) if regional_data else [],
-        'camping': regional_data.get("camping", []) if regional_data else []
+        'hiking': hiking,  # From trail_radius query
+        'swimming': regional_swimming,  # From regional_radius query
+        'camping': regional_camping  # From regional_radius query
     }
 
     # Assess data quality
@@ -94,9 +103,9 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
 
     # Score components with smooth curves and contextual adjustments
     local_score = _score_local_recreation_smooth(parks, playgrounds, expectations)  # 0-40
-    trail_score = _score_trail_access_smooth(hiking, expectations)  # 0-30
+    trail_score = _score_trail_access_smooth(hiking, expectations, area_type)  # 0-30 - pass area_type
     water_score = _score_water_access_smooth(swimming, expectations)  # 0-20
-    camping_score = _score_camping_smooth(camping, expectations)  # 0-10
+    camping_score = _score_camping_smooth(camping, expectations, area_type)  # 0-10 - pass area_type
 
     total_score = local_score + water_score + trail_score + camping_score
 
@@ -297,17 +306,25 @@ def _score_water_access(swimming: list) -> float:
     return 0.0
 
 
-def _score_trail_access_smooth(hiking: list, expectations: Dict) -> float:
-    """Score trail access (0-30 points) using smooth decay curves."""
+def _score_trail_access_smooth(hiking: list, expectations: Dict, area_type: str) -> float:
+    """Score trail access (0-30 points) using smooth decay curves with contextual optimal distances."""
     if not hiking:
         return 0.0
 
     closest = min(f["distance_m"] for f in hiking)
     
-    # Smooth distance decay
+    # Research-based contextual optimal distances
+    if area_type == "urban_core":
+        optimal_distance = 800  # 10-minute walk (research: <0.5 mile)
+        decay_rate = 0.0005  # Faster decay for urban (walkable threshold)
+    elif area_type == "suburban":
+        optimal_distance = 2000  # Bikeable distance (research: 1-2 miles)
+        decay_rate = 0.0003
+    else:  # exurban, rural
+        optimal_distance = 5000  # Drivable distance
+        decay_rate = 0.0001
+    
     max_score = 30.0
-    optimal_distance = 2000  # meters
-    decay_rate = 0.0002
     
     if closest <= optimal_distance:
         score = max_score
@@ -337,22 +354,35 @@ def _score_trail_access(hiking: list) -> float:
         return 8.0
 
 
-def _score_camping_smooth(camping: list, expectations: Dict) -> float:
-    """Score camping access (0-10 points) using smooth decay curves."""
+def _score_camping_smooth(camping: list, expectations: Dict, area_type: str) -> float:
+    """Score camping access (0-10 points) using smooth decay curves with contextual adjustments."""
+    expected_camping = expectations.get('expected_camping_within_15km', 1)
+    
     if not camping:
+        # If camping not expected in this area type, return neutral score
+        if expected_camping == 0:
+            return 5.0  # Neutral when not expected (not a penalty)
         return 0.0
 
     closest = min(f["distance_m"] for f in camping)
     
-    # Smooth distance decay
-    max_score = 10.0
-    optimal_distance = 5000  # meters
-    decay_rate = 0.0001
+    # Contextual optimal distances based on area type
+    if area_type == "urban_core":
+        optimal_distance = 10000  # 10km if available
+        max_score = 8.0  # Cap lower for urban (not primary feature)
+        decay_rate = 0.0002
+    elif area_type == "suburban":
+        optimal_distance = 15000  # 15km
+        max_score = 10.0
+        decay_rate = 0.0001
+    else:  # exurban, rural
+        optimal_distance = 25000  # 25km (research: 10-50 miles)
+        max_score = 10.0
+        decay_rate = 0.00005
     
     if closest <= optimal_distance:
         score = max_score
     else:
-        # Exponential decay beyond optimal distance
         score = max_score * math.exp(-decay_rate * (closest - optimal_distance))
     
     return min(max_score, max(0, score))

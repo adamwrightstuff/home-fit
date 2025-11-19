@@ -630,9 +630,11 @@ class RegionalBaselineManager:
                 'active_outdoors': {
                     'expected_parks_within_1km': 3,
                     'expected_parks_within_5km': 8,
+                    'expected_park_area_hectares': 3,  # Small-medium urban parks
                     'expected_playgrounds_within_1km': 2,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 2
+                    'expected_trails_within_15km': 2,
+                    'expected_camping_within_15km': 0  # Not expected in urban
                 },
                 'healthcare_access': {
                     'expected_hospitals_within_10km': 2,
@@ -649,9 +651,11 @@ class RegionalBaselineManager:
                 'active_outdoors': {
                     'expected_parks_within_1km': 2,
                     'expected_parks_within_5km': 5,
+                    'expected_park_area_hectares': 5,  # Larger community parks
                     'expected_playgrounds_within_1km': 1,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 1
+                    'expected_trails_within_15km': 1,
+                    'expected_camping_within_15km': 0  # Not expected in suburban
                 },
                 'healthcare_access': {
                     'expected_hospitals_within_10km': 1,
@@ -668,9 +672,11 @@ class RegionalBaselineManager:
                 'active_outdoors': {
                     'expected_parks_within_1km': 1,
                     'expected_parks_within_5km': 3,
+                    'expected_park_area_hectares': 10,  # Regional parks
                     'expected_playgrounds_within_1km': 0,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 1
+                    'expected_trails_within_15km': 1,
+                    'expected_camping_within_15km': 1  # May be available
                 },
                 'healthcare_access': {
                     'expected_hospitals_within_10km': 0,
@@ -687,9 +693,11 @@ class RegionalBaselineManager:
                 'active_outdoors': {
                     'expected_parks_within_1km': 0,
                     'expected_parks_within_5km': 1,
+                    'expected_park_area_hectares': 10,  # Large natural parks
                     'expected_playgrounds_within_1km': 0,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 1
+                    'expected_trails_within_15km': 1,
+                    'expected_camping_within_15km': 1  # Often available
                 },
                 'healthcare_access': {
                     'expected_hospitals_within_10km': 0,
