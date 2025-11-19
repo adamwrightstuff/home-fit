@@ -378,7 +378,8 @@ def get_contextual_tags(
     business_count: Optional[int] = None,
     levels_entropy: Optional[float] = None,
     building_type_diversity: Optional[float] = None,
-    footprint_area_cv: Optional[float] = None
+    footprint_area_cv: Optional[float] = None,
+    pre_1940_pct: Optional[float] = None
 ) -> List[str]:
     """
     Determine contextual tags for a location.
@@ -408,14 +409,29 @@ def get_contextual_tags(
         is_historic = True
     # Secondary signal: Landmark count (only if median year is historic OR unknown)
     # This handles historic neighborhoods with modern infill (Georgetown, Back Bay)
-    # But prevents modern areas (Downtown Austin 2007, SLU 2012) from being misclassified
+    # But prevents modern areas (Downtown Austin 2007, SLU 1970) from being misclassified
     if historic_landmarks and historic_landmarks >= 10:
-        # Only use landmark count if:
-        # 1. Median year is unknown (fallback), OR
-        # 2. Median year is historic (< 1980) - allows historic neighborhoods with infill
-        # Do NOT use landmark count alone for modern areas (>= 1980)
-        if median_year_built is None or median_year_built < 1980:
+        # Use pre_1940_pct to distinguish historic neighborhoods with infill from modern areas:
+        # - Historic neighborhoods with infill: Have pre-1940 buildings (historic core) → pre_1940_pct >= 5%
+        # - Modern areas built in 1970s: No pre-1940 buildings → pre_1940_pct < 5%
+        has_historic_core = pre_1940_pct is not None and pre_1940_pct >= 5.0
+        
+        if median_year_built is None:
+            # Unknown median year: Use landmark count as fallback (preserves backward compatibility)
             is_historic = True
+        elif median_year_built < 1950:
+            # Definitely historic: Already handled above, but landmark count confirms it
+            is_historic = True
+        elif median_year_built < 1980:
+            # Median year 1950-1979: Need to check if historic core exists
+            # If pre_1940_pct >= 5%, it's a historic neighborhood with infill → allow historic tag
+            # If pre_1940_pct < 5% or None, it's a modern area → do NOT allow historic tag
+            if has_historic_core:
+                is_historic = True
+            # If pre_1940_pct is None and median_year < 1980, be conservative: don't use landmark count
+            # This prevents modern areas (like South Lake Union 1970) from being misclassified
+        # If median_year_built >= 1980: Do NOT use landmark count (modern areas)
+    
     if is_historic:
         tags.append('historic')
     

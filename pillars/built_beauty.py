@@ -97,6 +97,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)
         historic_landmarks = historic_data.get('historic_landmarks_count', 0)
         median_year_built = historic_data.get('median_year_built')
+        # Extract pre_1940_pct to distinguish historic neighborhoods with infill from modern areas
+        year_built_data = historic_data.get('year_built_data', {})
+        pre_1940_pct = year_built_data.get('pre_1940_pct') if isinstance(year_built_data, dict) else None
 
         metric_override_keys = {
             "levels_entropy",
@@ -165,7 +168,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             business_count=None,  # Not available here, but tags will work without it
             levels_entropy=diversity_metrics.get("levels_entropy"),
             building_type_diversity=diversity_metrics.get("building_type_diversity"),
-            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
+            pre_1940_pct=pre_1940_pct
         )
 
         def _r2(value):
