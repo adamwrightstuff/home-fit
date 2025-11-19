@@ -115,6 +115,77 @@ def _validate_state_match(query_state: Optional[str], result_state: str) -> bool
     return False
 
 
+def _has_street_number(address: str) -> bool:
+    """
+    Check if address contains a street number (starts with digits).
+    
+    Args:
+        address: Address string
+    
+    Returns:
+        True if address appears to have a street number
+    """
+    # Remove common prefixes and check if starts with digits
+    address_clean = address.strip()
+    # Pattern: starts with 1-5 digits followed by space or comma
+    return bool(re.match(r'^\d{1,5}[\s,]', address_clean))
+
+
+def _find_city_relation_for_element(element_type: str, element_id: int, lat: float, lon: float) -> Optional[Tuple[float, float, str]]:
+    """
+    Find city relation containing a node/way and get its admin_centre.
+    
+    Args:
+        element_type: "node" or "way"
+        element_id: OSM ID
+        lat, lon: Coordinates (for fallback)
+    
+    Returns:
+        (lat, lon, source) or None
+    """
+    try:
+        from data_sources.osm_api import get_overpass_url
+        
+        # Query for relations containing this element with place=city/town/municipality
+        # Use rel(bn) for nodes, rel(bw) for ways
+        rel_filter = "rel(bn)" if element_type == "node" else "rel(bw)"
+        query = f"""
+        [out:json][timeout:10];
+        {element_type}({element_id});
+        {rel_filter}[place~"^(city|town|municipality)$"];
+        out body;
+        >;
+        out skel qt;
+        """
+        
+        response = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=15
+        )
+        
+        if response.status_code != 200:
+            return None
+            
+        data = response.json()
+        if not data or "elements" not in data:
+            return None
+        
+        # Find relation with place=city/town/municipality
+        for elem in data["elements"]:
+            if elem.get("type") == "relation":
+                tags = elem.get("tags", {})
+                if tags.get("place") in ("city", "town", "municipality"):
+                    # Get admin_centre for this relation
+                    return _get_relation_center_or_admin_centre(elem["id"])
+        
+        return None
+    except Exception as e:
+        print(f"Error finding city relation for {element_type} {element_id}: {e}")
+        return None
+
+
 def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, float, str]]:
     """
     Query OSM Overpass to get the best city center point from a relation.
@@ -325,7 +396,7 @@ def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]
 def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     """
     Geocode an address to coordinates.
-    Uses Census API first (for US addresses), falls back to Nominatim.
+    Uses Census API first (for US addresses with street numbers), falls back to Nominatim.
 
     Args:
         address: Address string or ZIP code
@@ -333,9 +404,9 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     Returns:
         (lat, lon, zip_code, state, city) or None if failed
     """
-    # Try Census API first (for US addresses)
+    # Try Census API first (for US addresses WITH street numbers)
     query_state = _extract_state_from_query(address)
-    if query_state:  # If we can extract a US state, try Census first
+    if query_state and _has_street_number(address):  # Only use Census if street number present
         census_result = _geocode_census(address)
         if census_result:
             return census_result
@@ -400,6 +471,15 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
             else:
                 # Fall back to Nominatim coordinates if relation query fails
                 print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
+        elif osm_type in ("node", "way") and osm_id:
+            # Nominatim returned a node/way - try to find the city relation containing it
+            relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
+            if relation_coords:
+                rel_lat, rel_lon, source = relation_coords
+                lat = rel_lat
+                lon = rel_lon
+                coordinate_source = source
+                print(f"📍 Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
         
         # Validate state match if we extracted a state from query
         address_details = result.get("address", {})
@@ -513,9 +593,9 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         (lat, lon, zip_code, state, city, full_result) or None if failed
         full_result: Complete geocoding response including address structure
     """
-    # Try Census API first (for US addresses)
+    # Try Census API first (for US addresses WITH street numbers)
     query_state = _extract_state_from_query(address)
-    if query_state:  # If we can extract a US state, try Census first
+    if query_state and _has_street_number(address):  # Only use Census if street number present
         census_result = _geocode_census(address)
         if census_result:
             lat, lon, zip_code, state, city = census_result
@@ -637,6 +717,18 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             else:
                 # Fall back to Nominatim coordinates if relation query fails
                 print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
+        elif osm_type in ("node", "way") and osm_id:
+            # Nominatim returned a node/way - try to find the city relation containing it
+            relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
+            if relation_coords:
+                rel_lat, rel_lon, source = relation_coords
+                lat = rel_lat
+                lon = rel_lon
+                coordinate_source = source
+                print(f"📍 Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+                # Update result dict with new coordinates for consistency
+                result["lat"] = str(lat)
+                result["lon"] = str(lon)
 
         # Extract address details
         address_details = result.get("address", {})
