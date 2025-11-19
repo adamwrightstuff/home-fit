@@ -141,6 +141,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
 
         if isinstance(beauty_score_result, tuple):
             beauty_score, coverage_cap_metadata = beauty_score_result
+            # Ensure coverage_cap_metadata is a dict, not None
+            if coverage_cap_metadata is None:
+                coverage_cap_metadata = {}
         else:
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
@@ -198,10 +201,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "historic_context": {
                 "landmarks": historic_landmarks,
                 "median_year_built": median_year_built,
-                "heritage_buildings": coverage_cap_metadata.get("heritage_profile", {}).get("count"),
-                "heritage_designations": coverage_cap_metadata.get("heritage_profile", {}).get("designations"),
-                "historic_tagged": coverage_cap_metadata.get("heritage_profile", {}).get("historic_tagged"),
-                "heritage_significance": coverage_cap_metadata.get("heritage_profile", {}).get("significance_score")
+                "heritage_buildings": (coverage_cap_metadata.get("heritage_profile") or {}).get("count", 0),
+                "heritage_designations": (coverage_cap_metadata.get("heritage_profile") or {}).get("designations", []),
+                "historic_tagged": (coverage_cap_metadata.get("heritage_profile") or {}).get("historic_tagged", 0),
+                "heritage_significance": (coverage_cap_metadata.get("heritage_profile") or {}).get("significance_score", 0)
             },
             "material_profile": coverage_cap_metadata.get("material_profile"),
             "heritage_profile": coverage_cap_metadata.get("heritage_profile"),
