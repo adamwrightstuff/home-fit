@@ -1692,6 +1692,10 @@ def score_architectural_diversity_as_beauty(
         design_score = 0.0
 
     coverage_component = None
+    # Calculate expected_coverage once (checking for spacious historic districts)
+    # This will be used for both coverage component scoring and coverage cap logic
+    expected_coverage = None
+    is_spacious_historic = False
     if built_coverage_ratio is not None:
         # Check if this is a spacious historic district (relaxed expectations)
         is_spacious_historic = _is_spacious_historic_district(
@@ -1709,6 +1713,8 @@ def score_architectural_diversity_as_beauty(
             expected_coverage = SPACIOUS_HISTORIC_COVERAGE_EXPECTATION
         else:
             expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
+    
+    if built_coverage_ratio is not None:
         
         if expected_coverage > 0:
             normalized_coverage = max(0.0, min(1.2, built_coverage_ratio / expected_coverage))
@@ -1908,17 +1914,8 @@ def score_architectural_diversity_as_beauty(
     if built_coverage_ratio is not None:
         relief_from_phase = max(0.0, phase23_confidence_bonus)
         
-        # Check if this is a spacious historic district (relaxed coverage cap thresholds)
-        is_spacious_historic = _is_spacious_historic_district(
-            effective,
-            built_coverage_ratio,
-            historic_landmarks,
-            median_year_built,
-            material_entropy=material_entropy,
-            footprint_cv=footprint_area_cv
-        )
-        
-        expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
+        # Use the already-calculated is_spacious_historic and expected_coverage from above
+        # (No need to recalculate - they're already set)
         cap_threshold = None
         cap_reason = None
         
@@ -2015,7 +2012,7 @@ def score_architectural_diversity_as_beauty(
         "material_tagged_ratio": round(material_tagged_ratio, 3),
         "type_category_diversity": round(type_category_diversity, 1) if type_category_diversity is not None else None,
         "height_stats": height_stats,
-        "expected_coverage": COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"]),
+        "expected_coverage": expected_coverage if expected_coverage is not None else COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"]),
         "age_percentile": round(age_percentile, 3),
         "age_mix_balance": round(age_mix_balance, 3) if age_mix_balance is not None else None,
         "age_coherence_signal": round(coherence_signal, 3),
