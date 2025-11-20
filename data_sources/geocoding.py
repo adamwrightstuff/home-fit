@@ -389,6 +389,51 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                             return float(best["lat"]), float(best["lon"]), "place_city"
             except Exception as e:
                 print(f"⚠️  Error searching for place nodes in relation bounding box: {e}")
+            
+            # If bounding box search failed, try radius search from relation center
+            # This catches cases where place=city node is outside the relation boundary
+            if member_nodes:
+                # Calculate relation center from member nodes
+                center_lat = sum(lats) / len(lats)
+                center_lon = sum(lons) / len(lons)
+                
+                # Search for place=city/town nodes within 5km of relation center
+                print(f"🔍 Bounding box search failed, trying radius search (5km) from relation center ({center_lat:.6f}, {center_lon:.6f})...")
+                radius_query = f"""
+                [out:json][timeout:10];
+                (
+                  node["place"="city"](around:5000,{center_lat},{center_lon});
+                  node["place"="town"](around:5000,{center_lat},{center_lon});
+                );
+                out;
+                """
+                
+                try:
+                    radius_response = requests.post(
+                        get_overpass_url(),
+                        data={"data": radius_query},
+                        headers={"User-Agent": "HomeFit/1.0"},
+                        timeout=15
+                    )
+                    
+                    if radius_response.status_code == 200:
+                        radius_data = radius_response.json()
+                        if radius_data and "elements" in radius_data:
+                            radius_nodes = [e for e in radius_data["elements"] if e.get("type") == "node" and "lat" in e and "lon" in e]
+                            if radius_nodes:
+                                # Prefer nodes with matching name if city_name provided
+                                if city_name:
+                                    for node in radius_nodes:
+                                        node_name = node.get("tags", {}).get("name", "")
+                                        if city_name.lower() in node_name.lower() or node_name.lower() in city_name.lower():
+                                            print(f"✅ Found place=city node via radius search: {node['lat']}, {node['lon']}")
+                                            return float(node["lat"]), float(node["lon"]), "place_city"
+                                # Otherwise, use the closest one (first in results is usually closest)
+                                best = radius_nodes[0]
+                                print(f"✅ Found place=city node via radius search: {best['lat']}, {best['lon']}")
+                                return float(best["lat"]), float(best["lon"]), "place_city"
+                except Exception as e:
+                    print(f"⚠️  Error searching for place nodes via radius search: {e}")
         
         # Check for admin_centre or label members
         members = relation.get("members", [])
