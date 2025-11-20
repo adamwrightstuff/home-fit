@@ -48,18 +48,17 @@ def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
     return f"{func_name}:{key_hash}"
 
 
-def cached(ttl_seconds: int = 3600, key_prefix: Optional[str] = None):
+def cached(ttl_seconds: int = 3600):
     """
     Decorator to cache function results with Redis (if available) or in-memory cache.
     
     Args:
         ttl_seconds: Time to live for cached results in seconds
-        key_prefix: Optional prefix for cache key (useful for cache versioning)
     """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            cache_key = _generate_cache_key(func.__name__, *args, key_prefix=key_prefix, **kwargs)
+            cache_key = _generate_cache_key(func.__name__, *args, **kwargs)
             current_time = time.time()
             
             # Try Redis first, fall back to in-memory

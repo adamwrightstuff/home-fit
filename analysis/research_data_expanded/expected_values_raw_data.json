@@ -1,0 +1,2295 @@
+{
+  "raw_data": [
+    {
+      "location": "Park Slope Brooklyn NY",
+      "city": "Park Slope Brooklyn NY",
+      "lat": 40.6678376,
+      "lon": -73.9791449,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 45525.56204602697,
+      "active_outdoors": {
+        "parks_1km": 18,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 18.1603,
+        "trails_15km": 70,
+        "water_15km": 402,
+        "camping_15km": 2,
+        "closest_water_km": 1.635
+      },
+      "healthcare": {
+        "hospitals_20km": 100,
+        "urgent_care_5km": 14,
+        "pharmacies_8km": 403,
+        "clinics_5km": 93,
+        "doctors_5km": 89,
+        "closest_hospital_km": 0.023
+      },
+      "amenities": {
+        "businesses_1km": 406,
+        "business_types": 16,
+        "restaurants_1km": 166,
+        "median_distance_m": 682.0
+      }
+    },
+    {
+      "location": "Williamsburg Brooklyn NY",
+      "city": "Williamsburg Brooklyn NY",
+      "lat": -25.7655556,
+      "lon": 28.2397222,
+      "area_type": "urban_core",
+      "detected_area_type": "exurban",
+      "density": null,
+      "active_outdoors": {
+        "parks_1km": 8,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 5.0619,
+        "trails_15km": 28,
+        "water_15km": 42,
+        "camping_15km": 2,
+        "closest_water_km": 1.137
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 48,
+        "business_types": 12,
+        "restaurants_1km": 23,
+        "median_distance_m": 836.5
+      }
+    },
+    {
+      "location": "West Village Manhattan NY",
+      "city": "West Village Manhattan NY",
+      "lat": 40.7322674,
+      "lon": -73.9972548,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 84289.68280692303,
+      "active_outdoors": {
+        "parks_1km": 63,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 9.3342,
+        "trails_15km": 99,
+        "water_15km": 358,
+        "camping_15km": 0,
+        "closest_water_km": 1.306
+      },
+      "healthcare": {
+        "hospitals_20km": 128,
+        "urgent_care_5km": 26,
+        "pharmacies_8km": 441,
+        "clinics_5km": 120,
+        "doctors_5km": 79,
+        "closest_hospital_km": 0.683
+      },
+      "amenities": {
+        "businesses_1km": 1182,
+        "business_types": 16,
+        "restaurants_1km": 642,
+        "median_distance_m": 737.5
+      }
+    },
+    {
+      "location": "North Beach San Francisco CA",
+      "city": "North Beach San Francisco CA",
+      "lat": 37.7997056,
+      "lon": -122.4082616,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 44226.5640439476,
+      "active_outdoors": {
+        "parks_1km": 38,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 9.8198,
+        "trails_15km": 62,
+        "water_15km": 299,
+        "camping_15km": 5,
+        "closest_water_km": 0.91
+      },
+      "healthcare": {
+        "hospitals_20km": 32,
+        "urgent_care_5km": 5,
+        "pharmacies_8km": 45,
+        "clinics_5km": 49,
+        "doctors_5km": 19,
+        "closest_hospital_km": 0.479
+      },
+      "amenities": {
+        "businesses_1km": 554,
+        "business_types": 15,
+        "restaurants_1km": 290,
+        "median_distance_m": 473.0
+      }
+    },
+    {
+      "location": "Old Town Pasadena CA",
+      "city": "Old Town Pasadena CA",
+      "lat": 34.1133062,
+      "lon": -118.1478291,
+      "area_type": "urban_core",
+      "detected_area_type": "suburban",
+      "density": 6644.7150001160335,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 6.8354,
+        "trails_15km": 64,
+        "water_15km": 7,
+        "camping_15km": 1,
+        "closest_water_km": 4.857
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 38,
+        "business_types": 12,
+        "restaurants_1km": 19,
+        "median_distance_m": 635.0
+      }
+    },
+    {
+      "location": "Downtown Boulder CO",
+      "city": "Downtown Boulder CO",
+      "lat": 40.164457,
+      "lon": -105.1023133,
+      "area_type": "urban_core",
+      "detected_area_type": "rural",
+      "density": 2913.4107377487608,
+      "active_outdoors": {
+        "parks_1km": 7,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 42.7117,
+        "trails_15km": 11,
+        "water_15km": 26,
+        "camping_15km": 0,
+        "closest_water_km": 2.159
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 4,
+        "pharmacies_8km": 8,
+        "clinics_5km": 9,
+        "doctors_5km": 9,
+        "closest_hospital_km": 2.779
+      },
+      "amenities": {
+        "businesses_1km": 70,
+        "business_types": 14,
+        "restaurants_1km": 31,
+        "median_distance_m": 275.5
+      }
+    },
+    {
+      "location": "Pearl District Portland OR",
+      "city": "Pearl District Portland OR",
+      "lat": 45.5243343,
+      "lon": -122.6782058,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 22325.104112330147,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 218,
+        "water_15km": 53,
+        "camping_15km": 0,
+        "closest_water_km": 0.641
+      },
+      "healthcare": {
+        "hospitals_20km": 21,
+        "urgent_care_5km": 11,
+        "pharmacies_8km": 42,
+        "clinics_5km": 58,
+        "doctors_5km": 121,
+        "closest_hospital_km": 1.55
+      },
+      "amenities": {
+        "businesses_1km": 478,
+        "business_types": 16,
+        "restaurants_1km": 205,
+        "median_distance_m": 541.0
+      }
+    },
+    {
+      "location": "Downtown Santa Monica CA",
+      "city": "Downtown Santa Monica CA",
+      "lat": 34.0256686,
+      "lon": -118.49356,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 21215.858831074394,
+      "active_outdoors": {
+        "parks_1km": 5,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 2.3411,
+        "trails_15km": 249,
+        "water_15km": 67,
+        "camping_15km": 0,
+        "closest_water_km": 1.584
+      },
+      "healthcare": {
+        "hospitals_20km": 37,
+        "urgent_care_5km": 6,
+        "pharmacies_8km": 50,
+        "clinics_5km": 17,
+        "doctors_5km": 10,
+        "closest_hospital_km": 0.405
+      },
+      "amenities": {
+        "businesses_1km": 98,
+        "business_types": 14,
+        "restaurants_1km": 54,
+        "median_distance_m": 746.0
+      }
+    },
+    {
+      "location": "Gaslamp Quarter San Diego CA",
+      "city": "Gaslamp Quarter San Diego CA",
+      "lat": 32.7169758,
+      "lon": -117.1615423,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 21252.92685607053,
+      "active_outdoors": {
+        "parks_1km": 46,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 15.4634,
+        "trails_15km": 27,
+        "water_15km": 155,
+        "camping_15km": 2,
+        "closest_water_km": 1.119
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 268,
+        "business_types": 12,
+        "restaurants_1km": 158,
+        "median_distance_m": 664.0
+      }
+    },
+    {
+      "location": "Downtown Charleston SC",
+      "city": "Downtown Charleston SC",
+      "lat": 32.777847,
+      "lon": -79.9659379,
+      "area_type": "urban_core",
+      "detected_area_type": "rural",
+      "density": 1886.9667972741247,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 4,
+        "water_15km": 85,
+        "camping_15km": 2,
+        "closest_water_km": 0.499
+      },
+      "healthcare": {
+        "hospitals_20km": 13,
+        "urgent_care_5km": 1,
+        "pharmacies_8km": 14,
+        "clinics_5km": 8,
+        "doctors_5km": 15,
+        "closest_hospital_km": 1.266
+      },
+      "amenities": {
+        "businesses_1km": 6,
+        "business_types": 5,
+        "restaurants_1km": 3,
+        "median_distance_m": 637.5
+      }
+    },
+    {
+      "location": "Downtown Savannah GA",
+      "city": "Downtown Savannah GA",
+      "lat": 32.0782002,
+      "lon": -81.0964376,
+      "area_type": "urban_core",
+      "detected_area_type": "exurban",
+      "density": 3544.358057430041,
+      "active_outdoors": {
+        "parks_1km": 35,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 26.2598,
+        "trails_15km": 8,
+        "water_15km": 49,
+        "camping_15km": 2,
+        "closest_water_km": 2.481
+      },
+      "healthcare": {
+        "hospitals_20km": 13,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 6,
+        "clinics_5km": 4,
+        "doctors_5km": 1,
+        "closest_hospital_km": 5.271
+      },
+      "amenities": {
+        "businesses_1km": 218,
+        "business_types": 11,
+        "restaurants_1km": 97,
+        "median_distance_m": 524.5
+      }
+    },
+    {
+      "location": "Downtown Asheville NC",
+      "city": "Downtown Asheville NC",
+      "lat": 35.5990531,
+      "lon": -82.5511822,
+      "area_type": "urban_core",
+      "detected_area_type": "exurban",
+      "density": 3519.682601921311,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 7.2227,
+        "trails_15km": 32,
+        "water_15km": 0,
+        "camping_15km": 2,
+        "closest_water_km": null
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 12,
+        "clinics_5km": 2,
+        "doctors_5km": 11,
+        "closest_hospital_km": 2.505
+      },
+      "amenities": {
+        "businesses_1km": 109,
+        "business_types": 14,
+        "restaurants_1km": 61,
+        "median_distance_m": 578.0
+      }
+    },
+    {
+      "location": "Old Town Alexandria VA",
+      "city": "Old Town Alexandria VA",
+      "lat": 38.8065306,
+      "lon": -77.0610459,
+      "area_type": "urban_core",
+      "detected_area_type": "suburban",
+      "density": 7072.715649037141,
+      "active_outdoors": {
+        "parks_1km": 24,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 31.6081,
+        "trails_15km": 156,
+        "water_15km": 28,
+        "camping_15km": 0,
+        "closest_water_km": 1.994
+      },
+      "healthcare": {
+        "hospitals_20km": 40,
+        "urgent_care_5km": 4,
+        "pharmacies_8km": 29,
+        "clinics_5km": 9,
+        "doctors_5km": 7,
+        "closest_hospital_km": 4.214
+      },
+      "amenities": {
+        "businesses_1km": 88,
+        "business_types": 12,
+        "restaurants_1km": 48,
+        "median_distance_m": 777.5
+      }
+    },
+    {
+      "location": "Downtown Burlington VT",
+      "city": "Downtown Burlington VT",
+      "lat": 44.4749361,
+      "lon": -73.2136329,
+      "area_type": "urban_core",
+      "detected_area_type": "exurban",
+      "density": 3962.8402270165325,
+      "active_outdoors": {
+        "parks_1km": 12,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 8.3425,
+        "trails_15km": 67,
+        "water_15km": 28,
+        "camping_15km": 3,
+        "closest_water_km": 0.671
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 2,
+        "pharmacies_8km": 15,
+        "clinics_5km": 13,
+        "doctors_5km": 16,
+        "closest_hospital_km": 1.575
+      },
+      "amenities": {
+        "businesses_1km": 154,
+        "business_types": 16,
+        "restaurants_1km": 64,
+        "median_distance_m": 347.5
+      }
+    },
+    {
+      "location": "Downtown Madison WI",
+      "city": "Downtown Madison WI",
+      "lat": 43.0767946,
+      "lon": -89.3927664,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 57199.50510361893,
+      "active_outdoors": {
+        "parks_1km": 44,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 15.6615,
+        "trails_15km": 104,
+        "water_15km": 51,
+        "camping_15km": 2,
+        "closest_water_km": 0.238
+      },
+      "healthcare": {
+        "hospitals_20km": 9,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 21,
+        "clinics_5km": 18,
+        "doctors_5km": 2,
+        "closest_hospital_km": 1.374
+      },
+      "amenities": {
+        "businesses_1km": 208,
+        "business_types": 15,
+        "restaurants_1km": 106,
+        "median_distance_m": 465.0
+      }
+    },
+    {
+      "location": "Downtown Greenville SC",
+      "city": "Downtown Greenville SC",
+      "lat": 34.8428503,
+      "lon": -82.4017524,
+      "area_type": "urban_core",
+      "detected_area_type": "rural",
+      "density": 2931.0142476404844,
+      "active_outdoors": {
+        "parks_1km": 23,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 12.5155,
+        "trails_15km": 13,
+        "water_15km": 5,
+        "camping_15km": 0,
+        "closest_water_km": 6.371
+      },
+      "healthcare": {
+        "hospitals_20km": 15,
+        "urgent_care_5km": 1,
+        "pharmacies_8km": 21,
+        "clinics_5km": 23,
+        "doctors_5km": 18,
+        "closest_hospital_km": 1.801
+      },
+      "amenities": {
+        "businesses_1km": 170,
+        "business_types": 13,
+        "restaurants_1km": 89,
+        "median_distance_m": 633.5
+      }
+    },
+    {
+      "location": "Upper West Side New York NY",
+      "city": "Upper West Side New York NY",
+      "lat": 40.7870455,
+      "lon": -73.9754163,
+      "area_type": "urban_core",
+      "detected_area_type": "urban_residential",
+      "density": 115253.71940311775,
+      "active_outdoors": {
+        "parks_1km": 24,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 353.4289,
+        "trails_15km": 100,
+        "water_15km": 301,
+        "camping_15km": 0,
+        "closest_water_km": 1.203
+      },
+      "healthcare": {
+        "hospitals_20km": 120,
+        "urgent_care_5km": 21,
+        "pharmacies_8km": 360,
+        "clinics_5km": 108,
+        "doctors_5km": 60,
+        "closest_hospital_km": 1.852
+      },
+      "amenities": {
+        "businesses_1km": 377,
+        "business_types": 15,
+        "restaurants_1km": 171,
+        "median_distance_m": 489.0
+      }
+    },
+    {
+      "location": "Times Square NY",
+      "city": "Times Square NY",
+      "lat": 40.7585971,
+      "lon": -73.9861935,
+      "area_type": "urban_core",
+      "detected_area_type": "suburban",
+      "density": 15167.435286698088,
+      "active_outdoors": {
+        "parks_1km": 36,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 5.2054,
+        "trails_15km": 90,
+        "water_15km": 340,
+        "camping_15km": 0,
+        "closest_water_km": 1.474
+      },
+      "healthcare": {
+        "hospitals_20km": 125,
+        "urgent_care_5km": 30,
+        "pharmacies_8km": 440,
+        "clinics_5km": 141,
+        "doctors_5km": 81,
+        "closest_hospital_km": 0.454
+      },
+      "amenities": {
+        "businesses_1km": 920,
+        "business_types": 15,
+        "restaurants_1km": 545,
+        "median_distance_m": 627.5
+      }
+    },
+    {
+      "location": "Downtown Phoenix AZ",
+      "city": "Downtown Phoenix AZ",
+      "lat": 33.4518519,
+      "lon": -112.0816061,
+      "area_type": "urban_core",
+      "detected_area_type": "suburban",
+      "density": 11593.072298395755,
+      "active_outdoors": {
+        "parks_1km": 12,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 22.928,
+        "trails_15km": 48,
+        "water_15km": 11,
+        "camping_15km": 0,
+        "closest_water_km": 3.854
+      },
+      "healthcare": {
+        "hospitals_20km": 47,
+        "urgent_care_5km": 2,
+        "pharmacies_8km": 28,
+        "clinics_5km": 42,
+        "doctors_5km": 9,
+        "closest_hospital_km": 1.515
+      },
+      "amenities": {
+        "businesses_1km": 0,
+        "business_types": 0,
+        "restaurants_1km": 0,
+        "median_distance_m": null
+      }
+    },
+    {
+      "location": "Main Street Bozeman MT",
+      "city": "Main Street Bozeman MT",
+      "lat": 45.6835231,
+      "lon": -111.0331122,
+      "area_type": "suburban",
+      "detected_area_type": "exurban",
+      "density": 4214.980471132952,
+      "active_outdoors": {
+        "parks_1km": 16,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 70.7099,
+        "trails_15km": 11,
+        "water_15km": 19,
+        "camping_15km": 2,
+        "closest_water_km": 2.34
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 3,
+        "pharmacies_8km": 6,
+        "clinics_5km": 11,
+        "doctors_5km": 9,
+        "closest_hospital_km": 1.85
+      },
+      "amenities": {
+        "businesses_1km": 109,
+        "business_types": 13,
+        "restaurants_1km": 40,
+        "median_distance_m": 543.0
+      }
+    },
+    {
+      "location": "Downtown Traverse City MI",
+      "city": "Downtown Traverse City MI",
+      "lat": 44.7639309,
+      "lon": -85.614008,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 2689.68810188969,
+      "active_outdoors": {
+        "parks_1km": 22,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 16.2652,
+        "trails_15km": 39,
+        "water_15km": 72,
+        "camping_15km": 6,
+        "closest_water_km": 0.287
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 3,
+        "pharmacies_8km": 4,
+        "clinics_5km": 4,
+        "doctors_5km": 5,
+        "closest_hospital_km": 2.311
+      },
+      "amenities": {
+        "businesses_1km": 0,
+        "business_types": 0,
+        "restaurants_1km": 0,
+        "median_distance_m": null
+      }
+    },
+    {
+      "location": "Downtown Bend OR",
+      "city": "Downtown Bend OR",
+      "lat": 44.0571463,
+      "lon": -121.3166171,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 2727.0039548062073,
+      "active_outdoors": {
+        "parks_1km": 15,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 13.5385,
+        "trails_15km": 20,
+        "water_15km": 3,
+        "camping_15km": 1,
+        "closest_water_km": 0.86
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 3,
+        "pharmacies_8km": 13,
+        "clinics_5km": 20,
+        "doctors_5km": 17,
+        "closest_hospital_km": 3.956
+      },
+      "amenities": {
+        "businesses_1km": 155,
+        "business_types": 15,
+        "restaurants_1km": 46,
+        "median_distance_m": 389.0
+      }
+    },
+    {
+      "location": "Main Street Park City UT",
+      "city": "Main Street Park City UT",
+      "lat": 40.6435897,
+      "lon": -111.4957939,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 414.13338166621276,
+      "active_outdoors": {
+        "parks_1km": 5,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 5.2405,
+        "trails_15km": 11,
+        "water_15km": 44,
+        "camping_15km": 16,
+        "closest_water_km": 4.34
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 5.415
+      },
+      "amenities": {
+        "businesses_1km": 126,
+        "business_types": 10,
+        "restaurants_1km": 43,
+        "median_distance_m": 191.0
+      }
+    },
+    {
+      "location": "Downtown Jackson WY",
+      "city": "Downtown Jackson WY",
+      "lat": 43.4786755,
+      "lon": -110.7599768,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 110.82045630309358,
+      "active_outdoors": {
+        "parks_1km": 8,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 29.17,
+        "trails_15km": 9,
+        "water_15km": 20,
+        "camping_15km": 1,
+        "closest_water_km": 2.246
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 0,
+        "business_types": 0,
+        "restaurants_1km": 0,
+        "median_distance_m": null
+      }
+    },
+    {
+      "location": "Downtown Sausalito CA",
+      "city": "Downtown Sausalito CA",
+      "lat": 37.8572649,
+      "lon": -122.479735,
+      "area_type": "suburban",
+      "detected_area_type": "exurban",
+      "density": 3912.705406666321,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 2.7419,
+        "trails_15km": 123,
+        "water_15km": 323,
+        "camping_15km": 7,
+        "closest_water_km": 0.425
+      },
+      "healthcare": {
+        "hospitals_20km": 30,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 7,
+        "clinics_5km": 1,
+        "doctors_5km": 0,
+        "closest_hospital_km": 8.136
+      },
+      "amenities": {
+        "businesses_1km": 68,
+        "business_types": 12,
+        "restaurants_1km": 27,
+        "median_distance_m": 381.5
+      }
+    },
+    {
+      "location": "Downtown Healdsburg CA",
+      "city": "Downtown Healdsburg CA",
+      "lat": 38.6109448,
+      "lon": -122.8692238,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 3318.4643154996515,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 7,
+        "water_15km": 17,
+        "camping_15km": 1,
+        "closest_water_km": 3.433
+      },
+      "healthcare": {
+        "hospitals_20km": 4,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 1,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 1.827
+      },
+      "amenities": {
+        "businesses_1km": 67,
+        "business_types": 12,
+        "restaurants_1km": 30,
+        "median_distance_m": 146.0
+      }
+    },
+    {
+      "location": "Downtown Sonoma CA",
+      "city": "Downtown Sonoma CA",
+      "lat": 38.7092814,
+      "lon": -122.9002132,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 16.606489761820466,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 3,
+        "water_15km": 4,
+        "camping_15km": 1,
+        "closest_water_km": 4.32
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 9.641
+      },
+      "amenities": {
+        "businesses_1km": 8,
+        "business_types": 3,
+        "restaurants_1km": 3,
+        "median_distance_m": 475.5
+      }
+    },
+    {
+      "location": "Downtown Napa CA",
+      "city": "Downtown Napa CA",
+      "lat": 38.3002789,
+      "lon": -122.2836938,
+      "area_type": "suburban",
+      "detected_area_type": "exurban",
+      "density": 3514.0813327992323,
+      "active_outdoors": {
+        "parks_1km": 14,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 25.3849,
+        "trails_15km": 7,
+        "water_15km": 4,
+        "camping_15km": 0,
+        "closest_water_km": 7.576
+      },
+      "healthcare": {
+        "hospitals_20km": 7,
+        "urgent_care_5km": 2,
+        "pharmacies_8km": 12,
+        "clinics_5km": 9,
+        "doctors_5km": 0,
+        "closest_hospital_km": 2.828
+      },
+      "amenities": {
+        "businesses_1km": 64,
+        "business_types": 12,
+        "restaurants_1km": 38,
+        "median_distance_m": 264.0
+      }
+    },
+    {
+      "location": "Downtown Monterey CA",
+      "city": "Downtown Monterey CA",
+      "lat": 36.2058349,
+      "lon": -121.1306095,
+      "area_type": "suburban",
+      "detected_area_type": "suburban",
+      "density": 7628.831706695729,
+      "active_outdoors": {
+        "parks_1km": 12,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 63.6081,
+        "trails_15km": 2,
+        "water_15km": 0,
+        "camping_15km": 1,
+        "closest_water_km": null
+      },
+      "healthcare": {
+        "hospitals_20km": 2,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 1,
+        "clinics_5km": 4,
+        "doctors_5km": 0,
+        "closest_hospital_km": 0.191
+      },
+      "amenities": {
+        "businesses_1km": 32,
+        "business_types": 11,
+        "restaurants_1km": 13,
+        "median_distance_m": 667.5
+      }
+    },
+    {
+      "location": "Downtown Ojai CA",
+      "city": "Downtown Ojai CA",
+      "lat": 34.4475125,
+      "lon": -119.2485245,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 138.00848219160193,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 6.0476,
+        "trails_15km": 16,
+        "water_15km": 1,
+        "camping_15km": 5,
+        "closest_water_km": 4.646
+      },
+      "healthcare": {
+        "hospitals_20km": 7,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 2,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 1.526
+      },
+      "amenities": {
+        "businesses_1km": 45,
+        "business_types": 11,
+        "restaurants_1km": 21,
+        "median_distance_m": 404.0
+      }
+    },
+    {
+      "location": "Downtown Taos NM",
+      "city": "Downtown Taos NM",
+      "lat": 36.4074254,
+      "lon": -105.5750597,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 33.48057686723717,
+      "active_outdoors": {
+        "parks_1km": 2,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 8.2454,
+        "trails_15km": 6,
+        "water_15km": 0,
+        "camping_15km": 0,
+        "closest_water_km": null
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 65,
+        "business_types": 12,
+        "restaurants_1km": 20,
+        "median_distance_m": 170.0
+      }
+    },
+    {
+      "location": "Downtown Key West FL",
+      "city": "Downtown Key West FL",
+      "lat": 24.5507335,
+      "lon": -81.8072299,
+      "area_type": "suburban",
+      "detected_area_type": "rural",
+      "density": 240.54829980305476,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 33.7223,
+        "trails_15km": 5,
+        "water_15km": 266,
+        "camping_15km": 3,
+        "closest_water_km": 0.423
+      },
+      "healthcare": {
+        "hospitals_20km": 2,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 2,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 4.297
+      },
+      "amenities": {
+        "businesses_1km": 126,
+        "business_types": 12,
+        "restaurants_1km": 61,
+        "median_distance_m": 788.5
+      }
+    },
+    {
+      "location": "Park City UT",
+      "city": "Park City UT",
+      "lat": 40.6466557,
+      "lon": -111.4982413,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 414.13338166621276,
+      "active_outdoors": {
+        "parks_1km": 7,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 6.1661,
+        "trails_15km": 12,
+        "water_15km": 44,
+        "camping_15km": 16,
+        "closest_water_km": 4.07
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 5.202
+      },
+      "amenities": {
+        "businesses_1km": 134,
+        "business_types": 10,
+        "restaurants_1km": 49,
+        "median_distance_m": 311.0
+      }
+    },
+    {
+      "location": "Healdsburg CA",
+      "city": "Healdsburg CA",
+      "lat": 38.6106812,
+      "lon": -122.870138,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 3318.4643154996515,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 5,
+        "water_15km": 17,
+        "camping_15km": 1,
+        "closest_water_km": 3.517
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 67,
+        "business_types": 12,
+        "restaurants_1km": 30,
+        "median_distance_m": 115.0
+      }
+    },
+    {
+      "location": "Carson City NV",
+      "city": "Carson City NV",
+      "lat": 39.1639039,
+      "lon": -119.7661465,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 3112.893700708747,
+      "active_outdoors": {
+        "parks_1km": 6,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 29.2023,
+        "trails_15km": 9,
+        "water_15km": 20,
+        "camping_15km": 1,
+        "closest_water_km": 0.924
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 5,
+        "clinics_5km": 6,
+        "doctors_5km": 2,
+        "closest_hospital_km": 0.88
+      },
+      "amenities": {
+        "businesses_1km": 48,
+        "business_types": 11,
+        "restaurants_1km": 27,
+        "median_distance_m": 265.5
+      }
+    },
+    {
+      "location": "Augusta ME",
+      "city": "Augusta ME",
+      "lat": 44.3071753,
+      "lon": -69.7816941,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 1328.4336182410764,
+      "active_outdoors": {
+        "parks_1km": 9,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 18.8976,
+        "trails_15km": 40,
+        "water_15km": 5,
+        "camping_15km": 0,
+        "closest_water_km": 3.388
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 8,
+        "clinics_5km": 1,
+        "doctors_5km": 5,
+        "closest_hospital_km": 1.222
+      },
+      "amenities": {
+        "businesses_1km": 14,
+        "business_types": 6,
+        "restaurants_1km": 5,
+        "median_distance_m": 840.0
+      }
+    },
+    {
+      "location": "Bismarck ND",
+      "city": "Bismarck ND",
+      "lat": 46.8208186,
+      "lon": -100.7830689,
+      "area_type": "exurban",
+      "detected_area_type": "exurban",
+      "density": 4441.181377185694,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 10,
+        "water_15km": 1,
+        "camping_15km": 2,
+        "closest_water_km": 11.023
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 4,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 1.517
+      },
+      "amenities": {
+        "businesses_1km": 5,
+        "business_types": 4,
+        "restaurants_1km": 1,
+        "median_distance_m": 716.0
+      }
+    },
+    {
+      "location": "Carmel-by-the-Sea CA",
+      "city": "Carmel-by-the-Sea CA",
+      "lat": 36.5552656,
+      "lon": -121.923278,
+      "area_type": "exurban",
+      "detected_area_type": "exurban",
+      "density": 3556.8466921959593,
+      "active_outdoors": {
+        "parks_1km": 10,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 18.8718,
+        "trails_15km": 40,
+        "water_15km": 231,
+        "camping_15km": 1,
+        "closest_water_km": 0.801
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 6,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 2.819
+      },
+      "amenities": {
+        "businesses_1km": 50,
+        "business_types": 9,
+        "restaurants_1km": 31,
+        "median_distance_m": 145.0
+      }
+    },
+    {
+      "location": "Aspen CO",
+      "city": "Aspen CO",
+      "lat": 39.518609,
+      "lon": -105.3060235,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 235.95068962894823,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 51,
+        "water_15km": 3,
+        "camping_15km": 3,
+        "closest_water_km": 8.093
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 2,
+        "closest_hospital_km": 15.871
+      },
+      "amenities": {
+        "businesses_1km": 7,
+        "business_types": 5,
+        "restaurants_1km": 4,
+        "median_distance_m": 199.0
+      }
+    },
+    {
+      "location": "Telluride CO",
+      "city": "Telluride CO",
+      "lat": 37.9368956,
+      "lon": -107.8097888,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 123.90874460796249,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 15,
+        "water_15km": 55,
+        "camping_15km": 9,
+        "closest_water_km": 5.58
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 1,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 0.581
+      },
+      "amenities": {
+        "businesses_1km": 40,
+        "business_types": 12,
+        "restaurants_1km": 17,
+        "median_distance_m": 203.0
+      }
+    },
+    {
+      "location": "Cody WY",
+      "city": "Cody WY",
+      "lat": 44.53041,
+      "lon": -109.0574798,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 846.3853215077007,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 0,
+        "water_15km": 0,
+        "camping_15km": 2,
+        "closest_water_km": null
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 2,
+        "clinics_5km": 1,
+        "doctors_5km": 0,
+        "closest_hospital_km": 1.352
+      },
+      "amenities": {
+        "businesses_1km": 17,
+        "business_types": 6,
+        "restaurants_1km": 12,
+        "median_distance_m": 662.0
+      }
+    },
+    {
+      "location": "Pierre SD",
+      "city": "Pierre SD",
+      "lat": 44.3671052,
+      "lon": -100.3463803,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 513.3268070768823,
+      "active_outdoors": {
+        "parks_1km": 3,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.8575,
+        "trails_15km": 3,
+        "water_15km": 3,
+        "camping_15km": 5,
+        "closest_water_km": 0.795
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 0.735
+      },
+      "amenities": {
+        "businesses_1km": 12,
+        "business_types": 6,
+        "restaurants_1km": 3,
+        "median_distance_m": 695.0
+      }
+    },
+    {
+      "location": "Montpelier VT",
+      "city": "Montpelier VT",
+      "lat": 44.2626941,
+      "lon": -72.5807647,
+      "area_type": "exurban",
+      "detected_area_type": "rural",
+      "density": 598.6418417842492,
+      "active_outdoors": {
+        "parks_1km": 2,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 1.2977,
+        "trails_15km": 15,
+        "water_15km": 13,
+        "camping_15km": 1,
+        "closest_water_km": 2.571
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 50,
+        "business_types": 13,
+        "restaurants_1km": 19,
+        "median_distance_m": 446.5
+      }
+    },
+    {
+      "location": "Bar Harbor ME",
+      "city": "Bar Harbor ME",
+      "lat": 44.4392226,
+      "lon": -68.3231212,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 122.17961689463384,
+      "active_outdoors": {
+        "parks_1km": 1,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 2.4794,
+        "trails_15km": 116,
+        "water_15km": 120,
+        "camping_15km": 7,
+        "closest_water_km": 0.627
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 0,
+        "business_types": 0,
+        "restaurants_1km": 0,
+        "median_distance_m": null
+      }
+    },
+    {
+      "location": "Cody WY",
+      "city": "Cody WY",
+      "lat": 44.53041,
+      "lon": -109.0574798,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 846.3853215077007,
+      "active_outdoors": {
+        "parks_1km": 8,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 27.7149,
+        "trails_15km": 0,
+        "water_15km": 0,
+        "camping_15km": 2,
+        "closest_water_km": null
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 2,
+        "clinics_5km": 1,
+        "doctors_5km": 0,
+        "closest_hospital_km": 1.352
+      },
+      "amenities": {
+        "businesses_1km": 17,
+        "business_types": 6,
+        "restaurants_1km": 12,
+        "median_distance_m": 662.0
+      }
+    },
+    {
+      "location": "Pierre SD",
+      "city": "Pierre SD",
+      "lat": 44.3671052,
+      "lon": -100.3463803,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 513.3268070768823,
+      "active_outdoors": {
+        "parks_1km": 3,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.8575,
+        "trails_15km": 3,
+        "water_15km": 3,
+        "camping_15km": 5,
+        "closest_water_km": 0.795
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": 0.735
+      },
+      "amenities": {
+        "businesses_1km": 12,
+        "business_types": 6,
+        "restaurants_1km": 3,
+        "median_distance_m": 695.0
+      }
+    },
+    {
+      "location": "Montpelier VT",
+      "city": "Montpelier VT",
+      "lat": 44.2626941,
+      "lon": -72.5807647,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 598.6418417842492,
+      "active_outdoors": {
+        "parks_1km": 2,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 1.2977,
+        "trails_15km": 15,
+        "water_15km": 13,
+        "camping_15km": 1,
+        "closest_water_km": 2.571
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 50,
+        "business_types": 13,
+        "restaurants_1km": 19,
+        "median_distance_m": 446.5
+      }
+    },
+    {
+      "location": "Juneau AK",
+      "city": "Juneau AK",
+      "lat": 58.3021624,
+      "lon": -134.4100853,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 1.758241134082506,
+      "active_outdoors": {
+        "parks_1km": 7,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 3.7041,
+        "trails_15km": 4,
+        "water_15km": 175,
+        "camping_15km": 0,
+        "closest_water_km": 0.337
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 1,
+        "clinics_5km": 3,
+        "doctors_5km": 7,
+        "closest_hospital_km": 4.353
+      },
+      "amenities": {
+        "businesses_1km": 48,
+        "business_types": 12,
+        "restaurants_1km": 25,
+        "median_distance_m": 345.5
+      }
+    },
+    {
+      "location": "Carson City NV",
+      "city": "Carson City NV",
+      "lat": 39.1639039,
+      "lon": -119.7661465,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 3112.893700708747,
+      "active_outdoors": {
+        "parks_1km": 6,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 29.2023,
+        "trails_15km": 9,
+        "water_15km": 20,
+        "camping_15km": 1,
+        "closest_water_km": 0.924
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 5,
+        "clinics_5km": 6,
+        "doctors_5km": 2,
+        "closest_hospital_km": 0.88
+      },
+      "amenities": {
+        "businesses_1km": 48,
+        "business_types": 11,
+        "restaurants_1km": 27,
+        "median_distance_m": 265.5
+      }
+    },
+    {
+      "location": "Bismarck ND",
+      "city": "Bismarck ND",
+      "lat": 46.8208186,
+      "lon": -100.7830689,
+      "area_type": "rural",
+      "detected_area_type": "exurban",
+      "density": 4441.181377185694,
+      "active_outdoors": {
+        "parks_1km": 6,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 26.0661,
+        "trails_15km": 10,
+        "water_15km": 1,
+        "camping_15km": 2,
+        "closest_water_km": 11.023
+      },
+      "healthcare": {
+        "hospitals_20km": 3,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 4,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 1.517
+      },
+      "amenities": {
+        "businesses_1km": 5,
+        "business_types": 4,
+        "restaurants_1km": 1,
+        "median_distance_m": 716.0
+      }
+    },
+    {
+      "location": "Augusta ME",
+      "city": "Augusta ME",
+      "lat": 44.3071753,
+      "lon": -69.7816941,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 1328.4336182410764,
+      "active_outdoors": {
+        "parks_1km": 9,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 18.8976,
+        "trails_15km": 40,
+        "water_15km": 5,
+        "camping_15km": 0,
+        "closest_water_km": 3.388
+      },
+      "healthcare": {
+        "hospitals_20km": 5,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 8,
+        "clinics_5km": 1,
+        "doctors_5km": 5,
+        "closest_hospital_km": 1.222
+      },
+      "amenities": {
+        "businesses_1km": 14,
+        "business_types": 6,
+        "restaurants_1km": 5,
+        "median_distance_m": 840.0
+      }
+    },
+    {
+      "location": "Telluride CO",
+      "city": "Telluride CO",
+      "lat": 37.9368956,
+      "lon": -107.8097888,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 123.90874460796249,
+      "active_outdoors": {
+        "parks_1km": 3,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 13.1333,
+        "trails_15km": 15,
+        "water_15km": 55,
+        "camping_15km": 9,
+        "closest_water_km": 5.58
+      },
+      "healthcare": {
+        "hospitals_20km": 1,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 1,
+        "clinics_5km": 0,
+        "doctors_5km": 1,
+        "closest_hospital_km": 0.581
+      },
+      "amenities": {
+        "businesses_1km": 40,
+        "business_types": 12,
+        "restaurants_1km": 17,
+        "median_distance_m": 203.0
+      }
+    },
+    {
+      "location": "Jackson WY",
+      "city": "Jackson WY",
+      "lat": 41.0038434,
+      "lon": -106.1782598,
+      "area_type": "rural",
+      "detected_area_type": "rural",
+      "density": 0.6365476855102108,
+      "active_outdoors": {
+        "parks_1km": 0,
+        "playgrounds_1km": 0,
+        "park_area_hectares": 0.0,
+        "trails_15km": 11,
+        "water_15km": 3,
+        "camping_15km": 1,
+        "closest_water_km": 8.98
+      },
+      "healthcare": {
+        "hospitals_20km": 0,
+        "urgent_care_5km": 0,
+        "pharmacies_8km": 0,
+        "clinics_5km": 0,
+        "doctors_5km": 0,
+        "closest_hospital_km": null
+      },
+      "amenities": {
+        "businesses_1km": 1,
+        "business_types": 1,
+        "restaurants_1km": 1,
+        "median_distance_m": 989.0
+      }
+    }
+  ],
+  "statistics": {
+    "urban_core": {
+      "sample_size": 19,
+      "active_outdoors": {
+        "parks_1km": {
+          "median": 18,
+          "p25": 8.0,
+          "p75": 36.0,
+          "min": 0,
+          "max": 63,
+          "count": 19
+        },
+        "playgrounds_1km": {
+          "median": 0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "min": 0,
+          "max": 0,
+          "count": 19
+        },
+        "park_area_hectares": {
+          "median": 9.8198,
+          "p25": 5.2054,
+          "p75": 22.928,
+          "min": 0.0,
+          "max": 353.4289,
+          "count": 19
+        },
+        "trails_15km": {
+          "median": 64,
+          "p25": 27.0,
+          "p75": 100.0,
+          "min": 4,
+          "max": 249,
+          "count": 19
+        },
+        "water_15km": {
+          "median": 51,
+          "p25": 26.0,
+          "p75": 299.0,
+          "min": 0,
+          "max": 402,
+          "count": 19
+        },
+        "camping_15km": {
+          "median": 1,
+          "p25": 0.0,
+          "p75": 2.0,
+          "min": 0,
+          "max": 5,
+          "count": 19
+        },
+        "closest_water_km": {
+          "median": 1.3900000000000001,
+          "p25": 0.85025,
+          "p75": 2.2394999999999996,
+          "min": 0.238,
+          "max": 6.371,
+          "count": 18
+        }
+      },
+      "healthcare": {
+        "hospitals_20km": {
+          "median": 15,
+          "p25": 5.0,
+          "p75": 47.0,
+          "min": 0,
+          "max": 128,
+          "count": 19
+        },
+        "pharmacies_8km": {
+          "median": 21,
+          "p25": 8.0,
+          "p75": 50.0,
+          "min": 0,
+          "max": 441,
+          "count": 19
+        },
+        "clinics_5km": {
+          "median": 17,
+          "p25": 4.0,
+          "p75": 58.0,
+          "min": 0,
+          "max": 141,
+          "count": 19
+        },
+        "closest_hospital_km": {
+          "median": 1.5325,
+          "p25": 0.53,
+          "p75": 2.3417499999999998,
+          "min": 0.023,
+          "max": 5.271,
+          "count": 16
+        }
+      },
+      "amenities": {
+        "businesses_1km": {
+          "median": 170,
+          "p25": 70.0,
+          "p75": 406.0,
+          "min": 0,
+          "max": 1182,
+          "count": 19
+        },
+        "business_types": {
+          "median": 14,
+          "p25": 12.0,
+          "p75": 15.0,
+          "min": 0,
+          "max": 16,
+          "count": 19
+        },
+        "restaurants_1km": {
+          "median": 89,
+          "p25": 31.0,
+          "p75": 171.0,
+          "min": 0,
+          "max": 642,
+          "count": 19
+        },
+        "median_distance_m": {
+          "median": 630.5,
+          "p25": 485.0,
+          "p75": 695.875,
+          "min": 275.5,
+          "max": 836.5,
+          "count": 18
+        }
+      }
+    },
+    "suburban": {
+      "sample_size": 13,
+      "active_outdoors": {
+        "parks_1km": {
+          "median": 10,
+          "p25": 3.5,
+          "p75": 14.5,
+          "min": 0,
+          "max": 22,
+          "count": 13
+        },
+        "playgrounds_1km": {
+          "median": 0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "min": 0,
+          "max": 0,
+          "count": 13
+        },
+        "park_area_hectares": {
+          "median": 13.5385,
+          "p25": 3.9912,
+          "p75": 31.44615,
+          "min": 0.0,
+          "max": 70.7099,
+          "count": 13
+        },
+        "trails_15km": {
+          "median": 9,
+          "p25": 5.5,
+          "p75": 18.0,
+          "min": 2,
+          "max": 123,
+          "count": 13
+        },
+        "water_15km": {
+          "median": 17,
+          "p25": 2.0,
+          "p75": 58.0,
+          "min": 0,
+          "max": 323,
+          "count": 13
+        },
+        "camping_15km": {
+          "median": 1,
+          "p25": 1.0,
+          "p75": 5.5,
+          "min": 0,
+          "max": 16,
+          "count": 13
+        },
+        "closest_water_km": {
+          "median": 2.34,
+          "p25": 0.425,
+          "p75": 4.34,
+          "min": 0.287,
+          "max": 7.576,
+          "count": 11
+        }
+      },
+      "healthcare": {
+        "hospitals_20km": {
+          "median": 3,
+          "p25": 1.0,
+          "p75": 5.5,
+          "min": 0,
+          "max": 30,
+          "count": 13
+        },
+        "pharmacies_8km": {
+          "median": 2,
+          "p25": 0.0,
+          "p75": 6.5,
+          "min": 0,
+          "max": 13,
+          "count": 13
+        },
+        "clinics_5km": {
+          "median": 0,
+          "p25": 0.0,
+          "p75": 6.5,
+          "min": 0,
+          "max": 20,
+          "count": 13
+        },
+        "closest_hospital_km": {
+          "median": 2.828,
+          "p25": 1.827,
+          "p75": 5.415,
+          "min": 0.191,
+          "max": 9.641,
+          "count": 11
+        }
+      },
+      "amenities": {
+        "businesses_1km": {
+          "median": 65,
+          "p25": 20.0,
+          "p75": 117.5,
+          "min": 0,
+          "max": 155,
+          "count": 13
+        },
+        "business_types": {
+          "median": 12,
+          "p25": 6.5,
+          "p75": 12.0,
+          "min": 0,
+          "max": 15,
+          "count": 13
+        },
+        "restaurants_1km": {
+          "median": 27,
+          "p25": 8.0,
+          "p75": 41.5,
+          "min": 0,
+          "max": 61,
+          "count": 13
+        },
+        "median_distance_m": {
+          "median": 389.0,
+          "p25": 191.0,
+          "p75": 543.0,
+          "min": 146.0,
+          "max": 788.5,
+          "count": 11
+        }
+      }
+    },
+    "exurban": {
+      "sample_size": 11,
+      "active_outdoors": {
+        "parks_1km": {
+          "median": 2,
+          "p25": 0.0,
+          "p75": 7.0,
+          "min": 0,
+          "max": 10,
+          "count": 11
+        },
+        "playgrounds_1km": {
+          "median": 0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "min": 0,
+          "max": 0,
+          "count": 11
+        },
+        "park_area_hectares": {
+          "median": 0.8575,
+          "p25": 0.0,
+          "p75": 18.8718,
+          "min": 0.0,
+          "max": 29.2023,
+          "count": 11
+        },
+        "trails_15km": {
+          "median": 12,
+          "p25": 5.0,
+          "p75": 40.0,
+          "min": 0,
+          "max": 51,
+          "count": 11
+        },
+        "water_15km": {
+          "median": 13,
+          "p25": 3.0,
+          "p75": 44.0,
+          "min": 0,
+          "max": 231,
+          "count": 11
+        },
+        "camping_15km": {
+          "median": 2,
+          "p25": 1.0,
+          "p75": 5.0,
+          "min": 0,
+          "max": 16,
+          "count": 11
+        },
+        "closest_water_km": {
+          "median": 3.4524999999999997,
+          "p25": 0.8932500000000001,
+          "p75": 6.2082500000000005,
+          "min": 0.795,
+          "max": 11.023,
+          "count": 10
+        }
+      },
+      "healthcare": {
+        "hospitals_20km": {
+          "median": 1,
+          "p25": 1.0,
+          "p75": 3.0,
+          "min": 0,
+          "max": 5,
+          "count": 11
+        },
+        "pharmacies_8km": {
+          "median": 1,
+          "p25": 0.0,
+          "p75": 5.0,
+          "min": 0,
+          "max": 8,
+          "count": 11
+        },
+        "clinics_5km": {
+          "median": 0,
+          "p25": 0.0,
+          "p75": 1.0,
+          "min": 0,
+          "max": 6,
+          "count": 11
+        },
+        "closest_hospital_km": {
+          "median": 1.352,
+          "p25": 0.8075,
+          "p75": 4.0105,
+          "min": 0.581,
+          "max": 15.871,
+          "count": 9
+        }
+      },
+      "amenities": {
+        "businesses_1km": {
+          "median": 40,
+          "p25": 12.0,
+          "p75": 50.0,
+          "min": 5,
+          "max": 134,
+          "count": 11
+        },
+        "business_types": {
+          "median": 9,
+          "p25": 6.0,
+          "p75": 12.0,
+          "min": 4,
+          "max": 13,
+          "count": 11
+        },
+        "restaurants_1km": {
+          "median": 17,
+          "p25": 4.0,
+          "p75": 30.0,
+          "min": 1,
+          "max": 49,
+          "count": 11
+        },
+        "median_distance_m": {
+          "median": 311.0,
+          "p25": 199.0,
+          "p75": 695.0,
+          "min": 115.0,
+          "max": 840.0,
+          "count": 11
+        }
+      }
+    },
+    "rural": {
+      "sample_size": 10,
+      "active_outdoors": {
+        "parks_1km": {
+          "median": 4.5,
+          "p25": 1.75,
+          "p75": 7.25,
+          "min": 0,
+          "max": 9,
+          "count": 10
+        },
+        "playgrounds_1km": {
+          "median": 0.0,
+          "p25": 0.0,
+          "p75": 0.0,
+          "min": 0,
+          "max": 0,
+          "count": 10
+        },
+        "park_area_hectares": {
+          "median": 8.4187,
+          "p25": 1.18765,
+          "p75": 26.478299999999997,
+          "min": 0.0,
+          "max": 29.2023,
+          "count": 10
+        },
+        "trails_15km": {
+          "median": 10.5,
+          "p25": 3.75,
+          "p75": 21.25,
+          "min": 0,
+          "max": 116,
+          "count": 10
+        },
+        "water_15km": {
+          "median": 9.0,
+          "p25": 2.5,
+          "p75": 71.25,
+          "min": 0,
+          "max": 175,
+          "count": 10
+        },
+        "camping_15km": {
+          "median": 1.5,
+          "p25": 0.75,
+          "p75": 5.5,
+          "min": 0,
+          "max": 9,
+          "count": 10
+        },
+        "closest_water_km": {
+          "median": 2.571,
+          "p25": 0.7110000000000001,
+          "p75": 7.28,
+          "min": 0.337,
+          "max": 11.023,
+          "count": 9
+        }
+      },
+      "healthcare": {
+        "hospitals_20km": {
+          "median": 1.0,
+          "p25": 0.0,
+          "p75": 3.5,
+          "min": 0,
+          "max": 5,
+          "count": 10
+        },
+        "pharmacies_8km": {
+          "median": 1.0,
+          "p25": 0.0,
+          "p75": 4.25,
+          "min": 0,
+          "max": 8,
+          "count": 10
+        },
+        "clinics_5km": {
+          "median": 0.0,
+          "p25": 0.0,
+          "p75": 1.5,
+          "min": 0,
+          "max": 6,
+          "count": 10
+        },
+        "closest_hospital_km": {
+          "median": 1.222,
+          "p25": 0.735,
+          "p75": 1.517,
+          "min": 0.581,
+          "max": 4.353,
+          "count": 7
+        }
+      },
+      "amenities": {
+        "businesses_1km": {
+          "median": 15.5,
+          "p25": 4.0,
+          "p75": 48.0,
+          "min": 0,
+          "max": 50,
+          "count": 10
+        },
+        "business_types": {
+          "median": 6.0,
+          "p25": 3.25,
+          "p75": 12.0,
+          "min": 0,
+          "max": 13,
+          "count": 10
+        },
+        "restaurants_1km": {
+          "median": 8.5,
+          "p25": 1.0,
+          "p75": 20.5,
+          "min": 0,
+          "max": 27,
+          "count": 10
+        },
+        "median_distance_m": {
+          "median": 662.0,
+          "p25": 305.5,
+          "p75": 778.0,
+          "min": 203.0,
+          "max": 989.0,
+          "count": 9
+        }
+      }
+    }
+  },
+  "sample_locations": {
+    "urban_core": [
+      "Park Slope Brooklyn NY",
+      "Williamsburg Brooklyn NY",
+      "West Village Manhattan NY",
+      "North Beach San Francisco CA",
+      "Old Town Pasadena CA",
+      "Downtown Boulder CO",
+      "Pearl District Portland OR",
+      "Downtown Santa Monica CA",
+      "Gaslamp Quarter San Diego CA",
+      "Downtown Charleston SC",
+      "Downtown Savannah GA",
+      "Downtown Asheville NC",
+      "Old Town Alexandria VA",
+      "Downtown Annapolis MD",
+      "Downtown Burlington VT",
+      "Downtown Madison WI",
+      "Downtown Greenville SC",
+      "Upper West Side New York NY",
+      "Times Square NY",
+      "Downtown Phoenix AZ"
+    ],
+    "suburban": [
+      "Main Street Bozeman MT",
+      "Downtown Traverse City MI",
+      "Downtown Bend OR",
+      "Main Street Park City UT",
+      "Downtown Durango CO",
+      "Downtown Jackson WY",
+      "Downtown Telluride CO",
+      "Downtown Sun Valley ID",
+      "Downtown Aspen CO",
+      "Downtown Carmel CA",
+      "Downtown Sausalito CA",
+      "Downtown Healdsburg CA",
+      "Downtown St Helena CA",
+      "Downtown Sonoma CA",
+      "Downtown Napa CA",
+      "Downtown Monterey CA",
+      "Downtown Ojai CA",
+      "Downtown Sedona AZ",
+      "Downtown Taos NM",
+      "Downtown Key West FL",
+      "Downtown Marblehead MA",
+      "Downtown Newport RI",
+      "Downtown Bar Harbor ME",
+      "Downtown Camden ME",
+      "Downtown Edgartown MA",
+      "Downtown Las Vegas NV"
+    ],
+    "exurban": [
+      "Park City UT",
+      "Healdsburg CA",
+      "Carson City NV",
+      "Augusta ME",
+      "Bismarck ND",
+      "Carmel-by-the-Sea CA",
+      "Aspen CO",
+      "Telluride CO",
+      "Cody WY",
+      "Pierre SD",
+      "Montpelier VT"
+    ],
+    "rural": [
+      "Bar Harbor ME",
+      "Cody WY",
+      "Pierre SD",
+      "Montpelier VT",
+      "Juneau AK",
+      "Carson City NV",
+      "Bismarck ND",
+      "Augusta ME",
+      "Telluride CO",
+      "Jackson WY"
+    ]
+  }
+}

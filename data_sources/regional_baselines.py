@@ -628,7 +628,9 @@ class RegionalBaselineManager:
         expectations = {
             'urban_core': {
                 'active_outdoors': {
-                    'expected_parks_within_1km': 3,
+                    # Research-backed medians from OSM sampling (n=10 successful)
+                    # Typical urban-core locations have ~8–9 parks within 1km and ~3 ha of parkland.
+                    'expected_parks_within_1km': 8,
                     'expected_parks_within_5km': 8,
                     'expected_park_area_hectares': 3,  # Small-medium urban parks
                     'expected_playgrounds_within_1km': 2,
@@ -642,19 +644,23 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 3
                 },
                 'neighborhood_amenities': {
-                    'expected_businesses_within_1km': 50,
+                    # Urban-core business density is substantially higher than the original baseline.
+                    # Median across sampled locations is ~190 businesses and ~110 restaurants within 1km.
+                    'expected_businesses_within_1km': 180,
                     'expected_business_types': 12,
-                    'expected_restaurants_within_1km': 15
+                    'expected_restaurants_within_1km': 100
                 }
             },
             'suburban': {
                 'active_outdoors': {
-                    'expected_parks_within_1km': 2,
-                    'expected_parks_within_5km': 5,
-                    'expected_park_area_hectares': 5,  # Larger community parks
+                    # Suburban medians from suburban-only run (n=13 successful)
+                    # Typical suburban locations have ~8 parks within 1km and ~6 ha of parkland.
+                    'expected_parks_within_1km': 8,
+                    'expected_parks_within_5km': 12,
+                    'expected_park_area_hectares': 6,  # Larger community parks
                     'expected_playgrounds_within_1km': 1,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 1,
+                    'expected_trails_within_15km': 9,
                     'expected_camping_within_15km': 0  # Not expected in suburban
                 },
                 'healthcare_access': {
@@ -663,9 +669,10 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 2
                 },
                 'neighborhood_amenities': {
-                    'expected_businesses_within_1km': 25,
-                    'expected_business_types': 8,
-                    'expected_restaurants_within_1km': 8
+                    # Suburban medians: ~65–70 businesses, 12 types, ~36 restaurants within 1km.
+                    'expected_businesses_within_1km': 65,
+                    'expected_business_types': 12,
+                    'expected_restaurants_within_1km': 35
                 }
             },
             'exurban': {
