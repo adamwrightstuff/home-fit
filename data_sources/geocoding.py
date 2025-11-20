@@ -256,19 +256,72 @@ def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, f
         
         # Look for admin_centre node in elements
         if admin_centre_id:
+            admin_centre_found = False
             for elem in elements:
                 if elem.get("type") == "node" and elem.get("id") == admin_centre_id:
                     if "lat" in elem and "lon" in elem:
+                        print(f"✅ Found admin_centre node {admin_centre_id} in relation {osm_id}")
                         return float(elem["lat"]), float(elem["lon"]), "admin_centre"
+                    admin_centre_found = True
+            
+            # If node ID found but coordinates missing, query it explicitly
+            if not admin_centre_found:
+                print(f"🔍 Admin_centre node {admin_centre_id} not in elements, querying explicitly...")
+                node_query = f"""
+                [out:json][timeout:10];
+                node({admin_centre_id});
+                out;
+                """
+                node_response = requests.post(
+                    get_overpass_url(),
+                    data={"data": node_query},
+                    headers={"User-Agent": "HomeFit/1.0"},
+                    timeout=15
+                )
+                if node_response.status_code == 200:
+                    node_data = node_response.json()
+                    if node_data and "elements" in node_data:
+                        for elem in node_data["elements"]:
+                            if elem.get("type") == "node" and elem.get("id") == admin_centre_id:
+                                if "lat" in elem and "lon" in elem:
+                                    print(f"✅ Found admin_centre node {admin_centre_id} via explicit query")
+                                    return float(elem["lat"]), float(elem["lon"]), "admin_centre"
         
         # Look for label node in elements
         if label_id:
+            label_found = False
             for elem in elements:
                 if elem.get("type") == "node" and elem.get("id") == label_id:
                     if "lat" in elem and "lon" in elem:
+                        print(f"✅ Found label node {label_id} in relation {osm_id}")
                         return float(elem["lat"]), float(elem["lon"]), "label"
+                    label_found = True
+            
+            # If node ID found but coordinates missing, query it explicitly
+            if not label_found:
+                print(f"🔍 Label node {label_id} not in elements, querying explicitly...")
+                node_query = f"""
+                [out:json][timeout:10];
+                node({label_id});
+                out;
+                """
+                node_response = requests.post(
+                    get_overpass_url(),
+                    data={"data": node_query},
+                    headers={"User-Agent": "HomeFit/1.0"},
+                    timeout=15
+                )
+                if node_response.status_code == 200:
+                    node_data = node_response.json()
+                    if node_data and "elements" in node_data:
+                        for elem in node_data["elements"]:
+                            if elem.get("type") == "node" and elem.get("id") == label_id:
+                                if "lat" in elem and "lon" in elem:
+                                    print(f"✅ Found label node {label_id} via explicit query")
+                                    return float(elem["lat"]), float(elem["lon"]), "label"
         
         # Fallback to relation center - query separately for center
+        print(f"⚠️  No admin_centre/label found for relation {osm_id}, using geometric center")
         center_query = f"""
         [out:json][timeout:10];
         relation({osm_id});
