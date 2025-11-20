@@ -341,6 +341,55 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
             if place_town_coords:
                 return place_town_coords
         
+        # Calculate relation bounding box from member nodes and search for place=city nodes within it
+        # This is more accurate than global name search since it's scoped to the relation's area
+        member_nodes = [e for e in elements if e.get("type") == "node" and "lat" in e and "lon" in e]
+        if member_nodes:
+            lats = [n["lat"] for n in member_nodes]
+            lons = [n["lon"] for n in member_nodes]
+            bbox_south = min(lats)
+            bbox_north = max(lats)
+            bbox_west = min(lons)
+            bbox_east = max(lons)
+            
+            # Search for place=city/town nodes WITHIN the relation's bounding box
+            print(f"🔍 Searching for place=city/town node within relation {osm_id} bounding box...")
+            place_query = f"""
+            [out:json][timeout:10];
+            (
+              node["place"="city"]({bbox_south},{bbox_west},{bbox_north},{bbox_east});
+              node["place"="town"]({bbox_south},{bbox_west},{bbox_north},{bbox_east});
+            );
+            out;
+            """
+            
+            try:
+                place_response = requests.post(
+                    get_overpass_url(),
+                    data={"data": place_query},
+                    headers={"User-Agent": "HomeFit/1.0"},
+                    timeout=15
+                )
+                
+                if place_response.status_code == 200:
+                    place_data = place_response.json()
+                    if place_data and "elements" in place_data:
+                        place_nodes = [e for e in place_data["elements"] if e.get("type") == "node" and "lat" in e and "lon" in e]
+                        if place_nodes:
+                            # Prefer nodes with matching name if city_name provided
+                            if city_name:
+                                for node in place_nodes:
+                                    node_name = node.get("tags", {}).get("name", "")
+                                    if city_name.lower() in node_name.lower() or node_name.lower() in city_name.lower():
+                                        print(f"✅ Found place=city node within relation: {node['lat']}, {node['lon']}")
+                                        return float(node["lat"]), float(node["lon"]), "place_city"
+                            # Otherwise, use the first one (usually there's only one)
+                            best = place_nodes[0]
+                            print(f"✅ Found place=city node within relation: {best['lat']}, {best['lon']}")
+                            return float(best["lat"]), float(best["lon"]), "place_city"
+            except Exception as e:
+                print(f"⚠️  Error searching for place nodes in relation bounding box: {e}")
+        
         # Check for admin_centre or label members
         members = relation.get("members", [])
         admin_centre_id = None
