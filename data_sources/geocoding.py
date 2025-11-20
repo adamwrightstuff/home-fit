@@ -177,8 +177,11 @@ def _find_city_relation_for_element(element_type: str, element_id: int, lat: flo
             if elem.get("type") == "relation":
                 tags = elem.get("tags", {})
                 if tags.get("place") in ("city", "town", "municipality"):
-                    # Get admin_centre for this relation
-                    return _get_relation_center_or_admin_centre(elem["id"])
+                    # Extract city name and state from relation tags
+                    city_name = tags.get("name")
+                    state = tags.get("addr:state") or tags.get("is_in:state")
+                    # Get best coordinates for this relation (place=city node preferred)
+                    return _get_relation_center_or_admin_centre(elem["id"], city_name, state)
         
         return None
     except Exception as e:
@@ -186,24 +189,105 @@ def _find_city_relation_for_element(element_type: str, element_id: int, lat: flo
         return None
 
 
-def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, float, str]]:
+def _find_place_node(name: str, place_type: str, state: Optional[str] = None) -> Optional[Tuple[float, float, str]]:
     """
-    Query OSM Overpass to get the best city center point from a relation.
-    
-    Priority:
-    1. admin_centre or label node (official city center - preferred)
-    2. relation geometric center (fallback)
+    Find a place node (city, neighbourhood, suburb) by name.
+    This is usually more accurate than geometric center for downtown/center locations.
     
     Args:
-        osm_id: OSM relation ID
+        name: Place name (e.g., "Bend", "Old San Juan")
+        place_type: OSM place type ("city", "town", "neighbourhood", "suburb")
+        state: Optional state code/name for filtering (e.g., "OR", "Oregon")
         
     Returns:
-        (lat, lon, source) where source is "admin_centre", "label", or "center", or None if failed
+        (lat, lon, source) where source is "place_city", "place_neighbourhood", etc., or None
     """
     try:
         from data_sources.osm_api import get_overpass_url
         
-        # Query Overpass for relation with full members
+        # Build query for place node
+        # Try both exact name match and case-insensitive
+        query = f"""
+        [out:json][timeout:10];
+        (
+          node["place"="{place_type}"]["name"="{name}"];
+          node["place"="{place_type}"]["name"~"^{name}$",i];
+        );
+        out;
+        """
+        
+        response = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=15
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data and "elements" in data:
+                candidates = []
+                for elem in data["elements"]:
+                    if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
+                        elem_tags = elem.get("tags", {})
+                        # If state provided, prefer matches in that state
+                        if state:
+                            elem_state = elem_tags.get("addr:state") or elem_tags.get("is_in:state")
+                            if elem_state and state.lower() in str(elem_state).lower():
+                                candidates.insert(0, elem)  # Prioritize state match
+                            else:
+                                candidates.append(elem)
+                        else:
+                            candidates.append(elem)
+                
+                if candidates:
+                    best = candidates[0]
+                    source_name = f"place_{place_type}"
+                    print(f"✅ Found {place_type} node for '{name}': {best['lat']}, {best['lon']}")
+                    return float(best["lat"]), float(best["lon"]), source_name
+        
+        return None
+    except Exception as e:
+        print(f"Error finding {place_type} node for {name}: {e}")
+        return None
+
+
+def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] = None, state: Optional[str] = None) -> Optional[Tuple[float, float, str]]:
+    """
+    Query OSM Overpass to get the best city center point from a relation.
+    
+    Priority:
+    1. place=city node (downtown marker - most accurate for cities)
+    2. admin_centre or label node (official city center)
+    3. relation geometric center (fallback)
+    
+    Args:
+        osm_id: OSM relation ID
+        city_name: Optional city name for place=city node lookup
+        state: Optional state code/name for filtering
+        
+    Returns:
+        (lat, lon, source) where source is "place_city", "admin_centre", "label", or "center", or None if failed
+    """
+    try:
+        from data_sources.osm_api import get_overpass_url
+        
+        # Track if we already tried place=city node lookup
+        tried_place_node = False
+        
+        # Priority 1: Try place=city node first (most accurate for downtown)
+        if city_name:
+            print(f"🔍 Trying place=city node for '{city_name}'...")
+            tried_place_node = True
+            place_city_coords = _find_place_node(city_name, "city", state)
+            if place_city_coords:
+                return place_city_coords
+            # Also try place=town as fallback
+            place_town_coords = _find_place_node(city_name, "town", state)
+            if place_town_coords:
+                return place_town_coords
+        
+        # Priority 2: Query Overpass for relation with full members
         # Use 'out body' to get relation with members, then recurse to get member nodes
         query = f"""
         [out:json][timeout:10];
@@ -238,6 +322,24 @@ def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, f
         
         if not relation:
             return None
+        
+        # Extract city name and state from relation tags if not provided
+        relation_tags = relation.get("tags", {})
+        if not city_name:
+            city_name = relation_tags.get("name")
+        if not state:
+            state = relation_tags.get("addr:state") or relation_tags.get("is_in:state")
+        
+        # If we now have city_name from relation tags (and didn't try place=city node lookup yet), try it
+        if city_name and not tried_place_node:
+            print(f"🔍 Trying place=city node for '{city_name}' (from relation tags)...")
+            place_city_coords = _find_place_node(city_name, "city", state)
+            if place_city_coords:
+                return place_city_coords
+            # Also try place=town as fallback
+            place_town_coords = _find_place_node(city_name, "town", state)
+            if place_town_coords:
+                return place_town_coords
         
         # Check for admin_centre or label members
         members = relation.get("members", [])
@@ -320,8 +422,8 @@ def _get_relation_center_or_admin_centre(osm_id: int) -> Optional[Tuple[float, f
                                     print(f"✅ Found label node {label_id} via explicit query")
                                     return float(elem["lat"]), float(elem["lon"]), "label"
         
-        # Fallback to relation center - query separately for center
-        print(f"⚠️  No admin_centre/label found for relation {osm_id}, using geometric center")
+        # Priority 3: Fallback to relation center - query separately for center
+        print(f"⚠️  No place=city/admin_centre/label found for relation {osm_id}, using geometric center")
         center_query = f"""
         [out:json][timeout:10];
         relation({osm_id});
@@ -516,30 +618,66 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         
         if osm_type == "relation" and osm_id:
             # This is likely a city boundary - get accurate center from OSM
-            print(f"🔍 Found relation {osm_id} for '{address}', querying admin_centre...")
-            relation_coords = _get_relation_center_or_admin_centre(osm_id)
+            print(f"🔍 Found relation {osm_id} for '{address}', querying for best coordinates...")
+            # Extract city name and state from result
+            address_details = result.get("address", {})
+            city_name = address_details.get("city") or address_details.get("town") or address_details.get("village")
+            result_state = address_details.get("state", "")
+            query_state = _extract_state_from_query(address) or result_state
+            
+            relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
             if relation_coords:
                 rel_lat, rel_lon, source = relation_coords
-                # Use relation coordinates (admin_centre/label preferred, center as fallback)
+                # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
                 lat = rel_lat
                 lon = rel_lon
                 coordinate_source = source
-                print(f"✅ Using OSM relation {source} for '{address}': {lat}, {lon}")
+                print(f"✅ Using OSM {source} for '{address}': {lat}, {lon}")
             else:
                 # Fall back to Nominatim coordinates if relation query fails
                 print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates: {lat}, {lon}")
         elif osm_type in ("node", "way") and osm_id:
-            # Nominatim returned a node/way - try to find the city relation containing it
-            print(f"🔍 Found {osm_type} {osm_id} for '{address}', searching for city relation...")
-            relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
-            if relation_coords:
-                rel_lat, rel_lon, source = relation_coords
-                lat = rel_lat
-                lon = rel_lon
-                coordinate_source = source
-                print(f"✅ Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+            # Check if this is a neighborhood
+            if _is_neighborhood_result(result):
+                address_details = result.get("address", {})
+                neighborhood_name = (address_details.get("neighbourhood") or 
+                                    address_details.get("suburb") or
+                                    address_details.get("city") or
+                                    address_details.get("town"))
+                result_state = address_details.get("state", "")
+                query_state = _extract_state_from_query(address) or result_state
+                
+                if neighborhood_name:
+                    print(f"🔍 Found neighborhood {osm_type} {osm_id} for '{address}', trying place node...")
+                    # Try place=neighbourhood first, then place=suburb
+                    neighborhood_coords = _find_place_node(neighborhood_name, "neighbourhood", query_state)
+                    if not neighborhood_coords:
+                        neighborhood_coords = _find_place_node(neighborhood_name, "suburb", query_state)
+                    
+                    if neighborhood_coords:
+                        rel_lat, rel_lon, source = neighborhood_coords
+                        lat = rel_lat
+                        lon = rel_lon
+                        coordinate_source = source
+                        print(f"✅ Using OSM {source} for neighborhood '{address}': {lat}, {lon}")
+                    else:
+                        # For neighborhoods, Nominatim coordinates are usually accurate
+                        print(f"✅ Using Nominatim coordinates for neighborhood '{address}': {lat}, {lon}")
+                else:
+                    print(f"✅ Using Nominatim coordinates for neighborhood '{address}': {lat}, {lon}")
             else:
-                print(f"⚠️  No city relation found for {osm_type} {osm_id}, using Nominatim coordinates: {lat}, {lon}")
+                # For city queries that returned a node/way, try to find the city relation containing it
+                print(f"🔍 Found {osm_type} {osm_id} for '{address}', searching for city relation...")
+                relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
+                if relation_coords:
+                    rel_lat, rel_lon, source = relation_coords
+                    lat = rel_lat
+                    lon = rel_lon
+                    coordinate_source = source
+                    print(f"✅ Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+                else:
+                    # For specific nodes/ways (addresses), use Nominatim coordinates directly
+                    print(f"✅ Using Nominatim coordinates for {osm_type} '{address}': {lat}, {lon}")
         
         # Validate state match if we extracted a state from query
         address_details = result.get("address", {})
@@ -763,14 +901,20 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         
         if osm_type == "relation" and osm_id:
             # This is likely a city boundary - get accurate center from OSM
-            relation_coords = _get_relation_center_or_admin_centre(osm_id)
+            # Extract city name and state from result for better place node lookup
+            address_details = result.get("address", {})
+            city_name = address_details.get("city") or address_details.get("town") or address_details.get("village")
+            result_state = address_details.get("state", "")
+            query_state = _extract_state_from_query(address) or result_state
+            
+            relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
             if relation_coords:
                 rel_lat, rel_lon, source = relation_coords
-                # Use relation coordinates (admin_centre/label preferred, center as fallback)
+                # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
                 lat = rel_lat
                 lon = rel_lon
                 coordinate_source = source
-                print(f"📍 Using OSM relation {source} for '{address}': {lat}, {lon}")
+                print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
                 # Update result dict with new coordinates for consistency
                 result["lat"] = str(lat)
                 result["lon"] = str(lon)
@@ -778,17 +922,48 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                 # Fall back to Nominatim coordinates if relation query fails
                 print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
         elif osm_type in ("node", "way") and osm_id:
-            # Nominatim returned a node/way - try to find the city relation containing it
-            relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
-            if relation_coords:
-                rel_lat, rel_lon, source = relation_coords
-                lat = rel_lat
-                lon = rel_lon
-                coordinate_source = source
-                print(f"📍 Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
-                # Update result dict with new coordinates for consistency
-                result["lat"] = str(lat)
-                result["lon"] = str(lon)
+            # Check if this is a neighborhood - if so, try to find place=neighbourhood/suburb node
+            if _is_neighborhood_result(result):
+                address_details = result.get("address", {})
+                neighborhood_name = (address_details.get("neighbourhood") or 
+                                    address_details.get("suburb") or
+                                    address_details.get("city") or
+                                    address_details.get("town"))
+                result_state = address_details.get("state", "")
+                query_state = _extract_state_from_query(address) or result_state
+                
+                if neighborhood_name:
+                    # Try place=neighbourhood first, then place=suburb
+                    neighborhood_coords = _find_place_node(neighborhood_name, "neighbourhood", query_state)
+                    if not neighborhood_coords:
+                        neighborhood_coords = _find_place_node(neighborhood_name, "suburb", query_state)
+                    
+                    if neighborhood_coords:
+                        rel_lat, rel_lon, source = neighborhood_coords
+                        lat = rel_lat
+                        lon = rel_lon
+                        coordinate_source = source
+                        print(f"📍 Using OSM {source} for neighborhood '{address}': {lat}, {lon}")
+                        result["lat"] = str(lat)
+                        result["lon"] = str(lon)
+                    else:
+                        # For neighborhoods, Nominatim coordinates are usually accurate
+                        print(f"📍 Using Nominatim coordinates for neighborhood '{address}': {lat}, {lon}")
+            else:
+                # For city queries that returned a node/way, try to find the city relation containing it
+                relation_coords = _find_city_relation_for_element(osm_type, osm_id, lat, lon)
+                if relation_coords:
+                    rel_lat, rel_lon, source = relation_coords
+                    lat = rel_lat
+                    lon = rel_lon
+                    coordinate_source = source
+                    print(f"📍 Using OSM relation {source} (found via {osm_type}) for '{address}': {lat}, {lon}")
+                    # Update result dict with new coordinates for consistency
+                    result["lat"] = str(lat)
+                    result["lon"] = str(lon)
+                else:
+                    # For specific nodes/ways (addresses), use Nominatim coordinates directly
+                    print(f"📍 Using Nominatim coordinates for {osm_type} '{address}': {lat}, {lon}")
 
         # Extract address details
         address_details = result.get("address", {})
