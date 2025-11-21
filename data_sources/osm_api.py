@@ -240,6 +240,10 @@ def _retry_overpass(
 
 DEBUG_PARKS = True  # Set False to silence park debugging
 
+# Feature flag: control whether we include tree/forest-heavy clauses in query_green_spaces.
+# When False, we only query parks/gardens/playgrounds used by Active Outdoors and Natural Beauty fallback.
+ENABLE_TREE_FEATURES_IN_PARK_QUERY = False
+
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
@@ -256,11 +260,11 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             "tree_features": [...]
         }
     """
-    query = f"""
+    # Build core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
+    base_query = f"""
     [out:json][timeout:25];
     (
-      // PARKS & GREEN SPACES - Optimized: skip nodes (most parks are ways/relations)
-      // Combined similar tags using regex for efficiency
+      // PARKS & GREEN SPACES - core (skip nodes except playgrounds)
       way["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
       relation["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
       way["landuse"~"^(park|recreation_ground|village_green)$"](around:{radius_m},{lat},{lon});
@@ -274,14 +278,24 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       node["leisure"="playground"](around:{radius_m},{lat},{lon});
       way["leisure"="playground"](around:{radius_m},{lat},{lon});
       relation["leisure"="playground"](around:{radius_m},{lat},{lon});
-      
-      // LOCAL NATURE - Combined natural tags
+    """
+
+    # Optional tree/forest-heavy clauses. Controlled by ENABLE_TREE_FEATURES_IN_PARK_QUERY.
+    tree_clause = f"""
+      // LOCAL NATURE - forests / scrub
       way["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
       relation["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
       
-      // TREES - Combined highway tree tags
+      // TREES - tree-lined streets and tree rows
       way["highway"]["trees"~"^(yes|both|left|right)$"](around:{radius_m},{lat},{lon});
       way["natural"="tree_row"](around:{radius_m},{lat},{lon});
+    """
+
+    query_body = base_query
+    if ENABLE_TREE_FEATURES_IN_PARK_QUERY:
+        query_body += tree_clause
+
+    query = query_body + """
     );
     out body;
     >;

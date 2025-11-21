@@ -180,16 +180,21 @@ def collect_active_outdoors_data(lat: float, lon: float, area_type: str) -> Dict
 def collect_healthcare_data(lat: float, lon: float, area_type: str) -> Dict:
     """Collect Healthcare Access pillar data."""
     data = {
-        'hospitals_20km': 0,
+        # Use radii that match healthcare_access expectations:
+        # - expected_hospitals_within_10km
+        # - expected_urgent_care_within_5km
+        # - expected_pharmacies_within_2km
+        'hospitals_10km': 0,
         'urgent_care_5km': 0,
-        'pharmacies_8km': 0,
+        'pharmacies_2km': 0,
         'clinics_5km': 0,
         'doctors_5km': 0,
         'closest_hospital_km': None,
     }
     
     try:
-        # Query healthcare facilities (20km radius to capture all hospitals)
+        # Query healthcare facilities (20km radius, then filter by distance_km)
+        # This matches how the healthcare pillar uses distance_km in scoring.
         healthcare = osm_api.query_healthcare_facilities(lat, lon, radius_m=20000)
         if healthcare:
             hospitals = healthcare.get('hospitals', [])
@@ -198,10 +203,10 @@ def collect_healthcare_data(lat: float, lon: float, area_type: str) -> Dict:
             clinics = healthcare.get('clinics', [])
             doctors = healthcare.get('doctors', [])
             
-            # Filter by distance
-            data['hospitals_20km'] = len([h for h in hospitals if h.get('distance_km', 999) <= 20])
+            # Filter by distance to match pillar expectations
+            data['hospitals_10km'] = len([h for h in hospitals if h.get('distance_km', 999) <= 10])
             data['urgent_care_5km'] = len([u for u in urgent_care if u.get('distance_km', 999) <= 5])
-            data['pharmacies_8km'] = len([p for p in pharmacies if p.get('distance_km', 999) <= 8])
+            data['pharmacies_2km'] = len([p for p in pharmacies if p.get('distance_km', 999) <= 2])
             data['clinics_5km'] = len([c for c in clinics if c.get('distance_km', 999) <= 5])
             data['doctors_5km'] = len([d for d in doctors if d.get('distance_km', 999) <= 5])
             
