@@ -240,10 +240,6 @@ def _retry_overpass(
 
 DEBUG_PARKS = True  # Set False to silence park debugging
 
-# Feature flag: control whether we include tree/forest-heavy clauses in query_green_spaces.
-# When False, we only query parks/gardens/playgrounds used by Active Outdoors and Natural Beauty fallback.
-ENABLE_TREE_FEATURES_IN_PARK_QUERY = False
-
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
@@ -260,8 +256,8 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             "tree_features": [...]
         }
     """
-    # Build core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
-    base_query = f"""
+    # Core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
+    query = f"""
     [out:json][timeout:25];
     (
       // PARKS & GREEN SPACES - core (skip nodes except playgrounds)
@@ -278,24 +274,6 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       node["leisure"="playground"](around:{radius_m},{lat},{lon});
       way["leisure"="playground"](around:{radius_m},{lat},{lon});
       relation["leisure"="playground"](around:{radius_m},{lat},{lon});
-    """
-
-    # Optional tree/forest-heavy clauses. Controlled by ENABLE_TREE_FEATURES_IN_PARK_QUERY.
-    tree_clause = f"""
-      // LOCAL NATURE - forests / scrub
-      way["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
-      relation["natural"~"^(wood|forest|scrub)$"](around:{radius_m},{lat},{lon});
-      
-      // TREES - tree-lined streets and tree rows
-      way["highway"]["trees"~"^(yes|both|left|right)$"](around:{radius_m},{lat},{lon});
-      way["natural"="tree_row"](around:{radius_m},{lat},{lon});
-    """
-
-    query_body = base_query
-    if ENABLE_TREE_FEATURES_IN_PARK_QUERY:
-        query_body += tree_clause
-
-    query = query_body + """
     );
     out body;
     >;
@@ -329,7 +307,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         if not elements:
             logger.warning(f"OSM parks query returned empty results for lat={lat}, lon={lon}, radius={radius_m}m")
 
-        parks, playgrounds, tree_features = _process_green_features(
+        parks, playgrounds = _process_green_features(
             elements, lat, lon)
 
         if DEBUG_PARKS:
@@ -341,7 +319,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         return {
             "parks": parks,
             "playgrounds": playgrounds,
-            "tree_features": tree_features
+            # tree_features removed (not used by any pillar; kept parks/playgrounds only)
         }
 
     except Exception as e:
@@ -548,22 +526,27 @@ def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optio
     """
 
     try:
-        resp = requests.post(
-            OVERPASS_URL,
-            data={"data": query},
-            timeout=45,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
+        def _do_request():
+            return requests.post(
+                get_overpass_url(),
+                data={"data": query},
+                timeout=45,
+                headers={"User-Agent": "HomeFit/1.0"}
+            )
 
-        if resp.status_code != 200:
+        # Cultural assets are non-critical; use NON_CRITICAL retry profile via query_type mapping
+        resp = _retry_overpass(_do_request, query_type="cultural_assets")
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                logger.warning("OSM cultural assets query rate limited (429)")
             return None
-
+        
         data = resp.json()
         elements = data.get("elements", [])
-
+        
         museums, galleries, theaters, public_art, cultural_venues = _process_cultural_assets(
             elements, lat, lon)
-
+        
         return {
             "museums": museums,
             "galleries": galleries,
@@ -571,7 +554,7 @@ def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optio
             "public_art": public_art,
             "cultural_venues": cultural_venues
         }
-
+    
     except Exception as e:
         logger.error(f"OSM cultural assets query error: {e}", exc_info=True)
         return None
@@ -613,26 +596,31 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
     """
 
     try:
-        resp = requests.post(
-            OVERPASS_URL,
-            data={"data": query},
-            timeout=35,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
+        def _do_request():
+            return requests.post(
+                get_overpass_url(),
+                data={"data": query},
+                timeout=35,
+                headers={"User-Agent": "HomeFit/1.0"}
+            )
 
-        if resp.status_code != 200:
+        # Charm features are non-critical; use NON_CRITICAL retry profile via query_type mapping
+        resp = _retry_overpass(_do_request, query_type="charm_features")
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                logger.warning("OSM charm query rate limited (429)")
             return None
-
+    
         data = resp.json()
         elements = data.get("elements", [])
-
+    
         historic, artwork = _process_charm_features(elements, lat, lon)
-
+    
         return {
             "historic": historic,
             "artwork": artwork
         }
-
+    
     except Exception as e:
         logger.error(f"OSM charm query error: {e}", exc_info=True)
         return None
@@ -755,11 +743,10 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         return None
 
 
-def _process_green_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict]]:
-    """Process OSM elements into parks, playgrounds, and tree features."""
+def _process_green_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict]]:
+    """Process OSM elements into parks and playgrounds."""
     parks = []
     playgrounds = []
-    tree_features = []
     nodes_dict = {}
     ways_dict = {}
     seen_park_ids = set()
@@ -880,7 +867,7 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 logger.debug(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
         logger.debug("=====================================")
 
-    return parks, playgrounds, tree_features
+    return parks, playgrounds
 
 
 def _process_nature_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict]]:
@@ -1031,13 +1018,16 @@ def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) 
             """
             
             try:
-                paths_resp = requests.post(
-                    OVERPASS_URL,
-                    data={"data": paths_query},
-                    timeout=25,
-                    headers={"User-Agent": "HomeFit/1.0"}
-                )
-                if paths_resp.status_code == 200:
+                def _do_paths_request():
+                    return requests.post(
+                        get_overpass_url(),
+                        data={"data": paths_query},
+                        timeout=25,
+                        headers={"User-Agent": "HomeFit/1.0"}
+                    )
+
+                paths_resp = _retry_overpass(_do_paths_request, query_type="park_trails")
+                if paths_resp is not None and paths_resp.status_code == 200:
                     paths_data = paths_resp.json()
                     paths = paths_data.get("elements", [])
                     

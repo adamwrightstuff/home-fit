@@ -6,6 +6,7 @@ Scores access to hospitals, clinics, pharmacies, and emergency services
 import math
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
+from data_sources.regional_baselines import get_contextual_expectations
 from data_sources.radius_profiles import get_radius_profile
 from logging_config import get_logger
 
@@ -187,10 +188,29 @@ def get_healthcare_access_score(lat: float, lon: float,
     """
     print(f"🏥 Analyzing healthcare access...")
 
+    # Determine area type for radius tuning (allow centrally provided override)
+    from data_sources import census_api
+    pop_density = census_api.get_population_density(lat, lon) or 0.0
+    from data_sources import data_quality as dq
+    detected_area_type = dq.detect_area_type(lat, lon, pop_density)
+    area_type = area_type or detected_area_type
+
+    # Contextual expectations (research-backed where available)
+    expectations = get_contextual_expectations(area_type, 'healthcare_access') or {}
+    exp_hosp = float(expectations.get('expected_hospitals_within_10km', 1) or 1)
+    exp_urgent = float(expectations.get('expected_urgent_care_within_5km', 1) or 1)
+    exp_pharm = float(expectations.get('expected_pharmacies_within_2km', 1) or 1)
+
+    # Radius profiles (meters) via centralized helper
+    rp = get_radius_profile('healthcare_access', area_type, location_scope)
+    fac_radius_m = int(rp.get('fac_radius_m', 10000))
+    pharm_radius_m = int(rp.get('pharm_radius_m', 3000))
+    print(f"   🔧 Radius profile (healthcare): area_type={area_type}, scope={location_scope}, facilities={fac_radius_m}m, pharmacies={pharm_radius_m}m")
+
     # Query OSM for healthcare facilities (hospitals, clinics, doctors, pharmacies, urgent/emergency)
     print(f"   💊 Querying pharmacies and clinics...")
     healthcare_facilities = _get_osm_healthcare(lat, lon)
-
+    
     hospitals = healthcare_facilities.get("hospitals", [])
     urgent_care = healthcare_facilities.get("urgent_care", [])
     pharmacies = healthcare_facilities.get("pharmacies", [])
@@ -205,19 +225,6 @@ def get_healthcare_access_score(lat: float, lon: float,
         print(f"      - Query radius too small or location data incomplete")
     
     print(f"   🔍 FINAL COUNTS (raw): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors")
-
-    # Determine area type for radius tuning (allow centrally provided override)
-    from data_sources import census_api
-    pop_density = census_api.get_population_density(lat, lon) or 0.0
-    from data_sources import data_quality as dq
-    detected_area_type = dq.detect_area_type(lat, lon, pop_density)
-    area_type = area_type or detected_area_type
-
-    # Radius profiles (meters) via centralized helper
-    rp = get_radius_profile('healthcare_access', area_type, location_scope)
-    fac_radius_m = int(rp.get('fac_radius_m', 10000))
-    pharm_radius_m = int(rp.get('pharm_radius_m', 3000))
-    print(f"   🔧 Radius profile (healthcare): area_type={area_type}, scope={location_scope}, facilities={fac_radius_m}m, pharmacies={pharm_radius_m}m")
 
     def _filter_by_radius(features: List[Dict], radius_m: int, category: str) -> List[Dict]:
         kept = []
@@ -274,13 +281,19 @@ def get_healthcare_access_score(lat: float, lon: float,
         hospital_bonus = min(10.0, float(len(hospitals) - 1) * 2.0)
     hospital_score = min(35.0, hospital_base)  # Base score capped at 35
 
-    # 2) Primary care access (25 points)
+    # 2) Primary care access (25 points) – expectations-aware
     has_clinic = len(clinics) > 0
     has_doctors = len(doctors) > 0
     primary_base = (10.0 if has_clinic else 0.0) + (10.0 if has_doctors else 0.0)
     primary_count = len(clinics) + len(doctors)
-    primary_per_10k = primary_count / denom
-    primary_density = max(0.0, min(5.0, primary_per_10k))
+    # Use expected urgent care count as a proxy “good-enough” benchmark for primary care access.
+    target_primary = max(1.0, exp_urgent)
+    if primary_count <= 0:
+        primary_density = 0.0
+    else:
+        primary_ratio = primary_count / target_primary
+        # Ratio 1.0 → full 5pt density bonus; cap at 1.5x to avoid over-rewarding outliers.
+        primary_density = max(0.0, min(5.0, 5.0 * min(primary_ratio, 1.5)))
     primary_score = primary_base + primary_density
     primary_score = min(25.0, primary_score)  # Cap at 25
 
@@ -303,9 +316,14 @@ def get_healthcare_access_score(lat: float, lon: float,
     )
     emergency_score = 10.0 if has_emergency_hospital else 0.0
 
-    # 5) Pharmacy access (15 points) - increased from 5
-    pharm_per_10k = len(pharmacies) / denom
-    pharmacy_score = max(0.0, min(15.0, pharm_per_10k * 3.0))  # Scale up from 5 to 15
+    # 5) Pharmacy access (15 points) – expectations-aware
+    pharm_count = len(pharmacies)
+    target_pharm = max(1.0, exp_pharm)
+    if pharm_count <= 0:
+        pharmacy_score = 0.0
+    else:
+        pharm_ratio = pharm_count / target_pharm
+        pharmacy_score = max(0.0, min(15.0, 15.0 * min(pharm_ratio, 1.5)))
 
     # Base total (without bonuses)
     base_total = hospital_score + primary_score + specialty_score + emergency_score + pharmacy_score
