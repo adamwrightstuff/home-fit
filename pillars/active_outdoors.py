@@ -140,25 +140,41 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     outdoor_bonus = 0.0
     urban_penalty = 0.0
 
-    # Outdoor gateway bonus:
-    # Rural / exurban / suburban / lower-rise urban with very strong
-    # trail+water should not be held back purely by weaker formal parks.
-    if area_type in {"rural", "exurban", "suburban", "urban_core_lowrise", "urban_residential"}:
-        if outdoor_backbone >= 70.0:
-            # Scale bonus with backbone strength, capped to avoid inflation.
-            outdoor_bonus = min(15.0, (outdoor_backbone - 70.0) * 0.5)
+    # ----------------------------
+    # Outdoor gateway bonus
+    # ----------------------------
+    # Reward true outdoor/gateway places (rural/exurban, then some suburban/urban_residential)
+    # without excessively boosting dense cores or marginal cases.
+    if area_type in {"rural", "exurban"}:
+        # Rural/exurban: strong bonus when backbone is very high
+        if outdoor_backbone >= 65.0:
+            outdoor_bonus = min(12.0, (outdoor_backbone - 65.0) * 0.4)
+    elif area_type in {"suburban", "urban_residential"}:
+        # Suburban / urban_residential: smaller bonus, harder to trigger
+        if outdoor_backbone >= 75.0:
+            outdoor_bonus = min(8.0, (outdoor_backbone - 75.0) * 0.3)
+    elif area_type == "urban_core_lowrise":
+        # Only a small bonus for very strong coastal/low-rise cores (e.g., Santa Monica),
+        # no bonus for weaker trail+water contexts like Vegas.
+        if outdoor_backbone >= 80.0 and water_norm >= 0.9:
+            outdoor_bonus = min(5.0, (outdoor_backbone - 80.0) * 0.2)
 
-    # Dense core penalty:
-    # Dense urban cores with excellent parks+trails but limited true
-    # outdoor feel (harsh cores) should not score like outdoor towns.
-    if area_type == "urban_core":
-        if local_score >= 25.0 and trail_score >= 25.0:
-            # Modest downward adjustment; water can partially offset.
-            base_penalty = 8.0
-            # If water is weak (<60% of max), strengthen penalty slightly.
-            if water_norm < 0.6:
-                base_penalty += 4.0
+    # ----------------------------
+    # Dense core penalties
+    # ----------------------------
+    # Treat historic_urban like a dense core; penalize when parks+trails are maxed,
+    # especially if water is not truly elite.
+    if area_type in {"urban_core", "historic_urban"}:
+        if local_norm >= 0.6 and trail_norm >= 0.9:
+            base_penalty = 15.0   # pull UWS / Park Slope / Times Sq down
+            if water_norm < 0.9:
+                base_penalty += 5.0  # harsher where water is not top-tier
             urban_penalty = base_penalty
+
+    # Penalize harsh low-rise cores (e.g., Vegas) when trail is maxed but water is weak.
+    if area_type == "urban_core_lowrise":
+        if trail_norm >= 0.9 and water_norm <= 0.6:
+            urban_penalty = max(urban_penalty, 10.0)
 
     total_score = max(0.0, min(100.0, total_base + outdoor_bonus - urban_penalty))
 
