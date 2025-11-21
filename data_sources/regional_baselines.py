@@ -649,6 +649,14 @@ class RegionalBaselineManager:
                     'expected_businesses_within_1km': 180,
                     'expected_business_types': 12,
                     'expected_restaurants_within_1km': 100
+                },
+                'public_transit_access': {
+                    # Transit expectations from transit research (n=10 urban_core locations).
+                    # Typical cores: ~18–19 routes total, ~17–18 bus routes, rail more variable.
+                    # We anchor expectations on "good but not NYC" cores.
+                    'expected_heavy_rail_routes': 5,   # 0.5 median, 9 p75 → 5 as a realistic "good rail city"
+                    'expected_light_rail_routes': 1,   # light rail is a bonus, not baseline
+                    'expected_bus_routes': 18          # ≈ median bus_routes
                 }
             },
             'suburban': {
@@ -673,6 +681,13 @@ class RegionalBaselineManager:
                     'expected_businesses_within_1km': 65,
                     'expected_business_types': 12,
                     'expected_restaurants_within_1km': 35
+                },
+                'public_transit_access': {
+                    # Transit expectations from transit research (n=5 suburban locations):
+                    # median ~13 routes, almost entirely bus, rail is rare.
+                    'expected_heavy_rail_routes': 0,   # commuter rail is upside
+                    'expected_light_rail_routes': 0,
+                    'expected_bus_routes': 13          # typical good suburban bus network
                 }
             },
             'exurban': {
@@ -694,6 +709,13 @@ class RegionalBaselineManager:
                     'expected_businesses_within_1km': 10,
                     'expected_business_types': 4,
                     'expected_restaurants_within_1km': 3
+                },
+                'public_transit_access': {
+                    # Transit expectations from transit research (n=10 exurban locations):
+                    # median ~1–2 bus routes, many places have none.
+                    'expected_heavy_rail_routes': 0,  # rare, treat as strong bonus when present
+                    'expected_light_rail_routes': 0,
+                    'expected_bus_routes': 2          # any 1–2 routes is already "typical"
                 }
             },
             'rural': {
@@ -715,6 +737,13 @@ class RegionalBaselineManager:
                     'expected_businesses_within_1km': 3,
                     'expected_business_types': 2,
                     'expected_restaurants_within_1km': 1
+                },
+                'public_transit_access': {
+                    # Transit expectations from transit research (n=10 rural locations):
+                    # median ~1–2 routes, many 0; buses dominate when present.
+                    'expected_heavy_rail_routes': 0,  # almost never expected
+                    'expected_light_rail_routes': 0,
+                    'expected_bus_routes': 2          # 1–2 routes is already typical access
                 }
             }
         }

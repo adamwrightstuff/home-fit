@@ -12,6 +12,7 @@ from data_sources import data_quality
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.transitland_api import get_nearby_transit_stops
 from data_sources.utils import haversine_distance as haversine_meters
+from data_sources.regional_baselines import get_contextual_expectations
 
 # Load environment variables from .env file
 load_dotenv()
@@ -234,10 +235,13 @@ def _find_nearest_metro(lat: float, lon: float) -> float:
     return min_distance
 
 
-def get_public_transit_score(lat: float, lon: float,
-                             area_type: Optional[str] = None,
-                             location_scope: Optional[str] = None,
-                             city: Optional[str] = None) -> Tuple[float, Dict]:
+def get_public_transit_score(
+    lat: float,
+    lon: float,
+    area_type: Optional[str] = None,
+    location_scope: Optional[str] = None,
+    city: Optional[str] = None,
+) -> Tuple[float, Dict]:
     """
     Calculate public transit access score (0-100).
 
@@ -294,63 +298,85 @@ def get_public_transit_score(lat: float, lon: float,
     # Suburban areas: emphasize commuter rail (heavy rail)
     # Rural areas: value any service (bus, rail, etc.)
     
-    # Calculate base scores with connectivity (route count) + proximity enhancements
-    heavy_rail_score = _score_heavy_rail_routes(heavy_rail_routes, lat, lon, area_type, city)
-    light_rail_score = _score_light_rail_routes(light_rail_routes, lat, lon, area_type)
-    bus_score = _score_bus_routes(bus_routes, lat, lon, area_type)
-    
-    # Check if we have commuter rail (route_type 2) vs subway (route_type 1)
-    has_commuter_rail = any(r.get("route_type") == 2 for r in heavy_rail_routes)
-    has_subway = any(r.get("route_type") == 1 for r in heavy_rail_routes)
-    
-    # Apply area-type-specific weighting
-    # Note: Individual mode scores are on 0-100 scale, but we want final score 0-100
-    # If you can get everywhere by one mode (e.g., subway), other modes are redundant
-    # Score based on best mode, not weighted average of all modes
-    if area_type == 'urban_core':
-        # Urban: Different logic for subway vs commuter rail
-        if has_subway and heavy_rail_score >= 70.0:
-            # Excellent subway = you can get everywhere, bus is redundant
-            total_score = heavy_rail_score
-        elif has_commuter_rail:
-            # Commuter rail + bus = multimodal access (combine them)
-            # Commuter rail gets you downtown, bus gets you local
-            # Use weighted combination: 70% commuter rail + 30% bus
-            total_score = (heavy_rail_score * 0.7) + (bus_score * 0.3)
-            total_score = min(100.0, total_score)
-        elif heavy_rail_score > 0:
-            # Some heavy rail but not commuter rail - use best of heavy rail or bus
-            total_score = max(heavy_rail_score, bus_score)
-        else:
-            # No heavy rail - use best available (bus or light rail)
-            total_score = max(bus_score, light_rail_score)
-        total_score = min(100.0, total_score)
-    elif area_type in ('suburban', 'exurban'):
-        # Suburban: Use best mode (usually commuter rail if available)
-        # If commuter rail is excellent (70+), use it - bus doesn't matter
-        # Only consider bus if commuter rail is weak/missing
-        if heavy_rail_score >= 70.0:
-            # Excellent commuter rail = you can get everywhere, bus is redundant
-            total_score = heavy_rail_score
-        elif heavy_rail_score > 0:
-            # Some commuter rail but not excellent - use best of heavy rail or bus
-            total_score = max(heavy_rail_score, bus_score)
-        else:
-            # No commuter rail - use best available (bus or light rail)
-            total_score = max(bus_score, light_rail_score)
-        total_score = min(100.0, total_score)
-    elif area_type == 'rural':
-        # Rural: Any service valued equally (33% each, max 90, bonus for multiple modes)
-        total_score = (heavy_rail_score * 0.33) + (light_rail_score * 0.33) + (bus_score * 0.33)
-        # Bonus for having multiple modes (any combination)
-        mode_count = sum([1 for score in [heavy_rail_score, light_rail_score, bus_score] if score > 0])
-        if mode_count >= 2:
-            total_score += 10.0  # Bonus for multimodal access in rural areas
-        total_score = min(100.0, total_score)
-    else:
-        # Default: balanced weighting (simple sum, each mode 0-100, cap at 100)
-        total_score = heavy_rail_score + light_rail_score + bus_score
-        total_score = min(100.0, total_score)
+    # Derive effective area type for expectations (fallback to 'unknown')
+    effective_area_type = area_type or "unknown"
+
+    # Look up contextual expectations for transit by area type
+    transit_expectations = get_contextual_expectations(
+        effective_area_type, "public_transit_access"
+    ) or {}
+
+    expected_heavy = transit_expectations.get("expected_heavy_rail_routes")
+    expected_light = transit_expectations.get("expected_light_rail_routes")
+    expected_bus = transit_expectations.get("expected_bus_routes")
+
+    # Normalize raw route counts against expectations to 0–100 per mode
+    heavy_count = len(heavy_rail_routes)
+    light_count = len(light_rail_routes)
+    bus_count = len(bus_routes)
+
+    def _normalize_route_count(
+        count: int, expected: Optional[int], fallback_scale: float = 1.0
+    ) -> float:
+        """
+        Normalize a route count to a 0–100 score using expectations.
+
+        - At 0 routes → 0.
+        - At ~expected routes → ~60.
+        - At 2× expected → ~85.
+        - ≥3× expected → ~95 (cap).
+
+        If expected is None or <=0, we treat any non-zero count as a modest
+        score that scales gently with count (used in unknown/edge cases).
+        """
+        if count <= 0:
+            return 0.0
+
+        # Fallback behavior when we don't have an expected value
+        if not expected or expected <= 0:
+            if count == 1:
+                return 50.0 * fallback_scale
+            if count == 2:
+                return 70.0 * fallback_scale
+            # 3+ routes in a place where we had no expectations is already strong
+            return 85.0 * fallback_scale
+
+        ratio = count / float(expected)
+
+        # No service yet or vanishingly small relative to expectation
+        if ratio <= 0.1:
+            return 0.0
+        if ratio < 1.0:
+            # Grow linearly up to 60 at expectation
+            return 60.0 * ratio
+        if ratio < 2.0:
+            # From 60 at 1× to 85 at 2×
+            return 60.0 + (ratio - 1.0) * 25.0
+        if ratio >= 3.0:
+            return 95.0
+        # Between 2× and 3×: 85 → 95
+        return 85.0 + (ratio - 2.0) * 10.0
+
+    heavy_rail_score = _normalize_route_count(heavy_count, expected_heavy)
+    light_rail_score = _normalize_route_count(light_count, expected_light, fallback_scale=0.8)
+    bus_score = _normalize_route_count(bus_count, expected_bus)
+
+    # Core supply score: best single mode
+    base_supply = max(heavy_rail_score, light_rail_score, bus_score)
+
+    # Small multimodal bonus – having multiple strong modes is good, but not
+    # better than an exceptional single-mode system like NYC subway.
+    mode_scores = [heavy_rail_score, light_rail_score, bus_score]
+    strong_modes = [s for s in mode_scores if s >= 30.0]
+    mode_count = len(strong_modes)
+
+    multimodal_bonus = 0.0
+    if mode_count == 2:
+        multimodal_bonus = 5.0
+    elif mode_count >= 3:
+        multimodal_bonus = 8.0
+
+    total_score = min(100.0, base_supply + multimodal_bonus)
 
     # Assess data quality
     combined_data = {
