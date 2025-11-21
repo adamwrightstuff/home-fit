@@ -111,14 +111,15 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     # Aggregate components in a data-centric, normalized way.
     # - Keep component curves and expectations fully data-backed.
     # - Normalize each component to its max and blend with global weights.
-    # - Add small, area-type-aware adjustments for outdoor gateways
-    #   vs dense cores, consistent with other pillars.
+    # - No post-hoc bonuses or penalties; total is a pure function of
+    #   component scores to respect design principles.
     # ------------------------------------------------------------------
-    # Global weights (sum to 1.0) for normalized components
-    W_LOCAL = 0.25   # local parks / playgrounds
-    W_TRAIL = 0.35   # trail access (main outdoors backbone)
-    W_WATER = 0.25   # water access
-    W_CAMP = 0.15    # camping access
+    # Global weights (sum to 1.0) for normalized components, learned from
+    # the calibration panel with hybrid towns constrained as anchors.
+    W_LOCAL = 0.15   # local parks / playgrounds
+    W_TRAIL = 0.15   # trail access
+    W_WATER = 0.20   # water access
+    W_CAMP = 0.50    # camping access
 
     # Normalize each component to 0–1 based on its design max
     local_norm = (local_score / 40.0) if local_score > 0 else 0.0
@@ -127,56 +128,12 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     camping_norm = (camping_score / 10.0) if camping_score > 0 else 0.0
 
     # Base total: weighted blend of normalized components → 0–100
-    total_base = (
+    total_score = (
         W_LOCAL * local_norm +
         W_TRAIL * trail_norm +
         W_WATER * water_norm +
         W_CAMP * camping_norm
     ) * 100.0
-
-    # Outdoor backbone: emphasize strong trail + water access
-    outdoor_backbone = (0.6 * trail_norm + 0.4 * water_norm) * 100.0  # 0–100
-
-    outdoor_bonus = 0.0
-    urban_penalty = 0.0
-
-    # ----------------------------
-    # Outdoor gateway bonus
-    # ----------------------------
-    # Reward true outdoor/gateway places (rural/exurban, then some suburban/urban_residential)
-    # without excessively boosting dense cores or marginal cases.
-    if area_type in {"rural", "exurban"}:
-        # Rural/exurban: strong bonus when backbone is very high
-        if outdoor_backbone >= 65.0:
-            outdoor_bonus = min(12.0, (outdoor_backbone - 65.0) * 0.4)
-    elif area_type in {"suburban", "urban_residential"}:
-        # Suburban / urban_residential: smaller bonus, harder to trigger
-        if outdoor_backbone >= 75.0:
-            outdoor_bonus = min(8.0, (outdoor_backbone - 75.0) * 0.3)
-    elif area_type == "urban_core_lowrise":
-        # Only a small bonus for very strong coastal/low-rise cores (e.g., Santa Monica),
-        # no bonus for weaker trail+water contexts like Vegas.
-        if outdoor_backbone >= 80.0 and water_norm >= 0.9:
-            outdoor_bonus = min(5.0, (outdoor_backbone - 80.0) * 0.2)
-
-    # ----------------------------
-    # Dense core penalties
-    # ----------------------------
-    # Treat historic_urban like a dense core; penalize when parks+trails are maxed,
-    # especially if water is not truly elite.
-    if area_type in {"urban_core", "historic_urban"}:
-        if local_norm >= 0.6 and trail_norm >= 0.9:
-            base_penalty = 15.0   # pull UWS / Park Slope / Times Sq down
-            if water_norm < 0.9:
-                base_penalty += 5.0  # harsher where water is not top-tier
-            urban_penalty = base_penalty
-
-    # Penalize harsh low-rise cores (e.g., Vegas) when trail is maxed but water is weak.
-    if area_type == "urban_core_lowrise":
-        if trail_norm >= 0.9 and water_norm <= 0.6:
-            urban_penalty = max(urban_penalty, 10.0)
-
-    total_score = max(0.0, min(100.0, total_base + outdoor_bonus - urban_penalty))
 
     # Build response with quality metrics
     breakdown = {
