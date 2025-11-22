@@ -655,7 +655,9 @@ class RegionalBaselineManager:
                     # Typical cores: ~18–19 routes total, ~17–18 bus routes, rail more variable.
                     # We anchor expectations on "good but not NYC" cores.
                     'expected_heavy_rail_routes': 5,   # 0.5 median, 9 p75 → 5 as a realistic "good rail city"
-                    'expected_light_rail_routes': 1,   # light rail is a bonus, not baseline
+                    # Light rail: median is 0 (most cores don't have it), but for cities WITH light rail,
+                    # median is 4 routes. Use 4 as expected to properly calibrate cities with light rail systems.
+                    'expected_light_rail_routes': 4,   # For cities with light rail systems (median of cities that have it)
                     'expected_bus_routes': 18          # ≈ median bus_routes
                 }
             },
@@ -744,6 +746,39 @@ class RegionalBaselineManager:
                     'expected_heavy_rail_routes': 0,  # almost never expected
                     'expected_light_rail_routes': 0,
                     'expected_bus_routes': 2          # 1–2 routes is already typical access
+                }
+            },
+            'urban_residential': {
+                # Urban residential areas (dense neighborhoods in cities) - typically have good transit
+                # but may have fewer routes than true urban cores. Use slightly lower expectations.
+                'active_outdoors': {
+                    'expected_parks_within_1km': 8,
+                    'expected_parks_within_5km': 8,
+                    'expected_park_area_hectares': 3,
+                    'expected_playgrounds_within_1km': 2,
+                    'expected_water_access_within_15km': 1,
+                    'expected_trails_within_15km': 2,
+                    'expected_camping_within_15km': 0
+                },
+                'healthcare_access': {
+                    'expected_hospitals_within_10km': 2,
+                    'expected_urgent_care_within_5km': 5,
+                    'expected_pharmacies_within_2km': 3
+                },
+                'neighborhood_amenities': {
+                    'expected_businesses_within_1km': 180,
+                    'expected_business_types': 12,
+                    'expected_restaurants_within_1km': 100
+                },
+                'public_transit_access': {
+                    # Urban residential: typically good transit but fewer routes than urban cores.
+                    # Heavy rail: may have 1-2 routes (commuter rail), not full metro systems.
+                    # Light rail: rare, treat as bonus when present.
+                    # Bus: typically 15-20 routes (good coverage, but scoring should reflect that
+                    # high route counts like 40-50 are exceptional, not just "good").
+                    'expected_heavy_rail_routes': 2,   # Lower than urban_core (commuter rail vs metro)
+                    'expected_light_rail_routes': 0,   # Rare in residential areas
+                    'expected_bus_routes': 20          # Higher to properly calibrate high route counts
                 }
             }
         }

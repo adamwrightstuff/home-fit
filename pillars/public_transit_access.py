@@ -338,43 +338,60 @@ def get_public_transit_score(
             return 0.0
 
         # Fallback behavior when we don't have an expected value
+        # More conservative fallback to prevent over-scoring when expectations are missing
         if not expected or expected <= 0:
             if count == 1:
-                return 50.0 * fallback_scale
+                return 40.0 * fallback_scale  # More conservative (was 50)
             if count == 2:
-                return 70.0 * fallback_scale
-            # 3+ routes in a place where we had no expectations is already strong
-            return 85.0 * fallback_scale
+                return 55.0 * fallback_scale  # More conservative (was 70)
+            if count == 3:
+                return 65.0 * fallback_scale  # More conservative
+            if count >= 4:
+                return 75.0 * fallback_scale  # More conservative (was 85)
+            return 0.0
 
         ratio = count / float(expected)
         
-        # Research-backed calibrated breakpoints (from calibrate_transit_scoring.py)
+        # Research-backed calibrated breakpoints (refined based on target score analysis)
         # Calibrated against target scores: Midtown Manhattan (100), Loop Chicago (97), 
         # Back Bay Boston (95), Pearl District (87), etc.
         # Scores reflect actual quality - no artificial caps by area type
+        
+        # More conservative curve to better match target scores:
+        # - Lower scores at each breakpoint to prevent over-scoring
+        # - Requires higher ratios to reach top scores
+        # - Slower growth after 2× to prevent over-scoring high route counts
         
         # No service yet or vanishingly small relative to expectation
         if ratio <= 0.1:
             return 0.0
         
-        # At expected (1×) → 60 points
+        # At expected (1×) → 45 points (more conservative)
         if ratio < 1.0:
-            return 60.0 * ratio
+            return 45.0 * ratio
         
-        # At 2× expected → 80 points
+        # At 2× expected → 65 points (more conservative, slower growth)
         if ratio < 2.0:
-            return 60.0 + (ratio - 1.0) * 20.0
+            return 45.0 + (ratio - 1.0) * 20.0
         
-        # At 3× expected → 90 points
+        # At 3× expected → 80 points (slower growth after 2×)
         if ratio < 3.0:
-            return 80.0 + (ratio - 2.0) * 10.0
+            return 65.0 + (ratio - 2.0) * 15.0
         
-        # At 5× expected → 95 points (exceptional)
+        # At 5× expected → 88 points (very slow growth)
         if ratio < 5.0:
-            return 90.0 + (ratio - 3.0) * 2.5
+            return 80.0 + (ratio - 3.0) * 4.0
         
-        # Above 5× → cap at 95 (exceptional transit)
-        # Very high ratios (10×, 20×+) still cap at 95 to prevent over-scoring
+        # At 8× expected → 92 points (minimal growth)
+        if ratio < 8.0:
+            return 88.0 + (ratio - 5.0) * 1.33
+        
+        # At 12× expected → 95 points (exceptional - requires very high ratios)
+        if ratio < 12.0:
+            return 92.0 + (ratio - 8.0) * 0.75
+        
+        # Above 12× → cap at 95 (exceptional transit)
+        # Very high ratios (20×, 30×+) still cap at 95 to prevent over-scoring
         # This cap applies to all area types - scores reflect actual quality
         return 95.0
 
