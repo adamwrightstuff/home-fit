@@ -325,7 +325,7 @@ def get_active_outdoors_score_v2(
 
     print(
         f"✅ Active Outdoors v2 (calibrated): {calibrated_total:.1f}/100 "
-        f\"[raw={raw_total:.1f}] "
+        f"[raw={raw_total:.1f}] "
         f"(daily={daily_score:.1f}, wild={wild_score:.1f}, water={water_score:.1f})"
     )
     return round(calibrated_total, 1), breakdown
