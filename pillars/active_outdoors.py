@@ -370,16 +370,25 @@ def _score_wild_adventure_v2(
     near_trails = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
     near_count = len(near_trails)
 
+    # Expectations + max contributions by area_type.
+    # Goal:
+    # - Rural/exurban mountain towns can reach the top of the 0–50 range when
+    #   they truly have deep trail networks + high canopy + nearby camping.
+    # - Dense cores with mostly urban parks/paths should get much lower Wild
+    #   scores even if they have many mapped trails.
     if area_type in {"urban_core", "historic_urban"}:
-        exp_trails, exp_near, exp_canopy = 5.0, 2.0, 20.0
+        exp_trails, exp_near, exp_canopy = 20.0, 8.0, 35.0
+        max_trails_total, max_trails_near, max_canopy = 10.0, 5.0, 20.0
     elif area_type in {"suburban", "urban_residential", "urban_core_lowrise"}:
-        exp_trails, exp_near, exp_canopy = 15.0, 5.0, 30.0
+        exp_trails, exp_near, exp_canopy = 20.0, 6.0, 30.0
+        max_trails_total, max_trails_near, max_canopy = 15.0, 8.0, 12.0
     else:  # rural / exurban
         exp_trails, exp_near, exp_canopy = 30.0, 10.0, 40.0
+        max_trails_total, max_trails_near, max_canopy = 20.0, 10.0, 10.0
 
-    s_trails_total = _sat_ratio_v2(trail_count, exp_trails, 20.0)
-    s_trails_near = _sat_ratio_v2(near_count, exp_near, 10.0)
-    s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, 10.0)
+    s_trails_total = _sat_ratio_v2(trail_count, exp_trails, max_trails_total)
+    s_trails_near = _sat_ratio_v2(near_count, exp_near, max_trails_near)
+    s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, max_canopy)
 
     # Camping proximity: full credit if any site within 10km, then decays
     if not camping:
