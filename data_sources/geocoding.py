@@ -673,8 +673,12 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
             # Special handling for DC - use "District of Columbia" explicitly
             if query_state == "DC":
                 state_name = "District of Columbia"
+                # For DC, replace "Washington DC" or "Washington, DC" with "Washington, District of Columbia"
+                # This prevents matching to Washington state or Washington, UT
+                query_string = re.sub(r'\bWashington\s*,?\s*DC\b', 'Washington, District of Columbia', address, flags=re.IGNORECASE)
+                query_string = re.sub(r'\bDC\b', 'District of Columbia', query_string, flags=re.IGNORECASE)
             # Only add if not already in query (avoid duplication)
-            if state_name.lower() not in address.lower() and query_state not in address.upper():
+            elif state_name.lower() not in address.lower() and query_state not in address.upper():
                 query_string = f"{address}, {state_name.title()}"
         
         params = {
@@ -948,8 +952,12 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             # Special handling for DC - use "District of Columbia" explicitly
             if query_state == "DC":
                 state_name = "District of Columbia"
+                # For DC, replace "Washington DC" or "Washington, DC" with "Washington, District of Columbia"
+                # This prevents matching to Washington state or Washington, UT
+                query_string = re.sub(r'\bWashington\s*,?\s*DC\b', 'Washington, District of Columbia', address, flags=re.IGNORECASE)
+                query_string = re.sub(r'\bDC\b', 'District of Columbia', query_string, flags=re.IGNORECASE)
             # Only add if not already in query (avoid duplication)
-            if state_name.lower() not in address.lower() and query_state not in address.upper():
+            elif state_name.lower() not in address.lower() and query_state not in address.upper():
                 query_string = f"{address}, {state_name.title()}"
         
         # First attempt: normal query with limit=1
