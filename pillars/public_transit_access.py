@@ -925,10 +925,10 @@ def _score_bus_routes(routes: List[Dict], lat: float = None, lon: float = None, 
 def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List) -> Dict:
     """Build summary of transit access from routes."""
     summary = {
-        "total_routes": len(all_routes),  # Total distinct routes (not stops)
-        "heavy_rail_routes": len(heavy_rail),
-        "light_rail_routes": len(light_rail),
-        "bus_routes": len(bus),
+        "total_routes": len(all_routes),  # Total distinct transit routes (not stops!)
+        "heavy_rail_routes": len(heavy_rail),  # Heavy rail (subway/metro/commuter) route count
+        "light_rail_routes": len(light_rail),  # Light rail/streetcar route count
+        "bus_routes": len(bus),  # Bus route count
         # Legacy field names for backward compatibility (deprecated - use *_routes)
         "total_stops": len(all_routes),  # DEPRECATED: Actually route count, not stops
         "heavy_rail_stops": len(heavy_rail),  # DEPRECATED: Actually route count
@@ -1015,10 +1015,10 @@ def _empty_breakdown() -> Dict:
             "light_rail_routes": 0,
             "bus_routes": 0,
             # Legacy field names for backward compatibility
-            "total_stops": 0,
-            "heavy_rail_stops": 0,
-            "light_rail_stops": 0,
-            "bus_stops": 0,
+            "total_routes": 0,
+            "heavy_rail_routes": 0,
+            "light_rail_routes": 0,
+            "bus_routes": 0,
             "nearest_heavy_rail": None,
             "nearest_light_rail": None,
             "nearest_bus": None,
