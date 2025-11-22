@@ -366,32 +366,36 @@ def get_public_transit_score(
         if ratio <= 0.1:
             return 0.0
         
-        # At expected (1×) → 45 points (more conservative)
+        # At expected (1×) → 40 points (more conservative)
         if ratio < 1.0:
-            return 45.0 * ratio
+            return 40.0 * ratio
         
-        # At 2× expected → 65 points (more conservative, slower growth)
+        # At 2× expected → 55 points (more conservative, slower growth)
         if ratio < 2.0:
-            return 45.0 + (ratio - 1.0) * 20.0
+            return 40.0 + (ratio - 1.0) * 15.0
         
-        # At 3× expected → 80 points (slower growth after 2×)
+        # At 3× expected → 65 points (slower growth after 2×)
         if ratio < 3.0:
-            return 65.0 + (ratio - 2.0) * 15.0
+            return 55.0 + (ratio - 2.0) * 10.0
         
-        # At 5× expected → 88 points (very slow growth)
+        # At 5× expected → 72 points (very slow growth - calibrated to Koreatown LA target)
         if ratio < 5.0:
-            return 80.0 + (ratio - 3.0) * 4.0
+            return 65.0 + (ratio - 3.0) * 3.5
         
-        # At 8× expected → 92 points (minimal growth)
+        # At 8× expected → 80 points (minimal growth)
         if ratio < 8.0:
-            return 88.0 + (ratio - 5.0) * 1.33
+            return 72.0 + (ratio - 5.0) * 2.67
         
-        # At 12× expected → 95 points (exceptional - requires very high ratios)
+        # At 12× expected → 88 points (exceptional - requires very high ratios)
         if ratio < 12.0:
-            return 92.0 + (ratio - 8.0) * 0.75
+            return 80.0 + (ratio - 8.0) * 2.0
         
-        # Above 12× → cap at 95 (exceptional transit)
-        # Very high ratios (20×, 30×+) still cap at 95 to prevent over-scoring
+        # At 20× expected → 95 points (exceptional transit)
+        if ratio < 20.0:
+            return 88.0 + (ratio - 12.0) * 0.875
+        
+        # Above 20× → cap at 95 (exceptional transit)
+        # Very high ratios (30×, 50×+) still cap at 95 to prevent over-scoring
         # This cap applies to all area types - scores reflect actual quality
         return 95.0
 
