@@ -4,17 +4,26 @@ Scores access to outdoor activities and recreation
 """
 
 import math
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
+
 from data_sources import osm_api
 from data_sources.data_quality import assess_pillar_data_quality
-from data_sources.regional_baselines import get_area_classification, get_contextual_expectations
+from data_sources.gee_api import get_tree_canopy_gee
+from data_sources.regional_baselines import (
+    get_area_classification,
+    get_contextual_expectations,
+)
 from data_sources.radius_profiles import get_radius_profile
 
 
-def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None,
-                              area_type: Optional[str] = None,
-                              location_scope: Optional[str] = None,
-                              include_diagnostics: bool = False) -> Tuple[float, Dict]:
+def get_active_outdoors_score(
+    lat: float,
+    lon: float,
+    city: Optional[str] = None,
+    area_type: Optional[str] = None,
+    location_scope: Optional[str] = None,
+    include_diagnostics: bool = False,
+) -> Tuple[float, Dict]:
     """
     Calculate active outdoors score (0-100) based on access to outdoor activities.
 
@@ -170,6 +179,295 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
     return round(total_score, 1), breakdown
+
+
+# ============================================================================
+# Active Outdoors v2 – data-centric outdoor lifestyle model
+# ============================================================================
+
+def get_active_outdoors_score_v2(
+    lat: float,
+    lon: float,
+    city: Optional[str] = None,
+    area_type: Optional[str] = None,
+    location_scope: Optional[str] = None,
+    include_diagnostics: bool = False,
+) -> Tuple[float, Dict]:
+    """
+    Compute Active Outdoors v2 (0–100).
+
+    This does NOT reuse the v1 0–40/30/20/10 weights. It is a new model built on:
+      - Daily Urban Outdoors (0–30)
+      - Wild Adventure Backbone (0–50)
+      - Waterfront Lifestyle (0–20)
+
+    All underlying features are objective (OSM features, tree canopy from GEE, etc.).
+    No per-city hacks; area_type is only used to set expectations.
+    """
+
+    print("🏃 [AO v2] Analyzing active outdoors access...")
+
+    # 1) Area classification and radius profile
+    detected_area_type, metro_name, area_metadata = get_area_classification(
+        lat, lon, city=city
+    )
+    area_type = area_type or detected_area_type
+
+    profile = get_radius_profile("active_outdoors", area_type, location_scope)
+    local_radius = int(profile.get("local_radius_m", 2000))  # daily use (~2 km)
+    trail_radius = int(profile.get("trail_radius_m", 15000))  # trails within ~15 km
+    regional_radius = int(
+        profile.get("regional_radius_m", 50000)
+    )  # water/camping within ~50 km
+
+    print(
+        f"   🔧 [AO v2] Radii – local={local_radius/1000:.1f}km, "
+        f"trail={trail_radius/1000:.1f}km, regional={regional_radius/1000:.1f}km"
+    )
+
+    # 2) Data collection (reuse existing data_sources)
+    # Local parks & playgrounds
+    print(
+        f"   📍 [AO v2] Querying local parks & playgrounds ({local_radius/1000:.1f}km)..."
+    )
+    local = osm_api.query_green_spaces(lat, lon, radius_m=local_radius) or {}
+    parks: List[Dict] = local.get("parks", []) or []
+    playgrounds: List[Dict] = local.get("playgrounds", []) or []
+
+    # Nature features – trails, water, camping
+    print(
+        f"   🥾 [AO v2] Querying nature features ({trail_radius/1000:.1f}–{regional_radius/1000:.1f}km)..."
+    )
+    nature_trail = osm_api.query_nature_features(lat, lon, radius_m=trail_radius) or {}
+    nature_regional = (
+        osm_api.query_nature_features(lat, lon, radius_m=regional_radius) or {}
+    )
+
+    hiking_trails: List[Dict] = (nature_trail.get("hiking", []) or []) + (
+        nature_regional.get("hiking", []) or []
+    )
+    swimming: List[Dict] = nature_regional.get("swimming", []) or []
+    camping: List[Dict] = nature_regional.get("camping", []) or []
+
+    # Tree canopy around 5 km as a proxy for “wildness”
+    try:
+        canopy_pct_5km = get_tree_canopy_gee(
+            lat, lon, radius_m=5000, area_type=area_type
+        ) or 0.0
+    except Exception:
+        canopy_pct_5km = 0.0
+
+    combined_data = {
+        "parks": parks,
+        "playgrounds": playgrounds,
+        "hiking": hiking_trails,
+        "swimming": swimming,
+        "camping": camping,
+        "tree_canopy_pct_5km": canopy_pct_5km,
+    }
+    dq = assess_pillar_data_quality(
+        "active_outdoors_v2", combined_data, lat, lon, area_type
+    )
+
+    # 3) Component scores
+    daily_score = _score_daily_urban_outdoors_v2(parks, playgrounds, area_type)
+    wild_score = _score_wild_adventure_v2(
+        hiking_trails, camping, canopy_pct_5km, area_type
+    )
+    water_score = _score_water_lifestyle_v2(swimming, area_type)
+
+    # 4) Aggregation (simple, explainable; can be re-fit)
+    W_DAILY = 0.30
+    W_WILD = 0.50
+    W_WATER = 0.20
+
+    total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+
+    breakdown: Dict = {
+        "score": round(total, 1),
+        "breakdown": {
+            "daily_urban_outdoors": round(daily_score, 1),
+            "wild_adventure": round(wild_score, 1),
+            "waterfront_lifestyle": round(water_score, 1),
+        },
+        "summary": _build_summary_v2(
+            parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km
+        ),
+        "data_quality": dq,
+        "area_classification": area_metadata,
+        "version": "active_outdoors_v2",
+    }
+
+    if include_diagnostics:
+        breakdown["diagnostics"] = {
+            "parks_2km": len(parks),
+            "playgrounds_2km": len(playgrounds),
+            "hiking_trails_total": len(hiking_trails),
+            "hiking_trails_within_5km": sum(
+                1 for h in hiking_trails if h.get("distance_m", 1e9) <= 5000
+            ),
+            "swimming_features": len(swimming),
+            "camp_sites": len(camping),
+            "tree_canopy_pct_5km": canopy_pct_5km,
+        }
+
+    print(
+        f"✅ Active Outdoors v2: {total:.1f}/100 "
+        f"(daily={daily_score:.1f}, wild={wild_score:.1f}, water={water_score:.1f})"
+    )
+    return round(total, 1), breakdown
+
+
+def _sat_ratio_v2(x: float, target: float, max_score: float) -> float:
+    """Smooth saturation: 0 at 0, asymptotically approaches max_score as x grows."""
+    if target <= 0:
+        return 0.0
+    r = x / target
+    return max_score * (1.0 - math.exp(-r))
+
+
+def _score_daily_urban_outdoors_v2(
+    parks: list, playgrounds: list, area_type: str
+) -> float:
+    """
+    Daily Urban Outdoors (0–30):
+      – Park/green area near home
+      – Park and playground count
+    Uses area-type–specific expectations from your expected-values research.
+    """
+    total_area_ha = sum(p.get("area_sqm", 0.0) for p in parks) / 10_000.0
+    park_count = len(parks)
+    playground_count = len(playgrounds)
+
+    if area_type in {"urban_core", "historic_urban"}:
+        exp_park_ha, exp_park_count, exp_play = 5.0, 8.0, 4.0
+    elif area_type in {"suburban", "urban_residential", "urban_core_lowrise"}:
+        exp_park_ha, exp_park_count, exp_play = 8.0, 6.0, 3.0
+    else:  # rural / exurban
+        exp_park_ha, exp_park_count, exp_play = 3.0, 2.0, 1.0
+
+    s_area = _sat_ratio_v2(total_area_ha, exp_park_ha, 15.0)
+    s_count = _sat_ratio_v2(park_count, exp_park_count, 10.0)
+    s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
+
+    return min(30.0, s_area + s_count + s_play)
+
+
+def _score_wild_adventure_v2(
+    hiking_trails: list,
+    camping: list,
+    canopy_pct_5km: float,
+    area_type: str,
+) -> float:
+    """
+    Wild Adventure Backbone (0–50):
+      – Trail richness (count + proximity)
+      – Wild/forested context (tree canopy)
+      – Camping access
+    """
+
+    trail_count = len(hiking_trails)
+    near_trails = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
+    near_count = len(near_trails)
+
+    if area_type in {"urban_core", "historic_urban"}:
+        exp_trails, exp_near, exp_canopy = 5.0, 2.0, 20.0
+    elif area_type in {"suburban", "urban_residential", "urban_core_lowrise"}:
+        exp_trails, exp_near, exp_canopy = 15.0, 5.0, 30.0
+    else:  # rural / exurban
+        exp_trails, exp_near, exp_canopy = 30.0, 10.0, 40.0
+
+    s_trails_total = _sat_ratio_v2(trail_count, exp_trails, 20.0)
+    s_trails_near = _sat_ratio_v2(near_count, exp_near, 10.0)
+    s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, 10.0)
+
+    # Camping proximity: full credit if any site within 10km, then decays
+    if not camping:
+        s_camp = 0.0
+    else:
+        nearest = min(camping, key=lambda c: c.get("distance_m", 1e9))
+        d = nearest.get("distance_m", 1e9)
+        if d <= 10_000:
+            s_camp = 10.0
+        else:
+            s_camp = 10.0 * math.exp(-0.00008 * (d - 10_000))
+
+    return max(0.0, min(50.0, s_trails_total + s_trails_near + s_canopy + s_camp))
+
+
+def _score_water_lifestyle_v2(swimming: list, area_type: str) -> float:
+    """
+    Waterfront Lifestyle (0–20):
+      – Swimmable water type
+      – Distance to shoreline / lake / river
+    """
+    if not swimming:
+        return 0.0
+
+    nearest = min(swimming, key=lambda s: s.get("distance_m", 1e9))
+    d = nearest.get("distance_m", 1e9)
+    t = nearest.get("type")
+
+    base = {
+        "beach": 20.0,
+        "swimming_area": 18.0,
+        "lake": 18.0,
+        "bay": 16.0,
+        "coastline": 16.0,
+    }.get(t, 12.0)
+
+    # Slight downweight for non-beach water in dense cores (ornamental water)
+    if area_type in {"urban_core", "historic_urban"} and t != "beach":
+        base *= 0.8
+
+    optimal = 2_000.0
+    if d <= optimal:
+        return base
+    return max(0.0, base * math.exp(-0.0003 * (d - optimal)))
+
+
+def _build_summary_v2(
+    parks: list,
+    playgrounds: list,
+    hiking: list,
+    swimming: list,
+    camping: list,
+    canopy_pct: float,
+) -> Dict:
+    def nearest_km(features: list) -> Optional[float]:
+        if not features:
+            return None
+        d = min(f.get("distance_m", 1e9) for f in features)
+        if d >= 1e9:
+            return None
+        return round(d / 1000.0, 2)
+
+    return {
+        "local_parks": {
+            "count": len(parks),
+            "playgrounds": len(playgrounds),
+            "total_park_area_ha": round(
+                sum(p.get("area_sqm", 0.0) / 10_000.0 for p in parks), 2
+            ),
+        },
+        "trails": {
+            "count_total": len(hiking),
+            "count_within_5km": sum(
+                1 for h in hiking if h.get("distance_m", 1e9) <= 5000
+            ),
+        },
+        "water": {
+            "features": len(swimming),
+            "nearest_km": nearest_km(swimming),
+        },
+        "camping": {
+            "sites": len(camping),
+            "nearest_km": nearest_km(camping),
+        },
+        "environment": {
+            "tree_canopy_pct_5km": round(canopy_pct, 1),
+        },
+    }
 
 
 def _score_local_recreation_smooth(parks: list, playgrounds: list, expectations: Dict) -> float:
