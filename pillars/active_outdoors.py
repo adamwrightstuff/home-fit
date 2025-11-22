@@ -161,8 +161,8 @@ def get_active_outdoors_score(lat: float, lon: float, city: Optional[str] = None
         except Exception:
             pass
 
-    # Log results
-    print(f"✅ Active Outdoors Score: {total_score:.0f}/100")
+    # Log results (include aggregation version tag for debugging/deploy verification)
+    print(f"✅ Active Outdoors Score (AO_AGG_V1): {total_score:.0f}/100")
     print(f"   🏞️  Local Parks & Playgrounds: {local_score:.0f}/40")
     print(f"   🥾 Trail Access: {trail_score:.0f}/30")
     print(f"   🏊 Water Access: {water_score:.0f}/20")
