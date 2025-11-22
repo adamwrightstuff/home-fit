@@ -276,15 +276,25 @@ def get_active_outdoors_score_v2(
     )
     water_score = _score_water_lifestyle_v2(swimming, area_type)
 
-    # 4) Aggregation (simple, explainable; can be re-fit)
+    # 4) Aggregation (simple, explainable) → raw v2 total
     W_DAILY = 0.30
     W_WILD = 0.50
     W_WATER = 0.20
 
-    total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+    raw_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+
+    # 5) Global calibration: map raw v2 → 0–100 scale using a single linear fit
+    # derived from the Round 9 calibration panel (no per-city tweaks).
+    #   target ≈ a * raw_total + b
+    # where:
+    #   a ≈ 1.77, b ≈ 36.2
+    CAL_A = 1.768
+    CAL_B = 36.202
+    calibrated_total = CAL_A * raw_total + CAL_B
+    calibrated_total = max(0.0, min(100.0, calibrated_total))
 
     breakdown: Dict = {
-        "score": round(total, 1),
+        "score": round(calibrated_total, 1),
         "breakdown": {
             "daily_urban_outdoors": round(daily_score, 1),
             "wild_adventure": round(wild_score, 1),
@@ -295,7 +305,9 @@ def get_active_outdoors_score_v2(
         ),
         "data_quality": dq,
         "area_classification": area_metadata,
-        "version": "active_outdoors_v2",
+        "version": "active_outdoors_v2_calibrated",
+        "raw_total_v2": round(raw_total, 1),
+        "calibration": {"a": CAL_A, "b": CAL_B},
     }
 
     if include_diagnostics:
@@ -312,10 +324,11 @@ def get_active_outdoors_score_v2(
         }
 
     print(
-        f"✅ Active Outdoors v2: {total:.1f}/100 "
+        f"✅ Active Outdoors v2 (calibrated): {calibrated_total:.1f}/100 "
+        f\"[raw={raw_total:.1f}] "
         f"(daily={daily_score:.1f}, wild={wild_score:.1f}, water={water_score:.1f})"
     )
-    return round(total, 1), breakdown
+    return round(calibrated_total, 1), breakdown
 
 
 def _sat_ratio_v2(x: float, target: float, max_score: float) -> float:
