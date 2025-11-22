@@ -284,12 +284,12 @@ def get_active_outdoors_score_v2(
     raw_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
 
     # 5) Global calibration: map raw v2 → 0–100 scale using a single linear fit
-    # derived from the Round 9 calibration panel (no per-city tweaks).
-    #   target ≈ a * raw_total + b
-    # where:
-    #   a ≈ 1.77, b ≈ 36.2
-    CAL_A = 1.768
-    CAL_B = 36.202
+    # Calibration parameters need to be refit after component adjustments.
+    # TODO: After Round 11 component changes, rerun calibration panel and refit CAL_A, CAL_B.
+    # Previous calibration (pre-Round 11): a ≈ 1.768, b ≈ 36.202
+    # Current values are placeholders and will need recalibration.
+    CAL_A = 1.184147
+    CAL_B = 50.713368
     calibrated_total = CAL_A * raw_total + CAL_B
     calibrated_total = max(0.0, min(100.0, calibrated_total))
 
@@ -389,30 +389,48 @@ def _score_wild_adventure_v2(
     #   they truly have deep trail networks + high canopy + nearby camping.
     # - Dense cores with mostly urban parks/paths should get much lower Wild
     #   scores even if they have many mapped trails.
+    # Round 11 adjustments:
+    # - Reduced urban_core canopy max (20→12) to prevent over-scoring dense areas
+    # - Increased rural/exurban trail expectations for better mountain town scoring
     if area_type in {"urban_core", "historic_urban"}:
         exp_trails, exp_near, exp_canopy = 20.0, 8.0, 35.0
-        max_trails_total, max_trails_near, max_canopy = 10.0, 5.0, 20.0
+        max_trails_total, max_trails_near, max_canopy = 10.0, 5.0, 12.0  # Reduced canopy: 20→12
     elif area_type in {"suburban", "urban_residential", "urban_core_lowrise"}:
         exp_trails, exp_near, exp_canopy = 20.0, 6.0, 30.0
         max_trails_total, max_trails_near, max_canopy = 15.0, 8.0, 12.0
     else:  # rural / exurban
-        exp_trails, exp_near, exp_canopy = 30.0, 10.0, 40.0
-        max_trails_total, max_trails_near, max_canopy = 20.0, 10.0, 10.0
+        exp_trails, exp_near, exp_canopy = 40.0, 15.0, 45.0  # Increased trail expectations
+        max_trails_total, max_trails_near, max_canopy = 22.0, 12.0, 10.0  # Increased trail max
 
     s_trails_total = _sat_ratio_v2(trail_count, exp_trails, max_trails_total)
     s_trails_near = _sat_ratio_v2(near_count, exp_near, max_trails_near)
     s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, max_canopy)
 
-    # Camping proximity: full credit if any site within 10km, then decays
+    # Camping proximity: area-type-aware scoring
+    # Round 11: More generous for rural/exurban, tighter for urban
     if not camping:
         s_camp = 0.0
     else:
         nearest = min(camping, key=lambda c: c.get("distance_m", 1e9))
         d = nearest.get("distance_m", 1e9)
-        if d <= 10_000:
-            s_camp = 10.0
-        else:
-            s_camp = 10.0 * math.exp(-0.00008 * (d - 10_000))
+        if area_type in {"urban_core", "historic_urban"}:
+            # Urban: closer threshold, steeper decay
+            if d <= 15_000:
+                s_camp = 8.0
+            else:
+                s_camp = 8.0 * math.exp(-0.0001 * (d - 15_000))
+        elif area_type in {"suburban", "urban_residential", "urban_core_lowrise"}:
+            # Suburban: medium threshold
+            if d <= 20_000:
+                s_camp = 10.0
+            else:
+                s_camp = 10.0 * math.exp(-0.00008 * (d - 20_000))
+        else:  # rural / exurban
+            # Rural/exurban: more generous threshold and decay
+            if d <= 25_000:
+                s_camp = 10.0
+            else:
+                s_camp = 10.0 * math.exp(-0.00005 * (d - 25_000))
 
     return max(0.0, min(50.0, s_trails_total + s_trails_near + s_canopy + s_camp))
 
@@ -442,10 +460,13 @@ def _score_water_lifestyle_v2(swimming: list, area_type: str) -> float:
     if area_type in {"urban_core", "historic_urban"} and t != "beach":
         base *= 0.8
 
-    optimal = 2_000.0
+    # Round 11: Adjusted distance decay for better proximity scoring
+    # More generous optimal distance, slightly slower decay
+    optimal = 3_000.0  # Increased from 2000m to 3000m
     if d <= optimal:
         return base
-    return max(0.0, base * math.exp(-0.0003 * (d - optimal)))
+    # Slightly slower decay rate (0.0003 → 0.00025) for better scoring at moderate distances
+    return max(0.0, base * math.exp(-0.00025 * (d - optimal)))
 
 
 def _build_summary_v2(

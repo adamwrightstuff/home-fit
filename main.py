@@ -15,7 +15,7 @@ from data_sources.cache import clear_cache, get_cache_stats, cleanup_expired_cac
 from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
-from pillars.active_outdoors import get_active_outdoors_score, get_active_outdoors_score_v2
+from pillars.active_outdoors import get_active_outdoors_score_v2
 from pillars import built_beauty, natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
@@ -143,7 +143,6 @@ def get_livability_score(request: Request,
                          tokens: Optional[str] = None,
                          include_chains: bool = False,
                          diagnostics: Optional[bool] = False,
-                         use_ao_v2: Optional[bool] = False,
                          enable_schools: Optional[bool] = None,
                          test_mode: Optional[bool] = False):
     """
@@ -336,9 +335,8 @@ def get_livability_score(request: Request,
 
     pillar_tasks = []
     if _include_pillar('active_outdoors'):
-        ao_func = get_active_outdoors_score_v2 if use_ao_v2 else get_active_outdoors_score
         pillar_tasks.append(
-            ('active_outdoors', ao_func, {
+            ('active_outdoors', get_active_outdoors_score_v2, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
             })
