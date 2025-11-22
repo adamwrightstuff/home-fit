@@ -410,7 +410,9 @@ def get_public_transit_score(
             pass
 
     # Suburban/Exurban/Rural commuter-centric layer: nearest rail + connectivity tier
-    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural'):
+    # Only applies as a fallback when base score is low (< 50) - helps catch commuter rail
+    # that might not be in Transitland, but shouldn't boost already high scores
+    if (area_type or 'unknown') in ('suburban', 'exurban', 'rural') and total_score < 50:
         nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
         connectivity_tier = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
 
@@ -433,7 +435,9 @@ def get_public_transit_score(
         # Bus bonus (0-15) proxy
         bus_bonus = min(15.0, max(0.0, len(bus_routes) * 3.0))
 
-        total_score = max(total_score, min(100.0, base + connectivity_bonus + bus_bonus))
+        commuter_score = min(100.0, base + connectivity_bonus + bus_bonus)
+        # Only use commuter score if it's better than the low base score
+        total_score = max(total_score, commuter_score)
 
         # Augment quality to reflect successful data retrieval, not mode variety
         try:
