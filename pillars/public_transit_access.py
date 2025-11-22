@@ -316,7 +316,7 @@ def get_public_transit_score(
     bus_count = len(bus_routes)
 
     def _normalize_route_count(
-        count: int, expected: Optional[int], fallback_scale: float = 1.0
+        count: int, expected: Optional[int], fallback_scale: float = 1.0, area_type: Optional[str] = None
     ) -> float:
         """
         Normalize a route count to a 0–100 score using expectations.
@@ -324,7 +324,7 @@ def get_public_transit_score(
         - At 0 routes → 0.
         - At ~expected routes → ~60.
         - At 2× expected → ~85.
-        - ≥3× expected → ~95 (cap).
+        - ≥3× expected → ~95 (cap for urban/suburban), ~80 (cap for exurban/rural).
 
         If expected is None or <=0, we treat any non-zero count as a modest
         score that scales gently with count (used in unknown/edge cases).
@@ -342,6 +342,9 @@ def get_public_transit_score(
             return 85.0 * fallback_scale
 
         ratio = count / float(expected)
+        
+        # Lower cap for exurban/rural - these areas shouldn't score as high even with exceptional transit
+        max_score = 80.0 if area_type in ('exurban', 'rural') else 95.0
 
         # No service yet or vanishingly small relative to expectation
         if ratio <= 0.1:
@@ -353,13 +356,13 @@ def get_public_transit_score(
             # From 60 at 1× to 85 at 2×
             return 60.0 + (ratio - 1.0) * 25.0
         if ratio >= 3.0:
-            return 95.0
-        # Between 2× and 3×: 85 → 95
-        return 85.0 + (ratio - 2.0) * 10.0
+            return max_score
+        # Between 2× and 3×: 85 → max_score
+        return 85.0 + (ratio - 2.0) * (max_score - 85.0)
 
-    heavy_rail_score = _normalize_route_count(heavy_count, expected_heavy)
-    light_rail_score = _normalize_route_count(light_count, expected_light, fallback_scale=0.8)
-    bus_score = _normalize_route_count(bus_count, expected_bus)
+    heavy_rail_score = _normalize_route_count(heavy_count, expected_heavy, area_type=effective_area_type)
+    light_rail_score = _normalize_route_count(light_count, expected_light, fallback_scale=0.8, area_type=effective_area_type)
+    bus_score = _normalize_route_count(bus_count, expected_bus, area_type=effective_area_type)
 
     # Core supply score: best single mode
     base_supply = max(heavy_rail_score, light_rail_score, bus_score)

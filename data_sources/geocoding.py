@@ -670,8 +670,11 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         if query_state and query_state in STATE_ABBREV_TO_NAME:
             # Add state name to query to help Nominatim prioritize
             state_name = STATE_ABBREV_TO_NAME[query_state]
+            # Special handling for DC - use "District of Columbia" explicitly
+            if query_state == "DC":
+                state_name = "District of Columbia"
             # Only add if not already in query (avoid duplication)
-            if state_name not in address.lower():
+            if state_name.lower() not in address.lower() and query_state not in address.upper():
                 query_string = f"{address}, {state_name.title()}"
         
         params = {
@@ -776,11 +779,37 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         # Validate state match if we extracted a state from query
         address_details = result.get("address", {})
         result_state = address_details.get("state", "")
+        state_mismatch = False
         if query_state and not _validate_state_match(query_state, result_state):
-            # State mismatch - this shouldn't happen with state prioritization,
-            # but log it for debugging
-            print(f"⚠️  State mismatch: query had '{query_state}' but got '{result_state}' for '{address}'")
-
+            # State mismatch - retry with limit=5 to find correct state
+            print(f"⚠️  State mismatch: query had '{query_state}' but got '{result_state}' for '{address}', retrying...")
+            state_mismatch = True
+            
+            # Retry with higher limit to find state match
+            params["limit"] = 5
+            retry_response = requests.get(
+                NOMINATIM_URL, params=params, headers=headers, timeout=10)
+            
+            if retry_response.status_code == 200:
+                retry_data = retry_response.json()
+                if retry_data:
+                    # Find first result matching the query state
+                    for candidate in retry_data:
+                        candidate_state = candidate.get("address", {}).get("state", "")
+                        if _validate_state_match(query_state, candidate_state):
+                            result = candidate
+                            # Update coordinates from new result
+                            lat = float(result["lat"])
+                            lon = float(result["lon"])
+                            address_details = result.get("address", {})
+                            result_state = candidate_state
+                            print(f"✅ Found state match: {result_state} for '{address}'")
+                            state_mismatch = False
+                            break
+                    
+                    if state_mismatch:
+                        print(f"⚠️  No state match found for '{query_state}' in '{address}', using first result")
+        
         zip_code = address_details.get("postcode", "")
         state = result_state
         city = address_details.get("city") or address_details.get(
@@ -916,8 +945,11 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         if query_state and query_state in STATE_ABBREV_TO_NAME:
             # Add state name to query to help Nominatim prioritize
             state_name = STATE_ABBREV_TO_NAME[query_state]
+            # Special handling for DC - use "District of Columbia" explicitly
+            if query_state == "DC":
+                state_name = "District of Columbia"
             # Only add if not already in query (avoid duplication)
-            if state_name not in address.lower():
+            if state_name.lower() not in address.lower() and query_state not in address.upper():
                 query_string = f"{address}, {state_name.title()}"
         
         # First attempt: normal query with limit=1
