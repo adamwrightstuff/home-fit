@@ -1,0 +1,78 @@
+{
+  "calibrated_config": {
+    "at_expected": 60.0,
+    "ratio_expected": 1.0,
+    "at_good": 80.0,
+    "ratio_good": 2.0,
+    "at_excellent": 90.0,
+    "ratio_excellent": 3.0,
+    "at_exceptional": 95.0,
+    "ratio_exceptional": 5.0,
+    "avg_error": 18.125,
+    "max_error": 45.0,
+    "rmse": 23.29431261059231
+  },
+  "test_locations": {
+    "Midtown Manhattan NY": {
+      "target": 100,
+      "heavy_rail": 65,
+      "light_rail": 1,
+      "bus": 403,
+      "area_type": "urban_core"
+    },
+    "The Loop Chicago IL": {
+      "target": 97,
+      "heavy_rail": 85,
+      "light_rail": 3,
+      "bus": 52,
+      "area_type": "suburban"
+    },
+    "Back Bay Boston MA": {
+      "target": 95,
+      "heavy_rail": 85,
+      "light_rail": 68,
+      "bus": 85,
+      "area_type": "urban_core"
+    },
+    "Pearl District Portland OR": {
+      "target": 87,
+      "heavy_rail": 3,
+      "light_rail": 8,
+      "bus": 51,
+      "area_type": "urban_core"
+    },
+    "Uptown Charlotte NC": {
+      "target": 55,
+      "heavy_rail": 0,
+      "light_rail": 2,
+      "bus": 47,
+      "area_type": "urban_residential"
+    },
+    "Midtown Atlanta GA": {
+      "target": 78,
+      "heavy_rail": 3,
+      "light_rail": 0,
+      "bus": 7,
+      "area_type": "urban_residential"
+    },
+    "Koreatown Los Angeles CA": {
+      "target": 73,
+      "heavy_rail": 13,
+      "light_rail": 2,
+      "bus": 90,
+      "area_type": "urban_core"
+    },
+    "Dupont Circle Washington DC": {
+      "target": 90,
+      "heavy_rail": 0,
+      "light_rail": 0,
+      "bus": 2,
+      "area_type": "rural"
+    }
+  },
+  "validation_metrics": {
+    "mean_error": 27.142078754578755,
+    "median_error": 33.46923076923077,
+    "max_error": 58.75
+  }
+}

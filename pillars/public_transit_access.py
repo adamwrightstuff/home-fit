@@ -319,12 +319,17 @@ def get_public_transit_score(
         count: int, expected: Optional[int], fallback_scale: float = 1.0, area_type: Optional[str] = None
     ) -> float:
         """
-        Normalize a route count to a 0–100 score using expectations.
-
-        - At 0 routes → 0.
-        - At ~expected routes → ~60.
-        - At 2× expected → ~85.
-        - ≥3× expected → ~95 (cap for urban/suburban), ~80 (cap for exurban/rural).
+        Normalize a route count to a 0–100 score using research-backed expectations.
+        
+        Calibrated curve based on target scores from real-world test locations:
+        - At 0 routes → 0
+        - At expected (1×) → 60 points ("meets expectations")
+        - At 2× expected → 80 points ("good")
+        - At 3× expected → 90 points ("excellent")
+        - At 5× expected → 95 points ("exceptional")
+        - Above 5× → capped at 95 (all area types)
+        
+        Scores reflect actual quality - no artificial caps by area type per design principles.
 
         If expected is None or <=0, we treat any non-zero count as a modest
         score that scales gently with count (used in unknown/edge cases).
@@ -343,22 +348,35 @@ def get_public_transit_score(
 
         ratio = count / float(expected)
         
-        # Lower cap for exurban/rural - these areas shouldn't score as high even with exceptional transit
-        max_score = 80.0 if area_type in ('exurban', 'rural') else 95.0
-
+        # Research-backed calibrated breakpoints (from calibrate_transit_scoring.py)
+        # Calibrated against target scores: Midtown Manhattan (100), Loop Chicago (97), 
+        # Back Bay Boston (95), Pearl District (87), etc.
+        # Scores reflect actual quality - no artificial caps by area type
+        
         # No service yet or vanishingly small relative to expectation
         if ratio <= 0.1:
             return 0.0
+        
+        # At expected (1×) → 60 points
         if ratio < 1.0:
-            # Grow linearly up to 60 at expectation
             return 60.0 * ratio
+        
+        # At 2× expected → 80 points
         if ratio < 2.0:
-            # From 60 at 1× to 85 at 2×
-            return 60.0 + (ratio - 1.0) * 25.0
-        if ratio >= 3.0:
-            return max_score
-        # Between 2× and 3×: 85 → max_score
-        return 85.0 + (ratio - 2.0) * (max_score - 85.0)
+            return 60.0 + (ratio - 1.0) * 20.0
+        
+        # At 3× expected → 90 points
+        if ratio < 3.0:
+            return 80.0 + (ratio - 2.0) * 10.0
+        
+        # At 5× expected → 95 points (exceptional)
+        if ratio < 5.0:
+            return 90.0 + (ratio - 3.0) * 2.5
+        
+        # Above 5× → cap at 95 (exceptional transit)
+        # Very high ratios (10×, 20×+) still cap at 95 to prevent over-scoring
+        # This cap applies to all area types - scores reflect actual quality
+        return 95.0
 
     heavy_rail_score = _normalize_route_count(heavy_count, expected_heavy, area_type=effective_area_type)
     light_rail_score = _normalize_route_count(light_count, expected_light, fallback_scale=0.8, area_type=effective_area_type)
@@ -890,10 +908,15 @@ def _score_bus_routes(routes: List[Dict], lat: float = None, lon: float = None, 
 def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List) -> Dict:
     """Build summary of transit access from routes."""
     summary = {
-        "total_stops": len(all_routes),  # Using route count as proxy
-        "heavy_rail_stops": len(heavy_rail),
-        "light_rail_stops": len(light_rail),
-        "bus_stops": len(bus),
+        "total_routes": len(all_routes),  # Total distinct routes (not stops)
+        "heavy_rail_routes": len(heavy_rail),
+        "light_rail_routes": len(light_rail),
+        "bus_routes": len(bus),
+        # Legacy field names for backward compatibility (deprecated - use *_routes)
+        "total_stops": len(all_routes),  # DEPRECATED: Actually route count, not stops
+        "heavy_rail_stops": len(heavy_rail),  # DEPRECATED: Actually route count
+        "light_rail_stops": len(light_rail),  # DEPRECATED: Actually route count
+        "bus_stops": len(bus),  # DEPRECATED: Actually route count
         "nearest_heavy_rail": heavy_rail[0] if heavy_rail else None,
         "nearest_light_rail": light_rail[0] if light_rail else None,
         "nearest_bus": bus[0] if bus else None,
@@ -970,6 +993,11 @@ def _empty_breakdown() -> Dict:
             "bus": 0
         },
         "summary": {
+            "total_routes": 0,
+            "heavy_rail_routes": 0,
+            "light_rail_routes": 0,
+            "bus_routes": 0,
+            # Legacy field names for backward compatibility
             "total_stops": 0,
             "heavy_rail_stops": 0,
             "light_rail_stops": 0,

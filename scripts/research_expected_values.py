@@ -310,10 +310,11 @@ def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[
         data["bus_score"] = bd.get("bus")
         data["commute_time_score"] = bd.get("commute_time")
 
-        data["total_stops"] = sm.get("total_stops")
-        data["heavy_rail_stops"] = sm.get("heavy_rail_stops")
-        data["light_rail_stops"] = sm.get("light_rail_stops")
-        data["bus_stops"] = sm.get("bus_stops")
+        # Use new field names (routes) but fall back to old names (stops) for backward compatibility
+        data["total_stops"] = sm.get("total_routes") or sm.get("total_stops")
+        data["heavy_rail_stops"] = sm.get("heavy_rail_routes") or sm.get("heavy_rail_stops")
+        data["light_rail_stops"] = sm.get("light_rail_routes") or sm.get("light_rail_stops")
+        data["bus_stops"] = sm.get("bus_routes") or sm.get("bus_stops")
 
         # Commute minutes are logged in summary if available
         data["mean_commute_minutes"] = sm.get("mean_commute_minutes")
