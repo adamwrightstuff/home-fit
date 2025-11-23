@@ -321,31 +321,6 @@ def get_public_transit_score(
     light_count = len(light_rail_routes)
     bus_count = len(bus_routes)
     
-    # Detect commuter rail suburbs: suburban areas with heavy rail near major metros
-    # These should be scored with commuter rail as the primary asset, not just a bonus
-    is_commuter_rail_suburb = False
-    if effective_area_type == 'suburban' and heavy_count > 0:
-        # Check if within reasonable commuter distance of a major metro
-        from data_sources.regional_baselines import RegionalBaselineManager
-        baseline_mgr = RegionalBaselineManager()
-        metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
-        
-        if metro_distance_km is not None and metro_distance_km < 50:
-            # Check if it's a major metro (population > 2M)
-            metro_name = baseline_mgr._detect_metro_area(city, lat, lon)
-            if metro_name:
-                metro_data = baseline_mgr.major_metros.get(metro_name, {})
-                metro_population = metro_data.get('population', 0)
-                if metro_population > 2000000:
-                    is_commuter_rail_suburb = True
-                    # Adjust expected heavy rail routes for commuter rail suburbs
-                    # Commuter rail is the primary asset - 1 route should score ~80-85 (target from LLM guidance)
-                    # Set expectation to 0.1 so 1 route = 10× expected = ~84 points base
-                    # This recognizes that commuter rail service is exceptional for suburban areas
-                    if expected_heavy is None or expected_heavy <= 0:
-                        expected_heavy = 0.1
-                        print(f"🚇 Detected commuter rail suburb: {heavy_count} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})")
-                        print(f"   Adjusting expected_heavy_rail_routes to 0.1 for commuter rail scoring (1 route = exceptional service for suburb)")
 
     def _normalize_route_count(
         count: int, expected: Optional[int], fallback_scale: float = 1.0, area_type: Optional[str] = None
