@@ -51,7 +51,6 @@ TARGET_AREA_TYPES: Dict[str, str] = {
     "taos nm": "rural",
     "new orleans la garden district": "historic_urban",
     "scottsdale az old town": "urban_core_lowrise",
-    "uptown charlotte nc": "urban_residential",
 }
 
 AREA_TYPE_DIAGNOSTICS_PATH = Path("analysis/area_type_diagnostics.jsonl")
