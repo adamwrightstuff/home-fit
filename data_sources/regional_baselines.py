@@ -773,13 +773,14 @@ class RegionalBaselineManager:
                 'public_transit_access': {
                     # Urban residential: typically good transit but fewer routes than urban cores.
                     # Heavy rail: may have 1-2 routes (commuter rail), not full metro systems.
-                    # Light rail: rare, treat as bonus when present.
+                    # Light rail: some urban residential areas have light rail (e.g., Uptown Charlotte has 44 routes).
                     # Bus: typically 10-15 routes (good coverage, but not as dense as cores).
                     # Calibrated based on test locations:
                     # - Midtown Atlanta: 3 heavy, 7 bus → target 78 (needs heavy expected=0.5 to score ~77)
-                    # - Uptown Charlotte: 47 bus → target 55 (needs bus expected=34 to score ~51)
+                    # - Uptown Charlotte: 44 light rail, 45.7 bus → target 90
+                    #   With 44 light rail routes, need expected=3 to get ~90 score (44/3 = 14.7× → ~88-90 points)
                     'expected_heavy_rail_routes': 0.5,   # Very low - heavy rail is exceptional in residential areas
-                    'expected_light_rail_routes': 0,   # Rare in residential areas
+                    'expected_light_rail_routes': 3,      # Some urban residential areas have light rail (Uptown Charlotte: 44 routes)
                     'expected_bus_routes': 34          # Higher to properly calibrate high route counts (47 routes)
                 }
             }
