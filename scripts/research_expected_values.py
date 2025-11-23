@@ -104,6 +104,24 @@ SAMPLE_LOCATIONS = {
         "Augusta ME",
         "Telluride CO",
         "Jackson WY",
+    ],
+    'commuter_rail_suburb': [
+        "Scarsdale NY",
+        "Montclair NJ",
+        "Greenwich CT",
+        "Naperville IL",
+        "Evanston IL",
+        "Oak Park IL",
+        "Newton MA",
+        "Brookline MA",
+        "Ardmore PA",
+        "Cherry Hill NJ",
+        "Palo Alto CA",
+        "Pleasanton CA",
+        "Kirkland WA",
+        "Shaker Heights OH",
+        "Carmel IN",
+        "Bronxville NY",  # Known test case
     ]
 }
 
@@ -449,10 +467,11 @@ def calculate_statistics(data_by_area_type: Dict[str, List[Dict]]) -> Dict:
             for l in tr_locations
             if l["transit"]["commute_time_score"] is not None
         ]
-        total_stops = [l["transit"]["total_stops"] for l in tr_locations if l["transit"]["total_stops"] is not None]
-        heavy_stops = [l["transit"]["heavy_rail_stops"] for l in tr_locations if l["transit"]["heavy_rail_stops"] is not None]
-        light_stops = [l["transit"]["light_rail_stops"] for l in tr_locations if l["transit"]["light_rail_stops"] is not None]
-        bus_stops = [l["transit"]["bus_stops"] for l in tr_locations if l["transit"]["bus_stops"] is not None]
+        # Note: field names are "stops" but actually contain route counts (for backward compatibility)
+        total_routes = [l["transit"]["total_stops"] for l in tr_locations if l["transit"]["total_stops"] is not None]
+        heavy_rail_routes = [l["transit"]["heavy_rail_stops"] for l in tr_locations if l["transit"]["heavy_rail_stops"] is not None]
+        light_rail_routes = [l["transit"]["light_rail_stops"] for l in tr_locations if l["transit"]["light_rail_stops"] is not None]
+        bus_routes = [l["transit"]["bus_stops"] for l in tr_locations if l["transit"]["bus_stops"] is not None]
         commute_minutes = [
             l["transit"]["mean_commute_minutes"]
             for l in tr_locations
@@ -505,10 +524,10 @@ def calculate_statistics(data_by_area_type: Dict[str, List[Dict]]) -> Dict:
                 "light_rail_score": calc_stats(light_scores),
                 "bus_score": calc_stats(bus_scores),
                 "commute_time_score": calc_stats(commute_scores),
-                "total_stops": calc_stats(total_stops),
-                "heavy_rail_stops": calc_stats(heavy_stops),
-                "light_rail_stops": calc_stats(light_stops),
-                "bus_stops": calc_stats(bus_stops),
+                "total_routes": calc_stats(total_routes),  # Actually route counts, not stops
+                "heavy_rail_routes": calc_stats(heavy_rail_routes),  # Actually route counts
+                "light_rail_routes": calc_stats(light_rail_routes),  # Actually route counts
+                "bus_routes": calc_stats(bus_routes),  # Actually route counts
                 "mean_commute_minutes": calc_stats(commute_minutes),
                 "transit_modes_count": calc_stats(modes_count),
             },
@@ -691,9 +710,17 @@ def main():
             print(f"  Businesses (1km): median={am['businesses_1km']['median']:.1f}")
 
         tr = area_stats.get("transit", {})
-        if tr.get("total_stops"):
+        if tr.get("total_routes"):
             print(
-                f"  Transit routes (radius profile): median={tr['total_stops']['median']:.1f}"
+                f"  Transit routes: median={tr['total_routes']['median']:.1f}"
+            )
+        if tr.get("heavy_rail_routes"):
+            print(
+                f"  Heavy rail routes: median={tr['heavy_rail_routes']['median']:.1f}"
+            )
+        if tr.get("bus_routes"):
+            print(
+                f"  Bus routes: median={tr['bus_routes']['median']:.1f}"
             )
         if tr.get("transit_score"):
             print(
