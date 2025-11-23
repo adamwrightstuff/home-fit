@@ -1184,8 +1184,49 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                     result["lat"] = str(lat)
                     result["lon"] = str(lon)
                 else:
-                    # For specific nodes/ways (addresses), use Nominatim coordinates directly
-                    print(f"📍 Using Nominatim coordinates for {osm_type} '{address}': {lat}, {lon}")
+                    # Try to find a place node for the location name before falling back to Nominatim coordinates
+                    # This helps with locations like "The Woodlands" where Nominatim returns a way but OSM has a place node
+                    # IMPORTANT: Only use place node if it's reasonably close to Nominatim coordinates (<10km)
+                    # This ensures we don't dramatically change coordinates that are already working correctly
+                    address_details_temp = result.get("address", {})
+                    location_name = (address_details_temp.get("city") or 
+                                   address_details_temp.get("town") or
+                                   address_details_temp.get("village") or
+                                   address_details_temp.get("suburb") or
+                                   address_details_temp.get("neighbourhood"))
+                    result_state_temp = address_details_temp.get("state", "")
+                    query_state_temp = _extract_state_from_query(address) or result_state_temp
+                    
+                    place_coords = None
+                    if location_name:
+                        # Try place=city, place=town, place=suburb, place=neighbourhood in order
+                        for place_type in ["city", "town", "suburb", "neighbourhood"]:
+                            place_coords = _find_place_node(location_name, place_type, query_state_temp)
+                            if place_coords:
+                                # Verify the place node is reasonably close to Nominatim coordinates
+                                # If it's >10km away, it might be a different location - don't use it
+                                from data_sources.utils import haversine_distance
+                                place_lat, place_lon, _ = place_coords
+                                distance_m = haversine_distance(lat, lon, place_lat, place_lon)
+                                if distance_m < 10000:  # 10km threshold
+                                    break
+                                else:
+                                    # Place node is too far - might be wrong location, skip it
+                                    print(f"⚠️  Place node for '{location_name}' is {distance_m:.0f}m away from Nominatim, skipping (too far)")
+                                    place_coords = None
+                                    continue
+                    
+                    if place_coords:
+                        rel_lat, rel_lon, source = place_coords
+                        lat = rel_lat
+                        lon = rel_lon
+                        coordinate_source = source
+                        print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
+                        result["lat"] = str(lat)
+                        result["lon"] = str(lon)
+                    else:
+                        # For specific nodes/ways (addresses), use Nominatim coordinates directly
+                        print(f"📍 Using Nominatim coordinates for {osm_type} '{address}': {lat}, {lon}")
 
         # Extract address details
         address_details = result.get("address", {})
