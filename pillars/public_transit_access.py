@@ -299,7 +299,13 @@ def get_public_transit_score(
     # Rural areas: value any service (bus, rail, etc.)
     
     # Derive effective area type for expectations (fallback to 'unknown')
+    # Map area types that don't have explicit transit expectations to similar types
     effective_area_type = area_type or "unknown"
+    
+    # Map historic_urban to urban_residential for transit expectations
+    # Historic urban areas are typically dense, walkable neighborhoods similar to urban_residential
+    if effective_area_type == "historic_urban":
+        effective_area_type = "urban_residential"
 
     # Look up contextual expectations for transit by area type
     transit_expectations = get_contextual_expectations(
