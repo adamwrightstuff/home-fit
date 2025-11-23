@@ -252,12 +252,26 @@ def _find_place_node(name: str, place_type: str, state: Optional[str] = None) ->
                             elif elem_state and state.lower() in str(elem_state).lower():
                                 candidates.insert(0, elem)  # Prioritize state match
                             else:
+                                # No state tag or doesn't match - if we have state requirement, can't verify
+                                # Don't add to candidates if we can't verify state match
+                                if not elem_state:
+                                    # No state tag - can't verify, skip this candidate
+                                    continue
                                 candidates.append(elem)
                         else:
                             candidates.append(elem)
                 
                 if candidates:
                     best = candidates[0]
+                    # If we have state requirement, verify the best candidate actually matches
+                    if state:
+                        best_tags = best.get("tags", {})
+                        best_state = best_tags.get("addr:state") or best_tags.get("is_in:state")
+                        if not best_state or state.lower() not in str(best_state).lower():
+                            # Can't verify state match - return None to use Nominatim coordinates
+                            print(f"⚠️  Place node for '{name}' found but state can't be verified (required: {state}, found: {best_state}), using Nominatim")
+                            return None
+                    
                     source_name = f"place_{place_type}"
                     print(f"✅ Found {place_type} node for '{name}': {best['lat']}, {best['lon']}")
                     return float(best["lat"]), float(best["lon"]), source_name
@@ -1080,42 +1094,49 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             result_state = address_details.get("state", "")
             query_state = _extract_state_from_query(address) or result_state
             
-            # For DC queries, ensure we're looking for Washington, DC specifically
-            # If query contains "DC" or "District of Columbia", prioritize that
-            if query_state == "DC" or "district of columbia" in address.lower():
-                # For DC, search for "Washington" with DC state context
-                # But also try "Dupont Circle" as a neighborhood in DC
-                if "dupont" in address.lower() or "circle" in address.lower():
-                    # Try Dupont Circle as a neighborhood first
-                    dupont_coords = _find_place_node("Dupont Circle", "neighbourhood", "DC")
-                    if dupont_coords:
-                        rel_lat, rel_lon, source = dupont_coords
-                        lat = rel_lat
-                        lon = rel_lon
-                        coordinate_source = source
-                        print(f"📍 Using OSM {source} for Dupont Circle in DC: {lat}, {lon}")
-                        result["lat"] = str(lat)
-                        result["lon"] = str(lon)
-                        address_details = result.get("address", {})
-                        zip_code = address_details.get("postcode", "")
-                        state = address_details.get("state", "")
-                        city = address_details.get("city") or address_details.get("town") or address_details.get("village", "")
-                        return lat, lon, zip_code, state, city, result
-            
-            relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
-            if relation_coords:
-                rel_lat, rel_lon, source = relation_coords
-                # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
-                lat = rel_lat
-                lon = rel_lon
-                coordinate_source = source
-                print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
-                # Update result dict with new coordinates for consistency
-                result["lat"] = str(lat)
-                result["lon"] = str(lon)
+            # CRITICAL: If Nominatim already returned correct state, only use place nodes if we can verify state
+            # Don't try to "improve" with place nodes if we can't verify state - this causes wrong city selection
+            if query_state and _validate_state_match(query_state, result_state):
+                # Nominatim has correct state - try to get better coordinates from OSM, but only if we can verify state
+                
+                # For DC queries, ensure we're looking for Washington, DC specifically
+                if query_state == "DC" or "district of columbia" in address.lower():
+                    # For DC, search for "Washington" with DC state context
+                    # But also try "Dupont Circle" as a neighborhood in DC
+                    if "dupont" in address.lower() or "circle" in address.lower():
+                        # Try Dupont Circle as a neighborhood first
+                        dupont_coords = _find_place_node("Dupont Circle", "neighbourhood", "DC")
+                        if dupont_coords:
+                            rel_lat, rel_lon, source = dupont_coords
+                            lat = rel_lat
+                            lon = rel_lon
+                            coordinate_source = source
+                            print(f"📍 Using OSM {source} for Dupont Circle in DC: {lat}, {lon}")
+                            result["lat"] = str(lat)
+                            result["lon"] = str(lon)
+                            address_details = result.get("address", {})
+                            zip_code = address_details.get("postcode", "")
+                            state = address_details.get("state", "")
+                            city = address_details.get("city") or address_details.get("town") or address_details.get("village", "")
+                            return lat, lon, zip_code, state, city, result
+                
+                relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
+                if relation_coords:
+                    rel_lat, rel_lon, source = relation_coords
+                    # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
+                    lat = rel_lat
+                    lon = rel_lon
+                    coordinate_source = source
+                    print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
+                    # Update result dict with new coordinates for consistency
+                    result["lat"] = str(lat)
+                    result["lon"] = str(lon)
+                else:
+                    # Place node lookup failed or couldn't verify state - use Nominatim coordinates
+                    print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
             else:
-                # Fall back to Nominatim coordinates if relation query fails
-                print(f"⚠️  OSM relation query failed for '{address}', using Nominatim coordinates")
+                # State mismatch or no state - use Nominatim coordinates directly
+                print(f"📍 Using Nominatim coordinates for '{address}' (state mismatch or no state): {lat}, {lon}")
         elif osm_type in ("node", "way") and osm_id:
             # Check if this is a neighborhood - if so, try to find place=neighbourhood/suburb node
             if _is_neighborhood_result(result):
