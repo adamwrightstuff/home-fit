@@ -1437,7 +1437,7 @@ def score_architectural_diversity_as_beauty(
             with ThreadPoolExecutor(max_workers=1) as timeout_executor:
                 future_shared = timeout_executor.submit(_fetch_roads_and_buildings, lat, lon, 2000)
                 try:
-                    shared_osm_data = future_shared.result(timeout=20)  # 20 second timeout for shared fetch
+                    shared_osm_data = future_shared.result(timeout=15)  # Reduced from 20s to 15s
                     if shared_osm_data is None:
                         logger.warning("Shared OSM data fetch returned None (likely rate limited), Phase 2/3 metrics will try to fetch their own data")
                     else:
@@ -1483,10 +1483,11 @@ def score_architectural_diversity_as_beauty(
                     else:  # facade_rhythm
                         return {"facade_rhythm": None, "coverage_confidence": 0.0}
 
-            block_grain_data = get_with_timeout(future_block, 30, "block_grain")
-            streetwall_data = get_with_timeout(future_streetwall, 30, "streetwall")
-            setback_data = get_with_timeout(future_setback, 30, "setback")
-            facade_rhythm_data = get_with_timeout(future_facade, 30, "facade_rhythm")
+            # Reduced timeouts from 30s to 15s for faster failure (caching handles retries)
+            block_grain_data = get_with_timeout(future_block, 15, "block_grain")
+            streetwall_data = get_with_timeout(future_streetwall, 15, "streetwall")
+            setback_data = get_with_timeout(future_setback, 15, "setback")
+            facade_rhythm_data = get_with_timeout(future_facade, 15, "facade_rhythm")
         
         raw_block = block_grain_data.get("block_grain")
         block_grain_value = float(raw_block) if isinstance(raw_block, (int, float)) else None

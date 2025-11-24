@@ -170,9 +170,13 @@ def _retry_overpass(
                             _current_min_query_interval = new_interval
                         
                         # If fail_fast is True and rate limited on second attempt or later, give up faster
+                        # Also cap retry_after at 10s even for CRITICAL queries to prevent excessive waits
                         if fail_fast and i >= 1:
                             logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
                             return None  # Fail fast instead of waiting more
+                        
+                        # Cap retry_after at 10s to prevent excessive waits (even for CRITICAL)
+                        retry_after = min(retry_after, 10.0)
                         
                         if i < max_attempts - 1:
                             logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
@@ -243,7 +247,7 @@ DEBUG_PARKS = True  # Set False to silence park debugging
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=30)
+@handle_api_timeout(timeout_seconds=20)  # Reduced from 30s
 def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Query OSM for parks, playgrounds, and tree features.
@@ -258,7 +262,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     """
     # Core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
       // PARKS & GREEN SPACES - core (skip nodes except playgrounds)
       way["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
@@ -285,7 +289,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             return requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=40,
+                timeout=20,  # Reduced from 40s for faster failure
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
@@ -329,7 +333,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=40)
+@handle_api_timeout(timeout_seconds=25)  # Reduced from 40s
 def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
     """
     Query OSM for outdoor recreation (hiking, swimming, camping).
@@ -374,7 +378,7 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
             r = requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=50,
+                timeout=25,  # Reduced from 50s for faster failure
                 headers={"User-Agent": "HomeFit/1.0"}
             )
             if r.status_code != 200:
@@ -571,7 +575,7 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
         }
     """
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
       // HISTORIC BUILDINGS - primary query (standard historic tag)
       node["historic"](around:{radius_m},{lat},{lon});
@@ -719,7 +723,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         return requests.post(
             get_overpass_url(),
             data={"data": query},
-            timeout=70,
+            timeout=30,  # Reduced from 70s for faster failure
             headers={"User-Agent": "HomeFit/1.0"}
         )
     
@@ -1063,7 +1067,7 @@ def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int =
     """
     try:
         q = f"""
-        [out:json][timeout:25];
+        [out:json][timeout:15];
         (
           way["highway"~"^(path|footway)$"](around:{radius_m},{lat},{lon});
         );
@@ -1209,7 +1213,7 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
 
     try:
         q = f"""
-        [out:json][timeout:25];
+        [out:json][timeout:15];
         (
           node["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
           way["tourism"="viewpoint"](around:{radius_m},{lat},{lon});
@@ -1994,7 +1998,7 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
         List of railway stations with name, lat, lon, distance
     """
     query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
       // Railway stations
       node["railway"="station"](around:{radius_m},{lat},{lon});
