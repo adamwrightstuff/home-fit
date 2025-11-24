@@ -371,17 +371,30 @@ def get_public_transit_score(
             return 0.0
 
         # Fallback behavior when we don't have an expected value
-        # More conservative fallback to prevent over-scoring when expectations are missing
+        # Use ratio-based scoring with a conservative baseline expected value (0.5)
+        # This makes scoring objective and scalable, rather than arbitrary point values
+        # Rationale: If an area type doesn't typically have this mode, treat 0.5 routes as "expected"
+        # This allows ratio-based scoring that scales appropriately
         if not expected or expected <= 0:
-            if count == 1:
-                return 40.0 * fallback_scale  # More conservative (was 50)
-            if count == 2:
-                return 55.0 * fallback_scale  # More conservative (was 70)
-            if count == 3:
-                return 65.0 * fallback_scale  # More conservative
-            if count >= 4:
-                return 75.0 * fallback_scale  # More conservative (was 85)
-            return 0.0
+            # Use conservative baseline: 0.5 routes as "expected" for unexpected modes
+            # This means 1 route = 2× baseline → 55 points, 2 routes = 4× baseline → 72 points
+            baseline_expected = 0.5
+            ratio = count / baseline_expected
+            
+            # Apply same ratio-based curve, but cap more conservatively for unexpected modes
+            # Cap at 75 points (vs 95 for expected modes) to prevent over-scoring
+            if ratio <= 0.1:
+                return 0.0
+            if ratio < 1.0:
+                return 40.0 * ratio
+            if ratio < 2.0:
+                return 40.0 + (ratio - 1.0) * 15.0
+            if ratio < 3.0:
+                return 55.0 + (ratio - 2.0) * 10.0
+            if ratio < 5.0:
+                return 65.0 + (ratio - 3.0) * 3.5
+            # Cap at 75 for unexpected modes (more conservative than 95 for expected modes)
+            return min(75.0, 72.0 + (ratio - 5.0) * 0.5)
 
         ratio = count / float(expected)
         
