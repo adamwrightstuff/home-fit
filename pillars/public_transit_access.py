@@ -241,6 +241,7 @@ def get_public_transit_score(
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
     city: Optional[str] = None,
+    density: Optional[float] = None,  # Pre-computed density to avoid redundant API calls
 ) -> Tuple[float, Dict]:
     """
     Calculate public transit access score (0-100).
@@ -456,8 +457,10 @@ def get_public_transit_score(
     }
     
     # Detect actual area type for data quality assessment
-    from data_sources import census_api
-    density = census_api.get_population_density(lat, lon)
+    # Use pre-computed density if available to avoid redundant API calls
+    if density is None:
+        from data_sources import census_api
+        density = census_api.get_population_density(lat, lon)
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
 

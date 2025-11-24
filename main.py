@@ -250,6 +250,7 @@ def get_livability_score(request: Request,
     # Compute a single area_type centrally for consistent radius profiles
     # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
     # Use multi-factor classification: business density, building coverage, density, keywords
+    # OPTIMIZATION: Parallelize independent API calls to reduce latency
     census_tract = None
     density = 0.0
     try:
@@ -257,12 +258,29 @@ def get_livability_score(request: Request,
         from data_sources import data_quality as _dq
         from data_sources import osm_api
         from data_sources.arch_diversity import compute_arch_diversity
+        from data_sources.regional_baselines import RegionalBaselineManager
         
-        density = _ca.get_population_density(lat, lon) or 0.0
+        # Parallelize independent API calls that don't depend on each other
+        # Note: get_population_density calls get_census_tract internally, so we fetch tract first
+        # then use it for density to avoid redundant calls
+        def _fetch_census_tract():
+            try:
+                return _ca.get_census_tract(lat, lon)
+            except Exception as e:
+                logger.warning(f"Census tract lookup failed (non-fatal): {e}")
+                return None
         
-        # Get business count for classification (skip if amenities pillar not requested)
-        business_count = 0
-        if only_pillars is None or "neighborhood_amenities" in only_pillars:
+        def _fetch_density(tract):
+            try:
+                # Use pre-fetched tract to avoid redundant get_census_tract call
+                return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+            except Exception as e:
+                logger.warning(f"Density lookup failed (non-fatal): {e}")
+                return 0.0
+        
+        def _fetch_business_count():
+            if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
+                return 0
             try:
                 business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
                 if business_data:
@@ -270,28 +288,48 @@ def get_livability_score(request: Request,
                                     business_data.get("tier2_social", []) +
                                     business_data.get("tier3_culture", []) +
                                     business_data.get("tier4_services", []))
-                    business_count = len(all_businesses)
+                    return len(all_businesses)
+                return 0
             except Exception as e:
                 logger.warning(f"Business count query failed (non-fatal): {e}")
+                return 0
         
-        # Get built coverage for classification (will be cached for beauty pillar)
-        built_coverage = None
-        try:
-            arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-            if arch_diversity:
-                built_coverage = arch_diversity.get("built_coverage_ratio")
-        except Exception as e:
-            logger.warning(f"Built coverage query failed (non-fatal): {e}")
+        def _fetch_built_coverage():
+            try:
+                arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+                if arch_diversity:
+                    return arch_diversity.get("built_coverage_ratio")
+                return None
+            except Exception as e:
+                logger.warning(f"Built coverage query failed (non-fatal): {e}")
+                return None
         
-        # Get distance to principal city for classification
-        metro_distance_km = None
-        try:
-            from data_sources.regional_baselines import RegionalBaselineManager
-            baseline_mgr = RegionalBaselineManager()
-            # Pass city parameter to help with metro detection, but geographic detection will work as fallback
-            metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
-        except Exception as e:
-            logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
+        def _fetch_metro_distance():
+            try:
+                baseline_mgr = RegionalBaselineManager()
+                return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+            except Exception as e:
+                logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
+                return None
+        
+        # Execute independent calls in parallel (tract first, then density uses it)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_census_tract = executor.submit(_fetch_census_tract)
+            future_business_count = executor.submit(_fetch_business_count)
+            future_built_coverage = executor.submit(_fetch_built_coverage)
+            future_metro_distance = executor.submit(_fetch_metro_distance)
+            
+            # Get census tract first (needed for density)
+            census_tract = future_census_tract.result()
+            
+            # Now fetch density using pre-computed tract (avoids redundant get_census_tract call)
+            future_density = executor.submit(_fetch_density, census_tract)
+            
+            # Wait for remaining results
+            density = future_density.result()
+            business_count = future_business_count.result()
+            built_coverage = future_built_coverage.result()
+            metro_distance_km = future_metro_distance.result()
         
         # Enhanced multi-factor classification with principal city distance
         area_type = _dq.detect_area_type(
@@ -303,13 +341,6 @@ def get_livability_score(request: Request,
             built_coverage=built_coverage,  # For building coverage
             metro_distance_km=metro_distance_km  # Distance to principal city
         )
-        
-        # Pre-compute census tract for pillars (used by housing, beauty, etc.)
-        try:
-            census_tract = _ca.get_census_tract(lat, lon)
-        except Exception as e:
-            logger.warning(f"Census tract lookup failed: {e}")
-            census_tract = None
     except Exception:
         area_type = "unknown"
 
@@ -359,7 +390,8 @@ def get_livability_score(request: Request,
     if _include_pillar('public_transit_access'):
         pillar_tasks.append(
             ('public_transit_access', get_public_transit_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
+                'city': city, 'density': density  # Pass pre-computed density to avoid redundant API calls
             })
         )
     if _include_pillar('healthcare_access'):

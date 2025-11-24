@@ -188,12 +188,14 @@ def get_healthcare_access_score(lat: float, lon: float,
     """
     print(f"🏥 Analyzing healthcare access...")
 
-    # Determine area type for radius tuning (allow centrally provided override)
-    from data_sources import census_api
-    pop_density = census_api.get_population_density(lat, lon) or 0.0
-    from data_sources import data_quality as dq
-    detected_area_type = dq.detect_area_type(lat, lon, pop_density)
-    area_type = area_type or detected_area_type
+    # Use provided area_type if available (already computed in main.py)
+    # Only detect if not provided to avoid redundant API calls
+    if area_type is None:
+        from data_sources import census_api
+        pop_density = census_api.get_population_density(lat, lon) or 0.0
+        from data_sources import data_quality as dq
+        detected_area_type = dq.detect_area_type(lat, lon, pop_density)
+        area_type = detected_area_type
 
     # Contextual expectations (research-backed where available)
     expectations = get_contextual_expectations(area_type, 'healthcare_access') or {}
