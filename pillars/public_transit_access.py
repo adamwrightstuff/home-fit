@@ -665,6 +665,11 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
         data = response.json()
         routes = data.get("routes", [])
         
+        # ENHANCED LOGGING: Log API response details
+        total_routes_from_api = len(routes)
+        limit_hit = total_routes_from_api >= 500
+        print(f"   📡 Transitland API response: {total_routes_from_api} routes (limit={'HIT' if limit_hit else 'not hit'}, radius={radius_m}m)")
+        
         if not routes:
             print("   ℹ️  No routes found")
             return []
@@ -674,18 +679,35 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
         processed_routes = []
         seen_route_ids = set()
         
+        # ENHANCED LOGGING: Track filtering
+        routes_missing_type = 0
+        routes_duplicate = 0
+        route_type_breakdown = {"heavy": 0, "light": 0, "bus": 0, "other": 0}
+        route_distances = []
+        
         for route in routes:
             route_type = route.get("route_type")
             if route_type is None:
+                routes_missing_type += 1
                 continue
             
             # Get unique route identifier for deduplication
             route_id = route.get("onestop_id") or route.get("id")
             if route_id and route_id in seen_route_ids:
-                # Skip duplicate route
+                routes_duplicate += 1
                 continue
             if route_id:
                 seen_route_ids.add(route_id)
+            
+            # Track route types for logging
+            if route_type in [1, 2]:  # Heavy rail
+                route_type_breakdown["heavy"] += 1
+            elif route_type == 0:  # Light rail
+                route_type_breakdown["light"] += 1
+            elif route_type == 3:  # Bus
+                route_type_breakdown["bus"] += 1
+            else:
+                route_type_breakdown["other"] += 1
             
             # Try to get distance from route geometry or nearest stop
             route_distance_km = None
@@ -699,6 +721,8 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                 route_lon = coords[0]
                 route_lat = coords[1]
                 route_distance_km = haversine_distance(lat, lon, route_lat, route_lon)
+                if route_distance_km is not None:
+                    route_distances.append(route_distance_km * 1000)  # Convert to meters
             
             # If no geometry, we'll calculate distance from nearest stop in usefulness function
             processed_routes.append({
@@ -712,7 +736,29 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                 "route_id": route_id
             })
         
-        print(f"   ℹ️  Found {len(processed_routes)} unique transit routes (deduplicated from {len(routes)} total)")
+        # ENHANCED LOGGING: Log processing details
+        print(f"   📊 Route processing: {len(processed_routes)} kept, {routes_missing_type} missing type, {routes_duplicate} duplicates")
+        print(f"   📊 Route type breakdown (raw): {route_type_breakdown['heavy']} heavy, {route_type_breakdown['light']} light, {route_type_breakdown['bus']} bus, {route_type_breakdown['other']} other")
+        
+        if route_distances:
+            avg_distance = sum(route_distances) / len(route_distances)
+            max_distance = max(route_distances)
+            min_distance = min(route_distances)
+            print(f"   📍 Route distances: avg={avg_distance:.0f}m, min={min_distance:.0f}m, max={max_distance:.0f}m (radius={radius_m}m)")
+            
+            # Warn if many routes are near the radius limit
+            routes_near_limit = len([d for d in route_distances if d > radius_m * 0.8])
+            if routes_near_limit > 0:
+                print(f"   ⚠️  {routes_near_limit} routes are within 80% of radius limit - may be missing routes just outside radius")
+        
+        # ENHANCED LOGGING: Warn if route count seems low for area type
+        if len(processed_routes) < 10:
+            print(f"   ⚠️  WARNING: Only {len(processed_routes)} routes found - may indicate:")
+            print(f"      - Transitland API coverage gap")
+            print(f"      - Query radius ({radius_m}m) too small")
+            print(f"      - Location has genuinely sparse transit")
+        
+        print(f"   ℹ️  Found {len(processed_routes)} unique transit routes (deduplicated from {total_routes_from_api} total)")
         
         return processed_routes
         

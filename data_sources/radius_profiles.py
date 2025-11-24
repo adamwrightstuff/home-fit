@@ -68,8 +68,16 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
         return {"query_radius_m": 1500, "walkable_distance_m": 1000}
 
     if p == "public_transit_access":
-        # Default nearby route search radius
-        return {"routes_radius_m": 1500}
+        # Area-type-specific radii: larger metros need larger search radii
+        # Urban cores have extensive transit networks that extend beyond 1.5km
+        # Rationale: Dense metros have more routes spread over larger areas
+        # This is objective (area-type based) and scalable (works for all locations)
+        if a == "urban_core":
+            return {"routes_radius_m": 3000}  # 3km for dense metros
+        elif a == "suburban":
+            return {"routes_radius_m": 2000}  # 2km for suburbs
+        else:  # exurban, rural, unknown
+            return {"routes_radius_m": 1500}  # 1.5km for sparse areas
 
     if p == "healthcare_access":
         # Mirrors existing thresholds based on area type
