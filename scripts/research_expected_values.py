@@ -26,7 +26,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from data_sources import geocoding, osm_api
 from data_sources.data_quality import detect_area_type
 from data_sources.census_api import get_population_density
-from pillars.public_transit_access import get_public_transit_score
+from data_sources.transitland_api import get_route_schedules
+from pillars.public_transit_access import get_public_transit_score, _get_nearby_routes
 
 # Sample locations by area type (from test cases + known benchmarks)
 SAMPLE_LOCATIONS = {
@@ -295,6 +296,9 @@ def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[
 
     This is research-only and does not change scoring; it just records the
     same raw metrics the pillar already exposes (counts and subscores).
+    
+    Now also collects service frequency metrics (headways, service span, trip counts)
+    for contextual scoring validation.
     """
     data: Dict[str, Optional[float]] = {
         "transit_score": None,
@@ -308,6 +312,19 @@ def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[
         "bus_stops": None,
         "mean_commute_minutes": None,
         "transit_modes_count": None,
+        # Service frequency metrics (new)
+        "heavy_rail_peak_headway_minutes": None,
+        "heavy_rail_off_peak_headway_minutes": None,
+        "heavy_rail_service_span_hours": None,
+        "heavy_rail_weekday_trips": None,
+        "light_rail_peak_headway_minutes": None,
+        "light_rail_off_peak_headway_minutes": None,
+        "light_rail_service_span_hours": None,
+        "light_rail_weekday_trips": None,
+        "bus_peak_headway_minutes": None,
+        "bus_off_peak_headway_minutes": None,
+        "bus_service_span_hours": None,
+        "bus_weekday_trips": None,
     }
 
     try:
@@ -342,6 +359,61 @@ def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[
             data["transit_modes_count"] = len(modes)
         else:
             data["transit_modes_count"] = None
+        
+        # Collect service frequency metrics for routes
+        # Get routes directly to query schedules
+        from data_sources.radius_profiles import get_radius_profile
+        rp = get_radius_profile('public_transit_access', area_type, "city")
+        nearby_radius = int(rp.get('routes_radius_m', 1500))
+        routes_data = _get_nearby_routes(lat, lon, radius_m=nearby_radius)
+        
+        if routes_data:
+            # Group routes by type
+            heavy_rail_routes = [r for r in routes_data if r.get("route_type") in [1, 2]]
+            light_rail_routes = [r for r in routes_data if r.get("route_type") == 0]
+            bus_routes = [r for r in routes_data if r.get("route_type") == 3]
+            
+            # Collect schedule data for each mode (sample up to 5 routes per mode to avoid rate limits)
+            def collect_mode_schedules(routes: List[Dict], mode_name: str) -> Dict:
+                """Collect aggregated schedule metrics for a mode."""
+                schedules = []
+                for route in routes[:5]:  # Limit to 5 routes to avoid rate limits
+                    route_id = route.get("route_id")
+                    if route_id:
+                        schedule = get_route_schedules(route_id)
+                        if schedule:
+                            schedules.append(schedule)
+                        time.sleep(0.5)  # Rate limiting
+                
+                if not schedules:
+                    return {}
+                
+                # Aggregate metrics
+                peak_headways = [s["peak_headway_minutes"] for s in schedules if s.get("peak_headway_minutes")]
+                off_peak_headways = [s["off_peak_headway_minutes"] for s in schedules if s.get("off_peak_headway_minutes")]
+                service_spans = [s["service_span_hours"] for s in schedules if s.get("service_span_hours")]
+                weekday_trips = [s["weekday_trips"] for s in schedules if s.get("weekday_trips")]
+                
+                return {
+                    f"{mode_name}_peak_headway_minutes": statistics.mean(peak_headways) if peak_headways else None,
+                    f"{mode_name}_off_peak_headway_minutes": statistics.mean(off_peak_headways) if off_peak_headways else None,
+                    f"{mode_name}_service_span_hours": statistics.mean(service_spans) if service_spans else None,
+                    f"{mode_name}_weekday_trips": sum(weekday_trips) if weekday_trips else None,
+                }
+            
+            # Collect schedules for each mode
+            if heavy_rail_routes:
+                heavy_metrics = collect_mode_schedules(heavy_rail_routes, "heavy_rail")
+                data.update(heavy_metrics)
+            
+            if light_rail_routes:
+                light_metrics = collect_mode_schedules(light_rail_routes, "light_rail")
+                data.update(light_metrics)
+            
+            if bus_routes:
+                bus_metrics = collect_mode_schedules(bus_routes, "bus")
+                data.update(bus_metrics)
+        
     except Exception as e:
         print(f"    ⚠️  Transit data collection failed: {e}")
 
@@ -483,6 +555,68 @@ def calculate_statistics(data_by_area_type: Dict[str, List[Dict]]) -> Dict:
             if l["transit"]["transit_modes_count"] is not None
         ]
         
+        # Service frequency metrics (new)
+        heavy_peak_headway = [
+            l["transit"]["heavy_rail_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("heavy_rail_peak_headway_minutes") is not None
+        ]
+        heavy_off_peak_headway = [
+            l["transit"]["heavy_rail_off_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("heavy_rail_off_peak_headway_minutes") is not None
+        ]
+        heavy_service_span = [
+            l["transit"]["heavy_rail_service_span_hours"]
+            for l in tr_locations
+            if l["transit"].get("heavy_rail_service_span_hours") is not None
+        ]
+        heavy_weekday_trips = [
+            l["transit"]["heavy_rail_weekday_trips"]
+            for l in tr_locations
+            if l["transit"].get("heavy_rail_weekday_trips") is not None
+        ]
+        light_peak_headway = [
+            l["transit"]["light_rail_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("light_rail_peak_headway_minutes") is not None
+        ]
+        light_off_peak_headway = [
+            l["transit"]["light_rail_off_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("light_rail_off_peak_headway_minutes") is not None
+        ]
+        light_service_span = [
+            l["transit"]["light_rail_service_span_hours"]
+            for l in tr_locations
+            if l["transit"].get("light_rail_service_span_hours") is not None
+        ]
+        light_weekday_trips = [
+            l["transit"]["light_rail_weekday_trips"]
+            for l in tr_locations
+            if l["transit"].get("light_rail_weekday_trips") is not None
+        ]
+        bus_peak_headway = [
+            l["transit"]["bus_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("bus_peak_headway_minutes") is not None
+        ]
+        bus_off_peak_headway = [
+            l["transit"]["bus_off_peak_headway_minutes"]
+            for l in tr_locations
+            if l["transit"].get("bus_off_peak_headway_minutes") is not None
+        ]
+        bus_service_span = [
+            l["transit"]["bus_service_span_hours"]
+            for l in tr_locations
+            if l["transit"].get("bus_service_span_hours") is not None
+        ]
+        bus_weekday_trips = [
+            l["transit"]["bus_weekday_trips"]
+            for l in tr_locations
+            if l["transit"].get("bus_weekday_trips") is not None
+        ]
+        
         def calc_stats(values):
             if not values:
                 return None
@@ -530,6 +664,19 @@ def calculate_statistics(data_by_area_type: Dict[str, List[Dict]]) -> Dict:
                 "bus_routes": calc_stats(bus_routes),  # Actually route counts
                 "mean_commute_minutes": calc_stats(commute_minutes),
                 "transit_modes_count": calc_stats(modes_count),
+                # Service frequency metrics (new)
+                "heavy_rail_peak_headway_minutes": calc_stats(heavy_peak_headway),
+                "heavy_rail_off_peak_headway_minutes": calc_stats(heavy_off_peak_headway),
+                "heavy_rail_service_span_hours": calc_stats(heavy_service_span),
+                "heavy_rail_weekday_trips": calc_stats(heavy_weekday_trips),
+                "light_rail_peak_headway_minutes": calc_stats(light_peak_headway),
+                "light_rail_off_peak_headway_minutes": calc_stats(light_off_peak_headway),
+                "light_rail_service_span_hours": calc_stats(light_service_span),
+                "light_rail_weekday_trips": calc_stats(light_weekday_trips),
+                "bus_peak_headway_minutes": calc_stats(bus_peak_headway),
+                "bus_off_peak_headway_minutes": calc_stats(bus_off_peak_headway),
+                "bus_service_span_hours": calc_stats(bus_service_span),
+                "bus_weekday_trips": calc_stats(bus_weekday_trips),
             },
         }
     

@@ -1,12 +1,12 @@
 Area Type,Metric,Median,P25,P75,Min,Max,Sample Size
-commuter_rail_suburb,transit.transit_score,79.75,76.725,80.5,0,80.5,16
-commuter_rail_suburb,transit.heavy_rail_score,40.0,0.0,55.0,0.0,75.0,16
-commuter_rail_suburb,transit.light_rail_score,0.0,0.0,0.0,0.0,52.0,16
-commuter_rail_suburb,transit.bus_score,75.0,67.5,75.0,0,75.0,16
+commuter_rail_suburb,transit.transit_score,59.7,47.525,72.52499999999999,0,83.7,16
+commuter_rail_suburb,transit.heavy_rail_score,40.0,0.0,55.0,0.0,72.0,16
+commuter_rail_suburb,transit.light_rail_score,0.0,0.0,0.0,0.0,72.5,16
+commuter_rail_suburb,transit.bus_score,37.5,16.25,46.575,0,78.7,16
 commuter_rail_suburb,transit.commute_time_score,85.0,75.625,85.0,68.7,85.0,14
-commuter_rail_suburb,transit.total_routes,9,7.0,14.0,2,64,15
+commuter_rail_suburb,transit.total_routes,9,7.0,14.0,2,61,15
 commuter_rail_suburb,transit.heavy_rail_routes,1,0.0,2.0,0,5,15
 commuter_rail_suburb,transit.light_rail_routes,0,0.0,0.0,0,3,15
-commuter_rail_suburb,transit.bus_routes,8,4.0,12.0,2,62,15
+commuter_rail_suburb,transit.bus_routes,8,4.0,12.0,2,60,15
 commuter_rail_suburb,transit.mean_commute_minutes,28.35,25.525000000000002,36.275,22.2,40.9,14
 commuter_rail_suburb,transit.transit_modes_count,2.0,2.0,2.0,0,2,16
