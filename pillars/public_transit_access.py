@@ -306,6 +306,26 @@ def get_public_transit_score(
     # Historic urban areas are typically dense, walkable neighborhoods similar to urban_residential
     if effective_area_type == "historic_urban":
         effective_area_type = "urban_residential"
+    
+    # Detect commuter rail suburbs: suburban areas with heavy rail near major metros
+    # These should use research-backed commuter_rail_suburb expectations
+    # Detection criteria: suburban + heavy rail routes > 0 + within 50km of major metro (pop > 2M)
+    is_commuter_rail_suburb = False
+    if effective_area_type == 'suburban' and len(heavy_rail_routes) > 0:
+        from data_sources.regional_baselines import RegionalBaselineManager
+        baseline_mgr = RegionalBaselineManager()
+        metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+        
+        if metro_distance_km is not None and metro_distance_km < 50:
+            # Check if it's a major metro (population > 2M)
+            metro_name = baseline_mgr._detect_metro_area(city, lat, lon)
+            if metro_name:
+                metro_data = baseline_mgr.major_metros.get(metro_name, {})
+                metro_population = metro_data.get('population', 0)
+                if metro_population > 2000000:
+                    is_commuter_rail_suburb = True
+                    effective_area_type = 'commuter_rail_suburb'
+                    print(f"🚇 Detected commuter rail suburb: {len(heavy_rail_routes)} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})")
 
     # Look up contextual expectations for transit by area type
     transit_expectations = get_contextual_expectations(

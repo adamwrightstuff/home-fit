@@ -782,6 +782,19 @@ class RegionalBaselineManager:
                     'expected_light_rail_routes': 0,   # Rare in residential areas
                     'expected_bus_routes': 34          # Higher to properly calibrate high route counts (47 routes)
                 }
+            },
+            'commuter_rail_suburb': {
+                # Commuter rail suburbs: suburban areas with commuter rail service to major metros
+                # Research data from 16 commuter rail suburbs (n=15 successful):
+                # - Heavy rail routes: median=1, p25=0, p75=2
+                # - Light rail routes: median=0
+                # - Bus routes: median=8, p25=4, p75=12
+                # Commuter rail is the PRIMARY transit asset in these areas, not just a bonus
+                'public_transit_access': {
+                    'expected_heavy_rail_routes': 1,   # Research-backed: median=1 for commuter rail suburbs
+                    'expected_light_rail_routes': 0,   # Rare in commuter rail suburbs
+                    'expected_bus_routes': 8          # Research-backed: median=8 for commuter rail suburbs
+                }
             }
         }
         
