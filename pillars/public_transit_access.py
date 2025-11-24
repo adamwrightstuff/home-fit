@@ -401,7 +401,7 @@ def get_public_transit_score(
         if ratio < 3.0:
             return 55.0 + (ratio - 2.0) * 10.0
         
-        # At 5× expected → 72 points (very slow growth - calibrated to Koreatown LA target)
+        # At 5× expected → 72 points (conservative growth to prevent over-scoring)
         if ratio < 5.0:
             return 65.0 + (ratio - 3.0) * 3.5
         
