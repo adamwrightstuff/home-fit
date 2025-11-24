@@ -292,6 +292,9 @@ def get_public_transit_score(
             light_rail_routes.append(route)
         elif route_type == 3:  # Bus
             bus_routes.append(route)
+    
+    # Log route type breakdown for debugging
+    print(f"   📊 Route breakdown: {len(heavy_rail_routes)} heavy rail, {len(light_rail_routes)} light rail, {len(bus_routes)} bus")
 
     # Context-aware weighting by area type
     # Urban areas: emphasize rail (heavy + light rail)
@@ -642,11 +645,22 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             return []
         
         # Process routes and calculate distance to nearest stop
+        # Deduplicate routes by onestop_id or route_id to prevent double-counting
         processed_routes = []
+        seen_route_ids = set()
+        
         for route in routes:
             route_type = route.get("route_type")
             if route_type is None:
                 continue
+            
+            # Get unique route identifier for deduplication
+            route_id = route.get("onestop_id") or route.get("id")
+            if route_id and route_id in seen_route_ids:
+                # Skip duplicate route
+                continue
+            if route_id:
+                seen_route_ids.add(route_id)
             
             # Try to get distance from route geometry or nearest stop
             route_distance_km = None
@@ -670,10 +684,10 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                 "distance_km": route_distance_km,
                 "lat": route_lat,
                 "lon": route_lon,
-                "route_id": route.get("onestop_id") or route.get("id")
+                "route_id": route_id
             })
         
-        print(f"   ℹ️  Found {len(processed_routes)} transit routes")
+        print(f"   ℹ️  Found {len(processed_routes)} unique transit routes (deduplicated from {len(routes)} total)")
         
         return processed_routes
         
