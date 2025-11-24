@@ -110,12 +110,76 @@ def get_nearby_transit_stops(
         return None
 
 
-def get_route_schedules(route_onestop_id: str) -> Optional[Dict]:
+def get_stop_departures(stop_onestop_id: str, limit: int = 200, service_date: Optional[str] = None) -> Optional[List[Dict]]:
+    """
+    Get scheduled departures for a stop using Transitland v2 stop departures endpoint.
+    
+    Args:
+        stop_onestop_id: Stop OneStop ID (e.g., 's-dr72zxmq5p-centralparkave~tuckahoerd')
+        limit: Maximum number of departures to return (default 200 for full day schedule)
+        service_date: Optional service date in YYYY-MM-DD format. If None, uses next weekday.
+                     Using a specific date returns full day schedule instead of just upcoming departures.
+    
+    Returns:
+        List of departure dictionaries with schedule information, or None if unavailable
+    """
+    if not TRANSITLAND_API_KEY:
+        return None
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # If no service_date provided, use next weekday (Monday-Friday) for full schedule
+        if service_date is None:
+            today = datetime.now()
+            # Find next weekday (Monday = 0, Friday = 4)
+            days_ahead = 0
+            if today.weekday() >= 5:  # Saturday or Sunday
+                days_ahead = 7 - today.weekday()  # Days until Monday
+            elif today.weekday() == 4:  # Friday
+                days_ahead = 3  # Next Monday
+            else:
+                days_ahead = 1  # Next weekday
+            service_date = (today + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+        
+        url = f"{TRANSITLAND_BASE_URL}/rest/stops/{stop_onestop_id}/departures"
+        params = {
+            "apikey": TRANSITLAND_API_KEY,
+            "limit": limit,
+            "service_date": service_date
+        }
+        
+        response = requests.get(url, params=params, timeout=30)  # Increased timeout for larger responses
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        stops = data.get("stops", [])
+        
+        if not stops:
+            return None
+        
+        # Response structure: stops[0].departures[]
+        stop = stops[0]
+        departures = stop.get("departures", [])
+        
+        return departures
+        
+    except Exception as e:
+        print(f"Transitland stop departures query error for {stop_onestop_id}: {e}")
+        return None
+
+
+def get_route_schedules(route_onestop_id: str, sample_stop_id: Optional[str] = None) -> Optional[Dict]:
     """
     Get schedule/service frequency data for a route using Transitland API.
     
+    Uses stop departures endpoint to calculate frequency metrics from a representative stop.
+    
     Args:
         route_onestop_id: Route OneStop ID (e.g., 'r-dr7-harlem')
+        sample_stop_id: Optional stop ID on this route (if not provided, will try to find one)
     
     Returns:
         {
@@ -131,122 +195,107 @@ def get_route_schedules(route_onestop_id: str) -> Optional[Dict]:
         return None
     
     try:
-        # Query route details - Transitland v2 may have schedule info in route metadata
-        url = f"{TRANSITLAND_BASE_URL}/rest/routes/{route_onestop_id}"
-        params = {"apikey": TRANSITLAND_API_KEY}
-        response = requests.get(url, params=params, timeout=15)
-        
-        if response.status_code != 200:
+        # If no sample stop provided, try to get one from the route
+        stop_id = sample_stop_id
+        if not stop_id:
+            # Try to find a stop on this route by querying stops near a known location
+            # For now, return None - caller should provide a stop_id
             return None
         
-        route_data = response.json().get("routes", [])
-        if not route_data:
+        # Get departures for this stop (use service_date to get full day schedule)
+        departures = get_stop_departures(stop_id, limit=200, service_date=None)  # None = auto-select next weekday
+        
+        if not departures or len(departures) < 2:
             return None
         
-        route = route_data[0]
-        
-        # Try to get trips for this route to calculate frequency
-        # NOTE: Transitland v2 API may not have a direct trips endpoint
-        # Schedule data may need to come from GTFS feeds or route_stops endpoint
-        # For now, we'll attempt to get schedule info from route_stops if available
-        trips_data = []
-        
-        # Check if route has route_stops that might contain schedule info
-        route_stops = route.get("route_stops", [])
-        if route_stops:
-            # Route stops might have schedule information
-            # This is a placeholder - actual structure may vary
-            pass
-        
-        # Alternative: Try trips endpoint (may not exist in v2)
-        trips_url = f"{TRANSITLAND_BASE_URL}/rest/trips"
-        trips_params = {
-            "route_onestop_id": route_onestop_id,
-            "apikey": TRANSITLAND_API_KEY,
-            "limit": 100
-        }
-        
-        trips_response = requests.get(trips_url, params=trips_params, timeout=15)
-        if trips_response.status_code == 200:
-            trips_data = trips_response.json().get("trips", [])
-        
-        # If we have trips, calculate service metrics
-        if trips_data:
-            # Extract departure times (assuming trips have schedule data)
-            # This is a simplified calculation - real GTFS would have more detail
-            departure_times = []
-            for trip in trips_data:
-                # Try to get stop_times or schedule info
-                # Transitland structure may vary
-                if "stop_times" in trip:
-                    for st in trip["stop_times"]:
-                        if "departure_time" in st:
-                            departure_times.append(st["departure_time"])
-                elif "departure_time" in trip:
-                    departure_times.append(trip["departure_time"])
+        # Parse departure times
+        departure_times = []
+        for dep in departures:
+            # Try different time fields - Transitland v2 structure
+            # departure.scheduled is the primary field (format: "HH:MM:SS")
+            time_str = None
             
-            if departure_times:
-                # Parse times and calculate metrics
-                # Times are typically in HH:MM:SS format
-                parsed_times = []
-                for dt in departure_times:
-                    try:
-                        parts = dt.split(":")
-                        if len(parts) >= 2:
-                            hours = int(parts[0])
-                            minutes = int(parts[1])
-                            total_minutes = hours * 60 + minutes
-                            parsed_times.append(total_minutes)
-                    except (ValueError, IndexError):
-                        continue
-                
-                if parsed_times:
-                    parsed_times.sort()
-                    first_minutes = parsed_times[0]
-                    last_minutes = parsed_times[-1]
+            # Check departure object first (most reliable)
+            dep_obj = dep.get("departure", {})
+            if isinstance(dep_obj, dict):
+                time_str = dep_obj.get("scheduled") or dep_obj.get("scheduled_local")
+            
+            # Fallback to other fields
+            if not time_str:
+                time_str = (dep.get("departure_time") or 
+                           dep.get("arrival_time") or
+                           (dep.get("arrival", {}) or {}).get("scheduled"))
+            
+            if time_str:
+                # Parse time string (format: "HH:MM:SS", "HH:MM", or ISO datetime)
+                try:
+                    # Handle ISO datetime strings like "2025-06-16T12:48:16-04:00"
+                    if "T" in time_str:
+                        # ISO format - extract time part
+                        time_part = time_str.split("T")[1].split("-")[0].split("+")[0]
+                        parts = time_part.split(":")
+                    else:
+                        parts = time_str.split(":")
                     
-                    # Service span in hours
-                    service_span_hours = (last_minutes - first_minutes) / 60.0
-                    
-                    # Calculate headways (time between consecutive trips)
-                    headways = []
-                    for i in range(1, len(parsed_times)):
-                        headway = parsed_times[i] - parsed_times[i-1]
-                        if headway > 0:  # Ignore same-time trips
-                            headways.append(headway)
-                    
-                    # Peak period: 7-9 AM and 5-7 PM (420-540 min and 1020-1140 min)
-                    peak_headways = [
-                        h for i, h in enumerate(headways)
-                        if i < len(parsed_times) - 1 and
-                        (420 <= parsed_times[i] <= 540 or 1020 <= parsed_times[i] <= 1140)
-                    ]
-                    off_peak_headways = [
-                        h for i, h in enumerate(headways)
-                        if i < len(parsed_times) - 1 and
-                        not (420 <= parsed_times[i] <= 540 or 1020 <= parsed_times[i] <= 1140)
-                    ]
-                    
-                    peak_headway = statistics.mean(peak_headways) if peak_headways else None
-                    off_peak_headway = statistics.mean(off_peak_headways) if off_peak_headways else None
-                    
-                    # Format first/last departure
-                    first_hour = first_minutes // 60
-                    first_min = first_minutes % 60
-                    last_hour = last_minutes // 60
-                    last_min = last_minutes % 60
-                    
-                    return {
-                        "service_span_hours": round(service_span_hours, 1),
-                        "peak_headway_minutes": round(peak_headway, 1) if peak_headway else None,
-                        "off_peak_headway_minutes": round(off_peak_headway, 1) if off_peak_headway else None,
-                        "weekday_trips": len(parsed_times),
-                        "first_departure": f"{first_hour:02d}:{first_min:02d}",
-                        "last_departure": f"{last_hour:02d}:{last_min:02d}",
-                    }
+                    if len(parts) >= 2:
+                        hours = int(parts[0])
+                        minutes = int(parts[1])
+                        total_minutes = hours * 60 + minutes
+                        departure_times.append(total_minutes)
+                except (ValueError, IndexError):
+                    continue
         
-        # Fallback: return None if we can't calculate
-        return None
+        if len(departure_times) < 2:
+            return None
+        
+        departure_times.sort()
+        
+        # Calculate service span
+        first_minutes = departure_times[0]
+        last_minutes = departure_times[-1]
+        service_span_hours = (last_minutes - first_minutes) / 60.0
+        
+        # Calculate headways (time between consecutive departures)
+        headways = []
+        for i in range(1, len(departure_times)):
+            headway = departure_times[i] - departure_times[i-1]
+            if headway > 0:  # Ignore same-time departures
+                headways.append(headway)
+        
+        if not headways:
+            return None
+        
+        # Peak period: 7-9 AM (420-540 min) and 5-7 PM (1020-1140 min)
+        peak_headways = []
+        off_peak_headways = []
+        
+        for i, headway in enumerate(headways):
+            # Use the earlier departure time to determine if it's peak
+            dep_time = departure_times[i]
+            is_peak = (420 <= dep_time <= 540) or (1020 <= dep_time <= 1140)
+            
+            if is_peak:
+                peak_headways.append(headway)
+            else:
+                off_peak_headways.append(headway)
+        
+        peak_headway = statistics.mean(peak_headways) if peak_headways else None
+        off_peak_headway = statistics.mean(off_peak_headways) if off_peak_headways else None
+        
+        # Format first/last departure
+        first_hour = first_minutes // 60
+        first_min = first_minutes % 60
+        last_hour = last_minutes // 60
+        last_min = last_minutes % 60
+        
+        return {
+            "service_span_hours": round(service_span_hours, 1),
+            "peak_headway_minutes": round(peak_headway, 1) if peak_headway else None,
+            "off_peak_headway_minutes": round(off_peak_headway, 1) if off_peak_headway else None,
+            "weekday_trips": len(departure_times),  # Approximate - actual count may vary by day
+            "first_departure": f"{first_hour:02d}:{first_min:02d}",
+            "last_departure": f"{last_hour:02d}:{last_min:02d}",
+        }
         
     except Exception as e:
         print(f"Transitland schedule query error for {route_onestop_id}: {e}")

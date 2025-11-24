@@ -26,8 +26,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from data_sources import geocoding, osm_api
 from data_sources.data_quality import detect_area_type
 from data_sources.census_api import get_population_density
-from data_sources.transitland_api import get_route_schedules
+from data_sources.transitland_api import get_route_schedules, get_stop_departures
 from pillars.public_transit_access import get_public_transit_score, _get_nearby_routes
+import statistics
 
 # Sample locations by area type (from test cases + known benchmarks)
 SAMPLE_LOCATIONS = {
@@ -291,6 +292,99 @@ def collect_amenities_data(lat: float, lon: float, area_type: str) -> Dict:
     return data
 
 
+def _calculate_schedule_from_departures(departures: List[Dict]) -> Optional[Dict]:
+    """Calculate schedule metrics from departure data."""
+    if not departures or len(departures) < 2:
+        return None
+    
+    # Parse departure times
+    departure_times = []
+    for dep in departures:
+        # Try different time fields - Transitland v2 structure
+        # departure.scheduled is the primary field (format: "HH:MM:SS")
+        time_str = None
+        
+        # Check departure object first (most reliable)
+        dep_obj = dep.get("departure", {})
+        if isinstance(dep_obj, dict):
+            time_str = dep_obj.get("scheduled") or dep_obj.get("scheduled_local")
+        
+        # Fallback to other fields
+        if not time_str:
+            time_str = (dep.get("departure_time") or 
+                       dep.get("arrival_time") or
+                       (dep.get("arrival", {}) or {}).get("scheduled"))
+        
+        if time_str:
+            try:
+                # Handle both "HH:MM:SS" and "HH:MM" formats
+                # Also handle ISO datetime strings like "2025-06-16T12:48:16-04:00"
+                if "T" in time_str:
+                    # ISO format - extract time part
+                    time_part = time_str.split("T")[1].split("-")[0].split("+")[0]
+                    parts = time_part.split(":")
+                else:
+                    parts = time_str.split(":")
+                
+                if len(parts) >= 2:
+                    hours = int(parts[0])
+                    minutes = int(parts[1])
+                    total_minutes = hours * 60 + minutes
+                    departure_times.append(total_minutes)
+            except (ValueError, IndexError):
+                continue
+    
+    if len(departure_times) < 2:
+        return None
+    
+    departure_times.sort()
+    
+    # Calculate service span
+    first_minutes = departure_times[0]
+    last_minutes = departure_times[-1]
+    service_span_hours = (last_minutes - first_minutes) / 60.0
+    
+    # Calculate headways
+    headways = []
+    for i in range(1, len(departure_times)):
+        headway = departure_times[i] - departure_times[i-1]
+        if headway > 0:
+            headways.append(headway)
+    
+    if not headways:
+        return None
+    
+    # Peak period: 7-9 AM (420-540 min) and 5-7 PM (1020-1140 min)
+    peak_headways = []
+    off_peak_headways = []
+    
+    for i, headway in enumerate(headways):
+        dep_time = departure_times[i]
+        is_peak = (420 <= dep_time <= 540) or (1020 <= dep_time <= 1140)
+        if is_peak:
+            peak_headways.append(headway)
+        else:
+            off_peak_headways.append(headway)
+    
+    peak_headway = statistics.mean(peak_headways) if peak_headways else None
+    off_peak_headway = statistics.mean(off_peak_headways) if off_peak_headways else None
+    
+    # Format first/last departure
+    first_hour = first_minutes // 60
+    first_min = first_minutes % 60
+    last_hour = last_minutes // 60
+    last_min = last_minutes % 60
+    
+    return {
+        "service_span_hours": round(service_span_hours, 1),
+        "peak_headway_minutes": round(peak_headway, 1) if peak_headway else None,
+        "off_peak_headway_minutes": round(off_peak_headway, 1) if off_peak_headway else None,
+        "weekday_trips": len(departure_times),
+        "first_departure": f"{first_hour:02d}:{first_min:02d}",
+        "last_departure": f"{last_hour:02d}:{last_min:02d}",
+    }
+
+
 def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[str]) -> Dict:
     """Collect Public Transit Access pillar data using the existing pillar logic.
 
@@ -373,17 +467,67 @@ def collect_transit_data(lat: float, lon: float, area_type: str, city: Optional[
             light_rail_routes = [r for r in routes_data if r.get("route_type") == 0]
             bus_routes = [r for r in routes_data if r.get("route_type") == 3]
             
-            # Collect schedule data for each mode (sample up to 5 routes per mode to avoid rate limits)
+            # Collect schedule data for each mode (sample up to 3 routes per mode to avoid rate limits)
             def collect_mode_schedules(routes: List[Dict], mode_name: str) -> Dict:
                 """Collect aggregated schedule metrics for a mode."""
+                import requests
+                import os
+                from dotenv import load_dotenv
+                load_dotenv()
+                
+                TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
+                TRANSITLAND_BASE_URL = "https://transit.land/api/v2"
+                
                 schedules = []
-                for route in routes[:5]:  # Limit to 5 routes to avoid rate limits
+                for route in routes[:3]:  # Limit to 3 routes to avoid rate limits
                     route_id = route.get("route_id")
-                    if route_id:
-                        schedule = get_route_schedules(route_id)
-                        if schedule:
-                            schedules.append(schedule)
-                        time.sleep(0.5)  # Rate limiting
+                    if not route_id:
+                        continue
+                    
+                    # Get a stop on this route by querying stops with route_type filter
+                    try:
+                        route_type = route.get("route_type")
+                        # Map route_type to Transitland route_type filter
+                        # 1=subway, 2=rail, 0=light rail, 3=bus
+                        route_type_filter = str(route_type) if route_type in [0, 1, 2, 3] else None
+                        
+                        if route_type_filter:
+                            # Query stops with route_type filter
+                            stops_url = f"{TRANSITLAND_BASE_URL}/rest/stops"
+                            stops_params = {
+                                "apikey": TRANSITLAND_API_KEY,
+                                "lat": lat,
+                                "lon": lon,
+                                "radius": 2000,
+                                "route_type": route_type_filter,
+                                "limit": 3
+                            }
+                            
+                            stops_response = requests.get(stops_url, params=stops_params, timeout=20)
+                            if stops_response.status_code == 200:
+                                stops_data = stops_response.json()
+                                stops = stops_data.get("stops", [])
+                                
+                                if stops:
+                                    # Use first stop as sample
+                                    sample_stop = stops[0]
+                                    stop_id = sample_stop.get("onestop_id") or sample_stop.get("id")
+                                    
+                                    if stop_id:
+                                        # Get departures for this stop (use service_date for full day schedule)
+                                        from data_sources.transitland_api import get_stop_departures
+                                        # Use next weekday to get full schedule (not just upcoming departures)
+                                        departures = get_stop_departures(stop_id, limit=200, service_date=None)
+                                        if departures and len(departures) >= 2:
+                                            # Calculate schedule metrics from departures
+                                            schedule = _calculate_schedule_from_departures(departures)
+                                            if schedule:
+                                                schedules.append(schedule)
+                                        
+                                        time.sleep(1)  # Rate limiting between stop queries
+                    except Exception as e:
+                        print(f"    ⚠️  Error getting schedule for route {route_id}: {e}")
+                        continue
                 
                 if not schedules:
                     return {}

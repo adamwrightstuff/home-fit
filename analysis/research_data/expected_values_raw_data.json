@@ -3,8 +3,8 @@
     {
       "location": "Scarsdale NY",
       "city": "Scarsdale NY",
-      "lat": 40.9885221,
-      "lon": -73.8085608,
+      "lat": 40.9880495,
+      "lon": -73.7974133,
       "area_type": "commuter_rail_suburb",
       "detected_area_type": "suburban",
       "density": 6723.541127190258,
@@ -15,26 +15,26 @@
         "transit_score": 47.4,
         "heavy_rail_score": 40.0,
         "light_rail_score": 0.0,
-        "bus_score": 40.0,
+        "bus_score": 30.0,
         "commute_time_score": 68.7,
-        "total_stops": 9,
+        "total_stops": 7,
         "heavy_rail_stops": 1,
         "light_rail_stops": 0,
-        "bus_stops": 8,
+        "bus_stops": 6,
         "mean_commute_minutes": 40.9,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 22.3,
+        "heavy_rail_off_peak_headway_minutes": 25.8,
+        "heavy_rail_service_span_hours": 17.4,
+        "heavy_rail_weekday_trips": 43,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 22.3,
+        "bus_off_peak_headway_minutes": 25.8,
+        "bus_service_span_hours": 17.4,
+        "bus_weekday_trips": 129
       }
     },
     {
@@ -60,18 +60,18 @@
         "bus_stops": 7,
         "mean_commute_minutes": 37.4,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 6.3,
+        "heavy_rail_off_peak_headway_minutes": 8.0,
+        "heavy_rail_service_span_hours": 19.9,
+        "heavy_rail_weekday_trips": 328,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 6.3,
+        "bus_off_peak_headway_minutes": 8.0,
+        "bus_service_span_hours": 19.9,
+        "bus_weekday_trips": 492
       }
     },
     {
@@ -102,13 +102,13 @@
         "heavy_rail_service_span_hours": null,
         "heavy_rail_weekday_trips": null,
         "light_rail_peak_headway_minutes": null,
-        "light_rail_off_peak_headway_minutes": null,
-        "light_rail_service_span_hours": null,
-        "light_rail_weekday_trips": null,
+        "light_rail_off_peak_headway_minutes": 420,
+        "light_rail_service_span_hours": 7.0,
+        "light_rail_weekday_trips": 2,
         "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_off_peak_headway_minutes": 420,
+        "bus_service_span_hours": 7.0,
+        "bus_weekday_trips": 6
       }
     },
     {
@@ -171,18 +171,18 @@
         "bus_stops": 7,
         "mean_commute_minutes": 24.7,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 28.9,
+        "heavy_rail_off_peak_headway_minutes": 54.5,
+        "heavy_rail_service_span_hours": 16.6,
+        "heavy_rail_weekday_trips": 46,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 28.9,
+        "bus_off_peak_headway_minutes": 54.5,
+        "bus_service_span_hours": 16.6,
+        "bus_weekday_trips": 69
       }
     },
     {
@@ -208,18 +208,18 @@
         "bus_stops": 12,
         "mean_commute_minutes": 34.0,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 14.7,
+        "heavy_rail_off_peak_headway_minutes": 18.3,
+        "heavy_rail_service_span_hours": 18.6,
+        "heavy_rail_weekday_trips": 130,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 14.7,
+        "bus_off_peak_headway_minutes": 18.3,
+        "bus_service_span_hours": 18.6,
+        "bus_weekday_trips": 195
       }
     },
     {
@@ -253,10 +253,10 @@
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 45,
+        "bus_off_peak_headway_minutes": 166.7,
+        "bus_service_span_hours": 11.3,
+        "bus_weekday_trips": 16
       }
     },
     {
@@ -319,18 +319,18 @@
         "bus_stops": 4,
         "mean_commute_minutes": 26.5,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 14.4,
+        "heavy_rail_off_peak_headway_minutes": 23.6,
+        "heavy_rail_service_span_hours": 18.9,
+        "heavy_rail_weekday_trips": 112,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 14.4,
+        "bus_off_peak_headway_minutes": 23.6,
+        "bus_service_span_hours": 18.9,
+        "bus_weekday_trips": 168
       }
     },
     {
@@ -356,18 +356,18 @@
         "bus_stops": 10,
         "mean_commute_minutes": 30.3,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 18.5,
+        "heavy_rail_off_peak_headway_minutes": 24.4,
+        "heavy_rail_service_span_hours": 17.0,
+        "heavy_rail_weekday_trips": 46,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 18.5,
+        "bus_off_peak_headway_minutes": 24.4,
+        "bus_service_span_hours": 17.0,
+        "bus_weekday_trips": 138
       }
     },
     {
@@ -430,18 +430,18 @@
         "bus_stops": 10,
         "mean_commute_minutes": 26.8,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 60,
+        "heavy_rail_off_peak_headway_minutes": 319,
+        "heavy_rail_service_span_hours": 11.6,
+        "heavy_rail_weekday_trips": 4,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 60,
+        "bus_off_peak_headway_minutes": 319,
+        "bus_service_span_hours": 11.6,
+        "bus_weekday_trips": 12
       }
     },
     {
@@ -578,18 +578,18 @@
         "bus_stops": 6,
         "mean_commute_minutes": 40.7,
         "transit_modes_count": 2,
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": 18.8,
+        "heavy_rail_off_peak_headway_minutes": 20.4,
+        "heavy_rail_service_span_hours": 20.1,
+        "heavy_rail_weekday_trips": 61,
         "light_rail_peak_headway_minutes": null,
         "light_rail_off_peak_headway_minutes": null,
         "light_rail_service_span_hours": null,
         "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "bus_peak_headway_minutes": 18.8,
+        "bus_off_peak_headway_minutes": 20.4,
+        "bus_service_span_hours": 20.1,
+        "bus_weekday_trips": 183
       }
     }
   ],
@@ -643,7 +643,7 @@
           "count": 16
         },
         "bus_score": {
-          "median": 37.5,
+          "median": 35.0,
           "p25": 16.25,
           "p75": 46.575,
           "min": 0,
@@ -683,7 +683,7 @@
           "count": 15
         },
         "bus_routes": {
-          "median": 8,
+          "median": 7,
           "p25": 4.0,
           "p75": 12.0,
           "min": 2,
@@ -706,18 +706,95 @@
           "max": 2,
           "count": 16
         },
-        "heavy_rail_peak_headway_minutes": null,
-        "heavy_rail_off_peak_headway_minutes": null,
-        "heavy_rail_service_span_hours": null,
-        "heavy_rail_weekday_trips": null,
+        "heavy_rail_peak_headway_minutes": {
+          "median": 18.65,
+          "p25": 14.475000000000001,
+          "p75": 27.249999999999996,
+          "min": 6.3,
+          "max": 60,
+          "count": 8
+        },
+        "heavy_rail_off_peak_headway_minutes": {
+          "median": 24.0,
+          "p25": 18.825000000000003,
+          "p75": 47.325,
+          "min": 8.0,
+          "max": 319,
+          "count": 8
+        },
+        "heavy_rail_service_span_hours": {
+          "median": 18.0,
+          "p25": 16.700000000000003,
+          "p75": 19.65,
+          "min": 11.6,
+          "max": 20.1,
+          "count": 8
+        },
+        "heavy_rail_weekday_trips": {
+          "median": 53.5,
+          "p25": 43.75,
+          "p75": 125.5,
+          "min": 4,
+          "max": 328,
+          "count": 8
+        },
         "light_rail_peak_headway_minutes": null,
-        "light_rail_off_peak_headway_minutes": null,
-        "light_rail_service_span_hours": null,
-        "light_rail_weekday_trips": null,
-        "bus_peak_headway_minutes": null,
-        "bus_off_peak_headway_minutes": null,
-        "bus_service_span_hours": null,
-        "bus_weekday_trips": null
+        "light_rail_off_peak_headway_minutes": {
+          "median": 420,
+          "p25": 420,
+          "p75": 420,
+          "min": 420,
+          "max": 420,
+          "count": 1
+        },
+        "light_rail_service_span_hours": {
+          "median": 7.0,
+          "p25": 7.0,
+          "p75": 7.0,
+          "min": 7.0,
+          "max": 7.0,
+          "count": 1
+        },
+        "light_rail_weekday_trips": {
+          "median": 2,
+          "p25": 2,
+          "p75": 2,
+          "min": 2,
+          "max": 2,
+          "count": 1
+        },
+        "bus_peak_headway_minutes": {
+          "median": 18.8,
+          "p25": 14.55,
+          "p75": 36.95,
+          "min": 6.3,
+          "max": 60,
+          "count": 9
+        },
+        "bus_off_peak_headway_minutes": {
+          "median": 25.1,
+          "p25": 19.875,
+          "p75": 204.77499999999998,
+          "min": 8.0,
+          "max": 420,
+          "count": 10
+        },
+        "bus_service_span_hours": {
+          "median": 17.2,
+          "p25": 11.524999999999999,
+          "p75": 19.15,
+          "min": 7.0,
+          "max": 20.1,
+          "count": 10
+        },
+        "bus_weekday_trips": {
+          "median": 133.5,
+          "p25": 15.0,
+          "p75": 186.0,
+          "min": 6,
+          "max": 492,
+          "count": 10
+        }
       }
     }
   },

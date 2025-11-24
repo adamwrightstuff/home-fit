@@ -48,7 +48,7 @@
         "count": 16
       },
       "bus_score": {
-        "median": 37.5,
+        "median": 35.0,
         "p25": 16.25,
         "p75": 46.575,
         "min": 0,
@@ -88,7 +88,7 @@
         "count": 15
       },
       "bus_routes": {
-        "median": 8,
+        "median": 7,
         "p25": 4.0,
         "p75": 12.0,
         "min": 2,
@@ -111,18 +111,95 @@
         "max": 2,
         "count": 16
       },
-      "heavy_rail_peak_headway_minutes": null,
-      "heavy_rail_off_peak_headway_minutes": null,
-      "heavy_rail_service_span_hours": null,
-      "heavy_rail_weekday_trips": null,
+      "heavy_rail_peak_headway_minutes": {
+        "median": 18.65,
+        "p25": 14.475000000000001,
+        "p75": 27.249999999999996,
+        "min": 6.3,
+        "max": 60,
+        "count": 8
+      },
+      "heavy_rail_off_peak_headway_minutes": {
+        "median": 24.0,
+        "p25": 18.825000000000003,
+        "p75": 47.325,
+        "min": 8.0,
+        "max": 319,
+        "count": 8
+      },
+      "heavy_rail_service_span_hours": {
+        "median": 18.0,
+        "p25": 16.700000000000003,
+        "p75": 19.65,
+        "min": 11.6,
+        "max": 20.1,
+        "count": 8
+      },
+      "heavy_rail_weekday_trips": {
+        "median": 53.5,
+        "p25": 43.75,
+        "p75": 125.5,
+        "min": 4,
+        "max": 328,
+        "count": 8
+      },
       "light_rail_peak_headway_minutes": null,
-      "light_rail_off_peak_headway_minutes": null,
-      "light_rail_service_span_hours": null,
-      "light_rail_weekday_trips": null,
-      "bus_peak_headway_minutes": null,
-      "bus_off_peak_headway_minutes": null,
-      "bus_service_span_hours": null,
-      "bus_weekday_trips": null
+      "light_rail_off_peak_headway_minutes": {
+        "median": 420,
+        "p25": 420,
+        "p75": 420,
+        "min": 420,
+        "max": 420,
+        "count": 1
+      },
+      "light_rail_service_span_hours": {
+        "median": 7.0,
+        "p25": 7.0,
+        "p75": 7.0,
+        "min": 7.0,
+        "max": 7.0,
+        "count": 1
+      },
+      "light_rail_weekday_trips": {
+        "median": 2,
+        "p25": 2,
+        "p75": 2,
+        "min": 2,
+        "max": 2,
+        "count": 1
+      },
+      "bus_peak_headway_minutes": {
+        "median": 18.8,
+        "p25": 14.55,
+        "p75": 36.95,
+        "min": 6.3,
+        "max": 60,
+        "count": 9
+      },
+      "bus_off_peak_headway_minutes": {
+        "median": 25.1,
+        "p25": 19.875,
+        "p75": 204.77499999999998,
+        "min": 8.0,
+        "max": 420,
+        "count": 10
+      },
+      "bus_service_span_hours": {
+        "median": 17.2,
+        "p25": 11.524999999999999,
+        "p75": 19.15,
+        "min": 7.0,
+        "max": 20.1,
+        "count": 10
+      },
+      "bus_weekday_trips": {
+        "median": 133.5,
+        "p25": 15.0,
+        "p75": 186.0,
+        "min": 6,
+        "max": 492,
+        "count": 10
+      }
     }
   }
 }
