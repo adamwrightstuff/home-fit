@@ -13,9 +13,13 @@ from data_sources.radius_profiles import get_radius_profile
 from data_sources.transitland_api import get_nearby_transit_stops
 from data_sources.utils import haversine_distance as haversine_meters
 from data_sources.regional_baselines import get_contextual_expectations
+from logging_config import get_logger
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize logger
+logger = get_logger(__name__)
 
 # Transitland API v2 endpoint
 TRANSITLAND_API = "https://transit.land/api/v2/rest"
@@ -254,28 +258,56 @@ def get_public_transit_score(
     Returns:
         (total_score, detailed_breakdown)
     """
-    print(f"🚇 Analyzing public transit access...")
+    logger.info("🚇 Analyzing public transit access...", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "area_type": area_type,
+        "location_scope": location_scope
+    })
 
     # Query for routes near location using centralized radius profile
     rp = get_radius_profile('public_transit_access', area_type, location_scope)
     nearby_radius = int(rp.get('routes_radius_m', 1500))
     routes_data = _get_nearby_routes(lat, lon, radius_m=nearby_radius)
     # Log chosen radius profile
-    print(f"   🔧 Radius profile (transit): area_type={area_type}, scope={location_scope}, routes_radius={nearby_radius}m")
+    logger.info(f"🔧 Radius profile (transit): area_type={area_type}, scope={location_scope}, routes_radius={nearby_radius}m", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "area_type": area_type,
+        "location_scope": location_scope,
+        "routes_radius_m": nearby_radius
+    })
     
     # If no Transitland routes, try OSM railway stations as fallback
     osm_stations = None
     if not routes_data:
-        print("⚠️  No Transitland routes found, checking OSM railway stations...")
+        logger.warning("⚠️  No Transitland routes found, checking OSM railway stations...", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "area_type": area_type
+        })
         from data_sources import osm_api as osm
         osm_stations = osm.query_railway_stations(lat, lon, radius_m=2000)
         
         if osm_stations and len(osm_stations) > 0:
             # Convert OSM stations to route-like format for scoring
             routes_data = _convert_osm_stations_to_routes(osm_stations)
-            print(f"   Found {len(routes_data)} railway stations via OSM")
+            logger.info(f"Found {len(routes_data)} railway stations via OSM", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "osm_stations_count": len(routes_data)
+            })
         else:
-            print("⚠️  No transit routes found nearby")
+            logger.warning("⚠️  No transit routes found nearby", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "area_type": area_type
+            })
             return 0, _empty_breakdown()
 
     # Categorize routes by type
@@ -295,7 +327,14 @@ def get_public_transit_score(
             bus_routes.append(route)
     
     # Log route type breakdown for debugging
-    print(f"   📊 Route breakdown: {len(heavy_rail_routes)} heavy rail, {len(light_rail_routes)} light rail, {len(bus_routes)} bus")
+    logger.info(f"📊 Route breakdown: {len(heavy_rail_routes)} heavy rail, {len(light_rail_routes)} light rail, {len(bus_routes)} bus", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "heavy_rail_routes": len(heavy_rail_routes),
+        "light_rail_routes": len(light_rail_routes),
+        "bus_routes": len(bus_routes)
+    })
 
     # Context-aware weighting by area type
     # Urban areas: emphasize rail (heavy + light rail)
@@ -322,23 +361,55 @@ def get_public_transit_score(
         
         # Enhanced logging for debugging detection failures
         if metro_distance_km is None:
-            print(f"⚠️  Commuter rail suburb detection: metro_distance_km is None for {city or 'unknown city'}")
+            logger.warning(f"⚠️  Commuter rail suburb detection: metro_distance_km is None for {city or 'unknown city'}", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "city": city
+            })
         elif metro_distance_km >= 50:
-            print(f"⚠️  Commuter rail suburb detection: {city or 'unknown city'} is {metro_distance_km:.1f}km from metro (threshold: 50km)")
+            logger.warning(f"⚠️  Commuter rail suburb detection: {city or 'unknown city'} is {metro_distance_km:.1f}km from metro (threshold: 50km)", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "city": city,
+                "metro_distance_km": metro_distance_km
+            })
         else:
             # Check if it's a major metro (population > 2M)
             metro_name = baseline_mgr._detect_metro_area(city, lat, lon)
             if not metro_name:
-                print(f"⚠️  Commuter rail suburb detection: Could not detect metro area for {city or 'unknown city'}")
+                logger.warning(f"⚠️  Commuter rail suburb detection: Could not detect metro area for {city or 'unknown city'}", extra={
+                    "pillar_name": "public_transit_access",
+                    "lat": lat,
+                    "lon": lon,
+                    "city": city
+                })
             else:
                 metro_data = baseline_mgr.major_metros.get(metro_name, {})
                 metro_population = metro_data.get('population', 0)
                 if metro_population <= 2000000:
-                    print(f"⚠️  Commuter rail suburb detection: {metro_name} population {metro_population:,} < 2M threshold")
+                    logger.warning(f"⚠️  Commuter rail suburb detection: {metro_name} population {metro_population:,} < 2M threshold", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "metro_name": metro_name,
+                        "metro_population": metro_population
+                    })
                 else:
                     is_commuter_rail_suburb = True
                     effective_area_type = 'commuter_rail_suburb'
-                    print(f"🚇 Detected commuter rail suburb: {len(heavy_rail_routes)} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})")
+                    logger.info(f"🚇 Detected commuter rail suburb: {len(heavy_rail_routes)} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "city": city,
+                        "metro_name": metro_name,
+                        "metro_population": metro_population,
+                        "metro_distance_km": metro_distance_km,
+                        "heavy_rail_routes": len(heavy_rail_routes),
+                        "detected_area_type": "commuter_rail_suburb"
+                    })
 
     # Look up contextual expectations for transit by area type
     transit_expectations = get_contextual_expectations(
@@ -600,15 +671,70 @@ def get_public_transit_score(
         }
 
     # Log results
-    print(f"✅ Public Transit Score: {total_score:.0f}/100")
-    print(f"   🚇 Heavy Rail: {heavy_rail_score:.0f} ({len(heavy_rail_routes)} routes)")
-    print(f"   🚊 Light Rail: {light_rail_score:.0f} ({len(light_rail_routes)} routes)")
-    print(f"   🚌 Bus: {bus_score:.0f} ({len(bus_routes)} routes)")
+    logger.info(f"✅ Public Transit Score: {total_score:.0f}/100", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "area_type": area_type,
+        "total_score": total_score,
+        "heavy_rail_score": heavy_rail_score,
+        "light_rail_score": light_rail_score,
+        "bus_score": bus_score,
+        "heavy_rail_routes": len(heavy_rail_routes),
+        "light_rail_routes": len(light_rail_routes),
+        "bus_routes": len(bus_routes),
+        "commute_minutes": commute_minutes,
+        "commute_score": commute_score,
+        "quality_tier": quality_metrics['quality_tier'],
+        "confidence": quality_metrics['confidence']
+    })
+    logger.info(f"🚇 Heavy Rail: {heavy_rail_score:.0f} ({len(heavy_rail_routes)} routes)", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "mode": "heavy_rail",
+        "score": heavy_rail_score,
+        "route_count": len(heavy_rail_routes)
+    })
+    logger.info(f"🚊 Light Rail: {light_rail_score:.0f} ({len(light_rail_routes)} routes)", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "mode": "light_rail",
+        "score": light_rail_score,
+        "route_count": len(light_rail_routes)
+    })
+    logger.info(f"🚌 Bus: {bus_score:.0f} ({len(bus_routes)} routes)", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "mode": "bus",
+        "score": bus_score,
+        "route_count": len(bus_routes)
+    })
     if area_type:
-        print(f"   📍 Area type weighting: {area_type}")
+        logger.info(f"📍 Area type weighting: {area_type}", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "area_type": area_type
+        })
     if commute_minutes is not None and commute_score is not None:
-        print(f"   ⏱️ Commute time: {commute_minutes:.1f} min → score {commute_score:.1f} (weight {COMMUTE_WEIGHT:.0%})")
-    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
+        logger.info(f"⏱️ Commute time: {commute_minutes:.1f} min → score {commute_score:.1f} (weight {COMMUTE_WEIGHT:.0%})", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "commute_minutes": commute_minutes,
+            "commute_score": commute_score,
+            "commute_weight": COMMUTE_WEIGHT
+        })
+    logger.info(f"📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)", extra={
+        "pillar_name": "public_transit_access",
+        "lat": lat,
+        "lon": lon,
+        "quality_tier": quality_metrics['quality_tier'],
+        "confidence": quality_metrics['confidence']
+    })
 
     return round(total_score, 1), breakdown
 
@@ -620,7 +746,12 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
     Returns list of routes with their types and distances.
     """
     if not TRANSITLAND_API_KEY:
-        print("   ⚠️  TRANSITLAND_API_KEY not found in .env")
+        logger.warning("⚠️  TRANSITLAND_API_KEY not found in .env", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland"
+        })
         return []
     
     try:
@@ -643,14 +774,35 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
                     break
             except requests.exceptions.Timeout:
                 if attempt < 1:  # Retry once
-                    print(f"   ⚠️  Transitland API timeout (attempt {attempt + 1}/2), retrying...")
+                    logger.warning(f"⚠️  Transitland API timeout (attempt {attempt + 1}/2), retrying...", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "api_name": "transitland",
+                        "attempt": attempt + 1,
+                        "error_type": "timeout"
+                    })
                     continue
                 else:
-                    print(f"   ⚠️  Transitland API timeout after 2 attempts")
+                    logger.error("⚠️  Transitland API timeout after 2 attempts", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "api_name": "transitland",
+                        "error_type": "timeout"
+                    })
                     raise
             except Exception as e:
                 if attempt < 1:
-                    print(f"   ⚠️  Transitland API error (attempt {attempt + 1}/2): {e}, retrying...")
+                    logger.warning(f"⚠️  Transitland API error (attempt {attempt + 1}/2): {e}, retrying...", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "api_name": "transitland",
+                        "attempt": attempt + 1,
+                        "error_type": "api_error",
+                        "error": str(e)
+                    })
                     continue
                 else:
                     raise
@@ -659,7 +811,14 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             return []
         
         if response.status_code != 200:
-            print(f"   ⚠️  Transitland API returned status {response.status_code}")
+            logger.warning(f"⚠️  Transitland API returned status {response.status_code}", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "api_name": "transitland",
+                "status_code": response.status_code,
+                "error_type": "http_error"
+            })
             return []
         
         data = response.json()
@@ -668,10 +827,24 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
         # ENHANCED LOGGING: Log API response details
         total_routes_from_api = len(routes)
         limit_hit = total_routes_from_api >= 500
-        print(f"   📡 Transitland API response: {total_routes_from_api} routes (limit={'HIT' if limit_hit else 'not hit'}, radius={radius_m}m)")
+        logger.info(f"📡 Transitland API response: {total_routes_from_api} routes (limit={'HIT' if limit_hit else 'not hit'}, radius={radius_m}m)", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland",
+            "total_routes_from_api": total_routes_from_api,
+            "limit_hit": limit_hit,
+            "radius_m": radius_m
+        })
         
         if not routes:
-            print("   ℹ️  No routes found")
+            logger.info("ℹ️  No routes found", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "api_name": "transitland",
+                "radius_m": radius_m
+            })
             return []
         
         # Process routes and calculate distance to nearest stop
@@ -737,33 +910,89 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             })
         
         # ENHANCED LOGGING: Log processing details
-        print(f"   📊 Route processing: {len(processed_routes)} kept, {routes_missing_type} missing type, {routes_duplicate} duplicates")
-        print(f"   📊 Route type breakdown (raw): {route_type_breakdown['heavy']} heavy, {route_type_breakdown['light']} light, {route_type_breakdown['bus']} bus, {route_type_breakdown['other']} other")
+        logger.info(f"📊 Route processing: {len(processed_routes)} kept, {routes_missing_type} missing type, {routes_duplicate} duplicates", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland",
+            "processed_routes": len(processed_routes),
+            "routes_missing_type": routes_missing_type,
+            "routes_duplicate": routes_duplicate,
+            "total_routes_from_api": total_routes_from_api
+        })
+        logger.info(f"📊 Route type breakdown (raw): {route_type_breakdown['heavy']} heavy, {route_type_breakdown['light']} light, {route_type_breakdown['bus']} bus, {route_type_breakdown['other']} other", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland",
+            "route_type_breakdown": route_type_breakdown
+        })
         
         if route_distances:
             avg_distance = sum(route_distances) / len(route_distances)
             max_distance = max(route_distances)
             min_distance = min(route_distances)
-            print(f"   📍 Route distances: avg={avg_distance:.0f}m, min={min_distance:.0f}m, max={max_distance:.0f}m (radius={radius_m}m)")
+            logger.info(f"📍 Route distances: avg={avg_distance:.0f}m, min={min_distance:.0f}m, max={max_distance:.0f}m (radius={radius_m}m)", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "api_name": "transitland",
+                "avg_distance_m": avg_distance,
+                "min_distance_m": min_distance,
+                "max_distance_m": max_distance,
+                "radius_m": radius_m
+            })
             
             # Warn if many routes are near the radius limit
             routes_near_limit = len([d for d in route_distances if d > radius_m * 0.8])
             if routes_near_limit > 0:
-                print(f"   ⚠️  {routes_near_limit} routes are within 80% of radius limit - may be missing routes just outside radius")
+                logger.warning(f"⚠️  {routes_near_limit} routes are within 80% of radius limit - may be missing routes just outside radius", extra={
+                    "pillar_name": "public_transit_access",
+                    "lat": lat,
+                    "lon": lon,
+                    "api_name": "transitland",
+                    "routes_near_limit": routes_near_limit,
+                    "radius_m": radius_m
+                })
         
         # ENHANCED LOGGING: Warn if route count seems low for area type
         if len(processed_routes) < 10:
-            print(f"   ⚠️  WARNING: Only {len(processed_routes)} routes found - may indicate:")
-            print(f"      - Transitland API coverage gap")
-            print(f"      - Query radius ({radius_m}m) too small")
-            print(f"      - Location has genuinely sparse transit")
+            logger.warning(f"⚠️  WARNING: Only {len(processed_routes)} routes found - may indicate: Transitland API coverage gap, Query radius ({radius_m}m) too small, Location has genuinely sparse transit", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "api_name": "transitland",
+                "processed_routes": len(processed_routes),
+                "radius_m": radius_m,
+                "warning_type": "low_route_count"
+            })
         
-        print(f"   ℹ️  Found {len(processed_routes)} unique transit routes (deduplicated from {total_routes_from_api} total)")
+        logger.info(f"ℹ️  Found {len(processed_routes)} unique transit routes (deduplicated from {total_routes_from_api} total)", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland",
+            "processed_routes": len(processed_routes),
+            "total_routes_from_api": total_routes_from_api
+        })
         
         return processed_routes
         
     except Exception as e:
-        print(f"   ⚠️  Transit query error: {e}")
+        logger.error(f"⚠️  Transit query error: {e}", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "api_name": "transitland",
+            "error_type": "query_error",
+            "error": str(e)
+        })
+        import traceback
+        logger.debug(f"Transit query error traceback: {traceback.format_exc()}", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon
+        })
         return []
 
 
