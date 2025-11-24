@@ -1066,6 +1066,11 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         
         raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus - penalty
         mult = DENSITY_MULTIPLIER.get(effective_area_type, 1.0)
+        # Built beauty component score is capped at 33.0 to maintain balance with other pillars.
+        # This cap is based on the architectural diversity scoring system where:
+        # - Component scores (height, type, footprint, coherence) are additive
+        # - The cap prevents any single component from dominating the overall livability score
+        # - The multiplier (DENSITY_MULTIPLIER) already provides area-type context
         normalized_score = min(33.0, raw_total * mult)
         
         return {

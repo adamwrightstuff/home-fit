@@ -12,46 +12,13 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-TARGET_AREA_TYPES: Dict[str, str] = {
-    "capitol hill seattle wa": "urban_residential",
-    "bronxville ny": "suburban",
-    "san francisco ca mission district": "urban_residential",
-    "ballard seattle wa": "urban_residential",
-    "georgetown dc": "historic_urban",
-    "upper west side new york ny": "urban_residential",
-    "telluride co": "rural",
-    "park slope brooklyn ny": "urban_residential",
-    "montclair nj": "suburban",
-    "palo alto ca downtown": "urban_residential",
-    "carmel-by-the-sea ca": "exurban",
-    "aspen co": "exurban",
-    "bay view milwaukee wi": "urban_residential",
-    "hyde park austin tx": "urban_residential",
-    "larchmont ny": "suburban",
-    "sausalito ca": "suburban",
-    "boulder co": "urban_residential",
-    "san francisco ca nob hill": "urban_core",
-    "santa monica ca": "urban_core",
-    "st paul mn summit hill": "suburban",
-    "downtown portland or": "urban_core",
-    "pearl district portland or": "urban_core",
-    "old town alexandria va": "historic_urban",
-    "chicago il lincoln park": "urban_residential",
-    "back bay boston ma": "historic_urban",
-    "savannah ga historic district": "historic_urban",
-    "healdsburg ca": "exurban",
-    "beacon hill boston ma": "historic_urban",
-    "venice beach los angeles ca": "urban_residential",
-    "charleston sc historic district": "historic_urban",
-    "san francisco ca outer sunset": "urban_residential",
-    "asheville nc": "urban_core",
-    "chicago il andersonville": "urban_residential",
-    "minneapolis mn north loop": "urban_core",
-    "durham nc downtown": "urban_core_lowrise",
-    "taos nm": "rural",
-    "new orleans la garden district": "historic_urban",
-    "scottsdale az old town": "urban_core_lowrise",
-}
+# REMOVED: TARGET_AREA_TYPES hardcoded overrides violate design principles
+# Hardcoded location-to-area-type mappings are not scalable and create maintenance burden.
+# If specific locations need different classifications, the classification logic itself
+# should be improved, not bypassed with exceptions.
+# 
+# Previous overrides were used for calibration/testing but should not be in production.
+TARGET_AREA_TYPES: Dict[str, str] = {}
 
 AREA_TYPE_DIAGNOSTICS_PATH = Path("analysis/area_type_diagnostics.jsonl")
 
@@ -298,11 +265,8 @@ def classify_morphology(
         elif density:
             return "urban_core"
     
-    # Special case: Irvine override
-    normalized_location = _normalize_location_key(location_input)
-    city_key = (city or "").lower().strip() if city else ""
-    if city_key == "irvine" or (normalized_location and "irvine" in normalized_location):
-        return "suburban"
+    # REMOVED: Irvine special case - hardcoded city exceptions violate design principles
+    # If Irvine needs different classification, improve the classification logic itself
     
     # Calculate intensity and context scores
     intensity = _calculate_intensity_score(density, coverage, business_count)
@@ -629,11 +593,8 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     """
     normalized_location = _normalize_location_key(location_input)
     
-    # Check for override in TARGET_AREA_TYPES before running classification
-    if normalized_location and normalized_location in TARGET_AREA_TYPES:
-        override_type = TARGET_AREA_TYPES[normalized_location]
-        logger.info(f"Using TARGET_AREA_TYPES override for '{normalized_location}': {override_type}")
-        return override_type
+    # REMOVED: TARGET_AREA_TYPES override check - hardcoded location overrides violate design principles
+    # If specific locations need different classifications, improve the classification logic itself
     
     diagnostic_record: Optional[Dict[str, Any]] = None
     if normalized_location or built_coverage is not None:

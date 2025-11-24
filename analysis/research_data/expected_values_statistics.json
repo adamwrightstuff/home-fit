@@ -1,517 +1,115 @@
 {
-  "urban_core": {
-    "sample_size": 5,
+  "commuter_rail_suburb": {
+    "sample_size": 16,
     "active_outdoors": {
-      "parks_1km": {
-        "median": 38,
-        "p25": 17.0,
-        "p75": 57.5,
-        "min": 10,
-        "max": 63,
-        "count": 5
+      "parks_1km": null,
+      "playgrounds_1km": null,
+      "park_area_hectares": null,
+      "trails_15km": null,
+      "water_15km": null,
+      "camping_15km": null,
+      "closest_water_km": null
+    },
+    "healthcare": {
+      "hospitals_10km": null,
+      "pharmacies_2km": null,
+      "clinics_5km": null,
+      "closest_hospital_km": null
+    },
+    "amenities": {
+      "businesses_1km": null,
+      "business_types": null,
+      "restaurants_1km": null,
+      "median_distance_m": null
+    },
+    "transit": {
+      "transit_score": {
+        "median": 79.75,
+        "p25": 76.725,
+        "p75": 80.5,
+        "min": 0,
+        "max": 80.5,
+        "count": 16
       },
-      "playgrounds_1km": {
-        "median": 0,
+      "heavy_rail_score": {
+        "median": 40.0,
+        "p25": 0.0,
+        "p75": 55.0,
+        "min": 0.0,
+        "max": 75.0,
+        "count": 16
+      },
+      "light_rail_score": {
+        "median": 0.0,
         "p25": 0.0,
         "p75": 0.0,
+        "min": 0.0,
+        "max": 52.0,
+        "count": 16
+      },
+      "bus_score": {
+        "median": 75.0,
+        "p25": 67.5,
+        "p75": 75.0,
         "min": 0,
-        "max": 0,
-        "count": 5
+        "max": 75.0,
+        "count": 16
       },
-      "park_area_hectares": {
-        "median": 9.3342,
-        "p25": 4.65295,
-        "p75": 10.14275,
-        "min": 2.4705,
-        "max": 10.4657,
-        "count": 5
+      "commute_time_score": {
+        "median": 85.0,
+        "p25": 75.625,
+        "p75": 85.0,
+        "min": 68.7,
+        "max": 85.0,
+        "count": 14
       },
-      "trails_15km": {
-        "median": 97,
-        "p25": 64.5,
-        "p75": 99.5,
-        "min": 63,
-        "max": 100,
-        "count": 5
+      "total_routes": {
+        "median": 9,
+        "p25": 7.0,
+        "p75": 14.0,
+        "min": 2,
+        "max": 64,
+        "count": 15
       },
-      "water_15km": {
-        "median": 358,
-        "p25": 153.0,
-        "p75": 419.5,
-        "min": 7,
-        "max": 446,
-        "count": 5
-      },
-      "camping_15km": {
+      "heavy_rail_routes": {
         "median": 1,
         "p25": 0.0,
-        "p75": 3.5,
+        "p75": 2.0,
         "min": 0,
         "max": 5,
-        "count": 5
+        "count": 15
       },
-      "closest_water_km": {
-        "median": 1.306,
-        "p25": 1.0375,
-        "p75": 3.532,
-        "min": 0.91,
-        "max": 4.857,
-        "count": 5
-      }
-    },
-    "healthcare": {
-      "hospitals_20km": {
-        "median": 101,
-        "p25": 28.0,
-        "p75": 123.0,
-        "min": 0,
-        "max": 128,
-        "count": 5
-      },
-      "pharmacies_8km": {
-        "median": 404,
-        "p25": 15.0,
-        "p75": 496.5,
-        "min": 0,
-        "max": 552,
-        "count": 5
-      },
-      "clinics_5km": {
-        "median": 94,
-        "p25": 3.5,
-        "p75": 128.5,
-        "min": 0,
-        "max": 137,
-        "count": 5
-      },
-      "closest_hospital_km": {
-        "median": 0.7295,
-        "p25": 0.6575,
-        "p75": 1.9347500000000002,
-        "min": 0.649,
-        "max": 2.321,
-        "count": 4
-      }
-    },
-    "amenities": {
-      "businesses_1km": {
-        "median": 544,
-        "p25": 258.5,
-        "p75": 868.0,
-        "min": 38,
-        "max": 1182,
-        "count": 5
-      },
-      "business_types": {
-        "median": 16,
-        "p25": 13.5,
-        "p75": 16.0,
-        "min": 12,
-        "max": 16,
-        "count": 5
-      },
-      "restaurants_1km": {
-        "median": 254,
-        "p25": 104.5,
-        "p75": 466.0,
-        "min": 19,
-        "max": 642,
-        "count": 5
-      },
-      "median_distance_m": {
-        "median": 635.0,
-        "p25": 538.5,
-        "p75": 737.5,
-        "min": 473.0,
-        "max": 737.5,
-        "count": 5
-      }
-    }
-  },
-  "suburban": {
-    "sample_size": 4,
-    "active_outdoors": {
-      "parks_1km": {
-        "median": 15.5,
-        "p25": 7.5,
-        "p75": 20.5,
-        "min": 5,
-        "max": 22,
-        "count": 4
-      },
-      "playgrounds_1km": {
-        "median": 0.0,
+      "light_rail_routes": {
+        "median": 0,
         "p25": 0.0,
         "p75": 0.0,
         "min": 0,
-        "max": 0,
-        "count": 4
-      },
-      "park_area_hectares": {
-        "median": 14.90185,
-        "p25": 7.3149999999999995,
-        "p75": 57.098725,
-        "min": 5.2405,
-        "max": 70.7099,
-        "count": 4
-      },
-      "trails_15km": {
-        "median": 17.0,
-        "p25": 2.75,
-        "p75": 36.5,
-        "min": 0,
-        "max": 41,
-        "count": 4
-      },
-      "water_15km": {
-        "median": 23.5,
-        "p25": 0.75,
-        "p75": 65.0,
-        "min": 0,
-        "max": 72,
-        "count": 4
-      },
-      "camping_15km": {
-        "median": 3.5,
-        "p25": 0.25,
-        "p75": 13.5,
-        "min": 0,
-        "max": 16,
-        "count": 4
-      },
-      "closest_water_km": {
-        "median": 0.86,
-        "p25": 0.287,
-        "p75": 4.34,
-        "min": 0.287,
-        "max": 4.34,
-        "count": 3
-      }
-    },
-    "healthcare": {
-      "hospitals_20km": {
-        "median": 3.0,
-        "p25": 1.5,
-        "p75": 3.0,
-        "min": 1,
         "max": 3,
-        "count": 4
+        "count": 15
       },
-      "pharmacies_8km": {
-        "median": 5.0,
-        "p25": 1.0,
-        "p75": 11.25,
+      "bus_routes": {
+        "median": 8,
+        "p25": 4.0,
+        "p75": 12.0,
+        "min": 2,
+        "max": 62,
+        "count": 15
+      },
+      "mean_commute_minutes": {
+        "median": 28.35,
+        "p25": 25.525000000000002,
+        "p75": 36.275,
+        "min": 22.2,
+        "max": 40.9,
+        "count": 14
+      },
+      "transit_modes_count": {
+        "median": 2.0,
+        "p25": 2.0,
+        "p75": 2.0,
         "min": 0,
-        "max": 13,
-        "count": 4
-      },
-      "clinics_5km": {
-        "median": 7.5,
-        "p25": 1.0,
-        "p75": 17.75,
-        "min": 0,
-        "max": 20,
-        "count": 4
-      },
-      "closest_hospital_km": {
-        "median": 3.1334999999999997,
-        "p25": 1.9652500000000002,
-        "p75": 5.05025,
-        "min": 1.85,
-        "max": 5.415,
-        "count": 4
-      }
-    },
-    "amenities": {
-      "businesses_1km": {
-        "median": 120.0,
-        "p25": 110.25,
-        "p75": 147.75,
-        "min": 109,
-        "max": 155,
-        "count": 4
-      },
-      "business_types": {
-        "median": 12.5,
-        "p25": 10.5,
-        "p75": 14.5,
-        "min": 10,
-        "max": 15,
-        "count": 4
-      },
-      "restaurants_1km": {
-        "median": 44.5,
-        "p25": 40.75,
-        "p75": 49.0,
-        "min": 40,
-        "max": 50,
-        "count": 4
-      },
-      "median_distance_m": {
-        "median": 466.0,
-        "p25": 240.5,
-        "p75": 568.5,
-        "min": 191.0,
-        "max": 577.0,
-        "count": 4
-      }
-    }
-  },
-  "exurban": {
-    "sample_size": 2,
-    "active_outdoors": {
-      "parks_1km": {
-        "median": 7.5,
-        "p25": 6.75,
-        "p75": 8.25,
-        "min": 7,
-        "max": 8,
-        "count": 2
-      },
-      "playgrounds_1km": {
-        "median": 0.0,
-        "p25": 0.0,
-        "p75": 0.0,
-        "min": 0,
-        "max": 0,
-        "count": 2
-      },
-      "park_area_hectares": {
-        "median": 4.90735,
-        "p25": 3.0192250000000005,
-        "p75": 6.795475,
-        "min": 3.6486,
-        "max": 6.1661,
-        "count": 2
-      },
-      "trails_15km": {
-        "median": 9.5,
-        "p25": 5.75,
-        "p75": 13.25,
-        "min": 7,
-        "max": 12,
-        "count": 2
-      },
-      "water_15km": {
-        "median": 30.5,
-        "p25": 10.25,
-        "p75": 50.75,
-        "min": 17,
-        "max": 44,
-        "count": 2
-      },
-      "camping_15km": {
-        "median": 8.5,
-        "p25": -2.75,
-        "p75": 19.75,
-        "min": 1,
-        "max": 16,
-        "count": 2
-      },
-      "closest_water_km": {
-        "median": 3.7935,
-        "p25": 3.37875,
-        "p75": 4.2082500000000005,
-        "min": 3.517,
-        "max": 4.07,
-        "count": 2
-      }
-    },
-    "healthcare": {
-      "hospitals_20km": {
-        "median": 3.5,
-        "p25": 2.75,
-        "p75": 4.25,
-        "min": 3,
-        "max": 4,
-        "count": 2
-      },
-      "pharmacies_8km": {
-        "median": 0.5,
-        "p25": -0.25,
-        "p75": 1.25,
-        "min": 0,
-        "max": 1,
-        "count": 2
-      },
-      "clinics_5km": {
-        "median": 0.0,
-        "p25": 0.0,
-        "p75": 0.0,
-        "min": 0,
-        "max": 0,
-        "count": 2
-      },
-      "closest_hospital_km": {
-        "median": 3.537,
-        "p25": 1.0395000000000003,
-        "p75": 6.0344999999999995,
-        "min": 1.872,
-        "max": 5.202,
-        "count": 2
-      }
-    },
-    "amenities": {
-      "businesses_1km": {
-        "median": 100.5,
-        "p25": 50.25,
-        "p75": 150.75,
-        "min": 67,
-        "max": 134,
-        "count": 2
-      },
-      "business_types": {
-        "median": 11.0,
-        "p25": 9.5,
-        "p75": 12.5,
-        "min": 10,
-        "max": 12,
-        "count": 2
-      },
-      "restaurants_1km": {
-        "median": 39.5,
-        "p25": 25.25,
-        "p75": 53.75,
-        "min": 30,
-        "max": 49,
-        "count": 2
-      },
-      "median_distance_m": {
-        "median": 213.0,
-        "p25": 66.0,
-        "p75": 360.0,
-        "min": 115.0,
-        "max": 311.0,
-        "count": 2
-      }
-    }
-  },
-  "rural": {
-    "sample_size": 1,
-    "active_outdoors": {
-      "parks_1km": {
-        "median": 1,
-        "p25": 1,
-        "p75": 1,
-        "min": 1,
-        "max": 1,
-        "count": 1
-      },
-      "playgrounds_1km": {
-        "median": 0,
-        "p25": 0,
-        "p75": 0,
-        "min": 0,
-        "max": 0,
-        "count": 1
-      },
-      "park_area_hectares": {
-        "median": 2.4794,
-        "p25": 2.4794,
-        "p75": 2.4794,
-        "min": 2.4794,
-        "max": 2.4794,
-        "count": 1
-      },
-      "trails_15km": {
-        "median": 116,
-        "p25": 116,
-        "p75": 116,
-        "min": 116,
-        "max": 116,
-        "count": 1
-      },
-      "water_15km": {
-        "median": 120,
-        "p25": 120,
-        "p75": 120,
-        "min": 120,
-        "max": 120,
-        "count": 1
-      },
-      "camping_15km": {
-        "median": 7,
-        "p25": 7,
-        "p75": 7,
-        "min": 7,
-        "max": 7,
-        "count": 1
-      },
-      "closest_water_km": {
-        "median": 0.627,
-        "p25": 0.627,
-        "p75": 0.627,
-        "min": 0.627,
-        "max": 0.627,
-        "count": 1
-      }
-    },
-    "healthcare": {
-      "hospitals_20km": {
-        "median": 4,
-        "p25": 4,
-        "p75": 4,
-        "min": 4,
-        "max": 4,
-        "count": 1
-      },
-      "pharmacies_8km": {
-        "median": 0,
-        "p25": 0,
-        "p75": 0,
-        "min": 0,
-        "max": 0,
-        "count": 1
-      },
-      "clinics_5km": {
-        "median": 0,
-        "p25": 0,
-        "p75": 0,
-        "min": 0,
-        "max": 0,
-        "count": 1
-      },
-      "closest_hospital_km": {
-        "median": 6.474,
-        "p25": 6.474,
-        "p75": 6.474,
-        "min": 6.474,
-        "max": 6.474,
-        "count": 1
-      }
-    },
-    "amenities": {
-      "businesses_1km": {
-        "median": 3,
-        "p25": 3,
-        "p75": 3,
-        "min": 3,
-        "max": 3,
-        "count": 1
-      },
-      "business_types": {
-        "median": 1,
-        "p25": 1,
-        "p75": 1,
-        "min": 1,
-        "max": 1,
-        "count": 1
-      },
-      "restaurants_1km": {
-        "median": 3,
-        "p25": 3,
-        "p75": 3,
-        "min": 3,
-        "max": 3,
-        "count": 1
-      },
-      "median_distance_m": {
-        "median": 926.0,
-        "p25": 926.0,
-        "p75": 926.0,
-        "min": 926.0,
-        "max": 926.0,
-        "count": 1
+        "max": 2,
+        "count": 16
       }
     }
   }

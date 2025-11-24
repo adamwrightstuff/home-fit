@@ -165,6 +165,17 @@ def _score_value_efficiency(home_value: float, median_rooms: float, metro_name: 
 
     # Metro-specific adjustments: high-cost metros get more forgiving thresholds
     # This prevents double-penalization (affordability already penalizes them)
+    # 
+    # RATIONALE: This adjustment is based on the observation that larger metros (>2M population)
+    # tend to have higher home values, which is already reflected in the affordability component.
+    # Without this adjustment, high-cost metros would be penalized twice:
+    # 1. In affordability (lower score for high home values)
+    # 2. In value efficiency (lower score for fewer rooms per $100k)
+    # 
+    # This is a context-aware adjustment, not location-specific tuning, as it applies to all
+    # locations within metros of a given size category.
+    # 
+    # TODO: Consider replacing with research-backed metro-specific expected values
     metro_adjustment = 1.0
     if metro_name:
         try:

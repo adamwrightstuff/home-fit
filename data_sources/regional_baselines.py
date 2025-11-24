@@ -771,16 +771,21 @@ class RegionalBaselineManager:
                     'expected_restaurants_within_1km': 100
                 },
                 'public_transit_access': {
-                    # Urban residential: typically good transit but fewer routes than urban cores.
-                    # Heavy rail: may have 1-2 routes (commuter rail), not full metro systems.
-                    # Light rail: rare, treat as bonus when present.
-                    # Bus: typically 10-15 routes (good coverage, but not as dense as cores).
-                    # Calibrated based on test locations:
-                    # - Midtown Atlanta: 3 heavy, 7 bus → target 78 (needs heavy expected=0.5 to score ~77)
-                    # - Uptown Charlotte: 44 light rail, 45.7 bus → target 55 (expected_light_rail=0 uses fallback, bus=34)
-                    'expected_heavy_rail_routes': 0.5,   # Very low - heavy rail is exceptional in residential areas
-                    'expected_light_rail_routes': 0,   # Rare in residential areas
-                    'expected_bus_routes': 34          # Higher to properly calibrate high route counts (47 routes)
+                    # Urban residential: dense neighborhoods with good transit but fewer routes than urban cores.
+                    # 
+                    # NOTE: Research data not yet available for urban_residential. These are conservative estimates
+                    # based on the area type description. Should be replaced with research medians when available.
+                    # 
+                    # Rationale:
+                    # - Heavy rail: Rare in residential areas (commuter rail may exist but not full metro systems)
+                    # - Light rail: Very rare in residential areas
+                    # - Bus: Good coverage but typically fewer routes than urban cores
+                    # 
+                    # TODO: Run research script for urban_residential locations to get actual medians
+                    #       Use: python scripts/research_expected_values.py --area-types urban_residential --pillars transit
+                    'expected_heavy_rail_routes': 0,   # Conservative: heavy rail is rare in residential areas
+                    'expected_light_rail_routes': 0,   # Conservative: light rail is very rare
+                    'expected_bus_routes': 15          # Conservative estimate: good coverage but fewer than cores
                 }
             },
             'commuter_rail_suburb': {
