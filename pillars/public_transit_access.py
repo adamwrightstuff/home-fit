@@ -458,8 +458,8 @@ def get_public_transit_score(
     
     # Detect actual area type for data quality assessment
     # Use pre-computed density if available to avoid redundant API calls
+    from data_sources import census_api  # Import outside conditional - used later for commute_time
     if density is None:
-        from data_sources import census_api
         density = census_api.get_population_density(lat, lon)
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
