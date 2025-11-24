@@ -159,8 +159,8 @@ def _retry_overpass(
                         else:
                             retry_after = int(resp.headers.get('Retry-After', base_wait))
                         
-                        # Respect Retry-After header, but cap at max_wait (now 30s for CRITICAL)
-                        retry_after = min(retry_after, retry_config.max_wait)
+                        # Respect Retry-After header, but cap at max_wait and also cap at 10s to prevent excessive waits
+                        retry_after = min(retry_after, retry_config.max_wait, 10.0)  # Hard cap at 10s regardless of profile
                         
                         # Increase minimum query interval adaptively
                         with _query_lock:
@@ -170,13 +170,9 @@ def _retry_overpass(
                             _current_min_query_interval = new_interval
                         
                         # If fail_fast is True and rate limited on second attempt or later, give up faster
-                        # Also cap retry_after at 10s even for CRITICAL queries to prevent excessive waits
                         if fail_fast and i >= 1:
                             logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
                             return None  # Fail fast instead of waiting more
-                        
-                        # Cap retry_after at 10s to prevent excessive waits (even for CRITICAL)
-                        retry_after = min(retry_after, 10.0)
                         
                         if i < max_attempts - 1:
                             logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
