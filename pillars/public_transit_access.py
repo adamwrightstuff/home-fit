@@ -320,13 +320,22 @@ def get_public_transit_score(
         baseline_mgr = RegionalBaselineManager()
         metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
         
-        if metro_distance_km is not None and metro_distance_km < 50:
+        # Enhanced logging for debugging detection failures
+        if metro_distance_km is None:
+            print(f"⚠️  Commuter rail suburb detection: metro_distance_km is None for {city or 'unknown city'}")
+        elif metro_distance_km >= 50:
+            print(f"⚠️  Commuter rail suburb detection: {city or 'unknown city'} is {metro_distance_km:.1f}km from metro (threshold: 50km)")
+        else:
             # Check if it's a major metro (population > 2M)
             metro_name = baseline_mgr._detect_metro_area(city, lat, lon)
-            if metro_name:
+            if not metro_name:
+                print(f"⚠️  Commuter rail suburb detection: Could not detect metro area for {city or 'unknown city'}")
+            else:
                 metro_data = baseline_mgr.major_metros.get(metro_name, {})
                 metro_population = metro_data.get('population', 0)
-                if metro_population > 2000000:
+                if metro_population <= 2000000:
+                    print(f"⚠️  Commuter rail suburb detection: {metro_name} population {metro_population:,} < 2M threshold")
+                else:
                     is_commuter_rail_suburb = True
                     effective_area_type = 'commuter_rail_suburb'
                     print(f"🚇 Detected commuter rail suburb: {len(heavy_rail_routes)} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})")
