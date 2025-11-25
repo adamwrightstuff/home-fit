@@ -124,6 +124,24 @@ SAMPLE_LOCATIONS = {
         "Shaker Heights OH",
         "Carmel IN",
         "Bronxville NY",  # Known test case
+    ],
+    'urban_residential': [
+        "Uptown Charlotte NC",  # Known test case
+        "Midtown Atlanta GA",  # Known test case
+        "Dupont Circle Washington DC",  # Known test case
+        "Georgetown Washington DC",
+        "Back Bay Boston MA",
+        "Beacon Hill Boston MA",
+        "Lincoln Park Chicago IL",
+        "Lakeview Chicago IL",
+        "Greenwich Village New York NY",
+        "Upper East Side New York NY",
+        "Pacific Heights San Francisco CA",
+        "Marina District San Francisco CA",
+        "Capitol Hill Seattle WA",
+        "Queen Anne Seattle WA",
+        "Highland Park Dallas TX",
+        "Montrose Houston TX",
     ]
 }
 

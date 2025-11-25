@@ -1,0 +1,22 @@
+{
+  "multimodal_bonus": {
+    "threshold": 20.0,
+    "bonus_2_modes": 3.0,
+    "bonus_3_modes": 6.0,
+    "avg_error": 79.5
+  },
+  "commute_weight": {
+    "weight": 0.05,
+    "avg_error": 9.762321428571433
+  },
+  "commute_time_distribution": {
+    "urban_residential": {
+      "median": 25.299999999999997,
+      "p25": 22.7,
+      "p75": 31.4,
+      "min": 16.3,
+      "max": 34.2,
+      "count": 14
+    }
+  }
+}

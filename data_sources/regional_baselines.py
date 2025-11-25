@@ -773,19 +773,16 @@ class RegionalBaselineManager:
                 'public_transit_access': {
                     # Urban residential: dense neighborhoods with good transit but fewer routes than urban cores.
                     # 
-                    # NOTE: Research data not yet available for urban_residential. These are conservative estimates
-                    # based on the area type description. Should be replaced with research medians when available.
+                    # RESEARCH-BACKED (n=16 urban_residential locations):
+                    # - Heavy rail routes: median=1.0, p25=0.0, p75=6.75 (range: 0-25)
+                    # - Light rail routes: median=0.0, p25=0.0, p75=1.75 (range: 0-4)
+                    # - Bus routes: median=35.0, p25=15.5, p75=57.5 (range: 3-96)
                     # 
-                    # Rationale:
-                    # - Heavy rail: Rare in residential areas (commuter rail may exist but not full metro systems)
-                    # - Light rail: Very rare in residential areas
-                    # - Bus: Good coverage but typically fewer routes than urban cores
-                    # 
-                    # TODO: Run research script for urban_residential locations to get actual medians
-                    #       Use: python scripts/research_expected_values.py --area-types urban_residential --pillars transit
-                    'expected_heavy_rail_routes': 0,   # Conservative: heavy rail is rare in residential areas
-                    'expected_light_rail_routes': 0,   # Conservative: light rail is very rare
-                    'expected_bus_routes': 15          # Conservative estimate: good coverage but fewer than cores
+                    # Research data collected: 2024-11-24
+                    # Source: scripts/research_expected_values.py --area-types urban_residential --pillars transit
+                    'expected_heavy_rail_routes': 1,   # Research-backed: median=1.0 (commuter rail may exist)
+                    'expected_light_rail_routes': 0,   # Research-backed: median=0.0 (very rare)
+                    'expected_bus_routes': 35          # Research-backed: median=35.0 (good coverage)
                 }
             },
             'commuter_rail_suburb': {
