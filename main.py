@@ -33,6 +33,63 @@ ENABLE_SCHOOL_SCORING = True  # Set to False to skip SchoolDigger API calls
 load_dotenv()
 
 
+def _compute_scoring_hash() -> str:
+    """
+    Compute a hash of key scoring files to auto-generate API version.
+    This ensures cache invalidation when scoring logic changes.
+    
+    Returns:
+        Short hash string (first 8 characters of MD5 hash)
+    """
+    import hashlib
+    import os
+    
+    # Key files that affect scoring results
+    scoring_files = [
+        # Pillar scoring logic
+        "pillars/active_outdoors.py",
+        "pillars/built_beauty.py",
+        "pillars/natural_beauty.py",
+        "pillars/neighborhood_amenities.py",
+        "pillars/air_travel_access.py",
+        "pillars/public_transit_access.py",
+        "pillars/healthcare_access.py",
+        "pillars/housing_value.py",
+        "pillars/schools.py",
+        "pillars/beauty_common.py",
+        # Expected values and baselines
+        "data_sources/regional_baselines.py",
+        # Area type classification
+        "data_sources/data_quality.py",
+        # Token allocation logic (in main.py)
+        "main.py",
+    ]
+    
+    hasher = hashlib.md5()
+    
+    for file_path in scoring_files:
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as f:
+                    hasher.update(f.read())
+        except Exception as e:
+            logger.warning(f"Could not hash {file_path} for versioning: {e}")
+    
+    # Return first 8 characters of hash (short but unique enough)
+    return hasher.hexdigest()[:8]
+
+
+# API Version - automatically generated from scoring file hash
+# Format: "3.0.0-{hash}" where hash changes when scoring logic changes
+# This ensures request-level caching invalidates old responses automatically
+_BASE_VERSION = "3.0.0"
+_SCORING_HASH = _compute_scoring_hash()
+API_VERSION = f"{_BASE_VERSION}-{_SCORING_HASH}"
+
+# Log the auto-generated version on startup
+logger.info(f"API Version: {API_VERSION} (auto-generated from scoring file hash)")
+
+
 def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     Parse token allocation string or return default equal distribution.
@@ -99,7 +156,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 9 pillars",
-    version="3.0.0"
+    version=API_VERSION
 )
 
 # CORS middleware
@@ -118,7 +175,7 @@ def root():
     return {
         "service": "HomeFit API",
         "status": "running",
-        "version": "3.0.0",
+        "version": API_VERSION,
         "pillars": [
             "active_outdoors",
             "built_beauty",
@@ -135,6 +192,23 @@ def root():
             "docs": "/docs"
         }
     }
+
+
+def _generate_request_cache_key(location: str, tokens: Optional[str], include_chains: bool, 
+                                diagnostics: bool, enable_schools: Optional[bool]) -> str:
+    """Generate cache key for request-level caching with API version."""
+    import hashlib
+    key_parts = [
+        f"api_response:v{API_VERSION}",
+        location.lower().strip(),
+        str(tokens) if tokens else "default",
+        str(include_chains),
+        str(diagnostics),
+        str(enable_schools) if enable_schools is not None else "default"
+    ]
+    key_str = ":".join(key_parts)
+    key_hash = hashlib.md5(key_str.encode()).hexdigest()
+    return f"api_response:v{API_VERSION}:{key_hash}"
 
 
 @app.get("/score")
@@ -180,6 +254,38 @@ def get_livability_score(request: Request,
         logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
 
     test_mode_enabled = bool(test_mode)
+    
+    # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
+    if not test_mode_enabled:
+        from data_sources.cache import _redis_client, _cache, _cache_ttl
+        import json
+        
+        cache_key = _generate_request_cache_key(location, tokens, include_chains, bool(diagnostics), enable_schools)
+        request_cache_ttl = 300  # 5 minutes for request-level cache
+        
+        # Check cache (Redis first, then in-memory)
+        cached_response = None
+        if _redis_client:
+            try:
+                cached_data = _redis_client.get(cache_key)
+                if cached_data:
+                    data = json.loads(cached_data)
+                    cache_time = data.get('timestamp', 0)
+                    if (time.time() - cache_time) < request_cache_ttl:
+                        cached_response = data.get('value')
+                        logger.info(f"Request cache hit for {location}")
+            except Exception as e:
+                logger.warning(f"Redis cache read error: {e}")
+        
+        if cached_response is None and cache_key in _cache:
+            cache_time = _cache_ttl.get(cache_key, 0)
+            if (time.time() - cache_time) < request_cache_ttl:
+                cached_response = _cache[cache_key]
+                logger.info(f"Request cache hit (in-memory) for {location}")
+        
+        if cached_response:
+            # Return cached response immediately
+            return cached_response
 
     override_params: Dict[str, float] = {}
     if test_mode_enabled:
@@ -296,10 +402,9 @@ def get_livability_score(request: Request,
         
         def _fetch_built_coverage():
             try:
+                # Return full arch_diversity dict to reuse in built_beauty pillar
                 arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-                if arch_diversity:
-                    return arch_diversity.get("built_coverage_ratio")
-                return None
+                return arch_diversity  # Return full dict, not just built_coverage_ratio
             except Exception as e:
                 logger.warning(f"Built coverage query failed (non-fatal): {e}")
                 return None
@@ -328,8 +433,11 @@ def get_livability_score(request: Request,
             # Wait for remaining results
             density = future_density.result()
             business_count = future_business_count.result()
-            built_coverage = future_built_coverage.result()
+            arch_diversity_data = future_built_coverage.result()  # Full arch_diversity dict
             metro_distance_km = future_metro_distance.result()
+        
+        # Extract built_coverage_ratio for area type detection
+        built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
         
         # Enhanced multi-factor classification with principal city distance
         area_type = _dq.detect_area_type(
@@ -374,6 +482,26 @@ def get_livability_score(request: Request,
         )
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
+    
+    # Add built_beauty and natural_beauty to parallel execution
+    if need_built_beauty:
+        pillar_tasks.append(
+            ('built_beauty', built_beauty.calculate_built_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'test_overrides': beauty_overrides if beauty_overrides else None,
+                'precomputed_arch_diversity': arch_diversity_data  # Pass precomputed data
+            })
+        )
+    if need_natural_beauty:
+        pillar_tasks.append(
+            ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'overrides': beauty_overrides if beauty_overrides else None
+            })
+        )
+    
     if _include_pillar('neighborhood_amenities'):
         pillar_tasks.append(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
@@ -415,7 +543,7 @@ def get_livability_score(request: Request,
             })
         )
 
-    # Execute all pillars in parallel
+    # Execute all pillars in parallel (including built/natural beauty)
     pillar_results = {}
     exceptions = {}
 
@@ -458,67 +586,28 @@ def get_livability_score(request: Request,
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-    built_score = 0.0
-    natural_score = 0.0
-    built_details = {
-        "component_score_0_50": 0.0,
-        "enhancer_bonus_raw": 0.0,
-        "enhancer_bonus_scaled": 0.0,
-        "score_before_normalization": 0.0,
-        "normalization": None,
-        "source": "built_beauty",
-        "architectural_analysis": {},
-        "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
-    }
-    natural_details = {
-        "tree_score_0_50": 0.0,
-        "enhancer_bonus_raw": 0.0,
-        "enhancer_bonus_scaled": 0.0,
-        "context_bonus_raw": 0.0,
-        "score_before_normalization": 0.0,
-        "normalization": None,
-        "source": "natural_beauty",
-        "tree_analysis": {},
-        "scenic_proxy": {},
-        "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
-        "context_bonus": {
-            "components": {},
-            "total_applied": 0.0,
-            "total_before_cap": 0.0,
-            "cap": 0.0,
-            "metrics": {}
-        }
-    }
-
-    built_calc = None
-    natural_calc = None
-
-    if need_built_beauty:
-        built_calc = built_beauty.calculate_built_beauty(
-            lat,
-            lon,
-            city=city,
-            area_type=area_type,
-            location_scope=location_scope,
-            location_name=location,
-            test_overrides=beauty_overrides if beauty_overrides else None
-        )
-
-    if need_natural_beauty:
-        natural_calc = natural_beauty.calculate_natural_beauty(
-            lat,
-            lon,
-            city=city,
-            area_type=area_type,
-            location_scope=location_scope,
-            location_name=location,
-            overrides=beauty_overrides if beauty_overrides else None
-        )
-
+    # Extract built/natural beauty from parallel results
+    built_calc = pillar_results.get('built_beauty')
+    natural_calc = pillar_results.get('natural_beauty')
+    
+    # Handle built_beauty result
     if built_calc:
         built_score = built_calc["score"]
         built_details = built_calc["details"]
-
+    else:
+        built_score = 0.0
+        built_details = {
+            "component_score_0_50": 0.0,
+            "enhancer_bonus_raw": 0.0,
+            "enhancer_bonus_scaled": 0.0,
+            "score_before_normalization": 0.0,
+            "normalization": None,
+            "source": "built_beauty",
+            "architectural_analysis": {},
+            "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
+        }
+    
+    # Handle natural_beauty result
     if natural_calc:
         tree_details = natural_calc["details"]
         natural_score = natural_calc["score"]
@@ -539,6 +628,27 @@ def get_livability_score(request: Request,
             "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
             "gvi_metrics": tree_details.get("gvi_metrics"),
             "expectation_effect": tree_details.get("expectation_effect"),
+        }
+    else:
+        natural_score = 0.0
+        natural_details = {
+            "tree_score_0_50": 0.0,
+            "enhancer_bonus_raw": 0.0,
+            "enhancer_bonus_scaled": 0.0,
+            "context_bonus_raw": 0.0,
+            "score_before_normalization": 0.0,
+            "normalization": None,
+            "source": "natural_beauty",
+            "tree_analysis": {},
+            "scenic_proxy": {},
+            "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
+            "context_bonus": {
+                "components": {},
+                "total_applied": 0.0,
+                "total_before_cap": 0.0,
+                "cap": 0.0,
+                "metrics": {}
+            }
         }
 
     pillar_results['built_beauty'] = (built_score, built_details)
@@ -748,7 +858,7 @@ def get_livability_score(request: Request,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
         "metadata": {
-            "version": "3.0.0",
+            "version": API_VERSION,
             "architecture": "9 Purpose-Driven Pillars",
             "pillars": {
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
@@ -820,6 +930,30 @@ def get_livability_score(request: Request,
         record_request_metrics(location, lat, lon, response, response_time)
     except Exception as e:
         logger.warning(f"Failed to record telemetry: {e}")
+
+    # REQUEST-LEVEL CACHING: Store response in cache (skip if test_mode)
+    if not test_mode_enabled:
+        try:
+            from data_sources.cache import _redis_client, _cache, _cache_ttl
+            import json
+            
+            cache_key = _generate_request_cache_key(location, tokens, include_chains, bool(diagnostics), enable_schools)
+            request_cache_ttl = 300  # 5 minutes for request-level cache
+            
+            cache_data = {
+                'value': response,
+                'timestamp': time.time()
+            }
+            if _redis_client:
+                try:
+                    _redis_client.setex(cache_key, request_cache_ttl, json.dumps(cache_data))
+                except Exception as e:
+                    logger.warning(f"Redis cache write error: {e}")
+            # Also store in in-memory cache
+            _cache[cache_key] = response
+            _cache_ttl[cache_key] = time.time()
+        except Exception as e:
+            logger.warning(f"Failed to cache response: {e}")
 
     return response
 
@@ -927,7 +1061,7 @@ def health_check():
         "status": "healthy",
         "checks": checks,
         "cache_stats": cache_stats,
-        "version": "3.0.0",
+        "version": API_VERSION,
         "architecture": "9 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",

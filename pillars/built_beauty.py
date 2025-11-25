@@ -49,7 +49,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                    location_scope: Optional[str] = None,
                                    area_type: Optional[str] = None,
                                    location_name: Optional[str] = None,
-                                   test_overrides: Optional[Dict[str, float]] = None) -> Tuple[Optional[float], Dict]:
+                                   test_overrides: Optional[Dict[str, float]] = None,
+                                   precomputed_arch_diversity: Optional[Dict] = None) -> Tuple[Optional[float], Dict]:
     """
     Score architectural beauty (0-50 points native range).
     """
@@ -62,7 +63,11 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             rp = get_radius_profile('built_beauty', area_type, location_scope)
             radius_m = int(rp.get('architectural_diversity_radius_m', 2000))
 
-        diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)
+        # Use precomputed data if available (from main.py initial call), otherwise compute
+        if precomputed_arch_diversity is not None:
+            diversity_metrics = precomputed_arch_diversity
+        else:
+            diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)
 
         if 'error' in diversity_metrics:
             logger.warning("Architectural diversity computation failed: %s", diversity_metrics.get('error'))
@@ -263,7 +268,8 @@ def calculate_built_beauty(lat: float,
                            test_overrides: Optional[Dict[str, float]] = None,
                            enhancers_data: Optional[Dict] = None,
                            disable_enhancers: bool = False,
-                           enhancer_radius_m: int = 1500) -> Dict:
+                           enhancer_radius_m: int = 1500,
+                           precomputed_arch_diversity: Optional[Dict] = None) -> Dict:
     """
     Compute built beauty components prior to normalization.
     """
@@ -274,7 +280,8 @@ def calculate_built_beauty(lat: float,
         location_scope=location_scope,
         area_type=area_type,
         location_name=location_name,
-        test_overrides=test_overrides
+        test_overrides=test_overrides,
+        precomputed_arch_diversity=precomputed_arch_diversity
     )
 
     if arch_score is None:
