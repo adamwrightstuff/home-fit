@@ -359,6 +359,7 @@ def get_livability_score(request: Request,
     # OPTIMIZATION: Parallelize independent API calls to reduce latency
     census_tract = None
     density = 0.0
+    arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
     try:
         from data_sources import census_api as _ca
         from data_sources import data_quality as _dq
