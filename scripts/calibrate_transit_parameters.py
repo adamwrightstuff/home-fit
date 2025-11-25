@@ -26,6 +26,7 @@ import statistics
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Target scores for known locations (from calibration data and test results)
+# Scores from Perplexity, Gemini, and Claude analysis
 TARGET_SCORES = {
     "Uptown Charlotte NC": 55,
     "Midtown Atlanta GA": 78,
@@ -38,6 +39,19 @@ TARGET_SCORES = {
     "Bronxville NY": 85,
     # Additional locations from transit_curve_calibration.json
     "Times Square NY": 100,  # Urban core, likely similar to Midtown Manhattan
+    # New target scores from research (2024-11-24)
+    "Beacon Hill Boston MA": 95,
+    "Capitol Hill Seattle WA": 86,
+    "Georgetown Washington DC": 68,
+    "Greenwich Village New York NY": 98,
+    "Highland Park Dallas TX": 42,
+    "Lakeview Chicago IL": 91,
+    "Lincoln Park Chicago IL": 90,
+    "Marina District San Francisco CA": 78,
+    "Montrose Houston TX": 50,
+    "Pacific Heights San Francisco CA": 80,
+    "Queen Anne Seattle WA": 75,
+    "Upper East Side New York NY": 97,
 }
 
 # Research data path
