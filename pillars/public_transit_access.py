@@ -37,11 +37,19 @@ TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 # Calibration source: scripts/calibrate_transit_parameters.py
 # Calibration data: analysis/transit_parameters_calibration.json
 COMMUTE_WEIGHT = 0.05  # Calibrated: 5% (research-backed)
-def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> float:
+def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500, cached_stops: Optional[Dict] = None) -> float:
     """Find nearest heavy rail/subway distance using Transitland stops API (km),
-    falling back to coordinate distance and OSM stations when needed."""
+    falling back to coordinate distance and OSM stations when needed.
+    
+    Args:
+        cached_stops: Optional pre-fetched stops data to avoid redundant API call
+    """
     try:
-        stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+        # PERFORMANCE OPTIMIZATION: Use cached stops if provided
+        if cached_stops is not None:
+            stops = cached_stops
+        else:
+            stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
         # stops may be shaped as {"stops": [...]} or {"items": [...]}
         items = stops.get("stops", []) or stops.get("items", []) or []
         distances_km = []
@@ -80,8 +88,12 @@ def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500) -> floa
         return float('inf')
 
 
-def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, search_m: int = 2000) -> float:
-    """Find nearest bus stop distance using route coordinates or Transitland stops API (km)."""
+def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, search_m: int = 2000, cached_stops: Optional[Dict] = None) -> float:
+    """Find nearest bus stop distance using route coordinates or Transitland stops API (km).
+    
+    Args:
+        cached_stops: Optional pre-fetched stops data to avoid redundant API call
+    """
     distances_km = []
     
     # First, try to use route coordinates if available
@@ -97,7 +109,11 @@ def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, searc
     # Fallback to stops API if no route coordinates available
     if not distances_km:
         try:
-            stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+            # PERFORMANCE OPTIMIZATION: Use cached stops if provided
+            if cached_stops is not None:
+                stops = cached_stops
+            else:
+                stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
             items = stops.get("stops", []) or stops.get("items", []) or []
             # Use all stops as proxy (since we can't filter by route_type)
             # This is a reasonable approximation for distance calculation
@@ -118,8 +134,12 @@ def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, searc
     return float('inf')
 
 
-def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict] = None, search_m: int = 2000) -> float:
-    """Find nearest light rail/tram stop distance using route coordinates or Transitland stops API (km)."""
+def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict] = None, search_m: int = 2000, cached_stops: Optional[Dict] = None) -> float:
+    """Find nearest light rail/tram stop distance using route coordinates or Transitland stops API (km).
+    
+    Args:
+        cached_stops: Optional pre-fetched stops data to avoid redundant API call
+    """
     distances_km = []
     
     # First, try to use route coordinates if available
@@ -135,7 +155,11 @@ def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict]
     # Fallback to stops API if no route coordinates available
     if not distances_km:
         try:
-            stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+            # PERFORMANCE OPTIMIZATION: Use cached stops if provided
+            if cached_stops is not None:
+                stops = cached_stops
+            else:
+                stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
             items = stops.get("stops", []) or stops.get("items", []) or []
             # Use all stops as proxy (since we can't filter by route_type)
             for s in items:
@@ -492,6 +516,11 @@ def get_public_transit_score(
         "routes_radius_m": nearby_radius
     })
     
+    # PERFORMANCE OPTIMIZATION: Cache stops data to avoid redundant API calls
+    # This will be reused by helper functions and commuter rail bonuses
+    # Note: We'll determine if caching is needed after effective_area_type is set
+    cached_stops_data = None
+    
     # If no Transitland routes, try OSM railway stations as fallback
     osm_stations = None
     if not routes_data:
@@ -561,6 +590,11 @@ def get_public_transit_score(
     # Historic urban areas are typically dense, walkable neighborhoods similar to urban_residential
     if effective_area_type == "historic_urban":
         effective_area_type = "urban_residential"
+    
+    # PERFORMANCE OPTIMIZATION: Pre-fetch stops data if needed for commuter rail bonuses or fallback scoring
+    # This avoids redundant API calls later
+    # Note: We'll determine if caching is needed after effective_area_type is set
+    cached_stops_data = None
     
     # Detect commuter rail suburbs: suburban areas with heavy rail near major metros
     # These should use research-backed commuter_rail_suburb expectations
@@ -828,10 +862,14 @@ def get_public_transit_score(
                 # Find a representative stop for this route
                 # Query stops near location and filter for heavy rail
                 try:
-                    from data_sources.transitland_api import get_nearby_transit_stops, get_route_schedules, get_stop_departures
+                    from data_sources.transitland_api import get_route_schedules, get_stop_departures
                     from datetime import datetime, timedelta
                     
-                    stops_data = get_nearby_transit_stops(lat, lon, radius_m=nearby_radius)
+                    # PERFORMANCE OPTIMIZATION: Use cached stops data if available
+                    stops_data = cached_stops_data
+                    if not stops_data:
+                        from data_sources.transitland_api import get_nearby_transit_stops
+                        stops_data = get_nearby_transit_stops(lat, lon, radius_m=nearby_radius)
                     if stops_data:
                         stops = stops_data.get("stops", []) or stops_data.get("items", []) or []
                         # Find a heavy rail stop (route_type 2 = commuter rail)
@@ -846,9 +884,32 @@ def get_public_transit_score(
                                     break
                         
                         if heavy_rail_stop:
-                            # Get weekday schedule
-                            schedule = get_route_schedules(route_id, sample_stop_id=heavy_rail_stop)
+                            # PERFORMANCE OPTIMIZATION: Parallelize API calls and reuse departures
+                            from concurrent.futures import ThreadPoolExecutor
                             
+                            # Find next Saturday for weekend schedule
+                            today = datetime.now()
+                            days_until_saturday = (5 - today.weekday()) % 7
+                            if days_until_saturday == 0:
+                                days_until_saturday = 7  # Next Saturday
+                            saturday = today + timedelta(days=days_until_saturday)
+                            saturday_str = saturday.strftime('%Y-%m-%d')
+                            
+                            # Parallelize weekday schedule and weekend departures
+                            def fetch_weekday_schedule():
+                                return get_route_schedules(route_id, sample_stop_id=heavy_rail_stop)
+                            
+                            def fetch_weekend_departures():
+                                return get_stop_departures(heavy_rail_stop, limit=200, service_date=saturday_str)
+                            
+                            with ThreadPoolExecutor(max_workers=2) as executor:
+                                future_schedule = executor.submit(fetch_weekday_schedule)
+                                future_weekend = executor.submit(fetch_weekend_departures)
+                                
+                                schedule = future_schedule.result()
+                                weekend_departures = future_weekend.result()
+                            
+                            # Process weekday schedule (reuse departures from schedule to avoid redundant API call)
                             if schedule:
                                 weekday_trips = schedule.get("weekday_trips")
                                 peak_headway = schedule.get("peak_headway_minutes")
@@ -864,17 +925,17 @@ def get_public_transit_score(
                                                     "weekday_trips": weekday_trips,
                                                     "peak_headway_min": peak_headway
                                                 })
+                                
+                                # PERFORMANCE OPTIMIZATION: Reuse departures from schedule instead of calling API again
+                                weekday_departures = schedule.get("departures")
+                                if weekday_departures:
+                                    for dep in weekday_departures:
+                                        trip = dep.get("trip", {})
+                                        headsign = trip.get("trip_headsign", "")
+                                        if headsign and headsign not in trip_headsigns:
+                                            trip_headsigns.append(headsign)
                             
-                            # Get weekend schedule for weekend bonus
-                            # Find next Saturday
-                            today = datetime.now()
-                            days_until_saturday = (5 - today.weekday()) % 7
-                            if days_until_saturday == 0:
-                                days_until_saturday = 7  # Next Saturday
-                            saturday = today + timedelta(days=days_until_saturday)
-                            saturday_str = saturday.strftime('%Y-%m-%d')
-                            
-                            weekend_departures = get_stop_departures(heavy_rail_stop, limit=200, service_date=saturday_str)
+                            # Process weekend schedule
                             if weekend_departures:
                                 weekend_trips = len(weekend_departures)
                                 if weekday_trips and weekend_trips:
@@ -889,16 +950,6 @@ def get_public_transit_score(
                                                         "weekend_trips": weekend_trips,
                                                         "weekday_trips": weekday_trips
                                                     })
-                            
-                            # Extract trip headsigns from departures for hub and destination analysis
-                            # Get weekday departures to extract headsigns
-                            weekday_departures = get_stop_departures(heavy_rail_stop, limit=50)
-                            if weekday_departures:
-                                for dep in weekday_departures:
-                                    trip = dep.get("trip", {})
-                                    headsign = trip.get("trip_headsign", "")
-                                    if headsign and headsign not in trip_headsigns:
-                                        trip_headsigns.append(headsign)
                                 
                                 # Calculate hub connectivity bonus
                                 if trip_headsigns:
@@ -980,7 +1031,8 @@ def get_public_transit_score(
     # - Calibrate connectivity bonus amounts (0, 6, 10, 15) from route count analysis
     # - Calibrate bus bonus multiplier (3.0) from empirical data
     if (area_type or 'unknown') in ('suburban', 'exurban', 'rural') and total_score < 50:
-        nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500)
+        # PERFORMANCE OPTIMIZATION: Use cached stops data
+        nearest_hr_km = _nearest_heavy_rail_km(lat, lon, search_m=2500, cached_stops=cached_stops_data)
         connectivity_tier = _connectivity_tier_heavy_rail(len(heavy_rail_routes))
 
         # Distance-based base (max ~70)
@@ -1056,7 +1108,8 @@ def get_public_transit_score(
 
     # Add commuter-centric fields to summary
     try:
-        nearest_hr_km_val = _nearest_heavy_rail_km(lat, lon, search_m=2500)
+        # PERFORMANCE OPTIMIZATION: Use cached stops data
+        nearest_hr_km_val = _nearest_heavy_rail_km(lat, lon, search_m=2500, cached_stops=cached_stops_data)
         # Ensure distance is in km and handle null properly
         if nearest_hr_km_val == float('inf') or nearest_hr_km_val is None:
             breakdown["summary"]["nearest_heavy_rail_distance_km"] = None

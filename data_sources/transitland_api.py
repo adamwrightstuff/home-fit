@@ -295,6 +295,7 @@ def get_route_schedules(route_onestop_id: str, sample_stop_id: Optional[str] = N
             "weekday_trips": len(departure_times),  # Approximate - actual count may vary by day
             "first_departure": f"{first_hour:02d}:{first_min:02d}",
             "last_departure": f"{last_hour:02d}:{last_min:02d}",
+            "departures": departures,  # Include raw departures for reuse (avoids redundant API call)
         }
         
     except Exception as e:
