@@ -162,11 +162,47 @@ def _get_fallback_urgent_care(lat: float, lon: float) -> List[Dict]:
         if distance_km <= 10000:
             urgent_care_facilities.append({
                 "name": name,
-                "distance_km": round(distance_km, 0),
+                "distance_km": round(distance_km / 1000.0, 1),  # Convert to km
                 "source": "fallback_database"
             })
     
     return urgent_care_facilities
+
+
+def _get_fallback_hospitals(lat: float, lon: float, max_distance_km: float = 60.0) -> List[Dict]:
+    """
+    Get hospitals from MAJOR_HOSPITALS database as fallback when OSM data is unavailable.
+    
+    This provides a scalable fallback mechanism for major medical centers across the US.
+    The database covers major metropolitan areas and regional hospitals.
+    
+    Args:
+        lat, lon: Location coordinates
+        max_distance_km: Maximum distance to include hospitals (default 60km)
+    
+    Returns:
+        List of hospital dicts with name, distance_km, size, and source
+    """
+    hospitals = []
+    
+    for name, hosp_lat, hosp_lon, size in MAJOR_HOSPITALS:
+        distance_m = _haversine_distance(lat, lon, hosp_lat, hosp_lon)
+        distance_km = distance_m / 1000.0
+        
+        # Only include hospitals within max_distance_km
+        if distance_km <= max_distance_km:
+            hospitals.append({
+                "name": name,
+                "distance_km": round(distance_km, 1),
+                "size": size,
+                "source": "major_hospitals_database",
+                "tags": {
+                    "emergency": "yes",  # Major hospitals typically have ER
+                    "healthcare": "hospital"
+                }
+            })
+    
+    return hospitals
 
 
 def get_healthcare_access_score(lat: float, lon: float,
@@ -175,13 +211,20 @@ def get_healthcare_access_score(lat: float, lon: float,
     """
     Calculate healthcare access score (0-100).
 
-    Scoring:
-    - Hospital Access (0-35): Distance to nearest major hospital
-    - Primary Care (0-25): Clinics and doctors within radius
+    Scoring (follows design principles: smooth, distance-based, research-backed):
+    - Hospital Access (0-35): Distance-based scoring to nearest hospital
+      * Uses OSM data when available, falls back to MAJOR_HOSPITALS database
+      * Smooth distance curve: 5km=35pts, 10km=30pts, 15km=25pts, 25km=20pts, 40km=15pts, 60km=10pts, >60km=5pts
+    - Primary Care (0-25): Clinics and doctors within radius (expectations-aware)
     - Specialized Care (0-15): Specialty services available
     - Emergency Services (0-10): Emergency room capability
-    - Pharmacies (0-15): Pharmacies within radius
+    - Pharmacies (0-15): Pharmacies within radius (expectations-aware)
     - Bonuses shown separately (cap at 100)
+
+    Fallback Mechanism:
+    - If OSM query fails or returns no hospitals, uses MAJOR_HOSPITALS database
+    - This ensures coverage even when OSM is unavailable (rate limits, timeouts, etc.)
+    - MAJOR_HOSPITALS covers major medical centers across all US metropolitan areas
 
     Returns:
         (total_score, detailed_breakdown)
@@ -221,6 +264,21 @@ def get_healthcare_access_score(lat: float, lon: float,
     pharmacies = healthcare_facilities.get("pharmacies", [])
     clinics = healthcare_facilities.get("clinics", [])
     doctors = healthcare_facilities.get("doctors", [])
+    query_failed = healthcare_facilities.get("_query_failed", False)
+    
+    # FALLBACK: Use MAJOR_HOSPITALS database if OSM query failed or returned no hospitals
+    # This ensures we have hospital data even when OSM is unavailable (rate limits, timeouts, etc.)
+    # This follows design principles: scalable fallback, not location-specific exceptions
+    if query_failed or len(hospitals) == 0:
+        print(f"   🔄 Using MAJOR_HOSPITALS database as fallback...")
+        fallback_hospitals = _get_fallback_hospitals(lat, lon, max_distance_km=60.0)
+        if fallback_hospitals:
+            # Merge with OSM hospitals (if any), avoiding duplicates by name
+            existing_names = {h.get("name", "").lower() for h in hospitals}
+            for fb_hosp in fallback_hospitals:
+                if fb_hosp.get("name", "").lower() not in existing_names:
+                    hospitals.append(fb_hosp)
+            print(f"   ✅ Added {len(fallback_hospitals)} hospitals from fallback database")
     
     # Log warning if no data found (could indicate OSM failure)
     if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
@@ -228,6 +286,7 @@ def get_healthcare_access_score(lat: float, lon: float,
         print(f"      - OSM query failed (rate limit, timeout, or network error)")
         print(f"      - No healthcare facilities in OSM for this location")
         print(f"      - Query radius too small or location data incomplete")
+        print(f"      - Location outside coverage of MAJOR_HOSPITALS database")
     
     print(f"   🔍 FINAL COUNTS (raw): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors")
 
@@ -277,14 +336,51 @@ def get_healthcare_access_score(lat: float, lon: float,
     # pop_density already computed
     denom = max(1.0, (pop_density / 10000.0))
 
-    # 1) Hospital presence (35 points base)
-    has_hospital = len(hospitals) > 0
-    hospital_base = 35.0 if has_hospital else 0.0
+    # 1) Hospital access (0-35 points) - DISTANCE-BASED SCORING
+    # Use distance-based scoring instead of binary presence check
+    # This provides smooth, predictable scoring that follows design principles
+    if len(hospitals) > 0:
+        # Use nearest hospital from OSM results (already filtered by radius)
+        numeric_hospitals = _with_numeric_distance(hospitals)
+        if numeric_hospitals:
+            nearest_osm = min(numeric_hospitals, key=lambda x: x["distance_km"])
+            nearest_dist_km = nearest_osm["distance_km"]
+        else:
+            # If no numeric distances, fall back to MAJOR_HOSPITALS distance calculation
+            _, nearest_db = _score_hospitals(lat, lon)
+            if nearest_db:
+                nearest_dist_km = nearest_db["distance_km"]
+            else:
+                nearest_dist_km = float('inf')
+    else:
+        # No hospitals from OSM - use MAJOR_HOSPITALS database
+        _, nearest_db = _score_hospitals(lat, lon)
+        if nearest_db:
+            nearest_dist_km = nearest_db["distance_km"]
+        else:
+            nearest_dist_km = float('inf')
+    
+    # Distance-based scoring (smooth curve, 0-35 points)
+    # Based on _score_hospitals logic but scaled to 0-35 instead of 0-40
+    if nearest_dist_km <= 5:
+        hospital_score = 35.0
+    elif nearest_dist_km <= 10:
+        hospital_score = 30.0
+    elif nearest_dist_km <= 15:
+        hospital_score = 25.0
+    elif nearest_dist_km <= 25:
+        hospital_score = 20.0
+    elif nearest_dist_km <= 40:
+        hospital_score = 15.0
+    elif nearest_dist_km <= 60:
+        hospital_score = 10.0
+    else:
+        hospital_score = 5.0  # Still give some points for hospitals >60km (better than nothing)
+    
     # Bonus for additional hospitals (shown separately)
     hospital_bonus = 0.0
     if len(hospitals) > 1:
         hospital_bonus = min(10.0, float(len(hospitals) - 1) * 2.0)
-    hospital_score = min(35.0, hospital_base)  # Base score capped at 35
 
     # 2) Primary care access (25 points) – expectations-aware
     has_clinic = len(clinics) > 0
@@ -337,9 +433,6 @@ def get_healthcare_access_score(lat: float, lon: float,
     total_score = base_total + hospital_bonus
     total_score = max(0.0, min(100.0, total_score))
 
-    # Check if query failed
-    query_failed = healthcare_facilities.get("_query_failed", False)
-    
     # Assess data quality
     combined_data = {
         'hospitals': hospitals,
@@ -374,6 +467,14 @@ def get_healthcare_access_score(lat: float, lon: float,
             "name": nearest.get('name', 'Unknown Hospital'),
             "distance_km": nearest.get('distance_km')
         }
+    else:
+        # Fallback to MAJOR_HOSPITALS database if no OSM hospitals with distances
+        _, nearest_db = _score_hospitals(lat, lon)
+        if nearest_db:
+            nearest_hospital = {
+                "name": nearest_db.get('name', 'Unknown Hospital'),
+                "distance_km": nearest_db.get('distance_km')
+            }
 
     breakdown = {
         "score": round(total_score, 1),
