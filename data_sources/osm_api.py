@@ -246,13 +246,14 @@ DEBUG_PARKS = True  # Set False to silence park debugging
 @handle_api_timeout(timeout_seconds=20)  # Reduced from 30s
 def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
-    Query OSM for parks, playgrounds, and tree features.
+    Query OSM for parks, playgrounds, recreational facilities, and tree features.
     INCLUDES RELATIONS to catch all parks!
 
     Returns:
         {
             "parks": [...],
             "playgrounds": [...],
+            "recreational_facilities": [...],  # NEW: tennis courts, baseball fields, dog parks, etc.
             "tree_features": [...]
         }
     """
@@ -274,6 +275,21 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       node["leisure"="playground"](around:{radius_m},{lat},{lon});
       way["leisure"="playground"](around:{radius_m},{lat},{lon});
       relation["leisure"="playground"](around:{radius_m},{lat},{lon});
+      
+      // GREENWAYS & RECREATIONAL PATHS - outdoor recreational infrastructure
+      // Capture cycleways (bike paths) and footways (walking paths) that are recreational
+      // Filtering for sidewalks/private access happens in processing
+      way["highway"="cycleway"]["access"!="private"](around:{radius_m},{lat},{lon});
+      way["highway"="footway"]["access"!="private"](around:{radius_m},{lat},{lon});
+      
+      // RECREATIONAL FACILITIES - actual recreation: tennis courts, basketball, baseball fields, etc.
+      // OBJECTIVE CRITERIA: leisure=pitch with sport tags, or leisure=dog_park
+      // DATA QUALITY: Exclude private facilities (access=private)
+      // These capture meaningful recreation without inflating with every pathway/greenway
+      node["leisure"="pitch"]["sport"~"^(tennis|basketball|baseball|soccer|volleyball|football)$"]["access"!="private"](around:{radius_m},{lat},{lon});
+      way["leisure"="pitch"]["sport"~"^(tennis|basketball|baseball|soccer|volleyball|football)$"]["access"!="private"](around:{radius_m},{lat},{lon});
+      node["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
+      way["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -307,11 +323,11 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         if not elements:
             logger.warning(f"OSM parks query returned empty results for lat={lat}, lon={lon}, radius={radius_m}m")
 
-        parks, playgrounds = _process_green_features(
+        parks, playgrounds, recreational_facilities = _process_green_features(
             elements, lat, lon)
 
         if DEBUG_PARKS:
-            logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds")
+            logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds, {len(recreational_facilities)} recreational facilities")
         elif len(parks) == 0 and len(elements) > 0:
             # Log warning if we got elements but no parks (might indicate processing issue)
             logger.warning(f"OSM parks query returned {len(elements)} elements but 0 parks after processing")
@@ -319,6 +335,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         return {
             "parks": parks,
             "playgrounds": playgrounds,
+            "recreational_facilities": recreational_facilities,  # NEW: tennis courts, baseball fields, dog parks
             # tree_features removed (not used by any pillar; kept parks/playgrounds only)
         }
 
@@ -743,14 +760,24 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         return None
 
 
-def _process_green_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict]]:
-    """Process OSM elements into parks and playgrounds."""
+def _process_green_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+    """
+    Process OSM elements into parks, playgrounds, and recreational facilities.
+    
+    Returns:
+        (parks, playgrounds, recreational_facilities)
+        - parks: Green spaces, parks, greenways
+        - playgrounds: Playgrounds (separate category)
+        - recreational_facilities: Tennis courts, basketball courts, baseball fields, dog parks, etc.
+    """
     parks = []
     playgrounds = []
+    recreational_facilities = []  # NEW: tennis courts, baseball fields, dog parks, etc.
     nodes_dict = {}
     ways_dict = {}
     seen_park_ids = set()
     seen_playground_ids = set()
+    seen_facility_ids = set()
 
     # Build nodes and ways dicts
     for elem in elements:
@@ -776,10 +803,37 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
         highway = tags.get("highway")
         elem_type = elem.get("type")
 
+        # GREENWAYS & RECREATIONAL PATHS - outdoor recreational infrastructure
+        # Capture cycleways and footways that are recreational (not sidewalks/infrastructure)
+        is_greenway = False
+        if highway in ["cycleway", "footway"]:
+            # Exclude sidewalks (standard urban infrastructure, not recreational)
+            if tags.get("footway") == "sidewalk":
+                continue  # Skip sidewalks
+            
+            # Exclude private/restricted access
+            access = tags.get("access", "").lower()
+            if access in ["private", "no", "restricted"]:
+                continue  # Skip private/restricted paths
+            
+            # For footways, require either:
+            # 1. Has a name tag (named recreational path like "Hudson Greenway")
+            # 2. OR minimum length (will check after geometry calculation)
+            # Cycleways are always included (bike paths are recreational)
+            has_name = bool(tags.get("name"))
+            if highway == "footway" and not has_name:
+                # Will check length after geometry calculation
+                # For now, mark as potential greenway (will filter by length later)
+                pass
+            
+            is_greenway = True
+        
         # Parks (exclude natural woods/forests/scrub from parks)
-        if leisure in ["park", "dog_park", "recreation_ground"] or \
+        is_park = leisure in ["park", "dog_park", "recreation_ground"] or \
            (leisure == "garden" and tags.get("garden:type") != "private") or \
-           landuse in ["park", "recreation_ground", "village_green"]:
+           landuse in ["park", "recreation_ground", "village_green"]
+        
+        if is_park or is_greenway:
 
             if osm_id in seen_park_ids:
                 continue
@@ -787,10 +841,39 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
 
             elem_lat, elem_lon, area_sqm = None, None, 0
             centroid_reason = "ok"
+            way_length_m = 0.0  # For greenways, track length
+            
             if elem_type == "way":
                 elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
                 if elem_lat is None:
                     centroid_reason = "way-geometry-fail"
+                else:
+                    # For greenways (linear features), estimate length from geometry
+                    if is_greenway:
+                        # Calculate approximate length from way nodes
+                        way_nodes = elem.get("nodes", [])
+                        if len(way_nodes) >= 2:
+                            # Estimate length by summing distances between consecutive nodes
+                            total_length = 0.0
+                            prev_node = None
+                            for node_id in way_nodes:
+                                node = nodes_dict.get(node_id)
+                                if node and "lat" in node and "lon" in node:
+                                    if prev_node:
+                                        dist = haversine_distance(
+                                            prev_node["lat"], prev_node["lon"],
+                                            node["lat"], node["lon"]
+                                        ) * 1000  # Convert km to meters
+                                        total_length += dist
+                                    prev_node = node
+                            way_length_m = total_length
+                        # For greenways, use small default area (they're linear, not areas)
+                        # Area will be minimal contribution to park area scoring
+                        # Use length-based estimate: assume 3m width for greenways
+                        if area_sqm == 0 and way_length_m > 0:
+                            area_sqm = max(1000, way_length_m * 3)  # 3m width estimate, min 0.1 ha
+                        elif area_sqm == 0:
+                            area_sqm = 1000  # Default 0.1 ha for linear greenways
             elif elem_type == "relation":
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
                 area_sqm = 0
@@ -818,16 +901,28 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 "distance_m": distance_m
             }
 
-            # Exclude marinas/clubs from parks
-            name_val = (tags.get("name") or "").lower()
-            is_marina = (tags.get("leisure") == "marina") or (tags.get("amenity") == "marina")
-            has_club_tag = any(k == "club" for k in tags.keys())
-            name_is_club = any(term in name_val for term in ["yacht club", "shore club", "country club", "beach club"]) if name_val else False
-            if is_marina or has_club_tag or name_is_club:
-                debug_skipped_parks.append({**park_debug, "centroid_reason": "excluded-nonpublic"})
-                if DEBUG_PARKS:
-                    logger.debug(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason=excluded-nonpublic")
-                continue
+            # For greenways (footways without names), check minimum length
+            if is_greenway and highway == "footway" and not tags.get("name"):
+                # Require minimum length of 200m for unnamed footways
+                # This filters out short paths/sidewalks while keeping recreational greenways
+                # If we couldn't calculate length (no nodes), skip it (conservative)
+                if way_length_m == 0.0 or way_length_m < 200.0:
+                    debug_skipped_parks.append({**park_debug, "centroid_reason": f"footway-too-short-{way_length_m:.0f}m"})
+                    if DEBUG_PARKS:
+                        logger.debug(f"[GREENWAY SKIP] id={osm_id} name={tags.get('name')} length={way_length_m:.0f}m reason=footway-too-short")
+                    continue
+            
+            # Exclude marinas/clubs from parks (not applicable to greenways)
+            if is_park:
+                name_val = (tags.get("name") or "").lower()
+                is_marina = (tags.get("leisure") == "marina") or (tags.get("amenity") == "marina")
+                has_club_tag = any(k == "club" for k in tags.keys())
+                name_is_club = any(term in name_val for term in ["yacht club", "shore club", "country club", "beach club"]) if name_val else False
+                if is_marina or has_club_tag or name_is_club:
+                    debug_skipped_parks.append({**park_debug, "centroid_reason": "excluded-nonpublic"})
+                    if DEBUG_PARKS:
+                        logger.debug(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason=excluded-nonpublic")
+                    continue
 
             if elem_lat is None:
                 debug_skipped_parks.append(park_debug)
@@ -837,15 +932,78 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
 
             debug_raw_candidates.append(park_debug)
 
+            # Determine name and type for greenways
+            if is_greenway:
+                greenway_name = tags.get("name") or f"{highway.title()} Path"
+                greenway_type = f"greenway_{highway}"
+            else:
+                greenway_name = tags.get("name", _get_park_type_name(leisure, landuse, natural))
+                greenway_type = leisure or landuse or natural
+
             parks.append({
-                "name": tags.get("name", _get_park_type_name(leisure, landuse, natural)),
-                "type": leisure or landuse or natural,
+                "name": greenway_name,
+                "type": greenway_type,
                 "lat": elem_lat,
                 "lon": elem_lon,
                 "distance_m": round(distance_m, 0) if distance_m is not None else None,
                 "area_sqm": round(area_sqm, 0) if area_sqm else 0,
                 "osm_id": osm_id
             })
+    # NEW: Process recreational facilities (tennis courts, baseball fields, dog parks, etc.)
+    # OBJECTIVE CRITERIA: leisure=pitch with sport tags, or leisure=dog_park
+    # DATA QUALITY: Exclude private facilities, avoid double-counting with parks
+    for elem in elements:
+        osm_id = elem.get("id")
+        if not osm_id or osm_id in seen_facility_ids:
+            continue
+        
+        tags = elem.get("tags", {})
+        leisure = tags.get("leisure")
+        sport = tags.get("sport", "").lower()
+        access = tags.get("access", "").lower()
+        elem_type = elem.get("type")
+        
+        # Skip private/restricted facilities
+        if access in ["private", "no", "restricted"]:
+            continue
+        
+        # Recreational facilities: pitch with sport tags, or dog_park
+        is_recreational_facility = False
+        facility_type = None
+        
+        if leisure == "pitch" and sport:
+            # Valid sports: tennis, basketball, baseball, soccer, volleyball, football
+            # OBJECTIVE CRITERIA: Only count actual recreational sports facilities
+            valid_sports = ["tennis", "basketball", "baseball", "soccer", "volleyball", "football"]
+            if sport in valid_sports:
+                is_recreational_facility = True
+                facility_type = sport
+        elif leisure == "dog_park":
+            is_recreational_facility = True
+            facility_type = "dog_park"
+        
+        if is_recreational_facility:
+            seen_facility_ids.add(osm_id)
+            
+            # Get coordinates and distance
+            elem_lat, elem_lon = None, None
+            if elem_type == "node":
+                elem_lat = elem.get("lat")
+                elem_lon = elem.get("lon")
+            elif elem_type == "way":
+                elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+            
+            if elem_lat and elem_lon:
+                distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+                recreational_facilities.append({
+                    "name": tags.get("name", f"{facility_type.title()} Court" if facility_type != "dog_park" else "Dog Park"),
+                    "type": facility_type,
+                    "lat": elem_lat,
+                    "lon": elem_lon,
+                    "distance_m": round(distance_m, 0),
+                    "osm_id": osm_id
+                })
+    
     # Deduplicate (increase to 150m to collapse same-name multi-polygons)
     pre_dedup_count = len(parks)
     parks = _deduplicate_by_proximity(parks, 150)
@@ -865,9 +1023,10 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
             logger.debug(f"Skipped parks (not kept): {len(debug_skipped_parks)}")
             for s in debug_skipped_parks:
                 logger.debug(f"[SKIPPED ] id={s['osm_id']} name={s['name']} reason={s['centroid_reason']}")
+        logger.debug(f"Recreational facilities: {len(recreational_facilities)}")
         logger.debug("=====================================")
 
-    return parks, playgrounds
+    return parks, playgrounds, recreational_facilities
 
 
 def _process_nature_features(elements: List[Dict], center_lat: float, center_lon: float) -> Tuple[List[Dict], List[Dict], List[Dict]]:
@@ -906,6 +1065,34 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         category = None
 
         if route == "hiking":
+            # DATA QUALITY: Filter out urban paths/cycle paths tagged as hiking routes
+            # Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails
+            # Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways
+            # Solution: Exclude routes that are explicitly cycle routes or have strong urban path indicators
+            # This follows Public Transit pattern: prevent data quality issues from inflating scores
+            
+            # Check for urban path/cycle route indicators
+            surface = tags.get("surface", "").lower()
+            network = tags.get("network", "").lower()
+            bicycle = tags.get("bicycle", "").lower()
+            route_type = tags.get("type", "").lower()
+            
+            # Exclude if explicitly a cycle route (bicycle=yes/designated AND route=hiking is suspicious)
+            # OR if it's a cycle network (ICN/NCN/RCN/LCN are cycle networks, not hiking)
+            # OR if it has urban surface AND is not in a protected area (we check protected area separately)
+            is_cycle_route = (
+                bicycle in ["yes", "designated", "official"] or
+                network in ["icn", "ncn", "rcn", "lcn"]  # International/National/Regional/Local Cycle Networks
+            )
+            
+            # Exclude if it's a cycle route (these are not hiking trails)
+            if is_cycle_route:
+                continue
+            
+            # Note: We don't filter by surface alone because legitimate hiking trails can be paved
+            # (e.g., trails in national parks that are maintained). The area_type filtering
+            # at the pillar level handles urban core over-scoring.
+            
             feature = {"type": "hiking_route", "name": tags.get("name")}
             category = "hiking"
         elif boundary == "national_park":
@@ -918,15 +1105,57 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             feature = {"type": "protected_area", "name": tags.get("name")}
             category = "hiking"
         elif natural == "beach":
-            feature = {"type": "beach", "name": tags.get("name")}
-            category = "swimming"
+            # DATA QUALITY: Distinguish actual swimmable beaches from rocky/inaccessible coastline
+            # OBJECTIVE CRITERIA: Use OSM tags to determine beach quality
+            # RESEARCH-BACKED: Beaches with surface=rock or access=private are not recreational
+            surface = tags.get("surface", "").lower()
+            access = tags.get("access", "").lower()
+            
+            # Exclude private beaches (not publicly accessible)
+            if access in ["private", "no", "restricted"]:
+                continue  # Skip private beaches
+            
+            # Exclude rocky beaches (not swimmable)
+            # OBJECTIVE CRITERIA: surface=rock indicates non-swimmable beach
+            if surface == "rock":
+                # Treat as rocky coastline, not beach (lower score)
+                feature = {"type": "coastline_rocky", "name": tags.get("name")}
+                category = "swimming"
+            else:
+                # Actual swimmable beach
+                feature = {"type": "beach", "name": tags.get("name")}
+                category = "swimming"
         elif natural == "water" and water_type == "lake":
+            # DATA QUALITY: Distinguish recreational lakes from ornamental water
+            # OBJECTIVE CRITERIA: Check for ornamental indicators, access restrictions, size
+            amenity = tags.get("amenity", "").lower()
+            leisure_tag = tags.get("leisure", "").lower()
+            access = tags.get("access", "").lower()
+            
+            # Exclude ornamental water (fountains, decorative ponds)
+            if amenity == "fountain" or leisure_tag == "water_park":
+                continue  # Skip ornamental water
+            
+            # Exclude private/restricted access
+            if access in ["private", "no", "restricted"]:
+                continue  # Skip private lakes
+            
+            # Will check size after geometry calculation (filter very small ornamental ponds)
             feature = {"type": "lake", "name": tags.get("name")}
             category = "swimming"
         elif natural == "coastline":
+            # DATA QUALITY: Filter very short coastline segments (likely fragments, not recreational)
+            # OBJECTIVE CRITERIA: Coastline segments <100m are likely OSM artifacts
+            # Only include longer coastline segments that represent actual waterfront access
+            # Note: Length calculation happens after geometry, will filter later
             feature = {"type": "coastline", "name": tags.get("name")}
             category = "swimming"
         elif natural == "water" and water_type == "bay":
+            # Bays are scenic but typically not swimmable
+            # OBJECTIVE CRITERIA: Check access restrictions
+            access = tags.get("access", "").lower()
+            if access in ["private", "no", "restricted"]:
+                continue  # Skip private bays
             feature = {"type": "bay", "name": tags.get("name")}
             category = "swimming"
         elif leisure == "swimming_area":
@@ -943,14 +1172,55 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
 
         elem_lat = None
         elem_lon = None
+        area_sqm = 0.0
+        way_length_m = 0.0
         
         if elem_type == "way":
-            elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+            elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
+            
+            # Calculate way length for coastline filtering
+            if natural == "coastline" or (natural == "water" and water_type == "lake"):
+                way_nodes = elem.get("nodes", [])
+                if len(way_nodes) >= 2:
+                    total_length = 0.0
+                    prev_node = None
+                    for node_id in way_nodes:
+                        node = nodes_dict.get(node_id)
+                        if node and "lat" in node and "lon" in node:
+                            if prev_node:
+                                dist = haversine_distance(
+                                    prev_node["lat"], prev_node["lon"],
+                                    node["lat"], node["lon"]
+                                ) * 1000  # Convert km to meters
+                                total_length += dist
+                            prev_node = node
+                    way_length_m = total_length
         elif elem_type == "relation":
             elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
         if elem_lat is None:
             continue
+
+        # DATA QUALITY: Filter coastline segments and ornamental lakes
+        # OBJECTIVE CRITERIA: Use size/length thresholds, not city-name exceptions
+        
+        # Filter very short coastline segments (<100m)
+        # Short segments are likely OSM artifacts, not recreational waterfront
+        if feature.get("type") == "coastline" and way_length_m > 0:
+            MIN_COASTLINE_LENGTH_M = 100.0
+            if way_length_m < MIN_COASTLINE_LENGTH_M:
+                continue  # Skip short coastline fragments
+        
+        # Filter very small lakes (<1 ha) unless explicitly tagged as swimming_area
+        # Small lakes are likely ornamental ponds, not recreational
+        if feature.get("type") == "lake":
+            area_ha = area_sqm / 10_000.0 if area_sqm else 0.0
+            MIN_RECREATIONAL_LAKE_AREA_HA = 1.0
+            if area_ha > 0 and area_ha < MIN_RECREATIONAL_LAKE_AREA_HA:
+                # Check if explicitly tagged as recreational
+                leisure_tag = tags.get("leisure", "").lower()
+                if leisure_tag != "swimming_area":
+                    continue  # Skip small ornamental ponds
 
         distance_m = haversine_distance(
             center_lat, center_lon, elem_lat, elem_lon)
