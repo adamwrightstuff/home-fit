@@ -285,6 +285,10 @@ def get_livability_score(request: Request,
         
         if cached_response:
             # Return cached response immediately
+            # Add cache indicator to response metadata
+            if isinstance(cached_response, dict) and "metadata" in cached_response:
+                cached_response["metadata"]["cache_hit"] = True
+                cached_response["metadata"]["cache_timestamp"] = time.time()
             return cached_response
 
     override_params: Dict[str, float] = {}
@@ -940,6 +944,11 @@ def get_livability_score(request: Request,
             
             cache_key = _generate_request_cache_key(location, tokens, include_chains, bool(diagnostics), enable_schools)
             request_cache_ttl = 300  # 5 minutes for request-level cache
+            
+            # Add cache indicator to response metadata
+            if isinstance(response, dict) and "metadata" in response:
+                response["metadata"]["cache_hit"] = False
+                response["metadata"]["cache_timestamp"] = time.time()
             
             cache_data = {
                 'value': response,

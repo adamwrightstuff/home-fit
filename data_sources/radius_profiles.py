@@ -39,19 +39,21 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
 
     if p == "active_outdoors":
         # Research-based radii: parks (local), trails (separate), water/camping (regional)
+        # NOTE: Trail radii align with expected-values research windows (15km) so that
+        # OSM sampling and contextual expectations use the same footprint.
         # Urban parks: 800m = 10-minute walk (research: 70-80% within 800m)
-        # Urban trails: 2km = walkable urban trails/greenways (research: <0.5 mile)
-        # Suburban trails: 5km = regional trail networks (research: 1-2 miles)
+        # Trails: 15km window used for expectations (even in dense cores)
+        # Suburban/exurban trails already relied on wider radii (15km+)
         if a == "urban_core":
             return {
                 "local_radius_m": 800,      # Parks: 10-minute walk
-                "trail_radius_m": 2000,     # Trails: Urban trails/greenways
+                "trail_radius_m": 15000,    # Trails: Align with expected-values window
                 "regional_radius_m": 15000  # Water/camping: Unchanged
             }
         elif a == "suburban":
             return {
                 "local_radius_m": 1500,     # Parks: Car-oriented access
-                "trail_radius_m": 5000,     # Trails: Regional trail networks
+                "trail_radius_m": 15000,    # Trails: Align with expected-values window
                 "regional_radius_m": 15000  # Water/camping: Unchanged
             }
         else:  # exurban, rural, unknown
