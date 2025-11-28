@@ -361,26 +361,36 @@ def get_active_outdoors_score_v2(
     # Trail data should come strictly from the trail-radius query so that the
     # sampling window matches contextual expectations (15km). Water/camping use
     # the wider regional radius.
-    hiking_trails: List[Dict] = nature_trail.get("hiking", []) or []
-    
-    # DATA QUALITY: Filter out urban paths/cycle paths from hiking trails
-    # Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails
-    # Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways
-    # Solution: Filter trails in dense urban cores based on characteristics
-    # This follows Public Transit pattern: prevent data quality issues from inflating scores
-    if area_type in {"urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"}:
-        hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
+    hiking_trails_raw: List[Dict] = nature_trail.get("hiking", []) or []
     
     swimming: List[Dict] = nature_regional.get("swimming", []) or []
     camping: List[Dict] = nature_regional.get("camping", []) or []
 
-    # Tree canopy around 5 km as a proxy for “wildness”
+    # Tree canopy around 5 km as a proxy for "wildness"
     try:
         canopy_pct_5km = get_tree_canopy_gee(
             lat, lon, radius_m=5000, area_type=area_type
         ) or 0.0
     except Exception:
         canopy_pct_5km = 0.0
+
+    # Detect special contexts (mountain town, desert) from objective signals.
+    # IMPORTANT: Use RAW trail count for detection (before filtering)
+    # This ensures mountain town detection works correctly for cities like Denver
+    # that have legitimate high trail counts but get filtered for scoring purposes
+    context_flags = _detect_special_contexts(area_type, hiking_trails_raw, swimming, canopy_pct_5km)
+    scoring_area_type = context_flags.get("effective_area_type", area_type)
+    is_desert_context = context_flags.get("is_desert_context", False)
+    
+    # DATA QUALITY: Filter out urban paths/cycle paths from hiking trails AFTER detection
+    # Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails
+    # Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways
+    # Solution: Filter trails in dense urban cores based on characteristics
+    # This follows Public Transit pattern: prevent data quality issues from inflating scores
+    # NOTE: Filter AFTER mountain town detection so detection can use raw trail count
+    hiking_trails: List[Dict] = hiking_trails_raw
+    if area_type in {"urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"}:
+        hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
 
     combined_data = {
         "parks": parks,
@@ -393,11 +403,6 @@ def get_active_outdoors_score_v2(
     dq = assess_pillar_data_quality(
         "active_outdoors_v2", combined_data, lat, lon, area_type
     )
-
-    # Detect special contexts (mountain town, desert) from objective signals.
-    context_flags = _detect_special_contexts(area_type, hiking_trails, swimming, canopy_pct_5km)
-    scoring_area_type = context_flags.get("effective_area_type", area_type)
-    is_desert_context = context_flags.get("is_desert_context", False)
 
     if scoring_area_type != area_type:
         logger.info(
@@ -929,10 +934,21 @@ def _detect_special_contexts(
     elif total_trails >= 30:
         # High trail count is strong signal, but require canopy check to avoid false positives
         # Times Square: 92 trails but 6.8% canopy → should NOT be detected
+        # Denver: 36 trails, 8.2% canopy → should be detected (legitimate mountain city)
         if canopy_pct >= 8.0:
             # If dense urban core, require higher canopy to avoid false positives
+            # BUT: For moderate-high trail counts (30-39), be more lenient than very high counts (60+)
+            # This allows legitimate mountain cities like Denver to be detected
             if is_dense_urban:
-                if canopy_pct >= 12.0:  # Higher threshold for dense urban cores
+                # For moderate-high counts (30-39), canopy >= 8% is sufficient (Denver: 36 trails, 8.2% qualifies)
+                # For very high counts (60+), require canopy >= 12% to prevent false positives (Times Square)
+                if total_trails >= 60:
+                    # Very high count in dense urban = likely OSM artifacts, require higher canopy
+                    if canopy_pct >= 12.0:
+                        is_mountain_town = True
+                else:
+                    # Moderate-high count (30-59) with reasonable canopy = legitimate mountain city
+                    # Denver: 36 trails, 8.2% canopy → qualifies
                     is_mountain_town = True
             else:
                 is_mountain_town = True
