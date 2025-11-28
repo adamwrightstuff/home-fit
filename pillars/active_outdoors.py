@@ -388,9 +388,14 @@ def get_active_outdoors_score_v2(
     # Solution: Filter trails in dense urban cores based on characteristics
     # This follows Public Transit pattern: prevent data quality issues from inflating scores
     # NOTE: Filter AFTER mountain town detection so detection can use raw trail count
+    # IMPORTANT: Don't filter trails for detected mountain towns - they have legitimate high trail counts
+    # Denver: 36 trails is legitimate (mountain city), not OSM artifacts
+    is_mountain_town = context_flags.get("is_mountain_town", False)
     hiking_trails: List[Dict] = hiking_trails_raw
     if area_type in {"urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"}:
-        hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
+        # Skip filtering if detected as mountain town - legitimate high trail counts
+        if not is_mountain_town:
+            hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
 
     combined_data = {
         "parks": parks,
@@ -422,6 +427,8 @@ def get_active_outdoors_score_v2(
     # 3) Component scores
     daily_score = _score_daily_urban_outdoors_v2(parks, playgrounds, recreational_facilities, scoring_area_type, expectations)
     is_mountain_town = context_flags.get("is_mountain_town", False)
+    # IMPORTANT: Pass scoring_area_type (not original area_type) so mountain town detection works
+    # If Denver is detected as mountain town, scoring_area_type = "exurban", which enables higher expectations
     wild_score = _score_wild_adventure_v2(
         hiking_trails, camping, canopy_pct_5km, scoring_area_type, is_mountain_town=is_mountain_town
     )
