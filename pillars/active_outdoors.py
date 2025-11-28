@@ -5,6 +5,7 @@ Scores access to outdoor activities and recreation
 
 import math
 from typing import Dict, Tuple, Optional, List
+from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import osm_api
 from data_sources.data_quality import assess_pillar_data_quality
@@ -324,55 +325,66 @@ def get_active_outdoors_score_v2(
         }
     )
 
-    # 2) Data collection (reuse existing data_sources)
-    # Local parks & playgrounds
+    # 2) Data collection - PARALLELIZE all API calls for performance
+    # PERFORMANCE OPTIMIZATION: Following Public Transit pattern
+    # All 4 API calls are independent and can run in parallel
+    # This reduces total time from ~20-40s to ~5-10s (slowest call)
     logger.info(
-        f"📍 [AO v2] Querying local parks & playgrounds ({local_radius/1000:.1f}km)...",
+        f"📍 [AO v2] Fetching data in parallel (parks, trails, water, canopy)...",
         extra={
             "pillar_name": "active_outdoors_v2",
             "lat": lat,
             "lon": lon,
-            "query_type": "local_parks",
-            "radius_m": local_radius
-        }
-    )
-    local = osm_api.query_green_spaces(lat, lon, radius_m=local_radius) or {}
-    parks: List[Dict] = local.get("parks", []) or []
-    playgrounds: List[Dict] = local.get("playgrounds", []) or []
-    recreational_facilities: List[Dict] = local.get("recreational_facilities", []) or []  # NEW: tennis courts, baseball fields, dog parks
-
-    # Nature features – trails, water, camping
-    logger.info(
-        f"🥾 [AO v2] Querying nature features ({trail_radius/1000:.1f}–{regional_radius/1000:.1f}km)...",
-        extra={
-            "pillar_name": "active_outdoors_v2",
-            "lat": lat,
-            "lon": lon,
-            "query_type": "nature_features",
+            "query_type": "parallel_data_fetch",
+            "local_radius_m": local_radius,
             "trail_radius_m": trail_radius,
             "regional_radius_m": regional_radius
         }
     )
-    nature_trail = osm_api.query_nature_features(lat, lon, radius_m=trail_radius) or {}
-    nature_regional = (
-        osm_api.query_nature_features(lat, lon, radius_m=regional_radius) or {}
-    )
-
+    
+    def _fetch_parks():
+        """Fetch local parks, playgrounds, and recreational facilities."""
+        return osm_api.query_green_spaces(lat, lon, radius_m=local_radius) or {}
+    
+    def _fetch_trails():
+        """Fetch hiking trails within trail radius."""
+        return osm_api.query_nature_features(lat, lon, radius_m=trail_radius) or {}
+    
+    def _fetch_regional():
+        """Fetch water features and camping within regional radius."""
+        return osm_api.query_nature_features(lat, lon, radius_m=regional_radius) or {}
+    
+    def _fetch_canopy():
+        """Fetch tree canopy percentage."""
+        try:
+            return get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type) or 0.0
+        except Exception:
+            return 0.0
+    
+    # Execute all API calls in parallel
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_parks = executor.submit(_fetch_parks)
+        future_trails = executor.submit(_fetch_trails)
+        future_regional = executor.submit(_fetch_regional)
+        future_canopy = executor.submit(_fetch_canopy)
+        
+        # Wait for all to complete
+        local = future_parks.result()
+        nature_trail = future_trails.result()
+        nature_regional = future_regional.result()
+        canopy_pct_5km = future_canopy.result()
+    
+    # Extract data from results
+    parks: List[Dict] = local.get("parks", []) or []
+    playgrounds: List[Dict] = local.get("playgrounds", []) or []
+    recreational_facilities: List[Dict] = local.get("recreational_facilities", []) or []
+    
     # Trail data should come strictly from the trail-radius query so that the
     # sampling window matches contextual expectations (15km). Water/camping use
     # the wider regional radius.
     hiking_trails_raw: List[Dict] = nature_trail.get("hiking", []) or []
-    
     swimming: List[Dict] = nature_regional.get("swimming", []) or []
     camping: List[Dict] = nature_regional.get("camping", []) or []
-
-    # Tree canopy around 5 km as a proxy for "wildness"
-    try:
-        canopy_pct_5km = get_tree_canopy_gee(
-            lat, lon, radius_m=5000, area_type=area_type
-        ) or 0.0
-    except Exception:
-        canopy_pct_5km = 0.0
 
     # Detect special contexts (mountain town, desert) from objective signals.
     # IMPORTANT: Use RAW trail count for detection (before filtering)
