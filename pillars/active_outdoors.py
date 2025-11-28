@@ -914,19 +914,27 @@ def _detect_special_contexts(
         if is_dense_urban:
             # RESEARCH-BACKED: For dense urban cores, require higher canopy to prevent false positives
             # Times Square (calibration coords): 102 trails, 8.9% canopy → should NOT be detected
-            # Denver: 44 trails, 8.2% canopy → should be detected (legitimate mountain city)
+            # Denver: 65 trails, 8.2% canopy → should be detected (legitimate mountain city)
             # 
             # Detection strategy:
+            # - Very high count (60+): Check if it's likely OSM artifacts vs legitimate mountain city
+            #   - If canopy >= 12%: Definitely mountain town
+            #   - If canopy >= 8% AND trails_near >= 5: Likely mountain town (Denver: 65 trails, 7 within 5km, 8.2% qualifies)
+            #   - If canopy < 8%: Likely false positive (urban paths)
             # - Moderate-high count (40-59): require canopy ≥ 8% (Denver: 44 trails, 8.2% qualifies)
-            # - Very high count (60+): require canopy ≥ 12% (Times Square: 102 trails, 8.9% does NOT qualify)
-            # This prevents false positives from OSM artifacts (urban paths tagged as hiking trails)
+            # This prevents false positives from OSM artifacts while allowing legitimate mountain cities
             if total_trails >= 60:
-                # Very high trail count (60+) in dense urban = likely OSM artifacts
-                # Require higher canopy threshold to prevent false positives
+                # Very high trail count (60+) in dense urban - need to distinguish artifacts from real mountain cities
                 if canopy_pct >= 12.0:
+                    # High canopy = definitely mountain town
+                    is_mountain_town = True
+                elif canopy_pct >= 8.0 and trails_near >= 5:
+                    # Moderate canopy + good near-trail access = legitimate mountain city
+                    # Denver: 65 trails, 7 within 5km, 8.2% canopy → qualifies
                     is_mountain_town = True
                 else:
-                    # Times Square: 102 trails, 8.9% canopy → false positive
+                    # Very high count but low canopy and few near trails = likely OSM artifacts
+                    # Times Square: 102 trails, 8.9% canopy, but likely few legitimate near trails
                     is_mountain_town = False
             elif canopy_pct >= 8.0:
                 # Moderate-high trail count (40-59) with reasonable canopy = legitimate mountain city
