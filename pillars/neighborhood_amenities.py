@@ -81,13 +81,22 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     # Raw total (before calibration)
     raw_total = home_score + location_score  # 0-100
     
-    # Global linear calibration: map raw_total → 0-100 target scale
-    # Calibration parameters fitted from Round 1 test panel (with OLD thresholds)
-    # TODO: After testing with tightened location_quality thresholds, refit calibration
-    #       using new raw scores from the test panel
-    # Note: If v2 internals change, refit calibration
-    CAL_A = 0.193
-    CAL_B = 68.087
+    # Area-type-specific linear calibration (research-backed from calibration panel)
+    # Calibrated against LLM target scores for known locations
+    # See: analysis/neighborhood_amenities_calibration_results.json
+    AREA_TYPE_CALIBRATIONS = {
+        "urban_core": {"a": 2.2833, "b": -121.65},
+        "urban_residential": {"a": 2.2833, "b": -121.65},  # Use urban_core calibration
+        "suburban": {"a": 0.2072, "b": 54.69},
+        "exurban": {"a": 0.2072, "b": 54.69},  # Use suburban calibration (not enough data for exurban)
+        "rural": {"a": 0.6589, "b": -8.61},
+    }
+    
+    # Get calibration for this area type (fallback to suburban if unknown)
+    cal_params = AREA_TYPE_CALIBRATIONS.get(area_type, AREA_TYPE_CALIBRATIONS["suburban"])
+    CAL_A = cal_params["a"]
+    CAL_B = cal_params["b"]
+    
     calibrated_total = CAL_A * raw_total + CAL_B
     calibrated_total = max(0.0, min(100.0, calibrated_total))
     
