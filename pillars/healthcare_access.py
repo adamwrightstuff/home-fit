@@ -1,6 +1,26 @@
 """
 Healthcare Access Pillar
 Scores access to hospitals, clinics, pharmacies, and emergency services
+
+This pillar measures physical infrastructure availability (counts, distances, proximity)
+based on objective, measurable data from OpenStreetMap and fallback databases.
+
+What it measures:
+- Hospital count and distance to nearest hospital
+- Primary care facilities (clinics, doctors) within radius
+- Pharmacy availability within radius
+- Emergency services (hospitals with ER capability)
+- Specialized care (unique specialties available)
+
+What it does NOT measure:
+- Insurance coverage rates or uninsured populations
+- Cost barriers or affordability
+- Demographic disparities in access
+- Quality of care or hospital ratings
+- Real-world accessibility barriers (transportation, trust, etc.)
+
+These factors may affect actual healthcare access but are not included to maintain
+objective, scalable, and reproducible scoring aligned with design principles.
 """
 
 import math

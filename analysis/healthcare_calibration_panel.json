@@ -250,7 +250,8 @@
     "expected_values_source": "data_sources/regional_baselines.py",
     "research_data_source": "analysis/research_data_expanded/expected_values_summary.csv",
     "panel_size": 12,
-    "locations_with_targets": 12
+    "locations_with_targets": 12,
+    "note": "LLM target scores include subjective factors (insurance rates, disparities, cost barriers) that the objective scoring system does not measure. The calibration is used to establish curve shape (breakpoints) rather than exact score matching. The scoring system measures infrastructure availability, not real-world accessibility."
   },
   "notes": [
     "Target scores should reflect real-world healthcare quality perception",
