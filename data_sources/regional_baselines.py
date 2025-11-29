@@ -674,11 +674,16 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 3,  # Research-backed: conservative estimate from pharmacies_8km median=21 (n=19)
                 },
                 'neighborhood_amenities': {
-                    # Urban-core business density is substantially higher than the original baseline.
-                    # Median across sampled locations is ~190 businesses and ~110 restaurants within 1km.
-                    'expected_businesses_within_1km': 180,
-                    'expected_business_types': 12,
-                    'expected_restaurants_within_1km': 100
+                    # RESEARCH-BACKED (OSM sampling):
+                    # - Research script: scripts/research_expected_values.py
+                    # - Sample size: n=19 successful urban_core locations
+                    # - Research data: businesses_1km median=170, p25=70, p75=406
+                    # - Research data: business_types median=14, p25=12, p75=15
+                    # - Research data: restaurants_1km median=89, p25=31, p75=171
+                    # - Research data: median_distance_m median=630.5, p25=485, p75=695.875
+                    'expected_businesses_within_1km': 170,  # Research-backed: median from businesses_1km (n=19)
+                    'expected_business_types': 14,  # Research-backed: median from business_types (n=19)
+                    'expected_restaurants_within_1km': 89  # Research-backed: median from restaurants_1km (n=19)
                 },
                 'public_transit_access': {
                     # Transit expectations from transit research (n=10 urban_core locations).
@@ -736,10 +741,16 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 2,  # Research-backed: median from pharmacies_8km (n=13)
                 },
                 'neighborhood_amenities': {
-                    # Suburban medians: ~65–70 businesses, 12 types, ~36 restaurants within 1km.
-                    'expected_businesses_within_1km': 65,
-                    'expected_business_types': 12,
-                    'expected_restaurants_within_1km': 35
+                    # RESEARCH-BACKED (OSM sampling):
+                    # - Research script: scripts/research_expected_values.py
+                    # - Sample size: n=13 successful suburban locations
+                    # - Research data: businesses_1km median=65, p25=20, p75=117.5
+                    # - Research data: business_types median=12, p25=6.5, p75=12
+                    # - Research data: restaurants_1km median=27, p25=8, p75=41.5
+                    # - Research data: median_distance_m median=389.0, p25=191, p75=543
+                    'expected_businesses_within_1km': 65,  # Research-backed: median from businesses_1km (n=13)
+                    'expected_business_types': 12,  # Research-backed: median from business_types (n=13)
+                    'expected_restaurants_within_1km': 27  # Research-backed: median from restaurants_1km (n=13)
                 },
                 'public_transit_access': {
                     # Transit expectations from transit research (n=5 suburban locations):
@@ -789,9 +800,16 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 1,  # Research-backed: median from pharmacies_8km (n=11)
                 },
                 'neighborhood_amenities': {
-                    'expected_businesses_within_1km': 10,
-                    'expected_business_types': 4,
-                    'expected_restaurants_within_1km': 3
+                    # RESEARCH-BACKED (OSM sampling):
+                    # - Research script: scripts/research_expected_values.py
+                    # - Sample size: n=11 successful exurban locations
+                    # - Research data: businesses_1km median=40, p25=12, p75=50
+                    # - Research data: business_types median=9, p25=6, p75=12
+                    # - Research data: restaurants_1km median=17, p25=4, p75=30
+                    # - Research data: median_distance_m median=311.0, p25=199, p75=695
+                    'expected_businesses_within_1km': 40,  # Research-backed: median from businesses_1km (n=11)
+                    'expected_business_types': 9,  # Research-backed: median from business_types (n=11)
+                    'expected_restaurants_within_1km': 17  # Research-backed: median from restaurants_1km (n=11)
                 },
                 'public_transit_access': {
                     # Transit expectations from transit research (n=10 exurban locations):
@@ -841,9 +859,16 @@ class RegionalBaselineManager:
                     'expected_pharmacies_within_2km': 0,  # Research-backed: median=1 for 8km, expect 0 for 2km (n=10)
                 },
                 'neighborhood_amenities': {
-                    'expected_businesses_within_1km': 3,
-                    'expected_business_types': 2,
-                    'expected_restaurants_within_1km': 1
+                    # RESEARCH-BACKED (OSM sampling):
+                    # - Research script: scripts/research_expected_values.py
+                    # - Sample size: n=10 successful rural locations
+                    # - Research data: businesses_1km median=15.5, p25=4, p75=48
+                    # - Research data: business_types median=6, p25=3.25, p75=12
+                    # - Research data: restaurants_1km median=8.5, p25=1, p75=20.5
+                    # - Research data: median_distance_m median=662.0, p25=305.5, p75=778
+                    'expected_businesses_within_1km': 16,  # Research-backed: median=15.5, rounded to 16 (n=10)
+                    'expected_business_types': 6,  # Research-backed: median from business_types (n=10)
+                    'expected_restaurants_within_1km': 9  # Research-backed: median=8.5, rounded to 9 (n=10)
                 },
                 'public_transit_access': {
                     # Transit expectations from transit research (n=10 rural locations):

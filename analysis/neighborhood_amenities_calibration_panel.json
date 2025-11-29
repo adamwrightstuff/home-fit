@@ -1,0 +1,225 @@
+{
+  "calibration_panel": [
+    {
+      "location": "Midtown Manhattan NY",
+      "area_type": "urban_core",
+      "target_score": 98,
+      "llm_scores": {
+        "perplexity": 95,
+        "gemini": 98,
+        "claude": 100,
+        "average": 98
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Pearl District Portland OR",
+      "area_type": "urban_core",
+      "target_score": 92,
+      "llm_scores": {
+        "perplexity": 88,
+        "gemini": 92,
+        "claude": 95,
+        "average": 92
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "French Quarter New Orleans LA",
+      "area_type": "urban_core",
+      "target_score": 88,
+      "llm_scores": {
+        "perplexity": 85,
+        "gemini": 85,
+        "claude": 93,
+        "average": 88
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Lincoln Park Chicago IL",
+      "area_type": "urban_residential",
+      "target_score": 87,
+      "llm_scores": {
+        "perplexity": 90,
+        "gemini": 79,
+        "claude": 91,
+        "average": 87
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Southtown San Antonio TX",
+      "area_type": "urban_core",
+      "target_score": 77,
+      "llm_scores": {
+        "perplexity": 80,
+        "gemini": 68,
+        "claude": 82,
+        "average": 77
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Evanston IL",
+      "area_type": "suburban",
+      "target_score": 81,
+      "llm_scores": {
+        "perplexity": 75,
+        "gemini": 88,
+        "claude": 80,
+        "average": 81
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Reston Town Center VA",
+      "area_type": "suburban",
+      "target_score": 80,
+      "llm_scores": {
+        "perplexity": 82,
+        "gemini": 83,
+        "claude": 75,
+        "average": 80
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Carmel IN",
+      "area_type": "suburban",
+      "target_score": 71,
+      "llm_scores": {
+        "perplexity": 70,
+        "gemini": 70,
+        "claude": 72,
+        "average": 71
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Irvine CA",
+      "area_type": "suburban",
+      "target_score": 67,
+      "llm_scores": {
+        "perplexity": 78,
+        "gemini": 55,
+        "claude": 68,
+        "average": 67
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Frisco TX",
+      "area_type": "suburban",
+      "target_score": 61,
+      "llm_scores": {
+        "perplexity": 72,
+        "gemini": 45,
+        "claude": 65,
+        "average": 61
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Woodstock VT",
+      "area_type": "rural",
+      "target_score": 58,
+      "llm_scores": {
+        "perplexity": 65,
+        "gemini": 60,
+        "claude": 48,
+        "average": 58
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Gunnison CO",
+      "area_type": "rural",
+      "target_score": 51,
+      "llm_scores": {
+        "perplexity": 60,
+        "gemini": 52,
+        "claude": 42,
+        "average": 51
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Taos NM",
+      "area_type": "rural",
+      "target_score": 48,
+      "llm_scores": {
+        "perplexity": 63,
+        "gemini": 40,
+        "claude": 40,
+        "average": 48
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "The Plains VA",
+      "area_type": "exurban",
+      "target_score": 36,
+      "llm_scores": {
+        "perplexity": 55,
+        "gemini": 25,
+        "claude": 28,
+        "average": 36
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    },
+    {
+      "location": "Pahrump NV",
+      "area_type": "rural",
+      "target_score": 25,
+      "llm_scores": {
+        "perplexity": 50,
+        "gemini": 10,
+        "claude": 15,
+        "average": 25
+      },
+      "data": {
+        "note": "Need to collect: business_count, restaurant_count, business_types, median_distance_m"
+      }
+    }
+  ],
+  "metadata": {
+    "created": "2024-12-19",
+    "description": "Calibration panel for neighborhood amenities scoring with LLM-researched target scores.",
+    "target_scores_source": "LLM research (Perplexity, Gemini, Claude) - average used as target_score",
+    "expected_values_source": "data_sources/regional_baselines.py",
+    "research_data_source": "analysis/research_data_expanded/expected_values_summary.csv",
+    "panel_size": 15,
+    "locations_with_targets": 15,
+    "note": "LLM target scores reflect real-world walkability and amenity quality perception. Data collection needed for business counts, restaurant counts, business types, and median distances."
+  }
+}
+
