@@ -1,126 +1,126 @@
 {
   "round": 11,
   "calibration": {
-    "CAL_A": 1.034122160730658,
-    "CAL_B": 53.371971917593726,
+    "CAL_A": 1.1506231163150435,
+    "CAL_B": 49.76230729736219,
     "stats": {
       "n_samples": 18,
-      "mean_error": 2.6053233644537006e-14,
-      "mean_abs_error": 13.294759719712463,
-      "max_abs_error": 34.1940409767728,
-      "r_squared": 0.13142246796159862,
-      "cal_a": 1.034122160730658,
-      "cal_b": 53.371971917593726
+      "mean_error": -2.6447979608848174e-14,
+      "mean_abs_error": 13.353237882182448,
+      "max_abs_error": 31.10115554903581,
+      "r_squared": 0.2945643827651174,
+      "cal_a": 1.1506231163150435,
+      "cal_b": 49.76230729736219
     }
   },
   "results": [
     {
       "name": "Bethesda MD",
       "target": 80,
-      "score": 92.8,
-      "raw_total": 32.0,
-      "error": 12.799999999999997,
-      "abs_error": 12.799999999999997,
+      "score": 93.2,
+      "raw_total": 35.2,
+      "error": 13.200000000000003,
+      "abs_error": 13.200000000000003,
       "area_type": "suburban",
       "components": {
-        "daily_urban_outdoors": 24.2,
-        "wild_adventure": 42.3,
+        "daily_urban_outdoors": 22.0,
+        "wild_adventure": 50.0,
         "waterfront_lifestyle": 18.0
       },
-      "lat": 38.9955604,
-      "lon": -77.0926255
+      "lat": 38.9846816,
+      "lon": -77.0942447
     },
     {
       "name": "Boston Back Bay MA",
       "target": 75,
-      "score": 76.4,
-      "raw_total": 22.8,
-      "error": 1.4000000000000057,
-      "abs_error": 1.4000000000000057,
+      "score": 93.4,
+      "raw_total": 35.4,
+      "error": 18.400000000000006,
+      "abs_error": 18.400000000000006,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 23.3,
-        "wild_adventure": 27.2,
-        "waterfront_lifestyle": 10.7
+        "daily_urban_outdoors": 23.9,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 16.0
       },
-      "lat": 42.3452955,
-      "lon": -71.0953075
+      "lat": 42.3473297,
+      "lon": -71.0749406
     },
     {
       "name": "Boulder CO",
       "target": 95,
-      "score": 59.0,
-      "raw_total": 12.9,
-      "error": -36.0,
-      "abs_error": 36.0,
+      "score": 82.7,
+      "raw_total": 26.4,
+      "error": -12.299999999999997,
+      "abs_error": 12.299999999999997,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 0.0,
-        "wild_adventure": 23.3,
-        "waterfront_lifestyle": 6.3
+        "daily_urban_outdoors": 17.5,
+        "wild_adventure": 35.2,
+        "waterfront_lifestyle": 18.0
       },
-      "lat": 40.102555,
-      "lon": -105.3632079
+      "lat": 40.0149856,
+      "lon": -105.270545
     },
     {
       "name": "Downtown Chicago IL",
       "target": 83,
-      "score": 67.9,
-      "raw_total": 17.9,
-      "error": -15.099999999999994,
-      "abs_error": 15.099999999999994,
+      "score": 68.9,
+      "raw_total": 15.0,
+      "error": -14.099999999999994,
+      "abs_error": 14.099999999999994,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 22.8,
-        "wild_adventure": 14.2,
+        "daily_urban_outdoors": 18.1,
+        "wild_adventure": 11.1,
         "waterfront_lifestyle": 20.0
       },
-      "lat": 41.8820015,
-      "lon": -87.6424138
+      "lat": 41.8789629,
+      "lon": -87.642124
     },
     {
       "name": "Downtown Denver CO",
       "target": 92,
-      "score": 66.2,
-      "raw_total": 17.0,
-      "error": -25.799999999999997,
-      "abs_error": 25.799999999999997,
+      "score": 77.7,
+      "raw_total": 22.3,
+      "error": -14.299999999999997,
+      "abs_error": 14.299999999999997,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 20.7,
-        "wild_adventure": 13.5,
+        "daily_urban_outdoors": 20.8,
+        "wild_adventure": 24.0,
         "waterfront_lifestyle": 20.0
       },
-      "lat": 39.7424841,
-      "lon": -104.9965595
+      "lat": 39.7509454,
+      "lon": -104.9997022
     },
     {
       "name": "Downtown Las Vegas NV",
       "target": 42,
-      "score": 67.2,
-      "raw_total": 17.5,
-      "error": 25.200000000000003,
-      "abs_error": 25.200000000000003,
+      "score": 64.2,
+      "raw_total": 11.1,
+      "error": 22.200000000000003,
+      "abs_error": 22.200000000000003,
       "area_type": "suburban",
       "components": {
-        "daily_urban_outdoors": 19.8,
-        "wild_adventure": 17.7,
-        "waterfront_lifestyle": 13.9
+        "daily_urban_outdoors": 17.2,
+        "wild_adventure": 8.2,
+        "waterfront_lifestyle": 9.2
       },
-      "lat": 36.1737443,
-      "lon": -115.1416452
+      "lat": 36.1674263,
+      "lon": -115.1484131
     },
     {
       "name": "Downtown Phoenix AZ",
       "target": 48,
-      "score": 71.0,
-      "raw_total": 19.7,
-      "error": 23.0,
-      "abs_error": 23.0,
+      "score": 77.1,
+      "raw_total": 21.8,
+      "error": 29.099999999999994,
+      "abs_error": 29.099999999999994,
       "area_type": "suburban",
       "components": {
-        "daily_urban_outdoors": 24.8,
-        "wild_adventure": 18.1,
+        "daily_urban_outdoors": 24.6,
+        "wild_adventure": 22.5,
         "waterfront_lifestyle": 16.2
       },
       "lat": 33.4518519,
@@ -129,31 +129,31 @@
     {
       "name": "Downtown Portland OR",
       "target": 88,
-      "score": 89.2,
-      "raw_total": 30.0,
-      "error": 1.2000000000000028,
-      "abs_error": 1.2000000000000028,
+      "score": 94.7,
+      "raw_total": 36.4,
+      "error": 6.700000000000003,
+      "abs_error": 6.700000000000003,
       "area_type": "urban_residential",
       "components": {
-        "daily_urban_outdoors": 24.9,
-        "wild_adventure": 37.1,
+        "daily_urban_outdoors": 24.7,
+        "wild_adventure": 50.0,
         "waterfront_lifestyle": 20.0
       },
-      "lat": 45.5158589,
-      "lon": -122.6821844
+      "lat": 45.5202471,
+      "lon": -122.674194
     },
     {
       "name": "Downtown Seattle WA",
       "target": 92,
-      "score": 72.7,
-      "raw_total": 20.6,
-      "error": -19.299999999999997,
-      "abs_error": 19.299999999999997,
+      "score": 85.7,
+      "raw_total": 28.9,
+      "error": -6.299999999999997,
+      "abs_error": 6.299999999999997,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 21.7,
-        "wild_adventure": 23.1,
-        "waterfront_lifestyle": 12.8
+        "daily_urban_outdoors": 18.7,
+        "wild_adventure": 40.2,
+        "waterfront_lifestyle": 16.0
       },
       "lat": 47.6142012,
       "lon": -122.3413502
@@ -161,14 +161,14 @@
     {
       "name": "Lake Placid NY",
       "target": 94,
-      "score": 92.7,
-      "raw_total": 32.0,
-      "error": -1.2999999999999972,
-      "abs_error": 1.2999999999999972,
+      "score": 84.9,
+      "raw_total": 28.3,
+      "error": -9.099999999999994,
+      "abs_error": 9.099999999999994,
       "area_type": "rural",
       "components": {
-        "daily_urban_outdoors": 19.1,
-        "wild_adventure": 44.5,
+        "daily_urban_outdoors": 3.9,
+        "wild_adventure": 46.2,
         "waterfront_lifestyle": 20.0
       },
       "lat": 44.2831194,
@@ -177,47 +177,47 @@
     {
       "name": "Miami Beach FL",
       "target": 60,
-      "score": 82.4,
-      "raw_total": 26.1,
-      "error": 22.400000000000006,
-      "abs_error": 22.400000000000006,
+      "score": 67.6,
+      "raw_total": 13.9,
+      "error": 7.599999999999994,
+      "abs_error": 7.599999999999994,
       "area_type": "rural",
       "components": {
-        "daily_urban_outdoors": 25.0,
-        "wild_adventure": 29.3,
-        "waterfront_lifestyle": 20.0
+        "daily_urban_outdoors": 14.9,
+        "wild_adventure": 12.5,
+        "waterfront_lifestyle": 16.0
       },
-      "lat": 25.7725228,
-      "lon": -80.1342317
+      "lat": 25.7929198,
+      "lon": -80.1353006
     },
     {
       "name": "Park City UT",
       "target": 92,
-      "score": 83.0,
-      "raw_total": 26.5,
-      "error": -9.0,
-      "abs_error": 9.0,
+      "score": 74.1,
+      "raw_total": 19.3,
+      "error": -17.900000000000006,
+      "abs_error": 17.900000000000006,
       "area_type": "exurban",
       "components": {
-        "daily_urban_outdoors": 24.8,
-        "wild_adventure": 32.5,
-        "waterfront_lifestyle": 13.8
+        "daily_urban_outdoors": 22.7,
+        "wild_adventure": 19.6,
+        "waterfront_lifestyle": 13.7
       },
-      "lat": 40.6466557,
-      "lon": -111.4982413
+      "lat": 40.6460921,
+      "lon": -111.4979963
     },
     {
       "name": "Park Slope Brooklyn NY",
       "target": 70,
-      "score": 67.1,
-      "raw_total": 17.5,
-      "error": -2.9000000000000057,
-      "abs_error": 2.9000000000000057,
+      "score": 69.1,
+      "raw_total": 15.2,
+      "error": -0.9000000000000057,
+      "abs_error": 0.9000000000000057,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 9.1,
-        "wild_adventure": 23.7,
-        "waterfront_lifestyle": 14.4
+        "daily_urban_outdoors": 10.1,
+        "wild_adventure": 19.9,
+        "waterfront_lifestyle": 10.8
       },
       "lat": 40.6701033,
       "lon": -73.9859723
@@ -225,63 +225,63 @@
     {
       "name": "Santa Monica CA",
       "target": 78,
-      "score": 60.6,
+      "score": 67.4,
       "raw_total": 13.8,
-      "error": -17.4,
-      "abs_error": 17.4,
+      "error": -10.599999999999994,
+      "abs_error": 10.599999999999994,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 6.8,
-        "wild_adventure": 15.5,
+        "daily_urban_outdoors": 13.3,
+        "wild_adventure": 11.5,
         "waterfront_lifestyle": 20.0
       },
-      "lat": 34.0256686,
-      "lon": -118.49356
+      "lat": 34.0194704,
+      "lon": -118.491227
     },
     {
       "name": "Times Square NY",
       "target": 35,
-      "score": 63.3,
-      "raw_total": 15.3,
-      "error": 28.299999999999997,
-      "abs_error": 28.299999999999997,
+      "score": 68.0,
+      "raw_total": 14.2,
+      "error": 33.0,
+      "abs_error": 33.0,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 18.3,
-        "wild_adventure": 14.5,
-        "waterfront_lifestyle": 12.8
+        "daily_urban_outdoors": 18.4,
+        "wild_adventure": 13.5,
+        "waterfront_lifestyle": 9.6
       },
-      "lat": 40.7585971,
-      "lon": -73.9861935
+      "lat": 40.7695457,
+      "lon": -74.0204177
     },
     {
       "name": "Truckee CA",
       "target": 95,
-      "score": 93.0,
-      "raw_total": 32.1,
-      "error": -2.0,
-      "abs_error": 2.0,
+      "score": 87.1,
+      "raw_total": 30.1,
+      "error": -7.900000000000006,
+      "abs_error": 7.900000000000006,
       "area_type": "rural",
       "components": {
-        "daily_urban_outdoors": 24.8,
-        "wild_adventure": 45.1,
-        "waterfront_lifestyle": 10.7
+        "daily_urban_outdoors": 13.8,
+        "wild_adventure": 46.7,
+        "waterfront_lifestyle": 12.8
       },
-      "lat": 39.3358482,
-      "lon": -120.1654186
+      "lat": 39.3279454,
+      "lon": -120.1835765
     },
     {
       "name": "Upper West Side New York NY",
       "target": 72,
-      "score": 67.4,
-      "raw_total": 17.6,
-      "error": -4.599999999999994,
-      "abs_error": 4.599999999999994,
+      "score": 67.5,
+      "raw_total": 13.8,
+      "error": -4.5,
+      "abs_error": 4.5,
       "area_type": "urban_core",
       "components": {
-        "daily_urban_outdoors": 24.1,
-        "wild_adventure": 15.0,
-        "waterfront_lifestyle": 14.4
+        "daily_urban_outdoors": 19.1,
+        "wild_adventure": 11.9,
+        "waterfront_lifestyle": 10.8
       },
       "lat": 40.7870455,
       "lon": -73.9754163
@@ -289,18 +289,18 @@
     {
       "name": "Walnut Creek CA",
       "target": 82,
-      "score": 84.7,
-      "raw_total": 27.4,
-      "error": 2.700000000000003,
-      "abs_error": 2.700000000000003,
+      "score": 91.4,
+      "raw_total": 33.7,
+      "error": 9.400000000000006,
+      "abs_error": 9.400000000000006,
       "area_type": "suburban",
       "components": {
-        "daily_urban_outdoors": 17.2,
-        "wild_adventure": 37.8,
-        "waterfront_lifestyle": 16.9
+        "daily_urban_outdoors": 21.7,
+        "wild_adventure": 47.5,
+        "waterfront_lifestyle": 17.1
       },
-      "lat": 37.8966084,
-      "lon": -122.063379
+      "lat": 37.9020731,
+      "lon": -122.0618702
     }
   ]
 }

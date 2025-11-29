@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
 Active Outdoors v2 Calibration Script
-Runs scoring on Round 11 calibration panel and fits new calibration parameters.
+Runs scoring on Round 12 (expanded) calibration panel and fits new calibration parameters.
+
+RESEARCH-BACKED: Target scores from external research (Perplexity, Gemini, Claude).
+These are used for calibration, NOT for tuning components to match specific scores.
+
+Design Principle: Research-backed expected values, not target-tuned values.
 """
 
 import sys
 import os
 import json
+import time
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import numpy as np
 
 # Add project root to path
@@ -18,16 +24,51 @@ sys.path.insert(0, str(project_root))
 from data_sources.geocoding import geocode
 from pillars.active_outdoors import get_active_outdoors_score_v2
 
+# Fallback coordinates for locations that frequently fail geocoding
+# Format: location_name -> (lat, lon)
+FALLBACK_COORDINATES = {
+    "Boulder CO": (40.0150, -105.2705),
+    "Times Square NY": (40.7580, -73.9855),
+    "Telluride CO": (37.9375, -107.8123),
+    "Jackson Hole WY": (43.4799, -110.7618),
+    "Bend OR": (44.0582, -121.3153),
+    "Flagstaff AZ": (35.1983, -111.6513),
+    "Asheville NC": (35.5951, -82.5515),
+    "Miami Beach FL": (25.7907, -80.1300),
+    "Park Slope Brooklyn NY": (40.6715, -73.9782),
+    "Upper West Side New York NY": (40.7870, -73.9754),
+    "Truckee CA": (39.3280, -120.1833),
+    "Walnut Creek CA": (37.9101, -122.0652),
+    "Downtown Detroit MI": (42.3314, -83.0458),
+    "Downtown Houston TX": (29.7604, -95.3698),
+    "Downtown Indianapolis IN": (39.7684, -86.1581),
+    "Downtown Minneapolis MN": (44.9778, -93.2650),
+    "Centennial CO": (39.5807, -104.8777),
+    "Hollywood FL": (26.0112, -80.1495),
+    "Outer Banks NC": (35.2321, -75.6903),  # Nags Head area
+}
 
-# Round 11 calibration panel data
-ROUND11_PANEL = [
+
+# Expanded Calibration Panel (Round 12)
+# RESEARCH-BACKED: Target scores from external research (Perplexity, Gemini, Claude)
+# These are used for calibration, NOT for tuning components to match specific scores.
+# Design Principle: Research-backed expected values, not target-tuned values.
+#
+# Area Type Mapping:
+# - "Urban" or "Urban/Suburban" → urban_core
+# - "Suburban" or "Suburban/Urban" → suburban (will be auto-detected)
+# - "Suburban/Exurban" → exurban (will be auto-detected)
+# - "Rural" or "Rural/Exurban" → rural or exurban (will be auto-detected)
+# - Unspecified → None (will be auto-detected from location)
+ROUND12_PANEL = [
+    # Original Round 11 locations (validated with research)
     {"name": "Bethesda MD", "target": 80, "area_type": "suburban"},
     {"name": "Boston Back Bay MA", "target": 75, "area_type": "urban_core"},
     {"name": "Boulder CO", "target": 95, "area_type": "urban_core"},
     {"name": "Downtown Chicago IL", "target": 83, "area_type": "urban_core"},
     {"name": "Downtown Denver CO", "target": 92, "area_type": "urban_core"},
     {"name": "Downtown Las Vegas NV", "target": 42, "area_type": "suburban"},
-    {"name": "Downtown Phoenix AZ", "target": 48, "area_type": "suburban"},
+    {"name": "Downtown Phoenix AZ", "target": 48, "area_type": "urban_core"},
     {"name": "Downtown Portland OR", "target": 88, "area_type": "urban_residential"},
     {"name": "Downtown Seattle WA", "target": 92, "area_type": "urban_core"},
     {"name": "Lake Placid NY", "target": 94, "area_type": "rural"},
@@ -39,18 +80,80 @@ ROUND11_PANEL = [
     {"name": "Truckee CA", "target": 95, "area_type": "rural"},
     {"name": "Upper West Side New York NY", "target": 72, "area_type": "urban_core"},
     {"name": "Walnut Creek CA", "target": 82, "area_type": "suburban"},
+    
+    # New locations from research (Round 12 additions)
+    # Exurban/Mountain Towns
+    {"name": "Asheville NC", "target": 95, "area_type": None},  # Will auto-detect (likely exurban)
+    {"name": "Aspen CO", "target": 96, "area_type": "rural"},  # Rural/Exurban → rural
+    {"name": "Bar Harbor ME", "target": 88, "area_type": "rural"},  # Rural/Exurban → rural
+    {"name": "Bend OR", "target": 95, "area_type": "exurban"},  # Suburban/Exurban → exurban
+    {"name": "Flagstaff AZ", "target": 90, "area_type": None},  # Will auto-detect (likely exurban)
+    {"name": "Jackson Hole WY", "target": 96, "area_type": None},  # Will auto-detect (likely rural/exurban)
+    {"name": "Missoula MT", "target": 88, "area_type": None},  # Will auto-detect (likely exurban)
+    {"name": "Telluride CO", "target": 97, "area_type": None},  # Will auto-detect (likely rural/exurban)
+    
+    # Low/Mid-Range Urban Cores
+    {"name": "Downtown Dallas TX", "target": 40, "area_type": "urban_core"},
+    {"name": "Downtown Detroit MI", "target": 40, "area_type": "urban_core"},
+    {"name": "Downtown Houston TX", "target": 35, "area_type": "urban_core"},
+    {"name": "Downtown Indianapolis IN", "target": 45, "area_type": "urban_core"},
+    {"name": "Downtown Kansas City MO", "target": 45, "area_type": "urban_core"},
+    {"name": "Downtown Minneapolis MN", "target": 75, "area_type": "urban_core"},
+    
+    # Diverse Suburban
+    {"name": "Centennial CO", "target": 70, "area_type": "suburban"},
+    {"name": "Gilbert AZ", "target": 52, "area_type": "suburban"},
+    {"name": "Hollywood FL", "target": 60, "area_type": "suburban"},
+    
+    # Edge Cases
+    {"name": "Outer Banks NC", "target": 75, "area_type": "rural"},  # Coastal rural
 ]
 
+# Use Round 12 panel (expanded)
+ROUND11_PANEL = ROUND12_PANEL  # Keep variable name for compatibility
 
-def geocode_location(name: str) -> Tuple[float, float]:
-    """Geocode a location name to lat/lon."""
-    print(f"🔍 Geocoding: {name}...")
-    result = geocode(name)
-    if not result:
-        raise ValueError(f"Failed to geocode: {name}")
-    lat, lon, _, _, _ = result
-    print(f"   ✅ Found: {lat:.6f}, {lon:.6f}")
-    return lat, lon
+
+def geocode_location(name: str, max_retries: int = 3) -> Tuple[float, float]:
+    """
+    Geocode a location name to lat/lon with retry logic and fallback coordinates.
+    
+    Args:
+        name: Location name to geocode
+        max_retries: Maximum number of retry attempts
+    
+    Returns:
+        (lat, lon) tuple
+    
+    Raises:
+        ValueError: If geocoding fails after all retries and no fallback available
+    """
+    # Check fallback coordinates first
+    if name in FALLBACK_COORDINATES:
+        lat, lon = FALLBACK_COORDINATES[name]
+        print(f"🔍 Using fallback coordinates for: {name}")
+        print(f"   ✅ Found: {lat:.6f}, {lon:.6f}")
+        return lat, lon
+    
+    # Try geocoding with retries
+    for attempt in range(max_retries):
+        try:
+            print(f"🔍 Geocoding: {name}... (attempt {attempt + 1}/{max_retries})")
+            result = geocode(name)
+            if result:
+                lat, lon, _, _, _ = result
+                print(f"   ✅ Found: {lat:.6f}, {lon:.6f}")
+                return lat, lon
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                print(f"   ⚠️  Geocoding failed: {e}")
+                print(f"   ⏳ Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print(f"   ❌ Geocoding failed after {max_retries} attempts: {e}")
+    
+    # If all retries failed, raise error
+    raise ValueError(f"Failed to geocode: {name} (after {max_retries} attempts)")
 
 
 def run_calibration_panel() -> List[Dict]:
@@ -210,9 +313,12 @@ def print_calibration_report(results: List[Dict], stats: Dict):
 
 def main():
     """Main calibration workflow."""
-    print("Active Outdoors v2 Calibration")
+    print("Active Outdoors v2 Calibration (Round 12 - Expanded Panel)")
     print("=" * 60)
     print(f"Running calibration on {len(ROUND11_PANEL)} locations...")
+    print("RESEARCH-BACKED: Target scores from external research (Perplexity, Gemini, Claude)")
+    print("Design Principle: These are used for calibration, NOT for tuning components.")
+    print("=" * 60)
     
     # Run calibration panel
     results = run_calibration_panel()
@@ -231,9 +337,11 @@ def main():
     output_dir = project_root / "analysis"
     output_dir.mkdir(exist_ok=True)
     
-    output_file = output_dir / "active_outdoors_calibration_round11.json"
+    output_file = output_dir / "active_outdoors_calibration_round12.json"
     output_data = {
-        "round": 11,
+        "round": 12,
+        "research_sources": ["Perplexity", "Gemini", "Claude"],
+        "note": "Target scores from external research. Used for calibration, not component tuning.",
         "calibration": {
             "CAL_A": stats["cal_a"],
             "CAL_B": stats["cal_b"],
