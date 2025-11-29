@@ -6,7 +6,7 @@ Scores access to hospitals, clinics, pharmacies, and emergency services
 import math
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
-from data_sources.regional_baselines import get_contextual_expectations
+from data_sources.regional_baselines import get_contextual_expectations, get_area_classification
 from data_sources.radius_profiles import get_radius_profile
 from logging_config import get_logger
 
@@ -207,7 +207,8 @@ def _get_fallback_hospitals(lat: float, lon: float, max_distance_km: float = 60.
 
 def get_healthcare_access_score(lat: float, lon: float,
                                 area_type: Optional[str] = None,
-                                location_scope: Optional[str] = None) -> Tuple[float, Dict]:
+                                location_scope: Optional[str] = None,
+                                city: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate healthcare access score (0-100).
 
@@ -476,6 +477,31 @@ def get_healthcare_access_score(lat: float, lon: float,
                 "distance_km": nearest_db.get('distance_km')
             }
 
+    # Get area classification for metadata (use provided area_type if available)
+    try:
+        if area_type:
+            # Use provided area_type, but still need metro_name for metadata
+            from data_sources.regional_baselines import regional_baseline_manager
+            metro_name = regional_baseline_manager._detect_metro_area(city, lat, lon)
+            area_metadata = {
+                'density': pop_density,
+                'metro_name': metro_name,
+                'area_type': area_type,
+                'classification_confidence': regional_baseline_manager._get_classification_confidence(pop_density, metro_name)
+            }
+        else:
+            # Fallback to computing classification if not provided
+            area_type, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
+    except Exception as e:
+        # Fallback if area classification fails
+        logger.warning(f"Area classification failed: {e}")
+        area_metadata = {
+            'density': pop_density,
+            'metro_name': None,
+            'area_type': area_type or 'unknown',
+            'classification_confidence': 0.0
+        }
+    
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
@@ -491,7 +517,8 @@ def get_healthcare_access_score(lat: float, lon: float,
         "summary": _build_summary(
             nearest_hospital, urgent_care, pharmacies, clinics
         ),
-        "data_quality": quality_metrics
+        "data_quality": quality_metrics,
+        "area_classification": area_metadata
     }
 
     # Enrich summary with counts

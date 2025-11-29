@@ -530,7 +530,7 @@ def get_livability_score(request: Request,
     if _include_pillar('healthcare_access'):
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city
             })
         )
     if _include_pillar('housing_value'):
