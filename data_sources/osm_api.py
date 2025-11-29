@@ -369,6 +369,13 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
       way["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
       relation["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
       
+      // SKI TRAILS - Mountain recreation (piste:type)
+      // RESEARCH-BACKED: Ski trails are legitimate outdoor recreation in mountain towns
+      // Safe to include: Only significant in mountain areas (Park City: 1538, Times Square: 10)
+      // This captures ski resort trails that aren't tagged as route=hiking
+      way["piste:type"](around:{radius_m},{lat},{lon});
+      relation["piste:type"](around:{radius_m},{lat},{lon});
+      
       // SWIMMING - Optimized: combined water types
       way["natural"~"^(beach|coastline)$"](around:{radius_m},{lat},{lon});
       relation["natural"="beach"](around:{radius_m},{lat},{lon});
@@ -1060,11 +1067,22 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         leisure = tags.get("leisure")
         tourism = tags.get("tourism")
         water_type = tags.get("water")
+        piste_type = tags.get("piste:type")
 
         feature = None
         category = None
 
-        if route == "hiking":
+        if piste_type:
+            # SKI TRAILS - Mountain recreation (piste:type)
+            # RESEARCH-BACKED: Ski trails are legitimate outdoor recreation in mountain towns
+            # Safe to include: Only significant in mountain areas (Park City: 1538, Times Square: 10)
+            # This captures ski resort trails that aren't tagged as route=hiking
+            # Filter out indoor/artificial ski facilities (piste:type=artificial or indoor)
+            piste_lower = piste_type.lower()
+            if piste_lower not in ["artificial", "indoor"]:
+                feature = {"type": "ski_trail", "name": tags.get("name")}
+                category = "hiking"  # Count as hiking trails for Wild Adventure scoring
+        elif route == "hiking":
             # DATA QUALITY: Filter out urban paths/cycle paths tagged as hiking routes
             # Problem: OSM tags urban pathways and cycle paths as route=hiking when they're not actual hiking trails
             # Example: Times Square has 100+ "hiking" routes that are actually urban paths/greenways
