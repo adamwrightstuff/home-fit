@@ -25,6 +25,44 @@ except Exception as e:
     logger.warning(f"Redis not available, using in-memory cache: {e}")
     _redis_client = None
 
+
+def _get_redis_client():
+    """
+    Get Redis client with lightweight reconnection check.
+    Only reconnects if connection is actually lost (not on every call).
+    This is performance-optimized: ping is fast, reconnection only happens when needed.
+    
+    Returns:
+        Redis client if available, None otherwise
+    """
+    global _redis_client
+    
+    if _redis_client is None:
+        return None
+    
+    # Lightweight ping check (fast, doesn't block)
+    try:
+        _redis_client.ping()
+        return _redis_client
+    except Exception:
+        # Connection lost - try to reconnect once (with short timeout for performance)
+        try:
+            import redis
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+            _redis_client = redis.from_url(
+                redis_url, 
+                decode_responses=True, 
+                socket_connect_timeout=1, 
+                socket_timeout=1
+            )
+            _redis_client.ping()
+            logger.info("Redis reconnected successfully")
+            return _redis_client
+        except Exception as reconnect_error:
+            logger.warning(f"Redis reconnection failed: {reconnect_error}")
+            _redis_client = None
+            return None
+
 # Simple in-memory cache (fallback when Redis is unavailable)
 _cache: Dict[str, Dict[str, Any]] = {}
 _cache_ttl: Dict[str, float] = {}
@@ -65,10 +103,11 @@ def cached(ttl_seconds: int = 3600):
             cache_entry = None
             cache_time = 0
             
-            if _redis_client:
+            redis_client = _get_redis_client()
+            if redis_client:
                 try:
                     # Try Redis
-                    cached_data = _redis_client.get(cache_key)
+                    cached_data = redis_client.get(cache_key)
                     if cached_data:
                         data = json.loads(cached_data)
                         cache_entry = data['value']
@@ -119,9 +158,10 @@ def cached(ttl_seconds: int = 3600):
                     'timestamp': current_time
                 }
                 
-                if _redis_client:
+                redis_client = _get_redis_client()
+                if redis_client:
                     try:
-                        _redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
+                        redis_client.setex(cache_key, ttl_seconds, json.dumps(cache_data))
                     except Exception as e:
                         logger.warning(f"Redis write error: {e}")
                 
@@ -147,19 +187,20 @@ def clear_cache(cache_type: Optional[str] = None):
     global _cache, _cache_ttl
     
     # Clear Redis if available
-    if _redis_client:
+    redis_client = _get_redis_client()
+    if redis_client:
         try:
             if cache_type is None:
                 # Clear all Redis keys
-                keys = _redis_client.keys("*")
+                keys = redis_client.keys("*")
                 if keys:
-                    _redis_client.delete(*keys)
+                    redis_client.delete(*keys)
             else:
                 # Clear specific cache type
                 pattern = f"*{cache_type}:*"
-                keys = _redis_client.keys(pattern)
+                keys = redis_client.keys(pattern)
                 if keys:
-                    _redis_client.delete(*keys)
+                    redis_client.delete(*keys)
         except Exception as e:
             logger.warning(f"Error clearing Redis cache: {e}")
     
@@ -213,20 +254,21 @@ def get_cache_stats() -> Dict[str, Any]:
         if current_time - cache_time > 3600:  # Assume 1 hour TTL for stats
             expired_entries += 1
     
+    redis_client = _get_redis_client()
     stats = {
         "total_entries": total_entries,
         "expired_entries": expired_entries,
         "active_entries": total_entries - expired_entries,
         "cache_size_mb": sum(len(str(v)) for v in _cache.values()) / (1024 * 1024),
-        "redis_available": _redis_client is not None
+        "redis_available": redis_client is not None
     }
     
     # Add Redis stats if available
-    if _redis_client:
+    if redis_client:
         try:
-            redis_keys = _redis_client.keys("*")
+            redis_keys = redis_client.keys("*")
             stats["redis_keys"] = len(redis_keys)
-            info = _redis_client.info("memory")
+            info = redis_client.info("memory")
             stats["redis_memory_mb"] = info.get("used_memory", 0) / (1024 * 1024)
         except Exception as e:
             stats["redis_error"] = str(e)

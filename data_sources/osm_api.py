@@ -159,8 +159,10 @@ def _retry_overpass(
                         else:
                             retry_after = int(resp.headers.get('Retry-After', base_wait))
                         
-                        # Respect Retry-After header, but cap at max_wait and also cap at 10s to prevent excessive waits
-                        retry_after = min(retry_after, retry_config.max_wait, 10.0)  # Hard cap at 10s regardless of profile
+                        # For rate limits, allow slightly longer waits (up to 15s) to respect Retry-After
+                        # But cap to prevent excessive delays that hurt performance
+                        # 15s is a good balance: respects OSM's rate limits without blocking requests too long
+                        retry_after = min(retry_after, retry_config.max_wait, 15.0)  # Increased from 10s to 15s for rate limits
                         
                         # Increase minimum query interval adaptively
                         with _query_lock:
@@ -169,10 +171,21 @@ def _retry_overpass(
                                 logger.debug(f"Increasing OSM min query interval to {new_interval:.2f}s due to 429")
                             _current_min_query_interval = new_interval
                         
-                        # If fail_fast is True and rate limited on second attempt or later, give up faster
+                        # Smart fail_fast: Try all endpoints once before giving up
+                        # This balances performance (doesn't wait forever) with reliability (tries all options)
+                        # The cache decorator will use stale cache if available, so failing fast is acceptable
                         if fail_fast and i >= 1:
-                            logger.warning(f"OSM rate limited (429), giving up after {i+1} attempts to avoid long delays (fail_fast=True)")
-                            return None  # Fail fast instead of waiting more
+                            # Count how many endpoints we've tried
+                            endpoints_tried = min(i + 1, len(OVERPASS_URLS))
+                            
+                            if endpoints_tried >= len(OVERPASS_URLS):
+                                # We've tried all endpoints, fail fast to avoid long waits
+                                # The cache decorator will use stale cache if available
+                                logger.warning(f"OSM rate limited (429) on all {len(OVERPASS_URLS)} endpoints after {i+1} attempts, failing fast (cache will provide stale data if available)")
+                                return None
+                            else:
+                                # Try next endpoint before giving up
+                                logger.debug(f"OSM rate limited (429), trying endpoint {endpoints_tried+1}/{len(OVERPASS_URLS)} before fail_fast")
                         
                         if i < max_attempts - 1:
                             logger.warning(f"OSM rate limited (429), waiting {retry_after}s before retry ({i+1}/{max_attempts})...")
