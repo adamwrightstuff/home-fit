@@ -662,7 +662,7 @@ def get_healthcare_access_score(lat: float, lon: float,
         print(f"      + Hospital Bonus: {hospital_bonus:.0f} (additional hospitals)")
     print(f"   🩺 Primary Care: {primary_score:.0f}/25 (clinics={len(clinics)}, doctors={len(doctors)})")
     print(f"   🧠 Specialized Care: {specialty_score:.0f}/15 (specialties={len(specialties)})")
-    print(f"   🚨 Emergency Services: {emergency_score:.0f}/10 (hospital_emergency_tag={has_emergency_hospital})")
+    print(f"   🚨 Emergency Services: {emergency_score:.0f}/10 (emergency_hospitals={len(emergency_hospitals)})")
     print(f"   💊 Pharmacies: {pharmacy_score:.0f}/15 ({len(pharmacies)} nearby)")
     print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
 
