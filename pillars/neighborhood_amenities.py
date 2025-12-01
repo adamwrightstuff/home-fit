@@ -83,13 +83,14 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     
     # Area-type-specific linear calibration (research-backed from calibration panel)
     # Calibrated against LLM target scores for known locations
+    # Constrained to ensure non-negative scores: calibrated_score >= 0 for all raw >= 0
     # See: analysis/neighborhood_amenities_calibration_results.json
     AREA_TYPE_CALIBRATIONS = {
-        "urban_core": {"a": 2.2833, "b": -121.65},
-        "urban_residential": {"a": 2.2833, "b": -121.65},  # Use urban_core calibration
+        "urban_core": {"a": 0.9638, "b": 0.0},  # Constrained (was: a=2.2833, b=-121.65)
+        "urban_residential": {"a": 0.9638, "b": 0.0},  # Use urban_core calibration
         "suburban": {"a": 0.2072, "b": 54.69},
         "exurban": {"a": 0.2072, "b": 54.69},  # Use suburban calibration (not enough data for exurban)
-        "rural": {"a": 0.6589, "b": -8.61},
+        "rural": {"a": 0.5574, "b": 0.0},  # Constrained (was: a=0.6589, b=-8.61)
     }
     
     # Get calibration for this area type (fallback to suburban if unknown)

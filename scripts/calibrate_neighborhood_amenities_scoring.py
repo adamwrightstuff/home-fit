@@ -287,7 +287,10 @@ def piecewise_linear_curve(ratio: float, breakpoints: Dict[str, float], max_scor
 
 def fit_area_type_calibration(results: List[Dict], area_type: str) -> Optional[Dict]:
     """
-    Fit calibration curves for a specific area type.
+    Fit calibration curves for a specific area type with non-negativity constraint.
+    
+    Constraint: calibrated_score >= 0 for all raw >= 0
+    This ensures the calibration function is valid across its entire domain.
     
     Returns calibrated parameters for density, variety, proximity, and location_quality.
     """
@@ -327,18 +330,37 @@ def fit_area_type_calibration(results: List[Dict], area_type: str) -> Optional[D
     cal_a = (n * sum_raw_target - sum_raw * sum_target) / denominator
     cal_b = (sum_target - cal_a * sum_raw) / n
     
-    # Calculate errors
+    # Apply non-negativity constraint: ensure calibrated_score >= 0 for all raw >= 0
+    # For linear function target = a * raw + b:
+    # - At raw = 0: b >= 0
+    # - For raw > 0: if a > 0 and b < 0, we need to ensure a * raw + b >= 0
+    #   This means: raw >= -b/a (zero crossing)
+    # To ensure non-negative for all raw >= 0, we need b >= 0
+    # If b < 0, we constrain b = 0 and refit a
+    constrained = False
+    if cal_b < 0:
+        constrained = True
+        # Constrain b = 0, refit a using least squares: a = sum(raw * target) / sum(raw^2)
+        # This ensures the calibration passes through (0, 0) and is non-negative
+        cal_b = 0.0
+        if sum_raw_sq > 1e-6:
+            cal_a = sum_raw_target / sum_raw_sq
+        else:
+            # Fallback: use average ratio
+            cal_a = sum_target / sum_raw if sum_raw > 1e-6 else 1.0
+    
+    # Calculate errors (using constrained calibration)
     errors = []
     for p in data_points:
         predicted = cal_a * p["raw_total"] + cal_b
-        predicted = max(0.0, min(100.0, predicted))
+        predicted = max(0.0, min(100.0, predicted))  # Cap at 0-100 for error calculation
         errors.append(abs(predicted - p["target"]))
     
     avg_error = statistics.mean(errors)
     max_error = max(errors)
     rmse = math.sqrt(statistics.mean([e ** 2 for e in errors]))
     
-    return {
+    result = {
         "area_type": area_type,
         "calibration_a": cal_a,
         "calibration_b": cal_b,
@@ -346,7 +368,13 @@ def fit_area_type_calibration(results: List[Dict], area_type: str) -> Optional[D
         "max_error": max_error,
         "rmse": rmse,
         "n": n,
+        "constrained": constrained,
     }
+    
+    if constrained:
+        result["constraint_note"] = "Calibration constrained to ensure non-negative scores (b >= 0)"
+    
+    return result
 
 
 def main() -> None:

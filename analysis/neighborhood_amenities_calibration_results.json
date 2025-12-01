@@ -262,12 +262,14 @@
   "area_type_calibrations": {
     "urban_core": {
       "area_type": "urban_core",
-      "calibration_a": 2.2832689122030487,
-      "calibration_b": -121.65323025951096,
-      "avg_error": 5.450855880728938,
-      "max_error": 8.159028161236563,
-      "rmse": 5.923192350422146,
-      "n": 4
+      "calibration_a": 0.9638071361734432,
+      "calibration_b": 0.0,
+      "avg_error": 5.9126675023393,
+      "max_error": 9.93540368284458,
+      "rmse": 6.555203610364354,
+      "n": 4,
+      "constrained": true,
+      "constraint_note": "Calibration constrained to ensure non-negative scores (b >= 0)"
     },
     "suburban": {
       "area_type": "suburban",
@@ -276,16 +278,19 @@
       "avg_error": 5.824626975576106,
       "max_error": 10.560637300117037,
       "rmse": 6.377145491652578,
-      "n": 5
+      "n": 5,
+      "constrained": false
     },
     "rural": {
       "area_type": "rural",
-      "calibration_a": 0.6588788276767816,
-      "calibration_b": -8.610423722955694,
-      "avg_error": 7.27044307734845,
-      "max_error": 9.27745904472247,
-      "rmse": 7.424165582938554,
-      "n": 4
+      "calibration_a": 0.5574334926342027,
+      "calibration_b": 0.0,
+      "avg_error": 7.536737081835216,
+      "max_error": 8.388419155555958,
+      "rmse": 7.584357928211581,
+      "n": 4,
+      "constrained": true,
+      "constraint_note": "Calibration constrained to ensure non-negative scores (b >= 0)"
     }
   }
 }
