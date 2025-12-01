@@ -602,13 +602,77 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
             if center_data and "elements" in center_data:
                 for elem in center_data["elements"]:
                     if elem.get("type") == "relation" and elem.get("id") == osm_id:
+                        center_lat = None
+                        center_lon = None
                         if "center" in elem:
                             center = elem["center"]
                             if "lat" in center and "lon" in center:
-                                return float(center["lat"]), float(center["lon"]), "center"
+                                center_lat = float(center["lat"])
+                                center_lon = float(center["lon"])
                         elif "lat" in elem and "lon" in elem:
                             # Some relations have lat/lon directly
-                            return float(elem["lat"]), float(elem["lon"]), "center"
+                            center_lat = float(elem["lat"])
+                            center_lon = float(elem["lon"])
+                        
+                        if center_lat and center_lon:
+                            # Check if center is in water (common for coastal cities)
+                            if _is_coordinate_in_water(center_lat, center_lon):
+                                print(f"⚠️  Relation center ({center_lat}, {center_lon}) is in water, searching for inland place node...")
+                                # Try to find a place=city node further inland
+                                # Search in a larger radius (10km) for any place=city/town node
+                                if city_name:
+                                    # Try searching from multiple points around the center
+                                    search_points = [
+                                        (center_lat + 0.01, center_lon),  # North
+                                        (center_lat - 0.01, center_lon),  # South
+                                        (center_lat, center_lon + 0.01),  # East
+                                        (center_lat, center_lon - 0.01),  # West
+                                    ]
+                                    for search_lat, search_lon in search_points:
+                                        inland_query = f"""
+                                        [out:json][timeout:10];
+                                        (
+                                          node["place"="city"](around:10000,{search_lat},{search_lon});
+                                          node["place"="town"](around:10000,{search_lat},{search_lon});
+                                        );
+                                        out;
+                                        """
+                                        try:
+                                            inland_response = requests.post(
+                                                get_overpass_url(),
+                                                data={"data": inland_query},
+                                                headers={"User-Agent": "HomeFit/1.0"},
+                                                timeout=15
+                                            )
+                                            if inland_response.status_code == 200:
+                                                inland_data = inland_response.json()
+                                                if inland_data and "elements" in inland_data:
+                                                    inland_nodes = [e for e in inland_data["elements"] 
+                                                                  if e.get("type") == "node" and "lat" in e and "lon" in e]
+                                                    if inland_nodes:
+                                                        # Prefer nodes with matching name
+                                                        for node in inland_nodes:
+                                                            node_name = node.get("tags", {}).get("name", "")
+                                                            if city_name and (city_name.lower() in node_name.lower() or node_name.lower() in city_name.lower()):
+                                                                node_lat = float(node["lat"])
+                                                                node_lon = float(node["lon"])
+                                                                # Verify it's not in water
+                                                                if not _is_coordinate_in_water(node_lat, node_lon):
+                                                                    print(f"✅ Found inland place node for '{city_name}': {node_lat}, {node_lon}")
+                                                                    return node_lat, node_lon, "place_city"
+                                                        # If no name match, use first non-water node
+                                                        for node in inland_nodes:
+                                                            node_lat = float(node["lat"])
+                                                            node_lon = float(node["lon"])
+                                                            if not _is_coordinate_in_water(node_lat, node_lon):
+                                                                print(f"✅ Found inland place node: {node_lat}, {node_lon}")
+                                                                return node_lat, node_lon, "place_city"
+                                        except Exception:
+                                            pass
+                                # If no inland node found, warn but still return center (better than nothing)
+                                print(f"⚠️  Could not find inland alternative, using water center: {center_lat}, {center_lon}")
+                            
+                            return center_lat, center_lon, "center"
             
         return None
     except Exception as e:

@@ -452,30 +452,29 @@ DENSITY_MULTIPLIER = {
 #   height_diversity → Height variation (entropy)
 #   historic_era_integrity → Type diversity
 #   footprint_diversity → Footprint CV
-# Phase 2 metrics (now active):
+# Form metrics (street geometry and building alignment):
 #   block_grain → Street network fineness
 #   streetwall_continuity → Building facade continuity along streets
-# Phase 3 metrics (now active):
 #   setback_consistency → Building setback consistency (uniformity of setbacks)
 #   facade_rhythm → Facade alignment (proportion of buildings aligned with mean setback)
 AREA_TYPE_WEIGHTS = {
     "urban_core": {
-        "height_diversity": 18,         # Phase 1: height variation (reduced from 20)
-        "historic_era_integrity": 10,   # Phase 1: type diversity
-        "footprint_diversity": 0,       # Phase 1: footprint CV (not used for urban_core)
-        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
-        "streetwall_continuity": 8,     # Phase 2: facade continuity (reduced from 10)
-        "setback_consistency": 4,        # Phase 3: setback uniformity
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "height_diversity": 18,         # Design: height variation (reduced from 20)
+        "historic_era_integrity": 10,   # Design: type diversity
+        "footprint_diversity": 0,       # Design: footprint CV (not used for urban_core)
+        "block_grain": 8,               # Form: street network fineness (reduced from 10)
+        "streetwall_continuity": 8,     # Form: facade continuity (reduced from 10)
+        "setback_consistency": 4,        # Form: setback uniformity
+        "facade_rhythm": 2,             # Form: facade alignment
     },
     "urban_historic": {
-        "height_diversity": 16,         # Phase 1: height variation (reduced from 18)
-        "historic_era_integrity": 17,   # Phase 1: type diversity (emphasized)
+        "height_diversity": 16,         # Design: height variation (reduced from 18)
+        "historic_era_integrity": 17,   # Design: type diversity (emphasized)
         "footprint_diversity": 0,
-        "block_grain": 6,               # Phase 2: street network fineness (reduced from 8)
-        "streetwall_continuity": 5,      # Phase 2: facade continuity (reduced from 7)
-        "setback_consistency": 4,       # Phase 3: setback uniformity
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "block_grain": 6,               # Form: street network fineness (reduced from 8)
+        "streetwall_continuity": 5,      # Form: facade continuity (reduced from 7)
+        "setback_consistency": 4,       # Form: setback uniformity
+        "facade_rhythm": 2,             # Form: facade alignment
     },
     "historic_urban": {  # Alias for urban_historic (uses same weights)
         "height_diversity": 18,
@@ -487,25 +486,25 @@ AREA_TYPE_WEIGHTS = {
         "facade_rhythm": 0,
     },
     "urban_residential": {
-        "height_diversity": 13,         # Phase 1: height variation (reduced from 15)
-        "historic_era_integrity": 10,   # Phase 1: type diversity
-        "footprint_diversity": 5,       # Phase 1: footprint CV
-        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
-        "streetwall_continuity": 8,     # Phase 2: facade continuity (reduced from 10)
-        "setback_consistency": 4,       # Phase 3: setback uniformity
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "height_diversity": 13,         # Design: height variation (reduced from 15)
+        "historic_era_integrity": 10,   # Design: type diversity
+        "footprint_diversity": 5,       # Design: footprint CV
+        "block_grain": 8,               # Form: street network fineness (reduced from 10)
+        "streetwall_continuity": 8,     # Form: facade continuity (reduced from 10)
+        "setback_consistency": 4,       # Form: setback uniformity
+        "facade_rhythm": 2,             # Form: facade alignment
     },
     "urban_core_lowrise": {
-        "height_diversity": 16,         # Phase 1: height variation (reduced from 18)
-        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "height_diversity": 16,         # Design: height variation (reduced from 18)
+        "historic_era_integrity": 10,   # Design: type diversity
         "footprint_diversity": 0,
-        "block_grain": 8,               # Phase 2: street network fineness (reduced from 10)
-        "streetwall_continuity": 10,    # Phase 2: facade continuity (reduced from 12)
-        "setback_consistency": 4,       # Phase 3: setback uniformity
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "block_grain": 8,               # Form: street network fineness (reduced from 10)
+        "streetwall_continuity": 10,    # Form: facade continuity (reduced from 12)
+        "setback_consistency": 4,       # Form: setback uniformity
+        "facade_rhythm": 2,             # Form: facade alignment
     },
     "suburban": {
-        "height_diversity": 6,          # Phase 1: height variation (less important)
+        "height_diversity": 6,          # Design: height variation (less important)
         "historic_era_integrity": 14,   # emphasize vernacular variety
         "footprint_diversity": 0,
         "block_grain": 18,              # tighter street planning rewarded
@@ -523,13 +522,13 @@ AREA_TYPE_WEIGHTS = {
         "facade_rhythm": 1,
     },
     "rural": {
-        "height_diversity": 0,          # Phase 1: height variation (not relevant)
-        "historic_era_integrity": 10,   # Phase 1: type diversity
+        "height_diversity": 0,          # Design: height variation (not relevant)
+        "historic_era_integrity": 10,   # Design: type diversity
         "footprint_diversity": 0,
-        "block_grain": 22,              # Phase 2: street network fineness (reduced from 25)
-        "streetwall_continuity": 13,    # Phase 2: facade continuity (reduced from 15)
-        "setback_consistency": 3,       # Phase 3: setback uniformity (less important)
-        "facade_rhythm": 2,             # Phase 3: facade alignment
+        "block_grain": 22,              # Form: street network fineness (reduced from 25)
+        "streetwall_continuity": 13,    # Form: facade continuity (reduced from 15)
+        "setback_consistency": 3,       # Form: setback uniformity (less important)
+        "facade_rhythm": 2,             # Form: facade alignment
     },
     "unknown": {
         "height_diversity": 10,          # Equal weights as fallback
@@ -656,14 +655,14 @@ def _is_spacious_historic_district(
     return has_historic_context and is_uniform
 
 MATERIAL_BONUS_WEIGHTS = {
-    "historic_urban": 1.15,
-    "urban_core": 1.0,
-    "urban_residential": 0.9,
-    "urban_core_lowrise": 0.95,
-    "suburban": 0.85,
+    "historic_urban": 1.5,  # Increased from 1.15 (LLM emphasizes material coherence)
+    "urban_core": 1.2,      # Increased from 1.0
+    "urban_residential": 1.1,  # Increased from 0.9
+    "urban_core_lowrise": 1.0,  # Increased from 0.95
+    "suburban": 0.9,         # Increased from 0.85
     "exurban": 0.75,
     "rural": 0.65,
-    "unknown": 0.8,
+    "unknown": 0.85,         # Increased from 0.8
 }
 
 HERITAGE_BONUS_WEIGHTS = {
@@ -690,9 +689,9 @@ AGE_CONTEXT_WINDOWS = {
 
 AGE_BONUS_MAX = 5.0
 AGE_MIX_BONUS_MAX = 2.25
-MODERN_FORM_BONUS_MAX = 4.0
+MODERN_FORM_BONUS_MAX = 6.0  # Increased from 4.0 (LLM emphasizes modern innovation)
 ROWHOUSE_BONUS_MAX = 6.0
-PHASE23_CONFIDENCE_FLOOR = 0.05
+FORM_METRICS_CONFIDENCE_FLOOR = 0.05  # Renamed from PHASE23_CONFIDENCE_FLOOR
 
 HERITAGE_STACK_CAPS = {
     "historic_urban": 6.5,
@@ -821,7 +820,7 @@ def _rowhouse_streetwall_proxy(area_type: str,
     """Synthesize streetwall continuity for rowhouse fabrics when direct data is absent."""
     if area_type not in ("urban_residential", "historic_urban"):
         return None
-    if confidence is not None and confidence >= PHASE23_CONFIDENCE_FLOOR:
+    if confidence is not None and confidence >= FORM_METRICS_CONFIDENCE_FLOOR:
         return None
     if coverage is None or coverage < 0.18:
         return None
@@ -898,7 +897,7 @@ def _rowhouse_bonus(area_type: str,
     return ROWHOUSE_BONUS_MAX * _clamp01(composite)
 
 
-def _phase23_fallback(metric: str,
+def _form_metrics_fallback(metric: str,
                       coverage: Optional[float],
                       levels_entropy: Optional[float],
                       building_type_diversity: Optional[float],
@@ -947,11 +946,11 @@ def _phase23_fallback(metric: str,
     return None
 
 
-def _apply_phase23_confidence(value: Optional[float],
+def _apply_form_metric_confidence(value: Optional[float],
                               confidence: Optional[float],
                               fallback: Optional[float]) -> Tuple[Optional[float], bool, bool, Optional[float], Optional[float]]:
     raw_value = value
-    if value is not None and confidence is not None and confidence >= PHASE23_CONFIDENCE_FLOOR:
+    if value is not None and confidence is not None and confidence >= FORM_METRICS_CONFIDENCE_FLOOR:
         return value, False, False, raw_value, confidence
     if fallback is not None:
         return fallback, True, False, raw_value, confidence
@@ -1158,6 +1157,90 @@ def _coherence_bonus(levels_entropy: float, footprint_cv: float, area_type: str)
     return 0.0
 
 
+def _estimate_material_coherence(material_profile: Optional[Dict],
+                                heritage_profile: Optional[Dict],
+                                median_year_built: Optional[int],
+                                effective: str) -> float:
+    """
+    Fallback material coherence estimation when OSM tags missing.
+    Based on heritage context and building age (research-backed patterns).
+    
+    LLM emphasizes material coherence, but OSM tagging is often incomplete.
+    This provides reasonable fallback based on area characteristics.
+    """
+    if material_profile and material_profile.get("entropy", 0) > 0:
+        return material_profile["entropy"]  # Use actual data if available
+    
+    # Fallback: Estimate based on heritage and age
+    # Historic areas (pre-1950) often have uniform materials (brick, stone)
+    if effective == "historic_urban":
+        if median_year_built and median_year_built < 1950:
+            # Historic areas typically have uniform materials
+            return 25.0  # Moderate entropy (coherent but not identical)
+        if heritage_profile and heritage_profile.get("count", 0) >= 10:
+            # High heritage = likely uniform materials
+            return 30.0
+    
+    # Modern areas: Higher material diversity expected
+    if effective == "urban_core" and median_year_built and median_year_built >= 1990:
+        return 60.0  # Higher diversity for modern areas
+    
+    return 0.0  # Unknown
+
+
+def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float, 
+                        area_type: str, material_entropy: float,
+                        building_type_diversity: float) -> float:
+    """
+    Enhanced coherence bonus (0-7.5 points) based on LLM emphasis on unity/coherence.
+    
+    LLM rationale consistently emphasizes:
+    - "High coherence" (Charleston, Beacon Hill)
+    - "Unified material palette" (Rainbow Row, Back Bay)
+    - "Cohesive streetscape" (Georgetown, Old Town Alexandria)
+    
+    This bonus rewards architectural unity appropriate to area type.
+    """
+    base_bonus = 0.0
+    t = CONTEXT_TARGETS.get(area_type, CONTEXT_TARGETS["urban_core"])
+    
+    # Height coherence (for areas that value uniformity)
+    if area_type in ("suburban", "urban_residential", "historic_urban"):
+        h_band = t["height"]
+        if levels_entropy <= h_band[2]:  # Within target range
+            base_bonus += 2.0
+        elif levels_entropy <= h_band[3]:  # Close to target
+            base_bonus += 1.0
+    
+    # Footprint coherence (for planned communities)
+    if area_type in ("suburban", "historic_urban"):
+        f_band = t["footprint"]
+        if footprint_cv <= f_band[2]:
+            base_bonus += 2.0
+        elif footprint_cv <= f_band[3]:
+            base_bonus += 1.0
+    
+    # Material coherence (for historic areas - LLM emphasizes this heavily)
+    if area_type == "historic_urban" and material_entropy > 0:
+        # Low entropy = high coherence (uniform materials)
+        if material_entropy < 20:
+            base_bonus += 3.0  # Strong bonus for material unity
+        elif material_entropy < 30:
+            base_bonus += 2.0
+        elif material_entropy < 40:
+            base_bonus += 1.0
+    
+    # Type coherence (for unified districts)
+    if area_type in ("historic_urban", "urban_residential"):
+        type_band = t["type"]
+        if building_type_diversity <= type_band[2]:
+            base_bonus += 1.5
+        elif building_type_diversity <= type_band[3]:
+            base_bonus += 0.5
+    
+    return min(7.5, base_bonus)
+
+
 def _context_penalty(area_type: str, built_cov: Optional[float],
                      levels_entropy: float, type_div: float,
                      footprint_cv: Optional[float] = None) -> float:
@@ -1244,8 +1327,7 @@ def score_architectural_diversity_as_beauty(
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
     
-    Now includes Phase 2 metrics: block_grain and streetwall_continuity.
-    Now includes Phase 3 metrics: setback_consistency and facade_rhythm.
+    Now includes form metrics: block_grain, streetwall_continuity, setback_consistency, and facade_rhythm.
     
     Args:
         levels_entropy: Height diversity (0-100)
@@ -1256,8 +1338,8 @@ def score_architectural_diversity_as_beauty(
         built_coverage_ratio: Optional built coverage ratio (0.0-1.0)
         historic_landmarks: Optional count of historic landmarks from OSM
         median_year_built: Optional median year buildings were built
-        lat: Optional latitude for Phase 2 & Phase 3 metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
-        lon: Optional longitude for Phase 2 & Phase 3 metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
+        lat: Optional latitude for form metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
+        lon: Optional longitude for form metrics (block_grain, streetwall_continuity, setback_consistency, facade_rhythm)
     
     Returns:
         Beauty score out of 50 points (native range, no scaling)
@@ -1386,14 +1468,14 @@ def score_architectural_diversity_as_beauty(
     
     blend = DESIGN_FORM_WEIGHTS.get(effective, DESIGN_FORM_WEIGHTS["unknown"])
 
-    # Import Phase 2 and Phase 3 metrics
+    # Import form metrics (street geometry and building alignment)
     from .street_geometry import (
         compute_block_grain, compute_streetwall_continuity,
         compute_setback_consistency, compute_facade_rhythm
     )
     from concurrent.futures import ThreadPoolExecutor
     
-    # Calculate Phase 1 raw scores (0-100 scale, normalized to 0-16.67 for weighting)
+    # Calculate design metrics raw scores (0-100 scale, normalized to 0-16.67 for weighting)
     height_raw = _score_band(levels_entropy, targets["height"], max_points=16.67)
     type_raw = _score_band(type_diversity_used, targets["type"], max_points=16.67)
     
@@ -1410,8 +1492,8 @@ def score_architectural_diversity_as_beauty(
             pass
     foot_raw = _score_band(footprint_area_cv, targets["footprint"], max_points=16.67)
     
-    # Calculate Phase 2 and Phase 3 metrics (0-100 scale, normalized to 0-16.67 for weighting)
-    # OPTIMIZATION: Run all Phase 2 & Phase 3 metrics in parallel for better performance
+    # Calculate form metrics (0-100 scale, normalized to 0-16.67 for weighting)
+    # OPTIMIZATION: Run all form metrics in parallel for better performance
     block_grain_value: Optional[float] = None
     streetwall_value: Optional[float] = None
     setback_value: Optional[float] = None
@@ -1422,31 +1504,31 @@ def score_architectural_diversity_as_beauty(
     facade_rhythm_confidence = 0.0
     
     if lat is not None and lon is not None:
-        # Use 2km radius for Phase 2 & Phase 3 metrics (same as architectural diversity)
-        # OPTIMIZATION: Fetch shared OSM data once for all Phase 2 & Phase 3 metrics
+        # Use 2km radius for form metrics (same as architectural diversity)
+        # OPTIMIZATION: Fetch shared OSM data once for all form metrics
         from .street_geometry import _fetch_roads_and_buildings
         from concurrent.futures import TimeoutError as FutureTimeoutError
         
         # Fetch shared OSM data with timeout to prevent hanging
-        # If this fails, Phase 2/3 metrics will still work but may need to fetch their own data
+        # If this fails, form metrics will still work but may need to fetch their own data
         # NOTE: _fetch_roads_and_buildings is cached, so repeated requests won't hit OSM again
         shared_osm_data = None
         try:
-            logger.debug("Fetching shared OSM data for Phase 2/3 metrics (cached if available)...")
+            logger.debug("Fetching shared OSM data for form metrics (cached if available)...")
             # Wrap in timeout executor to prevent hanging
             with ThreadPoolExecutor(max_workers=1) as timeout_executor:
                 future_shared = timeout_executor.submit(_fetch_roads_and_buildings, lat, lon, 2000)
                 try:
                     shared_osm_data = future_shared.result(timeout=15)  # Reduced from 20s to 15s
                     if shared_osm_data is None:
-                        logger.warning("Shared OSM data fetch returned None (likely rate limited), Phase 2/3 metrics will try to fetch their own data")
+                        logger.warning("Shared OSM data fetch returned None (likely rate limited), form metrics will try to fetch their own data")
                     else:
-                        logger.debug("Shared OSM data fetched successfully, Phase 2/3 metrics will use it")
+                        logger.debug("Shared OSM data fetched successfully, form metrics will use it")
                 except FutureTimeoutError:
-                    logger.warning("Shared OSM data fetch timed out after 20s, Phase 2/3 metrics will try to fetch their own data")
+                    logger.warning("Shared OSM data fetch timed out after 20s, form metrics will try to fetch their own data")
                     shared_osm_data = None
         except Exception as e:
-            logger.warning(f"Shared OSM data fetch failed: {e}, Phase 2/3 metrics will try to fetch their own data")
+            logger.warning(f"Shared OSM data fetch failed: {e}, form metrics will try to fetch their own data")
             shared_osm_data = None
         
         # Run all 4 metrics in parallel, but make each one independent
@@ -1463,7 +1545,7 @@ def score_architectural_diversity_as_beauty(
                 try:
                     return future.result(timeout=timeout)
                 except FutureTimeoutError:
-                    logger.warning(f"Phase 2/3 metric {name} timed out after {timeout}s, marking as missing")
+                    logger.warning(f"Form metric {name} timed out after {timeout}s, marking as missing")
                     if name == "block_grain":
                         return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
@@ -1473,7 +1555,7 @@ def score_architectural_diversity_as_beauty(
                     else:  # facade_rhythm
                         return {"facade_rhythm": None, "coverage_confidence": 0.0}
                 except Exception as e:
-                    logger.warning(f"Phase 2/3 metric {name} failed: {e}, marking as missing")
+                    logger.warning(f"Form metric {name} failed: {e}, marking as missing")
                     if name == "block_grain":
                         return {"block_grain": None, "coverage_confidence": 0.0}
                     elif name == "streetwall":
@@ -1541,30 +1623,30 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
 
-    phase23_fallback_info: Dict[str, Dict[str, Optional[float]]] = {}
+    form_metrics_fallback_info: Dict[str, Dict[str, Optional[float]]] = {}
 
-    block_fallback = _phase23_fallback(
+    block_fallback = _form_metrics_fallback(
         "block_grain",
         built_coverage_ratio,
         levels_entropy,
         building_type_diversity,
         footprint_area_cv
     )
-    streetwall_fallback = _phase23_fallback(
+    streetwall_fallback = _form_metrics_fallback(
         "streetwall",
         built_coverage_ratio,
         levels_entropy,
         building_type_diversity,
         footprint_area_cv
     )
-    setback_fallback = _phase23_fallback(
+    setback_fallback = _form_metrics_fallback(
         "setback",
         built_coverage_ratio,
         levels_entropy,
         building_type_diversity,
         footprint_area_cv
     )
-    facade_fallback = _phase23_fallback(
+    facade_fallback = _form_metrics_fallback(
         "facade",
         built_coverage_ratio,
         levels_entropy,
@@ -1572,12 +1654,12 @@ def score_architectural_diversity_as_beauty(
         footprint_area_cv
     )
 
-    block_grain_value, block_fallback_used, block_dropped, block_raw_value, block_raw_confidence = _apply_phase23_confidence(
+    block_grain_value, block_fallback_used, block_dropped, block_raw_value, block_raw_confidence = _apply_form_metric_confidence(
         block_grain_value,
         block_grain_confidence,
         block_fallback
     )
-    phase23_fallback_info["block_grain"] = {
+    form_metrics_fallback_info["block_grain"] = {
         "fallback_used": block_fallback_used,
         "dropped": block_dropped,
         "fallback_value": block_grain_value if block_fallback_used else None,
@@ -1585,12 +1667,12 @@ def score_architectural_diversity_as_beauty(
         "raw_confidence": block_raw_confidence
     }
 
-    streetwall_value, streetwall_fallback_used, streetwall_dropped, streetwall_raw_value, streetwall_raw_confidence = _apply_phase23_confidence(
+    streetwall_value, streetwall_fallback_used, streetwall_dropped, streetwall_raw_value, streetwall_raw_confidence = _apply_form_metric_confidence(
         streetwall_value,
         streetwall_confidence,
         streetwall_fallback
     )
-    phase23_fallback_info["streetwall_continuity"] = {
+    form_metrics_fallback_info["streetwall_continuity"] = {
         "fallback_used": streetwall_fallback_used,
         "dropped": streetwall_dropped,
         "fallback_value": streetwall_value if streetwall_fallback_used else None,
@@ -1607,12 +1689,12 @@ def score_architectural_diversity_as_beauty(
         streetwall_confidence
     )
     if streetwall_proxy_value is not None and (
-        streetwall_value is None or streetwall_confidence is None or streetwall_confidence < PHASE23_CONFIDENCE_FLOOR
+        streetwall_value is None or streetwall_confidence is None or streetwall_confidence < FORM_METRICS_CONFIDENCE_FLOOR
     ):
         streetwall_value = streetwall_proxy_value
-        streetwall_confidence = max(streetwall_confidence or 0.0, PHASE23_CONFIDENCE_FLOOR + 0.15)
+        streetwall_confidence = max(streetwall_confidence or 0.0, FORM_METRICS_CONFIDENCE_FLOOR + 0.15)
         streetwall_proxy_used = True
-        proxy_entry = phase23_fallback_info.setdefault("streetwall_continuity", {})
+        proxy_entry = form_metrics_fallback_info.setdefault("streetwall_continuity", {})
         proxy_entry.update({
             "fallback_used": True,
             "dropped": False,
@@ -1622,12 +1704,12 @@ def score_architectural_diversity_as_beauty(
             "proxy": "rowhouse"
         })
 
-    setback_value, setback_fallback_used, setback_dropped, setback_raw_value, setback_raw_confidence = _apply_phase23_confidence(
+    setback_value, setback_fallback_used, setback_dropped, setback_raw_value, setback_raw_confidence = _apply_form_metric_confidence(
         setback_value,
         setback_confidence,
         setback_fallback
     )
-    phase23_fallback_info["setback_consistency"] = {
+    form_metrics_fallback_info["setback_consistency"] = {
         "fallback_used": setback_fallback_used,
         "dropped": setback_dropped,
         "fallback_value": setback_value if setback_fallback_used else None,
@@ -1635,12 +1717,12 @@ def score_architectural_diversity_as_beauty(
         "raw_confidence": setback_raw_confidence
     }
 
-    facade_rhythm_value, facade_fallback_used, facade_dropped, facade_raw_value, facade_raw_confidence = _apply_phase23_confidence(
+    facade_rhythm_value, facade_fallback_used, facade_dropped, facade_raw_value, facade_raw_confidence = _apply_form_metric_confidence(
         facade_rhythm_value,
         facade_rhythm_confidence,
         facade_fallback
     )
-    phase23_fallback_info["facade_rhythm"] = {
+    form_metrics_fallback_info["facade_rhythm"] = {
         "fallback_used": facade_fallback_used,
         "dropped": facade_dropped,
         "fallback_value": facade_rhythm_value if facade_fallback_used else None,
@@ -1747,13 +1829,20 @@ def score_architectural_diversity_as_beauty(
         building_type_diversity,
         density
     )
+    # Estimate material entropy if OSM data missing (fallback for LLM alignment)
+    estimated_material_entropy = _estimate_material_coherence(
+        material_profile, heritage_profile, median_year_built, effective
+    )
+    material_entropy_to_use = material_entropy if material_entropy > 0 else estimated_material_entropy
+    
     material_bonus = 0.0
-    if material_entropy > 0:
+    if material_entropy_to_use > 0:
         material_multiplier = MATERIAL_BONUS_WEIGHTS.get(effective, 0.8)
-        material_bonus = (material_entropy / 100.0) * 4.0 * material_multiplier
-        if material_tagged_ratio < 0.1:
-            material_bonus *= 0.7
-        material_bonus = min(5.0, material_bonus)
+        material_bonus = (material_entropy_to_use / 100.0) * 4.0 * material_multiplier
+        if material_tagged_ratio < 0.1 and material_entropy == 0:
+            # If using fallback, reduce slightly (less confidence)
+            material_bonus *= 0.8
+        material_bonus = min(7.0, material_bonus)  # Increased cap from 5.0
     heritage_bonus = 0.0
     if heritage_significance > 0:
         heritage_multiplier = HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
@@ -1765,7 +1854,14 @@ def score_architectural_diversity_as_beauty(
         if heritage_landmark_count >= 6:
             incremental = (heritage_landmark_count - 5) * 0.15
             heritage_bonus += min(1.2, max(0.0, incremental))
-        heritage_bonus = min(5.2, heritage_bonus)
+        
+        # NEW: Bonus for exceptional preservation (20+ landmarks)
+        # LLM emphasizes "exceptional preservation" for top scores (Charleston, Beacon Hill)
+        if heritage_landmark_count >= 20:
+            exceptional_bonus = min(2.0, (heritage_landmark_count - 19) * 0.1)
+            heritage_bonus += exceptional_bonus
+        
+        heritage_bonus = min(7.2, heritage_bonus)  # Increased cap from 5.2
 
     normalized_vintage = _normalize_vintage_share(vintage_share)
     age_percentile = _age_percentile(effective, median_year_built)
@@ -1804,20 +1900,76 @@ def score_architectural_diversity_as_beauty(
 
     modern_material_share = _modern_material_share(material_profile)
     modern_form_bonus = 0.0
+    
+    # Modern form bonus: Rewards innovation, coherence, and contemporary design
+    # LLM rationale: "innovation and coherence" for modern urban cores
+    # Examples: Pearl District (converted warehouses), Downtown Austin (glass towers), SLU (tech campus)
     if median_year_built is not None and median_year_built >= 1990:
         if effective in ("urban_core", "urban_core_lowrise", "urban_residential"):
-            if age_percentile <= 0.5:
-                coverage_signal = _clamp01(((built_coverage_ratio or 0.0) - 0.22) / 0.18) if built_coverage_ratio is not None else 0.0
-                streetwall_signal = _clamp01((streetwall_value or 0.0) / 100.0)
-                facade_signal = _clamp01((facade_rhythm_value or 0.0) / 100.0)
-                skyline_signal = _clamp01(1.0 - min(levels_entropy / 70.0, 1.0))
-                material_signal = _clamp01((modern_material_share - 0.20) / 0.50)
+            # More lenient coverage threshold for modern areas (adaptive reuse often has lower coverage)
+            # LLM values "converted warehouses" which may have lower coverage
+            coverage_signal = 0.0
+            if built_coverage_ratio is not None:
+                # Lower threshold: 0.18 instead of 0.22 (accommodates warehouse conversions)
+                if built_coverage_ratio >= 0.18:
+                    coverage_signal = _clamp01((built_coverage_ratio - 0.18) / 0.22)  # 0.18-0.40 range
+                elif built_coverage_ratio >= 0.12:
+                    # Partial credit for adaptive reuse areas (warehouses, industrial)
+                    coverage_signal = _clamp01((built_coverage_ratio - 0.12) / 0.06) * 0.5
+            
+            # Modern design signals (less dependent on form metrics confidence)
+            streetwall_signal = _clamp01((streetwall_value or 0.0) / 100.0) if streetwall_value else 0.0
+            facade_signal = _clamp01((facade_rhythm_value or 0.0) / 100.0) if facade_rhythm_value else 0.0
+            
+            # Skyline signal: Modern areas value height diversity (LLM: "glass towers," "skyline")
+            # Higher entropy = more diverse skyline = better for modern urban cores
+            if levels_entropy > 40:
+                skyline_signal = _clamp01((levels_entropy - 40) / 40.0)  # 40-80 range
+            else:
+                skyline_signal = 0.0
+            
+            # Material signal: Modern materials (glass, steel) are valued
+            material_signal = _clamp01((modern_material_share - 0.20) / 0.50) if modern_material_share else 0.0
+            
+            # Adaptive reuse bonus: Warehouse conversions (LLM emphasizes this)
+            adaptive_reuse_bonus = 0.0
+            if median_year_built >= 1990 and median_year_built <= 2010:
+                # Buildings from 1990-2010 may be conversions
+                if built_coverage_ratio and 0.12 <= built_coverage_ratio < 0.30:
+                    # Warehouse/industrial conversion pattern
+                    if building_type_diversity > 30:  # Mixed uses
+                        adaptive_reuse_bonus = 1.5
+            
+            # Reduced dependency on form metrics confidence for modern areas
+            # LLM emphasizes "innovation" and "contemporary" over traditional metrics
+            confidence_modern = 1.0  # Default to full confidence
+            if streetwall_confidence > 0 or facade_rhythm_confidence > 0:
+                # Use confidence if available, but don't require it
                 confidence_modern = _confidence_gate(
                     [streetwall_confidence, setback_confidence, facade_rhythm_confidence]
                 )
-                design_signal = (0.35 * streetwall_signal) + (0.35 * facade_signal) + (0.15 * skyline_signal) + (0.15 * material_signal)
-                if coverage_signal > 0.0 and confidence_modern > 0.0:
-                    modern_form_bonus = MODERN_FORM_BONUS_MAX * _clamp01(design_signal) * coverage_signal * confidence_modern
+                # More lenient: minimum 0.3 instead of requiring > 0
+                confidence_modern = max(0.3, confidence_modern)
+            else:
+                # No form metrics data: Use age and coverage as proxy
+                if median_year_built >= 2000 and built_coverage_ratio and built_coverage_ratio >= 0.20:
+                    confidence_modern = 0.5  # Moderate confidence for very modern areas
+            
+            # Design signal: Weighted combination
+            design_signal = (
+                0.25 * streetwall_signal + 
+                0.25 * facade_signal + 
+                0.25 * skyline_signal + 
+                0.15 * material_signal +
+                0.10 * adaptive_reuse_bonus  # Small weight for adaptive reuse
+            )
+            
+            # Apply bonus if we have any positive signals
+            if coverage_signal > 0.0 or design_signal > 0.0:
+                modern_form_bonus = MODERN_FORM_BONUS_MAX * _clamp01(design_signal) * max(coverage_signal, 0.3) * confidence_modern
+                # Minimum bonus for modern areas with good coverage (even if design signals weak)
+                if coverage_signal >= 0.5 and median_year_built >= 2000:
+                    modern_form_bonus = max(modern_form_bonus, 1.5)
 
     rowhouse_bonus = _rowhouse_bonus(
         effective,
@@ -1861,14 +2013,20 @@ def score_architectural_diversity_as_beauty(
     if effective in ("exurban", "rural"):
         base = max(base, 12.0 + serenity_bonus)
     
-    # One bonus, one penalty (use effective area type for context-aware penalties)
-    # Scale bonus proportionally for 0-50 range
-    bonus = _coherence_bonus(levels_entropy, footprint_area_cv, effective)
-    bonus = bonus * (50.0 / 33.0)  # Scale from 0-33 to 0-50 range
+    # Enhanced coherence bonus (no scaling - designed for 0-50 range)
+    bonus = _coherence_bonus_v2(
+        levels_entropy, 
+        footprint_area_cv, 
+        effective,
+        material_entropy if material_entropy > 0 else estimated_material_entropy,
+        building_type_diversity
+    )
+    # No scaling - bonus already designed for 0-50 range
+    
     penalty = _context_penalty(effective, built_coverage_ratio,
                                levels_entropy, building_type_diversity,
                                footprint_area_cv)
-    penalty = penalty * (50.0 / 33.0)  # Scale from 0-33 to 0-50 range
+    penalty = penalty * (50.0 / 33.0)  # Keep penalty scaling for now
     
     total = base + bonus - penalty
     
@@ -1876,14 +2034,20 @@ def score_architectural_diversity_as_beauty(
     mult = DENSITY_MULTIPLIER.get(effective, 1.0)
     total *= mult
     
-    # Apply coverage-based score caps (graceful degradation)
-    # If OSM coverage is low, cap the score to prevent over-confidence
-    # However, Phase 2 metrics (block_grain, streetwall_continuity) are independent of building coverage
-    # So we adjust caps to be less aggressive when Phase 2 metrics have good confidence
-    coverage_cap_info = {"capped": False, "original_score": total, "cap_reason": None}
+    # Apply confidence-weighted degradation (replaces hard caps)
+    # LLM values spacious historic districts, so less aggressive degradation
+    data_quality_info = {
+        "confidence_0_1": 1.0,
+        "data_warning": None,
+        "degradation_applied": False,
+        "degradation_factor": 1.0,
+        "coverage_ratio": None,
+        "expected_coverage": expected_coverage,
+        "actual_coverage": built_coverage_ratio
+    }
     
-    # Calculate average Phase 2 & Phase 3 confidence (if available)
-    avg_phase23_confidence = 0.0
+    # Calculate average form metrics confidence (if available)
+    avg_form_confidence = 0.0
     if (block_grain_confidence > 0 or streetwall_confidence > 0 or 
         setback_confidence > 0 or facade_rhythm_confidence > 0):
         confidence_sum = 0.0
@@ -1901,81 +2065,60 @@ def score_architectural_diversity_as_beauty(
             confidence_sum += facade_rhythm_confidence
             confidence_count += 1
         if confidence_count > 0:
-            avg_phase23_confidence = confidence_sum / confidence_count
+            avg_form_confidence = confidence_sum / confidence_count
     
-    # Adjust caps based on Phase 2 & Phase 3 confidence
-    # If Phase 2 & Phase 3 metrics have good confidence (>0.5), we can be less aggressive with caps
-    # since block_grain, streetwall_continuity, setback_consistency, and facade_rhythm 
-    # don't depend on building coverage (or depend less directly)
-    phase23_confidence_bonus = 0.0
-    if avg_phase23_confidence > 0.5:
-        # Phase 2 & Phase 3 metrics provide independent value, so reduce cap aggressiveness
-        phase23_confidence_bonus = (avg_phase23_confidence - 0.5) * 10.0  # Add up to 5 points to cap threshold
-    
-    if built_coverage_ratio is not None:
-        relief_from_phase = max(0.0, phase23_confidence_bonus)
+    if built_coverage_ratio is not None and expected_coverage is not None:
+        coverage_ratio = built_coverage_ratio / expected_coverage
         
-        # Use the already-calculated is_spacious_historic and expected_coverage from above
-        # (No need to recalculate - they're already set)
-        cap_threshold = None
-        cap_reason = None
-        
-        # Apply spacious historic district logic to all area types, not just historic_urban
+        # Spacious historic districts: Less aggressive degradation
+        # LLM rationale: "spacious design," "lush settings" are valued
         if is_spacious_historic:
-            # Spacious historic districts: more lenient thresholds regardless of area type
-            # Accept 12-18% as good (instead of 7-10% for historic_urban/urban_core)
-            bands = (0.12, 0.18)
-            first_cap = 47.0  # Less aggressive cap
-            second_cap = 50.0
-        elif effective in ("historic_urban", "urban_core"):
-            bands = (0.07, 0.10)
-            first_cap = 45.0
-            second_cap = 50.0
-        elif effective == "suburban":
-            bands = (0.12, 0.18)
-            first_cap = 46.0
-            second_cap = 49.5
-        elif effective in ("exurban", "rural"):
-            bands = (0.15, 0.25)
-            first_cap = 47.0
-            second_cap = 49.5
+            # Only degrade if coverage is VERY low (< 50% of expected)
+            if coverage_ratio < 0.5:
+                coverage_confidence = max(0.0, min(1.0, coverage_ratio * 1.5))  # More forgiving
+            else:
+                coverage_confidence = 1.0  # No degradation if >= 50%
+        # Modern urban cores: More lenient (adaptive reuse, warehouse conversions)
+        # LLM values "converted warehouses" which may have lower coverage
+        elif effective == "urban_core" and median_year_built and median_year_built >= 1990:
+            # Modern areas: Accept lower coverage (warehouse conversions, adaptive reuse)
+            if coverage_ratio < 0.6:
+                coverage_confidence = max(0.0, min(1.0, coverage_ratio * 1.2))  # More forgiving
+            else:
+                coverage_confidence = 1.0
         else:
-            bands = (0.10, 0.14)
-            first_cap = 40.0
-            second_cap = 47.0
-
-        first_cap += relief_from_phase
-        second_cap += relief_from_phase
-
-        lower_band, upper_band = bands
-        effective_label = effective or "unknown"
-
-        meets_expectation = expected_coverage and built_coverage_ratio >= expected_coverage * 0.9
-
-        if meets_expectation:
-            cap_threshold = None
-        elif built_coverage_ratio < lower_band:
-            cap_threshold = first_cap
-            cap_reason = f"{effective_label}_coverage_lt_{int(lower_band*100)}pct"
-        elif built_coverage_ratio < upper_band:
-            cap_threshold = second_cap
-            cap_reason = f"{effective_label}_coverage_lt_{int(upper_band*100)}pct"
-
-        if cap_threshold is not None and total > cap_threshold:
-            logger.debug(
-                "Applying coverage cap | area_type=%s ratio=%.3f threshold=%.2f relief=%.2f total_before=%.2f",
-                effective,
-                built_coverage_ratio,
-                cap_threshold,
-                relief_from_phase,
-                total
-            )
-            coverage_cap_info = {
-                "capped": True,
-                "original_score": total,
-                "cap_reason": cap_reason
-            }
-            total = min(cap_threshold, total)
+            coverage_confidence = max(0.0, min(1.0, coverage_ratio))
+        
+        # Form metrics confidence less critical for historic AND modern areas
+        # Historic: Emphasizes heritage/age/material
+        # Modern: Emphasizes innovation/contemporary design
+        if effective == "historic_urban":
+            phase_weight = 0.1  # Reduced from 0.3 (form metrics less critical)
+        elif effective == "urban_core" and median_year_built and median_year_built >= 1990:
+            phase_weight = 0.15  # Slightly more than historic, but still reduced
+        else:
+            phase_weight = 0.3
+        
+        combined_confidence = (coverage_confidence * 0.7) + (avg_form_confidence * phase_weight)
+        degradation_factor = 0.5 + (combined_confidence * 0.5)
+        
+        if degradation_factor < 1.0:
+            original_score = total
+            total = total * degradation_factor
+            data_quality_info.update({
+                "degradation_applied": True,
+                "degradation_factor": round(degradation_factor, 3),
+                "coverage_ratio": round(coverage_ratio, 3),
+                "confidence_0_1": round(combined_confidence, 3)
+            })
+        else:
+            data_quality_info["confidence_0_1"] = round(combined_confidence, 3)
+    else:
+        data_quality_info.update({
+            "confidence_0_1": 0.2,
+            "data_warning": "missing_coverage_data"
+        })
+        total = total * 0.5
     
     # Cap at 50 (native range)
     final_score = max(0.0, min(50.0, total))
@@ -1989,11 +2132,12 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for architecture_score: {metric_overrides['architecture_score']!r}")
     
-    # Return score with metadata about coverage caps and Phase 2 & Phase 3 metrics
+    # Return score with metadata about confidence degradation and form metrics
     metadata = {
-        "coverage_cap_applied": coverage_cap_info["capped"],
-        "original_score_before_cap": coverage_cap_info["original_score"] if coverage_cap_info["capped"] else None,
-        "cap_reason": coverage_cap_info["cap_reason"],
+        "coverage_cap_applied": data_quality_info.get("degradation_applied", False),
+        "original_score_before_cap": None,  # Not applicable with degradation approach
+        "cap_reason": None,  # Not applicable with degradation approach
+        "data_quality": data_quality_info,
         "design_score": round(design_score, 1),
         "form_score": round(form_score, 1),
         "design_weight": blend["design"],
@@ -2020,12 +2164,11 @@ def score_architectural_diversity_as_beauty(
         "age_confidence_gate": round(confidence_gate, 3),
         "modern_form_bonus": round(modern_form_bonus, 2),
         "modern_material_share": round(modern_material_share, 3),
-        # Phase 2 metrics
+        # Form metrics (street geometry and building alignment)
         "block_grain": block_grain_value,
         "block_grain_confidence": block_grain_confidence,
         "streetwall_continuity": streetwall_value,
         "streetwall_confidence": streetwall_confidence,
-        # Phase 3 metrics
         "setback_consistency": setback_value,
         "setback_confidence": setback_confidence,
         "facade_rhythm": facade_rhythm_value,
@@ -2035,11 +2178,11 @@ def score_architectural_diversity_as_beauty(
         "streetwall_proxy_used": streetwall_proxy_used
     }
 
-    metadata["phase23_fallback"] = {
-        "block_grain": phase23_fallback_info.get("block_grain"),
-        "streetwall_continuity": phase23_fallback_info.get("streetwall_continuity"),
-        "setback_consistency": phase23_fallback_info.get("setback_consistency"),
-        "facade_rhythm": phase23_fallback_info.get("facade_rhythm"),
+    metadata["form_metrics_fallback"] = {
+        "block_grain": form_metrics_fallback_info.get("block_grain"),
+        "streetwall_continuity": form_metrics_fallback_info.get("streetwall_continuity"),
+        "setback_consistency": form_metrics_fallback_info.get("setback_consistency"),
+        "facade_rhythm": form_metrics_fallback_info.get("facade_rhythm"),
     }
 
     if applied_overrides:

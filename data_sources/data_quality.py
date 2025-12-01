@@ -279,7 +279,7 @@ def classify_morphology(
             intensity = max(intensity, 0.4)
         if business_count and business_count >= 75:
             intensity = max(intensity, 0.5)
-        # If major metro city, assume at least suburban intensity
+        # If major metro city, assume at least suburban intensity (handles planned communities like Irvine)
         if city:
             try:
                 from .regional_baselines import RegionalBaselineManager
@@ -287,8 +287,13 @@ def classify_morphology(
                 city_lower = city.lower().strip()
                 for metro_name in baseline_mgr.major_metros.keys():
                     if metro_name.lower() == city_lower:
-                        intensity = max(intensity, 0.3)
+                        # Major metro cities should be at least suburban, even with low coverage
+                        # This handles planned communities (Irvine, Reston) that have low coverage but high density
+                        intensity = max(intensity, 0.35)  # Increased from 0.3 to ensure suburban classification
                         context = max(context, 0.6)
+                        # If coverage is moderate (0.10-0.18), boost intensity further for planned communities
+                        if coverage and 0.10 <= coverage < 0.18:
+                            intensity = max(intensity, 0.40)  # Ensure suburban classification
                         break
             except Exception:
                 pass
@@ -311,9 +316,13 @@ def classify_morphology(
         return "urban_residential"
     
     # suburban: moderate intensity
+    # Also catch planned communities (high context, moderate coverage) that might score lower on intensity
     if intensity >= 0.30:
         return "suburban"
     elif intensity >= 0.20 and context >= 0.4:
+        return "suburban"
+    elif intensity >= 0.15 and context >= 0.6:
+        # Planned communities in major metros: lower intensity (spacious) but high context
         return "suburban"
     
     # exurban: low-moderate intensity

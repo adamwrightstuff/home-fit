@@ -221,11 +221,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "coverage_cap_applied": coverage_cap_metadata.get("coverage_cap_applied", False),
             "original_score_before_cap": coverage_cap_metadata.get("original_score_before_cap"),
             "cap_reason": coverage_cap_metadata.get("cap_reason"),
-            "phase2_confidence": {
+            "form_metrics_confidence": {
                 "block_grain": coverage_cap_metadata.get("block_grain_confidence", 0),
-                "streetwall_continuity": coverage_cap_metadata.get("streetwall_confidence", 0)
-            },
-            "phase3_confidence": {
+                "streetwall_continuity": coverage_cap_metadata.get("streetwall_confidence", 0),
                 "setback_consistency": coverage_cap_metadata.get("setback_confidence", 0),
                 "facade_rhythm": coverage_cap_metadata.get("facade_rhythm_confidence", 0)
             },
