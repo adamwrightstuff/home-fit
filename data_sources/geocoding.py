@@ -861,6 +861,15 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                             print(f"🔍 Nominatim returned a park, searching for neighborhood '{name_to_search}' near coordinates...")
                             neighborhood_coords = _find_neighborhood_near_coordinates(lat, lon, name_to_search, query_state)
                         
+                        # Also try searching with city context if we have it
+                        if not neighborhood_coords and city_name:
+                            print(f"🔍 Trying neighborhood search with city context '{city_name}'...")
+                            # Try searching in the city area
+                            city_coords = _find_place_node(city_name, "city", query_state)
+                            if city_coords:
+                                city_lat, city_lon, _ = city_coords
+                                neighborhood_coords = _find_neighborhood_near_coordinates(city_lat, city_lon, name_to_search, query_state, radius_m=10000)
+                        
                         if neighborhood_coords:
                             rel_lat, rel_lon, source = neighborhood_coords
                             lat = rel_lat
@@ -1065,9 +1074,16 @@ def _is_park_result(result: Dict) -> bool:
     """
     result_type = result.get("type", "").lower()
     result_class = result.get("class", "").lower()
+    osm_type = result.get("osm_type", "").lower()
     
-    # Check if it's a park or leisure feature
+    # Check if it's a park or leisure feature by type/class
     if result_type in ("park", "leisure") or result_class in ("leisure", "park"):
+        return True
+    
+    # Check OSM tags if available
+    address_details = result.get("address", {})
+    # Nominatim sometimes puts leisure info in address
+    if "leisure" in str(address_details).lower():
         return True
     
     # Check if the name suggests it's a park (e.g., "Lincoln Park" could be the park)
@@ -1076,13 +1092,19 @@ def _is_park_result(result: Dict) -> bool:
     
     # If it contains "park" and has leisure-related terms, it's likely a park
     if "park" in result_name or "park" in display_name:
-        if any(term in display_name for term in ["leisure", "recreation", "playground", "green space"]):
+        # Check for leisure indicators
+        leisure_indicators = ["leisure", "recreation", "playground", "green space", "beach", "trail"]
+        if any(term in display_name for term in leisure_indicators):
+            return True
+        
+        # If it's a way/relation (not a node) and has "park" in name, likely a park feature
+        if osm_type in ("way", "relation") and "park" in result_name:
             return True
     
     return False
 
 
-def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state: Optional[str] = None, radius_m: int = 2000) -> Optional[Tuple[float, float, str]]:
+def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state: Optional[str] = None, radius_m: int = 5000) -> Optional[Tuple[float, float, str]]:
     """
     Find a place=neighbourhood node near given coordinates by searching in the area.
     Useful when Nominatim returns a park but we need the neighborhood.
@@ -1091,7 +1113,7 @@ def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state
         lat, lon: Coordinates to search near
         name: Neighborhood name to search for
         state: Optional state code/name for filtering
-        radius_m: Search radius in meters
+        radius_m: Search radius in meters (increased to 5000m for better coverage)
     
     Returns:
         (lat, lon, source) or None
@@ -1100,21 +1122,23 @@ def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state
         from data_sources.osm_api import get_overpass_url
         
         # Search for place=neighbourhood nodes near the coordinates
-        # Try both exact name match and partial match
+        # Also search for relations which might have better coverage
         query = f"""
-        [out:json][timeout:10];
+        [out:json][timeout:15];
         (
           node["place"="neighbourhood"](around:{radius_m},{lat},{lon});
           node["place"="suburb"](around:{radius_m},{lat},{lon});
+          relation["place"="neighbourhood"](around:{radius_m},{lat},{lon});
+          relation["place"="suburb"](around:{radius_m},{lat},{lon});
         );
-        out;
+        out center;
         """
         
         response = requests.post(
             get_overpass_url(),
             data={"data": query},
             headers={"User-Agent": "HomeFit/1.0"},
-            timeout=15
+            timeout=20
         )
         
         if response.status_code == 200:
@@ -1122,29 +1146,68 @@ def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state
             if data and "elements" in data:
                 candidates = []
                 name_lower = name.lower()
+                # Extract key words from name (e.g., "Lincoln Park" -> ["lincoln", "park"])
+                name_words = set(name_lower.split())
                 
                 for elem in data["elements"]:
-                    if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
-                        elem_tags = elem.get("tags", {})
-                        elem_name = elem_tags.get("name", "").lower()
-                        
-                        # Check if name matches (exact or partial)
-                        if name_lower in elem_name or elem_name in name_lower:
-                            # If state provided, prefer matches in that state
-                            if state:
-                                elem_state = elem_tags.get("addr:state") or elem_tags.get("is_in:state")
-                                if elem_state and state.lower() in str(elem_state).lower():
-                                    candidates.insert(0, elem)  # Prioritize state match
-                                elif not elem_state:
-                                    candidates.append(elem)  # No state tag, lower priority
+                    elem_tags = elem.get("tags", {})
+                    elem_name = elem_tags.get("name", "").lower()
+                    
+                    # Get coordinates
+                    elem_lat, elem_lon = None, None
+                    if elem.get("type") == "node":
+                        elem_lat = elem.get("lat")
+                        elem_lon = elem.get("lon")
+                    elif elem.get("type") == "relation":
+                        # Relations have center coordinates
+                        if "center" in elem:
+                            elem_lat = elem["center"].get("lat")
+                            elem_lon = elem["center"].get("lon")
+                    
+                    if not elem_lat or not elem_lon:
+                        continue
+                    
+                    # Check if name matches (exact, partial, or word overlap)
+                    name_match_score = 0
+                    if name_lower == elem_name:
+                        name_match_score = 100  # Exact match
+                    elif name_lower in elem_name or elem_name in name_lower:
+                        name_match_score = 80  # Partial match
+                    else:
+                        # Check word overlap
+                        elem_words = set(elem_name.split())
+                        overlap = len(name_words & elem_words)
+                        if overlap > 0:
+                            name_match_score = 50 + (overlap * 10)  # Score based on word overlap
+                    
+                    if name_match_score > 0:
+                        # If state provided, prefer matches in that state
+                        state_match = True
+                        if state:
+                            elem_state = elem_tags.get("addr:state") or elem_tags.get("is_in:state")
+                            if elem_state:
+                                state_match = state.lower() in str(elem_state).lower()
                             else:
-                                candidates.append(elem)
+                                state_match = False  # Can't verify state, lower priority
+                        
+                        # Calculate distance from original coordinates
+                        from data_sources.regional_baselines import haversine_distance
+                        distance_km = haversine_distance(lat, lon, elem_lat, elem_lon)
+                        
+                        # Score: name match (weighted) - distance penalty
+                        score = name_match_score - (distance_km * 2)  # Penalize by distance
+                        if state_match:
+                            score += 20  # Bonus for state match
+                        
+                        candidates.append((score, elem_lat, elem_lon, elem_name))
                 
                 if candidates:
-                    best = candidates[0]
+                    # Sort by score (highest first)
+                    candidates.sort(key=lambda x: x[0], reverse=True)
+                    best_score, best_lat, best_lon, best_name = candidates[0]
                     source_name = "place_neighbourhood_near"
-                    print(f"✅ Found neighbourhood node near coordinates for '{name}': {best['lat']}, {best['lon']}")
-                    return float(best["lat"]), float(best["lon"]), source_name
+                    print(f"✅ Found neighbourhood node near coordinates for '{name}' (matched '{best_name}', score={best_score:.1f}): {best_lat}, {best_lon}")
+                    return float(best_lat), float(best_lon), source_name
         
         return None
     except Exception as e:
@@ -1397,6 +1460,15 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                         if not neighborhood_coords and _is_park_result(result):
                             print(f"🔍 Nominatim returned a park, searching for neighborhood '{name_to_search}' near coordinates...")
                             neighborhood_coords = _find_neighborhood_near_coordinates(lat, lon, name_to_search, query_state)
+                        
+                        # Also try searching with city context if we have it
+                        if not neighborhood_coords and city_name:
+                            print(f"🔍 Trying neighborhood search with city context '{city_name}'...")
+                            # Try searching in the city area
+                            city_coords = _find_place_node(city_name, "city", query_state)
+                            if city_coords:
+                                city_lat, city_lon, _ = city_coords
+                                neighborhood_coords = _find_neighborhood_near_coordinates(city_lat, city_lon, name_to_search, query_state, radius_m=10000)
                         
                         if neighborhood_coords:
                             rel_lat, rel_lon, source = neighborhood_coords
