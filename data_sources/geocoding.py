@@ -856,6 +856,11 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                         if not neighborhood_coords:
                             neighborhood_coords = _find_place_node(name_to_search, "suburb", query_state)
                         
+                        # If Nominatim returned a park but we're looking for a neighborhood, search nearby
+                        if not neighborhood_coords and _is_park_result(result):
+                            print(f"🔍 Nominatim returned a park, searching for neighborhood '{name_to_search}' near coordinates...")
+                            neighborhood_coords = _find_neighborhood_near_coordinates(lat, lon, name_to_search, query_state)
+                        
                         if neighborhood_coords:
                             rel_lat, rel_lon, source = neighborhood_coords
                             lat = rel_lat
@@ -1046,6 +1051,105 @@ def _is_neighborhood_result(result: Dict) -> bool:
         return True
     
     return False
+
+
+def _is_park_result(result: Dict) -> bool:
+    """
+    Check if Nominatim result is a park/leisure feature.
+    
+    Args:
+        result: Nominatim result dict
+    
+    Returns:
+        True if result is a park/leisure feature
+    """
+    result_type = result.get("type", "").lower()
+    result_class = result.get("class", "").lower()
+    
+    # Check if it's a park or leisure feature
+    if result_type in ("park", "leisure") or result_class in ("leisure", "park"):
+        return True
+    
+    # Check if the name suggests it's a park (e.g., "Lincoln Park" could be the park)
+    result_name = result.get("name", "").lower()
+    display_name = result.get("display_name", "").lower()
+    
+    # If it contains "park" and has leisure-related terms, it's likely a park
+    if "park" in result_name or "park" in display_name:
+        if any(term in display_name for term in ["leisure", "recreation", "playground", "green space"]):
+            return True
+    
+    return False
+
+
+def _find_neighborhood_near_coordinates(lat: float, lon: float, name: str, state: Optional[str] = None, radius_m: int = 2000) -> Optional[Tuple[float, float, str]]:
+    """
+    Find a place=neighbourhood node near given coordinates by searching in the area.
+    Useful when Nominatim returns a park but we need the neighborhood.
+    
+    Args:
+        lat, lon: Coordinates to search near
+        name: Neighborhood name to search for
+        state: Optional state code/name for filtering
+        radius_m: Search radius in meters
+    
+    Returns:
+        (lat, lon, source) or None
+    """
+    try:
+        from data_sources.osm_api import get_overpass_url
+        
+        # Search for place=neighbourhood nodes near the coordinates
+        # Try both exact name match and partial match
+        query = f"""
+        [out:json][timeout:10];
+        (
+          node["place"="neighbourhood"](around:{radius_m},{lat},{lon});
+          node["place"="suburb"](around:{radius_m},{lat},{lon});
+        );
+        out;
+        """
+        
+        response = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=15
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data and "elements" in data:
+                candidates = []
+                name_lower = name.lower()
+                
+                for elem in data["elements"]:
+                    if elem.get("type") == "node" and "lat" in elem and "lon" in elem:
+                        elem_tags = elem.get("tags", {})
+                        elem_name = elem_tags.get("name", "").lower()
+                        
+                        # Check if name matches (exact or partial)
+                        if name_lower in elem_name or elem_name in name_lower:
+                            # If state provided, prefer matches in that state
+                            if state:
+                                elem_state = elem_tags.get("addr:state") or elem_tags.get("is_in:state")
+                                if elem_state and state.lower() in str(elem_state).lower():
+                                    candidates.insert(0, elem)  # Prioritize state match
+                                elif not elem_state:
+                                    candidates.append(elem)  # No state tag, lower priority
+                            else:
+                                candidates.append(elem)
+                
+                if candidates:
+                    best = candidates[0]
+                    source_name = "place_neighbourhood_near"
+                    print(f"✅ Found neighbourhood node near coordinates for '{name}': {best['lat']}, {best['lon']}")
+                    return float(best["lat"]), float(best["lon"]), source_name
+        
+        return None
+    except Exception as e:
+        print(f"Error finding neighbourhood near coordinates for {name}: {e}")
+        return None
 
 
 def _is_city_result(result: Dict) -> bool:
@@ -1289,6 +1393,11 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                         if not neighborhood_coords:
                             neighborhood_coords = _find_place_node(name_to_search, "suburb", query_state)
                         
+                        # If Nominatim returned a park but we're looking for a neighborhood, search nearby
+                        if not neighborhood_coords and _is_park_result(result):
+                            print(f"🔍 Nominatim returned a park, searching for neighborhood '{name_to_search}' near coordinates...")
+                            neighborhood_coords = _find_neighborhood_near_coordinates(lat, lon, name_to_search, query_state)
+                        
                         if neighborhood_coords:
                             rel_lat, rel_lon, source = neighborhood_coords
                             lat = rel_lat
@@ -1388,6 +1497,11 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                     neighborhood_coords = _find_place_node(potential_neighborhood, "neighbourhood", query_state)
                     if not neighborhood_coords:
                         neighborhood_coords = _find_place_node(potential_neighborhood, "suburb", query_state)
+                    
+                    # If Nominatim returned a park but we're looking for a neighborhood, search nearby
+                    if not neighborhood_coords and _is_park_result(result):
+                        print(f"🔍 Nominatim returned a park, searching for neighborhood '{potential_neighborhood}' near coordinates...")
+                        neighborhood_coords = _find_neighborhood_near_coordinates(lat, lon, potential_neighborhood, query_state)
                     
                     if neighborhood_coords:
                         new_lat, new_lon, source = neighborhood_coords
