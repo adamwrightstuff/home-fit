@@ -11,6 +11,42 @@ from .cache import cached, CACHE_TTL
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address"
 
+
+def _is_coordinate_in_water(lat: float, lon: float) -> bool:
+    """
+    Check if coordinates are likely in water using NLCD land cover data.
+    
+    Uses a small radius (100m) to check if the exact point is classified as water.
+    This helps detect cases where geocoding returns coordinates in lakes/oceans.
+    
+    Args:
+        lat, lon: Coordinates to check
+    
+    Returns:
+        True if coordinates appear to be in water, False otherwise
+    """
+    try:
+        from data_sources.gee_api import get_landcover_context_gee
+        
+        # Use a small radius (100m) to check if the exact point is in water
+        # This is more precise than a larger radius which might include nearby land
+        landcover = get_landcover_context_gee(lat, lon, radius_m=100)
+        
+        if landcover:
+            water_pct = float(landcover.get("water_pct", 0.0))
+            # If >50% of the small radius is water, the point is likely in water
+            # This threshold catches cases like Lake Michigan for Lincoln Park
+            if water_pct > 50.0:
+                print(f"⚠️  Coordinates ({lat}, {lon}) appear to be in water ({water_pct:.1f}% water)")
+                return True
+        
+        return False
+    except Exception as e:
+        # If water detection fails, don't block geocoding
+        # Just log and continue
+        print(f"⚠️  Water detection check failed: {e}")
+        return False
+
 # Keywords that suggest user is looking for a neighborhood, not a city
 NEIGHBORHOOD_KEYWORDS = [
     "old", "historic", "district", "neighborhood", "neighbourhood",
@@ -831,10 +867,16 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                             result["lon"] = str(lon)
                         else:
                             # Neighborhood place node not found - fall through to relation center logic
-                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', trying relation center...")
+                            # BUT: For known problematic locations, prefer Nominatim coordinates over relation center
+                            # (relation centers can be in water for coastal neighborhoods)
+                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', using Nominatim coordinates (relation center may be inaccurate)")
+                            # Keep Nominatim coordinates instead of falling through to relation center
+                            # This preserves existing behavior for locations like Old San Juan, Downtown Charleston
+                            coordinate_source = "nominatim"  # Explicitly keep Nominatim coords
                 
-                # If we didn't find a neighborhood node, try city/relation center (for city relations)
-                if coordinate_source == "nominatim":
+                # If we didn't find a neighborhood node AND didn't already set coordinates, try city/relation center
+                # (Only for city relations, not neighborhood relations)
+                if coordinate_source == "nominatim" and not is_neighborhood_query:
                     relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
                     if relation_coords:
                         rel_lat, rel_lon, source = relation_coords
@@ -930,6 +972,36 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         state = result_state
         city = address_details.get("city") or address_details.get(
             "town") or address_details.get("village", "")
+
+        # Water detection: check if coordinates are in water
+        # This helps catch cases where geocoding returns coordinates in lakes/oceans
+        # (e.g., Lincoln Park Chicago returning coordinates in Lake Michigan)
+        if _is_coordinate_in_water(lat, lon):
+            print(f"⚠️  WARNING: Coordinates ({lat}, {lon}) appear to be in water for '{address}'")
+            # Try to find a nearby place=neighbourhood node if this is a neighborhood query
+            if is_neighborhood_query or _is_neighborhood_result(result):
+                query_parts = address.split(',')
+                potential_neighborhood = query_parts[0].strip() if query_parts else None
+                if potential_neighborhood:
+                    print(f"🔍 Attempting to find better coordinates for neighborhood '{potential_neighborhood}'...")
+                    neighborhood_coords = _find_place_node(potential_neighborhood, "neighbourhood", query_state)
+                    if not neighborhood_coords:
+                        neighborhood_coords = _find_place_node(potential_neighborhood, "suburb", query_state)
+                    
+                    if neighborhood_coords:
+                        new_lat, new_lon, source = neighborhood_coords
+                        # Verify the new coordinates are not in water
+                        if not _is_coordinate_in_water(new_lat, new_lon):
+                            print(f"✅ Found better coordinates for '{address}': {new_lat}, {new_lon} (was in water)")
+                            lat = new_lat
+                            lon = new_lon
+                            coordinate_source = source
+                            result["lat"] = str(lat)
+                            result["lon"] = str(lon)
+                        else:
+                            print(f"⚠️  Alternative coordinates also in water, using original coordinates")
+                    else:
+                        print(f"⚠️  Could not find alternative coordinates, using original (may be in water)")
 
         return lat, lon, zip_code, state, city
 
@@ -1228,10 +1300,16 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                             result["lon"] = str(lon)
                         else:
                             # Neighborhood place node not found - fall through to relation center logic
-                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', trying relation center...")
+                            # BUT: For known problematic locations, prefer Nominatim coordinates over relation center
+                            # (relation centers can be in water for coastal neighborhoods)
+                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', using Nominatim coordinates (relation center may be inaccurate)")
+                            # Keep Nominatim coordinates instead of falling through to relation center
+                            # This preserves existing behavior for locations like Old San Juan, Downtown Charleston
+                            coordinate_source = "nominatim"  # Explicitly keep Nominatim coords
                 
-                # If we didn't find a neighborhood node, try city/relation center (for city relations)
-                if coordinate_source == "nominatim":
+                # If we didn't find a neighborhood node AND didn't already set coordinates, try city/relation center
+                # (Only for city relations, not neighborhood relations)
+                if coordinate_source == "nominatim" and not is_neighborhood_query:
                     relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
                     if relation_coords:
                         rel_lat, rel_lon, source = relation_coords
@@ -1292,6 +1370,39 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                 else:
                     # For specific nodes/ways (addresses), use Nominatim coordinates directly
                     print(f"✅ Using Nominatim coordinates for {osm_type} '{address}': {lat}, {lon}")
+
+        # Water detection: check if coordinates are in water
+        # This helps catch cases where geocoding returns coordinates in lakes/oceans
+        # (e.g., Lincoln Park Chicago returning coordinates in Lake Michigan)
+        if _is_coordinate_in_water(lat, lon):
+            print(f"⚠️  WARNING: Coordinates ({lat}, {lon}) appear to be in water for '{address}'")
+            # Try to find a nearby place=neighbourhood node if this is a neighborhood query
+            is_neighborhood_query = _looks_like_neighborhood_query(address)
+            if is_neighborhood_query or _is_neighborhood_result(result):
+                query_parts = address.split(',')
+                potential_neighborhood = query_parts[0].strip() if query_parts else None
+                query_state = _extract_state_from_query(address) or result.get("address", {}).get("state", "")
+                
+                if potential_neighborhood:
+                    print(f"🔍 Attempting to find better coordinates for neighborhood '{potential_neighborhood}'...")
+                    neighborhood_coords = _find_place_node(potential_neighborhood, "neighbourhood", query_state)
+                    if not neighborhood_coords:
+                        neighborhood_coords = _find_place_node(potential_neighborhood, "suburb", query_state)
+                    
+                    if neighborhood_coords:
+                        new_lat, new_lon, source = neighborhood_coords
+                        # Verify the new coordinates are not in water
+                        if not _is_coordinate_in_water(new_lat, new_lon):
+                            print(f"✅ Found better coordinates for '{address}': {new_lat}, {new_lon} (was in water)")
+                            lat = new_lat
+                            lon = new_lon
+                            coordinate_source = source
+                            result["lat"] = str(lat)
+                            result["lon"] = str(lon)
+                        else:
+                            print(f"⚠️  Alternative coordinates also in water, using original coordinates")
+                    else:
+                        print(f"⚠️  Could not find alternative coordinates, using original (may be in water)")
 
         # Extract address details
         address_details = result.get("address", {})
