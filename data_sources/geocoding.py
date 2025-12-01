@@ -748,13 +748,17 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
         coordinate_source = "nominatim"
         
         if osm_type == "relation" and osm_id:
-            # This is likely a city boundary - get accurate center from OSM
+            # This could be a city boundary OR a neighborhood relation - check query first
             print(f"🔍 Found relation {osm_id} for '{address}', querying for best coordinates...")
             # Extract city name and state from result
             address_details = result.get("address", {})
             city_name = address_details.get("city") or address_details.get("town") or address_details.get("village")
+            neighborhood_name = address_details.get("neighbourhood") or address_details.get("suburb")
             result_state = address_details.get("state", "")
             query_state = _extract_state_from_query(address) or result_state
+            
+            # Check if query suggests a neighborhood (e.g., "Lincoln Park", "Park Slope")
+            is_neighborhood_query = _looks_like_neighborhood_query(address)
             
             # CRITICAL: If Nominatim already returned correct state, only use place nodes if we can verify state
             if query_state and _validate_state_match(query_state, result_state):
@@ -782,17 +786,66 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                             city = address_details.get("city") or address_details.get("town") or address_details.get("village", "")
                             return lat, lon, zip_code, state, city, result
                 
-                relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
-                if relation_coords:
-                    rel_lat, rel_lon, source = relation_coords
-                    # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
-                    lat = rel_lat
-                    lon = rel_lon
-                    coordinate_source = source
-                    print(f"✅ Using OSM {source} for '{address}': {lat}, {lon}")
-                else:
-                    # Place node lookup failed or couldn't verify state - use Nominatim coordinates
-                    print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
+                # If query suggests neighborhood OR result has neighborhood name, try place=neighbourhood first
+                if is_neighborhood_query or neighborhood_name:
+                    # Extract neighborhood name from query or result
+                    # Try to extract from query first (e.g., "Lincoln Park Chicago IL" -> "Lincoln Park")
+                    query_parts = address.split(',')
+                    if query_parts:
+                        # Take everything before the first comma (e.g., "Lincoln Park" from "Lincoln Park Chicago IL")
+                        potential_neighborhood = query_parts[0].strip()
+                    else:
+                        # No comma - try to extract neighborhood name (everything before city/state)
+                        # For "Lincoln Park Chicago IL", extract "Lincoln Park"
+                        words = address.split()
+                        # Find state code (2 uppercase letters) or state name
+                        state_idx = None
+                        for i, word in enumerate(words):
+                            if word.upper() in VALID_STATE_CODES or word.lower() in STATE_ABBREVIATIONS:
+                                state_idx = i
+                                break
+                        if state_idx and state_idx > 0:
+                            # Take all words before state as potential neighborhood name
+                            potential_neighborhood = ' '.join(words[:state_idx])
+                        else:
+                            # Fallback: take first word (not ideal but better than nothing)
+                            potential_neighborhood = words[0] if words else None
+                    
+                    # Use neighborhood name from result if available, otherwise try query
+                    name_to_search = neighborhood_name or potential_neighborhood
+                    
+                    if name_to_search:
+                        print(f"🔍 Query suggests neighborhood, trying place=neighbourhood node for '{name_to_search}'...")
+                        neighborhood_coords = _find_place_node(name_to_search, "neighbourhood", query_state)
+                        if not neighborhood_coords:
+                            neighborhood_coords = _find_place_node(name_to_search, "suburb", query_state)
+                        
+                        if neighborhood_coords:
+                            rel_lat, rel_lon, source = neighborhood_coords
+                            lat = rel_lat
+                            lon = rel_lon
+                            coordinate_source = source
+                            print(f"✅ Using OSM {source} for neighborhood '{name_to_search}': {lat}, {lon}")
+                            # Update result dict with new coordinates
+                            result["lat"] = str(lat)
+                            result["lon"] = str(lon)
+                        else:
+                            # Neighborhood place node not found - fall through to relation center logic
+                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', trying relation center...")
+                
+                # If we didn't find a neighborhood node, try city/relation center (for city relations)
+                if coordinate_source == "nominatim":
+                    relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
+                    if relation_coords:
+                        rel_lat, rel_lon, source = relation_coords
+                        # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
+                        lat = rel_lat
+                        lon = rel_lon
+                        coordinate_source = source
+                        print(f"✅ Using OSM {source} for '{address}': {lat}, {lon}")
+                    else:
+                        # Place node lookup failed or couldn't verify state - use Nominatim coordinates
+                        print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
             else:
                 # State mismatch or no state - use Nominatim coordinates directly
                 print(f"📍 Using Nominatim coordinates for '{address}' (state mismatch or no state): {lat}, {lon}")
@@ -1093,12 +1146,16 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         coordinate_source = "nominatim"
         
         if osm_type == "relation" and osm_id:
-            # This is likely a city boundary - get accurate center from OSM
+            # This could be a city boundary OR a neighborhood relation - check query first
             # Extract city name and state from result for better place node lookup
             address_details = result.get("address", {})
             city_name = address_details.get("city") or address_details.get("town") or address_details.get("village")
+            neighborhood_name = address_details.get("neighbourhood") or address_details.get("suburb")
             result_state = address_details.get("state", "")
             query_state = _extract_state_from_query(address) or result_state
+            
+            # Check if query suggests a neighborhood (e.g., "Lincoln Park", "Park Slope")
+            is_neighborhood_query = _looks_like_neighborhood_query(address)
             
             # CRITICAL: If Nominatim already returned correct state, only use place nodes if we can verify state
             # Don't try to "improve" with place nodes if we can't verify state - this causes wrong city selection
@@ -1126,20 +1183,69 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                             city = address_details.get("city") or address_details.get("town") or address_details.get("village", "")
                             return lat, lon, zip_code, state, city, result
                 
-                relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
-                if relation_coords:
-                    rel_lat, rel_lon, source = relation_coords
-                    # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
-                    lat = rel_lat
-                    lon = rel_lon
-                    coordinate_source = source
-                    print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
-                    # Update result dict with new coordinates for consistency
-                    result["lat"] = str(lat)
-                    result["lon"] = str(lon)
-                else:
-                    # Place node lookup failed or couldn't verify state - use Nominatim coordinates
-                    print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
+                # If query suggests neighborhood OR result has neighborhood name, try place=neighbourhood first
+                if is_neighborhood_query or neighborhood_name:
+                    # Extract neighborhood name from query or result
+                    # Try to extract from query first (e.g., "Lincoln Park Chicago IL" -> "Lincoln Park")
+                    query_parts = address.split(',')
+                    if query_parts:
+                        # Take everything before the first comma (e.g., "Lincoln Park" from "Lincoln Park Chicago IL")
+                        potential_neighborhood = query_parts[0].strip()
+                    else:
+                        # No comma - try to extract neighborhood name (everything before city/state)
+                        # For "Lincoln Park Chicago IL", extract "Lincoln Park"
+                        words = address.split()
+                        # Find state code (2 uppercase letters) or state name
+                        state_idx = None
+                        for i, word in enumerate(words):
+                            if word.upper() in VALID_STATE_CODES or word.lower() in STATE_ABBREVIATIONS:
+                                state_idx = i
+                                break
+                        if state_idx and state_idx > 0:
+                            # Take all words before state as potential neighborhood name
+                            potential_neighborhood = ' '.join(words[:state_idx])
+                        else:
+                            # Fallback: take first word (not ideal but better than nothing)
+                            potential_neighborhood = words[0] if words else None
+                    
+                    # Use neighborhood name from result if available, otherwise try query
+                    name_to_search = neighborhood_name or potential_neighborhood
+                    
+                    if name_to_search:
+                        print(f"🔍 Query suggests neighborhood, trying place=neighbourhood node for '{name_to_search}'...")
+                        neighborhood_coords = _find_place_node(name_to_search, "neighbourhood", query_state)
+                        if not neighborhood_coords:
+                            neighborhood_coords = _find_place_node(name_to_search, "suburb", query_state)
+                        
+                        if neighborhood_coords:
+                            rel_lat, rel_lon, source = neighborhood_coords
+                            lat = rel_lat
+                            lon = rel_lon
+                            coordinate_source = source
+                            print(f"📍 Using OSM {source} for neighborhood '{name_to_search}': {lat}, {lon}")
+                            # Update result dict with new coordinates
+                            result["lat"] = str(lat)
+                            result["lon"] = str(lon)
+                        else:
+                            # Neighborhood place node not found - fall through to relation center logic
+                            print(f"⚠️  No place=neighbourhood node found for '{name_to_search}', trying relation center...")
+                
+                # If we didn't find a neighborhood node, try city/relation center (for city relations)
+                if coordinate_source == "nominatim":
+                    relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
+                    if relation_coords:
+                        rel_lat, rel_lon, source = relation_coords
+                        # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
+                        lat = rel_lat
+                        lon = rel_lon
+                        coordinate_source = source
+                        print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
+                        # Update result dict with new coordinates for consistency
+                        result["lat"] = str(lat)
+                        result["lon"] = str(lon)
+                    else:
+                        # Place node lookup failed or couldn't verify state - use Nominatim coordinates
+                        print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
             else:
                 # State mismatch or no state - use Nominatim coordinates directly
                 print(f"📍 Using Nominatim coordinates for '{address}' (state mismatch or no state): {lat}, {lon}")
