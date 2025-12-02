@@ -1438,12 +1438,16 @@ def score_architectural_diversity_as_beauty(
 
     # Get contextual tags for scoring adjustments (if not provided)
     if contextual_tags is None:
-        from .data_quality import get_contextual_tags
-        contextual_tags = get_contextual_tags(
-            area_type, density, built_coverage_ratio, median_year_built,
-            historic_landmarks, business_count=None, levels_entropy=levels_entropy,
-            building_type_diversity=building_type_diversity, footprint_area_cv=footprint_area_cv
-        )
+        try:
+            from .data_quality import get_contextual_tags
+            contextual_tags = get_contextual_tags(
+                area_type, density, built_coverage_ratio, median_year_built,
+                historic_landmarks, business_count=None, levels_entropy=levels_entropy,
+                building_type_diversity=building_type_diversity, footprint_area_cv=footprint_area_cv
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get contextual tags: {e}, using empty list")
+            contextual_tags = []  # Ensure it's always defined
     
     # Use base area type for targets (morphology), not effective type
     # This keeps targets aligned with actual density/coverage characteristics
