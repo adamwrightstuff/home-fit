@@ -1379,8 +1379,9 @@ def score_architectural_diversity_as_beauty(
     applied_overrides: List[str] = []
     override_values: Dict[str, float] = {}
     # Initialize contextual_tags early to avoid scoping issues
-    # Must assign unconditionally (not in if statement) to prevent Python scoping error
-    contextual_tags = contextual_tags if contextual_tags is not None else []
+    # Read parameter into local variable first to avoid Python scoping error
+    _contextual_tags_param = contextual_tags
+    contextual_tags = _contextual_tags_param if _contextual_tags_param is not None else []
     material_entropy = 0.0
     material_tagged_ratio = 0.0
     if isinstance(material_profile, dict):
