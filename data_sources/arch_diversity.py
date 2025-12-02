@@ -1378,6 +1378,9 @@ def score_architectural_diversity_as_beauty(
     metric_overrides = metric_overrides or {}
     applied_overrides: List[str] = []
     override_values: Dict[str, float] = {}
+    # Initialize contextual_tags early to avoid scoping issues
+    if contextual_tags is None:
+        contextual_tags = []
     material_entropy = 0.0
     material_tagged_ratio = 0.0
     if isinstance(material_profile, dict):
@@ -1437,14 +1440,14 @@ def score_architectural_diversity_as_beauty(
             logger.warning(f"Ignoring invalid override for footprint_area_cv: {metric_overrides['footprint_area_cv']!r}")
 
     # Get contextual tags for scoring adjustments (if not provided)
-    if contextual_tags is None:
+    if not contextual_tags:  # Empty list or None - fetch tags
         try:
             from .data_quality import get_contextual_tags
             contextual_tags = get_contextual_tags(
                 area_type, density, built_coverage_ratio, median_year_built,
                 historic_landmarks, business_count=None, levels_entropy=levels_entropy,
                 building_type_diversity=building_type_diversity, footprint_area_cv=footprint_area_cv
-            )
+            ) or []  # Ensure it's always a list
         except Exception as e:
             logger.warning(f"Failed to get contextual tags: {e}, using empty list")
             contextual_tags = []  # Ensure it's always defined
