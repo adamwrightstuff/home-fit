@@ -125,6 +125,22 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                     except (TypeError, ValueError):
                         logger.warning("Ignoring invalid architectural override %s=%r", override_key, test_overrides[override_key])
 
+        # Get contextual tags (new system) for scoring and metadata
+        # Compute this BEFORE calling scoring function so we can pass it
+        from data_sources.data_quality import get_contextual_tags
+        contextual_tags = get_contextual_tags(
+            area_type,
+            density,
+            diversity_metrics.get("built_coverage_ratio"),
+            median_year_built,
+            historic_landmarks,
+            business_count=None,  # Not available here, but tags will work without it
+            levels_entropy=diversity_metrics.get("levels_entropy"),
+            building_type_diversity=diversity_metrics.get("building_type_diversity"),
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
+            pre_1940_pct=pre_1940_pct
+        )
+
         beauty_score_result = arch_diversity.score_architectural_diversity_as_beauty(
             diversity_metrics.get("levels_entropy", 0),
             diversity_metrics.get("building_type_diversity", 0),
@@ -154,22 +170,6 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         else:
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
-
-        # Get contextual tags (new system) for scoring and metadata
-        # Compute this BEFORE calling scoring function so we can pass it
-        from data_sources.data_quality import get_contextual_tags
-        contextual_tags = get_contextual_tags(
-            area_type,
-            density,
-            diversity_metrics.get("built_coverage_ratio"),
-            median_year_built,
-            historic_landmarks,
-            business_count=None,  # Not available here, but tags will work without it
-            levels_entropy=diversity_metrics.get("levels_entropy"),
-            building_type_diversity=diversity_metrics.get("building_type_diversity"),
-            footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
-            pre_1940_pct=pre_1940_pct
-        )
         
         # Get effective area type (backward compatible) for metadata
         effective_area_type = get_effective_area_type(
