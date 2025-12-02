@@ -616,11 +616,17 @@ def _is_spacious_historic_district(
     
     # Must have historic context (landmarks OR pre-1950 median year)
     # Lower threshold for landmarks (3 instead of 5) to catch places like Old San Juan
+    # But be strict: if median year is modern (>= 1980), require strong historic core
     has_historic_context = False
-    if historic_landmarks and historic_landmarks >= 3:
-        has_historic_context = True
     if median_year_built is not None and median_year_built < 1950:
+        # Definitely historic: pre-1950 median year
         has_historic_context = True
+    elif historic_landmarks and historic_landmarks >= 3:
+        # Modern areas (>= 1980) with landmarks: likely modern infill, not truly historic
+        # Only accept if median year is unknown or pre-1980 (could be historic with some infill)
+        if median_year_built is None or median_year_built < 1980:
+            has_historic_context = True
+        # If median_year >= 1980, don't use landmark count alone (prevents modern areas like Durham)
     
     # For very low coverage (< 20%), be more lenient - assume spacious by design
     # This helps Old San Juan (20.9% coverage, 0 landmarks, null median year)
