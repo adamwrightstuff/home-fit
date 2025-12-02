@@ -969,7 +969,8 @@ def _serenity_bonus(area_type: str,
                     built_coverage_ratio: Optional[float],
                     streetwall_continuity: float,
                     block_grain: float,
-                    density: Optional[float]) -> float:
+                    density: Optional[float],
+                    contextual_tags: Optional[List[str]] = None) -> float:
     """Reward intentional openness and calm street rhythm."""
     if built_coverage_ratio is None:
         return 0.0
@@ -978,8 +979,10 @@ def _serenity_bonus(area_type: str,
     openness = max(0.0, 0.30 - built_coverage_ratio)
     rhythm = streetwall_continuity / 100.0
     grain = block_grain / 100.0
+    is_historic = "historic" in (contextual_tags or [])
 
-    if area_type in ("historic_urban", "suburban", "exurban", "rural"):
+    # Historic areas and suburban/exurban/rural get serenity bonus
+    if is_historic or area_type in ("suburban", "exurban", "rural"):
         calm_factor = (0.6 * rhythm) + (0.4 * (1.0 - grain))
         density_factor = 1.0
         if density is not None:
@@ -988,8 +991,8 @@ def _serenity_bonus(area_type: str,
             else:
                 density_factor = 0.5 + min(0.5, max(0.0, 9000 - density) / 9000)
 
-        ceiling = 4.0 if area_type in ("historic_urban", "suburban") else 8.0
-        multiplier = 12.0 if area_type in ("historic_urban", "suburban") else 18.0
+        ceiling = 4.0 if (is_historic or area_type == "suburban") else 8.0
+        multiplier = 12.0 if (is_historic or area_type == "suburban") else 18.0
         bonus = min(ceiling, openness * multiplier * calm_factor * density_factor)
 
     return bonus
@@ -1060,12 +1063,13 @@ def _is_historic_organic(median_year_built: Optional[int]) -> bool:
 
 def _apply_historic_organic_adjustment(targets: Dict, is_historic_organic_flag: bool, 
                                        is_historic: bool, footprint_area_cv: float,
-                                       effective: str) -> None:
+                                       effective: str, contextual_tags: Optional[List[str]] = None) -> None:
     """Adjustment 1: Historic organic growth - widen variance bands for organic neighborhoods."""
     if is_historic_organic_flag or (is_historic and footprint_area_cv > 70):
         targets["footprint"] = (50, 65, 95, 100)  # HIGH CV is GOOD for historic areas
         if is_historic_organic_flag:
-            if effective in ["urban_core", "urban_core_lowrise", "historic_urban"]:
+            is_historic_tag = "historic" in (contextual_tags or [])
+            if effective in ["urban_core", "urban_core_lowrise"] or is_historic_tag:
                 targets["height"] = (10, 15, 70, 85)
                 targets["type"] = (20, 25, 85, 95)
 
@@ -1166,7 +1170,7 @@ def _coherence_bonus(levels_entropy: float, footprint_cv: float, area_type: str)
 def _estimate_material_coherence(material_profile: Optional[Dict],
                                 heritage_profile: Optional[Dict],
                                 median_year_built: Optional[int],
-                                effective: str) -> float:
+                                is_historic: bool = False) -> float:
     """
     Fallback material coherence estimation when OSM tags missing.
     Based on heritage context and building age (research-backed patterns).
@@ -1179,7 +1183,7 @@ def _estimate_material_coherence(material_profile: Optional[Dict],
     
     # Fallback: Estimate based on heritage and age
     # Historic areas (pre-1950) often have uniform materials (brick, stone)
-    if effective == "historic_urban":
+    if is_historic:
         if median_year_built and median_year_built < 1950:
             # Historic areas typically have uniform materials
             return 25.0  # Moderate entropy (coherent but not identical)
@@ -1188,7 +1192,7 @@ def _estimate_material_coherence(material_profile: Optional[Dict],
             return 30.0
     
     # Modern areas: Higher material diversity expected
-    if effective == "urban_core" and median_year_built and median_year_built >= 1990:
+    if median_year_built and median_year_built >= 1990:
         return 60.0  # Higher diversity for modern areas
     
     return 0.0  # Unknown
@@ -1196,7 +1200,8 @@ def _estimate_material_coherence(material_profile: Optional[Dict],
 
 def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float, 
                         area_type: str, material_entropy: float,
-                        building_type_diversity: float) -> float:
+                        building_type_diversity: float,
+                        contextual_tags: Optional[List[str]] = None) -> float:
     """
     Enhanced coherence bonus (0-7.5 points) based on LLM emphasis on unity/coherence.
     
@@ -1209,17 +1214,18 @@ def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float,
     """
     base_bonus = 0.0
     t = CONTEXT_TARGETS.get(area_type, CONTEXT_TARGETS["urban_core"])
+    is_historic = "historic" in (contextual_tags or [])
     
     # Height coherence (for areas that value uniformity)
-    if area_type in ("suburban", "urban_residential", "historic_urban"):
+    if area_type in ("suburban", "urban_residential") or is_historic:
         h_band = t["height"]
         if levels_entropy <= h_band[2]:  # Within target range
             base_bonus += 2.0
         elif levels_entropy <= h_band[3]:  # Close to target
             base_bonus += 1.0
     
-    # Footprint coherence (for planned communities)
-    if area_type in ("suburban", "historic_urban"):
+    # Footprint coherence (for planned communities and historic areas)
+    if area_type == "suburban" or is_historic:
         f_band = t["footprint"]
         if footprint_cv <= f_band[2]:
             base_bonus += 2.0
@@ -1227,7 +1233,7 @@ def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float,
             base_bonus += 1.0
     
     # Material coherence (for historic areas - LLM emphasizes this heavily)
-    if area_type == "historic_urban" and material_entropy > 0:
+    if is_historic and material_entropy > 0:
         # Low entropy = high coherence (uniform materials)
         if material_entropy < 20:
             base_bonus += 3.0  # Strong bonus for material unity
@@ -1237,7 +1243,7 @@ def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float,
             base_bonus += 1.0
     
     # Type coherence (for unified districts)
-    if area_type in ("historic_urban", "urban_residential"):
+    if is_historic or area_type == "urban_residential":
         type_band = t["type"]
         if building_type_diversity <= type_band[2]:
             base_bonus += 1.5
@@ -1249,7 +1255,8 @@ def _coherence_bonus_v2(levels_entropy: float, footprint_cv: float,
 
 def _context_penalty(area_type: str, built_cov: Optional[float],
                      levels_entropy: float, type_div: float,
-                     footprint_cv: Optional[float] = None) -> float:
+                     footprint_cv: Optional[float] = None,
+                     contextual_tags: Optional[List[str]] = None) -> float:
     """Exactly one penalty by context."""
     if area_type in ("urban_core", "urban_core_lowrise"):
         if built_cov is None:
@@ -1295,8 +1302,9 @@ def _context_penalty(area_type: str, built_cov: Optional[float],
             if built_cov < 0.35:
                 return 1.5
             return 0.0
-    # historic_urban: No coverage penalty (organic voids like courtyards/gardens are beautiful)
-    if area_type == "historic_urban":
+    # Historic areas: No coverage penalty (organic voids like courtyards/gardens are beautiful)
+    # Check via contextual_tags to include historic suburban areas
+    if "historic" in (contextual_tags or []):
         return 0.0
     if area_type == "suburban":
         # Cookie-cutter signal: very uniform height + very uniform types + HIGH footprint CV (fragmented)
@@ -1328,7 +1336,8 @@ def score_architectural_diversity_as_beauty(
     material_profile: Optional[Dict[str, Any]] = None,
     heritage_profile: Optional[Dict[str, Any]] = None,
     type_category_diversity: Optional[float] = None,
-    height_stats: Optional[Dict[str, Any]] = None
+    height_stats: Optional[Dict[str, Any]] = None,
+    contextual_tags: Optional[List[str]] = None
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -1411,20 +1420,20 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for footprint_area_cv: {metric_overrides['footprint_area_cv']!r}")
 
-    # Subtype detection: use centralized helper function
-    from .data_quality import get_effective_area_type
-    effective = get_effective_area_type(
-        area_type,
-        density,
-        levels_entropy,
-        building_type_diversity,
-        historic_landmarks=historic_landmarks,
-        median_year_built=median_year_built,
-        built_coverage_ratio=built_coverage_ratio,
-        footprint_area_cv=footprint_area_cv
-    )
+    # Get contextual tags for scoring adjustments (if not provided)
+    if contextual_tags is None:
+        from .data_quality import get_contextual_tags
+        contextual_tags = get_contextual_tags(
+            area_type, density, built_coverage_ratio, median_year_built,
+            historic_landmarks, business_count=None, levels_entropy=levels_entropy,
+            building_type_diversity=building_type_diversity, footprint_area_cv=footprint_area_cv
+        )
     
-    # Get base context-biased targets
+    # Use base area type for targets (morphology), not effective type
+    # This keeps targets aligned with actual density/coverage characteristics
+    # Adjustments (bonuses, phase weights) use contextual_tags (characteristics)
+    effective = area_type  # Keep as base type for targets
+    is_historic_tag = "historic" in (contextual_tags or [])  # Define once for use throughout function
     targets = CONTEXT_TARGETS.get(effective, CONTEXT_TARGETS["urban_core"])
     targets = dict(targets)  # Copy to avoid mutating original
     type_diversity_used = building_type_diversity
@@ -1456,7 +1465,7 @@ def score_architectural_diversity_as_beauty(
     
     # Apply all adjustments in order (most specific last)
     _apply_historic_organic_adjustment(targets, is_historic_organic_flag, is_historic, 
-                                       footprint_area_cv, effective)
+                                       footprint_area_cv, effective, contextual_tags=contextual_tags)
     _apply_very_historic_adjustment(targets, is_very_historic, effective)
     _apply_historic_moderate_diversity_adjustment(targets, is_historic, effective,
                                                    levels_entropy, building_type_diversity,
@@ -1747,7 +1756,7 @@ def score_architectural_diversity_as_beauty(
         [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
     )
 
-    if effective in ("urban_residential", "historic_urban") and coherence_signal >= 0.6:
+    if (effective == "urban_residential" or is_historic_tag) and coherence_signal >= 0.6:
         coherence_floor = (coherence_signal - 0.6) / 0.4
         coherence_floor = _clamp01(coherence_floor)
         type_raw = max(type_raw, 8.5 + (coherence_floor * 7.0))
@@ -1767,7 +1776,7 @@ def score_architectural_diversity_as_beauty(
         (facade_rhythm_value / 100.0) * 16.67
     ]
     design_components = [c for c in design_components if c is not None]
-    if effective in ("urban_residential", "historic_urban") and coherence_signal > 0.0:
+    if (effective == "urban_residential" or is_historic_tag) and coherence_signal > 0.0:
         coherence_component = coherence_signal * 16.0
         if confidence_gate > 0.0:
             coherence_component *= 1.0 + (confidence_gate * 0.15)
@@ -1827,7 +1836,8 @@ def score_architectural_diversity_as_beauty(
         built_coverage_ratio,
         streetwall_value if streetwall_value is not None else 0.0,
         block_grain_value if block_grain_value is not None else 0.0,
-        density
+        density,
+        contextual_tags=contextual_tags
     )
     scenic_bonus = _scenic_bonus(
         effective,
@@ -1836,8 +1846,9 @@ def score_architectural_diversity_as_beauty(
         density
     )
     # Estimate material entropy if OSM data missing (fallback for LLM alignment)
+    is_historic = "historic" in (contextual_tags or [])
     estimated_material_entropy = _estimate_material_coherence(
-        material_profile, heritage_profile, median_year_built, effective
+        material_profile, heritage_profile, median_year_built, is_historic=is_historic
     )
     material_entropy_to_use = material_entropy if material_entropy > 0 else estimated_material_entropy
     
@@ -1890,7 +1901,7 @@ def score_architectural_diversity_as_beauty(
     street_character_bonus = 0.0
     if block_grain_value is not None and streetwall_value is not None:
         street_character_bonus = max(0.0, ((block_grain_value + streetwall_value) / 200.0) - 0.35)
-        if effective in ("historic_urban", "urban_residential"):
+        if is_historic_tag or effective == "urban_residential":
             street_character_bonus *= 1.4
         elif effective in ("suburban", "exurban"):
             street_character_bonus *= 1.1
@@ -2005,7 +2016,8 @@ def score_architectural_diversity_as_beauty(
             # This rewards planned communities with consistent architecture
             base_floor = 8.0  # Slightly lower to avoid overscoring exceptional suburbs
             base = max(base, base_floor)
-    elif effective == "historic_urban":
+    elif "historic" in (contextual_tags or []):
+        # Historic areas (any base type with historic tag) get base floor bonus
         if built_coverage_ratio is not None:
             if built_coverage_ratio < 0.18:
                 base = max(base, 15.0 + serenity_bonus * 0.75)
@@ -2025,13 +2037,15 @@ def score_architectural_diversity_as_beauty(
         footprint_area_cv, 
         effective,
         material_entropy if material_entropy > 0 else estimated_material_entropy,
-        building_type_diversity
+        building_type_diversity,
+        contextual_tags=contextual_tags
     )
     # No scaling - bonus already designed for 0-50 range
     
     penalty = _context_penalty(effective, built_coverage_ratio,
                                levels_entropy, building_type_diversity,
-                               footprint_area_cv)
+                               footprint_area_cv,
+                               contextual_tags=contextual_tags)
     penalty = penalty * (50.0 / 33.0)  # Keep penalty scaling for now
     
     total = base + bonus - penalty
@@ -2098,7 +2112,7 @@ def score_architectural_diversity_as_beauty(
         # Form metrics confidence less critical for historic AND modern areas
         # Historic: Emphasizes heritage/age/material
         # Modern: Emphasizes innovation/contemporary design
-        if effective == "historic_urban":
+        if "historic" in (contextual_tags or []):
             phase_weight = 0.1  # Reduced from 0.3 (form metrics less critical)
         elif effective == "urban_core" and median_year_built and median_year_built >= 1990:
             phase_weight = 0.15  # Slightly more than historic, but still reduced

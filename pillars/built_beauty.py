@@ -141,7 +141,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             material_profile=diversity_metrics.get("material_profile"),
             heritage_profile=diversity_metrics.get("heritage_profile"),
             type_category_diversity=diversity_metrics.get("type_category_diversity"),
-            height_stats=diversity_metrics.get("height_stats")
+            height_stats=diversity_metrics.get("height_stats"),
+            contextual_tags=contextual_tags
         )
 
         if isinstance(beauty_score_result, tuple):
@@ -153,19 +154,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
 
-        # Get effective area type (backward compatible)
-        effective_area_type = get_effective_area_type(
-            area_type,
-            density,
-            diversity_metrics.get("levels_entropy"),
-            diversity_metrics.get("building_type_diversity"),
-            historic_landmarks=historic_landmarks,
-            median_year_built=median_year_built,
-            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
-            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
-        )
-        
-        # Also get contextual tags (new system) for metadata
+        # Get contextual tags (new system) for scoring and metadata
+        # Compute this BEFORE calling scoring function so we can pass it
         from data_sources.data_quality import get_contextual_tags
         contextual_tags = get_contextual_tags(
             area_type,
@@ -178,6 +168,18 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             building_type_diversity=diversity_metrics.get("building_type_diversity"),
             footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
             pre_1940_pct=pre_1940_pct
+        )
+        
+        # Get effective area type (backward compatible) for metadata
+        effective_area_type = get_effective_area_type(
+            area_type,
+            density,
+            diversity_metrics.get("levels_entropy"),
+            diversity_metrics.get("building_type_diversity"),
+            historic_landmarks=historic_landmarks,
+            median_year_built=median_year_built,
+            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
         )
 
         def _r2(value):
