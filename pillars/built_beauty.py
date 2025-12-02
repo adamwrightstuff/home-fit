@@ -142,7 +142,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             heritage_profile=diversity_metrics.get("heritage_profile"),
             type_category_diversity=diversity_metrics.get("type_category_diversity"),
             height_stats=diversity_metrics.get("height_stats"),
-            contextual_tags=contextual_tags
+            contextual_tags=contextual_tags,
+            pre_1940_pct=pre_1940_pct
         )
 
         if isinstance(beauty_score_result, tuple):

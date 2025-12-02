@@ -586,7 +586,8 @@ def _is_spacious_historic_district(
     historic_landmarks: Optional[int],
     median_year_built: Optional[int],
     material_entropy: Optional[float] = None,
-    footprint_cv: Optional[float] = None
+    footprint_cv: Optional[float] = None,
+    pre_1940_pct: Optional[float] = None
 ) -> bool:
     """
     Detect spacious historic districts that should have relaxed coverage expectations.
@@ -614,11 +615,16 @@ def _is_spacious_historic_district(
     if built_coverage_ratio is None or built_coverage_ratio >= 0.25:
         return False
     
-    # Must have historic context (landmarks OR pre-1950 median year)
+    # Must have historic context (landmarks OR pre-1950 median year OR significant pre-1940 buildings)
     # Lower threshold for landmarks (3 instead of 5) to catch places like Old San Juan
     # But be strict: if median year is modern (>= 1980), require strong historic core
+    # Use pre_1940_pct if available (better signal than median year for areas with modern infill)
     has_historic_context = False
-    if median_year_built is not None and median_year_built < 1950:
+    
+    # Best signal: significant pre-1940 building stock (handles modern infill in historic towns)
+    if pre_1940_pct is not None and pre_1940_pct >= 0.30:  # 30%+ pre-1940 buildings
+        has_historic_context = True
+    elif median_year_built is not None and median_year_built < 1950:
         # Definitely historic: pre-1950 median year
         has_historic_context = True
     elif historic_landmarks and historic_landmarks >= 3:
@@ -630,7 +636,7 @@ def _is_spacious_historic_district(
     
     # For very low coverage (< 20%), be more lenient - assume spacious by design
     # This helps Old San Juan (20.9% coverage, 0 landmarks, null median year)
-    # We'll accept it if it's in a known historic area (check area_type or location name)
+    # Also helps historic mountain/resort towns like Telluride with OSM data gaps
     if built_coverage_ratio < 0.21:
         # If it's already historic_urban, accept it
         if area_type == "historic_urban":
@@ -646,6 +652,13 @@ def _is_spacious_historic_district(
         # Footprint coherence: only if we have data and it's very uniform
         if footprint_cv is not None and footprint_cv < 40:
             return True
+        # For extremely low coverage (< 5%) in rural/exurban areas, consider architectural patterns
+        # Historic mountain/resort towns often have very low coverage with significant pre-1940 stock
+        # Even if OSM landmarks are missing, pre_1940_pct can indicate historic character
+        if built_coverage_ratio < 0.05 and area_type in ("rural", "exurban"):
+            # If we have pre-1940 buildings, likely historic (e.g., Telluride, Aspen)
+            if pre_1940_pct is not None and pre_1940_pct >= 0.20:  # 20%+ pre-1940
+                return True
     
     if not has_historic_context:
         return False
@@ -1339,7 +1352,8 @@ def score_architectural_diversity_as_beauty(
     heritage_profile: Optional[Dict[str, Any]] = None,
     type_category_diversity: Optional[float] = None,
     height_stats: Optional[Dict[str, Any]] = None,
-    contextual_tags: Optional[List[str]] = None
+    contextual_tags: Optional[List[str]] = None,
+    pre_1940_pct: Optional[float] = None
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -1798,13 +1812,15 @@ def score_architectural_diversity_as_beauty(
     is_spacious_historic = False
     if built_coverage_ratio is not None:
         # Check if this is a spacious historic district (relaxed expectations)
+        # Use pre_1940_pct if provided (better signal for historic character than median year)
         is_spacious_historic = _is_spacious_historic_district(
             effective,
             built_coverage_ratio,
             historic_landmarks,
             median_year_built,
             material_entropy=material_entropy,
-            footprint_cv=footprint_area_cv
+            footprint_cv=footprint_area_cv,
+            pre_1940_pct=pre_1940_pct
         )
         
         if is_spacious_historic:

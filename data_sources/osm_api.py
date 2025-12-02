@@ -621,6 +621,11 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
       node["building:historic"="yes"](around:{radius_m},{lat},{lon});
       way["building:historic"="yes"](around:{radius_m},{lat},{lon});
       
+      // HISTORIC DISTRICTS - relations (e.g., National Historic Landmark Districts)
+      relation["historic"="district"](around:{radius_m},{lat},{lon});
+      relation["heritage"="2"](around:{radius_m},{lat},{lon});  // US National Register
+      relation["heritage"="3"](around:{radius_m},{lat},{lon});  // US National Historic Landmark
+      
       // PUBLIC ART & FOUNTAINS
       node["tourism"="artwork"](around:{radius_m},{lat},{lon});
       way["tourism"="artwork"](around:{radius_m},{lat},{lon});
