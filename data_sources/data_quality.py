@@ -704,12 +704,13 @@ def get_effective_area_type(area_type: str, density: Optional[float],
         
         # Map tags to legacy effective types for backward compatibility
         # This allows gradual migration while using new continuous scoring
-        if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
+        if 'historic' in tags and area_type in ('urban_core', 'urban_residential', 'suburban'):
             if 'rowhouse' in tags or 'uniform' in tags:
                 # Historic + uniform = urban_residential (Park Slope pattern)
                 return "urban_residential"
             else:
-                # Historic + diverse = historic_urban (Georgetown pattern)
+                # Historic + diverse = historic_urban (Georgetown, Old Town Alexandria pattern)
+                # Also applies to historic suburban areas (Old Town Alexandria, Old San Juan)
                 return "historic_urban"
         elif 'lowrise' in tags and area_type == 'urban_core':
             return "urban_core_lowrise"
