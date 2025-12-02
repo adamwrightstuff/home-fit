@@ -640,8 +640,10 @@ def _is_spacious_historic_district(
         if has_historic_context:
             return True
         # Special case: very low coverage + uniform materials = likely spacious historic
-        if material_entropy is not None and material_entropy < 20:
+        # Only apply if we have actual material data (entropy > 0), not missing data (entropy = 0)
+        if material_entropy is not None and material_entropy > 0 and material_entropy < 20:
             return True
+        # Footprint coherence: only if we have data and it's very uniform
         if footprint_cv is not None and footprint_cv < 40:
             return True
     
