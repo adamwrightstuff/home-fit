@@ -272,6 +272,36 @@ def classify_morphology(
     intensity = _calculate_intensity_score(density, coverage, business_count)
     context = _calculate_context_score(metro_distance_km, city)
     
+    # Check if within major metro area (by distance OR city name)
+    # This handles planned communities (Irvine, Reston) that have low coverage but are in major metros
+    is_major_metro = False
+    if metro_distance_km is not None and metro_distance_km < 50:
+        # Within 50km of a major metro principal city = major metro area
+        is_major_metro = True
+        context = max(context, 0.6)
+    elif city:
+        try:
+            from .regional_baselines import RegionalBaselineManager
+            baseline_mgr = RegionalBaselineManager()
+            city_lower = city.lower().strip()
+            for metro_name in baseline_mgr.major_metros.keys():
+                if metro_name.lower() == city_lower:
+                    is_major_metro = True
+                    context = max(context, 0.6)
+                    break
+        except Exception:
+            pass
+    
+    # Apply metro proximity boost for planned communities (spacious but in major metros)
+    if is_major_metro:
+        # If coverage is moderate (0.10-0.18), boost intensity for planned communities
+        # This ensures suburban classification for spacious planned communities in major metros
+        if coverage and 0.10 <= coverage < 0.18:
+            intensity = max(intensity, 0.40)  # Ensure suburban classification
+        # Also boost if intensity is very low but we're in a major metro
+        elif intensity < 0.30:
+            intensity = max(intensity, 0.35)  # At least moderate intensity for major metro areas
+    
     # Handle missing density explicitly
     if density is None:
         # If we have strong coverage/business signals, assume moderate intensity
@@ -279,24 +309,6 @@ def classify_morphology(
             intensity = max(intensity, 0.4)
         if business_count and business_count >= 75:
             intensity = max(intensity, 0.5)
-        # If major metro city, assume at least suburban intensity (handles planned communities like Irvine)
-        if city:
-            try:
-                from .regional_baselines import RegionalBaselineManager
-                baseline_mgr = RegionalBaselineManager()
-                city_lower = city.lower().strip()
-                for metro_name in baseline_mgr.major_metros.keys():
-                    if metro_name.lower() == city_lower:
-                        # Major metro cities should be at least suburban, even with low coverage
-                        # This handles planned communities (Irvine, Reston) that have low coverage but high density
-                        intensity = max(intensity, 0.35)  # Increased from 0.3 to ensure suburban classification
-                        context = max(context, 0.6)
-                        # If coverage is moderate (0.10-0.18), boost intensity further for planned communities
-                        if coverage and 0.10 <= coverage < 0.18:
-                            intensity = max(intensity, 0.40)  # Ensure suburban classification
-                        break
-            except Exception:
-                pass
     
     # Single decision tree with graded transitions
     # urban_core: high intensity + urban context
