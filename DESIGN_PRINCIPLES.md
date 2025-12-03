@@ -224,6 +224,50 @@ expected_bus_routes = 15  # Conservative, not research-backed
 
 ---
 
+## Addendum: Approved Method for Deriving Feature Weights
+
+**Connection to Principle #1 (Research-Backed):** HomeFit may use statistical modeling to determine feature weights when the modeling process is objective, data-driven, transparent, reproducible, and applied consistently across area types. This is not considered artificial tuning—it is a research-backed method for calibrating how normalized features contribute to pillar scores.
+
+### What's Allowed
+
+HomeFit can derive feature weights using statistical techniques such as Ridge regression, Lasso, OLS (when appropriate), or similar models **as long as**:
+
+1. Inputs are objective normalized metrics (e.g., Norm Height Div, Norm Facade, etc.).
+2. Modeling is performed per area type, not per location.
+3. The model's coefficients are used directly as the source of weights.
+4. No manual adjustments are made to force scores for specific places.
+5. Weights are validated on a holdout set or through cross-validation to ensure generalization.
+
+**When to Use:** Statistical modeling is appropriate when you have sufficient data (e.g., 20+ samples per area type) and multiple correlated features. For simpler cases with clear research data, direct median-based expectations may be sufficient.
+
+### What This Enables
+
+- Context-aware scoring (each area type gets weights that reflect its real patterns).
+- Fully data-driven calibration without subjective overrides.
+- Scalable logic that works everywhere using the same process.
+
+### What's Still Not Allowed
+
+- Adjusting model outputs by hand.
+- Fitting weights to make individual cities or locations "look right."
+- Creating special-case logic or exceptions for specific places.
+- Using models without validation or documentation.
+
+### Documentation Requirement
+
+Whenever statistical modeling is used, HomeFit must record:
+
+- The dataset used (sample size, area types covered).
+- The method (e.g., Ridge α=5, Lasso α=0.1, OLS).
+- Rationale (why this method, why these features).
+- Resulting weights (coefficients per area type).
+- Validation results (holdout error, cross-validation scores).
+- Any limitations or TODOs.
+
+**Note:** This method still requires going through the Decision Checklist (Principle #1-7) before implementation.
+
+---
+
 ## Version History
 
 - **v1.0** (2024): Initial principles based on audit findings
