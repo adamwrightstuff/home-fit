@@ -143,8 +143,20 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
             'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
         }
     else:
-        # Fallback to computing classification if not provided
-        area_type, metro_name, area_metadata = get_area_classification(lat, lon)
+        # Fallback: compute area type if not provided (use same method as main.py)
+        from data_sources import data_quality
+        from data_sources.census_api import get_population_density
+        density = get_population_density(lat, lon) or 0.0
+        area_type = data_quality.detect_area_type(lat, lon, density=density)
+        # Get metadata separately
+        from data_sources.regional_baselines import regional_baseline_manager
+        metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
+        area_metadata = {
+            'density': density,
+            'metro_name': metro_name,
+            'area_type': area_type,
+            'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
+        }
     
     expectations = get_contextual_expectations(area_type, 'air_travel_access')
 

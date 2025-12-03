@@ -638,8 +638,18 @@ def get_healthcare_access_score(lat: float, lon: float,
                 'classification_confidence': regional_baseline_manager._get_classification_confidence(pop_density, metro_name)
             }
         else:
-            # Fallback to computing classification if not provided
-            area_type, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
+            # Fallback: compute area type if not provided (use same method as main.py)
+            from data_sources import data_quality
+            area_type = data_quality.detect_area_type(lat, lon, density=pop_density, city=city)
+            # Get metadata separately
+            from data_sources.regional_baselines import regional_baseline_manager
+            metro_name = regional_baseline_manager._detect_metro_area(city, lat, lon)
+            area_metadata = {
+                'density': pop_density,
+                'metro_name': metro_name,
+                'area_type': area_type,
+                'classification_confidence': regional_baseline_manager._get_classification_confidence(pop_density, metro_name)
+            }
     except Exception as e:
         # Fallback if area classification fails
         logger.warning(f"Area classification failed: {e}")

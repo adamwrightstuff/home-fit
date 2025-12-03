@@ -505,10 +505,17 @@ def get_active_outdoors_score_v2(
     })
 
     # 1) Area classification and radius profile
-    detected_area_type, metro_name, area_metadata = get_area_classification(
-        lat, lon, city=city
-    )
-    area_type = area_type or detected_area_type
+    # Use provided area_type from main.py for consistency, or fallback to detect_area_type()
+    if area_type is None:
+        # Fallback: compute area type if not provided (use same method as main.py)
+        from data_sources import data_quality, census_api
+        density = census_api.get_population_density(lat, lon) or 0.0
+        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+    
+    # Get metadata for area_classification field (still need metro_name)
+    _, metro_name, area_metadata = get_area_classification(lat, lon, city=city)
+    # Override area_type in metadata to match what we're actually using
+    area_metadata['area_type'] = area_type
 
     profile = get_radius_profile("active_outdoors", area_type, location_scope)
     local_radius = int(profile.get("local_radius_m", 2000))  # daily use (~2 km)
