@@ -642,7 +642,7 @@ def get_healthcare_access_score(lat: float, lon: float,
             }
         else:
             # Fallback: compute area type if not provided (use same method as main.py)
-            from data_sources import data_quality
+            # Use module-level data_quality import (already imported at top of file)
             area_type = data_quality.detect_area_type(lat, lon, density=pop_density, city=city)
             # Get metadata separately
             from data_sources.regional_baselines import regional_baseline_manager
