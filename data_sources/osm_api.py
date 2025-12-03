@@ -974,6 +974,49 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 "area_sqm": round(area_sqm, 0) if area_sqm else 0,
                 "osm_id": osm_id
             })
+    
+    # Process playgrounds (separate from parks)
+    for elem in elements:
+        osm_id = elem.get("id")
+        if not osm_id or osm_id in seen_playground_ids:
+            continue
+        
+        tags = elem.get("tags", {})
+        leisure = tags.get("leisure")
+        elem_type = elem.get("type")
+        access = tags.get("access", "").lower()
+        
+        # Only process playgrounds (leisure=playground)
+        if leisure != "playground":
+            continue
+        
+        # Skip private/restricted playgrounds
+        if access in ["private", "no", "restricted"]:
+            continue
+        
+        seen_playground_ids.add(osm_id)
+        
+        # Get coordinates and distance
+        elem_lat, elem_lon = None, None
+        if elem_type == "node":
+            elem_lat = elem.get("lat")
+            elem_lon = elem.get("lon")
+        elif elem_type == "way":
+            elem_lat, elem_lon, _ = _get_way_geometry(elem, nodes_dict)
+        elif elem_type == "relation":
+            elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+        
+        if elem_lat is not None and elem_lon is not None:
+            distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+            playgrounds.append({
+                "name": tags.get("name", "Playground"),
+                "type": "playground",
+                "lat": elem_lat,
+                "lon": elem_lon,
+                "distance_m": round(distance_m, 0),
+                "osm_id": osm_id
+            })
+    
     # NEW: Process recreational facilities (tennis courts, baseball fields, dog parks, etc.)
     # OBJECTIVE CRITERIA: leisure=pitch with sport tags, or leisure=dog_park
     # DATA QUALITY: Exclude private facilities, avoid double-counting with parks
