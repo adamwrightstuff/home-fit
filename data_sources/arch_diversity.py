@@ -447,6 +447,313 @@ DENSITY_MULTIPLIER = {
     "unknown": 1.00,
 }
 
+# Ridge Regression Weights for Built Beauty Scoring
+# Source: Statistical modeling per area type (see DESIGN_PRINCIPLES.md Addendum)
+# Method: Ridge regression with per-area-type modeling
+# Weights are normalized to sum to 1.0 per area type
+# Ridge regression weights for Built Beauty scoring
+# Feature order: [Norm Height Div, Norm Type Div, Norm Footprint Var, Norm Built Cov,
+#                 Norm Block Grain, Norm Streetwall, Norm Setback, Norm Facade,
+#                 Norm Landmark, Norm Year Built, Norm Brick Share, Norm Enhancer, Norm Rowhouse]
+# Each area type has coefficients (13 values) and an intercept
+RIDGE_REGRESSION_WEIGHTS = {
+    "suburban": {
+        "coefficients": [
+            1.694675643274188,      # Norm Height Div
+            -2.3900353828645042,    # Norm Type Div
+            -6.681365689676081,     # Norm Footprint Var
+            -3.648066098113575,     # Norm Built Cov
+            11.018714542374097,     # Norm Block Grain
+            -4.664424624283327,     # Norm Streetwall
+            -5.911764063464895,     # Norm Setback
+            -3.517228955121713,     # Norm Facade
+            2.825247622296669,      # Norm Landmark
+            4.932560448523192,      # Norm Year Built
+            -9.280769071332323,     # Norm Brick Share
+            5.602655607812873,      # Norm Enhancer
+            0.248141297717015,      # Norm Rowhouse
+        ],
+        "intercept": 68.32670209972913,
+        "r2_score": 0.4108053797460943,
+        "n_samples": 19,
+    },
+    "urban_core_lowrise": {
+        "coefficients": [
+            -1.8473622571779915,    # Norm Height Div
+            1.9961114584599727,      # Norm Type Div
+            -2.7126693869590972,     # Norm Footprint Var
+            -3.758395385525872,      # Norm Built Cov
+            -2.3555368233082187,     # Norm Block Grain
+            10.08500959353043,       # Norm Streetwall
+            -4.638995025628968,      # Norm Setback
+            1.3170989094530423,      # Norm Facade
+            1.5556151352083966,      # Norm Landmark
+            -0.498176014927891,      # Norm Year Built
+            8.643294249048453,       # Norm Brick Share
+            -8.560912018268516,      # Norm Enhancer
+            0.5195533246348992,      # Norm Rowhouse
+        ],
+        "intercept": 71.53211829562357,
+        "r2_score": 0.8800658706702397,
+        "n_samples": 17,
+    },
+    "urban_residential": {
+        "coefficients": [
+            -1.6735762240276472,     # Norm Height Div
+            -4.799476543644472,      # Norm Type Div
+            -4.489069679277536,      # Norm Footprint Var
+            -6.818319057192876,      # Norm Built Cov
+            8.780770428585161,       # Norm Block Grain
+            1.9464612344840354,      # Norm Streetwall
+            -3.133371995830633,      # Norm Setback
+            2.6885403407439085,      # Norm Facade
+            8.350833294429716,       # Norm Landmark
+            -3.3986287224978456,     # Norm Year Built
+            2.0253116601256524,      # Norm Brick Share
+            -4.050037591732545,      # Norm Enhancer
+            4.264074083559449,       # Norm Rowhouse
+        ],
+        "intercept": 75.17170022365947,
+        "r2_score": 0.6525740779606259,
+        "n_samples": 22,
+    },
+    "historic_urban": {
+        "coefficients": [
+            -7.5216399234938155,     # Norm Height Div
+            -2.300889391481023,      # Norm Type Div
+            8.16107092120239,        # Norm Footprint Var
+            0.37464977902598997,     # Norm Built Cov
+            1.6786810577995892,      # Norm Block Grain
+            -8.429418475644663,      # Norm Streetwall
+            3.3720782753763935,      # Norm Setback
+            -6.137329323940118,      # Norm Facade
+            3.695506139392704,       # Norm Landmark
+            -3.17156821443939,       # Norm Year Built
+            -2.3150382370468856,     # Norm Brick Share
+            6.33235272650232,        # Norm Enhancer
+            4.731248904620031,       # Norm Rowhouse
+        ],
+        "intercept": 83.58081718893044,
+        "r2_score": 0.713916004499322,
+        "n_samples": 10,
+    },
+    "urban_core": {
+        "coefficients": [
+            0.16505765294144645,     # Norm Height Div
+            2.2530318762652417,      # Norm Type Div
+            3.7001974533799073,      # Norm Footprint Var
+            -8.484569650314739,      # Norm Built Cov
+            -1.5720491368397184,     # Norm Block Grain
+            -1.839414472185815,      # Norm Streetwall
+            -1.940156235136,         # Norm Setback
+            2.5908438508643094,      # Norm Facade
+            2.1442115720349545,      # Norm Landmark
+            2.59759966902178,        # Norm Year Built
+            11.9386910650336,        # Norm Brick Share
+            -11.600706853148244,     # Norm Enhancer
+            1.4230023102964353,      # Norm Rowhouse
+        ],
+        "intercept": 73.51084650020052,
+        "r2_score": 0.8895077935549515,
+        "n_samples": 13,
+    },
+    "rural": {
+        "coefficients": [
+            -5.270330201510831,      # Norm Height Div
+            7.287347106188667,       # Norm Type Div
+            -4.408568142234023,      # Norm Footprint Var
+            -5.614048351889809,      # Norm Built Cov
+            -1.1006778003533268,     # Norm Block Grain
+            8.669826790785117,       # Norm Streetwall
+            1.4038509490409195,      # Norm Setback
+            -0.4271635354487338,     # Norm Facade
+            5.26680437449779,        # Norm Landmark
+            -1.9814976840090247,     # Norm Year Built
+            -6.177172670833175,      # Norm Brick Share
+            4.636071950542892,       # Norm Enhancer
+            3.5432492937895983,      # Norm Rowhouse
+        ],
+        "intercept": 79.56712930548285,
+        "r2_score": 0.7120045652144526,
+        "n_samples": 8,
+    },
+    "exurban": {
+        "coefficients": [
+            -2.0437615811834107,     # Norm Height Div
+            -1.4083894073838554,     # Norm Type Div
+            -3.589888375057796,      # Norm Footprint Var
+            -3.9054901730848455,     # Norm Built Cov
+            -1.1427606274951982,     # Norm Block Grain
+            1.3566734583851463,      # Norm Streetwall
+            -2.959660884592236,      # Norm Setback
+            -3.2576089108220145,     # Norm Facade
+            -0.5223109973020615,     # Norm Landmark
+            3.0493339100493366,      # Norm Year Built
+            -0.0013299088018364647,  # Norm Brick Share
+            -0.07786565476824103,    # Norm Enhancer
+            0.07725992743365523,     # Norm Rowhouse
+        ],
+        "intercept": 79.16009345369987,
+        "r2_score": 0.5721306752395754,
+        "n_samples": 7,
+    },
+    # Fallback for unknown area types
+    "unknown": {
+        "coefficients": [
+            0.16505765294144645,     # Norm Height Div (use urban_core)
+            2.2530318762652417,      # Norm Type Div
+            3.7001974533799073,      # Norm Footprint Var
+            -8.484569650314739,      # Norm Built Cov
+            -1.5720491368397184,     # Norm Block Grain
+            -1.839414472185815,      # Norm Streetwall
+            -1.940156235136,         # Norm Setback
+            2.5908438508643094,      # Norm Facade
+            2.1442115720349545,      # Norm Landmark
+            2.59759966902178,        # Norm Year Built
+            11.9386910650336,        # Norm Brick Share
+            -11.600706853148244,     # Norm Enhancer
+            1.4230023102964353,      # Norm Rowhouse
+        ],
+        "intercept": 73.51084650020052,
+        "r2_score": 0.8895077935549515,
+        "n_samples": 13,
+    },
+}
+
+
+def _score_with_ridge_regression(
+    area_type: str,
+    levels_entropy: float,
+    building_type_diversity: float,
+    footprint_area_cv: float,
+    built_coverage_ratio: Optional[float],
+    block_grain_value: Optional[float],
+    streetwall_value: Optional[float],
+    setback_value: Optional[float],
+    facade_rhythm_value: Optional[float],
+    historic_landmarks: Optional[int],
+    median_year_built: Optional[int],
+    material_profile: Optional[Dict[str, Any]],
+    enhancer_bonus: float,
+    rowhouse_indicator: float = 0.0,
+    elevation_range: Optional[float] = None
+) -> Tuple[float, Dict[str, float]]:
+    """
+    Score Built Beauty using Ridge regression weights.
+    
+    This implements the statistical modeling approach approved in DESIGN_PRINCIPLES.md Addendum.
+    Features are normalized to 0-1 range, then weighted by Ridge regression coefficients.
+    
+    Args:
+        area_type: Area type classification
+        levels_entropy: Height diversity (0-100)
+        building_type_diversity: Type diversity (0-100)
+        footprint_area_cv: Footprint variation (0-100)
+        built_coverage_ratio: Built coverage (0.0-1.0)
+        block_grain_value: Block grain metric (0-100)
+        streetwall_value: Streetwall continuity (0-100)
+        setback_value: Setback consistency (0-100)
+        facade_rhythm_value: Facade rhythm (0-100)
+        historic_landmarks: Count of historic landmarks
+        median_year_built: Median year buildings were built
+        material_profile: Material profile dict with brick share
+        enhancer_bonus: Enhancer bonus score (0-8.0 typically)
+        rowhouse_indicator: Rowhouse indicator (0.0-1.0)
+        elevation_range: Elevation range in meters (unused, kept for compatibility)
+    
+    Returns:
+        Tuple of (score, feature_contributions_dict)
+    """
+    # Get model for this area type (fallback to urban_core if not found)
+    model = RIDGE_REGRESSION_WEIGHTS.get(area_type, RIDGE_REGRESSION_WEIGHTS["urban_core"])
+    coefficients = model["coefficients"]
+    intercept = model["intercept"]
+    
+    # Normalize all features to 0-1 range (order matches coefficients array)
+    normalized_features: List[float] = []
+    feature_names = [
+        "Norm Height Div",
+        "Norm Type Div",
+        "Norm Footprint Var",
+        "Norm Built Cov",
+        "Norm Block Grain",
+        "Norm Streetwall",
+        "Norm Setback",
+        "Norm Facade",
+        "Norm Landmark",
+        "Norm Year Built",
+        "Norm Brick Share",
+        "Norm Enhancer",
+        "Norm Rowhouse",
+    ]
+    feature_contributions: Dict[str, float] = {}
+    
+    # 0: Norm Height Div: levels_entropy (0-100) → 0-1
+    normalized_features.append(_clamp01(levels_entropy / 100.0))
+    
+    # 1: Norm Type Div: building_type_diversity (0-100) → 0-1
+    normalized_features.append(_clamp01(building_type_diversity / 100.0))
+    
+    # 2: Norm Footprint Var: footprint_area_cv (0-100) → 0-1
+    normalized_features.append(_clamp01(footprint_area_cv / 100.0))
+    
+    # 3: Norm Built Cov: built_coverage_ratio (0.0-1.0) → already normalized
+    normalized_features.append(_clamp01(built_coverage_ratio if built_coverage_ratio is not None else 0.0))
+    
+    # 4: Norm Block Grain: block_grain (0-100) → 0-1
+    normalized_features.append(_clamp01(block_grain_value / 100.0 if block_grain_value is not None else 0.0))
+    
+    # 5: Norm Streetwall: streetwall_continuity (0-100) → 0-1
+    normalized_features.append(_clamp01(streetwall_value / 100.0 if streetwall_value is not None else 0.0))
+    
+    # 6: Norm Setback: setback_consistency (0-100) → 0-1
+    normalized_features.append(_clamp01(setback_value / 100.0 if setback_value is not None else 0.0))
+    
+    # 7: Norm Facade: facade_rhythm (0-100) → 0-1
+    normalized_features.append(_clamp01(facade_rhythm_value / 100.0 if facade_rhythm_value is not None else 0.0))
+    
+    # 8: Norm Landmark: historic_landmarks count → 0-1 (normalize 0-20 landmarks)
+    normalized_features.append(_clamp01((historic_landmarks or 0) / 20.0))
+    
+    # 9: Norm Year Built: median_year_built → 0-1 (inverted: older = higher)
+    # Normalize: 1800-2024 → 0-1, but inverted (older buildings = higher value)
+    if median_year_built is not None:
+        current_year = datetime.utcnow().year
+        # Normalize age: 0 years old (2024) = 0.0, 224 years old (1800) = 1.0
+        age_years = max(0.0, current_year - median_year_built)
+        normalized_features.append(_clamp01(age_years / 224.0))
+    else:
+        normalized_features.append(0.0)
+    
+    # 10: Norm Brick Share: extract from material_profile
+    brick_share = 0.0
+    if material_profile and isinstance(material_profile, dict):
+        materials = material_profile.get("materials", {})
+        if isinstance(materials, dict):
+            total_tagged = sum(materials.values())
+            if total_tagged > 0:
+                brick_count = materials.get("brick", 0) + materials.get("stone", 0)  # Stone often similar aesthetic
+                brick_share = brick_count / total_tagged
+    normalized_features.append(_clamp01(brick_share))
+    
+    # 11: Norm Enhancer: enhancer_bonus (0-8.0) → 0-1 (normalize to max 8.0)
+    normalized_features.append(_clamp01(enhancer_bonus / 8.0))
+    
+    # 12: Norm Rowhouse: rowhouse_indicator (0.0-1.0) → already normalized
+    normalized_features.append(_clamp01(rowhouse_indicator))
+    
+    # Apply Ridge regression: score = intercept + sum(coefficient * normalized_feature)
+    score = intercept
+    for i, (coef, norm_value) in enumerate(zip(coefficients, normalized_features)):
+        contribution = coef * norm_value
+        score += contribution
+        feature_contributions[feature_names[i]] = contribution
+    
+    # Clamp score to 0-100 range (Ridge regression predicts in 0-100 range)
+    score = max(0.0, min(100.0, score))
+    
+    return score, feature_contributions
+
 # Area-type-specific weights for beauty metrics (sum = 50 points)
 # Phase 1 metrics:
 #   height_diversity → Height variation (entropy)
@@ -1858,232 +2165,51 @@ def score_architectural_diversity_as_beauty(
     else:
         form_score = 0.0
 
-    total = (design_score * blend["design"]) + (form_score * blend["form"])
-    serenity_bonus = _serenity_bonus(
-        effective,
-        built_coverage_ratio,
-        streetwall_value if streetwall_value is not None else 0.0,
-        block_grain_value if block_grain_value is not None else 0.0,
-        density,
-        contextual_tags=contextual_tags
-    )
-    scenic_bonus = _scenic_bonus(
-        effective,
-        footprint_area_cv if footprint_area_cv is not None else 0.0,
-        building_type_diversity,
-        density
-    )
-    # Estimate material entropy if OSM data missing (fallback for LLM alignment)
-    is_historic = "historic" in (contextual_tags or [])
-    estimated_material_entropy = _estimate_material_coherence(
-        material_profile, heritage_profile, median_year_built, is_historic=is_historic
-    )
-    material_entropy_to_use = material_entropy if material_entropy > 0 else estimated_material_entropy
-    
-    material_bonus = 0.0
-    if material_entropy_to_use > 0:
-        material_multiplier = MATERIAL_BONUS_WEIGHTS.get(effective, 0.8)
-        material_bonus = (material_entropy_to_use / 100.0) * 4.0 * material_multiplier
-        if material_tagged_ratio < 0.1 and material_entropy == 0:
-            # If using fallback, reduce slightly (less confidence)
-            material_bonus *= 0.8
-        material_bonus = min(7.0, material_bonus)  # Increased cap from 5.0
-    heritage_bonus = 0.0
-    if heritage_significance > 0:
-        heritage_multiplier = HERITAGE_BONUS_WEIGHTS.get(effective, 1.0)
-        base_cap = 4.0
-        heritage_bonus = min(
-            base_cap,
-            (heritage_significance / 100.0) * 4.8 * heritage_multiplier
-        )
-        if heritage_landmark_count >= 6:
-            incremental = (heritage_landmark_count - 5) * 0.15
-            heritage_bonus += min(1.2, max(0.0, incremental))
-        
-        # NEW: Bonus for exceptional preservation (20+ landmarks)
-        # LLM emphasizes "exceptional preservation" for top scores (Charleston, Beacon Hill)
-        if heritage_landmark_count >= 20:
-            exceptional_bonus = min(2.0, (heritage_landmark_count - 19) * 0.1)
-            heritage_bonus += exceptional_bonus
-        
-        heritage_bonus = min(7.2, heritage_bonus)  # Increased cap from 5.2
-
-    normalized_vintage = _normalize_vintage_share(vintage_share)
-    age_percentile = _age_percentile(effective, median_year_built)
-    age_presence_factor = 1.0
-    if normalized_vintage is not None:
-        age_presence_factor = 0.65 + 0.35 * _clamp01(normalized_vintage * 1.5)
-    age_bonus = AGE_BONUS_MAX * age_percentile * HERITAGE_BONUS_WEIGHTS.get(effective, 1.0) * age_presence_factor
-
-    heritage_stack_cap = HERITAGE_STACK_CAPS.get(effective, HERITAGE_STACK_CAPS["unknown"])
-    heritage_stack = heritage_bonus + age_bonus
-    if heritage_stack > heritage_stack_cap:
-        reduce_amount = heritage_stack - heritage_stack_cap
-        if heritage_bonus >= reduce_amount:
-            heritage_bonus -= reduce_amount
-        else:
-            reduce_amount -= heritage_bonus
-            heritage_bonus = 0.0
-            age_bonus = max(0.0, age_bonus - reduce_amount)
-
-    street_character_bonus = 0.0
-    if block_grain_value is not None and streetwall_value is not None:
-        street_character_bonus = max(0.0, ((block_grain_value + streetwall_value) / 200.0) - 0.35)
-        if is_historic_tag or effective == "urban_residential":
-            street_character_bonus *= 1.4
-        elif effective in ("suburban", "exurban"):
-            street_character_bonus *= 1.1
-        street_character_bonus = min(4.5, street_character_bonus * 6.0)
-
-    age_mix_bonus = 0.0
-    age_mix_balance = None
-    if normalized_vintage is not None and 0.05 < normalized_vintage < 0.95:
-        age_mix_balance = _age_mix_balance(normalized_vintage)
-        coherence_gate = _clamp01((coherence_signal - 0.35) / 0.65)
-        if coherence_gate > 0.0 and confidence_gate > 0.0:
-            age_mix_bonus = AGE_MIX_BONUS_MAX * age_mix_balance * coherence_gate * confidence_gate
-
+    # REPLACED: Use Ridge regression for scoring instead of rule-based system
+    # Compute modern_material_share for metadata
     modern_material_share = _modern_material_share(material_profile)
-    modern_form_bonus = 0.0
     
-    # Modern form bonus: Rewards innovation, coherence, and contemporary design
-    # LLM rationale: "innovation and coherence" for modern urban cores
-    # Examples: Pearl District (converted warehouses), Downtown Austin (glass towers), SLU (tech campus)
-    if median_year_built is not None and median_year_built >= 1990:
-        if effective in ("urban_core", "urban_core_lowrise", "urban_residential"):
-            # More lenient coverage threshold for modern areas (adaptive reuse often has lower coverage)
-            # LLM values "converted warehouses" which may have lower coverage
-            coverage_signal = 0.0
-            if built_coverage_ratio is not None:
-                # Lower threshold: 0.18 instead of 0.22 (accommodates warehouse conversions)
-                if built_coverage_ratio >= 0.18:
-                    coverage_signal = _clamp01((built_coverage_ratio - 0.18) / 0.22)  # 0.18-0.40 range
-                elif built_coverage_ratio >= 0.12:
-                    # Partial credit for adaptive reuse areas (warehouses, industrial)
-                    coverage_signal = _clamp01((built_coverage_ratio - 0.12) / 0.06) * 0.5
-            
-            # Modern design signals (less dependent on form metrics confidence)
-            streetwall_signal = _clamp01((streetwall_value or 0.0) / 100.0) if streetwall_value else 0.0
-            facade_signal = _clamp01((facade_rhythm_value or 0.0) / 100.0) if facade_rhythm_value else 0.0
-            
-            # Skyline signal: Modern areas value height diversity (LLM: "glass towers," "skyline")
-            # Higher entropy = more diverse skyline = better for modern urban cores
-            if levels_entropy > 40:
-                skyline_signal = _clamp01((levels_entropy - 40) / 40.0)  # 40-80 range
-            else:
-                skyline_signal = 0.0
-            
-            # Material signal: Modern materials (glass, steel) are valued
-            material_signal = _clamp01((modern_material_share - 0.20) / 0.50) if modern_material_share else 0.0
-            
-            # Adaptive reuse bonus: Warehouse conversions (LLM emphasizes this)
-            adaptive_reuse_bonus = 0.0
-            if median_year_built >= 1990 and median_year_built <= 2010:
-                # Buildings from 1990-2010 may be conversions
-                if built_coverage_ratio and 0.12 <= built_coverage_ratio < 0.30:
-                    # Warehouse/industrial conversion pattern
-                    if building_type_diversity > 30:  # Mixed uses
-                        adaptive_reuse_bonus = 1.5
-            
-            # Reduced dependency on form metrics confidence for modern areas
-            # LLM emphasizes "innovation" and "contemporary" over traditional metrics
-            confidence_modern = 1.0  # Default to full confidence
-            if streetwall_confidence > 0 or facade_rhythm_confidence > 0:
-                # Use confidence if available, but don't require it
-                confidence_modern = _confidence_gate(
-                    [streetwall_confidence, setback_confidence, facade_rhythm_confidence]
-                )
-                # More lenient: minimum 0.3 instead of requiring > 0
-                confidence_modern = max(0.3, confidence_modern)
-            else:
-                # No form metrics data: Use age and coverage as proxy
-                if median_year_built >= 2000 and built_coverage_ratio and built_coverage_ratio >= 0.20:
-                    confidence_modern = 0.5  # Moderate confidence for very modern areas
-            
-            # Design signal: Weighted combination
-            design_signal = (
-                0.25 * streetwall_signal + 
-                0.25 * facade_signal + 
-                0.25 * skyline_signal + 
-                0.15 * material_signal +
-                0.10 * adaptive_reuse_bonus  # Small weight for adaptive reuse
-            )
-            
-            # Apply bonus if we have any positive signals
-            if coverage_signal > 0.0 or design_signal > 0.0:
-                modern_form_bonus = MODERN_FORM_BONUS_MAX * _clamp01(design_signal) * max(coverage_signal, 0.3) * confidence_modern
-                # Minimum bonus for modern areas with good coverage (even if design signals weak)
-                if coverage_signal >= 0.5 and median_year_built >= 2000:
-                    modern_form_bonus = max(modern_form_bonus, 1.5)
-
-    rowhouse_bonus = _rowhouse_bonus(
-        effective,
-        built_coverage_ratio,
-        streetwall_value,
-        setback_value,
-        facade_rhythm_value,
-        levels_entropy,
-        building_type_diversity,
-        footprint_area_cv,
-        median_year_built,
-        heritage_landmark_count,
-        coherence_signal,
-        confidence_gate
+    # Compute rowhouse indicator (0.0-1.0) based on area type and characteristics
+    rowhouse_indicator = 0.0
+    if effective in ("urban_residential", "historic_urban"):
+        if built_coverage_ratio is not None and 0.28 <= built_coverage_ratio <= 0.62:
+            if (streetwall_value is not None and streetwall_value >= 60.0 and
+                setback_value is not None and setback_value >= 60.0 and
+                facade_rhythm_value is not None and facade_rhythm_value >= 60.0):
+                if (levels_entropy is not None and levels_entropy <= 22.0 and
+                    building_type_diversity is not None and building_type_diversity <= 32.0 and
+                    footprint_area_cv is not None and 70.0 <= footprint_area_cv <= 130.0):
+                    rowhouse_indicator = 1.0
+                elif coherence_signal > 0.55 and confidence_gate > 0.0:
+                    rowhouse_indicator = 0.7  # Partial match
+    
+    # Enhancer bonus is computed separately in built_beauty.py, set to 0 here
+    # (Ridge regression will use it if passed, but it's not available in this function)
+    enhancer_bonus = 0.0
+    
+    # Call Ridge regression scoring
+    ridge_score_0_100, feature_contributions = _score_with_ridge_regression(
+        area_type=effective,
+        levels_entropy=levels_entropy,
+        building_type_diversity=building_type_diversity,
+        footprint_area_cv=footprint_area_cv,
+        built_coverage_ratio=built_coverage_ratio,
+        block_grain_value=block_grain_value,
+        streetwall_value=streetwall_value,
+        setback_value=setback_value,
+        facade_rhythm_value=facade_rhythm_value,
+        historic_landmarks=historic_landmarks,
+        median_year_built=median_year_built,
+        material_profile=material_profile,
+        enhancer_bonus=enhancer_bonus,
+        rowhouse_indicator=rowhouse_indicator,
+        elevation_range=None
     )
-
-    base = total + serenity_bonus + scenic_bonus + material_bonus + heritage_bonus + age_bonus + street_character_bonus + age_mix_bonus + modern_form_bonus + rowhouse_bonus
     
-    # SUBURBAN BASE FLOOR BONUS
-    # Rewards well-planned communities (e.g., Levittown, planned subdivisions)
-    # vs. chaotic sprawl. Very uniform suburban development can indicate
-    # intentional planning and cohesive design standards.
-    # This distinguishes intentional uniformity (beautiful) from cookie-cutter chaos (ugly).
-    if effective == "suburban":
-        if levels_entropy < 12 and footprint_area_cv < 45:
-            # Very uniform height + footprint = intentional cohesion, not cookie-cutter
-            # This rewards planned communities with consistent architecture
-            base_floor = 8.0  # Slightly lower to avoid overscoring exceptional suburbs
-            base = max(base, base_floor)
-    elif "historic" in (contextual_tags or []):
-        # Historic areas (any base type with historic tag) get base floor bonus
-        if built_coverage_ratio is not None:
-            if built_coverage_ratio < 0.18:
-                base = max(base, 15.0 + serenity_bonus * 0.75)
-            else:
-                base = max(base, 12.5 + serenity_bonus * 0.5)
-        else:
-            base = max(base, 12.0 + serenity_bonus * 0.5)
-    elif effective in ("exurban", "rural"):
-        if built_coverage_ratio is not None and built_coverage_ratio < 0.12:
-            base = max(base, 11.0 + serenity_bonus)
-    if effective in ("exurban", "rural"):
-        base = max(base, 12.0 + serenity_bonus)
+    # Scale from 0-100 to 0-50 (native Built Beauty range)
+    final_score = max(0.0, min(50.0, ridge_score_0_100 / 2.0))
     
-    # Enhanced coherence bonus (no scaling - designed for 0-50 range)
-    bonus = _coherence_bonus_v2(
-        levels_entropy, 
-        footprint_area_cv, 
-        effective,
-        material_entropy if material_entropy > 0 else estimated_material_entropy,
-        building_type_diversity,
-        contextual_tags=contextual_tags
-    )
-    # No scaling - bonus already designed for 0-50 range
-    
-    penalty = _context_penalty(effective, built_coverage_ratio,
-                               levels_entropy, building_type_diversity,
-                               footprint_area_cv,
-                               contextual_tags=contextual_tags)
-    penalty = penalty * (50.0 / 33.0)  # Keep penalty scaling for now
-    
-    total = base + bonus - penalty
-    
-    # Density multiplier (simple banding)
-    mult = DENSITY_MULTIPLIER.get(effective, 1.0)
-    total *= mult
-    
-    # Apply confidence-weighted degradation (replaces hard caps)
-    # LLM values spacious historic districts, so less aggressive degradation
+    # Prepare data quality info for metadata
     data_quality_info = {
         "confidence_0_1": 1.0,
         "data_warning": None,
@@ -2093,83 +2219,6 @@ def score_architectural_diversity_as_beauty(
         "expected_coverage": expected_coverage,
         "actual_coverage": built_coverage_ratio
     }
-    
-    # Calculate average form metrics confidence (if available)
-    avg_form_confidence = 0.0
-    if (block_grain_confidence > 0 or streetwall_confidence > 0 or 
-        setback_confidence > 0 or facade_rhythm_confidence > 0):
-        confidence_sum = 0.0
-        confidence_count = 0
-        if block_grain_confidence > 0:
-            confidence_sum += block_grain_confidence
-            confidence_count += 1
-        if streetwall_confidence > 0:
-            confidence_sum += streetwall_confidence
-            confidence_count += 1
-        if setback_confidence > 0:
-            confidence_sum += setback_confidence
-            confidence_count += 1
-        if facade_rhythm_confidence > 0:
-            confidence_sum += facade_rhythm_confidence
-            confidence_count += 1
-        if confidence_count > 0:
-            avg_form_confidence = confidence_sum / confidence_count
-    
-    if built_coverage_ratio is not None and expected_coverage is not None:
-        coverage_ratio = built_coverage_ratio / expected_coverage
-        
-        # Spacious historic districts: Less aggressive degradation
-        # LLM rationale: "spacious design," "lush settings" are valued
-        if is_spacious_historic:
-            # Only degrade if coverage is VERY low (< 50% of expected)
-            if coverage_ratio < 0.5:
-                coverage_confidence = max(0.0, min(1.0, coverage_ratio * 1.5))  # More forgiving
-            else:
-                coverage_confidence = 1.0  # No degradation if >= 50%
-        # Modern urban cores: More lenient (adaptive reuse, warehouse conversions)
-        # LLM values "converted warehouses" which may have lower coverage
-        elif effective == "urban_core" and median_year_built and median_year_built >= 1990:
-            # Modern areas: Accept lower coverage (warehouse conversions, adaptive reuse)
-            if coverage_ratio < 0.6:
-                coverage_confidence = max(0.0, min(1.0, coverage_ratio * 1.2))  # More forgiving
-            else:
-                coverage_confidence = 1.0
-        else:
-            coverage_confidence = max(0.0, min(1.0, coverage_ratio))
-        
-        # Form metrics confidence less critical for historic AND modern areas
-        # Historic: Emphasizes heritage/age/material
-        # Modern: Emphasizes innovation/contemporary design
-        if "historic" in (contextual_tags or []):
-            phase_weight = 0.1  # Reduced from 0.3 (form metrics less critical)
-        elif effective == "urban_core" and median_year_built and median_year_built >= 1990:
-            phase_weight = 0.15  # Slightly more than historic, but still reduced
-        else:
-            phase_weight = 0.3
-        
-        combined_confidence = (coverage_confidence * 0.7) + (avg_form_confidence * phase_weight)
-        degradation_factor = 0.5 + (combined_confidence * 0.5)
-        
-        if degradation_factor < 1.0:
-            original_score = total
-            total = total * degradation_factor
-            data_quality_info.update({
-                "degradation_applied": True,
-                "degradation_factor": round(degradation_factor, 3),
-                "coverage_ratio": round(coverage_ratio, 3),
-                "confidence_0_1": round(combined_confidence, 3)
-            })
-        else:
-            data_quality_info["confidence_0_1"] = round(combined_confidence, 3)
-    else:
-        data_quality_info.update({
-            "confidence_0_1": 0.2,
-            "data_warning": "missing_coverage_data"
-        })
-        total = total * 0.5
-    
-    # Cap at 50 (native range)
-    final_score = max(0.0, min(50.0, total))
 
     if "architecture_score" in metric_overrides:
         try:
@@ -2180,25 +2229,29 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for architecture_score: {metric_overrides['architecture_score']!r}")
     
-    # Return score with metadata about confidence degradation and form metrics
+    # Return score with metadata about Ridge regression and form metrics
     metadata = {
         "coverage_cap_applied": data_quality_info.get("degradation_applied", False),
-        "original_score_before_cap": None,  # Not applicable with degradation approach
-        "cap_reason": None,  # Not applicable with degradation approach
+        "original_score_before_cap": None,  # Not applicable with Ridge regression
+        "cap_reason": None,  # Not applicable with Ridge regression
         "data_quality": data_quality_info,
-        "design_score": round(design_score, 1),
-        "form_score": round(form_score, 1),
-        "design_weight": blend["design"],
-        "form_weight": blend["form"],
-        "serenity_bonus": round(serenity_bonus, 2),
-        "scenic_bonus": round(scenic_bonus, 2),
-        "material_bonus": round(material_bonus, 2),
-        "heritage_bonus": round(heritage_bonus, 2),
-        "age_bonus": round(age_bonus, 2),
-        "age_mix_bonus": round(age_mix_bonus, 2),
-        "modern_form_bonus": round(modern_form_bonus, 2),
-        "street_character_bonus": round(street_character_bonus, 2),
-        "rowhouse_bonus": round(rowhouse_bonus, 2),
+        "scoring_method": "ridge_regression",
+        "ridge_score_0_100": round(ridge_score_0_100, 1),
+        "feature_contributions": {k: round(v, 3) for k, v in feature_contributions.items()},
+        # Legacy fields for compatibility (set to 0 or None)
+        "design_score": 0.0,
+        "form_score": 0.0,
+        "design_weight": 0.0,
+        "form_weight": 0.0,
+        "serenity_bonus": 0.0,
+        "scenic_bonus": 0.0,
+        "material_bonus": 0.0,
+        "heritage_bonus": 0.0,
+        "age_bonus": 0.0,
+        "age_mix_bonus": 0.0,
+        "modern_form_bonus": 0.0,
+        "street_character_bonus": 0.0,
+        "rowhouse_bonus": 0.0,
         "material_profile": material_profile,
         "heritage_profile": heritage_profile,
         "material_entropy": round(material_entropy, 1),
@@ -2206,11 +2259,10 @@ def score_architectural_diversity_as_beauty(
         "type_category_diversity": round(type_category_diversity, 1) if type_category_diversity is not None else None,
         "height_stats": height_stats,
         "expected_coverage": expected_coverage if expected_coverage is not None else COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"]),
-        "age_percentile": round(age_percentile, 3),
-        "age_mix_balance": round(age_mix_balance, 3) if age_mix_balance is not None else None,
+        "age_percentile": None,
+        "age_mix_balance": None,
         "age_coherence_signal": round(coherence_signal, 3),
         "age_confidence_gate": round(confidence_gate, 3),
-        "modern_form_bonus": round(modern_form_bonus, 2),
         "modern_material_share": round(modern_material_share, 3),
         # Form metrics (street geometry and building alignment)
         "block_grain": block_grain_value,

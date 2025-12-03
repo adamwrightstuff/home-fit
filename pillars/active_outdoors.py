@@ -20,6 +20,213 @@ from logging_config import get_logger
 # Initialize logger
 logger = get_logger(__name__)
 
+# Ridge regression coefficients (advisory only, not used for scoring)
+# Global model (all area types combined)
+ACTIVE_OUTDOORS_RIDGE_GLOBAL = {
+    "coefficients": [
+        -0.836912876011333,      # Norm Daily
+        8.111140760295395,       # Norm Wild
+        1.4393450773832117,       # Norm Water
+        -1.6803163406904489,     # Norm ParkCount
+        0.0,                      # Norm Playground
+        -2.7804888330870883,     # Norm ParkArea
+        6.550673699373188,        # Norm Trails5
+        2.013996650298848,        # Norm SwimCount
+        -0.17007136273015588,    # Norm SwimKM
+        5.309054413801675,        # Norm CampCount
+        -3.2727730797828243,     # Norm CampKM
+        0.592336268134379,        # Norm Tree
+    ],
+    "intercept": 77.55414775327147,
+    "r2_score": 0.2497311792894693,
+    "n_samples": 21,
+}
+
+# Area-type-specific models (for reference, sample sizes too small for reliable prediction)
+ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE = {
+    "rural": {
+        "coefficients": [
+            -0.4819985793078666,   # Norm Daily
+            0.016334957660023446,   # Norm Wild
+            0.8500622169067389,     # Norm Water
+            -0.010375588470873744,  # Norm ParkCount
+            0.0,                    # Norm Playground
+            -0.3558405114940178,    # Norm ParkArea
+            0.24351409578185473,    # Norm Trails5
+            0.7618125133176625,     # Norm SwimCount
+            0.8006927444461264,     # Norm SwimKM
+            -0.03109715910619764,   # Norm CampCount
+            0.4745870520129916,     # Norm CampKM
+            -0.22372815368551674,   # Norm Tree
+        ],
+        "intercept": 89.16171626384786,
+        "r2_score": 0.6897050183343025,
+        "n_samples": 5,
+    },
+    "suburban": {
+        "coefficients": [
+            -0.6378519537133754,   # Norm Daily
+            1.474725354113921,      # Norm Wild
+            -0.6803220064533304,    # Norm Water
+            -0.4688179453167545,    # Norm ParkCount
+            0.0,                    # Norm Playground
+            0.7321829873787588,     # Norm ParkArea
+            -0.39008443689858514,   # Norm Trails5
+            -0.6698236174684394,    # Norm SwimCount
+            0.2895326227083448,     # Norm SwimKM
+            -0.4239820818789273,    # Norm CampCount
+            0.3448683643491389,     # Norm CampKM
+            0.042957538884930596,   # Norm Tree
+        ],
+        "intercept": 83.31369233718962,
+        "r2_score": 0.4957744772188506,
+        "n_samples": 3,
+    },
+    "urban_core": {
+        "coefficients": [
+            3.014794871479455,      # Norm Daily
+            4.838975862659801,      # Norm Wild
+            5.2717420943592055,     # Norm Water
+            0.7614157230799612,     # Norm ParkCount
+            0.0,                    # Norm Playground
+            0.10422897889989345,   # Norm ParkArea
+            2.563286669719146,      # Norm Trails5
+            0.19747987098326006,   # Norm SwimCount
+            2.8364914003537445,     # Norm SwimKM
+            0.12645467330841734,   # Norm CampCount
+            1.2992475890715411,     # Norm CampKM
+            3.034112401143685,      # Norm Tree
+        ],
+        "intercept": 66.90465452647607,
+        "r2_score": 0.16398747369134614,
+        "n_samples": 7,
+    },
+}
+
+# Min-max values for normalization (from expected_values_summary.csv)
+ACTIVE_OUTDOORS_FEATURE_RANGES = {
+    "daily": {"min": 0.0, "max": 30.0},           # Daily score range
+    "wild": {"min": 0.0, "max": 50.0},            # Wild score range
+    "water": {"min": 0.0, "max": 20.0},           # Water score range
+    "park_count": {"min": 0, "max": 63},           # From CSV: urban_core max
+    "playground": {"min": 0, "max": 10},           # Estimate (CSV shows mostly 0)
+    "park_area": {"min": 0.0, "max": 353.4289},   # From CSV: urban_core max
+    "trails_5km": {"min": 0, "max": 249},          # From CSV: urban_core trails_15km (use as proxy)
+    "swim_count": {"min": 0, "max": 402},         # From CSV: urban_core water_15km
+    "swim_km": {"min": 0.0, "max": 11.023},       # From CSV: rural max closest_water_km
+    "camp_count": {"min": 0, "max": 16},          # From CSV: suburban/exurban max
+    "camp_km": {"min": 0.0, "max": 15.871},       # From CSV: exurban max closest (estimate)
+    "tree": {"min": 0.0, "max": 100.0},           # Tree canopy percentage
+}
+
+
+def _normalize_feature(value: float, min_val: float, max_val: float, invert: bool = False) -> float:
+    """
+    Normalize a feature using min-max scaling.
+    
+    Args:
+        value: Raw feature value
+        min_val: Minimum value for normalization
+        max_val: Maximum value for normalization
+        invert: If True, invert the normalized value (1 - normalized)
+    
+    Returns:
+        Normalized value in [0, 1] range
+    """
+    if max_val == min_val:
+        return 0.0
+    
+    normalized = (value - min_val) / (max_val - min_val)
+    normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
+    
+    if invert:
+        return 1.0 - normalized
+    return normalized
+
+
+def _compute_normalized_features(
+    daily_score: float,
+    wild_score: float,
+    water_score: float,
+    parks: List[Dict],
+    playgrounds: List[Dict],
+    hiking_trails: List[Dict],
+    swimming: List[Dict],
+    camping: List[Dict],
+    canopy_pct_5km: float,
+) -> List[float]:
+    """
+    Compute the 12 normalized Active Outdoors features.
+    
+    Returns:
+        List of 12 normalized features in order:
+        1. Norm Daily, 2. Norm Wild, 3. Norm Water,
+        4. Norm ParkCount, 5. Norm Playground, 6. Norm ParkArea,
+        7. Norm Trails5, 8. Norm SwimCount, 9. Norm SwimKM,
+        10. Norm CampCount, 11. Norm CampKM, 12. Norm Tree
+    """
+    ranges = ACTIVE_OUTDOORS_FEATURE_RANGES
+    
+    # 1. Norm Daily
+    norm_daily = _normalize_feature(daily_score, ranges["daily"]["min"], ranges["daily"]["max"])
+    
+    # 2. Norm Wild
+    norm_wild = _normalize_feature(wild_score, ranges["wild"]["min"], ranges["wild"]["max"])
+    
+    # 3. Norm Water
+    norm_water = _normalize_feature(water_score, ranges["water"]["min"], ranges["water"]["max"])
+    
+    # 4. Norm ParkCount
+    park_count = len(parks)
+    norm_park_count = _normalize_feature(park_count, ranges["park_count"]["min"], ranges["park_count"]["max"])
+    
+    # 5. Norm Playground
+    playground_count = len(playgrounds)
+    norm_playground = _normalize_feature(playground_count, ranges["playground"]["min"], ranges["playground"]["max"])
+    
+    # 6. Norm ParkArea
+    total_park_area_ha = sum(p.get("area_sqm", 0.0) / 10_000.0 for p in parks)
+    norm_park_area = _normalize_feature(total_park_area_ha, ranges["park_area"]["min"], ranges["park_area"]["max"])
+    
+    # 7. Norm Trails5 (trails within 5km)
+    trails_5km = [t for t in hiking_trails if t.get("distance_m", 1e9) <= 5000]
+    trails_5km_count = len(trails_5km)
+    norm_trails5 = _normalize_feature(trails_5km_count, ranges["trails_5km"]["min"], ranges["trails_5km"]["max"])
+    
+    # 8. Norm SwimCount
+    swim_count = len(swimming)
+    norm_swim_count = _normalize_feature(swim_count, ranges["swim_count"]["min"], ranges["swim_count"]["max"])
+    
+    # 9. Norm SwimKM (inverted distance to nearest swimming)
+    closest_swim_km = min([s.get("distance_m", 1e9) / 1000.0 for s in swimming], default=1e9)
+    norm_swim_km = _normalize_feature(closest_swim_km, ranges["swim_km"]["min"], ranges["swim_km"]["max"], invert=True)
+    
+    # 10. Norm CampCount
+    camp_count = len(camping)
+    norm_camp_count = _normalize_feature(camp_count, ranges["camp_count"]["min"], ranges["camp_count"]["max"])
+    
+    # 11. Norm CampKM (inverted distance to nearest camping)
+    closest_camp_km = min([c.get("distance_m", 1e9) / 1000.0 for c in camping], default=1e9)
+    norm_camp_km = _normalize_feature(closest_camp_km, ranges["camp_km"]["min"], ranges["camp_km"]["max"], invert=True)
+    
+    # 12. Norm Tree
+    norm_tree = _normalize_feature(canopy_pct_5km, ranges["tree"]["min"], ranges["tree"]["max"])
+    
+    return [
+        norm_daily,
+        norm_wild,
+        norm_water,
+        norm_park_count,
+        norm_playground,
+        norm_park_area,
+        norm_trails5,
+        norm_swim_count,
+        norm_swim_km,
+        norm_camp_count,
+        norm_camp_km,
+        norm_tree,
+    ]
+
 
 def get_active_outdoors_score(
     lat: float,
@@ -471,6 +678,47 @@ def get_active_outdoors_score_v2(
     calibrated_total = CAL_A * raw_total + CAL_B
     calibrated_total = max(0.0, min(100.0, calibrated_total))
 
+    # Compute normalized features for regression analysis (advisory only)
+    normalized_features = _compute_normalized_features(
+        daily_score,
+        wild_score,
+        water_score,
+        parks,
+        playgrounds,
+        hiking_trails,
+        swimming,
+        camping,
+        canopy_pct_5km,
+    )
+    
+    # Compute advisory Ridge regression predictions (not used for scoring)
+    ridge_advisory = {}
+    
+    # Global model (always available)
+    global_model = ACTIVE_OUTDOORS_RIDGE_GLOBAL
+    global_prediction = global_model["intercept"] + sum(
+        coef * feat for coef, feat in zip(global_model["coefficients"], normalized_features)
+    )
+    ridge_advisory["global"] = {
+        "predicted_score": round(max(0.0, min(100.0, global_prediction)), 1),
+        "r2_score": global_model["r2_score"],
+        "n_samples": global_model["n_samples"],
+    }
+    
+    # Area-type-specific model (if available)
+    if scoring_area_type in ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE:
+        area_model = ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE[scoring_area_type]
+        area_prediction = area_model["intercept"] + sum(
+            coef * feat for coef, feat in zip(area_model["coefficients"], normalized_features)
+        )
+        ridge_advisory["area_type_specific"] = {
+            "predicted_score": round(max(0.0, min(100.0, area_prediction)), 1),
+            "r2_score": area_model["r2_score"],
+            "n_samples": area_model["n_samples"],
+            "area_type": scoring_area_type,
+            "note": "Small sample size - use with caution",
+        }
+
     breakdown: Dict = {
         "score": round(calibrated_total, 1),
         "breakdown": {
@@ -492,6 +740,22 @@ def get_active_outdoors_score_v2(
             "is_desert_context": context_flags.get("is_desert_context"),
             "trail_stats": context_flags.get("trail_stats"),
         },
+        "normalized_features": {
+            "norm_daily": round(normalized_features[0], 4),
+            "norm_wild": round(normalized_features[1], 4),
+            "norm_water": round(normalized_features[2], 4),
+            "norm_park_count": round(normalized_features[3], 4),
+            "norm_playground": round(normalized_features[4], 4),
+            "norm_park_area": round(normalized_features[5], 4),
+            "norm_trails5": round(normalized_features[6], 4),
+            "norm_swim_count": round(normalized_features[7], 4),
+            "norm_swim_km": round(normalized_features[8], 4),
+            "norm_camp_count": round(normalized_features[9], 4),
+            "norm_camp_km": round(normalized_features[10], 4),
+            "norm_tree": round(normalized_features[11], 4),
+        },
+        "ridge_regression_advisory": ridge_advisory,
+        "ridge_regression_note": "Ridge regression predictions are advisory only and not used for actual scoring. Use for directional signals when adjusting future weights.",
     }
 
     if include_diagnostics:
