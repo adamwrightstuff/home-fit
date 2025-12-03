@@ -456,6 +456,19 @@ def get_livability_score(request: Request,
     except Exception:
         area_type = "unknown"
         arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
+        density = 0.0  # Initialize to avoid NameError if exception occurs
+
+    # OPTIMIZATION: Pre-compute tree canopy (5km) once for pillars that need it
+    # This avoids redundant API calls in active_outdoors and natural_beauty
+    tree_canopy_5km = None
+    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
+        try:
+            from data_sources.gee_api import get_tree_canopy_gee
+            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
+            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
+        except Exception as e:
+            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
+            tree_canopy_5km = None
 
     # Step 2: Calculate all pillar scores in parallel
     logger.debug("Calculating pillar scores in parallel...")
@@ -482,7 +495,8 @@ def get_livability_score(request: Request,
         pillar_tasks.append(
             ('active_outdoors', get_active_outdoors_score_v2, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'include_diagnostics': bool(diagnostics)
+                'location_scope': location_scope, 'include_diagnostics': bool(diagnostics),
+                'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
             })
         )
     need_built_beauty = _include_pillar('built_beauty')
@@ -495,7 +509,8 @@ def get_livability_score(request: Request,
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': beauty_overrides if beauty_overrides else None,
-                'precomputed_arch_diversity': arch_diversity_data  # Pass precomputed data
+                'precomputed_arch_diversity': arch_diversity_data,  # Pass precomputed data
+                'density': density  # Pass pre-computed density
             })
         )
     if need_natural_beauty:
@@ -503,7 +518,8 @@ def get_livability_score(request: Request,
             ('natural_beauty', natural_beauty.calculate_natural_beauty, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
-                'overrides': beauty_overrides if beauty_overrides else None
+                'overrides': beauty_overrides if beauty_overrides else None,
+                'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
             })
         )
     
@@ -511,13 +527,15 @@ def get_livability_score(request: Request,
         pillar_tasks.append(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
                 'lat': lat, 'lon': lon, 'include_chains': include_chains,
-                'location_scope': location_scope, 'area_type': area_type
+                'location_scope': location_scope, 'area_type': area_type,
+                'density': density  # Pass pre-computed density
             })
         )
     if _include_pillar('air_travel_access'):
         pillar_tasks.append(
             ('air_travel_access', get_air_travel_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'density': density  # Pass pre-computed density
             })
         )
     if _include_pillar('public_transit_access'):
@@ -530,7 +548,8 @@ def get_livability_score(request: Request,
     if _include_pillar('healthcare_access'):
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
+                'density': density  # Pass pre-computed density
             })
         )
     if _include_pillar('housing_value'):

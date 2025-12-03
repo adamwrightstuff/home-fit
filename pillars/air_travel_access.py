@@ -111,7 +111,8 @@ MAJOR_AIRPORTS = [
 ]
 
 
-def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None) -> Tuple[float, Dict]:
+def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None,
+                         density: Optional[float] = None) -> Tuple[float, Dict]:
     """
     Calculate air travel access score (0-100) based on multi-airport proximity.
 
@@ -129,34 +130,26 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     """
     print(f"✈️  Analyzing air travel access...")
 
+    # Use pre-computed density if provided, otherwise fetch it
+    from data_sources.census_api import get_population_density
+    if density is None:
+        density = get_population_density(lat, lon) or 0.0
+    
     # Get area classification for contextual scoring (use provided if available)
-    if area_type:
-        # Use provided area_type, but still need metro_name for metadata
-        from data_sources.regional_baselines import regional_baseline_manager
-        from data_sources.census_api import get_population_density
-        density = get_population_density(lat, lon)
-        metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
-        area_metadata = {
-            'density': density,
-            'metro_name': metro_name,
-            'area_type': area_type,
-            'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
-        }
-    else:
+    from data_sources.regional_baselines import regional_baseline_manager
+    if area_type is None:
         # Fallback: compute area type if not provided (use same method as main.py)
         from data_sources import data_quality
-        from data_sources.census_api import get_population_density
-        density = get_population_density(lat, lon) or 0.0
         area_type = data_quality.detect_area_type(lat, lon, density=density)
-        # Get metadata separately
-        from data_sources.regional_baselines import regional_baseline_manager
-        metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
-        area_metadata = {
-            'density': density,
-            'metro_name': metro_name,
-            'area_type': area_type,
-            'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
-        }
+    
+    # Get metadata
+    metro_name = regional_baseline_manager._detect_metro_area(None, lat, lon)
+    area_metadata = {
+        'density': density,
+        'metro_name': metro_name,
+        'area_type': area_type,
+        'classification_confidence': regional_baseline_manager._get_classification_confidence(density, metro_name)
+    }
     
     expectations = get_contextual_expectations(area_type, 'air_travel_access')
 

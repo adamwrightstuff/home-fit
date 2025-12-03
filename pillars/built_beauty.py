@@ -50,7 +50,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                    area_type: Optional[str] = None,
                                    location_name: Optional[str] = None,
                                    test_overrides: Optional[Dict[str, float]] = None,
-                                   precomputed_arch_diversity: Optional[Dict] = None) -> Tuple[Optional[float], Dict]:
+                                   precomputed_arch_diversity: Optional[Dict] = None,
+                                   density: Optional[float] = None) -> Tuple[Optional[float], Dict]:
     """
     Score architectural beauty (0-50 points native range).
     """
@@ -85,8 +86,11 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             }
             return None, details
 
-        if area_type is None:
+        # Use pre-computed density if provided, otherwise fetch it
+        if density is None:
             density = census_api.get_population_density(lat, lon) or 0.0
+        
+        if area_type is None:
             if not city:
                 city = geocoding.reverse_geocode(lat, lon)
             area_type = data_quality.detect_area_type(
@@ -96,8 +100,6 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 city=city,
                 location_input=location_name
             )
-        else:
-            density = census_api.get_population_density(lat, lon) or 0.0
 
         historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)
         historic_landmarks = historic_data.get('historic_landmarks_count', 0)
@@ -273,7 +275,8 @@ def calculate_built_beauty(lat: float,
                            enhancers_data: Optional[Dict] = None,
                            disable_enhancers: bool = False,
                            enhancer_radius_m: int = 1500,
-                           precomputed_arch_diversity: Optional[Dict] = None) -> Dict:
+                           precomputed_arch_diversity: Optional[Dict] = None,
+                           density: Optional[float] = None) -> Dict:
     """
     Compute built beauty components prior to normalization.
     """
@@ -285,7 +288,8 @@ def calculate_built_beauty(lat: float,
         area_type=area_type,
         location_name=location_name,
         test_overrides=test_overrides,
-        precomputed_arch_diversity=precomputed_arch_diversity
+        precomputed_arch_diversity=precomputed_arch_diversity,
+        density=density
     )
 
     if arch_score is None:

@@ -327,7 +327,8 @@ def _get_fallback_hospitals(lat: float, lon: float, max_distance_km: float = 60.
 def get_healthcare_access_score(lat: float, lon: float,
                                 area_type: Optional[str] = None,
                                 location_scope: Optional[str] = None,
-                                city: Optional[str] = None) -> Tuple[float, Dict]:
+                                city: Optional[str] = None,
+                                density: Optional[float] = None) -> Tuple[float, Dict]:
     """
     Calculate healthcare access score (0-100).
 
@@ -354,14 +355,16 @@ def get_healthcare_access_score(lat: float, lon: float,
     # Use provided area_type if available (already computed in main.py)
     # Only detect if not provided to avoid redundant API calls
     from data_sources import census_api
-    if area_type is None:
+    # Use pre-computed density if provided, otherwise fetch it
+    if density is None:
         pop_density = census_api.get_population_density(lat, lon) or 0.0
+    else:
+        pop_density = density
+    
+    if area_type is None:
         from data_sources import data_quality as dq
         detected_area_type = dq.detect_area_type(lat, lon, pop_density)
         area_type = detected_area_type
-    else:
-        # Still need pop_density for later calculations even if area_type is provided
-        pop_density = census_api.get_population_density(lat, lon) or 0.0
 
     # Contextual expectations (research-backed where available)
     expectations = get_contextual_expectations(area_type, 'healthcare_access') or {}

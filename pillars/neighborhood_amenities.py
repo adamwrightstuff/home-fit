@@ -16,7 +16,8 @@ from data_sources.utils import haversine_distance
 
 def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = False, 
                                      location_scope: Optional[str] = None,
-                                     area_type: Optional[str] = None) -> Tuple[float, Dict]:
+                                     area_type: Optional[str] = None,
+                                     density: Optional[float] = None) -> Tuple[float, Dict]:
     """
     Calculate neighborhood amenities score (0-100) using dual scoring:
     
@@ -59,8 +60,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     
     # Ensure area_type is detected if not provided (needed for context-aware scoring)
     from data_sources import census_api, data_quality
-    if area_type is None:
+    # Use pre-computed density if provided, otherwise fetch it
+    if density is None:
         density = census_api.get_population_density(lat, lon)
+    if area_type is None:
         area_type = data_quality.detect_area_type(lat, lon, density)
     
     tier1_near = [b for b in tier1_all if b["distance_m"] <= walkable_distance]

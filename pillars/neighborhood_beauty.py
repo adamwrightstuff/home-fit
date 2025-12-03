@@ -34,7 +34,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
                                    test_overrides: Optional[Dict[str, float]] = None,
                                    test_mode: bool = False,
                                    precomputed_built: Optional[Dict] = None,
-                                   precomputed_natural: Optional[Dict] = None) -> Tuple[float, Dict]:
+                                   precomputed_natural: Optional[Dict] = None,
+                                   density: Optional[float] = None) -> Tuple[float, Dict]:
     """
     Calculate the legacy neighborhood beauty score (0-100) and detailed breakdown.
     """
@@ -43,7 +44,9 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     disable_enhancers = os.getenv("BEAUTY_DISABLE_ENHANCERS", "false").lower() == "true"
 
     # Establish baseline area type for weighting defaults.
-    density = census_api.get_population_density(lat, lon) or 0.0
+    # Use pre-computed density if provided, otherwise fetch it
+    if density is None:
+        density = census_api.get_population_density(lat, lon) or 0.0
     if area_type is None:
         default_area_type_for_weights = data_quality.detect_area_type(
             lat,

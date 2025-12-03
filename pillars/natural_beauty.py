@@ -720,15 +720,20 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     try:
         from data_sources import census_api, data_quality
 
-        density = census_api.get_population_density(lat, lon)
-        detected_area_type = data_quality.detect_area_type(
-            lat,
-            lon,
-            density,
-            location_input=location_name,
-            city=city
-        )
-        area_type = area_type or detected_area_type
+        # Use pre-computed density if provided, otherwise fetch it
+        if density is None:
+            density = census_api.get_population_density(lat, lon)
+        
+        if area_type is None:
+            detected_area_type = data_quality.detect_area_type(
+                lat,
+                lon,
+                density,
+                location_input=location_name,
+                city=city
+            )
+            area_type = detected_area_type
+        
         area_type_key = (area_type or "").lower() or "unknown"
 
         radius_profile = get_radius_profile('natural_beauty', area_type, location_scope)
@@ -738,7 +743,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
         from data_sources.gee_api import get_tree_canopy_gee, get_urban_greenness_gee
 
-        gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
+        # Use pre-computed 5km canopy if available and radius matches, otherwise fetch
+        if precomputed_tree_canopy_5km is not None and radius_m == 5000:
+            gee_canopy = precomputed_tree_canopy_5km
+            logger.debug("Using pre-computed tree canopy (5km): %.1f%%", gee_canopy)
+        else:
+            gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
 
         if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
             gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
@@ -1267,7 +1277,9 @@ def calculate_natural_beauty(lat: float,
                              overrides: Optional[Dict[str, float]] = None,
                              enhancers_data: Optional[Dict] = None,
                              disable_enhancers: bool = False,
-                             enhancer_radius_m: int = 1500) -> Dict:
+                             enhancer_radius_m: int = 1500,
+                             precomputed_tree_canopy_5km: Optional[float] = None,
+                             density: Optional[float] = None) -> Dict:
     """
     Compute natural beauty components prior to normalization.
     """

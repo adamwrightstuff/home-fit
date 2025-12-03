@@ -483,6 +483,7 @@ def get_active_outdoors_score_v2(
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
     include_diagnostics: bool = False,
+    precomputed_tree_canopy_5km: Optional[float] = None,
 ) -> Tuple[float, Dict]:
     """
     Compute Active Outdoors v2 (0–100).
@@ -570,6 +571,9 @@ def get_active_outdoors_score_v2(
     
     def _fetch_canopy():
         """Fetch tree canopy percentage."""
+        # Use pre-computed value if available, otherwise fetch
+        if precomputed_tree_canopy_5km is not None:
+            return precomputed_tree_canopy_5km or 0.0
         try:
             return get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type) or 0.0
         except Exception:
