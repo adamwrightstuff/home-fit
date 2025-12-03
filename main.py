@@ -458,18 +458,6 @@ def get_livability_score(request: Request,
         arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
         density = 0.0  # Initialize to avoid NameError if exception occurs
 
-    # OPTIMIZATION: Pre-compute tree canopy (5km) once for pillars that need it
-    # This avoids redundant API calls in active_outdoors and natural_beauty
-    tree_canopy_5km = None
-    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
-        try:
-            from data_sources.gee_api import get_tree_canopy_gee
-            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
-            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
-        except Exception as e:
-            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
-            tree_canopy_5km = None
-
     # Step 2: Calculate all pillar scores in parallel
     logger.debug("Calculating pillar scores in parallel...")
 
@@ -489,6 +477,18 @@ def get_livability_score(request: Request,
     # Prepare all pillar tasks
     def _include_pillar(name: str) -> bool:
         return only_pillars is None or name in only_pillars
+
+    # OPTIMIZATION: Pre-compute tree canopy (5km) once for pillars that need it
+    # This avoids redundant API calls in active_outdoors and natural_beauty
+    tree_canopy_5km = None
+    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
+        try:
+            from data_sources.gee_api import get_tree_canopy_gee
+            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
+            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
+        except Exception as e:
+            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
+            tree_canopy_5km = None
 
     pillar_tasks = []
     if _include_pillar('active_outdoors'):
