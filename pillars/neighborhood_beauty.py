@@ -318,29 +318,3 @@ def _check_calibration_guardrails(area_type: str, arch_score: float, tree_score:
     trees_out_of_range = tree_score < trees_min or tree_score > trees_max
     
     return arch_out_of_range or trees_out_of_range
-
-
-def _score_nyc_trees(tree_count: int) -> float:
-    """Score NYC street trees."""
-    if tree_count >= 50:
-        return 50.0
-    elif tree_count >= 30:
-        return 40.0
-    elif tree_count >= 20:
-        return 30.0
-    elif tree_count >= 10:
-        return 20.0
-    else:
-        return tree_count * 1.5
-
-
-def _score_tree_canopy(canopy_pct: float) -> float:
-    """Score tree canopy with a softened, piecewise-linear curve."""
-    canopy = max(0.0, min(100.0, canopy_pct))
-    if canopy <= 20.0:
-        return canopy * 1.1
-    if canopy <= 55.0:
-        return 22.0 + (canopy - 20.0) * 0.7
-    if canopy <= 70.0:
-        return 46.5 + (canopy - 55.0) * 0.25
-    return 50.0

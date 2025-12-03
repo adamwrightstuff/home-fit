@@ -1181,7 +1181,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         # Use centralized helper function for consistency
         # Fetch historic data using shared helper to avoid duplicate API calls
         from data_sources.data_quality import get_effective_area_type
-        from pillars.neighborhood_beauty import _fetch_historic_data
+        from pillars.built_beauty import _fetch_historic_data
         
         # Get historic markers for historic district detection using shared helper
         historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)

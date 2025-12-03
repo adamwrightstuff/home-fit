@@ -669,3 +669,5 @@ def get_[pillar]_score(lat, lon, area_type, ...):
 
 
 
+
+
