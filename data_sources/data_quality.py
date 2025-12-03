@@ -477,6 +477,227 @@ def get_contextual_tags(
     return tags
 
 
+# ============================================================================
+# MULTINOMIAL REGRESSION MODEL FOR AREA TYPE CLASSIFICATION
+# Data-driven classification using normalized Built Beauty features
+# Source: Statistical modeling using Target Area Types and normalized features
+# Method: Multinomial logistic regression (8 features, independent of Built Beauty scoring)
+# ============================================================================
+
+MULTINOMIAL_AREA_TYPE_COEFFICIENTS = {
+    "exurban": {
+        "intercept": 0.20761405025624194,
+        "coefficients": {
+            "Norm Built Cov": 0.3590586545936481,
+            "Norm Type Div": -0.3115619631157194,
+            "Norm Height Div": -0.2766447795166732,
+            "Norm Footprint Var": -0.2590696996291898,
+            "Norm Landmark": -0.2370934280893511,
+            "Norm Year Built": 0.01577499531380857,
+            "Norm Brick Share": -0.18937413861284594,
+            "Norm Rowhouse": -0.021474180002737275,
+        }
+    },
+    "historic_urban": {
+        "intercept": 0.6914806445450764,
+        "coefficients": {
+            "Norm Built Cov": 0.020289523686234268,
+            "Norm Type Div": 0.1592729062407413,
+            "Norm Height Div": -0.13220763939436003,
+            "Norm Footprint Var": -0.12800627087300052,
+            "Norm Landmark": 1.3315674582072535,
+            "Norm Year Built": -0.12099243183682491,
+            "Norm Brick Share": 0.6980389363234232,
+            "Norm Rowhouse": -0.017140960595401198,
+        }
+    },
+    "rural": {
+        "intercept": -0.8348309204849941,
+        "coefficients": {
+            "Norm Built Cov": -0.31387392860898457,
+            "Norm Type Div": 0.46153392817709175,
+            "Norm Height Div": 0.28145598925730713,
+            "Norm Footprint Var": 0.45814393487553254,
+            "Norm Landmark": -0.19819514865300725,
+            "Norm Year Built": 0.4113015309298016,
+            "Norm Brick Share": 0.06862705290186479,
+            "Norm Rowhouse": 0.08153023750915208,
+        }
+    },
+    "suburban": {
+        "intercept": 0.933302707412065,
+        "coefficients": {
+            "Norm Built Cov": 0.3783281292212452,
+            "Norm Type Div": 0.3763232115736111,
+            "Norm Height Div": -0.07761092769097764,
+            "Norm Footprint Var": -0.15678112903848674,
+            "Norm Landmark": -0.050653919033229545,
+            "Norm Year Built": 0.032920229711637355,
+            "Norm Brick Share": -0.3188935163798173,
+            "Norm Rowhouse": -0.10679403459775803,
+        }
+    },
+    "urban_core": {
+        "intercept": -0.4024504113915743,
+        "coefficients": {
+            "Norm Built Cov": 0.503502527902884,
+            "Norm Type Div": -0.3142197350669519,
+            "Norm Height Div": 0.06811726226017253,
+            "Norm Footprint Var": 0.21608310198742707,
+            "Norm Landmark": -0.15318717007103323,
+            "Norm Year Built": -0.07395833581147823,
+            "Norm Brick Share": -0.17736691312343665,
+            "Norm Rowhouse": -0.06406004803009237,
+        }
+    },
+    "urban_core_lowrise": {
+        "intercept": -0.8750944244875635,
+        "coefficients": {
+            "Norm Built Cov": -0.9823934820644601,
+            "Norm Type Div": 0.6683892937428421,
+            "Norm Height Div": -0.6819633143108803,
+            "Norm Footprint Var": -0.23117086282771,
+            "Norm Landmark": -0.11727739137567907,
+            "Norm Year Built": -0.16291977268409908,
+            "Norm Brick Share": -0.12362125252289846,
+            "Norm Rowhouse": 0.2569813611254871,
+        }
+    },
+    "urban_residential": {
+        "intercept": 0.27997835415074795,
+        "coefficients": {
+            "Norm Built Cov": 0.2119219624687688,
+            "Norm Type Div": -0.503827181413187,
+            "Norm Height Div": 0.031651517289995046,
+            "Norm Footprint Var": 0.23979929346426093,
+            "Norm Landmark": 0.6326910200126681,
+            "Norm Year Built": -0.09852647004872206,
+            "Norm Brick Share": -0.1012760498589381,
+            "Norm Rowhouse": 0.5718355805910625,
+        }
+    },
+}
+
+
+def _normalize_features_for_classification(
+    built_coverage_ratio: Optional[float],
+    building_type_diversity: Optional[float],
+    levels_entropy: Optional[float],
+    footprint_area_cv: Optional[float],
+    historic_landmarks: Optional[int],
+    median_year_built: Optional[int],
+    material_profile: Optional[Dict[str, Any]],
+    rowhouse_indicator: float = 0.0
+) -> Dict[str, float]:
+    """
+    Normalize features for multinomial regression area type classification.
+    
+    Normalizes 8 features to 0-1 range for use with multinomial regression model.
+    All features are available early (independent of Built Beauty scoring).
+    
+    Args:
+        built_coverage_ratio: Building coverage ratio (0.0-1.0)
+        building_type_diversity: Building type diversity (0-100)
+        levels_entropy: Height diversity (0-100)
+        footprint_area_cv: Footprint coefficient of variation (0-100)
+        historic_landmarks: Count of historic landmarks
+        median_year_built: Median year buildings were built
+        material_profile: Material profile dict with brick share
+        rowhouse_indicator: Rowhouse indicator (0.0-1.0)
+    
+    Returns:
+        Dict of normalized feature values (0-1 range)
+    """
+    def _clamp01(value: float) -> float:
+        return max(0.0, min(1.0, value))
+    
+    normalized = {}
+    
+    # Norm Built Cov: built_coverage_ratio (0.0-1.0) → already normalized
+    normalized["Norm Built Cov"] = _clamp01(built_coverage_ratio if built_coverage_ratio is not None else 0.0)
+    
+    # Norm Type Div: building_type_diversity (0-100) → 0-1
+    normalized["Norm Type Div"] = _clamp01(building_type_diversity / 100.0 if building_type_diversity is not None else 0.0)
+    
+    # Norm Height Div: levels_entropy (0-100) → 0-1
+    normalized["Norm Height Div"] = _clamp01(levels_entropy / 100.0 if levels_entropy is not None else 0.0)
+    
+    # Norm Footprint Var: footprint_area_cv (0-100) → 0-1
+    normalized["Norm Footprint Var"] = _clamp01(footprint_area_cv / 100.0 if footprint_area_cv is not None else 0.0)
+    
+    # Norm Landmark: historic_landmarks count → 0-1 (normalize 0-20 landmarks)
+    normalized["Norm Landmark"] = _clamp01((historic_landmarks or 0) / 20.0)
+    
+    # Norm Year Built: median_year_built → 0-1 (inverted: older = higher)
+    # Normalize: 0 years old (2024) = 0.0, 224 years old (1800) = 1.0
+    if median_year_built is not None:
+        from datetime import datetime
+        current_year = datetime.utcnow().year
+        age_years = max(0.0, current_year - median_year_built)
+        normalized["Norm Year Built"] = _clamp01(age_years / 224.0)
+    else:
+        normalized["Norm Year Built"] = 0.0
+    
+    # Norm Brick Share: extract from material_profile
+    brick_share = 0.0
+    if material_profile and isinstance(material_profile, dict):
+        materials = material_profile.get("materials", {})
+        if isinstance(materials, dict):
+            total_tagged = sum(materials.values())
+            if total_tagged > 0:
+                brick_count = materials.get("brick", 0) + materials.get("stone", 0)  # Stone often similar aesthetic
+                brick_share = brick_count / total_tagged
+    normalized["Norm Brick Share"] = _clamp01(brick_share)
+    
+    # Norm Rowhouse: rowhouse_indicator (0.0-1.0) → already normalized
+    normalized["Norm Rowhouse"] = _clamp01(rowhouse_indicator)
+    
+    return normalized
+
+
+def predict_area_type_with_multinomial(
+    normalized_features: Dict[str, float]
+) -> Tuple[str, Dict[str, float]]:
+    """
+    Predict area type using multinomial logistic regression.
+    
+    This is a data-driven alternative to rule-based classification.
+    Uses normalized features (8 features, independent of Built Beauty scoring).
+    
+    Args:
+        normalized_features: Dict of normalized feature values (0-1 range)
+            Required keys: All 8 feature names from MULTINOMIAL_AREA_TYPE_COEFFICIENTS
+    
+    Returns:
+        Tuple of (predicted_area_type, class_probabilities_dict)
+    """
+    # Compute logits for each class
+    logits = {}
+    for class_name, class_data in MULTINOMIAL_AREA_TYPE_COEFFICIENTS.items():
+        intercept = class_data["intercept"]
+        coefficients = class_data["coefficients"]
+        
+        # Compute: intercept + sum(coefficient * feature)
+        logit = intercept
+        for feature_name, coefficient in coefficients.items():
+            feature_value = normalized_features.get(feature_name, 0.0)
+            logit += coefficient * feature_value
+        
+        logits[class_name] = logit
+    
+    # Apply softmax to get probabilities
+    # Softmax: exp(logit) / sum(exp(logit) for all classes)
+    max_logit = max(logits.values())
+    exp_logits = {k: math.exp(v - max_logit) for k, v in logits.items()}  # Subtract max for numerical stability
+    sum_exp = sum(exp_logits.values())
+    probabilities = {k: v / sum_exp for k, v in exp_logits.items()}
+    
+    # Return class with highest probability
+    predicted_class = max(probabilities.items(), key=lambda x: x[1])[0]
+    
+    return predicted_class, probabilities
+
+
 def get_classification_with_tags(
     lat: float,
     lon: float,
@@ -655,206 +876,153 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
     return _finalize(base_type)
 
 
-def get_effective_area_type(area_type: str, density: Optional[float],
-                           levels_entropy: Optional[float] = None,
-                           building_type_diversity: Optional[float] = None,
-                           historic_landmarks: Optional[int] = None,
-                           median_year_built: Optional[int] = None,
-                           built_coverage_ratio: Optional[float] = None,
-                           footprint_area_cv: Optional[float] = None,
-                           business_count: Optional[int] = None,
-                           use_new_system: bool = True) -> str:
+def _compute_rowhouse_indicator(
+    levels_entropy: Optional[float],
+    building_type_diversity: Optional[float],
+    footprint_area_cv: Optional[float]
+) -> float:
     """
-    Determine effective area type including architectural subtypes.
+    Compute rowhouse indicator (0.0-1.0) from architectural diversity metrics.
     
-    NEW SYSTEM (use_new_system=True, default): Uses contextual tags instead of separate subtypes.
-    OLD SYSTEM (use_new_system=False): Returns legacy subtypes for backward compatibility.
+    Rowhouse districts have uniform architecture with consistent footprints.
+    Based on get_contextual_tags() logic for rowhouse detection.
     
-    The new system maps tags to legacy effective types for backward compatibility:
-    - urban_residential: Dense + uniform architecture (Park Slope brownstones)
-    - historic_urban: Historic + organic diversity (Greenwich Village, Georgetown)
-    - urban_core_lowrise: Dense + moderate diversity (Santa Barbara, Old Town Alexandria)
+    Args:
+        levels_entropy: Height diversity (0-100)
+        building_type_diversity: Type diversity (0-100)
+        footprint_area_cv: Footprint coefficient of variation (0-100)
+    
+    Returns:
+        Rowhouse indicator (0.0-1.0)
+    """
+    if levels_entropy is None or building_type_diversity is None:
+        return 0.0
+    
+    # Check for consistent footprint pattern (low CV = uniform sizes)
+    if footprint_area_cv is not None and footprint_area_cv < 50:
+        if levels_entropy < 20 and building_type_diversity < 35:
+            return 1.0
+    
+    # Also check if very uniform (very low diversity) even without footprint data
+    if levels_entropy < 15 and building_type_diversity < 25:
+        return 0.8  # High confidence but slightly lower without footprint confirmation
+    
+    return 0.0
+
+
+def get_effective_area_type(
+    area_type: str,
+    density: Optional[float],
+    levels_entropy: Optional[float] = None,
+    building_type_diversity: Optional[float] = None,
+    historic_landmarks: Optional[int] = None,
+    median_year_built: Optional[int] = None,
+    built_coverage_ratio: Optional[float] = None,
+    footprint_area_cv: Optional[float] = None,
+    business_count: Optional[int] = None,
+    pre_1940_pct: Optional[float] = None,
+    material_profile: Optional[Dict[str, Any]] = None,
+    use_multinomial: bool = True
+) -> str:
+    """
+    Determine effective area type using multinomial logistic regression.
+    
+    **NEW SYSTEM (use_multinomial=True, default):** Uses data-driven multinomial regression
+    model trained on normalized Built Beauty features. This replaces rule-based mapping
+    with statistical modeling per DESIGN_PRINCIPLES.md Addendum.
+    
+    **FALLBACK SYSTEM (use_multinomial=False):** Uses rule-based tag mapping for backward
+    compatibility when features are missing.
+    
+    The multinomial model predicts effective types directly:
+    - urban_core, suburban, exurban, rural (base types)
+    - historic_urban, urban_core_lowrise, urban_residential (architectural subtypes)
     
     Args:
         area_type: Base area type from detect_area_type() ('urban_core', 'suburban', etc.)
         density: Population density (people/km²)
-        levels_entropy: Optional height diversity metric (for subtype detection)
-        building_type_diversity: Optional type diversity metric (for subtype detection)
+        levels_entropy: Optional height diversity metric (0-100)
+        building_type_diversity: Optional type diversity metric (0-100)
         historic_landmarks: Optional count of historic landmarks from OSM
         median_year_built: Optional median year buildings were built
-        built_coverage_ratio: Optional coverage ratio (0-1) to distinguish leafy historic cores
+        built_coverage_ratio: Optional coverage ratio (0.0-1.0)
         footprint_area_cv: Optional coefficient of variation for building footprints (0-100)
         business_count: Optional business count (for mixed-use tag)
-        use_new_system: If True (default), use new tagging system
+        pre_1940_pct: Optional pre-1940 percentage (for historic detection)
+        material_profile: Optional material profile dict (for brick share)
+        use_multinomial: If True (default), use multinomial regression model
     
     Returns:
-        Effective area type string (for backward compatibility):
-        - 'urban_residential': Dense + uniform architecture
-        - 'historic_urban': Historic + organic diversity
-        - 'urban_core_lowrise': Dense + moderate diversity
-        - Original area_type: Otherwise
+        Effective area type string:
+        - 'urban_core', 'suburban', 'exurban', 'rural' (base types)
+        - 'historic_urban', 'urban_core_lowrise', 'urban_residential' (architectural subtypes)
     """
-    # NEW SYSTEM: Use tags instead of separate subtypes (default)
-    if use_new_system:
-        tags = get_contextual_tags(
-            area_type, density, built_coverage_ratio, median_year_built,
-            historic_landmarks, business_count, levels_entropy,
-            building_type_diversity, footprint_area_cv
+    # MULTINOMIAL REGRESSION SYSTEM (default)
+    if use_multinomial:
+        # Check if we have minimum required features for multinomial regression
+        # Need: built_coverage_ratio, building_type_diversity, levels_entropy, footprint_area_cv
+        has_minimum_features = (
+            built_coverage_ratio is not None and
+            building_type_diversity is not None and
+            levels_entropy is not None and
+            footprint_area_cv is not None
         )
         
-        # Map tags to legacy effective types for backward compatibility
-        # This allows gradual migration while using new continuous scoring
-        # NOTE: Suburban areas with historic tags stay as "suburban" - use tags for scoring adjustments
-        if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
-            if 'rowhouse' in tags or 'uniform' in tags:
-                # Historic + uniform = urban_residential (Park Slope pattern)
-                return "urban_residential"
-            else:
-                # Historic + diverse = historic_urban (Georgetown pattern)
-                return "historic_urban"
-        elif 'lowrise' in tags and area_type == 'urban_core':
-            return "urban_core_lowrise"
-        elif 'rowhouse' in tags and area_type == 'urban_core':
+        if has_minimum_features:
+            try:
+                # Compute rowhouse indicator
+                rowhouse_indicator = _compute_rowhouse_indicator(
+                    levels_entropy,
+                    building_type_diversity,
+                    footprint_area_cv
+                )
+                
+                # Normalize features
+                normalized_features = _normalize_features_for_classification(
+                    built_coverage_ratio,
+                    building_type_diversity,
+                    levels_entropy,
+                    footprint_area_cv,
+                    historic_landmarks,
+                    median_year_built,
+                    material_profile,
+                    rowhouse_indicator
+                )
+                
+                # Predict using multinomial regression
+                predicted_type, probabilities = predict_area_type_with_multinomial(normalized_features)
+                
+                logger.debug(
+                    f"Multinomial regression predicted: {predicted_type} "
+                    f"(probabilities: {probabilities})"
+                )
+                
+                return predicted_type
+                
+            except Exception as e:
+                logger.warning(f"Multinomial regression failed, using fallback: {e}")
+                # Fall through to fallback system
+    
+    # FALLBACK SYSTEM: Use rule-based tag mapping (backward compatibility)
+    tags = get_contextual_tags(
+        area_type, density, built_coverage_ratio, median_year_built,
+        historic_landmarks, business_count, levels_entropy,
+        building_type_diversity, footprint_area_cv, pre_1940_pct
+    )
+    
+    # Map tags to legacy effective types for backward compatibility
+    if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
+        if 'rowhouse' in tags or 'uniform' in tags:
             return "urban_residential"
-        
-        # No special tags, return base type
-        return area_type
-    
-    # OLD SYSTEM: Legacy logic for backward compatibility
-    effective = area_type
-    
-    # Helper: Check if area is historic
-    landmark_count = historic_landmarks or 0
-    coverage_ratio = built_coverage_ratio or 0.0
-    census_historic = median_year_built is not None and median_year_built < 1950
-
-    def is_historic() -> bool:
-        if census_historic:
-            return True
-        if landmark_count >= 12:
-            return True
-        return False
-    
-    # Helper: Check if area is very historic (pre-1940)
-    def is_very_historic() -> bool:
-        if median_year_built is not None and median_year_built < 1940:
-            return True
-        return False
-    
-    # Only proceed if we have required metrics for architectural subtypes
-    if not (levels_entropy is not None and building_type_diversity is not None):
-        return effective
-    
-    # Priority 1: Urban residential (uniform architecture)
-    # Applies to dense urban areas with uniform architecture (Park Slope pattern)
-    # Also applies to historic districts with intentional uniformity
-    if effective == "urban_core" and density:
-        # Very dense (>)10000) with uniform architecture
-        if density > 10000:
-            if levels_entropy < 20 and building_type_diversity < 30:
-                return "urban_residential"
-        
-        # Historic districts: Moderate density (2500-10000) with uniform architecture
-        if 2500 <= density < 10000 and is_historic():
-            if is_very_historic():
-                # Very historic (<1940): uniform height + moderate type diversity acceptable
-                if levels_entropy < 20 and building_type_diversity < 35:
-                    if built_coverage_ratio is not None and built_coverage_ratio <= 0.24:
-                        return "historic_urban"
-                    return "urban_residential"
-            else:
-                # Standard historic: stricter uniformity requirements
-                if levels_entropy < 15 and building_type_diversity < 20:
-                    return "urban_residential"
-    
-    # Priority 2: Historic urban (organic diversity in historic neighborhoods)
-    # Applies to historic areas with moderate diversity (not uniform like Park Slope)
-    # Examples: Greenwich Village, Georgetown (organic growth patterns)
-    # PRIORITIZED: If Census indicates historic (more reliable than OSM), be more forgiving
-    if effective in ("urban_core", "urban_core_lowrise", "suburban") and density and density > 2500:
-        if is_historic():
-            allow_historic_upgrade = True
-            if effective in ("urban_core", "urban_core_lowrise"):
-                allow_historic_upgrade = (
-                    census_historic
-                    and landmark_count >= 15
-                    and 0.15 <= coverage_ratio <= 0.42
-                )
-            elif effective == "suburban":
-                allow_historic_upgrade = (
-                    density >= 8000 and coverage_ratio >= 0.22 and landmark_count >= 10
-                )
-            if allow_historic_upgrade:
-                if median_year_built and median_year_built >= 1980:
-                    allow_historic_upgrade = False
-                # Organic historic pattern: moderate diversity from centuries of growth
-                # Height: 15-70 (moderate variation, 2-6 stories)
-                # Type: 25-85 (mixed-use historic neighborhoods)
-                # Not uniform enough for urban_residential, not skyscraper diverse
-
-                # If Census confirms historic, be more forgiving with diversity thresholds
-                # This handles neighborhoods where OSM diversity metrics vary slightly
-                if census_historic:
-                    # Census-based historic: More forgiving thresholds for coordinate variance
-                    # Allow slightly wider range to handle block-to-block variation
-                    if (5 < levels_entropy < 80 and 15 < building_type_diversity < 92):
-                        # Don't override if already classified as uniform (urban_residential)
-                        if effective != "urban_residential":
-                            return "historic_urban"
-                else:
-                    # OSM landmark-based historic: Use stricter thresholds (original logic)
-                    if (
-                        landmark_count >= 12
-                        and (10 < levels_entropy < 70)
-                        and (20 < building_type_diversity < 85)
-                    ):
-                        # Don't override if already classified as uniform (urban_residential)
-                        if effective != "urban_residential":
-                            return "historic_urban"
-    
-    # Priority 3: Urban core lowrise (moderate diversity, not uniform)
-    # Applies to dense urban areas with moderate diversity (not uniform like Levittown/Carmel)
-    # Only applies to urban_core base (not suburban) - respects base classification
-    # Dense suburbs (Bronxville, Redondo Beach, Manhattan Beach) should stay as suburban
-    # Urban core lowrise (Santa Barbara, Old Town Alexandria) start as urban_core
-    if effective == "urban_core" and density:
-        # Case 1: High density (>10000) with moderate diversity
-        if density > 10000:
-            # Standard: Moderate height diversity (20-60)
-            if 20 < levels_entropy < 60 and 20 < building_type_diversity < 80:
-                if effective not in ("urban_residential", "historic_urban"):
-                    return "urban_core_lowrise"
-            # Low-rise variant: Low height diversity (<20) but moderate type diversity
-            # Catches coastal cities, edge cities, and other dense low-rise areas
-            # Examples: Santa Barbara, Old Town Alexandria (dense urban, not suburbs)
-            if levels_entropy < 20 and 20 < building_type_diversity < 80:
-                if effective not in ("urban_residential", "historic_urban"):
-                    return "urban_core_lowrise"
-        # Case 2: Moderate density (2500-10000) with moderate diversity
-        elif 2500 <= density < 10000:
-            # Standard: Moderate height diversity (15-60)
-            if 15 < levels_entropy < 60 and 20 < building_type_diversity < 80:
-                if effective not in ("urban_residential", "historic_urban"):
-                    return "urban_core_lowrise"
-            # Low-rise variant: Low height diversity (<15) but moderate type diversity
-            # Catches estate suburbs and other dense low-rise areas (e.g., Beverly Hills)
-            if levels_entropy < 15 and 20 < building_type_diversity < 80:
-                if effective not in ("urban_residential", "historic_urban"):
-                    return "urban_core_lowrise"
-    
-    if effective in ("exurban", "rural"):
-        density_ok = density is None or density >= 250
-        if census_historic and coverage_ratio >= 0.12 and density_ok:
+        else:
             return "historic_urban"
-        if landmark_count >= 8 and coverage_ratio >= 0.14 and density_ok:
-            return "historic_urban"
-        if landmark_count >= 40 and coverage_ratio >= 0.05:
-            return "historic_urban"
-        if (footprint_area_cv is not None and coverage_ratio >= 0.18
-                and footprint_area_cv >= 85.0):
-            return "historic_urban"
-
-    return effective
+    elif 'lowrise' in tags and area_type == 'urban_core':
+        return "urban_core_lowrise"
+    elif 'rowhouse' in tags and area_type == 'urban_core':
+        return "urban_residential"
+    
+    # No special tags, return base type
+    return area_type
 
 
 def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict] = None) -> str:

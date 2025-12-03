@@ -171,16 +171,19 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
         
-        # Get effective area type (backward compatible) for metadata
+        # Get effective area type using multinomial regression (data-driven)
         effective_area_type = get_effective_area_type(
             area_type,
             density,
-            diversity_metrics.get("levels_entropy"),
-            diversity_metrics.get("building_type_diversity"),
+            levels_entropy=diversity_metrics.get("levels_entropy"),
+            building_type_diversity=diversity_metrics.get("building_type_diversity"),
             historic_landmarks=historic_landmarks,
             median_year_built=median_year_built,
             built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
-            footprint_area_cv=diversity_metrics.get("footprint_area_cv")
+            footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
+            pre_1940_pct=pre_1940_pct,
+            material_profile=diversity_metrics.get("material_profile"),
+            use_multinomial=True
         )
 
         def _r2(value):
