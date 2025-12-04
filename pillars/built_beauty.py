@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple
 from logging_config import get_logger
 
 from data_sources import osm_api
+from data_sources.data_quality import assess_pillar_data_quality
 from data_sources.radius_profiles import get_radius_profile
 from pillars.beauty_common import BUILT_ENHANCER_CAP, normalize_beauty_score
 
@@ -346,6 +347,15 @@ def calculate_built_beauty(lat: float,
         "source": "built_beauty"
     }
 
+    # Assess data quality (consistent with other pillars)
+    combined_data = {
+        "architectural_analysis": arch_details,
+        "enhancers": enhancers_data or {},
+    }
+    quality_metrics = assess_pillar_data_quality(
+        "built_beauty", combined_data, lat, lon, effective_area_type or area_type or "suburban"
+    )
+
     return {
         "score": built_score_norm,
         "score_before_normalization": built_score_raw,
@@ -355,7 +365,8 @@ def calculate_built_beauty(lat: float,
         "enhancers": enhancers_data,
         "built_bonus_raw": built_bonus_raw,
         "built_bonus_scaled": built_bonus_scaled,
-        "effective_area_type": effective_area_type
+        "effective_area_type": effective_area_type,
+        "data_quality": quality_metrics
     }
 
 

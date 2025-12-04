@@ -773,8 +773,8 @@ def get_livability_score(request: Request,
             },
             "summary": {},
             "details": built_details,
-            "confidence": built_details.get("architectural_analysis", {}).get("confidence_0_1", 0) if isinstance(built_details.get("architectural_analysis"), dict) else 0,
-            "data_quality": {},
+            "confidence": built_calc.get("data_quality", {}).get("confidence", 0) if built_calc else (built_details.get("architectural_analysis", {}).get("confidence_0_1", 0) if isinstance(built_details.get("architectural_analysis"), dict) else 0),
+            "data_quality": built_calc.get("data_quality", {}) if built_calc else {},
             "area_classification": {}
         },
         "natural_beauty": {
@@ -787,8 +787,8 @@ def get_livability_score(request: Request,
             },
             "summary": {},
             "details": natural_details,
-            "confidence": natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0,
-            "data_quality": {},
+            "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
+            "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
             "area_classification": {}
         },
         "neighborhood_amenities": {

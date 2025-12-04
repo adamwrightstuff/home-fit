@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from logging_config import get_logger
 
 from data_sources import osm_api
+from data_sources.data_quality import assess_pillar_data_quality
 from data_sources.radius_profiles import get_radius_profile
 from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
 
@@ -1484,6 +1485,16 @@ def calculate_natural_beauty(lat: float,
         for anomaly in validation_result["anomalies"]:
             logger.warning("Natural beauty anomaly: %s", anomaly)
 
+    # Assess data quality (consistent with other pillars)
+    combined_data = {
+        "tree_analysis": tree_details,
+        "enhancers": enhancers_data or {},
+        "scenic_metadata": scenic_meta,
+    }
+    quality_metrics = assess_pillar_data_quality(
+        "natural_beauty", combined_data, lat, lon, area_type or "suburban"
+    )
+
     return {
         "tree_score_0_50": tree_score,
         "details": tree_details,
@@ -1497,6 +1508,7 @@ def calculate_natural_beauty(lat: float,
         "score": natural_score_norm,
         "normalization": natural_norm_meta,
         "validation": validation_result,  # Include validation results in response
+        "data_quality": quality_metrics
     }
 
 
