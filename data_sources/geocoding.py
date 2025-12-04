@@ -458,10 +458,11 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
             
             # If bounding box search failed, try radius search from relation center
             # This catches cases where place=city node is outside the relation boundary
-            if member_nodes:
+            if member_nodes and len(lats) > 0 and len(lons) > 0:
                 # Calculate relation center from member nodes
-                center_lat = sum(lats) / len(lats)
-                center_lon = sum(lons) / len(lons)
+                # Protect against empty lists (shouldn't happen, but safety check)
+                center_lat = sum(lats) / len(lats) if lats else 0.0
+                center_lon = sum(lons) / len(lons) if lons else 0.0
                 
                 # Search for place=city/town nodes within 5km of relation center
                 print(f"🔍 Bounding box search failed, trying radius search (5km) from relation center ({center_lat:.6f}, {center_lon:.6f})...")

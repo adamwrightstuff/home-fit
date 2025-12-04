@@ -1397,7 +1397,7 @@ def _get_nearby_routes(lat: float, lon: float, radius_m: int = 1500) -> List[Dic
             "route_type_breakdown": route_type_breakdown
         })
         
-        if route_distances:
+        if route_distances and len(route_distances) > 0:
             avg_distance = sum(route_distances) / len(route_distances)
             max_distance = max(route_distances)
             min_distance = min(route_distances)

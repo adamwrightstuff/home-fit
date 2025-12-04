@@ -905,8 +905,9 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         segment_variances = []
         
         for segment_id, setbacks in segment_setbacks.items():
-            if len(setbacks) >= MIN_BUILDINGS_PER_SEGMENT:
+            if len(setbacks) >= MIN_BUILDINGS_PER_SEGMENT and len(setbacks) > 0:
                 # Calculate variance for this segment
+                # Additional safety check (len(setbacks) > 0) even though >= MIN_BUILDINGS_PER_SEGMENT should ensure this
                 mean_setback = sum(setbacks) / len(setbacks)
                 variance = sum((s - mean_setback) ** 2 for s in setbacks) / len(setbacks)
                 segment_variances.append(variance)

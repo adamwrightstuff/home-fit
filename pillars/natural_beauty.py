@@ -1348,9 +1348,10 @@ def _apply_component_dominance_guard(context_bonus_raw: float,
         return context_bonus_raw
     
     max_component = max(component_scores.values()) if component_scores.values() else 0.0
-    if context_bonus_raw > 0 and max_component / context_bonus_raw > MAX_COMPONENT_DOMINANCE_RATIO:
+    if context_bonus_raw > 0 and max_component > 0 and max_component / context_bonus_raw > MAX_COMPONENT_DOMINANCE_RATIO:
         # Scale down the dominant component
-        scale_factor = (context_bonus_raw * MAX_COMPONENT_DOMINANCE_RATIO) / max_component
+        # Protect against zero max_component
+        scale_factor = (context_bonus_raw * MAX_COMPONENT_DOMINANCE_RATIO) / max_component if max_component > 0 else 1.0
         # Apply gentle scaling (10% reduction) to prevent sudden jumps
         adjusted_bonus = context_bonus_raw * (1.0 - (1.0 - scale_factor) * 0.1)
         logger.warning(

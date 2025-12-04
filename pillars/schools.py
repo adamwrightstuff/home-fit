@@ -186,7 +186,11 @@ def get_school_data(
         schools_by_level[level] = schools_by_level[level][:3]
 
     # Calculate average with quality boost for high-performing districts
-    avg_rating = sum(all_ratings) / len(all_ratings)
+    # Protect against empty list
+    if len(all_ratings) > 0:
+        avg_rating = sum(all_ratings) / len(all_ratings)
+    else:
+        avg_rating = 0.0
     
     # Count excellent schools (80+) and apply district quality boost
     excellent_schools = sum(1 for r in all_ratings if r >= 80)

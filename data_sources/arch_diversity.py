@@ -324,7 +324,11 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     if len(areas) >= 2:
         mean_area = sum(areas)/len(areas)
         var = sum((a-mean_area)**2 for a in areas)/len(areas)
-        cv = (var ** 0.5) / mean_area
+        # Protect against zero mean_area (all areas are 0)
+        if mean_area > 0:
+            cv = (var ** 0.5) / mean_area
+        else:
+            cv = 0.0  # If all areas are 0, coefficient of variation is 0
         # Rescale CV based on observed distribution (95th percentile ~3.0 CV in practice)
         # This makes 100 truly mean "extremely inconsistent" not just "maxed out"
         # Typical CV values: 0.0-0.5 = very consistent, 0.5-1.5 = moderate, 1.5-3.0 = high, 3.0+ = extreme
