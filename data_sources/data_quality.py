@@ -1454,6 +1454,12 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
         completeness, data_sources, False  # needs_fallback always False
     )
     
+    # Validation: Ensure quality_tier is always a string
+    valid_tiers = ['excellent', 'good', 'fair', 'poor', 'very_poor']
+    if not isinstance(quality_tier, str) or quality_tier not in valid_tiers:
+        logger.warning(f"Invalid quality_tier '{quality_tier}' (type: {type(quality_tier)}), defaulting to 'fair'")
+        quality_tier = 'fair'
+    
     return {
         'completeness': completeness,
         'quality_tier': quality_tier,

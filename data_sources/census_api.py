@@ -361,14 +361,44 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             print("   ⚠️  No housing data returned")
             return None
 
-        # Parse values (handle nulls)
-        median_value = float(data[1][0]) if data[1][0] and data[1][0] != "-666666666" else None
-        median_income = float(data[1][1]) if data[1][1] and data[1][1] != "-666666666" else None
-        median_rooms = float(data[1][2]) if data[1][2] and data[1][2] != "-666666666" else None
+        # Parse values (handle nulls and error codes)
+        # Census error codes: -666666666 (null), -999999999 (median cannot be calculated),
+        # -888888888 (median falls in lowest interval), -555555555 (median falls in highest interval)
+        def parse_census_value(value_str):
+            """Parse Census value, handling error codes."""
+            if not value_str:
+                return None
+            value_str = str(value_str).strip()
+            # Check for error codes (all negative codes indicate data issues)
+            if value_str.startswith("-") or value_str in ["-666666666", "-999999999", "-888888888", "-555555555"]:
+                return None
+            try:
+                value = float(value_str)
+                # Additional validation: reject negative values (except error codes already handled)
+                if value < 0:
+                    return None
+                return value
+            except (ValueError, TypeError):
+                return None
+
+        median_value = parse_census_value(data[1][0])
+        median_income = parse_census_value(data[1][1])
+        median_rooms = parse_census_value(data[1][2])
 
         if not median_value or not median_income or not median_rooms:
-            print("   ⚠️  Incomplete housing data")
+            print("   ⚠️  Incomplete housing data (missing or error-coded values)")
             return None
+
+        # Validation: Flag suspiciously low income values
+        # Income below $30k is suspicious for most areas (could be student housing, etc.)
+        # This is a data quality warning, not a rejection
+        if median_income < 30000:
+            print(f"   ⚠️  WARNING: Median income ${int(median_income):,} seems unusually low")
+            print(f"      This may indicate student housing or unrepresentative tract data")
+
+        # Validation: Flag suspiciously low home values
+        if median_value < 50000:
+            print(f"   ⚠️  WARNING: Median home value ${int(median_value):,} seems unusually low")
 
         print(f"   ✅ Median home value: ${int(median_value):,}")
         print(f"   💰 Median household income: ${int(median_income):,}")
