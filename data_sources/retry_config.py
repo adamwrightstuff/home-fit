@@ -13,11 +13,12 @@ logger = get_logger(__name__)
 
 class RetryProfile(Enum):
     """Retry behavior profiles for different query types."""
-    CRITICAL = "critical"      # Critical queries (parks, healthcare, transit) - retry all attempts
+    CRITICAL = "critical"      # Critical queries (parks, transit) - retry all attempts
     STANDARD = "standard"       # Standard queries (amenities, housing) - moderate retries
     NON_CRITICAL = "non_critical"  # Non-critical queries (Phase 2/3 beauty metrics) - fail fast
     CENSUS = "census"           # Census API specific profile
     SCHOOLS = "schools"         # SchoolDigger API specific profile
+    HEALTHCARE = "healthcare"   # Healthcare queries - more retries, don't fail fast
 
 
 @dataclass
@@ -88,6 +89,15 @@ RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
         retry_on_timeout=True,
         retry_on_429=True,
     ),
+    RetryProfile.HEALTHCARE: RetryConfig(
+        max_attempts=5,  # More attempts than CRITICAL
+        base_wait=2.0,  # Longer base wait
+        fail_fast=False,  # Don't fail fast on rate limits - keep retrying
+        max_wait=20.0,  # Longer max wait for complex queries
+        exponential_backoff=True,
+        retry_on_timeout=True,
+        retry_on_429=True,
+    ),
 }
 
 
@@ -96,8 +106,8 @@ QUERY_TYPE_PROFILES: Dict[str, RetryProfile] = {
     # ALL queries are CRITICAL for scoring
     "parks": RetryProfile.CRITICAL,
     "green_spaces": RetryProfile.CRITICAL,
-    "healthcare": RetryProfile.CRITICAL,
-    "hospitals": RetryProfile.CRITICAL,
+    "healthcare": RetryProfile.HEALTHCARE,  # Use dedicated healthcare profile
+    "hospitals": RetryProfile.HEALTHCARE,  # Use dedicated healthcare profile
     "transit": RetryProfile.CRITICAL,
     "transit_routes": RetryProfile.CRITICAL,
     "transit_stops": RetryProfile.CRITICAL,

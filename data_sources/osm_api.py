@@ -2128,7 +2128,7 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=40)
+@handle_api_timeout(timeout_seconds=70)
 def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -> Optional[Dict]:
     """
     Query OSM for comprehensive healthcare facilities.
@@ -2145,7 +2145,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     # Simplified query - get all healthcare-related amenities
     # Reduced from 30+ queries to 9 queries for better performance
     query = f"""
-    [out:json][timeout:40];
+    [out:json][timeout:60];
     (
       // Healthcare amenities - nodes, ways, relations
       node["amenity"~"hospital|medical_centre|clinic|doctors|pharmacy|dentist|veterinary|emergency_ward"](around:{radius_m},{lat},{lon});
@@ -2171,7 +2171,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     """
     
     def _do_request():
-        return requests.post(get_overpass_url(), data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
+        return requests.post(get_overpass_url(), data={"data": query}, timeout=70, headers={"User-Agent": "HomeFit/1.0"})
     
     try:
         logger.debug(f"Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
