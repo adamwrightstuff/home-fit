@@ -576,7 +576,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     census_points: Optional[float] = None
     tree_radius_used: Optional[int] = None
     street_tree_feature_total = 0
-    primary_canopy_pct: Optional[float] = None
+    primary_canopy_pct: float = 0.0  # Always initialized, never None
     canopy_multi: Dict[str, Optional[float]] = {}
     gvi_metrics: Optional[Dict[str, float]] = None
     gvi_bonus = 0.0
@@ -595,9 +595,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     def _score_topography_component(metrics: Dict) -> float:
         if not metrics:
             return 0.0
+        # Always initialize with safe defaults
         relief = float(metrics.get("relief_range_m") or 0.0)
         slope_mean = float(metrics.get("slope_mean_deg") or 0.0)
         steep_fraction = float(metrics.get("steep_fraction") or 0.0)
+        
+        # Ensure all values are valid numbers
+        relief = 0.0 if not isinstance(relief, (int, float)) or math.isnan(relief) else max(0.0, relief)
+        slope_mean = 0.0 if not isinstance(slope_mean, (int, float)) or math.isnan(slope_mean) else max(0.0, slope_mean)
+        steep_fraction = 0.0 if not isinstance(steep_fraction, (int, float)) or math.isnan(steep_fraction) else max(0.0, min(1.0, steep_fraction))
 
         relief_factor = min(1.0, relief / 600.0)  # 600m relief → full credit
         slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
@@ -613,12 +619,21 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if not metrics:
             return 0.0, 0.0
 
+        # Always initialize with safe defaults and validate
         forest_pct = float(metrics.get("forest_pct") or 0.0)
         wetland_pct = float(metrics.get("wetland_pct") or 0.0)
         shrub_pct = float(metrics.get("shrub_pct") or 0.0)
         grass_pct = float(metrics.get("grass_pct") or 0.0)
         developed_pct = float(metrics.get("developed_pct") or 0.0)
         water_pct = float(metrics.get("water_pct") or 0.0)
+        
+        # Ensure all values are valid numbers and within reasonable bounds
+        forest_pct = 0.0 if not isinstance(forest_pct, (int, float)) or math.isnan(forest_pct) else max(0.0, min(100.0, forest_pct))
+        wetland_pct = 0.0 if not isinstance(wetland_pct, (int, float)) or math.isnan(wetland_pct) else max(0.0, min(100.0, wetland_pct))
+        shrub_pct = 0.0 if not isinstance(shrub_pct, (int, float)) or math.isnan(shrub_pct) else max(0.0, min(100.0, shrub_pct))
+        grass_pct = 0.0 if not isinstance(grass_pct, (int, float)) or math.isnan(grass_pct) else max(0.0, min(100.0, grass_pct))
+        developed_pct = 0.0 if not isinstance(developed_pct, (int, float)) or math.isnan(developed_pct) else max(0.0, min(100.0, developed_pct))
+        water_pct = 0.0 if not isinstance(water_pct, (int, float)) or math.isnan(water_pct) else max(0.0, min(100.0, water_pct))
 
         forest_factor = min(1.0, forest_pct / 40.0)  # 40% forest → full
         wetland_factor = min(1.0, wetland_pct / 10.0)
@@ -723,8 +738,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         from data_sources import census_api, data_quality
 
         # Use pre-computed density if provided, otherwise fetch it
+        # Always ensure density is initialized with safe default
         if density is None:
-            density = census_api.get_population_density(lat, lon)
+            try:
+                density = census_api.get_population_density(lat, lon)
+                if density is None:
+                    density = 0.0
+            except Exception as density_error:
+                logger.warning("Density lookup failed: %s, using default 0.0", density_error)
+                density = 0.0
+        
+        # Ensure density is never None
+        if density is None:
+            density = 0.0
         
         if area_type is None:
             detected_area_type = data_quality.detect_area_type(
@@ -746,27 +772,42 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         from data_sources.gee_api import get_tree_canopy_gee, get_urban_greenness_gee
 
         # Use pre-computed 5km canopy if available and radius matches, otherwise fetch
+        # Always initialize gee_canopy with safe default
+        gee_canopy: Optional[float] = None
         if precomputed_tree_canopy_5km is not None and radius_m == 5000:
             gee_canopy = precomputed_tree_canopy_5km
             logger.debug("Using pre-computed tree canopy (5km): %.1f%%", gee_canopy)
         else:
-            gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
+            try:
+                gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
+            except Exception as gee_error:
+                logger.warning("GEE canopy lookup failed: %s, using None", gee_error)
+                gee_canopy = None
 
         if location_scope != 'neighborhood' and gee_canopy is not None and gee_canopy < 25.0 and area_type == 'urban_core':
-            gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
-            if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
-                gee_canopy = gee_canopy_larger
-                tree_radius_used = 2000
-                if gee_canopy < 30.0:
-                    gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
-                    if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
-                        gee_canopy = gee_canopy_3km
-                        tree_radius_used = 3000
+            try:
+                gee_canopy_larger = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+                if gee_canopy_larger is not None and gee_canopy_larger > gee_canopy:
+                    gee_canopy = gee_canopy_larger
+                    tree_radius_used = 2000
+                    if gee_canopy < 30.0:
+                        try:
+                            gee_canopy_3km = get_tree_canopy_gee(lat, lon, radius_m=3000, area_type=area_type)
+                            if gee_canopy_3km is not None and gee_canopy_3km > gee_canopy:
+                                gee_canopy = gee_canopy_3km
+                                tree_radius_used = 3000
+                        except Exception:
+                            pass  # Fallback to 2km result
+            except Exception:
+                pass  # Fallback to original gee_canopy
         elif location_scope != 'neighborhood' and (gee_canopy is None or gee_canopy < 0.1) and area_type == 'urban_core':
-            gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
-            if gee_canopy is not None and gee_canopy >= 0.1:
-                tree_radius_used = 2000
-                logger.debug("Larger radius (2km) found %.1f%% canopy", gee_canopy)
+            try:
+                gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=2000, area_type=area_type)
+                if gee_canopy is not None and gee_canopy >= 0.1:
+                    tree_radius_used = 2000
+                    logger.debug("Larger radius (2km) found %.1f%% canopy", gee_canopy)
+            except Exception:
+                pass  # Keep original gee_canopy (None or < 0.1)
 
         if gee_canopy is not None and gee_canopy >= 0.1:
             canopy_score = _score_tree_canopy(gee_canopy)
@@ -918,12 +959,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     area_type_key = (area_type or "").lower() or "unknown"
     context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
     
-    topography_metrics = None
+    topography_metrics: Optional[Dict] = None
     if get_topography_context:
         try:
             topography_metrics = get_topography_context(lat, lon, radius_m=5000)
+            # Ensure topography_metrics is a valid dict
+            if not isinstance(topography_metrics, dict):
+                topography_metrics = None
         except Exception as exc:
-            logger.warning("Topography context lookup failed: %s", exc)
+            logger.warning("Topography context lookup failed: %s, using defaults", exc)
+            topography_metrics = None
+    
+    # Always initialize topography_score with safe default
+    topography_score = 0.0
     if topography_metrics:
         topography_score_raw = _score_topography_component(topography_metrics)
         
@@ -943,21 +991,29 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 pass  # Fallback to 1.0 if climate detection fails
         
         # Apply area-type-specific weight, then arid boost
-        topography_score = topography_score_raw * context_weights["topography"] * topography_multiplier
+        # Ensure topography_score is always a valid number
+        topography_score_raw = _score_topography_component(topography_metrics)
+        topography_score = float(topography_score_raw * context_weights["topography"] * topography_multiplier)
+        if math.isnan(topography_score) or not isinstance(topography_score, (int, float)):
+            topography_score = 0.0
         natural_context_components["topography"] = round(topography_score, 2)
         natural_context_components["topography_raw"] = round(topography_score_raw, 2)
         natural_context_components["topography_multiplier"] = round(topography_multiplier, 2) if topography_multiplier != 1.0 else None
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
 
-    landcover_metrics = None
+    landcover_metrics: Optional[Dict] = None
     landcover_score = 0.0
     water_score = 0.0
     if get_landcover_context_gee:
         try:
             landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=3000)
+            # Ensure landcover_metrics is a valid dict
+            if not isinstance(landcover_metrics, dict):
+                landcover_metrics = None
         except Exception as exc:
-            logger.warning("Land cover context lookup failed: %s", exc)
+            logger.warning("Land cover context lookup failed: %s, using defaults", exc)
+            landcover_metrics = None
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")
@@ -970,8 +1026,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             landcover_metrics, area_type, lat, lon, elevation_m_for_water, topography_metrics
         )
         # Apply area-type-specific weights
-        landcover_score = landcover_score_raw * context_weights["landcover"]
-        water_score = water_score_raw * context_weights["water"]
+        # Ensure scores are always valid numbers
+        landcover_score_raw = float(landcover_score_raw) if isinstance(landcover_score_raw, (int, float)) and not math.isnan(landcover_score_raw) else 0.0
+        water_score_raw = float(water_score_raw) if isinstance(water_score_raw, (int, float)) and not math.isnan(water_score_raw) else 0.0
+        landcover_score = float(landcover_score_raw * context_weights["landcover"])
+        water_score = float(water_score_raw * context_weights["water"])
+        # Validate final scores
+        if math.isnan(landcover_score) or not isinstance(landcover_score, (int, float)):
+            landcover_score = 0.0
+        if math.isnan(water_score) or not isinstance(water_score, (int, float)):
+            water_score = 0.0
         natural_context_components["landcover"] = round(landcover_score, 2)
         natural_context_components["landcover_raw"] = round(landcover_score_raw, 2)
         natural_context_components["water"] = round(water_score, 2)
@@ -1066,9 +1130,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     legacy_base_expectation = CANOPY_EXPECTATIONS.get(area_type_key, CANOPY_EXPECTATIONS["unknown"])
     climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
     
+    # Ensure primary_canopy_pct is always initialized (already set to 0.0 at start)
+    # But update from details if available
+    if primary_canopy_pct == 0.0:
+        primary_canopy_pct = float(details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0)
+    
+    # Ensure primary_canopy_pct is never None
     if primary_canopy_pct is None:
-        primary_canopy_pct = details.get("gee_canopy_pct") or details.get("census_canopy_pct") or 0.0
-    canopy_expectation_ratio = None
+        primary_canopy_pct = 0.0
+    
+    canopy_expectation_ratio: Optional[float] = None
     if expectation > 0:
         canopy_expectation_ratio = primary_canopy_pct / expectation
     details["canopy_expectation"] = {
@@ -1110,7 +1181,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     green_view_index = 0.0
     green_view_details: Dict[str, float] = {}
-    gvi_weight = GREEN_VIEW_WEIGHTS.get(area_type_key, 1.0)
+    gvi_weight = float(GREEN_VIEW_WEIGHTS.get(area_type_key, 1.0))
+    # Ensure gvi_bonus is always initialized (already set to 0.0 at start, but ensure it's set here too)
+    gvi_bonus = 0.0
 
     if gvi_metrics:
         tree_canopy_vis = float(gvi_metrics.get("tree_canopy_pct") or 0.0)
@@ -1124,7 +1197,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             max(0.0, (1.0 - seasonal_variation)) * 10.0
         )
         green_view_index = min(100.0, max(0.0, gvi_raw))
-        gvi_bonus = min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight)
+        # Ensure gvi_bonus is always a valid number
+        gvi_bonus = float(min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight))
+        if math.isnan(gvi_bonus) or not isinstance(gvi_bonus, (int, float)):
+            gvi_bonus = 0.0
         green_view_details = {
             "method": "gee_ndvi",
             "radius_m": gvi_radius_used,
@@ -1148,7 +1224,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             area_sq_km = math.pi * (tree_radius_km ** 2)
             density_component = min(20.0, (street_tree_feature_total / max(area_sq_km, 0.1)) * 0.5)
         green_view_index = min(100.0, max(0.0, canopy_component + street_component + density_component))
-        gvi_bonus = min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight)
+        # Ensure gvi_bonus is always a valid number
+        gvi_bonus = float(min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight))
+        if math.isnan(gvi_bonus) or not isinstance(gvi_bonus, (int, float)):
+            gvi_bonus = 0.0
         green_view_details = {
             "method": "composite",
             "components": {
@@ -1164,11 +1243,28 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     details["street_tree_feature_total"] = street_tree_feature_total
     details["gvi_bonus"] = round(gvi_bonus, 2)
     # Calculate street tree bonus (only for low-canopy areas with street trees)
+    # primary_canopy_pct is always initialized (never None), so we can safely check it
     street_tree_bonus = 0.0
     if primary_canopy_pct is not None and street_tree_feature_total > 0:
-        street_tree_bonus = _calculate_street_tree_bonus(primary_canopy_pct, street_tree_feature_total, area_type)
+        try:
+            street_tree_bonus = float(_calculate_street_tree_bonus(primary_canopy_pct, street_tree_feature_total, area_type))
+            if math.isnan(street_tree_bonus) or not isinstance(street_tree_bonus, (int, float)):
+                street_tree_bonus = 0.0
+        except Exception as stb_error:
+            logger.warning("Street tree bonus calculation failed: %s, using 0.0", stb_error)
+            street_tree_bonus = 0.0
+    
+    # Ensure all bonus values are valid numbers before calculation
+    expectation_adjustment = float(expectation_adjustment) if isinstance(expectation_adjustment, (int, float)) and not math.isnan(expectation_adjustment) else 0.0
+    expectation_penalty = float(expectation_penalty) if isinstance(expectation_penalty, (int, float)) and not math.isnan(expectation_penalty) else 0.0
+    gvi_bonus = float(gvi_bonus) if isinstance(gvi_bonus, (int, float)) and not math.isnan(gvi_bonus) else 0.0
+    biodiversity_bonus = float(biodiversity_bonus) if isinstance(biodiversity_bonus, (int, float)) and not math.isnan(biodiversity_bonus) else 0.0
+    street_tree_bonus = float(street_tree_bonus) if isinstance(street_tree_bonus, (int, float)) and not math.isnan(street_tree_bonus) else 0.0
     
     adjusted_score = base_tree_score + expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus
+    # Ensure adjusted_score is valid
+    if math.isnan(adjusted_score) or not isinstance(adjusted_score, (int, float)):
+        adjusted_score = base_tree_score
     score = max(0.0, min(50.0, adjusted_score))
     details["tree_base_score"] = round(base_tree_score, 2)
     details["adjusted_tree_score"] = round(adjusted_score, 2)
@@ -1299,14 +1395,20 @@ def calculate_natural_beauty(lat: float,
 
     context_info = tree_details.get("natural_context", {}) or {}
     tree_bonus_breakdown = tree_details.get("bonus_breakdown", {}) or {}
+    # Always initialize with safe default
     context_bonus_raw = float(context_info.get("total_bonus") or 0.0)
+    if math.isnan(context_bonus_raw) or not isinstance(context_bonus_raw, (int, float)):
+        context_bonus_raw = 0.0
     
     # Apply component dominance guard if enabled
     component_scores = context_info.get("component_scores", {}) or {}
     context_bonus_raw = _apply_component_dominance_guard(context_bonus_raw, component_scores)
+    # Ensure context_bonus_raw is still valid after guard
+    if math.isnan(context_bonus_raw) or not isinstance(context_bonus_raw, (int, float)):
+        context_bonus_raw = 0.0
     
-    natural_bonus_raw = context_bonus_raw
-    natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+    natural_bonus_raw = float(context_bonus_raw)
+    natural_bonus_scaled = float(min(NATURAL_ENHANCER_CAP, natural_bonus_raw))
     scenic_bonus_raw = 0.0
     scenic_meta = {
         "count": 0,
@@ -1326,8 +1428,14 @@ def calculate_natural_beauty(lat: float,
             natural_context_bonus=context_bonus_raw,
             landcover_metrics=landcover_metrics_for_dedup
         )
-        natural_bonus_raw = scenic_bonus_raw + context_bonus_raw
-        natural_bonus_scaled = min(NATURAL_ENHANCER_CAP, natural_bonus_raw)
+        # Ensure scenic_bonus_raw is valid
+        scenic_bonus_raw = float(scenic_bonus_raw) if isinstance(scenic_bonus_raw, (int, float)) and not math.isnan(scenic_bonus_raw) else 0.0
+        natural_bonus_raw = float(scenic_bonus_raw + context_bonus_raw)
+        if math.isnan(natural_bonus_raw) or not isinstance(natural_bonus_raw, (int, float)):
+            natural_bonus_raw = context_bonus_raw
+        natural_bonus_scaled = float(min(NATURAL_ENHANCER_CAP, natural_bonus_raw))
+        if math.isnan(natural_bonus_scaled) or not isinstance(natural_bonus_scaled, (int, float)):
+            natural_bonus_scaled = 0.0
     else:
         enhancers_data = enhancers_data or {"viewpoints_details": []}
 
