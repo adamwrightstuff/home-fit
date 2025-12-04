@@ -562,7 +562,8 @@ def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500,
 
 def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,
                  area_type: Optional[str] = None, location_name: Optional[str] = None,
-                 overrides: Optional[Dict[str, float]] = None) -> Tuple[float, Dict]:
+                 overrides: Optional[Dict[str, float]] = None,
+                 density: Optional[float] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     score = 0.0
     sources: List[str] = []
@@ -1290,7 +1291,8 @@ def calculate_natural_beauty(lat: float,
         location_scope=location_scope,
         area_type=area_type,
         location_name=location_name,
-        overrides=overrides
+        overrides=overrides,
+        density=density
     )
 
     context_info = tree_details.get("natural_context", {}) or {}
