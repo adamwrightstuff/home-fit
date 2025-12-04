@@ -60,7 +60,9 @@ def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
     Returns:
         Score from 0 to max_score
     """
-    if ratio <= 0.1:
+    # Changed threshold from 0.1 to 0.05 to ensure single pharmacies score > 0
+    # Even with high expectations, 1 pharmacy should get some credit
+    if ratio <= 0.05:
         return 0.0
     
     # Scale calibrated breakpoints to component's max_score
@@ -80,6 +82,11 @@ def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
     
     if ratio < ratio_expected:
         # Linear from 0 to at_expected
+        # Ensure ratios just above 0.05 get a small positive score
+        if ratio <= 0.1:
+            # Very small ratios: give minimal score (scaled down for very low ratios)
+            # This ensures places with 1 pharmacy don't get 0.0 when expectations are high
+            return (at_expected / ratio_expected) * ratio * 0.8  # Slight scale down for very low ratios
         return (at_expected / ratio_expected) * ratio
     elif ratio < ratio_good:
         # Linear from at_expected to at_good

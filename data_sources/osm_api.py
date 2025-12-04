@@ -2436,28 +2436,87 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             if (amenity == "hospital" or healthcare == "hospital" or 
                 (amenity == "medical_centre" and healthcare != "urgent_care")):
                 hospitals.append(facility)
-            # Urgent care - check multiple indicators
-            elif (amenity == "emergency_ward" or 
-                  healthcare == "urgent_care" or
-                  healthcare == "emergency" or
-                  (amenity == "clinic" and (
-                      "urgent" in name_lower or
-                      "walk-in" in name_lower or
-                      "walk in" in name_lower or
-                      "immediate" in name_lower or
-                      "urgent" in healthcare_specialty or
-                      "emergency" in healthcare_specialty
-                  )) or
-                  tags.get("emergency") == "yes"):
+            # Urgent care - check multiple indicators (expanded detection)
+            is_urgent_care = (
+                amenity == "emergency_ward" or 
+                healthcare == "urgent_care" or
+                healthcare == "emergency" or
+                tags.get("emergency") == "yes" or
+                # Check clinic names for urgent care indicators
+                (amenity == "clinic" and (
+                    "urgent" in name_lower or
+                    "walk-in" in name_lower or
+                    "walk in" in name_lower or
+                    "walkin" in name_lower or
+                    "immediate" in name_lower or
+                    "express" in name_lower or
+                    "minute" in name_lower or  # "minute clinic", "minuteclinic"
+                    "convenient" in name_lower or
+                    "urgent" in healthcare_specialty or
+                    "emergency" in healthcare_specialty
+                )) or
+                # Check for common urgent care brand names
+                (amenity in ["clinic", "doctors"] and any(
+                    brand in name_lower for brand in [
+                        "citymd", "city md", "gohealth", "go health",
+                        "medexpress", "med express", "afc", "concentra",
+                        "patient first", "patientfirst", "carenow", "care now",
+                        "fastmed", "fast med", "nextcare", "next care"
+                    ]
+                ))
+            )
+            
+            if is_urgent_care:
                 urgent_care.append(facility)
             # Regular clinics and medical centers
+            # CONSERVATIVE FILTERING: Only exclude obvious non-primary-care specialty clinics
+            # This prevents over-counting (e.g., Brooklyn Heights 110 clinics) while preserving
+            # legitimate primary care facilities. We filter only the most obvious specialty-only clinics.
             elif amenity in ["clinic", "doctors"]:
-                if amenity == "clinic":
-                    clinics.append(facility)
-                else:
-                    doctors.append(facility)
-            # Pharmacies
-            elif amenity == "pharmacy" or tags.get("shop") == "pharmacy":
+                # Exclude only obvious specialty-only clinics that don't provide primary care
+                # This is conservative to avoid breaking scores for places with legitimate specialty clinics
+                excluded_specialties = [
+                    "pain management", "chiropractic", "acupuncture",
+                    "physical therapy", "physiotherapy", "rehabilitation",
+                    "cosmetic", "plastic surgery", "laser",
+                    "radiology", "imaging", "diagnostic center", "laboratory",
+                    "veterinary", "animal"
+                ]
+                
+                # Check if this is an obvious specialty-only clinic
+                is_specialty_only = False
+                if healthcare_specialty:
+                    for excluded in excluded_specialties:
+                        if excluded in healthcare_specialty:
+                            is_specialty_only = True
+                            break
+                
+                # Also check name for obvious specialty-only indicators
+                if not is_specialty_only:
+                    specialty_name_indicators = [
+                        "pain management", "chiropractic", "acupuncture",
+                        "physical therapy", "physiotherapy", "rehab",
+                        "cosmetic", "plastic surgery", "laser",
+                        "radiology", "imaging", "diagnostic", "lab",
+                        "veterinary", "animal", "pet"
+                    ]
+                    for indicator in specialty_name_indicators:
+                        if indicator in name_lower:
+                            is_specialty_only = True
+                            break
+                
+                # Only count as primary care if not an obvious specialty-only clinic
+                # Note: We're conservative here - many specialty clinics also provide some primary care,
+                # so we only filter the most obvious ones (pain clinics, chiropractic, cosmetic, etc.)
+                if not is_specialty_only:
+                    if amenity == "clinic":
+                        clinics.append(facility)
+                    else:
+                        doctors.append(facility)
+            # Pharmacies - also check healthcare=pharmacy tag
+            elif (amenity == "pharmacy" or 
+                  tags.get("shop") == "pharmacy" or
+                  healthcare == "pharmacy"):
                 pharmacies.append(facility)
         
         return {
