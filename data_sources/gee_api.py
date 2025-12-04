@@ -139,11 +139,13 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
                 maxPixels=1e9
             )
             tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
-            if tcc_pct is not None and tcc_pct >= 0.1:
+            # Lower threshold: accept any non-negative value (was >= 0.1)
+            # Design principle: Objective and data-driven - use actual measured values
+            if tcc_pct is not None and tcc_pct >= 0.0:
                 print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
                 nlcd_tcc_result = min(100, max(0, tcc_pct))
             else:
-                print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (too low or unavailable)")
+                print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (unavailable)")
         except Exception as nlcd_tcc_error:
             print(f"   ⚠️  NLCD TCC unavailable: {nlcd_tcc_error}")
 
@@ -159,11 +161,13 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
                 maxPixels=1e9
             )
             h_mean = h_stats.get('treecover2000').getInfo()
-            if h_mean is not None and h_mean >= 0.1:
+            # Lower threshold: accept any non-negative value (was >= 0.1)
+            # Design principle: Objective and data-driven - use actual measured values
+            if h_mean is not None and h_mean >= 0.0:
                 print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
                 hansen_result = min(100, max(0, h_mean))
             else:
-                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (too low or unavailable)")
+                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (unavailable)")
         except Exception as hansen_error:
             print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
 
@@ -220,6 +224,18 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
                     print(f"   📊 NLCD TCC validated by {len(agreements)} source(s)")
                 else:
                     print(f"   ⚠️  Validation sources disagree - using NLCD TCC as primary")
+            
+            # Validate canopy value for sanity (doesn't affect scoring, just logs warnings)
+            # Design principle: Transparent and documented - flag data quality issues
+            if primary_result is not None:
+                if primary_result > 100.0:
+                    print(f"   ⚠️  Canopy value {primary_result}% exceeds 100%, capping to 100%")
+                    primary_result = 100.0
+                elif primary_result > 80.0:
+                    print(f"   ⚠️  Unusually high canopy value {primary_result}% - verify data quality")
+                elif primary_result < 0.0:
+                    print(f"   ⚠️  Negative canopy value {primary_result}%, setting to 0%")
+                    primary_result = 0.0
             
             return primary_result
         
@@ -579,6 +595,18 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
             "slope_p85_deg": slope_info.get('slope_p85'),
             "steep_fraction": steep_info.get('slope') if steep_info else None
         }
+
+        # Validate slope values against elevation (sanity check - doesn't affect scoring)
+        # Design principle: Transparent and documented - flag data quality issues
+        if elevation_mean is not None and topography["slope_mean_deg"] is not None:
+            # Rough heuristic: higher elevation should generally have higher slope
+            # This is not a hard rule, but can flag anomalies
+            expected_min_slope = min(5.0, elevation_mean / 1000.0)  # Conservative estimate
+            if elevation_mean > 500 and topography["slope_mean_deg"] < expected_min_slope * 0.3:
+                print(
+                    f"   ⚠️  Slope {topography['slope_mean_deg']:.1f}° seems unusually low "
+                    f"for elevation {elevation_mean:.0f}m - verify data quality"
+                )
 
         print(f"   ✅ GEE Topography: relief={relief:.1f}m, mean slope={topography['slope_mean_deg']:.1f}°")
         return topography

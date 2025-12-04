@@ -652,6 +652,9 @@ def get_livability_score(request: Request,
             "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
             "gvi_metrics": tree_details.get("gvi_metrics"),
             "expectation_effect": tree_details.get("expectation_effect"),
+            "data_availability": tree_details.get("data_availability", {}),  # NEW: expose data quality info
+            "gvi_available": tree_details.get("gvi_available", False),  # NEW: GVI data availability
+            "gvi_source": tree_details.get("gvi_source", "unknown"),  # NEW: GVI data source
         }
     else:
         natural_score = 0.0

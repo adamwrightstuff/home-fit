@@ -810,7 +810,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             except Exception:
                 pass  # Keep original gee_canopy (None or < 0.1)
 
-        if gee_canopy is not None and gee_canopy >= 0.1:
+        # Lower threshold: accept any non-negative value (was >= 0.1)
+        # This allows very small canopy values to be scored properly
+        # Design principle: Objective and data-driven - use actual measured values, not arbitrary thresholds
+        if gee_canopy is not None and gee_canopy >= 0.0:
             canopy_score = _score_tree_canopy(gee_canopy)
             score = canopy_score
             canopy_points = canopy_score
@@ -824,12 +827,25 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 elif rad == radius_m:
                     value = gee_canopy
                 else:
+                    # Always attempt to fetch, especially for 1000m
                     try:
                         value = get_tree_canopy_gee(lat, lon, radius_m=rad, area_type=area_type)
                     except Exception as multi_error:
                         logger.debug("Optional canopy radius fetch (%s) failed: %s", label, multi_error)
                         value = None
                 canopy_multi[label] = value
+            
+            # CRITICAL FIX: Ensure 1000m canopy is always populated as fallback
+            # Design principle: Scalable and general - works for all locations, not just specific cases
+            if canopy_multi.get("neighborhood_1000m") is None and tree_radius_used != 1000:
+                try:
+                    canopy_1000m = get_tree_canopy_gee(lat, lon, radius_m=1000, area_type=area_type)
+                    if canopy_1000m is not None and canopy_1000m >= 0.0:
+                        canopy_multi["neighborhood_1000m"] = canopy_1000m
+                        logger.debug("Fetched 1000m canopy as fallback: %.1f%%", canopy_1000m)
+                except Exception as fallback_error:
+                    logger.debug("1000m canopy fallback failed: %s", fallback_error)
+                    canopy_multi["neighborhood_1000m"] = None
 
             if gee_canopy < 15.0 and area_type in ['urban_core', 'urban_residential']:
                 logger.debug("Dense urban area with low GEE canopy (%.1f%%) - validating with Census/USFS...", gee_canopy)
@@ -858,7 +874,45 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             details['nyc_street_trees'] = tree_count
                         street_tree_feature_total += len(street_trees)
         else:
-            logger.warning("GEE returned %s - trying Census fallback", gee_canopy)
+            logger.warning("GEE returned %s - trying fallbacks", gee_canopy)
+            
+            # FIX: Try to use multi-radius canopy if primary failed
+            # Design principle: Scalable and general - fallback logic works for all locations
+            # Check if we have any valid canopy data in multi-radius
+            fallback_canopy = None
+            fallback_radius = None
+            
+            # Priority: try 1000m first (most common), then others
+            for rad in [1000, 2000, 400]:
+                if rad in MULTI_RADIUS_CANOPY.values():
+                    label = [k for k, v in MULTI_RADIUS_CANOPY.items() if v == rad][0]
+                    if canopy_multi.get(label) is not None:
+                        fallback_canopy = canopy_multi[label]
+                        fallback_radius = rad
+                        break
+            
+            # If no multi-radius data yet, try fetching 1000m directly
+            if fallback_canopy is None:
+                try:
+                    fallback_canopy = get_tree_canopy_gee(lat, lon, radius_m=1000, area_type=area_type)
+                    if fallback_canopy is not None and fallback_canopy >= 0.0:
+                        fallback_radius = 1000
+                        canopy_multi["neighborhood_1000m"] = fallback_canopy
+                        logger.debug("Using 1000m canopy as primary fallback: %.1f%%", fallback_canopy)
+                except Exception:
+                    pass
+            
+            # Use fallback if found (preserves scoring logic - just uses different radius)
+            # Design principle: Objective and data-driven - use best available data source
+            if fallback_canopy is not None and fallback_canopy >= 0.0:
+                gee_canopy = fallback_canopy
+                tree_radius_used = fallback_radius or 1000
+                canopy_score = _score_tree_canopy(gee_canopy)
+                score = canopy_score
+                canopy_points = canopy_score
+                sources.append(f"GEE (fallback {fallback_radius}m): {gee_canopy:.1f}% canopy")
+                details['gee_canopy_pct'] = gee_canopy
+                primary_canopy_pct = gee_canopy
         if tree_radius_used:
             gvi_radius = min(1200, tree_radius_used)
         else:
@@ -1078,6 +1132,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
         context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
 
+    # Always ensure natural_context structure is properly initialized
+    # Design principle: Transparent and documented - always show structure even when empty
     if natural_context_components:
         natural_context_details["component_scores"] = natural_context_components
         natural_context_details["total_bonus"] = round(context_bonus_total, 2)
@@ -1086,17 +1142,52 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["context_weights"] = context_weights  # Show area-type-specific weights
         details["natural_context"] = natural_context_details
     else:
+        # FIX: Ensure structure is always populated, even when empty
+        # This prevents empty/missing fields in API response
         details["natural_context"] = {
             "component_scores": {},
             "total_bonus": 0.0,
             "total_before_cap": 0.0,
-            "cap": NATURAL_CONTEXT_BONUS_CAP
+            "cap": NATURAL_CONTEXT_BONUS_CAP,
+            "context_weights": context_weights,  # Still include weights for transparency
+            "topography_available": topography_metrics is not None,
+            "landcover_available": landcover_metrics is not None
         }
     normalized_multi = {}
     for label in MULTI_RADIUS_CANOPY.keys():
         val = canopy_multi.get(label)
         normalized_multi[label] = round(val, 2) if isinstance(val, (int, float)) else None
     details["multi_radius_canopy"] = normalized_multi
+    
+    # Add data availability flags to distinguish real zeros from missing data
+    # Design principle: Transparent and documented - expose data quality information
+    # This does NOT affect scoring - purely informational
+    data_availability = {
+        "canopy": {
+            "gee_available": gee_canopy is not None,
+            "census_available": details.get("census_canopy_pct") is not None,
+            "primary_source": "gee" if gee_canopy is not None else ("census" if details.get("census_canopy_pct") else "none"),
+            "primary_value": primary_canopy_pct,
+            "multi_radius_available": {
+                label: val is not None for label, val in canopy_multi.items()
+            }
+        },
+        "gvi": {
+            "gee_available": gvi_metrics is not None,
+            "method": "gee_ndvi" if gvi_metrics else "composite",
+            "value": green_view_index
+        },
+        "topography": {
+            "available": topography_metrics is not None,
+            "source": topography_metrics.get("source") if topography_metrics else None
+        },
+        "landcover": {
+            "available": landcover_metrics is not None,
+            "source": landcover_metrics.get("source") if landcover_metrics else None,
+            "water_available": landcover_metrics.get("water_pct") is not None if landcover_metrics else False
+        }
+    }
+    details["data_availability"] = data_availability
     if gvi_metrics:
         details["gvi_metrics"] = {
             "tree_canopy_pct": round(float(gvi_metrics.get("tree_canopy_pct") or 0.0), 2),
@@ -1231,6 +1322,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             gvi_bonus = 0.0
         green_view_details = {
             "method": "composite",
+            "fallback_reason": "GEE GVI unavailable",  # Explain why using fallback
             "components": {
                 "canopy_component": round(canopy_component, 2),
                 "street_component": round(street_component, 2),
@@ -1243,6 +1335,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     details["green_view_details"] = green_view_details
     details["street_tree_feature_total"] = street_tree_feature_total
     details["gvi_bonus"] = round(gvi_bonus, 2)
+    # Add GVI availability flag (informational only, doesn't affect scoring)
+    # Design principle: Transparent and documented - expose data source information
+    details["gvi_available"] = gvi_metrics is not None
+    if gvi_metrics:
+        details["gvi_source"] = "gee_ndvi"
+        details["gvi_radius_m"] = gvi_radius_used
+    else:
+        details["gvi_source"] = "composite"
+        details["gvi_radius_m"] = tree_radius_used
     # Calculate street tree bonus (only for low-canopy areas with street trees)
     # primary_canopy_pct is always initialized (never None), so we can safely check it
     street_tree_bonus = 0.0
