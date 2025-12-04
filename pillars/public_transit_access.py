@@ -89,15 +89,44 @@ def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500, cached_
 
 
 def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, search_m: int = 2000, cached_stops: Optional[Dict] = None) -> float:
-    """Find nearest bus stop distance using route coordinates or Transitland stops API (km).
+    """Find nearest bus stop distance using actual stop locations (preferred) or route coordinates (fallback).
+    
+    RESEARCH-BACKED: Uses actual stop locations for accurate distance calculation.
+    Falls back to route coordinates only if stop data unavailable.
     
     Args:
         cached_stops: Optional pre-fetched stops data to avoid redundant API call
     """
     distances_km = []
     
-    # First, try to use route coordinates if available
-    if bus_routes:
+    # PREFER: Use actual stop locations from stops API (more accurate than route centroids)
+    try:
+        # PERFORMANCE OPTIMIZATION: Use cached stops if provided
+        if cached_stops is not None:
+            stops = cached_stops
+        else:
+            stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+        
+        # Get all stops (use all_stops if available, otherwise stops)
+        all_stops = stops.get("all_stops", []) or stops.get("stops", []) or []
+        
+        # Filter for bus stops (route_type == 3)
+        for s in all_stops:
+            route_type = s.get("route_type")
+            if route_type == 3:  # Bus
+                dist_m = s.get("distance_m")
+                if isinstance(dist_m, (int, float)):
+                    distances_km.append(dist_m / 1000.0)
+                    continue
+                stop_lat = s.get("lat")
+                stop_lon = s.get("lon")
+                if isinstance(stop_lat, (int, float)) and isinstance(stop_lon, (int, float)):
+                    distances_km.append(haversine_distance(lat, lon, float(stop_lat), float(stop_lon)))
+    except Exception:
+        pass
+    
+    # FALLBACK: Use route coordinates if no stop data available
+    if not distances_km and bus_routes:
         for route in bus_routes:
             route_lat = route.get("lat")
             route_lon = route.get("lon")
@@ -106,18 +135,37 @@ def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, searc
                 if dist <= (search_m / 1000.0):  # Within search radius
                     distances_km.append(dist)
     
-    # Fallback to stops API if no route coordinates available
-    if not distances_km:
-        try:
-            # PERFORMANCE OPTIMIZATION: Use cached stops if provided
-            if cached_stops is not None:
-                stops = cached_stops
-            else:
-                stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
-            items = stops.get("stops", []) or stops.get("items", []) or []
-            # Use all stops as proxy (since we can't filter by route_type)
-            # This is a reasonable approximation for distance calculation
-            for s in items:
+    if distances_km:
+        return min(distances_km)
+    return float('inf')
+
+
+def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict] = None, search_m: int = 2000, cached_stops: Optional[Dict] = None) -> float:
+    """Find nearest light rail/tram stop distance using actual stop locations (preferred) or route coordinates (fallback).
+    
+    RESEARCH-BACKED: Uses actual stop locations for accurate distance calculation.
+    Falls back to route coordinates only if stop data unavailable.
+    
+    Args:
+        cached_stops: Optional pre-fetched stops data to avoid redundant API call
+    """
+    distances_km = []
+    
+    # PREFER: Use actual stop locations from stops API (more accurate than route centroids)
+    try:
+        # PERFORMANCE OPTIMIZATION: Use cached stops if provided
+        if cached_stops is not None:
+            stops = cached_stops
+        else:
+            stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
+        
+        # Get all stops (use all_stops if available, otherwise stops)
+        all_stops = stops.get("all_stops", []) or stops.get("stops", []) or []
+        
+        # Filter for light rail stops (route_type == 0)
+        for s in all_stops:
+            route_type = s.get("route_type")
+            if route_type == 0:  # Light rail/Tram
                 dist_m = s.get("distance_m")
                 if isinstance(dist_m, (int, float)):
                     distances_km.append(dist_m / 1000.0)
@@ -126,24 +174,11 @@ def _nearest_bus_km(lat: float, lon: float, bus_routes: List[Dict] = None, searc
                 stop_lon = s.get("lon")
                 if isinstance(stop_lat, (int, float)) and isinstance(stop_lon, (int, float)):
                     distances_km.append(haversine_distance(lat, lon, float(stop_lat), float(stop_lon)))
-        except Exception:
-            pass
+    except Exception:
+        pass
     
-    if distances_km:
-        return min(distances_km)
-    return float('inf')
-
-
-def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict] = None, search_m: int = 2000, cached_stops: Optional[Dict] = None) -> float:
-    """Find nearest light rail/tram stop distance using route coordinates or Transitland stops API (km).
-    
-    Args:
-        cached_stops: Optional pre-fetched stops data to avoid redundant API call
-    """
-    distances_km = []
-    
-    # First, try to use route coordinates if available
-    if light_rail_routes:
+    # FALLBACK: Use route coordinates if no stop data available
+    if not distances_km and light_rail_routes:
         for route in light_rail_routes:
             route_lat = route.get("lat")
             route_lon = route.get("lon")
@@ -151,28 +186,6 @@ def _nearest_light_rail_km(lat: float, lon: float, light_rail_routes: List[Dict]
                 dist = haversine_distance(lat, lon, route_lat, route_lon)
                 if dist <= (search_m / 1000.0):  # Within search radius
                     distances_km.append(dist)
-    
-    # Fallback to stops API if no route coordinates available
-    if not distances_km:
-        try:
-            # PERFORMANCE OPTIMIZATION: Use cached stops if provided
-            if cached_stops is not None:
-                stops = cached_stops
-            else:
-                stops = get_nearby_transit_stops(lat, lon, radius_m=search_m) or {}
-            items = stops.get("stops", []) or stops.get("items", []) or []
-            # Use all stops as proxy (since we can't filter by route_type)
-            for s in items:
-                dist_m = s.get("distance_m")
-                if isinstance(dist_m, (int, float)):
-                    distances_km.append(dist_m / 1000.0)
-                    continue
-                stop_lat = s.get("lat")
-                stop_lon = s.get("lon")
-                if isinstance(stop_lat, (int, float)) and isinstance(stop_lon, (int, float)):
-                    distances_km.append(haversine_distance(lat, lon, float(stop_lat), float(stop_lon)))
-        except Exception:
-            pass
     
     if distances_km:
         return min(distances_km)
@@ -191,6 +204,68 @@ def _connectivity_tier_heavy_rail(heavy_routes_count: int) -> int:
     if heavy_routes_count == 1:
         return 1
     return 0
+
+
+def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lon: float = None, radius_m: int = 2000) -> Dict[str, int]:
+    """
+    Count actual transit stops by route_type from Transitland API.
+    
+    This provides accurate stop counts (not route counts) for each transit mode.
+    Research-backed: Uses actual stop data from Transitland API to count stops per mode.
+    
+    Args:
+        stops_data: Optional pre-fetched stops data (from get_nearby_transit_stops)
+        lat: Latitude (required if stops_data is None)
+        lon: Longitude (required if stops_data is None)
+        radius_m: Search radius if stops_data is None
+    
+    Returns:
+        Dictionary with counts: {"heavy_rail": int, "light_rail": int, "bus": int, "total": int}
+    """
+    counts = {"heavy_rail": 0, "light_rail": 0, "bus": 0, "total": 0}
+    
+    try:
+        if stops_data is None:
+            if lat is None or lon is None:
+                logger.warning("⚠️  Cannot count stops: stops_data is None and lat/lon not provided", extra={
+                    "pillar_name": "public_transit_access"
+                })
+                return counts
+            stops_data = get_nearby_transit_stops(lat, lon, radius_m=radius_m) or {}
+        
+        # Get all stops (use all_stops if available, otherwise stops)
+        all_stops = stops_data.get("all_stops", []) or stops_data.get("stops", []) or []
+        
+        # If we only have top 10, we need to fetch all stops
+        # For now, use what we have and note the limitation
+        if len(all_stops) < stops_data.get("count", 0):
+            # We have partial data - log this limitation
+            logger.debug(f"⚠️  Stop counting: Only have {len(all_stops)} stops out of {stops_data.get('count', 0)} total (API limit may apply)", extra={
+                "pillar_name": "public_transit_access",
+                "stops_available": len(all_stops),
+                "total_stops": stops_data.get("count", 0)
+            })
+        
+        for stop in all_stops:
+            route_type = stop.get("route_type")
+            
+            # GTFS route types: 0=Tram/Light Rail, 1=Subway/Metro, 2=Rail (Commuter), 3=Bus
+            if route_type in (1, 2):  # Heavy rail
+                counts["heavy_rail"] += 1
+            elif route_type == 0:  # Light rail
+                counts["light_rail"] += 1
+            elif route_type == 3:  # Bus
+                counts["bus"] += 1
+            
+            counts["total"] += 1
+        
+    except Exception as e:
+        logger.warning(f"⚠️  Error counting stops by route_type: {e}", extra={
+            "pillar_name": "public_transit_access",
+            "error": str(e)
+        })
+    
+    return counts
 
 # Major metro centers for proximity-based fallback scoring
 MAJOR_METROS = {
@@ -516,10 +591,27 @@ def get_public_transit_score(
         "routes_radius_m": nearby_radius
     })
     
-    # PERFORMANCE OPTIMIZATION: Cache stops data to avoid redundant API calls
-    # This will be reused by helper functions and commuter rail bonuses
-    # Note: We'll determine if caching is needed after effective_area_type is set
-    cached_stops_data = None
+    # PERFORMANCE OPTIMIZATION: Pre-fetch stops data early to avoid redundant API calls
+    # This will be reused by helper functions, distance calculations, stop counting, and commuter rail bonuses
+    # Use a larger radius for stops to ensure we capture all stops (stops API has 100 limit, so we use routes_radius)
+    try:
+        cached_stops_data = get_nearby_transit_stops(lat, lon, radius_m=nearby_radius)
+        if cached_stops_data:
+            logger.info(f"📊 Pre-fetched {cached_stops_data.get('count', 0)} transit stops (radius={nearby_radius}m)", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "stops_count": cached_stops_data.get('count', 0),
+                "radius_m": nearby_radius
+            })
+    except Exception as e:
+        logger.warning(f"⚠️  Could not pre-fetch stops data: {e}", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "error": str(e)
+        })
+        cached_stops_data = None
     
     # If no Transitland routes, try OSM railway stations as fallback
     osm_stations = None
@@ -576,6 +668,38 @@ def get_public_transit_score(
         "light_rail_routes": len(light_rail_routes),
         "bus_routes": len(bus_routes)
     })
+    
+    # Count actual stops by route_type for accurate reporting
+    stops_counts = None
+    if cached_stops_data:
+        stops_counts = _count_stops_by_route_type(cached_stops_data, lat=lat, lon=lon, radius_m=nearby_radius)
+        logger.info(f"📊 Stop breakdown: {stops_counts.get('heavy_rail', 0)} heavy rail, {stops_counts.get('light_rail', 0)} light rail, {stops_counts.get('bus', 0)} bus, {stops_counts.get('total', 0)} total", extra={
+            "pillar_name": "public_transit_access",
+            "lat": lat,
+            "lon": lon,
+            "heavy_rail_stops": stops_counts.get('heavy_rail', 0),
+            "light_rail_stops": stops_counts.get('light_rail', 0),
+            "bus_stops": stops_counts.get('bus', 0),
+            "total_stops": stops_counts.get('total', 0)
+        })
+        
+        # Log discrepancies between route counts and stop counts (data quality indicator)
+        if stops_counts.get('heavy_rail', 0) > 0 and len(heavy_rail_routes) == 0:
+            logger.warning(f"⚠️  Data quality: Found {stops_counts.get('heavy_rail', 0)} heavy rail stops but 0 heavy rail routes - may indicate route_type filtering issue", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "heavy_rail_stops": stops_counts.get('heavy_rail', 0),
+                "heavy_rail_routes": len(heavy_rail_routes)
+            })
+        if stops_counts.get('bus', 0) > 0 and len(bus_routes) == 0:
+            logger.warning(f"⚠️  Data quality: Found {stops_counts.get('bus', 0)} bus stops but 0 bus routes - may indicate route_type filtering issue", extra={
+                "pillar_name": "public_transit_access",
+                "lat": lat,
+                "lon": lon,
+                "bus_stops": stops_counts.get('bus', 0),
+                "bus_routes": len(bus_routes)
+            })
 
     # Context-aware weighting by area type
     # Urban areas: emphasize rail (heavy + light rail)
@@ -590,11 +714,6 @@ def get_public_transit_score(
     # Historic urban areas are typically dense, walkable neighborhoods similar to urban_residential
     if effective_area_type == "historic_urban":
         effective_area_type = "urban_residential"
-    
-    # PERFORMANCE OPTIMIZATION: Pre-fetch stops data if needed for commuter rail bonuses or fallback scoring
-    # This avoids redundant API calls later
-    # Note: We'll determine if caching is needed after effective_area_type is set
-    cached_stops_data = None
     
     # Detect commuter rail suburbs: suburban areas with heavy rail near major metros
     # These should use research-backed commuter_rail_suburb expectations
@@ -1088,7 +1207,8 @@ def get_public_transit_score(
             "bus": round(bus_score, 1)
         },
         "summary": _build_summary_from_routes(
-            heavy_rail_routes, light_rail_routes, bus_routes, routes_data
+            heavy_rail_routes, light_rail_routes, bus_routes, routes_data,
+            stops_counts=stops_counts
         ),
         "data_quality": quality_metrics
     }
@@ -1732,23 +1852,47 @@ def _score_bus_routes(routes: List[Dict], lat: float = None, lon: float = None, 
     return min(100, base_score + frequency_bonus + proximity_bonus)
 
 
-def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List) -> Dict:
-    """Build summary of transit access from routes."""
+def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List, stops_counts: Optional[Dict[str, int]] = None) -> Dict:
+    """
+    Build summary of transit access from routes and actual stop counts.
+    
+    RESEARCH-BACKED: Includes both route counts (for scoring) and actual stop counts (for accuracy).
+    Stop counts provide more accurate representation of transit density than route counts alone.
+    
+    Args:
+        heavy_rail: List of heavy rail routes
+        light_rail: List of light rail routes
+        bus: List of bus routes
+        all_routes: List of all routes
+        stops_counts: Optional dict with actual stop counts {"heavy_rail": int, "light_rail": int, "bus": int, "total": int}
+    """
     summary = {
-        "total_routes": len(all_routes),  # Total distinct transit routes (not stops!)
+        "total_routes": len(all_routes),  # Total distinct transit routes
         "heavy_rail_routes": len(heavy_rail),  # Heavy rail (subway/metro/commuter) route count
         "light_rail_routes": len(light_rail),  # Light rail/streetcar route count
         "bus_routes": len(bus),  # Bus route count
-        # Legacy field names for backward compatibility (deprecated - use *_routes)
-        "total_stops": len(all_routes),  # DEPRECATED: Actually route count, not stops
-        "heavy_rail_stops": len(heavy_rail),  # DEPRECATED: Actually route count
-        "light_rail_stops": len(light_rail),  # DEPRECATED: Actually route count
-        "bus_stops": len(bus),  # DEPRECATED: Actually route count
         "nearest_heavy_rail": heavy_rail[0] if heavy_rail else None,
         "nearest_light_rail": light_rail[0] if light_rail else None,
         "nearest_bus": bus[0] if bus else None,
         "transit_modes_available": []
     }
+    
+    # Add actual stop counts if available (more accurate than route counts)
+    if stops_counts:
+        summary["total_stops"] = stops_counts.get("total", 0)
+        summary["heavy_rail_stops"] = stops_counts.get("heavy_rail", 0)
+        summary["light_rail_stops"] = stops_counts.get("light_rail", 0)
+        summary["bus_stops"] = stops_counts.get("bus", 0)
+    else:
+        # Fallback: Use route counts (legacy behavior, less accurate)
+        # Note: This is a fallback when stop data unavailable
+        summary["total_stops"] = len(all_routes)
+        summary["heavy_rail_stops"] = len(heavy_rail)
+        summary["light_rail_stops"] = len(light_rail)
+        summary["bus_stops"] = len(bus)
+        logger.debug("⚠️  Using route counts as stop counts (stop data unavailable)", extra={
+            "pillar_name": "public_transit_access"
+        })
 
     if heavy_rail:
         summary["transit_modes_available"].append("Heavy Rail (Subway/Metro)")

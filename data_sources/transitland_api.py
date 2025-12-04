@@ -73,12 +73,30 @@ def get_nearby_transit_stops(
             stop_lon = stop["geometry"]["coordinates"][0]
             distance = haversine_distance(lat, lon, stop_lat, stop_lon)
             
+            # Extract route_type if available (from routes serving this stop)
+            # Transitland v2 API may include route_type in various locations:
+            # - stop.route_type (direct)
+            # - stop.routes[].route_type (from routes serving this stop)
+            # - stop.route_types[] (array of route types)
+            route_type = None
+            if "route_type" in stop:
+                route_type = stop.get("route_type")
+            elif "route_types" in stop and isinstance(stop["route_types"], list) and len(stop["route_types"]) > 0:
+                # Use first route_type from array (most common type for this stop)
+                route_type = stop["route_types"][0]
+            elif "routes" in stop and isinstance(stop["routes"], list) and len(stop["routes"]) > 0:
+                # Try to get route_type from first route serving this stop
+                first_route = stop["routes"][0]
+                if isinstance(first_route, dict):
+                    route_type = first_route.get("route_type")
+            
             processed_stops.append({
                 "id": stop.get("onestop_id"),
                 "name": stop.get("stop_name"),
                 "lat": stop_lat,
                 "lon": stop_lon,
-                "distance_m": round(distance, 0)
+                "distance_m": round(distance, 0),
+                "route_type": route_type  # Preserve route_type if available
             })
         
         # Sort by distance
@@ -101,6 +119,7 @@ def get_nearby_transit_stops(
         
         return {
             "stops": processed_stops[:10],  # Return top 10 closest
+            "all_stops": processed_stops,  # Include all stops for counting by route_type
             "count": len(processed_stops),
             "summary": summary
         }
