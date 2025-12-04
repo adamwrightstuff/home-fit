@@ -315,6 +315,12 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         
         seasonal_data = sentinel.map(add_seasonal_ndvi)
         
+        # Check if collection is empty
+        collection_size = seasonal_data.size().getInfo()
+        if collection_size == 0:
+            print(f"   ⚠️  No Sentinel-2 images found for greenness analysis")
+            return None
+        
         # Calculate seasonal NDVI statistics
         seasonal_stats = seasonal_data.select(['NDVI', 'season']).median().reduceRegion(
             reducer=ee.Reducer.mean().group(0, 'season'),
@@ -326,44 +332,84 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         # Calculate overall greenness metrics
         ndvi_mean = seasonal_data.select('NDVI').mean()
         
+        # Check if ndvi_mean has bands before doing comparisons
+        # If the collection is empty or has no valid NDVI data, this will fail
+        try:
+            # Try to get band names to verify the image has bands
+            ndvi_bands = ndvi_mean.bandNames().getInfo()
+            if not ndvi_bands or len(ndvi_bands) == 0:
+                print(f"   ⚠️  NDVI image has no bands, skipping greenness analysis")
+                return None
+        except Exception as band_check_error:
+            print(f"   ⚠️  Cannot verify NDVI bands: {band_check_error}")
+            return None
+        
         # Tree canopy (NDVI > 0.4)
-        tree_mask = ndvi_mean.gt(0.4)
-        tree_canopy = tree_mask.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=buffer,
-            scale=20,
-            maxPixels=1e9
-        ).get('NDVI')
+        # Wrap in try/except to handle cases where .gt() fails due to band mismatch
+        try:
+            tree_mask = ndvi_mean.gt(0.4)
+            tree_canopy = tree_mask.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=20,
+                maxPixels=1e9
+            ).get('NDVI')
+        except Exception as tree_error:
+            print(f"   ⚠️  Tree canopy calculation failed: {tree_error}")
+            tree_canopy = None
         
         # Vegetation health (average NDVI)
-        vegetation_health = ndvi_mean.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=buffer,
-            scale=20,
-            maxPixels=1e9
-        ).get('NDVI')
+        try:
+            vegetation_health = ndvi_mean.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=20,
+                maxPixels=1e9
+            ).get('NDVI')
+        except Exception as veg_error:
+            print(f"   ⚠️  Vegetation health calculation failed: {veg_error}")
+            vegetation_health = None
         
         # Green space ratio (any vegetation NDVI > 0.2)
-        green_mask = ndvi_mean.gt(0.2)
-        green_ratio = green_mask.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=buffer,
-            scale=20,
-            maxPixels=1e9
-        ).get('NDVI')
+        try:
+            green_mask = ndvi_mean.gt(0.2)
+            green_ratio = green_mask.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=20,
+                maxPixels=1e9
+            ).get('NDVI')
+        except Exception as green_error:
+            print(f"   ⚠️  Green space ratio calculation failed: {green_error}")
+            green_ratio = None
         
-        # Get results
-        tree_canopy_pct = tree_canopy.getInfo() * 100 if tree_canopy else 0
-        veg_health = vegetation_health.getInfo() if vegetation_health else 0
-        green_ratio_pct = green_ratio.getInfo() * 100 if green_ratio else 0
+        # Get results with safe defaults
+        try:
+            tree_canopy_pct = tree_canopy.getInfo() * 100 if tree_canopy else 0.0
+        except Exception:
+            tree_canopy_pct = 0.0
+        
+        try:
+            veg_health = vegetation_health.getInfo() if vegetation_health else 0.0
+        except Exception:
+            veg_health = 0.0
+        
+        try:
+            green_ratio_pct = green_ratio.getInfo() * 100 if green_ratio else 0.0
+        except Exception:
+            green_ratio_pct = 0.0
         
         # Calculate seasonal variation
-        seasonal_ndvi = seasonal_stats.getInfo()
-        seasonal_variation = 0
-        if seasonal_ndvi and 'groups' in seasonal_ndvi:
-            ndvi_values = [group['mean'] for group in seasonal_ndvi['groups'] if group['mean'] is not None]
-            if len(ndvi_values) > 1:
-                seasonal_variation = max(ndvi_values) - min(ndvi_values)
+        seasonal_variation = 0.0
+        try:
+            seasonal_ndvi = seasonal_stats.getInfo()
+            if seasonal_ndvi and 'groups' in seasonal_ndvi:
+                ndvi_values = [group['mean'] for group in seasonal_ndvi['groups'] if group['mean'] is not None]
+                if len(ndvi_values) > 1:
+                    seasonal_variation = max(ndvi_values) - min(ndvi_values)
+        except Exception as seasonal_error:
+            print(f"   ⚠️  Seasonal variation calculation failed: {seasonal_error}")
+            seasonal_variation = 0.0
         
         result = {
             "tree_canopy_pct": min(100, max(0, tree_canopy_pct)),
