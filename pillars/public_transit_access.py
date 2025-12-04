@@ -222,7 +222,7 @@ def _score_commute_time(mean_minutes: float, area_type: Optional[str]) -> float:
     Convert mean commute minutes into a 0-100 score with context-aware expectations.
     Shorter commutes boost scores; longer ones reduce them, allowing more leeway outside dense cores.
     
-    RESEARCH-BACKED RATIONALE:
+I     RESEARCH-BACKED RATIONALE:
     - Commute time correlates with transit quality (r=0.485 for commuter rail suburbs)
     - Urban cores have shorter expected commutes (20-30 min) due to density
     - Suburban/exurban areas have longer expected commutes (25-40 min) due to sprawl

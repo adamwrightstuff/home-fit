@@ -1,4 +1,4 @@
-Area Type,Metric,Median,P25,P75,Min,Max,Sample Size
+tesArea Type,Metric,Median,P25,P75,Min,Max,Sample Size
 urban_core,active_outdoors.parks_1km,18,8.0,36.0,0,63,19
 urban_core,active_outdoors.playgrounds_1km,0,0.0,0.0,0,0,19
 urban_core,active_outdoors.park_area_hectares,9.8198,5.2054,22.928,0.0,353.4289,19
