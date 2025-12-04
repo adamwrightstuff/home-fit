@@ -848,6 +848,23 @@ def _score_daily_urban_outdoors_v2(
     park_count = len(parks)
     playground_count = len(playgrounds)
     facility_count = len(recreational_facilities)
+    
+    # DIAGNOSTIC: Log input data for debugging
+    if park_count == 0 or total_area_ha == 0:
+        logger.warning(
+            f"🔍 [DAILY URBAN OUTDOORS DIAGNOSTIC] Low park data: "
+            f"parks={park_count}, area_ha={total_area_ha:.2f}, "
+            f"playgrounds={playground_count}, facilities={facility_count}, "
+            f"area_type={area_type}",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "park_count": park_count,
+                "total_area_ha": total_area_ha,
+                "playground_count": playground_count,
+                "facility_count": facility_count,
+                "area_type": area_type,
+            }
+        )
 
     # Use research-backed expected values with fallbacks
     # Map area types to appropriate expectations
@@ -884,6 +901,27 @@ def _score_daily_urban_outdoors_v2(
     s_facilities = _sat_ratio_v2(facility_count, exp_facilities, 3.0)
 
     base_score = min(30.0, s_area + s_count + s_play + s_facilities)
+    
+    # DIAGNOSTIC: Log scoring breakdown
+    if base_score == 0.0 or (park_count > 0 and base_score < 1.0):
+        logger.warning(
+            f"🔍 [DAILY URBAN OUTDOORS DIAGNOSTIC] Low base score: "
+            f"base={base_score:.2f}, s_area={s_area:.2f}, s_count={s_count:.2f}, "
+            f"s_play={s_play:.2f}, s_facilities={s_facilities:.2f}, "
+            f"exp_park_ha={exp_park_ha:.2f}, exp_park_count={exp_park_count:.2f}, "
+            f"effective_area_type={effective_area_type}",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "base_score": base_score,
+                "s_area": s_area,
+                "s_count": s_count,
+                "s_play": s_play,
+                "s_facilities": s_facilities,
+                "exp_park_ha": exp_park_ha,
+                "exp_park_count": exp_park_count,
+                "effective_area_type": effective_area_type,
+            }
+        )
 
     # URBAN CORE DENSITY PENALTY:
     # Dense urban cores (Times Square, Midtown, etc.) can record dozens of tiny
@@ -905,8 +943,41 @@ def _score_daily_urban_outdoors_v2(
         area_overflow = max(0.0, area_ratio - 1.8)    # Reduced from 2.0 to 1.8 (apply penalty earlier)
         # Increased max penalty from 8.0 to 12.0 and strengthened multipliers
         overflow_penalty = min(12.0, (overflow_ratio * 8.0) + (area_overflow * 4.0))
+        
+        # DIAGNOSTIC: Log penalty application
+        if overflow_penalty > 0:
+            logger.info(
+                f"🔍 [DAILY URBAN OUTDOORS DIAGNOSTIC] Urban core penalty applied: "
+                f"penalty={overflow_penalty:.2f}, count_ratio={count_ratio:.2f}, "
+                f"area_ratio={area_ratio:.2f}, base_score={base_score:.2f}",
+                extra={
+                    "pillar_name": "active_outdoors_v2",
+                    "overflow_penalty": overflow_penalty,
+                    "count_ratio": count_ratio,
+                    "area_ratio": area_ratio,
+                    "base_score": base_score,
+                }
+            )
 
-    return max(0.0, base_score - overflow_penalty)
+    final_score = max(0.0, base_score - overflow_penalty)
+    
+    # DIAGNOSTIC: Log final score if it's 0 despite having parks
+    if final_score == 0.0 and park_count > 0:
+        logger.warning(
+            f"🔍 [DAILY URBAN OUTDOORS DIAGNOSTIC] Final score is 0 despite {park_count} parks: "
+            f"base_score={base_score:.2f}, penalty={overflow_penalty:.2f}, "
+            f"total_area_ha={total_area_ha:.2f}, park_count={park_count}",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "final_score": final_score,
+                "base_score": base_score,
+                "overflow_penalty": overflow_penalty,
+                "total_area_ha": total_area_ha,
+                "park_count": park_count,
+            }
+        )
+    
+    return final_score
 
 
 def _score_wild_adventure_v2(

@@ -333,17 +333,86 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         data = resp.json()
         elements = data.get("elements", [])
         
-        if not elements:
-            logger.warning(f"OSM parks query returned empty results for lat={lat}, lon={lon}, radius={radius_m}m")
+        # DIAGNOSTIC: Log raw park elements before processing
+        raw_park_elements = [
+            e for e in elements 
+            if (e.get("tags", {}).get("leisure") in ["park", "garden", "dog_park", "playground", "recreation_ground"] or
+                e.get("tags", {}).get("landuse") in ["park", "recreation_ground", "village_green"] or
+                e.get("tags", {}).get("highway") in ["cycleway", "footway"])
+        ]
+        if raw_park_elements:
+            logger.info(
+                f"🔍 [PARKS DIAGNOSTIC] Found {len(raw_park_elements)} raw park/greenway elements "
+                f"(types: {set(e.get('type') for e in raw_park_elements)}, "
+                f"total elements: {len(elements)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "raw_park_count": len(raw_park_elements),
+                    "raw_park_types": [e.get("type") for e in raw_park_elements],
+                    "total_elements": len(elements),
+                }
+            )
+        elif not elements:
+            logger.warning(
+                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned empty results "
+                f"for lat={lat}, lon={lon}, radius={radius_m}m",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": radius_m,
+                }
+            )
 
         parks, playgrounds, recreational_facilities = _process_green_features(
             elements, lat, lon)
+        
+        # DIAGNOSTIC: Log processed park results
+        if len(parks) != len(raw_park_elements) and len(raw_park_elements) > 0:
+            logger.warning(
+                f"🔍 [PARKS DIAGNOSTIC] Processing filtered parks: "
+                f"{len(raw_park_elements)} raw → {len(parks)} processed "
+                f"(filtered: {len(raw_park_elements) - len(parks)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "raw_count": len(raw_park_elements),
+                    "processed_count": len(parks),
+                    "filtered_count": len(raw_park_elements) - len(parks),
+                }
+            )
+        elif len(parks) == 0 and len(elements) > 0:
+            # Log warning if we got elements but no parks (might indicate processing issue)
+            logger.warning(
+                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned {len(elements)} elements "
+                f"but 0 parks after processing (raw park elements: {len(raw_park_elements)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "total_elements": len(elements),
+                    "raw_park_elements": len(raw_park_elements),
+                }
+            )
+        elif len(parks) > 0:
+            logger.info(
+                f"🔍 [PARKS DIAGNOSTIC] Successfully processed {len(parks)} parks "
+                f"(playgrounds: {len(playgrounds)}, facilities: {len(recreational_facilities)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "park_count": len(parks),
+                    "playground_count": len(playgrounds),
+                    "facility_count": len(recreational_facilities),
+                }
+            )
 
         if DEBUG_PARKS:
             logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds, {len(recreational_facilities)} recreational facilities")
-        elif len(parks) == 0 and len(elements) > 0:
-            # Log warning if we got elements but no parks (might indicate processing issue)
-            logger.warning(f"OSM parks query returned {len(elements)} elements but 0 parks after processing")
 
         return {
             "parks": parks,
@@ -398,6 +467,9 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
       relation["leisure"="swimming_area"](around:{radius_m},{lat},{lon});
       
       // CAMPING
+      // RESEARCH-BACKED: Many campsites in OSM are tagged as nodes (points), not ways/relations
+      // Expand query to include nodes for better coverage
+      node["tourism"="camp_site"](around:{radius_m},{lat},{lon});
       way["tourism"="camp_site"](around:{radius_m},{lat},{lon});
       relation["tourism"="camp_site"](around:{radius_m},{lat},{lon});
     );
@@ -424,9 +496,53 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
             return None
         data = resp.json()
         elements = data.get("elements", [])
+        
+        # DIAGNOSTIC: Log raw camping elements before processing
+        raw_camping_elements = [
+            e for e in elements 
+            if e.get("tags", {}).get("tourism") == "camp_site"
+        ]
+        if raw_camping_elements:
+            logger.info(
+                f"🔍 [CAMPING DIAGNOSTIC] Found {len(raw_camping_elements)} raw camping elements "
+                f"(types: {set(e.get('type') for e in raw_camping_elements)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "raw_camping_count": len(raw_camping_elements),
+                    "raw_camping_types": [e.get("type") for e in raw_camping_elements],
+                }
+            )
 
         hiking, swimming, camping = _process_nature_features(
             elements, lat, lon)
+        
+        # DIAGNOSTIC: Log processed camping results
+        if len(camping) != len(raw_camping_elements):
+            logger.warning(
+                f"🔍 [CAMPING DIAGNOSTIC] Processing filtered camping: "
+                f"{len(raw_camping_elements)} raw → {len(camping)} processed "
+                f"(filtered: {len(raw_camping_elements) - len(camping)})",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "raw_count": len(raw_camping_elements),
+                    "processed_count": len(camping),
+                    "filtered_count": len(raw_camping_elements) - len(camping),
+                }
+            )
+        elif len(camping) > 0:
+            logger.info(
+                f"🔍 [CAMPING DIAGNOSTIC] Successfully processed {len(camping)} camping sites",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "camping_count": len(camping),
+                }
+            )
 
         # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park
         # This is a separate query to avoid overcounting urban sidewalks
@@ -951,6 +1067,20 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
 
             if elem_lat is None:
                 debug_skipped_parks.append(park_debug)
+                # DIAGNOSTIC: Log geometry failures (common issue)
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park "
+                    f"osm_id={osm_id}, type={elem_type}, name={tags.get('name')}, reason={centroid_reason}",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "osm_id": osm_id,
+                        "elem_type": elem_type,
+                        "park_name": tags.get("name"),
+                        "centroid_reason": centroid_reason,
+                        "leisure": leisure,
+                        "landuse": landuse,
+                    }
+                )
                 if DEBUG_PARKS:
                     logger.debug(f"[PARK SKIP] id={osm_id} name={tags.get('name')} type={elem_type} reason={centroid_reason}")
                 continue
@@ -1118,9 +1248,11 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         osm_id = elem.get("id")
         elem_type = elem.get("type")
         
-        if elem_type not in ["way", "relation"] or not osm_id or osm_id in seen_ids:
+        # RESEARCH-BACKED: Allow node elements for camping (many campsites are points in OSM)
+        # Other features (hiking, swimming) remain way/relation only for data quality
+        if not osm_id or osm_id in seen_ids:
             continue
-
+        
         tags = elem.get("tags", {})
         route = tags.get("route")
         boundary = tags.get("boundary")
@@ -1132,6 +1264,11 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
 
         feature = None
         category = None
+        
+        # For camping, allow nodes; for other features, require way/relation
+        is_camping = tourism == "camp_site"
+        if not is_camping and elem_type not in ["way", "relation"]:
+            continue
 
         if piste_type:
             # SKI TRAILS - Mountain recreation (piste:type)
@@ -1254,7 +1391,13 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         area_sqm = 0.0
         way_length_m = 0.0
         
-        if elem_type == "way":
+        if elem_type == "node":
+            # Handle node elements (primarily for camping sites)
+            elem_lat = elem.get("lat")
+            elem_lon = elem.get("lon")
+            area_sqm = 0.0  # Nodes have no area
+            way_length_m = 0.0
+        elif elem_type == "way":
             elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
             
             # Calculate way length for coastline filtering
@@ -1278,6 +1421,18 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
         if elem_lat is None:
+            # DIAGNOSTIC: Log when geometry calculation fails for camping
+            if is_camping:
+                logger.warning(
+                    f"🔍 [CAMPING DIAGNOSTIC] Failed to get geometry for camping site "
+                    f"osm_id={osm_id}, type={elem_type}, name={tags.get('name')}",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "osm_id": osm_id,
+                        "elem_type": elem_type,
+                        "camping_name": tags.get("name"),
+                    }
+                )
             continue
 
         # DATA QUALITY: Filter coastline segments and ornamental lakes
