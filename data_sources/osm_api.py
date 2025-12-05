@@ -787,10 +787,10 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
-def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = False) -> Optional[Dict]:
+def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True) -> Optional[Dict]:
     """
     Query OSM for local businesses within walking distance.
-    By default focuses on non-chain establishments.
+    By default includes chain establishments.
 
     Args:
         include_chains: If True, include chain/franchise businesses

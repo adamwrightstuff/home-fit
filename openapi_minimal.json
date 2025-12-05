@@ -1,0 +1,218 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HomeFit Score API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://home-fit-production.up.railway.app"
+    }
+  ],
+  "paths": {
+    "/score": {
+      "get": {
+        "operationId": "getScore",
+        "summary": "Get livability score for a location",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Address or ZIP code"
+          },
+          {
+            "name": "priorities",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "JSON string mapping pillars to priority levels: None, Low, Medium, High"
+          },
+          {
+            "name": "enable_schools",
+            "in": "query",
+            "required": false,
+            "schema": { 
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Enable school scoring (default: false)"
+          },
+          {
+            "name": "include_chains",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "diagnostics",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "input": { "type": "string" },
+                    "coordinates": {
+                      "type": "object",
+                      "properties": {
+                        "lat": { "type": "number" },
+                        "lon": { "type": "number" }
+                      }
+                    },
+                    "total_score": { "type": "number" },
+                    "livability_pillars": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "data_quality_summary": {
+                      "type": "object",
+                      "properties": {
+                        "area_classification": {
+                          "type": "object",
+                          "properties": {
+                            "area_type": { "type": "string" },
+                            "form_context": { "type": "string" },
+                            "baseline_contexts": {
+                              "type": "object",
+                              "additionalProperties": { "type": "string" }
+                            }
+                          },
+                          "additionalProperties": true
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch": {
+      "post": {
+        "operationId": "batchScores",
+        "summary": "Get livability scores for multiple locations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["locations"],
+                "properties": {
+                  "locations": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "List of addresses or ZIP codes (max 10 per batch)"
+                  },
+                  "priorities": {
+                    "type": "string",
+                    "description": "JSON string mapping pillars to priority levels: None, Low, Medium, High"
+                  },
+                  "enable_schools": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "include_chains": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch response with results for each location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["location", "success"],
+                        "properties": {
+                          "location": {
+                            "type": "string",
+                            "description": "The address or ZIP code for this result"
+                          },
+                          "success": {
+                            "type": "boolean",
+                            "description": "Whether this location was successfully processed"
+                          },
+                          "result": {
+                            "description": "The full score response (same structure as /score endpoint) - only present when success=true",
+                            "type": "object",
+                            "properties": {
+                              "input": { "type": "string" },
+                              "coordinates": {
+                                "type": "object",
+                                "properties": {
+                                  "lat": { "type": "number" },
+                                  "lon": { "type": "number" }
+                                }
+                              },
+                              "total_score": { "type": "number" },
+                              "livability_pillars": {
+                                "type": "object",
+                                "additionalProperties": true
+                              },
+                              "data_quality_summary": {
+                                "type": "object",
+                                "properties": {
+                                  "area_classification": {
+                                    "type": "object",
+                                    "properties": {
+                                      "area_type": { "type": "string" },
+                                      "form_context": { "type": "string" },
+                                      "baseline_contexts": {
+                                        "type": "object",
+                                        "additionalProperties": { "type": "string" }
+                                      }
+                                    },
+                                    "additionalProperties": true
+                                  }
+                                },
+                                "additionalProperties": true
+                              }
+                            },
+                            "additionalProperties": true
+                          },
+                          "error": {
+                            "type": "string",
+                            "description": "Error message - only present when success=false"
+                          }
+                        }
+                      }
+                    },
+                    "batch_summary": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

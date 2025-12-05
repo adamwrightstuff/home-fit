@@ -348,3 +348,14 @@
 {"location": "montclair nj", "density": 14678.349784108577, "city": "Montclair", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Montclair NJ", "predicted_area_type": "suburban"}
 {"location": "irvine ca", "density": 1691.119418119413, "city": "Irvine", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Irvine CA", "predicted_area_type": "rural"}
 {"location": "fitler square philadelphia pa", "density": 34182.25946787562, "city": "Philadelphia", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Fitler Square Philadelphia PA", "predicted_area_type": "urban_residential"}
+{"location": "(unknown)", "density": 27209.937888198758, "city": "", "business_count": 100, "built_coverage": 0.16, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 119442.67549501297, "city": "Miami", "business_count": null, "built_coverage": 0.163, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 11635.798895649925, "city": "Village of Bronxville", "business_count": null, "built_coverage": 0.101, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2727.0039548062073, "city": "Bend", "business_count": 155, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2332.249920842533, "city": "", "business_count": null, "built_coverage": 0.006, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 2727.0039548062073, "city": "Bend", "business_count": null, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 763.2190741994092, "city": "", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": null, "city": "Bend", "business_count": 155, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 763.2190741994092, "city": "", "business_count": 37, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 2727.0039548062073, "city": "Bend", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": null, "city": "Bend", "business_count": 155, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}

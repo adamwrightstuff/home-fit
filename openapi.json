@@ -1,0 +1,256 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HomeFit Score API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://home-fit-production.up.railway.app"
+    }
+  ],
+  "paths": {
+    "/score": {
+      "get": {
+        "operationId": "getScore",
+        "summary": "Get scoring JSON for a location",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Address or ZIP code"
+          },
+          {
+            "name": "enable_schools",
+            "in": "query",
+            "required": false,
+            "schema": { 
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Enable school scoring (default: false)"
+          },
+          {
+            "name": "priorities",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON string mapping pillars to priority levels: None, Low, Medium, High"
+          },
+          {
+            "name": "include_chains",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include chain businesses in amenities score (default: true)"
+          },
+          {
+            "name": "diagnostics",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include diagnostic data"
+          },
+          {
+            "name": "only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of pillars to calculate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful score response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "input": { 
+                      "type": "string",
+                      "description": "The input location string"
+                    },
+                    "coordinates": {
+                      "type": "object",
+                      "properties": {
+                        "lat": { "type": "number" },
+                        "lon": { "type": "number" }
+                      },
+                      "required": ["lat", "lon"]
+                    },
+                    "location_info": {
+                      "type": "object",
+                      "properties": {
+                        "city": { "type": "string" },
+                        "state": { "type": "string" },
+                        "zip": { "type": "string" }
+                      }
+                    },
+                    "total_score": { 
+                      "type": "number",
+                      "description": "Weighted total livability score (0-100)"
+                    },
+                    "livability_pillars": {
+                      "type": "object",
+                      "description": "Scores and details for each of the 9 livability pillars",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "score": { "type": "number" },
+                          "weight": { "type": "number" },
+                          "contribution": { "type": "number" },
+                          "confidence": { "type": "number" },
+                          "breakdown": { "type": "object" },
+                          "summary": { "type": "object" },
+                          "details": { "type": "object" },
+                          "data_quality": { "type": "object" },
+                          "area_classification": { "type": "object" }
+                        }
+                      }
+                    },
+                    "token_allocation": {
+                      "type": "object",
+                      "description": "Token allocation across pillars (sums to 100)",
+                      "additionalProperties": { "type": "number" }
+                    },
+                    "allocation_type": {
+                      "type": "string",
+                      "enum": ["priority_based", "token_based", "default_equal"],
+                      "description": "How token allocation was determined"
+                    },
+                    "overall_confidence": {
+                      "type": "object",
+                      "properties": {
+                        "average_confidence": { "type": "number" },
+                        "pillars_using_fallback": { "type": "number" },
+                        "fallback_percentage": { "type": "number" },
+                        "quality_tier_distribution": { "type": "object" },
+                        "overall_quality": { "type": "string" }
+                      }
+                    },
+                    "data_quality_summary": {
+                      "type": "object",
+                      "description": "Summary of data quality and area classification",
+                      "properties": {
+                        "data_sources_used": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "area_classification": {
+                          "type": "object",
+                          "description": "Area type classification information",
+                          "properties": {
+                            "area_type": {
+                              "type": "string",
+                              "description": "Universal morphological classification (e.g., urban_core, suburban, exurban, rural)",
+                              "enum": ["urban_core", "urban_residential", "suburban", "exurban", "rural", "unknown"]
+                            },
+                            "form_context": {
+                              "type": "string",
+                              "description": "Architectural classification for beauty pillars (e.g., urban_core_lowrise, historic_urban)",
+                              "nullable": true
+                            },
+                            "metro_name": {
+                              "type": "string",
+                              "description": "Metropolitan area name if applicable",
+                              "nullable": true
+                            },
+                            "baseline_contexts": {
+                              "type": "object",
+                              "description": "Pillar-specific baseline contexts",
+                              "additionalProperties": { "type": "string" },
+                              "nullable": true
+                            },
+                            "effective_area_type": {
+                              "type": "string",
+                              "description": "DEPRECATED: Use form_context instead. Legacy field for backward compatibility",
+                              "nullable": true
+                            }
+                          },
+                          "required": ["area_type"]
+                        },
+                        "total_pillars": { "type": "number" },
+                        "data_completeness": {
+                          "type": "string",
+                          "enum": ["high", "medium", "low"]
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "version": { "type": "string" },
+                        "architecture": { "type": "string" },
+                        "pillars": {
+                          "type": "object",
+                          "additionalProperties": { "type": "string" }
+                        },
+                        "data_sources": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "note": { "type": "string" },
+                        "test_mode": { "type": "boolean" },
+                        "cache_hit": { "type": "boolean" },
+                        "cache_timestamp": { "type": "number" },
+                        "overrides_applied": { "type": "object" },
+                        "pillars_requested": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    },
+                    "diagnostics": {
+                      "type": "object",
+                      "description": "Diagnostic data (only included if diagnostics=true)",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": ["input", "coordinates", "total_score", "livability_pillars"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g., geocoding failed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

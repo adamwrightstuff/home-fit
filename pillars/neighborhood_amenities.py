@@ -14,7 +14,7 @@ from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
 
 
-def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = False, 
+def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = True, 
                                      location_scope: Optional[str] = None,
                                      area_type: Optional[str] = None,
                                      density: Optional[float] = None) -> Tuple[float, Dict]:

@@ -247,10 +247,20 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         type_categories[category] = type_categories.get(category, 0) + 1
         
         lv_raw = tags.get("building:levels")
-        try:
-            lv = int(lv_raw) if lv_raw is not None else None
-        except Exception:
-            lv = None
+        lv = None
+        if lv_raw is not None:
+            try:
+                # Try to parse as float first (handles "2.5" -> 2, "3.0" -> 3)
+                lv_float = float(str(lv_raw).strip())
+                # Round to nearest integer (2.5 -> 3, 2.4 -> 2)
+                lv = int(round(lv_float))
+                # Validate: must be positive and reasonable (1-200 floors)
+                if lv < 1 or lv > 200:
+                    lv = None
+            except (ValueError, TypeError, AttributeError):
+                # Invalid value (e.g., "unknown", "mixed", empty string)
+                lv = None
+        
         if lv is None:
             bins["1"] += 1
             inferred_single_story += 1
@@ -318,7 +328,24 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 if area_sqm > 1.0:
                     areas.append(area_sqm)
 
+    # Calculate entropy for height diversity
+    # Validate: if we have many buildings but very low diversity, it might indicate data quality issues
     levels_entropy = entropy(list(bins.values())) * 100
+    
+    # Data quality validation: flag suspiciously low height diversity
+    # For suburban/exurban areas with 10+ buildings, height diversity < 5 suggests failed height queries
+    height_diversity_warning = None
+    if len(ways) >= 10 and levels_entropy < 5.0:
+        # Check if most buildings are missing height data (all in "1" bin)
+        if bins.get("1", 0) / len(ways) > 0.85:
+            height_diversity_warning = "suspiciously_low_height_diversity"
+            # Log warning for debugging
+            logger.warning(
+                f"Height diversity suspiciously low ({levels_entropy:.1f}) with {len(ways)} buildings. "
+                f"Most buildings ({bins.get('1', 0)}/{len(ways)}) have missing/inferred height data. "
+                f"Location: {lat:.4f}, {lon:.4f}"
+            )
+    
     type_div = entropy(list(types.values())) * 100
     type_category_div = entropy(list(type_categories.values())) * 100 if type_categories else 0.0
     if len(areas) >= 2:
@@ -344,6 +371,16 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         mean_levels = sum(level_values) / len(level_values)
         variance_levels = sum((lv - mean_levels) ** 2 for lv in level_values) / len(level_values)
         std_levels = variance_levels ** 0.5
+        
+        # Additional validation for dense urban areas: if we have many buildings but very low std,
+        # it might indicate data quality issues (e.g., all heights defaulted to 1)
+        if len(ways) >= 50 and std_levels < 0.5 and mean_levels < 2.0:
+            # Dense area with suspiciously uniform low heights - likely data quality issue
+            logger.warning(
+                f"Dense urban area ({len(ways)} buildings) with suspiciously uniform heights: "
+                f"mean={mean_levels:.2f}, std={std_levels:.2f}, entropy={levels_entropy:.1f}. "
+                f"Location: {lat:.4f}, {lon:.4f}. This may indicate failed height queries."
+            )
     else:
         mean_levels = 0.0
         std_levels = 0.0
@@ -421,7 +458,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "built_coverage_ratio": round(built_coverage_ratio, 3),  # 0.0-1.0 scale
         "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
         "beauty_valid": beauty_valid,  # Always True - no hard failure
-        "data_warning": data_warning,  # "low_building_coverage" if coverage < 50%
+        "data_warning": height_diversity_warning or data_warning,  # Height diversity warning or coverage warning
         "confidence_0_1": confidence_0_1,  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
         "material_profile": {
             "tagged_ratio": round(material_tagged / len(ways), 3) if ways else 0.0,

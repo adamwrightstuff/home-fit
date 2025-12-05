@@ -40,7 +40,7 @@ class BatchLocationRequest(BaseModel):
     locations: List[str]
     tokens: Optional[str] = None
     priorities: Optional[str] = None
-    include_chains: bool = False
+    include_chains: bool = True
     enable_schools: Optional[bool] = None
     max_batch_size: int = 10
     adaptive_delays: bool = True  # Use telemetry to adjust delays
@@ -417,7 +417,7 @@ def _compute_single_score_internal(
     location: str,
     tokens: Optional[str] = None,
     priorities_dict: Optional[Dict[str, str]] = None,
-    include_chains: bool = False,
+    include_chains: bool = True,
     enable_schools: Optional[bool] = None,
     test_mode: bool = False,
     request: Optional[Request] = None
@@ -1099,7 +1099,7 @@ def get_livability_score(request: Request,
                          location: str,
                          tokens: Optional[str] = None,
                          priorities: Optional[str] = None,
-                         include_chains: bool = False,
+                         include_chains: bool = True,
                          enable_schools: Optional[bool] = None,
                          test_mode: Optional[bool] = False):
     """
@@ -1126,7 +1126,7 @@ def get_livability_score(request: Request,
                    Priority levels: "None" (0), "Low" (1), "Medium" (2), "High" (3)
                    Example: '{"active_outdoors":"High","built_beauty":"Medium",...}'
                    Default: Equal distribution across all pillars (100 tokens total)
-        include_chains: Include chain/franchise businesses in amenities score (default: False)
+        include_chains: Include chain/franchise businesses in amenities score (default: True)
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
                        Set to False to disable school scoring and preserve API quota
 
@@ -2004,7 +2004,7 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
         locations: List of addresses or ZIP codes (max 10 per batch)
         tokens: Optional token allocation (same format as /score)
         priorities: Optional priority-based allocation (same format as /score)
-        include_chains: Include chain/franchise businesses (default: False)
+        include_chains: Include chain/franchise businesses (default: True)
         enable_schools: Enable school scoring (default: uses global flag)
         max_batch_size: Maximum locations per batch (default: 10)
         adaptive_delays: Use telemetry to adjust delays (default: True)
