@@ -52,7 +52,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                    location_name: Optional[str] = None,
                                    test_overrides: Optional[Dict[str, float]] = None,
                                    precomputed_arch_diversity: Optional[Dict] = None,
-                                   density: Optional[float] = None) -> Tuple[Optional[float], Dict]:
+                                   density: Optional[float] = None,
+                                   form_context: Optional[str] = None) -> Tuple[Optional[float], Dict]:
     """
     Score architectural beauty (0-50 points native range).
     """
@@ -296,7 +297,8 @@ def calculate_built_beauty(lat: float,
         location_name=location_name,
         test_overrides=test_overrides,
         precomputed_arch_diversity=precomputed_arch_diversity,
-        density=density
+        density=density,
+        form_context=form_context
     )
 
     if arch_score is None:
