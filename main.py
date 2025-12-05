@@ -336,7 +336,7 @@ def root():
 
 
 def _generate_request_cache_key(location: str, tokens: Optional[str], priorities: Optional[Dict[str, str]], 
-                                include_chains: bool, diagnostics: bool, enable_schools: Optional[bool]) -> str:
+                                include_chains: bool, enable_schools: Optional[bool]) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
     import json
@@ -346,7 +346,6 @@ def _generate_request_cache_key(location: str, tokens: Optional[str], priorities
         str(tokens) if tokens else "default",
         json.dumps(priorities, sort_keys=True) if priorities else "default",
         str(include_chains),
-        str(diagnostics),
         str(enable_schools) if enable_schools is not None else "default"
     ]
     key_str = ":".join(key_parts)
@@ -360,7 +359,6 @@ def get_livability_score(request: Request,
                          tokens: Optional[str] = None,
                          priorities: Optional[str] = None,
                          include_chains: bool = False,
-                         diagnostics: Optional[bool] = False,
                          enable_schools: Optional[bool] = None,
                          test_mode: Optional[bool] = False):
     """
@@ -424,7 +422,7 @@ def get_livability_score(request: Request,
             from data_sources.cache import _redis_client, _cache, _cache_ttl
             import json
             
-            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
+            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
             # Differentiated cache TTL based on data stability
             # Use minimum TTL of requested pillars (conservative approach)
             # Stable data (Census, airports): 24-48h, Moderate (OSM amenities, transit routes): 1-6h, Dynamic (transit stops): 5-15min
@@ -730,7 +728,7 @@ def get_livability_score(request: Request,
             pillar_tasks.append(
                 ('active_outdoors', get_active_outdoors_score_v2, {
                     'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                    'location_scope': location_scope, 'include_diagnostics': bool(diagnostics),
+                    'location_scope': location_scope,
                     'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
                 })
             )
@@ -1192,18 +1190,6 @@ def get_livability_score(request: Request,
         if only_pillars:
             response["metadata"]["pillars_requested"] = sorted(only_pillars)
 
-        if diagnostics:
-            # Surface pillar diagnostics when available
-            diag = {}
-            try:
-                parks_diag = active_outdoors_details.get("diagnostics", {})
-                if parks_diag:
-                    diag["active_outdoors"] = parks_diag
-            except Exception:
-                pass
-            if diag:
-                response["diagnostics"] = diag
-
         # Record telemetry metrics
         try:
             response_time = time.time() - start_time
@@ -1217,7 +1203,7 @@ def get_livability_score(request: Request,
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
                 import json
                 
-                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
+                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
                 # Add cache indicator to response metadata

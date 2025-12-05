@@ -181,8 +181,7 @@ def run_calibration_panel() -> List[Dict]:
                 lon=lon,
                 city=None,
                 area_type=area_type,
-                location_scope=None,
-                include_diagnostics=False
+                location_scope=None
             )
             
             # Extract raw_total from breakdown

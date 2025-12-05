@@ -234,7 +234,6 @@ def get_active_outdoors_score(
     city: Optional[str] = None,
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
-    include_diagnostics: bool = False,
 ) -> Tuple[float, Dict]:
     """
     Calculate active outdoors score (0-100) based on access to outdoor activities.
@@ -403,18 +402,6 @@ def get_active_outdoors_score(
         "area_classification": area_metadata
     }
 
-    if include_diagnostics:
-        try:
-            kept_parks = parks or []
-            breakdown["diagnostics"] = {
-                "parks_kept": [
-                    {"name": p.get("name"), "osm_id": p.get("osm_id"), "distance_m": p.get("distance_m"), "area_sqm": p.get("area_sqm")}
-                    for p in kept_parks
-                ][:50]
-            }
-        except Exception:
-            pass
-
     # Log results (include aggregation version tag for debugging/deploy verification)
     logger.info(f"✅ Active Outdoors Score (AO_AGG_V1): {total_score:.0f}/100", extra={
         "pillar_name": "active_outdoors",
@@ -482,7 +469,6 @@ def get_active_outdoors_score_v2(
     city: Optional[str] = None,
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
-    include_diagnostics: bool = False,
     precomputed_tree_canopy_5km: Optional[float] = None,
 ) -> Tuple[float, Dict]:
     """
@@ -768,19 +754,6 @@ def get_active_outdoors_score_v2(
         "ridge_regression_advisory": ridge_advisory,
         "ridge_regression_note": "Ridge regression predictions are advisory only and not used for actual scoring. Use for directional signals when adjusting future weights.",
     }
-
-    if include_diagnostics:
-        breakdown["diagnostics"] = {
-            "parks_2km": len(parks),
-            "playgrounds_2km": len(playgrounds),
-            "hiking_trails_total": len(hiking_trails),
-            "hiking_trails_within_5km": sum(
-                1 for h in hiking_trails if h.get("distance_m", 1e9) <= 5000
-            ),
-            "swimming_features": len(swimming),
-            "camp_sites": len(camping),
-            "tree_canopy_pct_5km": canopy_pct_5km,
-        }
 
     logger.info(
         f"✅ Active Outdoors v2 (calibrated): {calibrated_total:.1f}/100 "
