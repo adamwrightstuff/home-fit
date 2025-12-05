@@ -395,415 +395,414 @@ def get_livability_score(request: Request,
         JSON with pillar scores, token allocation, and weighted total
     """
     try:
-    try:
         # Determine if school scoring should be enabled for this request
         # Use query parameter if provided, otherwise fall back to global flag
         use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
         
         start_time = time.time()
-    logger.info(f"HomeFit Score Request: {location}")
-    if enable_schools is not None:
-        logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
+        logger.info(f"HomeFit Score Request: {location}")
+        if enable_schools is not None:
+            logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
 
-    test_mode_enabled = bool(test_mode)
-    
-    # Parse priorities parameter (if provided as JSON string)
-    priorities_dict: Optional[Dict[str, str]] = None
-    if priorities:
-        try:
-            import json
-            if isinstance(priorities, str):
-                priorities_dict = json.loads(priorities)
-            else:
-                priorities_dict = priorities
-        except (json.JSONDecodeError, TypeError):
-            logger.warning(f"Invalid priorities format: {priorities}, ignoring")
-            priorities_dict = None
-    
-    # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
-    if not test_mode_enabled:
-        from data_sources.cache import _redis_client, _cache, _cache_ttl
-        import json
+        test_mode_enabled = bool(test_mode)
         
-        cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
-        # Differentiated cache TTL based on data stability
-        # Use minimum TTL of requested pillars (conservative approach)
-        # Stable data (Census, airports): 24-48h, Moderate (OSM amenities, transit routes): 1-6h, Dynamic (transit stops): 5-15min
-        # For request-level cache, use 5min as baseline (covers dynamic data)
-        # Individual data source caches have their own TTLs in cache.py
-        request_cache_ttl = 300  # 5 minutes for request-level cache (conservative for dynamic data)
-        
-        # Check cache (Redis first, then in-memory)
-        cached_response = None
-        if _redis_client:
+        # Parse priorities parameter (if provided as JSON string)
+        priorities_dict: Optional[Dict[str, str]] = None
+        if priorities:
             try:
-                cached_data = _redis_client.get(cache_key)
-                if cached_data:
-                    data = json.loads(cached_data)
-                    cache_time = data.get('timestamp', 0)
-                    if (time.time() - cache_time) < request_cache_ttl:
-                        cached_response = data.get('value')
-                        logger.info(f"Request cache hit for {location}")
-            except Exception as e:
-                logger.warning(f"Redis cache read error: {e}")
-        
-        if cached_response is None and cache_key in _cache:
-            cache_time = _cache_ttl.get(cache_key, 0)
-            if (time.time() - cache_time) < request_cache_ttl:
-                cached_response = _cache[cache_key]
-                logger.info(f"Request cache hit (in-memory) for {location}")
-        
-        if cached_response:
-            # Return cached response immediately
-            # Add cache indicator to response metadata
-            if isinstance(cached_response, dict) and "metadata" in cached_response:
-                cached_response["metadata"]["cache_hit"] = True
-                cached_response["metadata"]["cache_timestamp"] = time.time()
-            return cached_response
-
-    override_params: Dict[str, float] = {}
-    if test_mode_enabled:
-        for key, value in request.query_params.items():
-            if key.startswith("override_"):
-                try:
-                    override_params[key] = float(value)
-                except (TypeError, ValueError):
-                    logger.warning(f"Ignoring invalid override parameter {key}={value!r}")
-
-    beauty_override_map = {
-        "override_tree_canopy": "tree_canopy_pct",
-        "override_tree_canopy_pct": "tree_canopy_pct",
-        "override_tree_score": "tree_score",
-        "override_levels_entropy": "levels_entropy",
-        "override_building_type_diversity": "building_type_diversity",
-        "override_footprint_area_cv": "footprint_area_cv",
-        "override_block_grain": "block_grain",
-        "override_streetwall": "streetwall_continuity",
-        "override_streetwall_continuity": "streetwall_continuity",
-        "override_setback": "setback_consistency",
-        "override_setback_consistency": "setback_consistency",
-        "override_facade": "facade_rhythm",
-        "override_facade_rhythm": "facade_rhythm",
-        "override_architecture_score": "architecture_score"
-    }
-
-    beauty_overrides: Dict[str, float] = {}
-    if test_mode_enabled:
-        for raw_key, mapped_key in beauty_override_map.items():
-            if raw_key in override_params:
-                beauty_overrides[mapped_key] = override_params[raw_key]
-
-    only_param = request.query_params.get("only")
-    only_pillars: Optional[set[str]] = None
-    if only_param:
-        raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
-        if raw_only:
-            expanded_only = set()
-            for name in raw_only:
-                if name == "neighborhood_beauty":
-                    expanded_only.update({"built_beauty", "natural_beauty"})
+                import json
+                if isinstance(priorities, str):
+                    priorities_dict = json.loads(priorities)
                 else:
-                    expanded_only.add(name)
-            only_pillars = expanded_only
-        if not only_pillars:
-            only_pillars = None
-
-    # Step 1: Geocode the location (with full result for neighborhood detection)
-    from data_sources.geocoding import geocode_with_full_result
-    geo_result = geocode_with_full_result(location)
-
-    if not geo_result:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not geocode the provided location. Please check the address."
-        )
-
-    lat, lon, zip_code, state, city, geocode_data = geo_result
-    logger.info(f"Coordinates: {lat}, {lon}")
-    logger.info(f"Location: {city}, {state} {zip_code}")
-    
-    # Detect if this is a neighborhood vs. standalone city
-    from data_sources.data_quality import detect_location_scope
-    location_scope = detect_location_scope(lat, lon, geocode_data)
-    logger.info(f"Location scope: {location_scope}")
-
-    # Compute a single area_type centrally for consistent radius profiles
-    # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
-    # Use multi-factor classification: business density, building coverage, density, keywords
-    # OPTIMIZATION: Parallelize independent API calls to reduce latency
-    census_tract = None
-    density = 0.0
-    try:
-        from data_sources import census_api as _ca
-        from data_sources import data_quality as _dq
-        from data_sources import osm_api
-        from data_sources.arch_diversity import compute_arch_diversity
-        from data_sources.regional_baselines import RegionalBaselineManager
+                    priorities_dict = priorities
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"Invalid priorities format: {priorities}, ignoring")
+                priorities_dict = None
         
-        # Parallelize independent API calls that don't depend on each other
-        # Note: get_population_density calls get_census_tract internally, so we fetch tract first
-        # then use it for density to avoid redundant calls
-        def _fetch_census_tract():
-            try:
-                return _ca.get_census_tract(lat, lon)
-            except Exception as e:
-                logger.warning(f"Census tract lookup failed (non-fatal): {e}")
-                return None
-        
-        def _fetch_density(tract):
-            try:
-                # Use pre-fetched tract to avoid redundant get_census_tract call
-                return _ca.get_population_density(lat, lon, tract=tract) or 0.0
-            except Exception as e:
-                logger.warning(f"Density lookup failed (non-fatal): {e}")
-                return 0.0
-        
-        def _fetch_business_count():
-            if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
-                return 0
-            try:
-                business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                if business_data:
-                    all_businesses = (business_data.get("tier1_daily", []) + 
-                                    business_data.get("tier2_social", []) +
-                                    business_data.get("tier3_culture", []) +
-                                    business_data.get("tier4_services", []))
-                    return len(all_businesses)
-                return 0
-            except Exception as e:
-                logger.warning(f"Business count query failed (non-fatal): {e}")
-                return 0
-        
-        def _fetch_built_coverage():
-            # Only fetch full arch_diversity if built_beauty pillar is requested
-            # Note: built_coverage_ratio is used for area_type detection, but it's just one factor
-            # and area_type detection can work without it (other factors: density, business_count, metro_distance)
-            if only_pillars is not None and "built_beauty" not in only_pillars:
-                # Skip expensive arch_diversity computation - area_type will work without built_coverage
-                logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
-                return None
-            try:
-                # Return full arch_diversity dict to reuse in built_beauty pillar
-                arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-                return arch_diversity  # Return full dict, not just built_coverage_ratio
-            except Exception as e:
-                logger.warning(f"Built coverage query failed (non-fatal): {e}")
-                return None
-        
-        def _fetch_metro_distance():
-            try:
-                baseline_mgr = RegionalBaselineManager()
-                return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
-            except Exception as e:
-                logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
-                return None
-        
-        # Execute independent calls in parallel (tract first, then density uses it)
-        # OPTIMIZATION: Only submit tasks that are actually needed
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            future_census_tract = executor.submit(_fetch_census_tract)
-            future_business_count = executor.submit(_fetch_business_count)
-            future_metro_distance = executor.submit(_fetch_metro_distance)
+        # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
+        if not test_mode_enabled:
+            from data_sources.cache import _redis_client, _cache, _cache_ttl
+            import json
             
-            # Conditionally submit built_coverage task
-            need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
-            if need_built_coverage:
-                future_built_coverage = executor.submit(_fetch_built_coverage)
-            else:
-                future_built_coverage = None
+            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
+            # Differentiated cache TTL based on data stability
+            # Use minimum TTL of requested pillars (conservative approach)
+            # Stable data (Census, airports): 24-48h, Moderate (OSM amenities, transit routes): 1-6h, Dynamic (transit stops): 5-15min
+            # For request-level cache, use 5min as baseline (covers dynamic data)
+            # Individual data source caches have their own TTLs in cache.py
+            request_cache_ttl = 300  # 5 minutes for request-level cache (conservative for dynamic data)
             
-            # Get census tract first (needed for density)
-            census_tract = future_census_tract.result()
+            # Check cache (Redis first, then in-memory)
+            cached_response = None
+            if _redis_client:
+                try:
+                    cached_data = _redis_client.get(cache_key)
+                    if cached_data:
+                        data = json.loads(cached_data)
+                        cache_time = data.get('timestamp', 0)
+                        if (time.time() - cache_time) < request_cache_ttl:
+                            cached_response = data.get('value')
+                            logger.info(f"Request cache hit for {location}")
+                except Exception as e:
+                    logger.warning(f"Redis cache read error: {e}")
             
-            # Now fetch density using pre-computed tract (avoids redundant get_census_tract call)
-            future_density = executor.submit(_fetch_density, census_tract)
+            if cached_response is None and cache_key in _cache:
+                cache_time = _cache_ttl.get(cache_key, 0)
+                if (time.time() - cache_time) < request_cache_ttl:
+                    cached_response = _cache[cache_key]
+                    logger.info(f"Request cache hit (in-memory) for {location}")
             
-            # Wait for remaining results
-            density = future_density.result()
-            business_count = future_business_count.result()
-            metro_distance_km = future_metro_distance.result()
-            arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
-        
-        # Extract built_coverage_ratio for area type detection
-        built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
-        
-        # Enhanced multi-factor classification with principal city distance
-        area_type = _dq.detect_area_type(
-            lat, lon, 
-            density=density, 
-            city=city,
-            location_input=location,  # For "downtown" keyword check
-            business_count=business_count,  # For business density
-            built_coverage=built_coverage,  # For building coverage
-            metro_distance_km=metro_distance_km  # Distance to principal city
-        )
-    except Exception:
-        area_type = "unknown"
-        arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
-        density = 0.0  # Initialize to avoid NameError if exception occurs
+            if cached_response:
+                # Return cached response immediately
+                # Add cache indicator to response metadata
+                if isinstance(cached_response, dict) and "metadata" in cached_response:
+                    cached_response["metadata"]["cache_hit"] = True
+                    cached_response["metadata"]["cache_timestamp"] = time.time()
+                return cached_response
 
-    # Step 2: Calculate all pillar scores in parallel
-    logger.debug("Calculating pillar scores in parallel...")
+        override_params: Dict[str, float] = {}
+        if test_mode_enabled:
+            for key, value in request.query_params.items():
+                if key.startswith("override_"):
+                    try:
+                        override_params[key] = float(value)
+                    except (TypeError, ValueError):
+                        logger.warning(f"Ignoring invalid override parameter {key}={value!r}")
 
-    # Pillar execution wrapper with error handling
-    def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
-        """
-        Execute a pillar function with error handling.
-        Returns: (pillar_name, (score, details) or None, exception or None)
-        """
-        try:
-            result = func(**kwargs)
-            return (name, result, None)
-        except Exception as e:
-            logger.error(f"{name} pillar failed: {e}")
-            return (name, None, e)
-
-    # Prepare all pillar tasks
-    def _include_pillar(name: str) -> bool:
-        return only_pillars is None or name in only_pillars
-
-    # OPTIMIZATION: Pre-compute tree canopy (5km) once for pillars that need it
-    # This avoids redundant API calls in active_outdoors and natural_beauty
-    tree_canopy_5km = None
-    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
-        try:
-            from data_sources.gee_api import get_tree_canopy_gee
-            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
-            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
-        except Exception as e:
-            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
-            tree_canopy_5km = None
-
-    pillar_tasks = []
-    if _include_pillar('active_outdoors'):
-        pillar_tasks.append(
-            ('active_outdoors', get_active_outdoors_score_v2, {
-                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'include_diagnostics': bool(diagnostics),
-                'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
-            })
-        )
-    need_built_beauty = _include_pillar('built_beauty')
-    need_natural_beauty = _include_pillar('natural_beauty')
-    
-    # Add built_beauty and natural_beauty to parallel execution
-    if need_built_beauty:
-        pillar_tasks.append(
-            ('built_beauty', built_beauty.calculate_built_beauty, {
-                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'location_name': location,
-                'test_overrides': beauty_overrides if beauty_overrides else None,
-                'precomputed_arch_diversity': arch_diversity_data,  # Pass precomputed data
-                'density': density  # Pass pre-computed density
-            })
-        )
-    if need_natural_beauty:
-        pillar_tasks.append(
-            ('natural_beauty', natural_beauty.calculate_natural_beauty, {
-                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
-                'location_scope': location_scope, 'location_name': location,
-                'overrides': beauty_overrides if beauty_overrides else None,
-                'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
-            })
-        )
-    
-    if _include_pillar('neighborhood_amenities'):
-        pillar_tasks.append(
-            ('neighborhood_amenities', get_neighborhood_amenities_score, {
-                'lat': lat, 'lon': lon, 'include_chains': include_chains,
-                'location_scope': location_scope, 'area_type': area_type,
-                'density': density  # Pass pre-computed density
-            })
-        )
-    if _include_pillar('air_travel_access'):
-        pillar_tasks.append(
-            ('air_travel_access', get_air_travel_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type,
-                'density': density  # Pass pre-computed density
-            })
-        )
-    if _include_pillar('public_transit_access'):
-        pillar_tasks.append(
-            ('public_transit_access', get_public_transit_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
-                'city': city, 'density': density  # Pass pre-computed density to avoid redundant API calls
-            })
-        )
-    if _include_pillar('healthcare_access'):
-        pillar_tasks.append(
-            ('healthcare_access', get_healthcare_access_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
-                'density': density  # Pass pre-computed density
-            })
-        )
-    if _include_pillar('housing_value'):
-        pillar_tasks.append(
-            ('housing_value', get_housing_value_score, {
-                'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
-            })
-        )
-
-    # Add school scoring if enabled (check per-request parameter)
-    if use_school_scoring and _include_pillar('quality_education'):
-        pillar_tasks.append(
-            ('quality_education', get_school_data, {
-                'zip_code': zip_code, 'state': state, 'city': city
-            })
-        )
-
-    # Execute all pillars in parallel (including built/natural beauty)
-    pillar_results = {}
-    exceptions = {}
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        # Submit all tasks
-        future_to_pillar = {
-            executor.submit(_execute_pillar, name, func, **kwargs): name
-            for name, func, kwargs in pillar_tasks
+        beauty_override_map = {
+            "override_tree_canopy": "tree_canopy_pct",
+            "override_tree_canopy_pct": "tree_canopy_pct",
+            "override_tree_score": "tree_score",
+            "override_levels_entropy": "levels_entropy",
+            "override_building_type_diversity": "building_type_diversity",
+            "override_footprint_area_cv": "footprint_area_cv",
+            "override_block_grain": "block_grain",
+            "override_streetwall": "streetwall_continuity",
+            "override_streetwall_continuity": "streetwall_continuity",
+            "override_setback": "setback_consistency",
+            "override_setback_consistency": "setback_consistency",
+            "override_facade": "facade_rhythm",
+            "override_facade_rhythm": "facade_rhythm",
+            "override_architecture_score": "architecture_score"
         }
+
+        beauty_overrides: Dict[str, float] = {}
+        if test_mode_enabled:
+            for raw_key, mapped_key in beauty_override_map.items():
+                if raw_key in override_params:
+                    beauty_overrides[mapped_key] = override_params[raw_key]
+
+        only_param = request.query_params.get("only")
+        only_pillars: Optional[set[str]] = None
+        if only_param:
+            raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
+            if raw_only:
+                expanded_only = set()
+                for name in raw_only:
+                    if name == "neighborhood_beauty":
+                        expanded_only.update({"built_beauty", "natural_beauty"})
+                    else:
+                        expanded_only.add(name)
+                only_pillars = expanded_only
+            if not only_pillars:
+                only_pillars = None
+
+        # Step 1: Geocode the location (with full result for neighborhood detection)
+        from data_sources.geocoding import geocode_with_full_result
+        geo_result = geocode_with_full_result(location)
+
+        if not geo_result:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not geocode the provided location. Please check the address."
+            )
+
+        lat, lon, zip_code, state, city, geocode_data = geo_result
+        logger.info(f"Coordinates: {lat}, {lon}")
+        logger.info(f"Location: {city}, {state} {zip_code}")
         
-        # Collect results as they complete
-        for future in as_completed(future_to_pillar):
-            pillar_name = future_to_pillar[future]
-            name, result, error = future.result()
+        # Detect if this is a neighborhood vs. standalone city
+        from data_sources.data_quality import detect_location_scope
+        location_scope = detect_location_scope(lat, lon, geocode_data)
+        logger.info(f"Location scope: {location_scope}")
+
+        # Compute a single area_type centrally for consistent radius profiles
+        # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+        # Use multi-factor classification: business density, building coverage, density, keywords
+        # OPTIMIZATION: Parallelize independent API calls to reduce latency
+        census_tract = None
+        density = 0.0
+        try:
+            from data_sources import census_api as _ca
+            from data_sources import data_quality as _dq
+            from data_sources import osm_api
+            from data_sources.arch_diversity import compute_arch_diversity
+            from data_sources.regional_baselines import RegionalBaselineManager
             
-            if error:
-                exceptions[pillar_name] = error
-                pillar_results[pillar_name] = None
+            # Parallelize independent API calls that don't depend on each other
+            # Note: get_population_density calls get_census_tract internally, so we fetch tract first
+            # then use it for density to avoid redundant calls
+            def _fetch_census_tract():
+                try:
+                    return _ca.get_census_tract(lat, lon)
+                except Exception as e:
+                    logger.warning(f"Census tract lookup failed (non-fatal): {e}")
+                    return None
+            
+            def _fetch_density(tract):
+                try:
+                    # Use pre-fetched tract to avoid redundant get_census_tract call
+                    return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+                except Exception as e:
+                    logger.warning(f"Density lookup failed (non-fatal): {e}")
+                    return 0.0
+            
+            def _fetch_business_count():
+                if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
+                    return 0
+                try:
+                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                    if business_data:
+                        all_businesses = (business_data.get("tier1_daily", []) + 
+                                        business_data.get("tier2_social", []) +
+                                        business_data.get("tier3_culture", []) +
+                                        business_data.get("tier4_services", []))
+                        return len(all_businesses)
+                    return 0
+                except Exception as e:
+                    logger.warning(f"Business count query failed (non-fatal): {e}")
+                    return 0
+            
+            def _fetch_built_coverage():
+                # Only fetch full arch_diversity if built_beauty pillar is requested
+                # Note: built_coverage_ratio is used for area_type detection, but it's just one factor
+                # and area_type detection can work without it (other factors: density, business_count, metro_distance)
+                if only_pillars is not None and "built_beauty" not in only_pillars:
+                    # Skip expensive arch_diversity computation - area_type will work without built_coverage
+                    logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
+                    return None
+                try:
+                    # Return full arch_diversity dict to reuse in built_beauty pillar
+                    arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+                    return arch_diversity  # Return full dict, not just built_coverage_ratio
+                except Exception as e:
+                    logger.warning(f"Built coverage query failed (non-fatal): {e}")
+                    return None
+            
+            def _fetch_metro_distance():
+                try:
+                    baseline_mgr = RegionalBaselineManager()
+                    return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+                except Exception as e:
+                    logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
+                    return None
+            
+            # Execute independent calls in parallel (tract first, then density uses it)
+            # OPTIMIZATION: Only submit tasks that are actually needed
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_census_tract = executor.submit(_fetch_census_tract)
+                future_business_count = executor.submit(_fetch_business_count)
+                future_metro_distance = executor.submit(_fetch_metro_distance)
+                
+                # Conditionally submit built_coverage task
+                need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+                if need_built_coverage:
+                    future_built_coverage = executor.submit(_fetch_built_coverage)
+                else:
+                    future_built_coverage = None
+                
+                # Get census tract first (needed for density)
+                census_tract = future_census_tract.result()
+                
+                # Now fetch density using pre-computed tract (avoids redundant get_census_tract call)
+                future_density = executor.submit(_fetch_density, census_tract)
+                
+                # Wait for remaining results
+                density = future_density.result()
+                business_count = future_business_count.result()
+                metro_distance_km = future_metro_distance.result()
+                arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
+            
+            # Extract built_coverage_ratio for area type detection
+            built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
+            
+            # Enhanced multi-factor classification with principal city distance
+            area_type = _dq.detect_area_type(
+                lat, lon, 
+                density=density, 
+                city=city,
+                location_input=location,  # For "downtown" keyword check
+                business_count=business_count,  # For business density
+                built_coverage=built_coverage,  # For building coverage
+                metro_distance_km=metro_distance_km  # Distance to principal city
+            )
+        except Exception:
+            area_type = "unknown"
+            arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
+            density = 0.0  # Initialize to avoid NameError if exception occurs
+
+        # Step 2: Calculate all pillar scores in parallel
+        logger.debug("Calculating pillar scores in parallel...")
+
+        # Pillar execution wrapper with error handling
+        def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
+            """
+            Execute a pillar function with error handling.
+            Returns: (pillar_name, (score, details) or None, exception or None)
+            """
+            try:
+                result = func(**kwargs)
+                return (name, result, None)
+            except Exception as e:
+                logger.error(f"{name} pillar failed: {e}")
+                return (name, None, e)
+
+        # Prepare all pillar tasks
+        def _include_pillar(name: str) -> bool:
+            return only_pillars is None or name in only_pillars
+
+        # OPTIMIZATION: Pre-compute tree canopy (5km) once for pillars that need it
+        # This avoids redundant API calls in active_outdoors and natural_beauty
+        tree_canopy_5km = None
+        if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
+            try:
+                from data_sources.gee_api import get_tree_canopy_gee
+                tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
+                logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
+            except Exception as e:
+                logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
+                tree_canopy_5km = None
+
+        pillar_tasks = []
+        if _include_pillar('active_outdoors'):
+            pillar_tasks.append(
+                ('active_outdoors', get_active_outdoors_score_v2, {
+                    'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                    'location_scope': location_scope, 'include_diagnostics': bool(diagnostics),
+                    'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
+                })
+            )
+        need_built_beauty = _include_pillar('built_beauty')
+        need_natural_beauty = _include_pillar('natural_beauty')
+        
+        # Add built_beauty and natural_beauty to parallel execution
+        if need_built_beauty:
+            pillar_tasks.append(
+                ('built_beauty', built_beauty.calculate_built_beauty, {
+                    'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                    'location_scope': location_scope, 'location_name': location,
+                    'test_overrides': beauty_overrides if beauty_overrides else None,
+                    'precomputed_arch_diversity': arch_diversity_data,  # Pass precomputed data
+                    'density': density  # Pass pre-computed density
+                })
+            )
+        if need_natural_beauty:
+            pillar_tasks.append(
+                ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                    'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                    'location_scope': location_scope, 'location_name': location,
+                    'overrides': beauty_overrides if beauty_overrides else None,
+                    'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
+                })
+            )
+        
+        if _include_pillar('neighborhood_amenities'):
+            pillar_tasks.append(
+                ('neighborhood_amenities', get_neighborhood_amenities_score, {
+                    'lat': lat, 'lon': lon, 'include_chains': include_chains,
+                    'location_scope': location_scope, 'area_type': area_type,
+                    'density': density  # Pass pre-computed density
+                })
+            )
+        if _include_pillar('air_travel_access'):
+            pillar_tasks.append(
+                ('air_travel_access', get_air_travel_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type,
+                    'density': density  # Pass pre-computed density
+                })
+            )
+        if _include_pillar('public_transit_access'):
+            pillar_tasks.append(
+                ('public_transit_access', get_public_transit_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
+                    'city': city, 'density': density  # Pass pre-computed density to avoid redundant API calls
+                })
+            )
+        if _include_pillar('healthcare_access'):
+            pillar_tasks.append(
+                ('healthcare_access', get_healthcare_access_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
+                    'density': density  # Pass pre-computed density
+                })
+            )
+        if _include_pillar('housing_value'):
+            pillar_tasks.append(
+                ('housing_value', get_housing_value_score, {
+                    'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+                })
+            )
+
+        # Add school scoring if enabled (check per-request parameter)
+        if use_school_scoring and _include_pillar('quality_education'):
+            pillar_tasks.append(
+                ('quality_education', get_school_data, {
+                    'zip_code': zip_code, 'state': state, 'city': city
+                })
+            )
+
+        # Execute all pillars in parallel (including built/natural beauty)
+        pillar_results = {}
+        exceptions = {}
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            # Submit all tasks
+            future_to_pillar = {
+                executor.submit(_execute_pillar, name, func, **kwargs): name
+                for name, func, kwargs in pillar_tasks
+            }
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_pillar):
+                pillar_name = future_to_pillar[future]
+                name, result, error = future.result()
+                
+                if error:
+                    exceptions[pillar_name] = error
+                    pillar_results[pillar_name] = None
+                else:
+                    pillar_results[pillar_name] = result
+
+        # Handle school scoring separately (conditional)
+        schools_found = False
+        if use_school_scoring:
+            if 'quality_education' in pillar_results and pillar_results['quality_education']:
+                school_avg, schools_by_level = pillar_results['quality_education']
             else:
-                pillar_results[pillar_name] = result
-
-    # Handle school scoring separately (conditional)
-    schools_found = False
-    if use_school_scoring:
-        if 'quality_education' in pillar_results and pillar_results['quality_education']:
-            school_avg, schools_by_level = pillar_results['quality_education']
+                school_avg = None  # Real failure, not fake score
+                schools_by_level = {"elementary": [], "middle": [], "high": []}
         else:
-            school_avg = None  # Real failure, not fake score
+            logger.info("School scoring disabled (preserving API quota)")
+            school_avg = None  # Not computed, don't use fake score
             schools_by_level = {"elementary": [], "middle": [], "high": []}
-    else:
-        logger.info("School scoring disabled (preserving API quota)")
-        school_avg = None  # Not computed, don't use fake score
-        schools_by_level = {"elementary": [], "middle": [], "high": []}
 
-    # Extract results with error handling (no fallback scores - use 0.0 if failed)
-    active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-    amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
-    air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
-    transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
-    healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
-    housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        # Extract results with error handling (no fallback scores - use 0.0 if failed)
+        active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
+        transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
-    # Extract built/natural beauty from parallel results
-    built_calc = pillar_results.get('built_beauty')
-    natural_calc = pillar_results.get('natural_beauty')
-    
-    # Handle built_beauty result
-    if built_calc:
-        built_score = built_calc["score"]
-        built_details = built_calc["details"]
-    else:
-        built_score = 0.0
+        # Extract built/natural beauty from parallel results
+        built_calc = pillar_results.get('built_beauty')
+        natural_calc = pillar_results.get('natural_beauty')
+        
+        # Handle built_beauty result
+        if built_calc:
+            built_score = built_calc["score"]
+            built_details = built_calc["details"]
+        else:
+            built_score = 0.0
         built_details = {
             "component_score_0_50": 0.0,
             "enhancer_bonus_raw": 0.0,
@@ -815,118 +814,118 @@ def get_livability_score(request: Request,
             "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
         }
     
-    # Handle natural_beauty result
-    if natural_calc:
-        tree_details = natural_calc["details"]
-        natural_score = natural_calc["score"]
-        natural_details = {
-            "tree_score_0_50": round(natural_calc["tree_score_0_50"], 2),
-            "enhancer_bonus_raw": round(natural_calc["natural_bonus_raw"], 2),
-            "enhancer_bonus_scaled": round(natural_calc["natural_bonus_scaled"], 2),
-            "context_bonus_raw": round(natural_calc["context_bonus_raw"], 2),
-            "score_before_normalization": round(natural_calc["score_before_normalization"], 2),
-            "normalization": natural_calc["normalization"],
-            "source": "natural_beauty",
-            "tree_analysis": tree_details,
-            "scenic_proxy": natural_calc["scenic_metadata"],
-            "enhancer_bonus": tree_details.get("enhancer_bonus", {}),
-            "context_bonus": tree_details.get("natural_context", {}),
-            "bonus_breakdown": tree_details.get("bonus_breakdown", {}),
-            "green_view_index": tree_details.get("green_view_index"),
-            "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
-            "gvi_metrics": tree_details.get("gvi_metrics"),
-            "expectation_effect": tree_details.get("expectation_effect"),
-            "data_availability": tree_details.get("data_availability", {}),  # NEW: expose data quality info
-            "gvi_available": tree_details.get("gvi_available", False),  # NEW: GVI data availability
-            "gvi_source": tree_details.get("gvi_source", "unknown"),  # NEW: GVI data source
-        }
-    else:
-        natural_score = 0.0
-        natural_details = {
-            "tree_score_0_50": 0.0,
-            "enhancer_bonus_raw": 0.0,
-            "enhancer_bonus_scaled": 0.0,
-            "context_bonus_raw": 0.0,
-            "score_before_normalization": 0.0,
-            "normalization": None,
-            "source": "natural_beauty",
-            "tree_analysis": {},
-            "scenic_proxy": {},
-            "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
-            "context_bonus": {
-                "components": {},
-                "total_applied": 0.0,
-                "total_before_cap": 0.0,
-                "cap": 0.0,
-                "metrics": {}
+        # Handle natural_beauty result
+        if natural_calc:
+            tree_details = natural_calc["details"]
+            natural_score = natural_calc["score"]
+            natural_details = {
+                "tree_score_0_50": round(natural_calc["tree_score_0_50"], 2),
+                "enhancer_bonus_raw": round(natural_calc["natural_bonus_raw"], 2),
+                "enhancer_bonus_scaled": round(natural_calc["natural_bonus_scaled"], 2),
+                "context_bonus_raw": round(natural_calc["context_bonus_raw"], 2),
+                "score_before_normalization": round(natural_calc["score_before_normalization"], 2),
+                "normalization": natural_calc["normalization"],
+                "source": "natural_beauty",
+                "tree_analysis": tree_details,
+                "scenic_proxy": natural_calc["scenic_metadata"],
+                "enhancer_bonus": tree_details.get("enhancer_bonus", {}),
+                "context_bonus": tree_details.get("natural_context", {}),
+                "bonus_breakdown": tree_details.get("bonus_breakdown", {}),
+                "green_view_index": tree_details.get("green_view_index"),
+                "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
+                "gvi_metrics": tree_details.get("gvi_metrics"),
+                "expectation_effect": tree_details.get("expectation_effect"),
+                "data_availability": tree_details.get("data_availability", {}),  # NEW: expose data quality info
+                "gvi_available": tree_details.get("gvi_available", False),  # NEW: GVI data availability
+                "gvi_source": tree_details.get("gvi_source", "unknown"),  # NEW: GVI data source
             }
-        }
-
-    pillar_results['built_beauty'] = (built_score, built_details)
-    pillar_results['natural_beauty'] = (natural_score, natural_details)
-
-    # Note: For school_avg, if None (not computed or failed), set to 0 for calculation
-    # but mark in response that it wasn't computed
-    if school_avg is None:
-        school_avg = 0.0
-
-    # Count total schools if available
-    if schools_by_level:
-        total_schools = sum([
-            len(schools_by_level.get("elementary", [])),
-            len(schools_by_level.get("middle", [])),
-            len(schools_by_level.get("high", []))
-        ])
-        schools_found = total_schools > 0
-    else:
-        total_schools = 0
-        schools_found = False
-
-    # Log any pillar failures
-    if exceptions:
-        logger.warning(f"{len(exceptions)} pillar(s) failed:")
-        for pillar_name, error in exceptions.items():
-            logger.warning(f"  - {pillar_name}: {error}")
-
-    # Step 3: Calculate weighted total using token allocation
-    # Priority: Use priorities if provided, otherwise fall back to tokens
-    if priorities_dict:
-        token_allocation = parse_priority_allocation(priorities_dict)
-        allocation_type = "priority_based"
-    else:
-        token_allocation = parse_token_allocation(tokens)
-        allocation_type = "token_based" if tokens else "default_equal"
-    
-    if only_pillars:
-        # Zero-out tokens for pillars not requested
-        for pillar_name in list(token_allocation.keys()):
-            if pillar_name not in only_pillars:
-                token_allocation[pillar_name] = 0.0
-        # Renormalize to 100 tokens if any remain
-        remaining = sum(token_allocation.values())
-        if remaining > 0:
-            scale = 100.0 / remaining
-            token_allocation = {k: v * scale for k, v in token_allocation.items()}
-            # Round to ensure exact 100 tokens
-            rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
-            total_rounded = sum(rounded.values())
-            remainder = 100 - total_rounded
-            if remainder > 0:
-                # Add remainder to pillar with largest fractional part
-                fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_allocation.items() if tokens > 0]
-                if fractional_parts:
-                    fractional_parts.sort(key=lambda x: x[1], reverse=True)
-                    for i in range(remainder):
-                        pillar = fractional_parts[i][0]
-                        rounded[pillar] = rounded.get(pillar, 0) + 1
-            token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
         else:
-            # Fallback: assign whole budget to requested pillars equally
-            equal = 100.0 / len(only_pillars)
-            token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
-                             for pillar_name in token_allocation.keys()}
+            natural_score = 0.0
+            natural_details = {
+                "tree_score_0_50": 0.0,
+                "enhancer_bonus_raw": 0.0,
+                "enhancer_bonus_scaled": 0.0,
+                "context_bonus_raw": 0.0,
+                "score_before_normalization": 0.0,
+                "normalization": None,
+                "source": "natural_beauty",
+                "tree_analysis": {},
+                "scenic_proxy": {},
+                "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
+                "context_bonus": {
+                    "components": {},
+                    "total_applied": 0.0,
+                    "total_before_cap": 0.0,
+                    "cap": 0.0,
+                    "metrics": {}
+                }
+            }
 
-    total_score = (
+        pillar_results['built_beauty'] = (built_score, built_details)
+        pillar_results['natural_beauty'] = (natural_score, natural_details)
+
+        # Note: For school_avg, if None (not computed or failed), set to 0 for calculation
+        # but mark in response that it wasn't computed
+        if school_avg is None:
+            school_avg = 0.0
+
+        # Count total schools if available
+        if schools_by_level:
+            total_schools = sum([
+                len(schools_by_level.get("elementary", [])),
+                len(schools_by_level.get("middle", [])),
+                len(schools_by_level.get("high", []))
+            ])
+            schools_found = total_schools > 0
+        else:
+            total_schools = 0
+            schools_found = False
+
+        # Log any pillar failures
+        if exceptions:
+            logger.warning(f"{len(exceptions)} pillar(s) failed:")
+            for pillar_name, error in exceptions.items():
+                logger.warning(f"  - {pillar_name}: {error}")
+
+        # Step 3: Calculate weighted total using token allocation
+        # Priority: Use priorities if provided, otherwise fall back to tokens
+        if priorities_dict:
+            token_allocation = parse_priority_allocation(priorities_dict)
+            allocation_type = "priority_based"
+        else:
+            token_allocation = parse_token_allocation(tokens)
+            allocation_type = "token_based" if tokens else "default_equal"
+        
+        if only_pillars:
+            # Zero-out tokens for pillars not requested
+            for pillar_name in list(token_allocation.keys()):
+                if pillar_name not in only_pillars:
+                    token_allocation[pillar_name] = 0.0
+            # Renormalize to 100 tokens if any remain
+            remaining = sum(token_allocation.values())
+            if remaining > 0:
+                scale = 100.0 / remaining
+                token_allocation = {k: v * scale for k, v in token_allocation.items()}
+                # Round to ensure exact 100 tokens
+                rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
+                total_rounded = sum(rounded.values())
+                remainder = 100 - total_rounded
+                if remainder > 0:
+                    # Add remainder to pillar with largest fractional part
+                    fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_allocation.items() if tokens > 0]
+                    if fractional_parts:
+                        fractional_parts.sort(key=lambda x: x[1], reverse=True)
+                        for i in range(remainder):
+                            pillar = fractional_parts[i][0]
+                            rounded[pillar] = rounded.get(pillar, 0) + 1
+                token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
+            else:
+                # Fallback: assign whole budget to requested pillars equally
+                equal = 100.0 / len(only_pillars)
+                token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
+                                 for pillar_name in token_allocation.keys()}
+
+        total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
         (built_score * token_allocation["built_beauty"] / 100) +
         (natural_score * token_allocation["natural_beauty"] / 100) +
@@ -936,10 +935,10 @@ def get_livability_score(request: Request,
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
         (housing_score * token_allocation["housing_value"] / 100)
-    )
+        )
 
-    logger.info(f"Final Livability Score: {total_score:.1f}/100")
-    logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
+        logger.info(f"Final Livability Score: {total_score:.1f}/100")
+        logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
                 f"Built Beauty: {built_score:.1f}/100 | "
                 f"Natural Beauty: {natural_score:.1f}/100 | "
                 f"Neighborhood Amenities: {amenities_score:.1f}/100 | "
@@ -949,16 +948,16 @@ def get_livability_score(request: Request,
                 f"Quality Education: {school_avg:.1f}/100 | "
                 f"Housing Value: {housing_score:.1f}/100")
 
-    # Count total schools and check if any were found
-    total_schools = sum([
+        # Count total schools and check if any were found
+        total_schools = sum([
         len(schools_by_level.get("elementary", [])),
         len(schools_by_level.get("middle", [])),
         len(schools_by_level.get("high", []))
-    ])
-    schools_found = total_schools > 0
+        ])
+        schools_found = total_schools > 0
 
-    # Build livability_pillars dict first
-    livability_pillars = {
+        # Build livability_pillars dict first
+        livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,
             "weight": token_allocation["active_outdoors"],
@@ -1067,10 +1066,10 @@ def get_livability_score(request: Request,
             "data_quality": housing_details.get("data_quality", {}),
             "area_classification": housing_details.get("area_classification", {})
         }
-    }
+        }
 
-    # Build response with enhanced metadata
-    response = {
+        # Build response with enhanced metadata
+        response = {
         "input": location,
         "coordinates": {
             "lat": lat,
@@ -1113,82 +1112,82 @@ def get_livability_score(request: Request,
             "note": "Total score = weighted average of 9 pillars. Equal token distribution by default (~11.11 tokens each, totaling 100). Custom allocation via 'priorities' parameter (recommended) or 'tokens' parameter (legacy).",
             "test_mode": test_mode_enabled
         }
-    }
-
-    if test_mode_enabled and beauty_overrides:
-        arch_override_keys = {
-            "levels_entropy",
-            "building_type_diversity",
-            "footprint_area_cv",
-            "block_grain",
-            "streetwall_continuity",
-            "setback_consistency",
-            "facade_rhythm",
-            "architecture_score"
         }
-        tree_override_keys = {
-            "tree_canopy_pct",
-            "tree_score"
-        }
-        overrides_payload = {}
-        built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
-        natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
-        if built_overrides:
-            overrides_payload["built_beauty"] = built_overrides
-        if natural_overrides:
-            overrides_payload["natural_beauty"] = natural_overrides
-        if overrides_payload:
-            response["metadata"]["overrides_applied"] = overrides_payload
-    if only_pillars:
-        response["metadata"]["pillars_requested"] = sorted(only_pillars)
 
-    if diagnostics:
-        # Surface pillar diagnostics when available
-        diag = {}
-        try:
-            parks_diag = active_outdoors_details.get("diagnostics", {})
-            if parks_diag:
-                diag["active_outdoors"] = parks_diag
-        except Exception:
-            pass
-        if diag:
-            response["diagnostics"] = diag
-
-    # Record telemetry metrics
-    try:
-        response_time = time.time() - start_time
-        record_request_metrics(location, lat, lon, response, response_time)
-    except Exception as e:
-        logger.warning(f"Failed to record telemetry: {e}")
-
-    # REQUEST-LEVEL CACHING: Store response in cache (skip if test_mode)
-    if not test_mode_enabled:
-        try:
-            from data_sources.cache import _redis_client, _cache, _cache_ttl
-            import json
-            
-            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
-            request_cache_ttl = 300  # 5 minutes for request-level cache
-            
-            # Add cache indicator to response metadata
-            if isinstance(response, dict) and "metadata" in response:
-                response["metadata"]["cache_hit"] = False
-                response["metadata"]["cache_timestamp"] = time.time()
-            
-            cache_data = {
-                'value': response,
-                'timestamp': time.time()
+        if test_mode_enabled and beauty_overrides:
+            arch_override_keys = {
+                "levels_entropy",
+                "building_type_diversity",
+                "footprint_area_cv",
+                "block_grain",
+                "streetwall_continuity",
+                "setback_consistency",
+                "facade_rhythm",
+                "architecture_score"
             }
-            if _redis_client:
-                try:
-                    _redis_client.setex(cache_key, request_cache_ttl, json.dumps(cache_data))
-                except Exception as e:
-                    logger.warning(f"Redis cache write error: {e}")
-            # Also store in in-memory cache
-            _cache[cache_key] = response
-            _cache_ttl[cache_key] = time.time()
+            tree_override_keys = {
+                "tree_canopy_pct",
+                "tree_score"
+            }
+            overrides_payload = {}
+            built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
+            natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
+            if built_overrides:
+                overrides_payload["built_beauty"] = built_overrides
+            if natural_overrides:
+                overrides_payload["natural_beauty"] = natural_overrides
+            if overrides_payload:
+                response["metadata"]["overrides_applied"] = overrides_payload
+        if only_pillars:
+            response["metadata"]["pillars_requested"] = sorted(only_pillars)
+
+        if diagnostics:
+            # Surface pillar diagnostics when available
+            diag = {}
+            try:
+                parks_diag = active_outdoors_details.get("diagnostics", {})
+                if parks_diag:
+                    diag["active_outdoors"] = parks_diag
+            except Exception:
+                pass
+            if diag:
+                response["diagnostics"] = diag
+
+        # Record telemetry metrics
+        try:
+            response_time = time.time() - start_time
+            record_request_metrics(location, lat, lon, response, response_time)
         except Exception as e:
-            logger.warning(f"Failed to cache response: {e}")
+            logger.warning(f"Failed to record telemetry: {e}")
+
+        # REQUEST-LEVEL CACHING: Store response in cache (skip if test_mode)
+        if not test_mode_enabled:
+            try:
+                from data_sources.cache import _redis_client, _cache, _cache_ttl
+                import json
+                
+                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
+                request_cache_ttl = 300  # 5 minutes for request-level cache
+                
+                # Add cache indicator to response metadata
+                if isinstance(response, dict) and "metadata" in response:
+                    response["metadata"]["cache_hit"] = False
+                    response["metadata"]["cache_timestamp"] = time.time()
+                
+                cache_data = {
+                    'value': response,
+                    'timestamp': time.time()
+                }
+                if _redis_client:
+                    try:
+                        _redis_client.setex(cache_key, request_cache_ttl, json.dumps(cache_data))
+                    except Exception as e:
+                        logger.warning(f"Redis cache write error: {e}")
+                # Also store in in-memory cache
+                _cache[cache_key] = response
+                _cache_ttl[cache_key] = time.time()
+            except Exception as e:
+                logger.warning(f"Failed to cache response: {e}")
 
         return response
     except HTTPException:
