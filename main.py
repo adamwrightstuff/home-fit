@@ -394,11 +394,13 @@ def get_livability_score(request: Request,
     Returns:
         JSON with pillar scores, token allocation, and weighted total
     """
-    # Determine if school scoring should be enabled for this request
-    # Use query parameter if provided, otherwise fall back to global flag
-    use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
-    
-    start_time = time.time()
+    try:
+    try:
+        # Determine if school scoring should be enabled for this request
+        # Use query parameter if provided, otherwise fall back to global flag
+        use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+        
+        start_time = time.time()
     logger.info(f"HomeFit Score Request: {location}")
     if enable_schools is not None:
         logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
@@ -1188,7 +1190,19 @@ def get_livability_score(request: Request,
         except Exception as e:
             logger.warning(f"Failed to cache response: {e}")
 
-    return response
+        return response
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400 for geocoding errors)
+        raise
+    except Exception as e:
+        # Catch any unhandled exceptions and return a proper error response
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Unhandled exception in get_livability_score: {e}\n{error_trace}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while calculating livability score: {str(e)}"
+        )
 
 
 def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict to dict
