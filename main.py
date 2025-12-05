@@ -673,6 +673,58 @@ def get_livability_score(request: Request,
                 logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
                 tree_canopy_5km = None
 
+        # Compute form_context once when beauty pillars are requested (shared across beauty pillars)
+        form_context = None
+        need_built_beauty = _include_pillar('built_beauty')
+        need_natural_beauty = _include_pillar('natural_beauty')
+        need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
+        
+        if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
+            try:
+                from data_sources.data_quality import get_form_context
+                from data_sources import census_api
+                
+                # Get required data for form_context computation
+                if arch_diversity_data:
+                    levels_entropy = arch_diversity_data.get("levels_entropy")
+                    building_type_diversity = arch_diversity_data.get("building_type_diversity")
+                    built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
+                    footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
+                    material_profile = arch_diversity_data.get("material_profile")
+                else:
+                    levels_entropy = None
+                    building_type_diversity = None
+                    built_coverage_ratio = None
+                    footprint_area_cv = None
+                    material_profile = None
+                
+                # Get historic data for form_context
+                from data_sources import osm_api
+                charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
+                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+                
+                year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
+                median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+                pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
+                
+                form_context = get_form_context(
+                    area_type=area_type,
+                    density=density,
+                    levels_entropy=levels_entropy,
+                    building_type_diversity=building_type_diversity,
+                    historic_landmarks=historic_landmarks,
+                    median_year_built=median_year_built,
+                    built_coverage_ratio=built_coverage_ratio,
+                    footprint_area_cv=footprint_area_cv,
+                    pre_1940_pct=pre_1940_pct,
+                    material_profile=material_profile,
+                    use_multinomial=True
+                )
+                logger.debug(f"Computed form_context: {form_context}")
+            except Exception as e:
+                logger.warning(f"Form context computation failed (non-fatal): {e}")
+                form_context = None
+
         pillar_tasks = []
         if _include_pillar('active_outdoors'):
             pillar_tasks.append(
@@ -682,9 +734,6 @@ def get_livability_score(request: Request,
                     'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
                 })
             )
-        need_built_beauty = _include_pillar('built_beauty')
-        need_natural_beauty = _include_pillar('natural_beauty')
-        
         # Add built_beauty and natural_beauty to parallel execution
         if need_built_beauty:
             pillar_tasks.append(
@@ -693,7 +742,8 @@ def get_livability_score(request: Request,
                     'location_scope': location_scope, 'location_name': location,
                     'test_overrides': beauty_overrides if beauty_overrides else None,
                     'precomputed_arch_diversity': arch_diversity_data,  # Pass precomputed data
-                    'density': density  # Pass pre-computed density
+                    'density': density,  # Pass pre-computed density
+                    'form_context': form_context  # Pass shared form_context
                 })
             )
         if need_natural_beauty:
@@ -702,7 +752,8 @@ def get_livability_score(request: Request,
                     'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                     'location_scope': location_scope, 'location_name': location,
                     'overrides': beauty_overrides if beauty_overrides else None,
-                    'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
+                    'precomputed_tree_canopy_5km': tree_canopy_5km,  # Optional: pre-computed tree canopy
+                    'form_context': form_context  # Pass shared form_context
                 })
             )
         
@@ -1085,7 +1136,7 @@ def get_livability_score(request: Request,
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
-        "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
+        "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
         "metadata": {
             "version": API_VERSION,
             "architecture": "9 Purpose-Driven Pillars",
@@ -1239,7 +1290,7 @@ def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict t
     }
 
 
-def _calculate_data_quality_summary(pillars: dict) -> dict:  # Changed from Dict to dict
+def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict
     """Calculate data quality summary for the response."""
     data_sources_used = set()
     area_classifications = []
@@ -1262,15 +1313,47 @@ def _calculate_data_quality_summary(pillars: dict) -> dict:  # Changed from Dict
         most_common_area = max(set(area_types), key=area_types.count)
         metro_name = area_classifications[0].get("metro_name") if area_classifications else None
     else:
-        most_common_area = "unknown"
+        most_common_area = area_type or "unknown"
         metro_name = None
+    
+    # Compute baseline contexts for pillars that use them
+    baseline_contexts = {}
+    if area_type:
+        from data_sources.data_quality import get_baseline_context
+        
+        # Compute baseline_context for each pillar that uses it
+        for pillar_name in ['active_outdoors', 'public_transit_access']:
+            if pillar_name in pillars:
+                try:
+                    baseline_contexts[pillar_name] = get_baseline_context(
+                        area_type=area_type,
+                        form_context=form_context,
+                        pillar_name=pillar_name
+                    )
+                except Exception:
+                    pass  # Non-fatal if computation fails
+    
+    # Compute deprecated effective_area_type (for backward compatibility)
+    # Use form_context if available, otherwise use area_type
+    effective_area_type = form_context if form_context is not None else area_type
+    
+    area_classification_dict = {
+        "area_type": most_common_area,  # Universal morphological classification
+        "form_context": form_context,  # Beauty pillars only (architectural classification)
+        "metro_name": metro_name
+    }
+    
+    # Add baseline_contexts for pillars that use them
+    if baseline_contexts:
+        area_classification_dict["baseline_contexts"] = baseline_contexts
+    
+    # Add deprecated effective_area_type for backward compatibility
+    if effective_area_type:
+        area_classification_dict["effective_area_type"] = effective_area_type  # DEPRECATED: Use form_context instead
     
     return {
         "data_sources_used": list(data_sources_used),
-        "area_classification": {
-            "type": most_common_area,
-            "metro_name": metro_name
-        },
+        "area_classification": area_classification_dict,
         "total_pillars": len(pillars),
         "data_completeness": "high" if len(data_sources_used) >= 3 else "medium" if len(data_sources_used) >= 2 else "low"
     }

@@ -9,6 +9,7 @@ import math
 from typing import Dict, Tuple, List, Optional
 from dotenv import load_dotenv
 from data_sources import data_quality
+from data_sources.data_quality import get_baseline_context
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.transitland_api import get_nearby_transit_stops
 from data_sources.utils import haversine_distance as haversine_meters
@@ -706,20 +707,13 @@ def get_public_transit_score(
     # Suburban areas: emphasize commuter rail (heavy rail)
     # Rural areas: value any service (bus, rail, etc.)
     
-    # Derive effective area type for expectations (fallback to 'unknown')
-    # Map area types that don't have explicit transit expectations to similar types
-    effective_area_type = area_type or "unknown"
-    
-    # Map historic_urban to urban_residential for transit expectations
-    # Historic urban areas are typically dense, walkable neighborhoods similar to urban_residential
-    if effective_area_type == "historic_urban":
-        effective_area_type = "urban_residential"
-    
     # Detect commuter rail suburbs: suburban areas with heavy rail near major metros
     # These should use research-backed commuter_rail_suburb expectations
     # Detection criteria: suburban + heavy rail routes > 0 + within 50km of major metro (pop > 2M)
     is_commuter_rail_suburb = False
-    if effective_area_type == 'suburban' and len(heavy_rail_routes) > 0:
+    has_heavy_rail = len(heavy_rail_routes) > 0
+    
+    if area_type == 'suburban' and has_heavy_rail:
         from data_sources.regional_baselines import RegionalBaselineManager
         baseline_mgr = RegionalBaselineManager()
         
@@ -777,7 +771,6 @@ def get_public_transit_score(
                     })
                 else:
                     is_commuter_rail_suburb = True
-                    effective_area_type = 'commuter_rail_suburb'
                     logger.info(f"🚇 Detected commuter rail suburb: {len(heavy_rail_routes)} heavy rail route(s) within {metro_distance_km:.1f}km of {metro_name} (pop {metro_population:,})", extra={
                         "pillar_name": "public_transit_access",
                         "lat": lat,
@@ -790,10 +783,20 @@ def get_public_transit_score(
                         "detected_area_type": "commuter_rail_suburb",
                         "location_scope": location_scope
                     })
+    
+    # Get baseline context for expectation lookup (pillar-specific mapping)
+    # Note: transit doesn't use form_context, so pass None
+    # Pass has_heavy_rail flag for commuter_rail_suburb detection
+    baseline_context = get_baseline_context(
+        area_type=area_type or "suburban",
+        form_context=None,  # transit doesn't need architectural classification
+        pillar_name='public_transit_access',
+        has_heavy_rail=is_commuter_rail_suburb  # Pass detection result
+    )
 
-    # Look up contextual expectations for transit by area type
+    # Look up contextual expectations for transit by baseline context
     transit_expectations = get_contextual_expectations(
-        effective_area_type, "public_transit_access"
+        baseline_context, "public_transit_access"
     ) or {}
 
     expected_heavy = transit_expectations.get("expected_heavy_rail_routes")

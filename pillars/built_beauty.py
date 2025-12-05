@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Tuple
 from logging_config import get_logger
 
 from data_sources import osm_api
-from data_sources.data_quality import assess_pillar_data_quality
+from data_sources.data_quality import assess_pillar_data_quality, get_effective_area_type
 from data_sources.radius_profiles import get_radius_profile
 from pillars.beauty_common import BUILT_ENHANCER_CAP, normalize_beauty_score
 
@@ -174,20 +174,25 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
         
-        # Get effective area type using multinomial regression (data-driven)
-        effective_area_type = get_effective_area_type(
-            area_type,
-            density,
-            levels_entropy=diversity_metrics.get("levels_entropy"),
-            building_type_diversity=diversity_metrics.get("building_type_diversity"),
-            historic_landmarks=historic_landmarks,
-            median_year_built=median_year_built,
-            built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
-            footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
-            pre_1940_pct=pre_1940_pct,
-            material_profile=diversity_metrics.get("material_profile"),
-            use_multinomial=True
-        )
+        # Use form_context if provided (computed once in main.py), otherwise compute it
+        # This ensures form_context is shared across beauty pillars
+        if form_context is None:
+            # Fallback: compute form_context if not provided (for backward compatibility)
+            effective_area_type = get_effective_area_type(
+                area_type,
+                density,
+                levels_entropy=diversity_metrics.get("levels_entropy"),
+                building_type_diversity=diversity_metrics.get("building_type_diversity"),
+                historic_landmarks=historic_landmarks,
+                median_year_built=median_year_built,
+                built_coverage_ratio=diversity_metrics.get("built_coverage_ratio"),
+                footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
+                pre_1940_pct=pre_1940_pct,
+                material_profile=diversity_metrics.get("material_profile"),
+                use_multinomial=True
+            )
+        else:
+            effective_area_type = form_context
 
         def _r2(value):
             return round(value, 2) if isinstance(value, (int, float)) else None
@@ -247,7 +252,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "age_mix": _r2(coverage_cap_metadata.get("age_mix_bonus")),
                 "modern_form": _r2(coverage_cap_metadata.get("modern_form_bonus")),
                 "street_character": _r2(coverage_cap_metadata.get("street_character_bonus")),
-                "rowhouse": _r2(coverage_cap_metadata.get("rowhouse_bonus")),
+                "rowhouse": _r2(coverage_cap_metadata.get("rowhouse_bonus") or 0.0),
                 "serenity": _r2(coverage_cap_metadata.get("serenity_bonus")),
                 "scenic": _r2(coverage_cap_metadata.get("scenic_bonus"))
             }
@@ -277,7 +282,8 @@ def calculate_built_beauty(lat: float,
                            disable_enhancers: bool = False,
                            enhancer_radius_m: int = 1500,
                            precomputed_arch_diversity: Optional[Dict] = None,
-                           density: Optional[float] = None) -> Dict:
+                           density: Optional[float] = None,
+                           form_context: Optional[str] = None) -> Dict:
     """
     Compute built beauty components prior to normalization.
     """

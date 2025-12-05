@@ -8,7 +8,7 @@ from typing import Dict, Tuple, Optional, List
 from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import osm_api
-from data_sources.data_quality import assess_pillar_data_quality
+from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
 from data_sources.gee_api import get_tree_canopy_gee
 from data_sources.regional_baselines import (
     get_area_classification,
@@ -867,20 +867,15 @@ def _score_daily_urban_outdoors_v2(
         )
 
     # Use research-backed expected values with fallbacks
-    # Map area types to appropriate expectations
-    effective_area_type = area_type
-    if area_type in {"historic_urban"}:
-        # Historic urban similar to urban_core for active_outdoors
-        effective_area_type = "urban_core"
-    elif area_type in {"urban_core_lowrise"}:
-        # Urban core lowrise similar to suburban for active_outdoors
-        effective_area_type = "suburban"
+    # Get baseline context for expectation lookup (pillar-specific mapping)
+    # Note: active_outdoors doesn't use form_context, so pass None
+    baseline_context = get_baseline_context(
+        area_type=area_type,
+        form_context=None,  # active_outdoors doesn't need architectural classification
+        pillar_name='active_outdoors'
+    )
     
-    # Get expectations for effective area type
-    if effective_area_type not in {"urban_core", "suburban", "exurban", "rural"}:
-        # Fallback to suburban if area type not recognized
-        effective_area_type = "suburban"
-    
+    # Get expectations for baseline context
     exp_expectations = expectations or {}
     
     # Extract expected values with fallbacks
@@ -909,7 +904,7 @@ def _score_daily_urban_outdoors_v2(
             f"base={base_score:.2f}, s_area={s_area:.2f}, s_count={s_count:.2f}, "
             f"s_play={s_play:.2f}, s_facilities={s_facilities:.2f}, "
             f"exp_park_ha={exp_park_ha:.2f}, exp_park_count={exp_park_count:.2f}, "
-            f"effective_area_type={effective_area_type}",
+            f"baseline_context={baseline_context}",
             extra={
                 "pillar_name": "active_outdoors_v2",
                 "base_score": base_score,
@@ -919,7 +914,7 @@ def _score_daily_urban_outdoors_v2(
                 "s_facilities": s_facilities,
                 "exp_park_ha": exp_park_ha,
                 "exp_park_count": exp_park_count,
-                "effective_area_type": effective_area_type,
+                "baseline_context": baseline_context,
             }
         )
 
@@ -1010,18 +1005,15 @@ def _score_wild_adventure_v2(
     #
     # RESEARCH-BACKED: Trail expectations use research-backed values where available.
     # Max contributions are calibrated from Round 11 analysis.
-    # Map area types to appropriate expectations
-    effective_area_type = area_type
-    if area_type in {"historic_urban"}:
-        effective_area_type = "urban_core"
-    elif area_type in {"urban_core_lowrise", "urban_residential"}:
-        effective_area_type = "suburban"
-    
-    if effective_area_type not in {"urban_core", "suburban", "exurban", "rural"}:
-        effective_area_type = "suburban"
+    # Get baseline context for expectation lookup (pillar-specific mapping)
+    baseline_context = get_baseline_context(
+        area_type=area_type,
+        form_context=None,  # active_outdoors doesn't need architectural classification
+        pillar_name='active_outdoors'
+    )
     
     # Get research-backed expected values
-    expectations = get_contextual_expectations(effective_area_type, 'active_outdoors') or {}
+    expectations = get_contextual_expectations(baseline_context, 'active_outdoors') or {}
     
     # Extract expected trail counts (within 15km radius)
     # Note: These are expectations for trails within 15km, but we're scoring trails within 5km for "near"
@@ -1029,7 +1021,7 @@ def _score_wild_adventure_v2(
     
     # Map to area-type-specific expectations and max contributions
     # These values are calibrated from Round 11 analysis and component tuning
-    if effective_area_type == "urban_core":
+    if baseline_context == "urban_core":
         # Use research-backed expected_trails_within_15km, scale for expectations
         # RESEARCH-BACKED: Urban cores have limited trail access (median: 2 trails within 15km)
         # Cap trail scoring to prevent over-scoring from OSM data artifacts (e.g., Times Square with 94 trails)
@@ -1042,7 +1034,7 @@ def _score_wild_adventure_v2(
         # RESEARCH-BACKED: Round 12 shows urban cores over-scoring on Wild Adventure
         # Phoenix: 25.6/50, Kansas City: 17.1/50 - reduce max contributions further
         max_trails_total, max_trails_near, max_canopy = 6.0, 3.0, 12.0  # Reduced from 8.0, 4.0
-    elif effective_area_type == "suburban":
+    elif baseline_context == "suburban":
         exp_trails = max(20.0, exp_trails_15km * 10.0)  # Scale up for total trails
         exp_near = 6.0  # Calibrated: trails within 5km for suburban
         exp_canopy = 30.0  # Calibrated: canopy expectation for suburban
@@ -1072,7 +1064,7 @@ def _score_wild_adventure_v2(
     # Solution: Cap trail count at 3x expected for urban cores (data quality measure, not arbitrary cap)
     # This follows Public Transit pattern: prevent data quality issues from inflating scores
     # Rationale: Similar to route deduplication - preventing false positives from data artifacts
-    if effective_area_type == "urban_core":
+    if baseline_context == "urban_core":
         # RESEARCH-BACKED: Strengthen trail cap for urban cores to prevent over-scoring
         # Round 12 analysis shows urban cores are over-scoring on Wild Adventure
         # Phoenix: 25.6/50, Kansas City: 17.1/50 - reduce cap from 2x to 1.5x expected

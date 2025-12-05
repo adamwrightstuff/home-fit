@@ -1489,7 +1489,8 @@ def calculate_natural_beauty(lat: float,
                              disable_enhancers: bool = False,
                              enhancer_radius_m: int = 1500,
                              precomputed_tree_canopy_5km: Optional[float] = None,
-                             density: Optional[float] = None) -> Dict:
+                             density: Optional[float] = None,
+                             form_context: Optional[str] = None) -> Dict:
     """
     Compute natural beauty components prior to normalization.
     """
@@ -1649,8 +1650,10 @@ def get_natural_beauty_score(lat: float,
     natural_score_raw = result["score_before_normalization"]
     tree_details = result["details"]
 
-    natural_area_type = area_type
-    if isinstance(tree_details, dict):
+    # Use form_context if provided (shared across beauty pillars), otherwise get from tree_details
+    natural_area_type = form_context if form_context is not None else area_type
+    if natural_area_type == area_type and isinstance(tree_details, dict):
+        # Fallback: get from tree_details if form_context not provided
         natural_area_type = tree_details.get("classification", {}).get("effective_area_type", area_type)  # type: ignore
 
     natural_score_norm, natural_norm_meta = normalize_beauty_score(

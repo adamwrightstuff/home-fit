@@ -22,6 +22,17 @@ TARGET_AREA_TYPES: Dict[str, str] = {}
 
 AREA_TYPE_DIAGNOSTICS_PATH = Path("analysis/area_type_diagnostics.jsonl")
 
+# Allowed baseline contexts for expectation table lookups
+# These are the valid keys for get_contextual_expectations()
+ALLOWED_BASELINE_CONTEXTS = {
+    'urban_core',
+    'urban_residential',
+    'suburban',
+    'commuter_rail_suburb',  # Transit-only context
+    'exurban',
+    'rural'
+}
+
 
 # ============================================================================
 # NEW MORPHOLOGICAL CLASSIFICATION SYSTEM
@@ -1023,6 +1034,134 @@ def get_effective_area_type(
     
     # No special tags, return base type
     return area_type
+
+
+def get_form_context(
+    area_type: str,
+    density: Optional[float],
+    levels_entropy: Optional[float] = None,
+    building_type_diversity: Optional[float] = None,
+    historic_landmarks: Optional[int] = None,
+    median_year_built: Optional[int] = None,
+    built_coverage_ratio: Optional[float] = None,
+    footprint_area_cv: Optional[float] = None,
+    business_count: Optional[int] = None,
+    pre_1940_pct: Optional[float] = None,
+    material_profile: Optional[Dict[str, Any]] = None,
+    use_multinomial: bool = True
+) -> Optional[str]:
+    """
+    Get form context for beauty pillars (architectural classification).
+    
+    This is computed once and shared by built_beauty, natural_beauty, and neighborhood_beauty.
+    Returns None if beauty pillars are not requested (no architectural features needed).
+    
+    Args:
+        area_type: Base morphological area type
+        density: Population density
+        levels_entropy: Optional height diversity metric
+        building_type_diversity: Optional type diversity metric
+        historic_landmarks: Optional count of historic landmarks
+        median_year_built: Optional median year buildings were built
+        built_coverage_ratio: Optional coverage ratio
+        footprint_area_cv: Optional footprint coefficient of variation
+        business_count: Optional business count
+        pre_1940_pct: Optional pre-1940 percentage
+        material_profile: Optional material profile dict
+        use_multinomial: If True, use multinomial regression model
+    
+    Returns:
+        Form context string (e.g., 'historic_urban', 'urban_core_lowrise', 'urban_residential')
+        or None if architectural features are not available
+    """
+    # Use get_effective_area_type() which handles multinomial regression
+    return get_effective_area_type(
+        area_type,
+        density,
+        levels_entropy=levels_entropy,
+        building_type_diversity=building_type_diversity,
+        historic_landmarks=historic_landmarks,
+        median_year_built=median_year_built,
+        built_coverage_ratio=built_coverage_ratio,
+        footprint_area_cv=footprint_area_cv,
+        business_count=business_count,
+        pre_1940_pct=pre_1940_pct,
+        material_profile=material_profile,
+        use_multinomial=use_multinomial
+    )
+
+
+def get_baseline_context(
+    area_type: str,
+    form_context: Optional[str],
+    pillar_name: str,
+    **pillar_specific_data
+) -> str:
+    """
+    Get pillar-specific baseline context for expectation table lookup.
+    
+    This maps area_type + form_context to a baseline context key that exists
+    in the expectation tables. Different pillars may map the same area_type
+    to different baseline contexts based on their specific needs.
+    
+    Args:
+        area_type: Base morphological area type (always consistent)
+        form_context: Optional form context from beauty pillars (e.g., 'historic_urban')
+        pillar_name: Name of the pillar requesting the context
+        **pillar_specific_data: Pillar-specific data (e.g., has_heavy_rail for transit)
+    
+    Returns:
+        Baseline context string from ALLOWED_BASELINE_CONTEXTS
+    """
+    # Pillar-specific mappings
+    if pillar_name == 'active_outdoors':
+        if form_context == 'historic_urban':
+            return 'urban_core'
+        elif form_context == 'urban_core_lowrise':
+            return 'suburban'
+        elif form_context == 'urban_residential':
+            return 'suburban'
+        # Default: use area_type if it's in allowed set
+        return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
+    
+    elif pillar_name == 'public_transit_access':
+        # Map historic_urban to urban_residential for transit expectations
+        if form_context == 'historic_urban':
+            return 'urban_residential'
+        
+        # Dynamic detection for commuter_rail_suburb
+        if area_type == 'suburban' and pillar_specific_data.get('has_heavy_rail'):
+            # Additional checks: within 50km of major metro (pop > 2M)
+            # These checks are done in the pillar itself before calling this function
+            return 'commuter_rail_suburb'
+        
+        # Default: use area_type if it's in allowed set
+        return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
+    
+    elif pillar_name in ('built_beauty', 'natural_beauty', 'neighborhood_beauty'):
+        # Beauty pillars use form_context directly (if available) or area_type
+        # But form_context values like 'historic_urban' are not in ALLOWED_BASELINE_CONTEXTS
+        # So we need to map them back to base types for expectation lookups
+        # Actually, beauty pillars don't use baseline contexts for expectations
+        # They use form_context for normalization/calibration
+        # Return area_type as fallback (beauty pillars may not need baseline_context)
+        return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
+    
+    else:
+        # Other pillars (healthcare_access, neighborhood_amenities, etc.)
+        # Use area_type directly
+        return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
+    
+    # Validation: ensure we always return a valid baseline context
+    # (This should never be reached due to the return statements above, but added for safety)
+    if area_type in ALLOWED_BASELINE_CONTEXTS:
+        return area_type
+    else:
+        logger.warning(
+            f"Invalid baseline_context computed for pillar '{pillar_name}', "
+            f"falling back to 'suburban'. area_type={area_type}, form_context={form_context}"
+        )
+        return 'suburban'
 
 
 def detect_location_scope(lat: float, lon: float, geocode_result: Optional[Dict] = None) -> str:

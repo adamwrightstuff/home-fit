@@ -35,7 +35,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
                                    test_mode: bool = False,
                                    precomputed_built: Optional[Dict] = None,
                                    precomputed_natural: Optional[Dict] = None,
-                                   density: Optional[float] = None) -> Tuple[float, Dict]:
+                                   density: Optional[float] = None,
+                                   form_context: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Calculate the legacy neighborhood beauty score (0-100) and detailed breakdown.
     """
@@ -80,7 +81,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             location_name=location_name,
             test_overrides=test_overrides,
             enhancers_data=shared_enhancers,
-            disable_enhancers=disable_enhancers
+            disable_enhancers=disable_enhancers,
+            form_context=form_context
         )
 
         natural_result = natural_beauty.calculate_natural_beauty(
@@ -92,7 +94,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
             location_name=location_name,
             overrides=test_overrides,
             enhancers_data=shared_enhancers,
-            disable_enhancers=disable_enhancers
+            disable_enhancers=disable_enhancers,
+            form_context=form_context
         )
 
     arch_component = built_result["component_score_0_50"]
@@ -107,7 +110,8 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
     natural_bonus_raw = natural_result["natural_bonus_raw"]
     scenic_bonus_raw = natural_result["scenic_bonus_raw"]
 
-    effective_area_type = built_result["effective_area_type"] or area_type or default_area_type_for_weights
+    # Use form_context if provided (shared across beauty pillars), otherwise get from built_result
+    effective_area_type = form_context if form_context is not None else (built_result.get("effective_area_type") or area_type or default_area_type_for_weights)
     resolved_area_type = (effective_area_type or "").lower() or None
 
     if beauty_weights is None:
