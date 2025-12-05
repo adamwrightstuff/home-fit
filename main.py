@@ -90,12 +90,122 @@ API_VERSION = f"{_BASE_VERSION}-{_SCORING_HASH}"
 logger.info(f"API Version: {API_VERSION} (auto-generated from scoring file hash)")
 
 
+def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
+    """
+    Parse priority allocation dictionary and convert to 100-token allocation.
+    
+    Priority mapping:
+    - "None" → weight 0
+    - "Low" → weight 1
+    - "Medium" → weight 2
+    - "High" → weight 3
+    
+    Args:
+        priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "built_beauty": "Medium"})
+    
+    Returns:
+        Dict mapping pillar names to token counts (sums to exactly 100)
+    """
+    primary_pillars = [
+        "active_outdoors",
+        "built_beauty",
+        "natural_beauty",
+        "neighborhood_amenities",
+        "air_travel_access",
+        "public_transit_access",
+        "healthcare_access",
+        "quality_education",
+        "housing_value"
+    ]
+    
+    # Priority to weight mapping
+    priority_weights = {
+        "none": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 3
+    }
+    
+    if priorities is None:
+        # Default equal distribution (100 tokens / 9 pillars = 11.11...)
+        equal_tokens = 100.0 / len(primary_pillars)
+        default_allocation = {}
+        remainder = 100.0
+        for i, pillar in enumerate(primary_pillars):
+            if i < len(primary_pillars) - 1:
+                tokens = int(equal_tokens)
+                default_allocation[pillar] = float(tokens)
+                remainder -= tokens
+            else:
+                # Last pillar gets remainder to ensure exact 100
+                default_allocation[pillar] = remainder
+        return default_allocation
+    
+    # Convert priorities to weights
+    weight_dict = {}
+    total_weight = 0.0
+    
+    for pillar in primary_pillars:
+        priority_str = priorities.get(pillar, "none").lower().strip()
+        weight = priority_weights.get(priority_str, 0)
+        weight_dict[pillar] = weight
+        total_weight += weight
+    
+    # Handle edge case: all priorities are "None" (total_weight = 0)
+    if total_weight == 0:
+        # Default to equal distribution
+        equal_tokens = 100.0 / len(primary_pillars)
+        default_allocation = {}
+        remainder = 100.0
+        for i, pillar in enumerate(primary_pillars):
+            if i < len(primary_pillars) - 1:
+                tokens = int(equal_tokens)
+                default_allocation[pillar] = float(tokens)
+                remainder -= tokens
+            else:
+                default_allocation[pillar] = remainder
+        return default_allocation
+    
+    # Calculate proportional tokens
+    token_dict = {}
+    fractional_parts = []
+    
+    for pillar in primary_pillars:
+        weight = weight_dict[pillar]
+        if weight > 0:
+            # Calculate proportional token allocation
+            proportional = (weight / total_weight) * 100.0
+            token_dict[pillar] = proportional
+            fractional_parts.append((pillar, proportional - int(proportional)))
+        else:
+            token_dict[pillar] = 0.0
+    
+    # Round down to integers and calculate remainder
+    rounded_tokens = {pillar: int(tokens) for pillar, tokens in token_dict.items()}
+    total_rounded = sum(rounded_tokens.values())
+    remainder = 100 - total_rounded
+    
+    # Distribute remainder to pillars with largest fractional parts (largest remainder method)
+    if remainder > 0:
+        # Sort by fractional part (descending)
+        fractional_parts.sort(key=lambda x: x[1], reverse=True)
+        # Add 1 token to top 'remainder' pillars
+        for i in range(remainder):
+            pillar = fractional_parts[i][0]
+            rounded_tokens[pillar] += 1
+    
+    return {pillar: float(rounded_tokens.get(pillar, 0)) for pillar in primary_pillars}
+
+
 def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     Parse token allocation string or return default equal distribution.
     
     Format: "active_outdoors:5,built_beauty:4,natural_beauty:4,air_travel:3,..."
-    Default: Equal distribution across all 9 pillars (~2.22 tokens each).
+    Default: Equal distribution across all 9 pillars (~11.11 tokens each, totaling 100).
+    
+    Note: This function now uses 100 tokens total (migrated from 20 tokens).
+    For priority-based allocation, use parse_priority_allocation() instead.
     """
     primary_pillars = [
         "active_outdoors",
@@ -112,9 +222,18 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     pillar_names = primary_pillars
     
     if tokens is None:
-        # Default equal distribution
-        equal_tokens = 20.0 / len(primary_pillars)
-        default_allocation = {pillar: equal_tokens for pillar in primary_pillars}
+        # Default equal distribution (100 tokens / 9 pillars = 11.11...)
+        equal_tokens = 100.0 / len(primary_pillars)
+        default_allocation = {}
+        remainder = 100.0
+        for i, pillar in enumerate(primary_pillars):
+            if i < len(primary_pillars) - 1:
+                tokens = int(equal_tokens)
+                default_allocation[pillar] = float(tokens)
+                remainder -= tokens
+            else:
+                # Last pillar gets remainder to ensure exact 100
+                default_allocation[pillar] = remainder
         return default_allocation
     
     # Parse custom allocation
@@ -136,10 +255,24 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
                 token_dict["natural_beauty"] = token_dict.get("natural_beauty", 0.0) + split
                 total_allocated += count
         
-        # Auto-normalize to 20 tokens (preserve user intent ratios)
+        # Auto-normalize to 100 tokens (preserve user intent ratios)
         if total_allocated > 0:
-            normalization_factor = 20.0 / total_allocated
+            normalization_factor = 100.0 / total_allocated
             token_dict = {k: v * normalization_factor for k, v in token_dict.items()}
+            
+            # Round to ensure exact 100 tokens using largest remainder method
+            fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_dict.items() if tokens > 0]
+            rounded_tokens = {pillar: int(tokens) for pillar, tokens in token_dict.items()}
+            total_rounded = sum(rounded_tokens.values())
+            remainder = 100 - total_rounded
+            
+            if remainder > 0:
+                fractional_parts.sort(key=lambda x: x[1], reverse=True)
+                for i in range(remainder):
+                    pillar = fractional_parts[i][0]
+                    rounded_tokens[pillar] = rounded_tokens.get(pillar, 0) + 1
+            
+            token_dict = {pillar: float(rounded_tokens.get(pillar, 0)) for pillar in primary_pillars}
         
         # Fill missing pillars with 0
         for pillar in primary_pillars:
@@ -147,8 +280,16 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
                 token_dict[pillar] = 0.0
     except Exception:
         # Fallback to equal distribution on parsing error
-        equal_tokens = 20.0 / len(pillar_names)
-        token_dict = {pillar: equal_tokens for pillar in pillar_names}
+        equal_tokens = 100.0 / len(pillar_names)
+        token_dict = {}
+        remainder = 100.0
+        for i, pillar in enumerate(pillar_names):
+            if i < len(pillar_names) - 1:
+                tokens = int(equal_tokens)
+                token_dict[pillar] = float(tokens)
+                remainder -= tokens
+            else:
+                token_dict[pillar] = remainder
     
     return token_dict
 
@@ -194,14 +335,16 @@ def root():
     }
 
 
-def _generate_request_cache_key(location: str, tokens: Optional[str], include_chains: bool, 
-                                diagnostics: bool, enable_schools: Optional[bool]) -> str:
+def _generate_request_cache_key(location: str, tokens: Optional[str], priorities: Optional[Dict[str, str]], 
+                                include_chains: bool, diagnostics: bool, enable_schools: Optional[bool]) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
+    import json
     key_parts = [
         f"api_response:v{API_VERSION}",
         location.lower().strip(),
         str(tokens) if tokens else "default",
+        json.dumps(priorities, sort_keys=True) if priorities else "default",
         str(include_chains),
         str(diagnostics),
         str(enable_schools) if enable_schools is not None else "default"
@@ -215,6 +358,7 @@ def _generate_request_cache_key(location: str, tokens: Optional[str], include_ch
 def get_livability_score(request: Request,
                          location: str,
                          tokens: Optional[str] = None,
+                         priorities: Optional[str] = None,
                          include_chains: bool = False,
                          diagnostics: Optional[bool] = False,
                          enable_schools: Optional[bool] = None,
@@ -236,7 +380,13 @@ def get_livability_score(request: Request,
     Parameters:
         location: Address or ZIP code
         tokens: Optional token allocation (format: "pillar:count,pillar:count,...")
-                Default: Equal distribution across all pillars
+                Default: Equal distribution across all pillars (100 tokens total)
+                Note: Deprecated in favor of 'priorities' parameter
+        priorities: Optional priority-based allocation (JSON string or query param)
+                   Format: JSON object mapping pillar names to priority levels
+                   Priority levels: "None" (0), "Low" (1), "Medium" (2), "High" (3)
+                   Example: '{"active_outdoors":"High","built_beauty":"Medium",...}'
+                   Default: Equal distribution across all pillars (100 tokens total)
         include_chains: Include chain/franchise businesses in amenities score (default: False)
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
                        Set to False to disable school scoring and preserve API quota
@@ -255,13 +405,31 @@ def get_livability_score(request: Request,
 
     test_mode_enabled = bool(test_mode)
     
+    # Parse priorities parameter (if provided as JSON string)
+    priorities_dict: Optional[Dict[str, str]] = None
+    if priorities:
+        try:
+            import json
+            if isinstance(priorities, str):
+                priorities_dict = json.loads(priorities)
+            else:
+                priorities_dict = priorities
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Invalid priorities format: {priorities}, ignoring")
+            priorities_dict = None
+    
     # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
     if not test_mode_enabled:
         from data_sources.cache import _redis_client, _cache, _cache_ttl
         import json
         
-        cache_key = _generate_request_cache_key(location, tokens, include_chains, bool(diagnostics), enable_schools)
-        request_cache_ttl = 300  # 5 minutes for request-level cache
+        cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
+        # Differentiated cache TTL based on data stability
+        # Use minimum TTL of requested pillars (conservative approach)
+        # Stable data (Census, airports): 24-48h, Moderate (OSM amenities, transit routes): 1-6h, Dynamic (transit stops): 5-15min
+        # For request-level cache, use 5min as baseline (covers dynamic data)
+        # Individual data source caches have their own TTLs in cache.py
+        request_cache_ttl = 300  # 5 minutes for request-level cache (conservative for dynamic data)
         
         # Check cache (Redis first, then in-memory)
         cached_response = None
@@ -405,6 +573,13 @@ def get_livability_score(request: Request,
                 return 0
         
         def _fetch_built_coverage():
+            # Only fetch full arch_diversity if built_beauty pillar is requested
+            # Note: built_coverage_ratio is used for area_type detection, but it's just one factor
+            # and area_type detection can work without it (other factors: density, business_count, metro_distance)
+            if only_pillars is not None and "built_beauty" not in only_pillars:
+                # Skip expensive arch_diversity computation - area_type will work without built_coverage
+                logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
+                return None
             try:
                 # Return full arch_diversity dict to reuse in built_beauty pillar
                 arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
@@ -422,11 +597,18 @@ def get_livability_score(request: Request,
                 return None
         
         # Execute independent calls in parallel (tract first, then density uses it)
+        # OPTIMIZATION: Only submit tasks that are actually needed
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_census_tract = executor.submit(_fetch_census_tract)
             future_business_count = executor.submit(_fetch_business_count)
-            future_built_coverage = executor.submit(_fetch_built_coverage)
             future_metro_distance = executor.submit(_fetch_metro_distance)
+            
+            # Conditionally submit built_coverage task
+            need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+            if need_built_coverage:
+                future_built_coverage = executor.submit(_fetch_built_coverage)
+            else:
+                future_built_coverage = None
             
             # Get census tract first (needed for density)
             census_tract = future_census_tract.result()
@@ -437,8 +619,8 @@ def get_livability_score(request: Request,
             # Wait for remaining results
             density = future_density.result()
             business_count = future_business_count.result()
-            arch_diversity_data = future_built_coverage.result()  # Full arch_diversity dict
             metro_distance_km = future_metro_distance.result()
+            arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
         
         # Extract built_coverage_ratio for area type detection
         built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
@@ -705,34 +887,53 @@ def get_livability_score(request: Request,
             logger.warning(f"  - {pillar_name}: {error}")
 
     # Step 3: Calculate weighted total using token allocation
-    token_allocation = parse_token_allocation(tokens)
+    # Priority: Use priorities if provided, otherwise fall back to tokens
+    if priorities_dict:
+        token_allocation = parse_priority_allocation(priorities_dict)
+        allocation_type = "priority_based"
+    else:
+        token_allocation = parse_token_allocation(tokens)
+        allocation_type = "token_based" if tokens else "default_equal"
+    
     if only_pillars:
         # Zero-out tokens for pillars not requested
         for pillar_name in list(token_allocation.keys()):
             if pillar_name not in only_pillars:
                 token_allocation[pillar_name] = 0.0
-        # Renormalize to 20 tokens if any remain
+        # Renormalize to 100 tokens if any remain
         remaining = sum(token_allocation.values())
         if remaining > 0:
-            scale = 20.0 / remaining
-            for pillar_name in token_allocation:
-                token_allocation[pillar_name] *= scale
+            scale = 100.0 / remaining
+            token_allocation = {k: v * scale for k, v in token_allocation.items()}
+            # Round to ensure exact 100 tokens
+            rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
+            total_rounded = sum(rounded.values())
+            remainder = 100 - total_rounded
+            if remainder > 0:
+                # Add remainder to pillar with largest fractional part
+                fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_allocation.items() if tokens > 0]
+                if fractional_parts:
+                    fractional_parts.sort(key=lambda x: x[1], reverse=True)
+                    for i in range(remainder):
+                        pillar = fractional_parts[i][0]
+                        rounded[pillar] = rounded.get(pillar, 0) + 1
+            token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
         else:
             # Fallback: assign whole budget to requested pillars equally
-            equal = 20.0 / len(only_pillars)
-            for pillar_name in token_allocation:
-                token_allocation[pillar_name] = equal if pillar_name in only_pillars else 0.0
+            equal = 100.0 / len(only_pillars)
+            token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
+                             for pillar_name in token_allocation.keys()}
 
     total_score = (
-        (active_outdoors_score * token_allocation["active_outdoors"] / 20) +
-        (built_score * token_allocation["built_beauty"] / 20) +
-        (natural_score * token_allocation["natural_beauty"] / 20) +
-        (amenities_score * token_allocation["neighborhood_amenities"] / 20) +
-        (air_travel_score * token_allocation["air_travel_access"] / 20) +
-        (transit_score * token_allocation["public_transit_access"] / 20) +
-        (healthcare_score * token_allocation["healthcare_access"] / 20) +
-        (school_avg * token_allocation["quality_education"] / 20) +
-        (housing_score * token_allocation["housing_value"] / 20)
+        (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
+        (built_score * token_allocation["built_beauty"] / 100) +
+        (natural_score * token_allocation["natural_beauty"] / 100) +
+        (amenities_score * token_allocation["neighborhood_amenities"] / 100) +
+        (air_travel_score * token_allocation["air_travel_access"] / 100) +
+        (transit_score * token_allocation["public_transit_access"] / 100) +
+        (healthcare_score * token_allocation["healthcare_access"] / 100) +
+        (school_avg * token_allocation["quality_education"] / 100) +
+        (housing_score * token_allocation["housing_value"] / 100)
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -759,7 +960,7 @@ def get_livability_score(request: Request,
         "active_outdoors": {
             "score": active_outdoors_score,
             "weight": token_allocation["active_outdoors"],
-            "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 20, 2),
+            "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 100, 2),
             "breakdown": active_outdoors_details["breakdown"],
             "summary": active_outdoors_details["summary"],
             "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
@@ -769,7 +970,7 @@ def get_livability_score(request: Request,
         "built_beauty": {
             "score": built_score,
             "weight": token_allocation["built_beauty"],
-            "contribution": round(built_score * token_allocation["built_beauty"] / 20, 2),
+            "contribution": round(built_score * token_allocation["built_beauty"] / 100, 2),
             "breakdown": {
                 "component_score_0_50": built_details["component_score_0_50"],
                 "enhancer_bonus_raw": built_details["enhancer_bonus_raw"]
@@ -783,7 +984,7 @@ def get_livability_score(request: Request,
         "natural_beauty": {
             "score": natural_score,
             "weight": token_allocation["natural_beauty"],
-            "contribution": round(natural_score * token_allocation["natural_beauty"] / 20, 2),
+            "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
             "breakdown": {
                 "tree_score_0_50": natural_details["tree_score_0_50"],
                 "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
@@ -797,7 +998,7 @@ def get_livability_score(request: Request,
         "neighborhood_amenities": {
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
-            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 20, 2),
+            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": amenities_details["breakdown"],
             "summary": amenities_details["summary"],
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
@@ -807,7 +1008,7 @@ def get_livability_score(request: Request,
         "air_travel_access": {
             "score": air_travel_score,
             "weight": token_allocation["air_travel_access"],
-            "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 20, 2),
+            "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 100, 2),
             "primary_airport": air_travel_details.get("primary_airport"),
             "nearest_airports": air_travel_details.get("nearest_airports", []),
             "summary": air_travel_details.get("summary", {}),
@@ -818,7 +1019,7 @@ def get_livability_score(request: Request,
         "public_transit_access": {
             "score": transit_score,
             "weight": token_allocation["public_transit_access"],
-            "contribution": round(transit_score * token_allocation["public_transit_access"] / 20, 2),
+            "contribution": round(transit_score * token_allocation["public_transit_access"] / 100, 2),
             "breakdown": transit_details["breakdown"],
             "summary": transit_details["summary"],
             "details": transit_details.get("details", {}),
@@ -829,7 +1030,7 @@ def get_livability_score(request: Request,
         "healthcare_access": {
             "score": healthcare_score,
             "weight": token_allocation["healthcare_access"],
-            "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 20, 2),
+            "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 100, 2),
             "breakdown": healthcare_details["breakdown"],
             "summary": healthcare_details["summary"],
             "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
@@ -839,7 +1040,7 @@ def get_livability_score(request: Request,
         "quality_education": {
             "score": school_avg,
             "weight": token_allocation["quality_education"],
-            "contribution": round(school_avg * token_allocation["quality_education"] / 20, 2),
+            "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
             "by_level": {
                 "elementary": schools_by_level.get("elementary", []),
                 "middle": schools_by_level.get("middle", []),
@@ -857,7 +1058,7 @@ def get_livability_score(request: Request,
         "housing_value": {
             "score": housing_score,
             "weight": token_allocation["housing_value"],
-            "contribution": round(housing_score * token_allocation["housing_value"] / 20, 2),
+            "contribution": round(housing_score * token_allocation["housing_value"] / 100, 2),
             "breakdown": housing_details["breakdown"],
             "summary": housing_details["summary"],
             "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
@@ -881,7 +1082,7 @@ def get_livability_score(request: Request,
         "livability_pillars": livability_pillars,
         "total_score": round(total_score, 2),
         "token_allocation": token_allocation,
-        "allocation_type": "custom" if tokens else "default_equal",
+        "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars),
         "metadata": {
@@ -907,7 +1108,7 @@ def get_livability_score(request: Request,
                 "OurAirports (airport database)",
                 "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default (~2.22 tokens each). Custom token allocation available via 'tokens' parameter.",
+            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default (~11.11 tokens each, totaling 100). Custom allocation via 'priorities' parameter (recommended) or 'tokens' parameter (legacy).",
             "test_mode": test_mode_enabled
         }
     }
@@ -964,7 +1165,7 @@ def get_livability_score(request: Request,
             from data_sources.cache import _redis_client, _cache, _cache_ttl
             import json
             
-            cache_key = _generate_request_cache_key(location, tokens, include_chains, bool(diagnostics), enable_schools)
+            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, bool(diagnostics), enable_schools)
             request_cache_ttl = 300  # 5 minutes for request-level cache
             
             # Add cache indicator to response metadata

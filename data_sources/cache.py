@@ -67,13 +67,21 @@ def _get_redis_client():
 _cache: Dict[str, Dict[str, Any]] = {}
 _cache_ttl: Dict[str, float] = {}
 
-# Cache TTL settings (in seconds)
+# Cache TTL settings (in seconds) - Differentiated by data stability
+# Stable data: 24-48h (Census, airports, geocoding)
+# Moderate data: 1-6h (OSM amenities, transit routes)
+# Dynamic data: 5-15min (transit stops, real-time)
 CACHE_TTL = {
-    'osm_queries': 7 * 24 * 3600,      # 7 days for OSM data
-    'census_data': 86400,     # 24 hours for Census data
+    'osm_queries': 6 * 3600,           # 6 hours for OSM data (moderate stability)
+    'osm_businesses': 2 * 3600,         # 2 hours for OSM business queries (more dynamic)
+    'osm_transit': 15 * 60,            # 15 minutes for transit stops (dynamic)
+    'census_data': 48 * 3600,          # 48 hours for Census data (very stable, changes annually)
     'school_data': 30 * 24 * 3600,     # 30 days for school data (extended to preserve quota)
-    'airport_distances': 86400,  # 24 hours for airport calculations
-    'geocoding': 86400,       # 24 hours for geocoding
+    'airport_distances': 24 * 3600,    # 24 hours for airport calculations (stable)
+    'geocoding': 24 * 3600,            # 24 hours for geocoding (stable)
+    'transit_routes': 6 * 3600,        # 6 hours for transit routes (moderate stability)
+    'transit_stops': 15 * 60,          # 15 minutes for transit stops (dynamic)
+    'healthcare': 2 * 3600,            # 2 hours for healthcare data (moderate stability)
 }
 
 
