@@ -2012,105 +2012,128 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
     Returns:
         JSON with results for each location, including performance metrics
     """
-    # Validate batch size
-    if len(batch_request.locations) > batch_request.max_batch_size:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
-        )
-    
-    # Get telemetry stats for adaptive delay calculation
-    telemetry_stats = None
-    if batch_request.adaptive_delays:
-        try:
-            telemetry_stats = get_telemetry_stats()
-        except Exception as e:
-            logger.warning(f"Could not fetch telemetry stats: {e}")
-    
-    # Calculate optimal delay based on historical performance
-    base_delay = _get_optimal_delay(telemetry_stats)
-    current_delay = base_delay
-    
-    # Parse priorities if provided
-    priorities_dict = None
-    if batch_request.priorities:
-        try:
-            priorities_dict = json.loads(batch_request.priorities) if isinstance(batch_request.priorities, str) else batch_request.priorities
-        except:
-            priorities_dict = None
-    
-    results = []
-    total_start_time = time.time()
-    consecutive_errors = 0
-    rate_limit_detected = False
-    
-    logger.info(f"Batch request: {len(batch_request.locations)} locations, base delay: {base_delay}s")
-    
-    for i, location in enumerate(batch_request.locations):
-        location_start_time = time.time()
-        retry_count = 0
-        location_success = False
+    try:
+        # Validate batch size
+        if len(batch_request.locations) > batch_request.max_batch_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
+            )
         
-        # Retry logic for individual locations (max 2 retries with backoff)
-        max_location_retries = 2
-        for retry_attempt in range(max_location_retries + 1):
+        # Validate locations list is not empty
+        if not batch_request.locations or len(batch_request.locations) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one location is required"
+            )
+        
+        # Get telemetry stats for adaptive delay calculation
+        telemetry_stats = None
+        if batch_request.adaptive_delays:
             try:
-                # Call the internal scoring function
-                result = _compute_single_score_internal(
-                    location=location,
-                    tokens=batch_request.tokens,
-                    priorities_dict=priorities_dict,
-                    include_chains=batch_request.include_chains,
-                    enable_schools=batch_request.enable_schools,
-                    test_mode=False,
-                    request=None  # No request object for batch processing
-                )
-                
-                location_time = time.time() - location_start_time
-                location_success = True
-                
-                # Check for rate limit indicators in response
-                if result.get("rate_limited") or "429" in str(result.get("error", "")):
-                    rate_limit_detected = True
-                    # Increase delay for subsequent requests
-                    current_delay = min(current_delay * 2, 15.0)  # Cap at 15s
-                    logger.warning(f"Rate limit detected for {location}, increasing delay to {current_delay}s")
-                
-                logger.info(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} completed in {location_time:.1f}s (retry: {retry_attempt})")
-                
-                results.append(BatchLocationResult(
-                    location=location,
-                    success=True,
-                    result=result,
-                    response_time=round(location_time, 2),
-                    retry_count=retry_attempt
-                ))
-                
-                # Reset consecutive error counter on success
-                consecutive_errors = 0
-                
-                # Gradually reduce delay if no errors (adaptive backoff)
-                if not rate_limit_detected and current_delay > base_delay:
-                    current_delay = max(base_delay, current_delay * 0.9)
-                
-                break  # Success, exit retry loop
-                
-            except HTTPException as e:
-                # HTTP exceptions (like 429) - retry with backoff
-                if e.status_code == 429 or "rate limit" in str(e.detail).lower():
-                    rate_limit_detected = True
-                    current_delay = min(current_delay * 2, 15.0)
+                telemetry_stats = get_telemetry_stats()
+            except Exception as e:
+                logger.warning(f"Could not fetch telemetry stats: {e}")
+        
+        # Calculate optimal delay based on historical performance
+        base_delay = _get_optimal_delay(telemetry_stats)
+        current_delay = base_delay
+        
+        # Parse priorities if provided
+        priorities_dict = None
+        if batch_request.priorities:
+            try:
+                priorities_dict = json.loads(batch_request.priorities) if isinstance(batch_request.priorities, str) else batch_request.priorities
+            except Exception as e:
+                logger.warning(f"Could not parse priorities: {e}")
+                priorities_dict = None
+        
+        results = []
+        total_start_time = time.time()
+        consecutive_errors = 0
+        rate_limit_detected = False
+        
+        logger.info(f"Batch request: {len(batch_request.locations)} locations, base delay: {base_delay}s")
+        
+        for i, location in enumerate(batch_request.locations):
+            location_start_time = time.time()
+            retry_count = 0
+            location_success = False
+            
+            # Retry logic for individual locations (max 2 retries with backoff)
+            max_location_retries = 2
+            for retry_attempt in range(max_location_retries + 1):
+                try:
+                    # Call the internal scoring function
+                    result = _compute_single_score_internal(
+                        location=location,
+                        tokens=batch_request.tokens,
+                        priorities_dict=priorities_dict,
+                        include_chains=batch_request.include_chains,
+                        enable_schools=batch_request.enable_schools,
+                        test_mode=False,
+                        request=None  # No request object for batch processing
+                    )
                     
-                    if retry_attempt < max_location_retries:
-                        wait_time = current_delay * (retry_attempt + 1)
-                        logger.warning(f"Rate limited for {location}, waiting {wait_time}s before retry {retry_attempt + 1}")
-                        time.sleep(wait_time)
-                        retry_count += 1
-                        continue
+                    location_time = time.time() - location_start_time
+                    location_success = True
+                    
+                    # Check for rate limit indicators in response
+                    if result.get("rate_limited") or "429" in str(result.get("error", "")):
+                        rate_limit_detected = True
+                        # Increase delay for subsequent requests
+                        current_delay = min(current_delay * 2, 15.0)  # Cap at 15s
+                        logger.warning(f"Rate limit detected for {location}, increasing delay to {current_delay}s")
+                    
+                    logger.info(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} completed in {location_time:.1f}s (retry: {retry_attempt})")
+                    
+                    results.append(BatchLocationResult(
+                        location=location,
+                        success=True,
+                        result=result,
+                        response_time=round(location_time, 2),
+                        retry_count=retry_attempt
+                    ))
+                    
+                    # Reset consecutive error counter on success
+                    consecutive_errors = 0
+                    
+                    # Gradually reduce delay if no errors (adaptive backoff)
+                    if not rate_limit_detected and current_delay > base_delay:
+                        current_delay = max(base_delay, current_delay * 0.9)
+                    
+                    break  # Success, exit retry loop
+                    
+                except HTTPException as e:
+                    # HTTP exceptions (like 429) - retry with backoff
+                    if e.status_code == 429 or "rate limit" in str(e.detail).lower():
+                        rate_limit_detected = True
+                        current_delay = min(current_delay * 2, 15.0)
+                        
+                        if retry_attempt < max_location_retries:
+                            wait_time = current_delay * (retry_attempt + 1)
+                            logger.warning(f"Rate limited for {location}, waiting {wait_time}s before retry {retry_attempt + 1}")
+                            time.sleep(wait_time)
+                            retry_count += 1
+                            continue
+                        else:
+                            # Max retries reached
+                            location_time = time.time() - location_start_time
+                            error_msg = f"Rate limited after {max_location_retries} retries"
+                            logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
+                            results.append(BatchLocationResult(
+                                location=location,
+                                success=False,
+                                error=error_msg,
+                                response_time=round(location_time, 2),
+                                retry_count=retry_count
+                            ))
+                            consecutive_errors += 1
+                            break
                     else:
-                        # Max retries reached
+                        # Other HTTP errors - don't retry
                         location_time = time.time() - location_start_time
-                        error_msg = f"Rate limited after {max_location_retries} retries"
+                        error_msg = str(e.detail)
                         logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
                         results.append(BatchLocationResult(
                             location=location,
@@ -2121,88 +2144,86 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
                         ))
                         consecutive_errors += 1
                         break
-                else:
-                    # Other HTTP errors - don't retry
-                    location_time = time.time() - location_start_time
-                    error_msg = str(e.detail)
-                    logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
-                    results.append(BatchLocationResult(
-                        location=location,
-                        success=False,
-                        error=error_msg,
-                        response_time=round(location_time, 2),
-                        retry_count=retry_count
-                    ))
-                    consecutive_errors += 1
-                    break
-                    
-            except Exception as e:
-                # Other exceptions - retry once with backoff
-                if retry_attempt < max_location_retries:
-                    wait_time = base_delay * (retry_attempt + 1)
-                    logger.warning(f"Error for {location}: {e}, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    retry_count += 1
-                    continue
-                else:
-                    # Max retries reached
-                    location_time = time.time() - location_start_time
-                    error_msg = str(e)
-                    logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed after {max_location_retries} retries: {error_msg}")
-                    results.append(BatchLocationResult(
-                        location=location,
-                        success=False,
-                        error=error_msg,
-                        response_time=round(location_time, 2),
-                        retry_count=retry_count
-                    ))
-                    consecutive_errors += 1
-                    break
+                        
+                except Exception as e:
+                    # Other exceptions - retry once with backoff
+                    if retry_attempt < max_location_retries:
+                        wait_time = base_delay * (retry_attempt + 1)
+                        logger.warning(f"Error for {location}: {e}, retrying in {wait_time}s")
+                        time.sleep(wait_time)
+                        retry_count += 1
+                        continue
+                    else:
+                        # Max retries reached
+                        location_time = time.time() - location_start_time
+                        error_msg = str(e)
+                        logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed after {max_location_retries} retries: {error_msg}")
+                        results.append(BatchLocationResult(
+                            location=location,
+                            success=False,
+                            error=error_msg,
+                            response_time=round(location_time, 2),
+                            retry_count=retry_count
+                        ))
+                        consecutive_errors += 1
+                        break
         
-        # Adaptive delay adjustment based on consecutive errors
-        if consecutive_errors >= 3:
-            # Multiple consecutive errors - significantly increase delay
-            current_delay = min(current_delay * 1.5, 20.0)
-            logger.warning(f"Multiple consecutive errors detected, increasing delay to {current_delay}s")
-        elif consecutive_errors > 0:
-            # Some errors - moderate increase
-            current_delay = min(current_delay * 1.2, 10.0)
+            # Adaptive delay adjustment based on consecutive errors
+            if consecutive_errors >= 3:
+                # Multiple consecutive errors - significantly increase delay
+                current_delay = min(current_delay * 1.5, 20.0)
+                logger.warning(f"Multiple consecutive errors detected, increasing delay to {current_delay}s")
+            elif consecutive_errors > 0:
+                # Some errors - moderate increase
+                current_delay = min(current_delay * 1.2, 10.0)
+            
+            # Wait before next request (except for last one)
+            if i < len(batch_request.locations) - 1:
+                # Use current_delay (which may have been adjusted)
+                time.sleep(current_delay)
         
-        # Wait before next request (except for last one)
-        if i < len(batch_request.locations) - 1:
-            # Use current_delay (which may have been adjusted)
-            time.sleep(current_delay)
+        total_time = time.time() - total_start_time
+        successful = sum(1 for r in results if r.success)
+        failed = len(results) - successful
+        
+        # Calculate performance metrics
+        successful_results = [r for r in results if r.success]
+        avg_response_time = sum(r.response_time for r in successful_results) / len(successful_results) if successful_results else 0
+        total_retries = sum(r.retry_count for r in results)
+        
+        logger.info(f"Batch completed: {successful}/{len(batch_request.locations)} successful in {total_time:.1f}s (avg: {avg_response_time:.1f}s, retries: {total_retries})")
+        
+        return {
+            "batch_summary": {
+                "batch_size": len(batch_request.locations),
+                "successful": successful,
+                "failed": failed,
+                "success_rate": round((successful / len(batch_request.locations)) * 100, 1) if batch_request.locations else 0,
+                "total_time_seconds": round(total_time, 2),
+                "average_response_time": round(avg_response_time, 2),
+                "total_retries": total_retries,
+                "base_delay_used": base_delay,
+                "final_delay_used": round(current_delay, 2)
+            },
+            "performance_insights": {
+                "rate_limits_detected": rate_limit_detected,
+                "adaptive_delay_adjustments": current_delay != base_delay,
+                "consecutive_errors": consecutive_errors
+            },
+            "results": [r.dict() for r in results]
+        }
     
-    total_time = time.time() - total_start_time
-    successful = sum(1 for r in results if r.success)
-    failed = len(results) - successful
-    
-    # Calculate performance metrics
-    successful_results = [r for r in results if r.success]
-    avg_response_time = sum(r.response_time for r in successful_results) / len(successful_results) if successful_results else 0
-    total_retries = sum(r.retry_count for r in results)
-    
-    logger.info(f"Batch completed: {successful}/{len(batch_request.locations)} successful in {total_time:.1f}s (avg: {avg_response_time:.1f}s, retries: {total_retries})")
-    
-    return {
-        "batch_summary": {
-            "batch_size": len(batch_request.locations),
-            "successful": successful,
-            "failed": failed,
-            "success_rate": round((successful / len(batch_request.locations)) * 100, 1) if batch_request.locations else 0,
-            "total_time_seconds": round(total_time, 2),
-            "average_response_time": round(avg_response_time, 2),
-            "total_retries": total_retries,
-            "base_delay_used": base_delay,
-            "final_delay_used": round(current_delay, 2)
-        },
-        "performance_insights": {
-            "rate_limits_detected": rate_limit_detected,
-            "adaptive_delay_adjustments": current_delay != base_delay,
-            "consecutive_errors": consecutive_errors
-        },
-        "results": [r.dict() for r in results]
-    }
+    except HTTPException:
+        # Re-raise HTTP exceptions (they're already properly formatted)
+        raise
+    except Exception as e:
+        # Catch any other unhandled exceptions and return a proper error response
+        error_msg = f"Batch processing failed: {str(e)}"
+        logger.error(f"Unhandled exception in batch endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=error_msg
+        )
 
 
 def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict to dict
