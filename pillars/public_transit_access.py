@@ -808,6 +808,8 @@ def get_public_transit_score(
     light_count = len(light_rail_routes)
     bus_count = len(bus_routes)
     
+    # Initialize effective_area_type early (will be refined later with area_type_dq)
+    effective_area_type = area_type
 
     def _normalize_route_count(
         count: int, expected: Optional[int], fallback_scale: float = 1.0, area_type: Optional[str] = None
