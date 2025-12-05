@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from dotenv import load_dotenv
 import time
-from typing import Optional, Dict, Tuple, Any
+import json
+from typing import Optional, Dict, Tuple, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from logging_config import get_logger
@@ -31,6 +33,64 @@ ENABLE_SCHOOL_SCORING = True  # Set to False to skip SchoolDigger API calls
 
 # Load environment variables
 load_dotenv()
+
+
+# Batch processing models
+class BatchLocationRequest(BaseModel):
+    locations: List[str]
+    tokens: Optional[str] = None
+    priorities: Optional[str] = None
+    include_chains: bool = False
+    enable_schools: Optional[bool] = None
+    max_batch_size: int = 10
+    adaptive_delays: bool = True  # Use telemetry to adjust delays
+
+
+class BatchLocationResult(BaseModel):
+    location: str
+    success: bool
+    result: Optional[Dict] = None
+    error: Optional[str] = None
+    response_time: Optional[float] = None
+    retry_count: int = 0
+
+
+def _get_optimal_delay(telemetry_stats: Optional[Dict] = None) -> float:
+    """
+    Calculate optimal delay between batch requests based on historical performance.
+    
+    Uses telemetry data to determine safe delay that avoids rate limits while
+    maintaining reasonable throughput.
+    """
+    # Base delay: OSM minimum query interval (0.5s) + safety margin
+    base_delay = 0.5
+    
+    if telemetry_stats:
+        perf_metrics = telemetry_stats.get("performance_metrics", {})
+        avg_response_time = perf_metrics.get("average_response_time", 0)
+        error_rate = telemetry_stats.get("system_metrics", {}).get("error_rate", 0)
+        timeout_rate = telemetry_stats.get("system_metrics", {}).get("timeout_rate", 0)
+        
+        # If we have response time data, use it to calculate delay
+        if avg_response_time > 0:
+            # Delay should be at least 50% of average response time to avoid overlap
+            # But cap at reasonable maximum (10s)
+            calculated_delay = max(base_delay, min(avg_response_time * 0.5, 10.0))
+        else:
+            calculated_delay = base_delay
+        
+        # Increase delay if error/timeout rates are high (indicates rate limiting)
+        if error_rate > 10 or timeout_rate > 5:
+            # High error rate - be more conservative
+            calculated_delay = max(calculated_delay * 1.5, 2.0)
+        elif error_rate > 5 or timeout_rate > 2:
+            # Moderate error rate - slightly increase delay
+            calculated_delay = max(calculated_delay * 1.2, 1.0)
+        
+        return round(calculated_delay, 2)
+    
+    # Default: conservative 2s delay if no telemetry data
+    return 2.0
 
 
 def _compute_scoring_hash() -> str:
@@ -353,6 +413,687 @@ def _generate_request_cache_key(location: str, tokens: Optional[str], priorities
     return f"api_response:v{API_VERSION}:{key_hash}"
 
 
+def _compute_single_score_internal(
+    location: str,
+    tokens: Optional[str] = None,
+    priorities_dict: Optional[Dict[str, str]] = None,
+    include_chains: bool = False,
+    enable_schools: Optional[bool] = None,
+    test_mode: bool = False,
+    request: Optional[Request] = None
+) -> Dict[str, Any]:
+    """
+    Internal function to compute score for a single location.
+    Extracted from get_livability_score for reuse in batch processing.
+    
+    This contains the core scoring logic without FastAPI-specific caching.
+    """
+    # Determine if school scoring should be enabled for this request
+    use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+    
+    start_time = time.time()
+    logger.info(f"HomeFit Score Request: {location}")
+    if enable_schools is not None:
+        logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
+
+    test_mode_enabled = bool(test_mode)
+    
+    override_params: Dict[str, float] = {}
+    if test_mode_enabled and request:
+        for key, value in request.query_params.items():
+            if key.startswith("override_"):
+                try:
+                    override_params[key] = float(value)
+                except (TypeError, ValueError):
+                    logger.warning(f"Ignoring invalid override parameter {key}={value!r}")
+
+    beauty_override_map = {
+        "override_tree_canopy": "tree_canopy_pct",
+        "override_tree_canopy_pct": "tree_canopy_pct",
+        "override_tree_score": "tree_score",
+        "override_levels_entropy": "levels_entropy",
+        "override_building_type_diversity": "building_type_diversity",
+        "override_footprint_area_cv": "footprint_area_cv",
+        "override_block_grain": "block_grain",
+        "override_streetwall": "streetwall_continuity",
+        "override_streetwall_continuity": "streetwall_continuity",
+        "override_setback": "setback_consistency",
+        "override_setback_consistency": "setback_consistency",
+        "override_facade": "facade_rhythm",
+        "override_facade_rhythm": "facade_rhythm",
+        "override_architecture_score": "architecture_score"
+    }
+
+    beauty_overrides: Dict[str, float] = {}
+    if test_mode_enabled:
+        for raw_key, mapped_key in beauty_override_map.items():
+            if raw_key in override_params:
+                beauty_overrides[mapped_key] = override_params[raw_key]
+
+    only_pillars: Optional[set[str]] = None
+    if request and hasattr(request, 'query_params'):
+        only_param = request.query_params.get("only")
+        if only_param:
+            raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
+            if raw_only:
+                expanded_only = set()
+                for name in raw_only:
+                    if name == "neighborhood_beauty":
+                        expanded_only.update({"built_beauty", "natural_beauty"})
+                    else:
+                        expanded_only.add(name)
+                only_pillars = expanded_only
+            if not only_pillars:
+                only_pillars = None
+
+    # Step 1: Geocode the location (with full result for neighborhood detection)
+    from data_sources.geocoding import geocode_with_full_result
+    geo_result = geocode_with_full_result(location)
+
+    if not geo_result:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not geocode the provided location. Please check the address."
+        )
+
+    lat, lon, zip_code, state, city, geocode_data = geo_result
+    logger.info(f"Coordinates: {lat}, {lon}")
+    logger.info(f"Location: {city}, {state} {zip_code}")
+    
+    # Detect if this is a neighborhood vs. standalone city
+    from data_sources.data_quality import detect_location_scope
+    location_scope = detect_location_scope(lat, lon, geocode_data)
+    logger.info(f"Location scope: {location_scope}")
+
+    # Compute a single area_type centrally for consistent radius profiles
+    # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+    census_tract = None
+    density = 0.0
+    try:
+        from data_sources import census_api as _ca
+        from data_sources import data_quality as _dq
+        from data_sources import osm_api
+        from data_sources.arch_diversity import compute_arch_diversity
+        from data_sources.regional_baselines import RegionalBaselineManager
+        
+        # Parallelize independent API calls that don't depend on each other
+        def _fetch_census_tract():
+            try:
+                return _ca.get_census_tract(lat, lon)
+            except Exception as e:
+                logger.warning(f"Census tract lookup failed (non-fatal): {e}")
+                return None
+        
+        def _fetch_density(tract):
+            try:
+                return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+            except Exception as e:
+                logger.warning(f"Density lookup failed (non-fatal): {e}")
+                return 0.0
+        
+        def _fetch_business_count():
+            if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
+                return 0
+            try:
+                business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                if business_data:
+                    all_businesses = (business_data.get("tier1_daily", []) + 
+                                    business_data.get("tier2_social", []) +
+                                    business_data.get("tier3_culture", []) +
+                                    business_data.get("tier4_services", []))
+                    return len(all_businesses)
+                return 0
+            except Exception as e:
+                logger.warning(f"Business count query failed (non-fatal): {e}")
+                return 0
+        
+        def _fetch_built_coverage():
+            if only_pillars is not None and "built_beauty" not in only_pillars:
+                logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
+                return None
+            try:
+                arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+                return arch_diversity
+            except Exception as e:
+                logger.warning(f"Built coverage query failed (non-fatal): {e}")
+                return None
+        
+        def _fetch_metro_distance():
+            try:
+                baseline_mgr = RegionalBaselineManager()
+                return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+            except Exception as e:
+                logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
+                return None
+        
+        # Execute independent calls in parallel
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_census_tract = executor.submit(_fetch_census_tract)
+            future_business_count = executor.submit(_fetch_business_count)
+            future_metro_distance = executor.submit(_fetch_metro_distance)
+            
+            need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+            if need_built_coverage:
+                future_built_coverage = executor.submit(_fetch_built_coverage)
+            else:
+                future_built_coverage = None
+            
+            census_tract = future_census_tract.result()
+            future_density = executor.submit(_fetch_density, census_tract)
+            
+            density = future_density.result()
+            business_count = future_business_count.result()
+            metro_distance_km = future_metro_distance.result()
+            arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
+        
+        built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
+        
+        area_type = _dq.detect_area_type(
+            lat, lon, 
+            density=density, 
+            city=city,
+            location_input=location,
+            business_count=business_count,
+            built_coverage=built_coverage,
+            metro_distance_km=metro_distance_km
+        )
+    except Exception:
+        area_type = "unknown"
+        arch_diversity_data = None
+        density = 0.0
+
+    # Step 2: Calculate all pillar scores in parallel
+    logger.debug("Calculating pillar scores in parallel...")
+
+    def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
+        try:
+            result = func(**kwargs)
+            return (name, result, None)
+        except Exception as e:
+            logger.error(f"{name} pillar failed: {e}")
+            return (name, None, e)
+
+    def _include_pillar(name: str) -> bool:
+        return only_pillars is None or name in only_pillars
+
+    # Pre-compute tree canopy (5km) once for pillars that need it
+    tree_canopy_5km = None
+    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
+        try:
+            from data_sources.gee_api import get_tree_canopy_gee
+            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
+            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
+        except Exception as e:
+            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
+            tree_canopy_5km = None
+
+    # Compute form_context once when beauty pillars are requested
+    form_context = None
+    need_built_beauty = _include_pillar('built_beauty')
+    need_natural_beauty = _include_pillar('natural_beauty')
+    need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
+    
+    if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
+        try:
+            from data_sources.data_quality import get_form_context
+            from data_sources import census_api
+            from data_sources import osm_api
+            
+            if arch_diversity_data:
+                levels_entropy = arch_diversity_data.get("levels_entropy")
+                building_type_diversity = arch_diversity_data.get("building_type_diversity")
+                built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
+                footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
+                material_profile = arch_diversity_data.get("material_profile")
+            else:
+                levels_entropy = None
+                building_type_diversity = None
+                built_coverage_ratio = None
+                footprint_area_cv = None
+                material_profile = None
+            
+            charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
+            historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+            
+            year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
+            median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+            pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
+            
+            form_context = get_form_context(
+                area_type=area_type,
+                density=density,
+                levels_entropy=levels_entropy,
+                building_type_diversity=building_type_diversity,
+                historic_landmarks=historic_landmarks,
+                median_year_built=median_year_built,
+                built_coverage_ratio=built_coverage_ratio,
+                footprint_area_cv=footprint_area_cv,
+                pre_1940_pct=pre_1940_pct,
+                material_profile=material_profile,
+                use_multinomial=True
+            )
+            logger.debug(f"Computed form_context: {form_context}")
+        except Exception as e:
+            logger.warning(f"Form context computation failed (non-fatal): {e}")
+            form_context = None
+
+    pillar_tasks = []
+    if _include_pillar('active_outdoors'):
+        pillar_tasks.append(
+            ('active_outdoors', get_active_outdoors_score_v2, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope,
+                'precomputed_tree_canopy_5km': tree_canopy_5km
+            })
+        )
+    if need_built_beauty:
+        pillar_tasks.append(
+            ('built_beauty', built_beauty.calculate_built_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'test_overrides': beauty_overrides if beauty_overrides else None,
+                'precomputed_arch_diversity': arch_diversity_data,
+                'density': density,
+                'form_context': form_context
+            })
+        )
+    if need_natural_beauty:
+        pillar_tasks.append(
+            ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'overrides': beauty_overrides if beauty_overrides else None,
+                'precomputed_tree_canopy_5km': tree_canopy_5km,
+                'form_context': form_context
+            })
+        )
+    
+    if _include_pillar('neighborhood_amenities'):
+        pillar_tasks.append(
+            ('neighborhood_amenities', get_neighborhood_amenities_score, {
+                'lat': lat, 'lon': lon, 'include_chains': include_chains,
+                'location_scope': location_scope, 'area_type': area_type,
+                'density': density
+            })
+        )
+    if _include_pillar('air_travel_access'):
+        pillar_tasks.append(
+            ('air_travel_access', get_air_travel_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'density': density
+            })
+        )
+    if _include_pillar('public_transit_access'):
+        pillar_tasks.append(
+            ('public_transit_access', get_public_transit_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 
+                'city': city, 'density': density
+            })
+        )
+    if _include_pillar('healthcare_access'):
+        pillar_tasks.append(
+            ('healthcare_access', get_healthcare_access_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
+                'density': density
+            })
+        )
+    if _include_pillar('housing_value'):
+        pillar_tasks.append(
+            ('housing_value', get_housing_value_score, {
+                'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+            })
+        )
+
+    if use_school_scoring and _include_pillar('quality_education'):
+        pillar_tasks.append(
+            ('quality_education', get_school_data, {
+                'zip_code': zip_code, 'state': state, 'city': city
+            })
+        )
+
+    # Execute all pillars in parallel
+    pillar_results = {}
+    exceptions = {}
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_pillar = {
+            executor.submit(_execute_pillar, name, func, **kwargs): name
+            for name, func, kwargs in pillar_tasks
+        }
+        
+        for future in as_completed(future_to_pillar):
+            pillar_name = future_to_pillar[future]
+            name, result, error = future.result()
+            
+            if error:
+                exceptions[pillar_name] = error
+                pillar_results[pillar_name] = None
+            else:
+                pillar_results[pillar_name] = result
+
+    # Handle school scoring separately
+    schools_found = False
+    if use_school_scoring:
+        if 'quality_education' in pillar_results and pillar_results['quality_education']:
+            school_avg, schools_by_level = pillar_results['quality_education']
+        else:
+            school_avg = None
+            schools_by_level = {"elementary": [], "middle": [], "high": []}
+    else:
+        logger.info("School scoring disabled (preserving API quota)")
+        school_avg = None
+        schools_by_level = {"elementary": [], "middle": [], "high": []}
+
+    # Extract results with error handling
+    active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
+    transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+    # Extract built/natural beauty from parallel results
+    built_calc = pillar_results.get('built_beauty')
+    natural_calc = pillar_results.get('natural_beauty')
+    
+    if built_calc:
+        built_score = built_calc["score"]
+        built_details = built_calc["details"]
+    else:
+        built_score = 0.0
+        built_details = {
+            "component_score_0_50": 0.0,
+            "enhancer_bonus_raw": 0.0,
+            "enhancer_bonus_scaled": 0.0,
+            "score_before_normalization": 0.0,
+            "normalization": None,
+            "source": "built_beauty",
+            "architectural_analysis": {},
+            "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
+        }
+
+    if natural_calc:
+        tree_details = natural_calc["details"]
+        natural_score = natural_calc["score"]
+        natural_details = {
+            "tree_score_0_50": round(natural_calc["tree_score_0_50"], 2),
+            "enhancer_bonus_raw": round(natural_calc["natural_bonus_raw"], 2),
+            "enhancer_bonus_scaled": round(natural_calc["natural_bonus_scaled"], 2),
+            "context_bonus_raw": round(natural_calc["context_bonus_raw"], 2),
+            "score_before_normalization": round(natural_calc["score_before_normalization"], 2),
+            "normalization": natural_calc["normalization"],
+            "source": "natural_beauty",
+            "tree_analysis": tree_details,
+            "scenic_proxy": natural_calc["scenic_metadata"],
+            "enhancer_bonus": tree_details.get("enhancer_bonus", {}),
+            "context_bonus": tree_details.get("natural_context", {}),
+            "bonus_breakdown": tree_details.get("bonus_breakdown", {}),
+            "green_view_index": tree_details.get("green_view_index"),
+            "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
+            "gvi_metrics": tree_details.get("gvi_metrics"),
+            "expectation_effect": tree_details.get("expectation_effect"),
+            "data_availability": tree_details.get("data_availability", {}),
+            "gvi_available": natural_calc.get("gvi_available", False),
+            "gvi_source": natural_calc.get("gvi_source", "unknown"),
+        }
+    else:
+        natural_score = 0.0
+        natural_details = {
+            "tree_score_0_50": 0.0,
+            "enhancer_bonus_raw": 0.0,
+            "enhancer_bonus_scaled": 0.0,
+            "context_bonus_raw": 0.0,
+            "score_before_normalization": 0.0,
+            "normalization": None,
+            "source": "natural_beauty",
+            "tree_analysis": {},
+            "scenic_proxy": {},
+            "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
+            "context_bonus": {
+                "components": {},
+                "total_applied": 0.0,
+                "total_before_cap": 0.0,
+                "cap": 0.0,
+                "metrics": {}
+            }
+        }
+
+    pillar_results['built_beauty'] = (built_score, built_details)
+    pillar_results['natural_beauty'] = (natural_score, natural_details)
+
+    if school_avg is None:
+        school_avg = 0.0
+
+    if schools_by_level:
+        total_schools = sum([
+            len(schools_by_level.get("elementary", [])),
+            len(schools_by_level.get("middle", [])),
+            len(schools_by_level.get("high", []))
+        ])
+        schools_found = total_schools > 0
+    else:
+        total_schools = 0
+        schools_found = False
+
+    if exceptions:
+        logger.warning(f"{len(exceptions)} pillar(s) failed:")
+        for pillar_name, error in exceptions.items():
+            logger.warning(f"  - {pillar_name}: {error}")
+
+    # Calculate weighted total using token allocation
+    if priorities_dict:
+        token_allocation = parse_priority_allocation(priorities_dict)
+        allocation_type = "priority_based"
+    else:
+        token_allocation = parse_token_allocation(tokens)
+        allocation_type = "token_based" if tokens else "default_equal"
+    
+    if only_pillars:
+        for pillar_name in list(token_allocation.keys()):
+            if pillar_name not in only_pillars:
+                token_allocation[pillar_name] = 0.0
+        remaining = sum(token_allocation.values())
+        if remaining > 0:
+            scale = 100.0 / remaining
+            token_allocation = {k: v * scale for k, v in token_allocation.items()}
+            rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
+            total_rounded = sum(rounded.values())
+            remainder = 100 - total_rounded
+            if remainder > 0:
+                fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_allocation.items() if tokens > 0]
+                if fractional_parts:
+                    fractional_parts.sort(key=lambda x: x[1], reverse=True)
+                    for i in range(remainder):
+                        pillar = fractional_parts[i][0]
+                        rounded[pillar] = rounded.get(pillar, 0) + 1
+            token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
+        else:
+            equal = 100.0 / len(only_pillars)
+            token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
+                             for pillar_name in token_allocation.keys()}
+
+    total_score = (
+        (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
+        (built_score * token_allocation["built_beauty"] / 100) +
+        (natural_score * token_allocation["natural_beauty"] / 100) +
+        (amenities_score * token_allocation["neighborhood_amenities"] / 100) +
+        (air_travel_score * token_allocation["air_travel_access"] / 100) +
+        (transit_score * token_allocation["public_transit_access"] / 100) +
+        (healthcare_score * token_allocation["healthcare_access"] / 100) +
+        (school_avg * token_allocation["quality_education"] / 100) +
+        (housing_score * token_allocation["housing_value"] / 100)
+    )
+
+    logger.info(f"Final Livability Score: {total_score:.1f}/100")
+
+    # Build livability_pillars dict
+    livability_pillars = {
+        "active_outdoors": {
+            "score": active_outdoors_score,
+            "weight": token_allocation["active_outdoors"],
+            "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 100, 2),
+            "breakdown": active_outdoors_details["breakdown"],
+            "summary": active_outdoors_details["summary"],
+            "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": active_outdoors_details.get("data_quality", {}),
+            "area_classification": active_outdoors_details.get("area_classification", {})
+        },
+        "built_beauty": {
+            "score": built_score,
+            "weight": token_allocation["built_beauty"],
+            "contribution": round(built_score * token_allocation["built_beauty"] / 100, 2),
+            "breakdown": {
+                "component_score_0_50": built_details["component_score_0_50"],
+                "enhancer_bonus_raw": built_details["enhancer_bonus_raw"]
+            },
+            "summary": {},
+            "details": built_details,
+            "confidence": built_calc.get("data_quality", {}).get("confidence", 0) if built_calc else (built_details.get("architectural_analysis", {}).get("confidence_0_1", 0) if isinstance(built_details.get("architectural_analysis"), dict) else 0),
+            "data_quality": built_calc.get("data_quality", {}) if built_calc else {},
+            "area_classification": {}
+        },
+        "natural_beauty": {
+            "score": natural_score,
+            "weight": token_allocation["natural_beauty"],
+            "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
+            "breakdown": {
+                "tree_score_0_50": natural_details["tree_score_0_50"],
+                "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
+            },
+            "summary": {},
+            "details": natural_details,
+            "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
+            "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
+            "area_classification": {}
+        },
+        "neighborhood_amenities": {
+            "score": amenities_score,
+            "weight": token_allocation["neighborhood_amenities"],
+            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
+            "breakdown": amenities_details["breakdown"],
+            "summary": amenities_details["summary"],
+            "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": amenities_details.get("data_quality", {}),
+            "area_classification": amenities_details.get("area_classification", {})
+        },
+        "air_travel_access": {
+            "score": air_travel_score,
+            "weight": token_allocation["air_travel_access"],
+            "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 100, 2),
+            "primary_airport": air_travel_details.get("primary_airport"),
+            "nearest_airports": air_travel_details.get("nearest_airports", []),
+            "summary": air_travel_details.get("summary", {}),
+            "confidence": air_travel_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": air_travel_details.get("data_quality", {}),
+            "area_classification": air_travel_details.get("area_classification", {})
+        },
+        "public_transit_access": {
+            "score": transit_score,
+            "weight": token_allocation["public_transit_access"],
+            "contribution": round(transit_score * token_allocation["public_transit_access"] / 100, 2),
+            "breakdown": transit_details["breakdown"],
+            "summary": transit_details["summary"],
+            "details": transit_details.get("details", {}),
+            "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": transit_details.get("data_quality", {}),
+            "area_classification": transit_details.get("area_classification", {})
+        },
+        "healthcare_access": {
+            "score": healthcare_score,
+            "weight": token_allocation["healthcare_access"],
+            "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 100, 2),
+            "breakdown": healthcare_details["breakdown"],
+            "summary": healthcare_details["summary"],
+            "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": healthcare_details.get("data_quality", {}),
+            "area_classification": healthcare_details.get("area_classification", {})
+        },
+        "quality_education": {
+            "score": school_avg,
+            "weight": token_allocation["quality_education"],
+            "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+            "by_level": {
+                "elementary": schools_by_level.get("elementary", []),
+                "middle": schools_by_level.get("middle", []),
+                "high": schools_by_level.get("high", [])
+            },
+            "total_schools_rated": total_schools,
+            "confidence": 50 if not use_school_scoring else 85,
+            "data_quality": {
+                "fallback_used": not use_school_scoring or not schools_found,
+                "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
+                "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+            },
+            "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
+        },
+        "housing_value": {
+            "score": housing_score,
+            "weight": token_allocation["housing_value"],
+            "contribution": round(housing_score * token_allocation["housing_value"] / 100, 2),
+            "breakdown": housing_details["breakdown"],
+            "summary": housing_details["summary"],
+            "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": housing_details.get("data_quality", {}),
+            "area_classification": housing_details.get("area_classification", {})
+        }
+    }
+
+    # Build response
+    response = {
+        "input": location,
+        "coordinates": {
+            "lat": lat,
+            "lon": lon
+        },
+        "location_info": {
+            "city": city,
+            "state": state,
+            "zip": zip_code
+        },
+        "livability_pillars": livability_pillars,
+        "total_score": round(total_score, 2),
+        "token_allocation": token_allocation,
+        "allocation_type": allocation_type,
+        "overall_confidence": _calculate_overall_confidence(livability_pillars),
+        "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
+        "metadata": {
+            "version": API_VERSION,
+            "architecture": "9 Purpose-Driven Pillars",
+            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default.",
+            "test_mode": test_mode_enabled
+        }
+    }
+
+    if test_mode_enabled and beauty_overrides:
+        arch_override_keys = {
+            "levels_entropy",
+            "building_type_diversity",
+            "footprint_area_cv",
+            "block_grain",
+            "streetwall_continuity",
+            "setback_consistency",
+            "facade_rhythm",
+            "architecture_score"
+        }
+        tree_override_keys = {
+            "tree_canopy_pct",
+            "tree_score"
+        }
+        overrides_payload = {}
+        built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
+        natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
+        if built_overrides:
+            overrides_payload["built_beauty"] = built_overrides
+        if natural_overrides:
+            overrides_payload["natural_beauty"] = natural_overrides
+        if overrides_payload:
+            response["metadata"]["overrides_applied"] = overrides_payload
+    if only_pillars:
+        response["metadata"]["pillars_requested"] = sorted(only_pillars)
+
+    return response
+
+
 @app.get("/score")
 def get_livability_score(request: Request,
                          location: str,
@@ -393,22 +1134,13 @@ def get_livability_score(request: Request,
         JSON with pillar scores, token allocation, and weighted total
     """
     try:
-        # Determine if school scoring should be enabled for this request
-        # Use query parameter if provided, otherwise fall back to global flag
-        use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
-        
         start_time = time.time()
-        logger.info(f"HomeFit Score Request: {location}")
-        if enable_schools is not None:
-            logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
-
         test_mode_enabled = bool(test_mode)
         
         # Parse priorities parameter (if provided as JSON string)
         priorities_dict: Optional[Dict[str, str]] = None
         if priorities:
             try:
-                import json
                 if isinstance(priorities, str):
                     priorities_dict = json.loads(priorities)
                 else:
@@ -458,54 +1190,73 @@ def get_livability_score(request: Request,
                     cached_response["metadata"]["cache_timestamp"] = time.time()
                 return cached_response
 
-        override_params: Dict[str, float] = {}
-        if test_mode_enabled:
-            for key, value in request.query_params.items():
-                if key.startswith("override_"):
+        # Call internal scoring function
+        response = _compute_single_score_internal(
+            location=location,
+            tokens=tokens,
+            priorities_dict=priorities_dict,
+            include_chains=include_chains,
+            enable_schools=enable_schools,
+            test_mode=test_mode_enabled,
+            request=request
+        )
+        
+        # Extract lat/lon for telemetry and caching
+        lat = response.get("coordinates", {}).get("lat", 0)
+        lon = response.get("coordinates", {}).get("lon", 0)
+        
+        # Record telemetry metrics
+        try:
+            response_time = time.time() - start_time
+            record_request_metrics(location, lat, lon, response, response_time)
+        except Exception as e:
+            logger.warning(f"Failed to record telemetry: {e}")
+
+        # REQUEST-LEVEL CACHING: Store response in cache (skip if test_mode)
+        if not test_mode_enabled:
+            try:
+                from data_sources.cache import _redis_client, _cache, _cache_ttl
+                
+                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
+                request_cache_ttl = 300  # 5 minutes for request-level cache
+                
+                # Add cache indicator to response metadata
+                if isinstance(response, dict) and "metadata" in response:
+                    response["metadata"]["cache_hit"] = False
+                    response["metadata"]["cache_timestamp"] = time.time()
+                
+                cache_data = {
+                    'value': response,
+                    'timestamp': time.time()
+                }
+                if _redis_client:
                     try:
-                        override_params[key] = float(value)
-                    except (TypeError, ValueError):
-                        logger.warning(f"Ignoring invalid override parameter {key}={value!r}")
+                        _redis_client.setex(cache_key, request_cache_ttl, json.dumps(cache_data))
+                    except Exception as e:
+                        logger.warning(f"Redis cache write error: {e}")
+                # Also store in in-memory cache
+                _cache[cache_key] = response
+                _cache_ttl[cache_key] = time.time()
+            except Exception as e:
+                logger.warning(f"Failed to cache response: {e}")
 
-        beauty_override_map = {
-            "override_tree_canopy": "tree_canopy_pct",
-            "override_tree_canopy_pct": "tree_canopy_pct",
-            "override_tree_score": "tree_score",
-            "override_levels_entropy": "levels_entropy",
-            "override_building_type_diversity": "building_type_diversity",
-            "override_footprint_area_cv": "footprint_area_cv",
-            "override_block_grain": "block_grain",
-            "override_streetwall": "streetwall_continuity",
-            "override_streetwall_continuity": "streetwall_continuity",
-            "override_setback": "setback_consistency",
-            "override_setback_consistency": "setback_consistency",
-            "override_facade": "facade_rhythm",
-            "override_facade_rhythm": "facade_rhythm",
-            "override_architecture_score": "architecture_score"
-        }
+        return response
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400 for geocoding errors)
+        raise
+    except Exception as e:
+        # Catch any unhandled exceptions and return a proper error response
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Unhandled exception in get_livability_score: {e}\n{error_trace}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while calculating livability score: {str(e)}"
+        )
 
-        beauty_overrides: Dict[str, float] = {}
-        if test_mode_enabled:
-            for raw_key, mapped_key in beauty_override_map.items():
-                if raw_key in override_params:
-                    beauty_overrides[mapped_key] = override_params[raw_key]
 
-        only_param = request.query_params.get("only")
-        only_pillars: Optional[set[str]] = None
-        if only_param:
-            raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
-            if raw_only:
-                expanded_only = set()
-                for name in raw_only:
-                    if name == "neighborhood_beauty":
-                        expanded_only.update({"built_beauty", "natural_beauty"})
-                    else:
-                        expanded_only.add(name)
-                only_pillars = expanded_only
-            if not only_pillars:
-                only_pillars = None
-
-        # Step 1: Geocode the location (with full result for neighborhood detection)
+# OLD CODE REMOVED - Now using _compute_single_score_internal
+# The following section was the old implementation that has been refactored
         from data_sources.geocoding import geocode_with_full_result
         geo_result = geocode_with_full_result(location)
 
@@ -1239,6 +1990,219 @@ def get_livability_score(request: Request,
             status_code=500,
             detail=f"Internal server error while calculating livability score: {str(e)}"
         )
+
+
+@app.post("/batch")
+def batch_livability_scores(request: Request, batch_request: BatchLocationRequest):
+    """
+    Calculate livability scores for multiple locations in a batch.
+    
+    Uses historical performance data to optimize delays and error handling.
+    Processes locations sequentially to avoid rate limits.
+    
+    Parameters:
+        locations: List of addresses or ZIP codes (max 10 per batch)
+        tokens: Optional token allocation (same format as /score)
+        priorities: Optional priority-based allocation (same format as /score)
+        include_chains: Include chain/franchise businesses (default: False)
+        enable_schools: Enable school scoring (default: uses global flag)
+        max_batch_size: Maximum locations per batch (default: 10)
+        adaptive_delays: Use telemetry to adjust delays (default: True)
+    
+    Returns:
+        JSON with results for each location, including performance metrics
+    """
+    # Validate batch size
+    if len(batch_request.locations) > batch_request.max_batch_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
+        )
+    
+    # Get telemetry stats for adaptive delay calculation
+    telemetry_stats = None
+    if batch_request.adaptive_delays:
+        try:
+            telemetry_stats = get_telemetry_stats()
+        except Exception as e:
+            logger.warning(f"Could not fetch telemetry stats: {e}")
+    
+    # Calculate optimal delay based on historical performance
+    base_delay = _get_optimal_delay(telemetry_stats)
+    current_delay = base_delay
+    
+    # Parse priorities if provided
+    priorities_dict = None
+    if batch_request.priorities:
+        try:
+            priorities_dict = json.loads(batch_request.priorities) if isinstance(batch_request.priorities, str) else batch_request.priorities
+        except:
+            priorities_dict = None
+    
+    results = []
+    total_start_time = time.time()
+    consecutive_errors = 0
+    rate_limit_detected = False
+    
+    logger.info(f"Batch request: {len(batch_request.locations)} locations, base delay: {base_delay}s")
+    
+    for i, location in enumerate(batch_request.locations):
+        location_start_time = time.time()
+        retry_count = 0
+        location_success = False
+        
+        # Retry logic for individual locations (max 2 retries with backoff)
+        max_location_retries = 2
+        for retry_attempt in range(max_location_retries + 1):
+            try:
+                # Call the internal scoring function
+                result = _compute_single_score_internal(
+                    location=location,
+                    tokens=batch_request.tokens,
+                    priorities_dict=priorities_dict,
+                    include_chains=batch_request.include_chains,
+                    enable_schools=batch_request.enable_schools,
+                    test_mode=False,
+                    request=None  # No request object for batch processing
+                )
+                
+                location_time = time.time() - location_start_time
+                location_success = True
+                
+                # Check for rate limit indicators in response
+                if result.get("rate_limited") or "429" in str(result.get("error", "")):
+                    rate_limit_detected = True
+                    # Increase delay for subsequent requests
+                    current_delay = min(current_delay * 2, 15.0)  # Cap at 15s
+                    logger.warning(f"Rate limit detected for {location}, increasing delay to {current_delay}s")
+                
+                logger.info(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} completed in {location_time:.1f}s (retry: {retry_attempt})")
+                
+                results.append(BatchLocationResult(
+                    location=location,
+                    success=True,
+                    result=result,
+                    response_time=round(location_time, 2),
+                    retry_count=retry_attempt
+                ))
+                
+                # Reset consecutive error counter on success
+                consecutive_errors = 0
+                
+                # Gradually reduce delay if no errors (adaptive backoff)
+                if not rate_limit_detected and current_delay > base_delay:
+                    current_delay = max(base_delay, current_delay * 0.9)
+                
+                break  # Success, exit retry loop
+                
+            except HTTPException as e:
+                # HTTP exceptions (like 429) - retry with backoff
+                if e.status_code == 429 or "rate limit" in str(e.detail).lower():
+                    rate_limit_detected = True
+                    current_delay = min(current_delay * 2, 15.0)
+                    
+                    if retry_attempt < max_location_retries:
+                        wait_time = current_delay * (retry_attempt + 1)
+                        logger.warning(f"Rate limited for {location}, waiting {wait_time}s before retry {retry_attempt + 1}")
+                        time.sleep(wait_time)
+                        retry_count += 1
+                        continue
+                    else:
+                        # Max retries reached
+                        location_time = time.time() - location_start_time
+                        error_msg = f"Rate limited after {max_location_retries} retries"
+                        logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
+                        results.append(BatchLocationResult(
+                            location=location,
+                            success=False,
+                            error=error_msg,
+                            response_time=round(location_time, 2),
+                            retry_count=retry_count
+                        ))
+                        consecutive_errors += 1
+                        break
+                else:
+                    # Other HTTP errors - don't retry
+                    location_time = time.time() - location_start_time
+                    error_msg = str(e.detail)
+                    logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
+                    results.append(BatchLocationResult(
+                        location=location,
+                        success=False,
+                        error=error_msg,
+                        response_time=round(location_time, 2),
+                        retry_count=retry_count
+                    ))
+                    consecutive_errors += 1
+                    break
+                    
+            except Exception as e:
+                # Other exceptions - retry once with backoff
+                if retry_attempt < max_location_retries:
+                    wait_time = base_delay * (retry_attempt + 1)
+                    logger.warning(f"Error for {location}: {e}, retrying in {wait_time}s")
+                    time.sleep(wait_time)
+                    retry_count += 1
+                    continue
+                else:
+                    # Max retries reached
+                    location_time = time.time() - location_start_time
+                    error_msg = str(e)
+                    logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed after {max_location_retries} retries: {error_msg}")
+                    results.append(BatchLocationResult(
+                        location=location,
+                        success=False,
+                        error=error_msg,
+                        response_time=round(location_time, 2),
+                        retry_count=retry_count
+                    ))
+                    consecutive_errors += 1
+                    break
+        
+        # Adaptive delay adjustment based on consecutive errors
+        if consecutive_errors >= 3:
+            # Multiple consecutive errors - significantly increase delay
+            current_delay = min(current_delay * 1.5, 20.0)
+            logger.warning(f"Multiple consecutive errors detected, increasing delay to {current_delay}s")
+        elif consecutive_errors > 0:
+            # Some errors - moderate increase
+            current_delay = min(current_delay * 1.2, 10.0)
+        
+        # Wait before next request (except for last one)
+        if i < len(batch_request.locations) - 1:
+            # Use current_delay (which may have been adjusted)
+            time.sleep(current_delay)
+    
+    total_time = time.time() - total_start_time
+    successful = sum(1 for r in results if r.success)
+    failed = len(results) - successful
+    
+    # Calculate performance metrics
+    successful_results = [r for r in results if r.success]
+    avg_response_time = sum(r.response_time for r in successful_results) / len(successful_results) if successful_results else 0
+    total_retries = sum(r.retry_count for r in results)
+    
+    logger.info(f"Batch completed: {successful}/{len(batch_request.locations)} successful in {total_time:.1f}s (avg: {avg_response_time:.1f}s, retries: {total_retries})")
+    
+    return {
+        "batch_summary": {
+            "batch_size": len(batch_request.locations),
+            "successful": successful,
+            "failed": failed,
+            "success_rate": round((successful / len(batch_request.locations)) * 100, 1) if batch_request.locations else 0,
+            "total_time_seconds": round(total_time, 2),
+            "average_response_time": round(avg_response_time, 2),
+            "total_retries": total_retries,
+            "base_delay_used": base_delay,
+            "final_delay_used": round(current_delay, 2)
+        },
+        "performance_insights": {
+            "rate_limits_detected": rate_limit_detected,
+            "adaptive_delay_adjustments": current_delay != base_delay,
+            "consecutive_errors": consecutive_errors
+        },
+        "results": [r.dict() for r in results]
+    }
 
 
 def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict to dict
