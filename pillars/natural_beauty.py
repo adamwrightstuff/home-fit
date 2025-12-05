@@ -1159,6 +1159,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         normalized_multi[label] = round(val, 2) if isinstance(val, (int, float)) else None
     details["multi_radius_canopy"] = normalized_multi
     
+    # Initialize green_view_index early (will be calculated later)
+    # This prevents "cannot access local variable" error when used in data_availability dict
+    green_view_index = 0.0
+    
     # Add data availability flags to distinguish real zeros from missing data
     # Design principle: Transparent and documented - expose data quality information
     # This does NOT affect scoring - purely informational
@@ -1271,7 +1275,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         tree_radius_km = tree_radius_used / 1000.0
         details["tree_radius_m"] = tree_radius_used
 
-    green_view_index = 0.0
+    # green_view_index already initialized above (line ~1160)
+    # Now calculate the actual value
     green_view_details: Dict[str, float] = {}
     gvi_weight = float(GREEN_VIEW_WEIGHTS.get(area_type_key, 1.0))
     # Ensure gvi_bonus is always initialized (already set to 0.0 at start, but ensure it's set here too)
@@ -1335,6 +1340,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     details["green_view_details"] = green_view_details
     details["street_tree_feature_total"] = street_tree_feature_total
     details["gvi_bonus"] = round(gvi_bonus, 2)
+    
+    # Update data_availability with calculated green_view_index value
+    if "data_availability" in details and "gvi" in details["data_availability"]:
+        details["data_availability"]["gvi"]["value"] = round(green_view_index, 2)
     # Add GVI availability flag (informational only, doesn't affect scoring)
     # Design principle: Transparent and documented - expose data source information
     details["gvi_available"] = gvi_metrics is not None
