@@ -587,6 +587,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     expectation_penalty = 0.0
     area_type_key = (area_type or "").lower() or "unknown"
     gvi_radius_used: Optional[int] = None
+    # Initialize green_view_index at function start to prevent scope errors
+    # This variable is used in data_availability dict and calculated later
+    green_view_index = 0.0
 
     overrides = overrides or {}
 
@@ -1159,11 +1162,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         normalized_multi[label] = round(val, 2) if isinstance(val, (int, float)) else None
     details["multi_radius_canopy"] = normalized_multi
     
-    # Initialize green_view_index early (will be calculated later)
-    # This prevents "cannot access local variable" error when used in data_availability dict
-    green_view_index = 0.0
-    
-    # Add data availability flags to distinguish real zeros from missing data
+    # green_view_index already initialized at function start (line ~590)
+    # Now add data availability flags to distinguish real zeros from missing data
     # Design principle: Transparent and documented - expose data quality information
     # This does NOT affect scoring - purely informational
     data_availability = {
