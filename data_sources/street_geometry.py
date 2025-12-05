@@ -516,28 +516,32 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         
         # Build grid: map (grid_lat, grid_lon) -> list of segment indices
         segment_grid = {}
-        for seg_idx, segment in enumerate(road_segments_precomputed):
-            # Get bounding box of segment
-            min_lat = min(segment["start"][0], segment["end"][0])
-            max_lat = max(segment["start"][0], segment["end"][0])
-            min_lon = min(segment["start"][1], segment["end"][1])
-            max_lon = max(segment["start"][1], segment["end"][1])
-            
-            # Add segment to all grid cells it might intersect
-            # Use floor division to get grid cell coordinates
-            min_grid_lat = int(min_lat / grid_cell_deg)
-            max_grid_lat = int(max_lat / grid_cell_deg)
-            min_grid_lon = int(min_lon / grid_cell_deg)
-            max_grid_lon = int(max_lon / grid_cell_deg)
-            
-            for grid_lat in range(min_grid_lat, max_grid_lat + 1):
-                for grid_lon in range(min_grid_lon, max_grid_lon + 1):
-                    key = (grid_lat, grid_lon)
-                    if key not in segment_grid:
-                        segment_grid[key] = []
-                    segment_grid[key].append(seg_idx)
+        if road_segments_precomputed:
+            for seg_idx, segment in enumerate(road_segments_precomputed):
+                # Get bounding box of segment
+                min_lat = min(segment["start"][0], segment["end"][0])
+                max_lat = max(segment["start"][0], segment["end"][0])
+                min_lon = min(segment["start"][1], segment["end"][1])
+                max_lon = max(segment["start"][1], segment["end"][1])
+                
+                # Add segment to all grid cells it might intersect
+                # Use floor division to get grid cell coordinates
+                min_grid_lat = int(min_lat / grid_cell_deg)
+                max_grid_lat = int(max_lat / grid_cell_deg)
+                min_grid_lon = int(min_lon / grid_cell_deg)
+                max_grid_lon = int(max_lon / grid_cell_deg)
+                
+                for grid_lat in range(min_grid_lat, max_grid_lat + 1):
+                    for grid_lon in range(min_grid_lon, max_grid_lon + 1):
+                        key = (grid_lat, grid_lon)
+                        if key not in segment_grid:
+                            segment_grid[key] = []
+                        segment_grid[key].append(seg_idx)
         
-        logger.info(f"[STREETWALL] Built spatial grid: {len(segment_grid)} cells, {len(road_segments_precomputed)} segments")
+        if len(segment_grid) == 0 or len(road_segments_precomputed) == 0:
+            logger.warning(f"[STREETWALL] No road segments found - spatial grid empty (0 cells, 0 segments). This may indicate sparse road network or OSM data coverage issue.")
+        else:
+            logger.info(f"[STREETWALL] Built spatial grid: {len(segment_grid)} cells, {len(road_segments_precomputed)} segments")
         
         # OPTIMIZATION: Sample buildings if too many (for statistical validity, 2000 is plenty)
         buildings_to_process = building_ways

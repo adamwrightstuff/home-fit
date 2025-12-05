@@ -351,9 +351,10 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             "key": CENSUS_API_KEY,
         }
 
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code != 200:
-            print(f"   ⚠️  ACS API returned status {response.status_code}")
+        # Use retry logic for better timeout handling
+        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+        if response is None:
+            print(f"   ⚠️  ACS API request failed after retries")
             return None
 
         data = response.json()

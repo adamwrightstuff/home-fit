@@ -987,7 +987,7 @@ def get_public_transit_score(
                     # PERFORMANCE OPTIMIZATION: Use cached stops data if available
                     stops_data = cached_stops_data
                     if not stops_data:
-                        from data_sources.transitland_api import get_nearby_transit_stops
+                        # Use the function already imported at the top of the file
                         stops_data = get_nearby_transit_stops(lat, lon, radius_m=nearby_radius)
                     if stops_data:
                         stops = stops_data.get("stops", []) or stops_data.get("items", []) or []
@@ -1785,8 +1785,7 @@ def _score_light_rail_routes(routes: List[Dict], lat: float = None, lon: float =
     proximity_bonus = 0.0
     if lat and lon:
         try:
-            # Find nearest light rail stop
-            from data_sources.transitland_api import get_nearby_transit_stops
+            # Find nearest light rail stop (using function already imported at top)
             stops = get_nearby_transit_stops(lat, lon, radius_m=2000) or {}
             items = stops.get("stops", []) or stops.get("items", []) or []
             distances_km = []
