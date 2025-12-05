@@ -810,63 +810,66 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
     else:
         brand_filter = ''
     
+    # Make name requirement optional - query businesses with or without names
+    # We'll filter out unnamed businesses in processing if needed, but this allows us to
+    # find businesses that exist in OSM even if they don't have names yet
     query = f"""
     [out:json][timeout:60];
     (
       // TIER 1: DAILY ESSENTIALS
-      node["amenity"="cafe"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["amenity"="cafe"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["amenity"="cafe"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"="cafe"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"="bakery"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"="bakery"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"="bakery"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="bakery"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"supermarket|convenience|greengrocer"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"~"supermarket|convenience|greengrocer"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"~"supermarket|convenience|greengrocer"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"supermarket|convenience|greengrocer"]{brand_filter}(around:{radius_m},{lat},{lon});
       
       // TIER 2: SOCIAL & DINING
-      node["amenity"="restaurant"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["amenity"="restaurant"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["amenity"="restaurant"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"="restaurant"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["amenity"~"bar|pub"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["amenity"~"bar|pub"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["amenity"~"bar|pub"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["amenity"~"bar|pub"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["amenity"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      node["shop"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"="ice_cream"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["amenity"="ice_cream"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"="ice_cream"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="ice_cream"]{brand_filter}(around:{radius_m},{lat},{lon});
       
       // TIER 3: CULTURE & LEISURE
-      node["shop"="books"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"="books"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"="books"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="books"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["tourism"="gallery"]["name"](around:{radius_m},{lat},{lon});
-      way["tourism"="gallery"]["name"](around:{radius_m},{lat},{lon});
-      node["shop"="art"]["name"](around:{radius_m},{lat},{lon});
-      way["shop"="art"]["name"](around:{radius_m},{lat},{lon});
+      node["tourism"="gallery"](around:{radius_m},{lat},{lon});
+      way["tourism"="gallery"](around:{radius_m},{lat},{lon});
+      node["shop"="art"](around:{radius_m},{lat},{lon});
+      way["shop"="art"](around:{radius_m},{lat},{lon});
       
-      node["amenity"~"theatre|cinema"]["name"](around:{radius_m},{lat},{lon});
-      way["amenity"~"theatre|cinema"]["name"](around:{radius_m},{lat},{lon});
+      node["amenity"~"theatre|cinema"](around:{radius_m},{lat},{lon});
+      way["amenity"~"theatre|cinema"](around:{radius_m},{lat},{lon});
       
-      node["tourism"="museum"]["name"](around:{radius_m},{lat},{lon});
-      way["tourism"="museum"]["name"](around:{radius_m},{lat},{lon});
+      node["tourism"="museum"](around:{radius_m},{lat},{lon});
+      way["tourism"="museum"](around:{radius_m},{lat},{lon});
       
-      node["amenity"="marketplace"]["name"](around:{radius_m},{lat},{lon});
-      way["amenity"="marketplace"]["name"](around:{radius_m},{lat},{lon});
+      node["amenity"="marketplace"](around:{radius_m},{lat},{lon});
+      way["amenity"="marketplace"](around:{radius_m},{lat},{lon});
       
       // TIER 4: SERVICES & RETAIL
-      node["shop"~"clothes|fashion|boutique"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"~"clothes|fashion|boutique"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"~"clothes|fashion|boutique"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"clothes|fashion|boutique"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"hairdresser|beauty"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"~"hairdresser|beauty"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"~"hairdresser|beauty"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"hairdresser|beauty"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"="music"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"="music"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"="music"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"="music"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["leisure"="fitness_centre"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["leisure"="fitness_centre"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["leisure"="fitness_centre"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["leisure"="fitness_centre"]{brand_filter}(around:{radius_m},{lat},{lon});
       
-      node["shop"~"garden_centre|florist"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
-      way["shop"~"garden_centre|florist"]["name"]{brand_filter}(around:{radius_m},{lat},{lon});
+      node["shop"~"garden_centre|florist"]{brand_filter}(around:{radius_m},{lat},{lon});
+      way["shop"~"garden_centre|florist"]{brand_filter}(around:{radius_m},{lat},{lon});
     );
     out body;
     >;
@@ -893,7 +896,49 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         data = resp.json()
         elements = data.get("elements", [])
 
+        # Diagnostic logging for amenities queries
+        if len(elements) == 0:
+            logger.warning(
+                f"🔍 [AMENITIES DIAGNOSTIC] OSM query returned 0 elements for lat={lat}, lon={lon}, radius={radius_m}m",
+                extra={
+                    "pillar_name": "neighborhood_amenities",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": radius_m,
+                    "include_chains": include_chains,
+                }
+            )
+        else:
+            logger.info(
+                f"🔍 [AMENITIES DIAGNOSTIC] OSM query returned {len(elements)} raw elements",
+                extra={
+                    "pillar_name": "neighborhood_amenities",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": radius_m,
+                    "include_chains": include_chains,
+                    "raw_elements_count": len(elements),
+                }
+            )
+
         businesses = _process_business_features(elements, lat, lon, include_chains)
+        
+        # Log processing results
+        total_processed = sum(len(businesses.get(k, [])) for k in ["tier1_daily", "tier2_social", "tier3_culture", "tier4_services"])
+        if len(elements) > 0 and total_processed == 0:
+            logger.warning(
+                f"🔍 [AMENITIES DIAGNOSTIC] OSM returned {len(elements)} elements but 0 businesses after processing",
+                extra={
+                    "pillar_name": "neighborhood_amenities",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": radius_m,
+                    "include_chains": include_chains,
+                    "raw_elements_count": len(elements),
+                    "processed_businesses_count": total_processed,
+                }
+            )
+        
         return businesses
 
     except Exception as e:
@@ -1828,6 +1873,12 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
     seen_ids = set()
     nodes_dict = {}
     ways_dict = {}
+    
+    # Diagnostic counters
+    filtered_no_name = 0
+    filtered_brand = 0
+    filtered_no_coords = 0
+    processed_count = 0
 
     for elem in elements:
         if elem.get("type") == "node":
@@ -1853,13 +1904,19 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         tags = elem.get("tags", {})
         name = tags.get("name")
 
-        if not name or (not include_chains and tags.get("brand")):
+        if not name:
+            filtered_no_name += 1
+            continue
+        
+        if not include_chains and tags.get("brand"):
+            filtered_brand += 1
             continue
 
         seen_ids.add(osm_id)
 
         elem_lat, elem_lon, coord_source = _resolve_element_coordinates(elem, nodes_dict, ways_dict)
         if elem_lat is None or elem_lon is None:
+            filtered_no_coords += 1
             logger.warning(
                 "Amenity feature missing coordinates; skipping",
                 extra={
@@ -1871,6 +1928,8 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
                 }
             )
             continue
+        
+        processed_count += 1
 
         distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
 
@@ -1936,6 +1995,26 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         elif shop in ["garden_centre", "florist"]:
             business["type"] = "garden"
             tier4_services.append(business)
+    
+    # Diagnostic logging
+    total_processed = len(tier1_daily) + len(tier2_social) + len(tier3_culture) + len(tier4_services)
+    if len(elements) > 0:
+        logger.info(
+            f"🔍 [AMENITIES PROCESSING] Processed {len(elements)} elements: "
+            f"{total_processed} businesses, {filtered_no_name} filtered (no name), "
+            f"{filtered_brand} filtered (brand), {filtered_no_coords} filtered (no coords)",
+            extra={
+                "pillar_name": "neighborhood_amenities",
+                "lat": center_lat,
+                "lon": center_lon,
+                "raw_elements": len(elements),
+                "processed_businesses": total_processed,
+                "filtered_no_name": filtered_no_name,
+                "filtered_brand": filtered_brand,
+                "filtered_no_coords": filtered_no_coords,
+                "include_chains": include_chains,
+            }
+        )
 
     return {
         "tier1_daily": tier1_daily,
