@@ -852,16 +852,16 @@ def get_livability_score(request: Request,
             built_details = built_calc["details"]
         else:
             built_score = 0.0
-        built_details = {
-            "component_score_0_50": 0.0,
-            "enhancer_bonus_raw": 0.0,
-            "enhancer_bonus_scaled": 0.0,
-            "score_before_normalization": 0.0,
-            "normalization": None,
-            "source": "built_beauty",
-            "architectural_analysis": {},
-            "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
-        }
+            built_details = {
+                "component_score_0_50": 0.0,
+                "enhancer_bonus_raw": 0.0,
+                "enhancer_bonus_scaled": 0.0,
+                "score_before_normalization": 0.0,
+                "normalization": None,
+                "source": "built_beauty",
+                "architectural_analysis": {},
+                "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
+            }
     
         # Handle natural_beauty result
         if natural_calc:
