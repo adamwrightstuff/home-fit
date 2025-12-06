@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import time
@@ -1992,41 +1993,9 @@ def get_livability_score(request: Request,
         )
 
 
-@app.post("/batch")
-def batch_livability_scores(request: Request, batch_request: BatchLocationRequest):
-    """
-    Calculate livability scores for multiple locations in a batch.
-    
-    Uses historical performance data to optimize delays and error handling.
-    Processes locations sequentially to avoid rate limits.
-    
-    Parameters:
-        locations: List of addresses or ZIP codes (max 10 per batch)
-        tokens: Optional token allocation (same format as /score)
-        priorities: Optional priority-based allocation (same format as /score)
-        include_chains: Include chain/franchise businesses (default: True)
-        enable_schools: Enable school scoring (default: uses global flag)
-        max_batch_size: Maximum locations per batch (default: 10)
-        adaptive_delays: Use telemetry to adjust delays (default: True)
-    
-    Returns:
-        JSON with results for each location, including performance metrics
-    """
+def _generate_batch_results(batch_request: BatchLocationRequest):
+    """Generator function that yields batch results incrementally with keep-alive messages."""
     try:
-        # Validate batch size
-        if len(batch_request.locations) > batch_request.max_batch_size:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
-            )
-        
-        # Validate locations list is not empty
-        if not batch_request.locations or len(batch_request.locations) == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="At least one location is required"
-            )
-        
         # Get telemetry stats for adaptive delay calculation
         telemetry_stats = None
         if batch_request.adaptive_delays:
@@ -2052,8 +2021,13 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
         total_start_time = time.time()
         consecutive_errors = 0
         rate_limit_detected = False
+        last_keepalive = time.time()
+        KEEPALIVE_INTERVAL = 25  # Send keep-alive every 25 seconds
         
         logger.info(f"Batch request: {len(batch_request.locations)} locations, base delay: {base_delay}s")
+        
+        # Send initial status
+        yield json.dumps({"status": "processing", "total_locations": len(batch_request.locations), "message": "Starting batch processing..."}) + "\n"
         
         for i, location in enumerate(batch_request.locations):
             location_start_time = time.time()
@@ -2087,13 +2061,22 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
                     
                     logger.info(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} completed in {location_time:.1f}s (retry: {retry_attempt})")
                     
-                    results.append(BatchLocationResult(
+                    batch_result = BatchLocationResult(
                         location=location,
                         success=True,
                         result=result,
                         response_time=round(location_time, 2),
                         retry_count=retry_attempt
-                    ))
+                    )
+                    results.append(batch_result)
+                    
+                    # Yield result immediately
+                    yield json.dumps({
+                        "type": "result",
+                        "index": i + 1,
+                        "total": len(batch_request.locations),
+                        "result": batch_result.dict()
+                    }) + "\n"
                     
                     # Reset consecutive error counter on success
                     consecutive_errors = 0
@@ -2121,13 +2104,20 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
                             location_time = time.time() - location_start_time
                             error_msg = f"Rate limited after {max_location_retries} retries"
                             logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
-                            results.append(BatchLocationResult(
+                            batch_result = BatchLocationResult(
                                 location=location,
                                 success=False,
                                 error=error_msg,
                                 response_time=round(location_time, 2),
                                 retry_count=retry_count
-                            ))
+                            )
+                            results.append(batch_result)
+                            yield json.dumps({
+                                "type": "result",
+                                "index": i + 1,
+                                "total": len(batch_request.locations),
+                                "result": batch_result.dict()
+                            }) + "\n"
                             consecutive_errors += 1
                             break
                     else:
@@ -2135,13 +2125,20 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
                         location_time = time.time() - location_start_time
                         error_msg = str(e.detail)
                         logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed: {error_msg}")
-                        results.append(BatchLocationResult(
+                        batch_result = BatchLocationResult(
                             location=location,
                             success=False,
                             error=error_msg,
                             response_time=round(location_time, 2),
                             retry_count=retry_count
-                        ))
+                        )
+                        results.append(batch_result)
+                        yield json.dumps({
+                            "type": "result",
+                            "index": i + 1,
+                            "total": len(batch_request.locations),
+                            "result": batch_result.dict()
+                        }) + "\n"
                         consecutive_errors += 1
                         break
                         
@@ -2158,16 +2155,23 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
                         location_time = time.time() - location_start_time
                         error_msg = str(e)
                         logger.error(f"Batch [{i+1}/{len(batch_request.locations)}]: {location} failed after {max_location_retries} retries: {error_msg}")
-                        results.append(BatchLocationResult(
+                        batch_result = BatchLocationResult(
                             location=location,
                             success=False,
                             error=error_msg,
                             response_time=round(location_time, 2),
                             retry_count=retry_count
-                        ))
+                        )
+                        results.append(batch_result)
+                        yield json.dumps({
+                            "type": "result",
+                            "index": i + 1,
+                            "total": len(batch_request.locations),
+                            "result": batch_result.dict()
+                        }) + "\n"
                         consecutive_errors += 1
                         break
-        
+            
             # Adaptive delay adjustment based on consecutive errors
             if consecutive_errors >= 3:
                 # Multiple consecutive errors - significantly increase delay
@@ -2180,7 +2184,22 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
             # Wait before next request (except for last one)
             if i < len(batch_request.locations) - 1:
                 # Use current_delay (which may have been adjusted)
-                time.sleep(current_delay)
+                # Send keep-alive messages during long waits
+                wait_start = time.time()
+                while time.time() - wait_start < current_delay:
+                    elapsed = time.time() - wait_start
+                    remaining = current_delay - elapsed
+                    sleep_time = min(remaining, KEEPALIVE_INTERVAL)
+                    time.sleep(sleep_time)
+                    
+                    # Send keep-alive if needed
+                    if time.time() - last_keepalive >= KEEPALIVE_INTERVAL:
+                        yield json.dumps({
+                            "type": "keepalive",
+                            "message": f"Processing... {i+1}/{len(batch_request.locations)} locations completed",
+                            "elapsed_seconds": round(time.time() - total_start_time, 1)
+                        }) + "\n"
+                        last_keepalive = time.time()
         
         total_time = time.time() - total_start_time
         successful = sum(1 for r in results if r.success)
@@ -2193,7 +2212,9 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
         
         logger.info(f"Batch completed: {successful}/{len(batch_request.locations)} successful in {total_time:.1f}s (avg: {avg_response_time:.1f}s, retries: {total_retries})")
         
-        return {
+        # Yield final summary
+        final_response = {
+            "type": "complete",
             "batch_summary": {
                 "batch_size": len(batch_request.locations),
                 "successful": successful,
@@ -2212,18 +2233,59 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
             },
             "results": [r.dict() for r in results]
         }
-    
-    except HTTPException:
-        # Re-raise HTTP exceptions (they're already properly formatted)
-        raise
+        yield json.dumps(final_response) + "\n"
+        
     except Exception as e:
-        # Catch any other unhandled exceptions and return a proper error response
         error_msg = f"Batch processing failed: {str(e)}"
-        logger.error(f"Unhandled exception in batch endpoint: {e}", exc_info=True)
+        logger.error(f"Unhandled exception in batch generator: {e}", exc_info=True)
+        yield json.dumps({"type": "error", "error": error_msg}) + "\n"
+
+
+@app.post("/batch")
+def batch_livability_scores(request: Request, batch_request: BatchLocationRequest):
+    """
+    Calculate livability scores for multiple locations in a batch.
+    
+    Uses historical performance data to optimize delays and error handling.
+    Processes locations sequentially to avoid rate limits.
+    Returns streaming results to prevent client timeouts.
+    
+    Parameters:
+        locations: List of addresses or ZIP codes (max 10 per batch)
+        tokens: Optional token allocation (same format as /score)
+        priorities: Optional priority-based allocation (same format as /score)
+        include_chains: Include chain/franchise businesses (default: True)
+        enable_schools: Enable school scoring (default: uses global flag)
+        max_batch_size: Maximum locations per batch (default: 10)
+        adaptive_delays: Use telemetry to adjust delays (default: True)
+    
+    Returns:
+        Streaming JSON with results for each location, including performance metrics.
+        Each line is a JSON object. Types: "status", "result", "keepalive", "complete", "error"
+    """
+    # Validate batch size
+    if len(batch_request.locations) > batch_request.max_batch_size:
         raise HTTPException(
-            status_code=500,
-            detail=error_msg
+            status_code=400,
+            detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
         )
+    
+    # Validate locations list is not empty
+    if not batch_request.locations or len(batch_request.locations) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one location is required"
+        )
+    
+    return StreamingResponse(
+        _generate_batch_results(batch_request),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering
+        }
+    )
 
 
 def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict to dict
