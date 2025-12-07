@@ -492,174 +492,30 @@ DENSITY_MULTIPLIER = {
 # Source: Statistical modeling per area type (see DESIGN_PRINCIPLES.md Addendum)
 # Method: Ridge regression with per-area-type modeling
 # Weights are normalized to sum to 1.0 per area type
-# Ridge regression weights for Built Beauty scoring
+# Global Ridge regression weights for Built Beauty scoring
+# Based on regression analysis of 56 locations (R²=0.1626, MAE=5.84, RMSE=7.43)
 # Feature order: [Norm Height Div, Norm Type Div, Norm Footprint Var, Norm Built Cov,
 #                 Norm Block Grain, Norm Streetwall, Norm Setback, Norm Facade,
 #                 Norm Landmark, Norm Year Built, Norm Brick Share, Norm Enhancer, Norm Rowhouse]
-# Each area type has coefficients (13 values) and an intercept
-RIDGE_REGRESSION_WEIGHTS = {
-    "suburban": {
-        "coefficients": [
-            1.694675643274188,      # Norm Height Div
-            -2.3900353828645042,    # Norm Type Div
-            -6.681365689676081,     # Norm Footprint Var
-            -3.648066098113575,     # Norm Built Cov
-            11.018714542374097,     # Norm Block Grain
-            -4.664424624283327,     # Norm Streetwall
-            -5.911764063464895,     # Norm Setback
-            -3.517228955121713,     # Norm Facade
-            2.825247622296669,      # Norm Landmark
-            4.932560448523192,      # Norm Year Built
-            -9.280769071332323,     # Norm Brick Share
-            5.602655607812873,      # Norm Enhancer
-            0.248141297717015,      # Norm Rowhouse
-        ],
-        "intercept": 68.32670209972913,
-        "r2_score": 0.4108053797460943,
-        "n_samples": 19,
-    },
-    "urban_core_lowrise": {
-        "coefficients": [
-            -1.8473622571779915,    # Norm Height Div
-            1.9961114584599727,      # Norm Type Div
-            -2.7126693869590972,     # Norm Footprint Var
-            -3.758395385525872,      # Norm Built Cov
-            -2.3555368233082187,     # Norm Block Grain
-            10.08500959353043,       # Norm Streetwall
-            -4.638995025628968,      # Norm Setback
-            1.3170989094530423,      # Norm Facade
-            1.5556151352083966,      # Norm Landmark
-            -0.498176014927891,      # Norm Year Built
-            8.643294249048453,       # Norm Brick Share
-            -8.560912018268516,      # Norm Enhancer
-            0.5195533246348992,      # Norm Rowhouse
-        ],
-        "intercept": 71.53211829562357,
-        "r2_score": 0.8800658706702397,
-        "n_samples": 17,
-    },
-    "urban_residential": {
-        "coefficients": [
-            -1.6735762240276472,     # Norm Height Div
-            -4.799476543644472,      # Norm Type Div
-            -4.489069679277536,      # Norm Footprint Var
-            -6.818319057192876,      # Norm Built Cov
-            8.780770428585161,       # Norm Block Grain
-            1.9464612344840354,      # Norm Streetwall
-            -3.133371995830633,      # Norm Setback
-            2.6885403407439085,      # Norm Facade
-            8.350833294429716,       # Norm Landmark
-            -3.3986287224978456,     # Norm Year Built
-            2.0253116601256524,      # Norm Brick Share
-            -4.050037591732545,      # Norm Enhancer
-            4.264074083559449,       # Norm Rowhouse
-        ],
-        "intercept": 75.17170022365947,
-        "r2_score": 0.6525740779606259,
-        "n_samples": 22,
-    },
-    "historic_urban": {
-        "coefficients": [
-            -7.5216399234938155,     # Norm Height Div
-            -2.300889391481023,      # Norm Type Div
-            8.16107092120239,        # Norm Footprint Var
-            0.37464977902598997,     # Norm Built Cov
-            1.6786810577995892,      # Norm Block Grain
-            -8.429418475644663,      # Norm Streetwall
-            3.3720782753763935,      # Norm Setback
-            -6.137329323940118,      # Norm Facade
-            3.695506139392704,       # Norm Landmark
-            -3.17156821443939,       # Norm Year Built
-            -2.3150382370468856,     # Norm Brick Share
-            6.33235272650232,        # Norm Enhancer
-            4.731248904620031,       # Norm Rowhouse
-        ],
-        "intercept": 83.58081718893044,
-        "r2_score": 0.713916004499322,
-        "n_samples": 10,
-    },
-    "urban_core": {
-        "coefficients": [
-            0.16505765294144645,     # Norm Height Div
-            2.2530318762652417,      # Norm Type Div
-            3.7001974533799073,      # Norm Footprint Var
-            -8.484569650314739,      # Norm Built Cov
-            -1.5720491368397184,     # Norm Block Grain
-            -1.839414472185815,      # Norm Streetwall
-            -1.940156235136,         # Norm Setback
-            2.5908438508643094,      # Norm Facade
-            2.1442115720349545,      # Norm Landmark
-            2.59759966902178,        # Norm Year Built
-            11.9386910650336,        # Norm Brick Share
-            -11.600706853148244,     # Norm Enhancer
-            1.4230023102964353,      # Norm Rowhouse
-        ],
-        "intercept": 73.51084650020052,
-        "r2_score": 0.8895077935549515,
-        "n_samples": 13,
-    },
-    "rural": {
-        "coefficients": [
-            -5.270330201510831,      # Norm Height Div
-            7.287347106188667,       # Norm Type Div
-            -4.408568142234023,      # Norm Footprint Var
-            -5.614048351889809,      # Norm Built Cov
-            -1.1006778003533268,     # Norm Block Grain
-            8.669826790785117,       # Norm Streetwall
-            1.4038509490409195,      # Norm Setback
-            -0.4271635354487338,     # Norm Facade
-            5.26680437449779,        # Norm Landmark
-            -1.9814976840090247,     # Norm Year Built
-            -6.177172670833175,      # Norm Brick Share
-            4.636071950542892,       # Norm Enhancer
-            3.5432492937895983,      # Norm Rowhouse
-        ],
-        "intercept": 79.56712930548285,
-        "r2_score": 0.7120045652144526,
-        "n_samples": 8,
-    },
-    "exurban": {
-        "coefficients": [
-            -2.0437615811834107,     # Norm Height Div
-            -1.4083894073838554,     # Norm Type Div
-            -3.589888375057796,      # Norm Footprint Var
-            -3.9054901730848455,     # Norm Built Cov
-            -1.1427606274951982,     # Norm Block Grain
-            1.3566734583851463,      # Norm Streetwall
-            -2.959660884592236,      # Norm Setback
-            -3.2576089108220145,     # Norm Facade
-            -0.5223109973020615,     # Norm Landmark
-            3.0493339100493366,      # Norm Year Built
-            -0.0013299088018364647,  # Norm Brick Share
-            -0.07786565476824103,    # Norm Enhancer
-            0.07725992743365523,     # Norm Rowhouse
-        ],
-        "intercept": 79.16009345369987,
-        "r2_score": 0.5721306752395754,
-        "n_samples": 7,
-    },
-    # Fallback for unknown area types
-    "unknown": {
-        "coefficients": [
-            0.16505765294144645,     # Norm Height Div (use urban_core)
-            2.2530318762652417,      # Norm Type Div
-            3.7001974533799073,      # Norm Footprint Var
-            -8.484569650314739,      # Norm Built Cov
-            -1.5720491368397184,     # Norm Block Grain
-            -1.839414472185815,      # Norm Streetwall
-            -1.940156235136,         # Norm Setback
-            2.5908438508643094,      # Norm Facade
-            2.1442115720349545,      # Norm Landmark
-            2.59759966902178,        # Norm Year Built
-            11.9386910650336,        # Norm Brick Share
-            -11.600706853148244,     # Norm Enhancer
-            1.4230023102964353,      # Norm Rowhouse
-        ],
-        "intercept": 73.51084650020052,
-        "r2_score": 0.8895077935549515,
-        "n_samples": 13,
-    },
+# Formula: score = INTERCEPT + sum(weight * norm_feature)
+# INTERCEPT = 75.6854
+BUILT_BEAUTY_WEIGHTS = {
+    'norm_height_diversity': 0.3286,
+    'norm_type_diversity': 0.4229,
+    'norm_footprint_variation': -0.8548,
+    'norm_built_coverage_ratio': 0.5236,
+    'norm_block_grain': -1.4277,  # Negative: fine suburban blocks = monotonous, coarse urban = interesting
+    'norm_streetwall_continuity': 2.3067,
+    'norm_setback_consistency': 1.8698,
+    'norm_facade_rhythm': 0.9434,
+    'norm_landmark_count': -0.939,
+    'norm_median_year_built': -0.4597,
+    'norm_material_share_brick': 2.6261,  # Strongest positive predictor
+    'norm_enhancer_bonus': -0.9777,  # Negative: modern glass/steel kills historic beauty
+    'norm_rowhouse_bonus': 0.0  # No impact
 }
+
+BUILT_BEAUTY_INTERCEPT = 75.6854
 
 
 def _score_with_ridge_regression(
@@ -680,13 +536,14 @@ def _score_with_ridge_regression(
     elevation_range: Optional[float] = None
 ) -> Tuple[float, Dict[str, float]]:
     """
-    Score Built Beauty using Ridge regression weights.
+    Score Built Beauty using global Ridge regression weights.
     
-    This implements the statistical modeling approach approved in DESIGN_PRINCIPLES.md Addendum.
-    Features are normalized to 0-1 range, then weighted by Ridge regression coefficients.
+    This implements the statistical modeling approach based on regression analysis of 56 locations.
+    Features are normalized to 0-1 range, then weighted by global Ridge regression coefficients.
+    Formula: score = INTERCEPT + sum(weight * norm_feature)
     
     Args:
-        area_type: Area type classification
+        area_type: Area type classification (unused in global model, kept for compatibility)
         levels_entropy: Height diversity (0-100)
         building_type_diversity: Type diversity (0-100)
         footprint_area_cv: Footprint variation (0-100)
@@ -705,68 +562,26 @@ def _score_with_ridge_regression(
     Returns:
         Tuple of (score, feature_contributions_dict)
     """
-    # Get model for this area type (fallback to urban_core if not found)
-    model = RIDGE_REGRESSION_WEIGHTS.get(area_type, RIDGE_REGRESSION_WEIGHTS["urban_core"])
-    coefficients = model["coefficients"]
-    intercept = model["intercept"]
+    # Normalize all features to 0-1 range
+    norm_height_diversity = _clamp01(levels_entropy / 100.0)
+    norm_type_diversity = _clamp01(building_type_diversity / 100.0)
+    norm_footprint_variation = _clamp01(footprint_area_cv / 100.0)
+    norm_built_coverage_ratio = _clamp01(built_coverage_ratio if built_coverage_ratio is not None else 0.0)
+    norm_block_grain = _clamp01(block_grain_value / 100.0 if block_grain_value is not None else 0.0)
+    norm_streetwall_continuity = _clamp01(streetwall_value / 100.0 if streetwall_value is not None else 0.0)
+    norm_setback_consistency = _clamp01(setback_value / 100.0 if setback_value is not None else 0.0)
+    norm_facade_rhythm = _clamp01(facade_rhythm_value / 100.0 if facade_rhythm_value is not None else 0.0)
+    norm_landmark_count = _clamp01((historic_landmarks or 0) / 20.0)
     
-    # Normalize all features to 0-1 range (order matches coefficients array)
-    normalized_features: List[float] = []
-    feature_names = [
-        "Norm Height Div",
-        "Norm Type Div",
-        "Norm Footprint Var",
-        "Norm Built Cov",
-        "Norm Block Grain",
-        "Norm Streetwall",
-        "Norm Setback",
-        "Norm Facade",
-        "Norm Landmark",
-        "Norm Year Built",
-        "Norm Brick Share",
-        "Norm Enhancer",
-        "Norm Rowhouse",
-    ]
-    feature_contributions: Dict[str, float] = {}
-    
-    # 0: Norm Height Div: levels_entropy (0-100) → 0-1
-    normalized_features.append(_clamp01(levels_entropy / 100.0))
-    
-    # 1: Norm Type Div: building_type_diversity (0-100) → 0-1
-    normalized_features.append(_clamp01(building_type_diversity / 100.0))
-    
-    # 2: Norm Footprint Var: footprint_area_cv (0-100) → 0-1
-    normalized_features.append(_clamp01(footprint_area_cv / 100.0))
-    
-    # 3: Norm Built Cov: built_coverage_ratio (0.0-1.0) → already normalized
-    normalized_features.append(_clamp01(built_coverage_ratio if built_coverage_ratio is not None else 0.0))
-    
-    # 4: Norm Block Grain: block_grain (0-100) → 0-1
-    normalized_features.append(_clamp01(block_grain_value / 100.0 if block_grain_value is not None else 0.0))
-    
-    # 5: Norm Streetwall: streetwall_continuity (0-100) → 0-1
-    normalized_features.append(_clamp01(streetwall_value / 100.0 if streetwall_value is not None else 0.0))
-    
-    # 6: Norm Setback: setback_consistency (0-100) → 0-1
-    normalized_features.append(_clamp01(setback_value / 100.0 if setback_value is not None else 0.0))
-    
-    # 7: Norm Facade: facade_rhythm (0-100) → 0-1
-    normalized_features.append(_clamp01(facade_rhythm_value / 100.0 if facade_rhythm_value is not None else 0.0))
-    
-    # 8: Norm Landmark: historic_landmarks count → 0-1 (normalize 0-20 landmarks)
-    normalized_features.append(_clamp01((historic_landmarks or 0) / 20.0))
-    
-    # 9: Norm Year Built: median_year_built → 0-1 (inverted: older = higher)
-    # Normalize: 1800-2024 → 0-1, but inverted (older buildings = higher value)
+    # Norm Year Built: median_year_built → 0-1 (older = higher)
     if median_year_built is not None:
         current_year = datetime.utcnow().year
-        # Normalize age: 0 years old (2024) = 0.0, 224 years old (1800) = 1.0
         age_years = max(0.0, current_year - median_year_built)
-        normalized_features.append(_clamp01(age_years / 224.0))
+        norm_median_year_built = _clamp01(age_years / 224.0)  # 0 years = 0.0, 224 years (1800) = 1.0
     else:
-        normalized_features.append(0.0)
+        norm_median_year_built = 0.0
     
-    # 10: Norm Brick Share: extract from material_profile
+    # Norm Material Share (Brick %): extract from material_profile
     brick_share = 0.0
     if material_profile and isinstance(material_profile, dict):
         materials = material_profile.get("materials", {})
@@ -775,22 +590,58 @@ def _score_with_ridge_regression(
             if total_tagged > 0:
                 brick_count = materials.get("brick", 0) + materials.get("stone", 0)  # Stone often similar aesthetic
                 brick_share = brick_count / total_tagged
-    normalized_features.append(_clamp01(brick_share))
+    norm_material_share_brick = _clamp01(brick_share)
     
-    # 11: Norm Enhancer: enhancer_bonus (0-8.0) → 0-1 (normalize to max 8.0)
-    normalized_features.append(_clamp01(enhancer_bonus / 8.0))
+    # Norm Enhancer: enhancer_bonus (0-8.0) → 0-1
+    norm_enhancer_bonus = _clamp01(enhancer_bonus / 8.0)
     
-    # 12: Norm Rowhouse: rowhouse_indicator (0.0-1.0) → already normalized
-    normalized_features.append(_clamp01(rowhouse_indicator))
+    # Norm Rowhouse: rowhouse_indicator (0.0-1.0) → already normalized
+    norm_rowhouse_bonus = _clamp01(rowhouse_indicator)
     
-    # Apply Ridge regression: score = intercept + sum(coefficient * normalized_feature)
-    score = intercept
-    for i, (coef, norm_value) in enumerate(zip(coefficients, normalized_features)):
-        contribution = coef * norm_value
-        score += contribution
-        feature_contributions[feature_names[i]] = contribution
+    # Apply global Ridge regression: score = intercept + sum(weight * norm_feature)
+    score = BUILT_BEAUTY_INTERCEPT
+    feature_contributions: Dict[str, float] = {}
     
-    # Clamp score to 0-100 range (Ridge regression predicts in 0-100 range)
+    score += BUILT_BEAUTY_WEIGHTS['norm_height_diversity'] * norm_height_diversity
+    feature_contributions['norm_height_diversity'] = BUILT_BEAUTY_WEIGHTS['norm_height_diversity'] * norm_height_diversity
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_type_diversity'] * norm_type_diversity
+    feature_contributions['norm_type_diversity'] = BUILT_BEAUTY_WEIGHTS['norm_type_diversity'] * norm_type_diversity
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_footprint_variation'] * norm_footprint_variation
+    feature_contributions['norm_footprint_variation'] = BUILT_BEAUTY_WEIGHTS['norm_footprint_variation'] * norm_footprint_variation
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_built_coverage_ratio'] * norm_built_coverage_ratio
+    feature_contributions['norm_built_coverage_ratio'] = BUILT_BEAUTY_WEIGHTS['norm_built_coverage_ratio'] * norm_built_coverage_ratio
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_block_grain'] * norm_block_grain
+    feature_contributions['norm_block_grain'] = BUILT_BEAUTY_WEIGHTS['norm_block_grain'] * norm_block_grain
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_streetwall_continuity'] * norm_streetwall_continuity
+    feature_contributions['norm_streetwall_continuity'] = BUILT_BEAUTY_WEIGHTS['norm_streetwall_continuity'] * norm_streetwall_continuity
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_setback_consistency'] * norm_setback_consistency
+    feature_contributions['norm_setback_consistency'] = BUILT_BEAUTY_WEIGHTS['norm_setback_consistency'] * norm_setback_consistency
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_facade_rhythm'] * norm_facade_rhythm
+    feature_contributions['norm_facade_rhythm'] = BUILT_BEAUTY_WEIGHTS['norm_facade_rhythm'] * norm_facade_rhythm
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_landmark_count'] * norm_landmark_count
+    feature_contributions['norm_landmark_count'] = BUILT_BEAUTY_WEIGHTS['norm_landmark_count'] * norm_landmark_count
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_median_year_built'] * norm_median_year_built
+    feature_contributions['norm_median_year_built'] = BUILT_BEAUTY_WEIGHTS['norm_median_year_built'] * norm_median_year_built
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_material_share_brick'] * norm_material_share_brick
+    feature_contributions['norm_material_share_brick'] = BUILT_BEAUTY_WEIGHTS['norm_material_share_brick'] * norm_material_share_brick
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_enhancer_bonus'] * norm_enhancer_bonus
+    feature_contributions['norm_enhancer_bonus'] = BUILT_BEAUTY_WEIGHTS['norm_enhancer_bonus'] * norm_enhancer_bonus
+    
+    score += BUILT_BEAUTY_WEIGHTS['norm_rowhouse_bonus'] * norm_rowhouse_bonus
+    feature_contributions['norm_rowhouse_bonus'] = BUILT_BEAUTY_WEIGHTS['norm_rowhouse_bonus'] * norm_rowhouse_bonus
+    
+    # Clamp score to 0-100 range
     score = max(0.0, min(100.0, score))
     
     return score, feature_contributions
