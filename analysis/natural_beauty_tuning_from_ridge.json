@@ -1,0 +1,90 @@
+{
+  "problem_type": "regression",
+  "target_column": "Median Target",
+  "feature_columns": [
+    "Tree Score (0-50)",
+    "Water %",
+    "Slope Mean (deg)",
+    "Developed %",
+    "Neighborhood Canopy % (1000m)",
+    "Green View Index",
+    "Total Context Bonus"
+  ],
+  "model": {
+    "type": "ridge_regression",
+    "hyperparameter_search": {
+      "strategy": "grid",
+      "param_grid": {
+        "alpha": [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000]
+      },
+      "cv_folds": 5,
+      "scoring_metric": "r2"
+    },
+    "fit_intercept": true,
+    "normalize_features": true
+  },
+  "model_results": {
+    "intercept": 74.4512,
+    "optimal_alpha": 19952.6231,
+    "cv_r2": -0.1886,
+    "full_r2": 0.2168,
+    "rmse": 13.1295,
+    "n_samples": 56,
+    "n_features": 7,
+    "feature_weights": {
+      "Tree Score (0-50)": 0.062,
+      "Water %": -0.0149,
+      "Slope Mean (deg)": 0.0066,
+      "Developed %": -0.1347,
+      "Neighborhood Canopy % (1000m)": 0.0216,
+      "Green View Index": -0.0173,
+      "Total Context Bonus": -0.0256
+    }
+  },
+  "changes": {
+    "removed": ["Natural Beauty Score", "Enhancer Bonus Raw", "Context Bonus Raw", "Enhancer Bonus Scaled"],
+    "status": "clean_valid_model",
+    "improvements": {
+      "cv_r2": "Improved from -0.241 to -0.189 (still negative but better)",
+      "features": "Reduced from 11 to 7 features (removed circular and redundant features)",
+      "note": "CV R² still negative - model needs more work or more data"
+    }
+  },
+  "pillar_update": {
+    "name": "Natural Beauty",
+    "primary_signal": "Tree Score (0-50)",
+    "supporting_signals": [
+      "Water %",
+      "Slope Mean (deg)",
+      "Developed %",
+      "Neighborhood Canopy % (1000m)",
+      "Green View Index",
+      "Total Context Bonus"
+    ],
+    "use_coefficients_as_weights": true,
+    "regularization_note": "High alpha (20k) indicates strong regularization still needed. Removed circular 'Natural Beauty Score' and redundant bonus features.",
+    "key_insights": [
+      "Developed % has strongest negative impact (-0.135)",
+      "Tree Score (0-50) most positive predictor (0.062)",
+      "CV R² improved from -0.241 to -0.189 after removing circular/redundant features",
+      "Model still needs improvement (CV R² still negative)"
+    ]
+  },
+  "area_type_breakdowns": {
+    "exurban": {"n": 2, "mean_target": 81.0},
+    "urban_core_lowrise": {"n": 5, "mean_target": 75.8},
+    "urban_residential": {"n": 9, "mean_target": 67.2},
+    "suburban": {"n": 10, "mean_target": 66.5},
+    "urban_core": {"n": 17, "mean_target": 59.4},
+    "rural": {"n": 5, "mean_target": 94.2},
+    "historic_urban": {"n": 8, "mean_target": 71.9}
+  },
+  "tuning_recommendations": {
+    "next_steps": [
+      "Refine alpha grid around 1k-10k range",
+      "Test feature selection (drop highly collinear bonus vars)",
+      "Stratified CV by area_type",
+      "Add interaction terms (Tree Score * Water %)"
+    ]
+  }
+}
