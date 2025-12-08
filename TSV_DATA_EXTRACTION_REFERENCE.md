@@ -170,6 +170,28 @@ This document maps TSV column names to API response paths for all pillars.
 
 ---
 
+## Quality Education (Schools)
+
+| TSV Column | API Response Path | Notes |
+|------------|------------------|-------|
+| **Schools Score (0-100)** | `livability_pillars.quality_education.score` | Final composite score (includes all bonuses) |
+| **Schools Weight** | `livability_pillars.quality_education.weight` | Token allocation (0-100) |
+| **Schools Contribution** | `livability_pillars.quality_education.contribution` | Contribution to overall composite |
+| **Base Avg Rating** | `livability_pillars.quality_education.breakdown.base_avg_rating` | Average school rating before quality boost and bonuses (0-100) |
+| **Quality Boost** | `livability_pillars.quality_education.breakdown.quality_boost` | Quality boost applied to base average (0-10) |
+| **Early Ed Bonus** | `livability_pillars.quality_education.breakdown.early_ed_bonus` | Early education access bonus (0-5) |
+| **College Bonus** | `livability_pillars.quality_education.breakdown.college_bonus` | College/university proximity bonus (0-5) |
+| **Total Schools Rated** | `livability_pillars.quality_education.total_schools_rated` | Count of schools with ratings |
+| **Excellent Schools Count** | `livability_pillars.quality_education.breakdown.excellent_schools_count` | Number of schools rated 80+ |
+| **Elementary Schools** | `livability_pillars.quality_education.by_level.elementary` | Array of top 3 elementary schools |
+| **Middle Schools** | `livability_pillars.quality_education.by_level.middle` | Array of top 3 middle schools |
+| **High Schools** | `livability_pillars.quality_education.by_level.high` | Array of top 3 high schools |
+
+**Scoring Formula:**
+- Final Score = Base Avg Rating + Quality Boost + Early Ed Bonus + College Bonus (capped at 100)
+
+---
+
 ## Notes
 
 1. **Response Structure**: All pillar data is nested under `livability_pillars.{pillar_name}` in the API response.

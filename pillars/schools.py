@@ -14,7 +14,7 @@ def get_school_data(
     city: Optional[str] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None
-) -> Tuple[float, Dict[str, List[Dict]]]:
+) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
     Calculate school score (0-100) and return schools by level.
     
@@ -28,7 +28,8 @@ def get_school_data(
         lat, lon: For OSM queries for early education and colleges
 
     Returns:
-        (average_rating_with_bonuses, schools_by_level)
+        (average_rating_with_bonuses, schools_by_level, breakdown)
+        breakdown contains: base_avg_rating, quality_boost, early_ed_bonus, college_bonus
     """
     print(f"📚 Fetching school data...")
 
@@ -37,7 +38,12 @@ def get_school_data(
 
     if not schools:
         print("⚠️  No schools found")
-        return 0.0, {"elementary": [], "middle": [], "high": []}
+        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+            "base_avg_rating": 0.0,
+            "quality_boost": 0.0,
+            "early_ed_bonus": 0.0,
+            "college_bonus": 0.0
+        }
 
     print(f"📦 {len(schools)} schools found")
     
@@ -53,7 +59,12 @@ def get_school_data(
     if schools_with_ratings == 0:
         print(f"⚠️  Found {len(schools)} schools but none have rating data")
         print("   Sample school data:", school.get("schoolName", "Unknown") if schools else "No schools")
-        return 0.0, {"elementary": [], "middle": [], "high": []}
+        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+            "base_avg_rating": 0.0,
+            "quality_boost": 0.0,
+            "early_ed_bonus": 0.0,
+            "college_bonus": 0.0
+        }
 
     # Process and score schools
     schools_by_level = {
@@ -178,7 +189,12 @@ def get_school_data(
 
     if not all_ratings:
         print("⚠️  Schools found but no ratings available")
-        return 0.0, {"elementary": [], "middle": [], "high": []}
+        return 0.0, {"elementary": [], "middle": [], "high": []}, {
+            "base_avg_rating": 0.0,
+            "quality_boost": 0.0,
+            "early_ed_bonus": 0.0,
+            "college_bonus": 0.0
+        }
 
     # Sort and keep top 3 per level
     for level in schools_by_level:
@@ -188,29 +204,37 @@ def get_school_data(
     # Calculate average with quality boost for high-performing districts
     # Protect against empty list
     if len(all_ratings) > 0:
-        avg_rating = sum(all_ratings) / len(all_ratings)
+        base_avg_rating = sum(all_ratings) / len(all_ratings)
     else:
-        avg_rating = 0.0
+        base_avg_rating = 0.0
     
     # Count excellent schools (80+) and apply district quality boost
     excellent_schools = sum(1 for r in all_ratings if r >= 80)
     majority_excellent = excellent_schools >= len(all_ratings) * 0.6  # 60%+
     
+    # Track quality boost amount
+    quality_boost = 0.0
+    avg_rating = base_avg_rating
+    
     # Boost for districts with multiple highly-rated schools
     # This handles cases where one outlier drags down average
-    if avg_rating >= 80 and len(all_ratings) >= 3:
+    if base_avg_rating >= 80 and len(all_ratings) >= 3:
         # Excellent district with multiple top schools
-        avg_rating = min(100, avg_rating + 10)
-    elif avg_rating >= 70 and excellent_schools >= 3:
+        quality_boost = min(10, 100 - base_avg_rating)
+        avg_rating = min(100, base_avg_rating + quality_boost)
+    elif base_avg_rating >= 70 and excellent_schools >= 3:
         # Very good district: 70+ average with 3+ excellent schools
         # One outlier shouldn't penalize top-tier districts
-        avg_rating = min(95, avg_rating + 8)
-    elif avg_rating >= 65 and majority_excellent and len(all_ratings) >= 3:
+        quality_boost = min(8, 95 - base_avg_rating)
+        avg_rating = min(95, base_avg_rating + quality_boost)
+    elif base_avg_rating >= 65 and majority_excellent and len(all_ratings) >= 3:
         # Good district: 65+ average with majority excellent
-        avg_rating = min(90, avg_rating + 5)
-    elif avg_rating >= 70 and len(all_ratings) >= 4:
+        quality_boost = min(5, 90 - base_avg_rating)
+        avg_rating = min(90, base_avg_rating + quality_boost)
+    elif base_avg_rating >= 70 and len(all_ratings) >= 4:
         # Very good district
-        avg_rating = min(95, avg_rating + 5)
+        quality_boost = min(5, 95 - base_avg_rating)
+        avg_rating = min(95, base_avg_rating + quality_boost)
 
     # Log results
     print(f"\n📚 Schools by Level:")
@@ -351,4 +375,14 @@ def get_school_data(
     if early_ed_bonus > 0 or college_bonus > 0:
         print(f"   📈 Score with bonuses: {total_score:.2f} (base: {avg_rating:.2f}, bonuses: +{early_ed_bonus + college_bonus:.1f})")
 
-    return round(total_score, 2), schools_by_level
+    # Build breakdown dictionary
+    breakdown = {
+        "base_avg_rating": round(base_avg_rating, 2),
+        "quality_boost": round(quality_boost, 2),
+        "early_ed_bonus": round(early_ed_bonus, 2),
+        "college_bonus": round(college_bonus, 2),
+        "total_schools_rated": len(all_ratings),
+        "excellent_schools_count": excellent_schools
+    }
+
+    return round(total_score, 2), schools_by_level, breakdown

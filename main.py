@@ -774,9 +774,30 @@ def _compute_single_score_internal(
 
     # Handle school scoring separately
     schools_found = False
+    school_breakdown = {
+        "base_avg_rating": 0.0,
+        "quality_boost": 0.0,
+        "early_ed_bonus": 0.0,
+        "college_bonus": 0.0,
+        "total_schools_rated": 0,
+        "excellent_schools_count": 0
+    }
     if use_school_scoring:
         if 'quality_education' in pillar_results and pillar_results['quality_education']:
-            school_avg, schools_by_level = pillar_results['quality_education']
+            result = pillar_results['quality_education']
+            if len(result) == 3:
+                school_avg, schools_by_level, school_breakdown = result
+            else:
+                # Handle legacy return format (backward compatibility)
+                school_avg, schools_by_level = result
+                school_breakdown = {
+                    "base_avg_rating": 0.0,
+                    "quality_boost": 0.0,
+                    "early_ed_bonus": 0.0,
+                    "college_bonus": 0.0,
+                    "total_schools_rated": 0,
+                    "excellent_schools_count": 0
+                }
         else:
             school_avg = None
             schools_by_level = {"elementary": [], "middle": [], "high": []}
@@ -971,8 +992,8 @@ def _compute_single_score_internal(
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
-            "breakdown": amenities_details["breakdown"],
-            "summary": amenities_details["summary"],
+            "breakdown": amenities_details.get("breakdown", {}),
+            "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),
             "area_classification": amenities_details.get("area_classification", {})
@@ -1013,6 +1034,7 @@ def _compute_single_score_internal(
             "score": school_avg,
             "weight": token_allocation["quality_education"],
             "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+            "breakdown": school_breakdown,
             "by_level": {
                 "elementary": schools_by_level.get("elementary", []),
                 "middle": schools_by_level.get("middle", []),
@@ -1575,9 +1597,30 @@ def get_livability_score(request: Request,
 
         # Handle school scoring separately (conditional)
         schools_found = False
+        school_breakdown = {
+            "base_avg_rating": 0.0,
+            "quality_boost": 0.0,
+            "early_ed_bonus": 0.0,
+            "college_bonus": 0.0,
+            "total_schools_rated": 0,
+            "excellent_schools_count": 0
+        }
         if use_school_scoring:
             if 'quality_education' in pillar_results and pillar_results['quality_education']:
-                school_avg, schools_by_level = pillar_results['quality_education']
+                result = pillar_results['quality_education']
+                if len(result) == 3:
+                    school_avg, schools_by_level, school_breakdown = result
+                else:
+                    # Handle legacy return format (backward compatibility)
+                    school_avg, schools_by_level = result
+                    school_breakdown = {
+                        "base_avg_rating": 0.0,
+                        "quality_boost": 0.0,
+                        "early_ed_bonus": 0.0,
+                        "college_bonus": 0.0,
+                        "total_schools_rated": 0,
+                        "excellent_schools_count": 0
+                    }
             else:
                 school_avg = None  # Real failure, not fake score
                 schools_by_level = {"elementary": [], "middle": [], "high": []}
@@ -1801,8 +1844,8 @@ def get_livability_score(request: Request,
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
-            "breakdown": amenities_details["breakdown"],
-            "summary": amenities_details["summary"],
+            "breakdown": amenities_details.get("breakdown", {}),
+            "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),
             "area_classification": amenities_details.get("area_classification", {})
@@ -1843,6 +1886,7 @@ def get_livability_score(request: Request,
             "score": school_avg,
             "weight": token_allocation["quality_education"],
             "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+            "breakdown": school_breakdown,
             "by_level": {
                 "elementary": schools_by_level.get("elementary", []),
                 "middle": schools_by_level.get("middle", []),
