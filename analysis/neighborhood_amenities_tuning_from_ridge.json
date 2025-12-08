@@ -1,0 +1,83 @@
+{
+  "problem_type": "regression",
+  "target_column": "Target Score",
+  "feature_columns": [
+    "Total score (0-100)",
+    "Norm Home walkability (0-60)",
+    "Norm Density subscore (0-25)",
+    "Norm Variety subscore (0-20)",
+    "Norm Proximity subscore (0-15)",
+    "Norm Location quality (0-40)",
+    "Norm Total businesses",
+    "Norm Businesses within walkable distance",
+    "Norm Tier 1 count",
+    "Norm Tier 2 count",
+    "Norm Tier 3 count",
+    "Norm Tier 4 count",
+    "Norm Median distance",
+    "Norm Businesses ≤400m",
+    "Norm Businesses ≤800m"
+  ],
+  "model": {
+    "type": "ridge_regression",
+    "fit_intercept": true,
+    "normalize_features": true
+  },
+  "model_results": {
+    "r2_score": 0.4768697240781379,
+    "intercept": 72.10696463302108,
+    "n_samples": 56,
+    "n_features": 15,
+    "coefficients": {
+      "Total score (0-100)": 0.06931223858837365,
+      "Norm Home walkability (0-60)": 7.659630729638629,
+      "Norm Density subscore (0-25)": 2.0887980571506763,
+      "Norm Variety subscore (0-20)": 0.20824734162948663,
+      "Norm Proximity subscore (0-15)": -2.4240845929112704,
+      "Norm Location quality (0-40)": 1.4106747578673546,
+      "Norm Total businesses": 9.799874606726027,
+      "Norm Businesses within walkable distance": 2.533578660001594,
+      "Norm Tier 1 count": 1.4455923844462146,
+      "Norm Tier 2 count": 1.9879451817973195,
+      "Norm Tier 3 count": 3.5255391735648853,
+      "Norm Tier 4 count": -4.403829044011264,
+      "Norm Median distance": -3.739148514820669,
+      "Norm Businesses ≤400m": 5.08437760839317,
+      "Norm Businesses ≤800m": -3.2435124324372127
+    }
+  },
+  "pillar_update": {
+    "name": "Neighborhood Amenities",
+    "primary_signals": [
+      "Norm Total businesses",
+      "Norm Home walkability (0-60)",
+      "Norm Businesses ≤400m"
+    ],
+    "supporting_signals": [
+      "Norm Density subscore (0-25)",
+      "Norm Tier 3 count",
+      "Norm Tier 2 count",
+      "Norm Businesses within walkable distance",
+      "Norm Tier 1 count",
+      "Norm Location quality (0-40)",
+      "Norm Variety subscore (0-20)",
+      "Total score (0-100)"
+    ],
+    "negative_signals": [
+      "Norm Tier 4 count",
+      "Norm Median distance",
+      "Norm Businesses ≤800m",
+      "Norm Proximity subscore (0-15)"
+    ],
+    "key_insights": [
+      "R² = 0.477 (47.7% variance explained) - moderate predictive power",
+      "Total businesses has strongest positive impact (9.80)",
+      "Home walkability is second strongest positive predictor (7.66)",
+      "Businesses within 400m is important (5.08)",
+      "Tier 4 count has negative impact (-4.40), suggesting services/retail may not be as valuable",
+      "Median distance has negative impact (-3.74), confirming closer is better",
+      "Proximity subscore has negative coefficient (-2.42), which may indicate multicollinearity or need for feature refinement",
+      "Tier 3 (culture/leisure) has positive impact (3.53), confirming value of cultural amenities"
+    ]
+  }
+}

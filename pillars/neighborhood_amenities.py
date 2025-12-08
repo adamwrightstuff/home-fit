@@ -13,6 +13,41 @@ import math
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
 
+# Ridge regression coefficients (advisory only, not used for scoring)
+# Calibrated from 56 locations using ridge regression (R²=0.477)
+# See: analysis/neighborhood_amenities_tuning_from_ridge.json
+RIDGE_COEFS = {
+    'intercept': 72.10696463302108,
+    'Total score (0-100)': 0.06931223858837365,
+    'Norm Home walkability (0-60)': 7.659630729638629,
+    'Norm Density subscore (0-25)': 2.0887980571506763,
+    'Norm Variety subscore (0-20)': 0.20824734162948663,
+    'Norm Proximity subscore (0-15)': -2.4240845929112704,
+    'Norm Location quality (0-40)': 1.4106747578673546,
+    'Norm Total businesses': 9.799874606726027,
+    'Norm Businesses within walkable distance': 2.533578660001594,
+    'Norm Tier 1 count': 1.4455923844462146,
+    'Norm Tier 2 count': 1.9879451817973195,
+    'Norm Tier 3 count': 3.5255391735648853,
+    'Norm Tier 4 count': -4.403829044011264,
+    'Norm Median distance': -3.739148514820669,
+    'Norm Businesses ≤400m': 5.08437760839317,
+    'Norm Businesses ≤800m': -3.2435124324372127
+}
+
+
+def predict_median_target(features_dict: Dict[str, float]) -> float:
+    """
+    Predict median target score using ridge regression coefficients.
+    
+    Args:
+        features_dict: Dictionary mapping feature names to normalized feature values
+        
+    Returns:
+        Predicted target score
+    """
+    return RIDGE_COEFS['intercept'] + sum(RIDGE_COEFS[k] * v for k, v in features_dict.items())
+
 
 def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = True, 
                                      location_scope: Optional[str] = None,
