@@ -1248,6 +1248,12 @@ class DataQualityManager:
             return self._assess_beauty_completeness(data, expected_minimums)
         elif pillar_name == 'housing_value':
             return self._assess_housing_completeness(data, expected_minimums)
+        elif pillar_name == 'built_beauty':
+            return self._assess_built_beauty_completeness(data, expected_minimums)
+        elif pillar_name == 'natural_beauty':
+            return self._assess_natural_beauty_completeness(data, expected_minimums)
+        elif pillar_name == 'public_transit_access':
+            return self._assess_transit_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
     
@@ -1437,6 +1443,91 @@ class DataQualityManager:
         metric_score = sum([has_median_value, has_median_income, has_median_rooms]) / 3.0
         
         completeness = metric_score
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_built_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess built beauty data completeness."""
+        arch_analysis = data.get('architectural_analysis', {})
+        enhancers = data.get('enhancers', {})
+        
+        if not arch_analysis:
+            return 0.0, 'very_poor'
+        
+        # Check for key architectural metrics
+        has_score = 'score' in arch_analysis
+        has_metrics = bool(arch_analysis.get('metrics', {}))
+        has_classification = 'classification' in arch_analysis
+        has_confidence = 'confidence_0_1' in arch_analysis
+        
+        # Check for enhancer data
+        has_enhancers = bool(enhancers)
+        
+        # Calculate completeness: architectural analysis is primary (80%), enhancers secondary (20%)
+        arch_score = sum([has_score, has_metrics, has_classification, has_confidence]) / 4.0
+        enhancer_score = 1.0 if has_enhancers else 0.0
+        
+        completeness = (arch_score * 0.8) + (enhancer_score * 0.2)
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_natural_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess natural beauty data completeness."""
+        tree_analysis = data.get('tree_analysis', {})
+        enhancers = data.get('enhancers', {})
+        scenic_metadata = data.get('scenic_metadata', {})
+        
+        if not tree_analysis:
+            return 0.0, 'very_poor'
+        
+        # Check for key tree analysis metrics
+        has_canopy = 'gee_canopy_pct' in tree_analysis or 'canopy_pct' in tree_analysis
+        has_natural_context = 'natural_context' in tree_analysis
+        has_data_availability = 'data_availability' in tree_analysis
+        has_multi_radius = 'multi_radius_canopy' in tree_analysis
+        
+        # Check for enhancer data
+        has_enhancers = bool(enhancers)
+        has_scenic = bool(scenic_metadata)
+        
+        # Calculate completeness: tree analysis is primary (70%), enhancers (20%), scenic (10%)
+        tree_score = sum([has_canopy, has_natural_context, has_data_availability, has_multi_radius]) / 4.0
+        enhancer_score = 1.0 if has_enhancers else 0.0
+        scenic_score = 1.0 if has_scenic else 0.0
+        
+        completeness = (tree_score * 0.7) + (enhancer_score * 0.2) + (scenic_score * 0.1)
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_transit_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess public transit access data completeness."""
+        routes_data = data.get('routes_data', [])
+        heavy_rail_routes = data.get('heavy_rail_routes', [])
+        light_rail_routes = data.get('light_rail_routes', [])
+        bus_routes = data.get('bus_routes', [])
+        
+        if not routes_data and not (heavy_rail_routes or light_rail_routes or bus_routes):
+            return 0.0, 'very_poor'
+        
+        # Check for route data availability
+        has_routes = len(routes_data) > 0
+        has_heavy_rail = len(heavy_rail_routes) > 0
+        has_light_rail = len(light_rail_routes) > 0
+        has_bus = len(bus_routes) > 0
+        
+        # Calculate completeness based on route types found
+        # Having any routes is good, having multiple types is better
+        route_type_count = sum([has_heavy_rail, has_light_rail, has_bus])
+        route_type_score = min(1.0, route_type_count / 3.0)  # 0-1 based on route types
+        
+        # Also consider total route count (normalized)
+        total_routes = len(routes_data) if routes_data else (len(heavy_rail_routes) + len(light_rail_routes) + len(bus_routes))
+        route_count_score = min(1.0, total_routes / 10.0)  # 10+ routes = full score
+        
+        # Weighted average: route types (60%), route count (40%)
+        completeness = (route_type_score * 0.6) + (route_count_score * 0.4)
+        
+        # Minimum floor: if we have any routes, completeness should be at least 0.3
+        if has_routes or route_type_count > 0:
+            completeness = max(completeness, 0.3)
+        
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_generic_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
