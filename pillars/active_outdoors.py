@@ -545,7 +545,37 @@ def get_active_outdoors_score_v2(
     
     def _fetch_parks():
         """Fetch local parks, playgrounds, and recreational facilities."""
-        return osm_api.query_green_spaces(lat, lon, radius_m=local_radius) or {}
+        result = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+        # DIAGNOSTIC: Log what we got from the query
+        if result is None:
+            logger.warning(
+                f"🔍 [PARKS DIAGNOSTIC v2] query_green_spaces returned None "
+                f"(radius={local_radius}m, lat={lat}, lon={lon})",
+                extra={
+                    "pillar_name": "active_outdoors_v2",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": local_radius,
+                }
+            )
+        elif result and isinstance(result, dict):
+            parks_count = len(result.get("parks", []))
+            if parks_count == 0:
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC v2] query_green_spaces returned dict with 0 parks "
+                    f"(playgrounds={len(result.get('playgrounds', []))}, "
+                    f"facilities={len(result.get('recreational_facilities', []))}, "
+                    f"radius={local_radius}m)",
+                    extra={
+                        "pillar_name": "active_outdoors_v2",
+                        "lat": lat,
+                        "lon": lon,
+                        "radius_m": local_radius,
+                        "playground_count": len(result.get("playgrounds", [])),
+                        "facility_count": len(result.get("recreational_facilities", [])),
+                    }
+                )
+        return result or {}
     
     def _fetch_trails():
         """Fetch hiking trails within trail radius."""
@@ -582,6 +612,48 @@ def get_active_outdoors_score_v2(
     parks: List[Dict] = local.get("parks", []) or []
     playgrounds: List[Dict] = local.get("playgrounds", []) or []
     recreational_facilities: List[Dict] = local.get("recreational_facilities", []) or []
+    
+    # DIAGNOSTIC: Log parks query result
+    if not parks and local:
+        logger.warning(
+            f"🔍 [PARKS DIAGNOSTIC v2] query_green_spaces returned data but 0 parks "
+            f"(playgrounds={len(playgrounds)}, facilities={len(recreational_facilities)}, "
+            f"radius={local_radius}m, area_type={area_type})",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "lat": lat,
+                "lon": lon,
+                "radius_m": local_radius,
+                "area_type": area_type,
+                "playground_count": len(playgrounds),
+                "facility_count": len(recreational_facilities),
+            }
+        )
+    elif not local:
+        logger.warning(
+            f"🔍 [PARKS DIAGNOSTIC v2] query_green_spaces returned None/empty "
+            f"(radius={local_radius}m, area_type={area_type})",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "lat": lat,
+                "lon": lon,
+                "radius_m": local_radius,
+                "area_type": area_type,
+            }
+        )
+    elif parks:
+        logger.info(
+            f"🔍 [PARKS DIAGNOSTIC v2] Successfully fetched {len(parks)} parks "
+            f"(playgrounds={len(playgrounds)}, facilities={len(recreational_facilities)})",
+            extra={
+                "pillar_name": "active_outdoors_v2",
+                "lat": lat,
+                "lon": lon,
+                "park_count": len(parks),
+                "playground_count": len(playgrounds),
+                "facility_count": len(recreational_facilities),
+            }
+        )
     
     # Trail data should come strictly from the trail-radius query so that the
     # sampling window matches contextual expectations (15km). Water/camping use

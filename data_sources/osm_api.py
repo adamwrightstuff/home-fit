@@ -388,13 +388,28 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             # Log warning if we got elements but no parks (might indicate processing issue)
             logger.warning(
                 f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned {len(elements)} elements "
-                f"but 0 parks after processing (raw park elements: {len(raw_park_elements)})",
+                f"but 0 parks after processing (raw park elements: {len(raw_park_elements)}, "
+                f"radius={radius_m}m). This may indicate geometry calculation failures or filtering issues.",
                 extra={
                     "pillar_name": "active_outdoors",
                     "lat": lat,
                     "lon": lon,
                     "total_elements": len(elements),
                     "raw_park_elements": len(raw_park_elements),
+                    "radius_m": radius_m,
+                }
+            )
+        elif len(parks) == 0 and len(elements) == 0:
+            # Log warning if query returned no elements at all (might be legitimate - no parks in area)
+            # Use WARNING level so it shows up in production logs
+            logger.warning(
+                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned 0 elements "
+                f"for lat={lat}, lon={lon}, radius={radius_m}m. This may be legitimate if no parks exist in the area.",
+                extra={
+                    "pillar_name": "active_outdoors",
+                    "lat": lat,
+                    "lon": lon,
+                    "radius_m": radius_m,
                 }
             )
         elif len(parks) > 0:
@@ -1064,7 +1079,18 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
                 area_sqm = 0
                 if elem_lat is None:
-                    centroid_reason = "relation-centroid-fail"
+                    # Fallback: Try to use relation's center point if available (some relations have center tags)
+                    center_lat = tags.get("center:lat") or tags.get("lat")
+                    center_lon = tags.get("center:lon") or tags.get("lon")
+                    if center_lat and center_lon:
+                        try:
+                            elem_lat = float(center_lat)
+                            elem_lon = float(center_lon)
+                            centroid_reason = "relation-center-tag"
+                        except (ValueError, TypeError):
+                            centroid_reason = "relation-centroid-fail"
+                    else:
+                        centroid_reason = "relation-centroid-fail"
             elif elem_type == "node" and leisure == "park":
                 elem_lat = elem.get("lat")
                 elem_lon = elem.get("lon")
@@ -1863,7 +1889,7 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
 
     return out
 
-def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float, include_chains: bool = False) -> Dict:
+def _process_business_features(elements: List[Dict], center_lat: float, center_lon: float, include_chains: bool = True) -> Dict:
     """Process OSM elements into categorized businesses by tier."""
     tier1_daily = []
     tier2_social = []
