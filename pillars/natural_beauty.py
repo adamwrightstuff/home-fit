@@ -287,25 +287,32 @@ def _compute_natural_beauty_ridge_features(
 
 def _compute_ridge_regression_score(normalized_features: Dict[str, float]) -> float:
     """
-    Compute Natural Beauty score using ridge regression formula.
+    Compute Natural Beauty score using ridge regression formula with tanh bounding.
     
-    Formula: intercept + sum(weight * normalized_feature)
+    Formula: tanh((intercept + sum(weight * normalized_feature)) / 30) * 100
+    
+    Tanh bounding prevents saturation at 100 while preserving high scores for exceptional
+    locations (e.g., rural areas). Fixes NYC saturation issue (Park Slope, Astoria, Riverdale).
     
     Args:
         normalized_features: Dict of normalized feature values
     
     Returns:
-        Calibrated score (0-100)
+        Calibrated score (0-100) with smooth tanh bounding
     """
-    score = NATURAL_BEAUTY_RIDGE_INTERCEPT
+    linear_score = NATURAL_BEAUTY_RIDGE_INTERCEPT
     
     for feature_name, weight in NATURAL_BEAUTY_RIDGE_WEIGHTS.items():
         feature_value = normalized_features.get(feature_name, 0.0)
         if feature_value is not None and not math.isnan(feature_value):
-            score += weight * feature_value
+            linear_score += weight * feature_value
         # NaN values default to 0 (no contribution)
     
-    return max(0.0, min(100.0, score))
+    # Apply tanh bounding: tanh(linear_pred / 30) * 100
+    # This prevents hard clipping while smoothly bounding scores to [0, 100]
+    bounded_score = math.tanh(linear_score / 30.0) * 100.0
+    
+    return max(0.0, min(100.0, bounded_score))
 
 
 def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float] = None) -> float:
@@ -1693,15 +1700,7 @@ def calculate_natural_beauty(lat: float,
         "components": context_info.get("component_scores", {})
     }
 
-    natural_native = max(0.0, tree_score + natural_bonus_scaled)
-    natural_score_raw = min(100.0, natural_native * 2.0)
-
-    natural_score_norm, natural_norm_meta = normalize_beauty_score(
-        natural_score_raw,
-        area_type
-    )
-    
-    # Compute ridge regression score (advisory/additional scoring method)
+    # Compute ridge regression score (PRIMARY SCORING METHOD - v2_clean_weights_tanh_cap)
     # Extract features for ridge regression
     landcover_metrics = tree_details.get("natural_context", {}).get("landcover_metrics", {}) or {}
     topography_metrics = tree_details.get("natural_context", {}).get("topography_metrics") or {}
@@ -1724,12 +1723,25 @@ def calculate_natural_beauty(lat: float,
         context_bonus_raw  # Total context bonus
     )
     
-    # Compute ridge regression score
+    # Compute ridge regression score with tanh bounding (PRIMARY SCORING METHOD)
     ridge_score = _compute_ridge_regression_score(normalized_features)
+    
+    # Legacy calculation for backward compatibility (kept for reference)
+    natural_native = max(0.0, tree_score + natural_bonus_scaled)
+    natural_score_raw_legacy = min(100.0, natural_native * 2.0)
+    
+    # Use ridge regression score as primary (with tanh bounding prevents NYC saturation)
+    natural_score_raw = ridge_score
+
+    natural_score_norm, natural_norm_meta = normalize_beauty_score(
+        natural_score_raw,
+        area_type
+    )
     
     # Add ridge regression metadata to tree_details
     tree_details["ridge_regression"] = {
         "intercept": NATURAL_BEAUTY_RIDGE_INTERCEPT,
+        "linear_prediction": round(ridge_score, 2),
         "predicted_score": round(ridge_score, 2),
         "r2_full": 0.2168,
         "r2_cv": -0.1886,
@@ -1740,7 +1752,9 @@ def calculate_natural_beauty(lat: float,
         "normalized_features": {k: round(v, 4) for k, v in normalized_features.items()},
         "feature_weights": NATURAL_BEAUTY_RIDGE_WEIGHTS,
         "removed_features": ["Natural Beauty Score", "Enhancer Bonus Raw", "Context Bonus Raw", "Enhancer Bonus Scaled"],
-        "note": "Ridge regression score is advisory. Updated model uses 7 features (removed circular and redundant features). CV R² improved from -0.241 to -0.189 but still negative, suggesting need for more data or further model improvements."
+        "output_transform": "tanh(linear_pred / 30) * 100",
+        "tuning_update": "v2_clean_weights_tanh_cap",
+        "note": "Ridge regression with tanh bounding is now the primary scoring method. Tanh prevents saturation at 100 (fixes NYC issue: Park Slope, Astoria, Riverdale) while preserving high scores for exceptional rural locations."
     }
     
     # Validate score and detect anomalies
@@ -1780,6 +1794,7 @@ def calculate_natural_beauty(lat: float,
         "scenic_bonus_raw": scenic_bonus_raw,
         "context_bonus_raw": context_bonus_raw,
         "score_before_normalization": natural_score_raw,
+        "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,
         "score": natural_score_norm,
         "normalization": natural_norm_meta,
