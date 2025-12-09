@@ -1,0 +1,53 @@
+name: HomeFit Collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 7:00 AM UTC (adjust as needed)
+    - cron: "0 7 * * *"
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+      
+      - name: Run collector script
+        env:
+          HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL }}
+          HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
+        run: |
+          python scripts/collector.py
+      
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ -n "$(git status --porcelain data/results.csv)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push results
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/results.csv
+          git commit -m "Update HomeFit results.csv from collector"
+          git push
