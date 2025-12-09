@@ -48,13 +48,12 @@ def get_schools(
     area_type: Optional[str] = None
 ) -> Optional[List[Dict]]:
     """
-    Query SchoolDigger API for schools using bulletproof approach.
+    Query SchoolDigger API for schools - 1 API call per location lookup.
     
-    Priority order (most accurate first):
-    1. District lookup by coordinates (most accurate - only schools in actual district)
-    2. Coordinate-based query with conservative radius + distance filtering
-    3. ZIP + State (fallback)
-    4. City + State (last resort)
+    Priority order (1 API call per method):
+    1. Coordinate-based query with conservative radius + distance filtering
+    2. ZIP + State (fallback)
+    3. City + State (last resort)
     
     Results are cached for 30 days to preserve API quota.
     
@@ -102,20 +101,7 @@ def get_schools(
         "perPage": 50
     }
 
-    # PRIORITY 1: District lookup by coordinates (most accurate - only schools in actual district)
-    if lat is not None and lon is not None:
-        print(f"🎯 Attempting district lookup for coordinates ({lat}, {lon})...")
-        district_ids = _find_districts_by_coordinates(lat, lon, state, base_params)
-        if district_ids:
-            print(f"✅ Found {len(district_ids)} district(s), querying schools by district...")
-            schools = _fetch_schools_by_districts(district_ids, base_params, lat, lon)
-            if schools:
-                print(f"✅ District-based query returned {len(schools)} schools")
-                return schools
-            else:
-                print("⚠️  District lookup found districts but no schools returned")
-
-    # PRIORITY 2: Coordinate-based query with conservative radius + distance filtering
+    # PRIORITY 1: Coordinate-based query with conservative radius + distance filtering (1 call)
     if lat is not None and lon is not None:
         # Get conservative radius based on area type
         radius_profile = get_radius_profile("quality_education", area_type, None)
@@ -130,7 +116,7 @@ def get_schools(
                 print(f"✅ Coordinate-based query returned {len(schools)} schools after distance filtering")
                 return schools
 
-    # PRIORITY 3: ZIP + State (fallback)
+    # PRIORITY 2: ZIP + State (fallback)
     if zip_code:
         print(f"📮 Attempting ZIP-based query ({zip_code})...")
         params_zip = {**base_params, "zip": zip_code}
@@ -145,7 +131,7 @@ def get_schools(
                 print(f"✅ ZIP-based query returned {len(schools)} schools")
                 return schools
 
-    # PRIORITY 4: City + State (last resort)
+    # PRIORITY 3: City + State (last resort)
     if city:
         print(f"🏙️  Attempting city-based query ({city})...")
         params_city = {**base_params, "city": city}
