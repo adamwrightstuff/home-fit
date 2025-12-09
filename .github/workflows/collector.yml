@@ -29,7 +29,7 @@ jobs:
       
       - name: Run collector script
         env:
-          HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL }}
+          HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL || 'https://home-fit-production.up.railway.app' }}
           HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
         run: |
           python scripts/collector.py

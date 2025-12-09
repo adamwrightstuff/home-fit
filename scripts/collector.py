@@ -35,11 +35,13 @@ LOCATIONS_CSV = DATA_DIR / "locations.csv"
 RESULTS_CSV = DATA_DIR / "results.csv"
 
 # API configuration from environment variables
-HOMEFIT_BASE_URL = os.getenv("HOMEFIT_BASE_URL", "http://localhost:8000")
+HOMEFIT_BASE_URL = os.getenv("HOMEFIT_BASE_URL", "").strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
 
 # Rate limiting and retry configuration
-INITIAL_DELAY_SECONDS = 2.0  # Base delay between requests
+# Conservative delay: wait for full response + additional delay to avoid overwhelming external APIs (OSM, Census, etc.)
+MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0  # Minimum delay after receiving a response
+ADAPTIVE_DELAY_FACTOR = 0.1  # Add 10% of response time as additional delay
 MAX_RETRIES = 3
 RETRY_BACKOFF_FACTOR = 2.0  # Exponential backoff multiplier
 REQUEST_TIMEOUT_SECONDS = 300  # 5 minutes for API calls
@@ -55,7 +57,13 @@ def call_homefit_api(location: str) -> Optional[Dict]:
     Returns:
         JSON response as dict, or None if request failed after retries
     """
-    url = f"{HOMEFIT_BASE_URL}/score"
+    # Ensure base URL doesn't have trailing slash
+    base_url = HOMEFIT_BASE_URL.rstrip('/')
+    url = f"{base_url}/score"
+    
+    if not base_url:
+        logger.error("HOMEFIT_BASE_URL is empty - this should have been caught earlier")
+        return None
     params = {
         "location": location,
         "enable_schools": "false"  # Disable schools to preserve quota
@@ -210,6 +218,19 @@ def append_result(location: str, raw_json: Dict):
 def main():
     """Main collector function."""
     try:
+        # Validate that base URL is set (fail early with clear error)
+        if not HOMEFIT_BASE_URL:
+            logger.error("=" * 80)
+            logger.error("ERROR: HOMEFIT_BASE_URL environment variable is not set!")
+            logger.error("=" * 80)
+            logger.error("To fix this:")
+            logger.error("1. Go to your GitHub repo → Settings → Secrets and variables → Actions")
+            logger.error("2. Add a secret named 'HOMEFIT_BASE_URL' with your API URL")
+            logger.error("   Example: 'https://your-api.example.com' or 'http://localhost:8000'")
+            logger.error("3. If using an API key, also add 'HOMEFIT_API_KEY' secret")
+            logger.error("=" * 80)
+            sys.exit(1)
+        
         # Ensure results.csv exists with header
         ensure_results_csv_header()
         
@@ -231,6 +252,10 @@ def main():
         logger.info(f"Already processed: {already_processed_count}")
         logger.info(f"To process this run: {to_process_count}")
         logger.info(f"API base URL: {HOMEFIT_BASE_URL}")
+        if HOMEFIT_API_KEY:
+            logger.info(f"API key: {'*' * 20} (configured)")
+        else:
+            logger.info("API key: (not set)")
         logger.info("=" * 80)
         
         if to_process_count == 0:
@@ -245,19 +270,26 @@ def main():
             logger.info(f"\n[{i}/{to_process_count}] Processing: {location}")
             
             try:
+                # Track time to make adaptive delay
+                start_time = time.time()
                 response = call_homefit_api(location)
+                response_time = time.time() - start_time
                 
                 if response is not None:
                     append_result(location, response)
                     successful += 1
-                    logger.info(f"✓ Successfully processed '{location}'")
+                    logger.info(f"✓ Successfully processed '{location}' (took {response_time:.1f}s)")
                 else:
                     failed += 1
                     logger.error(f"✗ Failed to process '{location}'")
                 
-                # Rate limiting: sleep between requests (except after last one)
+                # Conservative rate limiting: wait for full response, then add delay
+                # This ensures we don't overwhelm external APIs (OSM, Census, etc.) that the HomeFit API calls
                 if i < to_process_count:
-                    time.sleep(INITIAL_DELAY_SECONDS)
+                    # Adaptive delay: minimum delay + percentage of response time
+                    adaptive_delay = MIN_DELAY_AFTER_RESPONSE_SECONDS + (response_time * ADAPTIVE_DELAY_FACTOR)
+                    logger.info(f"Waiting {adaptive_delay:.1f}s before next request...")
+                    time.sleep(adaptive_delay)
                     
             except KeyboardInterrupt:
                 logger.info("\n\nInterrupted by user. Exiting cleanly...")
