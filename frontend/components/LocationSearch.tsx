@@ -37,7 +37,7 @@ export default function LocationSearch({ onSearch, disabled }: LocationSearchPro
         </button>
       </div>
       <p className="mt-2 text-sm text-gray-500">
-        Examples: "New York, NY", "90210", "1600 Pennsylvania Avenue NW, Washington, DC"
+        Examples: &quot;New York, NY&quot;, &quot;90210&quot;, &quot;1600 Pennsylvania Avenue NW, Washington, DC&quot;
       </p>
     </form>
   )
