@@ -48,7 +48,8 @@ def get_nearby_transit_stops(
             "lon": lon,
             "radius": radius_m,
             "apikey": TRANSITLAND_API_KEY,
-            "limit": 100
+            "limit": 100,
+            "include": "routes"  # Include routes in response to get route_type (may not be supported by all API versions)
         }
         
         response = requests.get(url, params=params, timeout=15)
@@ -79,16 +80,45 @@ def get_nearby_transit_stops(
             # - stop.routes[].route_type (from routes serving this stop)
             # - stop.route_types[] (array of route types)
             route_type = None
+            route_types_found = []
+            
             if "route_type" in stop:
                 route_type = stop.get("route_type")
             elif "route_types" in stop and isinstance(stop["route_types"], list) and len(stop["route_types"]) > 0:
                 # Use first route_type from array (most common type for this stop)
                 route_type = stop["route_types"][0]
+                route_types_found = stop["route_types"]
             elif "routes" in stop and isinstance(stop["routes"], list) and len(stop["routes"]) > 0:
-                # Try to get route_type from first route serving this stop
-                first_route = stop["routes"][0]
-                if isinstance(first_route, dict):
-                    route_type = first_route.get("route_type")
+                # Collect route_types from all routes serving this stop
+                for route_item in stop["routes"]:
+                    if isinstance(route_item, dict):
+                        rt = route_item.get("route_type")
+                        if rt is not None:
+                            route_types_found.append(rt)
+                
+                # Use most common route_type (or first if all different)
+                if route_types_found:
+                    # Count occurrences
+                    from collections import Counter
+                    type_counts = Counter(route_types_found)
+                    # Get most common, or first if tie
+                    route_type = type_counts.most_common(1)[0][0]
+            
+            # If still no route_type, try nested structure (routes may be wrapped)
+            if route_type is None and "routes" in stop:
+                routes_data = stop.get("routes", [])
+                if isinstance(routes_data, dict) and "data" in routes_data:
+                    # Routes might be in routes.data[]
+                    routes_list = routes_data.get("data", [])
+                    for route_item in routes_list:
+                        if isinstance(route_item, dict):
+                            rt = route_item.get("route_type")
+                            if rt is not None:
+                                route_types_found.append(rt)
+                    if route_types_found:
+                        from collections import Counter
+                        type_counts = Counter(route_types_found)
+                        route_type = type_counts.most_common(1)[0][0]
             
             processed_stops.append({
                 "id": stop.get("onestop_id"),

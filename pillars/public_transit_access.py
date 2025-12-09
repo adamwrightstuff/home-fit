@@ -207,7 +207,7 @@ def _connectivity_tier_heavy_rail(heavy_routes_count: int) -> int:
     return 0
 
 
-def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lon: float = None, radius_m: int = 2000) -> Dict[str, int]:
+def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lon: float = None, radius_m: int = 2000, routes_data: Optional[List[Dict]] = None) -> Dict[str, int]:
     """
     Count actual transit stops by route_type from Transitland API.
     
@@ -219,11 +219,13 @@ def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lo
         lat: Latitude (required if stops_data is None)
         lon: Longitude (required if stops_data is None)
         radius_m: Search radius if stops_data is None
+        routes_data: Optional list of routes to use as fallback for inferring route_type
     
     Returns:
         Dictionary with counts: {"heavy_rail": int, "light_rail": int, "bus": int, "total": int}
     """
     counts = {"heavy_rail": 0, "light_rail": 0, "bus": 0, "total": 0}
+    stops_without_type = 0
     
     try:
         if stops_data is None:
@@ -247,8 +249,24 @@ def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lo
                 "total_stops": stops_data.get("count", 0)
             })
         
+        # Build route_type distribution from routes_data for fallback inference
+        route_type_distribution = {}
+        if routes_data:
+            for route in routes_data:
+                rt = route.get("route_type")
+                if rt is not None:
+                    route_type_distribution[rt] = route_type_distribution.get(rt, 0) + 1
+        
         for stop in all_stops:
             route_type = stop.get("route_type")
+            
+            # If route_type is None and we have routes_data, try to infer from route distribution
+            if route_type is None and routes_data and route_type_distribution:
+                # Use most common route_type from nearby routes as fallback
+                # This assumes stops are likely to serve the most common route types in the area
+                most_common_type = max(route_type_distribution.items(), key=lambda x: x[1])[0]
+                route_type = most_common_type
+                stops_without_type += 1
             
             # GTFS route types: 0=Tram/Light Rail, 1=Subway/Metro, 2=Rail (Commuter), 3=Bus
             if route_type in (1, 2):  # Heavy rail
@@ -259,6 +277,13 @@ def _count_stops_by_route_type(stops_data: Optional[Dict], lat: float = None, lo
                 counts["bus"] += 1
             
             counts["total"] += 1
+        
+        if stops_without_type > 0:
+            logger.info(f"📊 Inferred route_type for {stops_without_type} stops from route distribution", extra={
+                "pillar_name": "public_transit_access",
+                "stops_without_type": stops_without_type,
+                "total_stops": len(all_stops)
+            })
         
     except Exception as e:
         logger.warning(f"⚠️  Error counting stops by route_type: {e}", extra={
@@ -673,7 +698,7 @@ def get_public_transit_score(
     # Count actual stops by route_type for accurate reporting
     stops_counts = None
     if cached_stops_data:
-        stops_counts = _count_stops_by_route_type(cached_stops_data, lat=lat, lon=lon, radius_m=nearby_radius)
+        stops_counts = _count_stops_by_route_type(cached_stops_data, lat=lat, lon=lon, radius_m=nearby_radius, routes_data=routes_data)
         logger.info(f"📊 Stop breakdown: {stops_counts.get('heavy_rail', 0)} heavy rail, {stops_counts.get('light_rail', 0)} light rail, {stops_counts.get('bus', 0)} bus, {stops_counts.get('total', 0)} total", extra={
             "pillar_name": "public_transit_access",
             "lat": lat,
