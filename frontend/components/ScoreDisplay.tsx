@@ -66,8 +66,8 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
       {/* Metadata */}
       <div className="bg-white rounded-lg shadow-lg p-4">
         <p className="text-sm text-gray-500">
-          API Version: {metadata.version} | 
-          {metadata.cache_hit && ' (Cached)'}
+          API Version: {metadata.version}
+          {metadata.cache_hit && ' | (Cached)'}
         </p>
       </div>
     </div>
