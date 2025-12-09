@@ -13,7 +13,8 @@ def get_school_data(
     state: Optional[str] = None,
     city: Optional[str] = None,
     lat: Optional[float] = None,
-    lon: Optional[float] = None
+    lon: Optional[float] = None,
+    area_type: Optional[str] = None
 ) -> Tuple[float, Dict[str, List[Dict]], Dict]:
     """
     Calculate school score (0-100) and return schools by level.
@@ -25,7 +26,8 @@ def get_school_data(
 
     Args:
         zip_code, state, city: For SchoolDigger API
-        lat, lon: For OSM queries for early education and colleges
+        lat, lon: For coordinate-based queries and OSM queries for early education and colleges
+        area_type: For determining conservative search radius (urban_core, suburban, etc.)
 
     Returns:
         (average_rating_with_bonuses, schools_by_level, breakdown)
@@ -33,8 +35,8 @@ def get_school_data(
     """
     print(f"📚 Fetching school data...")
 
-    # Get schools from API
-    schools = schools_api.get_schools(zip_code, state, city)
+    # Get schools from API using bulletproof approach
+    schools = schools_api.get_schools(zip_code, state, city, lat, lon, area_type)
 
     if not schools:
         print("⚠️  No schools found")

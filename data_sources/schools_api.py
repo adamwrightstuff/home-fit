@@ -6,8 +6,11 @@ Queries school ratings and data
 import os
 import time
 import requests
+import math
 from typing import List, Optional, Dict
 from .cache import cached, CACHE_TTL
+from .utils import haversine_distance
+from .radius_profiles import get_radius_profile
 
 SCHOOLDIGGER_BASE = "https://api.schooldigger.com/v2.1"
 
@@ -39,15 +42,29 @@ STATE_ABBREVIATIONS = {
 def get_schools(
     zip_code: Optional[str] = None,
     state: Optional[str] = None,
-    city: Optional[str] = None
+    city: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    area_type: Optional[str] = None
 ) -> Optional[List[Dict]]:
     """
-    Query SchoolDigger API for schools.
+    Query SchoolDigger API for schools using bulletproof approach.
+    
+    Priority order (most accurate first):
+    1. District lookup by coordinates (most accurate - only schools in actual district)
+    2. Coordinate-based query with conservative radius + distance filtering
+    3. ZIP + State (fallback)
+    4. City + State (last resort)
     
     Results are cached for 30 days to preserve API quota.
     
     NOTE: If data is obfuscated (generic IDs), it will NOT be cached
     to allow retry with valid rate limits.
+
+    Args:
+        zip_code, state, city: Traditional location identifiers
+        lat, lon: Coordinates for district/coordinate-based queries
+        area_type: For determining conservative search radius (urban_core, suburban, etc.)
 
     Returns:
         List of school dicts or None if API fails
@@ -78,40 +95,194 @@ def get_schools(
         print("⚠️  State parameter required for SchoolDigger API - data may be obfuscated")
         return None
     
-    params = {
+    base_params = {
         "appID": app_id,
         "appKey": app_key,
         "st": state,  # State is REQUIRED
         "perPage": 50
     }
 
-    # Try ZIP + State (most specific, includes required 'st')
+    # PRIORITY 1: District lookup by coordinates (most accurate - only schools in actual district)
+    if lat is not None and lon is not None:
+        print(f"🎯 Attempting district lookup for coordinates ({lat}, {lon})...")
+        district_ids = _find_districts_by_coordinates(lat, lon, state, base_params)
+        if district_ids:
+            print(f"✅ Found {len(district_ids)} district(s), querying schools by district...")
+            schools = _fetch_schools_by_districts(district_ids, base_params, lat, lon)
+            if schools:
+                print(f"✅ District-based query returned {len(schools)} schools")
+                return schools
+            else:
+                print("⚠️  District lookup found districts but no schools returned")
+
+    # PRIORITY 2: Coordinate-based query with conservative radius + distance filtering
+    if lat is not None and lon is not None:
+        # Get conservative radius based on area type
+        radius_profile = get_radius_profile("quality_education", area_type, None)
+        search_radius_miles = radius_profile.get("search_radius_miles", 2.0)  # Default 2 miles
+        
+        print(f"📍 Attempting coordinate-based query (radius: {search_radius_miles} miles)...")
+        schools = _fetch_schools_by_coordinates(lat, lon, search_radius_miles, base_params)
+        if schools:
+            # Filter by distance to ensure we only get schools that serve the neighborhood
+            schools = _filter_schools_by_distance(schools, lat, lon, search_radius_miles)
+            if schools:
+                print(f"✅ Coordinate-based query returned {len(schools)} schools after distance filtering")
+                return schools
+
+    # PRIORITY 3: ZIP + State (fallback)
     if zip_code:
-        params_zip = {**params, "zip": zip_code}
+        print(f"📮 Attempting ZIP-based query ({zip_code})...")
+        params_zip = {**base_params, "zip": zip_code}
         schools = _fetch_schools(params_zip)
         if schools:
-            return schools
+            # If we have coordinates, filter by distance even for ZIP results
+            if lat is not None and lon is not None:
+                radius_profile = get_radius_profile("quality_education", area_type, None)
+                search_radius_miles = radius_profile.get("search_radius_miles", 2.0)
+                schools = _filter_schools_by_distance(schools, lat, lon, search_radius_miles)
+            if schools:
+                print(f"✅ ZIP-based query returned {len(schools)} schools")
+                return schools
 
-    # Try City + State (includes required 'st')
+    # PRIORITY 4: City + State (last resort)
     if city:
-        params_city = {**params, "city": city}
-        # Also try with 'q' parameter for name/city search
-        params_city_q = {**params, "q": city}
+        print(f"🏙️  Attempting city-based query ({city})...")
+        params_city = {**base_params, "city": city}
         schools = _fetch_schools(params_city)
         if not schools:
+            params_city_q = {**base_params, "q": city}
             schools = _fetch_schools(params_city_q)
         if schools:
-            return schools
-    
-    # ZIP only without state will be obfuscated, but try if no other option
-    if zip_code and not state:
-        print("⚠️  Warning: ZIP-only query without state may return obfuscated data")
-        params_zip_only = {**params, "zip": zip_code}
-        schools = _fetch_schools(params_zip_only)
-        if schools:
-            return schools
+            # If we have coordinates, filter by distance even for city results
+            if lat is not None and lon is not None:
+                radius_profile = get_radius_profile("quality_education", area_type, None)
+                search_radius_miles = radius_profile.get("search_radius_miles", 2.0)
+                schools = _filter_schools_by_distance(schools, lat, lon, search_radius_miles)
+            if schools:
+                print(f"✅ City-based query returned {len(schools)} schools")
+                return schools
 
+    print("⚠️  No schools found with any query method")
     return None
+
+
+def _find_districts_by_coordinates(
+    lat: float, lon: float, state: str, base_params: Dict
+) -> List[str]:
+    """
+    Find school districts near the given coordinates.
+    
+    Returns:
+        List of district IDs (as strings)
+    """
+    try:
+        # Use districts endpoint with coordinate search
+        # Note: v1 endpoint for districts, v2.1 for schools
+        url = "https://api.schooldigger.com/v1/districts"
+        params = {
+            **base_params,
+            "nearLatitude": lat,
+            "nearLongitude": lon,
+            "distanceMiles": 2.0,  # Conservative radius for district lookup
+        }
+        
+        resp = requests.get(url, params=params, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            districts = data.get("districtList", [])
+            district_ids = [str(d.get("districtID", "")) for d in districts if d.get("districtID")]
+            if district_ids:
+                print(f"   Found districts: {district_ids}")
+            return district_ids
+    except Exception as e:
+        print(f"   District lookup failed: {e}")
+    return []
+
+
+def _fetch_schools_by_districts(
+    district_ids: List[str], base_params: Dict, lat: float, lon: float
+) -> Optional[List[Dict]]:
+    """
+    Fetch schools by district IDs. If multiple districts, query each and combine.
+    """
+    all_schools = []
+    for district_id in district_ids:
+        params = {
+            **base_params,
+            "districtID": district_id,
+        }
+        schools = _fetch_schools(params)
+        if schools:
+            all_schools.extend(schools)
+    
+    if all_schools:
+        # Remove duplicates (by schoolID if available, or by name)
+        seen = set()
+        unique_schools = []
+        for school in all_schools:
+            school_id = school.get("schoolID")
+            school_name = school.get("schoolName", "")
+            key = school_id if school_id else school_name
+            if key and key not in seen:
+                seen.add(key)
+                unique_schools.append(school)
+        return unique_schools
+    
+    return None
+
+
+def _fetch_schools_by_coordinates(
+    lat: float, lon: float, radius_miles: float, base_params: Dict
+) -> Optional[List[Dict]]:
+    """
+    Fetch schools near coordinates using distance-based query.
+    """
+    params = {
+        **base_params,
+        "nearLatitude": lat,
+        "nearLongitude": lon,
+        "distanceMiles": radius_miles,
+    }
+    return _fetch_schools(params)
+
+
+def _filter_schools_by_distance(
+    schools: List[Dict], lat: float, lon: float, max_radius_miles: float
+) -> List[Dict]:
+    """
+    Filter schools to only include those within max_radius_miles of the target coordinates.
+    This ensures we don't catch schools from unrelated neighborhoods.
+    """
+    if not schools:
+        return []
+    
+    max_radius_m = max_radius_miles * 1609.34  # Convert miles to meters
+    
+    filtered = []
+    for school in schools:
+        school_lat = school.get("latitude")
+        school_lon = school.get("longitude")
+        
+        # If school doesn't have coordinates, include it (better to include than exclude)
+        if school_lat is None or school_lon is None:
+            filtered.append(school)
+            continue
+        
+        distance_m = haversine_distance(lat, lon, school_lat, school_lon)
+        distance_miles = distance_m / 1609.34
+        
+        if distance_m <= max_radius_m:
+            filtered.append(school)
+        else:
+            print(f"   ⚠️  Filtered out school '{school.get('schoolName', 'Unknown')}' "
+                  f"(distance: {distance_miles:.2f} miles, max: {max_radius_miles:.2f} miles)")
+    
+    if len(filtered) < len(schools):
+        print(f"   📏 Distance filtering: {len(schools)} -> {len(filtered)} schools "
+              f"(removed {len(schools) - len(filtered)} schools beyond {max_radius_miles:.2f} miles)")
+    
+    return filtered
 
 
 def _fetch_schools(params: Dict) -> Optional[List[Dict]]:

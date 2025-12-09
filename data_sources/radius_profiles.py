@@ -33,6 +33,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     - built_beauty: {architectural_diversity_radius_m}
     - natural_beauty: {tree_canopy_radius_m, context_radius_m (optional)}
     - air_travel_access: {search_radius_km}
+    - quality_education: {search_radius_miles}
     """
     a, s = _normalize(area_type, scope)
     p = (pillar or "").lower()
@@ -113,6 +114,18 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
     if p == "air_travel_access":
         # Search within 100km for airports by default
         return {"search_radius_km": 100}
+
+    if p == "quality_education":
+        # Conservative school search radii to avoid catching unrelated schools
+        # Urban: 1.5 miles (tight for dense neighborhoods)
+        # Suburban: 2 miles (moderate for car-oriented access)
+        # Rural/Exurban: 3 miles (wider for sparse areas)
+        if a == "urban_core":
+            return {"search_radius_miles": 1.5}
+        elif a == "suburban":
+            return {"search_radius_miles": 2.0}
+        else:  # exurban, rural, unknown
+            return {"search_radius_miles": 3.0}
 
     return {}
 

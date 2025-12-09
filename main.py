@@ -748,7 +748,8 @@ def _compute_single_score_internal(
     if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
             ('quality_education', get_school_data, {
-                'zip_code': zip_code, 'state': state, 'city': city
+                'zip_code': zip_code, 'state': state, 'city': city,
+                'lat': lat, 'lon': lon, 'area_type': area_type
             })
         )
 
@@ -1569,7 +1570,8 @@ def get_livability_score(request: Request,
         if use_school_scoring and _include_pillar('quality_education'):
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
-                    'zip_code': zip_code, 'state': state, 'city': city
+                    'zip_code': zip_code, 'state': state, 'city': city,
+                    'lat': lat, 'lon': lon, 'area_type': area_type
                 })
             )
 
