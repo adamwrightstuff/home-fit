@@ -1,0 +1,63 @@
+name: HomeFit Collector Test (8am ET)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 8:00 AM ET (1:00 PM UTC)
+    # Note: ET is UTC-5 (EST) in winter, UTC-4 (EDT) in summer
+    - cron: "0 13 * * *"
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+      
+      - name: Run collector script (8am test)
+        env:
+          HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL || 'https://home-fit-production.up.railway.app' }}
+          HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
+        run: |
+          # Backup original locations.csv and use test file
+          if [ -f data/locations.csv ]; then
+            cp data/locations.csv data/locations.csv.backup
+          fi
+          cp data/locations_test_8am.csv data/locations.csv
+          python scripts/collector.py
+          # Restore original if backup exists
+          if [ -f data/locations.csv.backup ]; then
+            mv data/locations.csv.backup data/locations.csv
+          fi
+      
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ -n "$(git status --porcelain data/results.csv)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push results
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/results.csv
+          git commit -m "Update HomeFit results.csv from test collector (8am ET run - 40 locations)"
+          git push
