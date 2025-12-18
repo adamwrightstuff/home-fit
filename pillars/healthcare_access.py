@@ -60,9 +60,10 @@ def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
     Returns:
         Score from 0 to max_score
     """
-    # Changed threshold from 0.1 to 0.05 to ensure single pharmacies score > 0
-    # Even with high expectations, 1 pharmacy should get some credit
-    if ratio <= 0.05:
+    # Minimum threshold: Lowered from 0.05 to 0.01 to give credit for minimal facilities
+    # Even with very high expectations, 1 facility should get some credit
+    # Also ensure minimum score floor for any positive ratio
+    if ratio <= 0.0:
         return 0.0
     
     # Scale calibrated breakpoints to component's max_score
@@ -80,14 +81,22 @@ def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
     ratio_excellent = CALIBRATED_CURVE_PARAMS['ratio_excellent']
     ratio_exceptional = CALIBRATED_CURVE_PARAMS['ratio_exceptional']
     
+    # Minimum score floor: Ensure any positive ratio gets at least 2-5% of max_score
+    # This prevents locations with 1 facility from scoring 0 when expectations are very high
+    min_score_floor = max_score * 0.02  # 2% minimum (e.g., 0.3 points for pharmacies, 0.5 for primary care)
+    
     if ratio < ratio_expected:
         # Linear from 0 to at_expected
-        # Ensure ratios just above 0.05 get a small positive score
-        if ratio <= 0.1:
+        if ratio <= 0.01:
+            # Extremely small ratios: apply minimum floor
+            return min_score_floor
+        elif ratio <= 0.1:
             # Very small ratios: give minimal score (scaled down for very low ratios)
             # This ensures places with 1 pharmacy don't get 0.0 when expectations are high
-            return (at_expected / ratio_expected) * ratio * 0.8  # Slight scale down for very low ratios
-        return (at_expected / ratio_expected) * ratio
+            calculated_score = (at_expected / ratio_expected) * ratio * 0.8
+            return max(min_score_floor, calculated_score)  # Ensure minimum floor
+        else:
+            return (at_expected / ratio_expected) * ratio
     elif ratio < ratio_good:
         # Linear from at_expected to at_good
         return at_expected + (ratio - ratio_expected) * (at_good - at_expected) / (ratio_good - ratio_expected)
@@ -463,6 +472,28 @@ def get_healthcare_access_score(lat: float, lon: float,
 
     print(f"   🔍 FINAL COUNTS (filtered): {len(hospitals)} hospitals, {len(urgent_care)} urgent care, {len(pharmacies)} pharmacies, {len(clinics)} clinics, {len(doctors)} doctors | area={area_type}")
 
+    # FALLBACK SCORING: Apply conservative minimum scores for pharmacies/primary care when OSM fails
+    # This handles OSM data gaps (timeouts, rate limits, incomplete data) similar to neighborhood_amenities
+    # Only apply when OSM query failed AND we have no pharmacies/clinics/doctors AND we're in urban/suburban area
+    apply_pharmacy_fallback = False
+    apply_primary_care_fallback = False
+    
+    if query_failed:
+        # Check if this is an urban/suburban area that should have healthcare facilities
+        is_urban_suburban = (
+            area_type in ("urban_core", "urban_residential", "suburban") or 
+            (pop_density and pop_density > 1500)
+        )
+        
+        if is_urban_suburban:
+            if len(pharmacies) == 0:
+                apply_pharmacy_fallback = True
+            if len(clinics) == 0 and len(doctors) == 0:
+                apply_primary_care_fallback = True
+            
+            if apply_pharmacy_fallback or apply_primary_care_fallback:
+                print(f"   ⚠️  OSM query failed for urban/suburban area - applying fallback scores for missing components")
+
     # Population density (proxy) for normalization (per 10k)
     # pop_density already computed
     denom = max(1.0, (pop_density / 10000.0))
@@ -521,7 +552,20 @@ def get_healthcare_access_score(lat: float, lon: float,
     target_primary = max(1.0, exp_urgent)
     
     if primary_count <= 0:
-        primary_score = 0.0
+        if apply_primary_care_fallback:
+            # Apply fallback score for urban/suburban areas when OSM fails
+            # Conservative minimum based on area type
+            if area_type == "urban_core" or (pop_density and pop_density > 5000):
+                primary_score = 15.0
+            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
+                primary_score = 12.0
+            elif area_type == "suburban" or (pop_density and pop_density > 1500):
+                primary_score = 10.0
+            else:
+                primary_score = 0.0
+            print(f"   📊 Applied fallback primary care score: {primary_score:.1f}")
+        else:
+            primary_score = 0.0
     else:
         primary_ratio = primary_count / target_primary
         # Use calibrated curve for smooth, research-backed scoring
@@ -546,7 +590,20 @@ def get_healthcare_access_score(lat: float, lon: float,
     expected_specialties = 8.0
     
     if specialty_count <= 0:
-        specialty_score = 0.0
+        if apply_primary_care_fallback and len(hospitals) > 0:
+            # If we have hospitals (from fallback database) but no specialty data due to OSM failure,
+            # apply small fallback assuming hospitals have some specialties
+            if area_type == "urban_core" or (pop_density and pop_density > 5000):
+                specialty_score = 8.0
+            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
+                specialty_score = 6.0
+            elif area_type == "suburban" or (pop_density and pop_density > 1500):
+                specialty_score = 4.0
+            else:
+                specialty_score = 0.0
+            print(f"   📊 Applied fallback specialized care score: {specialty_score:.1f}")
+        else:
+            specialty_score = 0.0
     else:
         specialty_ratio = specialty_count / expected_specialties
         # Use calibrated curve for smooth scoring
@@ -578,7 +635,20 @@ def get_healthcare_access_score(lat: float, lon: float,
     target_pharm = max(1.0, exp_pharm)
     
     if pharm_count <= 0:
-        pharmacy_score = 0.0
+        if apply_pharmacy_fallback:
+            # Apply fallback score for urban/suburban areas when OSM fails
+            # Conservative minimum based on area type
+            if area_type == "urban_core" or (pop_density and pop_density > 5000):
+                pharmacy_score = 10.0
+            elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
+                pharmacy_score = 8.0
+            elif area_type == "suburban" or (pop_density and pop_density > 1500):
+                pharmacy_score = 6.0
+            else:
+                pharmacy_score = 0.0
+            print(f"   📊 Applied fallback pharmacy score: {pharmacy_score:.1f}")
+        else:
+            pharmacy_score = 0.0
     else:
         pharm_ratio = pharm_count / target_pharm
         # Use calibrated curve for smooth, research-backed scoring
