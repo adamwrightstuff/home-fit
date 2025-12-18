@@ -153,7 +153,8 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     
     expectations = get_contextual_expectations(area_type, 'air_travel_access')
 
-    # Find all airports within 100km
+    # Find all airports within 150km (extended from 100km for smoother scoring)
+    # Locations 100-150km away get reduced scores to avoid hard cutoff
     airports_with_distance = []
     
     # Use comprehensive database if available, otherwise fallback to legacy
@@ -177,8 +178,8 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
         
         distance_km = _haversine_distance(lat, lon, apt_lat, apt_lon) / 1000
         
-        # Only include airports within 100km
-        if distance_km <= 100:
+        # Include airports within 150km (extended range for smoother distribution)
+        if distance_km <= 150:
             airports_with_distance.append({
                 "code": code,
                 "name": name,
@@ -247,7 +248,8 @@ def _calculate_multi_airport_score(airports: List[Dict], expectations: Dict) -> 
     if not airports:
         return 0.0, None, "No nearby airports"
     
-    # Score the best 3 airports within 100km
+    # Score the best 3 airports within 150km (extended range)
+    # Prioritize airports within 100km, but include up to 150km with reduced scoring
     best_airports = airports[:3]
     
     total_score = 0.0
@@ -309,9 +311,16 @@ def _score_large_airport_smooth(distance_km: float, service_level: str) -> float
     
     if distance_km <= optimal_distance:
         score = max_score
-    else:
-        # Exponential decay beyond optimal distance
+    elif distance_km <= 100:
+        # Exponential decay beyond optimal distance (up to 100km)
         score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    else:
+        # Extended range (100-150km): continue decay but ensure minimum score
+        # At 100km, score is already low, so continue decay but don't go below 5-10 points
+        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
+        # Additional decay from 100-150km, but floor at 5 points for large airports
+        extended_decay = score_at_100km * math.exp(-0.03 * (distance_km - 100))
+        score = max(5.0, extended_decay)
     
     return min(max_score, max(0, score))
 
@@ -324,8 +333,13 @@ def _score_medium_airport_smooth(distance_km: float, service_level: str) -> floa
     
     if distance_km <= optimal_distance:
         score = max_score
-    else:
+    elif distance_km <= 100:
         score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    else:
+        # Extended range (100-150km): continue decay with minimum floor
+        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
+        extended_decay = score_at_100km * math.exp(-0.025 * (distance_km - 100))
+        score = max(3.0, extended_decay)  # Minimum 3 points for medium airports
     
     return min(max_score, max(0, score))
 
@@ -338,8 +352,13 @@ def _score_small_airport_smooth(distance_km: float) -> float:
     
     if distance_km <= optimal_distance:
         score = max_score
-    else:
+    elif distance_km <= 100:
         score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    else:
+        # Extended range (100-150km): continue decay with minimum floor
+        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
+        extended_decay = score_at_100km * math.exp(-0.02 * (distance_km - 100))
+        score = max(2.0, extended_decay)  # Minimum 2 points for small airports
     
     return min(max_score, max(0, score))
 
