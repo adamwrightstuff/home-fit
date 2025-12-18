@@ -2,21 +2,19 @@
 
 ## Core Principle
 
-**All pillars use actual data-backed scoring. Regression analysis is used only for calibration, not for primary scoring.**
+**All pillars use pure data-backed scoring. No calibration or regression analysis.**
 
-## Two Types of Regression Usage
+## Design Principles
 
-### ✅ ACCEPTABLE: Regression-Informed Calibration
-- **What**: Use regression analysis to determine calibration parameters (e.g., `y = ax + b`)
-- **Example**: `neighborhood_amenities`, `active_outdoors` (just added)
-- **Scoring**: Direct data measurements → calibrated score
-- **Transparent**: Calibration parameters are explicit and documented
-- **Design Compliant**: Maintains "Objective, Data-Driven Scoring" principle
+### ✅ Data-Backed Scoring Only
+- **What**: Direct measurement of objective metrics
+- **Scoring**: Data measurements → raw score (no calibration)
+- **Transparent**: All scoring logic is explicit and documented
+- **Design Compliant**: Pure "Objective, Data-Driven Scoring"
 
-### ❌ UNACCEPTABLE: Ridge Regression as Primary Scoring
-- **What**: Use ridge regression model to predict scores directly
-- **Problem**: Non-transparent, requires training data, causes convergence
-- **Status**: **REMOVED** from `natural_beauty` and `active_outdoors`
+### ❌ No Calibration or Regression
+- **What**: Calibration/tuning toward target scores violates design principles
+- **Status**: **REMOVED** from all pillars
 
 ## Current State of All Pillars
 
