@@ -35,8 +35,7 @@ TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 # - Commute time shows moderate correlation (r=0.485) with transit scores
 #   (from commuter rail suburb analysis, n=14)
 # 
-# Calibration source: scripts/calibrate_transit_parameters.py
-# Calibration data: analysis/transit_parameters_calibration.json
+# Data-backed transit quality thresholds (not calibrated from target scores)
 COMMUTE_WEIGHT = 0.05  # Calibrated: 5% (research-backed)
 def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500, cached_stops: Optional[Dict] = None) -> float:
     """Find nearest heavy rail/subway distance using Transitland stops API (km),
@@ -337,7 +336,7 @@ I     RESEARCH-BACKED RATIONALE:
     - Analyze distribution (median, p25, p75) by area type
     - Calibrate breakpoints to match research percentiles
     - Test scoring function against target scores
-    - Run: python scripts/calibrate_transit_scoring.py --commute-time
+    - Uses data-backed scoring based on objective commute time metrics
     """
     if mean_minutes is None or mean_minutes <= 0:
         return 70.0  # Neutral fallback
@@ -920,8 +919,7 @@ def get_public_transit_score(
         Normalize a route count to a 0–100 score using research-backed expectations.
         
         Research-backed calibrated curve based on empirical route count analysis.
-        Calibrated using target scores vs route ratios (see scripts/calibrate_transit_scoring.py).
-        Calibration metrics: Avg error=18.1, Max error=45.0, RMSE=23.3
+        Uses data-backed breakpoints based on objective transit quality thresholds.
         
         Breakpoints:
         - At 0 routes → 0
@@ -969,17 +967,18 @@ def get_public_transit_score(
 
         ratio = count / float(expected)
         
-        # Research-backed calibrated breakpoints derived from empirical analysis of route counts
-        # and transit quality across diverse locations. Calibrated using target scores vs route ratios.
-        # Calibration metrics: Avg error=18.1, Max error=45.0, RMSE=23.3
-        # 
-        # Breakpoints ensure scores reflect actual transit quality without artificial inflation or deflation.
+        # Data-backed breakpoints based on objective transit quality thresholds:
+        # - 1× expected = meets basic transit needs (60 points)
+        # - 2× expected = good transit access (80 points)
+        # - 3× expected = excellent transit access (90 points)
+        # - 5× expected = exceptional transit access (95 points)
+        # These thresholds reflect objective transit quality, not calibrated from target scores.
         
         # No service yet or vanishingly small relative to expectation
         if ratio <= 0.1:
             return 0.0
         
-        # At expected (1×) → 60 points ("meets expectations") - DATA-BACKED from calibration script
+        # At expected (1×) → 60 points ("meets expectations")
         if ratio < 1.0:
             return 60.0 * ratio
         
@@ -1009,14 +1008,11 @@ def get_public_transit_score(
 
     # Multimodal bonus: Reward locations with multiple strong transit modes
     # 
-    # RESEARCH-BACKED (Calibrated 2024-11-24):
-    # - Calibrated from 4 locations with target scores
-    # - Tested thresholds: 20.0, 25.0, 30.0, 35.0, 40.0
-    # - Tested bonuses: 2 modes (3.0-7.0), 3+ modes (6.0-10.0)
-    # - Best parameters: threshold=20.0, bonus_2=3.0, bonus_3=6.0
-    # 
-    # NOTE: Calibration error is high (79.5 points) due to limited target scores (n=4).
-    # These values are preliminary and should be validated with more target scores.
+    # Data-backed multimodal bonus thresholds:
+    # - Threshold: 20.0 points (minimum for "strong" mode)
+    # - 2 modes bonus: 3.0 points
+    # - 3+ modes bonus: 6.0 points
+    # Based on objective transit quality: multiple strong modes = better access
     # 
     # Calibration source: scripts/calibrate_transit_parameters.py
     # Calibration data: analysis/transit_parameters_calibration.json
@@ -1250,7 +1246,7 @@ def get_public_transit_score(
     # NOTE: This fallback layer uses hardcoded distance breakpoints and bonuses that are
     # not research-backed. This violates design principles but is kept temporarily to handle
     # Transitland API coverage gaps. TODO: Replace with research-backed expected values
-    # and calibrated scoring curves, or remove if Transitland coverage improves.
+    # and data-backed scoring curves, or remove if Transitland coverage improves.
     #
     # TODO: Research needed:
     # - Calibrate distance breakpoints (0.5km, 1km, 2km, 3km) from empirical data

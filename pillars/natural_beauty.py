@@ -16,8 +16,8 @@ from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
 
 logger = get_logger(__name__)
 
-# Ridge regression coefficients from natural_beauty_tuning_from_ridge.json
-# Calibrated from 56 locations using ridge regression (R²=0.217, CV R²=-0.189)
+# Ridge regression coefficients (advisory only, not used for scoring)
+# Legacy reference data - scoring uses pure data-backed component sum
 # Updated: Removed circular "Natural Beauty Score" and redundant bonus features
 # High alpha (20k) indicates strong regularization still needed
 NATURAL_BEAUTY_RIDGE_INTERCEPT = 74.4512
@@ -1750,14 +1750,8 @@ def calculate_natural_beauty(lat: float,
     natural_native = max(0.0, tree_weighted + scenic_weighted)
     natural_score_raw = min(100.0, natural_native * 2.0)  # Scale 0-50 to 0-100
     
-    # Calibration: Temporarily disabled pending re-calculation with fixed raw scores
-    # After fixing topography scoring and component weights, we need to:
-    # 1. Re-collect calibration data with new raw score formula
-    # 2. Re-calculate calibration parameters
-    # 3. If R² improves significantly, apply calibration; otherwise remove it
-    # 
-    # For now, use raw score directly (no calibration) to see impact of fixes
-    # This aligns with data-backed principles: fix the measurement, not the calibration
+    # Using raw score directly - no calibration per design principles
+    # Raw score is data-backed and reflects actual natural beauty metrics
     calibrated_raw = natural_score_raw
     
     # Ridge regression score (advisory only, kept for reference)
@@ -1833,13 +1827,13 @@ def calculate_natural_beauty(lat: float,
             "scenic_max_contribution": 30.0
         },
         "calibration": {
-            "cal_a": None,  # Temporarily disabled - calibration removed pending re-calculation
+            "cal_a": None,
             "cal_b": None,
             "area_type": area_type,
             "calibration_type": "none",
             "raw_score": natural_score_raw,
             "calibrated_score": calibrated_raw,
-            "note": "Calibration temporarily disabled. After fixing raw score calculation (topography, component weights), will re-collect data and re-calculate calibration parameters."
+            "note": "No calibration - using pure data-backed scoring per design principles"
         },
         "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,

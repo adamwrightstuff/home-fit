@@ -488,3 +488,8 @@
 {"location": "carroll gardens brooklyn ny", "density": 37504.32692554606, "city": "11231", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Carroll Gardens Brooklyn NY", "predicted_area_type": "urban_residential"}
 {"location": "manhattan beach ca", "density": 12321.941182652368, "city": "90266", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Manhattan Beach CA", "predicted_area_type": "suburban"}
 {"location": "redondo beach ca", "density": 11865.363279335492, "city": "90278", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Redondo Beach CA", "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 1930.449525878428, "city": null, "business_count": 68, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 16954.73244278816, "city": null, "business_count": 169, "built_coverage": 0.155, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 16119.608072063009, "city": null, "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 6087.135382970943, "city": null, "business_count": 168, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2727.0039548062073, "city": null, "business_count": 165, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}

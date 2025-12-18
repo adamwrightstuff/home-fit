@@ -20,8 +20,8 @@ from logging_config import get_logger
 # Initialize logger
 logger = get_logger(__name__)
 
-# Ridge regression coefficients (advisory only, not used for scoring)
-# Global model (all area types combined)
+# Ridge regression coefficients (advisory only, legacy reference)
+# Scoring uses pure data-backed weighted component sum
 ACTIVE_OUTDOORS_RIDGE_GLOBAL = {
     "coefficients": [
         -0.836912876011333,      # Norm Daily

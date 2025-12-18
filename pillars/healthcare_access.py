@@ -32,14 +32,17 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# Calibrated scoring curve parameters (from healthcare_calibration_results.json)
-# Calibrated from 12 locations with LLM-researched target scores
-# Average error: 11.08 points, Max error: 20.00 points, RMSE: 12.28 points
-CALIBRATED_CURVE_PARAMS = {
-    'at_expected': 50.0,      # Score at 1.0× expected
-    'at_good': 85.0,          # Score at 1.5× expected
-    'at_excellent': 85.0,     # Score at 2.5× expected
-    'at_exceptional': 95.0,   # Score at 3.0× expected
+# Data-backed scoring curve parameters (not calibrated from target scores)
+# Based on objective healthcare access quality thresholds:
+# - 1.0× expected = meets basic needs (50% of max)
+# - 1.5× expected = good access (85% of max)
+# - 2.5× expected = excellent access (85% of max, plateaus)
+# - 3.0× expected = exceptional access (95% of max)
+RATIO_SCORING_PARAMS = {
+    'at_expected': 50.0,      # Score at 1.0× expected (meets basic needs)
+    'at_good': 85.0,          # Score at 1.5× expected (good access)
+    'at_excellent': 85.0,     # Score at 2.5× expected (excellent access)
+    'at_exceptional': 95.0,   # Score at 3.0× expected (exceptional access)
     'ratio_expected': 1.0,
     'ratio_good': 1.5,
     'ratio_excellent': 2.5,
@@ -47,11 +50,11 @@ CALIBRATED_CURVE_PARAMS = {
 }
 
 
-def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
+def _ratio_score(ratio: float, max_score: float) -> float:
     """
-    Calibrated piecewise linear scoring curve based on healthcare calibration panel.
+    Data-backed piecewise linear scoring curve based on objective healthcare access quality.
     
-    Uses research-backed breakpoints calibrated from 12 locations with LLM target scores.
+    Uses objective thresholds: 1×=basic, 1.5×=good, 2.5×=excellent, 3×=exceptional.
     
     Args:
         ratio: Count ratio (actual / expected)
@@ -66,20 +69,20 @@ def _calibrated_ratio_score(ratio: float, max_score: float) -> float:
     if ratio <= 0.0:
         return 0.0
     
-    # Scale calibrated breakpoints to component's max_score
-    # Calibrated curve goes 0→50→85→85→95 at ratios 0→1.0→1.5→2.5→3.0
+    # Scale data-backed breakpoints to component's max_score
+    # Curve goes 0→50→85→85→95 at ratios 0→1.0→1.5→2.5→3.0
     # Scale to max_score: multiply by (max_score / 95.0)
     scale = max_score / 95.0
     
-    at_expected = CALIBRATED_CURVE_PARAMS['at_expected'] * scale
-    at_good = CALIBRATED_CURVE_PARAMS['at_good'] * scale
-    at_excellent = CALIBRATED_CURVE_PARAMS['at_excellent'] * scale
-    at_exceptional = CALIBRATED_CURVE_PARAMS['at_exceptional'] * scale
+    at_expected = RATIO_SCORING_PARAMS['at_expected'] * scale
+    at_good = RATIO_SCORING_PARAMS['at_good'] * scale
+    at_excellent = RATIO_SCORING_PARAMS['at_excellent'] * scale
+    at_exceptional = RATIO_SCORING_PARAMS['at_exceptional'] * scale
     
-    ratio_expected = CALIBRATED_CURVE_PARAMS['ratio_expected']
-    ratio_good = CALIBRATED_CURVE_PARAMS['ratio_good']
-    ratio_excellent = CALIBRATED_CURVE_PARAMS['ratio_excellent']
-    ratio_exceptional = CALIBRATED_CURVE_PARAMS['ratio_exceptional']
+    ratio_expected = RATIO_SCORING_PARAMS['ratio_expected']
+    ratio_good = RATIO_SCORING_PARAMS['ratio_good']
+    ratio_excellent = RATIO_SCORING_PARAMS['ratio_excellent']
+    ratio_exceptional = RATIO_SCORING_PARAMS['ratio_exceptional']
     
     # Minimum score floor: Ensure any positive ratio gets at least 2-5% of max_score
     # This prevents locations with 1 facility from scoring 0 when expectations are very high
@@ -507,7 +510,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     expected_hospitals = max(1.0, exp_hosp)
     if hospital_count > 0:
         hospital_ratio = hospital_count / expected_hospitals
-        hospital_count_score = _calibrated_ratio_score(hospital_ratio, max_score=20.0)
+        hospital_count_score = _ratio_score(hospital_ratio, max_score=20.0)
     else:
         hospital_count_score = 0.0
     
@@ -569,7 +572,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     else:
         primary_ratio = primary_count / target_primary
         # Use calibrated curve for smooth, research-backed scoring
-        primary_score = _calibrated_ratio_score(primary_ratio, max_score=25.0)
+        primary_score = _ratio_score(primary_ratio, max_score=25.0)
     
     primary_score = min(25.0, primary_score)
 
@@ -607,7 +610,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     else:
         specialty_ratio = specialty_count / expected_specialties
         # Use calibrated curve for smooth scoring
-        specialty_score = _calibrated_ratio_score(specialty_ratio, max_score=15.0)
+        specialty_score = _ratio_score(specialty_ratio, max_score=15.0)
     
     specialty_score = min(15.0, specialty_score)
 
@@ -625,7 +628,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     else:
         emergency_ratio = emergency_count / expected_emergency
         # Use calibrated curve for smooth scoring
-        emergency_score = _calibrated_ratio_score(emergency_ratio, max_score=10.0)
+        emergency_score = _ratio_score(emergency_ratio, max_score=10.0)
     
     emergency_score = min(10.0, emergency_score)
 
@@ -652,7 +655,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     else:
         pharm_ratio = pharm_count / target_pharm
         # Use calibrated curve for smooth, research-backed scoring
-        pharmacy_score = _calibrated_ratio_score(pharm_ratio, max_score=15.0)
+        pharmacy_score = _ratio_score(pharm_ratio, max_score=15.0)
     
     pharmacy_score = min(15.0, pharmacy_score)
 

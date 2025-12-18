@@ -13,9 +13,8 @@ import math
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
 
-# Ridge regression coefficients (advisory only, not used for scoring)
-# Calibrated from 56 locations using ridge regression (R²=0.477)
-# See: analysis/neighborhood_amenities_tuning_from_ridge.json
+# Ridge regression coefficients (advisory only, legacy reference)
+# Scoring uses pure data-backed component sum
 RIDGE_COEFS = {
     'intercept': 72.10696463302108,
     'Total score (0-100)': 0.06931223858837365,
