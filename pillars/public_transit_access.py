@@ -667,6 +667,83 @@ def get_public_transit_score(
                 "lon": lon,
                 "area_type": area_type
             })
+            
+            # FALLBACK SCORING: Apply conservative minimum scores for urban/suburban areas
+            # when Transitland API fails or returns no routes, but commute_time suggests transit exists
+            # This handles API data gaps similar to healthcare_access pillar
+            is_urban_suburban = (
+                area_type in ("urban_core", "urban_residential", "suburban") or 
+                (density and density > 1500)
+            )
+            
+            if is_urban_suburban:
+                # Try to get commute_time as proxy for transit availability
+                try:
+                    from data_sources.census_api import get_commute_time
+                    commute_minutes = get_commute_time(lat, lon)
+                    
+                    # If commute_time is reasonable (< 60 min), it suggests transit might exist
+                    # but Transitland API isn't finding it (data gap, not truly no transit)
+                    if commute_minutes and commute_minutes > 0 and commute_minutes < 60:
+                        commute_score = _score_commute_time(commute_minutes, area_type)
+                        
+                        # Apply conservative fallback scores based on area type and commute_time
+                        # These are minimum floors, not full scores
+                        if area_type == "urban_core" or (density and density > 5000):
+                            # Urban cores should have transit - apply moderate fallback
+                            fallback_heavy = 15.0
+                            fallback_bus = 12.0
+                        elif area_type == "urban_residential" or (density and density > 2000):
+                            fallback_heavy = 10.0
+                            fallback_bus = 10.0
+                        elif area_type == "suburban" or (density and density > 1500):
+                            fallback_heavy = 5.0
+                            fallback_bus = 8.0
+                        else:
+                            fallback_heavy = 0.0
+                            fallback_bus = 0.0
+                        
+                        # Use commute_score as additional signal (weighted 5%)
+                        commute_weighted = commute_score * COMMUTE_WEIGHT
+                        
+                        # Total fallback score
+                        fallback_total = fallback_heavy + fallback_bus + commute_weighted
+                        fallback_total = min(100.0, fallback_total)
+                        
+                        logger.info(f"📊 Applying fallback transit score {fallback_total:.1f} for {area_type or 'unknown'} area (Transitland API unavailable, commute_time={commute_minutes:.1f} min)", extra={
+                            "pillar_name": "public_transit_access",
+                            "lat": lat,
+                            "lon": lon,
+                            "area_type": area_type,
+                            "fallback_score": fallback_total,
+                            "commute_minutes": commute_minutes
+                        })
+                        
+                        return fallback_total, {
+                            "score": round(fallback_total, 1),
+                            "breakdown": {
+                                "heavy_rail": round(fallback_heavy, 1),
+                                "light_rail": 0.0,
+                                "bus": round(fallback_bus, 1),
+                                "commute_time": round(commute_score, 1)
+                            },
+                            "summary": {
+                                "total_routes": 0,
+                                "heavy_rail_routes": 0,
+                                "light_rail_routes": 0,
+                                "bus_routes": 0,
+                                "fallback_applied": True,
+                                "fallback_reason": f"Transitland API unavailable for {area_type or 'unknown'} area (commute_time={commute_minutes:.1f} min suggests transit exists)"
+                            }
+                        }
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not calculate fallback score: {e}", extra={
+                        "pillar_name": "public_transit_access",
+                        "lat": lat,
+                        "lon": lon,
+                        "error": str(e)
+                    })
+            
             return 0, _empty_breakdown()
 
     # Categorize routes by type
