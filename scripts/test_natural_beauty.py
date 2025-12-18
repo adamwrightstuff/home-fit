@@ -95,24 +95,13 @@ def print_natural_beauty_breakdown(data: Dict):
         print()
     
     # Raw score calculation
-    score_before_calibration = details.get("score_before_calibration", 0)
-    score_before_normalization = details.get("score_before_normalization", 0)
+    raw_score = details.get("raw_score", details.get("score_before_normalization", 0))
     
     print("Score Calculation:")
     print("-" * 80)
-    print(f"Raw Score (before calibration): {score_before_calibration:.2f}")
-    print(f"Calibrated Score (before normalization): {score_before_normalization:.2f}")
-    print(f"Final Score (after normalization): {score:.2f}")
+    print(f"Raw Score: {raw_score:.2f}")
+    print(f"Final Score: {score:.2f}")
     print()
-    
-    # Calibration
-    calibration = details.get("calibration", {})
-    if calibration:
-        print("Calibration Parameters:")
-        print("-" * 80)
-        print(f"CAL_A: {calibration.get('cal_a', 0):.6f}")
-        print(f"CAL_B: {calibration.get('cal_b', 0):.6f}")
-        print()
     
     # Context bonus breakdown
     context_bonus = details.get("context_bonus", {})
