@@ -724,16 +724,21 @@ def get_active_outdoors_score_v2(
         swimming, scoring_area_type, is_desert_context=is_desert_context
     )
 
-    # 4) Aggregation (simple, explainable) → raw v2 total
+    # 4) DATA-BACKED SCORING: Direct weighted sum of component scores
+    # Components are pure data-backed: parks/trails/water/camping from OSM/GEE
+    # This replaces ridge regression model to ensure pure data-backed scoring
     W_DAILY = 0.30
     W_WILD = 0.50
     W_WATER = 0.20
 
-    raw_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+    calibrated_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+    calibrated_total = max(0.0, min(100.0, calibrated_total))
+    
+    # Keep raw_total for reference (same as calibrated_total now)
+    raw_total = calibrated_total
 
-    # 5) Compute normalized features for ridge regression scoring
-    # Ridge regression proves 12 normalized features explain 7x more variance than raw_total
-    # (R²=0.333 vs R²=0.046 for raw_total linear calibration)
+    # 5) Compute normalized features for ridge regression (advisory only)
+    # Ridge regression kept for reference but not used for scoring
     normalized_features = _compute_normalized_features(
         daily_score,
         wild_score,
@@ -746,9 +751,7 @@ def get_active_outdoors_score_v2(
         canopy_pct_5km,
     )
     
-    # Ridge regression formula: intercept + sum(weight * normalized_feature)
-    # Calibrated from 56 locations using ridge regression (R²=0.333, CV R²=-0.8581)
-    # Tree canopy + camping dominate (44% signal)
+    # Ridge regression formula (advisory only, not used for scoring)
     RIDGE_INTERCEPT = 75.6429
     RIDGE_WEIGHTS = [
         -0.0484,  # norm_daily_urban_outdoors [0]
@@ -765,15 +768,12 @@ def get_active_outdoors_score_v2(
         0.1630,   # norm_tree_canopy_5km [11]
     ]
     
-    # Calculate score using ridge regression formula
-    # Handle NaN values as 0 (as per instruction: "NaN=0")
-    calibrated_total = RIDGE_INTERCEPT
+    # Calculate ridge regression score (advisory only)
+    ridge_score_advisory = RIDGE_INTERCEPT
     for weight, feature in zip(RIDGE_WEIGHTS, normalized_features):
         if feature is not None and not math.isnan(feature):
-            calibrated_total += weight * feature
-        # NaN values default to 0 (no contribution)
-    
-    calibrated_total = max(0.0, min(100.0, calibrated_total))
+            ridge_score_advisory += weight * feature
+    ridge_score_advisory = max(0.0, min(100.0, ridge_score_advisory))
     
     # Compute advisory Ridge regression predictions (not used for scoring)
     ridge_advisory = {}
@@ -815,14 +815,16 @@ def get_active_outdoors_score_v2(
         ),
         "data_quality": dq,
         "area_classification": area_metadata,
-        "version": "active_outdoors_v2_ridge_regression",
+        "version": "active_outdoors_v2_data_backed",
         "raw_total_v2": round(raw_total, 1),
-        "scoring_method": "ridge_regression_12_features",
-        "ridge_regression": {
+        "scoring_method": "weighted_component_sum",
+        "ridge_regression_advisory": {
+            "predicted_score": round(ridge_score_advisory, 1),
             "intercept": RIDGE_INTERCEPT,
             "r2_full": 0.3330,
             "r2_cv": -0.8581,
             "n_locations": 56,
+            "note": "Advisory only - not used for scoring. Primary scoring uses data-backed weighted sum of components.",
         },
         "context": {
             "area_type_for_scoring": scoring_area_type,
@@ -845,12 +847,11 @@ def get_active_outdoors_score_v2(
             "norm_tree": round(normalized_features[11], 4),
         },
         "ridge_regression_legacy_advisory": ridge_advisory,
-        "ridge_regression_note": "Legacy ridge regression coefficients (ACTIVE_OUTDOORS_RIDGE_GLOBAL) are advisory only. Actual scoring now uses the 12-feature ridge regression formula with R²=0.333 (vs R²=0.046 for raw_total linear calibration).",
+        "ridge_regression_note": "All ridge regression coefficients are advisory only. Actual scoring uses pure data-backed weighted sum: 0.30 * daily + 0.50 * wild + 0.20 * water. This ensures objective, measurable scoring aligned with design principles.",
     }
 
     logger.info(
-        f"✅ Active Outdoors v2 (calibrated): {calibrated_total:.1f}/100 "
-        f"[raw={raw_total:.1f}] "
+        f"✅ Active Outdoors v2 (data-backed): {calibrated_total:.1f}/100 "
         f"(daily={daily_score:.1f}, wild={wild_score:.1f}, water={water_score:.1f})",
         extra={
             "pillar_name": "active_outdoors_v2",
@@ -858,12 +859,10 @@ def get_active_outdoors_score_v2(
             "lon": lon,
             "area_type": area_type,
             "total_score": calibrated_total,
-            "raw_total": raw_total,
             "daily_score": daily_score,
             "wild_score": wild_score,
             "water_score": water_score,
-            "scoring_method": "ridge_regression_12_features",
-            "ridge_intercept": RIDGE_INTERCEPT,
+            "scoring_method": "weighted_component_sum",
             "quality_tier": dq['quality_tier'],
             "confidence": dq['confidence']
         }

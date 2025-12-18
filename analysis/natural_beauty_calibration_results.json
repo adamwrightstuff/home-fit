@@ -1,0 +1,77 @@
+{
+  "pillar": "natural_beauty",
+  "source": "perplexity_target_scores",
+  "n_samples": 176,
+  "calibration": {
+    "CAL_A": 0.3385401417742402,
+    "CAL_B": 44.90868924391733
+  },
+  "stats": {
+    "r_squared": 0.09986341704175605,
+    "mean_abs_error": 16.93385962005536,
+    "max_abs_error": 46.014061384263826,
+    "std_err": 19.913512844523066
+  },
+  "sample_locations": [
+    {
+      "name": "Downtown Detroit MI",
+      "raw": 36.406,
+      "target": 30,
+      "current": 98.60926566020987
+    },
+    {
+      "name": "Midtown Memphis TN",
+      "raw": 23.9668,
+      "target": 35,
+      "current": 98.61277167181048
+    },
+    {
+      "name": "Shadyside Pittsburgh PA",
+      "raw": 21.6638,
+      "target": 40,
+      "current": 98.61083747891061
+    },
+    {
+      "name": "North Loop Minneapolis MN",
+      "raw": 19.0046,
+      "target": 45,
+      "current": 98.61062341543119
+    },
+    {
+      "name": "Capitol Hill Seattle WA",
+      "raw": 83.48679999999999,
+      "target": 65,
+      "current": 98.61382283289899
+    },
+    {
+      "name": "Fremont Seattle WA",
+      "raw": 82.0506,
+      "target": 65,
+      "current": 98.61375808085137
+    },
+    {
+      "name": "Over-the-Rhine Cincinnati OH",
+      "raw": 60.0,
+      "target": 45,
+      "current": 98.60790419866852
+    },
+    {
+      "name": "Short North Columbus OH",
+      "raw": 10.6212,
+      "target": 30,
+      "current": 98.61124308523088
+    },
+    {
+      "name": "Hampden Baltimore MD",
+      "raw": 60.9084,
+      "target": 40,
+      "current": 98.61515404087461
+    },
+    {
+      "name": "Fells Point Baltimore MD",
+      "raw": 74.90299999999999,
+      "target": 50,
+      "current": 98.61295807137368
+    }
+  ]
+}

@@ -1,0 +1,1083 @@
+{
+  "source": "ridge_regression_csv",
+  "csv_path": "/Users/adamwright/Downloads/ridge_regression_predictions.csv",
+  "calibration": {
+    "CAL_A": 0.3445160616866051,
+    "CAL_B": 67.86417663577603,
+    "stats": {
+      "n_samples": 56,
+      "mean_error": 2.385393470051765e-14,
+      "mean_abs_error": 6.973889790542054,
+      "max_abs_error": 19.20924368210551,
+      "r_squared": 0.1296044324187423,
+      "cal_a": 0.3445160616866051,
+      "cal_b": 67.86417663577603
+    }
+  },
+  "results": [
+    {
+      "name": "Fairlawn OH",
+      "actual": 60.0,
+      "current_score": 95.4,
+      "ridge_predicted": 73.78682930725181,
+      "raw_total": 32.5,
+      "current_error": 35.400000000000006,
+      "current_abs_error": 35.400000000000006,
+      "ridge_error": 13.786829307251807,
+      "ridge_abs_error": 13.786829307251807,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 41.0,
+        "waterfront_lifestyle": 18.0
+      },
+      "lat": 41.1276,
+      "lon": -81.6093
+    },
+    {
+      "name": "Bethesda MD",
+      "actual": 75.0,
+      "current_score": 100.0,
+      "ridge_predicted": 87.69272300613953,
+      "raw_total": 37.1,
+      "current_error": 25.0,
+      "current_abs_error": 25.0,
+      "ridge_error": 12.69272300613953,
+      "ridge_abs_error": 12.69272300613953,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 18.6
+      },
+      "lat": 38.9807,
+      "lon": -77.1003
+    },
+    {
+      "name": "Coconut Grove Miami FL",
+      "actual": 84.0,
+      "current_score": 73.1,
+      "ridge_predicted": 71.38391197183668,
+      "raw_total": 18.4,
+      "current_error": -10.900000000000006,
+      "current_abs_error": 10.900000000000006,
+      "ridge_error": -12.616088028163318,
+      "ridge_abs_error": 12.616088028163318,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 14.5,
+        "waterfront_lifestyle": 10.8
+      },
+      "lat": 25.7281,
+      "lon": -80.2398
+    },
+    {
+      "name": "Cleveland OH",
+      "actual": 65.0,
+      "current_score": 59.7,
+      "ridge_predicted": 77.59283293551125,
+      "raw_total": 10.0,
+      "current_error": -5.299999999999997,
+      "current_abs_error": 5.299999999999997,
+      "ridge_error": 12.592832935511254,
+      "ridge_abs_error": 12.592832935511254,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 13.9,
+        "wild_adventure": 3.6,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 41.4993,
+      "lon": -81.6944
+    },
+    {
+      "name": "Bend OR",
+      "actual": 90.0,
+      "current_score": 69.9,
+      "ridge_predicted": 77.94788993725803,
+      "raw_total": 16.4,
+      "current_error": -20.099999999999994,
+      "current_abs_error": 20.099999999999994,
+      "ridge_error": -12.052110062741974,
+      "ridge_abs_error": 12.052110062741974,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 14.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 44.0582,
+      "lon": -121.3153
+    },
+    {
+      "name": "Downtown San Diego CA",
+      "actual": 82.0,
+      "current_score": 63.6,
+      "ridge_predicted": 70.9842352283584,
+      "raw_total": 12.4,
+      "current_error": -18.4,
+      "current_abs_error": 18.4,
+      "ridge_error": -11.0157647716416,
+      "ridge_abs_error": 11.0157647716416,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 12.1,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 32.7157,
+      "lon": -117.1611
+    },
+    {
+      "name": "Kiawah Island SC",
+      "actual": 90.0,
+      "current_score": 69.4,
+      "ridge_predicted": 79.47840531845642,
+      "raw_total": 16.1,
+      "current_error": -20.599999999999994,
+      "current_abs_error": 20.599999999999994,
+      "ridge_error": -10.521594681543576,
+      "ridge_abs_error": 10.521594681543576,
+      "area_type": "rural",
+      "components": {
+        "daily_urban_outdoors": 15.0,
+        "wild_adventure": 15.2,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 32.6082373,
+      "lon": -80.0848166
+    },
+    {
+      "name": "Burlington VT",
+      "actual": 85.0,
+      "current_score": 100.0,
+      "ridge_predicted": 74.79979843919088,
+      "raw_total": 37.3,
+      "current_error": 15.0,
+      "current_abs_error": 15.0,
+      "ridge_error": -10.20020156080912,
+      "ridge_abs_error": 10.20020156080912,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 27.6,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 44.4761601,
+      "lon": -73.212906
+    },
+    {
+      "name": "Houston Medical Center TX",
+      "actual": 60.0,
+      "current_score": 58.9,
+      "ridge_predicted": 69.75501119900865,
+      "raw_total": 9.5,
+      "current_error": -1.1000000000000014,
+      "current_abs_error": 1.1000000000000014,
+      "ridge_error": 9.75501119900865,
+      "ridge_abs_error": 9.75501119900865,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 5.3,
+        "waterfront_lifestyle": 7.2
+      },
+      "lat": 29.6962861,
+      "lon": -95.4144203
+    },
+    {
+      "name": "Downtown Los Angeles CA",
+      "actual": 60.0,
+      "current_score": 55.3,
+      "ridge_predicted": 69.50781644168731,
+      "raw_total": 7.2,
+      "current_error": -4.700000000000003,
+      "current_abs_error": 4.700000000000003,
+      "ridge_error": 9.50781644168731,
+      "ridge_abs_error": 9.50781644168731,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 17.6,
+        "wild_adventure": 2.8,
+        "waterfront_lifestyle": 2.6
+      },
+      "lat": 34.047996,
+      "lon": -118.2521002
+    },
+    {
+      "name": "Beaufort SC",
+      "actual": 80.0,
+      "current_score": 66.9,
+      "ridge_predicted": 70.67422872786801,
+      "raw_total": 14.5,
+      "current_error": -13.099999999999994,
+      "current_abs_error": 13.099999999999994,
+      "ridge_error": -9.325771272131988,
+      "ridge_abs_error": 9.325771272131988,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 15.0,
+        "wild_adventure": 17.1,
+        "waterfront_lifestyle": 7.6
+      },
+      "lat": 32.4315813,
+      "lon": -80.6698286
+    },
+    {
+      "name": "Downtown San Francisco CA",
+      "actual": 65.0,
+      "current_score": 63.8,
+      "ridge_predicted": 73.38370321398384,
+      "raw_total": 12.6,
+      "current_error": -1.2000000000000028,
+      "current_abs_error": 1.2000000000000028,
+      "ridge_error": 8.383703213983836,
+      "ridge_abs_error": 8.383703213983836,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 12.5,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 37.7875138,
+      "lon": -122.407159
+    },
+    {
+      "name": "Downtown Philadelphia PA",
+      "actual": 65.0,
+      "current_score": 57.6,
+      "ridge_predicted": 73.11612916635639,
+      "raw_total": 8.6,
+      "current_error": -7.399999999999999,
+      "current_abs_error": 7.399999999999999,
+      "ridge_error": 8.116129166356387,
+      "ridge_abs_error": 8.116129166356387,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 5.0,
+        "waterfront_lifestyle": 3.6
+      },
+      "lat": 39.9509501,
+      "lon": -75.1574842
+    },
+    {
+      "name": "Fitler Square Philadelphia PA",
+      "actual": 78.0,
+      "current_score": 78.3,
+      "ridge_predicted": 70.04890299729696,
+      "raw_total": 21.7,
+      "current_error": 0.29999999999999716,
+      "current_abs_error": 0.29999999999999716,
+      "ridge_error": -7.951097002703037,
+      "ridge_abs_error": 7.951097002703037,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 21.1,
+        "waterfront_lifestyle": 11.0
+      },
+      "lat": 39.9476084,
+      "lon": -75.1797855
+    },
+    {
+      "name": "Altadena CA",
+      "actual": 85.0,
+      "current_score": 96.5,
+      "ridge_predicted": 77.14694762709351,
+      "raw_total": 33.2,
+      "current_error": 11.5,
+      "current_abs_error": 11.5,
+      "ridge_error": -7.85305237290649,
+      "ridge_abs_error": 7.85305237290649,
+      "area_type": "exurban",
+      "components": {
+        "daily_urban_outdoors": 26.3,
+        "wild_adventure": 49.0,
+        "waterfront_lifestyle": 4.1
+      },
+      "lat": 34.1898584,
+      "lon": -118.1316619
+    },
+    {
+      "name": "Capitol Hill Seattle WA",
+      "actual": 82.0,
+      "current_score": 78.8,
+      "ridge_predicted": 74.28604430981696,
+      "raw_total": 22.0,
+      "current_error": -3.200000000000003,
+      "current_abs_error": 3.200000000000003,
+      "ridge_error": -7.713955690183042,
+      "ridge_abs_error": 7.713955690183042,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 18.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 47.6238307,
+      "lon": -122.318368
+    },
+    {
+      "name": "Hermosa Beach CA",
+      "actual": 92.0,
+      "current_score": 80.9,
+      "ridge_predicted": 85.27023954214557,
+      "raw_total": 23.4,
+      "current_error": -11.099999999999994,
+      "current_abs_error": 11.099999999999994,
+      "ridge_error": -6.729760457854425,
+      "ridge_abs_error": 6.729760457854425,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 20.7,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 33.8637822,
+      "lon": -118.3992143
+    },
+    {
+      "name": "Downtown Atlanta GA",
+      "actual": 65.0,
+      "current_score": 60.0,
+      "ridge_predicted": 71.4960505818519,
+      "raw_total": 10.1,
+      "current_error": -5.0,
+      "current_abs_error": 5.0,
+      "ridge_error": 6.496050581851904,
+      "ridge_abs_error": 6.496050581851904,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 6.6,
+        "waterfront_lifestyle": 7.2
+      },
+      "lat": 33.7638202,
+      "lon": -84.3856072
+    },
+    {
+      "name": "Downtown Minneapolis MN",
+      "actual": 75.0,
+      "current_score": 64.5,
+      "ridge_predicted": 69.19898126095356,
+      "raw_total": 13.0,
+      "current_error": -10.5,
+      "current_abs_error": 10.5,
+      "ridge_error": -5.801018739046441,
+      "ridge_abs_error": 5.801018739046441,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 16.9,
+        "wild_adventure": 13.7,
+        "waterfront_lifestyle": 5.6
+      },
+      "lat": 44.9778,
+      "lon": -93.265
+    },
+    {
+      "name": "Inner Harbor Baltimore MD",
+      "actual": 68.0,
+      "current_score": 64.4,
+      "ridge_predicted": 73.49560547602576,
+      "raw_total": 12.9,
+      "current_error": -3.5999999999999943,
+      "current_abs_error": 3.5999999999999943,
+      "ridge_error": 5.495605476025759,
+      "ridge_abs_error": 5.495605476025759,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 13.1,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 39.2908816,
+      "lon": -76.610759
+    },
+    {
+      "name": "Babylon NY",
+      "actual": 70.0,
+      "current_score": 98.9,
+      "ridge_predicted": 75.04896226468952,
+      "raw_total": 34.8,
+      "current_error": 28.900000000000006,
+      "current_abs_error": 28.900000000000006,
+      "ridge_error": 5.048962264689521,
+      "ridge_abs_error": 5.048962264689521,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 47.9,
+        "waterfront_lifestyle": 12.0
+      },
+      "lat": 40.6956552,
+      "lon": -73.3256753
+    },
+    {
+      "name": "Hudson OH",
+      "actual": 70.0,
+      "current_score": 80.0,
+      "ridge_predicted": 74.84434915760707,
+      "raw_total": 22.8,
+      "current_error": 10.0,
+      "current_abs_error": 10.0,
+      "ridge_error": 4.84434915760707,
+      "ridge_abs_error": 4.84434915760707,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 0.0,
+        "wild_adventure": 38.4,
+        "waterfront_lifestyle": 18.0
+      },
+      "lat": 41.240056,
+      "lon": -81.440667
+    },
+    {
+      "name": "Jackson Wyoming",
+      "actual": 95.0,
+      "current_score": 91.3,
+      "ridge_predicted": 90.61234829226623,
+      "raw_total": 30.0,
+      "current_error": -3.700000000000003,
+      "current_abs_error": 3.700000000000003,
+      "ridge_error": -4.387651707733767,
+      "ridge_abs_error": 4.387651707733767,
+      "area_type": "rural",
+      "components": {
+        "daily_urban_outdoors": 15.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 2.3
+      },
+      "lat": 43.479965,
+      "lon": -110.761815
+    },
+    {
+      "name": "Forest Grove OR",
+      "actual": 74.0,
+      "current_score": 95.2,
+      "ridge_predicted": 78.32540720770652,
+      "raw_total": 32.4,
+      "current_error": 21.200000000000003,
+      "current_abs_error": 21.200000000000003,
+      "ridge_error": 4.325407207706519,
+      "ridge_abs_error": 4.325407207706519,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 47.4,
+        "waterfront_lifestyle": 1.5
+      },
+      "lat": 45.5190404,
+      "lon": -123.1110551
+    },
+    {
+      "name": "Carmel-by-the-Sea CA",
+      "actual": 82.0,
+      "current_score": 98.4,
+      "ridge_predicted": 77.79342412905933,
+      "raw_total": 34.4,
+      "current_error": 16.400000000000006,
+      "current_abs_error": 16.400000000000006,
+      "ridge_error": -4.206575870940668,
+      "ridge_abs_error": 4.206575870940668,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 44.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 36.600256,
+      "lon": -121.8946388
+    },
+    {
+      "name": "Fells Point Baltimore MD",
+      "actual": 72.0,
+      "current_score": 99.1,
+      "ridge_predicted": 76.03672410515193,
+      "raw_total": 34.9,
+      "current_error": 27.099999999999994,
+      "current_abs_error": 27.099999999999994,
+      "ridge_error": 4.036724105151933,
+      "ridge_abs_error": 4.036724105151933,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 48.1,
+        "waterfront_lifestyle": 12.0
+      },
+      "lat": 39.2819893,
+      "lon": -76.5929562
+    },
+    {
+      "name": "French Quarter New Orleans LA",
+      "actual": 72.0,
+      "current_score": 73.2,
+      "ridge_predicted": 76.03306788163975,
+      "raw_total": 18.5,
+      "current_error": 1.2000000000000028,
+      "current_abs_error": 1.2000000000000028,
+      "ridge_error": 4.033067881639752,
+      "ridge_abs_error": 4.033067881639752,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 15.6,
+        "waterfront_lifestyle": 8.3
+      },
+      "lat": 29.9594926,
+      "lon": -90.0655403
+    },
+    {
+      "name": "Beacon Hill Boston MA",
+      "actual": 76.0,
+      "current_score": 100.0,
+      "ridge_predicted": 72.0438329284157,
+      "raw_total": 35.8,
+      "current_error": 24.0,
+      "current_abs_error": 24.0,
+      "ridge_error": -3.9561670715843036,
+      "ridge_abs_error": 3.9561670715843036,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 12.0
+      },
+      "lat": 42.3588336,
+      "lon": -71.0578303
+    },
+    {
+      "name": "Downtown Portland ME",
+      "actual": 75.0,
+      "current_score": 87.3,
+      "ridge_predicted": 78.76697869630598,
+      "raw_total": 27.4,
+      "current_error": 12.299999999999997,
+      "current_abs_error": 12.299999999999997,
+      "ridge_error": 3.7669786963059835,
+      "ridge_abs_error": 3.7669786963059835,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 0.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 12.0
+      },
+      "lat": 43.6584418,
+      "lon": -70.2584299
+    },
+    {
+      "name": "Irvine CA",
+      "actual": 75.0,
+      "current_score": 75.2,
+      "ridge_predicted": 78.51993385019233,
+      "raw_total": 19.8,
+      "current_error": 0.20000000000000284,
+      "current_abs_error": 0.20000000000000284,
+      "ridge_error": 3.5199338501923307,
+      "ridge_abs_error": 3.5199338501923307,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 26.9,
+        "wild_adventure": 16.2,
+        "waterfront_lifestyle": 18.0
+      },
+      "lat": 33.6567518,
+      "lon": -117.733291
+    },
+    {
+      "name": "Bar Harbor ME",
+      "actual": 88.0,
+      "current_score": 94.1,
+      "ridge_predicted": 84.57568521780104,
+      "raw_total": 31.7,
+      "current_error": 6.099999999999994,
+      "current_abs_error": 6.099999999999994,
+      "ridge_error": -3.4243147821989623,
+      "ridge_abs_error": 3.4243147821989623,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 14.4,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 12.0
+      },
+      "lat": 44.3876378,
+      "lon": -68.2043361
+    },
+    {
+      "name": "Durham NC",
+      "actual": 72.0,
+      "current_score": 100.0,
+      "ridge_predicted": 68.90863682676692,
+      "raw_total": 35.9,
+      "current_error": 28.0,
+      "current_abs_error": 28.0,
+      "ridge_error": -3.091363173233077,
+      "ridge_abs_error": 3.091363173233077,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 27.9,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 12.8
+      },
+      "lat": 35.996653,
+      "lon": -78.9018053
+    },
+    {
+      "name": "Downtown Denver CO",
+      "actual": 75.0,
+      "current_score": 60.9,
+      "ridge_predicted": 72.03063593753845,
+      "raw_total": 10.7,
+      "current_error": -14.100000000000001,
+      "current_abs_error": 14.100000000000001,
+      "ridge_error": -2.969364062461551,
+      "ridge_abs_error": 2.969364062461551,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 17.8,
+        "wild_adventure": 2.8,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 39.7509454,
+      "lon": -104.9997022
+    },
+    {
+      "name": "Fishtown Philadelphia PA",
+      "actual": 74.0,
+      "current_score": 75.4,
+      "ridge_predicted": 71.20995318881785,
+      "raw_total": 19.9,
+      "current_error": 1.4000000000000057,
+      "current_abs_error": 1.4000000000000057,
+      "ridge_error": -2.790046811182151,
+      "ridge_abs_error": 2.790046811182151,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 19.7,
+        "waterfront_lifestyle": 5.1
+      },
+      "lat": 39.9732555,
+      "lon": -75.1304082
+    },
+    {
+      "name": "Bozeman MT",
+      "actual": 92.0,
+      "current_score": 66.6,
+      "ridge_predicted": 94.59486862529482,
+      "raw_total": 14.3,
+      "current_error": -25.400000000000006,
+      "current_abs_error": 25.400000000000006,
+      "ridge_error": 2.594868625294822,
+      "ridge_abs_error": 2.594868625294822,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 20.6,
+        "wild_adventure": 13.4,
+        "waterfront_lifestyle": 7.2
+      },
+      "lat": 45.6794293,
+      "lon": -111.044047
+    },
+    {
+      "name": "Financial District Manhattan NY",
+      "actual": 60.0,
+      "current_score": 64.0,
+      "ridge_predicted": 62.55146491289446,
+      "raw_total": 12.7,
+      "current_error": 4.0,
+      "current_abs_error": 4.0,
+      "ridge_error": 2.5514649128944598,
+      "ridge_abs_error": 2.5514649128944598,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 12.7,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 40.7076681,
+      "lon": -74.009271
+    },
+    {
+      "name": "Big Bear Lake CA",
+      "actual": 90.0,
+      "current_score": 96.9,
+      "ridge_predicted": 87.57221657626741,
+      "raw_total": 33.5,
+      "current_error": 6.900000000000006,
+      "current_abs_error": 6.900000000000006,
+      "ridge_error": -2.427783423732592,
+      "ridge_abs_error": 2.427783423732592,
+      "area_type": "rural",
+      "components": {
+        "daily_urban_outdoors": 15.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 34.2440587,
+      "lon": -116.91018
+    },
+    {
+      "name": "Downtown Chicago IL",
+      "actual": 65.0,
+      "current_score": 62.3,
+      "ridge_predicted": 67.38163799723358,
+      "raw_total": 11.6,
+      "current_error": -2.700000000000003,
+      "current_abs_error": 2.700000000000003,
+      "ridge_error": 2.3816379972335824,
+      "ridge_abs_error": 2.3816379972335824,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 17.8,
+        "wild_adventure": 4.6,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 41.8789629,
+      "lon": -87.642124
+    },
+    {
+      "name": "Downtown Seattle WA",
+      "actual": 70.0,
+      "current_score": 64.1,
+      "ridge_predicted": 67.63357852330547,
+      "raw_total": 12.8,
+      "current_error": -5.900000000000006,
+      "current_abs_error": 5.900000000000006,
+      "ridge_error": -2.3664214766945264,
+      "ridge_abs_error": 2.3664214766945264,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 12.8,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 47.6142012,
+      "lon": -122.3413502
+    },
+    {
+      "name": "Bronxville NY",
+      "actual": 72.0,
+      "current_score": 91.3,
+      "ridge_predicted": 74.03537484231127,
+      "raw_total": 30.0,
+      "current_error": 19.299999999999997,
+      "current_abs_error": 19.299999999999997,
+      "ridge_error": 2.0353748423112705,
+      "ridge_abs_error": 2.0353748423112705,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 35.9,
+        "waterfront_lifestyle": 18.0
+      },
+      "lat": 40.9381544,
+      "lon": -73.8320784
+    },
+    {
+      "name": "Brickell Miami FL",
+      "actual": 70.0,
+      "current_score": 57.6,
+      "ridge_predicted": 71.91519487326335,
+      "raw_total": 8.6,
+      "current_error": -12.399999999999999,
+      "current_abs_error": 12.399999999999999,
+      "ridge_error": 1.9151948732633457,
+      "ridge_abs_error": 1.9151948732633457,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 4.5,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 25.7633616,
+      "lon": -80.1955103
+    },
+    {
+      "name": "Hyde Park Chicago IL",
+      "actual": 76.0,
+      "current_score": 79.6,
+      "ridge_predicted": 77.82614167147982,
+      "raw_total": 22.6,
+      "current_error": 3.5999999999999943,
+      "current_abs_error": 3.5999999999999943,
+      "ridge_error": 1.8261416714798173,
+      "ridge_abs_error": 1.8261416714798173,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 19.1,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 41.7944464,
+      "lon": -87.5939244
+    },
+    {
+      "name": "Downtown Austin TX",
+      "actual": 75.0,
+      "current_score": 86.5,
+      "ridge_predicted": 73.46690949998998,
+      "raw_total": 26.9,
+      "current_error": 11.5,
+      "current_abs_error": 11.5,
+      "ridge_error": -1.5330905000100188,
+      "ridge_abs_error": 1.5330905000100188,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 27.6,
+        "wild_adventure": 31.0,
+        "waterfront_lifestyle": 15.7
+      },
+      "lat": 30.2680536,
+      "lon": -97.7447642
+    },
+    {
+      "name": "Celebration FL",
+      "actual": 70.0,
+      "current_score": 89.6,
+      "ridge_predicted": 71.3531305653391,
+      "raw_total": 28.8,
+      "current_error": 19.599999999999994,
+      "current_abs_error": 19.599999999999994,
+      "ridge_error": 1.3531305653391001,
+      "ridge_abs_error": 1.3531305653391001,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 33.7,
+        "waterfront_lifestyle": 18.0
+      },
+      "lat": 28.319057,
+      "lon": -81.5408702
+    },
+    {
+      "name": "Garden District New Orleans LA",
+      "actual": 72.0,
+      "current_score": 68.2,
+      "ridge_predicted": 73.32210167915852,
+      "raw_total": 15.3,
+      "current_error": -3.799999999999997,
+      "current_abs_error": 3.799999999999997,
+      "ridge_error": 1.3221016791585214,
+      "ridge_abs_error": 1.3221016791585214,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 30.0,
+        "wild_adventure": 10.8,
+        "waterfront_lifestyle": 4.7
+      },
+      "lat": 29.9296054,
+      "lon": -90.0844053
+    },
+    {
+      "name": "Lake Placid NY",
+      "actual": 92.0,
+      "current_score": 89.8,
+      "ridge_predicted": 90.73564994912579,
+      "raw_total": 29.0,
+      "current_error": -2.200000000000003,
+      "current_abs_error": 2.200000000000003,
+      "ridge_error": -1.2643500508742136,
+      "ridge_abs_error": 1.2643500508742136,
+      "area_type": "rural",
+      "components": {
+        "daily_urban_outdoors": 0.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 44.2831194,
+      "lon": -73.9828318
+    },
+    {
+      "name": "Downtown Boston MA",
+      "actual": 65.0,
+      "current_score": 64.1,
+      "ridge_predicted": 65.93488520332527,
+      "raw_total": 12.8,
+      "current_error": -0.9000000000000057,
+      "current_abs_error": 0.9000000000000057,
+      "ridge_error": 0.9348852033252655,
+      "ridge_abs_error": 0.9348852033252655,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 12.8,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 42.353713,
+      "lon": -71.0576247
+    },
+    {
+      "name": "Ann Arbor MI",
+      "actual": 80.0,
+      "current_score": 96.9,
+      "ridge_predicted": 80.74901529146605,
+      "raw_total": 33.5,
+      "current_error": 16.900000000000006,
+      "current_abs_error": 16.900000000000006,
+      "ridge_error": 0.7490152914660513,
+      "ridge_abs_error": 0.7490152914660513,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 47.2,
+        "waterfront_lifestyle": 7.5
+      },
+      "lat": 42.2813722,
+      "lon": -83.7484616
+    },
+    {
+      "name": "Brooklyn Heights Brooklyn NY",
+      "actual": 75.0,
+      "current_score": 100.0,
+      "ridge_predicted": 74.25542454014438,
+      "raw_total": 36.1,
+      "current_error": 25.0,
+      "current_abs_error": 25.0,
+      "ridge_error": -0.7445754598556249,
+      "ridge_abs_error": 0.7445754598556249,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 47.4,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 40.6960849,
+      "lon": -73.9950297
+    },
+    {
+      "name": "Federal Triangle Washington DC",
+      "actual": 60.0,
+      "current_score": 64.3,
+      "ridge_predicted": 60.70722718140211,
+      "raw_total": 12.9,
+      "current_error": 4.299999999999997,
+      "current_abs_error": 4.299999999999997,
+      "ridge_error": 0.7072271814021107,
+      "ridge_abs_error": 0.7072271814021107,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 17.6,
+        "wild_adventure": 14.9,
+        "waterfront_lifestyle": 0.7
+      },
+      "lat": 38.9016,
+      "lon": -77.0404
+    },
+    {
+      "name": "Downtown Portland OR",
+      "actual": 75.0,
+      "current_score": 100.0,
+      "ridge_predicted": 74.38631722681305,
+      "raw_total": 36.0,
+      "current_error": 25.0,
+      "current_abs_error": 25.0,
+      "ridge_error": -0.6136827731869516,
+      "ridge_abs_error": 0.6136827731869516,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 27.6,
+        "wild_adventure": 47.5,
+        "waterfront_lifestyle": 20.0
+      },
+      "lat": 45.5152744,
+      "lon": -122.680025
+    },
+    {
+      "name": "Arlington VA",
+      "actual": 80.0,
+      "current_score": 99.0,
+      "ridge_predicted": 80.55239232729431,
+      "raw_total": 34.8,
+      "current_error": 19.0,
+      "current_abs_error": 19.0,
+      "ridge_error": 0.5523923272943136,
+      "ridge_abs_error": 0.5523923272943136,
+      "area_type": "urban_residential",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 50.0,
+        "waterfront_lifestyle": 6.9
+      },
+      "lat": 38.8891453,
+      "lon": -77.0911115
+    },
+    {
+      "name": "Hood River OR",
+      "actual": 92.0,
+      "current_score": 75.4,
+      "ridge_predicted": 92.37199343770365,
+      "raw_total": 19.9,
+      "current_error": -16.599999999999994,
+      "current_abs_error": 16.599999999999994,
+      "ridge_error": 0.3719934377036509,
+      "ridge_abs_error": 0.3719934377036509,
+      "area_type": "rural",
+      "components": {
+        "daily_urban_outdoors": 0.0,
+        "wild_adventure": 39.1,
+        "waterfront_lifestyle": 1.8
+      },
+      "lat": 45.5311636,
+      "lon": -121.6475587
+    },
+    {
+      "name": "Back Bay Boston MA",
+      "actual": 75.0,
+      "current_score": 64.5,
+      "ridge_predicted": 74.79625423314263,
+      "raw_total": 13.0,
+      "current_error": -10.5,
+      "current_abs_error": 10.5,
+      "ridge_error": -0.20374576685736656,
+      "ridge_abs_error": 0.20374576685736656,
+      "area_type": "urban_core",
+      "components": {
+        "daily_urban_outdoors": 18.0,
+        "wild_adventure": 13.3,
+        "waterfront_lifestyle": 4.8
+      },
+      "lat": 42.3507067,
+      "lon": -71.0797297
+    },
+    {
+      "name": "Centennial CO",
+      "actual": 74.0,
+      "current_score": 87.2,
+      "ridge_predicted": 74.09223844403937,
+      "raw_total": 27.4,
+      "current_error": 13.200000000000003,
+      "current_abs_error": 13.200000000000003,
+      "ridge_error": 0.0922384440393671,
+      "ridge_abs_error": 0.0922384440393671,
+      "area_type": "suburban",
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 34.4,
+        "waterfront_lifestyle": 8.9
+      },
+      "lat": 39.5807,
+      "lon": -104.8777
+    },
+    {
+      "name": "Georgetown Washington DC",
+      "actual": 80.0,
+      "current_score": 97.7,
+      "ridge_predicted": 79.96975602695538,
+      "raw_total": 34.0,
+      "current_error": 17.700000000000003,
+      "current_abs_error": 17.700000000000003,
+      "ridge_error": -0.030243973044619565,
+      "ridge_abs_error": 0.030243973044619565,
+      "area_type": null,
+      "components": {
+        "daily_urban_outdoors": 28.0,
+        "wild_adventure": 49.2,
+        "waterfront_lifestyle": 4.9
+      },
+      "lat": 38.9051994,
+      "lon": -77.062785
+    }
+  ]
+}

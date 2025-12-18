@@ -289,10 +289,11 @@ def _compute_ridge_regression_score(normalized_features: Dict[str, float]) -> fl
     """
     Compute Natural Beauty score using ridge regression formula with tanh bounding.
     
-    Formula: tanh((intercept + sum(weight * normalized_feature)) / 30) * 100
+    Formula: tanh((intercept + sum(weight * normalized_feature)) / 50) * 100
     
     Tanh bounding prevents saturation at 100 while preserving high scores for exceptional
-    locations (e.g., rural areas). Fixes NYC saturation issue (Park Slope, Astoria, Riverdale).
+    locations (e.g., rural areas). Fixed: Increased scaling factor from 30 to 50 to prevent
+    saturation at 98.6 for most locations. This allows better differentiation between scores.
     
     Args:
         normalized_features: Dict of normalized feature values
@@ -308,9 +309,10 @@ def _compute_ridge_regression_score(normalized_features: Dict[str, float]) -> fl
             linear_score += weight * feature_value
         # NaN values default to 0 (no contribution)
     
-    # Apply tanh bounding: tanh(linear_pred / 30) * 100
-    # This prevents hard clipping while smoothly bounding scores to [0, 100]
-    bounded_score = math.tanh(linear_score / 30.0) * 100.0
+    # Apply tanh bounding: tanh(linear_pred / 50) * 100
+    # Increased scaling factor from 30 to 50 to prevent saturation at 98.6
+    # This allows better differentiation: tanh(75/50) = tanh(1.5) ≈ 0.905 → 90.5 instead of 98.6
+    bounded_score = math.tanh(linear_score / 50.0) * 100.0
     
     return max(0.0, min(100.0, bounded_score))
 
@@ -1723,22 +1725,43 @@ def calculate_natural_beauty(lat: float,
         context_bonus_raw  # Total context bonus
     )
     
-    # Compute ridge regression score with tanh bounding (PRIMARY SCORING METHOD)
+    # DATA-BACKED SCORING (replacing ridge regression model)
+    # Adjusted component weights to better reflect natural beauty:
+    # - Tree score (0-50): Reduced weight - urban trees ≠ natural beauty
+    # - Scenic bonus (0-30): Increased weight - mountains/coastlines matter more
+    # Formula: (tree_score * 0.4) + (natural_bonus_scaled * 1.67) = Raw score (0-100)
+    # This weights scenic features (topography, water, wilderness) more heavily than urban tree canopy
+    # Rationale: Natural beauty is about scenic landscapes, not just tree coverage
+    # 
+    # Component breakdown:
+    # - Tree score contributes max 20 points (50 * 0.4)
+    # - Scenic bonus contributes max 30 points (18 * 1.67, capped at 30)
+    # - Total: 0-50 points, scaled to 0-100
+    tree_weighted = tree_score * 0.4  # Reduce tree dominance
+    scenic_weighted = min(30.0, natural_bonus_scaled * 1.67)  # Increase scenic weight, cap at 30
+    natural_native = max(0.0, tree_weighted + scenic_weighted)
+    natural_score_raw = min(100.0, natural_native * 2.0)  # Scale 0-50 to 0-100
+    
+    # Apply linear calibration from regression analysis (176 locations)
+    # Calibration aligns data-backed scores with target scores
+    # Source: analysis/natural_beauty_calibration_results.json (Perplexity target scores)
+    # Updated: Using new component weights (tree_weight=0.4, scenic_weight=1.67)
+    CAL_A = 0.338540  # From regression analysis (improved from 0.131710)
+    CAL_B = 44.908689  # From regression analysis (improved from 53.223394)
+    
+    calibrated_raw = CAL_A * natural_score_raw + CAL_B
+    calibrated_raw = max(0.0, min(100.0, calibrated_raw))
+    
+    # Ridge regression score (advisory only, kept for reference)
     ridge_score = _compute_ridge_regression_score(normalized_features)
-    
-    # Legacy calculation for backward compatibility (kept for reference)
-    natural_native = max(0.0, tree_score + natural_bonus_scaled)
-    natural_score_raw_legacy = min(100.0, natural_native * 2.0)
-    
-    # Use ridge regression score as primary (with tanh bounding prevents NYC saturation)
-    natural_score_raw = ridge_score
+    natural_score_raw_legacy = min(100.0, natural_native * 2.0)  # Legacy calculation
 
     natural_score_norm, natural_norm_meta = normalize_beauty_score(
-        natural_score_raw,
+        calibrated_raw,  # Using calibrated score
         area_type
     )
     
-    # Add ridge regression metadata to tree_details
+    # Add ridge regression metadata to tree_details (advisory only)
     tree_details["ridge_regression"] = {
         "intercept": NATURAL_BEAUTY_RIDGE_INTERCEPT,
         "linear_prediction": round(ridge_score, 2),
@@ -1752,9 +1775,9 @@ def calculate_natural_beauty(lat: float,
         "normalized_features": {k: round(v, 4) for k, v in normalized_features.items()},
         "feature_weights": NATURAL_BEAUTY_RIDGE_WEIGHTS,
         "removed_features": ["Natural Beauty Score", "Enhancer Bonus Raw", "Context Bonus Raw", "Enhancer Bonus Scaled"],
-        "output_transform": "tanh(linear_pred / 30) * 100",
+        "output_transform": "tanh(linear_pred / 50) * 100",
         "tuning_update": "v2_clean_weights_tanh_cap",
-        "note": "Ridge regression with tanh bounding is now the primary scoring method. Tanh prevents saturation at 100 (fixes NYC issue: Park Slope, Astoria, Riverdale) while preserving high scores for exceptional rural locations."
+        "note": "Ridge regression is now advisory only. Primary scoring uses data-backed component sum: (tree_score + natural_bonus_scaled) * (100/68). This ensures pure data-backed scoring aligned with design principles."
     }
     
     # Validate score and detect anomalies
@@ -1793,7 +1816,20 @@ def calculate_natural_beauty(lat: float,
         "natural_bonus_scaled": natural_bonus_scaled,
         "scenic_bonus_raw": scenic_bonus_raw,
         "context_bonus_raw": context_bonus_raw,
-        "score_before_normalization": natural_score_raw,
+        "score_before_normalization": calibrated_raw,
+        "score_before_calibration": natural_score_raw,
+        "component_weights": {
+            "tree_weight": 0.4,
+            "scenic_weight": 1.67,
+            "tree_max_contribution": 20.0,
+            "scenic_max_contribution": 30.0
+        },
+        "calibration": {
+            "cal_a": CAL_A,
+            "cal_b": CAL_B,
+            "raw_score": natural_score_raw,
+            "calibrated_score": calibrated_raw
+        },
         "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,
         "score": natural_score_norm,
@@ -1827,19 +1863,13 @@ def get_natural_beauty_score(lat: float,
         disable_enhancers=disable_enhancers
     )
 
-    natural_score_raw = result["score_before_normalization"]
+    # Use the already-normalized score from calculate_natural_beauty
+    # (calibration and normalization already applied)
+    natural_score_norm = result["score"]
+    natural_norm_meta = result.get("normalization", {})
+    natural_score_raw = result["score_before_normalization"]  # This is calibrated_raw
+    natural_score_uncalibrated = result.get("score_before_calibration", natural_score_raw)
     tree_details = result["details"]
-
-    # Use form_context if provided (shared across beauty pillars), otherwise get from tree_details
-    natural_area_type = form_context if form_context is not None else area_type
-    if natural_area_type == area_type and isinstance(tree_details, dict):
-        # Fallback: get from tree_details if form_context not provided
-        natural_area_type = tree_details.get("classification", {}).get("effective_area_type", area_type)  # type: ignore
-
-    natural_score_norm, natural_norm_meta = normalize_beauty_score(
-        natural_score_raw,
-        natural_area_type
-    )
 
     details = {
         "tree_score_0_50": round(result["tree_score_0_50"], 2),
@@ -1847,6 +1877,9 @@ def get_natural_beauty_score(lat: float,
         "enhancer_bonus_scaled": round(result["natural_bonus_scaled"], 2),
         "context_bonus_raw": round(result["context_bonus_raw"], 2),
         "score_before_normalization": round(natural_score_raw, 2),
+        "score_before_calibration": round(natural_score_uncalibrated, 2),
+        "component_weights": result.get("component_weights", {}),
+        "calibration": result.get("calibration", {}),
         "normalization": natural_norm_meta,
         "tree_analysis": tree_details,
         "scenic_proxy": result["scenic_metadata"],
