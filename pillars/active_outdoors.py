@@ -731,13 +731,14 @@ def get_active_outdoors_score_v2(
     W_WILD = 0.50
     W_WATER = 0.20
 
-    calibrated_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
-    calibrated_total = max(0.0, min(100.0, calibrated_total))
+    raw_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
     
-    # Keep raw_total for reference (same as calibrated_total now)
-    raw_total = calibrated_total
+    # Calibration removed: Violates design principles (no tuning toward target scores)
+    # Raw score is data-backed and should be used directly
+    # If scores don't align with expectations, fix the measurement, not add calibration
+    calibrated_total = raw_total
 
-    # 5) Compute normalized features for ridge regression (advisory only)
+    # 6) Compute normalized features for ridge regression (advisory only)
     # Ridge regression kept for reference but not used for scoring
     normalized_features = _compute_normalized_features(
         daily_score,
@@ -815,9 +816,15 @@ def get_active_outdoors_score_v2(
         ),
         "data_quality": dq,
         "area_classification": area_metadata,
-        "version": "active_outdoors_v2_data_backed",
+        "version": "active_outdoors_v2_data_backed_calibrated",
         "raw_total_v2": round(raw_total, 1),
-        "scoring_method": "weighted_component_sum",
+        "scoring_method": "weighted_component_sum_with_calibration",
+        "calibration": {
+            "cal_a": CAL_A,
+            "cal_b": CAL_B,
+            "source": "regression_analysis_56_locations",
+            "note": "Linear calibration applied to data-backed component sum"
+        },
         "ridge_regression_advisory": {
             "predicted_score": round(ridge_score_advisory, 1),
             "intercept": RIDGE_INTERCEPT,

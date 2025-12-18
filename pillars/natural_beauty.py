@@ -64,7 +64,9 @@ ENABLE_COMPONENT_DOMINANCE_GUARD = False  # Phase 2: Prevent single component fr
 ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coastal areas
 
 # Natural context scoring constants.
-TOPOGRAPHY_BONUS_MAX = 12.0
+# Updated: Increased topography max to better capture scenic mountain areas
+# Relief threshold lowered from 600m to 300m in _score_topography_component
+TOPOGRAPHY_BONUS_MAX = 18.0  # Increased from 12.0 to better capture scenic areas
 LANDCOVER_BONUS_MAX = 8.0
 WATER_BONUS_MAX = 40.0  # Increased to make water a primary visual element and prevent capping high-water coastal locations
 NATURAL_CONTEXT_BONUS_CAP = 20.0
@@ -169,46 +171,48 @@ BIODIVERSITY_WEIGHTS = {
 # Area-type-specific context bonus weights
 # Adjusts how much topography, landcover, and water contribute to context bonus
 # Updated to increase water weights reflecting its importance for natural beauty
+# Updated: Increased topography weights to better capture scenic beauty
+# Scenic features (topography, water, landcover) should matter more than tree coverage
 CONTEXT_BONUS_WEIGHTS = {
     "urban_core": {
-        "topography": 0.30,   # Decreased from 0.3 (maintained)
-        "landcover": 0.35,    # Decreased from 0.4
-        "water": 0.35         # Increased from 0.3
+        "topography": 0.5,   # Increased from 0.30 - scenic features matter in urban areas too
+        "landcover": 0.3,    # Decreased from 0.35
+        "water": 0.2         # Decreased from 0.35
     },
     "urban_core_lowrise": {
-        "topography": 0.35,   # Maintained
-        "landcover": 0.30,    # Decreased from 0.4
-        "water": 0.35         # Increased from 0.25
+        "topography": 0.5,   # Increased from 0.35
+        "landcover": 0.3,    # Decreased from 0.30
+        "water": 0.2         # Decreased from 0.35
     },
     "historic_urban": {
-        "topography": 0.35,   # Decreased from 0.4
-        "landcover": 0.30,    # Decreased from 0.35
-        "water": 0.35         # Increased from 0.25
+        "topography": 0.5,   # Increased from 0.35
+        "landcover": 0.3,    # Maintained from 0.30
+        "water": 0.2         # Decreased from 0.35
     },
     "urban_residential": {
-        "topography": 0.25,   # Decreased to prioritize water
-        "landcover": 0.30,    # Decreased to prioritize water
-        "water": 0.45         # CRITICAL: Increased significantly - water as primary visual element
+        "topography": 0.5,   # Increased from 0.25 - scenic features matter
+        "landcover": 0.3,    # Maintained from 0.30
+        "water": 0.2         # Decreased from 0.45
     },
     "suburban": {
-        "topography": 0.30,   # Decreased to prioritize water
-        "landcover": 0.30,    # Decreased to prioritize water
-        "water": 0.40         # CRITICAL: Increased significantly - water as primary visual element
+        "topography": 0.5,   # Increased from 0.30
+        "landcover": 0.3,    # Maintained from 0.30
+        "water": 0.2         # Decreased from 0.40
     },
     "exurban": {
-        "topography": 0.40,   # Decreased from 0.6
-        "landcover": 0.35,    # Increased from 0.25
-        "water": 0.25         # Increased from 0.15
+        "topography": 0.55,  # Increased from 0.40 - topography is key for scenic exurban areas
+        "landcover": 0.3,    # Decreased from 0.35
+        "water": 0.15        # Decreased from 0.25
     },
     "rural": {
-        "topography": 0.45,   # Decreased from 0.65
-        "landcover": 0.35,    # Increased from 0.2
-        "water": 0.20         # Increased from 0.15 (lower priority in rural)
+        "topography": 0.6,   # Increased from 0.45 - topography is critical for scenic rural areas
+        "landcover": 0.25,   # Decreased from 0.35
+        "water": 0.15        # Decreased from 0.20
     },
     "unknown": {
-        "topography": 0.4,
-        "landcover": 0.35,
-        "water": 0.25
+        "topography": 0.5,   # Increased from 0.4
+        "landcover": 0.3,    # Decreased from 0.35
+        "water": 0.2         # Decreased from 0.25
     }
 }
 
@@ -741,7 +745,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         slope_mean = 0.0 if not isinstance(slope_mean, (int, float)) or math.isnan(slope_mean) else max(0.0, slope_mean)
         steep_fraction = 0.0 if not isinstance(steep_fraction, (int, float)) or math.isnan(steep_fraction) else max(0.0, min(1.0, steep_fraction))
 
-        relief_factor = min(1.0, relief / 600.0)  # 600m relief → full credit
+        # Updated: Lower relief threshold (300m instead of 600m) to capture more scenic areas
+        # Many scenic mountain areas have 200-500m relief, not 600m+
+        relief_factor = min(1.0, relief / 300.0)  # 300m relief → full credit (was 600m)
         slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
         steep_factor = min(1.0, max(0.0, (steep_fraction - 0.05) / 0.35))  # >40% steep terrain
 
@@ -1733,24 +1739,26 @@ def calculate_natural_beauty(lat: float,
     # This weights scenic features (topography, water, wilderness) more heavily than urban tree canopy
     # Rationale: Natural beauty is about scenic landscapes, not just tree coverage
     # 
+    # Updated: Reduced tree weight, increased scenic weight to better capture natural beauty
     # Component breakdown:
-    # - Tree score contributes max 20 points (50 * 0.4)
-    # - Scenic bonus contributes max 30 points (18 * 1.67, capped at 30)
+    # - Tree score contributes max 15 points (50 * 0.3) - reduced from 20
+    # - Scenic bonus contributes max 35 points (25 * 2.0, capped at 35) - increased from 30
     # - Total: 0-50 points, scaled to 0-100
-    tree_weighted = tree_score * 0.4  # Reduce tree dominance
-    scenic_weighted = min(30.0, natural_bonus_scaled * 1.67)  # Increase scenic weight, cap at 30
+    # Rationale: Scenic features (topography, water, landcover) should matter more than tree coverage
+    tree_weighted = tree_score * 0.3  # Reduced from 0.4 - trees matter less than scenic beauty
+    scenic_weighted = min(35.0, natural_bonus_scaled * 2.0)  # Increased from 1.67, cap increased to 35
     natural_native = max(0.0, tree_weighted + scenic_weighted)
     natural_score_raw = min(100.0, natural_native * 2.0)  # Scale 0-50 to 0-100
     
-    # Apply linear calibration from regression analysis (176 locations)
-    # Calibration aligns data-backed scores with target scores
-    # Source: analysis/natural_beauty_calibration_results.json (Perplexity target scores)
-    # Updated: Using new component weights (tree_weight=0.4, scenic_weight=1.67)
-    CAL_A = 0.338540  # From regression analysis (improved from 0.131710)
-    CAL_B = 44.908689  # From regression analysis (improved from 53.223394)
-    
-    calibrated_raw = CAL_A * natural_score_raw + CAL_B
-    calibrated_raw = max(0.0, min(100.0, calibrated_raw))
+    # Calibration: Temporarily disabled pending re-calculation with fixed raw scores
+    # After fixing topography scoring and component weights, we need to:
+    # 1. Re-collect calibration data with new raw score formula
+    # 2. Re-calculate calibration parameters
+    # 3. If R² improves significantly, apply calibration; otherwise remove it
+    # 
+    # For now, use raw score directly (no calibration) to see impact of fixes
+    # This aligns with data-backed principles: fix the measurement, not the calibration
+    calibrated_raw = natural_score_raw
     
     # Ridge regression score (advisory only, kept for reference)
     ridge_score = _compute_ridge_regression_score(normalized_features)
@@ -1825,10 +1833,13 @@ def calculate_natural_beauty(lat: float,
             "scenic_max_contribution": 30.0
         },
         "calibration": {
-            "cal_a": CAL_A,
-            "cal_b": CAL_B,
+            "cal_a": None,  # Temporarily disabled - calibration removed pending re-calculation
+            "cal_b": None,
+            "area_type": area_type,
+            "calibration_type": "none",
             "raw_score": natural_score_raw,
-            "calibrated_score": calibrated_raw
+            "calibrated_score": calibrated_raw,
+            "note": "Calibration temporarily disabled. After fixing raw score calculation (topography, component weights), will re-collect data and re-calculate calibration parameters."
         },
         "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,

@@ -240,7 +240,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         "data_quality": quality_metrics,
         "version": "neighborhood_amenities_v2_calibrated",
         "raw_total": round(raw_total, 1),
-        "calibration": {"a": CAL_A, "b": CAL_B},
+        "calibration": {"a": None, "b": None, "note": "Calibration removed - using pure data-backed scoring per design principles"},
         "diagnostics": {
             "total_businesses": len(all_businesses),
             "businesses_within_walkable": len(nearby),

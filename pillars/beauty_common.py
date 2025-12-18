@@ -16,8 +16,9 @@ AREA_NORMALIZATION: Dict[str, Dict[str, float]] = {
 }
 
 # Enhancer caps used by both beauty sub-pillars.
+# Updated: Increased natural enhancer cap to allow scenic features to contribute more
 BUILT_ENHANCER_CAP = 8.0
-NATURAL_ENHANCER_CAP = 18.0
+NATURAL_ENHANCER_CAP = 25.0  # Increased from 18.0 to better capture scenic beauty
 BEAUTY_BONUS_CAP = BUILT_ENHANCER_CAP + NATURAL_ENHANCER_CAP
 
 
