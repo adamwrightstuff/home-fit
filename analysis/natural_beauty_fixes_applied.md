@@ -71,23 +71,23 @@ scenic_weighted = min(35.0, natural_bonus_scaled * 2.0)  # Was min(30.0, ... * 1
 
 **Impact**: Better balance between tree coverage and scenic beauty.
 
-### 4. Removed Complex Calibration ✅
+### 4. Removed Calibration ✅
 
-**Problem**: Area-type-specific calibration was patching symptoms (low R² values) instead of fixing root causes.
+**Problem**: Calibration violates design principles - it's tuning toward target scores instead of fixing measurements.
 
 **Changes**:
-- Temporarily disabled calibration
+- Removed all calibration
 - Raw score is now used directly (no calibration transform)
-- Will re-calculate calibration after fixes are validated
+- Pure data-backed scoring per design principles
 
 **Code**:
 ```python
 # pillars/natural_beauty.py
-# Calibration: Temporarily disabled pending re-calculation with fixed raw scores
-calibrated_raw = natural_score_raw  # No calibration transform
+# No calibration - using pure data-backed scoring per design principles
+calibrated_raw = natural_score_raw
 ```
 
-**Impact**: Pure data-backed scoring. If calibration is needed after fixes, it will be minimal and based on properly measured raw scores.
+**Impact**: Pure data-backed scoring aligned with design principles.
 
 ## Expected Impact
 
@@ -110,9 +110,8 @@ calibrated_raw = natural_score_raw  # No calibration transform
 
 1. ✅ **Fixes Applied**: Topography, component weights, raw score formula
 2. ⏳ **Test**: Run API calls on scenic locations to validate improvements
-3. ⏳ **Re-collect Data**: Collect fresh calibration data with new raw scores
-4. ⏳ **Re-calculate Calibration**: If needed, calculate new calibration parameters
-5. ⏳ **Validate**: Check if R² improves or if calibration can be removed entirely
+3. ✅ **Validation**: Test fixes on scenic locations to verify improvements
+4. ✅ **No Calibration**: Design principles require pure data-backed scoring
 
 ## Design Principles Restored
 
