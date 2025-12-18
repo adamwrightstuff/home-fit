@@ -34,7 +34,89 @@ def get_housing_value_score(lat: float, lon: float,
 
     if housing_data is None:
         print("⚠️  Housing data unavailable")
-        return 0, _empty_breakdown()
+        # Still assess data quality even when data is missing
+        # Use pre-computed density if provided, otherwise fetch
+        if density is None:
+            density = census_api.get_population_density(lat, lon) or 0.0
+        
+        # Detect actual area type for data quality assessment
+        area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+        quality_metrics = data_quality.assess_pillar_data_quality('housing_value', {}, lat, lon, area_type)
+        
+        # FALLBACK SCORING: Apply conservative minimum scores for urban/suburban areas
+        # when Census API fails or returns incomplete data
+        # This handles Census data gaps similar to neighborhood_amenities and healthcare_access
+        is_urban_suburban = (
+            area_type in ("urban_core", "urban_residential", "suburban") or 
+            (density and density > 1500)
+        )
+        
+        if is_urban_suburban:
+            # Apply conservative fallback scores based on area type and density
+            # Urban areas typically have higher prices (lower affordability) but better space/efficiency
+            # Conservative scores reflect typical urban housing characteristics
+            fallback_scores = {
+                "urban_core": {
+                    "affordability": 15.0,  # Urban cores are expensive (lower affordability)
+                    "space": 20.0,  # Moderate space (apartments/condos)
+                    "efficiency": 10.0,  # Moderate efficiency
+                },
+                "urban_residential": {
+                    "affordability": 20.0,
+                    "space": 22.0,
+                    "efficiency": 12.0,
+                },
+                "suburban": {
+                    "affordability": 25.0,  # Suburbs more affordable
+                    "space": 25.0,  # More space (houses)
+                    "efficiency": 15.0,  # Better efficiency
+                },
+            }
+            
+            # Determine fallback based on area_type or density
+            if area_type in fallback_scores:
+                fallback = fallback_scores[area_type]
+            elif density and density > 5000:
+                fallback = fallback_scores["urban_core"]
+            elif density and density > 2000:
+                fallback = fallback_scores["urban_residential"]
+            elif density and density > 1500:
+                fallback = fallback_scores["suburban"]
+            else:
+                fallback = None
+            
+            if fallback:
+                fallback_total = fallback["affordability"] + fallback["space"] + fallback["efficiency"]
+                
+                print(f"   📊 Applying fallback score {fallback_total:.1f} for {area_type or 'unknown'} area (Census API unavailable)")
+                
+                return fallback_total, {
+                    "score": round(fallback_total, 1),
+                    "breakdown": {
+                        "local_affordability": round(fallback["affordability"], 1),
+                        "space": round(fallback["space"], 1),
+                        "value_efficiency": round(fallback["efficiency"], 1)
+                    },
+                    "summary": {
+                        "median_home_value": 0,
+                        "median_household_income": 0,
+                        "median_rooms": 0,
+                        "price_to_income_ratio": 0,
+                        "cost_per_room": 0,
+                        "housing_type": "Unknown",
+                        "affordability_rating": "Unknown",
+                        "fallback_applied": True,
+                        "fallback_reason": f"Census API unavailable for {area_type or 'unknown'} area"
+                    },
+                    "data_quality": quality_metrics,
+                    "area_classification": {}
+                }
+        
+        # Return empty breakdown with proper data quality assessment
+        empty_breakdown = _empty_breakdown()
+        empty_breakdown["data_quality"] = quality_metrics
+        empty_breakdown["area_classification"] = {}
+        return 0, empty_breakdown
 
     median_value = housing_data["median_home_value"]
     median_income = housing_data["median_household_income"]
@@ -81,7 +163,8 @@ def get_housing_value_score(lat: float, lon: float,
             "value_efficiency": round(efficiency_score, 1)
         },
         "summary": _build_summary(median_value, median_income, median_rooms),
-        "data_quality": quality_metrics
+        "data_quality": quality_metrics,
+        "area_classification": {}
     }
 
     # Log results
@@ -299,5 +382,7 @@ def _empty_breakdown() -> Dict:
             "cost_per_room": 0,
             "housing_type": "Unknown",
             "affordability_rating": "Unknown"
-        }
+        },
+        "data_quality": {},
+        "area_classification": {}
     }
