@@ -820,10 +820,10 @@ def get_active_outdoors_score_v2(
         "raw_total_v2": round(raw_total, 1),
         "scoring_method": "weighted_component_sum_with_calibration",
         "calibration": {
-            "cal_a": CAL_A,
-            "cal_b": CAL_B,
-            "source": "regression_analysis_56_locations",
-            "note": "Linear calibration applied to data-backed component sum"
+            "cal_a": None,
+            "cal_b": None,
+            "source": None,
+            "note": "Calibration removed - using pure data-backed scoring per design principles"
         },
         "ridge_regression_advisory": {
             "predicted_score": round(ridge_score_advisory, 1),
