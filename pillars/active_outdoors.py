@@ -818,7 +818,7 @@ def get_active_outdoors_score_v2(
         "area_classification": area_metadata,
         "version": "active_outdoors_v2_data_backed_calibrated",
         "raw_total_v2": round(raw_total, 1),
-        "scoring_method": "weighted_component_sum_with_calibration",
+        "scoring_method": "weighted_component_sum",
         "calibration": {
             "cal_a": None,
             "cal_b": None,
