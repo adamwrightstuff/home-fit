@@ -1122,7 +1122,7 @@ def _score_wild_adventure_v2(
             exp_near = 15.0  # Calibrated: increased trail expectations
             exp_canopy = 45.0  # Calibrated: higher canopy expectation for rural
             # Increased max contributions to allow mountain towns to reach 40-45/50 for Wild Adventure
-            # This enables high scores when combined with Daily Urban and Waterfront
+            # This enables them to reach target scores of 90-95 when combined with Daily Urban and Waterfront
             max_trails_total, max_trails_near, max_canopy = 28.0, 18.0, 14.0  # Increased for mountain towns
         else:
             exp_trails = max(40.0, exp_trails_15km * 20.0)  # Scale up, increased for mountain towns
@@ -1335,7 +1335,7 @@ def _detect_special_contexts(
         # - If high count in non-dense urban, reliable signal
         if is_dense_urban:
             # RESEARCH-BACKED: For dense urban cores, require higher canopy to prevent false positives
-            # Times Square (calibration coords): 102 trails, 8.9% canopy → should NOT be detected
+            # Times Square example: 102 trails, 8.9% canopy → should NOT be detected
             # Denver: 65 trails, 8.2% canopy → should be detected (legitimate mountain city)
             # 
             # Detection strategy:
