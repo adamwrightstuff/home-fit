@@ -1,0 +1,302 @@
+{
+  "pillar": "public_transit_access",
+  "statistics": {
+    "count": 177,
+    "mean": 64.92598870056497,
+    "median": 70.8,
+    "std": 28.40533295715176,
+    "min": 0.0,
+    "max": 99.4,
+    "q25": 39.6,
+    "q75": 91.3,
+    "q10": 28.060000000000002,
+    "q90": 94.8,
+    "skewness": -0.6683063317762538,
+    "kurtosis": 2.348511459385125
+  },
+  "high_outliers": [],
+  "low_outliers": [
+    {
+      "location": "Decatur GA",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 30.9038252,
+      "lon": -84.5754768,
+      "city": "",
+      "state": "Georgia",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 46.36,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Marfa TX",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 30.3117621,
+      "lon": -104.023146,
+      "city": "Marfa",
+      "state": "Texas",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 39.67,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Oxford MS",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 34.3663773,
+      "lon": -89.5187664,
+      "city": "Oxford",
+      "state": "Mississippi",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 45.09,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Homer AK",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 59.6454064,
+      "lon": -151.5445643,
+      "city": "Homer",
+      "state": "Alaska",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 47.08,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Seward AK",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 60.1013952,
+      "lon": -149.4404281,
+      "city": "Seward",
+      "state": "Alaska",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 43.77,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Kalispell MT",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 48.202158,
+      "lon": -114.315321,
+      "city": "Kalispell",
+      "state": "Montana",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 49.14,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "St Augustine FL",
+      "score": 0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 29.8946952,
+      "lon": -81.3145395,
+      "city": "Saint Augustine",
+      "state": "Florida",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 41.72,
+      "z_score": -2.285697154069733
+    },
+    {
+      "location": "Manhattan Beach CA",
+      "score": 2.9,
+      "weight": 11.0,
+      "contribution": 0.32,
+      "lat": 33.8872777,
+      "lon": -118.4104324,
+      "city": "Manhattan Beach",
+      "state": "California",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 62.77,
+      "z_score": -2.1836036491502684
+    },
+    {
+      "location": "Downtown Lancaster PA",
+      "score": 4.2,
+      "weight": 11.0,
+      "contribution": 0.46,
+      "lat": 40.1785869,
+      "lon": -76.1776992,
+      "city": "Ephrata",
+      "state": "Pennsylvania",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 50.43,
+      "z_score": -2.1378375952208533
+    }
+  ],
+  "category_stats": {
+    "by_area_type": {},
+    "by_state": {
+      "Michigan": {
+        "count": 3,
+        "mean": 83.3,
+        "std": 14.357112058720816
+      },
+      "Tennessee": {
+        "count": 6,
+        "mean": 69.63333333333334,
+        "std": 22.577619203292645
+      },
+      "Pennsylvania": {
+        "count": 8,
+        "mean": 69.1875,
+        "std": 27.50679177494169
+      },
+      "Minnesota": {
+        "count": 3,
+        "mean": 68.06666666666666,
+        "std": 25.84070862461442
+      },
+      "Washington": {
+        "count": 10,
+        "mean": 69.25999999999999,
+        "std": 27.673062714488253
+      },
+      "Ohio": {
+        "count": 9,
+        "mean": 67.64444444444445,
+        "std": 23.201729394887362
+      },
+      "Maryland": {
+        "count": 3,
+        "mean": 93.76666666666667,
+        "std": 1.635712552851373
+      },
+      "Florida": {
+        "count": 9,
+        "mean": 56.111111111111114,
+        "std": 29.485531082377957
+      },
+      "Illinois": {
+        "count": 3,
+        "mean": 76.43333333333334,
+        "std": 15.4558151587751
+      },
+      "Colorado": {
+        "count": 6,
+        "mean": 79.1,
+        "std": 30.82477358662455
+      },
+      "California": {
+        "count": 22,
+        "mean": 62.45454545454545,
+        "std": 28.40233228695917
+      },
+      "Oregon": {
+        "count": 7,
+        "mean": 57.95714285714285,
+        "std": 26.56726541887092
+      },
+      "Massachusetts": {
+        "count": 4,
+        "mean": 73.3,
+        "std": 25.165353166605865
+      },
+      "Georgia": {
+        "count": 7,
+        "mean": 49.32857142857143,
+        "std": 26.394031483636294
+      },
+      "North Carolina": {
+        "count": 6,
+        "mean": 69.85000000000001,
+        "std": 22.518936475775227
+      },
+      "Idaho": {
+        "count": 6,
+        "mean": 48.666666666666664,
+        "std": 24.855627576511164
+      },
+      "Montana": {
+        "count": 5,
+        "mean": 44.239999999999995,
+        "std": 31.12636181759763
+      },
+      "Texas": {
+        "count": 10,
+        "mean": 53.54,
+        "std": 31.886429715476144
+      },
+      "New Mexico": {
+        "count": 3,
+        "mean": 84.89999999999999,
+        "std": 11.919731540601074
+      },
+      "Virginia": {
+        "count": 7,
+        "mean": 80.91428571428571,
+        "std": 8.552598363977474
+      },
+      "Utah": {
+        "count": 2,
+        "mean": 45.45,
+        "std": 17.349999999999998
+      },
+      "Vermont": {
+        "count": 2,
+        "mean": 69.95,
+        "std": 1.25
+      },
+      "Maine": {
+        "count": 2,
+        "mean": 84.05,
+        "std": 8.049999999999997
+      },
+      "New York": {
+        "count": 9,
+        "mean": 86.24444444444445,
+        "std": 18.297243940071116
+      },
+      "South Carolina": {
+        "count": 3,
+        "mean": 52.06666666666666,
+        "std": 9.127735510823895
+      },
+      "Alaska": {
+        "count": 3,
+        "mean": 23.599999999999998,
+        "std": 33.37544007200504
+      },
+      "Hawaii": {
+        "count": 2,
+        "mean": 89.15,
+        "std": 4.149999999999999
+      },
+      "Arizona": {
+        "count": 3,
+        "mean": 56.133333333333326,
+        "std": 22.479966389852297
+      },
+      "Kentucky": {
+        "count": 2,
+        "mean": 39.6,
+        "std": 0.0
+      },
+      "Rhode Island": {
+        "count": 2,
+        "mean": 92.3,
+        "std": 0.29999999999999716
+      }
+    }
+  },
+  "location_count": 177
+}

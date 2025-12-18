@@ -1,0 +1,344 @@
+{
+  "pillar": "built_beauty",
+  "statistics": {
+    "count": 177,
+    "mean": 75.8406779661017,
+    "median": 82.5,
+    "std": 20.21913105346793,
+    "min": 0.0,
+    "max": 87.80000000000001,
+    "q25": 76.8,
+    "q75": 83.80000000000001,
+    "q10": 75.52,
+    "q90": 84.4,
+    "skewness": -3.296268166065708,
+    "kurtosis": 12.2487092169153
+  },
+  "high_outliers": [],
+  "low_outliers": [
+    {
+      "location": "Ballston Arlington VA",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 38.8820057,
+      "lon": -77.1115141,
+      "city": "Arlington",
+      "state": "Virginia",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 67.09,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Ballard Seattle WA",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 47.6765073,
+      "lon": -122.3862233,
+      "city": "Seattle",
+      "state": "Washington",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 53.89,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Bar Harbor ME",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 44.3876378,
+      "lon": -68.2043361,
+      "city": "Bar Harbor",
+      "state": "Maine",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 48.03,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "College Hill Providence RI",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 41.8303719,
+      "lon": -71.4013695,
+      "city": "Providence",
+      "state": "Rhode Island",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 58.68,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Newburyport MA",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 42.8116592,
+      "lon": -70.8719271,
+      "city": "Newburyport",
+      "state": "Massachusetts",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 41.42,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Historic Kenwood St Petersburg FL",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 27.7774873,
+      "lon": -82.6616149,
+      "city": "Saint Petersburg",
+      "state": "Florida",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 65.43,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Downtown Sarasota FL",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 27.3364239,
+      "lon": -82.5426467,
+      "city": "Sarasota",
+      "state": "Florida",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 45.44,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Grandview Heights OH",
+      "score": 0.0,
+      "weight": 11.0,
+      "contribution": 0.0,
+      "lat": 39.9797863,
+      "lon": -83.0407403,
+      "city": "Grandview Heights",
+      "state": "Ohio",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 57.94,
+      "z_score": -3.7509365642641557
+    },
+    {
+      "location": "Rapid City SD",
+      "score": 5.0,
+      "weight": 11.0,
+      "contribution": 0.55,
+      "lat": 44.0806041,
+      "lon": -103.228023,
+      "city": "Rapid City",
+      "state": "South Dakota",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 52.78,
+      "z_score": -3.503646016179874
+    },
+    {
+      "location": "Ohio City Cleveland OH",
+      "score": 5.5,
+      "weight": 11.0,
+      "contribution": 0.6,
+      "lat": 41.4853003,
+      "lon": -81.7099488,
+      "city": "Cleveland",
+      "state": "Ohio",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 62.63,
+      "z_score": -3.478916961371446
+    },
+    {
+      "location": "Old Town Alexandria VA",
+      "score": 6.0,
+      "weight": 11.0,
+      "contribution": 0.66,
+      "lat": 38.8065306,
+      "lon": -77.0610459,
+      "city": "Alexandria",
+      "state": "Virginia",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 65.22,
+      "z_score": -3.4541879065630177
+    },
+    {
+      "location": "Saratoga Springs NY",
+      "score": 6.0,
+      "weight": 11.0,
+      "contribution": 0.66,
+      "lat": 43.0821793,
+      "lon": -73.7853915,
+      "city": "City of Saratoga Springs",
+      "state": "New York",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 35.18,
+      "z_score": -3.4541879065630177
+    }
+  ],
+  "category_stats": {
+    "by_area_type": {},
+    "by_state": {
+      "Michigan": {
+        "count": 3,
+        "mean": 83.53333333333333,
+        "std": 0.33993463423952197
+      },
+      "Tennessee": {
+        "count": 6,
+        "mean": 81.11666666666667,
+        "std": 3.8723019280813107
+      },
+      "Pennsylvania": {
+        "count": 8,
+        "mean": 80.5375,
+        "std": 3.5372791450491996
+      },
+      "Minnesota": {
+        "count": 3,
+        "mean": 80.73333333333333,
+        "std": 3.7747700445045447
+      },
+      "Washington": {
+        "count": 10,
+        "mean": 74.03,
+        "std": 24.737301793041212
+      },
+      "Ohio": {
+        "count": 9,
+        "mean": 63.67777777777777,
+        "std": 32.666761148767364
+      },
+      "Maryland": {
+        "count": 3,
+        "mean": 83.56666666666666,
+        "std": 0.04714045207910049
+      },
+      "Florida": {
+        "count": 9,
+        "mean": 62.800000000000004,
+        "std": 33.69296002959009
+      },
+      "Illinois": {
+        "count": 3,
+        "mean": 84.10000000000001,
+        "std": 1.4306175822583345
+      },
+      "Colorado": {
+        "count": 6,
+        "mean": 80.28333333333335,
+        "std": 3.6089780024575115
+      },
+      "California": {
+        "count": 22,
+        "mean": 81.56818181818181,
+        "std": 3.6781154220403764
+      },
+      "Oregon": {
+        "count": 7,
+        "mean": 82.47142857142856,
+        "std": 1.9054165541681316
+      },
+      "Massachusetts": {
+        "count": 4,
+        "mean": 62.275000000000006,
+        "std": 35.966746794782544
+      },
+      "Georgia": {
+        "count": 7,
+        "mean": 79.65714285714286,
+        "std": 3.6425490065757713
+      },
+      "North Carolina": {
+        "count": 6,
+        "mean": 82.61666666666667,
+        "std": 1.188018892479783
+      },
+      "Idaho": {
+        "count": 6,
+        "mean": 79.0,
+        "std": 4.0365001341921625
+      },
+      "Montana": {
+        "count": 5,
+        "mean": 77.58,
+        "std": 1.8004443895883033
+      },
+      "Texas": {
+        "count": 10,
+        "mean": 81.6,
+        "std": 3.4111581610942654
+      },
+      "New Mexico": {
+        "count": 3,
+        "mean": 83.56666666666668,
+        "std": 0.3299831645537235
+      },
+      "Virginia": {
+        "count": 7,
+        "mean": 58.45714285714286,
+        "std": 35.22007776185369
+      },
+      "Utah": {
+        "count": 2,
+        "mean": 80.0,
+        "std": 3.1999999999999957
+      },
+      "Vermont": {
+        "count": 2,
+        "mean": 78.75,
+        "std": 3.950000000000003
+      },
+      "Maine": {
+        "count": 2,
+        "mean": 37.7,
+        "std": 37.7
+      },
+      "New York": {
+        "count": 9,
+        "mean": 74.19999999999999,
+        "std": 24.329771428802566
+      },
+      "South Carolina": {
+        "count": 3,
+        "mean": 81.53333333333332,
+        "std": 3.091206165165228
+      },
+      "Alaska": {
+        "count": 3,
+        "mean": 79.39999999999999,
+        "std": 2.5781130050226038
+      },
+      "Hawaii": {
+        "count": 2,
+        "mean": 78.45,
+        "std": 1.75
+      },
+      "Arizona": {
+        "count": 3,
+        "mean": 83.13333333333334,
+        "std": 2.2291004663067326
+      },
+      "Kentucky": {
+        "count": 2,
+        "mean": 79.25,
+        "std": 1.1500000000000057
+      },
+      "Rhode Island": {
+        "count": 2,
+        "mean": 42.099999999999994,
+        "std": 42.099999999999994
+      }
+    }
+  },
+  "location_count": 177
+}

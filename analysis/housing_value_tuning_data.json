@@ -1,0 +1,331 @@
+{
+  "pillar": "housing_value",
+  "statistics": {
+    "count": 177,
+    "mean": 42.985310734463276,
+    "median": 40.3,
+    "std": 16.412603984018272,
+    "min": 0.0,
+    "max": 85.0,
+    "q25": 33.5,
+    "q75": 54.0,
+    "q10": 26.08,
+    "q90": 65.0,
+    "skewness": -0.23191658335950663,
+    "kurtosis": 3.5971184579052946
+  },
+  "high_outliers": [
+    {
+      "location": "Shadyside Pittsburgh PA",
+      "score": 85.0,
+      "weight": 12.0,
+      "contribution": 10.2,
+      "lat": 40.4418068,
+      "lon": -79.8819609,
+      "city": "Pittsburgh",
+      "state": "Pennsylvania",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 64.79,
+      "z_score": 2.559903919356637
+    },
+    {
+      "location": "Highlands Louisville KY",
+      "score": 80.0,
+      "weight": 12.0,
+      "contribution": 9.6,
+      "lat": 38.2272929,
+      "lon": -85.7082949,
+      "city": "Louisville",
+      "state": "Kentucky",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 61.0,
+      "z_score": 2.255260000276597
+    },
+    {
+      "location": "Midtown Harrisburg PA",
+      "score": 80.0,
+      "weight": 12.0,
+      "contribution": 9.6,
+      "lat": 40.2736071,
+      "lon": -76.8902078,
+      "city": "Harrisburg",
+      "state": "Pennsylvania",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 66.75,
+      "z_score": 2.255260000276597
+    }
+  ],
+  "low_outliers": [
+    {
+      "location": "Brickell Miami FL",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 25.7633616,
+      "lon": -80.1955103,
+      "city": "Miami",
+      "state": "Florida",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 66.68,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Wynwood Miami FL",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 25.8014116,
+      "lon": -80.1990871,
+      "city": "Miami",
+      "state": "Florida",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 67.97,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Oxford MS",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 34.3663773,
+      "lon": -89.5187664,
+      "city": "Oxford",
+      "state": "Mississippi",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 45.09,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Washington Heights Manhattan NY",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 40.8401984,
+      "lon": -73.9402214,
+      "city": "City of New York",
+      "state": "New York",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 69.48,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Athens GA",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 33.9597677,
+      "lon": -83.376398,
+      "city": "Athens",
+      "state": "Georgia",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 52.69,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Ketchum ID",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 43.680741,
+      "lon": -114.363662,
+      "city": "Ketchum",
+      "state": "Idaho",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 43.53,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Downtown Madison WI",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 43.0748562,
+      "lon": -89.3925138,
+      "city": "Madison",
+      "state": "Wisconsin",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 61.19,
+      "z_score": -2.6190427050040386
+    },
+    {
+      "location": "Jackson WY",
+      "score": 0,
+      "weight": 12.0,
+      "contribution": 0.0,
+      "lat": 51.3501021,
+      "lon": -0.2871127,
+      "city": "Epsom and Ewell",
+      "state": "England",
+      "area_type": null,
+      "location_scope": null,
+      "total_score": 51.92,
+      "z_score": -2.6190427050040386
+    }
+  ],
+  "category_stats": {
+    "by_area_type": {},
+    "by_state": {
+      "Michigan": {
+        "count": 3,
+        "mean": 40.266666666666666,
+        "std": 11.922341306229335
+      },
+      "Tennessee": {
+        "count": 6,
+        "mean": 46.916666666666664,
+        "std": 13.60985141563109
+      },
+      "Pennsylvania": {
+        "count": 8,
+        "mean": 68.125,
+        "std": 10.288798520721455
+      },
+      "Minnesota": {
+        "count": 3,
+        "mean": 57.96666666666667,
+        "std": 4.195500235040182
+      },
+      "Washington": {
+        "count": 10,
+        "mean": 38.95,
+        "std": 10.291185548808263
+      },
+      "Ohio": {
+        "count": 9,
+        "mean": 55.35555555555556,
+        "std": 13.002402437080713
+      },
+      "Maryland": {
+        "count": 3,
+        "mean": 50.633333333333326,
+        "std": 6.561673228343176
+      },
+      "Florida": {
+        "count": 9,
+        "mean": 38.86666666666667,
+        "std": 23.012267259973417
+      },
+      "Illinois": {
+        "count": 3,
+        "mean": 48.9,
+        "std": 1.5556349186104033
+      },
+      "Colorado": {
+        "count": 6,
+        "mean": 35.86666666666667,
+        "std": 5.743885637982552
+      },
+      "California": {
+        "count": 22,
+        "mean": 32.8909090909091,
+        "std": 6.621721081610477
+      },
+      "Oregon": {
+        "count": 7,
+        "mean": 46.75714285714286,
+        "std": 8.61839513447124
+      },
+      "Massachusetts": {
+        "count": 4,
+        "mean": 37.35,
+        "std": 5.341582162618113
+      },
+      "Georgia": {
+        "count": 7,
+        "mean": 47.45714285714285,
+        "std": 22.773597315616993
+      },
+      "North Carolina": {
+        "count": 6,
+        "mean": 51.21666666666667,
+        "std": 12.505787549059924
+      },
+      "Idaho": {
+        "count": 6,
+        "mean": 38.333333333333336,
+        "std": 18.633899812498246
+      },
+      "Montana": {
+        "count": 5,
+        "mean": 44.54,
+        "std": 5.913239382944004
+      },
+      "Texas": {
+        "count": 10,
+        "mean": 46.21,
+        "std": 14.591535217378603
+      },
+      "New Mexico": {
+        "count": 3,
+        "mean": 49.333333333333336,
+        "std": 14.636332266733433
+      },
+      "Virginia": {
+        "count": 7,
+        "mean": 47.42857142857142,
+        "std": 7.497754765969094
+      },
+      "Utah": {
+        "count": 2,
+        "mean": 39.3,
+        "std": 0.1999999999999993
+      },
+      "Vermont": {
+        "count": 2,
+        "mean": 49.7,
+        "std": 15.3
+      },
+      "Maine": {
+        "count": 2,
+        "mean": 41.2,
+        "std": 8.8
+      },
+      "New York": {
+        "count": 9,
+        "mean": 29.45555555555556,
+        "std": 15.110637247472106
+      },
+      "South Carolina": {
+        "count": 3,
+        "mean": 37.93333333333333,
+        "std": 8.157750234524766
+      },
+      "Alaska": {
+        "count": 3,
+        "mean": 58.333333333333336,
+        "std": 4.714045207910317
+      },
+      "Hawaii": {
+        "count": 2,
+        "mean": 34.4,
+        "std": 0.6000000000000014
+      },
+      "Arizona": {
+        "count": 3,
+        "mean": 36.03333333333333,
+        "std": 4.266406242052229
+      },
+      "Kentucky": {
+        "count": 2,
+        "mean": 62.5,
+        "std": 17.5
+      },
+      "Rhode Island": {
+        "count": 2,
+        "mean": 62.0,
+        "std": 8.0
+      }
+    }
+  },
+  "location_count": 177
+}
