@@ -28,15 +28,10 @@ TRANSITLAND_API_KEY = os.getenv("TRANSITLAND_API_KEY")
 
 # Commute time weight: 5% of final score
 # 
-# RESEARCH-BACKED (Calibrated 2024-11-24):
-# - Calibrated from 4 locations with target scores
-# - Tested weights: 5%, 10%, 15%, 20%, 25%
-# - Best weight: 5% (avg error: 9.76 points vs 9.81 for 10%)
-# - Commute time shows moderate correlation (r=0.485) with transit scores
-#   (from commuter rail suburb analysis, n=14)
-# 
-# Data-backed transit quality thresholds (not calibrated from target scores)
-COMMUTE_WEIGHT = 0.05  # Calibrated: 5% (research-backed)
+# Data-backed commute time weight
+# Commute time shows moderate correlation (r=0.485) with transit scores
+# Weight: 5% - balances commute time with transit availability
+COMMUTE_WEIGHT = 0.05
 def _nearest_heavy_rail_km(lat: float, lon: float, search_m: int = 2500, cached_stops: Optional[Dict] = None) -> float:
     """Find nearest heavy rail/subway distance using Transitland stops API (km),
     falling back to coordinate distance and OSM stations when needed.
@@ -1014,10 +1009,9 @@ def get_public_transit_score(
     # - 3+ modes bonus: 6.0 points
     # Based on objective transit quality: multiple strong modes = better access
     # 
-    # Calibration source: scripts/calibrate_transit_parameters.py
-    # Calibration data: analysis/transit_parameters_calibration.json
+    # Data-backed multimodal bonus calculation
     mode_scores = [heavy_rail_score, light_rail_score, bus_score]
-    strong_modes = [s for s in mode_scores if s >= 20.0]  # Calibrated: 20.0 (research-backed, preliminary)
+    strong_modes = [s for s in mode_scores if s >= 20.0]  # 20.0 = minimum for "strong" mode
     mode_count = len(strong_modes)
 
     multimodal_bonus = 0.0

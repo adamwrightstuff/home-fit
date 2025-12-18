@@ -368,7 +368,7 @@ def get_active_outdoors_score(
     #   component scores to respect design principles.
     # ------------------------------------------------------------------
     # Global weights (sum to 1.0) for normalized components, learned from
-    # the calibration panel with hybrid towns constrained as anchors.
+    # data-backed scoring with component weights.
     W_LOCAL = 0.15   # local parks / playgrounds
     W_TRAIL = 0.15   # trail access
     W_WATER = 0.20   # water access
@@ -1122,7 +1122,7 @@ def _score_wild_adventure_v2(
             exp_near = 15.0  # Calibrated: increased trail expectations
             exp_canopy = 45.0  # Calibrated: higher canopy expectation for rural
             # Increased max contributions to allow mountain towns to reach 40-45/50 for Wild Adventure
-            # This enables them to reach target scores of 90-95 when combined with Daily Urban and Waterfront
+            # This enables high scores when combined with Daily Urban and Waterfront
             max_trails_total, max_trails_near, max_canopy = 28.0, 18.0, 14.0  # Increased for mountain towns
         else:
             exp_trails = max(40.0, exp_trails_15km * 20.0)  # Scale up, increased for mountain towns

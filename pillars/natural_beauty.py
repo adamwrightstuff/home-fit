@@ -55,7 +55,7 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     street_tree_api = None  # type: ignore
 
-# Feature flags for new calibration features
+# Feature flags for natural beauty scoring features
 # Set to False to disable new features for rollback capability
 ENABLE_CANOPY_SATURATION = True  # Reduce returns above 50% canopy
 ENABLE_WATER_TYPE_DIFF = False  # Disabled until OSM water type data validated
