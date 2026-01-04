@@ -1176,7 +1176,6 @@ def get_livability_score(request: Request,
         # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
         if not test_mode_enabled:
             from data_sources.cache import _redis_client, _cache, _cache_ttl
-            import json
             
             cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
             # Differentiated cache TTL based on data stability
@@ -1999,7 +1998,6 @@ def get_livability_score(request: Request,
         if not test_mode_enabled:
             try:
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
-                import json
                 
                 cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
                 request_cache_ttl = 300  # 5 minutes for request-level cache
