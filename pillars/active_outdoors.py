@@ -103,7 +103,7 @@ ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE = {
     },
 }
 
-# Min-max values for normalization (from expected_values_summary.csv)
+# Min-max values for normalization (from research-backed expected values)
 ACTIVE_OUTDOORS_FEATURE_RANGES = {
     "daily": {"min": 0.0, "max": 30.0},           # Daily score range
     "wild": {"min": 0.0, "max": 50.0},            # Wild score range

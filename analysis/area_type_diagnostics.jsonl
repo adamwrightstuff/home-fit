@@ -493,3 +493,48 @@
 {"location": "(unknown)", "density": 16119.608072063009, "city": null, "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
 {"location": "(unknown)", "density": 6087.135382970943, "city": null, "business_count": 168, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
 {"location": "(unknown)", "density": 2727.0039548062073, "city": null, "business_count": 165, "built_coverage": 0.143, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 9711.340474717546, "city": "48226", "business_count": null, "built_coverage": 0.175, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 9711.340474717546, "city": "Detroit", "business_count": 195, "built_coverage": 0.175, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
+{"location": "(unknown)", "density": 6980.278853298916, "city": "Memphis", "business_count": 34, "built_coverage": 0.162, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 13767.53020679227, "city": "Pittsburgh", "business_count": 59, "built_coverage": 0.209, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 15355.723821715013, "city": "Minneapolis", "business_count": 101, "built_coverage": 0.233, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 34072.206595749674, "city": "Seattle", "business_count": 217, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 14179.640718562874, "city": "Seattle", "business_count": 171, "built_coverage": 0.205, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 18184.37566753858, "city": "Cincinnati", "business_count": null, "built_coverage": 0.207, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 8472.649153334918, "city": "Columbus", "business_count": 187, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 5369.672266652935, "city": "Baltimore", "business_count": 137, "built_coverage": 0.149, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 14943.540161624209, "city": "Baltimore", "business_count": 237, "built_coverage": 0.239, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 4543.563792087578, "city": "Tampa", "business_count": 106, "built_coverage": 0.162, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 4998.119449202439, "city": "Tampa", "business_count": 7, "built_coverage": 0.156, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 26671.271071547337, "city": "Chicago", "business_count": 109, "built_coverage": 0.293, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 26420.05849535516, "city": "Chicago", "business_count": 85, "built_coverage": 0.241, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 19808.199905001835, "city": "Chicago", "business_count": 265, "built_coverage": 0.313, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 12242.974519334814, "city": "Denver", "business_count": null, "built_coverage": 0.263, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 9529.977048219238, "city": "Denver", "business_count": 72, "built_coverage": 0.218, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
+{"location": "(unknown)", "density": 48219.36507482741, "city": "Miami", "business_count": 97, "built_coverage": 0.172, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 3119.6115963282946, "city": "Miami", "business_count": 82, "built_coverage": 0.196, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3879.908626128576, "city": "Miami", "business_count": null, "built_coverage": 0.147, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 46672.171083038054, "city": "San Francisco", "business_count": null, "built_coverage": 0.385, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 24170.51679757112, "city": "San Francisco", "business_count": 144, "built_coverage": 0.32, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 7446.469680359213, "city": "Portland", "business_count": null, "built_coverage": 0.235, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3491.539562473437, "city": "Portland", "business_count": 92, "built_coverage": 0.121, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 11518.036354086551, "city": "San Diego", "business_count": 102, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 8363.112274449788, "city": "San Diego", "business_count": null, "built_coverage": 0.184, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3230.7960036033087, "city": "Philadelphia", "business_count": 21, "built_coverage": 0.065, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 15027.064803887311, "city": "Philadelphia", "business_count": 140, "built_coverage": 0.136, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "(unknown)", "density": 56234.94269480612, "city": "Boston", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
+{"location": "(unknown)", "density": 17091.452083620876, "city": "Boston", "business_count": 65, "built_coverage": 0.127, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
+{"location": "(unknown)", "density": 438.3306095406822, "city": "", "business_count": 8, "built_coverage": 0.014, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 2794.8876508069934, "city": "Roswell", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 4736.667664542617, "city": "Cary", "business_count": 45, "built_coverage": 0.109, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3049.043721363303, "city": "Durham", "business_count": null, "built_coverage": 0.137, "metro_distance_km": null, "input": null, "predicted_area_type": "exurban"}
+{"location": "(unknown)", "density": 2889.7603775466114, "city": "Boise", "business_count": 50, "built_coverage": 0.186, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 4518.500503448463, "city": "Missoula", "business_count": null, "built_coverage": 0.103, "metro_distance_km": null, "input": null, "predicted_area_type": "exurban"}
+{"location": "(unknown)", "density": 28.040611252717536, "city": "Leavenworth", "business_count": null, "built_coverage": 0.041, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 1.0723785228436045, "city": "Marfa", "business_count": 39, "built_coverage": 0.018, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 33.48057686723717, "city": "Taos", "business_count": 68, "built_coverage": 0.02, "metro_distance_km": null, "input": null, "predicted_area_type": "rural"}
+{"location": "(unknown)", "density": 2689.68810188969, "city": "Traverse City", "business_count": 123, "built_coverage": 0.088, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 5976.710367614388, "city": "Village of Larchmont", "business_count": 76, "built_coverage": 0.068, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2831.3058675324246, "city": "Portland", "business_count": 38, "built_coverage": 0.128, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3879.908626128576, "city": "Miami", "business_count": 0, "built_coverage": 0.147, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 3049.043721363303, "city": "Durham", "business_count": 85, "built_coverage": 0.137, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
