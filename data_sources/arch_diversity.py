@@ -9,7 +9,9 @@ from datetime import datetime
 import requests
 
 from .osm_api import get_overpass_url, _retry_overpass
-from .cache import cached, CACHE_TTL
+from .cache import cached, CACHE_TTL, _generate_cache_key, _get_redis_client, _cache, _cache_ttl
+import time
+import json
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -36,15 +38,67 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         out skel qt;
         """
         def _do_request():
-            return requests.post(get_overpass_url(), data={"data": q}, timeout=40, headers={"User-Agent":"HomeFit/1.0"})
+            return requests.post(get_overpass_url(), data={"data": q}, timeout=60, headers={"User-Agent":"HomeFit/1.0"})
         
-        # Architectural diversity is standard (important but not critical) - use STANDARD profile
-        resp = _retry_overpass(_do_request, query_type="architectural_diversity")
+        # Architectural diversity is CRITICAL - use CRITICAL profile with more aggressive retries
+        # Use custom config with more attempts and longer waits for this critical query
+        from .retry_config import RetryConfig
+        custom_config = RetryConfig(
+            max_attempts=5,  # More attempts than default CRITICAL (3)
+            base_wait=2.0,  # Longer base wait
+            fail_fast=False,  # Don't fail fast - keep trying all endpoints
+            max_wait=20.0,  # Longer max wait
+            exponential_backoff=True,
+            retry_on_timeout=True,
+            retry_on_429=True,
+        )
+        resp = _retry_overpass(_do_request, query_type="architectural_diversity", config=custom_config)
         
         if resp is None or resp.status_code != 200:
             status_msg = f"status {resp.status_code}" if resp else "no response"
             error_detail = f"API {status_msg}"
             
+            # Check for stale cache before returning zeros
+            # This allows us to use previously successful data when API temporarily fails
+            cache_key = _generate_cache_key("compute_arch_diversity", lat, lon, radius_m)
+            current_time = time.time()
+            stale_cache_entry = None
+            stale_cache_time = 0
+            
+            # Try Redis first
+            redis_client = _get_redis_client()
+            if redis_client:
+                try:
+                    cached_data = redis_client.get(cache_key)
+                    if cached_data:
+                        data = json.loads(cached_data)
+                        stale_cache_entry = data.get('value')
+                        stale_cache_time = data.get('timestamp', 0)
+                except Exception:
+                    pass
+            
+            # Fall back to in-memory cache
+            if stale_cache_entry is None and cache_key in _cache:
+                stale_cache_entry = _cache.get(cache_key)
+                stale_cache_time = _cache_ttl.get(cache_key, 0)
+            
+            # Use stale cache if it exists and is less than 24 hours old
+            # Only use if it doesn't have an error (has actual data)
+            if stale_cache_entry and isinstance(stale_cache_entry, dict):
+                cache_age_hours = (current_time - stale_cache_time) / 3600
+                has_error = stale_cache_entry.get('error') is not None
+                has_data = stale_cache_entry.get('levels_entropy', 0) > 0 or stale_cache_entry.get('building_type_diversity', 0) > 0
+                
+                if not has_error and has_data and cache_age_hours < 24:
+                    logger.warning(f"API failed, using stale cache (age: {cache_age_hours:.1f} hours) for architectural diversity")
+                    result = stale_cache_entry.copy()
+                    result['_stale_cache'] = True
+                    result['_cache_age_hours'] = round(cache_age_hours, 1)
+                    result['data_warning'] = 'stale_cache_used'
+                    result['confidence_0_1'] = max(0.0, result.get('confidence_0_1', 1.0) * (1.0 - (cache_age_hours / 24.0)))
+                    return result
+            
+            # No usable stale cache - return error with zeros
             # Determine user-friendly message based on error type
             if resp and resp.status_code == 429:
                 error_detail = "Rate limited (429) - max retries reached"
@@ -69,7 +123,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 "error": error_detail,
                 "user_message": user_message,
                 "retry_suggested": True,
-                "_cache_skip": True
+                # Don't skip cache - allow stale cached data to be used if available
+                # The cache decorator will handle TTL appropriately
             }
         
         elements = resp.json().get("elements", [])
@@ -86,7 +141,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 "data_warning": "no_buildings",
                 "confidence_0_1": 0.0,  # Very low confidence for no buildings
                 "note": "No buildings found in OSM",
-                "_cache_skip": True
+                # Don't skip cache - this is valid data (no buildings = legitimate result)
             }
     except requests.exceptions.Timeout as e:
         print(f"⚠️  OSM building query timeout: {e}")
@@ -101,7 +156,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "data_warning": "timeout",
             "confidence_0_1": 0.0,  # Very low confidence for timeouts
             "error": f"Timeout: {str(e)}",
-            "_cache_skip": True
+            # Don't skip cache - allow stale cached data to be used if available
         }
     except requests.exceptions.RequestException as e:
         print(f"⚠️  OSM building query network error: {e}")
@@ -116,7 +171,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "data_warning": "network_error",
             "confidence_0_1": 0.0,  # Very low confidence for network errors
             "error": f"Network error: {str(e)}",
-            "_cache_skip": True
+            # Don't skip cache - allow stale cached data to be used if available
         }
     except Exception as e:
         print(f"⚠️  OSM building query error: {e}")
@@ -133,7 +188,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             "data_warning": "error",
             "confidence_0_1": 0.0,  # Very low confidence for errors
             "error": str(e),
-            "_cache_skip": True
+            # Don't skip cache - allow stale cached data to be used if available
         }
 
     import math

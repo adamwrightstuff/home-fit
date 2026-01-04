@@ -74,19 +74,26 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
 
         if 'error' in diversity_metrics:
             logger.warning("Architectural diversity computation failed: %s", diversity_metrics.get('error'))
-            user_message = diversity_metrics.get('user_message', 'OSM building data temporarily unavailable. Please try again.')
-            retry_suggested = diversity_metrics.get('retry_suggested', False)
-            details = {
-                "error": diversity_metrics.get('error'),
-                "note": "OSM building data unavailable",
-                "user_message": user_message,
-                "retry_suggested": retry_suggested,
-                "beauty_valid": diversity_metrics.get("beauty_valid", False),
-                "data_warning": diversity_metrics.get("data_warning", "api_error"),
-                "confidence_0_1": diversity_metrics.get("confidence_0_1", 0.0),
-                "score": None
-            }
-            return None, details
+            # Check if this is a recoverable error (beauty_valid=True means we can continue with defaults)
+            beauty_valid = diversity_metrics.get("beauty_valid", False)
+            if not beauty_valid:
+                # Hard failure - cannot continue
+                user_message = diversity_metrics.get('user_message', 'OSM building data temporarily unavailable. Please try again.')
+                retry_suggested = diversity_metrics.get('retry_suggested', False)
+                details = {
+                    "error": diversity_metrics.get('error'),
+                    "note": "OSM building data unavailable",
+                    "user_message": user_message,
+                    "retry_suggested": retry_suggested,
+                    "beauty_valid": False,
+                    "data_warning": diversity_metrics.get("data_warning", "api_error"),
+                    "confidence_0_1": diversity_metrics.get("confidence_0_1", 0.0),
+                    "score": None
+                }
+                return None, details
+            # Soft failure (beauty_valid=True) - continue with zero/default values
+            # The diversity_metrics dict already has all metrics set to 0, so we can proceed
+            logger.info("Continuing built beauty calculation with default values due to API error (beauty_valid=True)")
 
         # Use pre-computed density if provided, otherwise fetch it
         if density is None:
@@ -232,6 +239,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "beauty_valid": diversity_metrics.get("beauty_valid") if "beauty_valid" in diversity_metrics else True,
             "data_warning": diversity_metrics.get("data_warning"),
             "confidence_0_1": diversity_metrics.get("confidence_0_1") if "confidence_0_1" in diversity_metrics else 1.0,
+            "error": diversity_metrics.get("error") if "error" in diversity_metrics else None,
+            "retry_suggested": diversity_metrics.get("retry_suggested", False) if "error" in diversity_metrics else False,
             "osm_building_coverage": diversity_metrics.get("osm_building_coverage") or diversity_metrics.get("built_coverage_ratio", 0),
             "coverage_cap_applied": coverage_cap_metadata.get("coverage_cap_applied", False),
             "original_score_before_cap": coverage_cap_metadata.get("original_score_before_cap"),
