@@ -1735,7 +1735,7 @@ def calculate_natural_beauty(lat: float,
     # Adjusted component weights to better reflect natural beauty:
     # - Tree score (0-50): Reduced weight - urban trees ≠ natural beauty
     # - Scenic bonus (0-30): Increased weight - mountains/coastlines matter more
-    # Formula: (tree_score * 0.4) + (natural_bonus_scaled * 1.67) = Raw score (0-100)
+    # Formula: (tree_score * 0.3) + min(35.0, natural_bonus_scaled * 2.0), then scaled * 2.0 to 0-100
     # This weights scenic features (topography, water, wilderness) more heavily than urban tree canopy
     # Rationale: Natural beauty is about scenic landscapes, not just tree coverage
     # 
@@ -1821,10 +1821,10 @@ def calculate_natural_beauty(lat: float,
         "score_before_normalization": calibrated_raw,
         "score_before_calibration": natural_score_raw,
         "component_weights": {
-            "tree_weight": 0.4,
-            "scenic_weight": 1.67,
-            "tree_max_contribution": 20.0,
-            "scenic_max_contribution": 30.0
+            "tree_weight": 0.3,
+            "scenic_weight": 2.0,
+            "tree_max_contribution": 15.0,
+            "scenic_max_contribution": 35.0
         },
         "calibration": {
             "cal_a": None,
