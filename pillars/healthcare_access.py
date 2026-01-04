@@ -132,7 +132,7 @@ def _distance_to_hospital_score(distance_km: float, max_score: float = 35.0) -> 
         return max_score
     
     # Smooth exponential decay: score = max_score * e^(-distance / decay_factor)
-    # Calibrated breakpoints:
+    # Data-backed breakpoints:
     # - 5km = 35pts (100%)
     # - 10km = 30pts (86%)
     # - 15km = 25pts (71%)
@@ -501,7 +501,7 @@ def get_healthcare_access_score(lat: float, lon: float,
     # pop_density already computed
     denom = max(1.0, (pop_density / 10000.0))
 
-    # 1) Hospital access (0-35 points) - CALIBRATED RATIO-BASED + DISTANCE-BASED SCORING
+    # 1) Hospital access (0-35 points) - DATA-BACKED RATIO-BASED + DISTANCE-BASED SCORING
     # Combine count-based (ratio to expected) and distance-based (proximity) scoring
     # This provides comprehensive scoring that follows design principles
     
@@ -549,8 +549,8 @@ def get_healthcare_access_score(lat: float, lon: float,
         # Small bonus for multiple hospitals (indicates choice and redundancy)
         hospital_bonus = min(5.0, float(len(hospitals) - 1) * 0.5)
 
-    # 2) Primary care access (25 points) – CALIBRATED RATIO-BASED SCORING
-    # Use calibrated curve based on ratio of clinics+doctors to expected urgent care
+    # 2) Primary care access (25 points) – DATA-BACKED RATIO-BASED SCORING
+    # Use data-backed curve based on ratio of clinics+doctors to expected urgent care
     primary_count = len(clinics) + len(doctors)
     target_primary = max(1.0, exp_urgent)
     
@@ -571,13 +571,13 @@ def get_healthcare_access_score(lat: float, lon: float,
             primary_score = 0.0
     else:
         primary_ratio = primary_count / target_primary
-        # Use calibrated curve for smooth, research-backed scoring
+        # Use data-backed curve for smooth, research-backed scoring
         primary_score = _ratio_score(primary_ratio, max_score=25.0)
     
     primary_score = min(25.0, primary_score)
 
-    # 3) Specialized care (15 points) – CALIBRATED COUNT-BASED SCORING
-    # Count unique specialties and score using calibrated curve
+    # 3) Specialized care (15 points) – DATA-BACKED COUNT-BASED SCORING
+    # Count unique specialties and score using data-backed curve
     # Expected: ~5-10 specialties for good access (conservative estimate)
     import re
     specialties = set()
@@ -609,12 +609,12 @@ def get_healthcare_access_score(lat: float, lon: float,
             specialty_score = 0.0
     else:
         specialty_ratio = specialty_count / expected_specialties
-        # Use calibrated curve for smooth scoring
+        # Use data-backed curve for smooth scoring
         specialty_score = _ratio_score(specialty_ratio, max_score=15.0)
     
     specialty_score = min(15.0, specialty_score)
 
-    # 4) Emergency services (10 points) – CALIBRATED RATIO-BASED SCORING
+    # 4) Emergency services (10 points) – DATA-BACKED RATIO-BASED SCORING
     # Score based on ratio of hospitals with ER to expected hospitals
     emergency_hospitals = [
         f for f in hospitals
@@ -627,13 +627,13 @@ def get_healthcare_access_score(lat: float, lon: float,
         emergency_score = 0.0
     else:
         emergency_ratio = emergency_count / expected_emergency
-        # Use calibrated curve for smooth scoring
+        # Use data-backed curve for smooth scoring
         emergency_score = _ratio_score(emergency_ratio, max_score=10.0)
     
     emergency_score = min(10.0, emergency_score)
 
-    # 5) Pharmacy access (15 points) – CALIBRATED RATIO-BASED SCORING
-    # Use calibrated curve based on ratio of pharmacies to expected
+    # 5) Pharmacy access (15 points) – DATA-BACKED RATIO-BASED SCORING
+    # Use data-backed curve based on ratio of pharmacies to expected
     pharm_count = len(pharmacies)
     target_pharm = max(1.0, exp_pharm)
     
@@ -654,7 +654,7 @@ def get_healthcare_access_score(lat: float, lon: float,
             pharmacy_score = 0.0
     else:
         pharm_ratio = pharm_count / target_pharm
-        # Use calibrated curve for smooth, research-backed scoring
+        # Use data-backed curve for smooth, research-backed scoring
         pharmacy_score = _ratio_score(pharm_ratio, max_score=15.0)
     
     pharmacy_score = min(15.0, pharmacy_score)
