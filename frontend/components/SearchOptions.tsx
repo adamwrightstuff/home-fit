@@ -149,25 +149,28 @@ function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsPr
               Set priority levels for each pillar. Higher priorities receive more weight in the total score.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(Object.keys(PILLAR_NAMES) as Array<keyof PillarPriorities>).map((pillar) => (
-                <div key={pillar} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <label className="text-xs font-medium text-gray-700 flex-1">
-                    {PILLAR_NAMES[pillar]}
-                  </label>
-                  <select
-                    value={options.priorities[pillar]}
-                    onChange={(e) => handlePriorityChange(pillar, e.target.value as PriorityLevel)}
-                    disabled={disabled}
-                    className="ml-2 text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {PRIORITY_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {level}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+              {(Object.keys(PILLAR_NAMES) as Array<keyof PillarPriorities>).map((pillar) => {
+                const currentValue = options.priorities[pillar]
+                return (
+                  <div key={pillar} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <label className="text-xs font-medium text-gray-700 flex-1 mr-2">
+                      {PILLAR_NAMES[pillar]}
+                    </label>
+                    <select
+                      value={currentValue}
+                      onChange={(e) => handlePriorityChange(pillar, e.target.value as PriorityLevel)}
+                      disabled={disabled}
+                      className="text-xs border border-gray-300 rounded px-3 py-1.5 bg-white text-gray-900 font-medium min-w-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {PRIORITY_LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
