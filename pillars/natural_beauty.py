@@ -988,8 +988,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     logger.debug("1000m canopy fallback failed: %s", fallback_error)
                     canopy_multi["neighborhood_1000m"] = None
 
-            if gee_canopy < 15.0 and area_type in ['urban_core', 'urban_residential']:
-                logger.debug("Dense urban area with low GEE canopy (%.1f%%) - validating with Census/USFS...", gee_canopy)
+            # Validate GEE data with Census/USFS for low canopy values
+            # Urban areas: validate when < 15% (very low for dense areas)
+            # Suburban areas: validate when < 20% (suspiciously low given expected ~40%)
+            # This catches data quality issues where GEE underestimates canopy
+            should_validate = False
+            if area_type in ['urban_core', 'urban_residential']:
+                should_validate = gee_canopy < 15.0
+            elif area_type == 'suburban':
+                should_validate = gee_canopy < 20.0  # Expected ~40%, so < 20% is suspicious
+            
+            if should_validate:
+                area_desc = area_type if area_type else "area"
+                logger.debug("%s with low GEE canopy (%.1f%%) - validating with Census/USFS...", area_desc.capitalize(), gee_canopy)
                 census_canopy = census_api.get_tree_canopy(lat, lon)
                 if census_canopy is not None and census_canopy > gee_canopy:
                     census_score = _score_tree_canopy(census_canopy)
@@ -999,6 +1010,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
                         details['census_canopy_pct'] = census_canopy
                         primary_canopy_pct = census_canopy
+                        logger.info("Census/USFS canopy (%.1f%%) higher than GEE (%.1f%%) - using Census", census_canopy, gee_canopy)
                 elif census_canopy is not None:
                     logger.debug("Census/USFS canopy (%.1f%%) confirms GEE result", census_canopy)
 
