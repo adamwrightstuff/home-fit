@@ -991,12 +991,17 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             # Validate GEE data with Census/USFS for low canopy values
             # Urban areas: validate when < 15% (very low for dense areas)
             # Suburban areas: validate when < 20% (suspiciously low given expected ~40%)
+            # Unknown area types: validate when < 20% (conservative threshold)
             # This catches data quality issues where GEE underestimates canopy
             should_validate = False
             if area_type in ['urban_core', 'urban_residential']:
                 should_validate = gee_canopy < 15.0
             elif area_type == 'suburban':
                 should_validate = gee_canopy < 20.0  # Expected ~40%, so < 20% is suspicious
+            elif area_type is None:
+                # Fallback: validate when area_type is unknown but GEE is very low
+                # This helps cases where area type detection fails but data quality issues exist
+                should_validate = gee_canopy < 20.0  # Conservative threshold for unknown areas
             
             if should_validate:
                 area_desc = area_type if area_type else "area"
