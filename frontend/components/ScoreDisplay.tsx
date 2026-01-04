@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ScoreResponse } from '@/types/api'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
@@ -34,18 +35,60 @@ const PILLAR_DESCRIPTIONS: Record<string, string> = {
 
 export default function ScoreDisplay({ data }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
+  const [copied, setCopied] = useState(false)
+
+  // Copy scores summary to clipboard
+  const copyScores = async () => {
+    const lines = [
+      `HomeFit Livability Score: ${location_info.city}, ${location_info.state} ${location_info.zip}`,
+      `Total Score: ${total_score.toFixed(1)}/100`,
+      '',
+      'Pillar Scores:',
+      ...Object.entries(livability_pillars).map(([key, pillar]) => 
+        `  ${PILLAR_NAMES[key]}: ${pillar.score.toFixed(1)}/100`
+      ),
+    ]
+    
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
   return (
     <div className="space-y-6">
       {/* Location Info */}
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {location_info.city}, {location_info.state} {location_info.zip}
-        </h2>
-        <p className="text-gray-600">Input: {data.input}</p>
-        <p className="text-sm text-gray-500 mt-1">
-          Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
-        </p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {location_info.city}, {location_info.state} {location_info.zip}
+            </h2>
+            <p className="text-gray-600">Input: {data.input}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
+            </p>
+          </div>
+          <button
+            onClick={copyScores}
+            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
+          >
+            {copied ? (
+              <>
+                <span>✓</span>
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <span>📋</span>
+                <span>Copy Scores</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Total Score */}
