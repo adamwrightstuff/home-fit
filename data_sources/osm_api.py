@@ -2386,12 +2386,164 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
     return coverage
 
 
+def _process_healthcare_elements(elements: List[Dict], lat: float, lon: float, nodes_dict: Dict, ways_dict: Dict) -> Dict:
+    """
+    Process OSM elements and categorize into healthcare facility types.
+    
+    Returns dict with hospitals, urgent_care, clinics, pharmacies, doctors lists.
+    """
+    hospitals = []
+    urgent_care = []
+    clinics = []
+    pharmacies = []
+    doctors = []
+    
+    for elem in elements:
+        tags = elem.get("tags", {})
+        amenity = tags.get("amenity", "")
+        name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
+        
+        elem_lat, elem_lon, coord_source = _resolve_element_coordinates(elem, nodes_dict, ways_dict)
+        if elem_lat is None or elem_lon is None:
+            logger.warning(
+                "Healthcare facility missing coordinates after resolution",
+                extra={
+                    "facility_id": elem.get("id"),
+                    "elem_type": elem.get("type"),
+                    "amenity": amenity,
+                    "healthcare": tags.get("healthcare"),
+                    "name": name,
+                    "reason": coord_source
+                }
+            )
+            distance_km = None
+        else:
+            distance_m = haversine_distance(lat, lon, elem_lat, elem_lon)
+            distance_km = distance_m / 1000.0 if distance_m is not None else None
+        
+        facility = {
+            "name": name,
+            "lat": elem_lat,
+            "lon": elem_lon,
+            "distance_km": round(distance_km, 3) if isinstance(distance_km, (int, float)) else None,
+            "osm_id": elem.get("id"),
+            "amenity": amenity,
+            "emergency": tags.get("emergency"),
+            "beds": tags.get("beds"),
+            "tags": tags,
+            "coordinate_source": coord_source
+        }
+        
+        # Categorize facilities - IMPROVED LOGIC
+        healthcare = tags.get("healthcare", "")
+        healthcare_specialty = tags.get("healthcare:speciality", "").lower()
+        name_lower = name.lower()
+        
+        # Hospitals and major medical centers (exclude if it's urgent care branded)
+        if (amenity == "hospital" or healthcare == "hospital" or 
+            (amenity == "medical_centre" and healthcare != "urgent_care")):
+            hospitals.append(facility)
+        # Urgent care - check multiple indicators (expanded detection)
+        is_urgent_care = (
+            amenity == "emergency_ward" or 
+            healthcare == "urgent_care" or
+            healthcare == "emergency" or
+            tags.get("emergency") == "yes" or
+            # Check clinic names for urgent care indicators
+            (amenity == "clinic" and (
+                "urgent" in name_lower or
+                "walk-in" in name_lower or
+                "walk in" in name_lower or
+                "walkin" in name_lower or
+                "immediate" in name_lower or
+                "express" in name_lower or
+                "minute" in name_lower or  # "minute clinic", "minuteclinic"
+                "convenient" in name_lower or
+                "urgent" in healthcare_specialty or
+                "emergency" in healthcare_specialty
+            )) or
+            # Check for common urgent care brand names
+            (amenity in ["clinic", "doctors"] and any(
+                brand in name_lower for brand in [
+                    "citymd", "city md", "gohealth", "go health",
+                    "medexpress", "med express", "afc", "concentra",
+                    "patient first", "patientfirst", "carenow", "care now",
+                    "fastmed", "fast med", "nextcare", "next care"
+                ]
+            ))
+        )
+        
+        if is_urgent_care:
+            urgent_care.append(facility)
+        # Regular clinics and medical centers
+        # CONSERVATIVE FILTERING: Only exclude obvious non-primary-care specialty clinics
+        # This prevents over-counting (e.g., Brooklyn Heights 110 clinics) while preserving
+        # legitimate primary care facilities. We filter only the most obvious specialty-only clinics.
+        elif amenity in ["clinic", "doctors"]:
+            # Exclude only obvious specialty-only clinics that don't provide primary care
+            # This is conservative to avoid breaking scores for places with legitimate specialty clinics
+            excluded_specialties = [
+                "pain management", "chiropractic", "acupuncture",
+                "physical therapy", "physiotherapy", "rehabilitation",
+                "cosmetic", "plastic surgery", "laser",
+                "radiology", "imaging", "diagnostic center", "laboratory",
+                "veterinary", "animal"
+            ]
+            
+            # Check if this is an obvious specialty-only clinic
+            is_specialty_only = False
+            if healthcare_specialty:
+                for excluded in excluded_specialties:
+                    if excluded in healthcare_specialty:
+                        is_specialty_only = True
+                        break
+            
+            # Also check name for obvious specialty-only indicators
+            if not is_specialty_only:
+                specialty_name_indicators = [
+                    "pain management", "chiropractic", "acupuncture",
+                    "physical therapy", "physiotherapy", "rehab",
+                    "cosmetic", "plastic surgery", "laser",
+                    "radiology", "imaging", "diagnostic", "lab",
+                    "veterinary", "animal", "pet"
+                ]
+                for indicator in specialty_name_indicators:
+                    if indicator in name_lower:
+                        is_specialty_only = True
+                        break
+            
+            # Only count as primary care if not an obvious specialty-only clinic
+            # Note: We're conservative here - many specialty clinics also provide some primary care,
+            # so we only filter the most obvious ones (pain clinics, chiropractic, cosmetic, etc.)
+            if not is_specialty_only:
+                if amenity == "clinic":
+                    clinics.append(facility)
+                else:
+                    doctors.append(facility)
+        # Pharmacies - also check healthcare=pharmacy tag
+        elif (amenity == "pharmacy" or 
+              tags.get("shop") == "pharmacy" or
+              healthcare == "pharmacy"):
+            pharmacies.append(facility)
+    
+    return {
+        "hospitals": hospitals,
+        "urgent_care": urgent_care,
+        "clinics": clinics,
+        "pharmacies": pharmacies,
+        "doctors": doctors
+    }
+
+
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=70)
+@handle_api_timeout(timeout_seconds=100)
 def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -> Optional[Dict]:
     """
     Query OSM for comprehensive healthcare facilities.
+    
+    IMPROVED: Split into 4 smaller sequential queries for better reliability.
+    Executes queries sequentially (not parallel) to respect rate limits.
     
     Returns:
         {
@@ -2402,26 +2554,39 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
             "doctors": [...]
         }
     """
-    # Simplified query - get all healthcare-related amenities
-    # Reduced from 30+ queries to 9 queries for better performance
-    query = f"""
-    [out:json][timeout:60];
+    results = {
+        "hospitals": [],
+        "urgent_care": [],
+        "clinics": [],
+        "pharmacies": [],
+        "doctors": [],
+        "_query_failed": False
+    }
+    
+    # Build smaller, focused queries for better reliability
+    # Query 1: Hospitals and major medical centers
+    hospital_query = f"""
+    [out:json][timeout:25];
     (
-      // Healthcare amenities - nodes, ways, relations
-      node["amenity"~"hospital|medical_centre|clinic|doctors|pharmacy|dentist|veterinary|emergency_ward"](around:{radius_m},{lat},{lon});
-      way["amenity"~"hospital|medical_centre|clinic|doctors|pharmacy|dentist|veterinary|emergency_ward"](around:{radius_m},{lat},{lon});
-      relation["amenity"~"hospital|medical_centre|clinic"](around:{radius_m},{lat},{lon});
-      
-      // Healthcare tag (more specific - only common healthcare values)
-      node["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
-      way["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
-      relation["healthcare"~"hospital|clinic|doctor|dentist|pharmacy|veterinary|urgent_care|emergency"](around:{radius_m},{lat},{lon});
-      
-      // Pharmacies via shop tag
-      node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
-      way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
-      
-      // Emergency services (only if also healthcare-related)
+      node["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
+      way["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
+      relation["amenity"~"hospital|medical_centre"](around:{radius_m},{lat},{lon});
+      node["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+      way["healthcare"="hospital"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    
+    # Query 2: Urgent care and emergency services
+    urgent_query = f"""
+    [out:json][timeout:25];
+    (
+      node["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
+      way["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
+      node["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
+      way["amenity"="emergency_ward"](around:{radius_m},{lat},{lon});
       node["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
       way["emergency"="yes"]["amenity"~"clinic|hospital"](around:{radius_m},{lat},{lon});
     );
@@ -2430,220 +2595,137 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     out skel qt;
     """
     
-    def _do_request():
-        return requests.post(get_overpass_url(), data={"data": query}, timeout=70, headers={"User-Agent": "HomeFit/1.0"})
+    # Query 3: Clinics and doctors
+    clinic_query = f"""
+    [out:json][timeout:25];
+    (
+      node["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
+      way["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
+      node["healthcare"~"clinic|doctor"](around:{radius_m},{lat},{lon});
+      way["healthcare"~"clinic|doctor"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
     
-    try:
-        logger.debug(f"Querying comprehensive healthcare facilities within {radius_m/1000:.0f}km...")
-        # Healthcare is critical - use CRITICAL profile (retry all attempts)
-        resp = _retry_overpass(_do_request, query_type="healthcare")
-        
-        if resp is None or resp.status_code != 200:
-            if resp and resp.status_code == 429:
-                logger.warning("Healthcare query rate limited (429) - max retries reached")
-                logger.warning("Consider: Increasing retry attempts or adding delay between requests")
-            elif resp:
-                logger.warning(f"Healthcare query failed: HTTP {resp.status_code}")
-                logger.debug(f"Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
-            else:
-                logger.warning("Healthcare query failed: No response (timeout or network error)")
-            # Return empty dict with error flag to allow proper error handling upstream
-            logger.error(f"Healthcare query failed - returning empty results. Status: {resp.status_code if resp else 'No response'}")
-            return {
-                "hospitals": [],
-                "urgent_care": [],
-                "clinics": [],
-                "pharmacies": [],
-                "doctors": [],
-                "_query_failed": True  # Flag to indicate query failure
-            }
-
-        data = resp.json()
-        elements = data.get("elements", [])
-        
-        # Add logging to debug query results
-        logger.debug(f"Healthcare query returned {len(elements)} elements")
-        if len(elements) == 0:
-            logger.warning(f"Healthcare query returned 0 elements for {lat}, {lon} - this may indicate a query issue or no facilities in OSM")
-        
-        hospitals = []
-        urgent_care = []
-        clinics = []
-        pharmacies = []
-        doctors = []
-        
-        # Build nodes/ways/relations dicts for geometry calculation
-        nodes_dict = {}
-        ways_dict = {}
-        relations_dict = {}
-        for elem in elements:
-            if elem.get("type") == "node":
-                nodes_dict[elem["id"]] = elem
-            elif elem.get("type") == "way":
-                ways_dict[elem["id"]] = elem
-            elif elem.get("type") == "relation":
-                relations_dict[elem["id"]] = elem
-                # Extract member ways from relations to ensure they're in ways_dict
-                members = elem.get("members", [])
-                for member in members:
-                    if member.get("type") == "way":
-                        way_id = member.get("ref")
-                        # If way isn't already in ways_dict, we need to find it in elements
-                        if way_id not in ways_dict:
-                            # Search for the way in elements (should be there due to > recursion)
-                            for e in elements:
-                                if e.get("type") == "way" and e.get("id") == way_id:
-                                    ways_dict[way_id] = e
-                                    break
-        
-        for elem in elements:
-            tags = elem.get("tags", {})
-            amenity = tags.get("amenity", "")
-            name = tags.get("name") or tags.get("brand") or "Unnamed Facility"
-            
-            elem_lat, elem_lon, coord_source = _resolve_element_coordinates(elem, nodes_dict, ways_dict)
-            if elem_lat is None or elem_lon is None:
-                logger.warning(
-                    "Healthcare facility missing coordinates after resolution",
-                    extra={
-                        "facility_id": elem.get("id"),
-                        "elem_type": elem.get("type"),
-                        "amenity": amenity,
-                        "healthcare": tags.get("healthcare"),
-                        "name": name,
-                        "reason": coord_source
-                    }
+    # Query 4: Pharmacies
+    pharmacy_query = f"""
+    [out:json][timeout:20];
+    (
+      node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
+      way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
+      node["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
+      way["amenity"="pharmacy"](around:{radius_m},{lat},{lon});
+      node["healthcare"="pharmacy"](around:{radius_m},{lat},{lon});
+      way["healthcare"="pharmacy"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    
+    # Execute queries SEQUENTIALLY (not parallel) to respect rate limits
+    queries = [
+        ("hospitals", hospital_query),
+        ("urgent_care", urgent_query),
+        ("clinics", clinic_query),
+        ("pharmacies", pharmacy_query)
+    ]
+    
+    logger.debug(f"Querying healthcare facilities within {radius_m/1000:.0f}km (split into {len(queries)} sequential queries)...")
+    
+    for category, query in queries:
+        try:
+            def _do_request():
+                return requests.post(
+                    get_overpass_url(), 
+                    data={"data": query}, 
+                    timeout=30,  # Shorter timeout for simpler queries
+                    headers={"User-Agent": "HomeFit/1.0"}
                 )
-                distance_km = None
-            else:
-                distance_m = haversine_distance(lat, lon, elem_lat, elem_lon)
-                distance_km = distance_m / 1000.0 if distance_m is not None else None
             
-            facility = {
-                "name": name,
-                "lat": elem_lat,
-                "lon": elem_lon,
-                "distance_km": round(distance_km, 3) if isinstance(distance_km, (int, float)) else None,
-                "osm_id": elem.get("id"),
-                "amenity": amenity,
-                "emergency": tags.get("emergency"),
-                "beds": tags.get("beds"),
-                "tags": tags,
-                "coordinate_source": coord_source
-            }
+            # Use existing retry logic (respects global throttling)
+            resp = _retry_overpass(_do_request, query_type="healthcare")
             
-            # Categorize facilities - IMPROVED LOGIC
-            healthcare = tags.get("healthcare", "")
-            healthcare_specialty = tags.get("healthcare:speciality", "").lower()
-            name_lower = name.lower()
-            
-            # Hospitals and major medical centers (exclude if it's urgent care branded)
-            if (amenity == "hospital" or healthcare == "hospital" or 
-                (amenity == "medical_centre" and healthcare != "urgent_care")):
-                hospitals.append(facility)
-            # Urgent care - check multiple indicators (expanded detection)
-            is_urgent_care = (
-                amenity == "emergency_ward" or 
-                healthcare == "urgent_care" or
-                healthcare == "emergency" or
-                tags.get("emergency") == "yes" or
-                # Check clinic names for urgent care indicators
-                (amenity == "clinic" and (
-                    "urgent" in name_lower or
-                    "walk-in" in name_lower or
-                    "walk in" in name_lower or
-                    "walkin" in name_lower or
-                    "immediate" in name_lower or
-                    "express" in name_lower or
-                    "minute" in name_lower or  # "minute clinic", "minuteclinic"
-                    "convenient" in name_lower or
-                    "urgent" in healthcare_specialty or
-                    "emergency" in healthcare_specialty
-                )) or
-                # Check for common urgent care brand names
-                (amenity in ["clinic", "doctors"] and any(
-                    brand in name_lower for brand in [
-                        "citymd", "city md", "gohealth", "go health",
-                        "medexpress", "med express", "afc", "concentra",
-                        "patient first", "patientfirst", "carenow", "care now",
-                        "fastmed", "fast med", "nextcare", "next care"
-                    ]
-                ))
-            )
-            
-            if is_urgent_care:
-                urgent_care.append(facility)
-            # Regular clinics and medical centers
-            # CONSERVATIVE FILTERING: Only exclude obvious non-primary-care specialty clinics
-            # This prevents over-counting (e.g., Brooklyn Heights 110 clinics) while preserving
-            # legitimate primary care facilities. We filter only the most obvious specialty-only clinics.
-            elif amenity in ["clinic", "doctors"]:
-                # Exclude only obvious specialty-only clinics that don't provide primary care
-                # This is conservative to avoid breaking scores for places with legitimate specialty clinics
-                excluded_specialties = [
-                    "pain management", "chiropractic", "acupuncture",
-                    "physical therapy", "physiotherapy", "rehabilitation",
-                    "cosmetic", "plastic surgery", "laser",
-                    "radiology", "imaging", "diagnostic center", "laboratory",
-                    "veterinary", "animal"
-                ]
+            if resp is None or resp.status_code != 200:
+                if resp and resp.status_code == 429:
+                    retry_after = resp.headers.get('Retry-After', 'unknown')
+                    logger.warning(f"Healthcare {category} query rate limited (429), Retry-After: {retry_after}s")
+                elif resp and resp.status_code == 504:
+                    logger.warning(f"Healthcare {category} query gateway timeout (504) - Overpass server overloaded")
+                elif resp:
+                    logger.warning(f"Healthcare {category} query failed: HTTP {resp.status_code}")
+                    logger.debug(f"Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
+                else:
+                    logger.warning(f"Healthcare {category} query failed: No response (timeout or network error)")
+                    logger.debug(f"Query was: {query[:200]}...")  # Log first 200 chars
+                    logger.debug(f"Endpoint: {get_overpass_url()}")
                 
-                # Check if this is an obvious specialty-only clinic
-                is_specialty_only = False
-                if healthcare_specialty:
-                    for excluded in excluded_specialties:
-                        if excluded in healthcare_specialty:
-                            is_specialty_only = True
-                            break
-                
-                # Also check name for obvious specialty-only indicators
-                if not is_specialty_only:
-                    specialty_name_indicators = [
-                        "pain management", "chiropractic", "acupuncture",
-                        "physical therapy", "physiotherapy", "rehab",
-                        "cosmetic", "plastic surgery", "laser",
-                        "radiology", "imaging", "diagnostic", "lab",
-                        "veterinary", "animal", "pet"
-                    ]
-                    for indicator in specialty_name_indicators:
-                        if indicator in name_lower:
-                            is_specialty_only = True
-                            break
-                
-                # Only count as primary care if not an obvious specialty-only clinic
-                # Note: We're conservative here - many specialty clinics also provide some primary care,
-                # so we only filter the most obvious ones (pain clinics, chiropractic, cosmetic, etc.)
-                if not is_specialty_only:
-                    if amenity == "clinic":
-                        clinics.append(facility)
-                    else:
-                        doctors.append(facility)
-            # Pharmacies - also check healthcare=pharmacy tag
-            elif (amenity == "pharmacy" or 
-                  tags.get("shop") == "pharmacy" or
-                  healthcare == "pharmacy"):
-                pharmacies.append(facility)
-        
-        return {
-            "hospitals": hospitals,
-            "urgent_care": urgent_care,
-            "clinics": clinics,
-            "pharmacies": pharmacies,
-            "doctors": doctors
-        }
+                results["_query_failed"] = True
+                logger.warning(f"Healthcare {category} query failed, continuing with other categories...")
+                # Small delay before next query to be extra safe
+                time.sleep(0.2)
+                continue
             
-    except Exception as e:
-        logger.error(f"Error querying healthcare facilities: {e}", exc_info=True)
-        # Return empty dict with error flag to allow proper error handling upstream
-        logger.error(f"Healthcare query exception - returning empty results: {e}")
-        return {
-            "hospitals": [],
-            "urgent_care": [],
-            "clinics": [],
-            "pharmacies": [],
-            "doctors": [],
-            "_query_failed": True  # Flag to indicate query failure
-        }
+            data = resp.json()
+            elements = data.get("elements", [])
+            
+            logger.debug(f"Healthcare {category} query returned {len(elements)} elements")
+            if len(elements) == 0:
+                logger.debug(f"Healthcare {category} query returned 0 elements for {lat}, {lon}")
+            
+            # Build nodes/ways dicts for geometry calculation
+            nodes_dict = {}
+            ways_dict = {}
+            for elem in elements:
+                if elem.get("type") == "node":
+                    nodes_dict[elem["id"]] = elem
+                elif elem.get("type") == "way":
+                    ways_dict[elem["id"]] = elem
+                elif elem.get("type") == "relation":
+                    # Extract member ways from relations
+                    members = elem.get("members", [])
+                    for member in members:
+                        if member.get("type") == "way":
+                            way_id = member.get("ref")
+                            if way_id not in ways_dict:
+                                # Search for the way in elements
+                                for e in elements:
+                                    if e.get("type") == "way" and e.get("id") == way_id:
+                                        ways_dict[way_id] = e
+                                        break
+            
+            # Process elements for this category
+            category_results = _process_healthcare_elements(elements, lat, lon, nodes_dict, ways_dict)
+            
+            # Merge results
+            results["hospitals"].extend(category_results["hospitals"])
+            results["urgent_care"].extend(category_results["urgent_care"])
+            results["clinics"].extend(category_results["clinics"])
+            results["pharmacies"].extend(category_results["pharmacies"])
+            results["doctors"].extend(category_results["doctors"])
+            
+            # Small delay between queries to be extra safe (global throttling handles this, but explicit is clearer)
+            time.sleep(0.1)  # 100ms between queries
+            
+        except Exception as e:
+            logger.warning(f"Healthcare {category} query error: {e}", exc_info=True)
+            results["_query_failed"] = True
+            # Small delay before next query
+            time.sleep(0.2)
+    
+    # Log final results
+    total_found = (len(results["hospitals"]) + len(results["urgent_care"]) + 
+                   len(results["clinics"]) + len(results["pharmacies"]) + len(results["doctors"]))
+    logger.debug(f"Healthcare query complete: {total_found} total facilities found")
+    
+    if results["_query_failed"] and total_found == 0:
+        logger.error(f"Healthcare query failed - returning empty results. All queries failed.")
+    elif results["_query_failed"]:
+        logger.warning(f"Healthcare query partially failed - returning {total_found} facilities from successful queries")
+    
+    return results
 
 
 

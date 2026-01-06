@@ -515,26 +515,27 @@ def get_healthcare_access_score(lat: float, lon: float,
         hospital_count_score = 0.0
     
     # Distance-based score (0-15 points): Proximity to nearest hospital
+    # IMPORTANT: Use fallback hospitals for distance scoring even if they're beyond filter radius
+    # This provides partial credit for hospitals within reasonable distance (up to 60km)
+    nearest_dist_km = float('inf')
+    
     if len(hospitals) > 0:
         # Use nearest hospital from OSM results (already filtered by radius)
         numeric_hospitals = _with_numeric_distance(hospitals)
         if numeric_hospitals:
             nearest_osm = min(numeric_hospitals, key=lambda x: x["distance_km"])
             nearest_dist_km = nearest_osm["distance_km"]
-        else:
-            # If no numeric distances, fall back to MAJOR_HOSPITALS distance calculation
-            _, nearest_db = _score_hospitals(lat, lon)
-            if nearest_db:
-                nearest_dist_km = nearest_db["distance_km"]
-            else:
-                nearest_dist_km = float('inf')
-    else:
-        # No hospitals from OSM - use MAJOR_HOSPITALS database
+    
+    # FALLBACK: If no OSM hospitals within radius, or if OSM query failed,
+    # use MAJOR_HOSPITALS database for distance scoring (up to 60km)
+    # This ensures we get distance-based credit even when OSM data is unavailable
+    if nearest_dist_km == float('inf') or query_failed:
         _, nearest_db = _score_hospitals(lat, lon)
         if nearest_db:
             nearest_dist_km = nearest_db["distance_km"]
-        else:
-            nearest_dist_km = float('inf')
+            # Log that we're using fallback for distance scoring
+            if query_failed:
+                logger.debug(f"Using fallback hospital database for distance scoring: {nearest_db.get('name')} at {nearest_dist_km}km")
     
     # Distance-based scoring using smooth exponential decay
     hospital_distance_score = _distance_to_hospital_score(nearest_dist_km, max_score=15.0)
