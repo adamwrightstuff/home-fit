@@ -258,6 +258,49 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     return {pillar: float(rounded_tokens.get(pillar, 0)) for pillar in primary_pillars}
 
 
+def _extract_built_beauty_summary(built_details: Dict) -> Dict:
+    """Extract summary data from built beauty details for display in UI."""
+    summary = {}
+    arch_analysis = built_details.get("architectural_analysis", {})
+    
+    if isinstance(arch_analysis, dict):
+        summary["height_diversity"] = round(arch_analysis.get("height_diversity", 0), 2)
+        summary["type_diversity"] = round(arch_analysis.get("type_diversity", 0), 2)
+        summary["footprint_variation"] = round(arch_analysis.get("footprint_variation", 0), 2)
+        summary["built_coverage_ratio"] = round(arch_analysis.get("built_coverage_ratio", 0), 3)
+        summary["diversity_score"] = round(arch_analysis.get("diversity_score", 0), 2)
+        if arch_analysis.get("median_year_built"):
+            summary["median_year_built"] = int(arch_analysis.get("median_year_built", 0))
+        if arch_analysis.get("pre_1940_pct") is not None:
+            summary["pre_1940_pct"] = round(arch_analysis.get("pre_1940_pct", 0), 1)
+    
+    summary["component_score"] = round(built_details.get("component_score_0_50", 0), 2)
+    summary["enhancer_bonus"] = round(built_details.get("enhancer_bonus_scaled", 0), 2)
+    
+    return summary
+
+
+def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
+    """Extract summary data from natural beauty details for display in UI."""
+    summary = {}
+    tree_analysis = natural_details.get("tree_analysis", {})
+    multi_radius = natural_details.get("multi_radius_canopy", {})
+    
+    if isinstance(multi_radius, dict):
+        summary["neighborhood_canopy_pct"] = round(multi_radius.get("neighborhood_1000m", 0), 1)
+        summary["local_canopy_pct"] = round(multi_radius.get("local_400m", 0), 1)
+        summary["extended_canopy_pct"] = round(multi_radius.get("extended_2000m", 0), 1)
+    
+    if isinstance(tree_analysis, dict):
+        summary["tree_score"] = round(tree_analysis.get("tree_score_0_50", 0), 2)
+        summary["green_view_index"] = round(tree_analysis.get("green_view_index", 0), 2) if tree_analysis.get("green_view_index") else None
+    
+    summary["scenic_bonus"] = round(natural_details.get("enhancer_bonus_scaled", 0), 2)
+    summary["context_bonus"] = round(natural_details.get("context_bonus_raw", 0), 2)
+    
+    return summary
+
+
 def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     Parse token allocation string or return default equal distribution.
@@ -1036,6 +1079,14 @@ def _compute_single_score_internal(
             "weight": token_allocation["quality_education"],
             "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
             "breakdown": school_breakdown,
+            "summary": {
+                "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
+                "total_schools_rated": school_breakdown.get("total_schools_rated", 0),
+                "excellent_schools_count": school_breakdown.get("excellent_schools_count", 0),
+                "quality_boost": round(school_breakdown.get("quality_boost", 0), 2),
+                "early_ed_bonus": round(school_breakdown.get("early_ed_bonus", 0), 2),
+                "college_bonus": round(school_breakdown.get("college_bonus", 0), 2)
+            },
             "by_level": {
                 "elementary": schools_by_level.get("elementary", []),
                 "middle": schools_by_level.get("middle", []),
