@@ -292,7 +292,10 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
         summary["extended_canopy_pct"] = round(multi_radius.get("extended_2000m", 0), 1)
     
     if isinstance(tree_analysis, dict):
-        summary["tree_score"] = round(tree_analysis.get("tree_score_0_50", 0), 2)
+        # FIX: tree_score_0_50 is at top level of details, not in tree_analysis
+        # tree_analysis has "total_score" which is the final tree score
+        tree_score = natural_details.get("tree_score_0_50") or tree_analysis.get("total_score", 0)
+        summary["tree_score"] = round(tree_score, 2) if tree_score else 0
         summary["green_view_index"] = round(tree_analysis.get("green_view_index", 0), 2) if tree_analysis.get("green_view_index") else None
     
     summary["scenic_bonus"] = round(natural_details.get("enhancer_bonus_scaled", 0), 2)
