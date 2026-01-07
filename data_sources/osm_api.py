@@ -9,8 +9,9 @@ import math
 import time
 import threading
 import random
+import json
 from typing import Dict, List, Tuple, Optional, Any
-from .cache import cached, CACHE_TTL
+from .cache import cached, CACHE_TTL, _generate_cache_key, _get_redis_client, _cache, _cache_ttl
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout
 from .utils import haversine_distance, get_way_center
 from .retry_config import RetryConfig, get_retry_config, RetryProfile
@@ -322,6 +323,53 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         resp = _retry_overpass(_do_request, query_type="parks")
 
         if resp is None or resp.status_code != 200:
+            # Check for stale cache before returning None
+            # This allows us to use previously successful data when API temporarily fails
+            cache_key = _generate_cache_key("query_green_spaces", lat, lon, radius_m)
+            current_time = time.time()
+            stale_cache_entry = None
+            stale_cache_time = 0
+            
+            # Try Redis first
+            redis_client = _get_redis_client()
+            if redis_client:
+                try:
+                    cached_data = redis_client.get(cache_key)
+                    if cached_data:
+                        data = json.loads(cached_data)
+                        stale_cache_entry = data.get('value')
+                        stale_cache_time = data.get('timestamp', 0)
+                except Exception:
+                    pass
+            
+            # Fall back to in-memory cache
+            if stale_cache_entry is None and cache_key in _cache:
+                stale_cache_entry = _cache.get(cache_key)
+                stale_cache_time = _cache_ttl.get(cache_key, 0)
+            
+            # Use stale cache if it exists and is less than 24 hours old
+            # Only use if it doesn't have an error (has actual data)
+            if stale_cache_entry and isinstance(stale_cache_entry, dict):
+                cache_age_hours = (current_time - stale_cache_time) / 3600
+                has_error = stale_cache_entry.get('error') is not None
+                has_data = (
+                    len(stale_cache_entry.get('parks', [])) > 0 or
+                    len(stale_cache_entry.get('playgrounds', [])) > 0 or
+                    len(stale_cache_entry.get('recreational_facilities', [])) > 0
+                )
+                
+                if not has_error and has_data and cache_age_hours < 24:
+                    logger.warning(
+                        f"OSM parks API failed, using stale cache (age: {cache_age_hours:.1f} hours) "
+                        f"for lat={lat}, lon={lon}, radius={radius_m}m"
+                    )
+                    result = stale_cache_entry.copy()
+                    result['_stale_cache'] = True
+                    result['_cache_age_hours'] = round(cache_age_hours, 1)
+                    result['data_warning'] = 'stale_cache_used'
+                    return result
+            
+            # No usable stale cache - log error and return None
             if resp and resp.status_code == 429:
                 logger.warning("OSM parks query rate limited (429)")
             elif resp:
