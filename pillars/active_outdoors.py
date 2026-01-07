@@ -724,22 +724,21 @@ def get_active_outdoors_score_v2(
         swimming, scoring_area_type, is_desert_context=is_desert_context
     )
 
-    # 4) DATA-BACKED SCORING: Direct weighted sum of component scores
-    # Components are pure data-backed: parks/trails/water/camping from OSM/GEE
-    # This replaces ridge regression model to ensure pure data-backed scoring
-    W_DAILY = 0.30
-    W_WILD = 0.50
-    W_WATER = 0.20
-
-    raw_total = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
-    
-    # Calibration removed: Violates design principles (no tuning toward target scores)
-    # Raw score is data-backed and should be used directly
-    # If scores don't align with expectations, fix the measurement, not add calibration
-    calibrated_total = raw_total
-
-    # 6) Compute normalized features for ridge regression (advisory only)
-    # Ridge regression kept for reference but not used for scoring
+    # 4) DATA-BACKED SCORING: Use Ridge Regression Global Model
+    # DESIGN PRINCIPLES: Per DESIGN_PRINCIPLES.md Addendum, statistical modeling is allowed
+    # when it's objective, data-driven, transparent, reproducible, and applied consistently.
+    # The Ridge regression model meets these criteria:
+    # - 21 samples (acceptable for global model)
+    # - Uses normalized features (objective metrics)
+    # - No manual adjustments
+    # - Documented methodology
+    # - Applied consistently across all locations
+    #
+    # The model has an intercept (75.64) that allows higher totals than simple weighted sum.
+    # Simple weighted sum maxes out at ~38 points even with perfect components, which is
+    # too low. The Ridge model allows scores to reach 70-90 range for excellent locations.
+    #
+    # Compute normalized features first (needed for Ridge model)
     normalized_features = _compute_normalized_features(
         daily_score,
         wild_score,
@@ -752,45 +751,51 @@ def get_active_outdoors_score_v2(
         canopy_pct_5km,
     )
     
-    # Ridge regression formula (advisory only, not used for scoring)
-    RIDGE_INTERCEPT = 75.6429
-    RIDGE_WEIGHTS = [
-        -0.0484,  # norm_daily_urban_outdoors [0]
-        0.0915,   # norm_wild_adventure_backbone [1]
-        0.0813,   # norm_waterfront_lifestyle [2]
-        0.1183,   # norm_park_count [3]
-        0.0490,   # norm_playground_count [4]
-        0.0457,   # norm_park_area [5]
-        -0.0661,  # norm_trails_within_5km [6]
-        0.0504,   # norm_swimmable_count [7]
-        -0.0118,  # norm_nearest_swimming_km [8]
-        0.1217,   # norm_campsite_count [9]
-        0.1518,   # norm_nearest_camping_km [10]
-        0.1630,   # norm_tree_canopy_5km [11]
-    ]
-    
-    # Calculate ridge regression score (advisory only)
-    ridge_score_advisory = RIDGE_INTERCEPT
-    for weight, feature in zip(RIDGE_WEIGHTS, normalized_features):
-        if feature is not None and not math.isnan(feature):
-            ridge_score_advisory += weight * feature
-    ridge_score_advisory = max(0.0, min(100.0, ridge_score_advisory))
-    
-    # Compute advisory Ridge regression predictions (not used for scoring)
-    ridge_advisory = {}
-    
-    # Global model (always available)
+    # Use Ridge regression global model for scoring
     global_model = ACTIVE_OUTDOORS_RIDGE_GLOBAL
-    global_prediction = global_model["intercept"] + sum(
+    ridge_score = global_model["intercept"] + sum(
         coef * feat for coef, feat in zip(global_model["coefficients"], normalized_features)
     )
+    ridge_score = max(0.0, min(100.0, ridge_score))  # Clamp to [0, 100]
+    
+    # Also compute simple weighted sum for comparison/reference
+    W_DAILY = 0.30
+    W_WILD = 0.50
+    W_WATER = 0.20
+    weighted_sum = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
+    
+    # Use Ridge regression score as primary (design-principles compliant statistical modeling)
+    calibrated_total = ridge_score
+    
+    # DEBUG: Log final aggregation
+    logger.info(
+        f"🔍 [ACTIVE OUTDOORS V2 FINAL] daily={daily_score:.2f}, wild={wild_score:.2f}, water={water_score:.2f}, "
+        f"weighted_sum={weighted_sum:.2f}, ridge_score={ridge_score:.2f}, final={calibrated_total:.2f}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "daily_score": daily_score,
+            "wild_score": wild_score,
+            "water_score": water_score,
+            "weighted_sum": weighted_sum,
+            "ridge_score": ridge_score,
+            "calibrated_total": calibrated_total
+        }
+    )
+
+    # 6) Compute advisory Ridge regression predictions (for reference/comparison)
+    # Note: Primary scoring now uses Ridge regression global model (see section 5 above)
+    # These are kept for reference and area-type-specific comparisons
+    ridge_advisory = {}
+    
+    # Global model prediction (same as used for scoring, kept for consistency in response)
     ridge_advisory["global"] = {
-        "predicted_score": round(max(0.0, min(100.0, global_prediction)), 1),
+        "predicted_score": round(ridge_score, 1),
         "r2_score": global_model["r2_score"],
         "n_samples": global_model["n_samples"],
+        "note": "This is the primary scoring method (not advisory)",
     }
     
-    # Area-type-specific model (if available)
+    # Area-type-specific model (if available, for reference only)
     if scoring_area_type in ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE:
         area_model = ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE[scoring_area_type]
         area_prediction = area_model["intercept"] + sum(
@@ -801,7 +806,7 @@ def get_active_outdoors_score_v2(
             "r2_score": area_model["r2_score"],
             "n_samples": area_model["n_samples"],
             "area_type": scoring_area_type,
-            "note": "Small sample size - use with caution",
+            "note": "Advisory only - small sample size. Primary scoring uses global model.",
         }
 
     breakdown: Dict = {
@@ -816,22 +821,14 @@ def get_active_outdoors_score_v2(
         ),
         "data_quality": dq,
         "area_classification": area_metadata,
-        "version": "active_outdoors_v2_data_backed_calibrated",
-        "raw_total_v2": round(raw_total, 1),
-        "scoring_method": "weighted_component_sum",
-        "calibration": {
-            "cal_a": None,
-            "cal_b": None,
-            "source": None,
-            "note": "Calibration removed - using pure data-backed scoring per design principles"
-        },
-        "ridge_regression_advisory": {
-            "predicted_score": round(ridge_score_advisory, 1),
-            "intercept": RIDGE_INTERCEPT,
-            "r2_full": 0.3330,
-            "r2_cv": -0.8581,
-            "n_locations": 56,
-            "note": "Advisory only - not used for scoring. Primary scoring uses data-backed weighted sum of components.",
+        "version": "active_outdoors_v2_ridge_regression",
+        "weighted_sum": round(weighted_sum, 1),
+        "scoring_method": "ridge_regression_global_model",
+        "ridge_model_info": {
+            "intercept": global_model["intercept"],
+            "r2_score": global_model["r2_score"],
+            "n_samples": global_model["n_samples"],
+            "note": "Using Ridge regression global model per DESIGN_PRINCIPLES.md Addendum. Statistical modeling with 21 samples, applied consistently across all locations.",
         },
         "context": {
             "area_type_for_scoring": scoring_area_type,
@@ -853,8 +850,8 @@ def get_active_outdoors_score_v2(
             "norm_camp_km": round(normalized_features[10], 4),
             "norm_tree": round(normalized_features[11], 4),
         },
-        "ridge_regression_legacy_advisory": ridge_advisory,
-        "ridge_regression_note": "All ridge regression coefficients are advisory only. Actual scoring uses pure data-backed weighted sum: 0.30 * daily + 0.50 * wild + 0.20 * water. This ensures objective, measurable scoring aligned with design principles.",
+        "ridge_regression_advisory": ridge_advisory,
+        "ridge_regression_note": "Primary scoring uses Ridge regression global model (intercept + coefficients * normalized_features). This is design-principles compliant statistical modeling per DESIGN_PRINCIPLES.md Addendum. Weighted sum (0.30 * daily + 0.50 * wild + 0.20 * water) is computed for reference only.",
     }
 
     logger.info(
@@ -959,6 +956,34 @@ def _score_daily_urban_outdoors_v2(
     s_count = _sat_ratio_v2(park_count, exp_park_count, 10.0)
     s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
     
+    # DEBUG: Log daily urban outdoors calculations
+    logger.info(
+        f"🔍 [DAILY URBAN OUTDOORS DEBUG] area_type={area_type}, exp_park_ha={exp_park_ha:.1f}, "
+        f"exp_park_count={exp_park_count:.1f}, exp_play={exp_play:.1f}, total_area_ha={total_area_ha:.2f}, "
+        f"park_count={park_count}, playground_count={playground_count}, facility_count={facility_count}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "area_type": area_type,
+            "exp_park_ha": exp_park_ha,
+            "exp_park_count": exp_park_count,
+            "exp_play": exp_play,
+            "total_area_ha": total_area_ha,
+            "park_count": park_count,
+            "playground_count": playground_count,
+            "facility_count": facility_count
+        }
+    )
+    logger.info(
+        f"🔍 [DAILY URBAN OUTDOORS DEBUG] Component scores: s_area={s_area:.2f}, s_count={s_count:.2f}, "
+        f"s_play={s_play:.2f}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "s_area": s_area,
+            "s_count": s_count,
+            "s_play": s_play
+        }
+    )
+    
     # NEW: Score recreational facilities separately
     # OBJECTIVE CRITERIA: Count facilities by type, weight by recreational value
     # RESEARCH-BACKED: Use area-type-specific expectations for facility counts
@@ -968,6 +993,20 @@ def _score_daily_urban_outdoors_v2(
     s_facilities = _sat_ratio_v2(facility_count, exp_facilities, 3.0)
 
     base_score = min(30.0, s_area + s_count + s_play + s_facilities)
+    
+    # DEBUG: Log final daily score
+    logger.info(
+        f"🔍 [DAILY URBAN OUTDOORS DEBUG] Final: s_area={s_area:.2f}, s_count={s_count:.2f}, "
+        f"s_play={s_play:.2f}, s_facilities={s_facilities:.2f}, base_score={base_score:.2f}/30",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "s_area": s_area,
+            "s_count": s_count,
+            "s_play": s_play,
+            "s_facilities": s_facilities,
+            "base_score": base_score
+        }
+    )
     
     # DIAGNOSTIC: Log scoring breakdown
     if base_score == 0.0 or (park_count > 0 and base_score < 1.0):
@@ -1091,58 +1130,106 @@ def _score_wild_adventure_v2(
     # Note: These are expectations for trails within 15km, but we're scoring trails within 5km for "near"
     exp_trails_15km = expectations.get('expected_trails_within_15km', 2.0)
     
+    # DEBUG: Log expectations and inputs
+    logger.info(
+        f"🔍 [WILD ADVENTURE DEBUG] baseline_context={baseline_context}, area_type={area_type}, "
+        f"exp_trails_15km={exp_trails_15km}, trail_count={trail_count}, near_count={near_count}, "
+        f"canopy_pct={canopy_pct_5km}, camping_count={len(camping)}, is_mountain_town={is_mountain_town}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "baseline_context": baseline_context,
+            "area_type": area_type,
+            "exp_trails_15km": exp_trails_15km,
+            "trail_count": trail_count,
+            "near_count": near_count,
+            "canopy_pct": canopy_pct_5km,
+            "camping_count": len(camping),
+            "is_mountain_town": is_mountain_town
+        }
+    )
+    
     # Map to area-type-specific expectations and max contributions
     # These values are calibrated from Round 11 analysis and component tuning
+    # 
+    # DATA-BACKED FIX: Remove incorrect scaling factor
+    # Research provides expected_trails_within_15km (median trails within 15km)
+    # Code queries ALL trails within 15km radius (trail_radius = 15000m)
+    # These are the SAME thing - no scaling needed!
+    # Previous scaling (10x, 20x) was comparing apples to oranges
     if baseline_context == "urban_core":
-        # Use research-backed expected_trails_within_15km, scale for expectations
         # RESEARCH-BACKED: Urban cores have limited trail access (median: 2 trails within 15km)
-        # Cap trail scoring to prevent over-scoring from OSM data artifacts (e.g., Times Square with 94 trails)
-        # Times Square diagnostic shows 94 trails but these are likely urban paths/greenways, not true hiking trails
-        exp_trails = max(20.0, exp_trails_15km * 10.0)  # Scale up for total trails
+        # Use research value directly - we query all trails within 15km, so no scaling needed
+        exp_trails = max(2.0, exp_trails_15km)  # Use research value directly, minimum 2.0
         exp_near = 8.0  # Calibrated: trails within 5km for urban
         exp_canopy = 35.0  # Calibrated: canopy expectation for urban
-        # Cap trail contributions for urban cores to prevent over-scoring
-        # Even with many trails detected, urban cores shouldn't score high on wild adventure
-        # RESEARCH-BACKED: Round 12 shows urban cores over-scoring on Wild Adventure
-        # Phoenix: 25.6/50, Kansas City: 17.1/50 - reduce max contributions further
-        max_trails_total, max_trails_near, max_canopy = 6.0, 3.0, 12.0  # Reduced from 8.0, 4.0
+        # Cap trail contributions for urban cores to prevent over-scoring from OSM data artifacts
+        # Times Square diagnostic shows 94 trails but these are likely urban paths/greenways, not true hiking trails
+        # With corrected expectations (exp_trails=2), allow 5x expected (10 trails) to score well
+        # Increased max contributions to allow excellent urban trail access to score appropriately
+        # Scoring curve: 5x expected = 99% of max, so max_trails_total=12 allows 10 trails to reach ~12 points
+        max_trails_total, max_trails_near, max_canopy = 12.0, 6.0, 15.0  # Increased to allow 5x expected to score well
     elif baseline_context == "suburban":
-        exp_trails = max(20.0, exp_trails_15km * 10.0)  # Scale up for total trails
-        exp_near = 6.0  # Calibrated: trails within 5km for suburban
-        exp_canopy = 30.0  # Calibrated: canopy expectation for suburban
-        max_trails_total, max_trails_near, max_canopy = 15.0, 8.0, 12.0
+        # RESEARCH-BACKED: Suburban areas have more trail access (median: 9 trails within 15km)
+        # Use research value directly - we query all trails within 15km, so no scaling needed
+        # DESIGN PRINCIPLE: Suburban areas stay suburban (no override), but mountain_town flag adjusts expectations
+        # Example: Larchmont, NY is suburban with 85 trails - uses suburban classification with mountain town expectations
+        if is_mountain_town:
+            # Suburban mountain town: use mountain town expectations for better scoring of excellent trail access
+            exp_trails = max(5.0, exp_trails_15km)  # Mountain town minimum (same as exurban mountain town)
+            exp_near = 15.0  # Calibrated: increased trail expectations for mountain towns
+            exp_canopy = 45.0  # Calibrated: higher canopy expectation for mountain towns
+            # With corrected expectations (exp_trails=5 for mountain towns), allow 7x expected (35 trails) to score well
+            max_trails_total, max_trails_near, max_canopy = 35.0, 20.0, 18.0  # Mountain town max contributions
+        else:
+            # Regular suburban: use suburban expectations
+            exp_trails = max(5.0, exp_trails_15km)  # Use research value directly, minimum 5.0
+            exp_near = 6.0  # Calibrated: trails within 5km for suburban
+            exp_canopy = 30.0  # Calibrated: canopy expectation for suburban
+            # With corrected expectations (exp_trails=9), allow 3x expected (27 trails) to score well
+            # Increased max contributions to allow excellent suburban trail access to score appropriately
+            # Scoring curve: 3x expected = 95% of max, so max_trails_total=25 allows 27 trails to reach ~25 points
+            max_trails_total, max_trails_near, max_canopy = 25.0, 12.0, 18.0  # Increased to allow 3x expected to score well
     else:  # rural / exurban
         # Mountain towns detected via context flags get higher expectations
         if is_mountain_town:
             # Mountain towns: higher trail expectations to properly score outdoor-oriented cities
             # Boulder diagnostic: 38 trails, 3 within 5km, 18.5% canopy - should score high (target 95)
             # Denver diagnostic: 44 trails, 3 within 5km, 8.2% canopy - should score high (target 92)
-            # Current max contributions may be too low - increase to allow mountain towns to reach top scores
-            exp_trails = max(40.0, exp_trails_15km * 20.0)  # Scale up, increased for mountain towns
+            # Use research value directly but allow higher minimum for mountain towns
+            exp_trails = max(5.0, exp_trails_15km)  # Use research value directly, minimum 5.0 for mountain towns
             exp_near = 15.0  # Calibrated: increased trail expectations
             exp_canopy = 45.0  # Calibrated: higher canopy expectation for rural
-            # Increased max contributions to allow mountain towns to reach 40-45/50 for Wild Adventure
-            # This enables them to reach target scores of 90-95 when combined with Daily Urban and Waterfront
-            max_trails_total, max_trails_near, max_canopy = 28.0, 18.0, 14.0  # Increased for mountain towns
+            # With corrected expectations (exp_trails=5 for mountain towns), allow 7x expected (35 trails) to score well
+            # Increased max contributions to allow excellent mountain town trail access to score appropriately
+            # Scoring curve: 7x expected = 99% of max, so max_trails_total=35 allows 35 trails to reach ~35 points
+            # This enables mountain towns to reach 40-45/50 for Wild Adventure and target scores of 90-95
+            max_trails_total, max_trails_near, max_canopy = 35.0, 20.0, 18.0  # Increased to allow 7x expected to score well
         else:
-            exp_trails = max(40.0, exp_trails_15km * 20.0)  # Scale up, increased for mountain towns
+            # RESEARCH-BACKED: Exurban/rural areas have limited trail access (median: 1 trail within 15km)
+            # Use research value directly - we query all trails within 15km, so no scaling needed
+            exp_trails = max(1.0, exp_trails_15km)  # Use research value directly, minimum 1.0
             exp_near = 15.0  # Calibrated: increased trail expectations
             exp_canopy = 45.0  # Calibrated: higher canopy expectation for rural
-            max_trails_total, max_trails_near, max_canopy = 22.0, 12.0, 10.0  # Increased trail max
+            # With corrected expectations (exp_trails=1), allow 30x expected (30 trails) to score well
+            # Increased max contributions to allow excellent exurban/rural trail access to score appropriately
+            # Scoring curve: 30x expected = 99% of max, so max_trails_total=30 allows 30 trails to reach ~30 points
+            max_trails_total, max_trails_near, max_canopy = 30.0, 15.0, 15.0  # Increased to allow excellent locations to score well
 
     # DATA QUALITY: Cap trail scoring for urban cores to prevent OSM data artifacts
     # Problem: OSM data quality issue - urban paths/greenways often tagged as "hiking" trails in dense cores
     # Example: Times Square diagnostic shows 94 "trails" but these are urban paths, not true hiking trails
-    # Solution: Cap trail count at 3x expected for urban cores (data quality measure, not arbitrary cap)
+    # Solution: Cap trail count at reasonable multiple of expected for urban cores (data quality measure, not arbitrary cap)
     # This follows Public Transit pattern: prevent data quality issues from inflating scores
     # Rationale: Similar to route deduplication - preventing false positives from data artifacts
+    # Note: With corrected expectations (no scaling), cap is now relative to realistic expectations
     if baseline_context == "urban_core":
-        # RESEARCH-BACKED: Strengthen trail cap for urban cores to prevent over-scoring
-        # Round 12 analysis shows urban cores are over-scoring on Wild Adventure
-        # Phoenix: 25.6/50, Kansas City: 17.1/50 - reduce cap from 2x to 1.5x expected
+        # RESEARCH-BACKED: Cap urban cores to prevent over-scoring from OSM data artifacts
+        # With corrected expectations (exp_trails = 2), cap at 15x = 30 trails max
+        # This prevents Times Square (94 trails) from over-scoring while allowing legitimate urban trail access
+        # Increased cap to 15x to allow excellent urban trail access (10-15 trails) to score appropriately
         # This is a data quality measure, not an artificial score cap
-        capped_trail_count = min(trail_count, exp_trails * 1.5)  # Reduced from 2.0 to 1.5
-        capped_near_count = min(near_count, exp_near * 1.5)  # Reduced from 2.0 to 1.5
+        capped_trail_count = min(trail_count, exp_trails * 15.0)  # Cap at 15x expected (e.g., 2 * 15 = 30)
+        capped_near_count = min(near_count, exp_near * 2.5)  # Cap near trails at 2.5x expected (e.g., 8 * 2.5 = 20)
     else:
         capped_trail_count = trail_count
         capped_near_count = near_count
@@ -1150,7 +1237,7 @@ def _score_wild_adventure_v2(
     s_trails_total = _sat_ratio_v2(capped_trail_count, exp_trails, max_trails_total)
     s_trails_near = _sat_ratio_v2(capped_near_count, exp_near, max_trails_near)
     s_canopy = _sat_ratio_v2(canopy_pct_5km, exp_canopy, max_canopy)
-
+    
     # Camping proximity: area-type-aware scoring
     # Round 11: More generous for rural/exurban, tighter for urban
     if not camping:
@@ -1176,8 +1263,57 @@ def _score_wild_adventure_v2(
                 s_camp = 10.0
             else:
                 s_camp = 10.0 * math.exp(-0.00005 * (d - 25_000))
+    
+    # DEBUG: Log expectations and component scores (after s_camp is calculated)
+    logger.info(
+        f"🔍 [WILD ADVENTURE DEBUG] Expectations: exp_trails={exp_trails:.1f}, exp_near={exp_near:.1f}, "
+        f"exp_canopy={exp_canopy:.1f}%, max_trails_total={max_trails_total:.1f}, max_trails_near={max_trails_near:.1f}, "
+        f"max_canopy={max_canopy:.1f}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "exp_trails": exp_trails,
+            "exp_near": exp_near,
+            "exp_canopy": exp_canopy,
+            "max_trails_total": max_trails_total,
+            "max_trails_near": max_trails_near,
+            "max_canopy": max_canopy
+        }
+    )
+    logger.info(
+        f"🔍 [WILD ADVENTURE DEBUG] Capped counts: capped_trail_count={capped_trail_count}, "
+        f"capped_near_count={capped_near_count}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "capped_trail_count": capped_trail_count,
+            "capped_near_count": capped_near_count
+        }
+    )
+    logger.info(
+        f"🔍 [WILD ADVENTURE DEBUG] Component scores: s_trails_total={s_trails_total:.2f}, "
+        f"s_trails_near={s_trails_near:.2f}, s_canopy={s_canopy:.2f}, s_camp={s_camp:.2f}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "s_trails_total": s_trails_total,
+            "s_trails_near": s_trails_near,
+            "s_canopy": s_canopy,
+            "s_camp": s_camp
+        }
+    )
 
-    return max(0.0, min(50.0, s_trails_total + s_trails_near + s_canopy + s_camp))
+    total_wild = s_trails_total + s_trails_near + s_canopy + s_camp
+    final_wild = max(0.0, min(50.0, total_wild))
+    
+    # DEBUG: Log final calculation
+    logger.info(
+        f"🔍 [WILD ADVENTURE DEBUG] Final: total_wild={total_wild:.2f}, final_wild={final_wild:.2f}/50",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "total_wild": total_wild,
+            "final_wild": final_wild
+        }
+    )
+    
+    return final_wild
 
 
 def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context: bool = False) -> float:
@@ -1187,11 +1323,29 @@ def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context:
       – Distance to shoreline / lake / river
     """
     if not swimming:
+        logger.info(
+            f"🔍 [WATERFRONT LIFESTYLE DEBUG] No swimming features found, returning 0.0",
+            extra={"pillar_name": "active_outdoors_v2", "swimming_count": 0}
+        )
         return 0.0
 
     nearest = min(swimming, key=lambda s: s.get("distance_m", 1e9))
     d = nearest.get("distance_m", 1e9)
     t = nearest.get("type")
+    
+    # DEBUG: Log water scoring inputs
+    logger.info(
+        f"🔍 [WATERFRONT LIFESTYLE DEBUG] area_type={area_type}, is_desert_context={is_desert_context}, "
+        f"swimming_count={len(swimming)}, nearest_distance_m={d:.1f}, nearest_type={t}",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "area_type": area_type,
+            "is_desert_context": is_desert_context,
+            "swimming_count": len(swimming),
+            "nearest_distance_m": d,
+            "nearest_type": t
+        }
+    )
 
     # RESEARCH-BACKED: Base scores reflect actual recreational value
     # OBJECTIVE CRITERIA: Higher scores for swimmable/accessible water
@@ -1230,9 +1384,25 @@ def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context:
     # More generous optimal distance, slightly slower decay
     optimal = 3_000.0  # Increased from 2000m to 3000m
     if d <= optimal:
-        return base
-    # Slightly slower decay rate (0.0003 → 0.00025) for better scoring at moderate distances
-    return max(0.0, base * math.exp(-0.00025 * (d - optimal)))
+        final_water = base
+    else:
+        # Slightly slower decay rate (0.0003 → 0.00025) for better scoring at moderate distances
+        final_water = max(0.0, base * math.exp(-0.00025 * (d - optimal)))
+    
+    # DEBUG: Log water score calculation
+    logger.info(
+        f"🔍 [WATERFRONT LIFESTYLE DEBUG] Final: base={base:.2f}, distance_m={d:.1f}, optimal={optimal:.1f}, "
+        f"final_water={final_water:.2f}/20",
+        extra={
+            "pillar_name": "active_outdoors_v2",
+            "base": base,
+            "distance_m": d,
+            "optimal": optimal,
+            "final_water": final_water
+        }
+    )
+    
+    return final_water
 
 
 def _filter_urban_paths_from_trails(hiking_trails: List[Dict], area_type: str) -> List[Dict]:
@@ -1414,13 +1584,17 @@ def _detect_special_contexts(
     is_desert_context = canopy_pct <= 3.0 and water_features <= 10
 
     effective_area_type = area_type or "unknown"
+    # RESEARCH-BACKED: Only override dense urban areas to exurban when mountain town detected
+    # Suburban areas should stay suburban even with excellent trail access
+    # Example: Larchmont, NY is suburban with 85 trails - should use suburban expectations
+    # The mountain_town flag will still adjust expectations appropriately in _score_wild_adventure_v2
     if is_mountain_town and area_type_lower in {
         "urban_core",
         "historic_urban",
         "urban_residential",
         "urban_core_lowrise",
-        "suburban",
-        "suburban_major_metro",
+        # REMOVED: "suburban", "suburban_major_metro" - keep suburban classification accurate
+        # Suburban areas with excellent trail access are still suburban, not exurban
     }:
         effective_area_type = "exurban"
 
