@@ -57,15 +57,50 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
           {pillar.summary && Object.keys(pillar.summary).length > 0 && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">Summary:</p>
-              <div className="text-gray-600 space-y-1">
-                {Object.entries(pillar.summary).slice(0, 5).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="capitalize">{key.replace(/_/g, ' ')}:</span>
-                    <span className="font-medium">
-                      {typeof value === 'number' ? value.toFixed(2) : String(value)}
-                    </span>
-                  </div>
-                ))}
+              <div className="text-gray-600 space-y-2">
+                {Object.entries(pillar.summary).map(([key, value]) => {
+                  // Handle nested objects (like Active Outdoors summary)
+                  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    return (
+                      <div key={key} className="space-y-0.5">
+                        <span className="font-medium capitalize text-gray-700">
+                          {key.replace(/_/g, ' ')}:
+                        </span>
+                        <div className="ml-2 space-y-0.5">
+                          {Object.entries(value).map(([subKey, subValue]) => (
+                            <div key={subKey} className="flex justify-between text-gray-600">
+                              <span className="capitalize">{subKey.replace(/_/g, ' ')}:</span>
+                              <span className="font-medium">
+                                {typeof subValue === 'number'
+                                  ? subValue % 1 === 0
+                                    ? subValue.toString()
+                                    : subValue.toFixed(2)
+                                  : subValue === null || subValue === undefined
+                                  ? 'N/A'
+                                  : String(subValue)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }
+                  // Handle simple values (numbers, strings)
+                  return (
+                    <div key={key} className="flex justify-between">
+                      <span className="capitalize">{key.replace(/_/g, ' ')}:</span>
+                      <span className="font-medium">
+                        {typeof value === 'number'
+                          ? value % 1 === 0
+                            ? value.toString()
+                            : value.toFixed(2)
+                          : value === null || value === undefined
+                          ? 'N/A'
+                          : String(value)}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
