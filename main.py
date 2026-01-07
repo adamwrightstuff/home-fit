@@ -287,9 +287,11 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     multi_radius = natural_details.get("multi_radius_canopy", {})
     
     if isinstance(multi_radius, dict):
+        # FIX: Use correct key names from multi_radius_canopy dict
+        # Keys are: micro_400m, neighborhood_1000m, macro_2000m
         summary["neighborhood_canopy_pct"] = round(multi_radius.get("neighborhood_1000m", 0), 1)
-        summary["local_canopy_pct"] = round(multi_radius.get("local_400m", 0), 1)
-        summary["extended_canopy_pct"] = round(multi_radius.get("extended_2000m", 0), 1)
+        summary["local_canopy_pct"] = round(multi_radius.get("micro_400m", 0), 1)  # Fixed: was local_400m
+        summary["extended_canopy_pct"] = round(multi_radius.get("macro_2000m", 0), 1)  # Fixed: was extended_2000m
     
     if isinstance(tree_analysis, dict):
         # FIX: tree_score_0_50 is at top level of details, not in tree_analysis

@@ -74,8 +74,8 @@ NATURAL_CONTEXT_BONUS_CAP = 20.0
 # Component dominance guard (prevents single component from exceeding 60% of context bonus)
 MAX_COMPONENT_DOMINANCE_RATIO = 0.6
 
-GVI_BONUS_MAX = 8.0
-BIODIVERSITY_BONUS_MAX = 4.0
+GVI_BONUS_MAX = 5.0  # Reduced from 8.0 - partially redundant with canopy, keep for health/seasonal data
+BIODIVERSITY_BONUS_MAX = 0.0  # Disabled - redundant with landcover in context bonus (uses same data)
 CANOPY_EXPECTATION_BONUS_MAX = 6.0
 CANOPY_EXPECTATION_PENALTY_MAX = 3.0  # Reduced from 6.0 - penalties should reduce scores, not eliminate them
 STREET_TREE_BONUS_MAX = 5.0
@@ -718,7 +718,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     gvi_metrics: Optional[Dict[str, float]] = None
     gvi_bonus = 0.0
     biodiversity_entropy = 0.0
-    biodiversity_bonus = 0.0
+    biodiversity_bonus = 0.0  # Disabled - redundant with landcover in context bonus
     expectation_adjustment = 0.0
     expectation_penalty = 0.0
     area_type_key = (area_type or "").lower() or "unknown"
@@ -1278,10 +1278,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 entropy_max = math.log(len(normalized), 2) if len(normalized) > 1 else 1.0
                 if entropy_max > 0:
                     biodiversity_entropy = min(100.0, (entropy_value / entropy_max) * 100.0)
-                    biodiversity_bonus = min(
-                        BIODIVERSITY_BONUS_MAX,
-                        (biodiversity_entropy / 100.0) * BIODIVERSITY_BONUS_MAX * CONTEXT_SCALERS.get(area_type_key, 1.0)
-                    )
+                    # Biodiversity bonus disabled - redundant with landcover in context bonus
+                    # Both use same underlying data (forest, wetland, shrub, grass)
+                    # biodiversity_bonus = min(
+                    #     BIODIVERSITY_BONUS_MAX,
+                    #     (biodiversity_entropy / 100.0) * BIODIVERSITY_BONUS_MAX * CONTEXT_SCALERS.get(area_type_key, 1.0)
+                    # )
+                    biodiversity_bonus = 0.0
         natural_context_details["biodiversity_entropy"] = round(biodiversity_entropy, 2)
     else:
         natural_context_details["biodiversity_index"] = 0.0
@@ -1697,27 +1700,31 @@ def calculate_natural_beauty(lat: float,
         "top_viewpoints": []
     }
 
+    # Scenic proxy (viewpoints) disabled - redundant with context bonus
+    # Context bonus already captures scenic beauty via topography + landcover + water
+    # OSM viewpoints add complexity and are less reliable (coverage varies by region)
+    scenic_bonus_raw = 0.0
+    scenic_meta = {
+        "count": 0,
+        "closest_distance_m": None,
+        "weights_sum": 0.0,
+        "top_viewpoints": [],
+        "disabled": True,
+        "reason": "Redundant with context bonus (topography + landcover + water)"
+    }
+    
     if not disable_enhancers:
         if enhancers_data is None:
             enhancers_data = osm_api.query_beauty_enhancers(lat, lon, radius_m=enhancer_radius_m)
-        # Pass context bonus and landcover metrics for deduplication
-        landcover_metrics_for_dedup = tree_details.get("natural_context", {}).get("landcover_metrics")
-        scenic_bonus_raw, scenic_meta = _compute_viewshed_proxy(
-            enhancers_data.get("viewpoints_details", []),
-            radius_m=enhancer_radius_m,
-            natural_context_bonus=context_bonus_raw,
-            landcover_metrics=landcover_metrics_for_dedup
-        )
-        # Ensure scenic_bonus_raw is valid
-        scenic_bonus_raw = float(scenic_bonus_raw) if isinstance(scenic_bonus_raw, (int, float)) and not math.isnan(scenic_bonus_raw) else 0.0
-        natural_bonus_raw = float(scenic_bonus_raw + context_bonus_raw)
-        if math.isnan(natural_bonus_raw) or not isinstance(natural_bonus_raw, (int, float)):
-            natural_bonus_raw = context_bonus_raw
-        natural_bonus_scaled = float(min(NATURAL_ENHANCER_CAP, natural_bonus_raw))
-        if math.isnan(natural_bonus_scaled) or not isinstance(natural_bonus_scaled, (int, float)):
-            natural_bonus_scaled = 0.0
-    else:
-        enhancers_data = enhancers_data or {"viewpoints_details": []}
+        # Scenic proxy calculation disabled - see comment above
+        # scenic_bonus_raw, scenic_meta = _compute_viewshed_proxy(...)
+    
+    natural_bonus_raw = float(context_bonus_raw)  # Only context bonus, no scenic proxy
+    if math.isnan(natural_bonus_raw) or not isinstance(natural_bonus_raw, (int, float)):
+        natural_bonus_raw = context_bonus_raw
+    natural_bonus_scaled = float(min(NATURAL_ENHANCER_CAP, natural_bonus_raw))
+    if math.isnan(natural_bonus_scaled) or not isinstance(natural_bonus_scaled, (int, float)):
+        natural_bonus_scaled = 0.0
 
     tree_details.setdefault("scenic_proxy", scenic_meta)
     tree_details.setdefault("enhancer_bonus", {})
