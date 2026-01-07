@@ -77,7 +77,7 @@ MAX_COMPONENT_DOMINANCE_RATIO = 0.6
 GVI_BONUS_MAX = 8.0
 BIODIVERSITY_BONUS_MAX = 4.0
 CANOPY_EXPECTATION_BONUS_MAX = 6.0
-CANOPY_EXPECTATION_PENALTY_MAX = 6.0
+CANOPY_EXPECTATION_PENALTY_MAX = 3.0  # Reduced from 6.0 - penalties should reduce scores, not eliminate them
 STREET_TREE_BONUS_MAX = 5.0
 
 MULTI_RADIUS_CANOPY = {
@@ -1413,9 +1413,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 (canopy_expectation_ratio - 1.0) * 20.0 * expectation_weight
             )
         elif canopy_expectation_ratio <= 0.85:
+            # Reduced penalty severity: use gentler curve
+            # Old: (0.85 - ratio) * 18.0 → could reach 15.3 for ratio=0
+            # New: (0.85 - ratio) * 6.0 → max 5.1 for ratio=0, capped at 3.0
+            # This prevents penalties from completely wiping out base scores
             expectation_penalty = min(
                 CANOPY_EXPECTATION_PENALTY_MAX,
-                (0.85 - canopy_expectation_ratio) * 18.0 / max(expectation_weight, 0.65)
+                (0.85 - canopy_expectation_ratio) * 6.0 / max(expectation_weight, 0.65)
             )
     details["canopy_expectation"]["bonus"] = round(expectation_adjustment, 2)
     details["canopy_expectation"]["penalty"] = round(expectation_penalty, 2)
@@ -1527,7 +1531,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     biodiversity_bonus = float(biodiversity_bonus) if isinstance(biodiversity_bonus, (int, float)) and not math.isnan(biodiversity_bonus) else 0.0
     street_tree_bonus = float(street_tree_bonus) if isinstance(street_tree_bonus, (int, float)) and not math.isnan(street_tree_bonus) else 0.0
     
-    adjusted_score = base_tree_score + expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus
+    # FIX: Cap expectation penalty so it cannot reduce score below 0
+    # Design principle: Penalties should reduce scores, but not eliminate them entirely
+    # This prevents very low canopy areas from getting 0 tree score due to aggressive penalties
+    # Example: Houston has 0.6% canopy (base score 0.96) but penalty of -6.0 would reduce to -1.6 → 0
+    # Fix: Cap penalty at base_score so minimum score is 0, not negative
+    capped_penalty = min(expectation_penalty, base_tree_score) if expectation_penalty > 0 else 0.0
+    
+    adjusted_score = base_tree_score + expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus
     # Ensure adjusted_score is valid
     if math.isnan(adjusted_score) or not isinstance(adjusted_score, (int, float)):
         adjusted_score = base_tree_score
@@ -1536,13 +1547,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     details["adjusted_tree_score"] = round(adjusted_score, 2)
     details["bonus_breakdown"] = {
         "canopy_expectation_bonus": round(expectation_adjustment, 2),
-        "canopy_expectation_penalty": round(-expectation_penalty, 2) if expectation_penalty else 0.0,
+        "canopy_expectation_penalty": round(-capped_penalty, 2) if capped_penalty else 0.0,
+        "canopy_expectation_penalty_raw": round(-expectation_penalty, 2) if expectation_penalty else 0.0,  # Show raw penalty for transparency
         "green_view_bonus": round(gvi_bonus, 2),
         "biodiversity_bonus": round(biodiversity_bonus, 2),
         "street_tree_bonus": round(street_tree_bonus, 2),
     }
     details["bonus_breakdown"]["net"] = round(
-        expectation_adjustment - expectation_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus,
+        expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus,
         2
     )
 
@@ -1749,23 +1761,22 @@ def calculate_natural_beauty(lat: float,
     )
     
     # DATA-BACKED SCORING (replacing ridge regression model)
-    # Adjusted component weights to better reflect natural beauty:
-    # - Tree score (0-50): Reduced weight - urban trees ≠ natural beauty
-    # - Scenic bonus (0-30): Increased weight - mountains/coastlines matter more
-    # Formula: (tree_score * 0.3) + min(35.0, natural_bonus_scaled * 2.0), then scaled * 2.0 to 0-100
-    # This weights scenic features (topography, water, wilderness) more heavily than urban tree canopy
-    # Rationale: Natural beauty is about scenic landscapes, not just tree coverage
+    # Updated weights to better balance tree coverage and scenic features:
+    # - Tree score (0-50): Increased weight - trees are core to natural beauty
+    # - Scenic bonus (0-25): Important but secondary to tree coverage
+    # Formula: (tree_score * 0.6) + min(30.0, natural_bonus_scaled * 1.5), then scaled to 0-100
+    # This balances trees (primary) and scenic features (secondary) for natural beauty
     # 
-    # Updated: Reduced tree weight, increased scenic weight to better capture natural beauty
     # Component breakdown:
-    # - Tree score contributes max 15 points (50 * 0.3) - reduced from 20
-    # - Scenic bonus contributes max 35 points (25 * 2.0, capped at 35) - increased from 30
-    # - Total: 0-50 points, scaled to 0-100
-    # Rationale: Scenic features (topography, water, landcover) should matter more than tree coverage
-    tree_weighted = tree_score * 0.3  # Reduced from 0.4 - trees matter less than scenic beauty
-    scenic_weighted = min(35.0, natural_bonus_scaled * 2.0)  # Increased from 1.67, cap increased to 35
+    # - Tree score contributes max 30 points (50 * 0.6) - increased from 15
+    # - Scenic bonus contributes max 30 points (25 * 1.5, capped at 30) - reduced from 35
+    # - Total: 0-60 points, scaled to 0-100
+    # Rationale: Trees are fundamental to natural beauty, scenic features enhance but don't replace trees
+    tree_weighted = tree_score * 0.6  # Increased from 0.3 - trees are core to natural beauty
+    scenic_weighted = min(30.0, natural_bonus_scaled * 1.5)  # Reduced from 2.0, cap reduced to 30
     natural_native = max(0.0, tree_weighted + scenic_weighted)
-    natural_score_raw = min(100.0, natural_native * 2.0)  # Scale 0-50 to 0-100
+    # Scale 0-60 to 0-100: multiply by 100/60 = 1.667
+    natural_score_raw = min(100.0, natural_native * (100.0 / 60.0))
     
     # Using raw score directly - no calibration per design principles
     # Raw score is data-backed and reflects actual natural beauty metrics
@@ -1838,10 +1849,10 @@ def calculate_natural_beauty(lat: float,
         "score_before_normalization": calibrated_raw,
         "score_before_calibration": natural_score_raw,
         "component_weights": {
-            "tree_weight": 0.3,
-            "scenic_weight": 2.0,
-            "tree_max_contribution": 15.0,
-            "scenic_max_contribution": 35.0
+            "tree_weight": 0.6,
+            "scenic_weight": 1.5,
+            "tree_max_contribution": 30.0,
+            "scenic_max_contribution": 30.0
         },
         "calibration": {
             "cal_a": None,
