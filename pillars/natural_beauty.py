@@ -988,36 +988,52 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     logger.debug("1000m canopy fallback failed: %s", fallback_error)
                     canopy_multi["neighborhood_1000m"] = None
 
-            # Validate GEE data with Census/USFS for low canopy values
-            # Urban areas: validate when < 15% (very low for dense areas)
-            # Suburban areas: validate when < 20% (suspiciously low given expected ~40%)
-            # Unknown area types: validate when < 20% (conservative threshold)
-            # This catches data quality issues where GEE underestimates canopy
-            should_validate = False
-            if area_type in ['urban_core', 'urban_residential']:
-                should_validate = gee_canopy < 15.0
-            elif area_type == 'suburban':
-                should_validate = gee_canopy < 20.0  # Expected ~40%, so < 20% is suspicious
-            elif area_type is None:
-                # Fallback: validate when area_type is unknown but GEE is very low
-                # This helps cases where area type detection fails but data quality issues exist
-                should_validate = gee_canopy < 20.0  # Conservative threshold for unknown areas
-            
-            if should_validate:
-                area_desc = area_type if area_type else "area"
-                logger.debug("%s with low GEE canopy (%.1f%%) - validating with Census/USFS...", area_desc.capitalize(), gee_canopy)
+            # Validate GEE data with Census/USFS - always cross-check for data quality
+            # More aggressive validation to catch underestimation issues:
+            # - Always check Census/USFS if available (even if GEE seems reasonable)
+            # - Use Census/USFS if it's significantly higher (indicates GEE underestimation)
+            # - For PNW/temperate climates, be especially cautious about low GEE values
+            area_desc = area_type if area_type else "area"
+            census_canopy = None
+            try:
                 census_canopy = census_api.get_tree_canopy(lat, lon)
-                if census_canopy is not None and census_canopy > gee_canopy:
+            except Exception as census_error:
+                logger.debug("Census/USFS canopy lookup failed during validation: %s", census_error)
+            
+            if census_canopy is not None:
+                # Check if Census/USFS suggests GEE is underestimating
+                diff = census_canopy - gee_canopy
+                
+                # Use Census/USFS if it's significantly higher (>10% difference)
+                # This catches systematic underestimation issues
+                if diff > 10.0:
                     census_score = _score_tree_canopy(census_canopy)
                     if census_score > score:
                         score = census_score
                         canopy_points = census_score
-                        sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated GEE)")
+                        sources.append(f"USFS Census: {census_canopy:.1f}% canopy (GEE underestimated by {diff:.1f}%)")
                         details['census_canopy_pct'] = census_canopy
                         primary_canopy_pct = census_canopy
-                        logger.info("Census/USFS canopy (%.1f%%) higher than GEE (%.1f%%) - using Census", census_canopy, gee_canopy)
-                elif census_canopy is not None:
-                    logger.debug("Census/USFS canopy (%.1f%%) confirms GEE result", census_canopy)
+                        logger.info("Census/USFS canopy (%.1f%%) significantly higher than GEE (%.1f%%, diff: +%.1f%%) - using Census", 
+                                  census_canopy, gee_canopy, diff)
+                # Also use Census/USFS if GEE is suspiciously low for the area type
+                elif (area_type == 'suburban' and gee_canopy < 30.0) or \
+                     (area_type in ['urban_core', 'urban_residential'] and gee_canopy < 20.0):
+                    # If Census is higher (even slightly), prefer it for suspiciously low GEE values
+                    if census_canopy > gee_canopy:
+                        census_score = _score_tree_canopy(census_canopy)
+                        if census_score > score:
+                            score = census_score
+                            canopy_points = census_score
+                            sources.append(f"USFS Census: {census_canopy:.1f}% canopy (validated low GEE)")
+                            details['census_canopy_pct'] = census_canopy
+                            primary_canopy_pct = census_canopy
+                            logger.info("Census/USFS canopy (%.1f%%) higher than low GEE (%.1f%%) for %s - using Census", 
+                                      census_canopy, gee_canopy, area_desc)
+                    else:
+                        logger.debug("Census/USFS canopy (%.1f%%) confirms GEE result (%.1f%%)", census_canopy, gee_canopy)
+                else:
+                    logger.debug("Census/USFS canopy (%.1f%%) available, GEE (%.1f%%) within expected range", census_canopy, gee_canopy)
 
             if nyc_api and city and ("New York" in city or "NYC" in city or "Brooklyn" in city):
                 if gee_canopy < 15.0:

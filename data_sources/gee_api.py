@@ -6,8 +6,12 @@ Provides satellite-based tree canopy and environmental analysis.
 import ee
 import os
 import json
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 import math
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError, as_completed
+import time
+from functools import wraps
+from data_sources.cache import cached, CACHE_TTL
 
 # Initialize GEE with service account credentials
 def _initialize_gee():
@@ -92,18 +96,80 @@ except Exception as e:
     GEE_AVAILABLE = False
 
 
+# Helper functions for parallel execution of different canopy sources
+def _get_nlcd_tcc_canopy(buffer: ee.Geometry, year_used: int = 2021) -> Tuple[Optional[float], int]:
+    """Get NLCD TCC canopy percentage. Returns (percentage, year_used).
+    
+    Filters by bounds to get the correct regional tile (CONUS, AK, HI, PR) instead of
+    just taking the first image which might be Alaska.
+    """
+    try:
+        nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
+        # Filter by year AND bounds to get the correct regional tile
+        # This ensures we get CONUS for US locations, not Alaska
+        nlcd_tcc = nlcd_collection.filter(ee.Filter.eq('year', year_used)).filterBounds(buffer).first()
+        if nlcd_tcc is None:
+            return (None, year_used)
+        nlcd_tcc = nlcd_tcc.select('NLCD_Percent_Tree_Canopy_Cover')
+        tcc_stats = nlcd_tcc.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=30,
+            maxPixels=1e9
+        )
+        tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
+        if tcc_pct is not None and tcc_pct >= 0.0:
+            return (min(100, max(0, tcc_pct)), year_used)
+    except Exception as e:
+        # Log error for debugging but don't print (handled in main function)
+        pass
+    return (None, year_used)
+
+def _get_hansen_canopy(buffer: ee.Geometry) -> Optional[float]:
+    """Get Hansen tree cover percentage."""
+    try:
+        hansen = ee.Image('UMD/hansen/global_forest_change_2024_v1_12').select('treecover2000')
+        h_stats = hansen.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=30,
+            maxPixels=1e9
+        )
+        h_mean = h_stats.get('treecover2000').getInfo()
+        if h_mean is not None and h_mean >= 0.0:
+            return min(100, max(0, h_mean))
+    except Exception:
+        pass
+    return None
+
+def _get_nlcd_landcover_canopy(buffer: ee.Geometry) -> Optional[float]:
+    """Get NLCD Land Cover forest percentage."""
+    try:
+        nlcd = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021')
+        landcover = nlcd.select('landcover')
+        tree_classes = landcover.eq(40).Or(landcover.eq(41)).Or(landcover.eq(42)).Or(landcover.eq(43))
+        canopy_stats = tree_classes.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=30,
+            maxPixels=1e9
+        )
+        canopy_mean = canopy_stats.get('landcover').getInfo()
+        if canopy_mean is not None and canopy_mean > 0:
+            return min(100, max(0, canopy_mean * 100))
+    except Exception:
+        pass
+    return None
+
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))  # Cache for 48 hours (canopy data is very stable)
 def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type: Optional[str] = None) -> Optional[float]:
     """
-    Get tree canopy percentage using Google Earth Engine.
+    Get tree canopy percentage using Google Earth Engine with parallel multi-source validation.
     
-    Uses NLCD Tree Canopy Cover dataset (30m resolution, USA only) as primary source.
-    Validates against other sources for quality assurance. No data fabrication - uses real measurements only.
-    
-    Priority:
-    1. NLCD TCC (2021) - Primary source, designed for urban/suburban areas
-    2. NLCD Land Cover - Validation source
-    3. Hansen Global Forest - Fallback only (measures woody vegetation, not just canopy)
-    4. Sentinel-2 NDVI - Final fallback
+    Uses NLCD Tree Canopy Cover dataset as primary source, validates in parallel with other sources
+    to compensate for NLCD's known ~10% underestimation bias. Sources run concurrently with timeouts
+    to minimize latency while ensuring accuracy.
     
     Args:
         lat: Latitude
@@ -119,96 +185,89 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
         
     try:
         print(f"🛰️  Analyzing tree canopy with Google Earth Engine at {lat}, {lon}...")
+        start_time = time.time()
         
         # Create point of interest
         point = ee.Geometry.Point([lon, lat])
         buffer = point.buffer(radius_m)
         
-        # Priority 1: NLCD/USGS Tree Canopy Cover (urban/suburban, USA-only, CONUS coverage)
-        # This is the official USGS NLCD TCC dataset (2023 release with data 1985-2023)
-        nlcd_tcc_result = None
-        try:
-            nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
-            # Use 2021 data (most recent complete year at time of writing)
-            nlcd_tcc = nlcd_collection.filter(ee.Filter.eq('year', 2021)).first().select('NLCD_Percent_Tree_Canopy_Cover')
-            # Use mean reducer for accurate percentage coverage calculation
-            tcc_stats = nlcd_tcc.reduceRegion(
-                reducer=ee.Reducer.mean(),
-                geometry=buffer,
-                scale=30,
-                maxPixels=1e9
-            )
-            tcc_pct = tcc_stats.get('NLCD_Percent_Tree_Canopy_Cover').getInfo()
-            # Lower threshold: accept any non-negative value (was >= 0.1)
-            # Design principle: Objective and data-driven - use actual measured values
-            if tcc_pct is not None and tcc_pct >= 0.0:
-                print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC 2021): {tcc_pct:.1f}%")
-                nlcd_tcc_result = min(100, max(0, tcc_pct))
-            else:
-                print(f"   ⚠️  NLCD TCC returned {0 if tcc_pct is None else tcc_pct:.1f}% (unavailable)")
-        except Exception as nlcd_tcc_error:
-            print(f"   ⚠️  NLCD TCC unavailable: {nlcd_tcc_error}")
-
-        # Priority 2: Hansen Global Tree Cover (more reliable, global coverage)
-        hansen_result = None
-        try:
-            hansen = ee.Image('UMD/hansen/global_forest_change_2024_v1_12').select('treecover2000')
-            # Use mean reducer for accurate percentage coverage calculation
-            h_stats = hansen.reduceRegion(
-                reducer=ee.Reducer.mean(),
-                geometry=buffer,
-                scale=30,
-                maxPixels=1e9
-            )
-            h_mean = h_stats.get('treecover2000').getInfo()
-            # Lower threshold: accept any non-negative value (was >= 0.1)
-            # Design principle: Objective and data-driven - use actual measured values
-            if h_mean is not None and h_mean >= 0.0:
-                print(f"   ✅ GEE Tree Canopy (Hansen): {h_mean:.1f}%")
-                hansen_result = min(100, max(0, h_mean))
-            else:
-                print(f"   ⚠️  Hansen tree cover returned {0 if h_mean is None else h_mean:.1f}% (unavailable)")
-        except Exception as hansen_error:
-            print(f"   ⚠️  Hansen tree cover unavailable: {hansen_error}")
-
-        # Priority 3: NLCD Land Cover forest classes (rural/forested, USA-only)
-        nlcd_landcover_result = None
-        try:
-            nlcd = ee.Image('USGS/NLCD_RELEASES/2021_REL/NLCD/2021')
-            landcover = nlcd.select('landcover')
-            # Classes: 40 Deciduous, 41 Evergreen, 42 Mixed, 43 Shrub/Scrub
-            tree_classes = landcover.eq(40).Or(landcover.eq(41)).Or(landcover.eq(42)).Or(landcover.eq(43))
-            # Use mean reducer for accurate percentage coverage calculation
-            canopy_stats = tree_classes.reduceRegion(
-                reducer=ee.Reducer.mean(),
-                geometry=buffer,
-                scale=30,
-                maxPixels=1e9
-            )
-            canopy_mean = canopy_stats.get('landcover').getInfo()
-            if canopy_mean is not None and canopy_mean > 0:
-                canopy_percentage = canopy_mean * 100
-                print(f"   ✅ GEE Tree Canopy (NLCD Land Cover): {canopy_percentage:.1f}%")
-                nlcd_landcover_result = min(100, max(0, canopy_percentage))
-            else:
-                print("   ⚠️  NLCD Land Cover forest classes indicate ~0% within buffer")
-        except Exception as nlcd_error:
-            print(f"   ⚠️  NLCD Land Cover unavailable: {nlcd_error}")
+        # Determine most recent NLCD year (one-time check)
+        nlcd_collection = ee.ImageCollection('USGS/NLCD_RELEASES/2023_REL/TCC/v2023-5')
+        available_years = nlcd_collection.aggregate_array('year').distinct().getInfo()
+        year_used = 2021  # Default
+        if 2023 in available_years:
+            year_used = 2023
+        elif 2022 in available_years:
+            year_used = 2022
         
-        # Validation-based multi-source approach: Use NLCD TCC as primary, validate with others
-        if nlcd_tcc_result:
-            # NLCD TCC is designed for urban/suburban - prioritize it
+        # Run all sources in parallel with timeouts (max 8 seconds per source)
+        # Total time should be ~8-10 seconds max instead of 15-20+ sequential
+        nlcd_tcc_result = None
+        hansen_result = None
+        nlcd_landcover_result = None
+        
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all tasks
+            nlcd_future = executor.submit(_get_nlcd_tcc_canopy, buffer, year_used)
+            hansen_future = executor.submit(_get_hansen_canopy, buffer)
+            landcover_future = executor.submit(_get_nlcd_landcover_canopy, buffer)
+            
+            # Collect results with timeouts (8 seconds per source)
+            futures = {
+                nlcd_future: 'NLCD TCC',
+                hansen_future: 'Hansen',
+                landcover_future: 'NLCD Land Cover'
+            }
+            
+            for future in as_completed(futures, timeout=10):
+                source_name = futures[future]
+                try:
+                    result = future.result(timeout=8)
+                    if source_name == 'NLCD TCC':
+                        if result[0] is not None:
+                            nlcd_tcc_result, year_used = result
+                            print(f"   ✅ GEE Tree Canopy (USGS/NLCD TCC {year_used}): {nlcd_tcc_result:.1f}%")
+                        else:
+                            print(f"   ⚠️  NLCD TCC returned None (unavailable)")
+                    elif source_name == 'Hansen':
+                        if result is not None:
+                            hansen_result = result
+                            print(f"   ✅ GEE Tree Canopy (Hansen): {hansen_result:.1f}%")
+                        else:
+                            print(f"   ⚠️  Hansen returned None (unavailable)")
+                    elif source_name == 'NLCD Land Cover':
+                        if result is not None:
+                            nlcd_landcover_result = result
+                            print(f"   ✅ GEE Tree Canopy (NLCD Land Cover): {nlcd_landcover_result:.1f}%")
+                        else:
+                            print(f"   ⚠️  NLCD Land Cover returned None (unavailable)")
+                except FutureTimeoutError:
+                    print(f"   ⚠️  {source_name} timed out after 8s (skipping)")
+                except Exception as e:
+                    print(f"   ⚠️  {source_name} error: {str(e)[:100]}")
+        
+        elapsed = time.time() - start_time
+        print(f"   ⏱️  Multi-source canopy analysis completed in {elapsed:.1f}s")
+        
+        # Multi-source approach: Use highest value to avoid NLCD underestimation bias
+        # Research shows NLCD systematically underestimates by ~10% (up to 13.9% in urban)
+        if nlcd_tcc_result is not None:
             primary_result = nlcd_tcc_result
+            print(f"   ⚠️  Note: NLCD known to underestimate canopy by ~10% (up to 13.9% in urban)")
             
-            # Validate against other sources (don't blindly average - check agreement)
+            # Collect validation sources and use highest value if significantly different
             validation_sources = []
-            if nlcd_landcover_result:
+            if nlcd_landcover_result is not None:
                 validation_sources.append(('NLCD Land Cover', nlcd_landcover_result))
-            # Note: Hansen measures different things (woody vegetation vs tree canopy) - use cautiously
+            if hansen_result is not None:
+                # Cap Hansen at 90% to avoid extreme outliers
+                validation_sources.append(('Hansen', min(90, hansen_result)))
             
-            # Check agreement with validation sources
+            # Check agreement and use highest value if validation suggests underestimation
             if validation_sources:
+                max_validation_value = primary_result
                 agreements = []
+                
                 for source_name, source_value in validation_sources:
                     diff = abs(primary_result - source_value)
                     if diff <= 5:  # Within 5% = good agreement
@@ -218,76 +277,52 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
                         agreements.append(source_name)
                         print(f"   ~ {source_name} roughly agrees with NLCD TCC (diff: {diff:.1f}%)")
                     else:
-                        print(f"   ⚠️  {source_name} differs significantly from NLCD TCC ({diff:.1f}% diff)")
+                        # Large difference - check if validation source suggests underestimation
+                        if source_value > primary_result + 10:  # Validation is >10% higher
+                            print(f"   ⚠️  {source_name} ({source_value:.1f}%) significantly higher than NLCD TCC ({primary_result:.1f}%, diff: +{source_value - primary_result:.1f}%)")
+                            print(f"   💡 Using higher value to compensate for NLCD underestimation bias")
+                            max_validation_value = max(max_validation_value, source_value)
+                        else:
+                            print(f"   ⚠️  {source_name} differs from NLCD TCC ({diff:.1f}% diff)")
                 
                 if agreements:
                     print(f"   📊 NLCD TCC validated by {len(agreements)} source(s)")
                 else:
-                    print(f"   ⚠️  Validation sources disagree - using NLCD TCC as primary")
+                    print(f"   ⚠️  Validation sources disagree - using highest value to compensate for NLCD underestimation")
+                
+                # Use the highest value if validation sources suggest underestimation
+                if max_validation_value > primary_result:
+                    print(f"   ✅ Updating canopy from {primary_result:.1f}% to {max_validation_value:.1f}% (compensating for NLCD underestimation)")
+                    primary_result = max_validation_value
             
-            # Validate canopy value for sanity (doesn't affect scoring, just logs warnings)
-            # Design principle: Transparent and documented - flag data quality issues
+            # Validate canopy value for sanity
             if primary_result is not None:
                 if primary_result > 100.0:
-                    print(f"   ⚠️  Canopy value {primary_result}% exceeds 100%, capping to 100%")
                     primary_result = 100.0
                 elif primary_result > 80.0:
                     print(f"   ⚠️  Unusually high canopy value {primary_result}% - verify data quality")
                 elif primary_result < 0.0:
-                    print(f"   ⚠️  Negative canopy value {primary_result}%, setting to 0%")
                     primary_result = 0.0
             
             return primary_result
         
-        # Fallback: If NLCD unavailable, try other sources
+        # Fallback: If NLCD unavailable, use other sources
         sources = []
-        if nlcd_landcover_result:
+        if nlcd_landcover_result is not None:
             sources.append(('NLCD Land Cover', nlcd_landcover_result))
-        if hansen_result:
+        if hansen_result is not None:
             sources.append(('Hansen', hansen_result))
         
         if len(sources) == 1:
             return sources[0][1]
         elif len(sources) > 1:
-            # If multiple fallback sources, average them
             values = [s[1] for s in sources]
-            combined_result = sum(values) / len(values)
+            combined_result = max(values)  # Use max instead of average
             source_names = ', '.join([s[0] for s in sources])
-            print(f"   📊 Combined fallback result ({source_names}): {combined_result:.1f}%")
+            print(f"   📊 Using highest fallback value ({source_names}): {combined_result:.1f}% (max of {values})")
             return min(100, max(0, combined_result))
         
-        # Priority 4: Sentinel-2 NDVI fallback (recent imagery, cloud-limited)
-        try:
-            sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                       .filterDate('2023-01-01', '2024-12-31')
-                       .filterBounds(buffer)
-                       .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20)))
-            
-            count = sentinel.size().getInfo()
-            if count == 0:
-                print(f"   ⚠️  No Sentinel-2 data available for this location")
-                return None
-            
-            image = sentinel.sort('system:time_start', False).first()
-            ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
-            tree_mask = ndvi.gt(0.4)  # NDVI > 0.4 = trees
-            
-            tree_stats = tree_mask.reduceRegion(
-                reducer=ee.Reducer.mean(),
-                geometry=buffer,
-                scale=20,
-                maxPixels=1e9
-            )
-            
-            tree_ratio = tree_stats.get('NDVI').getInfo()
-            canopy_percentage = (tree_ratio * 100) if tree_ratio else 0
-            
-            print(f"   ✅ GEE Tree Canopy (Sentinel-2): {canopy_percentage:.1f}%")
-            return min(100, max(0, canopy_percentage))
-            
-        except Exception as sentinel_error:
-            print(f"   ⚠️  Sentinel-2 fallback failed: {sentinel_error}")
-            return None
+        return None
         
     except Exception as e:
         print(f"   ⚠️  GEE tree canopy analysis error: {e}")
