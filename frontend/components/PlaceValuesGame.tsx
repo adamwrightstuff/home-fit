@@ -448,6 +448,7 @@ export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGamePr
             <MapPin className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-slate-900 mb-4 tracking-tight">Where You Belong</h1>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <p className="text-slate-600 text-lg mb-8">Discover your unique Place Values profile through 20 quick scenarios.</p>
           <button onClick={start_game} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
             Start the Journey <ChevronRight className="w-5 h-5" />
