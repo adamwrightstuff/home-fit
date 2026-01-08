@@ -41,7 +41,7 @@ const PILLAR_NAMES: Record<keyof PillarPriorities, string> = {
   housing_value: 'Housing Value',
 }
 
-const PRIORITY_LEVELS: PriorityLevel[] = ['Low', 'Medium', 'High']
+const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
 const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
