@@ -74,23 +74,30 @@ export default function Home() {
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <LocationSearch onSearch={handle_search} disabled={loading} />
-          <div className="mt-4 mb-4">
-            <button
-              onClick={() => set_show_game(true)}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Sparkles className="w-4 h-4" />
-              Discover Your Place Values (20-question quiz)
-            </button>
-            <p className="text-xs text-gray-500 text-center mt-2">
-              Not sure what matters most? Take our quick quiz to personalize your priorities
-            </p>
-          </div>
           <SearchOptionsComponent 
             options={search_options} 
             onChange={set_search_options}
             disabled={loading}
           />
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">Not sure what matters most?</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  Take our 20-question quiz to discover your Place Values profile
+                </p>
+              </div>
+              <button
+                onClick={() => set_show_game(true)}
+                className="flex-shrink-0 px-4 py-2 border-2 border-purple-200 text-purple-700 rounded-lg font-medium hover:bg-purple-50 hover:border-purple-300 transition-all flex items-center gap-2 whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4" />
+                Take Quiz
+              </button>
+            </div>
+          </div>
         </div>
 
         {loading && (
