@@ -13,6 +13,7 @@ export default function Home() {
   const [scoreData, setScoreData] = useState<ScoreResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [requestStartTime, setRequestStartTime] = useState<number | undefined>(undefined)
   const [searchOptions, setSearchOptions] = useState<SearchOptions>({
     priorities: { ...DEFAULT_PRIORITIES },
     include_chains: true,
@@ -23,6 +24,8 @@ export default function Home() {
     setLoading(true)
     setError(null)
     setScoreData(null)
+    const startTime = Date.now()
+    setRequestStartTime(startTime)
 
     try {
       const params: ScoreRequestParams = {
@@ -37,6 +40,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+      setRequestStartTime(undefined)
     }
   }
 
@@ -63,7 +67,7 @@ export default function Home() {
 
         {loading && (
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <LoadingSpinner />
+            <LoadingSpinner startTime={requestStartTime} />
           </div>
         )}
 
