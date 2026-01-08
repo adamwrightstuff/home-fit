@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronRight, MapPin, Home, Sparkles, RefreshCcw, Check } from 'lucide-react'
+import { ChevronRight, ChevronLeft, MapPin, Home, Sparkles, RefreshCcw, Check, ArrowLeft } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 
 const pillar_names = {
@@ -246,9 +246,10 @@ const questions = [
 
 interface PlaceValuesGameProps {
   onApplyPriorities?: (priorities: PillarPriorities) => void
+  onBack?: () => void
 }
 
-export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGameProps) {
+export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const [game_state, set_game_state] = useState<'intro' | 'playing' | 'results'>('intro')
   const [current_question, set_current_question] = useState(0)
   const [scores, set_scores] = useState<Record<keyof PillarPriorities, number>>({
@@ -290,6 +291,25 @@ export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGamePr
       set_current_question(current_question + 1)
     } else {
       set_game_state('results')
+    }
+  }
+
+  const handle_back = () => {
+    if (game_state === 'playing') {
+      if (current_question > 0) {
+        // Go back to previous question
+        set_current_question(current_question - 1)
+        // Note: We can't undo the previous answer's scores easily, so we'll just go back
+      } else {
+        // Go back to intro
+        set_game_state('intro')
+      }
+    } else if (game_state === 'results') {
+      // From results, go back to playing (but this would reset, so maybe go to intro instead)
+      set_game_state('intro')
+    } else if (game_state === 'intro' && onBack) {
+      // Go back to main page
+      onBack()
     }
   }
 
@@ -443,7 +463,16 @@ export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGamePr
   if (game_state === 'intro') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="max-w-xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center">
+        <div className="max-w-xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center relative">
+          {onBack && (
+            <button
+              onClick={handle_back}
+              className="absolute top-4 left-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back</span>
+            </button>
+          )}
           <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
             <MapPin className="w-8 h-8 text-white" />
           </div>
@@ -464,6 +493,13 @@ export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGamePr
     return (
       <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
         <div className="max-w-2xl w-full">
+          <button
+            onClick={handle_back}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors mb-6 -ml-2"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Back</span>
+          </button>
           <div className="mb-8">
             <div className="flex justify-between text-sm font-bold text-slate-400 mb-2 uppercase tracking-widest">
               <span>Question {current_question + 1}</span>
@@ -502,6 +538,13 @@ export default function PlaceValuesGame({ onApplyPriorities }: PlaceValuesGamePr
     return (
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="max-w-4xl mx-auto">
+          <button
+            onClick={handle_back}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors mb-6 -ml-2"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Back</span>
+          </button>
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 md:p-12 mb-6">
             <div className="flex items-center gap-3 mb-6">
               <Sparkles className="w-8 h-8 text-purple-600" />

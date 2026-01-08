@@ -955,9 +955,34 @@ def _compute_single_score_internal(
     if priorities_dict:
         token_allocation = parse_priority_allocation(priorities_dict)
         allocation_type = "priority_based"
+        # Store original priority levels for response (normalize to proper case: None/Low/Medium/High)
+        priority_levels = {}
+        primary_pillars = [
+            "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+            "air_travel_access", "public_transit_access", "healthcare_access",
+            "quality_education", "housing_value"
+        ]
+        for pillar in primary_pillars:
+            original_priority = priorities_dict.get(pillar, "none")
+            if original_priority:
+                priority_str = original_priority.strip().lower()
+                # Normalize to proper case
+                if priority_str == "none":
+                    priority_levels[pillar] = "None"
+                elif priority_str == "low":
+                    priority_levels[pillar] = "Low"
+                elif priority_str == "medium":
+                    priority_levels[pillar] = "Medium"
+                elif priority_str == "high":
+                    priority_levels[pillar] = "High"
+                else:
+                    priority_levels[pillar] = "None"  # Default for invalid values
+            else:
+                priority_levels[pillar] = "None"
     else:
         token_allocation = parse_token_allocation(tokens)
         allocation_type = "token_based" if tokens else "default_equal"
+        priority_levels = None  # No priority levels when using tokens
     
     if only_pillars:
         for pillar_name in list(token_allocation.keys()):
@@ -1002,6 +1027,7 @@ def _compute_single_score_internal(
         "active_outdoors": {
             "score": active_outdoors_score,
             "weight": token_allocation["active_outdoors"],
+            "importance_level": priority_levels.get("active_outdoors") if priority_levels else None,
             "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 100, 2),
             "breakdown": active_outdoors_details["breakdown"],
             "summary": active_outdoors_details["summary"],
@@ -1012,6 +1038,7 @@ def _compute_single_score_internal(
         "built_beauty": {
             "score": built_score,
             "weight": token_allocation["built_beauty"],
+            "importance_level": priority_levels.get("built_beauty") if priority_levels else None,
             "contribution": round(built_score * token_allocation["built_beauty"] / 100, 2),
             "breakdown": {
                 "component_score_0_50": built_details["component_score_0_50"],
@@ -1026,6 +1053,7 @@ def _compute_single_score_internal(
         "natural_beauty": {
             "score": natural_score,
             "weight": token_allocation["natural_beauty"],
+            "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
             "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
             "breakdown": {
                 "tree_score_0_50": natural_details["tree_score_0_50"],
@@ -1040,6 +1068,7 @@ def _compute_single_score_internal(
         "neighborhood_amenities": {
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
+            "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": amenities_details.get("breakdown", {}),
             "summary": amenities_details.get("summary", {}),
@@ -1050,6 +1079,7 @@ def _compute_single_score_internal(
         "air_travel_access": {
             "score": air_travel_score,
             "weight": token_allocation["air_travel_access"],
+            "importance_level": priority_levels.get("air_travel_access") if priority_levels else None,
             "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 100, 2),
             "primary_airport": air_travel_details.get("primary_airport"),
             "nearest_airports": air_travel_details.get("nearest_airports", []),
@@ -1061,6 +1091,7 @@ def _compute_single_score_internal(
         "public_transit_access": {
             "score": transit_score,
             "weight": token_allocation["public_transit_access"],
+            "importance_level": priority_levels.get("public_transit_access") if priority_levels else None,
             "contribution": round(transit_score * token_allocation["public_transit_access"] / 100, 2),
             "breakdown": transit_details["breakdown"],
             "summary": transit_details["summary"],
@@ -1072,6 +1103,7 @@ def _compute_single_score_internal(
         "healthcare_access": {
             "score": healthcare_score,
             "weight": token_allocation["healthcare_access"],
+            "importance_level": priority_levels.get("healthcare_access") if priority_levels else None,
             "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 100, 2),
             "breakdown": healthcare_details["breakdown"],
             "summary": healthcare_details["summary"],
@@ -1082,6 +1114,7 @@ def _compute_single_score_internal(
         "quality_education": {
             "score": school_avg,
             "weight": token_allocation["quality_education"],
+            "importance_level": priority_levels.get("quality_education") if priority_levels else None,
             "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
             "breakdown": school_breakdown,
             "summary": {
@@ -1109,6 +1142,7 @@ def _compute_single_score_internal(
         "housing_value": {
             "score": housing_score,
             "weight": token_allocation["housing_value"],
+            "importance_level": priority_levels.get("housing_value") if priority_levels else None,
             "contribution": round(housing_score * token_allocation["housing_value"] / 100, 2),
             "breakdown": housing_details["breakdown"],
             "summary": housing_details["summary"],
@@ -1793,9 +1827,34 @@ def get_livability_score(request: Request,
         if priorities_dict:
             token_allocation = parse_priority_allocation(priorities_dict)
             allocation_type = "priority_based"
+            # Store original priority levels for response (normalize to proper case: None/Low/Medium/High)
+            priority_levels = {}
+            primary_pillars = [
+                "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+                "air_travel_access", "public_transit_access", "healthcare_access",
+                "quality_education", "housing_value"
+            ]
+            for pillar in primary_pillars:
+                original_priority = priorities_dict.get(pillar, "none")
+                if original_priority:
+                    priority_str = original_priority.strip().lower()
+                    # Normalize to proper case
+                    if priority_str == "none":
+                        priority_levels[pillar] = "None"
+                    elif priority_str == "low":
+                        priority_levels[pillar] = "Low"
+                    elif priority_str == "medium":
+                        priority_levels[pillar] = "Medium"
+                    elif priority_str == "high":
+                        priority_levels[pillar] = "High"
+                    else:
+                        priority_levels[pillar] = "None"  # Default for invalid values
+                else:
+                    priority_levels[pillar] = "None"
         else:
             token_allocation = parse_token_allocation(tokens)
             allocation_type = "token_based" if tokens else "default_equal"
+            priority_levels = None  # No priority levels when using tokens
         
         if only_pillars:
             # Zero-out tokens for pillars not requested
@@ -1872,6 +1931,7 @@ def get_livability_score(request: Request,
         "built_beauty": {
             "score": built_score,
             "weight": token_allocation["built_beauty"],
+            "importance_level": priority_levels.get("built_beauty") if priority_levels else None,
             "contribution": round(built_score * token_allocation["built_beauty"] / 100, 2),
             "breakdown": {
                 "component_score_0_50": built_details["component_score_0_50"],
@@ -1886,6 +1946,7 @@ def get_livability_score(request: Request,
         "natural_beauty": {
             "score": natural_score,
             "weight": token_allocation["natural_beauty"],
+            "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
             "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
             "breakdown": {
                 "tree_score_0_50": natural_details["tree_score_0_50"],
@@ -1900,6 +1961,7 @@ def get_livability_score(request: Request,
         "neighborhood_amenities": {
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
+            "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": amenities_details.get("breakdown", {}),
             "summary": amenities_details.get("summary", {}),
@@ -1910,6 +1972,7 @@ def get_livability_score(request: Request,
         "air_travel_access": {
             "score": air_travel_score,
             "weight": token_allocation["air_travel_access"],
+            "importance_level": priority_levels.get("air_travel_access") if priority_levels else None,
             "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 100, 2),
             "primary_airport": air_travel_details.get("primary_airport"),
             "nearest_airports": air_travel_details.get("nearest_airports", []),
@@ -1921,6 +1984,7 @@ def get_livability_score(request: Request,
         "public_transit_access": {
             "score": transit_score,
             "weight": token_allocation["public_transit_access"],
+            "importance_level": priority_levels.get("public_transit_access") if priority_levels else None,
             "contribution": round(transit_score * token_allocation["public_transit_access"] / 100, 2),
             "breakdown": transit_details["breakdown"],
             "summary": transit_details["summary"],

@@ -37,6 +37,7 @@ export interface AreaClassification {
 export interface LivabilityPillar {
   score: number;
   weight: number;
+  importance_level?: 'None' | 'Low' | 'Medium' | 'High' | null;
   contribution: number;
   breakdown?: PillarBreakdown;
   summary?: PillarSummary;

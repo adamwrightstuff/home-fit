@@ -27,6 +27,8 @@ interface SearchOptionsProps {
   options: SearchOptions
   onChange: (options: SearchOptions) => void
   disabled?: boolean
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
 }
 
 const PILLAR_NAMES: Record<keyof PillarPriorities, string> = {
@@ -58,9 +60,19 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
 // Session storage key
 const STORAGE_KEY = 'homefit_search_options'
 
-function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsProps) {
-  const [expanded, setExpanded] = useState(false)
+function SearchOptionsComponent({ options, onChange, disabled, expanded: externalExpanded, onExpandedChange }: SearchOptionsProps) {
+  const [internalExpanded, setInternalExpanded] = useState(false)
   const [showTooltip, setShowTooltip] = useState<{ type: string | null }>({ type: null })
+  
+  // Use external expanded state if provided, otherwise use internal
+  const expanded = externalExpanded !== undefined ? externalExpanded : internalExpanded
+  const setExpanded = (value: boolean) => {
+    if (externalExpanded !== undefined && onExpandedChange) {
+      onExpandedChange(value)
+    } else {
+      setInternalExpanded(value)
+    }
+  }
 
   // Load from session storage on mount
   useEffect(() => {

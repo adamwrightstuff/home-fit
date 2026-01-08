@@ -17,6 +17,7 @@ export default function Home() {
   const [error, set_error] = useState<string | null>(null)
   const [request_start_time, set_request_start_time] = useState<number | undefined>(undefined)
   const [show_game, set_show_game] = useState(false)
+  const [search_options_expanded, set_search_options_expanded] = useState(false)
   const [search_options, set_search_options] = useState<SearchOptions>({
     priorities: { ...DEFAULT_PRIORITIES },
     include_chains: true,
@@ -53,11 +54,12 @@ export default function Home() {
       priorities
     }))
     set_show_game(false)
+    set_search_options_expanded(true) // Expand the search options to show the applied priorities
   }
 
   // Show game if active
   if (show_game) {
-    return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} />
+    return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} onBack={() => set_show_game(false)} />
   }
 
   return (
@@ -78,6 +80,8 @@ export default function Home() {
             options={search_options} 
             onChange={set_search_options}
             disabled={loading}
+            expanded={search_options_expanded}
+            onExpandedChange={set_search_options_expanded}
           />
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex items-center justify-between gap-4">
