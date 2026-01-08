@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Info } from 'lucide-react'
 
 export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -40,7 +41,7 @@ const PILLAR_NAMES: Record<keyof PillarPriorities, string> = {
   housing_value: 'Housing Value',
 }
 
-const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+const PRIORITY_LEVELS: PriorityLevel[] = ['Low', 'Medium', 'High']
 
 const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
@@ -54,17 +55,44 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   housing_value: 'Medium',
 }
 
+// Session storage key
+const STORAGE_KEY = 'homefit_search_options'
+
 function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showTooltip, setShowTooltip] = useState<{ type: string | null }>({ type: null })
+
+  // Load from session storage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        onChange({ ...options, ...parsed })
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [])
+
+  // Save to session storage when options change
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(options))
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [options])
 
   const handlePriorityChange = (pillar: keyof PillarPriorities, priority: PriorityLevel) => {
-    onChange({
+    const newOptions = {
       ...options,
       priorities: {
         ...options.priorities,
         [pillar]: priority,
       },
-    })
+    }
+    onChange(newOptions)
   }
 
   const handleIncludeChainsChange = (value: boolean) => {
@@ -89,15 +117,15 @@ function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsPr
   }
 
   return (
-    <div className="border-t border-gray-200 pt-4 mt-4">
+    <div className="border-t border-gray-200 pt-6 mt-6">
       <button
         onClick={() => setExpanded(!expanded)}
         disabled={disabled}
-        className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center justify-between w-full text-left text-sm font-semibold text-gray-900 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 -mx-2"
       >
-        <span>Advanced Options</span>
+        <span>Customize your score</span>
         <svg
-          className={`w-5 h-5 transition-transform ${expanded ? 'transform rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform duration-200 ${expanded ? 'transform rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -107,67 +135,132 @@ function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsPr
       </button>
 
       {expanded && (
-        <div className="mt-4 space-y-4">
-          {/* Checkboxes */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={options.include_chains}
-                onChange={(e) => handleIncludeChainsChange(e.target.checked)}
-                disabled={disabled}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Include chain businesses</span>
-            </label>
+        <div className="mt-4 space-y-6 bg-gray-50 -mx-2 px-4 py-4 rounded-lg">
+          {/* Scoring Inputs Section */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+              Scoring Inputs
+            </h4>
+            <div className="space-y-4">
+              {/* School Scoring Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="enable_schools" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    School scoring
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onMouseEnter={() => setShowTooltip({ type: 'schools' })}
+                      onMouseLeave={() => setShowTooltip({ type: null })}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                      aria-label="School scoring info"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                    {showTooltip.type === 'schools' && (
+                      <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                        Enable scoring based on nearby school quality and ratings
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="enable_schools"
+                    checked={options.enable_schools}
+                    onChange={(e) => handleEnableSchoolsChange(e.target.checked)}
+                    disabled={disabled}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={options.enable_schools}
-                onChange={(e) => handleEnableSchoolsChange(e.target.checked)}
-                disabled={disabled}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Enable school scoring</span>
-            </label>
+              {/* Chain Businesses Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="include_chains" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Chain businesses
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onMouseEnter={() => setShowTooltip({ type: 'chains' })}
+                      onMouseLeave={() => setShowTooltip({ type: null })}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                      aria-label="Chain businesses info"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                    {showTooltip.type === 'chains' && (
+                      <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                        Include chain restaurants and businesses in neighborhood amenities count
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="include_chains"
+                    checked={options.include_chains}
+                    onChange={(e) => handleIncludeChainsChange(e.target.checked)}
+                    disabled={disabled}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
           </div>
 
-          {/* Priorities Section */}
+          {/* Pillar Priorities Section */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-900">Pillar Priorities</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Pillar Priorities
+              </h4>
               <button
                 onClick={handleResetPriorities}
                 disabled={disabled}
-                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded px-2 py-1"
               >
                 Reset to Default
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
               Set priority levels for each pillar. Higher priorities receive more weight in the total score.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(Object.keys(PILLAR_NAMES) as Array<keyof PillarPriorities>).map((pillar) => {
                 const currentValue = options.priorities[pillar]
                 return (
-                  <div key={pillar} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <label className="text-xs font-medium text-gray-700 flex-1 mr-2">
+                  <div key={pillar} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                    <label className="text-sm font-medium text-gray-700 flex-1 mr-3">
                       {PILLAR_NAMES[pillar]}
                     </label>
-                    <select
-                      value={currentValue}
-                      onChange={(e) => handlePriorityChange(pillar, e.target.value as PriorityLevel)}
-                      disabled={disabled}
-                      className="text-xs border border-gray-300 rounded px-3 py-1.5 bg-white text-gray-900 font-medium min-w-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {PRIORITY_LEVELS.map((level) => (
-                        <option key={level} value={level}>
-                          {level}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                      {PRIORITY_LEVELS.map((level) => {
+                        const isSelected = currentValue === level
+                        return (
+                          <button
+                            key={level}
+                            type="button"
+                            onClick={() => handlePriorityChange(pillar, level)}
+                            disabled={disabled}
+                            className={`px-2.5 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isSelected
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                            }`}
+                          >
+                            {level}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })}
@@ -182,4 +275,3 @@ function SearchOptionsComponent({ options, onChange, disabled }: SearchOptionsPr
 export { DEFAULT_PRIORITIES }
 export type { PillarPriorities, SearchOptions }
 export default SearchOptionsComponent
-

@@ -64,15 +64,15 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             HomeFit
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-base md:text-lg text-gray-700 font-medium">
             Discover how livable a location is across 9 key pillars
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 mb-8">
           <LocationSearch onSearch={handle_search} disabled={loading} />
           <SearchOptionsComponent 
             options={search_options} 
@@ -91,7 +91,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => set_show_game(true)}
-                className="flex-shrink-0 px-4 py-2 border-2 border-purple-200 text-purple-700 rounded-lg font-medium hover:bg-purple-50 hover:border-purple-300 transition-all flex items-center gap-2 whitespace-nowrap"
+                className="flex-shrink-0 px-4 py-2.5 border-2 border-purple-200 text-purple-700 rounded-lg font-medium hover:bg-purple-50 hover:border-purple-300 hover:shadow-sm transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <Sparkles className="w-4 h-4" />
                 Take Quiz

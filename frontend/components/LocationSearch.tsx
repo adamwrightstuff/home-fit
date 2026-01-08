@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect, useRef } from 'react'
 
 interface LocationSearchProps {
   onSearch: (location: string) => void
@@ -9,6 +9,14 @@ interface LocationSearchProps {
 
 export default function LocationSearch({ onSearch, disabled }: LocationSearchProps) {
   const [location, setLocation] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    // Autofocus on mount
+    if (inputRef.current && !disabled) {
+      inputRef.current.focus()
+    }
+  }, [disabled])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -19,24 +27,25 @@ export default function LocationSearch({ onSearch, disabled }: LocationSearchPro
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <input
+          ref={inputRef}
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Enter an address or ZIP code (e.g., 123 Main St, New York, NY)"
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+          className="flex-1 px-4 py-3.5 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-base"
           disabled={disabled}
         />
         <button
           type="submit"
           disabled={disabled || !location.trim()}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-base"
         >
           {disabled ? 'Searching...' : 'Search'}
         </button>
       </div>
-      <p className="mt-2 text-sm text-gray-500">
+      <p className="mt-2 text-xs text-gray-500 opacity-70">
         Examples: &quot;New York, NY&quot;, &quot;90210&quot;, &quot;1600 Pennsylvania Avenue NW, Washington, DC&quot;
       </p>
     </form>
