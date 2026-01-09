@@ -25,6 +25,7 @@ export default function Home() {
   })
 
   const handle_search = (location: string) => {
+    console.log('Page: handle_search called with location:', location)
     set_loading(true)
     set_error(null)
     set_score_data(null)
@@ -91,7 +92,7 @@ export default function Home() {
         </div>
 
         {loading && current_location && (
-          <div className="fixed inset-0 z-50 bg-gray-50">
+          <div className="fixed inset-0 z-50 bg-gray-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
             <SmartLoadingScreen
               location={current_location}
               priorities={JSON.stringify(search_options.priorities)}

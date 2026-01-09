@@ -45,6 +45,7 @@ export default function SmartLoadingScreen({
   const [final_score, set_final_score] = useState<number | null>(null)
 
   useEffect(() => {
+    console.log('SmartLoadingScreen: Starting stream for location:', location)
     const cleanup = streamScore(
       { 
         location,
@@ -53,6 +54,7 @@ export default function SmartLoadingScreen({
         enable_schools
       },
       (event: StreamEvent) => {
+        console.log('SmartLoadingScreen: Received event:', event.status, event)
         if (event.status === 'started') {
           set_status('starting')
         } else if (event.status === 'analyzing') {
@@ -85,12 +87,18 @@ export default function SmartLoadingScreen({
             on_complete(event.response!)
           }, 500)
         } else if (event.status === 'error') {
+          console.error('SmartLoadingScreen: Error event:', event)
           if (on_error) {
             on_error(new Error(event.message || 'Unknown error'))
           }
         }
       },
-      on_error
+      (error) => {
+        console.error('SmartLoadingScreen: Stream error:', error)
+        if (on_error) {
+          on_error(error)
+        }
+      }
     )
 
     return cleanup
