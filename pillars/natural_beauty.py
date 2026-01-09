@@ -1759,22 +1759,30 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             weighted_canopy_for_gvi = primary_canopy_pct or 0.0
         
         # Canopy component: Use weighted canopy for better representation
-        # Scale factor varies by area type to reflect visual greenness
-        # Suburban areas have lawns/grass/shrubs that add visual greenness beyond tree canopy
-        # Design principle: Context-Aware Expectations - different areas have different visual greenness
-        if area_type_key in ['suburban', 'exurban']:
-            # Suburban areas: Visual greenness = canopy + lawns/grass/shrubs
-            # Scale factor 0.85: Lawns and grass add significant visual greenness
-            # This better reflects that suburban areas look greener than canopy % suggests
-            canopy_scale = 0.85
-        elif area_type_key in ['urban_core', 'urban_core_lowrise', 'historic_urban', 'urban_residential']:
-            # Urban areas: Less lawn/grass, more hardscape
-            # Scale factor 0.6: Established factor for urban areas
-            canopy_scale = 0.6
-        else:
-            # Rural/unknown: Use moderate scale
-            canopy_scale = 0.7
-        canopy_component = weighted_canopy_for_gvi * canopy_scale
+        # Try to get actual greenness data from GEE if available (includes lawns/grass, not just canopy)
+        # Design principle: Objective & Data-Driven - use actual measured data, not assumptions
+        canopy_component = weighted_canopy_for_gvi * 0.6  # Base scale factor (research-backed)
+        
+        # Try to enhance with actual greenness data if available
+        # This captures visual greenness (lawns, grass, shrubs) not just tree canopy
+        try:
+            from data_sources.gee_api import get_urban_greenness_gee
+            greenness_data = get_urban_greenness_gee(lat, lon, radius_m=1000)
+            if greenness_data:
+                green_space_ratio = float(greenness_data.get("green_space_ratio", 0) or 0)
+                # green_space_ratio is NDVI > 0.2 (any vegetation including lawns/grass)
+                # This is actual measured visual greenness, not just tree canopy
+                if green_space_ratio > 0:
+                    # Use green_space_ratio as a boost to canopy component
+                    # This is objective data showing actual visible greenness
+                    # Scale: if green_space_ratio is 60% but canopy is 22%, boost reflects the difference
+                    greenness_boost = min(15.0, (green_space_ratio - weighted_canopy_for_gvi) * 0.5)
+                    if greenness_boost > 0:
+                        canopy_component += greenness_boost
+                        logger.debug(f"GVI fallback: Using greenness data boost: {greenness_boost:.2f} (green_space_ratio: {green_space_ratio:.1f}%, canopy: {weighted_canopy_for_gvi:.1f}%)")
+        except Exception as e:
+            logger.debug(f"Could not get greenness data for GVI fallback: {e}")
+            # Continue with base canopy component
         
         # Street tree component - visible street-level greenery
         street_component = 0.0
@@ -1851,16 +1859,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "components": {
                 "canopy_component": round(canopy_component, 2),
                 "canopy_pct_used": round(weighted_canopy_for_gvi, 2),
-                "canopy_scale_factor": round(canopy_scale, 2),
-                "area_type": area_type_key,
+                "canopy_base_scale": 0.6,
+                "greenness_boost_applied": round(canopy_component - (weighted_canopy_for_gvi * 0.6), 2) if canopy_component > (weighted_canopy_for_gvi * 0.6) else 0.0,
                 "street_component": round(street_component, 2),
                 "density_component": round(density_component, 2),
                 "local_parks_component": round(local_parks_component, 2),
                 "local_green_score_source": round(local_green_score, 2),
-                "note": f"Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI). Canopy scale factor {canopy_scale:.2f} reflects visual greenness for {area_type_key} areas (includes lawns/grass beyond tree canopy)."
+                "note": "Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI). Greenness boost uses actual GEE NDVI data (green_space_ratio) when available to capture visual greenness including lawns/grass."
             },
             "weight": gvi_weight,
-            "note": "Improved fallback: uses weighted canopy (multi-radius) + local parks (from existing score) + street trees. All components are objective and data-driven. Scale factor varies by area type to reflect visual greenness."
+            "note": "Improved fallback: uses weighted canopy (multi-radius) + local parks (from existing score) + street trees. All components are objective and data-driven. Greenness boost uses actual measured NDVI data when available."
         }
 
     details["green_view_index"] = round(green_view_index, 2)
