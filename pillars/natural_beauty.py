@@ -1759,9 +1759,22 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             weighted_canopy_for_gvi = primary_canopy_pct or 0.0
         
         # Canopy component: Use weighted canopy for better representation
-        # Scale factor 0.6: Established factor based on visible vs satellite canopy difference
-        # Design principle: Smooth and predictable - using established scale factor
-        canopy_component = weighted_canopy_for_gvi * 0.6
+        # Scale factor varies by area type to reflect visual greenness
+        # Suburban areas have lawns/grass/shrubs that add visual greenness beyond tree canopy
+        # Design principle: Context-Aware Expectations - different areas have different visual greenness
+        if area_type_key in ['suburban', 'exurban']:
+            # Suburban areas: Visual greenness = canopy + lawns/grass/shrubs
+            # Scale factor 0.85: Lawns and grass add significant visual greenness
+            # This better reflects that suburban areas look greener than canopy % suggests
+            canopy_scale = 0.85
+        elif area_type_key in ['urban_core', 'urban_core_lowrise', 'historic_urban', 'urban_residential']:
+            # Urban areas: Less lawn/grass, more hardscape
+            # Scale factor 0.6: Established factor for urban areas
+            canopy_scale = 0.6
+        else:
+            # Rural/unknown: Use moderate scale
+            canopy_scale = 0.7
+        canopy_component = weighted_canopy_for_gvi * canopy_scale
         
         # Street tree component - visible street-level greenery
         street_component = 0.0
@@ -1838,14 +1851,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "components": {
                 "canopy_component": round(canopy_component, 2),
                 "canopy_pct_used": round(weighted_canopy_for_gvi, 2),
+                "canopy_scale_factor": round(canopy_scale, 2),
+                "area_type": area_type_key,
                 "street_component": round(street_component, 2),
                 "density_component": round(density_component, 2),
                 "local_parks_component": round(local_parks_component, 2),
                 "local_green_score_source": round(local_green_score, 2),
-                "note": "Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI)"
+                "note": f"Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI). Canopy scale factor {canopy_scale:.2f} reflects visual greenness for {area_type_key} areas (includes lawns/grass beyond tree canopy)."
             },
             "weight": gvi_weight,
-            "note": "Improved fallback: uses weighted canopy (multi-radius) + local parks (from existing score) + street trees. All components are objective and data-driven."
+            "note": "Improved fallback: uses weighted canopy (multi-radius) + local parks (from existing score) + street trees. All components are objective and data-driven. Scale factor varies by area type to reflect visual greenness."
         }
 
     details["green_view_index"] = round(green_view_index, 2)
