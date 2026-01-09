@@ -81,8 +81,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           container: map_container_ref.current,
           style: map_style,
           center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
-          zoom: coordinates ? 12 : 2,
-          attributionControl: true
+          zoom: coordinates ? 12 : 2
         })
 
         new_map.on('load', () => {
