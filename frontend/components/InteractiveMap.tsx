@@ -85,12 +85,42 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         console.log('InteractiveMap: MapLibre GL loaded successfully')
         console.log('InteractiveMap: MapLibre version:', maplibregl.version || 'unknown')
 
-        // MapTiler free tier
-        const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
-        const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
+        // Use OpenStreetMap tiles (free, no API key required)
+        // Alternative: Use MapTiler if API key is provided
+        const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY
+        let map_style: string
+        
+        if (maptiler_key && maptiler_key !== 'get_your_own_OpIi9ZULNHzrESv6T2vL') {
+          // Use MapTiler if valid key is provided
+          map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
+        } else {
+          // Use OpenStreetMap style (free, no API key needed)
+          map_style = {
+            version: 8,
+            sources: {
+              'osm-tiles': {
+                type: 'raster',
+                tiles: [
+                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                ],
+                tileSize: 256,
+                attribution: '© OpenStreetMap contributors'
+              }
+            },
+            layers: [
+              {
+                id: 'osm-tiles',
+                type: 'raster',
+                source: 'osm-tiles',
+                minzoom: 0,
+                maxzoom: 19
+              }
+            ]
+          } as any
+        }
 
         console.log('InteractiveMap: Creating map instance')
-        console.log('InteractiveMap: Style URL:', map_style)
+        console.log('InteractiveMap: Using style:', typeof map_style === 'string' ? map_style : 'OpenStreetMap')
         console.log('InteractiveMap: Coordinates:', coordinates)
         console.log('InteractiveMap: Container:', map_container_ref.current)
         
