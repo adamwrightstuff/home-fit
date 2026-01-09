@@ -42,7 +42,14 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       })
 
       new_map.on('load', () => {
-        set_map_loaded(true)
+        // Ensure style is fully loaded
+        if (new_map.isStyleLoaded()) {
+          set_map_loaded(true)
+        } else {
+          new_map.once('style.load', () => {
+            set_map_loaded(true)
+          })
+        }
       })
 
       set_map(new_map)
@@ -59,89 +66,100 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   }, [map_container_ref, map_loaded, coordinates])
 
   useEffect(() => {
-    if (!map || !coordinates) return
+    if (!map || !coordinates || !map_loaded) return
 
-    // Update map center when coordinates are available
-    map.flyTo({
-      center: [coordinates.lon, coordinates.lat],
-      zoom: 12,
-      duration: 1000
-    })
+    // Wait for map style to fully load before adding sources/layers
+    const add_marker = () => {
+      // Double-check style is loaded
+      if (!map.isStyleLoaded()) {
+        map.once('style.load', add_marker)
+        return
+      }
 
-    // Add marker if not exists
-    if (!map.getSource('location')) {
-      map.addSource('location', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [coordinates.lon, coordinates.lat]
-          },
-          properties: {
-            title: location
+      try {
+        // Update map center when coordinates are available
+        map.flyTo({
+          center: [coordinates.lon, coordinates.lat],
+          zoom: 12,
+          duration: 1000
+        })
+
+        // Add marker if not exists (only after style is loaded)
+        if (!map.getSource('location')) {
+          map.addSource('location', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [coordinates.lon, coordinates.lat]
+              },
+              properties: {
+                title: location,
+                completed: completed_pillars.length
+              }
+            }
+          })
+
+          map.addLayer({
+            id: 'location-marker',
+            type: 'circle',
+            source: 'location',
+            paint: {
+              'circle-radius': 8,
+              'circle-color': '#3B82F6',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#FFFFFF'
+            }
+          })
+
+          map.addLayer({
+            id: 'location-label',
+            type: 'symbol',
+            source: 'location',
+            layout: {
+              'text-field': location,
+              'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+              'text-offset': [0, 1.5],
+              'text-anchor': 'top',
+              'text-size': 14
+            },
+            paint: {
+              'text-color': '#1F2937',
+              'text-halo-color': '#FFFFFF',
+              'text-halo-width': 2
+            }
+          })
+        } else {
+          // Update existing marker
+          const source = map.getSource('location') as any
+          if (source && source.setData) {
+            source.setData({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [coordinates.lon, coordinates.lat]
+              },
+              properties: {
+                title: location,
+                completed: completed_pillars.length
+              }
+            })
           }
         }
-      })
-
-      map.addLayer({
-        id: 'location-marker',
-        type: 'circle',
-        source: 'location',
-        paint: {
-          'circle-radius': 8,
-          'circle-color': '#3B82F6',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#FFFFFF'
+      } catch (error) {
+        // Retry if style wasn't ready
+        if (error instanceof Error && error.message.includes('not done loading')) {
+          console.log('Map style not ready, waiting...')
+          map.once('style.load', add_marker)
+        } else {
+          console.warn('Error updating map marker:', error)
         }
-      })
-
-      map.addLayer({
-        id: 'location-label',
-        type: 'symbol',
-        source: 'location',
-        layout: {
-          'text-field': location,
-          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-          'text-offset': [0, 1.5],
-          'text-anchor': 'top',
-          'text-size': 14
-        },
-        paint: {
-          'text-color': '#1F2937',
-          'text-halo-color': '#FFFFFF',
-          'text-halo-width': 2
-        }
-      })
-    } else {
-      // Update existing marker
-      map.getSource('location').setData({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [coordinates.lon, coordinates.lat]
-        },
-        properties: {
-          title: location
-        }
-      })
+      }
     }
 
-    // Visual feedback for completed pillars - pulse animation
-    if (completed_pillars.length > 0) {
-      map.getSource('location')?.setData({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [coordinates.lon, coordinates.lat]
-        },
-        properties: {
-          title: location,
-          completed: completed_pillars.length
-        }
-      })
-    }
-  }, [map, coordinates, location, completed_pillars])
+    add_marker()
+  }, [map, coordinates, location, completed_pillars, map_loaded])
 
   // MapLibre GL works without API key (uses MapTiler's free tiles)
   // Optional: Set NEXT_PUBLIC_MAPTILER_KEY for more features (100K free loads/month)
