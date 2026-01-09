@@ -16,30 +16,29 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   useEffect(() => {
     if (!map_container_ref.current || map_loaded) return
 
-    // Check if Mapbox GL is available
-    let mapboxgl: any = null
+    // Use MapLibre GL (open-source alternative to Mapbox GL)
+    let maplibregl: any = null
     try {
-      mapboxgl = require('mapbox-gl')
-      require('mapbox-gl/dist/mapbox-gl.css')
+      maplibregl = require('maplibre-gl')
+      require('maplibre-gl/dist/maplibre-gl.css')
     } catch (e) {
-      console.warn('Mapbox GL not available - map will not load')
+      console.warn('MapLibre GL not available - map will not load')
       return
     }
 
-    const mapbox_token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
-    
-    if (!mapbox_token) {
-      console.warn('MAPBOX_TOKEN not set - map will not load')
-      return
-    }
+    // MapTiler free tier (100K map loads/month, completely free)
+    // Uses demo key by default - works immediately, no signup needed
+    // Optional: Get your own free API key at https://www.maptiler.com/cloud/ for more features
+    const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
+    // MapTiler streets style - free, no credit card required
+    const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
 
     const initialize_map = () => {
-      const new_map = new mapboxgl.Map({
+      const new_map = new maplibregl.Map({
         container: map_container_ref.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
+        style: map_style,
         center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
-        zoom: coordinates ? 12 : 2,
-        accessToken: mapbox_token
+        zoom: coordinates ? 12 : 2
       })
 
       new_map.on('load', () => {
@@ -144,22 +143,9 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     }
   }, [map, coordinates, location, completed_pillars])
 
-  if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-    return (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-        <div className="text-center p-8">
-          <p className="text-gray-600 mb-2">Map unavailable</p>
-          <p className="text-sm text-gray-500">MAPBOX_TOKEN not configured</p>
-          {coordinates && (
-            <div className="mt-4 text-sm text-gray-600">
-              <p>Location: {location}</p>
-              <p>Coordinates: {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
+  // MapLibre GL works without API key (uses MapTiler's free tiles)
+  // Optional: Set NEXT_PUBLIC_MAPTILER_KEY for more features (100K free loads/month)
+  // Get free key at: https://www.maptiler.com/cloud/
 
   return (
     <div className="w-full h-full relative">
