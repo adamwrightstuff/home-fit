@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-// Import MapLibre GL CSS
+// Import MapLibre GL CSS - must be done client-side
 if (typeof window !== 'undefined') {
-  require('maplibre-gl/dist/maplibre-gl.css')
+  try {
+    require('maplibre-gl/dist/maplibre-gl.css')
+  } catch (e) {
+    console.warn('Could not load MapLibre CSS:', e)
+  }
 }
 
 interface InteractiveMapProps {
@@ -17,125 +21,146 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   const map_container_ref = useRef<HTMLDivElement>(null)
   const [map, set_map] = useState<any>(null)
   const [map_loaded, set_map_loaded] = useState(false)
+  const [init_error, set_init_error] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!map_container_ref.current || map_loaded) {
-      console.log('InteractiveMap: Skipping init - container:', !!map_container_ref.current, 'loaded:', map_loaded)
+    // Only run on client
+    if (typeof window === 'undefined') return
+    
+    if (!map_container_ref.current) {
+      console.log('InteractiveMap: Waiting for container ref...')
+      return
+    }
+    
+    if (map_loaded || map) {
+      console.log('InteractiveMap: Map already loaded, skipping init')
       return
     }
 
     console.log('InteractiveMap: Initializing map...')
+    console.log('InteractiveMap: Container element:', map_container_ref.current)
+    console.log('InteractiveMap: Container dimensions:', {
+      width: map_container_ref.current.offsetWidth,
+      height: map_container_ref.current.offsetHeight,
+      clientWidth: map_container_ref.current.clientWidth,
+      clientHeight: map_container_ref.current.clientHeight
+    })
 
-    // Dynamically import MapLibre GL (works better with Next.js)
-    let maplibregl: any = null
-    
+    let is_mounted = true
+
     const loadMapLibre = async () => {
       try {
+        // Dynamic import for MapLibre GL
         const maplibreModule = await import('maplibre-gl')
-        maplibregl = maplibreModule.default || maplibreModule
-        console.log('InteractiveMap: MapLibre GL loaded successfully', maplibregl)
+        const maplibregl = maplibreModule.default || maplibreModule
         
-        // Wait a tick to ensure container is ready
-        await new Promise(resolve => setTimeout(resolve, 100))
+        if (!is_mounted || !map_container_ref.current) {
+          console.log('InteractiveMap: Component unmounted or container gone')
+          return
+        }
         
-        // Initialize map after library is loaded
-        initializeMapWithLib(maplibregl)
-      } catch (e) {
-        console.error('InteractiveMap: MapLibre GL not available:', e)
-        return
-      }
-    }
-    
-    const initializeMapWithLib = (maplibregl: any) => {
-      if (!map_container_ref.current) {
-        console.error('InteractiveMap: Container ref is null after load')
-        return
-      }
+        console.log('InteractiveMap: MapLibre GL loaded successfully')
+        
+        // Wait a moment to ensure container is ready
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        if (!map_container_ref.current) {
+          console.error('InteractiveMap: Container ref lost after delay')
+          return
+        }
 
-      // MapTiler free tier (100K map loads/month, completely free)
-      // Uses demo key by default - works immediately, no signup needed
-      // Optional: Get your own free API key at https://www.maptiler.com/cloud/ for more features
-      const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
-      // MapTiler streets style - free, no credit card required
-      const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
+        // MapTiler free tier
+        const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
+        const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
 
-      console.log('InteractiveMap: Creating map instance, coordinates:', coordinates)
-      console.log('InteractiveMap: Container dimensions:', {
-        width: map_container_ref.current.offsetWidth,
-        height: map_container_ref.current.offsetHeight
-      })
-      
-      try {
+        console.log('InteractiveMap: Creating map instance')
+        console.log('InteractiveMap: Style URL:', map_style)
+        console.log('InteractiveMap: Coordinates:', coordinates)
+        
         const new_map = new maplibregl.Map({
           container: map_container_ref.current,
           style: map_style,
           center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
-          zoom: coordinates ? 12 : 2
+          zoom: coordinates ? 12 : 2,
+          attributionControl: true
         })
 
         new_map.on('load', () => {
+          if (!is_mounted) return
           console.log('InteractiveMap: Map load event fired')
-          // Ensure style is fully loaded
           if (new_map.isStyleLoaded()) {
             console.log('InteractiveMap: Style already loaded')
             set_map_loaded(true)
+            set_map(new_map)
           } else {
             console.log('InteractiveMap: Waiting for style.load event')
             new_map.once('style.load', () => {
+              if (!is_mounted) return
               console.log('InteractiveMap: Style.load event fired')
               set_map_loaded(true)
+              set_map(new_map)
             })
           }
         })
 
         new_map.on('error', (e: any) => {
           console.error('InteractiveMap: Map error:', e)
+          if (e.error) {
+            set_init_error(e.error.message || 'Map initialization error')
+          }
         })
 
         new_map.on('styledata', () => {
           console.log('InteractiveMap: Style data loaded')
         })
 
+        // Set map immediately so we can use it
         set_map(new_map)
-        console.log('InteractiveMap: Map instance created successfully')
-      } catch (error) {
-        console.error('InteractiveMap: Error creating map:', error)
+        console.log('InteractiveMap: Map instance created')
+        
+      } catch (e: any) {
+        console.error('InteractiveMap: Error loading MapLibre:', e)
+        set_init_error(e.message || 'Failed to load map library')
       }
     }
 
     loadMapLibre()
 
     return () => {
+      is_mounted = false
       console.log('InteractiveMap: Cleanup - removing map')
       if (map) {
-        map.remove()
+        try {
+          map.remove()
+        } catch (e) {
+          console.warn('InteractiveMap: Error removing map:', e)
+        }
         set_map(null)
         set_map_loaded(false)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map_container_ref, map_loaded])
+  }, []) // Only run once on mount
 
+  // Update map when coordinates change
   useEffect(() => {
     if (!map || !coordinates || !map_loaded) return
 
-    // Wait for map style to fully load before adding sources/layers
-    const add_marker = () => {
-      // Double-check style is loaded
+    const updateMap = () => {
       if (!map.isStyleLoaded()) {
-        map.once('style.load', add_marker)
+        map.once('style.load', updateMap)
         return
       }
 
       try {
-        // Update map center when coordinates are available
+        console.log('InteractiveMap: Updating map center to:', coordinates)
         map.flyTo({
           center: [coordinates.lon, coordinates.lat],
           zoom: 12,
           duration: 1000
         })
 
-        // Add marker if not exists (only after style is loaded)
+        // Add or update marker
         if (!map.getSource('location')) {
           map.addSource('location', {
             type: 'geojson',
@@ -182,7 +207,6 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
             }
           })
         } else {
-          // Update existing marker
           const source = map.getSource('location') as any
           if (source && source.setData) {
             source.setData({
@@ -199,38 +223,49 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           }
         }
       } catch (error) {
-        // Retry if style wasn't ready
         if (error instanceof Error && error.message.includes('not done loading')) {
-          console.log('Map style not ready, waiting...')
-          map.once('style.load', add_marker)
+          console.log('InteractiveMap: Style not ready, waiting...')
+          map.once('style.load', updateMap)
         } else {
-          console.warn('Error updating map marker:', error)
+          console.warn('InteractiveMap: Error updating map:', error)
         }
       }
     }
 
-    add_marker()
+    updateMap()
   }, [map, coordinates, location, completed_pillars, map_loaded])
 
-  // MapLibre GL works without API key (uses MapTiler's free tiles)
-  // Optional: Set NEXT_PUBLIC_MAPTILER_KEY for more features (100K free loads/month)
-  // Get free key at: https://www.maptiler.com/cloud/
-
   return (
-    <div className="w-full h-full relative" style={{ minHeight: '100vh', position: 'relative' }}>
+    <div 
+      className="w-full h-full relative" 
+      style={{ 
+        minHeight: '100vh', 
+        height: '100vh',
+        width: '100%',
+        position: 'relative'
+      }}
+    >
       <div 
         ref={map_container_ref} 
         className="w-full h-full" 
         style={{ 
-          minHeight: '100vh', 
-          width: '100%',
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0
+          bottom: 0,
+          width: '100%',
+          height: '100%'
         }}
       />
+      {init_error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+          <div className="text-center p-4">
+            <div className="text-red-600 font-semibold mb-2">Map Error</div>
+            <div className="text-sm text-gray-600">{init_error}</div>
+          </div>
+        </div>
+      )}
       {coordinates && (
         <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
           <div className="text-xs font-semibold text-gray-700">{location}</div>
