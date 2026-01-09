@@ -64,17 +64,17 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-homefit-text-primary mb-2">
               {location_info.city}, {location_info.state} {location_info.zip}
             </h2>
-            <p className="text-gray-600">Input: {data.input}</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-homefit-text-secondary">Input: {data.input}</p>
+            <p className="text-sm text-homefit-text-secondary opacity-75 mt-1">
               Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
             </p>
           </div>
           <button
             onClick={copyScores}
-            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
+            className="ml-4 px-4 py-2 bg-homefit-accent-primary text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
           >
             {copied ? (
               <>
@@ -108,7 +108,7 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
 
       {/* Metadata */}
       <div className="bg-white rounded-lg shadow-lg p-4">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-homefit-text-secondary opacity-75">
           API Version: {metadata.version}
           {metadata.cache_hit && ' | (Cached)'}
         </p>

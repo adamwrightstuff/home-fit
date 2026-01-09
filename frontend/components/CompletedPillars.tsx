@@ -17,15 +17,15 @@ interface CompletedPillarsProps {
 }
 
 function get_score_color(score: number): string {
-  if (score >= 80) return 'bg-green-50 border-green-200 text-green-700'
-  if (score >= 60) return 'bg-yellow-50 border-yellow-200 text-yellow-700'
-  return 'bg-red-50 border-red-200 text-red-700'
+  if (score >= 80) return 'bg-homefit-score-high/10 border-homefit-score-high/30 text-homefit-score-high'
+  if (score >= 60) return 'bg-homefit-score-mid/10 border-homefit-score-mid/30 text-homefit-score-mid'
+  return 'bg-homefit-score-low/10 border-homefit-score-low/30 text-homefit-score-low'
 }
 
 export default function CompletedPillars({ completed_pillars, pillar_config }: CompletedPillarsProps) {
   if (completed_pillars.size === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-homefit-text-secondary">
         <p>Waiting for pillar results...</p>
       </div>
     )
@@ -41,7 +41,7 @@ export default function CompletedPillars({ completed_pillars, pillar_config }: C
 
   return (
     <div className="space-y-3 max-h-96 overflow-y-auto">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">Completed Pillars</h3>
+      <h3 className="text-sm font-semibold text-homefit-text-primary mb-3">Completed Pillars</h3>
       {pillars_array.map(({ key, score, details, config }) => (
         <div
           key={key}

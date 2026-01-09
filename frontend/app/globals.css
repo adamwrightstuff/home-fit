@@ -6,15 +6,23 @@
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #F8F6F2;
+  --foreground: #2D3436;
+  /* HomeFit Color Palette */
+  --bg-base: #E8DCC8;
+  --bg-secondary: #F8F6F2;
+  --accent-primary: #7B9B7E;
+  --accent-secondary: #C96956;
+  --text-primary: #2D3436;
+  --text-secondary: #6C7A89;
+  --text-white: #FFFFFF;
+  --score-high: #7B9B7E;
+  --score-mid: #D4A574;
+  --score-low: #C96956;
+  --success: #7B9B7E;
+  --warning: #D4A574;
+  --error: #C96956;
+  --info: #8BA5B5;
 }
 
 body {

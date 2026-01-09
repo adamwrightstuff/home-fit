@@ -134,7 +134,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
       <button
         onClick={() => setExpanded(!expanded)}
         disabled={disabled}
-        className="flex items-center justify-between w-full text-left text-sm font-semibold text-gray-900 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 -mx-2"
+        className="flex items-center justify-between w-full text-left text-sm font-semibold text-homefit-text-primary hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-2 rounded px-2 -mx-2"
       >
         <span>Customize your score</span>
         <svg
@@ -151,14 +151,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
         <div className="mt-4 space-y-6 bg-gray-50 -mx-2 px-4 py-4 rounded-lg">
           {/* Scoring Inputs Section */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+            <h4 className="text-xs font-semibold text-homefit-text-primary uppercase tracking-wider mb-3">
               Scoring Inputs
             </h4>
             <div className="space-y-4">
               {/* School Scoring Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <label htmlFor="enable_schools" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  <label htmlFor="enable_schools" className="text-sm font-medium text-homefit-text-primary cursor-pointer">
                     School scoring
                   </label>
                   <div className="relative">
@@ -187,14 +187,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-homefit-accent-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-homefit-accent-primary"></div>
                 </label>
               </div>
 
               {/* Chain Businesses Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <label htmlFor="include_chains" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  <label htmlFor="include_chains" className="text-sm font-medium text-homefit-text-primary cursor-pointer">
                     Chain businesses
                   </label>
                   <div className="relative">
@@ -223,7 +223,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-homefit-accent-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-homefit-accent-primary"></div>
                 </label>
               </div>
             </div>
@@ -232,18 +232,18 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           {/* Pillar Priorities Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-homefit-text-primary uppercase tracking-wider">
                 Pillar Priorities
               </h4>
               <button
                 onClick={handleResetPriorities}
                 disabled={disabled}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded px-2 py-1"
+                className="text-xs text-homefit-accent-primary hover:opacity-80 font-medium disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-1 rounded px-2 py-1"
               >
                 Reset to Default
               </button>
             </div>
-            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
+            <p className="text-xs text-homefit-text-secondary mb-4 leading-relaxed">
               Set priority levels for each pillar. Higher priorities receive more weight in the total score.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -251,7 +251,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                 const currentValue = options.priorities[pillar]
                 return (
                   <div key={pillar} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                    <label className="text-sm font-medium text-gray-700 flex-1 mr-3">
+                    <label className="text-sm font-medium text-homefit-text-primary flex-1 mr-3">
                       {PILLAR_NAMES[pillar]}
                     </label>
                     <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
@@ -263,10 +263,10 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                             type="button"
                             onClick={() => handlePriorityChange(pillar, level)}
                             disabled={disabled}
-                            className={`px-2.5 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`px-2.5 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                               isSelected
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                                ? 'bg-homefit-accent-primary text-white shadow-sm'
+                                : 'text-homefit-text-secondary hover:text-homefit-text-primary hover:bg-gray-200'
                             }`}
                           >
                             {level}

@@ -79,11 +79,13 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         // ALWAYS use OpenStreetMap tiles (free, no API key required)
         // MapTiler requires a valid paid API key, so we'll use OSM by default
         console.log('InteractiveMap: Using OpenStreetMap tiles (free, no API key required)')
+        // Define style with explicit type to satisfy MapLibre's StyleSpecification
+        // Using type assertion to ensure version is literal type 8
         const map_style = {
           version: 8 as const,
           sources: {
             'osm-tiles': {
-              type: 'raster' as const,
+              type: 'raster',
               tiles: [
                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
               ],
@@ -94,7 +96,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           layers: [
             {
               id: 'osm-tiles',
-              type: 'raster' as const,
+              type: 'raster',
               source: 'osm-tiles',
               minzoom: 0,
               maxzoom: 19
@@ -109,6 +111,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         
         const new_map = new maplibregl.Map({
           container: map_container_ref.current,
+          // @ts-ignore - MapLibre type definitions are strict about version literal type
           style: map_style,
           center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
           zoom: coordinates ? 12 : 2
@@ -282,30 +285,30 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         }}
       />
       {is_initializing && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-homefit-bg-secondary bg-opacity-75 z-10">
           <div className="text-center p-4">
-            <div className="text-gray-600 font-semibold mb-2">Loading map...</div>
-            <div className="text-xs text-gray-500">Initializing MapLibre GL</div>
+            <div className="text-homefit-text-secondary font-semibold mb-2">Loading map...</div>
+            <div className="text-xs text-homefit-text-secondary opacity-75">Initializing MapLibre GL</div>
           </div>
         </div>
       )}
       {init_error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-homefit-bg-secondary z-10">
           <div className="text-center p-4">
-            <div className="text-red-600 font-semibold mb-2">Map Error</div>
-            <div className="text-sm text-gray-600">{init_error}</div>
-            <div className="text-xs text-gray-500 mt-2">Check browser console for details</div>
+            <div className="text-homefit-error font-semibold mb-2">Map Error</div>
+            <div className="text-sm text-homefit-text-secondary">{init_error}</div>
+            <div className="text-xs text-homefit-text-secondary opacity-75 mt-2">Check browser console for details</div>
           </div>
         </div>
       )}
       {coordinates && map_loaded && (
         <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
-          <div className="text-xs font-semibold text-gray-700">{location}</div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs font-semibold text-homefit-text-primary">{location}</div>
+          <div className="text-xs text-homefit-text-secondary opacity-75 mt-1">
             {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}
           </div>
           {completed_pillars.length > 0 && (
-            <div className="text-xs text-blue-600 mt-1 font-medium">
+            <div className="text-xs text-homefit-accent-primary mt-1 font-medium">
               {completed_pillars.length}/9 pillars complete
             </div>
           )}

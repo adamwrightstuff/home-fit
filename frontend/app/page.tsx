@@ -50,13 +50,13 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <main className="min-h-screen bg-homefit-bg-secondary p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-homefit-text-primary mb-2">
             HomeFit
           </h1>
-          <p className="text-base md:text-lg text-gray-700 font-medium">
+          <p className="text-base md:text-lg text-homefit-text-secondary font-medium">
             Discover how livable a location is across 9 key pillars
           </p>
         </div>
@@ -73,16 +73,16 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="text-sm text-homefit-text-secondary mb-1">
                   <span className="font-medium">Not sure what matters most?</span>
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-homefit-text-secondary opacity-75">
                   Take our 20-question quiz to discover your Place Values profile
                 </p>
               </div>
               <button
                 onClick={() => set_show_game(true)}
-                className="flex-shrink-0 px-4 py-2.5 border-2 border-purple-200 text-purple-700 rounded-lg font-medium hover:bg-purple-50 hover:border-purple-300 hover:shadow-sm transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="flex-shrink-0 px-4 py-2.5 border-2 border-homefit-accent-secondary text-homefit-accent-secondary rounded-lg font-medium hover:bg-homefit-accent-secondary hover:text-white hover:shadow-sm transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-homefit-accent-secondary focus:ring-offset-2"
               >
                 <Sparkles className="w-4 h-4" />
                 Take Quiz
@@ -92,7 +92,7 @@ export default function Home() {
         </div>
 
         {loading && current_location && (
-          <div className="fixed inset-0 z-50 bg-gray-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="fixed inset-0 z-50 bg-homefit-bg-secondary" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
             <SmartLoadingScreen
               location={current_location}
               priorities={JSON.stringify(search_options.priorities)}

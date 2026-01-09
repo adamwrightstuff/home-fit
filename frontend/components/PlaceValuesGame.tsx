@@ -422,10 +422,10 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   const get_importance_color = (level: PriorityLevel) => {
     const colors = {
-      'None': 'bg-gray-100 text-gray-500',
-      'Low': 'bg-blue-100 text-blue-600',
-      'Medium': 'bg-purple-100 text-purple-600',
-      'High': 'bg-pink-100 text-pink-700 border border-pink-200'
+      'None': 'bg-gray-100 text-homefit-text-secondary',
+      'Low': 'bg-homefit-info/20 text-homefit-info',
+      'Medium': 'bg-homefit-accent-primary/20 text-homefit-accent-primary',
+      'High': 'bg-homefit-accent-secondary/20 text-homefit-accent-secondary border border-homefit-accent-secondary/30'
     }
     return colors[level]
   }
@@ -462,24 +462,24 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   if (game_state === 'intro') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="max-w-xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-10 text-center relative">
+      <div className="min-h-screen bg-homefit-bg-secondary flex items-center justify-center p-6">
+        <div className="max-w-xl w-full bg-white rounded-3xl shadow-sm border border-gray-200 p-10 text-center relative">
           {onBack && (
             <button
               onClick={handle_back}
-              className="absolute top-4 left-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              className="absolute top-4 left-4 flex items-center gap-2 text-homefit-text-secondary hover:text-homefit-text-primary font-medium transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Back</span>
             </button>
           )}
-          <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
+          <div className="w-16 h-16 bg-homefit-accent-primary rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
             <MapPin className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-4 tracking-tight">Where You Belong</h1>
+          <h1 className="text-4xl font-bold text-homefit-text-primary mb-4 tracking-tight">Where You Belong</h1>
           {/* eslint-disable-next-line react/no-unescaped-entities */}
-          <p className="text-slate-600 text-lg mb-8">Discover your unique Place Values profile through 20 quick scenarios.</p>
-          <button onClick={start_game} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+          <p className="text-homefit-text-secondary text-lg mb-8">Discover your unique Place Values profile through 20 quick scenarios.</p>
+          <button onClick={start_game} className="w-full py-4 bg-homefit-accent-primary text-white rounded-xl font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
             Start the Journey <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -491,37 +491,37 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     const question = questions[current_question]
     const progress = ((current_question + 1) / questions.length) * 100
     return (
-      <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
+      <div className="min-h-screen bg-homefit-bg-secondary p-6 flex flex-col items-center">
         <div className="max-w-2xl w-full">
           <button
             onClick={handle_back}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors mb-6 -ml-2"
+            className="flex items-center gap-2 text-homefit-text-secondary hover:text-homefit-text-primary font-medium transition-colors mb-6 -ml-2"
           >
             <ChevronLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
           <div className="mb-8">
-            <div className="flex justify-between text-sm font-bold text-slate-400 mb-2 uppercase tracking-widest">
+            <div className="flex justify-between text-sm font-bold text-homefit-text-secondary opacity-75 mb-2 uppercase tracking-widest">
               <span>Question {current_question + 1}</span>
               <span>{Math.round(progress)}%</span>
             </div>
-            <div className="h-1.5 w-full bg-slate-200 rounded-full">
-              <div className="h-full bg-purple-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-1.5 w-full bg-gray-200 rounded-full">
+              <div className="h-full bg-homefit-accent-primary rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
           </div>
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 md:p-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-10 leading-snug">{question.text}</h2>
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 md:p-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-homefit-text-primary mb-10 leading-snug">{question.text}</h2>
             <div className="space-y-3">
               {question.options.map((option, idx) => (
                 <button
                   key={idx}
                   onClick={() => handle_answer(option.pillars)}
-                  className="w-full text-left p-5 rounded-2xl border-2 border-slate-100 hover:border-purple-500 hover:bg-purple-50 transition-all group flex items-center gap-4"
+                  className="w-full text-left p-5 rounded-2xl border-2 border-gray-100 hover:border-homefit-accent-primary hover:bg-homefit-accent-primary/5 transition-all group flex items-center gap-4"
                 >
-                  <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                  <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-homefit-text-secondary group-hover:bg-homefit-accent-primary group-hover:text-white transition-colors">
                     {idx + 1}
                   </span>
-                  <span className="text-slate-700 font-medium text-lg">{option.text}</span>
+                  <span className="text-homefit-text-primary font-medium text-lg">{option.text}</span>
                 </button>
               ))}
             </div>
@@ -536,40 +536,40 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     const priorities = convert_scores_to_priorities()
     
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-homefit-bg-secondary p-6">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={handle_back}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors mb-6 -ml-2"
+            className="flex items-center gap-2 text-homefit-text-secondary hover:text-homefit-text-primary font-medium transition-colors mb-6 -ml-2"
           >
             <ChevronLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 md:p-12 mb-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 md:p-12 mb-6">
             <div className="flex items-center gap-3 mb-6">
-              <Sparkles className="w-8 h-8 text-purple-600" />
-              <h1 className="text-3xl font-bold text-slate-900">Your Place Values</h1>
+              <Sparkles className="w-8 h-8 text-homefit-accent-primary" />
+              <h1 className="text-3xl font-bold text-homefit-text-primary">Your Place Values</h1>
             </div>
             
-            <div className="bg-purple-50 border border-purple-100 rounded-2xl p-6 mb-10">
-              <p className="text-purple-900 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: get_profile_summary(all_pillars).replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-700">$1</strong>') }} />
+            <div className="bg-homefit-accent-primary/10 border border-homefit-accent-primary/30 rounded-2xl p-6 mb-10">
+              <p className="text-homefit-text-primary leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: get_profile_summary(all_pillars).replace(/\*\*(.*?)\*\*/g, '<strong class="text-homefit-accent-primary">$1</strong>') }} />
             </div>
 
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Detailed Breakdown</h3>
+            <h3 className="text-sm font-bold text-homefit-text-secondary opacity-75 uppercase tracking-widest mb-6">Detailed Breakdown</h3>
             <div className="grid md:grid-cols-2 gap-4 mb-8">
               {all_pillars.map(({ pillar, score, priority, display_level }) => (
-                <div key={pillar} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50">
+                <div key={pillar} className="p-5 rounded-2xl border border-gray-100 bg-homefit-bg-secondary/50">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-bold text-slate-900">{pillar_names[pillar]}</span>
+                    <span className="font-bold text-homefit-text-primary">{pillar_names[pillar]}</span>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${get_importance_color(display_level)}`}>
                         {display_level}
                       </span>
-                      <span className="text-xs text-slate-500">→ {priority}</span>
+                      <span className="text-xs text-homefit-text-secondary">→ {priority}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-1">{pillar_descriptions[pillar]}</p>
-                  <p className="text-xs text-slate-400">Score: {score}/{max_possible_scores[pillar]} → Priority: {priority}</p>
+                  <p className="text-sm text-homefit-text-secondary leading-relaxed mb-1">{pillar_descriptions[pillar]}</p>
+                  <p className="text-xs text-homefit-text-secondary opacity-75">Score: {score}/{max_possible_scores[pillar]} → Priority: {priority}</p>
                 </div>
               ))}
             </div>
@@ -577,13 +577,13 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             {onApplyPriorities && (
               <button 
                 onClick={handle_apply_priorities}
-                className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-all flex items-center justify-center gap-2 mb-4"
+                className="w-full py-4 bg-homefit-accent-primary text-white rounded-xl font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 mb-4"
               >
                 <Check className="w-5 h-5" /> Apply These Priorities to Search
               </button>
             )}
 
-            <button onClick={start_game} className="w-full py-4 border-2 border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+            <button onClick={start_game} className="w-full py-4 border-2 border-gray-200 rounded-xl font-bold text-homefit-text-secondary hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
               <RefreshCcw className="w-4 h-4" /> Reset Assessment
             </button>
           </div>
