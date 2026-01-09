@@ -63,15 +63,6 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       try {
         console.log('InteractiveMap: Loading MapLibre GL...')
         
-        // Load CSS first (client-side only)
-        if (typeof window !== 'undefined') {
-          try {
-            await import('maplibre-gl/dist/maplibre-gl.css')
-          } catch (e) {
-            console.warn('Could not load MapLibre CSS:', e)
-          }
-        }
-        
         // Dynamic import for MapLibre GL
         const maplibreModule = await import('maplibre-gl')
         const maplibregl = maplibreModule.default || maplibreModule
