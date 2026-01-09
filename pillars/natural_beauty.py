@@ -668,6 +668,10 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
     (5-minute walk) significantly impacts daily quality of life, even if canopy
     coverage is moderate.
     
+    IMPROVED RELIABILITY: If 400m query fails, tries 1000m as fallback to ensure
+    parks are captured even when API has temporary issues. This prevents scores
+    from being artificially low due to transient OSM API failures.
+    
     Args:
         lat: Latitude
         lon: Longitude
@@ -678,13 +682,39 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
     """
     try:
         from data_sources import osm_api
+        
+        # Try primary radius first
         green_spaces = osm_api.query_green_spaces(lat, lon, radius_m=radius_m)
+        fallback_used = False
+        
+        # FALLBACK: If 400m query fails (returns None), try 1000m
+        # This ensures we capture parks even when API has temporary issues
+        # Design principle: Scalable & General - works reliably across all locations
+        if not green_spaces and radius_m == 400:
+            logger.debug("OSM query for 400m failed, trying 1000m fallback for parks")
+            green_spaces = osm_api.query_green_spaces(lat, lon, radius_m=1000)
+            fallback_used = True
+            if green_spaces:
+                logger.debug("Successfully retrieved parks using 1000m fallback")
+        
         if not green_spaces:
-            return 0.0, {"count": 0, "total_area_m2": 0, "available": False}
+            return 0.0, {
+                "count": 0, 
+                "total_area_m2": 0, 
+                "available": False,
+                "fallback_used": False,
+                "query_failed": True
+            }
         
         parks = green_spaces.get('parks', [])
         if not parks:
-            return 0.0, {"count": 0, "total_area_m2": 0, "available": True}
+            return 0.0, {
+                "count": 0, 
+                "total_area_m2": 0, 
+                "available": True,
+                "fallback_used": fallback_used,
+                "query_failed": False
+            }
         
         # Score based on count and proximity
         park_count = len(parks)
@@ -701,18 +731,27 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
             elif total_area >= 5000:
                 area_score = 2.0 + ((total_area - 5000) / 15000) * 2.0
         
+        # If fallback was used (1000m instead of 400m), apply distance penalty
+        # Parks >400m away are less valuable for "local" green spaces
+        # Reduce score by 30% to reflect that parks are further away
         total_score = min(10.0, count_score + area_score)
+        if fallback_used:
+            total_score = total_score * 0.7  # 30% penalty for parks >400m away
+            logger.debug(f"Applied 30% distance penalty for parks >400m: {total_score:.2f}")
         
         return total_score, {
             "count": park_count,
             "total_area_m2": round(total_area, 0),
             "count_score": round(count_score, 2),
             "area_score": round(area_score, 2),
-            "available": True
+            "available": True,
+            "fallback_used": fallback_used,
+            "radius_used": 1000 if fallback_used else radius_m,
+            "distance_penalty_applied": fallback_used
         }
     except Exception as e:
         logger.warning("Local green space scoring failed: %s", e)
-        return 0.0, {"error": str(e), "available": False}
+        return 0.0, {"error": str(e), "available": False, "fallback_used": False}
 
 
 def _score_nyc_trees(tree_count: int) -> float:
@@ -1693,6 +1732,38 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # Scale factor 1.5x: Parks are more visible per point than canopy alone
         # This means a perfect local green score (10) contributes 15 GVI points
         local_parks_component = local_green_score * 1.5  # Reuse existing score, scale for GVI
+        
+        # FALLBACK: If local_green_score is 0 but query failed (not just no parks), try direct query
+        # This ensures parks are included even if Local Green Score query failed
+        # Design principle: Scalable & General - robust to API failures
+        if local_parks_component == 0.0:
+            query_failed = local_green_meta.get("query_failed", False)
+            available = local_green_meta.get("available", False)
+            # If query failed (not available) OR if fallback was used but still 0, try direct query
+            if query_failed or (not available and not local_green_meta.get("fallback_used", False)):
+                try:
+                    from data_sources import osm_api
+                    # Try 1000m query directly as last resort
+                    fallback_green = osm_api.query_green_spaces(lat, lon, radius_m=1000)
+                    if fallback_green:
+                        fallback_parks = fallback_green.get('parks', [])
+                        if fallback_parks:
+                            # Calculate parks component directly from park count/area
+                            park_count = len(fallback_parks)
+                            park_area = sum(p.get('area_m2', 0) or 0 for p in fallback_parks)
+                            # Simple scoring: 1 park = 3 GVI points, 2+ parks = 6 GVI points
+                            # Area bonus: large parks (>20k m²) add 3 more points
+                            parks_gvi = min(6.0, park_count * 3.0)
+                            if park_area >= 20000:
+                                parks_gvi += 3.0
+                            # Apply distance penalty (parks >400m are less visible)
+                            local_parks_component = min(15.0, parks_gvi * 0.7)  # 30% penalty for distance
+                            logger.debug(f"GVI fallback: Using direct parks query, found {park_count} parks, component: {local_parks_component:.2f}")
+                            # Update metadata to reflect fallback was used
+                            local_green_meta["gvi_fallback_used"] = True
+                            local_green_meta["gvi_fallback_parks"] = park_count
+                except Exception as e:
+                    logger.debug(f"GVI fallback parks query failed: {e}")
         
         # Combine all components
         # Design principle: Research-backed - using additive combination based on actual data sources
