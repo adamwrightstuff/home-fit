@@ -1531,9 +1531,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if primary_canopy_pct is None:
         primary_canopy_pct = 0.0
     
+    # IMPROVED: Use weighted canopy for expectation comparison (better reflects lived experience)
+    # Design principle: Objective and data-driven - use best available data (weighted canopy from multi-radius)
+    # For scenic areas (e.g., mountain towns), beauty comes from surrounding forests (captured in 1000m/2000m radii)
+    # Using weighted canopy (12.9%) instead of primary (6.6%) better reflects what someone experiences
+    # Fallback to primary_canopy_pct if weighted not available
+    weighted_canopy_for_expectation = details.get('weighted_canopy_pct')
+    if weighted_canopy_for_expectation is None:
+        weighted_canopy_for_expectation = primary_canopy_pct
+    
     canopy_expectation_ratio: Optional[float] = None
     if expectation > 0:
-        canopy_expectation_ratio = primary_canopy_pct / expectation
+        canopy_expectation_ratio = weighted_canopy_for_expectation / expectation
+    
     details["canopy_expectation"] = {
         "climate_zone": climate_zone,
         "climate_base_pct": round(climate_base, 1),
@@ -1543,10 +1553,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         "base_expected_pct": legacy_base_expectation,
         "climate_adjusted_pct": expectation,
         "climate_multiplier": round(climate_multiplier, 3),
-        "observed_pct": round(primary_canopy_pct, 2),
+        "observed_pct": round(weighted_canopy_for_expectation, 2),  # Use weighted for comparison
+        "observed_pct_primary": round(primary_canopy_pct, 2),  # Keep primary for reference
         "ratio": round(canopy_expectation_ratio, 3) if canopy_expectation_ratio is not None else None
     }
+    
     expectation_weight = CONTEXT_SCALERS.get(area_type_key, 1.0)
+    
     if canopy_expectation_ratio is not None:
         if canopy_expectation_ratio >= 1.05:
             expectation_adjustment = min(
@@ -1558,10 +1571,37 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             # Old: (0.85 - ratio) * 18.0 → could reach 15.3 for ratio=0
             # New: (0.85 - ratio) * 6.0 → max 5.1 for ratio=0, capped at 3.0
             # This prevents penalties from completely wiping out base scores
-            expectation_penalty = min(
+            base_penalty = min(
                 CANOPY_EXPECTATION_PENALTY_MAX,
                 (0.85 - canopy_expectation_ratio) * 6.0 / max(expectation_weight, 0.65)
             )
+            
+            # IMPROVED: Reduce penalty when context bonus is high
+            # Design principle: Research-backed - scenic areas with strong context (mountains, water, forests)
+            # can have low immediate canopy because beauty comes from context, not immediate canopy
+            # This is especially true for mountain towns (Leavenworth), coastal areas, etc.
+            # Context bonus is already calculated above (line 1431), so we can use it here
+            # If context_bonus > 12 (strong scenic features), reduce penalty by 50%
+            # This prevents penalizing scenic areas unfairly for low immediate canopy
+            # Rationale: Mountain towns/coastal areas may have 6-10% immediate canopy (valley floor/beach)
+            # but still score high in natural beauty due to surrounding mountains/water/forests
+            penalty_reduction_factor = 1.0
+            if context_bonus_total > 12.0:
+                # Strong scenic context: reduce penalty by 50%
+                penalty_reduction_factor = 0.5
+            elif context_bonus_total > 8.0:
+                # Moderate scenic context: reduce penalty by 25%
+                penalty_reduction_factor = 0.75
+            
+            expectation_penalty = base_penalty * penalty_reduction_factor
+            if penalty_reduction_factor < 1.0:
+                details["canopy_expectation"]["penalty_reduction"] = {
+                    "original_penalty": round(base_penalty, 2),
+                    "reduction_factor": round(penalty_reduction_factor, 2),
+                    "reduced_penalty": round(expectation_penalty, 2),
+                    "context_bonus": round(context_bonus_total, 2),
+                    "reason": "High scenic context reduces penalty for low immediate canopy"
+                }
     details["canopy_expectation"]["bonus"] = round(expectation_adjustment, 2)
     details["canopy_expectation"]["penalty"] = round(expectation_penalty, 2)
     details["expectation_effect"] = {
