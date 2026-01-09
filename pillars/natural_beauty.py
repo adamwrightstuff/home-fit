@@ -1575,6 +1575,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         tree_radius_km = tree_radius_used / 1000.0
         details["tree_radius_m"] = tree_radius_used
 
+    # Calculate local green spaces early (needed for GVI fallback)
+    # Design principle: Objective and data-driven - calculate once, reuse in multiple places
+    local_green_score, local_green_meta = _score_local_green_spaces(lat, lon, radius_m=400)
+    details["local_green_spaces"] = local_green_meta
+    details["local_green_score"] = round(local_green_score, 2)
+
     # green_view_index already initialized above (line ~1160)
     # Now calculate the actual value
     green_view_details: Dict[str, float] = {}
@@ -1610,30 +1616,70 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "weight": gvi_weight
         }
     else:
-        canopy_component = (primary_canopy_pct or 0.0) * 0.6
+        # IMPROVED COMPOSITE FALLBACK: Use weighted canopy and include local parks
+        # Design principle: Objective and data-driven - use best available data
+        # Use weighted canopy (multi-radius: 400m + 1000m + 2000m) instead of primary (400m only)
+        # This better reflects visible greenery at different scales for lived experience
+        weighted_canopy_for_gvi = details.get('weighted_canopy_pct')
+        if weighted_canopy_for_gvi is None:
+            weighted_canopy_for_gvi = primary_canopy_pct or 0.0
+        
+        # Canopy component: Use weighted canopy for better representation
+        # Scale factor 0.6: Established factor based on visible vs satellite canopy difference
+        # Design principle: Smooth and predictable - using established scale factor
+        canopy_component = weighted_canopy_for_gvi * 0.6
+        
+        # Street tree component - visible street-level greenery
         street_component = 0.0
         if street_tree_points:
             street_component += min(40.0, (street_tree_points / 50.0) * 40.0)
+        elif street_tree_feature_total > 0:
+            # Use street_tree_feature_total as proxy (includes OSM parks)
+            # Scale: ~20 features = full street component value (30 points)
+            street_component = min(30.0, (street_tree_feature_total / 20.0) * 30.0)
         if osm_tree_points:
             street_component += min(20.0, (osm_tree_points / 50.0) * 20.0)
+        
+        # Density component - tree density in area
         density_component = 0.0
         if tree_radius_km and street_tree_feature_total > 0:
             area_sq_km = math.pi * (tree_radius_km ** 2)
             density_component = min(20.0, (street_tree_feature_total / max(area_sq_km, 0.1)) * 0.5)
-        green_view_index = min(100.0, max(0.0, canopy_component + street_component + density_component))
+        
+        # Local parks component - reuse existing local_green_score to avoid duplication
+        # Design principle: Objective and data-driven - reuse existing scoring logic
+        # Parks are highly visible and contribute significantly to "green view"
+        # Convert local_green_score (0-10 scale) to GVI contribution
+        # Scale factor 1.5x: Parks are more visible per point than canopy alone
+        # This means a perfect local green score (10) contributes 15 GVI points
+        local_parks_component = local_green_score * 1.5  # Reuse existing score, scale for GVI
+        
+        # Combine all components
+        # Design principle: Research-backed - using additive combination based on actual data sources
+        # All components are objective metrics: canopy %, street trees, density, parks
+        gvi_raw = canopy_component + street_component + density_component + local_parks_component
+        green_view_index = min(100.0, max(0.0, gvi_raw))
+        
         # Ensure gvi_bonus is always a valid number
         gvi_bonus = float(min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight))
         if math.isnan(gvi_bonus) or not isinstance(gvi_bonus, (int, float)):
             gvi_bonus = 0.0
+        
         green_view_details = {
             "method": "composite",
-            "fallback_reason": "GEE GVI unavailable",  # Explain why using fallback
+            "fallback_reason": "GEE GVI unavailable",
+            "improved_fallback": True,  # Flag indicating improved formula
             "components": {
                 "canopy_component": round(canopy_component, 2),
+                "canopy_pct_used": round(weighted_canopy_for_gvi, 2),
                 "street_component": round(street_component, 2),
-                "density_component": round(density_component, 2)
+                "density_component": round(density_component, 2),
+                "local_parks_component": round(local_parks_component, 2),
+                "local_green_score_source": round(local_green_score, 2),
+                "note": "Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI)"
             },
-            "weight": gvi_weight
+            "weight": gvi_weight,
+            "note": "Improved fallback: uses weighted canopy (multi-radius) + local parks (from existing score) + street trees. All components are objective and data-driven."
         }
 
     details["green_view_index"] = round(green_view_index, 2)
@@ -1653,12 +1699,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     else:
         details["gvi_source"] = "composite"
         details["gvi_radius_m"] = tree_radius_used
-    # Calculate local green space score (for lived experience)
-    local_green_score, local_green_meta = _score_local_green_spaces(lat, lon, radius_m=400)
-    details["local_green_spaces"] = local_green_meta
-    details["local_green_score"] = round(local_green_score, 2)
     
     # Calculate street tree bonus (only for low-canopy areas with street trees)
+    # Note: local_green_score already calculated above (moved earlier for GVI fallback)
     # primary_canopy_pct is always initialized (never None), so we can safely check it
     street_tree_bonus = 0.0
     if primary_canopy_pct is not None and street_tree_feature_total > 0:
