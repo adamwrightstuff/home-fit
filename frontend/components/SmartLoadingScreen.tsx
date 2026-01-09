@@ -123,43 +123,56 @@ export default function SmartLoadingScreen({
   console.log('SmartLoadingScreen: Rendering with status:', status, 'progress:', progress, 'location:', location)
   
   return (
-    <div className="flex h-full w-full bg-gray-50" style={{ minHeight: '100vh', width: '100%' }}>
-      {/* Left side - Map */}
-      <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh' }}>
-        <InteractiveMap 
-          location={location}
-          coordinates={coordinates}
-          completed_pillars={Array.from(completed_pillars.keys())}
-        />
-      </div>
-
-      {/* Right side - Progress */}
-      <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh' }}>
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Analyzing {location}</h2>
-          
-          <ProgressBar progress={progress} />
-          
-          {final_score !== null && (
-            <div className="mb-6 p-6 bg-green-50 border-2 border-green-200 rounded-lg">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-green-700 mb-2">{final_score.toFixed(1)}</div>
-                <div className="text-sm text-green-600">Final Score</div>
-              </div>
-            </div>
-          )}
-          
-          {current_pillar && status === 'analyzing' && (
-            <CurrentlyAnalyzing 
-              pillar_key={current_pillar}
-              config={PILLAR_CONFIG[current_pillar]}
-            />
-          )}
-          
-          <CompletedPillars 
-            completed_pillars={completed_pillars}
-            pillar_config={PILLAR_CONFIG}
+    <div className="flex h-full w-full bg-gray-50" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
+      {/* Loading overlay - shows immediately */}
+      {status === 'starting' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-700 mb-2">Initializing...</div>
+            <div className="text-sm text-gray-500">Preparing to analyze {location}</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Main content */}
+      <div className="flex h-full w-full" style={{ minHeight: '100vh' }}>
+        {/* Left side - Map */}
+        <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh' }}>
+          <InteractiveMap 
+            location={location}
+            coordinates={coordinates}
+            completed_pillars={Array.from(completed_pillars.keys())}
           />
+        </div>
+
+        {/* Right side - Progress */}
+        <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh' }}>
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Analyzing {location}</h2>
+            
+            <ProgressBar progress={progress} />
+            
+            {final_score !== null && (
+              <div className="mb-6 p-6 bg-green-50 border-2 border-green-200 rounded-lg">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-green-700 mb-2">{final_score.toFixed(1)}</div>
+                  <div className="text-sm text-green-600">Final Score</div>
+                </div>
+              </div>
+            )}
+            
+            {current_pillar && status === 'analyzing' && (
+              <CurrentlyAnalyzing 
+                pillar_key={current_pillar}
+                config={PILLAR_CONFIG[current_pillar]}
+              />
+            )}
+            
+            <CompletedPillars 
+              completed_pillars={completed_pillars}
+              pillar_config={PILLAR_CONFIG}
+            />
+          </div>
         </div>
       </div>
     </div>
