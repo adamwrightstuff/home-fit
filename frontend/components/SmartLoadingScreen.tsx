@@ -120,10 +120,12 @@ export default function SmartLoadingScreen({
     }
   }, [completed_pillars, status])
 
+  console.log('SmartLoadingScreen: Rendering with status:', status, 'progress:', progress, 'location:', location)
+  
   return (
-    <div className="flex h-full w-full bg-gray-50">
+    <div className="flex h-full w-full bg-gray-50" style={{ minHeight: '100vh', width: '100%' }}>
       {/* Left side - Map */}
-      <div className="w-1/2 border-r border-gray-200">
+      <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh' }}>
         <InteractiveMap 
           location={location}
           coordinates={coordinates}
@@ -132,7 +134,7 @@ export default function SmartLoadingScreen({
       </div>
 
       {/* Right side - Progress */}
-      <div className="w-1/2 p-8 overflow-y-auto">
+      <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh' }}>
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Analyzing {location}</h2>
           
