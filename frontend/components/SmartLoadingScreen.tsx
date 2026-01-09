@@ -151,9 +151,10 @@ export default function SmartLoadingScreen({
           {/* Loading overlay - only on right side */}
           {status === 'starting' && (
             <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-              <div className="text-center">
+              <div className="text-center max-w-md px-4">
                 <div className="text-2xl font-bold text-homefit-text-primary mb-2">Initializing...</div>
-                <div className="text-sm text-homefit-text-secondary">Preparing to analyze {location}</div>
+                <div className="text-sm text-homefit-text-secondary mb-6">Preparing to analyze {location}</div>
+                <LoadingQuotes is_loading={true} />
               </div>
             </div>
           )}

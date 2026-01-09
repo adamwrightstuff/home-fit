@@ -20,7 +20,6 @@ const QUOTE_DURATION = 3500 // 3.5 seconds per quote (between 3-4 seconds)
 
 export default function LoadingQuotes({ is_loading }: LoadingQuotesProps) {
   const [current_index, set_current_index] = useState(0)
-  const [is_visible, set_is_visible] = useState(true)
   const [quote_opacity, set_quote_opacity] = useState(1)
   const interval_ref = useRef<NodeJS.Timeout | null>(null)
   const fade_timeout_ref = useRef<NodeJS.Timeout | null>(null)
@@ -33,12 +32,10 @@ export default function LoadingQuotes({ is_loading }: LoadingQuotesProps) {
     if (!is_loading) {
       // Fade out gracefully when loading completes
       set_quote_opacity(0)
-      fade_timeout_ref.current = setTimeout(() => set_is_visible(false), FADE_DURATION)
       return
     }
 
-    // Reset visibility when loading starts
-    set_is_visible(true)
+    // Reset when loading starts
     set_quote_opacity(1)
     set_current_index(0)
 
@@ -63,7 +60,8 @@ export default function LoadingQuotes({ is_loading }: LoadingQuotesProps) {
     }
   }, [is_loading])
 
-  if (!is_loading && !is_visible) {
+  // Always render when loading, even if opacity is 0 (for layout)
+  if (!is_loading) {
     return null
   }
 
@@ -71,17 +69,24 @@ export default function LoadingQuotes({ is_loading }: LoadingQuotesProps) {
     <div 
       className="text-center"
       style={{
-        minHeight: '2rem', // Prevent layout shift during transitions
+        minHeight: '2.5rem',
+        paddingTop: '0.75rem',
+        paddingBottom: '0.75rem',
+        marginTop: '0.5rem',
+        marginBottom: '1.5rem',
       }}
     >
       <p 
-        className="text-homefit-text-secondary italic"
+        className="italic"
         style={{
-          fontSize: '17px', // Between 16-18px as specified
-          fontWeight: 400, // Regular weight
-          lineHeight: '1.5',
+          fontSize: '17px',
+          fontWeight: 400,
+          lineHeight: '1.6',
           opacity: quote_opacity,
-          transition: `opacity ${FADE_DURATION}ms ease-in-out`
+          transition: `opacity ${FADE_DURATION}ms ease-in-out`,
+          color: '#6C7A89',
+          margin: 0,
+          display: 'block',
         }}
       >
         {QUOTES[current_index]}
