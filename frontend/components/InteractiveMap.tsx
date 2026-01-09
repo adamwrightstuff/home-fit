@@ -178,7 +178,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run once on mount
+  }, []) // Only run once on mount - map_ref is stable
 
   // Update map when coordinates change
   useEffect(() => {
