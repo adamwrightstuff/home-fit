@@ -75,7 +75,6 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         }
         
         console.log('InteractiveMap: MapLibre GL loaded successfully')
-        console.log('InteractiveMap: MapLibre version:', maplibregl.version || 'unknown')
 
         // ALWAYS use OpenStreetMap tiles (free, no API key required)
         // MapTiler requires a valid paid API key, so we'll use OSM by default
