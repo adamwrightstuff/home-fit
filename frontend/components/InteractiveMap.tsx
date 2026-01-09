@@ -85,47 +85,34 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         console.log('InteractiveMap: MapLibre GL loaded successfully')
         console.log('InteractiveMap: MapLibre version:', maplibregl.version || 'unknown')
 
-        // Use OpenStreetMap tiles (free, no API key required)
-        // Only use MapTiler if a valid API key is explicitly provided
-        const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY
-        const is_demo_key = maptiler_key === 'get_your_own_OpIi9ZULNHzrESv6T2vL'
-        const has_valid_key = maptiler_key && maptiler_key.trim() !== '' && !is_demo_key
-        
-        let map_style: string | object
-        
-        if (has_valid_key) {
-          // Use MapTiler if valid key is provided
-          console.log('InteractiveMap: Using MapTiler with provided API key')
-          map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
-        } else {
-          // Use OpenStreetMap style (free, no API key needed)
-          console.log('InteractiveMap: Using OpenStreetMap tiles (no API key required)')
-          map_style = {
-            version: 8,
-            sources: {
-              'osm-tiles': {
-                type: 'raster',
-                tiles: [
-                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-                ],
-                tileSize: 256,
-                attribution: '© OpenStreetMap contributors'
-              }
-            },
-            layers: [
-              {
-                id: 'osm-tiles',
-                type: 'raster',
-                source: 'osm-tiles',
-                minzoom: 0,
-                maxzoom: 19
-              }
-            ]
-          }
+        // ALWAYS use OpenStreetMap tiles (free, no API key required)
+        // MapTiler requires a valid paid API key, so we'll use OSM by default
+        console.log('InteractiveMap: Using OpenStreetMap tiles (free, no API key required)')
+        const map_style = {
+          version: 8,
+          sources: {
+            'osm-tiles': {
+              type: 'raster',
+              tiles: [
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+              ],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [
+            {
+              id: 'osm-tiles',
+              type: 'raster',
+              source: 'osm-tiles',
+              minzoom: 0,
+              maxzoom: 19
+            }
+          ]
         }
 
         console.log('InteractiveMap: Creating map instance')
-        console.log('InteractiveMap: Using style:', typeof map_style === 'string' ? map_style : 'OpenStreetMap')
+        console.log('InteractiveMap: Using OpenStreetMap style')
         console.log('InteractiveMap: Coordinates:', coordinates)
         console.log('InteractiveMap: Container:', map_container_ref.current)
         
