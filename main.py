@@ -1392,8 +1392,10 @@ async def _stream_score_with_progress(
     Streams events as each pillar completes (no artificial delays).
     """
     try:
+        # Send started event immediately and flush
         yield f"event: started\n"
         yield f"data: {json.dumps({'status': 'started'})}\n\n"
+        await asyncio.sleep(0.01)  # Small delay to ensure event is flushed
         
         loop = asyncio.get_event_loop()
         
@@ -1410,6 +1412,7 @@ async def _stream_score_with_progress(
         
         yield f"event: analyzing\n"
         yield f"data: {json.dumps({'status': 'analyzing', 'location': f'{city}, {state}', 'coordinates': {'lat': lat, 'lon': lon}})}\n\n"
+        await asyncio.sleep(0.01)  # Flush analyzing event
         
         # Step 2: Detect location scope
         from data_sources.data_quality import detect_location_scope

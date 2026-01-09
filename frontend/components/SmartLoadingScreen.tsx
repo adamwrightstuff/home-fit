@@ -56,8 +56,10 @@ export default function SmartLoadingScreen({
       (event: StreamEvent) => {
         console.log('SmartLoadingScreen: Received event:', event.status, event)
         if (event.status === 'started') {
+          console.log('SmartLoadingScreen: Setting status to starting')
           set_status('starting')
         } else if (event.status === 'analyzing') {
+          console.log('SmartLoadingScreen: Setting status to analyzing, coordinates:', event.coordinates)
           set_status('analyzing')
           if (event.coordinates) {
             set_coordinates(event.coordinates)

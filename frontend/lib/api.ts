@@ -89,13 +89,20 @@ export function streamScore(
 
   const url = `${API_BASE_URL}/score/stream?${searchParams.toString()}`;
   
+  console.log('streamScore: Connecting to SSE endpoint:', url);
   const eventSource = new EventSource(url);
   let closed = false;
 
   eventSource.addEventListener('started', (e: MessageEvent) => {
+    console.log('streamScore: Received started event:', e.data);
     if (!closed) {
-      const data = JSON.parse(e.data);
-      onEvent({ ...data, status: 'started' });
+      try {
+        const data = JSON.parse(e.data);
+        console.log('streamScore: Parsed started data:', data);
+        onEvent({ ...data, status: 'started' });
+      } catch (err) {
+        console.error('streamScore: Error parsing started event:', err);
+      }
     }
   });
 
@@ -141,7 +148,13 @@ export function streamScore(
     }
   });
 
-  eventSource.onerror = () => {
+  eventSource.onerror = (error) => {
+    console.error('streamScore: EventSource error:', error);
+    console.error('streamScore: EventSource readyState:', eventSource.readyState);
+    // readyState: 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
+    if (eventSource.readyState === EventSource.CLOSED) {
+      console.error('streamScore: Connection closed unexpectedly');
+    }
     if (!closed) {
       if (onError) {
         onError(new Error('EventSource connection error'));
@@ -149,6 +162,11 @@ export function streamScore(
       eventSource.close();
       closed = true;
     }
+  };
+  
+  // Log when connection opens
+  eventSource.onopen = () => {
+    console.log('streamScore: EventSource connection opened');
   };
 
   return () => {
