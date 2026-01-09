@@ -660,7 +660,7 @@ def _calculate_weighted_canopy_score(canopy_multi: Dict[str, Optional[float]]) -
     return 0.0, 0.0
 
 
-def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tuple[float, Dict]:
+def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400, area_type: Optional[str] = None) -> Tuple[float, Dict]:
     """
     Score local green spaces (parks, gardens) within walking distance.
     
@@ -672,10 +672,16 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
     parks are captured even when API has temporary issues. This prevents scores
     from being artificially low due to transient OSM API failures.
     
+    IMPROVED FOR SUBURBAN AREAS: For suburban areas, also checks 2000m radius for
+    large green spaces (golf courses, large parks) that are visible and contribute
+    to natural beauty even if not within walking distance. These are weighted less
+    but still contribute to the score.
+    
     Args:
         lat: Latitude
         lon: Longitude
         radius_m: Search radius (default 400m for 5-minute walk)
+        area_type: Optional area type to determine if extended radius should be used
     
     Returns:
         Tuple of (score 0-10, metadata dict)
@@ -686,6 +692,7 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
         # Try primary radius first
         green_spaces = osm_api.query_green_spaces(lat, lon, radius_m=radius_m)
         fallback_used = False
+        extended_radius_used = False
         
         # FALLBACK: If 400m query fails (returns None), try 1000m
         # This ensures we capture parks even when API has temporary issues
@@ -703,16 +710,41 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
                 "total_area_m2": 0, 
                 "available": False,
                 "fallback_used": False,
+                "extended_radius_used": False,
                 "query_failed": True
             }
         
         parks = green_spaces.get('parks', [])
-        if not parks:
+        
+        # For suburban areas, also check 2000m for large green spaces (golf courses, large parks)
+        # These are visible and contribute to natural beauty even if not within walking distance
+        # Design principle: Context-Aware Expectations - suburban areas have larger green spaces
+        extended_parks = []
+        if area_type and area_type.lower() in ['suburban', 'exurban'] and radius_m <= 1000:
+            try:
+                extended_green = osm_api.query_green_spaces(lat, lon, radius_m=2000)
+                if extended_green:
+                    extended_parks = extended_green.get('parks', [])
+                    # Filter to only large green spaces (golf courses, large parks >50k m²)
+                    # These are highly visible even from distance
+                    extended_parks = [
+                        p for p in extended_parks 
+                        if p.get('leisure') == 'golf_course' or 
+                           (p.get('area_m2', 0) or 0) > 50000
+                    ]
+                    if extended_parks:
+                        extended_radius_used = True
+                        logger.debug(f"Found {len(extended_parks)} large green spaces in 2000m radius")
+            except Exception as e:
+                logger.debug(f"Extended radius query failed: {e}")
+        
+        if not parks and not extended_parks:
             return 0.0, {
                 "count": 0, 
                 "total_area_m2": 0, 
                 "available": True,
                 "fallback_used": fallback_used,
+                "extended_radius_used": extended_radius_used,
                 "query_failed": False
             }
         
@@ -731,12 +763,30 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
             elif total_area >= 5000:
                 area_score = 2.0 + ((total_area - 5000) / 15000) * 2.0
         
+        # Extended radius parks (golf courses, large parks) contribute but with distance penalty
+        extended_score = 0.0
+        if extended_parks:
+            extended_count = len(extended_parks)
+            extended_area = sum(p.get('area_m2', 0) or 0 for p in extended_parks)
+            # Large green spaces contribute but with 50% penalty (they're further away)
+            # Golf courses are highly visible, so they still matter
+            extended_count_score = min(4.0, extended_count * 2.0) * 0.5  # 50% penalty
+            extended_area_score = 0.0
+            if extended_area >= 100000:  # Very large (golf courses are typically 50-100 hectares)
+                extended_area_score = 2.0 * 0.5  # 50% penalty
+            elif extended_area >= 50000:
+                extended_area_score = 1.0 * 0.5  # 50% penalty
+            extended_score = extended_count_score + extended_area_score
+        
         # If fallback was used (1000m instead of 400m), apply distance penalty
         # Parks >400m away are less valuable for "local" green spaces
         # Reduce score by 30% to reflect that parks are further away
-        total_score = min(10.0, count_score + area_score)
+        total_score = min(10.0, count_score + area_score + extended_score)
         if fallback_used:
-            total_score = total_score * 0.7  # 30% penalty for parks >400m away
+            # Apply penalty only to local parks, not extended
+            local_score = count_score + area_score
+            local_score_penalized = local_score * 0.7
+            total_score = min(10.0, local_score_penalized + extended_score)
             logger.debug(f"Applied 30% distance penalty for parks >400m: {total_score:.2f}")
         
         return total_score, {
@@ -744,14 +794,18 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tu
             "total_area_m2": round(total_area, 0),
             "count_score": round(count_score, 2),
             "area_score": round(area_score, 2),
+            "extended_count": len(extended_parks),
+            "extended_area_m2": round(sum(p.get('area_m2', 0) or 0 for p in extended_parks), 0),
+            "extended_score": round(extended_score, 2),
             "available": True,
             "fallback_used": fallback_used,
-            "radius_used": 1000 if fallback_used else radius_m,
+            "extended_radius_used": extended_radius_used,
+            "radius_used": 2000 if extended_radius_used else (1000 if fallback_used else radius_m),
             "distance_penalty_applied": fallback_used
         }
     except Exception as e:
         logger.warning("Local green space scoring failed: %s", e)
-        return 0.0, {"error": str(e), "available": False, "fallback_used": False}
+        return 0.0, {"error": str(e), "available": False, "fallback_used": False, "extended_radius_used": False}
 
 
 def _score_nyc_trees(tree_count: int) -> float:
@@ -1656,7 +1710,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     # Calculate local green spaces early (needed for GVI fallback)
     # Design principle: Objective and data-driven - calculate once, reuse in multiple places
-    local_green_score, local_green_meta = _score_local_green_spaces(lat, lon, radius_m=400)
+    # Pass area_type to enable extended radius for suburban areas (golf courses, large parks)
+    local_green_score, local_green_meta = _score_local_green_spaces(lat, lon, radius_m=400, area_type=area_type)
     details["local_green_spaces"] = local_green_meta
     details["local_green_score"] = round(local_green_score, 2)
 
