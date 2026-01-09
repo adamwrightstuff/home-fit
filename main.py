@@ -8,6 +8,9 @@ import json
 from typing import Optional, Dict, Tuple, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import asyncio
+import queue
+import threading
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -1373,6 +1376,704 @@ def get_livability_score(request: Request,
             status_code=500,
             detail=f"Internal server error while calculating livability score: {str(e)}"
         )
+
+
+async def _stream_score_with_progress(
+    location: str,
+    tokens: Optional[str] = None,
+    priorities_dict: Optional[Dict[str, str]] = None,
+    include_chains: bool = True,
+    enable_schools: Optional[bool] = None,
+    test_mode: bool = False,
+    request: Optional[Request] = None
+):
+    """
+    Async generator that streams score calculation with real-time progress.
+    Streams events as each pillar completes (no artificial delays).
+    """
+    try:
+        yield f"event: started\n"
+        yield f"data: {json.dumps({'status': 'started'})}\n\n"
+        
+        loop = asyncio.get_event_loop()
+        
+        # Step 1: Geocode
+        from data_sources.geocoding import geocode_with_full_result
+        geo_result = await loop.run_in_executor(None, geocode_with_full_result, location)
+        
+        if not geo_result:
+            yield f"event: error\n"
+            yield f"data: {json.dumps({'status': 'error', 'message': 'Could not geocode location'})}\n\n"
+            return
+        
+        lat, lon, zip_code, state, city, geocode_data = geo_result
+        
+        yield f"event: analyzing\n"
+        yield f"data: {json.dumps({'status': 'analyzing', 'location': f'{city}, {state}', 'coordinates': {'lat': lat, 'lon': lon}})}\n\n"
+        
+        # Step 2: Detect location scope
+        from data_sources.data_quality import detect_location_scope
+        location_scope = await loop.run_in_executor(None, detect_location_scope, lat, lon, geocode_data)
+        
+        # Step 3: Pre-compute shared data in parallel
+        census_tract = None
+        density = 0.0
+        arch_diversity_data = None
+        area_type = "unknown"
+        
+        def prepare_shared_data():
+            try:
+                from data_sources import census_api as _ca
+                from data_sources import data_quality as _dq
+                from data_sources import osm_api
+                from data_sources.arch_diversity import compute_arch_diversity
+                from data_sources.regional_baselines import RegionalBaselineManager
+                
+                census_tract = _ca.get_census_tract(lat, lon)
+                density = _ca.get_population_density(lat, lon, tract=census_tract) or 0.0
+                
+                business_count = 0
+                try:
+                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                    if business_data:
+                        all_businesses = (business_data.get("tier1_daily", []) + 
+                                        business_data.get("tier2_social", []) +
+                                        business_data.get("tier3_culture", []) +
+                                        business_data.get("tier4_services", []))
+                        business_count = len(all_businesses)
+                except Exception:
+                    pass
+                
+                try:
+                    arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
+                except Exception:
+                    arch_diversity_data = None
+                
+                built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
+                
+                try:
+                    baseline_mgr = RegionalBaselineManager()
+                    metro_distance_km = baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+                except Exception:
+                    metro_distance_km = None
+                
+                area_type = _dq.detect_area_type(
+                    lat, lon,
+                    density=density,
+                    city=city,
+                    location_input=location,
+                    business_count=business_count,
+                    built_coverage=built_coverage,
+                    metro_distance_km=metro_distance_km
+                )
+                
+                return census_tract, density, arch_diversity_data, area_type
+            except Exception as e:
+                logger.warning(f"Shared data preparation failed: {e}")
+                return None, 0.0, None, "unknown"
+        
+        census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
+        
+        # Pre-compute tree canopy
+        tree_canopy_5km = None
+        try:
+            from data_sources.gee_api import get_tree_canopy_gee
+            tree_canopy_5km = await loop.run_in_executor(
+                None, get_tree_canopy_gee, lat, lon, 5000, area_type
+            )
+        except Exception:
+            tree_canopy_5km = None
+        
+        # Compute form_context
+        form_context = None
+        try:
+            from data_sources.data_quality import get_form_context
+            from data_sources import census_api, osm_api
+            
+            if arch_diversity_data:
+                levels_entropy = arch_diversity_data.get("levels_entropy")
+                building_type_diversity = arch_diversity_data.get("building_type_diversity")
+                built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
+                footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
+                material_profile = arch_diversity_data.get("material_profile")
+            else:
+                levels_entropy = building_type_diversity = built_coverage_ratio = footprint_area_cv = material_profile = None
+            
+            try:
+                charm_data = await loop.run_in_executor(None, osm_api.query_charm_features, lat, lon, 1000)
+                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+            except Exception:
+                historic_landmarks = 0
+            
+            year_built_data = None
+            median_year_built = None
+            pre_1940_pct = None
+            try:
+                year_built_data = await loop.run_in_executor(None, census_api.get_year_built_data, lat, lon)
+                if year_built_data:
+                    median_year_built = year_built_data.get('median_year_built')
+                    pre_1940_pct = year_built_data.get('pre_1940_pct')
+            except Exception:
+                pass
+            
+            form_context = get_form_context(
+                area_type=area_type,
+                density=density,
+                levels_entropy=levels_entropy,
+                building_type_diversity=building_type_diversity,
+                historic_landmarks=historic_landmarks,
+                median_year_built=median_year_built,
+                built_coverage_ratio=built_coverage_ratio,
+                footprint_area_cv=footprint_area_cv,
+                pre_1940_pct=pre_1940_pct,
+                material_profile=material_profile,
+                use_multinomial=True
+            )
+        except Exception as e:
+            logger.warning(f"Form context computation failed: {e}")
+            form_context = None
+        
+        # Build pillar tasks
+        use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+        
+        pillar_tasks = []
+        pillar_tasks.append(
+            ('active_outdoors', get_active_outdoors_score_v2, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope,
+                'precomputed_tree_canopy_5km': tree_canopy_5km
+            })
+        )
+        pillar_tasks.append(
+            ('built_beauty', built_beauty.calculate_built_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'test_overrides': None,
+                'precomputed_arch_diversity': arch_diversity_data,
+                'density': density,
+                'form_context': form_context
+            })
+        )
+        pillar_tasks.append(
+            ('natural_beauty', natural_beauty.calculate_natural_beauty, {
+                'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
+                'location_scope': location_scope, 'location_name': location,
+                'overrides': None,
+                'precomputed_tree_canopy_5km': tree_canopy_5km,
+                'form_context': form_context
+            })
+        )
+        pillar_tasks.append(
+            ('neighborhood_amenities', get_neighborhood_amenities_score, {
+                'lat': lat, 'lon': lon, 'include_chains': include_chains,
+                'location_scope': location_scope, 'area_type': area_type,
+                'density': density
+            })
+        )
+        pillar_tasks.append(
+            ('air_travel_access', get_air_travel_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'density': density
+            })
+        )
+        pillar_tasks.append(
+            ('public_transit_access', get_public_transit_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'location_scope': location_scope,
+                'city': city, 'density': density
+            })
+        )
+        pillar_tasks.append(
+            ('healthcare_access', get_healthcare_access_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type,
+                'location_scope': location_scope,
+                'city': city, 'density': density
+            })
+        )
+        pillar_tasks.append(
+            ('housing_value', get_housing_value_score, {
+                'lat': lat, 'lon': lon, 'census_tract': census_tract,
+                'density': density, 'city': city
+            })
+        )
+        if use_school_scoring:
+            pillar_tasks.append(
+                ('quality_education', get_school_data, {
+                    'zip_code': zip_code, 'state': state, 'city': city,
+                    'lat': lat, 'lon': lon, 'area_type': area_type
+                })
+            )
+        
+        # Execute pillars in parallel and stream as they complete
+        def _execute_pillar(name: str, func, **kwargs):
+            try:
+                result = func(**kwargs)
+                return (name, result, None)
+            except Exception as e:
+                logger.error(f"{name} pillar failed: {e}", exc_info=True)
+                return (name, None, e)
+        
+        # Use queue to communicate between threads
+        result_queue = queue.Queue()
+        exceptions = {}
+        pillar_results = {}
+        
+        def run_pillars_parallel():
+            """Execute all pillars in parallel and put results in queue as they complete."""
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                future_to_pillar = {
+                    executor.submit(_execute_pillar, name, func, **kwargs): name
+                    for name, func, kwargs in pillar_tasks
+                }
+                
+                for future in as_completed(future_to_pillar):
+                    pillar_name = future_to_pillar[future]
+                    name, result, error = future.result()
+                    result_queue.put((pillar_name, result, error))
+        
+        # Start pillar execution in background thread
+        pillar_thread = threading.Thread(target=run_pillars_parallel, daemon=True)
+        pillar_thread.start()
+        
+        # Stream results as they arrive
+        total_pillars = len(pillar_tasks)
+        completed_count = 0
+        
+        while completed_count < total_pillars:
+            try:
+                # Wait for next result (5 minute timeout per pillar)
+                pillar_name, result, error = result_queue.get(timeout=300)
+                completed_count += 1
+                
+                if error:
+                    exceptions[pillar_name] = error
+                    pillar_results[pillar_name] = None
+                    yield f"event: complete\n"
+                    yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
+                else:
+                    pillar_results[pillar_name] = result
+                    
+                    # Extract score based on pillar type
+                    if pillar_name in ['built_beauty', 'natural_beauty']:
+                        score = result.get('score', 0.0) if isinstance(result, dict) else 0.0
+                        details = result.get('details', {}) if isinstance(result, dict) else {}
+                    elif pillar_name == 'quality_education':
+                        if isinstance(result, tuple) and len(result) >= 2:
+                            score = result[0] if result[0] is not None else 0.0
+                            details = {'schools_by_level': result[1] if len(result) > 1 else {}}
+                            if len(result) > 2:
+                                details['breakdown'] = result[2]
+                        else:
+                            score = 0.0
+                            details = {}
+                    else:
+                        if isinstance(result, tuple) and len(result) >= 2:
+                            score = result[0] if result[0] is not None else 0.0
+                            details = result[1] if len(result) > 1 else {}
+                        else:
+                            score = 0.0
+                            details = {}
+                    
+                    yield f"event: complete\n"
+                    yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed_count, 'total': total_pillars})}\n\n"
+                    
+            except queue.Empty:
+                logger.error(f"Timeout waiting for pillar results after {completed_count}/{total_pillars} completed")
+                yield f"event: error\n"
+                yield f"data: {json.dumps({'status': 'error', 'message': f'Timeout: Only {completed_count}/{total_pillars} pillars completed'})}\n\n"
+                break
+        
+        # Wait for thread to complete
+        pillar_thread.join(timeout=1.0)
+        
+        # Now build the final response using existing internal function
+        # We've already computed all pillars, so we can reuse the internal function
+        # But we need to pass our results... actually, let's just call it normally
+        # since it will reuse the same data and be faster
+        
+        # For now, build the response structure manually using our results
+        # Extract results (similar to _compute_single_score_internal)
+        active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
+        transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        
+        # Extract built/natural beauty
+        built_calc = pillar_results.get('built_beauty')
+        natural_calc = pillar_results.get('natural_beauty')
+        
+        if built_calc:
+            built_score = built_calc.get("score", 0.0) if isinstance(built_calc, dict) else 0.0
+            built_details = built_calc.get("details", {}) if isinstance(built_calc, dict) else {}
+        else:
+            built_score = 0.0
+            built_details = {
+                "component_score_0_50": 0.0,
+                "enhancer_bonus_raw": 0.0,
+                "enhancer_bonus_scaled": 0.0,
+                "score_before_normalization": 0.0,
+                "normalization": None,
+                "source": "built_beauty",
+                "architectural_analysis": {},
+                "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
+            }
+        
+        if natural_calc:
+            tree_details = natural_calc.get("details", {}) if isinstance(natural_calc, dict) else {}
+            natural_score = natural_calc.get("score", 0.0) if isinstance(natural_calc, dict) else 0.0
+            natural_details = {
+                "tree_score_0_50": round(natural_calc.get("tree_score_0_50", 0), 2) if isinstance(natural_calc, dict) else 0.0,
+                "enhancer_bonus_raw": round(natural_calc.get("natural_bonus_raw", 0), 2) if isinstance(natural_calc, dict) else 0.0,
+                "enhancer_bonus_scaled": round(natural_calc.get("natural_bonus_scaled", 0), 2) if isinstance(natural_calc, dict) else 0.0,
+                "context_bonus_raw": round(natural_calc.get("context_bonus_raw", 0), 2) if isinstance(natural_calc, dict) else 0.0,
+                "score_before_normalization": round(natural_calc.get("score_before_normalization", 0), 2) if isinstance(natural_calc, dict) else 0.0,
+                "normalization": natural_calc.get("normalization") if isinstance(natural_calc, dict) else None,
+                "source": "natural_beauty",
+                "tree_analysis": tree_details,
+                "scenic_proxy": natural_calc.get("scenic_metadata", {}) if isinstance(natural_calc, dict) else {},
+                "enhancer_bonus": tree_details.get("enhancer_bonus", {}),
+                "context_bonus": tree_details.get("natural_context", {}),
+                "bonus_breakdown": tree_details.get("bonus_breakdown", {}),
+                "green_view_index": tree_details.get("green_view_index"),
+                "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
+                "gvi_metrics": tree_details.get("gvi_metrics"),
+                "expectation_effect": tree_details.get("expectation_effect"),
+                "data_availability": tree_details.get("data_availability", {}),
+                "gvi_available": natural_calc.get("gvi_available", False) if isinstance(natural_calc, dict) else False,
+                "gvi_source": natural_calc.get("gvi_source", "unknown") if isinstance(natural_calc, dict) else "unknown",
+            }
+        else:
+            natural_score = 0.0
+            natural_details = {
+                "tree_score_0_50": 0.0,
+                "enhancer_bonus_raw": 0.0,
+                "enhancer_bonus_scaled": 0.0,
+                "context_bonus_raw": 0.0,
+                "score_before_normalization": 0.0,
+                "normalization": None,
+                "source": "natural_beauty",
+                "tree_analysis": {},
+                "scenic_proxy": {},
+                "enhancer_bonus": {"natural_raw": 0.0, "natural_scaled": 0.0, "scaled_total": 0.0},
+                "context_bonus": {
+                    "components": {},
+                    "total_applied": 0.0,
+                    "total_before_cap": 0.0,
+                    "cap": 0.0,
+                    "metrics": {}
+                }
+            }
+        
+        pillar_results['built_beauty'] = (built_score, built_details)
+        pillar_results['natural_beauty'] = (natural_score, natural_details)
+        
+        # Handle school scoring
+        schools_found = False
+        school_breakdown = {
+            "base_avg_rating": 0.0,
+            "quality_boost": 0.0,
+            "early_ed_bonus": 0.0,
+            "college_bonus": 0.0,
+            "total_schools_rated": 0,
+            "excellent_schools_count": 0
+        }
+        
+        if use_school_scoring:
+            if 'quality_education' in pillar_results and pillar_results['quality_education']:
+                result = pillar_results['quality_education']
+                if isinstance(result, tuple) and len(result) == 3:
+                    school_avg, schools_by_level, school_breakdown = result
+                elif isinstance(result, tuple) and len(result) >= 2:
+                    school_avg, schools_by_level = result[0], result[1]
+                    school_breakdown = {
+                        "base_avg_rating": 0.0,
+                        "quality_boost": 0.0,
+                        "early_ed_bonus": 0.0,
+                        "college_bonus": 0.0,
+                        "total_schools_rated": 0,
+                        "excellent_schools_count": 0
+                    }
+                else:
+                    school_avg = None
+                    schools_by_level = {"elementary": [], "middle": [], "high": []}
+            else:
+                school_avg = None
+                schools_by_level = {"elementary": [], "middle": [], "high": []}
+        else:
+            school_avg = None
+            schools_by_level = {"elementary": [], "middle": [], "high": []}
+        
+        if school_avg is None:
+            school_avg = 0.0
+        
+        if schools_by_level:
+            total_schools = sum([
+                len(schools_by_level.get("elementary", [])),
+                len(schools_by_level.get("middle", [])),
+                len(schools_by_level.get("high", []))
+            ])
+            schools_found = total_schools > 0
+        else:
+            total_schools = 0
+            schools_found = False
+        
+        # Calculate token allocation
+        if priorities_dict:
+            token_allocation = parse_priority_allocation(priorities_dict)
+            allocation_type = "priority_based"
+            priority_levels = {}
+            primary_pillars = [
+                "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+                "air_travel_access", "public_transit_access", "healthcare_access",
+                "quality_education", "housing_value"
+            ]
+            for pillar in primary_pillars:
+                original_priority = priorities_dict.get(pillar, "none")
+                if original_priority:
+                    priority_str = original_priority.strip().lower()
+                    if priority_str == "none":
+                        priority_levels[pillar] = "None"
+                    elif priority_str == "low":
+                        priority_levels[pillar] = "Low"
+                    elif priority_str == "medium":
+                        priority_levels[pillar] = "Medium"
+                    elif priority_str == "high":
+                        priority_levels[pillar] = "High"
+                    else:
+                        priority_levels[pillar] = "None"
+                else:
+                    priority_levels[pillar] = "None"
+        else:
+            token_allocation = parse_token_allocation(tokens)
+            allocation_type = "token_based" if tokens else "default_equal"
+            priority_levels = None
+        
+        # Calculate weighted total
+        total_score = (
+            (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
+            (built_score * token_allocation["built_beauty"] / 100) +
+            (natural_score * token_allocation["natural_beauty"] / 100) +
+            (amenities_score * token_allocation["neighborhood_amenities"] / 100) +
+            (air_travel_score * token_allocation["air_travel_access"] / 100) +
+            (transit_score * token_allocation["public_transit_access"] / 100) +
+            (healthcare_score * token_allocation["healthcare_access"] / 100) +
+            (school_avg * token_allocation["quality_education"] / 100) +
+            (housing_score * token_allocation["housing_value"] / 100)
+        )
+        
+        # Build livability_pillars dict (reuse helper functions)
+        livability_pillars = {
+            "active_outdoors": {
+                "score": active_outdoors_score,
+                "weight": token_allocation["active_outdoors"],
+                "importance_level": priority_levels.get("active_outdoors") if priority_levels else None,
+                "contribution": round(active_outdoors_score * token_allocation["active_outdoors"] / 100, 2),
+                "breakdown": active_outdoors_details.get("breakdown", {}),
+                "summary": active_outdoors_details.get("summary", {}),
+                "confidence": active_outdoors_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": active_outdoors_details.get("data_quality", {}),
+                "area_classification": active_outdoors_details.get("area_classification", {})
+            },
+            "built_beauty": {
+                "score": built_score,
+                "weight": token_allocation["built_beauty"],
+                "importance_level": priority_levels.get("built_beauty") if priority_levels else None,
+                "contribution": round(built_score * token_allocation["built_beauty"] / 100, 2),
+                "breakdown": {
+                    "component_score_0_50": built_details.get("component_score_0_50", 0),
+                    "enhancer_bonus_raw": built_details.get("enhancer_bonus_raw", 0)
+                },
+                "summary": _extract_built_beauty_summary(built_details),
+                "details": built_details,
+                "confidence": built_calc.get("data_quality", {}).get("confidence", 0) if built_calc else (built_details.get("architectural_analysis", {}).get("confidence_0_1", 0) if isinstance(built_details.get("architectural_analysis"), dict) else 0),
+                "data_quality": built_calc.get("data_quality", {}) if built_calc else {},
+                "area_classification": {}
+            },
+            "natural_beauty": {
+                "score": natural_score,
+                "weight": token_allocation["natural_beauty"],
+                "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
+                "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
+                "breakdown": {
+                    "tree_score_0_50": natural_details.get("tree_score_0_50", 0),
+                    "enhancer_bonus_raw": natural_details.get("enhancer_bonus_raw", 0)
+                },
+                "summary": _extract_natural_beauty_summary(natural_details),
+                "details": natural_details,
+                "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
+                "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
+                "area_classification": {}
+            },
+            "neighborhood_amenities": {
+                "score": amenities_score,
+                "weight": token_allocation["neighborhood_amenities"],
+                "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
+                "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
+                "breakdown": amenities_details.get("breakdown", {}),
+                "summary": amenities_details.get("summary", {}),
+                "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": amenities_details.get("data_quality", {}),
+                "area_classification": amenities_details.get("area_classification", {})
+            },
+            "air_travel_access": {
+                "score": air_travel_score,
+                "weight": token_allocation["air_travel_access"],
+                "importance_level": priority_levels.get("air_travel_access") if priority_levels else None,
+                "contribution": round(air_travel_score * token_allocation["air_travel_access"] / 100, 2),
+                "primary_airport": air_travel_details.get("primary_airport"),
+                "nearest_airports": air_travel_details.get("nearest_airports", []),
+                "summary": air_travel_details.get("summary", {}),
+                "confidence": air_travel_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": air_travel_details.get("data_quality", {}),
+                "area_classification": air_travel_details.get("area_classification", {})
+            },
+            "public_transit_access": {
+                "score": transit_score,
+                "weight": token_allocation["public_transit_access"],
+                "importance_level": priority_levels.get("public_transit_access") if priority_levels else None,
+                "contribution": round(transit_score * token_allocation["public_transit_access"] / 100, 2),
+                "breakdown": transit_details.get("breakdown", {}),
+                "summary": transit_details.get("summary", {}),
+                "details": transit_details.get("details", {}),
+                "confidence": transit_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": transit_details.get("data_quality", {}),
+                "area_classification": transit_details.get("area_classification", {})
+            },
+            "healthcare_access": {
+                "score": healthcare_score,
+                "weight": token_allocation["healthcare_access"],
+                "importance_level": priority_levels.get("healthcare_access") if priority_levels else None,
+                "contribution": round(healthcare_score * token_allocation["healthcare_access"] / 100, 2),
+                "breakdown": healthcare_details.get("breakdown", {}),
+                "summary": healthcare_details.get("summary", {}),
+                "confidence": healthcare_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": healthcare_details.get("data_quality", {}),
+                "area_classification": healthcare_details.get("area_classification", {})
+            },
+            "quality_education": {
+                "score": school_avg,
+                "weight": token_allocation["quality_education"],
+                "importance_level": priority_levels.get("quality_education") if priority_levels else None,
+                "contribution": round(school_avg * token_allocation["quality_education"] / 100, 2),
+                "breakdown": school_breakdown,
+                "summary": {
+                    "base_avg_rating": round(school_breakdown.get("base_avg_rating", 0), 2),
+                    "total_schools_rated": school_breakdown.get("total_schools_rated", 0),
+                    "excellent_schools_count": school_breakdown.get("excellent_schools_count", 0),
+                    "quality_boost": round(school_breakdown.get("quality_boost", 0), 2),
+                    "early_ed_bonus": round(school_breakdown.get("early_ed_bonus", 0), 2),
+                    "college_bonus": round(school_breakdown.get("college_bonus", 0), 2)
+                },
+                "by_level": {
+                    "elementary": schools_by_level.get("elementary", []),
+                    "middle": schools_by_level.get("middle", []),
+                    "high": schools_by_level.get("high", [])
+                },
+                "total_schools_rated": total_schools,
+                "confidence": 50 if not use_school_scoring else 85,
+                "data_quality": {
+                    "fallback_used": not use_school_scoring or not schools_found,
+                    "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
+                    "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+                },
+                "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
+            },
+            "housing_value": {
+                "score": housing_score,
+                "weight": token_allocation["housing_value"],
+                "importance_level": priority_levels.get("housing_value") if priority_levels else None,
+                "contribution": round(housing_score * token_allocation["housing_value"] / 100, 2),
+                "breakdown": housing_details.get("breakdown", {}),
+                "summary": housing_details.get("summary", {}),
+                "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": housing_details.get("data_quality", {}),
+                "area_classification": housing_details.get("area_classification", {})
+            }
+        }
+        
+        # Build final response
+        final_response = {
+            "input": location,
+            "coordinates": {"lat": lat, "lon": lon},
+            "location_info": {"city": city, "state": state, "zip": zip_code},
+            "livability_pillars": livability_pillars,
+            "total_score": round(total_score, 2),
+            "token_allocation": token_allocation,
+            "allocation_type": allocation_type,
+            "overall_confidence": _calculate_overall_confidence(livability_pillars),
+            "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
+            "metadata": {
+                "version": API_VERSION,
+                "architecture": "9 Purpose-Driven Pillars",
+                "note": "Total score = weighted average of 9 pillars. Equal token distribution by default.",
+                "test_mode": test_mode
+            }
+        }
+        
+        yield f"event: done\n"
+        yield f"data: {json.dumps({'status': 'done', 'response': final_response})}\n\n"
+        
+    except Exception as e:
+        logger.error(f"Streaming error: {e}", exc_info=True)
+        yield f"event: error\n"
+        yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
+
+
+@app.get("/score/stream")
+async def stream_score(
+    request: Request,
+    location: str,
+    tokens: Optional[str] = None,
+    priorities: Optional[str] = None,
+    include_chains: bool = True,
+    enable_schools: Optional[bool] = None,
+    test_mode: Optional[bool] = False
+):
+    """
+    Server-Sent Events endpoint for streaming score calculation progress.
+    Streams events as each pillar completes in real-time (no artificial delays).
+    
+    Events:
+    - 'started': Calculation begins
+    - 'analyzing': Location geocoded, analysis starting
+    - 'complete': A pillar has finished (includes pillar name, score, completed count)
+    - 'done': All pillars complete, final response ready
+    - 'error': An error occurred
+    """
+    try:
+        # Parse priorities
+        priorities_dict: Optional[Dict[str, str]] = None
+        if priorities:
+            try:
+                if isinstance(priorities, str):
+                    priorities_dict = json.loads(priorities)
+                else:
+                    priorities_dict = priorities
+            except (json.JSONDecodeError, TypeError):
+                priorities_dict = None
+        
+        return StreamingResponse(
+            _stream_score_with_progress(
+                location=location,
+                tokens=tokens,
+                priorities_dict=priorities_dict,
+                include_chains=include_chains,
+                enable_schools=enable_schools,
+                test_mode=bool(test_mode),
+                request=request
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Stream endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # OLD CODE REMOVED - Now using _compute_single_score_internal

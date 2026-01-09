@@ -85,6 +85,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     } catch (e) {
       // Ignore storage errors
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Save to session storage when options change

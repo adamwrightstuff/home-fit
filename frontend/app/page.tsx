@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { getScore } from '@/lib/api'
 import { ScoreResponse, ScoreRequestParams } from '@/types/api'
 import LocationSearch from '@/components/LocationSearch'
 import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions, type PillarPriorities } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 import { Sparkles } from 'lucide-react'
@@ -16,6 +15,7 @@ export default function Home() {
   const [loading, set_loading] = useState(false)
   const [error, set_error] = useState<string | null>(null)
   const [request_start_time, set_request_start_time] = useState<number | undefined>(undefined)
+  const [current_location, set_current_location] = useState<string>('')
   const [show_game, set_show_game] = useState(false)
   const [search_options_expanded, set_search_options_expanded] = useState(false)
   const [search_options, set_search_options] = useState<SearchOptions>({
@@ -24,28 +24,14 @@ export default function Home() {
     enable_schools: true,
   })
 
-  const handle_search = async (location: string) => {
+  const handle_search = (location: string) => {
     set_loading(true)
     set_error(null)
     set_score_data(null)
+    set_current_location(location)
     const start_time = Date.now()
     set_request_start_time(start_time)
-
-    try {
-      const params: ScoreRequestParams = {
-        location,
-        priorities: JSON.stringify(search_options.priorities),
-        include_chains: search_options.include_chains,
-        enable_schools: search_options.enable_schools,
-      }
-      const data = await getScore(params)
-      set_score_data(data)
-    } catch (err) {
-      set_error(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      set_loading(false)
-      set_request_start_time(undefined)
-    }
+    // Note: SmartLoadingScreen will handle the API call via streamScore
   }
 
   const handle_apply_priorities = (priorities: PillarPriorities) => {
@@ -104,13 +90,28 @@ export default function Home() {
           </div>
         </div>
 
-        {loading && (
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <LoadingSpinner startTime={request_start_time} />
+        {loading && current_location && (
+          <div className="fixed inset-0 z-50 bg-gray-50">
+            <SmartLoadingScreen
+              location={current_location}
+              priorities={JSON.stringify(search_options.priorities)}
+              include_chains={search_options.include_chains}
+              enable_schools={search_options.enable_schools}
+              on_complete={(response) => {
+                set_score_data(response)
+                set_loading(false)
+                set_request_start_time(undefined)
+              }}
+              on_error={(error) => {
+                set_error(error.message)
+                set_loading(false)
+                set_request_start_time(undefined)
+              }}
+            />
           </div>
         )}
 
-        {error && (
+        {!loading && error && (
           <div className="bg-white rounded-lg shadow-lg p-6">
             <ErrorMessage message={error} />
           </div>
