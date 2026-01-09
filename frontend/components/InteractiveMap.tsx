@@ -14,15 +14,21 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   const [map_loaded, set_map_loaded] = useState(false)
 
   useEffect(() => {
-    if (!map_container_ref.current || map_loaded) return
+    if (!map_container_ref.current || map_loaded) {
+      console.log('InteractiveMap: Skipping init - container:', !!map_container_ref.current, 'loaded:', map_loaded)
+      return
+    }
+
+    console.log('InteractiveMap: Initializing map...')
 
     // Use MapLibre GL (open-source alternative to Mapbox GL)
     let maplibregl: any = null
     try {
       maplibregl = require('maplibre-gl')
       require('maplibre-gl/dist/maplibre-gl.css')
+      console.log('InteractiveMap: MapLibre GL loaded successfully')
     } catch (e) {
-      console.warn('MapLibre GL not available - map will not load')
+      console.error('InteractiveMap: MapLibre GL not available:', e)
       return
     }
 
@@ -34,6 +40,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
 
     const initialize_map = () => {
+      console.log('InteractiveMap: Creating map instance, coordinates:', coordinates)
       const new_map = new maplibregl.Map({
         container: map_container_ref.current,
         style: map_style,
@@ -42,28 +49,38 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       })
 
       new_map.on('load', () => {
+        console.log('InteractiveMap: Map load event fired')
         // Ensure style is fully loaded
         if (new_map.isStyleLoaded()) {
+          console.log('InteractiveMap: Style already loaded')
           set_map_loaded(true)
         } else {
+          console.log('InteractiveMap: Waiting for style.load event')
           new_map.once('style.load', () => {
+            console.log('InteractiveMap: Style.load event fired')
             set_map_loaded(true)
           })
         }
       })
 
+      new_map.on('error', (e: any) => {
+        console.error('InteractiveMap: Map error:', e)
+      })
+
       set_map(new_map)
+      console.log('InteractiveMap: Map instance created')
     }
 
     initialize_map()
 
     return () => {
+      console.log('InteractiveMap: Cleanup - removing map')
       if (map) {
         map.remove()
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map_container_ref, map_loaded, coordinates])
+  }, [map_container_ref, map_loaded])
 
   useEffect(() => {
     if (!map || !coordinates || !map_loaded) return
@@ -166,8 +183,12 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   // Get free key at: https://www.maptiler.com/cloud/
 
   return (
-    <div className="w-full h-full relative">
-      <div ref={map_container_ref} className="w-full h-full" />
+    <div className="w-full h-full relative" style={{ minHeight: '100vh' }}>
+      <div 
+        ref={map_container_ref} 
+        className="w-full h-full" 
+        style={{ minHeight: '100vh', width: '100%' }}
+      />
       {coordinates && (
         <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
           <div className="text-xs font-semibold text-gray-700">{location}</div>

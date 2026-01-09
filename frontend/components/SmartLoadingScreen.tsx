@@ -126,20 +126,10 @@ export default function SmartLoadingScreen({
   
   return (
     <div className="flex h-full w-full bg-gray-50" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
-      {/* Loading overlay - shows immediately */}
-      {status === 'starting' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700 mb-2">Initializing...</div>
-            <div className="text-sm text-gray-500">Preparing to analyze {location}</div>
-          </div>
-        </div>
-      )}
-      
-      {/* Main content */}
+      {/* Main content - always render so map can initialize */}
       <div className="flex h-full w-full" style={{ minHeight: '100vh' }}>
         {/* Left side - Map */}
-        <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh' }}>
+        <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh', position: 'relative' }}>
           <InteractiveMap 
             location={location}
             coordinates={coordinates}
@@ -148,7 +138,17 @@ export default function SmartLoadingScreen({
         </div>
 
         {/* Right side - Progress */}
-        <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh' }}>
+        <div className="w-1/2 p-8 overflow-y-auto bg-white" style={{ minHeight: '100vh', position: 'relative' }}>
+          {/* Loading overlay - only on right side */}
+          {status === 'starting' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-700 mb-2">Initializing...</div>
+                <div className="text-sm text-gray-500">Preparing to analyze {location}</div>
+              </div>
+            </div>
+          )}
+          
           <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Analyzing {location}</h2>
             
