@@ -292,13 +292,20 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
         summary["neighborhood_canopy_pct"] = round(multi_radius.get("neighborhood_1000m", 0), 1)
         summary["local_canopy_pct"] = round(multi_radius.get("micro_400m", 0), 1)  # Fixed: was local_400m
         summary["extended_canopy_pct"] = round(multi_radius.get("macro_2000m", 0), 1)  # Fixed: was extended_2000m
+        # Add weighted canopy if available
+        if isinstance(tree_analysis, dict) and "weighted_canopy_pct" in tree_analysis:
+            summary["weighted_canopy_pct"] = round(tree_analysis.get("weighted_canopy_pct", 0), 1)
     
     if isinstance(tree_analysis, dict):
-        # FIX: tree_score_0_50 is at top level of details, not in tree_analysis
-        # tree_analysis has "total_score" which is the final tree score
-        tree_score = natural_details.get("tree_score_0_50") or tree_analysis.get("total_score", 0)
-        summary["tree_score"] = round(tree_score, 2) if tree_score else 0
+        # Show base tree score (canopy only) and adjusted (with bonuses)
+        base_score = tree_analysis.get("tree_base_score", 0)
+        adjusted_score = tree_analysis.get("adjusted_tree_score", 0)
+        summary["tree_score"] = round(adjusted_score, 2) if adjusted_score else round(base_score, 2)
+        summary["tree_base_score"] = round(base_score, 2)  # NEW: Show base separately
         summary["green_view_index"] = round(tree_analysis.get("green_view_index", 0), 2) if tree_analysis.get("green_view_index") else None
+        # Add local green spaces
+        if "local_green_score" in tree_analysis:
+            summary["local_green_score"] = round(tree_analysis.get("local_green_score", 0), 2)
     
     summary["scenic_bonus"] = round(natural_details.get("enhancer_bonus_scaled", 0), 2)
     summary["context_bonus"] = round(natural_details.get("context_bonus_raw", 0), 2)

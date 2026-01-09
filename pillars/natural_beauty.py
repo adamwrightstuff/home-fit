@@ -74,7 +74,7 @@ NATURAL_CONTEXT_BONUS_CAP = 20.0
 # Component dominance guard (prevents single component from exceeding 60% of context bonus)
 MAX_COMPONENT_DOMINANCE_RATIO = 0.6
 
-GVI_BONUS_MAX = 5.0  # Reduced from 8.0 - partially redundant with canopy, keep for health/seasonal data
+GVI_BONUS_MAX = 10.0  # Increased from 5.0 - GVI measures visible greenery from street level
 BIODIVERSITY_BONUS_MAX = 0.0  # Disabled - redundant with landcover in context bonus (uses same data)
 CANOPY_EXPECTATION_BONUS_MAX = 6.0
 CANOPY_EXPECTATION_PENALTY_MAX = 3.0  # Reduced from 6.0 - penalties should reduce scores, not eliminate them
@@ -574,29 +574,145 @@ def _score_tree_canopy(canopy_pct: float) -> float:
 
 def _calculate_street_tree_bonus(canopy_pct: float, street_tree_count: int, area_type: Optional[str] = None) -> float:
     """
-    Calculate street tree bonus for low-canopy urban areas with mature street trees.
+    Calculate street tree bonus for urban areas with mature street trees.
     
-    Only applies when satellite canopy is very low (<10%) and street trees are present.
-    This helps urban historic places (Garden District, Beacon Hill) get credit for
-    street-level greenery even when satellite canopy is sparse.
+    UPDATED: Expanded from <10% to <20% canopy to better reflect lived experience.
+    Street trees matter even when there's moderate satellite canopy, as they provide
+    immediate visual and environmental benefits at street level.
     
     Args:
         canopy_pct: Primary canopy percentage from satellite data
-        street_tree_count: Number of street trees found
+        street_tree_count: Number of street trees found (includes OSM parks proxy)
         area_type: Optional area type for context
     
     Returns:
         Bonus points (0-5.0), capped at STREET_TREE_BONUS_MAX
     """
-    # Only apply when canopy is very low (<10%)
-    if canopy_pct >= 10.0 or street_tree_count <= 0:
+    # Expanded threshold: apply when canopy is low-to-moderate (<20%)
+    # This captures more urban areas where street trees are important
+    if canopy_pct >= 20.0 or street_tree_count <= 0:
         return 0.0
     
-    # Bonus formula: 20 trees = full 5 points
-    # Linear scaling: 1 tree = 0.25 points, 20 trees = 5.0 points
-    bonus = min(STREET_TREE_BONUS_MAX, (street_tree_count / 20.0) * STREET_TREE_BONUS_MAX)
+    # Diminishing returns: full bonus at 20 trees, but still give credit for fewer
+    # Formula: 20 trees = full 5 points, with diminishing returns above 20
+    if street_tree_count >= 20:
+        bonus = STREET_TREE_BONUS_MAX
+    else:
+        # Linear scaling up to 20 trees
+        bonus = (street_tree_count / 20.0) * STREET_TREE_BONUS_MAX
+    
+    # Apply area-type scaling: street trees matter more in dense urban areas
+    if area_type in ("urban_core", "urban_core_lowrise", "historic_urban"):
+        bonus = min(STREET_TREE_BONUS_MAX, bonus * 1.2)  # 20% boost in urban areas
     
     return bonus
+
+
+def _calculate_weighted_canopy_score(canopy_multi: Dict[str, Optional[float]]) -> Tuple[float, Optional[float]]:
+    """
+    Calculate weighted canopy score favoring closer radii for lived experience.
+    
+    Rationale: For lived experience, immediate surroundings (400m) matter more
+    than regional context (2000m). This better reflects what someone sees walking
+    around their neighborhood.
+    
+    Args:
+        canopy_multi: Dict with keys "micro_400m", "neighborhood_1000m", "macro_2000m"
+    
+    Returns:
+        Tuple of (weighted_canopy_pct, primary_canopy_pct_for_scoring)
+    """
+    weights = {
+        "micro_400m": 0.50,           # Immediate surroundings - highest weight
+        "neighborhood_1000m": 0.35,  # Neighborhood context
+        "macro_2000m": 0.15          # Regional context - lowest weight
+    }
+    
+    weighted_sum = 0.0
+    total_weight = 0.0
+    primary_canopy = None
+    
+    for label, weight in weights.items():
+        canopy_pct = canopy_multi.get(label)
+        if canopy_pct is not None and canopy_pct >= 0.0:
+            weighted_sum += canopy_pct * weight
+            total_weight += weight
+            # Use 400m as primary if available, otherwise 1000m
+            if label == "micro_400m" and primary_canopy is None:
+                primary_canopy = canopy_pct
+            elif label == "neighborhood_1000m" and primary_canopy is None:
+                primary_canopy = canopy_pct
+    
+    # If we have any weighted data, use it
+    if total_weight > 0:
+        weighted_canopy = weighted_sum / total_weight
+        # Fallback to primary if weighted calculation fails
+        if primary_canopy is None:
+            primary_canopy = weighted_canopy
+        return weighted_canopy, primary_canopy
+    
+    # Fallback: use any available canopy value
+    for label in ["micro_400m", "neighborhood_1000m", "macro_2000m"]:
+        canopy_pct = canopy_multi.get(label)
+        if canopy_pct is not None and canopy_pct >= 0.0:
+            return canopy_pct, canopy_pct
+    
+    return 0.0, 0.0
+
+
+def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400) -> Tuple[float, Dict]:
+    """
+    Score local green spaces (parks, gardens) within walking distance.
+    
+    Rationale: For lived experience, having a park or green space within 400m
+    (5-minute walk) significantly impacts daily quality of life, even if canopy
+    coverage is moderate.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        radius_m: Search radius (default 400m for 5-minute walk)
+    
+    Returns:
+        Tuple of (score 0-10, metadata dict)
+    """
+    try:
+        from data_sources import osm_api
+        green_spaces = osm_api.query_green_spaces(lat, lon, radius_m=radius_m)
+        if not green_spaces:
+            return 0.0, {"count": 0, "total_area_m2": 0, "available": False}
+        
+        parks = green_spaces.get('parks', [])
+        if not parks:
+            return 0.0, {"count": 0, "total_area_m2": 0, "available": True}
+        
+        # Score based on count and proximity
+        park_count = len(parks)
+        total_area = sum(p.get('area_m2', 0) or 0 for p in parks)
+        
+        # Count-based scoring: 1 park = 3 points, 2+ parks = 6 points
+        count_score = min(6.0, park_count * 3.0)
+        
+        # Area-based scoring: 5000 m² = 2 points, 20000 m² = 4 points
+        area_score = 0.0
+        if total_area > 0:
+            if total_area >= 20000:
+                area_score = 4.0
+            elif total_area >= 5000:
+                area_score = 2.0 + ((total_area - 5000) / 15000) * 2.0
+        
+        total_score = min(10.0, count_score + area_score)
+        
+        return total_score, {
+            "count": park_count,
+            "total_area_m2": round(total_area, 0),
+            "count_score": round(count_score, 2),
+            "area_score": round(area_score, 2),
+            "available": True
+        }
+    except Exception as e:
+        logger.warning("Local green space scoring failed: %s", e)
+        return 0.0, {"error": str(e), "available": False}
 
 
 def _score_nyc_trees(tree_count: int) -> float:
@@ -955,12 +1071,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # This allows very small canopy values to be scored properly
         # Design principle: Objective and data-driven - use actual measured values, not arbitrary thresholds
         if gee_canopy is not None and gee_canopy >= 0.0:
-            canopy_score = _score_tree_canopy(gee_canopy)
-            score = canopy_score
-            canopy_points = canopy_score
-            sources.append(f"GEE: {gee_canopy:.1f}% canopy")
-            details['gee_canopy_pct'] = gee_canopy
-            primary_canopy_pct = gee_canopy
+            # Populate multi-radius canopy data first
             for label, rad in MULTI_RADIUS_CANOPY.items():
                 value = None
                 if tree_radius_used and rad == tree_radius_used:
@@ -987,6 +1098,17 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 except Exception as fallback_error:
                     logger.debug("1000m canopy fallback failed: %s", fallback_error)
                     canopy_multi["neighborhood_1000m"] = None
+            
+            # Calculate weighted canopy for lived experience (favoring closer radii)
+            weighted_canopy, primary_canopy = _calculate_weighted_canopy_score(canopy_multi)
+            canopy_score = _score_tree_canopy(weighted_canopy)
+            score = canopy_score
+            canopy_points = canopy_score
+            sources.append(f"GEE: {weighted_canopy:.1f}% weighted canopy (400m:{canopy_multi.get('micro_400m')}, 1000m:{canopy_multi.get('neighborhood_1000m')}, 2000m:{canopy_multi.get('macro_2000m')})")
+            details['gee_canopy_pct'] = weighted_canopy
+            details['weighted_canopy_pct'] = weighted_canopy
+            details['canopy_weights'] = {"400m": 0.50, "1000m": 0.35, "2000m": 0.15}
+            primary_canopy_pct = primary_canopy
 
             # Validate GEE data with Census/USFS - always cross-check for data quality
             # More aggressive validation to catch underestimation issues:
@@ -1531,6 +1653,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     else:
         details["gvi_source"] = "composite"
         details["gvi_radius_m"] = tree_radius_used
+    # Calculate local green space score (for lived experience)
+    local_green_score, local_green_meta = _score_local_green_spaces(lat, lon, radius_m=400)
+    details["local_green_spaces"] = local_green_meta
+    details["local_green_score"] = round(local_green_score, 2)
+    
     # Calculate street tree bonus (only for low-canopy areas with street trees)
     # primary_canopy_pct is always initialized (never None), so we can safely check it
     street_tree_bonus = 0.0
@@ -1543,26 +1670,36 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             logger.warning("Street tree bonus calculation failed: %s, using 0.0", stb_error)
             street_tree_bonus = 0.0
     
+    # OPTION A: Keep base_tree_score separate, calculate bonuses separately
+    # This avoids double-counting when we weight components separately in final score
+    
     # Ensure all bonus values are valid numbers before calculation
     expectation_adjustment = float(expectation_adjustment) if isinstance(expectation_adjustment, (int, float)) and not math.isnan(expectation_adjustment) else 0.0
     expectation_penalty = float(expectation_penalty) if isinstance(expectation_penalty, (int, float)) and not math.isnan(expectation_penalty) else 0.0
     gvi_bonus = float(gvi_bonus) if isinstance(gvi_bonus, (int, float)) and not math.isnan(gvi_bonus) else 0.0
     biodiversity_bonus = float(biodiversity_bonus) if isinstance(biodiversity_bonus, (int, float)) and not math.isnan(biodiversity_bonus) else 0.0
     street_tree_bonus = float(street_tree_bonus) if isinstance(street_tree_bonus, (int, float)) and not math.isnan(street_tree_bonus) else 0.0
+    local_green_score = float(local_green_score) if isinstance(local_green_score, (int, float)) and not math.isnan(local_green_score) else 0.0
+    
+    # Base tree score is canopy only (no bonuses added)
+    base_tree_score_only = base_tree_score  # This is already capped at 50, canopy only
     
     # FIX: Cap expectation penalty so it cannot reduce score below 0
     # Design principle: Penalties should reduce scores, but not eliminate them entirely
     # This prevents very low canopy areas from getting 0 tree score due to aggressive penalties
     # Example: Houston has 0.6% canopy (base score 0.96) but penalty of -6.0 would reduce to -1.6 → 0
     # Fix: Cap penalty at base_score so minimum score is 0, not negative
-    capped_penalty = min(expectation_penalty, base_tree_score) if expectation_penalty > 0 else 0.0
+    capped_penalty = min(expectation_penalty, base_tree_score_only) if expectation_penalty > 0 else 0.0
     
-    adjusted_score = base_tree_score + expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus
-    # Ensure adjusted_score is valid
-    if math.isnan(adjusted_score) or not isinstance(adjusted_score, (int, float)):
-        adjusted_score = base_tree_score
-    score = max(0.0, min(50.0, adjusted_score))
-    details["tree_base_score"] = round(base_tree_score, 2)
+    # For backward compatibility and display, calculate adjusted_score
+    # But we won't use this for final weighting - we'll weight components separately
+    adjusted_score = base_tree_score_only + expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus + local_green_score
+    adjusted_score = max(0.0, min(50.0, adjusted_score))  # Cap at 50 for display
+    
+    # Store base score separately for final weighting
+    score = base_tree_score_only  # This is the canopy-only score (0-50)
+    
+    details["tree_base_score"] = round(base_tree_score_only, 2)
     details["adjusted_tree_score"] = round(adjusted_score, 2)
     details["bonus_breakdown"] = {
         "canopy_expectation_bonus": round(expectation_adjustment, 2),
@@ -1571,9 +1708,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         "green_view_bonus": round(gvi_bonus, 2),
         "biodiversity_bonus": round(biodiversity_bonus, 2),
         "street_tree_bonus": round(street_tree_bonus, 2),
+        "local_green_bonus": round(local_green_score, 2),
     }
     details["bonus_breakdown"]["net"] = round(
-        expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus,
+        expectation_adjustment - capped_penalty + gvi_bonus + biodiversity_bonus + street_tree_bonus + local_green_score,
         2
     )
 
@@ -1783,23 +1921,40 @@ def calculate_natural_beauty(lat: float,
         context_bonus_raw  # Total context bonus
     )
     
-    # DATA-BACKED SCORING (replacing ridge regression model)
-    # Updated weights to better balance tree coverage and scenic features:
-    # - Tree score (0-50): Increased weight - trees are core to natural beauty
-    # - Scenic bonus (0-25): Important but secondary to tree coverage
-    # Formula: (tree_score * 0.6) + min(30.0, natural_bonus_scaled * 1.5), then scaled to 0-100
-    # This balances trees (primary) and scenic features (secondary) for natural beauty
-    # 
-    # Component breakdown:
-    # - Tree score contributes max 30 points (50 * 0.6) - increased from 15
-    # - Scenic bonus contributes max 30 points (25 * 1.5, capped at 30) - reduced from 35
-    # - Total: 0-60 points, scaled to 0-100
-    # Rationale: Trees are fundamental to natural beauty, scenic features enhance but don't replace trees
-    tree_weighted = tree_score * 0.6  # Increased from 0.3 - trees are core to natural beauty
-    scenic_weighted = min(30.0, natural_bonus_scaled * 1.5)  # Reduced from 2.0, cap reduced to 30
-    natural_native = max(0.0, tree_weighted + scenic_weighted)
-    # Scale 0-60 to 0-100: multiply by 100/60 = 1.667
-    natural_score_raw = min(100.0, natural_native * (100.0 / 60.0))
+    # OPTION A: Multi-component model with separate weighting (no double-counting)
+    # Rationale: Better reflects what someone experiences walking around their neighborhood:
+    # 1. Base canopy coverage (with expectation adjustment) - 15%
+    # 2. Visible greenery (GVI) - 20%
+    # 3. Street trees - 5%
+    # 4. Local green spaces - 10%
+    # 5. Natural context (topography + landcover + water) - 35%
+    
+    # Extract bonus values from tree_details
+    bonus_breakdown = tree_details.get("bonus_breakdown", {}) or {}
+    base_tree_score_only = float(tree_details.get("tree_base_score", tree_score) or tree_score)
+    expectation_adjustment = float(bonus_breakdown.get("canopy_expectation_bonus", 0) or 0)
+    expectation_penalty = float(bonus_breakdown.get("canopy_expectation_penalty_raw", 0) or 0)
+    if expectation_penalty > 0:
+        expectation_penalty = -expectation_penalty  # Convert back to negative
+    gvi_bonus = float(bonus_breakdown.get("green_view_bonus", 0) or 0)
+    street_tree_bonus = float(bonus_breakdown.get("street_tree_bonus", 0) or 0)
+    local_green_score = float(tree_details.get("local_green_score", 0) or 0)
+    
+    # Apply expectation adjustment to base score
+    capped_penalty = min(abs(expectation_penalty), base_tree_score_only) if expectation_penalty < 0 else 0.0
+    base_with_expectation = base_tree_score_only + expectation_adjustment - capped_penalty
+    base_with_expectation = max(0.0, min(50.0, base_with_expectation))  # Cap at 50
+    
+    # Weight each component separately
+    tree_weighted = base_with_expectation * 0.30  # 50 * 0.30 = 15 points max (base canopy with expectation adjustment)
+    gvi_weighted = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
+    street_tree_weighted = street_tree_bonus * 1.0  # 5 points max (already 0-5 scale)
+    local_green_weighted = local_green_score * 1.0  # 10 points max (already 0-10 scale)
+    scenic_weighted = min(35.0, natural_bonus_scaled * 1.75)  # 35 points max (context bonus 0-20, scaled 1.75x)
+    
+    natural_native = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted)
+    # Total max: 15 + 20 + 5 + 10 + 35 = 85 points, scale to 100
+    natural_score_raw = min(100.0, natural_native * (100.0 / 85.0))
     
     # Using raw score directly - no calibration per design principles
     # Raw score is data-backed and reflects actual natural beauty metrics
@@ -1872,10 +2027,16 @@ def calculate_natural_beauty(lat: float,
         "score_before_normalization": calibrated_raw,
         "score_before_calibration": natural_score_raw,
         "component_weights": {
-            "tree_weight": 0.6,
-            "scenic_weight": 1.5,
-            "tree_max_contribution": 30.0,
-            "scenic_max_contribution": 30.0
+            "base_canopy_weight": 0.30,
+            "gvi_weight": 0.20,
+            "street_tree_weight": 1.0,  # Already 0-5 scale
+            "local_green_weight": 1.0,  # Already 0-10 scale
+            "scenic_weight": 1.75,
+            "base_canopy_max_contribution": 15.0,
+            "gvi_max_contribution": 20.0,
+            "street_tree_max_contribution": 5.0,
+            "local_green_max_contribution": 10.0,
+            "scenic_max_contribution": 35.0
         },
         "calibration": {
             "cal_a": None,
