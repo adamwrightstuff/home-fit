@@ -80,10 +80,10 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         // MapTiler requires a valid paid API key, so we'll use OSM by default
         console.log('InteractiveMap: Using OpenStreetMap tiles (free, no API key required)')
         const map_style = {
-          version: 8,
+          version: 8 as const,
           sources: {
             'osm-tiles': {
-              type: 'raster',
+              type: 'raster' as const,
               tiles: [
                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
               ],
@@ -94,7 +94,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           layers: [
             {
               id: 'osm-tiles',
-              type: 'raster',
+              type: 'raster' as const,
               source: 'osm-tiles',
               minzoom: 0,
               maxzoom: 19
