@@ -1613,36 +1613,54 @@ async def _stream_score_with_progress(
                 logger.error(f"{name} pillar failed: {e}", exc_info=True)
                 return (name, None, e)
         
-        # Use queue to communicate between threads
-        result_queue = queue.Queue()
+        # Use asyncio-compatible queue for async generator
+        async_queue = asyncio.Queue()
         exceptions = {}
         pillar_results = {}
+        all_pillars_complete = threading.Event()
         
         def run_pillars_parallel():
-            """Execute all pillars in parallel and put results in queue as they complete."""
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                future_to_pillar = {
-                    executor.submit(_execute_pillar, name, func, **kwargs): name
-                    for name, func, kwargs in pillar_tasks
-                }
+            """Execute all pillars in parallel and put results in async queue as they complete."""
+            try:
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    future_to_pillar = {
+                        executor.submit(_execute_pillar, name, func, **kwargs): name
+                        for name, func, kwargs in pillar_tasks
+                    }
+                    
+                    for future in as_completed(future_to_pillar):
+                        pillar_name = future_to_pillar[future]
+                        name, result, error = future.result()
+                        # Put result in async queue from thread (thread-safe)
+                        loop.call_soon_threadsafe(async_queue.put_nowait, (pillar_name, result, error))
                 
-                for future in as_completed(future_to_pillar):
-                    pillar_name = future_to_pillar[future]
-                    name, result, error = future.result()
-                    result_queue.put((pillar_name, result, error))
+                # Signal completion
+                loop.call_soon_threadsafe(all_pillars_complete.set)
+            except Exception as e:
+                logger.error(f"Error in pillar execution thread: {e}", exc_info=True)
+                loop.call_soon_threadsafe(all_pillars_complete.set)
         
         # Start pillar execution in background thread
         pillar_thread = threading.Thread(target=run_pillars_parallel, daemon=True)
         pillar_thread.start()
         
-        # Stream results as they arrive
+        # Stream results as they arrive (async-compatible)
         total_pillars = len(pillar_tasks)
         completed_count = 0
         
         while completed_count < total_pillars:
             try:
-                # Wait for next result (5 minute timeout per pillar)
-                pillar_name, result, error = result_queue.get(timeout=300)
+                # Wait for next result asynchronously (5 minute timeout per pillar)
+                # Use asyncio.wait_for with timeout to prevent hanging
+                try:
+                    pillar_name, result, error = await asyncio.wait_for(async_queue.get(), timeout=300.0)
+                except asyncio.TimeoutError:
+                    # Check if thread is done (maybe all pillars finished but queue is empty)
+                    if all_pillars_complete.is_set() and async_queue.empty():
+                        logger.warning(f"Thread completed but only {completed_count}/{total_pillars} pillars received")
+                        break
+                    raise
+                
                 completed_count += 1
                 
                 if error:
@@ -1650,6 +1668,8 @@ async def _stream_score_with_progress(
                     pillar_results[pillar_name] = None
                     yield f"event: complete\n"
                     yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
+                    # Force flush the event
+                    await asyncio.sleep(0)  # Yield control to allow event to be sent
                 else:
                     pillar_results[pillar_name] = result
                     
@@ -1676,14 +1696,16 @@ async def _stream_score_with_progress(
                     
                     yield f"event: complete\n"
                     yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed_count, 'total': total_pillars})}\n\n"
+                    # Force flush the event to ensure it's sent immediately
+                    await asyncio.sleep(0)  # Yield control to allow event to be sent
                     
-            except queue.Empty:
+            except asyncio.TimeoutError:
                 logger.error(f"Timeout waiting for pillar results after {completed_count}/{total_pillars} completed")
                 yield f"event: error\n"
                 yield f"data: {json.dumps({'status': 'error', 'message': f'Timeout: Only {completed_count}/{total_pillars} pillars completed'})}\n\n"
                 break
         
-        # Wait for thread to complete
+        # Wait for thread to complete (brief wait)
         pillar_thread.join(timeout=1.0)
         
         # Now build the final response using existing internal function
