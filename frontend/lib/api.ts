@@ -92,28 +92,28 @@ export function streamScore(
   const eventSource = new EventSource(url);
   let closed = false;
 
-  eventSource.addEventListener('started', (e) => {
+  eventSource.addEventListener('started', (e: MessageEvent) => {
     if (!closed) {
       const data = JSON.parse(e.data);
       onEvent({ ...data, status: 'started' });
     }
   });
 
-  eventSource.addEventListener('analyzing', (e) => {
+  eventSource.addEventListener('analyzing', (e: MessageEvent) => {
     if (!closed) {
       const data = JSON.parse(e.data);
       onEvent({ ...data, status: 'analyzing' });
     }
   });
 
-  eventSource.addEventListener('complete', (e) => {
+  eventSource.addEventListener('complete', (e: MessageEvent) => {
     if (!closed) {
       const data = JSON.parse(e.data);
       onEvent({ ...data, status: 'complete' });
     }
   });
 
-  eventSource.addEventListener('done', (e) => {
+  eventSource.addEventListener('done', (e: MessageEvent) => {
     if (!closed) {
       const data = JSON.parse(e.data);
       onEvent({ ...data, status: 'done' });
@@ -122,19 +122,26 @@ export function streamScore(
     }
   });
 
-  eventSource.addEventListener('error', (e) => {
+  eventSource.addEventListener('error', (e: MessageEvent) => {
     if (!closed) {
-      const data = JSON.parse(e.data);
-      onEvent({ ...data, status: 'error' });
-      if (onError) {
-        onError(new Error(data.message || 'Stream error'));
+      try {
+        const data = JSON.parse(e.data);
+        onEvent({ ...data, status: 'error' });
+        if (onError) {
+          onError(new Error(data.message || 'Stream error'));
+        }
+      } catch (err) {
+        // If parsing fails, just trigger error handler
+        if (onError) {
+          onError(new Error('Stream error'));
+        }
       }
       eventSource.close();
       closed = true;
     }
   });
 
-  eventSource.onerror = (error) => {
+  eventSource.onerror = () => {
     if (!closed) {
       if (onError) {
         onError(new Error('EventSource connection error'));

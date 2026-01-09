@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { StreamEvent, streamScore, ScoreResponse } from '@/lib/api'
+import { StreamEvent, streamScore } from '@/lib/api'
+import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
 import ProgressBar from './ProgressBar'

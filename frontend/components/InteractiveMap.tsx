@@ -56,6 +56,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         map.remove()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map_container_ref, map_loaded, coordinates])
 
   useEffect(() => {
