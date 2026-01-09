@@ -86,15 +86,20 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         console.log('InteractiveMap: MapLibre version:', maplibregl.version || 'unknown')
 
         // Use OpenStreetMap tiles (free, no API key required)
-        // Alternative: Use MapTiler if API key is provided
+        // Only use MapTiler if a valid API key is explicitly provided
         const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY
-        let map_style: string
+        const is_demo_key = maptiler_key === 'get_your_own_OpIi9ZULNHzrESv6T2vL'
+        const has_valid_key = maptiler_key && maptiler_key.trim() !== '' && !is_demo_key
         
-        if (maptiler_key && maptiler_key !== 'get_your_own_OpIi9ZULNHzrESv6T2vL') {
+        let map_style: string | object
+        
+        if (has_valid_key) {
           // Use MapTiler if valid key is provided
+          console.log('InteractiveMap: Using MapTiler with provided API key')
           map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
         } else {
           // Use OpenStreetMap style (free, no API key needed)
+          console.log('InteractiveMap: Using OpenStreetMap tiles (no API key required)')
           map_style = {
             version: 8,
             sources: {
@@ -116,7 +121,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
                 maxzoom: 19
               }
             ]
-          } as any
+          }
         }
 
         console.log('InteractiveMap: Creating map instance')
