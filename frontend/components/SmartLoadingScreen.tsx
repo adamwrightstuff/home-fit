@@ -129,7 +129,15 @@ export default function SmartLoadingScreen({
       {/* Main content - always render so map can initialize */}
       <div className="flex h-full w-full" style={{ minHeight: '100vh' }}>
         {/* Left side - Map */}
-        <div className="w-1/2 border-r border-gray-200" style={{ minHeight: '100vh', position: 'relative' }}>
+        <div 
+          className="w-1/2 border-r border-gray-200" 
+          style={{ 
+            minHeight: '100vh', 
+            height: '100vh',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
           <InteractiveMap 
             location={location}
             coordinates={coordinates}

@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+// Import MapLibre GL CSS
+if (typeof window !== 'undefined') {
+  require('maplibre-gl/dist/maplibre-gl.css')
+}
+
 interface InteractiveMapProps {
   location: string
   coordinates?: { lat: number; lon: number } | null
@@ -26,8 +31,12 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     
     const loadMapLibre = async () => {
       try {
-        maplibregl = (await import('maplibre-gl')).default
-        console.log('InteractiveMap: MapLibre GL loaded successfully')
+        const maplibreModule = await import('maplibre-gl')
+        maplibregl = maplibreModule.default || maplibreModule
+        console.log('InteractiveMap: MapLibre GL loaded successfully', maplibregl)
+        
+        // Wait a tick to ensure container is ready
+        await new Promise(resolve => setTimeout(resolve, 100))
         
         // Initialize map after library is loaded
         initializeMapWithLib(maplibregl)
@@ -38,6 +47,10 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     }
     
     const initializeMapWithLib = (maplibregl: any) => {
+      if (!map_container_ref.current) {
+        console.error('InteractiveMap: Container ref is null after load')
+        return
+      }
 
       // MapTiler free tier (100K map loads/month, completely free)
       // Uses demo key by default - works immediately, no signup needed
@@ -46,40 +59,48 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       // MapTiler streets style - free, no credit card required
       const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
 
-      if (!map_container_ref.current) {
-        console.error('InteractiveMap: Container ref is null')
-        return
-      }
-
       console.log('InteractiveMap: Creating map instance, coordinates:', coordinates)
-      const new_map = new maplibregl.Map({
-        container: map_container_ref.current,
-        style: map_style,
-        center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
-        zoom: coordinates ? 12 : 2
+      console.log('InteractiveMap: Container dimensions:', {
+        width: map_container_ref.current.offsetWidth,
+        height: map_container_ref.current.offsetHeight
       })
+      
+      try {
+        const new_map = new maplibregl.Map({
+          container: map_container_ref.current,
+          style: map_style,
+          center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
+          zoom: coordinates ? 12 : 2
+        })
 
-      new_map.on('load', () => {
-        console.log('InteractiveMap: Map load event fired')
-        // Ensure style is fully loaded
-        if (new_map.isStyleLoaded()) {
-          console.log('InteractiveMap: Style already loaded')
-          set_map_loaded(true)
-        } else {
-          console.log('InteractiveMap: Waiting for style.load event')
-          new_map.once('style.load', () => {
-            console.log('InteractiveMap: Style.load event fired')
+        new_map.on('load', () => {
+          console.log('InteractiveMap: Map load event fired')
+          // Ensure style is fully loaded
+          if (new_map.isStyleLoaded()) {
+            console.log('InteractiveMap: Style already loaded')
             set_map_loaded(true)
-          })
-        }
-      })
+          } else {
+            console.log('InteractiveMap: Waiting for style.load event')
+            new_map.once('style.load', () => {
+              console.log('InteractiveMap: Style.load event fired')
+              set_map_loaded(true)
+            })
+          }
+        })
 
-      new_map.on('error', (e: any) => {
-        console.error('InteractiveMap: Map error:', e)
-      })
+        new_map.on('error', (e: any) => {
+          console.error('InteractiveMap: Map error:', e)
+        })
 
-      set_map(new_map)
-      console.log('InteractiveMap: Map instance created')
+        new_map.on('styledata', () => {
+          console.log('InteractiveMap: Style data loaded')
+        })
+
+        set_map(new_map)
+        console.log('InteractiveMap: Map instance created successfully')
+      } catch (error) {
+        console.error('InteractiveMap: Error creating map:', error)
+      }
     }
 
     loadMapLibre()
@@ -196,11 +217,19 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
   // Get free key at: https://www.maptiler.com/cloud/
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: '100vh' }}>
+    <div className="w-full h-full relative" style={{ minHeight: '100vh', position: 'relative' }}>
       <div 
         ref={map_container_ref} 
         className="w-full h-full" 
-        style={{ minHeight: '100vh', width: '100%' }}
+        style={{ 
+          minHeight: '100vh', 
+          width: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0
+        }}
       />
       {coordinates && (
         <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
