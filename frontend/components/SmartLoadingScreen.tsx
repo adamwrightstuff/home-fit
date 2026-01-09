@@ -7,6 +7,7 @@ import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
 import ProgressBar from './ProgressBar'
 import InteractiveMap from './InteractiveMap'
+import LoadingQuotes from './LoadingQuotes'
 
 interface SmartLoadingScreenProps {
   location: string
@@ -161,6 +162,10 @@ export default function SmartLoadingScreen({
             <h2 className="text-2xl font-bold text-homefit-text-primary mb-4">Analyzing {location}</h2>
             
             <ProgressBar progress={progress} />
+            
+            <div className="mb-6">
+              <LoadingQuotes is_loading={status !== 'complete'} />
+            </div>
             
             {final_score !== null && (
               <div className="mb-6 p-6 bg-homefit-score-high/10 border-2 border-homefit-score-high/30 rounded-lg">
