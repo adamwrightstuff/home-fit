@@ -167,6 +167,22 @@ def _has_street_number(address: str) -> bool:
     return bool(re.match(r'^\d{1,5}[\s,]', address_clean))
 
 
+def _is_us_zip_code(address: str) -> bool:
+    """
+    Check if address is a US zip code (5-digit number, optionally with ZIP+4 extension).
+    
+    Args:
+        address: Address string
+    
+    Returns:
+        True if address appears to be a US zip code
+    """
+    address_clean = address.strip()
+    # Pattern: exactly 5 digits, optionally followed by hyphen and 4 more digits
+    # Also allow whitespace around it (but not other text)
+    return bool(re.match(r'^\s*\d{5}(-\d{4})?\s*$', address_clean))
+
+
 def _find_city_relation_for_element(element_type: str, element_id: int, lat: float, lon: float) -> Optional[Tuple[float, float, str]]:
     """
     Find city relation containing a node/way and get its admin_centre.
@@ -784,12 +800,52 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
     Returns:
         (lat, lon, zip_code, state, city) or None if failed
     """
-    # Try Census API first (for US addresses WITH street numbers)
+    # Check if this is a US zip code (5-digit number)
+    is_us_zip = _is_us_zip_code(address)
+    
+    # Try Census API first (for US addresses WITH street numbers, or US zip codes)
     query_state = _extract_state_from_query(address)
     if query_state and _has_street_number(address):  # Only use Census if street number present
         census_result = _geocode_census(address)
         if census_result:
             return census_result
+    elif is_us_zip:
+        # For US zip codes, try Census API with zip code
+        # Extract just the 5-digit zip code (remove ZIP+4 extension if present)
+        zip_match = re.match(r'^(\d{5})', address.strip())
+        if zip_match:
+            zip_5digit = zip_match.group(1)
+            try:
+                # Census API can geocode by zip code directly
+                params = {
+                    "street": "",
+                    "city": "",
+                    "state": "",
+                    "zip": zip_5digit,
+                    "benchmark": "Public_AR_Current",
+                    "vintage": "Current_Current",
+                    "format": "json"
+                }
+                response = requests.get(
+                    CENSUS_GEOCODER_URL, params=params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and "result" in data and "addressMatches" in data["result"]:
+                        matches = data["result"]["addressMatches"]
+                        if matches:
+                            match = matches[0]
+                            coordinates = match.get("coordinates", {})
+                            if "y" in coordinates and "x" in coordinates:
+                                lat = float(coordinates["y"])
+                                lon = float(coordinates["x"])
+                                address_components = match.get("addressComponents", {})
+                                zip_code = address_components.get("zip", zip_5digit)
+                                state = address_components.get("state", "")
+                                city = address_components.get("city", "")
+                                print(f"✅ Census API geocoded US zip code {zip_5digit}: {city}, {state}")
+                                return lat, lon, zip_code, state, city
+            except Exception as e:
+                print(f"⚠️  Census API zip code lookup failed: {e}, falling back to Nominatim")
     
     # Fall back to Nominatim
     try:
@@ -818,6 +874,11 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
             "addressdetails": 1,
             "limit": 1
         }
+        
+        # For US zip codes, add country filter to prioritize US results
+        if is_us_zip:
+            params["countrycodes"] = "us"
+            print(f"🔍 Detected US zip code, adding country filter to Nominatim query")
 
         headers = {
             "User-Agent": "HomeFit/1.0"
@@ -1334,7 +1395,10 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         (lat, lon, zip_code, state, city, full_result) or None if failed
         full_result: Complete geocoding response including address structure
     """
-    # Try Census API first (for US addresses WITH street numbers)
+    # Check if this is a US zip code (5-digit number)
+    is_us_zip = _is_us_zip_code(address)
+    
+    # Try Census API first (for US addresses WITH street numbers, or US zip codes)
     query_state = _extract_state_from_query(address)
     if query_state and _has_street_number(address):  # Only use Census if street number present
         census_result = _geocode_census(address)
@@ -1354,6 +1418,56 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                 "type": "city"  # Census doesn't provide type, default to city
             }
             return lat, lon, zip_code, state, city, full_result
+    elif is_us_zip:
+        # For US zip codes, try Census API with zip code
+        # Extract just the 5-digit zip code (remove ZIP+4 extension if present)
+        zip_match = re.match(r'^(\d{5})', address.strip())
+        if zip_match:
+            zip_5digit = zip_match.group(1)
+            try:
+                # Census API can geocode by zip code directly
+                params = {
+                    "street": "",
+                    "city": "",
+                    "state": "",
+                    "zip": zip_5digit,
+                    "benchmark": "Public_AR_Current",
+                    "vintage": "Current_Current",
+                    "format": "json"
+                }
+                response = requests.get(
+                    CENSUS_GEOCODER_URL, params=params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and "result" in data and "addressMatches" in data["result"]:
+                        matches = data["result"]["addressMatches"]
+                        if matches:
+                            match = matches[0]
+                            coordinates = match.get("coordinates", {})
+                            if "y" in coordinates and "x" in coordinates:
+                                lat = float(coordinates["y"])
+                                lon = float(coordinates["x"])
+                                address_components = match.get("addressComponents", {})
+                                zip_code = address_components.get("zip", zip_5digit)
+                                state = address_components.get("state", "")
+                                city = address_components.get("city", "")
+                                print(f"✅ Census API geocoded US zip code {zip_5digit}: {city}, {state}")
+                                # Create a Nominatim-like result structure for compatibility
+                                full_result = {
+                                    "lat": str(lat),
+                                    "lon": str(lon),
+                                    "address": {
+                                        "postcode": zip_code,
+                                        "state": state,
+                                        "city": city or "",
+                                        "town": city or "",
+                                        "village": ""
+                                    },
+                                    "type": "city"
+                                }
+                                return lat, lon, zip_code, state, city, full_result
+            except Exception as e:
+                print(f"⚠️  Census API zip code lookup failed: {e}, falling back to Nominatim")
     
     # Fall back to Nominatim
     try:
@@ -1383,6 +1497,11 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             "addressdetails": 1,
             "limit": 1
         }
+        
+        # For US zip codes, add country filter to prioritize US results
+        if is_us_zip:
+            params["countrycodes"] = "us"
+            print(f"🔍 Detected US zip code, adding country filter to Nominatim query")
 
         headers = {
             "User-Agent": "HomeFit/1.0"
