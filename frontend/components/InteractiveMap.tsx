@@ -21,25 +21,36 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
 
     console.log('InteractiveMap: Initializing map...')
 
-    // Use MapLibre GL (open-source alternative to Mapbox GL)
+    // Dynamically import MapLibre GL (works better with Next.js)
     let maplibregl: any = null
-    try {
-      maplibregl = require('maplibre-gl')
-      require('maplibre-gl/dist/maplibre-gl.css')
-      console.log('InteractiveMap: MapLibre GL loaded successfully')
-    } catch (e) {
-      console.error('InteractiveMap: MapLibre GL not available:', e)
-      return
+    
+    const loadMapLibre = async () => {
+      try {
+        maplibregl = (await import('maplibre-gl')).default
+        console.log('InteractiveMap: MapLibre GL loaded successfully')
+        
+        // Initialize map after library is loaded
+        initializeMapWithLib(maplibregl)
+      } catch (e) {
+        console.error('InteractiveMap: MapLibre GL not available:', e)
+        return
+      }
     }
+    
+    const initializeMapWithLib = (maplibregl: any) => {
 
-    // MapTiler free tier (100K map loads/month, completely free)
-    // Uses demo key by default - works immediately, no signup needed
-    // Optional: Get your own free API key at https://www.maptiler.com/cloud/ for more features
-    const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
-    // MapTiler streets style - free, no credit card required
-    const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
+      // MapTiler free tier (100K map loads/month, completely free)
+      // Uses demo key by default - works immediately, no signup needed
+      // Optional: Get your own free API key at https://www.maptiler.com/cloud/ for more features
+      const maptiler_key = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'get_your_own_OpIi9ZULNHzrESv6T2vL'
+      // MapTiler streets style - free, no credit card required
+      const map_style = `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptiler_key}`
 
-    const initialize_map = () => {
+      if (!map_container_ref.current) {
+        console.error('InteractiveMap: Container ref is null')
+        return
+      }
+
       console.log('InteractiveMap: Creating map instance, coordinates:', coordinates)
       const new_map = new maplibregl.Map({
         container: map_container_ref.current,
@@ -71,12 +82,14 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       console.log('InteractiveMap: Map instance created')
     }
 
-    initialize_map()
+    loadMapLibre()
 
     return () => {
       console.log('InteractiveMap: Cleanup - removing map')
       if (map) {
         map.remove()
+        set_map(null)
+        set_map_loaded(false)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
