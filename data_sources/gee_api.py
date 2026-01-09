@@ -264,29 +264,52 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
                 validation_sources.append(('Hansen', min(90, hansen_result)))
             
             # Check agreement and use highest value if validation suggests underestimation
+            # Research shows NLCD systematically underestimates by ~10% (up to 13.9% in urban)
+            # Use higher validation value when available to compensate, even for smaller differences
             if validation_sources:
                 max_validation_value = primary_result
                 agreements = []
+                underestimation_detected = False
                 
                 for source_name, source_value in validation_sources:
                     diff = abs(primary_result - source_value)
+                    diff_pct = source_value - primary_result  # Positive = higher, negative = lower
+                    
                     if diff <= 5:  # Within 5% = good agreement
                         agreements.append(source_name)
-                        print(f"   ✓ {source_name} validates NLCD TCC (diff: {diff:.1f}%)")
+                        # If validation is higher (even slightly), use it to compensate for NLCD underestimation
+                        if source_value > primary_result + 3.0:  # >3% higher = meaningful underestimation
+                            print(f"   ✓ {source_name} validates NLCD TCC (diff: {diff:.1f}%)")
+                            print(f"   💡 {source_name} is {diff_pct:.1f}% higher - using to compensate for NLCD underestimation bias")
+                            max_validation_value = max(max_validation_value, source_value)
+                            underestimation_detected = True
+                        else:
+                            print(f"   ✓ {source_name} validates NLCD TCC (diff: {diff:.1f}%)")
                     elif diff <= 10:  # Within 10% = acceptable
                         agreements.append(source_name)
-                        print(f"   ~ {source_name} roughly agrees with NLCD TCC (diff: {diff:.1f}%)")
+                        # If validation is higher, use it
+                        if source_value > primary_result + 3.0:  # >3% higher = meaningful underestimation
+                            print(f"   ~ {source_name} roughly agrees with NLCD TCC (diff: {diff:.1f}%)")
+                            print(f"   💡 {source_name} is {diff_pct:.1f}% higher - using to compensate for NLCD underestimation bias")
+                            max_validation_value = max(max_validation_value, source_value)
+                            underestimation_detected = True
+                        else:
+                            print(f"   ~ {source_name} roughly agrees with NLCD TCC (diff: {diff:.1f}%)")
                     else:
                         # Large difference - check if validation source suggests underestimation
-                        if source_value > primary_result + 10:  # Validation is >10% higher
-                            print(f"   ⚠️  {source_name} ({source_value:.1f}%) significantly higher than NLCD TCC ({primary_result:.1f}%, diff: +{source_value - primary_result:.1f}%)")
+                        if source_value > primary_result + 3.0:  # >3% higher = meaningful underestimation
+                            print(f"   ⚠️  {source_name} ({source_value:.1f}%) significantly higher than NLCD TCC ({primary_result:.1f}%, diff: +{diff_pct:.1f}%)")
                             print(f"   💡 Using higher value to compensate for NLCD underestimation bias")
                             max_validation_value = max(max_validation_value, source_value)
+                            underestimation_detected = True
                         else:
                             print(f"   ⚠️  {source_name} differs from NLCD TCC ({diff:.1f}% diff)")
                 
                 if agreements:
-                    print(f"   📊 NLCD TCC validated by {len(agreements)} source(s)")
+                    if underestimation_detected:
+                        print(f"   📊 NLCD TCC validated by {len(agreements)} source(s), but using higher value to compensate for underestimation")
+                    else:
+                        print(f"   📊 NLCD TCC validated by {len(agreements)} source(s)")
                 else:
                     print(f"   ⚠️  Validation sources disagree - using highest value to compensate for NLCD underestimation")
                 
