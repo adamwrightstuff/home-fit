@@ -1,19 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
 
 interface InteractiveMapProps {
   location: string
   coordinates?: { lat: number; lon: number } | null
   completed_pillars: string[]
-}
-
-// Load MapLibre CSS
-if (typeof window !== 'undefined') {
-  import('maplibre-gl/dist/maplibre-gl.css').catch(() => {
-    console.warn('Could not load MapLibre CSS')
-  })
 }
 
 export default function InteractiveMap({ location, coordinates, completed_pillars }: InteractiveMapProps) {
@@ -70,6 +62,15 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     async function initializeMap() {
       try {
         console.log('InteractiveMap: Loading MapLibre GL...')
+        
+        // Load CSS first (client-side only)
+        if (typeof window !== 'undefined') {
+          try {
+            await import('maplibre-gl/dist/maplibre-gl.css')
+          } catch (e) {
+            console.warn('Could not load MapLibre CSS:', e)
+          }
+        }
         
         // Dynamic import for MapLibre GL
         const maplibreModule = await import('maplibre-gl')
