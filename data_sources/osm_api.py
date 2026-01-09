@@ -281,6 +281,12 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       way["landuse"~"^(park|recreation_ground|village_green)$"](around:{radius_m},{lat},{lon});
       relation["landuse"~"^(park|recreation_ground|village_green)$"](around:{radius_m},{lat},{lon});
       
+      // GOLF COURSES - large, highly visible green spaces that contribute to natural beauty
+      // Design principle: Objective & Data-Driven - golf courses are actual green spaces in OSM
+      // They are large, well-maintained, and highly visible, contributing to "green view"
+      way["leisure"="golf_course"](around:{radius_m},{lat},{lon});
+      relation["leisure"="golf_course"](around:{radius_m},{lat},{lon});
+      
       // Gardens (exclude private)
       way["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
       relation["leisure"="garden"]["garden:type"!="private"](around:{radius_m},{lat},{lon});
@@ -1078,7 +1084,8 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
             is_greenway = True
         
         # Parks (exclude natural woods/forests/scrub from parks)
-        is_park = leisure in ["park", "dog_park", "recreation_ground"] or \
+        # Include golf courses as they are large, highly visible green spaces
+        is_park = leisure in ["park", "dog_park", "recreation_ground", "golf_course"] or \
            (leisure == "garden" and tags.get("garden:type") != "private") or \
            landuse in ["park", "recreation_ground", "village_green"]
         
