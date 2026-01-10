@@ -1782,8 +1782,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     
     # NEW: Adjust context bonus weights for high-relief scenic areas
     # When relief > 300m or prominence > 200m, increase topography weight
-    # BUT: Preserve water weight if water proximity is significant (<10km)
+    # BUT: Preserve water weight if water proximity is significant (<15km)
     # Note: This adjustment happens AFTER adaptive weights from landscape tags
+    # If landscape tags already increased topography (e.g., "mountain"), this preserves that boost
     terrain_adjusted_weights = context_weights.copy()
     relief = topography_metrics.get("relief_range_m") if topography_metrics else None
     prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
@@ -1798,9 +1799,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         water_threshold_km = 15.0 if area_type_key in ("rural", "exurban") else 10.0
         has_significant_water = nearest_water_km < water_threshold_km
     
-    if relief is not None and relief > 300.0:
-        # High relief: increase topography weight
-        # BUT: If water is significant, preserve water weight and only scale landcover
+    # Only apply high-relief adjustment if relief is high AND landscape tags haven't already adjusted weights
+    # If "mountain" tag is present, it already increased topography weight by 30%, so don't double-adjust
+    has_mountain_tag = "mountain" in landscape_tags if landscape_tags else False
+    
+    if relief is not None and relief > 300.0 and not has_mountain_tag:
+        # High relief WITHOUT mountain tag: apply standard high-relief adjustment
+        # If mountain tag is present, it already handled the topography boost
         base_topography = context_weights.get("topography", 0.5)
         base_water = context_weights.get("water", 0.2)
         base_landcover = context_weights.get("landcover", 0.3)
@@ -1812,7 +1817,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             # Scale landcover to maintain total = 1.0
             remaining_for_landcover = 1.0 - terrain_adjusted_weights["topography"] - terrain_adjusted_weights["water"]
             terrain_adjusted_weights["landcover"] = max(0.15, remaining_for_landcover)  # Min 0.15
-            logger.debug(f"Adjusted weights for high relief ({relief:.1f}m) WITH significant water: topography={terrain_adjusted_weights['topography']:.2f}, water={terrain_adjusted_weights['water']:.2f} (preserved), landcover={terrain_adjusted_weights['landcover']:.2f}")
+            logger.debug(f"Adjusted weights for high relief ({relief:.1f}m) WITH significant water (no mountain tag): topography={terrain_adjusted_weights['topography']:.2f}, water={terrain_adjusted_weights['water']:.2f} (preserved), landcover={terrain_adjusted_weights['landcover']:.2f}")
         else:
             # No significant water: standard high-relief adjustment
             terrain_adjusted_weights["topography"] = min(0.7, base_topography + 0.15)
@@ -1822,7 +1827,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
                 terrain_adjusted_weights["landcover"] = base_landcover * scale
                 terrain_adjusted_weights["water"] = base_water * scale
-            logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m) without significant water")
+            logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m) without significant water (no mountain tag)")
+    elif has_mountain_tag:
+        # Mountain tag is present: adaptive weights already increased topography
+        # Just ensure water weight is preserved if significant water is present
+        if has_significant_water:
+            # Preserve water weight - it's already set correctly by adaptive weights
+            # Just log that we're using mountain tag weights
+            logger.debug(f"Using mountain tag adaptive weights (topography={context_weights.get('topography', 0.5):.2f}) with significant water preserved (water={context_weights.get('water', 0.2):.2f})")
     
     # Always initialize topography_score with safe default
     topography_score = 0.0
