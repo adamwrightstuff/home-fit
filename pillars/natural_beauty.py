@@ -2869,8 +2869,11 @@ def calculate_natural_beauty(lat: float,
     scenic_weighted = min(70.0, natural_bonus_scaled * 1.75)  # 70 points max (context bonus 0-40, scaled 1.75x)
     
     natural_native = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted)
-    # Total max: 15 + 20 + 5 + 10 + 70 = 120 points, scale to 100
-    natural_score_raw = min(100.0, natural_native * (100.0 / 120.0))
+    # Total max: 15 + 20 + 5 + 10 + 70 = 120 points
+    # Keep original scaling (100/93.75) for backwards compatibility - same weighted score gives same final score
+    # The increased context bonus cap (40.0 → 70 weighted) allows exceptional areas to reach higher weighted totals
+    # which then scale proportionally to higher final scores, while maintaining backwards compatibility
+    natural_score_raw = min(100.0, natural_native * (100.0 / 93.75))
     
     # Using raw score directly - no calibration per design principles
     # Raw score is data-backed and reflects actual natural beauty metrics
