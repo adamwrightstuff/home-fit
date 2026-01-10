@@ -1597,10 +1597,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
     
     # Check if water proximity is significant BEFORE adjusting weights
+    # For mountain/rural areas, use a more generous threshold (15km) since water is a major scenic feature
+    # even when slightly further away (e.g., Truckee to Lake Tahoe is ~12-15km)
     has_significant_water = False
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
         nearest_water_km = water_proximity_data.get("nearest_distance_km")
-        has_significant_water = nearest_water_km < 10.0  # Within 10km = significant
+        # Use area-type-specific threshold: rural/exurban get 15km, others get 10km
+        water_threshold_km = 15.0 if area_type_key in ("rural", "exurban") else 10.0
+        has_significant_water = nearest_water_km < water_threshold_km
     
     if relief is not None and relief > 300.0:
         # High relief: increase topography weight
