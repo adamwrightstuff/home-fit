@@ -218,6 +218,136 @@ CONTEXT_BONUS_WEIGHTS = {
 }
 
 
+def _get_adaptive_context_weights(
+    area_type: str,
+    landscape_tags: List[str]
+) -> Dict[str, float]:
+    """
+    Get context bonus weights adapted for landscape context.
+    
+    Base weights come from area_type, then adjusted by landscape tags.
+    This enables context-aware Natural Beauty scoring that adapts to different
+    landscape types (coastal, mountain, desert, plains, forest, urban_park).
+    
+    Design principles:
+    - All adjustments are objective and data-driven (based on landscape tags)
+    - Tags are additive (multiple tags can apply)
+    - Weights always sum to 1.0 after adjustments
+    - Adjustments are documented with rationale
+    
+    Args:
+        area_type: Base morphological classification
+        landscape_tags: List of landscape context tags from get_natural_landscape_tags()
+    
+    Returns:
+        Dict with adjusted weights: {"topography": float, "landcover": float, "water": float}
+        Weights sum to 1.0
+    """
+    # Start with base weights from area_type
+    area_type_key = (area_type or "").lower() or "unknown"
+    base_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"]).copy()
+    
+    # If no landscape tags, return base weights unchanged
+    if not landscape_tags:
+        return base_weights
+    
+    # Track adjustments for each component
+    # Using multiplicative adjustments to preserve relative relationships
+    adjustments = {
+        "topography": 1.0,
+        "landcover": 1.0,
+        "water": 1.0
+    }
+    
+    # Apply tag-based adjustments
+    for tag in landscape_tags:
+        if tag == "coastal":
+            # Coastal: Water dominates, increase water weight, decrease landcover
+            # Rationale: Coastal views emphasize water, less emphasis on landcover diversity
+            adjustments["water"] *= 1.20
+            adjustments["landcover"] *= 0.85
+        
+        elif tag == "mountain":
+            # Mountain: Topography dominates, increase topography, decrease landcover expectation
+            # Rationale: Mountain terrain is the primary scenic feature, canopy expectations lower
+            adjustments["topography"] *= 1.30
+            adjustments["landcover"] *= 0.90
+        
+        elif tag == "desert":
+            # Desert: Topography matters more (scarcity value), decrease canopy expectation
+            # Rationale: In arid regions, terrain features (mesas, canyons) are primary beauty drivers
+            adjustments["topography"] *= 1.25
+            adjustments["landcover"] *= 0.80  # Less emphasis on landcover in deserts
+        
+        elif tag == "plains":
+            # Plains: Landcover visibility matters more, decrease topography
+            # Rationale: In flat landscapes, vegetation and landcover patterns are more visible
+            adjustments["landcover"] *= 1.20
+            adjustments["topography"] *= 0.85
+        
+        elif tag == "forest":
+            # Forest: Canopy/landcover dominates, decrease water emphasis
+            # Rationale: In forested areas, canopy coverage is the primary beauty driver
+            adjustments["landcover"] *= 1.15
+            adjustments["water"] *= 0.90
+        
+        elif tag == "urban_park":
+            # Urban park: Moderate adjustments, slight increase in landcover (parks matter)
+            # Rationale: Parks are primary natural beauty in urban contexts
+            adjustments["landcover"] *= 1.10
+            adjustments["topography"] *= 0.95  # Slight decrease (less terrain variation in cities)
+    
+    # Apply adjustments to base weights
+    adjusted_weights = {
+        "topography": base_weights["topography"] * adjustments["topography"],
+        "landcover": base_weights["landcover"] * adjustments["landcover"],
+        "water": base_weights["water"] * adjustments["water"]
+    }
+    
+    # Normalize to sum to 1.0
+    total = sum(adjusted_weights.values())
+    if total > 0:
+        adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
+    else:
+        # Fallback: return base weights if normalization fails
+        logger.warning(f"Adjusted weights sum to {total}, falling back to base weights")
+        return base_weights
+    
+    # Validate: ensure weights are reasonable (each between 0.1 and 0.8)
+    # If any weight is out of bounds, scale adjustments
+    max_weight = max(adjusted_weights.values())
+    min_weight = min(adjusted_weights.values())
+    
+    if max_weight > 0.8 or min_weight < 0.1:
+        # Scale adjustments to keep weights in bounds
+        # Reduce all adjustments proportionally if max too high
+        if max_weight > 0.8:
+            scale_factor = 0.75 / max_weight  # Bring max down to 0.75
+            adjustments["topography"] *= scale_factor
+            adjustments["landcover"] *= scale_factor
+            adjustments["water"] *= scale_factor
+            # Recalculate
+            adjusted_weights = {
+                "topography": base_weights["topography"] * adjustments["topography"],
+                "landcover": base_weights["landcover"] * adjustments["landcover"],
+                "water": base_weights["water"] * adjustments["water"]
+            }
+            total = sum(adjusted_weights.values())
+            if total > 0:
+                adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
+        
+        # Ensure minimum weight
+        for key in adjusted_weights:
+            if adjusted_weights[key] < 0.1:
+                adjusted_weights[key] = 0.1
+        # Renormalize if we adjusted minimum
+        total = sum(adjusted_weights.values())
+        if total > 0:
+            adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
+    
+    return adjusted_weights
+
+
 def _normalize_natural_beauty_feature(value: float, min_val: float, max_val: float, invert: bool = False) -> float:
     """
     Normalize a Natural Beauty feature using min-max scaling.
@@ -1520,7 +1650,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     # Get area-type-specific context bonus weights
     area_type_key = (area_type or "").lower() or "unknown"
-    context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
+    # Base weights - will be adjusted by landscape tags if available
+    base_context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
+    
+    # PHASE 1: Detect landscape context tags (after fetching data)
+    # Initialize landscape_tags - will be populated after data fetch
+    landscape_tags: List[str] = []
     
     # PARALLELIZE: Fetch independent data sources concurrently to reduce latency
     # Topography, landcover, and water proximity can all run in parallel
@@ -1589,9 +1724,66 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if landcover_metrics and not isinstance(landcover_metrics, dict):
         landcover_metrics = None
     
+    # PHASE 1: Detect landscape context tags now that we have all data
+    try:
+        from data_sources.data_quality import get_natural_landscape_tags
+        
+        # Extract elevation for climate adjustment
+        elevation_m_for_climate = None
+        if topography_metrics:
+            elevation_m_for_climate = topography_metrics.get("elevation_mean_m")
+        
+        # Get climate multiplier for tag detection
+        climate_multiplier_for_tags = None
+        if lat is not None and lon is not None:
+            climate_multiplier_for_tags = _get_climate_adjustment(lat, lon, elevation_m_for_climate)
+        
+        # Get canopy pct (primary radius) - use primary_canopy_pct if available
+        canopy_pct_for_tags = primary_canopy_pct if primary_canopy_pct is not None else None
+        
+        # URBAN_PARK detection: Quick check for urban areas with high park density
+        # This is a best-effort check - we fetch park data only for urban areas to avoid extra API calls
+        park_data_for_tags = None
+        if area_type_key in ("urban_core", "urban_core_lowrise", "historic_urban", "urban_residential", "suburban"):
+            try:
+                # Quick park check: fetch park count within 400m for urban_park detection
+                _, park_meta = _score_local_green_spaces(lat, lon, radius_m=400, area_type=area_type_key)
+                if isinstance(park_meta, dict):
+                    park_data_for_tags = {
+                        "park_count": park_meta.get("park_count", 0),
+                        "park_area_ha": park_meta.get("total_park_area_ha", 0),
+                        "local_green_score": park_meta.get("local_green_score", 0)
+                    }
+            except Exception as park_error:
+                logger.debug(f"Park data fetch for urban_park tag failed (non-critical): {park_error}")
+                park_data_for_tags = None
+        
+        # Detect landscape tags
+        landscape_tags = get_natural_landscape_tags(
+            base_area_type=area_type_key,
+            lat=lat,
+            lon=lon,
+            topography_metrics=topography_metrics,
+            landcover_metrics=landcover_metrics,
+            water_proximity_data=water_proximity_data,
+            elevation_m=elevation_m_for_climate,
+            climate_multiplier=climate_multiplier_for_tags,
+            canopy_pct=canopy_pct_for_tags,
+            park_data=park_data_for_tags  # Pass park data if available
+        )
+        
+        logger.debug(f"Detected landscape tags: {landscape_tags} for area_type={area_type_key}")
+    except Exception as tag_error:
+        logger.warning(f"Landscape tag detection failed: {tag_error}, using base weights only")
+        landscape_tags = []
+    
+    # PHASE 2: Get adaptive context weights based on landscape tags
+    context_weights = _get_adaptive_context_weights(area_type_key, landscape_tags)
+    
     # NEW: Adjust context bonus weights for high-relief scenic areas
     # When relief > 300m or prominence > 200m, increase topography weight
     # BUT: Preserve water weight if water proximity is significant (<10km)
+    # Note: This adjustment happens AFTER adaptive weights from landscape tags
     terrain_adjusted_weights = context_weights.copy()
     relief = topography_metrics.get("relief_range_m") if topography_metrics else None
     prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
@@ -1801,11 +1993,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["total_bonus"] = round(context_bonus_total, 2)
         natural_context_details["total_before_cap"] = round(total_context_before_cap, 2)
         natural_context_details["cap"] = NATURAL_CONTEXT_BONUS_CAP
-        natural_context_details["context_weights"] = context_weights  # Show area-type-specific weights
+        natural_context_details["context_weights"] = context_weights  # Show adaptive weights (adjusted by landscape)
+        natural_context_details["base_context_weights"] = base_context_weights  # Show base weights for comparison
+        natural_context_details["landscape_context_tags"] = landscape_tags  # Store landscape tags for UI
         # #region agent log - Add debug info to API response
         natural_context_details["debug_breakdown"] = {
             "area_type_key": area_type_key,
-            "base_weights": context_weights,
+            "landscape_tags": landscape_tags,
+            "base_weights": base_context_weights,
+            "adaptive_weights": context_weights,
             "adjusted_weights": terrain_adjusted_weights,
             "has_significant_water": has_significant_water,
             "topography_raw": natural_context_components.get("topography_raw", 0),
@@ -1832,6 +2028,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "total_before_cap": 0.0,
             "cap": NATURAL_CONTEXT_BONUS_CAP,
             "context_weights": context_weights,  # Still include weights for transparency
+            "base_context_weights": base_context_weights,  # Show base weights for comparison
+            "landscape_context_tags": landscape_tags,  # Store landscape tags for UI
             "topography_available": topography_metrics is not None,
             "landcover_available": landcover_metrics is not None,
             "viewshed_available": viewshed_metrics is not None

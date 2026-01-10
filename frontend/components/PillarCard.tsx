@@ -114,6 +114,26 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
           {/* NEW: Natural Beauty specific metrics */}
           {name === 'Natural Beauty' && pillar.summary && (
             <div className="space-y-3 mt-3 pt-3 border-t border-gray-200">
+              {/* Landscape Context Tags */}
+              {Array.isArray(pillar.summary.landscape_context) && pillar.summary.landscape_context.length > 0 && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Landscape Setting:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {pillar.summary.landscape_context.map((tag: string, idx: number) => (
+                      <span 
+                        key={idx}
+                        className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-homefit-text-secondary mt-1 italic">
+                    The Natural Beauty score adapts to different landscapes. For example, mountain areas emphasize terrain and views, while urban areas prioritize greenery and parks.
+                  </p>
+                </div>
+              )}
+              
               {/* Data Coverage Indicator */}
               {pillar.summary.data_coverage_tier && (
                 <div>
@@ -131,10 +151,55 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
                 </div>
               )}
               
-              {/* Terrain Metrics */}
-              {(pillar.summary.terrain_relief_m || pillar.summary.terrain_prominence_m || pillar.summary.terrain_ruggedness_m) && (
+              {/* Greenery Section */}
+              {(pillar.summary.neighborhood_canopy_pct || pillar.summary.green_view_index || pillar.summary.local_green_score) && (
                 <div>
-                  <p className="font-semibold text-homefit-text-primary mb-1">Terrain:</p>
+                  <p className="font-semibold text-homefit-text-primary mb-1">🌳 Greenery:</p>
+                  <div className="text-homefit-text-secondary space-y-0.5">
+                    {pillar.summary.neighborhood_canopy_pct !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Neighborhood Canopy:</span>
+                        <span className="font-medium">{pillar.summary.neighborhood_canopy_pct}%</span>
+                      </div>
+                    )}
+                    {pillar.summary.local_canopy_pct !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Local Canopy:</span>
+                        <span className="font-medium">{pillar.summary.local_canopy_pct}%</span>
+                      </div>
+                    )}
+                    {pillar.summary.green_view_index !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Green View Index:</span>
+                        <span className="font-medium">{pillar.summary.green_view_index.toFixed(1)}</span>
+                      </div>
+                    )}
+                    {pillar.summary.local_green_score !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Local Green Spaces:</span>
+                        <span className="font-medium">{pillar.summary.local_green_score.toFixed(1)}</span>
+                      </div>
+                    )}
+                    {pillar.summary.visible_green_fraction !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Visible Green:</span>
+                        <span className="font-medium">{pillar.summary.visible_green_fraction}%</span>
+                      </div>
+                    )}
+                    {pillar.summary.street_level_ndvi !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Street-Level NDVI:</span>
+                        <span className="font-medium">{pillar.summary.street_level_ndvi}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Terrain & Views Section */}
+              {(pillar.summary.terrain_relief_m || pillar.summary.terrain_prominence_m || pillar.summary.terrain_ruggedness_m || pillar.summary.visible_natural_pct) && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">⛰️ Terrain & Views:</p>
                   <div className="text-homefit-text-secondary space-y-0.5">
                     {pillar.summary.terrain_relief_m && (
                       <div className="flex justify-between">
@@ -154,27 +219,36 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
                         <span className="font-medium">{pillar.summary.terrain_ruggedness_m}m</span>
                       </div>
                     )}
+                    {pillar.summary.visible_natural_pct !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Visible Natural:</span>
+                        <span className="font-medium">{pillar.summary.visible_natural_pct}%</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
               
-              {/* Water Proximity */}
-              {pillar.summary.water_proximity_km && (
+              {/* Water & Landcover Section */}
+              {(pillar.summary.water_proximity_km || pillar.summary.water_proximity_type) && (
                 <div>
-                  <p className="font-semibold text-homefit-text-primary mb-1">Water:</p>
-                  <div className="text-homefit-text-secondary">
-                    <div className="flex justify-between">
-                      <span>Nearest {pillar.summary.water_proximity_type || 'waterbody'}:</span>
-                      <span className="font-medium">{pillar.summary.water_proximity_km}km</span>
-                    </div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">💧 Water & Landcover:</p>
+                  <div className="text-homefit-text-secondary space-y-0.5">
+                    {pillar.summary.water_proximity_km && (
+                      <div className="flex justify-between">
+                        <span>Nearest {pillar.summary.water_proximity_type || 'waterbody'}:</span>
+                        <span className="font-medium">{pillar.summary.water_proximity_km}km</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
               
-              {/* Eye-Level Greenery */}
-              {(pillar.summary.visible_green_fraction || pillar.summary.street_level_ndvi) && (
+              {/* Eye-Level Greenery - Add to Greenery section if not already there */}
+              {(pillar.summary.visible_green_fraction || pillar.summary.street_level_ndvi) && 
+               (!pillar.summary.neighborhood_canopy_pct && !pillar.summary.green_view_index && !pillar.summary.local_green_score) && (
                 <div>
-                  <p className="font-semibold text-homefit-text-primary mb-1">Eye-Level Greenery:</p>
+                  <p className="font-semibold text-homefit-text-primary mb-1">🌳 Greenery:</p>
                   <div className="text-homefit-text-secondary space-y-0.5">
                     {pillar.summary.visible_green_fraction && (
                       <div className="flex justify-between">
@@ -192,19 +266,6 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
                 </div>
               )}
               
-              {/* Viewshed */}
-              {pillar.summary.visible_natural_pct && (
-                <div>
-                  <p className="font-semibold text-homefit-text-primary mb-1">Viewshed:</p>
-                  <div className="text-homefit-text-secondary">
-                    <div className="flex justify-between">
-                      <span>Visible Natural:</span>
-                      <span className="font-medium">{pillar.summary.visible_natural_pct}%</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {/* Debug Breakdown - Context Bonus Calculation */}
               {pillar.details?.context_bonus?.debug_breakdown && (
                 <div className="mt-3 pt-3 border-t border-gray-300">
@@ -214,6 +275,13 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
                       <span>Area Type:</span>
                       <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.area_type_key || 'unknown'}</span>
                     </div>
+                    {Array.isArray(pillar.details.context_bonus.debug_breakdown.landscape_tags) && 
+                     pillar.details.context_bonus.debug_breakdown.landscape_tags.length > 0 && (
+                      <div className="flex justify-between">
+                        <span>Landscape Tags:</span>
+                        <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.landscape_tags.join(', ')}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Topography Raw:</span>
                       <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.topography_raw?.toFixed(2) || '0'}</span>

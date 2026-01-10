@@ -488,6 +488,120 @@ def get_contextual_tags(
     return tags
 
 
+def get_natural_landscape_tags(
+    base_area_type: str,
+    lat: float,
+    lon: float,
+    topography_metrics: Optional[Dict],
+    landcover_metrics: Optional[Dict],
+    water_proximity_data: Optional[Dict],
+    elevation_m: Optional[float],
+    climate_multiplier: Optional[float],
+    canopy_pct: Optional[float],
+    park_data: Optional[Dict] = None
+) -> List[str]:
+    """
+    Determine natural landscape context tags for a location.
+    
+    Tags are orthogonal attributes that adjust Natural Beauty scoring,
+    complementing the morphological area_type classification.
+    This separates "what it is" (morphology) from "landscape context" (natural setting).
+    
+    Tag detection is fully algorithmic based on objective metrics - no hardcoded locations.
+    
+    Args:
+        base_area_type: Base morphological classification (urban_core, suburban, rural, etc.)
+        lat: Latitude
+        lon: Longitude
+        topography_metrics: Dict with relief_range_m, elevation_mean_m, ruggedness_index_m
+        landcover_metrics: Dict with forest_pct, water_pct, developed_pct
+        water_proximity_data: Dict with nearest_distance_km, nearest_waterbody (type, area_km2)
+        elevation_m: Mean elevation in meters
+        climate_multiplier: Climate adjustment multiplier (from _get_climate_adjustment)
+        canopy_pct: Tree canopy percentage (primary radius)
+        park_data: Optional dict with park_count, park_area_ha, local_green_score (for urban_park detection)
+    
+    Returns:
+        List of landscape tags: ['coastal', 'mountain', 'desert', 'plains', 'forest', 'urban_park']
+    """
+    tags = []
+    
+    # Extract metrics with safe defaults
+    relief_m = float(topography_metrics.get("relief_range_m", 0) or 0) if topography_metrics else 0.0
+    elevation_mean_m = float(topography_metrics.get("elevation_mean_m", elevation_m or 0) or 0) if topography_metrics else (float(elevation_m) if elevation_m else 0.0)
+    ruggedness_m = float(topography_metrics.get("ruggedness_index_m", 0) or 0) if topography_metrics else 0.0
+    
+    forest_pct = float(landcover_metrics.get("forest_pct", 0) or 0) if landcover_metrics else 0.0
+    water_pct = float(landcover_metrics.get("water_pct", 0) or 0) if landcover_metrics else 0.0
+    
+    nearest_water_km = None
+    water_proximity_type = None
+    lake_area_km2 = None
+    if water_proximity_data:
+        nearest_water_km = water_proximity_data.get("nearest_distance_km")
+        nearest_waterbody = water_proximity_data.get("nearest_waterbody", {})
+        if isinstance(nearest_waterbody, dict):
+            water_proximity_type = nearest_waterbody.get("type")
+            lake_area_km2 = nearest_waterbody.get("area_km2")
+    
+    canopy_pct_val = float(canopy_pct) if canopy_pct is not None else 0.0
+    climate_mult = float(climate_multiplier) if climate_multiplier is not None else 1.0
+    
+    # COASTAL: Ocean proximity (<5km) OR very large lakes (>500km² within 10km)
+    is_coastal = False
+    if nearest_water_km is not None and nearest_water_km < 5.0:
+        if water_proximity_type == "ocean":
+            is_coastal = True
+        elif water_proximity_type == "lake" and lake_area_km2 is not None and lake_area_km2 > 500.0:
+            # Very large lakes (Great Lakes scale) are coastal-like features
+            is_coastal = True
+    
+    if is_coastal:
+        tags.append('coastal')
+    
+    # MOUNTAIN: High relief (>300m) OR high elevation (>1000m) OR high ruggedness (>75m)
+    # Priority check: mountains override plains
+    is_mountain = False
+    if relief_m > 300.0 or elevation_mean_m > 1000.0 or ruggedness_m > 75.0:
+        is_mountain = True
+    
+    if is_mountain:
+        tags.append('mountain')
+    
+    # FOREST: High canopy (>50%) OR high forest landcover (>60%)
+    # Can coexist with mountain (mountain forests)
+    if canopy_pct_val > 50.0 or forest_pct > 60.0:
+        tags.append('forest')
+    
+    # DESERT: Arid climate (multiplier <0.7) AND low canopy (<15%) AND low relief (<200m)
+    # Only tag if NOT mountain (mountains can be arid but aren't desert landscapes)
+    if not is_mountain:
+        if climate_mult < 0.7 and canopy_pct_val < 15.0 and relief_m < 200.0:
+            tags.append('desert')
+    
+    # PLAINS: Low relief (<100m) AND low forest (<30%) AND low elevation (<500m)
+    # Only tag if NOT mountain and NOT desert (avoid conflicts)
+    if not is_mountain and 'desert' not in tags:
+        if relief_m < 100.0 and forest_pct < 30.0 and elevation_mean_m < 500.0:
+            tags.append('plains')
+    
+    # URBAN_PARK: Urban area with high park density
+    # Detected using park_data from _score_local_green_spaces (park count, area, score)
+    if park_data and base_area_type in ("urban_core", "urban_core_lowrise", "historic_urban", "urban_residential", "suburban"):
+        park_count = park_data.get("park_count", 0)
+        park_area_ha = park_data.get("park_area_ha", 0)
+        local_green_score = park_data.get("local_green_score", 0)
+        
+        # Tag as urban_park if:
+        # - 3+ parks within 400m OR
+        # - Park area >2ha within 400m OR
+        # - High local green score (>5.0)
+        if park_count >= 3 or park_area_ha >= 2.0 or local_green_score >= 5.0:
+            tags.append('urban_park')
+    
+    return tags
+
+
 # ============================================================================
 # MULTINOMIAL REGRESSION MODEL FOR AREA TYPE CLASSIFICATION
 # Data-driven classification using normalized Built Beauty features

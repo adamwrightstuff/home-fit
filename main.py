@@ -362,6 +362,21 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
         summary["data_coverage_tier"] = data_coverage.get("overall_tier")
         summary["data_coverage_pct"] = round(data_coverage.get("overall_coverage", 0), 1)
     
+    # NEW: Add landscape context tags for UI display
+    if isinstance(natural_context, dict):
+        landscape_tags = natural_context.get("landscape_context_tags", [])
+        if isinstance(landscape_tags, list) and len(landscape_tags) > 0:
+            # Format tags as human-readable labels
+            tag_labels = {
+                "coastal": "Coastal",
+                "mountain": "Mountain",
+                "desert": "Desert",
+                "plains": "Plains",
+                "forest": "Forest",
+                "urban_park": "Urban Park"
+            }
+            summary["landscape_context"] = [tag_labels.get(tag, tag.title()) for tag in landscape_tags]
+    
     return summary
 
 
