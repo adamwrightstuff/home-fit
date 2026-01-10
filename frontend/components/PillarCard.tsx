@@ -204,6 +204,63 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
                   </div>
                 </div>
               )}
+              
+              {/* Debug Breakdown - Context Bonus Calculation */}
+              {pillar.details?.context_bonus?.debug_breakdown && (
+                <div className="mt-3 pt-3 border-t border-gray-300">
+                  <p className="font-semibold text-homefit-text-primary mb-2 text-xs">🔍 Debug: Context Bonus Breakdown</p>
+                  <div className="text-homefit-text-secondary space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span>Area Type:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.area_type_key || 'unknown'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Topography Raw:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.topography_raw?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Topography Final:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.topography_final?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Landcover Raw:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.landcover_raw?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Landcover Final:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.landcover_final?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Water Raw:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.water_raw?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Water Final:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.water_final?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Viewshed Bonus:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.viewshed?.toFixed(2) || '0'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Water Proximity Available:</span>
+                      <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.water_proximity_available ? 'Yes' : 'No'}</span>
+                    </div>
+                    {pillar.details.context_bonus.debug_breakdown.water_proximity_nearest_km !== null && pillar.details.context_bonus.debug_breakdown.water_proximity_nearest_km !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Nearest Water (km):</span>
+                        <span className="font-medium">{pillar.details.context_bonus.debug_breakdown.water_proximity_nearest_km?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <div className="flex justify-between font-semibold">
+                        <span>Total Context Bonus:</span>
+                        <span className="font-bold">{pillar.details.context_bonus.total_bonus?.toFixed(2) || pillar.summary.context_bonus?.toFixed(2) || '0'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
