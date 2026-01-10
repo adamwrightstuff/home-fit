@@ -913,6 +913,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                  density: Optional[float] = None,
                  precomputed_tree_canopy_5km: Optional[float] = None) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
+    # #region agent log
+    try:
+        import os
+        import time
+        log_dir = '/Users/adamwright/home-fit/.cursor'
+        os.makedirs(log_dir, exist_ok=True)
+        log_entry = f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"ENTRY","location":"natural_beauty.py:910","message":"_score_trees called","data":{{"lat":{lat},"lon":{lon},"city":"{city or "unknown"}","area_type":"{area_type or "unknown"}"}},"timestamp":{int(time.time()*1000)}}}\n'
+        with open(f'{log_dir}/debug.log', 'a') as f:
+            f.write(log_entry)
+        logger.info(f"DEBUG: _score_trees called for {city or 'unknown'} at {lat},{lon}")
+    except Exception as e:
+        logger.error(f"DEBUG LOG ERROR: {e}")
+    # #endregion
     score = 0.0
     sources: List[str] = []
     details: Dict = {}
@@ -1472,6 +1485,20 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     natural_context_details: Dict[str, Dict] = {}
     context_bonus_total = 0.0
 
+    # #region agent log
+    try:
+        import os
+        import time
+        log_dir = '/Users/adamwright/home-fit/.cursor'
+        os.makedirs(log_dir, exist_ok=True)
+        log_entry = f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"ENTRY","location":"natural_beauty.py:1470","message":"Context bonus calculation started","data":{{"lat":{lat},"lon":{lon},"area_type":"{area_type}"}},"timestamp":{int(time.time()*1000)}}}\n'
+        with open(f'{log_dir}/debug.log', 'a') as f:
+            f.write(log_entry)
+        logger.info(f"DEBUG: Context bonus calc started for {city or 'unknown'} - lat={lat}, lon={lon}, area_type={area_type}")
+    except Exception as e:
+        logger.error(f"DEBUG LOG ERROR: {e}")
+    # #endregion
+
     try:
         from data_sources.gee_api import get_topography_context, get_landcover_context_gee, get_viewshed_proxy
     except ImportError:  # pragma: no cover - optional dependency
@@ -1516,16 +1543,32 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     if f == future:
                         if key == 'topography' and isinstance(result, dict):
                             topography_metrics = result
+                            # #region agent log
+                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1518","message":"Topography metrics fetched","data":{{"relief_m":{topography_metrics.get("relief_range_m")},"prominence_m":{topography_metrics.get("terrain_prominence_m")},"ruggedness_m":{topography_metrics.get("ruggedness_index_m")}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            # #endregion
                         elif key == 'landcover' and isinstance(result, dict):
                             landcover_metrics = result
+                            # #region agent log
+                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"B","location":"natural_beauty.py:1520","message":"Landcover metrics fetched","data":{{"source":"{landcover_metrics.get("source","unknown")}","forest_pct":{landcover_metrics.get("forest_pct",0)},"water_pct":{landcover_metrics.get("water_pct",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            # #endregion
                         elif key == 'water' and isinstance(result, dict):
                             water_proximity_data = result
+                            # #region agent log
+                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1522","message":"Water proximity data fetched","data":{{"nearest_distance_km":{water_proximity_data.get("nearest_distance_km")},"count":{water_proximity_data.get("count",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            # #endregion
                         break
             except Exception as exc:
                 # Log which call failed for debugging
                 for key, f in futures.items():
                     if f == future:
                         logger.debug(f"Parallel {key} data fetch failed: {exc}, using defaults")
+                        # #region agent log
+                        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1528","message":"Parallel data fetch failed","data":{{"key":"{key}","error":"{str(exc)[:100]}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                        # #endregion
                         break
     
     # Validate results
@@ -1592,6 +1635,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_components["topography_multiplier"] = round(topography_multiplier, 2) if topography_multiplier != 1.0 else None
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
+        # #region agent log
+        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1587","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"multiplier":{topography_multiplier},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+        # #endregion
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")
@@ -1612,6 +1659,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "nearest_waterbody": water_proximity_data.get("nearest_waterbody"),
                 "water_density_km2": water_proximity_data.get("water_density")
             }
+            # #region agent log
+            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                nearest_water_km = water_proximity_data.get("nearest_distance_km")
+                waterbody = water_proximity_data.get("nearest_waterbody", {})
+                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1609","message":"Water proximity stored in details","data":{{"nearest_km":{nearest_water_km},"waterbody_type":"{waterbody.get("type","none") if isinstance(waterbody,dict) else "none"}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            # #endregion
         # Apply area-type-specific weights (adjusted for high-relief areas)
         # Ensure scores are always valid numbers
         landcover_score_raw = float(landcover_score_raw) if isinstance(landcover_score_raw, (int, float)) and not math.isnan(landcover_score_raw) else 0.0
@@ -1628,6 +1681,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_components["water"] = round(water_score, 2)
         natural_context_components["water_raw"] = round(water_score_raw, 2)
         context_bonus_total += landcover_score + water_score
+        # #region agent log - Add to API response
+        natural_context_details["debug_water_proximity"] = {
+            "available": bool(water_proximity_data),
+            "nearest_distance_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
+            "count": water_proximity_data.get("count", 0) if water_proximity_data else 0,
+            "nearest_waterbody": water_proximity_data.get("nearest_waterbody") if water_proximity_data else None
+        }
+        # #endregion
         biodiversity_index = (
             BIODIVERSITY_WEIGHTS["forest"] * float(landcover_metrics.get("forest_pct", 0.0)) +
             BIODIVERSITY_WEIGHTS["wetland"] * float(landcover_metrics.get("wetland_pct", 0.0)) +
@@ -1679,11 +1740,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 natural_context_components["viewshed"] = round(viewshed_bonus, 2)
                 natural_context_components["visible_natural_pct"] = round(visible_natural_pct, 2)
                 natural_context_details["viewshed_metrics"] = viewshed_metrics
+                # #region agent log
+                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                # #endregion
         except Exception as viewshed_error:
             logger.debug("Viewshed proxy calculation failed: %s, using defaults", viewshed_error)
             viewshed_metrics = None
 
     total_context_before_cap = context_bonus_total
+    # #region agent log
+    with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+        f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"E","location":"natural_beauty.py:1686","message":"Context bonus before cap","data":{{"total":{context_bonus_total},"cap":{NATURAL_CONTEXT_BONUS_CAP},"area_type":"{area_type_key}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+    # #endregion
     if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
         context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
 
@@ -1695,6 +1764,23 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["total_before_cap"] = round(total_context_before_cap, 2)
         natural_context_details["cap"] = NATURAL_CONTEXT_BONUS_CAP
         natural_context_details["context_weights"] = context_weights  # Show area-type-specific weights
+        # #region agent log - Add debug info to API response
+        natural_context_details["debug_breakdown"] = {
+            "area_type_key": area_type_key,
+            "weights": terrain_adjusted_weights,
+            "topography_raw": natural_context_components.get("topography_raw", 0),
+            "topography_final": natural_context_components.get("topography", 0),
+            "landcover_raw": natural_context_components.get("landcover_raw", 0),
+            "landcover_final": natural_context_components.get("landcover", 0),
+            "water_raw": natural_context_components.get("water_raw", 0),
+            "water_final": natural_context_components.get("water", 0),
+            "viewshed": natural_context_components.get("viewshed", 0),
+            "water_proximity_available": bool(water_proximity_data),
+            "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
+            "landcover_available": bool(landcover_metrics),
+            "topography_available": bool(topography_metrics)
+        }
+        # #endregion
         details["natural_context"] = natural_context_details
     else:
         # FIX: Ensure structure is always populated, even when empty
@@ -1979,6 +2065,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 reduction_reasons.append(f"Moderate context bonus ({context_bonus_total:.1f})")
             
             expectation_penalty = base_penalty * penalty_reduction_factor
+            # #region agent log
+            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1969","message":"Penalty reduction calculated","data":{{"base_penalty":{base_penalty},"reduction_factor":{penalty_reduction_factor},"final_penalty":{expectation_penalty},"context_bonus":{context_bonus_total},"water_km":{nearest_water_km},"reasons":{reduction_reasons}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            # #endregion
             if penalty_reduction_factor < 1.0:
                 details["canopy_expectation"]["penalty_reduction"] = {
                     "original_penalty": round(base_penalty, 2),
