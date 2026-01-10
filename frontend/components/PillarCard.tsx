@@ -112,7 +112,7 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
           </div>
           
           {/* NEW: Natural Beauty specific metrics */}
-          {pillar.name === 'Natural Beauty' && pillar.summary && (
+          {name === 'Natural Beauty' && pillar.summary && (
             <div className="space-y-3 mt-3 pt-3 border-t border-gray-200">
               {/* Data Coverage Indicator */}
               {pillar.summary.data_coverage_tier && (
