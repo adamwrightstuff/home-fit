@@ -67,10 +67,10 @@ ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coast
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
 # Relief threshold lowered from 600m to 300m in _score_topography_component
-TOPOGRAPHY_BONUS_MAX = 18.0  # Increased from 12.0 to better capture scenic areas
+TOPOGRAPHY_BONUS_MAX = 20.0  # Increased from 18.0 to better capture exceptional mountain terrain
 LANDCOVER_BONUS_MAX = 8.0
 WATER_BONUS_MAX = 40.0  # Increased to make water a primary visual element and prevent capping high-water coastal locations
-NATURAL_CONTEXT_BONUS_CAP = 20.0
+NATURAL_CONTEXT_BONUS_CAP = 25.0  # Increased from 20.0 to allow exceptional scenic areas (mountain towns with lakes) to reach their potential
 
 # Component dominance guard (prevents single component from exceeding 60% of context bonus)
 MAX_COMPONENT_DOMINANCE_RATIO = 0.6
@@ -989,7 +989,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # New: Ruggedness factor (elevation variation)
         # Ruggedness > 150m = very rugged terrain, highly scenic
-        ruggedness_factor = min(1.0, ruggedness / 150.0) if ruggedness > 0 else 0.0
+        # BUT: Lower threshold (100m) for moderate ruggedness to better capture mountain towns
+        ruggedness_factor = min(1.0, ruggedness / 100.0) if ruggedness > 0 else 0.0  # Lower threshold: 100m → full credit (was 150m)
         
         # Combined scoring: traditional factors (70%) + prominence/ruggedness (30%)
         # This ensures prominence and ruggedness add to scenic beauty beyond just relief
@@ -997,10 +998,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         enhanced_score = (0.15 * prominence_factor) + (0.15 * ruggedness_factor)
         
         # If prominence or ruggedness is significant, boost the score
-        if prominence > 150 or ruggedness > 100:
+        # Lower threshold for ruggedness (75m instead of 100m) to better capture mountain towns
+        if prominence > 150 or ruggedness > 75:  # Lower threshold: 75m triggers enhanced scoring (was 100m)
             # High prominence/ruggedness areas get enhanced scoring
-            enhanced_weight = 0.35  # Increase weight for enhanced metrics
-            traditional_weight = 0.65
+            enhanced_weight = 0.40  # Increase weight for enhanced metrics (was 0.35)
+            traditional_weight = 0.60  # Decrease traditional weight (was 0.65)
         else:
             enhanced_weight = 0.30
             traditional_weight = 0.70
@@ -1118,27 +1120,37 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 water_proximity_type = nearest_waterbody.get("type")
                 
                 # Water type weighting: ocean > large lake > river > small lake
+                # Large lakes (>50km²) get higher weight - these are major scenic features
                 type_weight = 1.0
                 if water_proximity_type == "ocean":
                     type_weight = 1.5
-                elif water_proximity_type == "lake" and nearest_waterbody.get("area_km2", 0) > 10.0:
-                    type_weight = 1.3
+                elif water_proximity_type == "lake":
+                    lake_area_km2 = nearest_waterbody.get("area_km2", 0)
+                    if lake_area_km2 > 50.0:  # Very large lakes (Lake Tahoe, Great Lakes, etc.)
+                        type_weight = 1.4
+                    elif lake_area_km2 > 10.0:  # Large lakes
+                        type_weight = 1.3
+                    else:
+                        type_weight = 1.1  # Small lakes still get slight boost
                 elif water_proximity_type == "river":
                     type_weight = 1.2
                 
                 # Exponential decay: closer = higher bonus
-                # <1km: 8.0, 1-3km: 6.0, 3-5km: 4.0, 5-10km: 2.0, >10km: 0.0
+                # Increased bonuses for mountain/rural areas where water is a major scenic feature
+                # <1km: 10.0, 1-3km: 8.0, 3-5km: 6.0, 5-10km: 4.0, 10-15km: 2.0, >15km: 0.0
                 if nearest_distance_km < 1.0:
-                    proximity_bonus = 8.0 * type_weight
+                    proximity_bonus = 10.0 * type_weight
                 elif nearest_distance_km < 3.0:
-                    proximity_bonus = 6.0 * type_weight
+                    proximity_bonus = 8.0 * type_weight
                 elif nearest_distance_km < 5.0:
-                    proximity_bonus = 4.0 * type_weight
+                    proximity_bonus = 6.0 * type_weight
                 elif nearest_distance_km < 10.0:
+                    proximity_bonus = 4.0 * type_weight
+                elif nearest_distance_km < 15.0:
                     proximity_bonus = 2.0 * type_weight
                 
-                # Cap proximity bonus
-                proximity_bonus = min(12.0, proximity_bonus)
+                # Cap proximity bonus (increased from 12.0 to 16.0 for exceptional water features)
+                proximity_bonus = min(16.0, proximity_bonus)
         
         # Calculate water score: base + bonuses (additive, like built beauty)
         # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
@@ -2625,11 +2637,11 @@ def calculate_natural_beauty(lat: float,
     gvi_weighted = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
     street_tree_weighted = street_tree_bonus * 1.0  # 5 points max (already 0-5 scale)
     local_green_weighted = local_green_score * 1.0  # 10 points max (already 0-10 scale)
-    scenic_weighted = min(35.0, natural_bonus_scaled * 1.75)  # 35 points max (context bonus 0-20, scaled 1.75x)
+    scenic_weighted = min(43.75, natural_bonus_scaled * 1.75)  # 43.75 points max (context bonus 0-25, scaled 1.75x)
     
     natural_native = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted)
-    # Total max: 15 + 20 + 5 + 10 + 35 = 85 points, scale to 100
-    natural_score_raw = min(100.0, natural_native * (100.0 / 85.0))
+    # Total max: 15 + 20 + 5 + 10 + 43.75 = 93.75 points, scale to 100
+    natural_score_raw = min(100.0, natural_native * (100.0 / 93.75))
     
     # Using raw score directly - no calibration per design principles
     # Raw score is data-backed and reflects actual natural beauty metrics
