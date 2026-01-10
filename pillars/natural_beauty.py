@@ -5,6 +5,7 @@ Natural Beauty pillar implementation (trees, scenic context, and enhancers).
 from __future__ import annotations
 
 import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Tuple
 
 from logging_config import get_logger
@@ -1482,16 +1483,56 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     area_type_key = (area_type or "").lower() or "unknown"
     context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
     
+    # PARALLELIZE: Fetch independent data sources concurrently to reduce latency
+    # Topography, landcover, and water proximity can all run in parallel
     topography_metrics: Optional[Dict] = None
-    if get_topography_context:
+    landcover_metrics: Optional[Dict] = None
+    water_proximity_data: Optional[Dict] = None
+    
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {}
+        
+        # Submit topography call
+        if get_topography_context:
+            futures['topography'] = executor.submit(get_topography_context, lat, lon, 5000)
+        
+        # Submit landcover call
+        if get_landcover_context_gee:
+            futures['landcover'] = executor.submit(get_landcover_context_gee, lat, lon, 3000)
+        
+        # Submit water proximity call
         try:
-            topography_metrics = get_topography_context(lat, lon, radius_m=5000)
-            # Ensure topography_metrics is a valid dict
-            if not isinstance(topography_metrics, dict):
-                topography_metrics = None
-        except Exception as exc:
-            logger.warning("Topography context lookup failed: %s, using defaults", exc)
-            topography_metrics = None
+            from data_sources import osm_api
+            futures['water'] = executor.submit(osm_api.query_water_features, lat, lon, 15000)
+        except Exception:
+            pass
+        
+        # Collect results as they complete
+        for future in as_completed(futures.values()):
+            try:
+                result = future.result()
+                # Match result to the right variable by checking which future completed
+                for key, f in futures.items():
+                    if f == future:
+                        if key == 'topography' and isinstance(result, dict):
+                            topography_metrics = result
+                        elif key == 'landcover' and isinstance(result, dict):
+                            landcover_metrics = result
+                        elif key == 'water' and isinstance(result, dict):
+                            water_proximity_data = result
+                        break
+            except Exception as exc:
+                # Log which call failed for debugging
+                for key, f in futures.items():
+                    if f == future:
+                        logger.debug(f"Parallel {key} data fetch failed: {exc}, using defaults")
+                        break
+    
+    # Validate results
+    if topography_metrics and not isinstance(topography_metrics, dict):
+        topography_metrics = None
+    if landcover_metrics and not isinstance(landcover_metrics, dict):
+        landcover_metrics = None
     
     # NEW: Adjust context bonus weights for high-relief scenic areas
     # When relief > 300m or prominence > 200m, increase topography weight
@@ -1512,6 +1553,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     
     # Always initialize topography_score with safe default
     topography_score = 0.0
+    landcover_score = 0.0
+    water_score = 0.0
+    
     if topography_metrics:
         topography_score_raw = _score_topography_component(topography_metrics)
         
@@ -1548,29 +1592,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_components["topography_multiplier"] = round(topography_multiplier, 2) if topography_multiplier != 1.0 else None
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
-
-    landcover_metrics: Optional[Dict] = None
-    landcover_score = 0.0
-    water_score = 0.0
-    water_proximity_data: Optional[Dict] = None
-    
-    # NEW: Query water proximity from OSM (distance to nearest significant waterbody)
-    try:
-        from data_sources import osm_api
-        water_proximity_data = osm_api.query_water_features(lat, lon, radius_m=15000)
-    except Exception as water_error:
-        logger.debug("Water proximity query failed: %s, using defaults", water_error)
-        water_proximity_data = None
-    
-    if get_landcover_context_gee:
-        try:
-            landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=3000)
-            # Ensure landcover_metrics is a valid dict
-            if not isinstance(landcover_metrics, dict):
-                landcover_metrics = None
-        except Exception as exc:
-            logger.warning("Land cover context lookup failed: %s, using defaults", exc)
-            landcover_metrics = None
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")

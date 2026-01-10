@@ -288,9 +288,10 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     summary = {}
     tree_analysis = natural_details.get("tree_analysis", {})
     multi_radius = natural_details.get("multi_radius_canopy", {})
-    natural_context = natural_details.get("natural_context", {})
+    # FIX: Use context_bonus instead of natural_context (it's stored as context_bonus in natural_details)
+    natural_context = natural_details.get("context_bonus", {}) or natural_details.get("natural_context", {})
     data_availability = natural_details.get("data_availability", {})
-    data_coverage = natural_details.get("data_coverage", {})
+    data_coverage = natural_details.get("data_coverage", {}) or natural_details.get("data_availability", {}).get("data_coverage", {})
     
     if isinstance(multi_radius, dict):
         # FIX: Use correct key names from multi_radius_canopy dict
