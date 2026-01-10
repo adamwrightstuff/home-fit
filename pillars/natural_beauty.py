@@ -206,9 +206,9 @@ CONTEXT_BONUS_WEIGHTS = {
         "water": 0.15        # Decreased from 0.25
     },
     "rural": {
-        "topography": 0.6,   # Increased from 0.45 - topography is critical for scenic rural areas
-        "landcover": 0.25,   # Decreased from 0.35
-        "water": 0.15        # Decreased from 0.20
+        "topography": 0.55,  # Slightly reduced to make room for water in mountain/rural areas
+        "landcover": 0.25,   # Maintained
+        "water": 0.20        # Increased from 0.15 - rural/mountain areas often have scenic water (lakes, rivers)
     },
     "unknown": {
         "topography": 0.5,   # Increased from 0.4
@@ -1579,20 +1579,42 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     
     # NEW: Adjust context bonus weights for high-relief scenic areas
     # When relief > 300m or prominence > 200m, increase topography weight
+    # BUT: Preserve water weight if water proximity is significant (<10km)
     terrain_adjusted_weights = context_weights.copy()
     relief = topography_metrics.get("relief_range_m") if topography_metrics else None
     prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
     
+    # Check if water proximity is significant BEFORE adjusting weights
+    has_significant_water = False
+    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+        nearest_water_km = water_proximity_data.get("nearest_distance_km")
+        has_significant_water = nearest_water_km < 10.0  # Within 10km = significant
+    
     if relief is not None and relief > 300.0:
-        # High relief: increase topography weight (0.6-0.7)
-        terrain_adjusted_weights["topography"] = min(0.7, context_weights["topography"] + 0.15)
-        # Reduce other weights proportionally to maintain total
-        total_other = terrain_adjusted_weights.get("landcover", 0.3) + terrain_adjusted_weights.get("water", 0.2)
-        if total_other > 0:
-            scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
-            terrain_adjusted_weights["landcover"] = terrain_adjusted_weights.get("landcover", 0.3) * scale
-            terrain_adjusted_weights["water"] = terrain_adjusted_weights.get("water", 0.2) * scale
-        logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m)")
+        # High relief: increase topography weight
+        # BUT: If water is significant, preserve water weight and only scale landcover
+        base_topography = context_weights.get("topography", 0.5)
+        base_water = context_weights.get("water", 0.2)
+        base_landcover = context_weights.get("landcover", 0.3)
+        
+        if has_significant_water:
+            # Preserve water weight: increase topography moderately, only scale landcover
+            terrain_adjusted_weights["topography"] = min(0.65, base_topography + 0.10)
+            terrain_adjusted_weights["water"] = base_water  # Preserve water weight
+            # Scale landcover to maintain total = 1.0
+            remaining_for_landcover = 1.0 - terrain_adjusted_weights["topography"] - terrain_adjusted_weights["water"]
+            terrain_adjusted_weights["landcover"] = max(0.15, remaining_for_landcover)  # Min 0.15
+            logger.debug(f"Adjusted weights for high relief ({relief:.1f}m) WITH significant water: topography={terrain_adjusted_weights['topography']:.2f}, water={terrain_adjusted_weights['water']:.2f} (preserved), landcover={terrain_adjusted_weights['landcover']:.2f}")
+        else:
+            # No significant water: standard high-relief adjustment
+            terrain_adjusted_weights["topography"] = min(0.7, base_topography + 0.15)
+            # Reduce other weights proportionally to maintain total
+            total_other = base_landcover + base_water
+            if total_other > 0:
+                scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
+                terrain_adjusted_weights["landcover"] = base_landcover * scale
+                terrain_adjusted_weights["water"] = base_water * scale
+            logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m) without significant water")
     
     # Always initialize topography_score with safe default
     topography_score = 0.0
@@ -1767,7 +1789,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # #region agent log - Add debug info to API response
         natural_context_details["debug_breakdown"] = {
             "area_type_key": area_type_key,
-            "weights": terrain_adjusted_weights,
+            "base_weights": context_weights,
+            "adjusted_weights": terrain_adjusted_weights,
+            "has_significant_water": has_significant_water,
             "topography_raw": natural_context_components.get("topography_raw", 0),
             "topography_final": natural_context_components.get("topography", 0),
             "landcover_raw": natural_context_components.get("landcover_raw", 0),
@@ -1777,6 +1801,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "viewshed": natural_context_components.get("viewshed", 0),
             "water_proximity_available": bool(water_proximity_data),
             "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
+            "relief_m": relief,
             "landcover_available": bool(landcover_metrics),
             "topography_available": bool(topography_metrics)
         }
