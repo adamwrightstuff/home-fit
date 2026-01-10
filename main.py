@@ -288,6 +288,9 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     summary = {}
     tree_analysis = natural_details.get("tree_analysis", {})
     multi_radius = natural_details.get("multi_radius_canopy", {})
+    natural_context = natural_details.get("natural_context", {})
+    data_availability = natural_details.get("data_availability", {})
+    data_coverage = natural_details.get("data_coverage", {})
     
     if isinstance(multi_radius, dict):
         # FIX: Use correct key names from multi_radius_canopy dict
@@ -309,9 +312,50 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
         # Add local green spaces
         if "local_green_score" in tree_analysis:
             summary["local_green_score"] = round(tree_analysis.get("local_green_score", 0), 2)
+        
+        # NEW: Add eye-level greenery metrics
+        gvi_metrics = tree_analysis.get("gvi_metrics", {})
+        if isinstance(gvi_metrics, dict):
+            if gvi_metrics.get("visible_green_fraction"):
+                summary["visible_green_fraction"] = round(gvi_metrics.get("visible_green_fraction", 0), 1)
+            if gvi_metrics.get("street_level_ndvi"):
+                summary["street_level_ndvi"] = round(gvi_metrics.get("street_level_ndvi", 0), 3)
     
     summary["scenic_bonus"] = round(natural_details.get("enhancer_bonus_scaled", 0), 2)
     summary["context_bonus"] = round(natural_details.get("context_bonus_raw", 0), 2)
+    
+    # NEW: Add terrain metrics
+    if isinstance(natural_context, dict):
+        topography_metrics = natural_context.get("topography_metrics", {})
+        if isinstance(topography_metrics, dict):
+            if topography_metrics.get("relief_range_m") is not None:
+                summary["terrain_relief_m"] = round(topography_metrics.get("relief_range_m", 0), 1)
+            if topography_metrics.get("terrain_prominence_m") is not None:
+                summary["terrain_prominence_m"] = round(topography_metrics.get("terrain_prominence_m", 0), 1)
+            if topography_metrics.get("ruggedness_index_m") is not None:
+                summary["terrain_ruggedness_m"] = round(topography_metrics.get("ruggedness_index_m", 0), 1)
+    
+    # NEW: Add water proximity metrics
+    if isinstance(natural_context, dict):
+        water_proximity = natural_context.get("water_proximity", {})
+        if isinstance(water_proximity, dict):
+            if water_proximity.get("nearest_distance_km") is not None:
+                summary["water_proximity_km"] = round(water_proximity.get("nearest_distance_km", 0), 1)
+                nearest_waterbody = water_proximity.get("nearest_waterbody", {})
+                if isinstance(nearest_waterbody, dict) and nearest_waterbody.get("type"):
+                    summary["water_proximity_type"] = nearest_waterbody.get("type")
+    
+    # NEW: Add viewshed metrics
+    if isinstance(natural_context, dict):
+        viewshed_metrics = natural_context.get("viewshed_metrics", {})
+        if isinstance(viewshed_metrics, dict):
+            if viewshed_metrics.get("visible_natural_pct") is not None:
+                summary["visible_natural_pct"] = round(viewshed_metrics.get("visible_natural_pct", 0), 1)
+    
+    # NEW: Add data coverage tier
+    if isinstance(data_coverage, dict) and data_coverage.get("overall_tier"):
+        summary["data_coverage_tier"] = data_coverage.get("overall_tier")
+        summary["data_coverage_pct"] = round(data_coverage.get("overall_coverage", 0), 1)
     
     return summary
 

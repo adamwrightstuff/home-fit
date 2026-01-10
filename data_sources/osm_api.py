@@ -632,6 +632,213 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=30)
+def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
+    """
+    Query OSM for water features (rivers, lakes, oceans, waterbodies).
+    
+    Returns distance to nearest significant waterbody and list of water features.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        radius_m: Search radius in meters (default 15km to catch major waterbodies)
+    
+    Returns:
+        {
+            "water_features": [...],  # List of water features with distance, area, type
+            "nearest_waterbody": {...},  # Nearest significant waterbody (>1km² or major river)
+            "nearest_distance_km": float,  # Distance to nearest significant waterbody in km
+            "water_density": float  # Total water area within radius (km²)
+        }
+    """
+    import math
+    
+    query = f"""
+    [out:json][timeout:40];
+    (
+      // WATERWAYS (rivers, streams)
+      way["waterway"](around:{radius_m},{lat},{lon});
+      way["waterway"="river"](around:{radius_m},{lat},{lon});
+      way["waterway"="stream"](around:{radius_m},{lat},{lon});
+      
+      // WATERBODIES (lakes, reservoirs, ponds)
+      way["natural"="water"](around:{radius_m},{lat},{lon});
+      relation["natural"="water"](around:{radius_m},{lat},{lon});
+      
+      // OCEAN/SEA
+      way["natural"="bay"](around:{radius_m},{lat},{lon});
+      way["natural"="coastline"](around:{radius_m},{lat},{lon});
+      relation["natural"="bay"](around:{radius_m},{lat},{lon});
+      relation["natural"="coastline"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    
+    try:
+        resp = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            timeout=40,
+            headers={"User-Agent": "HomeFit/1.0"}
+        )
+        
+        if resp.status_code != 200:
+            return None
+        
+        data = resp.json()
+        elements = data.get("elements", [])
+        
+        water_features = []
+        point_lat, point_lon = lat, lon
+        
+        for elem in elements:
+            try:
+                elem_type = elem.get("type")
+                tags = elem.get("tags", {})
+                
+                # Determine water type
+                waterway = tags.get("waterway")
+                natural = tags.get("natural")
+                water_type = None
+                
+                if waterway in ("river", "stream"):
+                    water_type = waterway
+                elif natural == "water":
+                    # Check for specific waterbody types
+                    if tags.get("water") in ("lake", "reservoir", "pond"):
+                        water_type = tags.get("water")
+                    else:
+                        water_type = "lake"  # Default for natural=water
+                elif natural in ("bay", "coastline"):
+                    water_type = "ocean"
+                
+                if not water_type:
+                    continue
+                
+                # Calculate distance and area
+                distance_km = None
+                area_km2 = None
+                
+                if elem_type == "way":
+                    # Calculate centroid and area from way geometry
+                    geometry = elem.get("geometry", [])
+                    if not geometry:
+                        continue
+                    
+                    # Calculate centroid
+                    lats = [p.get("lat") for p in geometry if "lat" in p]
+                    lons = [p.get("lon") for p in geometry if "lon" in p]
+                    if not lats or not lons:
+                        continue
+                    
+                    centroid_lat = sum(lats) / len(lats)
+                    centroid_lon = sum(lons) / len(lons)
+                    
+                    # Calculate distance using Haversine formula
+                    R = 6371  # Earth radius in km
+                    dlat = math.radians(centroid_lat - point_lat)
+                    dlon = math.radians(centroid_lon - point_lon)
+                    a = math.sin(dlat/2)**2 + math.cos(math.radians(point_lat)) * math.cos(math.radians(centroid_lat)) * math.sin(dlon/2)**2
+                    c = 2 * math.asin(math.sqrt(a))
+                    distance_km = R * c
+                    
+                    # Estimate area using polygon area (rough approximation)
+                    if len(geometry) >= 3:
+                        # Simple shoelace formula for polygon area
+                        area_sqm = 0.0
+                        for i in range(len(geometry)):
+                            j = (i + 1) % len(geometry)
+                            area_sqm += geometry[i].get("lon", 0) * geometry[j].get("lat", 0)
+                            area_sqm -= geometry[j].get("lon", 0) * geometry[i].get("lat", 0)
+                        area_sqm = abs(area_sqm) * 111000 * 111000 / 2  # Rough conversion to sq meters
+                        area_km2 = area_sqm / 1_000_000
+                
+                elif elem_type == "relation":
+                    # For relations, use center point if available
+                    if "center" in elem:
+                        center = elem["center"]
+                        centroid_lat = center.get("lat")
+                        centroid_lon = center.get("lon")
+                        if centroid_lat and centroid_lon:
+                            R = 6371
+                            dlat = math.radians(centroid_lat - point_lat)
+                            dlon = math.radians(centroid_lon - point_lon)
+                            a = math.sin(dlat/2)**2 + math.cos(math.radians(point_lat)) * math.cos(math.radians(centroid_lat)) * math.sin(dlon/2)**2
+                            c = 2 * math.asin(math.sqrt(a))
+                            distance_km = R * c
+                    
+                    # Use area from tags if available
+                    area_osm = tags.get("area")
+                    if area_osm:
+                        area_km2 = float(area_osm) / 1_000_000
+                
+                # Skip if no valid distance
+                if distance_km is None or distance_km > radius_m / 1000.0:
+                    continue
+                
+                # Get name if available
+                name = tags.get("name") or tags.get("name:en")
+                
+                water_features.append({
+                    "type": water_type,
+                    "distance_km": round(distance_km, 2),
+                    "area_km2": round(area_km2, 2) if area_km2 else None,
+                    "name": name,
+                    "osm_id": elem.get("id"),
+                    "osm_type": elem_type
+                })
+            except Exception as elem_error:
+                logger.debug(f"Error processing water feature: {elem_error}")
+                continue
+        
+        if not water_features:
+            return {
+                "water_features": [],
+                "nearest_waterbody": None,
+                "nearest_distance_km": None,
+                "water_density": 0.0
+            }
+        
+        # Sort by distance
+        water_features.sort(key=lambda x: x["distance_km"])
+        
+        # Find nearest significant waterbody (>1km² or major river)
+        nearest_waterbody = None
+        nearest_distance_km = None
+        
+        for feature in water_features:
+            # Significant waterbody: >1km² or major river/stream
+            is_significant = (
+                (feature.get("area_km2") and feature["area_km2"] > 1.0) or
+                feature["type"] == "river" or
+                feature["type"] == "ocean"
+            )
+            
+            if is_significant:
+                nearest_waterbody = feature
+                nearest_distance_km = feature["distance_km"]
+                break
+        
+        # Calculate water density (total water area within radius)
+        water_density = sum(f.get("area_km2", 0) for f in water_features if f.get("area_km2"))
+        
+        return {
+            "water_features": water_features[:20],  # Limit to 20 nearest features
+            "nearest_waterbody": nearest_waterbody,
+            "nearest_distance_km": round(nearest_distance_km, 2) if nearest_distance_km else None,
+            "water_density": round(water_density, 2)
+        }
+    
+    except Exception as e:
+        logger.error(f"OSM water features query error: {e}", exc_info=True)
+        return None
+
+
 def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Enhanced tree query with comprehensive tree data from OSM.

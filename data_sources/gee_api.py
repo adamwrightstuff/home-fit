@@ -485,14 +485,71 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
             print(f"   ⚠️  Seasonal variation calculation failed: {seasonal_error}")
             seasonal_variation = 0.0
         
+        # NEW: Calculate visible green fraction (eye-level greenery proxy)
+        # Use NDVI > 0.3 threshold for visible vegetation (lower than tree threshold)
+        # This captures shrubs, grass, and smaller vegetation visible at street level
+        visible_green_fraction = 0.0
+        try:
+            visible_green_mask = ndvi_mean.gt(0.3)  # NDVI > 0.3 = visible green
+            visible_green = visible_green_mask.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=10,  # Higher resolution (10m) for street-level accuracy
+                maxPixels=1e9,
+                bestEffort=True
+            ).get('NDVI')
+            if visible_green:
+                visible_green_fraction = visible_green.getInfo() * 100 if visible_green else 0.0
+        except Exception as visible_error:
+            print(f"   ⚠️  Visible green fraction calculation failed: {visible_error}")
+            # Fallback: use green_ratio_pct as proxy
+            visible_green_fraction = green_ratio_pct * 0.8  # Assume 80% of green space is visible
+        
+        # NEW: Calculate seasonal consistency (year-round greenery)
+        # Lower seasonal variation = more consistent year-round greenery (better)
+        seasonal_consistency = 1.0 - min(1.0, seasonal_variation / 0.5)  # Normalize to 0-1
+        seasonal_consistency = max(0.0, min(1.0, seasonal_consistency))
+        
+        # NEW: Street-level vegetation index (using higher resolution)
+        # Calculate NDVI at 10m resolution (street-level) for more accurate eye-level estimate
+        street_level_ndvi = 0.0
+        try:
+            # Use recent Sentinel-2 image (prefer summer for vegetation visibility)
+            recent_sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                             .filterDate('2023-06-01', '2024-09-30')  # Summer months
+                             .filterBounds(buffer)
+                             .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                             .median())
+            
+            street_ndvi = recent_sentinel.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            street_ndvi_mean = street_ndvi.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffer,
+                scale=10,  # 10m resolution for street-level accuracy
+                maxPixels=1e9,
+                bestEffort=True
+            ).get('NDVI')
+            
+            if street_ndvi_mean:
+                street_level_ndvi_val = street_ndvi_mean.getInfo()
+                if street_level_ndvi_val is not None:
+                    street_level_ndvi = max(0.0, min(1.0, street_level_ndvi_val))
+        except Exception as street_error:
+            print(f"   ⚠️  Street-level NDVI calculation failed: {street_error}")
+            # Fallback: use overall NDVI
+            street_level_ndvi = veg_health
+        
         result = {
             "tree_canopy_pct": min(100, max(0, tree_canopy_pct)),
             "vegetation_health": min(1, max(0, veg_health)),
             "green_space_ratio": min(100, max(0, green_ratio_pct)),
-            "seasonal_variation": min(1, max(0, seasonal_variation))
+            "seasonal_variation": min(1, max(0, seasonal_variation)),
+            "visible_green_fraction": min(100, max(0, visible_green_fraction)),
+            "seasonal_consistency": round(seasonal_consistency, 3),
+            "street_level_ndvi": round(street_level_ndvi, 3)
         }
         
-        print(f"   ✅ GEE Greenness Analysis: {tree_canopy_pct:.1f}% canopy, {veg_health:.2f} health")
+        print(f"   ✅ GEE Greenness Analysis: {tree_canopy_pct:.1f}% canopy, {veg_health:.2f} health, {visible_green_fraction:.1f}% visible green")
         return result
         
     except Exception as e:
@@ -625,9 +682,46 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
             bestEffort=True
         )
 
+        # Calculate elevation standard deviation for ruggedness index
+        dem_std = dem.reduceRegion(
+            reducer=ee.Reducer.stdDev(),
+            geometry=buffer,
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        )
+
+        # Calculate terrain prominence: elevation at center point vs surrounding area
+        # Use a smaller buffer (2km) for local prominence calculation
+        center_point = ee.Geometry.Point([lon, lat])
+        local_buffer = center_point.buffer(2000)  # 2km radius for prominence
+        prominence_buffer = buffer.difference(local_buffer)  # Area outside local buffer
+        
+        center_elevation = dem.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=center_point.buffer(100),  # Very small buffer for center point
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        )
+        
+        # Mean elevation of surrounding area (outside local buffer)
+        surrounding_elevation = None
+        if prominence_buffer.area(1).getInfo() > 0:  # Check if buffer has area
+            surrounding_elevation = dem.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=prominence_buffer,
+                scale=90,
+                maxPixels=1e9,
+                bestEffort=True
+            )
+
         dem_info = dem_stats.getInfo()
         slope_info = slope_stats.getInfo()
         steep_info = steep_fraction.getInfo()
+        dem_std_info = dem_std.getInfo()
+        center_elev = center_elevation.getInfo()
+        surrounding_elev = surrounding_elevation.getInfo() if surrounding_elevation else None
 
         if not dem_info or not slope_info:
             return None
@@ -639,6 +733,32 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
         if elevation_min is not None and elevation_max is not None:
             relief = elevation_max - elevation_min
 
+        # Calculate prominence: center elevation - mean surrounding elevation
+        prominence = None
+        if center_elev and elevation_mean is not None:
+            center_elev_val = center_elev.get('elevation_mean') or center_elev.get('elevation')
+            if center_elev_val is not None:
+                if surrounding_elev:
+                    surrounding_elev_val = surrounding_elev.get('elevation_mean') or surrounding_elev.get('elevation')
+                    if surrounding_elev_val is not None:
+                        prominence = max(0.0, center_elev_val - surrounding_elev_val)
+                else:
+                    # Fallback: use p10 as proxy for surrounding elevation
+                    if elevation_min is not None:
+                        prominence = max(0.0, center_elev_val - elevation_min)
+
+        # Calculate ruggedness index: standard deviation of elevation
+        ruggedness_index = None
+        if dem_std_info:
+            ruggedness_index = dem_std_info.get('elevation_stdDev') or dem_std_info.get('elevation')
+
+        # Calculate local relief intensity: relief per unit area (m/km²)
+        # Buffer area in km²
+        buffer_area_km2 = (math.pi * (radius_m / 1000.0) ** 2) if radius_m else None
+        relief_intensity = None
+        if relief is not None and buffer_area_km2 and buffer_area_km2 > 0:
+            relief_intensity = relief / buffer_area_km2
+
         topography = {
             "source": "USGS/SRTMGL1_003",
             "elevation_mean_m": elevation_mean,
@@ -647,6 +767,9 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
             "elevation_p10_m": dem_info.get('elevation_p10'),
             "elevation_p90_m": dem_info.get('elevation_p90'),
             "relief_range_m": relief,
+            "relief_intensity_m_per_km2": relief_intensity,
+            "terrain_prominence_m": prominence,
+            "ruggedness_index_m": ruggedness_index,
             "slope_mean_deg": slope_info.get('slope_mean'),
             "slope_max_deg": slope_info.get('slope_max'),
             "slope_std_deg": slope_info.get('slope_stdDev'),
@@ -666,11 +789,177 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
                     f"for elevation {elevation_mean:.0f}m - verify data quality"
                 )
 
-        print(f"   ✅ GEE Topography: relief={relief:.1f}m, mean slope={topography['slope_mean_deg']:.1f}°")
+        print(f"   ✅ GEE Topography: relief={relief:.1f}m, prominence={prominence:.1f}m, ruggedness={ruggedness_index:.1f}m, mean slope={topography['slope_mean_deg']:.1f}°")
         return topography
 
     except Exception as e:
         print(f"⚠️  GEE topography analysis error: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))  # Cache for 48 hours
+def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000, 
+                      landcover_metrics: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Estimate visible natural area fraction using approximate viewshed analysis.
+    
+    This function provides a proxy for viewshed by combining terrain analysis
+    with landcover to estimate what fraction of natural features (forests, 
+    mountains, water) would be visible from a location.
+    
+    Args:
+        lat: Latitude
+        lon: Longitude
+        radius_m: Analysis radius in meters (default 5000m)
+        landcover_metrics: Optional pre-computed landcover metrics (to avoid redundant GEE calls)
+    
+    Returns:
+        Dict with keys:
+        - visible_natural_pct: Estimated percentage of visible natural area (0-100)
+        - viewshed_radius_m: Effective viewshed radius
+        - terrain_prominence_m: Terrain prominence (height above surroundings)
+        - visible_forest_pct: Estimated visible forest percentage
+        - visible_water_pct: Estimated visible water percentage
+        - viewshed_quality: "high"|"medium"|"low" based on terrain complexity
+    """
+    if not GEE_AVAILABLE:
+        return None
+    
+    try:
+        print(f"🔭 Analyzing viewshed proxy with GEE at {lat}, {lon} (radius={radius_m}m)")
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+        
+        # Get topography for prominence calculation
+        dem = ee.Image('USGS/SRTMGL1_003')
+        slope = ee.Terrain.slope(dem)
+        
+        # Get center elevation
+        center_point = ee.Geometry.Point([lon, lat])
+        center_elev = dem.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=center_point.buffer(100),
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        ).getInfo()
+        
+        # Get surrounding elevation (area 2-5km from center)
+        local_buffer = center_point.buffer(2000)
+        prominence_buffer = buffer.difference(local_buffer)
+        
+        surrounding_elev = None
+        if prominence_buffer.area(1).getInfo() > 0:
+            surrounding_elev = dem.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=prominence_buffer,
+                scale=90,
+                maxPixels=1e9,
+                bestEffort=True
+            ).getInfo()
+        
+        # Calculate prominence
+        terrain_prominence_m = None
+        if center_elev and 'elevation' in center_elev:
+            center_elev_val = center_elev['elevation']
+            if surrounding_elev and 'elevation' in surrounding_elev:
+                terrain_prominence_m = max(0.0, center_elev_val - surrounding_elev['elevation'])
+            else:
+                # Fallback: use mean elevation difference
+                dem_stats = dem.reduceRegion(
+                    reducer=ee.Reducer.minMax(),
+                    geometry=buffer,
+                    scale=90,
+                    maxPixels=1e9,
+                    bestEffort=True
+                ).getInfo()
+                if dem_stats and 'elevation_min' in dem_stats:
+                    terrain_prominence_m = max(0.0, center_elev_val - dem_stats['elevation_min'])
+        
+        # Approximate viewshed: higher prominence and slope = better visibility
+        # Use a simple model: visibility decays with distance, enhanced by terrain
+        slope_stats = slope.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=90,
+            maxPixels=1e9,
+            bestEffort=True
+        ).getInfo()
+        
+        slope_mean = slope_stats.get('slope') if slope_stats else 0.0
+        slope_mean = max(0.0, slope_mean) if slope_mean else 0.0
+        
+        # Visibility factor: higher prominence = better viewshed
+        # Rough approximation: prominence > 200m = excellent viewshed
+        prominence_factor = min(1.0, (terrain_prominence_m or 0.0) / 200.0)
+        slope_factor = min(1.0, slope_mean / 20.0)  # 20° slope = full visibility bonus
+        
+        # Effective viewshed radius (reduced for flat terrain, enhanced for prominent terrain)
+        base_viewshed_radius = radius_m * 0.6  # Assume 60% effective visibility on average
+        terrain_enhancement = 1.0 + (prominence_factor * 0.3) + (slope_factor * 0.2)
+        viewshed_radius_m = base_viewshed_radius * terrain_enhancement
+        
+        # Get landcover if not provided
+        if landcover_metrics is None:
+            landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=int(viewshed_radius_m))
+        
+        if not landcover_metrics:
+            # Fallback to basic estimate
+            visible_natural_pct = min(100.0, (terrain_prominence_m or 0.0) / 10.0) if terrain_prominence_m else 0.0
+            return {
+                "visible_natural_pct": visible_natural_pct,
+                "viewshed_radius_m": viewshed_radius_m,
+                "terrain_prominence_m": terrain_prominence_m,
+                "visible_forest_pct": None,
+                "visible_water_pct": None,
+                "viewshed_quality": "low" if not terrain_prominence_m else "medium"
+            }
+        
+        # Estimate visible natural features
+        forest_pct = landcover_metrics.get('forest_pct', 0.0) or 0.0
+        water_pct = landcover_metrics.get('water_pct', 0.0) or 0.0
+        shrub_pct = landcover_metrics.get('shrub_pct', 0.0) or 0.0
+        grass_pct = landcover_metrics.get('grass_pct', 0.0) or 0.0
+        
+        # Visible natural = forest + water + natural areas (weighted by visibility)
+        # Forests and water are more visible than shrub/grass
+        visible_natural_pct = (
+            forest_pct * 1.0 +  # Forests highly visible
+            water_pct * 1.0 +   # Water highly visible
+            shrub_pct * 0.6 +   # Shrub moderately visible
+            grass_pct * 0.4     # Grass less visible
+        )
+        
+        # Apply terrain-based visibility enhancement
+        # Higher prominence = more of the landscape is visible
+        visibility_enhancement = 1.0 + (prominence_factor * 0.2)
+        visible_natural_pct = min(100.0, visible_natural_pct * visibility_enhancement)
+        
+        visible_forest_pct = min(100.0, forest_pct * visibility_enhancement)
+        visible_water_pct = min(100.0, water_pct * visibility_enhancement)
+        
+        # Determine viewshed quality
+        if terrain_prominence_m and terrain_prominence_m > 200 and slope_mean > 10:
+            viewshed_quality = "high"
+        elif terrain_prominence_m and terrain_prominence_m > 100:
+            viewshed_quality = "medium"
+        else:
+            viewshed_quality = "low"
+        
+        result = {
+            "visible_natural_pct": round(visible_natural_pct, 2),
+            "viewshed_radius_m": round(viewshed_radius_m, 0),
+            "terrain_prominence_m": round(terrain_prominence_m, 2) if terrain_prominence_m else None,
+            "visible_forest_pct": round(visible_forest_pct, 2),
+            "visible_water_pct": round(visible_water_pct, 2),
+            "viewshed_quality": viewshed_quality
+        }
+        
+        print(f"   ✅ Viewshed Proxy: {visible_natural_pct:.1f}% visible natural, prominence={terrain_prominence_m:.1f}m, quality={viewshed_quality}")
+        return result
+        
+    except Exception as e:
+        print(f"⚠️  GEE viewshed proxy analysis error: {e}")
         return None
 
 

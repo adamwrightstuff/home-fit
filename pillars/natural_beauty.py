@@ -935,6 +935,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Initialize green_view_index at function start to prevent scope errors
     # This variable is used in data_availability dict and calculated later
     green_view_index = 0.0
+    # Initialize viewshed_metrics and water_proximity_data for scope
+    viewshed_metrics: Optional[Dict] = None
+    water_proximity_data: Optional[Dict] = None
 
     overrides = overrides or {}
 
@@ -948,25 +951,54 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         relief = float(metrics.get("relief_range_m") or 0.0)
         slope_mean = float(metrics.get("slope_mean_deg") or 0.0)
         steep_fraction = float(metrics.get("steep_fraction") or 0.0)
+        prominence = float(metrics.get("terrain_prominence_m") or 0.0)
+        ruggedness = float(metrics.get("ruggedness_index_m") or 0.0)
+        relief_intensity = float(metrics.get("relief_intensity_m_per_km2") or 0.0)
         
         # Ensure all values are valid numbers
         relief = 0.0 if not isinstance(relief, (int, float)) or math.isnan(relief) else max(0.0, relief)
         slope_mean = 0.0 if not isinstance(slope_mean, (int, float)) or math.isnan(slope_mean) else max(0.0, slope_mean)
         steep_fraction = 0.0 if not isinstance(steep_fraction, (int, float)) or math.isnan(steep_fraction) else max(0.0, min(1.0, steep_fraction))
+        prominence = 0.0 if not isinstance(prominence, (int, float)) or math.isnan(prominence) else max(0.0, prominence)
+        ruggedness = 0.0 if not isinstance(ruggedness, (int, float)) or math.isnan(ruggedness) else max(0.0, ruggedness)
+        relief_intensity = 0.0 if not isinstance(relief_intensity, (int, float)) or math.isnan(relief_intensity) else max(0.0, relief_intensity)
 
         # Updated: Lower relief threshold (300m instead of 600m) to capture more scenic areas
         # Many scenic mountain areas have 200-500m relief, not 600m+
         relief_factor = min(1.0, relief / 300.0)  # 300m relief → full credit (was 600m)
         slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
         steep_factor = min(1.0, max(0.0, (steep_fraction - 0.05) / 0.35))  # >40% steep terrain
-
-        combined = max(0.0, min(1.0, (0.5 * relief_factor) + (0.3 * slope_factor) + (0.2 * steep_factor)))
+        
+        # New: Prominence factor (peak height above surrounding area)
+        # Prominence > 200m = very prominent peak, highly scenic
+        prominence_factor = min(1.0, prominence / 200.0) if prominence > 0 else 0.0
+        
+        # New: Ruggedness factor (elevation variation)
+        # Ruggedness > 150m = very rugged terrain, highly scenic
+        ruggedness_factor = min(1.0, ruggedness / 150.0) if ruggedness > 0 else 0.0
+        
+        # Combined scoring: traditional factors (70%) + prominence/ruggedness (30%)
+        # This ensures prominence and ruggedness add to scenic beauty beyond just relief
+        traditional_score = (0.4 * relief_factor) + (0.25 * slope_factor) + (0.15 * steep_factor)
+        enhanced_score = (0.15 * prominence_factor) + (0.15 * ruggedness_factor)
+        
+        # If prominence or ruggedness is significant, boost the score
+        if prominence > 150 or ruggedness > 100:
+            # High prominence/ruggedness areas get enhanced scoring
+            enhanced_weight = 0.35  # Increase weight for enhanced metrics
+            traditional_weight = 0.65
+        else:
+            enhanced_weight = 0.30
+            traditional_weight = 0.70
+        
+        combined = max(0.0, min(1.0, (traditional_weight * traditional_score) + (enhanced_weight * enhanced_score)))
         return TOPOGRAPHY_BONUS_MAX * combined
 
     def _score_landcover_component(metrics: Dict, context_area_type: Optional[str], 
                                    lat: Optional[float] = None, lon: Optional[float] = None,
                                    elevation_m: Optional[float] = None,
-                                   topography_metrics: Optional[Dict] = None) -> Tuple[float, float]:
+                                   topography_metrics: Optional[Dict] = None,
+                                   water_proximity_data: Optional[Dict] = None) -> Tuple[float, float]:
         if not metrics:
             return 0.0, 0.0
 
@@ -1057,9 +1089,55 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             developed_penalty = -3.0 if developed_pct > 80.0 else (-1.5 if developed_pct > 60.0 else 0.0)
             visibility_bonus = elevation_bonus + developed_penalty
         
+        # NEW: Water proximity bonus (distance to nearest significant waterbody)
+        # Proximity to water matters for human perception, even if coverage % is low
+        proximity_bonus = 0.0
+        nearest_water_distance_km = None
+        water_proximity_type = None
+        
+        if water_proximity_data and lat is not None and lon is not None:
+            nearest_waterbody = water_proximity_data.get("nearest_waterbody")
+            nearest_distance_km = water_proximity_data.get("nearest_distance_km")
+            
+            if nearest_waterbody and nearest_distance_km is not None:
+                nearest_water_distance_km = nearest_distance_km
+                water_proximity_type = nearest_waterbody.get("type")
+                
+                # Water type weighting: ocean > large lake > river > small lake
+                type_weight = 1.0
+                if water_proximity_type == "ocean":
+                    type_weight = 1.5
+                elif water_proximity_type == "lake" and nearest_waterbody.get("area_km2", 0) > 10.0:
+                    type_weight = 1.3
+                elif water_proximity_type == "river":
+                    type_weight = 1.2
+                
+                # Exponential decay: closer = higher bonus
+                # <1km: 8.0, 1-3km: 6.0, 3-5km: 4.0, 5-10km: 2.0, >10km: 0.0
+                if nearest_distance_km < 1.0:
+                    proximity_bonus = 8.0 * type_weight
+                elif nearest_distance_km < 3.0:
+                    proximity_bonus = 6.0 * type_weight
+                elif nearest_distance_km < 5.0:
+                    proximity_bonus = 4.0 * type_weight
+                elif nearest_distance_km < 10.0:
+                    proximity_bonus = 2.0 * type_weight
+                
+                # Cap proximity bonus
+                proximity_bonus = min(12.0, proximity_bonus)
+        
         # Calculate water score: base + bonuses (additive, like built beauty)
         # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
-        water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus)
+        # NEW: Include proximity bonus in water scoring
+        water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus + proximity_bonus)
+        
+        # Store proximity metadata in metrics for reporting
+        if water_proximity_data:
+            metrics["water_proximity"] = {
+                "nearest_distance_km": nearest_water_distance_km,
+                "nearest_type": water_proximity_type,
+                "proximity_bonus": round(proximity_bonus, 2) if proximity_bonus > 0 else None
+            }
 
         return landcover_score, water_score
 
@@ -1394,10 +1472,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     context_bonus_total = 0.0
 
     try:
-        from data_sources.gee_api import get_topography_context, get_landcover_context_gee
+        from data_sources.gee_api import get_topography_context, get_landcover_context_gee, get_viewshed_proxy
     except ImportError:  # pragma: no cover - optional dependency
         get_topography_context = None  # type: ignore
         get_landcover_context_gee = None  # type: ignore
+        get_viewshed_proxy = None  # type: ignore
 
     # Get area-type-specific context bonus weights
     area_type_key = (area_type or "").lower() or "unknown"
@@ -1413,6 +1492,23 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         except Exception as exc:
             logger.warning("Topography context lookup failed: %s, using defaults", exc)
             topography_metrics = None
+    
+    # NEW: Adjust context bonus weights for high-relief scenic areas
+    # When relief > 300m or prominence > 200m, increase topography weight
+    terrain_adjusted_weights = context_weights.copy()
+    relief = topography_metrics.get("relief_range_m") if topography_metrics else None
+    prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
+    
+    if relief is not None and relief > 300.0:
+        # High relief: increase topography weight (0.6-0.7)
+        terrain_adjusted_weights["topography"] = min(0.7, context_weights["topography"] + 0.15)
+        # Reduce other weights proportionally to maintain total
+        total_other = terrain_adjusted_weights.get("landcover", 0.3) + terrain_adjusted_weights.get("water", 0.2)
+        if total_other > 0:
+            scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
+            terrain_adjusted_weights["landcover"] = terrain_adjusted_weights.get("landcover", 0.3) * scale
+            terrain_adjusted_weights["water"] = terrain_adjusted_weights.get("water", 0.2) * scale
+        logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m)")
     
     # Always initialize topography_score with safe default
     topography_score = 0.0
@@ -1434,10 +1530,17 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             except Exception:
                 pass  # Fallback to 1.0 if climate detection fails
         
-        # Apply area-type-specific weight, then arid boost
+        # NEW: Apply terrain bonus multiplier for high prominence (>200m)
+        # Prominent peaks are highly scenic and should get additional boost
+        if prominence is not None and prominence > 200.0:
+            terrain_multiplier = 1.2 + (min(1.0, (prominence - 200.0) / 300.0) * 0.3)  # 1.2-1.5 multiplier
+            topography_multiplier *= terrain_multiplier
+            logger.debug(f"Applying terrain prominence boost ({terrain_multiplier:.2f}x) for prominence {prominence:.1f}m")
+        
+        # Apply area-type-specific weight (adjusted for high-relief), then multipliers
         # Ensure topography_score is always a valid number
         topography_score_raw = _score_topography_component(topography_metrics)
-        topography_score = float(topography_score_raw * context_weights["topography"] * topography_multiplier)
+        topography_score = float(topography_score_raw * terrain_adjusted_weights["topography"] * topography_multiplier)
         if math.isnan(topography_score) or not isinstance(topography_score, (int, float)):
             topography_score = 0.0
         natural_context_components["topography"] = round(topography_score, 2)
@@ -1449,6 +1552,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     landcover_metrics: Optional[Dict] = None
     landcover_score = 0.0
     water_score = 0.0
+    water_proximity_data: Optional[Dict] = None
+    
+    # NEW: Query water proximity from OSM (distance to nearest significant waterbody)
+    try:
+        from data_sources import osm_api
+        water_proximity_data = osm_api.query_water_features(lat, lon, radius_m=15000)
+    except Exception as water_error:
+        logger.debug("Water proximity query failed: %s, using defaults", water_error)
+        water_proximity_data = None
+    
     if get_landcover_context_gee:
         try:
             landcover_metrics = get_landcover_context_gee(lat, lon, radius_m=3000)
@@ -1466,15 +1579,24 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if topography_metrics:
             elevation_m_for_water = topography_metrics.get("elevation_mean_m")
         
+        # Include water proximity data in scoring
         landcover_score_raw, water_score_raw = _score_landcover_component(
-            landcover_metrics, area_type, lat, lon, elevation_m_for_water, topography_metrics
+            landcover_metrics, area_type, lat, lon, elevation_m_for_water, topography_metrics, water_proximity_data
         )
-        # Apply area-type-specific weights
+        
+        # Store water proximity metadata in natural_context_details
+        if water_proximity_data:
+            natural_context_details["water_proximity"] = {
+                "nearest_distance_km": water_proximity_data.get("nearest_distance_km"),
+                "nearest_waterbody": water_proximity_data.get("nearest_waterbody"),
+                "water_density_km2": water_proximity_data.get("water_density")
+            }
+        # Apply area-type-specific weights (adjusted for high-relief areas)
         # Ensure scores are always valid numbers
         landcover_score_raw = float(landcover_score_raw) if isinstance(landcover_score_raw, (int, float)) and not math.isnan(landcover_score_raw) else 0.0
         water_score_raw = float(water_score_raw) if isinstance(water_score_raw, (int, float)) and not math.isnan(water_score_raw) else 0.0
-        landcover_score = float(landcover_score_raw * context_weights["landcover"])
-        water_score = float(water_score_raw * context_weights["water"])
+        landcover_score = float(landcover_score_raw * terrain_adjusted_weights["landcover"])
+        water_score = float(water_score_raw * terrain_adjusted_weights["water"])
         # Validate final scores
         if math.isnan(landcover_score) or not isinstance(landcover_score, (int, float)):
             landcover_score = 0.0
@@ -1520,6 +1642,26 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     else:
         natural_context_details["biodiversity_index"] = 0.0
 
+    # NEW: Viewshed proxy analysis (visible natural area from location)
+    viewshed_metrics: Optional[Dict] = None
+    if get_viewshed_proxy:
+        try:
+            # Use pre-computed landcover_metrics if available to avoid redundant GEE calls
+            viewshed_metrics = get_viewshed_proxy(lat, lon, radius_m=5000, landcover_metrics=landcover_metrics)
+            if viewshed_metrics:
+                visible_natural_pct = viewshed_metrics.get("visible_natural_pct", 0.0) or 0.0
+                # Add viewshed component to context bonus (scaled by visible natural fraction)
+                # Visible natural > 30% = strong scenic context (mountain backdrop, forests visible)
+                viewshed_factor = min(1.0, visible_natural_pct / 30.0)
+                viewshed_bonus = viewshed_factor * 4.0  # Max 4.0 bonus for excellent viewshed
+                context_bonus_total += viewshed_bonus
+                natural_context_components["viewshed"] = round(viewshed_bonus, 2)
+                natural_context_components["visible_natural_pct"] = round(visible_natural_pct, 2)
+                natural_context_details["viewshed_metrics"] = viewshed_metrics
+        except Exception as viewshed_error:
+            logger.debug("Viewshed proxy calculation failed: %s, using defaults", viewshed_error)
+            viewshed_metrics = None
+
     total_context_before_cap = context_bonus_total
     if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
         context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
@@ -1543,7 +1685,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "cap": NATURAL_CONTEXT_BONUS_CAP,
             "context_weights": context_weights,  # Still include weights for transparency
             "topography_available": topography_metrics is not None,
-            "landcover_available": landcover_metrics is not None
+            "landcover_available": landcover_metrics is not None,
+            "viewshed_available": viewshed_metrics is not None
         }
     normalized_multi = {}
     for label in MULTI_RADIUS_CANOPY.keys():
@@ -1555,7 +1698,61 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Now add data availability flags to distinguish real zeros from missing data
     # Design principle: Transparent and documented - expose data quality information
     # This does NOT affect scoring - purely informational
+    
+    # NEW: Calculate data coverage tier (low/medium/high)
+    # Coverage based on availability and reliability of data sources
+    coverage_scores = []
+    
+    # Canopy coverage (0-100)
+    canopy_coverage = 0.0
+    if gee_canopy is not None or details.get("census_canopy_pct") is not None:
+        canopy_coverage += 50.0  # Primary data available
+    if any(val is not None for val in canopy_multi.values()):
+        canopy_coverage += 30.0  # Multi-radius data available
+    if details.get("weighted_canopy_pct") is not None:
+        canopy_coverage += 20.0  # Weighted calculation available
+    coverage_scores.append(min(100.0, canopy_coverage))
+    
+    # GVI coverage (0-100)
+    gvi_coverage = 100.0 if gvi_metrics else 50.0  # Full if GEE, partial if composite
+    if gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi")):
+        gvi_coverage = 100.0  # Enhanced with eye-level metrics
+    coverage_scores.append(gvi_coverage)
+    
+    # Terrain coverage (0-100)
+    terrain_coverage = 0.0
+    if topography_metrics:
+        terrain_coverage += 60.0  # Basic topography available
+        if topography_metrics.get("terrain_prominence_m") is not None:
+            terrain_coverage += 20.0  # Prominence available
+        if topography_metrics.get("ruggedness_index_m") is not None:
+            terrain_coverage += 20.0  # Ruggedness available
+    coverage_scores.append(terrain_coverage)
+    
+    # Water coverage (0-100)
+    water_coverage = 0.0
+    if landcover_metrics and landcover_metrics.get("water_pct") is not None:
+        water_coverage += 50.0  # Coverage % available
+    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+        water_coverage += 50.0  # Proximity available
+    coverage_scores.append(water_coverage)
+    
+    # Viewshed coverage (0-100)
+    viewshed_coverage = 100.0 if viewshed_metrics else 0.0
+    coverage_scores.append(viewshed_coverage)
+    
+    # Overall coverage tier: average of component coverages
+    overall_coverage = sum(coverage_scores) / len(coverage_scores) if coverage_scores else 0.0
+    if overall_coverage >= 80.0:
+        overall_tier = "high"
+    elif overall_coverage >= 50.0:
+        overall_tier = "medium"
+    else:
+        overall_tier = "low"
+    
     data_availability = {
+        "overall_tier": overall_tier,
+        "overall_coverage": round(overall_coverage, 1),
         "canopy": {
             "gee_available": gee_canopy is not None,
             "census_available": details.get("census_canopy_pct") is not None,
@@ -1563,23 +1760,75 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "primary_value": primary_canopy_pct,
             "multi_radius_available": {
                 label: val is not None for label, val in canopy_multi.items()
-            }
+            },
+            "coverage": round(canopy_coverage, 1),
+            "reliability": min(100, int(canopy_coverage * 1.0))  # Coverage = reliability for canopy
         },
         "gvi": {
             "gee_available": gvi_metrics is not None,
-            "method": "gee_ndvi" if gvi_metrics else "composite",
-            "value": green_view_index
+            "method": "gee_ndvi_enhanced" if (gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"))) else ("gee_ndvi" if gvi_metrics else "composite"),
+            "value": green_view_index,
+            "eye_level_available": bool(gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"))),
+            "coverage": round(gvi_coverage, 1),
+            "reliability": min(100, int(gvi_coverage * 1.0))
         },
         "topography": {
             "available": topography_metrics is not None,
-            "source": topography_metrics.get("source") if topography_metrics else None
+            "source": topography_metrics.get("source") if topography_metrics else None,
+            "prominence_available": topography_metrics.get("terrain_prominence_m") is not None if topography_metrics else False,
+            "ruggedness_available": topography_metrics.get("ruggedness_index_m") is not None if topography_metrics else False,
+            "coverage": round(terrain_coverage, 1),
+            "reliability": min(100, int(terrain_coverage * 1.0))
         },
         "landcover": {
             "available": landcover_metrics is not None,
             "source": landcover_metrics.get("source") if landcover_metrics else None,
-            "water_available": landcover_metrics.get("water_pct") is not None if landcover_metrics else False
+            "water_available": landcover_metrics.get("water_pct") is not None if landcover_metrics else False,
+            "water_proximity_available": water_proximity_data is not None,
+            "coverage": round(water_coverage, 1),
+            "reliability": min(100, int(water_coverage * 1.0))
+        },
+        "viewshed": {
+            "available": viewshed_metrics is not None,
+            "visible_natural_pct": viewshed_metrics.get("visible_natural_pct") if viewshed_metrics else None,
+            "quality": viewshed_metrics.get("viewshed_quality") if viewshed_metrics else None,
+            "coverage": round(viewshed_coverage, 1),
+            "reliability": min(100, int(viewshed_coverage * 1.0))
         }
     }
+    
+    # Add data coverage summary for easier UI consumption
+    details["data_coverage"] = {
+        "overall_tier": overall_tier,
+        "overall_coverage": round(overall_coverage, 1),
+        "components": {
+            "terrain": {
+                "available": topography_metrics is not None,
+                "reliability": min(100, int(terrain_coverage * 1.0)),
+                "source": topography_metrics.get("source") if topography_metrics else None
+            },
+            "water": {
+                "available": landcover_metrics is not None and landcover_metrics.get("water_pct") is not None,
+                "reliability": min(100, int(water_coverage * 1.0)),
+                "source": "gee_landcover" if landcover_metrics else "osm_proximity" if water_proximity_data else None
+            },
+            "greenery": {
+                "available": gee_canopy is not None or details.get("census_canopy_pct") is not None,
+                "reliability": min(100, int(canopy_coverage * 1.0)),
+                "source": "gee" if gee_canopy is not None else "census" if details.get("census_canopy_pct") else None
+            }
+        },
+        "warnings": []  # Optional warnings (e.g., "missing_street_imagery", "low_elevation_precision")
+    }
+    
+    # Add warnings if data coverage is low
+    if overall_coverage < 50.0:
+        details["data_coverage"]["warnings"].append("low_data_coverage")
+    if not viewshed_metrics:
+        details["data_coverage"]["warnings"].append("viewshed_unavailable")
+    if not water_proximity_data and (not landcover_metrics or not landcover_metrics.get("water_pct")):
+        details["data_coverage"]["warnings"].append("water_data_limited")
+    
     details["data_availability"] = data_availability
     if gvi_metrics:
         details["gvi_metrics"] = {
@@ -1587,6 +1836,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "green_space_ratio": round(float(gvi_metrics.get("green_space_ratio") or 0.0), 2),
             "vegetation_health": round(float(gvi_metrics.get("vegetation_health") or 0.0), 3),
             "seasonal_variation": round(float(gvi_metrics.get("seasonal_variation") or 0.0), 3),
+            "visible_green_fraction": round(float(gvi_metrics.get("visible_green_fraction") or 0.0), 2),
+            "street_level_ndvi": round(float(gvi_metrics.get("street_level_ndvi") or 0.0), 3),
+            "seasonal_consistency": round(float(gvi_metrics.get("seasonal_consistency") or 0.0), 3),
             "radius_m": gvi_radius_used
         }
     else:
@@ -1669,22 +1921,41 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 (0.85 - canopy_expectation_ratio) * 6.0 / max(expectation_weight, 0.65)
             )
             
-            # IMPROVED: Reduce penalty when context bonus is high
+            # IMPROVED: Reduce penalty when context bonus is high OR when scenic terrain features are present
             # Design principle: Research-backed - scenic areas with strong context (mountains, water, forests)
             # can have low immediate canopy because beauty comes from context, not immediate canopy
             # This is especially true for mountain towns (Leavenworth), coastal areas, etc.
-            # Context bonus is already calculated above (line 1431), so we can use it here
-            # If context_bonus > 12 (strong scenic features), reduce penalty by 50%
-            # This prevents penalizing scenic areas unfairly for low immediate canopy
-            # Rationale: Mountain towns/coastal areas may have 6-10% immediate canopy (valley floor/beach)
-            # but still score high in natural beauty due to surrounding mountains/water/forests
+            # Context bonus is already calculated above, so we can use it here
+            # NEW: Also check for terrain prominence, visible natural fraction, and water proximity
             penalty_reduction_factor = 1.0
+            reduction_reasons = []
+            
+            # Check terrain prominence (>200m = very prominent, scenic)
+            if prominence is not None and prominence > 200.0:
+                penalty_reduction_factor = min(0.5, penalty_reduction_factor * 0.6)  # Reduce by 60%
+                reduction_reasons.append(f"High terrain prominence ({prominence:.1f}m)")
+            
+            # Check visible natural fraction (>30% = excellent viewshed, scenic backdrop)
+            visible_natural_pct = viewshed_metrics.get("visible_natural_pct") if viewshed_metrics else None
+            if visible_natural_pct is not None and visible_natural_pct > 30.0:
+                penalty_reduction_factor = min(0.5, penalty_reduction_factor * 0.7)  # Reduce by 30%
+                reduction_reasons.append(f"High visible natural fraction ({visible_natural_pct:.1f}%)")
+            
+            # Check water proximity (<5km = significant water nearby)
+            nearest_water_km = water_proximity_data.get("nearest_distance_km") if water_proximity_data else None
+            if nearest_water_km is not None and nearest_water_km < 5.0:
+                penalty_reduction_factor = min(0.5, penalty_reduction_factor * 0.8)  # Reduce by 20%
+                reduction_reasons.append(f"Water proximity ({nearest_water_km:.1f}km)")
+            
+            # Check context bonus (fallback if terrain/viewshed/water not available)
             if context_bonus_total > 12.0:
                 # Strong scenic context: reduce penalty by 50%
-                penalty_reduction_factor = 0.5
+                penalty_reduction_factor = min(0.5, penalty_reduction_factor * 0.5)
+                reduction_reasons.append(f"High context bonus ({context_bonus_total:.1f})")
             elif context_bonus_total > 8.0:
                 # Moderate scenic context: reduce penalty by 25%
-                penalty_reduction_factor = 0.75
+                penalty_reduction_factor = min(0.75, penalty_reduction_factor * 0.75)
+                reduction_reasons.append(f"Moderate context bonus ({context_bonus_total:.1f})")
             
             expectation_penalty = base_penalty * penalty_reduction_factor
             if penalty_reduction_factor < 1.0:
@@ -1693,7 +1964,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     "reduction_factor": round(penalty_reduction_factor, 2),
                     "reduced_penalty": round(expectation_penalty, 2),
                     "context_bonus": round(context_bonus_total, 2),
-                    "reason": "High scenic context reduces penalty for low immediate canopy"
+                    "reasons": reduction_reasons,
+                    "terrain_prominence_m": round(prominence, 1) if prominence else None,
+                    "visible_natural_pct": round(visible_natural_pct, 1) if visible_natural_pct else None,
+                    "water_proximity_km": round(nearest_water_km, 1) if nearest_water_km else None,
+                    "note": "High scenic context (terrain, viewshed, water) reduces penalty for low immediate canopy"
                 }
     details["canopy_expectation"]["bonus"] = round(expectation_adjustment, 2)
     details["canopy_expectation"]["penalty"] = round(expectation_penalty, 2)
@@ -1727,26 +2002,58 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         green_ratio = float(gvi_metrics.get("green_space_ratio") or 0.0)
         vegetation_health = float(gvi_metrics.get("vegetation_health") or 0.0) * 100.0
         seasonal_variation = float(gvi_metrics.get("seasonal_variation") or 0.0)
-        gvi_raw = (
-            tree_canopy_vis * 0.4 +
-            green_ratio * 0.3 +
-            vegetation_health * 0.2 +
-            max(0.0, (1.0 - seasonal_variation)) * 10.0
-        )
+        # NEW: Eye-level greenery metrics
+        visible_green_fraction = float(gvi_metrics.get("visible_green_fraction") or 0.0)
+        seasonal_consistency = float(gvi_metrics.get("seasonal_consistency") or 0.0)
+        street_level_ndvi = float(gvi_metrics.get("street_level_ndvi") or 0.0) * 100.0
+        
+        # Enhanced GVI calculation: incorporate eye-level visibility
+        # Multi-resolution approach: canopy-level + street-level
+        # Eye-level visibility matters more for human perception (higher weight)
+        if visible_green_fraction > 0 or street_level_ndvi > 0:
+            # Use eye-level metrics when available (better reflects human perception)
+            # Visible green fraction captures what someone sees at street level
+            # Street-level NDVI provides high-resolution vegetation index
+            eye_level_component = max(
+                visible_green_fraction * 0.5,  # Visible green fraction (50% weight)
+                street_level_ndvi * 0.3         # Street-level NDVI (30% weight)
+            )
+            # Combine with traditional metrics (weighted by eye-level availability)
+            traditional_component = (
+                tree_canopy_vis * 0.25 +         # Tree canopy visibility (25% weight)
+                green_ratio * 0.20 +             # Green space ratio (20% weight)
+                vegetation_health * 0.15 +       # Vegetation health (15% weight)
+                seasonal_consistency * 10.0      # Seasonal consistency (10% weight)
+            )
+            # Weight eye-level component higher when available
+            gvi_raw = (eye_level_component * 0.6) + (traditional_component * 0.4)
+        else:
+            # Fallback: traditional calculation (no eye-level data)
+            gvi_raw = (
+                tree_canopy_vis * 0.4 +
+                green_ratio * 0.3 +
+                vegetation_health * 0.2 +
+                max(0.0, (1.0 - seasonal_variation)) * 10.0
+            )
+        
         green_view_index = min(100.0, max(0.0, gvi_raw))
         # Ensure gvi_bonus is always a valid number
         gvi_bonus = float(min(GVI_BONUS_MAX, (green_view_index / 100.0) * GVI_BONUS_MAX * gvi_weight))
         if math.isnan(gvi_bonus) or not isinstance(gvi_bonus, (int, float)):
             gvi_bonus = 0.0
         green_view_details = {
-            "method": "gee_ndvi",
+            "method": "gee_ndvi_enhanced" if (visible_green_fraction > 0 or street_level_ndvi > 0) else "gee_ndvi",
             "radius_m": gvi_radius_used,
             "components": {
                 "tree_canopy_pct": round(tree_canopy_vis, 2),
                 "green_space_ratio": round(green_ratio, 2),
                 "vegetation_health_pct": round(vegetation_health, 2),
-                "seasonal_variation": round(seasonal_variation, 3)
+                "seasonal_variation": round(seasonal_variation, 3),
+                "visible_green_fraction": round(visible_green_fraction, 2) if visible_green_fraction > 0 else None,
+                "street_level_ndvi": round(street_level_ndvi, 2) if street_level_ndvi > 0 else None,
+                "seasonal_consistency": round(seasonal_consistency, 3) if seasonal_consistency > 0 else None
             },
+            "eye_level_used": visible_green_fraction > 0 or street_level_ndvi > 0,
             "weight": gvi_weight
         }
     else:

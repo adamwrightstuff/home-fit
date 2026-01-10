@@ -110,6 +110,102 @@ export default function PillarCard({ name, description, pillar }: PillarCardProp
               {pillar.data_quality.quality_tier || 'Unknown'}
             </p>
           </div>
+          
+          {/* NEW: Natural Beauty specific metrics */}
+          {pillar.name === 'Natural Beauty' && pillar.summary && (
+            <div className="space-y-3 mt-3 pt-3 border-t border-gray-200">
+              {/* Data Coverage Indicator */}
+              {pillar.summary.data_coverage_tier && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Data Coverage:</p>
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                    pillar.summary.data_coverage_tier === 'high' 
+                      ? 'bg-green-100 text-green-800'
+                      : pillar.summary.data_coverage_tier === 'medium'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {pillar.summary.data_coverage_tier.toUpperCase()}
+                    {pillar.summary.data_coverage_pct && ` (${pillar.summary.data_coverage_pct}%)`}
+                  </span>
+                </div>
+              )}
+              
+              {/* Terrain Metrics */}
+              {(pillar.summary.terrain_relief_m || pillar.summary.terrain_prominence_m || pillar.summary.terrain_ruggedness_m) && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Terrain:</p>
+                  <div className="text-homefit-text-secondary space-y-0.5">
+                    {pillar.summary.terrain_relief_m && (
+                      <div className="flex justify-between">
+                        <span>Relief:</span>
+                        <span className="font-medium">{pillar.summary.terrain_relief_m}m</span>
+                      </div>
+                    )}
+                    {pillar.summary.terrain_prominence_m && (
+                      <div className="flex justify-between">
+                        <span>Prominence:</span>
+                        <span className="font-medium">{pillar.summary.terrain_prominence_m}m</span>
+                      </div>
+                    )}
+                    {pillar.summary.terrain_ruggedness_m && (
+                      <div className="flex justify-between">
+                        <span>Ruggedness:</span>
+                        <span className="font-medium">{pillar.summary.terrain_ruggedness_m}m</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Water Proximity */}
+              {pillar.summary.water_proximity_km && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Water:</p>
+                  <div className="text-homefit-text-secondary">
+                    <div className="flex justify-between">
+                      <span>Nearest {pillar.summary.water_proximity_type || 'waterbody'}:</span>
+                      <span className="font-medium">{pillar.summary.water_proximity_km}km</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Eye-Level Greenery */}
+              {(pillar.summary.visible_green_fraction || pillar.summary.street_level_ndvi) && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Eye-Level Greenery:</p>
+                  <div className="text-homefit-text-secondary space-y-0.5">
+                    {pillar.summary.visible_green_fraction && (
+                      <div className="flex justify-between">
+                        <span>Visible Green:</span>
+                        <span className="font-medium">{pillar.summary.visible_green_fraction}%</span>
+                      </div>
+                    )}
+                    {pillar.summary.street_level_ndvi && (
+                      <div className="flex justify-between">
+                        <span>Street-Level NDVI:</span>
+                        <span className="font-medium">{pillar.summary.street_level_ndvi}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Viewshed */}
+              {pillar.summary.visible_natural_pct && (
+                <div>
+                  <p className="font-semibold text-homefit-text-primary mb-1">Viewshed:</p>
+                  <div className="text-homefit-text-secondary">
+                    <div className="flex justify-between">
+                      <span>Visible Natural:</span>
+                      <span className="font-medium">{pillar.summary.visible_natural_pct}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
