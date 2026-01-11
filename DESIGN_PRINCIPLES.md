@@ -151,8 +151,31 @@ Before making **ANY** scoring change, ask:
 3. ✅ **Is this scalable?** (works for all locations)
 4. ✅ **Is this transparent?** (documented rationale)
 5. ✅ **Does this avoid artificial tuning?** (no location-specific exceptions)
-6. ✅ **Have I tested regressions?** (20+ locations)
-7. ✅ **Does this follow pillar-specific principles?** (check pillar docs)
+6. ✅ **Have I validated against human perception?** (rank-order correlation ≥ 0.7 with 15+ locations)
+7. ✅ **Have I run regression tests?** (prevent breaking changes, but NOT primary validation)
+8. ✅ **Does this follow pillar-specific principles?** (check pillar docs)
+
+### Validation Priority Order
+
+**PRIMARY (Required before any change):**
+- **Rank-order correlation with human ratings** (Spearman ≥ 0.7)
+  - Validates that scores align with human perception
+  - Most data-backed validation approach
+  - Run: `python scripts/validate_natural_beauty_scoring.py`
+
+**SECONDARY (Verify research data used):**
+- Research-backed expected values
+  - Check that expected values come from research, not arbitrary tuning
+  - Verify climate adjustments are based on empirical data
+
+**DEFENSIVE (Prevent breaking changes):**
+- Regression tests (20+ locations)
+  - Prevents unintended changes
+  - Assumes baseline is correct (may lock in wrong behavior if baseline is wrong)
+  - Should complement, not replace, correctness validation
+  - Run: `python tests/test_natural_beauty_regression.py`
+
+**Note:** Regression testing ensures stability but doesn't validate correctness. The most data-backed approach is rank-order correlation with human ratings, which tests if scores align with how people actually perceive natural beauty.
 
 ---
 

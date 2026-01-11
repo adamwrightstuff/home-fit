@@ -1860,40 +1860,56 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # Calculate topography raw score once (with improved scoring for relief/ruggedness)
         topography_score_raw = _score_topography_component(topography_metrics)
         
-        # Apply topography boost for arid regions if enabled
-        topography_multiplier = 1.0
+        # Convert multipliers to additive bonuses (following design principles: additive bonus structure)
+        # Design principle: Use additive bonuses, not multiplicative multipliers
+        # This prevents compounding effects and makes scoring more predictable and debuggable
+        topography_bonuses = []
+        
+        # Arid boost: convert 1.3x multiplier to 30% additive bonus (capped at 20% of max)
         if ENABLE_TOPOGRAPHY_BOOST_ARID and lat is not None and lon is not None:
-            # Get climate adjustment to detect arid regions
-            # Arid regions have multipliers < 0.9 (typically 0.65-0.85)
             try:
                 elevation_m = topography_metrics.get("elevation_mean_m")
                 climate_multiplier = _get_climate_adjustment(lat, lon, elevation_m)
-                # Arid and semi-arid regions (multiplier < 0.9) get 1.3x boost to topography
+                # Arid and semi-arid regions (multiplier < 0.9) get 30% additive bonus to topography
                 if climate_multiplier < 0.9:
-                    topography_multiplier = 1.3
-                    logger.debug("Applying arid topography boost (1.3x) for region with climate multiplier %.2f", climate_multiplier)
+                    arid_bonus = min(TOPOGRAPHY_BONUS_MAX * 0.2, topography_score_raw * 0.30)
+                    topography_bonuses.append(("arid_climate", arid_bonus))
+                    logger.debug("Applying arid topography bonus (%.2f) for region with climate multiplier %.2f", arid_bonus, climate_multiplier)
             except Exception:
-                pass  # Fallback to 1.0 if climate detection fails
+                pass  # Fallback if climate detection fails
         
-        # NEW: Apply terrain bonus multiplier for high prominence (>200m)
-        # Prominent peaks are highly scenic and should get additional boost
+        # Prominence boost: convert 1.2-1.5x multiplier to 20-50% additive bonus (capped at 30% of max)
+        prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
         if prominence is not None and prominence > 200.0:
-            terrain_multiplier = 1.2 + (min(1.0, (prominence - 200.0) / 300.0) * 0.3)  # 1.2-1.5 multiplier
-            topography_multiplier *= terrain_multiplier
-            logger.debug(f"Applying terrain prominence boost ({terrain_multiplier:.2f}x) for prominence {prominence:.1f}m")
+            # Calculate prominence factor: 0-50% bonus (was 20-50% in multiplier terms)
+            prominence_factor = min(0.5, (prominence - 200.0) / 300.0 * 0.5)  # 0-50% bonus
+            prominence_bonus = topography_score_raw * (0.2 + prominence_factor)  # 20-50% total
+            prominence_bonus = min(TOPOGRAPHY_BONUS_MAX * 0.3, prominence_bonus)  # Cap at 30% of max
+            topography_bonuses.append(("prominence", prominence_bonus))
+            logger.debug(f"Applying terrain prominence bonus ({prominence_bonus:.2f}) for prominence {prominence:.1f}m")
         
-        # Apply area-type-specific weight (adjusted for high-relief), then multipliers
-        topography_score = float(topography_score_raw * terrain_adjusted_weights["topography"] * topography_multiplier)
+        # Apply area-type-specific weight, then add bonuses (additive structure)
+        topography_score_base = float(topography_score_raw * terrain_adjusted_weights["topography"])
+        topography_bonus_total = sum(bonus for _, bonus in topography_bonuses)
+        topography_score = min(TOPOGRAPHY_BONUS_MAX, topography_score_base + topography_bonus_total)
+        
         if math.isnan(topography_score) or not isinstance(topography_score, (int, float)):
             topography_score = 0.0
+        
         natural_context_components["topography"] = round(topography_score, 2)
         natural_context_components["topography_raw"] = round(topography_score_raw, 2)
-        natural_context_components["topography_multiplier"] = round(topography_multiplier, 2) if topography_multiplier != 1.0 else None
+        natural_context_components["topography_base"] = round(topography_score_base, 2)
+        if topography_bonuses:
+            natural_context_components["topography_bonuses"] = {
+                name: round(bonus, 2) for name, bonus in topography_bonuses
+            }
+            natural_context_components["topography_bonus_total"] = round(topography_bonus_total, 2)
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
         # #region agent log
         with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1587","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"multiplier":{topography_multiplier},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            bonus_info = f'"bonus_total":{topography_bonus_total}' if topography_bonuses else '"bonuses":"none"'
+            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1893","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"base":{topography_score_base},{bonus_info},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
         # #endregion
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
@@ -1980,7 +1996,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     else:
         natural_context_details["biodiversity_index"] = 0.0
 
-    # NEW: Viewshed proxy analysis (visible natural area from location)
+    # Enhanced Viewshed analysis (visible natural area from location)
     viewshed_metrics: Optional[Dict] = None
     if get_viewshed_proxy:
         try:
@@ -1988,13 +2004,24 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             viewshed_metrics = get_viewshed_proxy(lat, lon, radius_m=5000, landcover_metrics=landcover_metrics)
             if viewshed_metrics:
                 visible_natural_pct = viewshed_metrics.get("visible_natural_pct", 0.0) or 0.0
-                # Add viewshed component to context bonus (scaled by visible natural fraction)
-                # Visible natural > 30% = strong scenic context (mountain backdrop, forests visible)
-                viewshed_factor = min(1.0, visible_natural_pct / 30.0)
-                viewshed_bonus = viewshed_factor * 4.0  # Max 4.0 bonus for excellent viewshed
+                scenic_viewshed_score = viewshed_metrics.get("scenic_viewshed_score", 0.0) or 0.0
+                viewshed_relief_m = viewshed_metrics.get("viewshed_relief_m")
+                # Enhanced viewshed bonus: use scenic_viewshed_score for better accuracy
+                # Scale scenic viewshed score (0-100) to bonus points (0-6.0)
+                # Higher scores for high visible natural % and high relief
+                if scenic_viewshed_score > 0:
+                    viewshed_factor = min(1.0, scenic_viewshed_score / 70.0)  # Scale by 70 (high quality threshold)
+                    viewshed_bonus = viewshed_factor * 6.0  # Max 6.0 bonus for excellent viewshed (increased from 4.0)
+                else:
+                    # Fallback to old calculation if scenic_viewshed_score not available
+                    viewshed_factor = min(1.0, visible_natural_pct / 30.0)
+                    viewshed_bonus = viewshed_factor * 4.0  # Max 4.0 bonus
                 context_bonus_total += viewshed_bonus
                 natural_context_components["viewshed"] = round(viewshed_bonus, 2)
                 natural_context_components["visible_natural_pct"] = round(visible_natural_pct, 2)
+                if viewshed_relief_m is not None:
+                    natural_context_components["viewshed_relief_m"] = round(viewshed_relief_m, 2)
+                natural_context_components["scenic_viewshed_score"] = round(scenic_viewshed_score, 2)
                 natural_context_details["viewshed_metrics"] = viewshed_metrics
                 # #region agent log
                 with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
@@ -2087,8 +2114,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     
     # GVI coverage (0-100)
     gvi_coverage = 100.0 if gvi_metrics else 50.0  # Full if GEE, partial if composite
-    if gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi")):
-        gvi_coverage = 100.0  # Enhanced with eye-level metrics
+    if gvi_metrics:
+        if gvi_metrics.get("semantic_gvi"):
+            gvi_coverage = 100.0  # Enhanced with semantic GVI
+        elif gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"):
+            gvi_coverage = 90.0  # Enhanced with eye-level metrics
     coverage_scores.append(gvi_coverage)
     
     # Terrain coverage (0-100)
@@ -2138,9 +2168,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         },
         "gvi": {
             "gee_available": gvi_metrics is not None,
-            "method": "gee_ndvi_enhanced" if (gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"))) else ("gee_ndvi" if gvi_metrics else "composite"),
+            "method": "semantic_gvi" if (gvi_metrics and gvi_metrics.get("semantic_gvi")) else ("gee_ndvi_enhanced" if (gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"))) else ("gee_ndvi" if gvi_metrics else "composite")),
             "value": green_view_index,
+            "semantic_gvi_available": bool(gvi_metrics and gvi_metrics.get("semantic_gvi")),
             "eye_level_available": bool(gvi_metrics and (gvi_metrics.get("visible_green_fraction") or gvi_metrics.get("street_level_ndvi"))),
+            "vegetation_health_score": round(gvi_metrics.get("vegetation_health_score", 0), 2) if gvi_metrics else None,
             "coverage": round(gvi_coverage, 1),
             "reliability": min(100, int(gvi_coverage * 1.0))
         },
@@ -2383,10 +2415,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         seasonal_consistency = float(gvi_metrics.get("seasonal_consistency") or 0.0)
         street_level_ndvi = float(gvi_metrics.get("street_level_ndvi") or 0.0) * 100.0
         
-        # Enhanced GVI calculation: incorporate eye-level visibility
-        # Multi-resolution approach: canopy-level + street-level
-        # Eye-level visibility matters more for human perception (higher weight)
-        if visible_green_fraction > 0 or street_level_ndvi > 0:
+        # Enhanced GVI calculation: prioritize semantic_gvi if available
+        semantic_gvi = float(gvi_metrics.get("semantic_gvi") or 0.0)  # Enhanced SGVI
+        vegetation_health_score = float(gvi_metrics.get("vegetation_health_score") or (vegetation_health * 100.0))  # Enhanced health score
+        
+        if semantic_gvi > 0:
+            # Use semantic GVI as primary metric (more accurate, uses NDVI + VARI)
+            gvi_raw = semantic_gvi
+        elif visible_green_fraction > 0 or street_level_ndvi > 0:
             # Use eye-level metrics when available (better reflects human perception)
             # Visible green fraction captures what someone sees at street level
             # Street-level NDVI provides high-resolution vegetation index
@@ -2398,7 +2434,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             traditional_component = (
                 tree_canopy_vis * 0.25 +         # Tree canopy visibility (25% weight)
                 green_ratio * 0.20 +             # Green space ratio (20% weight)
-                vegetation_health * 0.15 +       # Vegetation health (15% weight)
+                vegetation_health_score * 0.15 + # Enhanced vegetation health (15% weight)
                 seasonal_consistency * 10.0      # Seasonal consistency (10% weight)
             )
             # Weight eye-level component higher when available
@@ -2408,7 +2444,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             gvi_raw = (
                 tree_canopy_vis * 0.4 +
                 green_ratio * 0.3 +
-                vegetation_health * 0.2 +
+                vegetation_health_score * 0.2 +  # Use enhanced health score
                 max(0.0, (1.0 - seasonal_variation)) * 10.0
             )
         
@@ -2418,8 +2454,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if math.isnan(gvi_bonus) or not isinstance(gvi_bonus, (int, float)):
             gvi_bonus = 0.0
         green_view_details = {
-            "method": "gee_ndvi_enhanced" if (visible_green_fraction > 0 or street_level_ndvi > 0) else "gee_ndvi",
+            "method": "semantic_gvi" if semantic_gvi > 0 else ("gee_ndvi_enhanced" if (visible_green_fraction > 0 or street_level_ndvi > 0) else "gee_ndvi"),
             "radius_m": gvi_radius_used,
+            "semantic_gvi": round(semantic_gvi, 2) if semantic_gvi > 0 else None,
+            "vegetation_health_score": round(vegetation_health_score, 2),
             "components": {
                 "tree_canopy_pct": round(tree_canopy_vis, 2),
                 "green_space_ratio": round(green_ratio, 2),
@@ -2430,6 +2468,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "seasonal_consistency": round(seasonal_consistency, 3) if seasonal_consistency > 0 else None
             },
             "eye_level_used": visible_green_fraction > 0 or street_level_ndvi > 0,
+            "semantic_gvi_used": semantic_gvi > 0,
             "weight": gvi_weight
         }
     else:

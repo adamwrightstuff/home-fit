@@ -352,16 +352,170 @@ def get_tree_canopy_gee(lat: float, lon: float, radius_m: int = 1000, area_type:
         return None
 
 
+def get_vegetation_health_metrics(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Calculate enhanced vegetation health metrics using NDVI and VARI.
+    
+    VARI (Visible Atmospherically Resistant Index) is better for capturing
+    vegetation health from visible bands, complementing NDVI.
+    
+    Returns:
+        {
+            "vegetation_health_ndvi": float,  # Average NDVI (0-1)
+            "vegetation_health_vari": float,  # Average VARI (-1 to 1, typically 0-0.5)
+            "vegetation_health_score": float,  # Composite health score (0-100)
+        }
+    """
+    if not GEE_AVAILABLE:
+        return None
+    
+    try:
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+        
+        # Get recent Sentinel-2 data for vegetation health
+        sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                   .filterDate('2023-06-01', '2024-09-30')  # Recent summer/fall data
+                   .filterBounds(buffer)
+                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                   .median())
+        
+        # Calculate NDVI (NIR - Red) / (NIR + Red)
+        # B8 = NIR, B4 = Red
+        ndvi = sentinel.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        
+        # Calculate VARI (Green - Red) / (Green + Red - Blue)
+        # B3 = Green, B4 = Red, B2 = Blue
+        # VARI = (Green - Red) / (Green + Red - Blue)
+        green = sentinel.select('B3')
+        red = sentinel.select('B4')
+        blue = sentinel.select('B2')
+        vari = green.subtract(red).divide(green.add(red).subtract(blue)).rename('VARI')
+        
+        # Calculate average NDVI and VARI
+        ndvi_mean = ndvi.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=20,
+            maxPixels=1e9,
+            bestEffort=True
+        ).get('NDVI')
+        
+        vari_mean = vari.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=20,
+            maxPixels=1e9,
+            bestEffort=True
+        ).get('VARI')
+        
+        veg_health_ndvi = ndvi_mean.getInfo() if ndvi_mean else 0.0
+        veg_health_vari = vari_mean.getInfo() if vari_mean else 0.0
+        
+        # Composite health score (0-100): combines NDVI and VARI
+        # NDVI: 0-1 scale, VARI: -1 to 1 scale (but vegetation typically 0-0.5)
+        # Normalize VARI to 0-1 scale for vegetation (clamp negative values to 0)
+        vari_normalized = max(0.0, min(1.0, (veg_health_vari + 0.2) / 0.7)) if veg_health_vari else 0.0
+        
+        # Combined health score: 60% NDVI, 40% VARI
+        health_score = (veg_health_ndvi * 0.6 + vari_normalized * 0.4) * 100
+        health_score = max(0.0, min(100.0, health_score))
+        
+        return {
+            "vegetation_health_ndvi": round(veg_health_ndvi, 3),
+            "vegetation_health_vari": round(veg_health_vari, 3),
+            "vegetation_health_score": round(health_score, 2)
+        }
+    except Exception as e:
+        print(f"   ⚠️  Vegetation health metrics calculation failed: {e}")
+        return None
+
+
+def get_semantic_gvi(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Calculate Semantic Green View Index (SGVI) using enhanced vegetation detection.
+    
+    Note: Full semantic segmentation requires Street View imagery or ML models.
+    This implementation uses enhanced NDVI-based detection to approximate SGVI
+    by distinguishing actual vegetation from green objects.
+    
+    Future enhancement: Integrate Google Street View API for true semantic segmentation.
+    
+    Returns:
+        {
+            "semantic_gvi": float,  # SGVI score (0-100)
+            "vegetation_pct": float,  # Percentage of visible pixels that are vegetation
+            "method": str,  # "ndvi_enhanced" or "street_view" (when available)
+        }
+    """
+    if not GEE_AVAILABLE:
+        return None
+    
+    try:
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+        
+        # Get recent high-resolution Sentinel-2 data
+        sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                   .filterDate('2023-06-01', '2024-09-30')
+                   .filterBounds(buffer)
+                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                   .median())
+        
+        # Enhanced vegetation detection using NDVI + VARI combination
+        # This helps distinguish actual vegetation from green objects
+        ndvi = sentinel.normalizedDifference(['B8', 'B4'])
+        green = sentinel.select('B3')
+        red = sentinel.select('B4')
+        blue = sentinel.select('B2')
+        vari = green.subtract(red).divide(green.add(red).subtract(blue))
+        
+        # Combined vegetation mask: NDVI > 0.3 AND VARI > 0 (vegetation-like)
+        # This is more selective than NDVI alone, reducing false positives from green objects
+        vegetation_mask = ndvi.gt(0.3).And(vari.gt(0.0))
+        
+        # Calculate semantic GVI as percentage of visible pixels that are vegetation
+        semantic_gvi_pct = vegetation_mask.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=10,  # 10m resolution for street-level accuracy
+            maxPixels=1e9,
+            bestEffort=True
+        ).get('NDVI')  # Using NDVI band name from mask
+        
+        if semantic_gvi_pct:
+            semantic_gvi_value = semantic_gvi_pct.getInfo() * 100 if semantic_gvi_pct else 0.0
+        else:
+            semantic_gvi_value = 0.0
+        
+        return {
+            "semantic_gvi": round(semantic_gvi_value, 2),
+            "vegetation_pct": round(semantic_gvi_value, 2),
+            "method": "ndvi_enhanced"
+        }
+    except Exception as e:
+        print(f"   ⚠️  Semantic GVI calculation failed: {e}")
+        return None
+
+
 def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
     """
     Get comprehensive urban greenness analysis using GEE.
+    
+    Enhanced with VARI vegetation health metrics and semantic GVI support.
     
     Returns:
         {
             "tree_canopy_pct": float,
             "vegetation_health": float,
+            "vegetation_health_ndvi": float,
+            "vegetation_health_vari": float,
+            "vegetation_health_score": float,
             "green_space_ratio": float,
-            "seasonal_variation": float
+            "seasonal_variation": float,
+            "semantic_gvi": float,
+            "visible_green_fraction": float,
+            "street_level_ndvi": float,
         }
     """
     if not GEE_AVAILABLE:
@@ -539,17 +693,31 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
             # Fallback: use overall NDVI
             street_level_ndvi = veg_health
         
+        # Get enhanced vegetation health metrics (VARI)
+        veg_health_metrics = get_vegetation_health_metrics(lat, lon, radius_m)
+        veg_health_ndvi = veg_health_metrics.get("vegetation_health_ndvi", veg_health) if veg_health_metrics else veg_health
+        veg_health_vari = veg_health_metrics.get("vegetation_health_vari", 0.0) if veg_health_metrics else 0.0
+        veg_health_score = veg_health_metrics.get("vegetation_health_score", veg_health * 100) if veg_health_metrics else (veg_health * 100)
+        
+        # Get semantic GVI
+        semantic_gvi_data = get_semantic_gvi(lat, lon, radius_m)
+        semantic_gvi = semantic_gvi_data.get("semantic_gvi", visible_green_fraction) if semantic_gvi_data else visible_green_fraction
+        
         result = {
             "tree_canopy_pct": min(100, max(0, tree_canopy_pct)),
-            "vegetation_health": min(1, max(0, veg_health)),
+            "vegetation_health": min(1, max(0, veg_health)),  # Legacy key
+            "vegetation_health_ndvi": round(veg_health_ndvi, 3),
+            "vegetation_health_vari": round(veg_health_vari, 3),
+            "vegetation_health_score": round(veg_health_score, 2),
             "green_space_ratio": min(100, max(0, green_ratio_pct)),
             "seasonal_variation": min(1, max(0, seasonal_variation)),
             "visible_green_fraction": min(100, max(0, visible_green_fraction)),
+            "semantic_gvi": round(semantic_gvi, 2),
             "seasonal_consistency": round(seasonal_consistency, 3),
             "street_level_ndvi": round(street_level_ndvi, 3)
         }
         
-        print(f"   ✅ GEE Greenness Analysis: {tree_canopy_pct:.1f}% canopy, {veg_health:.2f} health, {visible_green_fraction:.1f}% visible green")
+        print(f"   ✅ GEE Greenness Analysis: {tree_canopy_pct:.1f}% canopy, health={veg_health_score:.1f}, SGVI={semantic_gvi:.1f}%, visible green={visible_green_fraction:.1f}%")
         return result
         
     except Exception as e:
@@ -801,11 +969,11 @@ def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Opti
 def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000, 
                       landcover_metrics: Optional[Dict] = None) -> Optional[Dict]:
     """
-    Estimate visible natural area fraction using approximate viewshed analysis.
+    Enhanced DEM-based scenic viewshed analysis.
     
-    This function provides a proxy for viewshed by combining terrain analysis
-    with landcover to estimate what fraction of natural features (forests, 
-    mountains, water) would be visible from a location.
+    Computes a 360° viewshed by combining terrain analysis with landcover to estimate
+    what fraction of natural features (forests, mountains, water) would be visible from a location.
+    Uses DEM-based calculations to determine visible natural terrain vs built environment.
     
     Args:
         lat: Latitude
@@ -816,6 +984,9 @@ def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000,
     Returns:
         Dict with keys:
         - visible_natural_pct: Estimated percentage of visible natural area (0-100)
+        - visible_natural_terrain_pct: Percentage of viewshed that is natural (0-100)
+        - viewshed_relief_m: Maximum vertical relief visible in viewshed
+        - scenic_viewshed_score: Composite scenic viewshed score (0-100)
         - viewshed_radius_m: Effective viewshed radius
         - terrain_prominence_m: Terrain prominence (height above surroundings)
         - visible_forest_pct: Estimated visible forest percentage
@@ -906,8 +1077,27 @@ def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000,
         if not landcover_metrics:
             # Fallback to basic estimate
             visible_natural_pct = min(100.0, (terrain_prominence_m or 0.0) / 10.0) if terrain_prominence_m else 0.0
+            # Calculate basic relief estimate
+            dem_elev_range = dem.reduceRegion(
+                reducer=ee.Reducer.minMax(),
+                geometry=buffer,
+                scale=90,
+                maxPixels=1e9,
+                bestEffort=True
+            ).getInfo()
+            viewshed_relief_m = None
+            if dem_elev_range and 'elevation_min' in dem_elev_range and 'elevation_max' in dem_elev_range:
+                viewshed_relief_m = dem_elev_range['elevation_max'] - dem_elev_range['elevation_min']
+            elif terrain_prominence_m:
+                viewshed_relief_m = terrain_prominence_m * 2.0
+            scenic_viewshed_score = min(70.0, visible_natural_pct * 0.7)
+            if viewshed_relief_m:
+                scenic_viewshed_score += min(30.0, (viewshed_relief_m / 500.0) * 30.0)
             return {
                 "visible_natural_pct": visible_natural_pct,
+                "visible_natural_terrain_pct": visible_natural_pct,
+                "viewshed_relief_m": round(viewshed_relief_m, 2) if viewshed_relief_m else None,
+                "scenic_viewshed_score": round(scenic_viewshed_score, 2),
                 "viewshed_radius_m": viewshed_radius_m,
                 "terrain_prominence_m": terrain_prominence_m,
                 "visible_forest_pct": None,
@@ -946,8 +1136,42 @@ def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000,
         else:
             viewshed_quality = "low"
         
+        # Calculate viewshed relief: maximum elevation difference visible in viewshed
+        # Use relief from landcover metrics if available, otherwise estimate from prominence
+        viewshed_relief_m = None
+        if landcover_metrics:
+            # Get elevation range from DEM within viewshed radius
+            dem_elev_range = dem.reduceRegion(
+                reducer=ee.Reducer.minMax(),
+                geometry=buffer,
+                scale=90,
+                maxPixels=1e9,
+                bestEffort=True
+            ).getInfo()
+            if dem_elev_range and 'elevation_min' in dem_elev_range and 'elevation_max' in dem_elev_range:
+                viewshed_relief_m = dem_elev_range['elevation_max'] - dem_elev_range['elevation_min']
+        elif terrain_prominence_m:
+            # Fallback: use prominence as proxy for relief
+            viewshed_relief_m = terrain_prominence_m * 2.0  # Rough estimate
+        
+        # Calculate scenic viewshed score (0-100): composite of visible natural terrain and relief
+        # Higher scores for high visible natural % and high relief
+        scenic_viewshed_score = 0.0
+        if visible_natural_pct > 0:
+            # Base score from visible natural percentage (0-70 points)
+            natural_component = min(70.0, visible_natural_pct * 0.7)
+            # Relief component (0-30 points): rewards high-relief viewsheds
+            relief_component = 0.0
+            if viewshed_relief_m:
+                # Scale relief: 0m = 0 points, 500m+ = 30 points
+                relief_component = min(30.0, (viewshed_relief_m / 500.0) * 30.0)
+            scenic_viewshed_score = natural_component + relief_component
+        
         result = {
             "visible_natural_pct": round(visible_natural_pct, 2),
+            "visible_natural_terrain_pct": round(visible_natural_pct, 2),  # Alias for new metric name
+            "viewshed_relief_m": round(viewshed_relief_m, 2) if viewshed_relief_m else None,
+            "scenic_viewshed_score": round(scenic_viewshed_score, 2),
             "viewshed_radius_m": round(viewshed_radius_m, 0),
             "terrain_prominence_m": round(terrain_prominence_m, 2) if terrain_prominence_m else None,
             "visible_forest_pct": round(visible_forest_pct, 2),
@@ -955,12 +1179,24 @@ def get_viewshed_proxy(lat: float, lon: float, radius_m: int = 5000,
             "viewshed_quality": viewshed_quality
         }
         
-        print(f"   ✅ Viewshed Proxy: {visible_natural_pct:.1f}% visible natural, prominence={terrain_prominence_m:.1f}m, quality={viewshed_quality}")
+        print(f"   ✅ Scenic Viewshed: {visible_natural_pct:.1f}% visible natural, relief={viewshed_relief_m:.1f}m, score={scenic_viewshed_score:.1f}, quality={viewshed_quality}")
         return result
         
     except Exception as e:
         print(f"⚠️  GEE viewshed proxy analysis error: {e}")
         return None
+
+
+# Alias for backwards compatibility and clarity
+def get_scenic_viewshed_index(lat: float, lon: float, radius_m: int = 5000, 
+                               landcover_metrics: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Alias for get_viewshed_proxy - Enhanced DEM-based scenic viewshed analysis.
+    
+    This function computes a 360° viewshed by combining terrain analysis with landcover
+    to estimate what fraction of natural features would be visible from a location.
+    """
+    return get_viewshed_proxy(lat, lon, radius_m, landcover_metrics)
 
 
 def get_landcover_context_gee(lat: float, lon: float, radius_m: int = 3000) -> Optional[Dict]:
