@@ -1721,6 +1721,24 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
                                 f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1522","message":"Water proximity data fetched","data":{{"nearest_distance_km":{water_proximity_data.get("nearest_distance_km")},"count":{water_proximity_data.get("count",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
                             # #endregion
+        
+        # FALLBACK: If no water proximity data but high water coverage, assume coastal/ocean
+        # This handles cases where OSM coastline queries fail but landcover shows high water %
+        # (e.g., Manhattan Beach, CA - ocean isn't always returned as discrete OSM feature)
+        if not water_proximity_data and landcover_metrics:
+            water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
+            if water_pct > 30.0:  # High water coverage suggests coastal/ocean
+                water_proximity_data = {
+                    "nearest_waterbody": {
+                        "type": "ocean",
+                        "name": "Ocean",
+                        "area_km2": None  # Ocean is unbounded
+                    },
+                    "nearest_distance_km": 0.0,  # Assume on/near coast
+                    "water_features": [],
+                    "water_density": water_pct  # Use landcover water % as proxy
+                }
+                logger.debug(f"Water proximity fallback: High water coverage ({water_pct:.1f}%) suggests ocean proximity")
                         break
             except Exception as exc:
                 # Log which call failed for debugging
