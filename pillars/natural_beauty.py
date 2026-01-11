@@ -1107,10 +1107,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         ruggedness = 0.0 if not isinstance(ruggedness, (int, float)) or math.isnan(ruggedness) else max(0.0, ruggedness)
         relief_intensity = 0.0 if not isinstance(relief_intensity, (int, float)) or math.isnan(relief_intensity) else max(0.0, relief_intensity)
 
-        # Updated: Lower relief threshold (300m instead of 600m) to capture more scenic areas
+        # Updated: Lower relief threshold (250m instead of 300m) to capture more scenic areas
         # Many scenic mountain areas have 200-500m relief, not 600m+
-        # Allow >1.0 factor for exceptional relief (>300m) to reward mountain towns
-        relief_factor = min(1.2, relief / 300.0)  # 300m relief → 1.0, 400m+ relief → 1.2 (was capped at 1.0)
+        # Allow >1.0 factor for exceptional relief (>250m) to reward mountain towns more aggressively
+        relief_factor = min(1.3, relief / 250.0)  # 250m relief → 1.0, 394m relief → 1.576, capped at 1.3 (was 300m → 1.0, capped at 1.2)
         slope_factor = min(1.0, max(0.0, (slope_mean - 3.0) / 17.0))  # 20° mean slope → full
         steep_factor = min(1.0, max(0.0, (steep_fraction - 0.05) / 0.35))  # >40% steep terrain
         
@@ -1119,9 +1119,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         prominence_factor = min(1.0, prominence / 200.0) if prominence > 0 else 0.0
         
         # New: Ruggedness factor (elevation variation)
-        # Ruggedness > 90m = very rugged terrain, highly scenic
-        # Allow >1.0 factor for exceptional ruggedness (>90m) to reward mountain towns
-        ruggedness_factor = min(1.1, ruggedness / 90.0) if ruggedness > 0 else 0.0  # Lower threshold: 90m → 1.0, 100m+ → 1.1 (was 100m → 1.0)
+        # Ruggedness > 80m = very rugged terrain, highly scenic
+        # Allow >1.0 factor for exceptional ruggedness (>80m) to reward mountain towns more aggressively
+        ruggedness_factor = min(1.2, ruggedness / 80.0) if ruggedness > 0 else 0.0  # Lower threshold: 80m → 1.0, 73.8m → 0.92, 100m+ → 1.2 (was 90m → 1.0, capped at 1.1)
         
         # Combined scoring: traditional factors (70%) + prominence/ruggedness (30%)
         # This ensures prominence and ruggedness add to scenic beauty beyond just relief
@@ -1129,16 +1129,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         enhanced_score = (0.15 * prominence_factor) + (0.15 * ruggedness_factor)
         
         # If prominence or ruggedness is significant, boost the score
-        # Lower threshold for ruggedness (75m instead of 100m) to better capture mountain towns
+        # Lower threshold for ruggedness (70m instead of 75m) to better capture mountain towns
         # For areas with multiple high-terrain indicators, further increase enhanced weight
         if relief > 350 or prominence > 180 or ruggedness > 80:
             # Very high terrain (multiple indicators): maximum enhanced weight
-            enhanced_weight = 0.45  # Further increase for exceptional terrain
-            traditional_weight = 0.55
-        elif prominence > 150 or ruggedness > 75:  # Lower threshold: 75m triggers enhanced scoring (was 100m)
-            # High prominence/ruggedness areas get enhanced scoring
-            enhanced_weight = 0.40  # Increase weight for enhanced metrics (was 0.35)
-            traditional_weight = 0.60  # Decrease traditional weight (was 0.65)
+            enhanced_weight = 0.50  # Further increase for exceptional terrain (was 0.45)
+            traditional_weight = 0.50
+        elif relief > 300 or prominence > 150 or ruggedness > 70:  # Lower threshold: 70m triggers enhanced scoring (was 75m)
+            # High relief/ruggedness areas get enhanced scoring
+            enhanced_weight = 0.45  # Increase weight for enhanced metrics (was 0.40)
+            traditional_weight = 0.55  # Decrease traditional weight (was 0.60)
         else:
             enhanced_weight = 0.30
             traditional_weight = 0.70
@@ -1857,6 +1857,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     water_score = 0.0
     
     if topography_metrics:
+        # Calculate topography raw score once (with improved scoring for relief/ruggedness)
         topography_score_raw = _score_topography_component(topography_metrics)
         
         # Apply topography boost for arid regions if enabled
@@ -1882,8 +1883,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             logger.debug(f"Applying terrain prominence boost ({terrain_multiplier:.2f}x) for prominence {prominence:.1f}m")
         
         # Apply area-type-specific weight (adjusted for high-relief), then multipliers
-        # Ensure topography_score is always a valid number
-        topography_score_raw = _score_topography_component(topography_metrics)
         topography_score = float(topography_score_raw * terrain_adjusted_weights["topography"] * topography_multiplier)
         if math.isnan(topography_score) or not isinstance(topography_score, (int, float)):
             topography_score = 0.0
