@@ -3124,7 +3124,7 @@ def calculate_natural_beauty(lat: float,
         "context_bonus_raw": context_bonus_raw,
         "score_before_normalization": calibrated_raw,
         "score_before_calibration": natural_score_raw,
-        "score_before_uplift": natural_score_raw,
+        "score_before_uplift": natural_score_raw,  # Before uplift = raw score
         "uplift_bonus": round(uplift_bonus, 2),
         "component_weights": {
             "base_canopy_weight": 0.30,
@@ -3186,8 +3186,10 @@ def get_natural_beauty_score(lat: float,
     # (calibration and normalization already applied)
     natural_score_norm = result["score"]
     natural_norm_meta = result.get("normalization", {})
-    natural_score_raw = result["score_before_normalization"]  # This is calibrated_raw
+    natural_score_raw = result["score_before_normalization"]  # This is calibrated_raw (with uplift)
     natural_score_uncalibrated = result.get("score_before_calibration", natural_score_raw)
+    natural_score_before_uplift = result.get("score_before_uplift", natural_score_uncalibrated)  # Before uplift
+    uplift_bonus = result.get("uplift_bonus", 0.0)
     tree_details = result["details"]
 
     details = {

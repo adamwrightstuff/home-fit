@@ -567,3 +567,5 @@
 {"location": "(unknown)", "density": 11865.363279335492, "city": "Redondo Beach", "business_count": null, "built_coverage": 0.185, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
 {"location": "(unknown)", "density": 37504.32692554606, "city": "City of New York", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_residential"}
 {"location": "(unknown)", "density": 5933.294521943906, "city": "Culver City", "business_count": null, "built_coverage": 0.264, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "georgetown, dc", "density": 4745.974764486511, "city": "Washington", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Georgetown, DC", "predicted_area_type": "suburban"}
+{"location": "beacon hill, boston ma", "density": 47709.1282051282, "city": "Boston", "business_count": null, "built_coverage": null, "metro_distance_km": null, "input": "Beacon Hill, Boston MA", "predicted_area_type": "urban_residential"}

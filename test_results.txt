@@ -1,0 +1,31 @@
+Redis not available, using in-memory cache: No module named 'redis'
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Washington at 38.9051994,-77.062785
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Washington - lat=38.9051994, lon=-77.062785, area_type=suburban
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 1425 raw park/greenway elements (types: {'relation', 'node', 'way'}, total elements: 8386)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 1425 raw → 132 processed (filtered: 1293)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+WARNING:homefit.data_sources.osm_api:OSM request timeout, waiting 2.0s before retry (2/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://z.overpass-api.de/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 6019 raw park/greenway elements (types: {'relation', 'node', 'way'}, total elements: 32373)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 6019 raw → 482 processed (filtered: 5537)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 277 raw park/greenway elements (types: {'way'}, total elements: 1187)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 277 raw → 24 processed (filtered: 253)
+Traceback (most recent call last):
+  File "/Users/adamwright/home-fit/test_locations.py", line 65, in test_locations
+    score, details = get_natural_beauty_score(
+                     ~~~~~~~~~~~~~~~~~~~~~~~~^
+        lat=lat,
+        ^^^^^^^^
+    ...<2 lines>...
+        location_name=location
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/adamwright/home-fit/pillars/natural_beauty.py", line 3200, in get_natural_beauty_score
+    "score_before_uplift": round(natural_score_before_uplift, 2),
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'natural_score_before_uplift' is not defined
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Boston at 42.3568437,-71.0686266
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Boston - lat=42.3568437, lon=-71.0686266, area_type=urban_residential
