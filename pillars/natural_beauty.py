@@ -3002,23 +3002,20 @@ def calculate_natural_beauty(lat: float,
     # especially in high-green, high-terrain locales. Add context-dependent uplift.
     # Enhanced: Increased uplift bonuses to help locations reach 65-75 target range
     # FIX: Use actual canopy percentage, not tree score, to prevent inflated uplifts
-    # Get actual canopy percentage from tree_details (more reliable than tree score)
+    # Design principle: Use actual data, not approximations - if canopy % unavailable, no uplift
     actual_canopy_pct = None
     multi_radius_canopy = tree_details.get("multi_radius_canopy", {}) or {}
     if multi_radius_canopy:
         # Use neighborhood canopy (1000m) as primary metric
         actual_canopy_pct = float(multi_radius_canopy.get("neighborhood_1000m", 0.0) or 0.0)
-    # Fallback: use base_tree_score_only as proxy if canopy % not available (older data)
-    # But scale it down: tree score 50 = 100% canopy, so score/50 * 100 = canopy %
-    if actual_canopy_pct is None or actual_canopy_pct <= 0:
-        actual_canopy_pct = (base_tree_score_only / 50.0) * 100.0  # Approximate canopy % from score
     
     uplift_bonus = 0.0
     
     # Base uplift factors (additive bonuses)
     # High canopy locations (>35%) get uplift for greenery-rich contexts
     # Use actual canopy percentage, not tree score, to prevent inflated uplifts
-    if actual_canopy_pct >= 35.0:
+    # Only apply if we have actual canopy data (design principle: use real data, not approximations)
+    if actual_canopy_pct is not None and actual_canopy_pct >= 35.0:
         # High canopy: 8-25 points uplift (scales with canopy quality, increased from 5-15)
         # Very high canopy (45%+) gets maximum uplift
         if actual_canopy_pct >= 45.0:
@@ -3043,7 +3040,8 @@ def calculate_natural_beauty(lat: float,
     
     # Combination bonus: high canopy + moderate context (greenery-rich scenic locations)
     # This helps locations like Silver Lake, OH with high canopy but moderate context
-    if actual_canopy_pct >= 35.0 and context_bonus_raw >= 5.0:
+    # Only apply if we have actual canopy data (design principle: use real data, not approximations)
+    if actual_canopy_pct is not None and actual_canopy_pct >= 35.0 and context_bonus_raw >= 5.0:
         # Combination: additional 8-18 points (increased from 5-12)
         combo_canopy_factor = min(1.0, (actual_canopy_pct - 35.0) / 15.0)  # 35-50% → 0-1.0
         combo_context_factor = min(1.0, (context_bonus_raw - 5.0) / 15.0)  # 5-20 → 0-1.0
