@@ -3001,22 +3001,35 @@ def calculate_natural_beauty(lat: float,
     # Research shows computational methods systematically underestimate perceived beauty,
     # especially in high-green, high-terrain locales. Add context-dependent uplift.
     # Enhanced: Increased uplift bonuses to help locations reach 65-75 target range
+    # FIX: Use actual canopy percentage, not tree score, to prevent inflated uplifts
+    # Get actual canopy percentage from tree_details (more reliable than tree score)
+    actual_canopy_pct = None
+    multi_radius_canopy = tree_details.get("multi_radius_canopy", {}) or {}
+    if multi_radius_canopy:
+        # Use neighborhood canopy (1000m) as primary metric
+        actual_canopy_pct = float(multi_radius_canopy.get("neighborhood_1000m", 0.0) or 0.0)
+    # Fallback: use base_tree_score_only as proxy if canopy % not available (older data)
+    # But scale it down: tree score 50 = 100% canopy, so score/50 * 100 = canopy %
+    if actual_canopy_pct is None or actual_canopy_pct <= 0:
+        actual_canopy_pct = (base_tree_score_only / 50.0) * 100.0  # Approximate canopy % from score
+    
     uplift_bonus = 0.0
     
     # Base uplift factors (additive bonuses)
     # High canopy locations (>35%) get uplift for greenery-rich contexts
-    if base_tree_score_only >= 35.0:
+    # Use actual canopy percentage, not tree score, to prevent inflated uplifts
+    if actual_canopy_pct >= 35.0:
         # High canopy: 8-25 points uplift (scales with canopy quality, increased from 5-15)
         # Very high canopy (45%+) gets maximum uplift
-        if base_tree_score_only >= 45.0:
+        if actual_canopy_pct >= 45.0:
             uplift_bonus += 25.0  # Very high canopy: full 25 points
-        elif base_tree_score_only >= 40.0:
+        elif actual_canopy_pct >= 40.0:
             # High canopy (40-45%): 15-25 points
-            canopy_factor = (base_tree_score_only - 40.0) / 5.0  # 40-45% → 0-1.0
+            canopy_factor = (actual_canopy_pct - 40.0) / 5.0  # 40-45% → 0-1.0
             uplift_bonus += 15.0 + (canopy_factor * 10.0)  # 15-25 points
         else:
             # Moderate-high canopy (35-40%): 8-15 points
-            canopy_factor = (base_tree_score_only - 35.0) / 5.0  # 35-40% → 0-1.0
+            canopy_factor = (actual_canopy_pct - 35.0) / 5.0  # 35-40% → 0-1.0
             uplift_bonus += 8.0 + (canopy_factor * 7.0)  # 8-15 points
     
     # High context bonus locations get uplift for scenic contexts
@@ -3030,9 +3043,9 @@ def calculate_natural_beauty(lat: float,
     
     # Combination bonus: high canopy + moderate context (greenery-rich scenic locations)
     # This helps locations like Silver Lake, OH with high canopy but moderate context
-    if base_tree_score_only >= 35.0 and context_bonus_raw >= 5.0:
+    if actual_canopy_pct >= 35.0 and context_bonus_raw >= 5.0:
         # Combination: additional 8-18 points (increased from 5-12)
-        combo_canopy_factor = min(1.0, (base_tree_score_only - 35.0) / 15.0)  # 35-50% → 0-1.0
+        combo_canopy_factor = min(1.0, (actual_canopy_pct - 35.0) / 15.0)  # 35-50% → 0-1.0
         combo_context_factor = min(1.0, (context_bonus_raw - 5.0) / 15.0)  # 5-20 → 0-1.0
         combo_factor = (combo_canopy_factor + combo_context_factor) / 2.0
         uplift_bonus += 8.0 + (combo_factor * 10.0)  # 8-18 points
