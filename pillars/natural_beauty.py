@@ -2985,10 +2985,13 @@ def calculate_natural_beauty(lat: float,
     gvi_weighted = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
     street_tree_weighted = street_tree_bonus * 1.0  # 5 points max (already 0-5 scale)
     local_green_weighted = local_green_score * 1.0  # 10 points max (already 0-10 scale)
-    scenic_weighted = min(70.0, natural_bonus_scaled * 1.75)  # 70 points max (context bonus 0-40, scaled 1.75x)
+    # PHASE 4: Enhanced context weighting - increase scaling for context bonuses
+    # Increased from 1.75x to 2.0x to give more weight to scenic context
+    # This allows scenic locations to reach higher scores even with moderate canopy
+    scenic_weighted = min(80.0, natural_bonus_scaled * 2.0)  # 80 points max (context bonus 0-40, scaled 2.0x, increased from 1.75x)
     
     natural_native = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted)
-    # Total max: 15 + 20 + 5 + 10 + 70 = 120 points
+    # Total max: 15 + 20 + 5 + 10 + 80 = 130 points (increased from 120)
     # Keep original scaling (100/93.75) for backwards compatibility - same weighted score gives same final score
     # The increased context bonus cap (40.0 → 70 weighted) allows exceptional areas to reach higher weighted totals
     # which then scale proportionally to higher final scores, while maintaining backwards compatibility
@@ -3101,12 +3104,12 @@ def calculate_natural_beauty(lat: float,
             "gvi_weight": 0.20,
             "street_tree_weight": 1.0,  # Already 0-5 scale
             "local_green_weight": 1.0,  # Already 0-10 scale
-            "scenic_weight": 1.75,
+            "scenic_weight": 2.0,  # PHASE 4: Increased from 1.75 to 2.0 for enhanced context weighting
             "base_canopy_max_contribution": 15.0,
             "gvi_max_contribution": 20.0,
             "street_tree_max_contribution": 5.0,
             "local_green_max_contribution": 10.0,
-            "scenic_max_contribution": 35.0
+            "scenic_max_contribution": 80.0  # PHASE 4: Increased from 70.0 to 80.0 (context bonus 0-40, scaled 2.0x)
         },
         "calibration": {
             "cal_a": None,
