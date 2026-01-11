@@ -2417,7 +2417,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # Enhanced GVI calculation: prioritize semantic_gvi if available
         semantic_gvi = float(gvi_metrics.get("semantic_gvi") or 0.0)  # Enhanced SGVI
-        vegetation_health_score = float(gvi_metrics.get("vegetation_health_score") or (vegetation_health * 100.0))  # Enhanced health score
+        # vegetation_health is already in 0-100 scale, so use it directly if vegetation_health_score not available
+        vegetation_health_score = float(gvi_metrics.get("vegetation_health_score") or vegetation_health)  # Enhanced health score (already 0-100 scale)
         
         if semantic_gvi > 0:
             # Use semantic GVI as primary metric (more accurate, uses NDVI + VARI)
