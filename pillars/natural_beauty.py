@@ -2023,9 +2023,71 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     natural_context_components["viewshed_relief_m"] = round(viewshed_relief_m, 2)
                 natural_context_components["scenic_viewshed_score"] = round(scenic_viewshed_score, 2)
                 natural_context_details["viewshed_metrics"] = viewshed_metrics
+                
+                # PHASE 3: Mountain backdrop bonus - reward visible high-relief terrain
+                # This bonus recognizes that visible mountain backdrops are a major scenic feature
+                # even when local terrain metrics don't capture it fully
+                mountain_backdrop_bonus = 0.0
+                if viewshed_relief_m is not None and visible_natural_pct is not None:
+                    # Require both high relief (>200m) AND significant visible natural terrain (>30%)
+                    # This ensures we're rewarding actual visible mountain backdrops, not just local terrain
+                    if viewshed_relief_m > 200.0 and visible_natural_pct > 30.0:
+                        # Scale bonus by both relief (0-8 points) and visible natural % (0-4 points)
+                        # Max 12 points for exceptional visible mountain backdrops (600m+ relief, 60%+ visible natural)
+                        relief_component = min(8.0, (viewshed_relief_m - 200.0) / 400.0 * 8.0)  # 200-600m → 0-8 points
+                        natural_component = min(4.0, (visible_natural_pct - 30.0) / 30.0 * 4.0)  # 30-60% → 0-4 points
+                        mountain_backdrop_bonus = relief_component + natural_component
+                        context_bonus_total += mountain_backdrop_bonus
+                        natural_context_components["mountain_backdrop_bonus"] = round(mountain_backdrop_bonus, 2)
+                        logger.debug(f"Applied mountain backdrop bonus ({mountain_backdrop_bonus:.2f}) for relief {viewshed_relief_m:.1f}m and {visible_natural_pct:.1f}% visible natural")
+                
+                # PHASE 3: Water visibility bonus - enhance bonuses for visually accessible water
+                # If viewshed shows good visibility AND water is nearby, add visibility bonus
+                # This is calculated AFTER viewshed is available, similar to mountain backdrop bonus
+                water_visibility_bonus = 0.0
+                if water_proximity_data and lat is not None and lon is not None:
+                    nearest_waterbody = water_proximity_data.get("nearest_waterbody")
+                    nearest_distance_km = water_proximity_data.get("nearest_distance_km")
+                    if nearest_waterbody and nearest_distance_km is not None and visible_natural_pct is not None:
+                        water_proximity_type = nearest_waterbody.get("type")
+                        # Water type weighting: ocean > large lake > river > small lake
+                        type_weight = 1.0
+                        if water_proximity_type == "ocean":
+                            type_weight = 1.5
+                        elif water_proximity_type == "lake":
+                            lake_area_km2 = nearest_waterbody.get("area_km2", 0)
+                            if lake_area_km2 > 50.0:
+                                type_weight = 1.4
+                            elif lake_area_km2 > 10.0:
+                                type_weight = 1.3
+                            else:
+                                type_weight = 1.1
+                        elif water_proximity_type == "river":
+                            type_weight = 1.2
+                        
+                        # Require both good viewshed (visible natural >30% OR scenic score >50) AND nearby water (<15km)
+                        # This rewards water that's both close AND visible
+                        if (visible_natural_pct > 30.0 or scenic_viewshed_score > 50.0) and nearest_distance_km < 15.0:
+                            # Scale visibility bonus by viewshed quality (max 6 points)
+                            # Close water (<5km) with excellent viewshed gets full bonus
+                            # Further water (5-15km) gets reduced bonus
+                            if nearest_distance_km < 5.0:
+                                visibility_factor = min(1.0, (visible_natural_pct / 50.0) if visible_natural_pct > 0 else (scenic_viewshed_score / 70.0))
+                                water_visibility_bonus = visibility_factor * 6.0 * type_weight  # Max 6 points for close visible water
+                            elif nearest_distance_km < 10.0:
+                                visibility_factor = min(1.0, (visible_natural_pct / 50.0) if visible_natural_pct > 0 else (scenic_viewshed_score / 70.0))
+                                water_visibility_bonus = visibility_factor * 4.0 * type_weight  # Max 4 points for medium-distance visible water
+                            else:  # 10-15km
+                                visibility_factor = min(1.0, (visible_natural_pct / 50.0) if visible_natural_pct > 0 else (scenic_viewshed_score / 70.0))
+                                water_visibility_bonus = visibility_factor * 2.0 * type_weight  # Max 2 points for far visible water
+                            
+                            context_bonus_total += water_visibility_bonus
+                            natural_context_components["water_visibility_bonus"] = round(water_visibility_bonus, 2)
+                            logger.debug(f"Applied water visibility bonus ({water_visibility_bonus:.2f}) for {nearest_distance_km:.1f}km {water_proximity_type} with {visible_natural_pct:.1f}% visible natural")
+                
                 # #region agent log
                 with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"mountain_backdrop_bonus":{mountain_backdrop_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
                 # #endregion
         except Exception as viewshed_error:
             logger.debug("Viewshed proxy calculation failed: %s, using defaults", viewshed_error)
