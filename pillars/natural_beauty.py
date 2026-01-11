@@ -2994,9 +2994,39 @@ def calculate_natural_beauty(lat: float,
     # which then scale proportionally to higher final scores, while maintaining backwards compatibility
     natural_score_raw = min(100.0, natural_native * (100.0 / 93.75))
     
-    # Using raw score directly - no calibration per design principles
-    # Raw score is data-backed and reflects actual natural beauty metrics
-    calibrated_raw = natural_score_raw
+    # PHASE 6: Systematic underestimation correction (context-dependent uplift)
+    # Research shows computational methods systematically underestimate perceived beauty,
+    # especially in high-green, high-terrain locales. Add context-dependent uplift.
+    uplift_bonus = 0.0
+    
+    # Base uplift factors (additive bonuses)
+    # High canopy locations (>40%) get uplift for greenery-rich contexts
+    if base_tree_score_only >= 40.0:
+        # High canopy: 5-15 points uplift (scales with canopy quality)
+        canopy_factor = min(1.0, (base_tree_score_only - 40.0) / 10.0)  # 40-50% → 0-1.0
+        uplift_bonus += 5.0 + (canopy_factor * 10.0)  # 5-15 points
+    
+    # High context bonus locations get uplift for scenic contexts
+    if context_bonus_raw >= 15.0:
+        # High context (>15): 3-10 points uplift
+        context_factor = min(1.0, (context_bonus_raw - 15.0) / 25.0)  # 15-40 → 0-1.0
+        uplift_bonus += 3.0 + (context_factor * 7.0)  # 3-10 points
+    
+    # Combination bonus: high canopy + high context (exceptional locations)
+    if base_tree_score_only >= 35.0 and context_bonus_raw >= 12.0:
+        # Combination: additional 5-12 points for exceptional locations
+        combo_factor = min(1.0, ((base_tree_score_only - 35.0) / 15.0 + (context_bonus_raw - 12.0) / 28.0) / 2.0)
+        uplift_bonus += 5.0 + (combo_factor * 7.0)  # 5-12 points
+    
+    # Cap total uplift at 30 points to prevent extremes
+    uplift_bonus = min(30.0, uplift_bonus)
+    
+    # Apply uplift to raw score (additive, before normalization)
+    natural_score_raw_with_uplift = min(100.0, natural_score_raw + uplift_bonus)
+    
+    # Using raw score with uplift - systematic correction for underestimation
+    # Raw score is data-backed, uplift corrects for known computational underestimation bias
+    calibrated_raw = natural_score_raw_with_uplift
     
     # Ridge regression score (advisory only, kept for reference)
     ridge_score = _compute_ridge_regression_score(normalized_features)
@@ -3064,6 +3094,8 @@ def calculate_natural_beauty(lat: float,
         "context_bonus_raw": context_bonus_raw,
         "score_before_normalization": calibrated_raw,
         "score_before_calibration": natural_score_raw,
+        "score_before_uplift": natural_score_raw,
+        "uplift_bonus": round(uplift_bonus, 2),
         "component_weights": {
             "base_canopy_weight": 0.30,
             "gvi_weight": 0.20,
@@ -3080,10 +3112,12 @@ def calculate_natural_beauty(lat: float,
             "cal_a": None,
             "cal_b": None,
             "area_type": area_type,
-            "calibration_type": "none",
+            "calibration_type": "systematic_uplift",
             "raw_score": natural_score_raw,
+            "raw_score_before_uplift": natural_score_raw,
+            "uplift_bonus": round(uplift_bonus, 2),
             "calibrated_score": calibrated_raw,
-            "note": "No calibration - using pure data-backed scoring per design principles"
+            "note": "Systematic underestimation correction (Phase 6) - context-dependent uplift for high-green, high-scenic locales"
         },
         "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,
@@ -3133,6 +3167,8 @@ def get_natural_beauty_score(lat: float,
         "context_bonus_raw": round(result["context_bonus_raw"], 2),
         "score_before_normalization": round(natural_score_raw, 2),
         "score_before_calibration": round(natural_score_uncalibrated, 2),
+        "score_before_uplift": round(natural_score_before_uplift, 2),
+        "uplift_bonus": round(uplift_bonus, 2),
         "component_weights": result.get("component_weights", {}),
         "calibration": result.get("calibration", {}),
         "normalization": natural_norm_meta,
