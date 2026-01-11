@@ -3000,29 +3000,45 @@ def calculate_natural_beauty(lat: float,
     # PHASE 6: Systematic underestimation correction (context-dependent uplift)
     # Research shows computational methods systematically underestimate perceived beauty,
     # especially in high-green, high-terrain locales. Add context-dependent uplift.
+    # Enhanced: Increased uplift bonuses to help locations reach 65-75 target range
     uplift_bonus = 0.0
     
     # Base uplift factors (additive bonuses)
-    # High canopy locations (>40%) get uplift for greenery-rich contexts
-    if base_tree_score_only >= 40.0:
-        # High canopy: 5-15 points uplift (scales with canopy quality)
-        canopy_factor = min(1.0, (base_tree_score_only - 40.0) / 10.0)  # 40-50% → 0-1.0
-        uplift_bonus += 5.0 + (canopy_factor * 10.0)  # 5-15 points
+    # High canopy locations (>35%) get uplift for greenery-rich contexts
+    if base_tree_score_only >= 35.0:
+        # High canopy: 8-25 points uplift (scales with canopy quality, increased from 5-15)
+        # Very high canopy (45%+) gets maximum uplift
+        if base_tree_score_only >= 45.0:
+            uplift_bonus += 25.0  # Very high canopy: full 25 points
+        elif base_tree_score_only >= 40.0:
+            # High canopy (40-45%): 15-25 points
+            canopy_factor = (base_tree_score_only - 40.0) / 5.0  # 40-45% → 0-1.0
+            uplift_bonus += 15.0 + (canopy_factor * 10.0)  # 15-25 points
+        else:
+            # Moderate-high canopy (35-40%): 8-15 points
+            canopy_factor = (base_tree_score_only - 35.0) / 5.0  # 35-40% → 0-1.0
+            uplift_bonus += 8.0 + (canopy_factor * 7.0)  # 8-15 points
     
     # High context bonus locations get uplift for scenic contexts
-    if context_bonus_raw >= 15.0:
-        # High context (>15): 3-10 points uplift
-        context_factor = min(1.0, (context_bonus_raw - 15.0) / 25.0)  # 15-40 → 0-1.0
-        uplift_bonus += 3.0 + (context_factor * 7.0)  # 3-10 points
+    if context_bonus_raw >= 10.0:
+        # High context (>10): 5-15 points uplift (increased from 3-10, lower threshold)
+        if context_bonus_raw >= 20.0:
+            uplift_bonus += 15.0  # Very high context: full 15 points
+        else:
+            context_factor = (context_bonus_raw - 10.0) / 10.0  # 10-20 → 0-1.0
+            uplift_bonus += 5.0 + (context_factor * 10.0)  # 5-15 points
     
-    # Combination bonus: high canopy + high context (exceptional locations)
-    if base_tree_score_only >= 35.0 and context_bonus_raw >= 12.0:
-        # Combination: additional 5-12 points for exceptional locations
-        combo_factor = min(1.0, ((base_tree_score_only - 35.0) / 15.0 + (context_bonus_raw - 12.0) / 28.0) / 2.0)
-        uplift_bonus += 5.0 + (combo_factor * 7.0)  # 5-12 points
+    # Combination bonus: high canopy + moderate context (greenery-rich scenic locations)
+    # This helps locations like Silver Lake, OH with high canopy but moderate context
+    if base_tree_score_only >= 35.0 and context_bonus_raw >= 5.0:
+        # Combination: additional 8-18 points (increased from 5-12)
+        combo_canopy_factor = min(1.0, (base_tree_score_only - 35.0) / 15.0)  # 35-50% → 0-1.0
+        combo_context_factor = min(1.0, (context_bonus_raw - 5.0) / 15.0)  # 5-20 → 0-1.0
+        combo_factor = (combo_canopy_factor + combo_context_factor) / 2.0
+        uplift_bonus += 8.0 + (combo_factor * 10.0)  # 8-18 points
     
-    # Cap total uplift at 30 points to prevent extremes
-    uplift_bonus = min(30.0, uplift_bonus)
+    # Cap total uplift at 45 points to prevent extremes (increased from 30)
+    uplift_bonus = min(45.0, uplift_bonus)
     
     # Apply uplift to raw score (additive, before normalization)
     natural_score_raw_with_uplift = min(100.0, natural_score_raw + uplift_bonus)
