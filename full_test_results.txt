@@ -1,0 +1,55 @@
+Redis not available, using in-memory cache: No module named 'redis'
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Washington at 38.9051994,-77.062785
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Washington - lat=38.9051994, lon=-77.062785, area_type=suburban
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 277 raw park/greenway elements (types: {'way'}, total elements: 1187)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 277 raw → 24 processed (filtered: 253)
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 6019 raw park/greenway elements (types: {'relation', 'node', 'way'}, total elements: 32373)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 6019 raw → 482 processed (filtered: 5537)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Boston at 42.3568437,-71.0686266
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Boston - lat=42.3568437, lon=-71.0686266, area_type=urban_residential
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 2814 raw park/greenway elements (types: {'relation', 'node', 'way'}, total elements: 18463)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 2814 raw → 186 processed (filtered: 2628)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 657 raw park/greenway elements (types: {'relation', 'way'}, total elements: 8111)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 657 raw → 49 processed (filtered: 608)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for New York at 40.6701033,-73.9859723
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for New York - lat=40.6701033, lon=-73.9859723, area_type=urban_residential
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 1861 raw park/greenway elements (types: {'relation', 'way'}, total elements: 5842)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 1861 raw → 110 processed (filtered: 1751)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 312 raw park/greenway elements (types: {'relation', 'way'}, total elements: 1048)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 312 raw → 16 processed (filtered: 296)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Manhattan Beach at 33.8872777,-118.4104324
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Manhattan Beach - lat=33.8872777, lon=-118.4104324, area_type=suburban
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 289 raw park/greenway elements (types: {'way'}, total elements: 1545)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 289 raw → 32 processed (filtered: 257)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] OSM parks query returned empty results for lat=33.8872777, lon=-118.4104324, radius=2000m
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] OSM parks query returned 0 elements for lat=33.8872777, lon=-118.4104324, radius=2000m. This may be legitimate if no parks exist in the area.
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for The Woodlands at 30.1734194,-95.504686
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for The Woodlands - lat=30.1734194, lon=-95.504686, area_type=exurban
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 2 raw park/greenway elements (types: {'way'}, total elements: 63)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Successfully processed 2 parks (playgrounds: 0, facilities: 0)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 76 raw park/greenway elements (types: {'way'}, total elements: 1471)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 76 raw → 40 processed (filtered: 36)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Los Angeles at 34.0896518,-118.269373
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Los Angeles - lat=34.0896518, lon=-118.269373, area_type=suburban
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 126 raw park/greenway elements (types: {'way'}, total elements: 1198)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 126 raw → 11 processed (filtered: 115)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] OSM parks query returned empty results for lat=34.0896518, lon=-118.269373, radius=2000m
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] OSM parks query returned 0 elements for lat=34.0896518, lon=-118.269373, radius=2000m. This may be legitimate if no parks exist in the area.
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Truckee at 39.3279454,-120.1835765

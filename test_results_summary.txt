@@ -1,0 +1,640 @@
+Redis not available, using in-memory cache: No module named 'redis'
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Washington at 38.9051994,-77.062785
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Washington - lat=38.9051994, lon=-77.062785, area_type=suburban
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 1425 raw park/greenway elements (types: {'relation', 'way', 'node'}, total elements: 8386)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 1425 raw → 132 processed (filtered: 1293)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 6019 raw park/greenway elements (types: {'relation', 'way', 'node'}, total elements: 6060)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=23009026, type=way, name=Normanstone Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=24776331, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=24776341, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=24776368, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=24776372, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=24776373, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=27314162, type=way, name=Arlington Ridge Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=28307408, type=way, name=Dawson Terrace Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=28317315, type=way, name=Gateway Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=28317525, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=29216640, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=34746710, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=39943816, type=way, name=Capital Crescent Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=40797125, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=40797128, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964684, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964702, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964735, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964756, type=way, name=Longfellow Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964784, type=way, name=James Monroe Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964838, type=way, name=Theodore Roosevelt Island, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964862, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964867, type=way, name=Thompson's Boat Center, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964868, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964871, type=way, name=Rock Creek & Potomac Parkway, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964878, type=way, name=Witherspoon Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964882, type=way, name=Sheridan Circle, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964911, type=way, name=Triangle Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964924, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964927, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964962, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964965, type=way, name=Montrose Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964967, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964978, type=way, name=Washington Circle Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41964980, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965042, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965059, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965076, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965084, type=way, name=Rain Garden by the Civil War Nurses Memorial, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965096, type=way, name=Robert Emmet Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965134, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965217, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965262, type=way, name=Dupont Circle, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965279, type=way, name=Old Stone House Garden, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965280, type=way, name=Edward J. Kelly Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965281, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965283, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965302, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965336, type=way, name=Lady Bird Johnson Park (Columbia Island), reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=41965346, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=45270308, type=way, name=Dark Star Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=45279457, type=way, name=Rhodeside Green Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=45300960, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=45330150, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207280, type=way, name=Hardy, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207304, type=way, name=Francis Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207305, type=way, name=Duke Ellington Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207306, type=way, name=Sonny Bono Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207307, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207308, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207309, type=way, name=Rose Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207311, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207312, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207313, type=way, name=Book Hill Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207317, type=way, name=Guy Mason Recreation Center, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48207335, type=way, name=Mitchell Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=48268462, type=way, name=Volta Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=50432210, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=50432223, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=50432224, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=50575568, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=50575569, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=55170864, type=way, name=110 Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=55292813, type=way, name=Georgetown Waterfront Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=58187071, type=way, name=Nuns of the Battlefield Civil War Nurses Monument, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=58673541, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=58673542, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=59246906, type=way, name=Square 80, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=66409206, type=way, name=Veterans Memorial Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=66409285, type=way, name=GW Anniversary Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=66409302, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=66819510, type=way, name=West End Garden, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=66819548, type=way, name=Whitehaven Garden, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=68771710, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=69609482, type=way, name=Healy Lawn, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=81125927, type=way, name=Freedom Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=86573515, type=way, name=Devils Chair Bridge, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=86573516, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=86573579, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=104456355, type=way, name=Library Walk, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=105424318, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=107119138, type=way, name=Capital Crescent Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=111877871, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=118400763, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=123992233, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=137952740, type=way, name=Potomac Heritage Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=137952743, type=way, name=Potomac Heritage Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=150858238, type=way, name=Hillside Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=159366407, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=159366408, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=161838113, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=176578521, type=way, name=Ropewalk, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=180184831, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=188659878, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=230476812, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=234731531, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=234731538, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=234731539, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=234731579, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=234731580, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=235071651, type=way, name=Francis Scott Key Memorial, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237169543, type=way, name=Potomac Heritage Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237169544, type=way, name=Potomac Heritage Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237887425, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237887426, type=way, name=Steven M. Dixon Memorial Garden, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237887427, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=237887749, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=280174801, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=280174802, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=297059396, type=way, name=Whitehaven Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298173927, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298175203, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298175204, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298175365, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298176419, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298176421, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298245316, type=way, name=Whitehaven Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298365102, type=way, name=Dumbarton Oaks Gardens, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=298461980, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=330560139, type=way, name=Whitehaven Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331151745, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331157992, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331158667, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331159285, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331159286, type=way, name=Varsity Place, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331168570, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331168571, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331168572, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331168574, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=331168575, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=333193623, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=381608958, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=398804975, type=way, name=Triangle Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=398807879, type=way, name=Galvez Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=411214746, type=way, name=Capital Crescent Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=468917865, type=way, name=Belvedere Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=484878998, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=485116737, type=way, name=Fort Meyer Heights Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=493540504, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=542285084, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=542285085, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=542285086, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=544617303, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=544617304, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=544617305, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=544617306, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=544617307, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=551974258, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102846, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102847, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102849, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102851, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102853, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555102854, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=555285573, type=way, name=Whitehaven Parkway Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=599558569, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=599564367, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=619876895, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=640601931, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=672889576, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=681287126, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=710310289, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=715818223, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=766755784, type=way, name=Normanstone Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=771734785, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=771734786, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=771749703, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=773908308, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=775393112, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=797173067, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=797173068, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=797173073, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=797173074, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=816942604, type=way, name=North Meade Street Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=847309243, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=847323924, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=847323925, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=867774186, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=902836008, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=902836009, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=903668927, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=903668996, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=903669024, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=903867992, type=way, name=Robert Latham Owen Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=904151106, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=931661880, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=958047522, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=968937382, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494174, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494175, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494176, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494177, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494178, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494179, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494180, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494181, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494182, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494183, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494189, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494191, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494192, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494206, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494208, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494210, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494212, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494213, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494214, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494218, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494221, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494222, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494225, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=988494229, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=994133429, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1007399856, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1008235301, type=way, name=Hillside Park Path, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1008235302, type=way, name=Hillside Park Path, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1019840296, type=way, name=Presidential Grove, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1020958895, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1022268359, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1030808017, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1034670304, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1042092412, type=way, name=Winfield Lane Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1042092413, type=way, name=Winfield Lane Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1042092414, type=way, name=Winfield Lane Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1042092415, type=way, name=Winfield Lane Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1052465082, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1052465083, type=way, name=M Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1053611679, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1053611680, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1056345183, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1056345184, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1056345186, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1056345188, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1056345189, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1058949169, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1061126844, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1061862688, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1061862689, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1063796060, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1063796061, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1063796062, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1065855716, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1072038647, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1089375297, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1093279968, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101804782, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101804784, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101804785, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101804786, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101805097, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1101805103, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1103962542, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1104188778, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1104188779, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1107180829, type=way, name=Copley Lawn, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1109744920, type=way, name=Healey Family Student Center Terrace, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1110091477, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1112169574, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1149048681, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1151100288, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1164513441, type=way, name=Guy Mason Recreation Center Dog Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1193466108, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1215423856, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1215423859, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1232439269, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1232651161, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1237119037, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1237119039, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1246901895, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1246901897, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1246901898, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1296512671, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1306136445, type=way, name=Arlington Boulevard Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1306136469, type=way, name=Hillside Park Path, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1307620886, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1307620887, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1307620911, type=way, name=Watergate Steps, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1307620912, type=way, name=Watergate Steps, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756412, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756413, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756414, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756418, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756419, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756423, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756424, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756425, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756426, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756427, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756428, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756439, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314756440, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759890, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759891, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759892, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759893, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759894, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759895, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759896, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759902, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759903, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759905, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759906, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759907, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759908, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759914, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759915, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759916, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759917, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759918, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759919, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759923, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759924, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759925, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759926, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314759927, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761745, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761746, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761747, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761748, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761749, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761750, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761751, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761752, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761753, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761754, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761756, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761757, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761761, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761762, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761766, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761767, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761769, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761770, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761772, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761773, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761774, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761775, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761778, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761779, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761781, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761782, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761783, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761784, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761785, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761786, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761787, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761788, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314761789, type=way, name=G Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764603, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764604, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764605, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764606, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764607, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764608, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764609, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764610, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764611, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764612, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764613, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764614, type=way, name=Virginia Avenue Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764618, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314764619, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771831, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771834, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771835, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771836, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771837, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771839, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771840, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771841, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771842, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771843, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771844, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771845, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771846, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771848, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771849, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771851, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771852, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771853, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771854, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771855, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771856, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771857, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771858, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771860, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771861, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771863, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771864, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771865, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771866, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771867, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314771868, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981697, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981698, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981699, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981700, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981701, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981702, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981703, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981704, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981705, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981706, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981707, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981708, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981709, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1314981710, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1319285529, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1328182424, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1328182425, type=way, name=L Street Northwest, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329680039, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329680040, type=way, name=20th Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329682645, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329710595, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329710596, type=way, name=21st Street Northwest Cycletrack, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329979128, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1329979129, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511569, type=way, name=Chesapeake and Ohio Canal Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511575, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511576, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511577, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511578, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1338511579, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1342230588, type=way, name=Centennial Grove, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1354189311, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1354189312, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355214658, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355214659, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215384, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215385, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215386, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215387, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215829, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1355215830, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1356961817, type=way, name=Normanstone Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1356961819, type=way, name=Normanstone Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1357111677, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1357111678, type=way, name=Glover-Archbold Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448496, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448497, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448498, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448499, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448501, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448502, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448503, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448504, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448508, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448509, type=way, name=Custis Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448513, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1370448514, type=way, name=Mount Vernon Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1381095652, type=way, name=Belmont Road Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1388307049, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1388307050, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1388323174, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1388323175, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1388391408, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1409213045, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1421495842, type=way, name=Rock Creek Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1423613839, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1423613840, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1423613842, type=way, name=110 Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1423613843, type=way, name=110 Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1423613845, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1424811994, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1424811998, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425364880, type=way, name=Rosslyn Highlands Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425364883, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425575084, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425575086, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425598638, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425598639, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425630396, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425630399, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425633797, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425633801, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425633802, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1425633803, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1430204757, type=way, name=Capital Crescent Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432092475, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432092478, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432092479, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432314990, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432314993, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432346021, type=way, name=Rosslyn Parklet, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432359068, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432359071, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432359073, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1432578801, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1433208086, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1433952076, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434405549, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434627019, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434627021, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434627022, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434935847, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1434935852, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436202759, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436202764, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436202765, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252404, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252406, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252408, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252410, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252412, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252414, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436252417, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436687795, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436687799, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436687800, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1436687801, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442444113, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442444115, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442444117, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614516, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614518, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614520, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614523, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614524, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614526, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614528, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614530, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614532, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614534, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614536, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614539, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614541, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614543, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614545, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442614548, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1442629270, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1443273666, type=way, name=East Park, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1443738143, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1443947949, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444018606, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260532, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260535, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260537, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260540, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260542, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260544, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260545, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260546, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260551, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260552, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260553, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444260554, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444264428, type=way, name=Freedom Park Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444274768, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319853, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319854, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319855, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319858, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319859, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319860, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1444319863, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1447509840, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1448482379, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1454720713, type=way, name=Arlington Boulevard Trail, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1456813557, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=1456813558, type=way, name=None, reason=way-geometry-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=2999110, type=relation, name=West Potomac Park, reason=relation-centroid-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=6151578, type=relation, name=Edward R Murrow Park, reason=relation-centroid-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=6603538, type=relation, name=Rawlins Park, reason=relation-centroid-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=11158003, type=relation, name=National Mall, reason=relation-centroid-fail
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Failed to get geometry for park osm_id=19793573, type=relation, name=Dumbarton Oaks Park, reason=relation-centroid-fail
+ERROR:homefit.data_sources.osm_api:OSM parks query error: must be real number, not NoneType
+Traceback (most recent call last):
+  File "/Users/adamwright/home-fit/data_sources/osm_api.py", line 423, in query_green_spaces
+    parks, playgrounds, recreational_facilities = _process_green_features(
+                                                  ~~~~~~~~~~~~~~~~~~~~~~~^
+        elements, lat, lon)
+        ^^^^^^^^^^^^^^^^^^^
+  File "/Users/adamwright/home-fit/data_sources/osm_api.py", line 1473, in _process_green_features
+    distance_m = haversine_distance(center_lat, center_lon, elem_lat, elem_lon)
+  File "/Users/adamwright/home-fit/data_sources/utils.py", line 22, in haversine_distance
+    phi1 = math.radians(lat1)
+TypeError: must be real number, not NoneType
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 277 raw park/greenway elements (types: {'way'}, total elements: 1187)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 277 raw → 24 processed (filtered: 253)
+WARNING:homefit.data_sources.osm_api:OSM parks query returned no response
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Boston at 42.3568437,-71.0686266
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Boston - lat=42.3568437, lon=-71.0686266, area_type=urban_residential
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 657 raw park/greenway elements (types: {'relation', 'way'}, total elements: 8111)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 657 raw → 49 processed (filtered: 608)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for New York at 40.6701033,-73.9859723
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for New York - lat=40.6701033, lon=-73.9859723, area_type=urban_residential
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 312 raw park/greenway elements (types: {'relation', 'way'}, total elements: 1048)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 312 raw → 16 processed (filtered: 296)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Manhattan Beach at 33.8872777,-118.4104324
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Manhattan Beach - lat=33.8872777, lon=-118.4104324, area_type=suburban
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 289 raw park/greenway elements (types: {'way'}, total elements: 1545)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 289 raw → 32 processed (filtered: 257)
+WARNING:homefit.data_sources.osm_api:OSM rate limited (429), waiting 1s before retry (1/3)...
+WARNING:homefit.data_sources.osm_api:Switching Overpass endpoint to https://overpass.kumi.systems/api/interpreter
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 1517 raw park/greenway elements (types: {'way', 'node'}, total elements: 7286)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 1517 raw → 169 processed (filtered: 1348)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for The Woodlands at 30.1734194,-95.504686
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for The Woodlands - lat=30.1734194, lon=-95.504686, area_type=exurban
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 2 raw park/greenway elements (types: {'way'}, total elements: 63)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Successfully processed 2 parks (playgrounds: 0, facilities: 0)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 76 raw park/greenway elements (types: {'way'}, total elements: 1471)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 76 raw → 40 processed (filtered: 36)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Los Angeles at 34.0896518,-118.269373
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Los Angeles - lat=34.0896518, lon=-118.269373, area_type=suburban
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 126 raw park/greenway elements (types: {'way'}, total elements: 1198)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 126 raw → 11 processed (filtered: 115)
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 3345 raw park/greenway elements (types: {'way'}, total elements: 17932)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 3345 raw → 228 processed (filtered: 3117)
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Truckee at 39.3279454,-120.1835765
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Truckee - lat=39.3279454, lon=-120.1835765, area_type=rural
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 110 raw park/greenway elements (types: {'way'}, total elements: 698)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 110 raw → 9 processed (filtered: 101)
+WARNING:homefit.pillars.natural_beauty:Natural beauty validation: Very high score (>95) - verify components are reasonable
+INFO:homefit.pillars.natural_beauty:DEBUG: _score_trees called for Stowe at 44.4643768,-72.6856197
+INFO:homefit.pillars.natural_beauty:DEBUG: Context bonus calc started for Stowe - lat=44.4643768, lon=-72.6856197, area_type=rural
+INFO:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Found 82 raw park/greenway elements (types: {'way'}, total elements: 525)
+WARNING:homefit.data_sources.osm_api:🔍 [PARKS DIAGNOSTIC] Processing filtered parks: 82 raw → 13 processed (filtered: 69)
