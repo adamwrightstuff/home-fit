@@ -549,12 +549,18 @@ def get_natural_landscape_tags(
     
     # COASTAL: Ocean proximity (<5km) OR very large lakes (>500km² within 10km)
     is_coastal = False
-    if nearest_water_km is not None and nearest_water_km < 5.0:
-        if water_proximity_type == "ocean":
+    if nearest_water_km is not None:
+        if water_proximity_type == "ocean" and nearest_water_km < 5.0:
             is_coastal = True
-        elif water_proximity_type == "lake" and lake_area_km2 is not None and lake_area_km2 > 500.0:
+        elif water_proximity_type == "lake" and nearest_water_km < 10.0:
             # Very large lakes (Great Lakes scale) are coastal-like features
-            is_coastal = True
+            # Use area_km2 if available, fallback to water_density as proxy when OSM area tag missing
+            # water_density > 100 km² within 15km radius suggests very large lake (>500km² total)
+            water_density = water_proximity_data.get("water_density", 0) if water_proximity_data else 0
+            area_available = lake_area_km2 is not None and lake_area_km2 > 500.0
+            density_indicates_large = water_density > 100.0  # High density within 15km suggests large lake
+            if area_available or density_indicates_large:
+                is_coastal = True
     
     if is_coastal:
         tags.append('coastal')
