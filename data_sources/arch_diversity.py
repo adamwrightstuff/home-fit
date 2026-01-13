@@ -251,6 +251,58 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "composite": {"composite", "mixed"},
     }
 
+    def _infer_material_from_type(tags: Dict[str, str], lat: float, lon: float) -> Optional[str]:
+        """
+        Infer building material from building type and geographic region.
+        Returns normalized material name or None if inference not possible.
+        """
+        btag = (tags.get("building:use") or tags.get("building") or "").lower()
+        amenity = (tags.get("amenity") or "").lower()
+        
+        # Geographic heuristics (latitude-based)
+        # Northern regions (lat > 40): More brick/stone (heating needs)
+        # Southern regions (lat < 35): More wood/stucco (cooling needs)
+        # Coastal regions: More wood (proximity to lumber)
+        is_northern = lat > 40.0
+        is_southern = lat < 35.0
+        
+        # Residential buildings
+        if any(k in btag for k in ("residential", "house", "apart", "condo", "terrace", "detached", "semidetached_house")):
+            if is_northern:
+                return "brick"  # Northern residential: typically brick
+            elif is_southern:
+                return "wood"  # Southern residential: typically wood frame
+            else:
+                return "brick"  # Default: brick
+        
+        # Commercial/retail
+        if any(k in btag for k in ("commercial", "retail", "shop", "store")) or amenity in ("shop", "supermarket"):
+            if is_northern:
+                return "brick"  # Northern commercial: brick/stone
+            else:
+                return "concrete"  # Modern commercial: concrete/steel
+        
+        # Office buildings
+        if "office" in btag or tags.get("office"):
+            return "concrete"  # Modern offices: concrete/steel
+        
+        # Industrial
+        if any(k in btag for k in ("industrial", "warehouse", "factory")):
+            return "metal"  # Industrial: steel/metal
+        
+        # Religious/civic (historic buildings more likely)
+        if amenity in ("place_of_worship", "church", "cathedral") or "church" in btag:
+            if is_northern:
+                return "stone"  # Northern churches: stone
+            else:
+                return "brick"  # Southern churches: brick
+        
+        # Default inference
+        if is_northern:
+            return "brick"
+        else:
+            return "wood"
+    
     def _normalize_material(value: str) -> str:
         val = (value or "").lower().strip()
         for canonical, synonyms in MATERIAL_CANONICAL.items():
@@ -280,6 +332,14 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     ways = [e for e in elements if e.get("type") == "way"]
     nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
     
+    # Tag availability tracking
+    total_buildings = len(ways)
+    buildings_with_levels_tag = 0
+    buildings_with_material_tag = 0
+    buildings_with_material_inferred = 0
+    buildings_with_type_tag = 0
+    buildings_with_any_tag = 0
+    
     # Building levels histogram (bins)
     bins = {"1":0, "2":0, "3-4":0, "5-8":0, "9+":0}
     types = {}
@@ -296,6 +356,17 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     
     for e in ways:
         tags = e.get("tags", {})
+        
+        # Track tag availability
+        if tags.get("building:levels") is not None:
+            buildings_with_levels_tag += 1
+        if tags.get("building:material") is not None:
+            buildings_with_material_tag += 1
+        if tags.get("building") or tags.get("building:use"):
+            buildings_with_type_tag += 1
+        if tags:
+            buildings_with_any_tag += 1
+        
         btype = tags.get("building") or "unknown"
         types[btype] = types.get(btype, 0) + 1
         category = _categorize_building(tags)
@@ -337,8 +408,18 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             level_values.append(lv)
         
         material = tags.get("building:material")
-        if material:
+        material_inferred = False
+        if not material:
+            # Infer material when tag is missing
+            inferred_material = _infer_material_from_type(tags, lat, lon)
+            if inferred_material:
+                material = inferred_material
+                material_inferred = True
+                buildings_with_material_inferred += 1
+        else:
             material_tagged += 1
+        
+        if material:
             normalized_material = _normalize_material(material)
             materials[material] = materials.get(material, 0) + 1
             if normalized_material:
@@ -383,9 +464,43 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 if area_sqm > 1.0:
                     areas.append(area_sqm)
 
+    # Log tag availability statistics
+    if total_buildings > 0:
+        levels_tag_pct = (buildings_with_levels_tag / total_buildings) * 100
+        material_tag_pct = (buildings_with_material_tag / total_buildings) * 100
+        material_inferred_pct = (buildings_with_material_inferred / total_buildings) * 100
+        material_total_pct = ((buildings_with_material_tag + buildings_with_material_inferred) / total_buildings) * 100
+        type_tag_pct = (buildings_with_type_tag / total_buildings) * 100
+        
+        logger.info(
+            f"[ARCH_DIVERSITY] Tag availability for {total_buildings} buildings at ({lat:.4f}, {lon:.4f}): "
+            f"levels={buildings_with_levels_tag} ({levels_tag_pct:.1f}%), "
+            f"material_tagged={buildings_with_material_tag} ({material_tag_pct:.1f}%), "
+            f"material_inferred={buildings_with_material_inferred} ({material_inferred_pct:.1f}%), "
+            f"material_total={buildings_with_material_tag + buildings_with_material_inferred} ({material_total_pct:.1f}%), "
+            f"type={buildings_with_type_tag} ({type_tag_pct:.1f}%)"
+        )
+        
+        # Log level tag distribution if available
+        if buildings_with_levels_tag > 0:
+            logger.debug(f"[ARCH_DIVERSITY] {buildings_with_levels_tag} buildings have height tags, "
+                        f"{inferred_single_story} will be inferred as single-story")
+
     # Calculate entropy for height diversity
+    # Log bin distribution before entropy calculation
+    logger.debug(
+        f"[ARCH_DIVERSITY] Level bins distribution: {bins}, "
+        f"inferred_single_story={inferred_single_story}/{total_buildings}"
+    )
+    
     # Validate: if we have many buildings but very low diversity, it might indicate data quality issues
-    levels_entropy = entropy(list(bins.values())) * 100
+    raw_entropy = entropy(list(bins.values()))
+    levels_entropy = raw_entropy * 100
+    
+    logger.debug(
+        f"[ARCH_DIVERSITY] Height diversity: raw_entropy={raw_entropy:.4f}, "
+        f"scaled_entropy={levels_entropy:.1f}"
+    )
     
     # Data quality validation: flag suspiciously low height diversity
     # For suburban/exurban areas with 10+ buildings, height diversity < 5 suggests failed height queries
@@ -401,14 +516,24 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 f"Location: {lat:.4f}, {lon:.4f}"
             )
     
-    type_div = entropy(list(types.values())) * 100
+    type_div_raw = entropy(list(types.values()))
+    type_div = type_div_raw * 100
     type_category_div = entropy(list(type_categories.values())) * 100 if type_categories else 0.0
+    
+    logger.debug(
+        f"[ARCH_DIVERSITY] Type diversity: unique_types={len(types)}, "
+        f"type_categories={len(type_categories)}, "
+        f"raw_entropy={type_div_raw:.4f}, scaled={type_div:.1f}"
+    )
+    logger.debug(f"[ARCH_DIVERSITY] Area calculation: {len(areas)} buildings with valid areas")
+    
     if len(areas) >= 2:
         mean_area = sum(areas)/len(areas)
         var = sum((a-mean_area)**2 for a in areas)/len(areas)
+        std_area = var ** 0.5
         # Protect against zero mean_area (all areas are 0)
         if mean_area > 0:
-            cv = (var ** 0.5) / mean_area
+            cv = std_area / mean_area
         else:
             cv = 0.0  # If all areas are 0, coefficient of variation is 0
         # Rescale CV based on observed distribution (95th percentile ~3.0 CV in practice)
@@ -420,8 +545,14 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         else:
             area_cv = 95 + min(5.0, (cv - 3.0) / 3.0 * 5.0)  # Scale 3.0+ CV to 95-100
         area_cv = max(0.0, min(100.0, area_cv))
+        
+        logger.debug(
+            f"[ARCH_DIVERSITY] Footprint variation: mean_area={mean_area:.1f}m², "
+            f"std={std_area:.1f}m², cv={cv:.4f}, scaled_cv={area_cv:.1f}"
+        )
     else:
         area_cv = 0.0
+        logger.debug(f"[ARCH_DIVERSITY] Footprint variation: insufficient data ({len(areas)} areas)")
     if level_values:
         mean_levels = sum(level_values) / len(level_values)
         variance_levels = sum((lv - mean_levels) ** 2 for lv in level_values) / len(level_values)
@@ -443,11 +574,21 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
 
     diversity_score = min(100.0, 0.4*levels_entropy + 0.4*type_div + 0.2*area_cv)
     
+    logger.debug(
+        f"[ARCH_DIVERSITY] Diversity score: levels={levels_entropy:.1f}*0.4 + "
+        f"type={type_div:.1f}*0.4 + area={area_cv:.1f}*0.2 = {diversity_score:.1f}"
+    )
+    
     # Calculate built coverage ratio: sum of building areas / circle land area
     # This helps identify urban areas with lots of voids (low coverage = fragmented, less beautiful)
     circle_area_sqm = math.pi * (radius_m ** 2)
     total_built_area_sqm = sum(areas) if areas else 0.0
     built_coverage_ratio = (total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
+    
+    logger.debug(
+        f"[ARCH_DIVERSITY] Coverage calculation: total_built_area={total_built_area_sqm:.0f}m², "
+        f"circle_area={circle_area_sqm:.0f}m², ratio={built_coverage_ratio:.4f}"
+    )
 
     # Calculate OSM coverage validation
     # No hard failure - always report coverage and confidence
