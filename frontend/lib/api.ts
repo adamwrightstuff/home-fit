@@ -89,9 +89,6 @@ export function streamScore(
 
   const url = `${API_BASE_URL}/score/stream?${searchParams.toString()}`;
   
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/58f12577-eab6-4acc-8929-94a4b68cc043',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:91','message':'Stream URL with priorities','data':{url:url.substring(0,300),hasPriorities:url.includes('priorities')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
   console.log('streamScore: Connecting to SSE endpoint:', url);
   const eventSource = new EventSource(url);
   let closed = false;
