@@ -974,6 +974,20 @@ COVERAGE_EXPECTATIONS = {
 # Examples: Old San Juan (20.9%), Garden District New Orleans (19.8%)
 SPACIOUS_HISTORIC_COVERAGE_EXPECTATION = 0.22  # 22% instead of 34% for historic_urban
 
+# Coverage scoring targets (min_penalty, plateau_start, plateau_end, max_penalty)
+# Values are in percentage (0-100), based on research data:
+# Urban Core (27.5% median), Suburban (14.3% median), Rural (3.4% median)
+COVERAGE_TARGETS = {
+    "urban_core": (15, 25, 40, 50),      # Higher coverage = better for urban
+    "urban_residential": (12, 20, 35, 45),
+    "urban_core_lowrise": (15, 25, 40, 50),
+    "historic_urban": (10, 20, 35, 45),   # More forgiving for historic
+    "suburban": (8, 12, 20, 30),         # Moderate coverage best
+    "exurban": (5, 8, 15, 25),
+    "rural": (2, 3, 8, 15),              # Low coverage expected
+    "unknown": (10, 20, 35, 45),
+}
+
 
 def _is_spacious_historic_district(
     area_type: str,
@@ -2183,41 +2197,10 @@ def score_architectural_diversity_as_beauty(
         type_raw = max(type_raw, 8.5 + (coherence_floor * 7.0))
 
     scale_params = DESIGN_FORM_SCALE.get(effective, DESIGN_FORM_SCALE["unknown"])
-
-    material_component = None
-    if material_entropy > 0:
-        material_component = (material_entropy / 100.0) * 16.67
-        if material_tagged_ratio < 0.15:
-            material_component *= 0.65
-    design_components = [
-        height_raw,
-        type_raw,
-        foot_raw,
-        (setback_value / 100.0) * 16.67,
-        (facade_rhythm_value / 100.0) * 16.67
-    ]
-    design_components = [c for c in design_components if c is not None]
-    if (effective == "urban_residential" or is_historic_tag) and coherence_signal > 0.0:
-        coherence_component = coherence_signal * 16.0
-        if confidence_gate > 0.0:
-            coherence_component *= 1.0 + (confidence_gate * 0.15)
-        design_components.append(coherence_component)
-    if material_component is not None:
-        design_components.append(material_component)
-    if design_components:
-        design_total = sum(design_components)
-        design_score = min(50.0, (design_total / (len(design_components) * 16.67)) * scale_params["design"])
-    else:
-        design_score = 0.0
-
-    coverage_component = None
-    # Calculate expected_coverage once (checking for spacious historic districts)
-    # This will be used for both coverage component scoring and coverage cap logic
-    expected_coverage = None
+    
+    # Calculate is_spacious_historic early (needed for coverage scoring)
     is_spacious_historic = False
     if built_coverage_ratio is not None:
-        # Check if this is a spacious historic district (relaxed expectations)
-        # Use pre_1940_pct if provided (better signal for historic character than median year)
         is_spacious_historic = _is_spacious_historic_district(
             effective,
             built_coverage_ratio,
@@ -2227,26 +2210,108 @@ def score_architectural_diversity_as_beauty(
             footprint_cv=footprint_area_cv,
             pre_1940_pct=pre_1940_pct
         )
-        
+
+    material_component = None
+    if material_entropy > 0:
+        material_component = (material_entropy / 100.0) * 16.67
+        if material_tagged_ratio < 0.15:
+            material_component *= 0.65
+    # Setback consistency: increased weight for urban areas (critical for streetwall quality)
+    setback_weight = 16.67  # Default weight
+    if effective in ("urban_core", "urban_core_lowrise"):
+        setback_weight = 22.0  # Increased from 16.67 to 22.0 for urban core
+    elif effective == "urban_residential":
+        setback_weight = 20.0  # Increased from 16.67 to 20.0 for urban residential
+    
+    design_components = [
+        height_raw,
+        type_raw,
+        foot_raw,
+        (setback_value / 100.0) * setback_weight if setback_value is not None else None,
+        (facade_rhythm_value / 100.0) * 16.67 if facade_rhythm_value is not None else None
+    ]
+    design_components = [c for c in design_components if c is not None]
+    
+    # Built coverage: direct scoring component (10-15 points based on area type)
+    coverage_raw = None
+    if built_coverage_ratio is not None:
+        # Adjust targets for spacious historic districts
         if is_spacious_historic:
+            # More forgiving targets for spacious historic (e.g., Garden District)
+            coverage_targets = (8, 15, 30, 40)
+        else:
+            coverage_targets = COVERAGE_TARGETS.get(effective, COVERAGE_TARGETS["unknown"])
+        
+        # Score coverage using band scoring (similar to height/type/footprint)
+        coverage_max_points = 12.0  # 12 points for most areas
+        if effective in ("urban_core", "urban_core_lowrise"):
+            coverage_max_points = 15.0  # 15 points for urban core (more important)
+        elif effective == "urban_residential":
+            coverage_max_points = 13.0  # 13 points for urban residential
+        
+        coverage_raw = _score_band(built_coverage_ratio * 100.0, coverage_targets, max_points=coverage_max_points)
+        design_components.append(coverage_raw)
+    if (effective == "urban_residential" or is_historic_tag) and coherence_signal > 0.0:
+        coherence_component = coherence_signal * 16.0
+        if confidence_gate > 0.0:
+            coherence_component *= 1.0 + (confidence_gate * 0.15)
+        design_components.append(coherence_component)
+    if material_component is not None:
+        design_components.append(material_component)
+    if design_components:
+        # Calculate expected total points (accounting for variable weights)
+        # Base components: height, type, footprint (each 16.67)
+        # Variable components: setback (16.67-22.0), facade_rhythm (16.67), coverage (12.0-15.0)
+        base_components_count = sum(1 for c in [height_raw, type_raw, foot_raw] if c is not None)
+        base_points = base_components_count * 16.67
+        
+        # Variable weight components
+        variable_points = 0.0
+        if setback_value is not None:
+            variable_points += setback_weight
+        if facade_rhythm_value is not None:
+            variable_points += 16.67
+        if coverage_raw is not None:
+            # Coverage weight is already in coverage_raw (12.0-15.0)
+            variable_points += coverage_raw
+        
+        expected_total = base_points + variable_points
+        # Normalize to design scale (0-50 points native range)
+        if expected_total > 0:
+            design_score = min(50.0, (sum(design_components) / expected_total) * 50.0 * scale_params["design"])
+        else:
+            design_score = 0.0
+    else:
+        design_score = 0.0
+
+    # Calculate expected_coverage for coverage cap logic (coverage already scored in design_components)
+    expected_coverage = None
+    if built_coverage_ratio is not None:
+        # Check if this is a spacious historic district (relaxed expectations)
+        # Use pre_1940_pct if provided (better signal for historic character than median year)
+        is_spacious_historic_for_cap = _is_spacious_historic_district(
+            effective,
+            built_coverage_ratio,
+            historic_landmarks,
+            median_year_built,
+            material_entropy=material_entropy,
+            footprint_cv=footprint_area_cv,
+            pre_1940_pct=pre_1940_pct
+        )
+        
+        if is_spacious_historic_for_cap:
             # Use relaxed expectation for spacious historic districts
             # Apply to all area types, not just historic_urban
             expected_coverage = SPACIOUS_HISTORIC_COVERAGE_EXPECTATION
         else:
             expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
     
-    if built_coverage_ratio is not None:
-        
-        if expected_coverage > 0:
-            normalized_coverage = max(0.0, min(1.2, built_coverage_ratio / expected_coverage))
-            coverage_component = min(16.67, normalized_coverage * 16.67)
+    # Form components (coverage already included in design_components, so not duplicated here)
     form_components = [
-        (block_grain_value / 100.0) * 16.67,
-        (streetwall_value / 100.0) * 16.67,
+        (block_grain_value / 100.0) * 16.67 if block_grain_value is not None else None,
+        (streetwall_value / 100.0) * 16.67 if streetwall_value is not None else None,
     ]
     form_components = [c for c in form_components if c is not None]
-    if coverage_component is not None:
-        form_components.append(coverage_component)
     if form_components:
         form_total = sum(form_components)
         form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * scale_params["form"])
