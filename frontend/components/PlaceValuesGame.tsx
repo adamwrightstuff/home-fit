@@ -455,13 +455,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   const handle_apply_priorities = () => {
     const priorities = convert_scores_to_priorities()
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/58f12577-eab6-4acc-8929-94a4b68cc043',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PlaceValuesGame.tsx:456','message':'Quiz apply button clicked','data':{priorities:JSON.stringify(priorities),scores:JSON.stringify(scores)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     if (onApplyPriorities) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/58f12577-eab6-4acc-8929-94a4b68cc043',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PlaceValuesGame.tsx:459','message':'Calling onApplyPriorities callback','data':{priorities:JSON.stringify(priorities),hasCallback:!!onApplyPriorities},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       onApplyPriorities(priorities)
     }
   }

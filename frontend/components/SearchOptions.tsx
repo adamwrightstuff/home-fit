@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Info } from 'lucide-react'
 
 export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
@@ -74,15 +74,25 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     }
   }
 
-  // Load from session storage on mount
+  // Load from session storage on mount - but only on initial mount, never overwrite programmatic changes
+  // Use a ref to track if we've already loaded to prevent multiple loads
+  const hasLoadedRef = useRef(false)
+  
   useEffect(() => {
+    // Only load once on initial mount
+    if (hasLoadedRef.current) {
+      return
+    }
+    
     try {
       const stored = sessionStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         onChange({ ...options, ...parsed })
       }
+      hasLoadedRef.current = true
     } catch (e) {
+      hasLoadedRef.current = true // Mark as loaded even on error to prevent retries
       // Ignore storage errors
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

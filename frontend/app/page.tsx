@@ -18,10 +18,27 @@ export default function Home() {
   const [current_location, set_current_location] = useState<string>('')
   const [show_game, set_show_game] = useState(false)
   const [search_options_expanded, set_search_options_expanded] = useState(false)
-  const [search_options, set_search_options] = useState<SearchOptions>({
-    priorities: { ...DEFAULT_PRIORITIES },
-    include_chains: true,
-    enable_schools: true,
+  // Initialize from sessionStorage if available, otherwise use defaults
+  // This ensures quiz priorities persist across page reloads
+  const [search_options, set_search_options] = useState<SearchOptions>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return {
+          priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
+          include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
+          enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : true,
+        }
+      }
+    } catch (e) {
+      // Ignore errors, fall back to defaults
+    }
+    return {
+      priorities: { ...DEFAULT_PRIORITIES },
+      include_chains: true,
+      enable_schools: true,
+    }
   })
 
   const handle_search = (location: string) => {
@@ -36,10 +53,21 @@ export default function Home() {
   }
 
   const handle_apply_priorities = (priorities: PillarPriorities) => {
-    set_search_options(prev => ({
-      ...prev,
-      priorities
-    }))
+    set_search_options(prev => {
+      const updated = {
+        ...prev,
+        priorities
+      }
+      
+      // Immediately save to sessionStorage to prevent SearchOptions from overwriting
+      try {
+        sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
+      } catch (e) {
+        // Ignore storage errors
+      }
+      
+      return updated
+    })
     set_show_game(false)
     set_search_options_expanded(true) // Expand the search options to show the applied priorities
   }

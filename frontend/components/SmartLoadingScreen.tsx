@@ -47,6 +47,10 @@ export default function SmartLoadingScreen({
 
   useEffect(() => {
     console.log('SmartLoadingScreen: Starting stream for location:', location)
+    console.log('[DEBUG] SmartLoadingScreen: Received priorities prop:', priorities)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/58f12577-eab6-4acc-8929-94a4b68cc043',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SmartLoadingScreen.tsx:48','message':'Starting stream with priorities','data':{location,priorities:priorities?priorities.substring(0,200):null,prioritiesLength:priorities?.length,include_chains,enable_schools},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const cleanup = streamScore(
       { 
         location,
