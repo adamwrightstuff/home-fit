@@ -113,8 +113,8 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           container: map_container_ref.current,
           // @ts-ignore - MapLibre type definitions are strict about version literal type
           style: map_style,
-          center: coordinates ? [coordinates.lon, coordinates.lat] : [0, 0],
-          zoom: coordinates ? 12 : 2
+          center: coordinates ? [coordinates.lon, coordinates.lat] : [-98, 39], // Center of continental US
+          zoom: coordinates ? 12 : 4 // Slightly zoomed in to show US better
         })
 
         new_map.on('load', () => {
