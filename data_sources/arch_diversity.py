@@ -1576,6 +1576,134 @@ def _score_band(value: float, band: tuple, max_points: float = 16.67) -> float:
     return max(0.0, max_points * (hi - value) / span)
 
 
+# ============================================================================
+# WAVE 1: Fix Biggest Conceptual Bugs - Helper Functions
+# ============================================================================
+
+def _apply_diversity_coherence_multiplier(
+    height_raw: float,
+    type_raw: float,
+    foot_raw: float,
+    coherence_signal: float,
+    area_type: str
+) -> Tuple[float, float, float]:
+    """
+    Apply coherence multiplier to diversity components in low-intensity contexts.
+    
+    In suburban/exurban, high diversity without coherence can feel chaotic.
+    Returns adjusted (height_raw, type_raw, foot_raw).
+    """
+    if area_type in ("urban_core", "urban_core_lowrise", "historic_urban", "urban_residential"):
+        # Urban contexts: no penalty (diversity is good even without strong coherence)
+        return height_raw, type_raw, foot_raw
+    
+    # Suburban/exurban: diversity conditional on coherence
+    if area_type in ("suburban", "exurban", "rural"):
+        # f(coherence) = 0.5-0.7 at low coherence, ≈1.0 at high coherence
+        # Smooth interpolation: f(0.0) = 0.6, f(0.4) = 0.75, f(0.7) = 1.0
+        if coherence_signal < 0.4:
+            multiplier = 0.6 + (coherence_signal / 0.4) * 0.15  # 0.6 to 0.75
+        elif coherence_signal < 0.7:
+            multiplier = 0.75 + ((coherence_signal - 0.4) / 0.3) * 0.25  # 0.75 to 1.0
+        else:
+            multiplier = 1.0
+        
+        height_raw *= multiplier
+        type_raw *= multiplier
+        foot_raw *= multiplier
+    
+    return height_raw, type_raw, foot_raw
+
+
+def _estimate_parking_paved_share(lat: float, lon: float, radius_m: int = 1000) -> Optional[float]:
+    """
+    Estimate share of area that is parking/paved surfaces.
+    
+    Query OSM for parking lots, parking areas, and high-capacity roads.
+    Returns 0.0-1.0 ratio, or None if unavailable.
+    """
+    try:
+        query = f"""
+        [out:json][timeout:25];
+        (
+          way["amenity"="parking"](around:{radius_m},{lat},{lon});
+          way["parking"](around:{radius_m},{lat},{lon});
+          way["highway"~"^(motorway|trunk|primary)$"](around:{radius_m},{lat},{lon});
+        );
+        out body;
+        >;
+        out skel qt;
+        """
+        def _do_request():
+            return requests.post(get_overpass_url(), data={"data": query}, timeout=30, headers={"User-Agent":"HomeFit/1.0"})
+        
+        # Use standard retry profile for parking query
+        resp = _retry_overpass(_do_request, query_type="standard")
+        
+        if resp is None or resp.status_code != 200:
+            return None
+        
+        data = resp.json()
+        elements = data.get("elements", [])
+        
+        if not elements:
+            return None
+        
+        # Calculate total area of parking/paved features
+        # For simplicity, count parking ways and major roads
+        # This is a rough estimate - could be refined with actual area calculations
+        parking_count = sum(1 for elem in elements if elem.get("tags", {}).get("amenity") == "parking" or "parking" in elem.get("tags", {}))
+        major_road_count = sum(1 for elem in elements if elem.get("tags", {}).get("highway") in ("motorway", "trunk", "primary"))
+        
+        # Rough estimate: if we have significant parking/road features, assume some paved share
+        # This is conservative - return None if count is low (unreliable signal)
+        total_features = parking_count + major_road_count
+        if total_features < 3:  # Not enough data for reliable estimate
+            return None
+        
+        # Rough heuristic: each parking lot or major road suggests ~2-5% paved share
+        # This is very approximate - a proper implementation would calculate actual areas
+        estimated_share = min(0.5, total_features * 0.02)  # Cap at 50%
+        
+        return estimated_share
+    except Exception as e:
+        logger.debug(f"Parking/paved share estimation failed: {e}")
+        return None
+
+
+def _score_streetwall_contextual(
+    streetwall_value: float,
+    area_type: str
+) -> float:
+    """
+    Score streetwall continuity with area-type-specific behavior.
+    
+    - Urban contexts: Linear 0-100 → 0-16.67 (full continuity rewarded)
+    - Suburban: Peak at moderate continuity (60-80), decline at extremes
+    - Exurban/rural: Cap or penalize very high continuity (indicates auto-oriented strip)
+    """
+    if area_type in ("urban_core", "historic_urban", "urban_residential"):
+        # Keep current behavior: linear 0-100 → 0-16.67
+        return (streetwall_value / 100.0) * 16.67
+    elif area_type == "suburban":
+        # Peak at moderate continuity (60-80), decline at extremes
+        if streetwall_value < 40:
+            return (streetwall_value / 40.0) * 12.0  # 0-40 → 0-12
+        elif streetwall_value <= 80:
+            return 12.0 + ((streetwall_value - 40) / 40.0) * 4.67  # 40-80 → 12-16.67
+        else:
+            return 16.67 - ((streetwall_value - 80) / 20.0) * 2.0  # 80-100 → 16.67-14.67
+    else:  # exurban, rural
+        # Cap or lightly penalize very high continuity (indicates auto-oriented strip)
+        if streetwall_value < 50:
+            return (streetwall_value / 50.0) * 12.0  # 0-50 → 0-12
+        elif streetwall_value <= 70:
+            return 12.0 + ((streetwall_value - 50) / 20.0) * 4.67  # 50-70 → 12-16.67
+        else:
+            # Penalize >70: too continuous for rural/exurban (stripmall pattern)
+            return 16.67 - ((streetwall_value - 70) / 30.0) * 6.67  # 70-100 → 16.67-10.0
+
+
 def _coherence_bonus(levels_entropy: float, footprint_cv: float, area_type: str) -> float:
     """Simple coherence bonus: low height + low footprint for context."""
     t = CONTEXT_TARGETS.get(area_type, CONTEXT_TARGETS["urban_core"])
@@ -1942,6 +2070,10 @@ def score_architectural_diversity_as_beauty(
             pass
     foot_raw = _score_band(footprint_area_cv, targets["footprint"], max_points=16.67)
     
+    # WAVE 1.2: Adjust footprint CV for parking/paved dominance (before diversity multiplier)
+    # Store original for potential adjustment
+    footprint_area_cv_original = footprint_area_cv
+    
     # Calculate form metrics (0-100 scale, normalized to 0-16.67 for weighting)
     # OPTIMIZATION: Run all form metrics in parallel for better performance
     block_grain_value: Optional[float] = None
@@ -2191,6 +2323,26 @@ def score_architectural_diversity_as_beauty(
         [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
     )
 
+    # WAVE 1.2: Adjust footprint CV for parking/paved dominance
+    # Apply parking adjustment if significant parking detected
+    # (This happens after form metrics are fetched, so we have lat/lon)
+    parking_share = None
+    if lat is not None and lon is not None:
+        parking_share = _estimate_parking_paved_share(lat, lon, radius_m=1000)
+    
+    if parking_share is not None and parking_share > 0.15:  # >15% parking/paved
+        # Down-weight footprint CV: high CV from parking lots shouldn't count as "organic variety"
+        parking_penalty = min(0.3, parking_share * 2.0)  # Max 30% reduction
+        footprint_area_cv_adjusted = footprint_area_cv_original * (1.0 - parking_penalty)
+        # Re-score with adjusted CV (targets is still in scope from earlier)
+        foot_raw = _score_band(footprint_area_cv_adjusted, targets["footprint"], max_points=16.67)
+
+    # WAVE 1.1: Apply coherence multiplier to diversity components
+    height_raw, type_raw, foot_raw = _apply_diversity_coherence_multiplier(
+        height_raw, type_raw, foot_raw,
+        coherence_signal, effective
+    )
+
     if (effective == "urban_residential" or is_historic_tag) and coherence_signal >= 0.6:
         coherence_floor = (coherence_signal - 0.6) / 0.4
         coherence_floor = _clamp01(coherence_floor)
@@ -2277,8 +2429,9 @@ def score_architectural_diversity_as_beauty(
         
         expected_total = base_points + variable_points
         # Normalize to design scale (0-50 points native range)
+        # scale_params["design"] is stored as percentage (62.0 = 62%), so divide by 100.0
         if expected_total > 0:
-            design_score = min(50.0, (sum(design_components) / expected_total) * 50.0 * scale_params["design"])
+            design_score = min(50.0, (sum(design_components) / expected_total) * 50.0 * (scale_params["design"] / 100.0))
         else:
             design_score = 0.0
     else:
@@ -2309,58 +2462,26 @@ def score_architectural_diversity_as_beauty(
     # Form components (coverage already included in design_components, so not duplicated here)
     form_components = [
         (block_grain_value / 100.0) * 16.67 if block_grain_value is not None else None,
-        (streetwall_value / 100.0) * 16.67 if streetwall_value is not None else None,
     ]
+    
+    # WAVE 1.3: Area-type-specific streetwall behavior
+    if streetwall_value is not None:
+        streetwall_component = _score_streetwall_contextual(streetwall_value, effective)
+        form_components.append(streetwall_component)
     form_components = [c for c in form_components if c is not None]
     if form_components:
         form_total = sum(form_components)
-        form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * scale_params["form"])
+        # scale_params["form"] is stored as percentage (54.0 = 54%), so divide by 100.0
+        form_score = min(50.0, (form_total / (len(form_components) * 16.67)) * (scale_params["form"] / 100.0))
     else:
         form_score = 0.0
 
-    # REPLACED: Use Ridge regression for scoring instead of rule-based system
+    # Use rule-based scoring: design_score + form_score (0-50 native range)
+    # Note: Both design_score and form_score are already in 0-50 native range
+    final_score = min(50.0, design_score + form_score)
+    
     # Compute modern_material_share for metadata
     modern_material_share = _modern_material_share(material_profile)
-    
-    # Compute rowhouse indicator (0.0-1.0) based on area type and characteristics
-    rowhouse_indicator = 0.0
-    if effective in ("urban_residential", "historic_urban"):
-        if built_coverage_ratio is not None and 0.28 <= built_coverage_ratio <= 0.62:
-            if (streetwall_value is not None and streetwall_value >= 60.0 and
-                setback_value is not None and setback_value >= 60.0 and
-                facade_rhythm_value is not None and facade_rhythm_value >= 60.0):
-                if (levels_entropy is not None and levels_entropy <= 22.0 and
-                    building_type_diversity is not None and building_type_diversity <= 32.0 and
-                    footprint_area_cv is not None and 70.0 <= footprint_area_cv <= 130.0):
-                    rowhouse_indicator = 1.0
-                elif coherence_signal > 0.55 and confidence_gate > 0.0:
-                    rowhouse_indicator = 0.7  # Partial match
-    
-    # Enhancer bonus is computed separately in built_beauty.py, set to 0 here
-    # (Ridge regression will use it if passed, but it's not available in this function)
-    enhancer_bonus = 0.0
-    
-    # Call Ridge regression scoring
-    ridge_score_0_100, feature_contributions = _score_with_ridge_regression(
-        area_type=effective,
-        levels_entropy=levels_entropy,
-        building_type_diversity=building_type_diversity,
-        footprint_area_cv=footprint_area_cv,
-        built_coverage_ratio=built_coverage_ratio,
-        block_grain_value=block_grain_value,
-        streetwall_value=streetwall_value,
-        setback_value=setback_value,
-        facade_rhythm_value=facade_rhythm_value,
-        historic_landmarks=historic_landmarks,
-        median_year_built=median_year_built,
-        material_profile=material_profile,
-        enhancer_bonus=enhancer_bonus,
-        rowhouse_indicator=rowhouse_indicator,
-        elevation_range=None
-    )
-    
-    # Scale from 0-100 to 0-50 (native Built Beauty range)
-    final_score = max(0.0, min(50.0, ridge_score_0_100 / 2.0))
     
     # Prepare data quality info for metadata
     data_quality_info = {
@@ -2382,20 +2503,17 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for architecture_score: {metric_overrides['architecture_score']!r}")
     
-    # Return score with metadata about Ridge regression and form metrics
+    # Return score with metadata about rule-based scoring
     metadata = {
         "coverage_cap_applied": data_quality_info.get("degradation_applied", False),
-        "original_score_before_cap": None,  # Not applicable with Ridge regression
-        "cap_reason": None,  # Not applicable with Ridge regression
+        "original_score_before_cap": None,  # Not applicable with rule-based scoring
+        "cap_reason": None,  # Not applicable with rule-based scoring
         "data_quality": data_quality_info,
-        "scoring_method": "ridge_regression",
-        "ridge_score_0_100": round(ridge_score_0_100, 1),
-        "feature_contributions": {k: round(v, 3) for k, v in feature_contributions.items()},
-        # Legacy fields for compatibility (set to 0 or None)
-        "design_score": 0.0,
-        "form_score": 0.0,
-        "design_weight": 0.0,
-        "form_weight": 0.0,
+        "scoring_method": "rule_based",
+        "design_score": round(design_score, 1),
+        "form_score": round(form_score, 1),
+        "design_weight": scale_params.get("design", 100.0),
+        "form_weight": scale_params.get("form", 100.0),
         "serenity_bonus": 0.0,
         "scenic_bonus": 0.0,
         "material_bonus": 0.0,

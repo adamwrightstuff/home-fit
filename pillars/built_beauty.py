@@ -219,6 +219,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "setback_consistency": coverage_cap_metadata.get("setback_consistency", 0),
                 "facade_rhythm": coverage_cap_metadata.get("facade_rhythm", 0)
             },
+            # Rule-based scoring metadata (from Wave 1 switch)
+            "design_score": coverage_cap_metadata.get("design_score"),
+            "form_score": coverage_cap_metadata.get("form_score"),
+            "scoring_method": coverage_cap_metadata.get("scoring_method"),
             "classification": {
                 "base_area_type": area_type,
                 "effective_area_type": effective_area_type,
