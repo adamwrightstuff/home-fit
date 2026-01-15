@@ -1212,7 +1212,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                                    lat: Optional[float] = None, lon: Optional[float] = None,
                                    elevation_m: Optional[float] = None,
                                    topography_metrics: Optional[Dict] = None,
-                                   water_proximity_data: Optional[Dict] = None) -> Tuple[float, float]:
+                                   water_proximity_data: Optional[Dict] = None,
+                                   park_data: Optional[Dict] = None) -> Tuple[float, float]:
         if not metrics:
             return 0.0, 0.0
 
@@ -1308,6 +1309,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         proximity_bonus = 0.0
         nearest_water_distance_km = None
         water_proximity_type = None
+        river_corridor_bonus = 0.0
         
         if water_proximity_data and lat is not None and lon is not None:
             nearest_waterbody = water_proximity_data.get("nearest_waterbody")
@@ -1316,6 +1318,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             if nearest_waterbody and nearest_distance_km is not None:
                 nearest_water_distance_km = nearest_distance_km
                 water_proximity_type = nearest_waterbody.get("type")
+                # Normalize OSM types: treat streams as rivers for perception scoring.
+                if water_proximity_type == "stream":
+                    water_proximity_type = "river"
                 
                 # Water type weighting: ocean > large lake > river > small lake
                 # Large lakes (>50km²) get higher weight - these are major scenic features
@@ -1323,7 +1328,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 if water_proximity_type == "ocean":
                     type_weight = 1.5
                 elif water_proximity_type == "lake":
-                    lake_area_km2 = nearest_waterbody.get("area_km2", 0)
+                    lake_area_km2 = nearest_waterbody.get("area_km2")
+                    lake_area_km2 = float(lake_area_km2) if isinstance(lake_area_km2, (int, float)) else 0.0
                     if lake_area_km2 > 50.0:  # Very large lakes (Lake Tahoe, Great Lakes, etc.)
                         type_weight = 1.4
                     elif lake_area_km2 > 10.0:  # Large lakes
@@ -1331,7 +1337,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     else:
                         type_weight = 1.1  # Small lakes still get slight boost
                 elif water_proximity_type == "river":
-                    type_weight = 1.2
+                    # Rivers/streams are highly salient at close distance (greenbelts, riverwalks).
+                    # Slightly higher than lakes-by-default to compensate for landcover undercounting.
+                    type_weight = 1.25
                 
                 # Exponential decay: closer = higher bonus
                 # Increased bonuses for mountain/rural areas where water is a major scenic feature
@@ -1358,18 +1366,72 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 
                 # Cap proximity bonus (increased from 16.0 to 18.0 for exceptional water features)
                 proximity_bonus = min(18.0, proximity_bonus)
+
+                # River corridor bonus: reward being *right* on a river/stream even if 3km water% is low.
+                # Guarded by development so dense urban waterfronts don't get over-rewarded.
+                if water_proximity_type == "river" and nearest_distance_km < 0.5:
+                    # 0..1, higher = more natural surroundings
+                    dev_factor = max(0.0, min(1.0, 1.0 - (developed_pct / 85.0)))
+                    # Strongest when extremely close; fades by 0.5km
+                    dist_factor = max(0.0, min(1.0, (0.5 - nearest_distance_km) / 0.5))
+                    river_corridor_bonus = 6.0 * dev_factor * dist_factor
+                    proximity_bonus = min(18.0, proximity_bonus + river_corridor_bonus)
         
         # Calculate water score: base + bonuses (additive, like built beauty)
         # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
         # NEW: Include proximity bonus in water scoring
         water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus + proximity_bonus)
+
+        # Guardrail: In very dense urban contexts, large nearby water coverage (ocean/river) can otherwise
+        # dominate Natural Beauty even when the surrounding land cover is almost entirely hardscape.
+        # If the non-water natural index is extremely low, cap the water contribution.
+        if context_area_type in ("urban_core", "urban_core_lowrise", "historic_urban") and water_pct > 15.0:
+            # Park-aware cap: waterfront parks should still score well, but pure hardscape waterfront shouldn't.
+            local_green_score = None
+            park_count = None
+            if isinstance(park_data, dict):
+                try:
+                    local_green_score = float(park_data.get("local_green_score")) if park_data.get("local_green_score") is not None else None
+                except Exception:
+                    local_green_score = None
+                try:
+                    park_count = int(park_data.get("park_count")) if park_data.get("park_count") is not None else None
+                except Exception:
+                    park_count = None
+
+            cap_val = 24.0
+            if (local_green_score is not None and local_green_score >= 6.0) or (park_count is not None and park_count >= 2):
+                cap_val = 34.0
+            elif local_green_score is not None and local_green_score >= 4.0:
+                cap_val = 30.0
+
+            if natural_index < 0.12:
+                water_score = min(water_score, cap_val)
+                metrics["water_urban_guardrail"] = {
+                    "applied": True,
+                    "reason": "dense_urban_low_natural_index",
+                    "natural_index": round(natural_index, 3),
+                    "water_pct": round(water_pct, 2),
+                    "water_score_capped_at": cap_val,
+                    "park_local_green_score": local_green_score,
+                    "park_count_400m": park_count,
+                }
+            else:
+                metrics["water_urban_guardrail"] = {
+                    "applied": False,
+                    "natural_index": round(natural_index, 3),
+                    "water_pct": round(water_pct, 2),
+                    "park_local_green_score": local_green_score,
+                    "park_count_400m": park_count,
+                }
         
         # Store proximity metadata in metrics for reporting
         if water_proximity_data:
             metrics["water_proximity"] = {
                 "nearest_distance_km": nearest_water_distance_km,
                 "nearest_type": water_proximity_type,
-                "proximity_bonus": round(proximity_bonus, 2) if proximity_bonus > 0 else None
+                "proximity_bonus": round(proximity_bonus, 2) if proximity_bonus > 0 else None,
+                "river_corridor_bonus": round(river_corridor_bonus, 2) if river_corridor_bonus > 0 else None,
             }
 
         return landcover_score, water_score
@@ -1795,6 +1857,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         # #endregion
                         break
     
+    # Normalize: treat "query succeeded but no usable nearest distance" as missing for scoring purposes.
+    # This prevents confusing states like "Water Proximity Available: Yes" with nearest_km=None.
+    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is None:
+        water_proximity_data = None
+
     # FALLBACK: If no water proximity data but high water coverage, assume coastal/ocean
     # This handles cases where OSM coastline queries fail but landcover shows high water %
     # (e.g., Manhattan Beach, CA - ocean isn't always returned as discrete OSM feature)
@@ -1879,12 +1946,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if area_type_key in ("urban_core", "urban_core_lowrise", "historic_urban", "urban_residential", "suburban"):
             try:
                 # Quick park check: fetch park count within 400m for urban_park detection
-                _, park_meta = _score_local_green_spaces(lat, lon, radius_m=400, area_type=area_type_key)
+                local_green_score_for_tags, park_meta = _score_local_green_spaces(lat, lon, radius_m=400, area_type=area_type_key)
                 if isinstance(park_meta, dict):
+                    total_area_m2 = park_meta.get("total_area_m2", 0) or 0
+                    park_area_ha = (float(total_area_m2) / 10000.0) if isinstance(total_area_m2, (int, float)) else 0.0
                     park_data_for_tags = {
-                        "park_count": park_meta.get("park_count", 0),
-                        "park_area_ha": park_meta.get("total_park_area_ha", 0),
-                        "local_green_score": park_meta.get("local_green_score", 0)
+                        "park_count": park_meta.get("count", 0),
+                        "park_area_ha": round(park_area_ha, 2),
+                        "local_green_score": round(float(local_green_score_for_tags or 0.0), 2),
                     }
             except Exception as park_error:
                 logger.debug(f"Park data fetch for urban_park tag failed (non-critical): {park_error}")
@@ -1934,6 +2003,66 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Only apply high-relief adjustment if relief is high AND landscape tags haven't already adjusted weights
     # If "mountain" tag is present, it already increased topography weight by 30%, so don't double-adjust
     has_mountain_tag = "mountain" in landscape_tags if landscape_tags else False
+
+    # NEW: Near-water reweighting (greenbelts / riverwalks / lakeside neighborhoods)
+    # When water is *very close*, increase water weight so proximity isn't washed out in suburban/urban contexts.
+    # Guard: don't inflate extremely dense waterfronts where the "natural" experience is limited.
+    near_water_reweight_applied = False
+    near_water_reweight_meta: Dict[str, float] = {}
+    nearest_water_km_for_weights = None
+    nearest_water_type_for_weights = None
+    developed_pct_for_weights = None
+    if landcover_metrics:
+        try:
+            developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
+        except Exception:
+            developed_pct_for_weights = None
+    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+        nearest_water_km_for_weights = float(water_proximity_data.get("nearest_distance_km") or 0.0)
+        nearest_waterbody = water_proximity_data.get("nearest_waterbody") or {}
+        if isinstance(nearest_waterbody, dict):
+            nearest_water_type_for_weights = nearest_waterbody.get("type")
+    if nearest_water_type_for_weights == "stream":
+        nearest_water_type_for_weights = "river"
+
+    if (
+        nearest_water_km_for_weights is not None
+        and nearest_water_km_for_weights <= 0.75
+        and nearest_water_type_for_weights in ("river", "lake", "ocean")
+        and area_type_key in ("historic_urban", "urban_residential", "suburban", "urban_core_lowrise")
+        and (developed_pct_for_weights is None or developed_pct_for_weights < 85.0)
+    ):
+        base_topography = terrain_adjusted_weights.get("topography", context_weights.get("topography", 0.5))
+        base_water = terrain_adjusted_weights.get("water", context_weights.get("water", 0.2))
+        base_landcover = terrain_adjusted_weights.get("landcover", context_weights.get("landcover", 0.3))
+
+        target_water = max(base_water, 0.30)
+        # Keep topography fixed; take the increase from landcover.
+        new_landcover = max(0.10, 1.0 - base_topography - target_water)
+        new_water = 1.0 - base_topography - new_landcover
+
+        near_water_reweight_applied = new_water > base_water + 1e-6
+        if near_water_reweight_applied:
+            terrain_adjusted_weights["topography"] = base_topography
+            terrain_adjusted_weights["water"] = new_water
+            terrain_adjusted_weights["landcover"] = new_landcover
+            near_water_reweight_meta = {
+                "water_weight_before": round(base_water, 3),
+                "water_weight_after": round(new_water, 3),
+                "landcover_weight_before": round(base_landcover, 3),
+                "landcover_weight_after": round(new_landcover, 3),
+            }
+            logger.debug(
+                "Near-water reweight applied: area=%s type=%s dist=%.2fkm dev=%.1f%% (water %.2f→%.2f, landcover %.2f→%.2f)",
+                area_type_key,
+                nearest_water_type_for_weights,
+                nearest_water_km_for_weights,
+                developed_pct_for_weights or 0.0,
+                base_water,
+                new_water,
+                base_landcover,
+                new_landcover,
+            )
     
     if relief is not None and relief > 300.0 and not has_mountain_tag:
         # High relief WITHOUT mountain tag: apply standard high-relief adjustment
@@ -2038,7 +2167,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # Include water proximity data in scoring
         landcover_score_raw, water_score_raw = _score_landcover_component(
-            landcover_metrics, area_type, lat, lon, elevation_m_for_water, topography_metrics, water_proximity_data
+            landcover_metrics,
+            area_type,
+            lat,
+            lon,
+            elevation_m_for_water,
+            topography_metrics,
+            water_proximity_data,
+            park_data_for_tags,
         )
         
         # Store water proximity metadata in natural_context_details
@@ -2072,7 +2208,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         context_bonus_total += landcover_score + water_score
         # #region agent log - Add to API response
         natural_context_details["debug_water_proximity"] = {
-            "available": bool(water_proximity_data),
+            "available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "nearest_distance_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
             "count": water_proximity_data.get("count", 0) if water_proximity_data else 0,
             "nearest_waterbody": water_proximity_data.get("nearest_waterbody") if water_proximity_data else None
@@ -2167,12 +2303,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     nearest_distance_km = water_proximity_data.get("nearest_distance_km")
                     if nearest_waterbody and nearest_distance_km is not None and visible_natural_pct is not None:
                         water_proximity_type = nearest_waterbody.get("type")
+                        if water_proximity_type == "stream":
+                            water_proximity_type = "river"
                         # Water type weighting: ocean > large lake > river > small lake
                         type_weight = 1.0
                         if water_proximity_type == "ocean":
                             type_weight = 1.5
                         elif water_proximity_type == "lake":
-                            lake_area_km2 = nearest_waterbody.get("area_km2", 0)
+                            lake_area_km2 = nearest_waterbody.get("area_km2")
+                            lake_area_km2 = float(lake_area_km2) if isinstance(lake_area_km2, (int, float)) else 0.0
                             if lake_area_km2 > 50.0:
                                 type_weight = 1.4
                             elif lake_area_km2 > 10.0:
@@ -2180,7 +2319,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             else:
                                 type_weight = 1.1
                         elif water_proximity_type == "river":
-                            type_weight = 1.2
+                            type_weight = 1.25
                         
                         # Require both good viewshed (visible natural >30% OR scenic score >50) AND nearby water (<15km)
                         # This rewards water that's both close AND visible
@@ -2236,6 +2375,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "adaptive_weights": context_weights,
             "adjusted_weights": terrain_adjusted_weights,
             "has_significant_water": has_significant_water,
+            "near_water_reweight_applied": near_water_reweight_applied,
+            "near_water_reweight_meta": near_water_reweight_meta,
+            "water_proximity_type": (water_proximity_data.get("nearest_waterbody", {}) or {}).get("type") if water_proximity_data else None,
+            "landcover_developed_pct": developed_pct_for_weights,
             "topography_raw": natural_context_components.get("topography_raw", 0),
             "topography_final": natural_context_components.get("topography", 0),
             "landcover_raw": natural_context_components.get("landcover_raw", 0),
@@ -2243,7 +2386,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "water_raw": natural_context_components.get("water_raw", 0),
             "water_final": natural_context_components.get("water", 0),
             "viewshed": natural_context_components.get("viewshed", 0),
-            "water_proximity_available": bool(water_proximity_data),
+            "water_proximity_available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
             "relief_m": relief,
             "landcover_available": bool(landcover_metrics),
