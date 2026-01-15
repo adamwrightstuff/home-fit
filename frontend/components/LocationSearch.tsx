@@ -9,6 +9,7 @@ interface LocationSearchProps {
 
 export default function LocationSearch({ onSearch, disabled }: LocationSearchProps) {
   const [location, setLocation] = useState('')
+  const [submitted, setSubmitted] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -20,32 +21,41 @@ export default function LocationSearch({ onSearch, disabled }: LocationSearchPro
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+    setSubmitted(true)
     if (location.trim() && !disabled) {
       onSearch(location.trim())
     }
   }
 
+  const isInvalid = submitted && !location.trim()
+
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="flex gap-3">
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input
           ref={inputRef}
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Enter an address or ZIP code (e.g., 123 Main St, New York, NY)"
-          className="flex-1 px-4 py-3.5 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:border-homefit-accent-primary text-homefit-text-primary text-base"
+          className={`hf-input ${isInvalid ? 'hf-input--invalid' : ''}`}
           disabled={disabled}
         />
         <button
           type="submit"
           disabled={disabled || !location.trim()}
-          className="px-6 py-3.5 bg-homefit-accent-primary text-white rounded-lg font-semibold hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-base"
+          className="hf-btn-primary"
+          style={{ paddingLeft: '2.25rem', paddingRight: '2.25rem' }}
         >
           {disabled ? 'Searching...' : 'Search'}
         </button>
       </div>
-      <p className="mt-2 text-xs text-homefit-text-secondary opacity-70">
+      {isInvalid ? (
+        <div className="hf-helper" style={{ color: 'var(--hf-danger)' }}>
+          Please enter a location (city/state, ZIP code, or address).
+        </div>
+      ) : null}
+      <p className="hf-helper">
         Examples: &quot;New York, NY&quot;, &quot;90210&quot;, &quot;1600 Pennsylvania Avenue NW, Washington, DC&quot;
       </p>
     </form>

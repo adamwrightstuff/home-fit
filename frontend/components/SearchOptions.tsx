@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Info } from 'lucide-react'
+import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
 export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -31,17 +32,17 @@ interface SearchOptionsProps {
   onExpandedChange?: (expanded: boolean) => void
 }
 
-const PILLAR_NAMES: Record<keyof PillarPriorities, string> = {
-  active_outdoors: 'Active Outdoors',
-  built_beauty: 'Built Beauty',
-  natural_beauty: 'Natural Beauty',
-  neighborhood_amenities: 'Neighborhood Amenities',
-  air_travel_access: 'Air Travel Access',
-  public_transit_access: 'Public Transit Access',
-  healthcare_access: 'Healthcare Access',
-  quality_education: 'Quality Education',
-  housing_value: 'Housing Value',
-}
+const PILLAR_ORDER: Array<keyof PillarPriorities> = [
+  'natural_beauty',
+  'built_beauty',
+  'neighborhood_amenities',
+  'active_outdoors',
+  'healthcare_access',
+  'public_transit_access',
+  'air_travel_access',
+  'quality_education',
+  'housing_value',
+]
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
@@ -219,13 +220,24 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
   }
 
   return (
-    <div className="border-t border-gray-200 pt-6 mt-6">
+    <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
       <button
         onClick={() => setExpanded(!expanded)}
         disabled={disabled}
-        className="flex items-center justify-between w-full text-left text-sm font-semibold text-homefit-text-primary hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-2 rounded px-2 -mx-2"
+        className="hf-btn-link"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          textAlign: 'left',
+          padding: '0.75rem 1rem',
+          fontSize: '1rem',
+        }}
       >
-        <span>Customize your score</span>
+        <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
+          Customize your score
+        </span>
         <svg
           className={`w-5 h-5 transition-transform duration-200 ${expanded ? 'transform rotate-180' : ''}`}
           fill="none"
@@ -237,17 +249,17 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
       </button>
 
       {expanded && (
-        <div className="mt-4 space-y-6 bg-gray-50 -mx-2 px-4 py-4 rounded-lg">
+        <div className="hf-panel" style={{ marginTop: '1rem' }}>
           {/* Scoring Inputs Section */}
           <div>
-            <h4 className="text-xs font-semibold text-homefit-text-primary uppercase tracking-wider mb-3">
+            <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
               Scoring Inputs
             </h4>
             <div className="space-y-4">
               {/* School Scoring Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <label htmlFor="enable_schools" className="text-sm font-medium text-homefit-text-primary cursor-pointer">
+                  <label htmlFor="enable_schools" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--hf-text-primary)' }}>
                     School scoring
                   </label>
                   <div className="relative">
@@ -276,7 +288,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-homefit-accent-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-homefit-accent-primary"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(102,126,234,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#667eea]"></div>
                 </label>
               </div>
 
@@ -336,7 +348,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               {/* Chain Businesses Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <label htmlFor="include_chains" className="text-sm font-medium text-homefit-text-primary cursor-pointer">
+                  <label htmlFor="include_chains" className="text-sm font-medium cursor-pointer" style={{ color: 'var(--hf-text-primary)' }}>
                     Chain businesses
                   </label>
                   <div className="relative">
@@ -365,7 +377,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-homefit-accent-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-homefit-accent-primary"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(102,126,234,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#667eea]"></div>
                 </label>
               </div>
             </div>
@@ -374,29 +386,42 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           {/* Pillar Priorities Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xs font-semibold text-homefit-text-primary uppercase tracking-wider">
+              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Pillar Priorities
               </h4>
               <button
                 onClick={handleResetPriorities}
                 disabled={disabled}
-                className="text-xs text-homefit-accent-primary hover:opacity-80 font-medium disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-1 rounded px-2 py-1"
+                className="hf-btn-link"
+                style={{ fontSize: '0.9rem' }}
               >
                 Reset to Default
               </button>
             </div>
-            <p className="text-xs text-homefit-text-secondary mb-4 leading-relaxed">
+            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
               Set priority levels for each pillar. Higher priorities receive more weight in the total score.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(Object.keys(PILLAR_NAMES) as Array<keyof PillarPriorities>).map((pillar) => {
+              {PILLAR_ORDER.map((pillar) => {
                 const currentValue = options.priorities[pillar]
+                const meta = PILLAR_META[pillar as PillarKey]
                 return (
-                  <div key={pillar} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                    <label className="text-sm font-medium text-homefit-text-primary flex-1 mr-3">
-                      {PILLAR_NAMES[pillar]}
+                  <div
+                    key={pillar}
+                    className="hf-panel"
+                    style={{
+                      padding: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem',
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1 }}>
+                      <span style={{ fontSize: '1.25rem' }}>{meta.icon}</span>
+                      <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                     </label>
-                    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                    <div className="priority-buttons" aria-label={`${meta.name} priority`}>
                       {PRIORITY_LEVELS.map((level) => {
                         const isSelected = currentValue === level
                         return (
@@ -405,11 +430,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                             type="button"
                             onClick={() => handlePriorityChange(pillar, level)}
                             disabled={disabled}
-                            className={`px-2.5 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-homefit-accent-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
-                              isSelected
-                                ? 'bg-homefit-accent-primary text-white shadow-sm'
-                                : 'text-homefit-text-secondary hover:text-homefit-text-primary hover:bg-gray-200'
-                            }`}
+                            className={`priority-btn ${isSelected ? 'active' : ''}`}
                           >
                             {level}
                           </button>

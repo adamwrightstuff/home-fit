@@ -16,16 +16,10 @@ interface CompletedPillarsProps {
   pillar_config: Record<string, PillarConfig>
 }
 
-function get_score_color(score: number): string {
-  if (score >= 80) return 'bg-homefit-score-high/10 border-homefit-score-high/30 text-homefit-score-high'
-  if (score >= 60) return 'bg-homefit-score-mid/10 border-homefit-score-mid/30 text-homefit-score-mid'
-  return 'bg-homefit-score-low/10 border-homefit-score-low/30 text-homefit-score-low'
-}
-
 export default function CompletedPillars({ completed_pillars, pillar_config }: CompletedPillarsProps) {
   if (completed_pillars.size === 0) {
     return (
-      <div className="text-center py-8 text-homefit-text-secondary">
+      <div className="hf-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>
         <p>Waiting for pillar results...</p>
       </div>
     )
@@ -40,24 +34,33 @@ export default function CompletedPillars({ completed_pillars, pillar_config }: C
     .sort((a, b) => b.score - a.score) // Sort by score descending
 
   return (
-    <div className="space-y-3 max-h-96 overflow-y-auto">
-      <h3 className="text-sm font-semibold text-homefit-text-primary mb-3">Completed Pillars</h3>
+    <div style={{ display: 'grid', gap: '0.75rem', maxHeight: 420, overflowY: 'auto' }}>
+      <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+        Completed pillars
+      </div>
       {pillars_array.map(({ key, score, details, config }) => (
         <div
           key={key}
-          className={`p-4 rounded-lg border-2 transition-all duration-300 ${get_score_color(score)}`}
+          className="hf-panel"
+          style={{ padding: '1rem' }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <span className="text-2xl">{config.emoji}</span>
               <div>
-                <h4 className="font-semibold text-sm">{config.name}</h4>
-                <p className="text-xs opacity-75">{config.description}</p>
+                <h4 style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{config.name}</h4>
+                <p className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>
+                  {config.description}
+                </p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold">{score.toFixed(1)}</div>
-              <div className="text-xs opacity-75">/ 100</div>
+              <div style={{ fontWeight: 900, fontSize: '1.6rem', background: 'var(--hf-primary-gradient)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
+                {score.toFixed(1)}
+              </div>
+              <div className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                / 100
+              </div>
             </div>
           </div>
         </div>

@@ -13,19 +13,19 @@ interface CurrentlyAnalyzingProps {
 
 export default function CurrentlyAnalyzing({ pillar_key, config }: CurrentlyAnalyzingProps) {
   return (
-    <div className="mb-6 p-6 bg-homefit-info/10 border-2 border-homefit-info/30 rounded-lg">
-      <div className="flex items-center space-x-4">
-        <div className="text-4xl animate-bounce">{config.emoji}</div>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-homefit-text-primary mb-1">
-            Analyzing {config.name}
-          </h3>
-          <p className="text-sm text-homefit-text-secondary">{config.description}</p>
+    <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ fontSize: '2rem' }}>{config.emoji}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>Analyzing {config.name}</div>
+          <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+            {config.description}
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <div className="w-2 h-2 bg-homefit-info rounded-full animate-pulse"></div>
-          <div className="w-2 h-2 bg-homefit-info rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-2 h-2 bg-homefit-info rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+        <div style={{ display: 'flex', gap: '0.35rem' }} aria-hidden="true">
+          <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.7 }} />
+          <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.45 }} />
+          <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.25 }} />
         </div>
       </div>
     </div>

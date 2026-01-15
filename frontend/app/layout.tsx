@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'HomeFit - Livability Score',
-  description: 'Discover how livable a location is across 9 key pillars',
+  description: 'Discover how livable any location is across 9 essential factors',
 }
 
 export default function RootLayout({

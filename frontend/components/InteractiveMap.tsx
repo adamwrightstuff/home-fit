@@ -209,7 +209,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
             source: 'location',
             paint: {
               'circle-radius': 8,
-              'circle-color': '#3B82F6',
+              'circle-color': '#667eea',
               'circle-stroke-width': 2,
               'circle-stroke-color': '#FFFFFF'
             }
@@ -285,30 +285,32 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         }}
       />
       {is_initializing && (
-        <div className="absolute inset-0 flex items-center justify-center bg-homefit-bg-secondary bg-opacity-75 z-10">
-          <div className="text-center p-4">
-            <div className="text-homefit-text-secondary font-semibold mb-2">Loading map...</div>
-            <div className="text-xs text-homefit-text-secondary opacity-75">Initializing MapLibre GL</div>
+        <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'rgba(248,249,250,0.85)' }}>
+          <div className="hf-panel" style={{ maxWidth: 320, textAlign: 'center' }}>
+            <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>Loading map…</div>
+            <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+              Initializing MapLibre GL
+            </div>
           </div>
         </div>
       )}
       {init_error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-homefit-bg-secondary z-10">
-          <div className="text-center p-4">
-            <div className="text-homefit-error font-semibold mb-2">Map Error</div>
-            <div className="text-sm text-homefit-text-secondary">{init_error}</div>
-            <div className="text-xs text-homefit-text-secondary opacity-75 mt-2">Check browser console for details</div>
+        <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'rgba(248,249,250,0.92)' }}>
+          <div className="hf-error" style={{ maxWidth: 420 }}>
+            <div style={{ fontWeight: 800, marginBottom: '0.35rem' }}>Map error</div>
+            <div style={{ marginBottom: '0.5rem' }}>{init_error}</div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Check the browser console for details.</div>
           </div>
         </div>
       )}
       {coordinates && map_loaded && (
-        <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
-          <div className="text-xs font-semibold text-homefit-text-primary">{location}</div>
-          <div className="text-xs text-homefit-text-secondary opacity-75 mt-1">
+        <div className="absolute top-4 left-4 z-10 hf-panel" style={{ padding: '0.85rem 1rem' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--hf-text-primary)' }}>{location}</div>
+          <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
             {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}
           </div>
           {completed_pillars.length > 0 && (
-            <div className="text-xs text-homefit-accent-primary mt-1 font-medium">
+            <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.35rem', fontWeight: 700 }}>
               {completed_pillars.length}/9 pillars complete
             </div>
           )}

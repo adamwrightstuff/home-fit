@@ -8,7 +8,7 @@ import ScoreDisplay from '@/components/ScoreDisplay'
 import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
-import { Sparkles } from 'lucide-react'
+import AppHeader from '@/components/AppHeader'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
@@ -79,18 +79,11 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-homefit-bg-secondary p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-homefit-text-primary mb-2">
-            HomeFit
-          </h1>
-          <p className="text-base md:text-lg text-homefit-text-secondary font-medium">
-            Discover how livable a location is across 9 key pillars
-          </p>
-        </div>
+    <main className="hf-page">
+      <AppHeader />
+      <div className="hf-container">
 
-        <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 mb-8">
+        <div id="search" className="hf-card">
           <LocationSearch onSearch={handle_search} disabled={loading} />
           <SearchOptionsComponent 
             options={search_options} 
@@ -99,29 +92,27 @@ export default function Home() {
             expanded={search_options_expanded}
             onExpandedChange={set_search_options_expanded}
           />
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                <p className="text-sm text-homefit-text-secondary mb-1">
-                  <span className="font-medium">Not sure what matters most?</span>
-                </p>
-                <p className="text-xs text-homefit-text-secondary opacity-75">
-                  Take our 20-question quiz to discover your Place Values profile
-                </p>
+          <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--hf-border)' }}>
+            <div className="hf-grid-2" style={{ alignItems: 'center' }}>
+              <div>
+                <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+                  Not sure what matters most?
+                </div>
+                <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+                  Take our 20-question quiz to discover your Place Values profile.
+                </div>
               </div>
-              <button
-                onClick={() => set_show_game(true)}
-                className="flex-shrink-0 px-4 py-2.5 border-2 border-homefit-accent-secondary text-homefit-accent-secondary rounded-lg font-medium hover:bg-homefit-accent-secondary hover:text-white hover:shadow-sm transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-homefit-accent-secondary focus:ring-offset-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Take Quiz
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={() => set_show_game(true)} className="hf-btn-primary">
+                  Take Quiz
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {loading && current_location && (
-          <div className="fixed inset-0 z-50 bg-homefit-bg-secondary" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="fixed inset-0 z-50 hf-page" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
             <SmartLoadingScreen
               location={current_location}
               priorities={JSON.stringify(search_options.priorities)}
@@ -142,7 +133,7 @@ export default function Home() {
         )}
 
         {!loading && error && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="hf-card">
             <ErrorMessage message={error} />
           </div>
         )}

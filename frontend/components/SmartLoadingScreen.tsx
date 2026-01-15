@@ -8,6 +8,7 @@ import CompletedPillars from './CompletedPillars'
 import ProgressBar from './ProgressBar'
 import InteractiveMap from './InteractiveMap'
 import LoadingQuotes from './LoadingQuotes'
+import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
 interface SmartLoadingScreenProps {
   location: string
@@ -18,17 +19,25 @@ interface SmartLoadingScreenProps {
   enable_schools?: boolean
 }
 
-const PILLAR_CONFIG: Record<string, { emoji: string; name: string; description: string }> = {
-  active_outdoors: { emoji: '🏃', name: 'Active Outdoors', description: 'Parks, trails, and recreation' },
-  built_beauty: { emoji: '🏛️', name: 'Built Beauty', description: 'Architecture and streetscapes' },
-  natural_beauty: { emoji: '🌳', name: 'Natural Beauty', description: 'Tree canopy and natural features' },
-  neighborhood_amenities: { emoji: '🏪', name: 'Neighborhood Amenities', description: 'Coffee, groceries, restaurants' },
-  air_travel_access: { emoji: '✈️', name: 'Air Travel Access', description: 'Airport distance and options' },
-  public_transit_access: { emoji: '🚇', name: 'Public Transit', description: 'Subway, bus, rail coverage' },
-  healthcare_access: { emoji: '🏥', name: 'Healthcare Access', description: 'Hospitals and clinics nearby' },
-  quality_education: { emoji: '🎓', name: 'Quality Education', description: 'School quality and ratings' },
-  housing_value: { emoji: '🏠', name: 'Housing Value', description: 'Market trends and pricing' }
-}
+const PILLAR_ORDER: PillarKey[] = [
+  'natural_beauty',
+  'built_beauty',
+  'neighborhood_amenities',
+  'active_outdoors',
+  'healthcare_access',
+  'public_transit_access',
+  'air_travel_access',
+  'quality_education',
+  'housing_value',
+]
+
+const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; description: string }> = PILLAR_ORDER.reduce(
+  (acc, key) => {
+    acc[key] = { emoji: PILLAR_META[key].icon, name: PILLAR_META[key].name, description: PILLAR_META[key].description }
+    return acc
+  },
+  {} as Record<PillarKey, { emoji: string; name: string; description: string }>
+)
 
 export default function SmartLoadingScreen({ 
   location, 
@@ -76,7 +85,7 @@ export default function SmartLoadingScreen({
         }
 
         // Animate pillar completion in a deterministic order to keep the UX engaging.
-        const pillarOrder = Object.keys(PILLAR_CONFIG)
+        const pillarOrder = PILLAR_ORDER
         pillarOrder.forEach((pillarKey, idx) => {
           const delayMs = 220 * idx
           setTimeout(() => {
@@ -132,12 +141,12 @@ export default function SmartLoadingScreen({
   }, [completed_pillars, status])
 
   return (
-    <div className="flex h-full w-full bg-homefit-bg-secondary" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
+    <div className="hf-page" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
       {/* Main content - always render so map can initialize */}
       <div className="flex h-full w-full" style={{ minHeight: '100vh' }}>
         {/* Left side - Map */}
         <div 
-          className="w-1/2 border-r border-gray-200" 
+          className="w-1/2"
           style={{ 
             minHeight: '100vh', 
             height: '100vh',
@@ -153,20 +162,26 @@ export default function SmartLoadingScreen({
         </div>
 
         {/* Right side - Progress */}
-        <div className="w-1/2 p-8 overflow-y-auto bg-white" style={{ minHeight: '100vh', position: 'relative' }}>
+        <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh', position: 'relative' }}>
           {/* Loading overlay - only on right side */}
           {status === 'starting' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'var(--hf-bg-gradient)' }}>
               <div className="text-center max-w-md px-4">
-                <div className="text-2xl font-bold text-homefit-text-primary mb-2">Initializing...</div>
-                <div className="text-sm text-homefit-text-secondary mb-6">Preparing to analyze {location}</div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
+                  Initializing…
+                </div>
+                <div className="hf-muted" style={{ marginBottom: '1.5rem' }}>
+                  Preparing to analyze {location}
+                </div>
                 <LoadingQuotes is_loading={true} />
               </div>
             </div>
           )}
           
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-homefit-text-primary mb-4">Analyzing {location}</h2>
+            <div className="hf-section-title" style={{ marginBottom: '0.75rem' }}>
+              Analyzing {location}
+            </div>
             
             <ProgressBar progress={progress} />
             
@@ -175,10 +190,12 @@ export default function SmartLoadingScreen({
             </div>
             
             {final_score !== null && (
-              <div className="mb-6 p-6 bg-homefit-score-high/10 border-2 border-homefit-score-high/30 rounded-lg">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-homefit-score-high mb-2">{final_score.toFixed(1)}</div>
-                  <div className="text-sm text-homefit-score-high">Final Score</div>
+              <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+                <div className="hf-score-hero" style={{ padding: '1rem 1.25rem', borderRadius: 16 }}>
+                  <div className="hf-score-hero__value" style={{ fontSize: '2.5rem' }}>
+                    {final_score.toFixed(1)}
+                  </div>
+                  <div className="hf-score-hero__label">Final score</div>
                 </div>
               </div>
             )}
@@ -186,7 +203,7 @@ export default function SmartLoadingScreen({
             {current_pillar && status === 'analyzing' && (
               <CurrentlyAnalyzing 
                 pillar_key={current_pillar}
-                config={PILLAR_CONFIG[current_pillar]}
+                config={(PILLAR_CONFIG as any)[current_pillar]}
               />
             )}
             
