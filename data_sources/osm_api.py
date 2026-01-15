@@ -498,7 +498,12 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=25)  # Reduced from 40s
-def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Optional[Dict]:
+def query_nature_features(
+    lat: float,
+    lon: float,
+    radius_m: int = 15000,
+    include_hiking: bool = True,
+) -> Optional[Dict]:
     """
     Query OSM for outdoor recreation (hiking, swimming, camping).
     Includes trails within large parks (>50 hectares) to catch urban parks like Prospect Park.
@@ -510,42 +515,48 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
             "camping": [...]
         }
     """
-    query = f"""
-    [out:json][timeout:35];
-    (
+    hiking_query = f"""
       // HIKING - Optimized: combined boundary types
-      relation["route"="hiking"](around:{radius_m},{lat},{lon});
-      way["boundary"~"^(national_park|protected_area)$"](around:{radius_m},{lat},{lon});
-      relation["boundary"~"^(national_park|protected_area)$"](around:{radius_m},{lat},{lon});
-      way["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
-      relation["leisure"="nature_reserve"](around:{radius_m},{lat},{lon});
+      relation[\"route\"=\"hiking\"](around:{radius_m},{lat},{lon});
+      way[\"boundary\"~\"^(national_park|protected_area)$\"](around:{radius_m},{lat},{lon});
+      relation[\"boundary\"~\"^(national_park|protected_area)$\"](around:{radius_m},{lat},{lon});
+      way[\"leisure\"=\"nature_reserve\"](around:{radius_m},{lat},{lon});
+      relation[\"leisure\"=\"nature_reserve\"](around:{radius_m},{lat},{lon});
       
       // SKI TRAILS - Mountain recreation (piste:type)
       // RESEARCH-BACKED: Ski trails are legitimate outdoor recreation in mountain towns
       // Safe to include: Only significant in mountain areas (Park City: 1538, Times Square: 10)
       // This captures ski resort trails that aren't tagged as route=hiking
-      way["piste:type"](around:{radius_m},{lat},{lon});
-      relation["piste:type"](around:{radius_m},{lat},{lon});
-      
+      way[\"piste:type\"](around:{radius_m},{lat},{lon});
+      relation[\"piste:type\"](around:{radius_m},{lat},{lon});
+    """
+
+    water_query = f"""
       // SWIMMING - Optimized: combined water types
-      way["natural"~"^(beach|coastline)$"](around:{radius_m},{lat},{lon});
-      relation["natural"="beach"](around:{radius_m},{lat},{lon});
-      way["natural"="water"]["water"~"^(lake|bay)$"](around:{radius_m},{lat},{lon});
-      relation["natural"="water"]["water"~"^(lake|bay)$"](around:{radius_m},{lat},{lon});
-      way["leisure"="swimming_area"](around:{radius_m},{lat},{lon});
-      relation["leisure"="swimming_area"](around:{radius_m},{lat},{lon});
-      
+      way[\"natural\"~\"^(beach|coastline)$\"](around:{radius_m},{lat},{lon});
+      relation[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
+      way[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
+      relation[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
+      way[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
+      relation[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
+    """
+
+    camping_query = f"""
       // CAMPING
       // RESEARCH-BACKED: Many campsites in OSM are tagged as nodes (points), not ways/relations
       // Expand query to include nodes for better coverage
-      node["tourism"="camp_site"](around:{radius_m},{lat},{lon});
-      way["tourism"="camp_site"](around:{radius_m},{lat},{lon});
-      relation["tourism"="camp_site"](around:{radius_m},{lat},{lon});
-    );
-    out body;
-    >;
-    out skel qt;
+      node[\"tourism\"=\"camp_site\"](around:{radius_m},{lat},{lon});
+      way[\"tourism\"=\"camp_site\"](around:{radius_m},{lat},{lon});
+      relation[\"tourism\"=\"camp_site\"](around:{radius_m},{lat},{lon});
     """
+
+    query = (
+        "\n    [out:json][timeout:35];\n    (\n"
+        + (hiking_query if include_hiking else "")
+        + water_query
+        + camping_query
+        + "\n    );\n    out body;\n    >;\n    out skel qt;\n    "
+    )
 
     try:
         def _do_request():
@@ -613,13 +624,19 @@ def query_nature_features(lat: float, lon: float, radius_m: int = 15000) -> Opti
                 }
             )
 
-        # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park
-        # This is a separate query to avoid overcounting urban sidewalks
-        try:
-            large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
-            hiking.extend(large_park_trails)
-        except Exception as e:
-            logger.warning(f"Large park trail query failed: {e}")
+        # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park.
+        #
+        # IMPORTANT (performance): this helper calls `query_green_spaces()` (itself an Overpass request)
+        # and then may issue additional Overpass requests per large park to fetch internal paths.
+        # For very large radii (e.g. 50km regional queries used for water/camping), this is
+        # disproportionately expensive and doesn't materially improve the result quality in practice.
+        # Keep it for "trail-scale" queries only.
+        if include_hiking and radius_m <= 20000:
+            try:
+                large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
+                hiking.extend(large_park_trails)
+            except Exception as e:
+                logger.warning(f"Large park trail query failed: {e}")
 
         return {
             "hiking": hiking,

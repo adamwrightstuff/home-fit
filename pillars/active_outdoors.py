@@ -583,7 +583,9 @@ def get_active_outdoors_score_v2(
     
     def _fetch_regional():
         """Fetch water features and camping within regional radius."""
-        return osm_api.query_nature_features(lat, lon, radius_m=regional_radius) or {}
+        # PERFORMANCE: Regional AO v2 only consumes water + camping from this result.
+        # Skip hiking routes/protected-area queries to reduce Overpass payload and latency.
+        return osm_api.query_nature_features(lat, lon, radius_m=regional_radius, include_hiking=False) or {}
     
     def _fetch_canopy():
         """Fetch tree canopy percentage."""
