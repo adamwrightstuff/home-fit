@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronRight, ChevronLeft, MapPin, Home, Sparkles, RefreshCcw, Check, ArrowLeft } from 'lucide-react'
+import { ChevronRight, ChevronLeft, MapPin, Sparkles, RefreshCcw, Check, ArrowLeft } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 
 const pillar_names = {
@@ -16,6 +16,8 @@ const pillar_names = {
   housing_value: "Housing Value"
 }
 
+const PILLAR_KEYS = Object.keys(pillar_names) as Array<keyof PillarPriorities>
+
 const pillar_descriptions = {
   active_outdoors: "You crave adventure and outdoor recreation—parks, trails, and water activities fuel your lifestyle.",
   built_beauty: "You appreciate architectural character and urban design—beautiful buildings and streetscapes matter to you.",
@@ -26,19 +28,6 @@ const pillar_descriptions = {
   healthcare_access: "You prioritize health access—hospitals, clinics, and medical facilities bring peace of mind.",
   quality_education: "You value strong schools and educational opportunities—for family or community quality.",
   housing_value: "You want space and value—affordability and getting more for your money are key priorities."
-}
-
-// Maximum possible points per pillar (audited across all 20 questions)
-const max_possible_scores: Record<keyof PillarPriorities, number> = {
-  active_outdoors: 43,
-  built_beauty: 41,
-  natural_beauty: 39,
-  neighborhood_amenities: 60,
-  air_travel_access: 22,
-  public_transit_access: 20,
-  healthcare_access: 23,
-  quality_education: 32,
-  housing_value: 45
 }
 
 const questions = [
@@ -244,6 +233,50 @@ const questions = [
   }
 ]
 
+type AnswersMap = Record<number, number>
+
+function compute_scores_from_answers(answers: AnswersMap) {
+  const totals = Object.fromEntries(PILLAR_KEYS.map(k => [k, 0])) as Record<keyof PillarPriorities, number>
+
+  for (const [q_idx_str, option_idx] of Object.entries(answers)) {
+    const q_idx = Number(q_idx_str)
+    const question = questions[q_idx]
+    if (!question) continue
+    const option = question.options[option_idx]
+    if (!option) continue
+
+    for (const [pillar, pts] of Object.entries(option.pillars)) {
+      const key = pillar as keyof PillarPriorities
+      totals[key] = (totals[key] || 0) + (pts || 0)
+    }
+  }
+
+  return totals
+}
+
+function compute_max_possible_scores() {
+  const totals = Object.fromEntries(PILLAR_KEYS.map(k => [k, 0])) as Record<keyof PillarPriorities, number>
+
+  for (const question of questions) {
+    const per_question_max = Object.fromEntries(PILLAR_KEYS.map(k => [k, 0])) as Record<keyof PillarPriorities, number>
+
+    for (const option of question.options) {
+      for (const [pillar, pts] of Object.entries(option.pillars)) {
+        const key = pillar as keyof PillarPriorities
+        per_question_max[key] = Math.max(per_question_max[key] || 0, pts || 0)
+      }
+    }
+
+    for (const k of PILLAR_KEYS) {
+      totals[k] += per_question_max[k] || 0
+    }
+  }
+
+  return totals
+}
+
+const max_possible_scores = compute_max_possible_scores()
+
 interface PlaceValuesGameProps {
   onApplyPriorities?: (priorities: PillarPriorities) => void
   onBack?: () => void
@@ -252,43 +285,30 @@ interface PlaceValuesGameProps {
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const [game_state, set_game_state] = useState<'intro' | 'playing' | 'results'>('intro')
   const [current_question, set_current_question] = useState(0)
-  const [scores, set_scores] = useState<Record<keyof PillarPriorities, number>>({
-    active_outdoors: 0,
-    built_beauty: 0,
-    natural_beauty: 0,
-    neighborhood_amenities: 0,
-    air_travel_access: 0,
-    public_transit_access: 0,
-    healthcare_access: 0,
-    quality_education: 0,
-    housing_value: 0
-  })
+  const [answers, set_answers] = useState<AnswersMap>({})
+  const [show_details, set_show_details] = useState(false)
+
+  const scores = React.useMemo(() => compute_scores_from_answers(answers), [answers])
 
   const start_game = () => {
     set_game_state('playing')
     set_current_question(0)
-    set_scores({
-      active_outdoors: 0,
-      built_beauty: 0,
-      natural_beauty: 0,
-      neighborhood_amenities: 0,
-      air_travel_access: 0,
-      public_transit_access: 0,
-      healthcare_access: 0,
-      quality_education: 0,
-      housing_value: 0
-    })
+    set_answers({})
+    set_show_details(false)
   }
 
-  const handle_answer = (pillars: Partial<Record<keyof PillarPriorities, number>>) => {
-    const new_scores = { ...scores }
-    Object.keys(pillars).forEach(pillar => {
-      const key = pillar as keyof PillarPriorities
-      new_scores[key] = (new_scores[key] || 0) + (pillars[key] || 0)
-    })
-    set_scores(new_scores)
-    if (current_question < questions.length - 1) {
-      set_current_question(current_question + 1)
+  const reset_assessment = () => {
+    set_answers({})
+    set_current_question(0)
+    set_game_state('intro')
+    set_show_details(false)
+  }
+
+  const handle_select_option = (question_index: number, option_index: number) => {
+    set_answers(prev => ({ ...prev, [question_index]: option_index }))
+
+    if (question_index < questions.length - 1) {
+      set_current_question(question_index + 1)
     } else {
       set_game_state('results')
     }
@@ -299,7 +319,6 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       if (current_question > 0) {
         // Go back to previous question
         set_current_question(current_question - 1)
-        // Note: We can't undo the previous answer's scores easily, so we'll just go back
       } else {
         // Go back to intro
         set_game_state('intro')
@@ -411,16 +430,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     return priorities
   }
 
-  const get_importance_level = (pillar: keyof PillarPriorities, score: number): PriorityLevel => {
-    if (score === 0) return 'None'
-    const max = max_possible_scores[pillar] || 50
-    const percentage = (score / max) * 100
-    if (percentage <= 25) return 'Low'
-    if (percentage <= 60) return 'Medium'
-    return 'High'
-  }
-
-  const get_importance_color = (level: PriorityLevel) => {
+  const get_priority_color = (level: PriorityLevel) => {
     const colors = {
       'None': 'bg-gray-100 text-homefit-text-secondary',
       'Low': 'bg-homefit-info/20 text-homefit-info',
@@ -430,19 +440,18 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     return colors[level]
   }
 
-  const get_all_pillars_with_levels = () => {
+  const get_all_pillars_with_priority = () => {
     const priorities = convert_scores_to_priorities()
     return Object.entries(scores)
       .map(([pillar, score]) => ({
         pillar: pillar as keyof PillarPriorities,
         score,
-        priority: priorities[pillar as keyof PillarPriorities],
-        display_level: get_importance_level(pillar as keyof PillarPriorities, score)
+        priority: priorities[pillar as keyof PillarPriorities]
       }))
       .sort((a, b) => b.score - a.score)
   }
 
-  const get_profile_summary = (sorted_pillars: ReturnType<typeof get_all_pillars_with_levels>) => {
+  const get_profile_summary = (sorted_pillars: ReturnType<typeof get_all_pillars_with_priority>) => {
     const top_pillars = sorted_pillars.filter(p => p.priority === 'High' || p.priority === 'Medium').slice(0, 3)
     if (top_pillars.length === 0) return "You're still exploring what matters most in a home."
     
@@ -490,6 +499,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   if (game_state === 'playing') {
     const question = questions[current_question]
     const progress = ((current_question + 1) / questions.length) * 100
+    const selected_option_index = answers[current_question]
     return (
       <div className="min-h-screen bg-homefit-bg-secondary p-6 flex flex-col items-center">
         <div className="max-w-2xl w-full">
@@ -515,8 +525,12 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               {question.options.map((option, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handle_answer(option.pillars)}
-                  className="w-full text-left p-5 rounded-2xl border-2 border-gray-100 hover:border-homefit-accent-primary hover:bg-homefit-accent-primary/5 transition-all group flex items-center gap-4"
+                  onClick={() => handle_select_option(current_question, idx)}
+                  className={`w-full text-left p-5 rounded-2xl border-2 transition-all group flex items-center gap-4 ${
+                    selected_option_index === idx
+                      ? 'border-homefit-accent-primary bg-homefit-accent-primary/5'
+                      : 'border-gray-100 hover:border-homefit-accent-primary hover:bg-homefit-accent-primary/5'
+                  }`}
                 >
                   <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-homefit-text-secondary group-hover:bg-homefit-accent-primary group-hover:text-white transition-colors">
                     {idx + 1}
@@ -532,8 +546,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   }
 
   if (game_state === 'results') {
-    const all_pillars = get_all_pillars_with_levels()
-    const priorities = convert_scores_to_priorities()
+    const all_pillars = get_all_pillars_with_priority()
     
     return (
       <div className="min-h-screen bg-homefit-bg-secondary p-6">
@@ -555,21 +568,30 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               <p className="text-homefit-text-primary leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: get_profile_summary(all_pillars).replace(/\*\*(.*?)\*\*/g, '<strong class="text-homefit-accent-primary">$1</strong>') }} />
             </div>
 
-            <h3 className="text-sm font-bold text-homefit-text-secondary opacity-75 uppercase tracking-widest mb-6">Detailed Breakdown</h3>
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <h3 className="text-sm font-bold text-homefit-text-secondary opacity-75 uppercase tracking-widest">Detailed Breakdown</h3>
+              <button
+                onClick={() => set_show_details(v => !v)}
+                className="text-sm font-bold text-homefit-text-secondary hover:text-homefit-text-primary transition-colors"
+              >
+                {show_details ? 'Hide details' : 'Show details'}
+              </button>
+            </div>
             <div className="grid md:grid-cols-2 gap-4 mb-8">
-              {all_pillars.map(({ pillar, score, priority, display_level }) => (
+              {all_pillars.map(({ pillar, score, priority }) => (
                 <div key={pillar} className="p-5 rounded-2xl border border-gray-100 bg-homefit-bg-secondary/50">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-bold text-homefit-text-primary">{pillar_names[pillar]}</span>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${get_importance_color(display_level)}`}>
-                        {display_level}
+                      <span className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${get_priority_color(priority)}`}>
+                        {priority}
                       </span>
-                      <span className="text-xs text-homefit-text-secondary">→ {priority}</span>
                     </div>
                   </div>
                   <p className="text-sm text-homefit-text-secondary leading-relaxed mb-1">{pillar_descriptions[pillar]}</p>
-                  <p className="text-xs text-homefit-text-secondary opacity-75">Score: {score}/{max_possible_scores[pillar]} → Priority: {priority}</p>
+                  {show_details && (
+                    <p className="text-xs text-homefit-text-secondary opacity-75">Score: {score}/{max_possible_scores[pillar]}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -583,7 +605,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               </button>
             )}
 
-            <button onClick={start_game} className="w-full py-4 border-2 border-gray-200 rounded-xl font-bold text-homefit-text-secondary hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+            <button onClick={reset_assessment} className="w-full py-4 border-2 border-gray-200 rounded-xl font-bold text-homefit-text-secondary hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
               <RefreshCcw className="w-4 h-4" /> Reset Assessment
             </button>
           </div>
