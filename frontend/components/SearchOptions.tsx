@@ -91,16 +91,22 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     }
     
     try {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        onChange({ ...options, ...parsed })
-      }
-
       const storedPremiumCode = sessionStorage.getItem(PREMIUM_CODE_KEY)
       if (storedPremiumCode) {
         setPremiumCode(storedPremiumCode)
         setPremiumCodeInput(storedPremiumCode)
+      }
+
+      const stored = sessionStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        // Migration: if schools were previously enabled but no premium code is saved,
+        // force schools off (prevents confusing "schools on" state without access).
+        const migrated = {
+          ...parsed,
+          enable_schools: parsed.enable_schools && !storedPremiumCode ? false : parsed.enable_schools,
+        }
+        onChange({ ...options, ...migrated })
       }
       hasLoadedRef.current = true
     } catch (e) {

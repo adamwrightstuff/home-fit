@@ -28,7 +28,8 @@ export default function Home() {
         return {
           priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
           include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
-          enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : true,
+          // Premium-gated: default OFF unless explicitly enabled by user with a premium code
+          enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
         }
       }
     } catch (e) {
@@ -37,7 +38,7 @@ export default function Home() {
     return {
       priorities: { ...DEFAULT_PRIORITIES },
       include_chains: true,
-      enable_schools: true,
+      enable_schools: false,
     }
   })
 
