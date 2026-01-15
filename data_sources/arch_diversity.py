@@ -1704,6 +1704,178 @@ def _score_streetwall_contextual(
             return 16.67 - ((streetwall_value - 70) / 30.0) * 6.67  # 70-100 → 16.67-10.0
 
 
+# ============================================================================
+# WAVE 2: Non-Linear Scoring Improvements - Helper Functions
+# ============================================================================
+
+def _score_coverage_with_hump(
+    coverage_pct: float,
+    area_type: str,
+    max_points: float = 12.0,
+    is_spacious_historic: bool = False
+) -> float:
+    """
+    Score built coverage with post-peak decline (hump shape).
+    
+    Coverage feels oppressive at very high levels (>50-60%), so scores should
+    peak at optimal levels and then decline. Different area types have different
+    optimal coverage ranges.
+    
+    Args:
+        coverage_pct: Built coverage as percentage (0-100)
+        area_type: Area type classification
+        max_points: Maximum points for coverage component (12.0-15.0)
+        is_spacious_historic: Whether this is a spacious historic district
+    
+    Returns:
+        Points (0-max_points)
+    """
+    # Adjust targets for spacious historic districts
+    if is_spacious_historic:
+        # Spacious historic: peak at lower coverage, gentle decline
+        peak_start, peak_end, decline_start, decline_steep = 15, 25, 35, 50
+    else:
+        # Area-type-specific hump shapes
+        if area_type in ("urban_core", "urban_core_lowrise"):
+            # Urban core: peak at 30-45%, decline after 55%
+            peak_start, peak_end, decline_start, decline_steep = 30, 45, 55, 70
+        elif area_type == "urban_residential":
+            # Urban residential: peak at 25-40%, decline after 50%
+            peak_start, peak_end, decline_start, decline_steep = 25, 40, 50, 65
+        elif area_type == "historic_urban":
+            # Historic urban: peak at 20-35%, decline after 45%
+            peak_start, peak_end, decline_start, decline_steep = 20, 35, 45, 60
+        elif area_type == "suburban":
+            # Suburban: peak at 12-20%, decline after 30%
+            peak_start, peak_end, decline_start, decline_steep = 12, 20, 30, 45
+        elif area_type in ("exurban", "rural"):
+            # Exurban/rural: peak at 5-12%, decline after 20%
+            peak_start, peak_end, decline_start, decline_steep = 5, 12, 20, 35
+        else:
+            # Default: moderate peak and decline
+            peak_start, peak_end, decline_start, decline_steep = 15, 30, 45, 60
+    
+    # Below peak: linear rise to peak
+    if coverage_pct < peak_start:
+        if peak_start > 0:
+            return max_points * (coverage_pct / peak_start) * 0.8  # 80% max at peak_start
+        return 0.0
+    
+    # In peak range: full points (slight variation for naturalness)
+    if coverage_pct <= peak_end:
+        # Smooth plateau: 95-100% of max_points
+        plateau_factor = 0.95 + 0.05 * ((coverage_pct - peak_start) / (peak_end - peak_start))
+        return max_points * plateau_factor
+    
+    # Between peak and decline: gentle linear decline
+    if coverage_pct <= decline_start:
+        # Decline from 100% to 70% of max_points
+        decline_factor = 1.0 - 0.3 * ((coverage_pct - peak_end) / (decline_start - peak_end))
+        return max_points * decline_factor
+    
+    # After decline_start: steeper decline
+    if coverage_pct <= decline_steep:
+        # Decline from 70% to 30% of max_points
+        decline_factor = 0.7 - 0.4 * ((coverage_pct - decline_start) / (decline_steep - decline_start))
+        return max_points * decline_factor
+    
+    # Very high coverage: steep penalty (oppressive)
+    # Decline from 30% to 0% of max_points
+    if coverage_pct <= 100.0:
+        decline_factor = 0.3 - 0.3 * ((coverage_pct - decline_steep) / (100.0 - decline_steep))
+        return max_points * max(0.0, decline_factor)
+    
+    # Over 100% (shouldn't happen, but handle gracefully)
+    return 0.0
+
+
+def _score_block_grain_with_sweet_spot(
+    block_grain_value: float,
+    area_type: str
+) -> float:
+    """
+    Score block grain with area-type-specific sweet spots (non-linear).
+    
+    Different area types prefer different block grain characteristics:
+    - Urban: Prefer finer grain (more intersections, walkable blocks)
+    - Suburban: Prefer moderate grain (balanced walkability and privacy)
+    - Exurban/Rural: Prefer coarser grain (more private, less walkability-focused)
+    
+    Args:
+        block_grain_value: Block grain metric (0-100, higher = finer grain)
+        area_type: Area type classification
+    
+    Returns:
+        Points (0-16.67)
+    """
+    max_points = 16.67
+    
+    # Area-type-specific sweet spots
+    if area_type in ("urban_core", "urban_core_lowrise", "urban_residential"):
+        # Urban: Sweet spot at high grain (60-85) for walkability
+        # Decline at very fine grain (<40) or very coarse (>90)
+        if block_grain_value < 40:
+            # Too coarse: linear rise
+            return max_points * (block_grain_value / 40.0) * 0.6  # 0-40 → 0-40% max
+        elif block_grain_value <= 60:
+            # Rising to sweet spot
+            return max_points * (0.6 + 0.25 * ((block_grain_value - 40) / 20.0))  # 40-60 → 60-85% max
+        elif block_grain_value <= 85:
+            # Sweet spot: full points
+            return max_points * (0.85 + 0.15 * ((block_grain_value - 60) / 25.0))  # 60-85 → 85-100% max
+        elif block_grain_value <= 95:
+            # Decline from sweet spot
+            return max_points * (1.0 - 0.3 * ((block_grain_value - 85) / 10.0))  # 85-95 → 100-70% max
+        else:
+            # Very fine grain: steeper decline
+            return max_points * (0.7 - 0.7 * ((block_grain_value - 95) / 5.0))  # 95-100 → 70-0% max
+    
+    elif area_type == "historic_urban":
+        # Historic urban: Similar to urban but slightly lower sweet spot (50-75)
+        if block_grain_value < 30:
+            return max_points * (block_grain_value / 30.0) * 0.5
+        elif block_grain_value <= 50:
+            return max_points * (0.5 + 0.35 * ((block_grain_value - 30) / 20.0))  # 30-50 → 50-85% max
+        elif block_grain_value <= 75:
+            return max_points * (0.85 + 0.15 * ((block_grain_value - 50) / 25.0))  # 50-75 → 85-100% max
+        elif block_grain_value <= 90:
+            return max_points * (1.0 - 0.4 * ((block_grain_value - 75) / 15.0))  # 75-90 → 100-60% max
+        else:
+            return max_points * (0.6 - 0.6 * ((block_grain_value - 90) / 10.0))  # 90-100 → 60-0% max
+    
+    elif area_type == "suburban":
+        # Suburban: Sweet spot at moderate grain (40-65)
+        # Balanced between walkability and privacy
+        if block_grain_value < 25:
+            return max_points * (block_grain_value / 25.0) * 0.5  # 0-25 → 0-50% max
+        elif block_grain_value <= 40:
+            return max_points * (0.5 + 0.3 * ((block_grain_value - 25) / 15.0))  # 25-40 → 50-80% max
+        elif block_grain_value <= 65:
+            return max_points * (0.8 + 0.2 * ((block_grain_value - 40) / 25.0))  # 40-65 → 80-100% max
+        elif block_grain_value <= 80:
+            return max_points * (1.0 - 0.35 * ((block_grain_value - 65) / 15.0))  # 65-80 → 100-65% max
+        else:
+            return max_points * (0.65 - 0.65 * ((block_grain_value - 80) / 20.0))  # 80-100 → 65-0% max
+    
+    elif area_type in ("exurban", "rural"):
+        # Exurban/rural: Sweet spot at lower grain (20-45)
+        # Prefer more private, less walkability-focused
+        if block_grain_value < 15:
+            return max_points * (block_grain_value / 15.0) * 0.4  # 0-15 → 0-40% max
+        elif block_grain_value <= 30:
+            return max_points * (0.4 + 0.45 * ((block_grain_value - 15) / 15.0))  # 15-30 → 40-85% max
+        elif block_grain_value <= 45:
+            return max_points * (0.85 + 0.15 * ((block_grain_value - 30) / 15.0))  # 30-45 → 85-100% max
+        elif block_grain_value <= 65:
+            return max_points * (1.0 - 0.5 * ((block_grain_value - 45) / 20.0))  # 45-65 → 100-50% max
+        else:
+            return max_points * (0.5 - 0.5 * ((block_grain_value - 65) / 35.0))  # 65-100 → 50-0% max
+    
+    else:
+        # Unknown/default: Linear scoring (backward compatibility)
+        return max_points * (block_grain_value / 100.0)
+
+
 def _coherence_bonus(levels_entropy: float, footprint_cv: float, area_type: str) -> float:
     """Simple coherence bonus: low height + low footprint for context."""
     t = CONTEXT_TARGETS.get(area_type, CONTEXT_TARGETS["urban_core"])
@@ -2385,23 +2557,23 @@ def score_architectural_diversity_as_beauty(
     design_components = [c for c in design_components if c is not None]
     
     # Built coverage: direct scoring component (10-15 points based on area type)
+    # WAVE 2.1: Coverage with post-peak decline (hump shape)
     coverage_raw = None
     if built_coverage_ratio is not None:
-        # Adjust targets for spacious historic districts
-        if is_spacious_historic:
-            # More forgiving targets for spacious historic (e.g., Garden District)
-            coverage_targets = (8, 15, 30, 40)
-        else:
-            coverage_targets = COVERAGE_TARGETS.get(effective, COVERAGE_TARGETS["unknown"])
-        
-        # Score coverage using band scoring (similar to height/type/footprint)
+        # Coverage max points vary by area type
         coverage_max_points = 12.0  # 12 points for most areas
         if effective in ("urban_core", "urban_core_lowrise"):
             coverage_max_points = 15.0  # 15 points for urban core (more important)
         elif effective == "urban_residential":
             coverage_max_points = 13.0  # 13 points for urban residential
         
-        coverage_raw = _score_band(built_coverage_ratio * 100.0, coverage_targets, max_points=coverage_max_points)
+        # Use hump-shaped scoring (peaks at optimal, declines at very high coverage)
+        coverage_raw = _score_coverage_with_hump(
+            built_coverage_ratio * 100.0,
+            effective,
+            max_points=coverage_max_points,
+            is_spacious_historic=is_spacious_historic
+        )
         design_components.append(coverage_raw)
     if (effective == "urban_residential" or is_historic_tag) and coherence_signal > 0.0:
         coherence_component = coherence_signal * 16.0
@@ -2460,8 +2632,9 @@ def score_architectural_diversity_as_beauty(
             expected_coverage = COVERAGE_EXPECTATIONS.get(effective, COVERAGE_EXPECTATIONS["unknown"])
     
     # Form components (coverage already included in design_components, so not duplicated here)
+    # WAVE 2.2: Block grain with area-type-specific sweet spots (non-linear)
     form_components = [
-        (block_grain_value / 100.0) * 16.67 if block_grain_value is not None else None,
+        _score_block_grain_with_sweet_spot(block_grain_value, effective) if block_grain_value is not None else None,
     ]
     
     # WAVE 1.3: Area-type-specific streetwall behavior
