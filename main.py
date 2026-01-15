@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ import os
 import asyncio
 import queue
 import threading
+import hashlib
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -39,10 +40,70 @@ from data_sources.arch_diversity import compute_arch_diversity
 ##########################
 # CONFIGURATION FLAGS
 ##########################
-ENABLE_SCHOOL_SCORING = True  # Set to False to skip SchoolDigger API calls
-
-# Load environment variables
 load_dotenv()
+
+# Launch hardening toggles (env-driven)
+HOMEFIT_PROXY_SECRET = os.getenv("HOMEFIT_PROXY_SECRET", "")
+HOMEFIT_SCHOOLS_PREMIUM_CODES = {
+    c.strip()
+    for c in os.getenv("HOMEFIT_SCHOOLS_PREMIUM_CODES", "").split(",")
+    if c.strip()
+}
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+# Schools: default OFF for public launch (SchoolDigger free quota is extremely low)
+ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
+
+# Streaming (SSE): default OFF for launch week
+ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=False)
+
+# Batch: hard cap (server-side), do NOT trust client-provided values
+MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
+
+# Log hygiene: avoid logging raw user-provided addresses by default
+LOG_RAW_LOCATIONS = _env_bool("LOG_RAW_LOCATIONS", default=False)
+
+def _safe_location_for_logs(location: str) -> str:
+    if LOG_RAW_LOCATIONS:
+        return location
+    digest = hashlib.md5(location.strip().lower().encode()).hexdigest()[:10]
+    return f"location_hash:{digest}"
+
+def _verify_proxy_secret(request: Request) -> None:
+    """
+    If HOMEFIT_PROXY_SECRET is set, require callers to include it via header.
+    This is used to ensure only the Vercel proxy can call protected endpoints.
+    """
+    if not HOMEFIT_PROXY_SECRET:
+        return  # local/dev mode
+    provided = request.headers.get("X-HomeFit-Proxy-Secret")
+    if not provided:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if provided != HOMEFIT_PROXY_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+def require_proxy_auth(request: Request) -> None:
+    _verify_proxy_secret(request)
+
+def _is_schools_allowed(request: Optional[Request], enable_schools_param: Optional[bool]) -> bool:
+    """
+    Schools are expensive and quota-limited. Default is OFF unless explicitly enabled.
+    Premium override can be granted via an internal code header (validated at the proxy).
+    """
+    requested = enable_schools_param if enable_schools_param is not None else ENABLE_SCHOOL_SCORING
+    if not requested:
+        return False
+    if ENABLE_SCHOOL_SCORING:
+        return True
+    if not request or not HOMEFIT_SCHOOLS_PREMIUM_CODES:
+        return False
+    provided = request.headers.get("X-HomeFit-Premium-Code", "").strip()
+    return bool(provided) and provided in HOMEFIT_SCHOOLS_PREMIUM_CODES
 
 
 # Batch processing models
@@ -496,10 +557,16 @@ app = FastAPI(
 )
 
 # CORS middleware
+# In production, prefer proxying via Vercel (same-origin) and restricting origins.
+_cors_origins_env = os.getenv("CORS_ALLOW_ORIGINS", "")
+_cors_allow_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+if not _cors_allow_origins:
+    _cors_allow_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_allow_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -672,11 +739,11 @@ def _compute_single_score_internal(
     
     This contains the core scoring logic without FastAPI-specific caching.
     """
-    # Determine if school scoring should be enabled for this request
-    use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+    # Determine if school scoring should be enabled for this request (gated)
+    use_school_scoring = _is_schools_allowed(request, enable_schools)
     
     start_time = time.time()
-    logger.info(f"HomeFit Score Request: {location}")
+    logger.info(f"HomeFit Score Request: {_safe_location_for_logs(location)}")
     if enable_schools is not None:
         logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
 
@@ -1467,7 +1534,7 @@ def _compute_single_score_internal(
     return response
 
 
-@app.get("/score")
+@app.get("/score", dependencies=[Depends(require_proxy_auth)])
 def get_livability_score(request: Request,
                          location: str,
                          tokens: Optional[str] = None,
@@ -2375,7 +2442,7 @@ async def _stream_score_with_progress(
         yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
 
 
-@app.get("/score/stream")
+@app.get("/score/stream", dependencies=[Depends(require_proxy_auth)])
 async def stream_score(
     request: Request,
     location: str,
@@ -2396,6 +2463,10 @@ async def stream_score(
     - 'done': All pillars complete, final response ready
     - 'error': An error occurred
     """
+    if not ENABLE_STREAMING:
+        # Launch default: disable SSE to reduce long-lived connection load.
+        raise HTTPException(status_code=404, detail="Streaming is disabled")
+
     try:
         # Parse priorities
         priorities_dict: Optional[Dict[str, str]] = None
@@ -3467,7 +3538,7 @@ def _generate_batch_results(batch_request: BatchLocationRequest):
         yield json.dumps({"type": "error", "error": error_msg}) + "\n"
 
 
-@app.post("/batch")
+@app.post("/batch", dependencies=[Depends(require_proxy_auth)])
 def batch_livability_scores(request: Request, batch_request: BatchLocationRequest):
     """
     Calculate livability scores for multiple locations in a batch.
@@ -3477,23 +3548,23 @@ def batch_livability_scores(request: Request, batch_request: BatchLocationReques
     Returns streaming results to prevent client timeouts.
     
     Parameters:
-        locations: List of addresses or ZIP codes (max 10 per batch)
+        locations: List of addresses or ZIP codes (server-capped)
         tokens: Optional token allocation (same format as /score)
         priorities: Optional priority-based allocation (same format as /score)
         include_chains: Include chain/franchise businesses (default: True)
         enable_schools: Enable school scoring (default: uses global flag)
-        max_batch_size: Maximum locations per batch (default: 10)
+        max_batch_size: Deprecated client hint (ignored; server uses MAX_BATCH_SIZE)
         adaptive_delays: Use telemetry to adjust delays (default: True)
     
     Returns:
         Streaming JSON with results for each location, including performance metrics.
         Each line is a JSON object. Types: "status", "result", "keepalive", "complete", "error"
     """
-    # Validate batch size
-    if len(batch_request.locations) > batch_request.max_batch_size:
+    # Validate batch size (server-side hard cap; do NOT trust client-provided limits)
+    if len(batch_request.locations) > MAX_BATCH_SIZE:
         raise HTTPException(
             status_code=400,
-            detail=f"Batch size limited to {batch_request.max_batch_size} locations. Received {len(batch_request.locations)}"
+            detail=f"Batch size limited to {MAX_BATCH_SIZE} locations. Received {len(batch_request.locations)}"
         )
     
     # Validate locations list is not empty
@@ -3618,7 +3689,13 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
     }
 
 
-@app.get("/health")
+@app.get("/healthz")
+def healthz():
+    """Basic liveness check (public)."""
+    return {"status": "ok", "version": API_VERSION}
+
+
+@app.get("/health", dependencies=[Depends(require_proxy_auth)])
 def health_check():
     """Detailed health check with API credential validation."""
     credentials = check_api_credentials()
@@ -3665,7 +3742,7 @@ def health_check():
     }
 
 
-@app.post("/cache/clear")
+@app.post("/cache/clear", dependencies=[Depends(require_proxy_auth)])
 def clear_cache_endpoint(cache_type: str = None):
     """Clear cache entries."""
     try:
@@ -3678,7 +3755,7 @@ def clear_cache_endpoint(cache_type: str = None):
         raise HTTPException(status_code=500, detail=f"Cache clear failed: {e}")
 
 
-@app.get("/cache/stats")
+@app.get("/cache/stats", dependencies=[Depends(require_proxy_auth)])
 def cache_stats_endpoint():
     """Get cache statistics."""
     try:
@@ -3691,7 +3768,7 @@ def cache_stats_endpoint():
         raise HTTPException(status_code=500, detail=f"Cache stats failed: {e}")
 
 
-@app.get("/telemetry")
+@app.get("/telemetry", dependencies=[Depends(require_proxy_auth)])
 def telemetry_endpoint():
     """Get telemetry and analytics data."""
     try:
