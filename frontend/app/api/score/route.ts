@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
+// Vercel/Serverless safety: scoring can legitimately take ~20–40s.
+// Allow enough time for typical requests to finish.
+export const maxDuration = 60;
 
 const RAILWAY_API_BASE_URL =
   process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
+const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '55000');
 const PREMIUM_CODES = new Set(
   (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '')
     .split(',')
@@ -26,13 +30,6 @@ function getClientIp(req: NextRequest): string {
 export async function GET(req: NextRequest) {
   if (process.env.HOMEFIT_DISABLE_SCORE === '1') {
     return NextResponse.json({ detail: 'Temporarily disabled' }, { status: 503 });
-  }
-
-  if (!HOMEFIT_PROXY_SECRET) {
-    return NextResponse.json(
-      { detail: 'Server misconfigured: missing HOMEFIT_PROXY_SECRET' },
-      { status: 500 }
-    );
   }
 
   const sp = req.nextUrl.searchParams;
@@ -63,7 +60,7 @@ export async function GET(req: NextRequest) {
   const url = `${RAILWAY_API_BASE_URL}/score?${upstreamParams.toString()}`;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25_000);
+  const timeout = setTimeout(() => controller.abort(), SCORE_PROXY_TIMEOUT_MS);
   const start = Date.now();
 
   try {
@@ -71,7 +68,7 @@ export async function GET(req: NextRequest) {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        'X-HomeFit-Proxy-Secret': HOMEFIT_PROXY_SECRET,
+        ...(HOMEFIT_PROXY_SECRET ? { 'X-HomeFit-Proxy-Secret': HOMEFIT_PROXY_SECRET } : {}),
         ...(premiumOk ? { 'X-HomeFit-Premium-Code': premiumCode } : {}),
       },
       signal: controller.signal,
@@ -94,6 +91,18 @@ export async function GET(req: NextRequest) {
 
     const bodyText = await upstream.text();
     const contentType = upstream.headers.get('content-type') || 'application/json';
+
+    // If the upstream is protected by a proxy secret but this proxy isn't configured,
+    // return a clear operator-facing message.
+    if (upstream.status === 401 && !HOMEFIT_PROXY_SECRET) {
+      return NextResponse.json(
+        {
+          detail:
+            'Server misconfigured: set HOMEFIT_PROXY_SECRET (must match backend HOMEFIT_PROXY_SECRET) to enable /api/score.',
+        },
+        { status: 500, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
 
     return new NextResponse(bodyText, {
       status: upstream.status,
