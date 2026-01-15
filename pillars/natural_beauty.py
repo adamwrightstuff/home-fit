@@ -71,74 +71,6 @@ ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coast
 ENABLE_NATURAL_BEAUTY_V7 = True
 ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING = True
 ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
-# Wave 2: Empirical percentile remap (dual-scored; default OFF until validated)
-ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING = True
-
-# Wave 2: Empirical scaling targets (small, hand-curated anchor set).
-# Input to percentile scaling is a legacy-linear 0-100 "pre-uplift" score.
-AREA_TYPE_PERCENTILES = {
-    # NOTE: These percentiles are defined in the v1 *pre-uplift* 0–100 raw score space.
-    # They are tuned so key anchors remain stable (±3) when ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING is enabled.
-    #
-    # Urban anchors: Back Bay raw_pre_uplift≈26.6, Capitol Hill raw_pre_uplift≈37.4
-    "urban_core": {"p25": 25.0, "p50": 50.0, "p75": 75.0},
-    #
-    # Suburban anchors:
-    # - Barton Springs raw_pre_uplift≈41.8 (uplift≈6.2 -> ~48)
-    # - Manhattan Beach raw_pre_uplift≈60.2 (uplift≈15 -> ~75)
-    "suburban": {"p25": 30.0, "p50": 47.54, "p75": 78.54},
-    #
-    # Rural anchors:
-    # - Lake Placid raw_pre_uplift≈66.0 (uplift≈25.7 -> ~92)
-    # - Telluride raw_pre_uplift≈78.8 (uplift capped -> ~100)
-    "rural": {"p25": 35.0, "p50": 50.0, "p75": 75.0},
-    # Placeholder (insufficient anchors yet)
-    "exurban": {"p25": 60.0, "p50": 75.0, "p75": 92.0},
-}
-
-
-def _get_area_type_percentiles(area_type: Optional[str]) -> Dict[str, float]:
-    """Resolve an area type to a percentile profile (with sensible fallbacks)."""
-    key = (area_type or "").lower() or "suburban"
-    # Map related types into a single bucket for now.
-    if key in ("urban_core_lowrise", "historic_urban", "urban_residential"):
-        key = "urban_core"
-    if key not in AREA_TYPE_PERCENTILES:
-        key = "suburban"
-    return AREA_TYPE_PERCENTILES[key]
-
-
-def _percentile_scale(score_0_100: float, area_type: Optional[str]) -> float:
-    """
-    Monotonic piecewise-linear remapping:
-      p25 -> 25, p50 -> 50, p75 -> 75, cap at 100.
-    Input score is expected in [0,100].
-    """
-    try:
-        x = float(score_0_100)
-    except Exception:
-        return 0.0
-    x = max(0.0, min(100.0, x))
-
-    p = _get_area_type_percentiles(area_type)
-    p25 = float(p.get("p25", 35.0) or 35.0)
-    p50 = float(p.get("p50", 50.0) or 50.0)
-    p75 = float(p.get("p75", 68.0) or 68.0)
-
-    # Ensure strictly increasing breakpoints to avoid divide-by-zero.
-    p25 = max(1e-6, min(100.0, p25))
-    p50 = max(p25 + 1e-6, min(100.0, p50))
-    p75 = max(p50 + 1e-6, min(100.0, p75))
-
-    if x <= p25:
-        return (x / p25) * 25.0
-    if x <= p50:
-        return 25.0 + ((x - p25) / (p50 - p25)) * 25.0
-    if x <= p75:
-        return 50.0 + ((x - p50) / (p75 - p50)) * 25.0
-
-    # Upper tail: map p75..100 -> 75..100
-    return 75.0 + ((x - p75) / (100.0 - p75)) * 25.0
 
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
@@ -3322,13 +3254,9 @@ def calculate_natural_beauty(lat: float,
     natural_native_v6 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v6)
     natural_native_v7 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v7)
 
-    # Scaling
-    # - v1: legacy linear scaling (kept for comparison / regression monitoring)
-    # - v2: empirical percentile remap (Wave 2). Flagged until validated.
+    # Scaling factor: keep legacy scaling for now (Phase 7A) to avoid distribution-wide changes.
     natural_score_raw_v6 = min(100.0, natural_native_v6 * (100.0 / 93.75))
-    natural_score_raw_v7_v1 = min(100.0, natural_native_v7 * (100.0 / 93.75))
-    natural_score_raw_v7_v2 = min(100.0, _percentile_scale(natural_score_raw_v7_v1, area_type))
-    natural_score_raw_v7 = natural_score_raw_v7_v2 if ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING else natural_score_raw_v7_v1
+    natural_score_raw_v7 = min(100.0, natural_native_v7 * (100.0 / 93.75))
     
     # PHASE 6: Systematic underestimation correction (context-dependent uplift)
     # Research shows computational methods systematically underestimate perceived beauty,
@@ -3419,28 +3347,24 @@ def calculate_natural_beauty(lat: float,
 
     # Apply uplift to raw score (additive, before normalization)
     natural_score_raw_with_uplift_v6 = min(100.0, natural_score_raw_v6 + uplift_bonus_v6)
-    natural_score_raw_with_uplift_v7_v1 = min(100.0, natural_score_raw_v7_v1 + uplift_bonus_v7)
-    natural_score_raw_with_uplift_v7_v2 = min(100.0, natural_score_raw_v7_v2 + uplift_bonus_v7)
-    natural_score_raw_with_uplift_v7 = natural_score_raw_with_uplift_v7_v2 if ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING else natural_score_raw_with_uplift_v7_v1
+    natural_score_raw_with_uplift_v7 = min(100.0, natural_score_raw_v7 + uplift_bonus_v7)
     
     # Using raw score with uplift - systematic correction for underestimation
     # Raw score is data-backed, uplift corrects for known computational underestimation bias
     calibrated_raw_v6 = natural_score_raw_with_uplift_v6
-    calibrated_raw_v7_v1 = natural_score_raw_with_uplift_v7_v1
-    calibrated_raw_v7_v2 = natural_score_raw_with_uplift_v7_v2
     calibrated_raw_v7 = natural_score_raw_with_uplift_v7
 
-    # Ship v7 by default (with percentile scaling optional)
+    # Ship v7 by default
     calibrated_raw = calibrated_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else calibrated_raw_v6
     
     # Ridge regression score (advisory only, kept for reference)
     ridge_score = _compute_ridge_regression_score(normalized_features)
     natural_score_raw_legacy = min(100.0, natural_native_v6 * 2.0)  # Legacy reference calculation
 
-    natural_score_norm, natural_norm_meta = normalize_beauty_score(calibrated_raw, area_type)
-    # Dual-scoring for monitoring: v1 (legacy) vs v2 (percentile) — both normalized.
-    natural_score_norm_v7_v1, _natural_norm_meta_v7_v1 = normalize_beauty_score(calibrated_raw_v7_v1, area_type)
-    natural_score_norm_v7_v2, _natural_norm_meta_v7_v2 = normalize_beauty_score(calibrated_raw_v7_v2, area_type)
+    natural_score_norm, natural_norm_meta = normalize_beauty_score(
+        calibrated_raw,  # Using calibrated score
+        area_type
+    )
     
     # Add ridge regression metadata to tree_details (advisory only)
     tree_details["ridge_regression"] = {
@@ -3469,25 +3393,6 @@ def calculate_natural_beauty(lat: float,
         context_bonus_raw,
         component_scores
     )
-
-    # Wave 2: Attach v1 vs v2 comparison for safe iteration (no UI dependency).
-    try:
-        natural_context = tree_details.get("natural_context", {}) if isinstance(tree_details, dict) else {}
-        if isinstance(natural_context, dict):
-            debug_breakdown = natural_context.get("debug_breakdown", {})
-            if isinstance(debug_breakdown, dict):
-                debug_breakdown.update({
-                    "score_v1": round(float(natural_score_norm_v7_v1), 2),
-                    "score_v2": round(float(natural_score_norm_v7_v2), 2),
-                    "delta_v2_minus_v1": round(float(natural_score_norm_v7_v2 - natural_score_norm_v7_v1), 2),
-                    "raw_pre_uplift_v1": round(float(natural_score_raw_v7_v1), 2),
-                    "raw_pre_uplift_v2": round(float(natural_score_raw_v7_v2), 2),
-                    "uplift_bonus_v7": round(float(uplift_bonus_v7), 2),
-                    "percentile_profile": _get_area_type_percentiles(area_type),
-                    "percentile_scaling_enabled": bool(ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING),
-                })
-    except Exception:
-        pass
     
     # Log warnings if validation detected issues
     if validation_result["warnings"]:
@@ -3523,14 +3428,6 @@ def calculate_natural_beauty(lat: float,
         "scoring_version": "v7" if ENABLE_NATURAL_BEAUTY_V7 else "v6",
         "score_v6": round(min(100.0, natural_score_raw_with_uplift_v6), 2),
         "score_v7": round(min(100.0, natural_score_raw_with_uplift_v7), 2),
-        # Wave 2: v1 vs v2 monitoring fields (normalized scores)
-        "score_v1": round(float(natural_score_norm_v7_v1), 2),
-        "score_v2": round(float(natural_score_norm_v7_v2), 2),
-        "delta_v2_minus_v1": round(float(natural_score_norm_v7_v2 - natural_score_norm_v7_v1), 2),
-        "raw_pre_uplift_v1": round(float(natural_score_raw_v7_v1), 2),
-        "raw_pre_uplift_v2": round(float(natural_score_raw_v7_v2), 2),
-        "percentile_profile": _get_area_type_percentiles(area_type),
-        "percentile_scaling_enabled": bool(ENABLE_NATURAL_BEAUTY_V7_PERCENTILE_SCALING),
         "native_points_v6": round(natural_native_v6, 3),
         "native_points_v7": round(natural_native_v7, 3),
         "scenic_weighted_pre_cap": round(scenic_weighted_pre_cap, 3),
