@@ -3620,10 +3620,68 @@ def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict t
     }
 
 
+def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
+    """
+    Scan a nested pillar payload for degraded-data markers.
+
+    Sources of truth:
+    - `data_sources/cache.py` sets `_stale_cache: True` when returning stale cached results.
+    - Some OSM helpers set `data_warning: 'stale_cache_used'` and/or `rate_limited: True`.
+    - Many failures manifest as error strings containing '429'.
+    """
+    stale_cache_used = False
+    rate_limited = False
+    warnings = set()
+    nodes = 0
+
+    def walk(x):
+        nonlocal stale_cache_used, rate_limited, nodes
+        if nodes >= max_nodes:
+            return
+        nodes += 1
+
+        if isinstance(x, dict):
+            if x.get("_stale_cache") is True:
+                stale_cache_used = True
+            dw = x.get("data_warning")
+            if isinstance(dw, str) and dw:
+                warnings.add(dw)
+            if x.get("rate_limited") is True:
+                rate_limited = True
+            err = x.get("error")
+            if err is not None and "429" in str(err):
+                rate_limited = True
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+
+    walk(obj)
+
+    reasons = []
+    if rate_limited:
+        reasons.append("rate_limited")
+        warnings.add("upstream_rate_limited")
+    if stale_cache_used:
+        reasons.append("stale_cache_used")
+        warnings.add("stale_cache_used")
+
+    degraded = bool(reasons)
+    return {
+        "degraded": degraded,
+        "reasons": reasons,
+        "warnings": sorted(warnings),
+    }
+
+
 def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict
     """Calculate data quality summary for the response."""
     data_sources_used = set()
     area_classifications = []
+    per_pillar_degraded = {}
+    degraded_reasons = set()
+    degraded_warnings = set()
     
     for pillar_name, pillar_data in pillars.items():
         data_quality = pillar_data.get("data_quality", {})
@@ -3636,6 +3694,17 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         # Collect area classifications
         if area_classification:
             area_classifications.append(area_classification)
+
+        # Collect degraded signals (stale cache / rate limiting) from the pillar payload.
+        try:
+            sig = _collect_degraded_signals(pillar_data)
+            if sig.get("degraded"):
+                per_pillar_degraded[pillar_name] = sig
+                degraded_reasons.update(sig.get("reasons", []))
+                degraded_warnings.update(sig.get("warnings", []))
+        except Exception:
+            # Never fail the request due to diagnostics.
+            pass
     
     # Get most common area classification
     if area_classifications:
@@ -3685,7 +3754,11 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         "data_sources_used": list(data_sources_used),
         "area_classification": area_classification_dict,
         "total_pillars": len(pillars),
-        "data_completeness": "high" if len(data_sources_used) >= 3 else "medium" if len(data_sources_used) >= 2 else "low"
+        "data_completeness": "high" if len(data_sources_used) >= 3 else "medium" if len(data_sources_used) >= 2 else "low",
+        "degraded": bool(per_pillar_degraded),
+        "degraded_reasons": sorted(degraded_reasons),
+        "degraded_warnings": sorted(degraded_warnings),
+        "per_pillar_degraded": per_pillar_degraded,
     }
 
 
