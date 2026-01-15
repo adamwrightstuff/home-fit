@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { StreamEvent, streamScore } from '@/lib/api'
+import { getScore } from '@/lib/api'
 import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
@@ -46,65 +46,73 @@ export default function SmartLoadingScreen({
   const [final_score, set_final_score] = useState<number | null>(null)
 
   useEffect(() => {
-    console.log('SmartLoadingScreen: Starting stream for location:', location)
-    const cleanup = streamScore(
-      { 
-        location,
-        priorities,
-        include_chains,
-        enable_schools
-      },
-      (event: StreamEvent) => {
-        console.log('SmartLoadingScreen: Received event:', event.status, event)
-        if (event.status === 'started') {
-          console.log('SmartLoadingScreen: Setting status to starting')
-          set_status('starting')
-        } else if (event.status === 'analyzing') {
-          console.log('SmartLoadingScreen: Setting status to analyzing, coordinates:', event.coordinates)
-          set_status('analyzing')
-          if (event.coordinates) {
-            set_coordinates(event.coordinates)
-          }
-        } else if (event.status === 'complete' && event.pillar) {
-          set_completed_pillars((prev) => {
-            const new_completed = new Map(prev)
-            new_completed.set(event.pillar!, { 
-              score: event.score || 0, 
-              details: event 
+    let cancelled = false
+
+    // Reset UI state for new request
+    set_current_pillar(null)
+    set_completed_pillars(new Map())
+    set_progress(0)
+    set_coordinates(null)
+    set_status('starting')
+    set_final_score(null)
+
+    const run = async () => {
+      try {
+        // Brief "initializing" phase for UX parity with prior streaming UI
+        await new Promise((r) => setTimeout(r, 300))
+        if (cancelled) return
+        set_status('analyzing')
+
+        const response = await getScore({
+          location,
+          priorities,
+          include_chains,
+          enable_schools,
+        })
+
+        if (cancelled) return
+        if (response.coordinates) {
+          set_coordinates(response.coordinates)
+        }
+
+        // Animate pillar completion in a deterministic order to keep the UX engaging.
+        const pillarOrder = Object.keys(PILLAR_CONFIG)
+        pillarOrder.forEach((pillarKey, idx) => {
+          const delayMs = 220 * idx
+          setTimeout(() => {
+            if (cancelled) return
+            const pillarData = (response.livability_pillars as any)?.[pillarKey]
+            const score = Number(pillarData?.score ?? 0)
+            set_completed_pillars((prev) => {
+              const next = new Map(prev)
+              next.set(pillarKey, { score, details: pillarData })
+              set_progress((next.size / 9) * 100)
+              return next
             })
-            
-            // Calculate progress: each pillar is ~11.11% (100/9)
-            const new_progress = (new_completed.size / 9) * 100
-            set_progress(new_progress)
-            
-            return new_completed
-          })
-          set_current_pillar(null) // Clear current pillar when it completes
-        } else if (event.status === 'done' && event.response) {
+          }, delayMs)
+        })
+
+        const totalAnimationMs = 220 * pillarOrder.length
+        setTimeout(() => {
+          if (cancelled) return
           set_status('complete')
           set_progress(100)
-          set_final_score(event.response.total_score)
-          
-          // Call on_complete after a brief delay to show final state
+          set_final_score(response.total_score)
           setTimeout(() => {
-            on_complete(event.response!)
+            if (!cancelled) on_complete(response)
           }, 500)
-        } else if (event.status === 'error') {
-          console.error('SmartLoadingScreen: Error event:', event)
-          if (on_error) {
-            on_error(new Error(event.message || 'Unknown error'))
-          }
-        }
-      },
-      (error) => {
-        console.error('SmartLoadingScreen: Stream error:', error)
-        if (on_error) {
-          on_error(error)
-        }
+        }, totalAnimationMs)
+      } catch (e) {
+        if (cancelled) return
+        const err = e instanceof Error ? e : new Error('Unknown error')
+        if (on_error) on_error(err)
       }
-    )
+    }
 
-    return cleanup
+    run()
+    return () => {
+      cancelled = true
+    }
   }, [location, priorities, include_chains, enable_schools, on_complete, on_error])
 
   // Update current pillar based on which ones are not yet completed
@@ -123,8 +131,6 @@ export default function SmartLoadingScreen({
     }
   }, [completed_pillars, status])
 
-  console.log('SmartLoadingScreen: Rendering with status:', status, 'progress:', progress, 'location:', location)
-  
   return (
     <div className="flex h-full w-full bg-homefit-bg-secondary" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
       {/* Main content - always render so map can initialize */}
