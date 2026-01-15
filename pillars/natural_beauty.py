@@ -64,6 +64,14 @@ ENABLE_TOPOGRAPHY_BOOST_ARID = True  # Increase topography weight in arid region
 ENABLE_COMPONENT_DOMINANCE_GUARD = False  # Phase 2: Prevent single component from dominating
 ENABLE_VISIBILITY_PENALTY_REDUCTION = True  # Reduce visibility penalty in coastal areas
 
+# Phase 7: New scoring mechanics (default ON)
+# - Uplift smoothing removes the 35% canopy cliff
+# - Adaptive scenic cap reduces scenic dominance and "easy 100s" with low greenery
+# - Dual scoring (v6 + v7) is returned for monitoring/rollback
+ENABLE_NATURAL_BEAUTY_V7 = True
+ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING = True
+ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
+
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
 # Relief threshold lowered from 600m to 300m in _score_topography_component
@@ -80,6 +88,57 @@ BIODIVERSITY_BONUS_MAX = 0.0  # Disabled - redundant with landcover in context b
 CANOPY_EXPECTATION_BONUS_MAX = 6.0
 CANOPY_EXPECTATION_PENALTY_MAX = 3.0  # Reduced from 6.0 - penalties should reduce scores, not eliminate them
 STREET_TREE_BONUS_MAX = 5.0
+
+# Phase 7 uplift smoothing parameters (applies to canopy-driven uplift channels)
+CANOPY_UPLIFT_LO = 30.0
+CANOPY_UPLIFT_HI = 40.0
+
+# Phase 7 scenic dominance controls (cap applied to scenic_weighted before summation)
+SCENIC_CAP_BY_AREA_TYPE = {
+    "urban_core": 50.0,
+    "urban_core_lowrise": 52.0,
+    "historic_urban": 52.0,
+    "urban_residential": 55.0,
+    "suburban": 60.0,
+    "exurban": 65.0,
+    "rural": 70.0,
+    "unknown": 60.0,
+}
+
+SCENIC_CAP_TAG_BONUS = {
+    "mountain": 5.0,
+    "coastal": 5.0,
+    "forest": 5.0,
+    # Keep arid/desert/plains neutral for now; they already change context weights upstream.
+    "desert": 0.0,
+    "plains": 0.0,
+    "urban_park": 0.0,
+}
+
+MIN_SCENIC_CAP = 45.0
+MAX_SCENIC_CAP = 75.0
+
+
+def _ramp01_canopy_uplift(canopy_pct: Optional[float]) -> float:
+    """
+    Phase 7: Smooth uplift cliff around the legacy 35% threshold using a 30-40% linear ramp.
+    Returns 0..1.
+    """
+    if canopy_pct is None:
+        return 0.0
+    x = (float(canopy_pct) - CANOPY_UPLIFT_LO) / (CANOPY_UPLIFT_HI - CANOPY_UPLIFT_LO)
+    return max(0.0, min(1.0, x))
+
+
+def _compute_scenic_cap(area_type: Optional[str], landscape_tags: Optional[List[str]]) -> float:
+    """
+    Phase 7: Adaptive scenic cap = area-type baseline + additive tag bonuses, clamped.
+    """
+    area_key = (area_type or "").lower() or "unknown"
+    cap = float(SCENIC_CAP_BY_AREA_TYPE.get(area_key, SCENIC_CAP_BY_AREA_TYPE["unknown"]))
+    for tag in (landscape_tags or []):
+        cap += float(SCENIC_CAP_TAG_BONUS.get(str(tag).lower(), 0.0))
+    return max(MIN_SCENIC_CAP, min(MAX_SCENIC_CAP, cap))
 
 MULTI_RADIUS_CANOPY = {
     "micro_400m": 400,
@@ -110,6 +169,9 @@ CLIMATE_BASE_EXPECTATIONS = {
     "continental": 32.0,    # Research: 25-40% (mid-point)
     "unknown": 30.0,        # Default fallback
 }
+
+# Backwards-compatibility alias (some validation scripts reference this older name)
+CLIMATE_CANOPY_EXPECTATIONS = CLIMATE_BASE_EXPECTATIONS
 
 # Area type adjustments within climate zones
 # Applied as multipliers to climate base expectations
@@ -1750,6 +1812,43 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "water_density": water_pct  # Use landcover water % as proxy
             }
             logger.debug(f"Water proximity fallback: High water coverage ({water_pct:.1f}%) suggests ocean proximity")
+
+    # FALLBACK: If OSM water proximity is unavailable (commonly due to Overpass 429s/timeouts),
+    # use a micro-radius GEE landcover read to detect "on/near water" for rivers/creeks.
+    #
+    # Rationale: creek corridors (Barton Creek, etc.) have low water% at 3km, but a strong lived
+    # water experience when water is present within ~100-250m. This keeps Natural Beauty robust
+    # even when OSM is degraded.
+    if not water_proximity_data and get_landcover_context_gee:
+        try:
+            micro_radius_m = 250
+            micro_landcover = get_landcover_context_gee(lat, lon, micro_radius_m)
+            micro_water_pct = float((micro_landcover or {}).get("water_pct", 0.0) or 0.0)
+            # If there's measurable water very close by, treat it as "near water".
+            if micro_water_pct >= 1.0:
+                inferred_type = "lake" if micro_water_pct >= 12.0 else "river"
+                water_proximity_data = {
+                    "nearest_waterbody": {
+                        "type": inferred_type,
+                        "name": "Nearby water (GEE landcover)",
+                        "area_km2": None,
+                    },
+                    "nearest_distance_km": 0.0,
+                    "water_features": [],
+                    "water_density": micro_water_pct,
+                    "count": 0,
+                    "source": "gee_landcover_micro",
+                    "micro_radius_m": micro_radius_m,
+                    "micro_water_pct": round(micro_water_pct, 2),
+                }
+                logger.debug(
+                    "Water proximity fallback (GEE micro): water_pct=%.2f%% within %dm → type=%s",
+                    micro_water_pct,
+                    micro_radius_m,
+                    inferred_type,
+                )
+        except Exception as e:
+            logger.debug("Water proximity micro landcover fallback failed (non-fatal): %s", e)
     
     # Validate results
     if topography_metrics and not isinstance(topography_metrics, dict):
@@ -2988,14 +3087,33 @@ def calculate_natural_beauty(lat: float,
     # PHASE 4: Enhanced context weighting - increase scaling for context bonuses
     # Increased from 1.75x to 2.0x to give more weight to scenic context
     # This allows scenic locations to reach higher scores even with moderate canopy
-    scenic_weighted = min(80.0, natural_bonus_scaled * 2.0)  # 80 points max (context bonus 0-40, scaled 2.0x, increased from 1.75x)
-    
-    natural_native = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted)
-    # Total max: 15 + 20 + 5 + 10 + 80 = 130 points (increased from 120)
-    # Keep original scaling (100/93.75) for backwards compatibility - same weighted score gives same final score
-    # The increased context bonus cap (40.0 → 70 weighted) allows exceptional areas to reach higher weighted totals
-    # which then scale proportionally to higher final scores, while maintaining backwards compatibility
-    natural_score_raw = min(100.0, natural_native * (100.0 / 93.75))
+    scenic_weighted_pre_cap = min(80.0, natural_bonus_scaled * 2.0)  # 80 points max (context bonus 0-40, scaled 2.0x)
+
+    # Phase 7: Apply adaptive scenic cap (v7 path only)
+    landscape_tags = None
+    try:
+        natural_context = tree_details.get("natural_context", {}) if isinstance(tree_details, dict) else {}
+        if isinstance(natural_context, dict):
+            landscape_tags = natural_context.get("landscape_context_tags")
+            if landscape_tags is None:
+                # Some older paths stash tags under debug_breakdown
+                debug_breakdown = natural_context.get("debug_breakdown", {})
+                if isinstance(debug_breakdown, dict):
+                    landscape_tags = debug_breakdown.get("landscape_tags")
+    except Exception:
+        landscape_tags = None
+
+    scenic_cap = _compute_scenic_cap(area_type, landscape_tags) if ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP else 80.0
+    scenic_weighted_v7 = min(scenic_weighted_pre_cap, scenic_cap) if ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP else scenic_weighted_pre_cap
+    scenic_weighted_v6 = scenic_weighted_pre_cap
+
+    # Native points (component sum). Keep in 0-130-ish range for legacy scaling.
+    natural_native_v6 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v6)
+    natural_native_v7 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v7)
+
+    # Scaling factor: keep legacy scaling for now (Phase 7A) to avoid distribution-wide changes.
+    natural_score_raw_v6 = min(100.0, natural_native_v6 * (100.0 / 93.75))
+    natural_score_raw_v7 = min(100.0, natural_native_v7 * (100.0 / 93.75))
     
     # PHASE 6: Systematic underestimation correction (context-dependent uplift)
     # Research shows computational methods systematically underestimate perceived beauty,
@@ -3009,58 +3127,96 @@ def calculate_natural_beauty(lat: float,
         # Use neighborhood canopy (1000m) as primary metric
         actual_canopy_pct = float(multi_radius_canopy.get("neighborhood_1000m", 0.0) or 0.0)
     
-    uplift_bonus = 0.0
+    uplift_bonus_v6 = 0.0
+    uplift_bonus_v7 = 0.0
     
     # Base uplift factors (additive bonuses)
     # High canopy locations (>35%) get uplift for greenery-rich contexts
     # Use actual canopy percentage, not tree score, to prevent inflated uplifts
     # Only apply if we have actual canopy data (design principle: use real data, not approximations)
+    # v6 canopy uplift (legacy strict threshold)
     if actual_canopy_pct is not None and actual_canopy_pct >= 35.0:
         # High canopy: 8-25 points uplift (scales with canopy quality, increased from 5-15)
         # Very high canopy (45%+) gets maximum uplift
         if actual_canopy_pct >= 45.0:
-            uplift_bonus += 25.0  # Very high canopy: full 25 points
+            uplift_bonus_v6 += 25.0  # Very high canopy: full 25 points
         elif actual_canopy_pct >= 40.0:
             # High canopy (40-45%): 15-25 points
             canopy_factor = (actual_canopy_pct - 40.0) / 5.0  # 40-45% → 0-1.0
-            uplift_bonus += 15.0 + (canopy_factor * 10.0)  # 15-25 points
+            uplift_bonus_v6 += 15.0 + (canopy_factor * 10.0)  # 15-25 points
         else:
             # Moderate-high canopy (35-40%): 8-15 points
             canopy_factor = (actual_canopy_pct - 35.0) / 5.0  # 35-40% → 0-1.0
-            uplift_bonus += 8.0 + (canopy_factor * 7.0)  # 8-15 points
+            uplift_bonus_v6 += 8.0 + (canopy_factor * 7.0)  # 8-15 points
+
+    # v7 canopy uplift: same piecewise shape, smoothly ramped 30-40% to remove cliffs.
+    if ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING and actual_canopy_pct is not None:
+        ramp = _ramp01_canopy_uplift(actual_canopy_pct)
+        canopy_eff = max(35.0, float(actual_canopy_pct))  # Preserve legacy shape above 35 while smoothing below.
+        canopy_uplift_base = 0.0
+        if canopy_eff >= 45.0:
+            canopy_uplift_base = 25.0
+        elif canopy_eff >= 40.0:
+            canopy_factor = (canopy_eff - 40.0) / 5.0
+            canopy_uplift_base = 15.0 + (canopy_factor * 10.0)
+        else:
+            canopy_factor = (canopy_eff - 35.0) / 5.0
+            canopy_uplift_base = 8.0 + (canopy_factor * 7.0)
+        uplift_bonus_v7 += canopy_uplift_base * ramp
     
     # High context bonus locations get uplift for scenic contexts
+    # Context uplift: apply to both v6 and v7 (unchanged)
     if context_bonus_raw >= 10.0:
         # High context (>10): 5-15 points uplift (increased from 3-10, lower threshold)
         if context_bonus_raw >= 20.0:
-            uplift_bonus += 15.0  # Very high context: full 15 points
+            uplift_bonus_v6 += 15.0  # Very high context: full 15 points
+            uplift_bonus_v7 += 15.0
         else:
             context_factor = (context_bonus_raw - 10.0) / 10.0  # 10-20 → 0-1.0
-            uplift_bonus += 5.0 + (context_factor * 10.0)  # 5-15 points
+            add = 5.0 + (context_factor * 10.0)  # 5-15 points
+            uplift_bonus_v6 += add
+            uplift_bonus_v7 += add
     
     # Combination bonus: high canopy + moderate context (greenery-rich scenic locations)
     # This helps locations like Silver Lake, OH with high canopy but moderate context
     # Only apply if we have actual canopy data (design principle: use real data, not approximations)
+    # Combination bonus (legacy): requires canopy >=35 and context >=5
     if actual_canopy_pct is not None and actual_canopy_pct >= 35.0 and context_bonus_raw >= 5.0:
         # Combination: additional 8-18 points (increased from 5-12)
         combo_canopy_factor = min(1.0, (actual_canopy_pct - 35.0) / 15.0)  # 35-50% → 0-1.0
         combo_context_factor = min(1.0, (context_bonus_raw - 5.0) / 15.0)  # 5-20 → 0-1.0
         combo_factor = (combo_canopy_factor + combo_context_factor) / 2.0
-        uplift_bonus += 8.0 + (combo_factor * 10.0)  # 8-18 points
+        uplift_bonus_v6 += 8.0 + (combo_factor * 10.0)  # 8-18 points
+
+    # v7 combo bonus: preserve shape but ramp in by canopy to smooth cliff
+    if ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING and actual_canopy_pct is not None and context_bonus_raw >= 5.0:
+        ramp = _ramp01_canopy_uplift(actual_canopy_pct)
+        canopy_eff = max(35.0, float(actual_canopy_pct))
+        combo_canopy_factor = min(1.0, (canopy_eff - 35.0) / 15.0)
+        combo_context_factor = min(1.0, (context_bonus_raw - 5.0) / 15.0)
+        combo_factor = (combo_canopy_factor + combo_context_factor) / 2.0
+        combo_uplift_base = 8.0 + (combo_factor * 10.0)
+        uplift_bonus_v7 += combo_uplift_base * ramp
     
     # Cap total uplift at 45 points to prevent extremes (increased from 30)
-    uplift_bonus = min(45.0, uplift_bonus)
-    
+    uplift_bonus_v6 = min(45.0, uplift_bonus_v6)
+    uplift_bonus_v7 = min(45.0, uplift_bonus_v7)
+
     # Apply uplift to raw score (additive, before normalization)
-    natural_score_raw_with_uplift = min(100.0, natural_score_raw + uplift_bonus)
+    natural_score_raw_with_uplift_v6 = min(100.0, natural_score_raw_v6 + uplift_bonus_v6)
+    natural_score_raw_with_uplift_v7 = min(100.0, natural_score_raw_v7 + uplift_bonus_v7)
     
     # Using raw score with uplift - systematic correction for underestimation
     # Raw score is data-backed, uplift corrects for known computational underestimation bias
-    calibrated_raw = natural_score_raw_with_uplift
+    calibrated_raw_v6 = natural_score_raw_with_uplift_v6
+    calibrated_raw_v7 = natural_score_raw_with_uplift_v7
+
+    # Ship v7 by default
+    calibrated_raw = calibrated_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else calibrated_raw_v6
     
     # Ridge regression score (advisory only, kept for reference)
     ridge_score = _compute_ridge_regression_score(normalized_features)
-    natural_score_raw_legacy = min(100.0, natural_native * 2.0)  # Legacy calculation
+    natural_score_raw_legacy = min(100.0, natural_native_v6 * 2.0)  # Legacy reference calculation
 
     natural_score_norm, natural_norm_meta = normalize_beauty_score(
         calibrated_raw,  # Using calibrated score
@@ -3123,9 +3279,24 @@ def calculate_natural_beauty(lat: float,
         "scenic_bonus_raw": scenic_bonus_raw,
         "context_bonus_raw": context_bonus_raw,
         "score_before_normalization": calibrated_raw,
-        "score_before_calibration": natural_score_raw,
-        "score_before_uplift": natural_score_raw,  # Before uplift = raw score
-        "uplift_bonus": round(uplift_bonus, 2),
+        "score_before_calibration": natural_score_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else natural_score_raw_v6,
+        "score_before_uplift": natural_score_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else natural_score_raw_v6,
+        "uplift_bonus": round(uplift_bonus_v7 if ENABLE_NATURAL_BEAUTY_V7 else uplift_bonus_v6, 2),
+        "scoring_version": "v7" if ENABLE_NATURAL_BEAUTY_V7 else "v6",
+        "score_v6": round(min(100.0, natural_score_raw_with_uplift_v6), 2),
+        "score_v7": round(min(100.0, natural_score_raw_with_uplift_v7), 2),
+        "native_points_v6": round(natural_native_v6, 3),
+        "native_points_v7": round(natural_native_v7, 3),
+        "scenic_weighted_pre_cap": round(scenic_weighted_pre_cap, 3),
+        "scenic_weighted_v6": round(scenic_weighted_v6, 3),
+        "scenic_weighted_v7": round(scenic_weighted_v7, 3),
+        "scenic_cap_v7": round(float(scenic_cap), 3) if ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP else None,
+        "uplift_v6": round(uplift_bonus_v6, 2),
+        "uplift_v7": round(uplift_bonus_v7, 2),
+        "uplift_debug_v7": {
+            "canopy_ramp_factor": round(_ramp01_canopy_uplift(actual_canopy_pct), 4) if ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING else None,
+            "actual_canopy_pct": round(actual_canopy_pct, 2) if isinstance(actual_canopy_pct, (int, float)) else None,
+        },
         "component_weights": {
             "base_canopy_weight": 0.30,
             "gvi_weight": 0.20,
@@ -3143,11 +3314,11 @@ def calculate_natural_beauty(lat: float,
             "cal_b": None,
             "area_type": area_type,
             "calibration_type": "systematic_uplift",
-            "raw_score": natural_score_raw,
-            "raw_score_before_uplift": natural_score_raw,
-            "uplift_bonus": round(uplift_bonus, 2),
+            "raw_score": natural_score_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else natural_score_raw_v6,
+            "raw_score_before_uplift": natural_score_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else natural_score_raw_v6,
+            "uplift_bonus": round(uplift_bonus_v7 if ENABLE_NATURAL_BEAUTY_V7 else uplift_bonus_v6, 2),
             "calibrated_score": calibrated_raw,
-            "note": "Systematic underestimation correction (Phase 6) - context-dependent uplift for high-green, high-scenic locales"
+            "note": "Phase 6 uplift with Phase 7 smoothing/scenic cap when v7 enabled"
         },
         "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,

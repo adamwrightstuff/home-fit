@@ -1199,6 +1199,7 @@ def get_scenic_viewshed_index(lat: float, lon: float, radius_m: int = 5000,
     return get_viewshed_proxy(lat, lon, radius_m, landcover_metrics)
 
 
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))  # Landcover is stable; cache aggressively.
 def get_landcover_context_gee(lat: float, lon: float, radius_m: int = 3000) -> Optional[Dict]:
     """
     Summarize surrounding land cover mix using GEE datasets.

@@ -680,14 +680,19 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
     """
     
     try:
-        resp = requests.post(
-            get_overpass_url(),
-            data={"data": query},
-            timeout=40,
-            headers={"User-Agent": "HomeFit/1.0"}
-        )
-        
-        if resp.status_code != 200:
+        def _do_request():
+            return requests.post(
+                get_overpass_url(),
+                data={"data": query},
+                timeout=40,
+                headers={"User-Agent": "HomeFit/1.0"}
+            )
+
+        # Water proximity is critical for perceived natural beauty; use shared retry/throttling.
+        resp = _retry_overpass(_do_request, query_type="water_features")
+
+        # IMPORTANT: return None on failure so the cache layer can fall back to stale cache if available.
+        if resp is None or resp.status_code != 200:
             return None
         
         data = resp.json()
@@ -813,10 +818,17 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         
         for feature in water_features:
             # Significant waterbody: >1km² or major river/stream
+            area_km2 = feature.get("area_km2")
+            distance_km = feature.get("distance_km")
+            ftype = feature.get("type")
+
+            # Treat creeks/streams as significant when they're nearby — this is crucial for places like
+            # Barton Creek Greenbelt where water coverage % is low at 3km but the lived experience is "on water".
             is_significant = (
-                (feature.get("area_km2") and feature["area_km2"] > 1.0) or
-                feature["type"] == "river" or
-                feature["type"] == "ocean"
+                (isinstance(area_km2, (int, float)) and area_km2 > 1.0) or
+                ftype in ("river", "ocean") or
+                (ftype == "stream" and isinstance(distance_km, (int, float)) and distance_km <= 2.0) or
+                (ftype in ("lake", "reservoir", "pond") and isinstance(distance_km, (int, float)) and distance_km <= 1.0)
             )
             
             if is_significant:
@@ -831,7 +843,8 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
             "water_features": water_features[:20],  # Limit to 20 nearest features
             "nearest_waterbody": nearest_waterbody,
             "nearest_distance_km": round(nearest_distance_km, 2) if nearest_distance_km else None,
-            "water_density": round(water_density, 2)
+            "water_density": round(water_density, 2),
+            "count": len(water_features),
         }
     
     except Exception as e:

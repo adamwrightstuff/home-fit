@@ -980,6 +980,19 @@ def _compute_single_score_internal(
             "data_availability": tree_details.get("data_availability", {}),
             "gvi_available": natural_calc.get("gvi_available", False),
             "gvi_source": natural_calc.get("gvi_source", "unknown"),
+            # Phase 7: versioned scoring (v7 is default display, v6 included for monitoring)
+            "scoring_version": natural_calc.get("scoring_version"),
+            "score_v6": natural_calc.get("score_v6"),
+            "score_v7": natural_calc.get("score_v7"),
+            "native_points_v6": natural_calc.get("native_points_v6"),
+            "native_points_v7": natural_calc.get("native_points_v7"),
+            "scenic_weighted_pre_cap": natural_calc.get("scenic_weighted_pre_cap"),
+            "scenic_weighted_v6": natural_calc.get("scenic_weighted_v6"),
+            "scenic_weighted_v7": natural_calc.get("scenic_weighted_v7"),
+            "scenic_cap_v7": natural_calc.get("scenic_cap_v7"),
+            "uplift_v6": natural_calc.get("uplift_v6"),
+            "uplift_v7": natural_calc.get("uplift_v7"),
+            "uplift_debug_v7": natural_calc.get("uplift_debug_v7"),
         }
     else:
         natural_score = 0.0

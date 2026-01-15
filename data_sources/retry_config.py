@@ -122,6 +122,7 @@ QUERY_TYPE_PROFILES: Dict[str, RetryProfile] = {
     "setback_consistency": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
     "facade_rhythm": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
     "nature_features": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
+    "water_features": RetryProfile.CRITICAL,  # Water proximity is critical for natural beauty + outdoors
 }
 
 
