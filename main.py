@@ -17,7 +17,13 @@ logger = get_logger(__name__)
 
 # UPDATED IMPORTS - 9 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
-from data_sources.cache import clear_cache, get_cache_stats, cleanup_expired_cache
+from data_sources.cache import (
+    clear_cache,
+    get_cache_stats,
+    cleanup_expired_cache,
+    redis_get_compressed_json,
+    redis_set_compressed_json,
+)
 from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
@@ -152,6 +158,12 @@ API_VERSION = f"{_BASE_VERSION}-{_SCORING_HASH}"
 
 # Log the auto-generated version on startup
 logger.info(f"API Version: {API_VERSION} (auto-generated from scoring file hash)")
+
+# Shared, cross-user location cache (Redis)
+# Stores a compressed response template keyed by geocoded lat/lon + request options.
+# This is NOT keyed by IP or user identity, so it benefits all users.
+LOCATION_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours
+LOCATION_CACHE_MAX_BYTES = 256_000      # hard cap per entry (base64 text length)
 
 
 def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
@@ -536,6 +548,115 @@ def _generate_request_cache_key(location: str, tokens: Optional[str], priorities
     return f"api_response:v{API_VERSION}:{key_hash}"
 
 
+def _generate_location_cache_key(
+    lat: float,
+    lon: float,
+    location_scope: str,
+    include_chains: bool,
+    use_school_scoring: bool,
+    only_pillars: Optional[set[str]] = None,
+) -> str:
+    """
+    Key for a cross-user, location-based cached response template.
+
+    Notes:
+    - Keyed by geocoded lat/lon rounded to 4 decimals (~11m) to absorb minor geocoder jitter.
+    - Includes options that affect pillar computations (include_chains, schools, location_scope).
+    - Omits priorities/tokens so different users can reuse the same cached template.
+    - Skips caching for only_pillars requests (to avoid shape mismatches / key explosion).
+    """
+    import hashlib
+    lat_r = round(float(lat), 4)
+    lon_r = round(float(lon), 4)
+    parts = [
+        f"location_response_template:v{API_VERSION}",
+        f"{lat_r:.4f}",
+        f"{lon_r:.4f}",
+        str(location_scope or "unknown"),
+        str(bool(include_chains)),
+        str(bool(use_school_scoring)),
+        "only=None" if not only_pillars else "only=set",
+    ]
+    key_hash = hashlib.md5(":".join(parts).encode("utf-8")).hexdigest()
+    return f"location_response_template:v{API_VERSION}:{key_hash}"
+
+
+def _apply_allocation_to_cached_response(
+    cached_response: Dict[str, Any],
+    *,
+    tokens: Optional[str],
+    priorities_dict: Optional[Dict[str, str]],
+    only_pillars: Optional[set[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Cached responses are stored without assuming a specific user priority allocation.
+    On cache hit, recompute weights and totals for the current request.
+    """
+    import copy
+    response = copy.deepcopy(cached_response)
+
+    # Recompute allocation + priority levels (copied from existing logic)
+    if priorities_dict:
+        token_allocation = parse_priority_allocation(priorities_dict)
+        allocation_type = "priority_based"
+        priority_levels: Optional[Dict[str, str]] = {}
+        primary_pillars = [
+            "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+            "air_travel_access", "public_transit_access", "healthcare_access",
+            "quality_education", "housing_value"
+        ]
+        for pillar in primary_pillars:
+            original_priority = priorities_dict.get(pillar, "none")
+            if original_priority:
+                priority_str = original_priority.strip().lower()
+                if priority_str == "none":
+                    priority_levels[pillar] = "None"
+                elif priority_str == "low":
+                    priority_levels[pillar] = "Low"
+                elif priority_str == "medium":
+                    priority_levels[pillar] = "Medium"
+                elif priority_str == "high":
+                    priority_levels[pillar] = "High"
+                else:
+                    priority_levels[pillar] = "None"
+            else:
+                priority_levels[pillar] = "None"
+    else:
+        token_allocation = parse_token_allocation(tokens)
+        allocation_type = "token_based" if tokens else "default_equal"
+        priority_levels = None
+
+    if only_pillars:
+        for pillar_name in list(token_allocation.keys()):
+            if pillar_name not in only_pillars:
+                token_allocation[pillar_name] = 0.0
+        remaining = sum(token_allocation.values())
+        if remaining > 0:
+            scale = 100.0 / remaining
+            token_allocation = {k: v * scale for k, v in token_allocation.items()}
+
+    response["token_allocation"] = token_allocation
+    response["allocation_type"] = allocation_type
+
+    livability_pillars = response.get("livability_pillars", {}) or {}
+    total_score = 0.0
+    for pillar_name, pillar_data in livability_pillars.items():
+        weight = float(token_allocation.get(pillar_name, 0.0) or 0.0)
+        score = float(pillar_data.get("score", 0.0) or 0.0)
+        pillar_data["weight"] = weight
+        pillar_data["contribution"] = round(score * weight / 100.0, 2)
+        pillar_data["importance_level"] = priority_levels.get(pillar_name) if priority_levels else None
+        total_score += score * weight / 100.0
+
+    response["total_score"] = round(total_score, 2)
+
+    if isinstance(response.get("metadata"), dict):
+        response["metadata"]["cache_hit"] = True
+        response["metadata"]["cache_timestamp"] = time.time()
+
+    return response
+
+
 def _compute_single_score_internal(
     location: str,
     tokens: Optional[str] = None,
@@ -627,6 +748,34 @@ def _compute_single_score_internal(
     from data_sources.data_quality import detect_location_scope
     location_scope = detect_location_scope(lat, lon, geocode_data)
     logger.info(f"Location scope: {location_scope}")
+
+    # ------------------------------------------------------------------
+    # Shared cross-user cache (Redis): return cached response template if available.
+    # This is keyed by geocoded coordinates + request options (not IP), and we
+    # recompute weights (priorities/tokens) on hit.
+    # ------------------------------------------------------------------
+    if not test_mode_enabled and only_pillars is None:
+        try:
+            location_cache_key = _generate_location_cache_key(
+                lat=lat,
+                lon=lon,
+                location_scope=location_scope,
+                include_chains=include_chains,
+                use_school_scoring=use_school_scoring,
+                only_pillars=only_pillars,
+            )
+            cached_template = redis_get_compressed_json(location_cache_key)
+            if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
+                cached_template["input"] = location  # reflect current user query string
+                response = _apply_allocation_to_cached_response(
+                    cached_template,
+                    tokens=tokens,
+                    priorities_dict=priorities_dict,
+                    only_pillars=only_pillars,
+                )
+                return response
+        except Exception as e:
+            logger.warning(f"Location cache read failed (non-fatal): {e}")
 
     # Compute a single area_type centrally for consistent radius profiles
     # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
@@ -1292,6 +1441,29 @@ def _compute_single_score_internal(
     if only_pillars:
         response["metadata"]["pillars_requested"] = sorted(only_pillars)
 
+    # Store a cross-user, location-based response template in Redis (compressed).
+    # This is bounded (TTL + max size) to avoid unbounded Redis growth.
+    if not test_mode_enabled and only_pillars is None:
+        try:
+            location_cache_key = _generate_location_cache_key(
+                lat=lat,
+                lon=lon,
+                location_scope=location_scope,
+                include_chains=include_chains,
+                use_school_scoring=use_school_scoring,
+                only_pillars=only_pillars,
+            )
+            wrote = redis_set_compressed_json(
+                location_cache_key,
+                response,
+                LOCATION_CACHE_TTL_SECONDS,
+                max_bytes=LOCATION_CACHE_MAX_BYTES,
+            )
+            if wrote and isinstance(response.get("metadata"), dict):
+                response["metadata"]["location_cache_write"] = True
+        except Exception as e:
+            logger.debug(f"Location cache write skipped/failed: {e}")
+
     return response
 
 
@@ -1494,6 +1666,63 @@ async def _stream_score_with_progress(
         # Step 2: Detect location scope
         from data_sources.data_quality import detect_location_scope
         location_scope = await loop.run_in_executor(None, detect_location_scope, lat, lon, geocode_data)
+
+        # Shared cross-user cache (Redis): if we have a cached response template for this location,
+        # skip all heavy computation and stream results immediately.
+        test_mode_enabled = bool(test_mode)
+        use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
+        if not test_mode_enabled:
+            try:
+                location_cache_key = _generate_location_cache_key(
+                    lat=lat,
+                    lon=lon,
+                    location_scope=location_scope,
+                    include_chains=include_chains,
+                    use_school_scoring=use_school_scoring,
+                    only_pillars=None,
+                )
+                cached_template = redis_get_compressed_json(location_cache_key)
+                if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
+                    cached_template["input"] = location
+                    response = _apply_allocation_to_cached_response(
+                        cached_template,
+                        tokens=tokens,
+                        priorities_dict=priorities_dict,
+                        only_pillars=None,
+                    )
+
+                    # Emit pillar completion events quickly (match existing behavior: omit school pillar when disabled)
+                    pillar_order = [
+                        "active_outdoors",
+                        "built_beauty",
+                        "natural_beauty",
+                        "neighborhood_amenities",
+                        "air_travel_access",
+                        "public_transit_access",
+                        "healthcare_access",
+                        "housing_value",
+                    ]
+                    if use_school_scoring:
+                        pillar_order.append("quality_education")
+
+                    total_pillars = len(pillar_order)
+                    completed = 0
+                    for pillar_name in pillar_order:
+                        completed += 1
+                        score = None
+                        try:
+                            score = float(response["livability_pillars"][pillar_name]["score"])
+                        except Exception:
+                            score = 0.0
+                        yield f"event: complete\n"
+                        yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed, 'total': total_pillars})}\n\n"
+                        await asyncio.sleep(0)
+
+                    yield f"event: done\n"
+                    yield f"data: {json.dumps({'status': 'done', 'response': response})}\n\n"
+                    return
+            except Exception as e:
+                logger.warning(f"Stream location cache read failed (non-fatal): {e}")
         
         # Step 3: Pre-compute shared data in parallel
         census_tract = None
@@ -2113,6 +2342,29 @@ async def _stream_score_with_progress(
                 "test_mode": test_mode
             }
         }
+
+        # Store a shared, cross-user response template (compressed) for future requests.
+        # Bounded by TTL + size cap to avoid unbounded Redis growth.
+        if not test_mode_enabled:
+            try:
+                location_cache_key = _generate_location_cache_key(
+                    lat=lat,
+                    lon=lon,
+                    location_scope=location_scope,
+                    include_chains=include_chains,
+                    use_school_scoring=use_school_scoring,
+                    only_pillars=None,
+                )
+                wrote = redis_set_compressed_json(
+                    location_cache_key,
+                    final_response,
+                    LOCATION_CACHE_TTL_SECONDS,
+                    max_bytes=LOCATION_CACHE_MAX_BYTES,
+                )
+                if wrote and isinstance(final_response.get("metadata"), dict):
+                    final_response["metadata"]["location_cache_write"] = True
+            except Exception as e:
+                logger.debug(f"Stream location cache write skipped/failed: {e}")
         
         yield f"event: done\n"
         yield f"data: {json.dumps({'status': 'done', 'response': final_response})}\n\n"

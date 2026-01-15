@@ -7,6 +7,8 @@ import time
 import hashlib
 import os
 import json
+import base64
+import zlib
 from typing import Any, Optional, Dict
 from functools import wraps
 from logging_config import get_logger
@@ -282,6 +284,68 @@ def get_cache_stats() -> Dict[str, Any]:
             stats["redis_error"] = str(e)
     
     return stats
+
+
+def _compress_json_to_b64(value: Any, compress_level: int = 6) -> str:
+    """
+    Compress a JSON-serializable value with zlib and return base64 text.
+
+    Stored as text so it works with Redis clients using decode_responses=True.
+    """
+    raw = json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    compressed = zlib.compress(raw, level=compress_level)
+    return base64.b64encode(compressed).decode("ascii")
+
+
+def _decompress_b64_to_json(b64_value: str) -> Any:
+    """Inverse of _compress_json_to_b64()."""
+    compressed = base64.b64decode(b64_value.encode("ascii"))
+    raw = zlib.decompress(compressed)
+    return json.loads(raw.decode("utf-8"))
+
+
+def redis_get_compressed_json(key: str) -> Optional[Any]:
+    """
+    Fetch a compressed JSON value from Redis (base64+zlib).
+    Returns None if missing or invalid.
+    """
+    redis_client = _get_redis_client()
+    if not redis_client:
+        return None
+    try:
+        data = redis_client.get(key)
+        if not data:
+            return None
+        return _decompress_b64_to_json(data)
+    except Exception as e:
+        logger.warning(f"Redis compressed read error for {key}: {e}")
+        return None
+
+
+def redis_set_compressed_json(
+    key: str,
+    value: Any,
+    ttl_seconds: int,
+    *,
+    max_bytes: int = 256_000,
+) -> bool:
+    """
+    Store a compressed JSON value in Redis with a TTL, skipping if it exceeds max_bytes.
+    Returns True if written, False if skipped/failed.
+    """
+    redis_client = _get_redis_client()
+    if not redis_client:
+        return False
+    try:
+        payload = _compress_json_to_b64(value)
+        # Rough size bound: base64 text length ~ bytes stored
+        if len(payload) > max_bytes:
+            return False
+        redis_client.setex(key, ttl_seconds, payload)
+        return True
+    except Exception as e:
+        logger.warning(f"Redis compressed write error for {key}: {e}")
+        return False
 
 
 def cleanup_expired_cache():
