@@ -59,10 +59,16 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
 
 // Session storage key
 const STORAGE_KEY = 'homefit_search_options'
+const PREMIUM_CODE_KEY = 'homefit_premium_code'
 
 function SearchOptionsComponent({ options, onChange, disabled, expanded: externalExpanded, onExpandedChange }: SearchOptionsProps) {
   const [internalExpanded, setInternalExpanded] = useState(false)
   const [showTooltip, setShowTooltip] = useState<{ type: string | null }>({ type: null })
+  const [showSchoolsWaitlist, setShowSchoolsWaitlist] = useState(false)
+  const [premiumCode, setPremiumCode] = useState<string>('')
+  const [premiumCodeInput, setPremiumCodeInput] = useState<string>('')
+  const [premiumCodeMessage, setPremiumCodeMessage] = useState<string>('')
+  const waitlistUrl = process.env.NEXT_PUBLIC_WAITLIST_URL || ''
   
   // Use external expanded state if provided, otherwise use internal
   const expanded = externalExpanded !== undefined ? externalExpanded : internalExpanded
@@ -89,6 +95,12 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
       if (stored) {
         const parsed = JSON.parse(stored)
         onChange({ ...options, ...parsed })
+      }
+
+      const storedPremiumCode = sessionStorage.getItem(PREMIUM_CODE_KEY)
+      if (storedPremiumCode) {
+        setPremiumCode(storedPremiumCode)
+        setPremiumCodeInput(storedPremiumCode)
       }
       hasLoadedRef.current = true
     } catch (e) {
@@ -126,10 +138,71 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
   }
 
   const handleEnableSchoolsChange = (value: boolean) => {
+    if (value) {
+      // Premium-gated feature: require a saved premium code before enabling.
+      if (!premiumCode) {
+        setShowSchoolsWaitlist(true)
+        setPremiumCodeMessage('Enter a Premium code to enable school scoring.')
+        onChange({
+          ...options,
+          enable_schools: false,
+        })
+        return
+      }
+
+      setShowSchoolsWaitlist(false)
+      setPremiumCodeMessage('')
+      onChange({
+        ...options,
+        enable_schools: true,
+      })
+      return
+    }
+
+    setShowSchoolsWaitlist(false)
+    setPremiumCodeMessage('')
     onChange({
       ...options,
-      enable_schools: value,
+      enable_schools: false,
     })
+  }
+
+  const handleSavePremiumCode = () => {
+    const cleaned = premiumCodeInput.trim()
+    if (!cleaned) {
+      setPremiumCode('')
+      setPremiumCodeMessage('Please enter a code.')
+      try {
+        sessionStorage.removeItem(PREMIUM_CODE_KEY)
+      } catch {
+        // ignore
+      }
+      return
+    }
+
+    setPremiumCode(cleaned)
+    setPremiumCodeInput(cleaned)
+    setPremiumCodeMessage('Code saved. You can now enable school scoring.')
+    try {
+      sessionStorage.setItem(PREMIUM_CODE_KEY, cleaned)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleClearPremiumCode = () => {
+    setPremiumCode('')
+    setPremiumCodeInput('')
+    setPremiumCodeMessage('Code cleared.')
+    try {
+      sessionStorage.removeItem(PREMIUM_CODE_KEY)
+    } catch {
+      // ignore
+    }
+    // If schools were enabled, turn them off.
+    if (options.enable_schools) {
+      onChange({ ...options, enable_schools: false })
+    }
   }
 
   const handleResetPriorities = () => {
@@ -183,7 +256,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     </button>
                     {showTooltip.type === 'schools' && (
                       <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                        Enable scoring based on nearby school quality and ratings
+                        Premium feature: enter a Premium code to enable school scoring
                       </div>
                     )}
                   </div>
@@ -200,6 +273,59 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                   <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-homefit-accent-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-homefit-accent-primary"></div>
                 </label>
               </div>
+
+              {showSchoolsWaitlist && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  <div className="font-semibold">School scoring is Premium-gated.</div>
+                  <div className="mt-1">
+                    Join the waitlist with your email. After approval, you’ll receive a Premium code to paste here.
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={premiumCodeInput}
+                      onChange={(e) => setPremiumCodeInput(e.target.value)}
+                      placeholder="Enter Premium code"
+                      className="flex-1 rounded border border-amber-200 bg-white px-2 py-1 text-xs text-amber-950 placeholder:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                      disabled={disabled}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSavePremiumCode}
+                      disabled={disabled}
+                      className="rounded bg-amber-900 px-2 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Save
+                    </button>
+                    {premiumCode && (
+                      <button
+                        type="button"
+                        onClick={handleClearPremiumCode}
+                        disabled={disabled}
+                        className="rounded border border-amber-300 bg-transparent px-2 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  {premiumCodeMessage && <div className="mt-2 text-xs">{premiumCodeMessage}</div>}
+
+                  <div className="mt-2">
+                    {waitlistUrl ? (
+                      <a
+                        href={waitlistUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline hover:opacity-80"
+                      >
+                        Join the Premium waitlist
+                      </a>
+                    ) : (
+                      <span>Join the Premium waitlist (link not configured).</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Chain Businesses Toggle */}
               <div className="flex items-center justify-between">
