@@ -1,0 +1,318 @@
+{
+  "rank_order_correlation": {
+    "status": "skipped",
+    "reason": "scipy not available",
+    "correlation": null,
+    "p_value": null,
+    "passed": false
+  },
+  "research_backed": {
+    "status": "completed",
+    "passed": true,
+    "checks": [
+      {
+        "climate": "arid",
+        "expectation": 8.0,
+        "research_range": [
+          1.5,
+          15.0
+        ],
+        "in_range": true
+      },
+      {
+        "climate": "mediterranean",
+        "expectation": 25.0,
+        "research_range": [
+          20.0,
+          35.0
+        ],
+        "in_range": true
+      },
+      {
+        "climate": "temperate",
+        "expectation": 35.0,
+        "research_range": [
+          30.0,
+          40.0
+        ],
+        "in_range": true
+      },
+      {
+        "climate": "humid_temperate",
+        "expectation": 40.0,
+        "research_range": [
+          30.0,
+          45.0
+        ],
+        "in_range": true
+      },
+      {
+        "climate": "tropical",
+        "expectation": 35.0,
+        "research_range": [
+          30.0,
+          45.0
+        ],
+        "in_range": true
+      },
+      {
+        "climate": "continental",
+        "expectation": 32.0,
+        "research_range": [
+          25.0,
+          40.0
+        ],
+        "in_range": true
+      }
+    ]
+  },
+  "component_bounds": {
+    "status": "completed",
+    "passed": true,
+    "checks": [
+      {
+        "location": "Truckee, CA",
+        "topography_in_bounds": true,
+        "water_in_bounds": true
+      },
+      {
+        "location": "Carmel-by-the-Sea, CA",
+        "topography_in_bounds": true,
+        "water_in_bounds": true
+      },
+      {
+        "location": "Sedona, AZ",
+        "topography_in_bounds": true,
+        "water_in_bounds": true
+      }
+    ]
+  },
+  "regression": {
+    "total": 13,
+    "passed": 1,
+    "regressions": 12,
+    "errors": 0,
+    "results": [
+      {
+        "location": "Old Town Scottsdale AZ",
+        "baseline_score": 13.3,
+        "current_score": 29.1,
+        "change": 15.8,
+        "abs_change": 15.8,
+        "tolerance": 3.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 15.8 points (tolerance: 3.0)"
+      },
+      {
+        "location": "Sedona AZ",
+        "baseline_score": 61.16,
+        "current_score": 86.87,
+        "change": 25.71,
+        "abs_change": 25.71,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 25.7 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Coconut Grove Miami FL",
+        "baseline_score": 51.92,
+        "current_score": 36.88,
+        "change": -15.04,
+        "abs_change": 15.04,
+        "tolerance": 8.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 15.0 points (tolerance: 8.0)"
+      },
+      {
+        "location": "Manhattan Beach CA",
+        "baseline_score": 30.5,
+        "current_score": 70.84,
+        "change": 40.34,
+        "abs_change": 40.34,
+        "tolerance": 6.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 40.3 points (tolerance: 6.0)"
+      },
+      {
+        "location": "Carmel-by-the-Sea CA",
+        "baseline_score": 91.09,
+        "current_score": 96.86,
+        "change": 5.77,
+        "abs_change": 5.77,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 5.8 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Garden District New Orleans LA",
+        "baseline_score": 20.07,
+        "current_score": 26.45,
+        "change": 6.38,
+        "abs_change": 6.38,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 6.4 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Beacon Hill Boston MA",
+        "baseline_score": 35.71,
+        "current_score": 32.36,
+        "change": -3.35,
+        "abs_change": 3.35,
+        "tolerance": 5.0,
+        "status": "pass",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0
+      },
+      {
+        "location": "Pearl District Portland OR",
+        "baseline_score": 100.0,
+        "current_score": 70.83,
+        "change": -29.17,
+        "abs_change": 29.17,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 29.2 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Georgetown DC",
+        "baseline_score": 100.0,
+        "current_score": 63.37,
+        "change": -36.63,
+        "abs_change": 36.63,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 36.6 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Bronxville NY",
+        "baseline_score": 75.0,
+        "current_score": 58.42,
+        "change": -16.58,
+        "abs_change": 16.58,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 16.6 points (tolerance: 5.0)"
+      },
+      {
+        "location": "The Woodlands TX",
+        "baseline_score": 60.0,
+        "current_score": 19.43,
+        "change": -40.57,
+        "abs_change": 40.57,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 40.6 points (tolerance: 5.0)"
+      },
+      {
+        "location": "Stowe VT",
+        "baseline_score": 70.0,
+        "current_score": 100.0,
+        "change": 30.0,
+        "abs_change": 30.0,
+        "tolerance": 8.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 30.0 points (tolerance: 8.0)"
+      },
+      {
+        "location": "Venice Beach Los Angeles CA",
+        "baseline_score": 20.0,
+        "current_score": 70.8,
+        "change": 50.8,
+        "abs_change": 50.8,
+        "tolerance": 5.0,
+        "status": "regression",
+        "components": {
+          "water": 0.0,
+          "topography": 0.0,
+          "landcover": 0.0
+        },
+        "canopy_pct": 0.0,
+        "water_pct": 0.0,
+        "warning": "Score changed by 50.8 points (tolerance: 5.0)"
+      }
+    ]
+  }
+}
