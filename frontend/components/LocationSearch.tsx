@@ -5,9 +5,12 @@ import { useState, FormEvent, useEffect, useRef } from 'react'
 interface LocationSearchProps {
   onSearch: (location: string) => void
   disabled?: boolean
+  examples?: string[]
 }
 
-export default function LocationSearch({ onSearch, disabled }: LocationSearchProps) {
+const DEFAULT_EXAMPLES = ['New York, NY', '90210', '1600 Pennsylvania Avenue NW, Washington, DC']
+
+export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_EXAMPLES }: LocationSearchProps) {
   const [location, setLocation] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -55,9 +58,25 @@ export default function LocationSearch({ onSearch, disabled }: LocationSearchPro
           Please enter a location (city/state, ZIP code, or address).
         </div>
       ) : null}
-      <p className="hf-helper">
-        Examples: &quot;New York, NY&quot;, &quot;90210&quot;, &quot;1600 Pennsylvania Avenue NW, Washington, DC&quot;
-      </p>
+      <div className="hf-chip-row" aria-label="Search examples">
+        <span className="hf-helper" style={{ marginTop: 0 }}>
+          Try:
+        </span>
+        {examples.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            className="hf-chip"
+            onClick={() => {
+              setSubmitted(false)
+              setLocation(ex)
+              inputRef.current?.focus()
+            }}
+          >
+            {ex.length > 26 ? `${ex.slice(0, 26)}…` : ex}
+          </button>
+        ))}
+      </div>
     </form>
   )
 }

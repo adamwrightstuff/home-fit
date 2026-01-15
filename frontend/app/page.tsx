@@ -9,6 +9,7 @@ import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 import AppHeader from '@/components/AppHeader'
+import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
@@ -110,6 +111,43 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {!loading && !score_data && !error && (
+          <section style={{ marginTop: '3rem', marginBottom: '3rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <div className="hf-section-title" style={{ marginBottom: '0.5rem' }}>
+                9 Essential Livability Factors
+              </div>
+              <div className="hf-muted">We analyze every location across these key pillars.</div>
+            </div>
+
+            <div className="hf-grid-3">
+              {(
+                [
+                  'natural_beauty',
+                  'built_beauty',
+                  'neighborhood_amenities',
+                  'active_outdoors',
+                  'healthcare_access',
+                  'public_transit_access',
+                  'air_travel_access',
+                  'quality_education',
+                  'housing_value',
+                ] as PillarKey[]
+              ).map((key) => (
+                <div key={key} className="hf-card-sm" style={{ cursor: 'default' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{PILLAR_META[key].icon}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.35rem' }}>
+                    {PILLAR_META[key].name}
+                  </div>
+                  <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+                    {PILLAR_META[key].description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {loading && current_location && (
           <div className="fixed inset-0 z-50 hf-page" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
