@@ -16,47 +16,51 @@ export const PILLAR_META: Record<
   natural_beauty: {
     icon: '🌳',
     name: 'Natural Beauty',
-    description: 'Tree canopy, water, and dramatic terrain nearby',
+    description:
+      'Tree-lined streets, nearby water, and access to dramatic landscapes—from urban canopy to mountain views',
   },
   built_beauty: {
     icon: '🏛️',
     name: 'Built Beauty',
-    description: 'Architectural character, variety, and placemaking details',
+    description:
+      "Architecture and streetscapes that feel thoughtfully designed—not cookie-cutter, but crafted with character",
   },
   neighborhood_amenities: {
     icon: '🏘️',
     name: 'Neighborhood Amenities',
-    description: 'Walkable essentials, variety, and neighborhood vibrancy',
+    description:
+      "Walkable variety and neighborhood character—where you have choices for coffee, groceries, and daily needs without driving",
   },
   active_outdoors: {
     icon: '🏃',
     name: 'Active Outdoors',
-    description: 'Parks, trails, camping, and waterfront recreation',
+    description: 'Easy access to trails, parks, and waterfront recreation—for weekend adventures or after-work runs',
   },
   healthcare_access: {
     icon: '🏥',
     name: 'Healthcare Access',
-    description: 'Hospitals, primary care, specialists, and pharmacies',
+    description:
+      "Quality medical care nearby when you need it—hospitals, doctors, specialists, and pharmacies you can count on",
   },
   public_transit_access: {
     icon: '🚇',
     name: 'Public Transit Access',
-    description: 'Rail/bus service, multimodal coverage, and commute options',
+    description: "Reliable transit options that get you where you're going—so driving isn't your only choice",
   },
   air_travel_access: {
     icon: '✈️',
     name: 'Air Travel Access',
-    description: 'Distance to airports and multiple airport options',
+    description: 'Good airports within reasonable reach—making trips to see family or explore new places less of a hassle',
   },
   quality_education: {
     icon: '🏫',
     name: 'Schools',
-    description: 'K-12 quality with early education and nearby colleges',
+    description: 'Strong local schools that set kids up for success—from early education through high school and beyond',
   },
   housing_value: {
     icon: '💰',
     name: 'Housing Value',
-    description: 'Affordability and space/value for typical housing',
+    description: "More space and quality for your money—where housing costs make sense for what you're getting",
   },
 }
 

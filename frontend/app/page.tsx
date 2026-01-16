@@ -81,7 +81,11 @@ export default function Home() {
 
   return (
     <main className="hf-page">
-      <AppHeader />
+      <AppHeader
+        tagline="Find the neighborhood where you truly belong"
+        heroImageUrl="https://images.unsplash.com/photo-1464146072230-91cabc968266?w=800&q=80"
+        heroImageAlt="Neighborhood street with homes"
+      />
       <div className="hf-container">
 
         <div id="search" className="hf-card">

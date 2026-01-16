@@ -83,6 +83,35 @@ body {
   font-weight: 300;
 }
 
+.hf-hero-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  text-align: left;
+}
+
+.hf-hero-text h1,
+.hf-hero-text p {
+  text-align: left;
+}
+
+.hf-hero-imageWrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hf-hero-image {
+  width: 100%;
+  height: 500px;
+  max-width: 560px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+}
+
 .hf-container {
   max-width: 1200px;
   margin: -2rem auto 0;
@@ -427,6 +456,8 @@ body {
   .hf-container { padding: 0 1rem 2rem; }
   .hf-grid-2, .hf-grid-3 { grid-template-columns: 1fr; }
   .hf-card { padding: 1.75rem; }
+  .hf-hero-grid { grid-template-columns: 1fr; text-align: left; }
+  .hf-hero-image { height: 300px; max-width: 100%; }
 }
 
 @layer utilities {
