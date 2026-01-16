@@ -293,7 +293,18 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               </div>
 
               {showSchoolsWaitlist && (
-                <div className="hf-premium-banner" style={{ marginTop: '0.75rem' }}>
+                <div className="hf-premium-banner" style={{ marginTop: '0.75rem', position: 'relative' }}>
+                  <button
+                    type="button"
+                    aria-label="Close premium banner"
+                    className="hf-premium-close"
+                    onClick={() => {
+                      setShowSchoolsWaitlist(false)
+                      setPremiumCodeMessage('')
+                    }}
+                  >
+                    ×
+                  </button>
                   <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.35rem' }}>
                     School scoring is Premium-gated.
                   </div>

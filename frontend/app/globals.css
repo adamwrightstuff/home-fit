@@ -290,6 +290,33 @@ body {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
 }
 
+.hf-premium-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 300;
+  transition: all 0.2s ease;
+}
+
+.hf-premium-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.hf-premium-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
 .hf-premium-btn--outline {
   background: transparent;
   color: #ffffff;
