@@ -293,49 +293,48 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               </div>
 
               {showSchoolsWaitlist && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  <div className="font-semibold">School scoring is Premium-gated.</div>
-                  <div className="mt-1">
-                    Join the waitlist with your email. After approval, you’ll receive a Premium code to paste here.
+                <div className="hf-premium-banner" style={{ marginTop: '0.75rem' }}>
+                  <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.35rem' }}>
+                    School scoring is Premium-gated.
                   </div>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div style={{ opacity: 0.95, fontSize: '0.95rem' }}>
+                    Join the waitlist. After approval, you’ll receive a Premium code to paste here.
+                  </div>
+
+                  <div style={{ marginTop: '0.9rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <input
                       type="text"
                       value={premiumCodeInput}
                       onChange={(e) => setPremiumCodeInput(e.target.value)}
                       placeholder="Enter Premium code"
-                      className="flex-1 rounded border border-amber-200 bg-white px-2 py-1 text-xs text-amber-950 placeholder:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                      className="hf-input"
                       disabled={disabled}
+                      style={{ flex: 1, minWidth: 220 }}
                     />
-                    <button
-                      type="button"
-                      onClick={handleSavePremiumCode}
-                      disabled={disabled}
-                      className="rounded bg-amber-900 px-2 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    <button type="button" onClick={handleSavePremiumCode} disabled={disabled} className="hf-premium-btn">
                       Save
                     </button>
-                    {premiumCode && (
+                    {premiumCode ? (
                       <button
                         type="button"
                         onClick={handleClearPremiumCode}
                         disabled={disabled}
-                        className="rounded border border-amber-300 bg-transparent px-2 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="hf-premium-btn hf-premium-btn--outline"
                       >
                         Clear
                       </button>
-                    )}
+                    ) : null}
                   </div>
-                  {premiumCodeMessage && <div className="mt-2 text-xs">{premiumCodeMessage}</div>}
 
-                  <div className="mt-2">
+                  {premiumCodeMessage ? (
+                    <div style={{ marginTop: '0.6rem', fontSize: '0.95rem', opacity: 0.95 }}>
+                      {premiumCodeMessage}
+                    </div>
+                  ) : null}
+
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.95rem', opacity: 0.95 }}>
                     {waitlistUrl ? (
-                      <a
-                        href={waitlistUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline hover:opacity-80"
-                      >
+                      <a href={waitlistUrl} target="_blank" rel="noreferrer">
                         Join the Premium waitlist
                       </a>
                     ) : (
