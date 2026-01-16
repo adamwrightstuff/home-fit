@@ -37,18 +37,26 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
         <div className={getScoreBadgeClass(pillar.score)}>{pillar.score.toFixed(0)}</div>
       </div>
 
-      <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.75rem' }}>
-        <div>
+      <div
+        style={{
+          marginTop: '1rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.9rem 1.2rem',
+          alignItems: 'baseline',
+        }}
+      >
+        <div style={{ minWidth: 110 }}>
           <div className="hf-label">Weight</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{pillar.weight.toFixed(1)}%</div>
+          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.weight.toFixed(1)}%</div>
         </div>
-        <div>
+        <div style={{ minWidth: 130 }}>
           <div className="hf-label">Contribution</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{pillar.contribution.toFixed(1)}</div>
+          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.contribution.toFixed(1)}</div>
         </div>
-        <div>
+        <div style={{ minWidth: 120 }}>
           <div className="hf-label">Confidence</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{pillar.confidence.toFixed(0)}%</div>
+          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.confidence.toFixed(0)}%</div>
         </div>
       </div>
 

@@ -22,6 +22,13 @@ const PILLAR_ORDER: PillarKey[] = [
   'housing_value',
 ]
 
+function overallTier(score: number): { label: string; tone: string } {
+  if (score >= 80) return { label: 'Excellent', tone: 'high' }
+  if (score >= 60) return { label: 'Strong', tone: 'mid' }
+  if (score >= 40) return { label: 'Mixed', tone: 'mid' }
+  return { label: 'Challenging', tone: 'low' }
+}
+
 export default function ScoreDisplay({ data }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const [copied, setCopied] = useState(false)
@@ -44,6 +51,20 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
       console.error('Failed to copy:', err)
     }
   }
+
+  const pillar_ranked = PILLAR_ORDER
+    .map((key) => ({ key, score: livability_pillars[key].score }))
+    .sort((a, b) => b.score - a.score)
+
+  const top2 = pillar_ranked.slice(0, 2)
+  const bottom1 = pillar_ranked[pillar_ranked.length - 1]
+  const tier = overallTier(total_score)
+
+  const schoolsDisabled =
+    (livability_pillars.quality_education as any)?.data_quality?.fallback_used === true &&
+    String((livability_pillars.quality_education as any)?.data_quality?.reason || '').toLowerCase().includes('disabled')
+
+  const lowConfidencePillars = PILLAR_ORDER.filter((k) => (livability_pillars[k]?.confidence ?? 100) < 60)
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
@@ -82,17 +103,48 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
           <TotalScore score={total_score} confidence={overall_confidence} />
           <div className="hf-panel">
             <div className="hf-label" style={{ marginBottom: '0.75rem' }}>
-              What this means
+              Quick summary
             </div>
-            <div className="hf-muted">
-              Your HomeFit score combines 9 pillar scores (0–100) using your priority weights. Higher-priority pillars contribute more to your total.
+
+            <div style={{ fontSize: '1.05rem', color: 'var(--hf-text-primary)', fontWeight: 650, lineHeight: 1.45 }}>
+              {tier.label} overall fit ({total_score.toFixed(1)}/100).
+            </div>
+
+            <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
+              Strongest pillars:{' '}
+              {top2
+                .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
+                .join(' and ')}
+              . Biggest opportunity:{' '}
+              {`${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`}.
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
+                How to read this
+              </div>
+              <ul className="hf-muted" style={{ margin: 0, paddingLeft: '1.1rem', display: 'grid', gap: '0.4rem', fontSize: '0.95rem' }}>
+                <li>Pillar scores are 0–100; your total is a weighted blend based on priorities.</li>
+                <li>Higher-priority pillars contribute more to the total score.</li>
+                {schoolsDisabled ? <li>Schools scoring is currently disabled (premium-gated), so “Schools” may be 0.</li> : null}
+                {lowConfidencePillars.length ? (
+                  <li>
+                    Lower-confidence data in:{' '}
+                    {lowConfidencePillars
+                      .slice(0, 3)
+                      .map((k) => PILLAR_META[k].name)
+                      .join(', ')}
+                    {lowConfidencePillars.length > 3 ? '…' : ''}.
+                  </li>
+                ) : null}
+              </ul>
             </div>
 
             <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--hf-border)' }}>
               <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
                 Data notes
               </div>
-              <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+              <div className="hf-muted" style={{ fontSize: '0.92rem' }}>
                 API version: {metadata.version}
                 {metadata.cache_hit ? ' (cached)' : ''}
               </div>
