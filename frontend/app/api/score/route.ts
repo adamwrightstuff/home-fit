@@ -174,7 +174,11 @@ export async function GET(req: NextRequest) {
     );
 
     return NextResponse.json(
-      { detail: 'Upstream request failed or timed out' },
+      {
+        detail: 'Upstream request failed or timed out',
+        // Safe debug: helps diagnose upstream fetch failures (no secrets).
+        error: err instanceof Error ? err.message : String(err),
+      },
       { status: 502, headers: { 'Cache-Control': 'no-store' } }
     );
   } finally {
