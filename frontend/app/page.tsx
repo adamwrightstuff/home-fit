@@ -104,7 +104,7 @@ export default function Home() {
                   Not sure what matters most?
                 </div>
                 <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
-                  Take our 10-question quiz to discover your Place Values profile.
+                  Take our 20-question quiz to discover your Place Values profile.
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
