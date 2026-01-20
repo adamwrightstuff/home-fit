@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     });
 
     const durationMs = Date.now() - start;
-    const locationHash = md5(location.toLowerCase()).slice(0, 10);
+    const locationHash = md5((location || '').toLowerCase()).slice(0, 10);
     const ip = getClientIp(req);
     // Minimal operational logging (avoid logging addresses)
     console.log(
