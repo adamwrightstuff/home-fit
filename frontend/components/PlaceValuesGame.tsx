@@ -57,146 +57,146 @@ const questions: QuizQuestion[] = [
   {
     id: 1,
     type: 'rank',
-    text: 'How do you prefer to spend a Saturday?',
+    text: 'Saturday priorities?',
     helper: 'Rank your top 3.',
     rankCount: 3,
     rankLabels: ['#1', '#2', '#3'],
     rankWeights: [4, 3, 2],
     options: [
-      { text: 'Exploring hiking trails and outdoor recreation', pillars: { active_outdoors: 1, natural_beauty: 1 } },
-      { text: 'Walking through neighborhoods with historic architecture', pillars: { built_beauty: 1 } },
-      { text: 'Browsing farmers markets and trying local cafés', pillars: { neighborhood_amenities: 1 } },
-      { text: 'Enjoying time at home with plenty of space', pillars: { housing_value: 1 } },
+      { text: 'Hiking trails', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Historic architecture', pillars: { built_beauty: 1 } },
+      { text: 'Farmers market / cafés', pillars: { neighborhood_amenities: 1 } },
+      { text: 'Spacious home', pillars: { housing_value: 1 } },
     ],
   },
   {
     id: 2,
     type: 'rank',
-    text: 'What makes an evening walk appealing?',
+    text: 'Evening walk appeal?',
     helper: 'Rank your top 2.',
     rankCount: 2,
     rankLabels: ['#1', '#2'],
     rankWeights: [4, 3],
     options: [
-      { text: 'Tree-lined streets with gardens and green spaces', pillars: { natural_beauty: 1 } },
-      { text: 'Charming streetscapes with architectural character', pillars: { built_beauty: 1 } },
-      { text: 'Lively streets with shops, restaurants, and street life', pillars: { neighborhood_amenities: 1 } },
-      { text: 'Scenic waterfront paths', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Tree-lined streets / gardens', pillars: { natural_beauty: 1 } },
+      { text: 'Charming rowhouses', pillars: { built_beauty: 1 } },
+      { text: 'Bustling shops / performers', pillars: { neighborhood_amenities: 1 } },
+      { text: 'Waterfront paths', pillars: { active_outdoors: 1, natural_beauty: 1 } },
     ],
   },
   {
     id: 3,
     type: 'multi',
-    text: 'What gives you peace of mind about a place?',
-    helper: 'Select 2–4.',
+    text: 'Reassuring factors?',
+    helper: 'Select 2–4 high priorities.',
     minSelect: 2,
     maxSelect: 4,
     options: [
-      { text: 'A top-rated hospital nearby', pillars: { healthcare_access: 4 } },
-      { text: 'Highly-rated schools in the district', pillars: { quality_education: 4 } },
-      { text: 'Tree-covered streets and accessible parks', pillars: { natural_beauty: 3, active_outdoors: 1 } },
-      { text: 'Getting good value and space for your money', pillars: { housing_value: 4 } },
+      { text: 'Top hospital', pillars: { healthcare_access: 4 } },
+      { text: 'Rated schools', pillars: { quality_education: 4 } },
+      { text: 'Tree streets / parks', pillars: { natural_beauty: 3, active_outdoors: 1 } },
+      { text: 'Space / value', pillars: { housing_value: 4 } },
     ],
   },
   {
     id: 4,
     type: 'rank',
-    text: "What's your ideal commute situation?",
-    helper: 'Rank preferences 1–4.',
-    rankCount: 4,
-    rankLabels: ['#1', '#2', '#3', '#4'],
-    rankWeights: [4, 3, 2, 1],
-    options: [
-      { text: 'Reliable subway or train service', pillars: { public_transit_access: 1 } },
-      { text: 'A scenic drive with good roads', pillars: { active_outdoors: 1, natural_beauty: 1 } },
-      { text: 'Walking or biking to work and daily needs', pillars: { neighborhood_amenities: 1 } },
-      { text: 'Easy access to a major airport', pillars: { air_travel_access: 1 } },
-    ],
-  },
-  {
-    id: 5,
-    type: 'rank',
-    text: 'If you have (or plan to have) kids, what matters most?',
-    helper: 'Rank top to bottom.',
-    rankCount: 4,
-    rankLabels: ['Top', '2nd', '3rd', 'Bottom'],
-    rankWeights: [4, 3, 2, 1],
-    options: [
-      { text: 'Top-rated schools', pillars: { quality_education: 1 } },
-      { text: 'Safe, walkable streets', pillars: { neighborhood_amenities: 1 } },
-      { text: 'Nearby parks and outdoor activities', pillars: { active_outdoors: 1, natural_beauty: 1 } },
-      { text: 'Enough space for the family to grow', pillars: { housing_value: 1 } },
-    ],
-  },
-  {
-    id: 6,
-    type: 'multi',
-    text: 'What would be a dealbreaker for you?',
-    helper: 'Select all that apply.',
-    minSelect: 1,
-    maxSelect: 4,
-    options: [
-      { text: 'Poor school ratings', pillars: { quality_education: 4 } },
-      { text: 'Limited access to quality healthcare', pillars: { healthcare_access: 4 } },
-      { text: 'Generic, characterless development', pillars: { built_beauty: 4 } },
-      { text: 'Having to drive everywhere for basics', pillars: { public_transit_access: 2, neighborhood_amenities: 2 } },
-    ],
-  },
-  {
-    id: 7,
-    type: 'rank',
-    text: 'If you could splurge on one aspect of where you live, what would it be?',
+    text: 'Job commute choice?',
     helper: 'Rank 1–4.',
     rankCount: 4,
     rankLabels: ['#1', '#2', '#3', '#4'],
     rankWeights: [4, 3, 2, 1],
     options: [
-      { text: 'A home with architectural character and thoughtful design', pillars: { built_beauty: 1 } },
-      { text: 'More square footage and living space', pillars: { housing_value: 1 } },
-      { text: 'Being in the best school district', pillars: { quality_education: 1 } },
-      { text: 'A property backing onto nature', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Subway', pillars: { public_transit_access: 1 } },
+      { text: 'Scenic drive', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Walkable', pillars: { neighborhood_amenities: 1 } },
+      { text: 'Near airport', pillars: { air_travel_access: 1 } },
+    ],
+  },
+  {
+    id: 5,
+    type: 'rank',
+    text: 'Kids / family must-haves?',
+    helper: 'Drag-style ranking: top to bottom.',
+    rankCount: 4,
+    rankLabels: ['Top', '2nd', '3rd', 'Bottom'],
+    rankWeights: [4, 3, 2, 1],
+    options: [
+      { text: 'Top schools', pillars: { quality_education: 1 } },
+      { text: 'Safe walks', pillars: { neighborhood_amenities: 1 } },
+      { text: 'Parks / trails', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Bigger home', pillars: { housing_value: 1 } },
+    ],
+  },
+  {
+    id: 6,
+    type: 'multi',
+    text: 'Biggest dealbreakers?',
+    helper: 'Select any that would stop you from choosing a place.',
+    minSelect: 1,
+    maxSelect: 4,
+    options: [
+      { text: 'Poor schools', pillars: { quality_education: 4 } },
+      { text: 'Far from hospitals', pillars: { healthcare_access: 4 } },
+      { text: 'Zero character', pillars: { built_beauty: 4 } },
+      { text: 'Must drive everywhere', pillars: { public_transit_access: 2, neighborhood_amenities: 2 } },
+    ],
+  },
+  {
+    id: 7,
+    type: 'rank',
+    text: 'Home splurge excitement?',
+    helper: 'Rank 1–4.',
+    rankCount: 4,
+    rankLabels: ['#1', '#2', '#3', '#4'],
+    rankWeights: [4, 3, 2, 1],
+    options: [
+      { text: 'Designed details', pillars: { built_beauty: 1 } },
+      { text: 'Bigger space', pillars: { housing_value: 1 } },
+      { text: 'Top district', pillars: { quality_education: 1 } },
+      { text: 'Nature backing', pillars: { active_outdoors: 1, natural_beauty: 1 } },
     ],
   },
   {
     id: 8,
     type: 'rank',
-    text: 'How do you think about cost of living?',
-    helper: 'Rank your top 2.',
+    text: 'Cost of living view?',
+    helper: 'Pick your High + Medium priorities (in that order).',
     rankCount: 2,
-    rankLabels: ['#1', '#2'],
-    rankWeights: [4, 3],
+    rankLabels: ['High', 'Medium'],
+    rankWeights: [4, 2],
     options: [
-      { text: 'I want maximum space and value for my money', pillars: { housing_value: 1 } },
-      { text: "I'm willing to pay more for beautiful surroundings", pillars: { built_beauty: 1, natural_beauty: 1 } },
-      { text: 'Good schools justify higher costs', pillars: { quality_education: 1 } },
-      { text: 'I prioritize location and convenience over size', pillars: { neighborhood_amenities: 1, public_transit_access: 1 } },
+      { text: 'Max space / value', pillars: { housing_value: 1 } },
+      { text: 'Pay for beauty', pillars: { built_beauty: 1 } },
+      { text: 'Schools matter', pillars: { quality_education: 1 } },
+      { text: 'Location first', pillars: { public_transit_access: 1, air_travel_access: 1 } },
     ],
   },
   {
     id: 9,
     type: 'rank',
-    text: 'What kind of connectivity matters to you?',
-    helper: 'Choose your top 2.',
+    text: 'Connectivity ideal?',
+    helper: 'Select your top 2.',
     rankCount: 2,
     rankLabels: ['#1', '#2'],
     rankWeights: [4, 3],
     options: [
-      { text: 'Being near a major airport', pillars: { air_travel_access: 1 } },
-      { text: 'Having comprehensive public transit options', pillars: { public_transit_access: 1 } },
-      { text: 'Walking to daily amenities and services', pillars: { neighborhood_amenities: 1 } },
-      { text: 'Easy access to scenic roads and highways', pillars: { active_outdoors: 1, natural_beauty: 1 } },
+      { text: 'Major airport', pillars: { air_travel_access: 1 } },
+      { text: 'Full transit', pillars: { public_transit_access: 1 } },
+      { text: 'Walkable amenities', pillars: { neighborhood_amenities: 1 } },
+      { text: 'Scenic drives', pillars: { active_outdoors: 1, natural_beauty: 1 } },
     ],
   },
   {
     id: 10,
     type: 'single',
-    text: 'If you had to choose just one non-negotiable, what would it be?',
-    helper: 'Select one.',
+    text: 'Non-negotiables?',
+    helper: 'Pick your #1.',
     options: [
-      { text: 'Access to nature and outdoor recreation', pillars: { active_outdoors: 3, natural_beauty: 2 } },
-      { text: 'Top-rated schools', pillars: { quality_education: 5 } },
-      { text: 'Quality healthcare nearby', pillars: { healthcare_access: 5 } },
-      { text: 'Getting the best value and space for your family budget', pillars: { housing_value: 5 } },
+      { text: 'Nature access', pillars: { active_outdoors: 3, natural_beauty: 2 } },
+      { text: 'Top schools', pillars: { quality_education: 5 } },
+      { text: 'Healthcare access', pillars: { healthcare_access: 5 } },
+      { text: 'Best value / space', pillars: { housing_value: 5 } },
     ],
   },
 ]
@@ -437,38 +437,6 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       const current = next[current_question]
       if (!current || current.kind !== 'rank') return prev
       next[current_question] = { kind: 'rank', ranked: [] }
-      return next
-    })
-  }
-
-  const move_rank_item_for_current = (rank_index: number, delta: -1 | 1) => {
-    set_answers((prev) => {
-      const next = [...prev]
-      const q = questions[current_question]
-      const current = next[current_question]
-      if (!q || q.type !== 'rank' || !current || current.kind !== 'rank') return prev
-      const ranked = [...current.ranked]
-      const toIndex = rank_index + delta
-      if (rank_index < 0 || rank_index >= ranked.length) return prev
-      if (toIndex < 0 || toIndex >= ranked.length) return prev
-      const tmp = ranked[rank_index]
-      ranked[rank_index] = ranked[toIndex]
-      ranked[toIndex] = tmp
-      next[current_question] = { kind: 'rank', ranked }
-      return next
-    })
-  }
-
-  const remove_rank_item_for_current = (rank_index: number) => {
-    set_answers((prev) => {
-      const next = [...prev]
-      const q = questions[current_question]
-      const current = next[current_question]
-      if (!q || q.type !== 'rank' || !current || current.kind !== 'rank') return prev
-      const ranked = [...current.ranked]
-      if (rank_index < 0 || rank_index >= ranked.length) return prev
-      ranked.splice(rank_index, 1)
-      next[current_question] = { kind: 'rank', ranked }
       return next
     })
   }
@@ -811,90 +779,14 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                 {question.type === 'multi' && currentAnswer?.kind === 'multi'
                   ? ` (${currentAnswer.selected.filter(Boolean).length}/${question.maxSelect})`
                   : null}
-                {question.type === 'rank' && currentAnswer?.kind === 'rank' ? ` (${currentAnswer.ranked.length}/${question.rankCount})` : null}
               </div>
             ) : null}
 
             {question.type === 'rank' && currentAnswer?.kind === 'rank' ? (
-              <div className="hf-panel" style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                  <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Your ranking
-                  </div>
-                  <button type="button" onClick={clear_rank_for_current} className="hf-btn-link">
-                    Clear
-                  </button>
-                </div>
-
-                {currentAnswer.ranked.length === 0 ? (
-                  <div className="hf-muted" style={{ marginTop: '0.5rem' }}>
-                    Tap options above to add them in order. You can reorder below.
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.75rem' }}>
-                    {currentAnswer.ranked.map((optionIdx, rankIdx) => {
-                      const label = question.rankLabels?.[rankIdx] || `#${rankIdx + 1}`
-                      const optText = question.options[optionIdx]?.text || 'Option'
-                      return (
-                        <div
-                          key={`${optionIdx}-${rankIdx}`}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '1rem',
-                            padding: '0.75rem 0.9rem',
-                            border: '1px solid var(--hf-border)',
-                            borderRadius: 14,
-                            background: '#fff',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div
-                              style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 10,
-                                background: 'var(--hf-primary-gradient)',
-                                color: '#fff',
-                                fontWeight: 900,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flex: '0 0 auto',
-                              }}
-                            >
-                              {label}
-                            </div>
-                            <div style={{ color: 'var(--hf-text-primary)', fontWeight: 650 }}>{optText}</div>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <button
-                              type="button"
-                              className="hf-btn-link"
-                              onClick={() => move_rank_item_for_current(rankIdx, -1)}
-                              disabled={rankIdx === 0}
-                            >
-                              Up
-                            </button>
-                            <button
-                              type="button"
-                              className="hf-btn-link"
-                              onClick={() => move_rank_item_for_current(rankIdx, 1)}
-                              disabled={rankIdx === currentAnswer.ranked.length - 1}
-                            >
-                              Down
-                            </button>
-                            <button type="button" className="hf-btn-link" onClick={() => remove_rank_item_for_current(rankIdx)}>
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+              <div style={{ marginTop: '1rem' }}>
+                <button type="button" onClick={clear_rank_for_current} className="hf-btn-link">
+                  Clear ranking
+                </button>
               </div>
             ) : null}
 
