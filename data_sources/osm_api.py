@@ -1197,12 +1197,18 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
     """
 
     def _do_request():
-        return requests.post(
+        r = requests.post(
             get_overpass_url(),
             data={"data": query},
             timeout=30,  # Reduced from 70s for faster failure
             headers={"User-Agent": "HomeFit/1.0"}
         )
+        # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
+        # If we just return the response, _retry_overpass() will treat it as "success"
+        # and we will never fall back to alternate endpoints.
+        if r.status_code != 200:
+            raise RuntimeError(f"Overpass status={r.status_code}")
+        return r
     
     try:
         # Amenities are standard (important but not critical) - use STANDARD profile
@@ -1259,6 +1265,11 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
                 }
             )
         
+        # Avoid caching empty business results; transient Overpass failures can otherwise poison cache.
+        total_processed = sum(len(businesses.get(k, [])) for k in ["tier1_daily", "tier2_social", "tier3_culture", "tier4_services"])
+        if total_processed == 0:
+            businesses["_cache_skip"] = True
+            businesses["data_warning"] = "empty_businesses_result_not_cached"
         return businesses
 
     except Exception as e:
