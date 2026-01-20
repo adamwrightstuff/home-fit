@@ -9,9 +9,66 @@ interface PillarCardProps {
   pillar: LivabilityPillar
 }
 
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function formatNumber(n: number): string {
+  if (!Number.isFinite(n)) return 'N/A'
+  return n % 1 === 0 ? n.toString() : n.toFixed(2)
+}
+
+function formatValue(value: any, depth: number = 0): string {
+  if (value === null || value === undefined) return 'N/A'
+  if (typeof value === 'number') return formatNumber(value)
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.length ? value.map((v) => String(v)).join(', ') : '—'
+
+  if (isRecord(value)) {
+    // Common pattern in API: { count, types } for tier summaries
+    const count = typeof value.count === 'number' ? value.count : null
+    const types = Array.isArray(value.types) ? value.types : null
+    if (count !== null && types) {
+      const typeStr = types.length ? types.join(', ') : '—'
+      return `${count} (${typeStr})`
+    }
+
+    // For small objects, render key=value pairs (avoid [object Object])
+    if (depth < 2) {
+      const entries = Object.entries(value)
+        .filter(([, v]) => typeof v !== 'object' || v === null)
+        .slice(0, 6)
+      if (entries.length) {
+        return entries.map(([k, v]) => `${k.replace(/_/g, ' ')}: ${formatValue(v, depth + 1)}`).join(', ')
+      }
+    }
+
+    return '—'
+  }
+
+  return String(value)
+}
+
 export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
+  const rawSummary = pillar.summary || {}
+
+  // Built Beauty: the useful metrics live under details.architectural_analysis.metrics.
+  // Some summary fields are placeholders (often zeros), so override them when available.
+  const builtMetrics = pillar_key === 'built_beauty' ? pillar.details?.architectural_analysis?.metrics : null
+  const summary =
+    pillar_key === 'built_beauty' && isRecord(builtMetrics)
+      ? {
+          ...rawSummary,
+          height_diversity: builtMetrics.height_diversity ?? rawSummary.height_diversity,
+          type_diversity: builtMetrics.type_diversity ?? rawSummary.type_diversity,
+          footprint_variation: builtMetrics.footprint_variation ?? rawSummary.footprint_variation,
+          built_coverage_ratio: builtMetrics.built_coverage_ratio ?? rawSummary.built_coverage_ratio,
+          diversity_score: rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
+        }
+      : rawSummary
 
   return (
     <div
@@ -86,9 +143,9 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
               </div>
             ) : null}
 
-            {pillar.summary && Object.keys(pillar.summary).length > 0 ? (
+            {summary && Object.keys(summary).length > 0 ? (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {Object.entries(pillar.summary).map(([key, value]) => {
+                {Object.entries(summary).map(([key, value]) => {
                   // Nested objects (e.g., Active Outdoors summary)
                   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                     return (
@@ -101,13 +158,7 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
                             <div key={subKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                               <span style={{ textTransform: 'capitalize' }}>{subKey.replace(/_/g, ' ')}</span>
                               <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
-                                {typeof subValue === 'number'
-                                  ? subValue % 1 === 0
-                                    ? subValue.toString()
-                                    : subValue.toFixed(2)
-                                  : subValue === null || subValue === undefined
-                                    ? 'N/A'
-                                    : String(subValue)}
+                                {formatValue(subValue, 1)}
                               </span>
                             </div>
                           ))}
@@ -133,13 +184,7 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
                     <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                       <span style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
                       <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
-                        {typeof value === 'number'
-                          ? value % 1 === 0
-                            ? value.toString()
-                            : value.toFixed(2)
-                          : value === null || value === undefined
-                            ? 'N/A'
-                            : String(value)}
+                        {formatValue(value)}
                       </span>
                     </div>
                   )
