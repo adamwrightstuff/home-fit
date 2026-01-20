@@ -80,6 +80,9 @@ export default function SmartLoadingScreen({
         })
 
         if (cancelled) return
+        if (!response || typeof response.total_score !== 'number') {
+          throw new Error('Scoring response was incomplete. Please refresh and try again.')
+        }
         if (response.coordinates) {
           set_coordinates(response.coordinates)
         }
@@ -106,7 +109,7 @@ export default function SmartLoadingScreen({
           if (cancelled) return
           set_status('complete')
           set_progress(100)
-          set_final_score(response.total_score)
+          set_final_score(typeof response.total_score === 'number' ? response.total_score : null)
           setTimeout(() => {
             if (!cancelled) on_complete(response)
           }, 500)
@@ -114,6 +117,9 @@ export default function SmartLoadingScreen({
       } catch (e) {
         if (cancelled) return
         const err = e instanceof Error ? e : new Error('Unknown error')
+        set_status('complete')
+        set_progress(0)
+        set_final_score(null)
         if (on_error) on_error(err)
       }
     }

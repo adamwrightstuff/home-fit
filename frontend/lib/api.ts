@@ -52,7 +52,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
-  while (response.status === 202) {
+  while (response.status === 202 || response.status === 409) {
     const payload = await response.json().catch(() => null);
     const jobId = payload?.job_id;
     if (!jobId) {
@@ -71,7 +71,11 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
     throw new Error(error?.detail || `API error: ${response.status}`);
   }
 
-  return response.json();
+  const json = await response.json();
+  if (!json || typeof json.total_score !== 'number') {
+    throw new Error('Unexpected scoring response. Please refresh and try again.');
+  }
+  return json;
 }
 
 export async function checkHealth(): Promise<any> {
