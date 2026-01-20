@@ -318,12 +318,18 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 
     try:
         def _do_request():
-            return requests.post(
+            r = requests.post(
                 get_overpass_url(),
                 data={"data": query},
                 timeout=20,  # Reduced from 40s for faster failure
                 headers={"User-Agent": "HomeFit/1.0"}
             )
+            # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
+            # If we just return the response, _retry_overpass() will treat it as "success"
+            # and we will never fall back to alternate endpoints.
+            if r.status_code != 200:
+                raise RuntimeError(f"Overpass status={r.status_code}")
+            return r
 
         # Parks are critical - use CRITICAL profile (retry all attempts)
         resp = _retry_overpass(_do_request, query_type="parks")
