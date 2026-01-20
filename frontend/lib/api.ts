@@ -36,16 +36,39 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
 
   const url = `${API_BASE_URL}/api/score?${searchParams.toString()}`;
   
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  // Launch hardening: scoring can take longer than a serverless request limit.
+  // We transparently handle async job polling when the API returns 202 {job_id}.
+  const start = Date.now();
+  const maxWaitMs = 4 * 60 * 1000; // client-side cap (keep UI responsive)
+  let pollDelayMs = 750;
+
+  async function fetchOnce(fetchUrl: string): Promise<Response> {
+    return fetch(fetchUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  let response = await fetchOnce(url);
+  while (response.status === 202) {
+    const payload = await response.json().catch(() => null);
+    const jobId = payload?.job_id;
+    if (!jobId) {
+      throw new Error('Scoring is queued, but no job_id was returned');
+    }
+    if (Date.now() - start > maxWaitMs) {
+      throw new Error('Scoring is taking longer than expected. Please try again.');
+    }
+    await new Promise((r) => setTimeout(r, pollDelayMs));
+    pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.25));
+    response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`);
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error.detail || `API error: ${response.status}`);
+    throw new Error(error?.detail || `API error: ${response.status}`);
   }
 
   return response.json();

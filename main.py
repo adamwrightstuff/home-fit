@@ -12,6 +12,7 @@ import asyncio
 import queue
 import threading
 import hashlib
+import uuid
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -90,7 +91,11 @@ def _verify_proxy_secret(request: Request) -> None:
 def require_proxy_auth(request: Request) -> None:
     _verify_proxy_secret(request)
 
-def _is_schools_allowed(request: Optional[Request], enable_schools_param: Optional[bool]) -> bool:
+def _is_schools_allowed(
+    request: Optional[Request],
+    enable_schools_param: Optional[bool],
+    premium_code: Optional[str] = None,
+) -> bool:
     """
     Schools are expensive and quota-limited. Default is OFF unless explicitly enabled.
     Premium override can be granted via an internal code header (validated at the proxy).
@@ -100,9 +105,9 @@ def _is_schools_allowed(request: Optional[Request], enable_schools_param: Option
         return False
     if ENABLE_SCHOOL_SCORING:
         return True
-    if not request or not HOMEFIT_SCHOOLS_PREMIUM_CODES:
+    if not HOMEFIT_SCHOOLS_PREMIUM_CODES:
         return False
-    provided = request.headers.get("X-HomeFit-Premium-Code", "").strip()
+    provided = (premium_code or (request.headers.get("X-HomeFit-Premium-Code", "") if request else "")).strip()
     return bool(provided) and provided in HOMEFIT_SCHOOLS_PREMIUM_CODES
 
 
@@ -731,7 +736,8 @@ def _compute_single_score_internal(
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
     test_mode: bool = False,
-    request: Optional[Request] = None
+    request: Optional[Request] = None,
+    premium_code: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -740,7 +746,7 @@ def _compute_single_score_internal(
     This contains the core scoring logic without FastAPI-specific caching.
     """
     # Determine if school scoring should be enabled for this request (gated)
-    use_school_scoring = _is_schools_allowed(request, enable_schools)
+    use_school_scoring = _is_schools_allowed(request, enable_schools, premium_code=premium_code)
     
     start_time = time.time()
     logger.info(f"HomeFit Score Request: {_safe_location_for_logs(location)}")
@@ -1692,6 +1698,142 @@ def get_livability_score(request: Request,
             status_code=500,
             detail=f"Internal server error while calculating livability score: {str(e)}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Async scoring jobs (Vercel-friendly polling)
+#
+# Problem:
+# - Vercel serverless functions have a hard execution limit (~60s).
+# - Some score computations can exceed that (or hang due to upstream dependencies).
+#
+# Solution:
+# - Create a job on the Railway backend quickly.
+# - Let the frontend poll job status/result via Vercel (/api/score?job_id=...).
+# ---------------------------------------------------------------------------
+_SCORE_JOBS_LOCK = threading.Lock()
+_SCORE_JOBS: Dict[str, Dict[str, Any]] = {}
+_SCORE_JOBS_TTL_SECONDS = int(os.getenv("HOMEFIT_SCORE_JOBS_TTL_SECONDS", "900"))  # 15 min
+_SCORE_JOBS_MAX = int(os.getenv("HOMEFIT_SCORE_JOBS_MAX", "500"))
+_SCORE_JOB_WORKERS = int(os.getenv("HOMEFIT_SCORE_JOB_WORKERS", "2"))
+_SCORE_JOB_EXECUTOR = ThreadPoolExecutor(max_workers=max(1, _SCORE_JOB_WORKERS))
+
+
+def _score_jobs_cleanup(now_ts: Optional[float] = None) -> None:
+    now_ts = now_ts or time.time()
+    with _SCORE_JOBS_LOCK:
+        # Drop completed/errored jobs after TTL
+        expired: List[str] = []
+        for jid, job in _SCORE_JOBS.items():
+            updated_at = float(job.get("updated_at") or job.get("created_at") or 0.0)
+            status = str(job.get("status") or "")
+            if status in {"done", "error"} and (now_ts - updated_at) > _SCORE_JOBS_TTL_SECONDS:
+                expired.append(jid)
+        for jid in expired:
+            _SCORE_JOBS.pop(jid, None)
+
+        # Hard cap total jobs in memory (drop oldest first)
+        if len(_SCORE_JOBS) > _SCORE_JOBS_MAX:
+            by_created = sorted(
+                _SCORE_JOBS.items(), key=lambda kv: float(kv[1].get("created_at") or 0.0)
+            )
+            for jid, _ in by_created[: max(0, len(_SCORE_JOBS) - _SCORE_JOBS_MAX)]:
+                _SCORE_JOBS.pop(jid, None)
+
+
+@app.post("/score/jobs", dependencies=[Depends(require_proxy_auth)])
+def create_score_job(
+    request: Request,
+    location: str,
+    tokens: Optional[str] = None,
+    priorities: Optional[str] = None,
+    include_chains: bool = True,
+    enable_schools: Optional[bool] = None,
+    test_mode: Optional[bool] = False,
+):
+    """
+    Create an async score job. Returns quickly with a job_id.
+
+    Use GET /score/jobs/{job_id} to poll status/result.
+    """
+    # Parse priorities JSON if provided
+    priorities_dict: Optional[Dict[str, str]] = None
+    if priorities:
+        try:
+            priorities_dict = json.loads(priorities) if isinstance(priorities, str) else priorities
+        except (json.JSONDecodeError, TypeError):
+            priorities_dict = None
+
+    premium_code = request.headers.get("X-HomeFit-Premium-Code", "").strip() or None
+    test_mode_enabled = bool(test_mode)
+
+    job_id = uuid.uuid4().hex
+    now = time.time()
+    job = {
+        "job_id": job_id,
+        "status": "queued",
+        "created_at": now,
+        "updated_at": now,
+        "result": None,
+        "error": None,
+    }
+
+    _score_jobs_cleanup(now_ts=now)
+    with _SCORE_JOBS_LOCK:
+        _SCORE_JOBS[job_id] = job
+
+    def _run_job():
+        with _SCORE_JOBS_LOCK:
+            if job_id in _SCORE_JOBS:
+                _SCORE_JOBS[job_id]["status"] = "running"
+                _SCORE_JOBS[job_id]["updated_at"] = time.time()
+        try:
+            result = _compute_single_score_internal(
+                location=location,
+                tokens=tokens,
+                priorities_dict=priorities_dict,
+                include_chains=include_chains,
+                enable_schools=enable_schools,
+                test_mode=test_mode_enabled,
+                request=None,
+                premium_code=premium_code,
+            )
+            with _SCORE_JOBS_LOCK:
+                if job_id in _SCORE_JOBS:
+                    _SCORE_JOBS[job_id]["status"] = "done"
+                    _SCORE_JOBS[job_id]["result"] = result
+                    _SCORE_JOBS[job_id]["updated_at"] = time.time()
+        except Exception as e:
+            with _SCORE_JOBS_LOCK:
+                if job_id in _SCORE_JOBS:
+                    _SCORE_JOBS[job_id]["status"] = "error"
+                    _SCORE_JOBS[job_id]["error"] = str(e)
+                    _SCORE_JOBS[job_id]["updated_at"] = time.time()
+
+    _SCORE_JOB_EXECUTOR.submit(_run_job)
+    return {"job_id": job_id, "status": "queued"}
+
+
+@app.get("/score/jobs/{job_id}", dependencies=[Depends(require_proxy_auth)])
+def get_score_job(job_id: str):
+    """Poll async score job status/result."""
+    _score_jobs_cleanup()
+    with _SCORE_JOBS_LOCK:
+        job = _SCORE_JOBS.get(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        status = str(job.get("status") or "unknown")
+        response: Dict[str, Any] = {
+            "job_id": job_id,
+            "status": status,
+            "created_at": job.get("created_at"),
+            "updated_at": job.get("updated_at"),
+        }
+        if status == "done":
+            response["result"] = job.get("result")
+        elif status == "error":
+            response["detail"] = job.get("error") or "Job failed"
+        return response
 
 
 async def _stream_score_with_progress(

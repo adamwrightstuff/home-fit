@@ -13,6 +13,15 @@ import time
 from functools import wraps
 from data_sources.cache import cached, CACHE_TTL
 
+# Defensive: prevent Earth Engine calls from hanging indefinitely.
+# ee.data.setDeadline sets a per-request deadline (ms) for API calls.
+try:
+    deadline_ms = int(os.getenv("HOMEFIT_GEE_DEADLINE_MS", "9000"))
+    if hasattr(ee, "data") and hasattr(ee.data, "setDeadline"):
+        ee.data.setDeadline(deadline_ms)
+except Exception:
+    pass
+
 # Initialize GEE with service account credentials
 def _initialize_gee():
     """Initialize GEE with service account credentials from environment variable."""

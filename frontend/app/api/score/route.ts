@@ -33,14 +33,18 @@ export async function GET(req: NextRequest) {
   }
 
   const sp = req.nextUrl.searchParams;
+  const jobId = sp.get('job_id')?.trim();
   const location = sp.get('location')?.trim();
-  if (!location) {
-    return NextResponse.json({ detail: 'Missing required query param: location' }, { status: 400 });
+  if (!jobId && !location) {
+    return NextResponse.json(
+      { detail: 'Missing required query param: location (or provide job_id)' },
+      { status: 400 }
+    );
   }
 
   // Forward only a small, explicit allowlist of query params.
   const upstreamParams = new URLSearchParams();
-  upstreamParams.set('location', location);
+  if (location) upstreamParams.set('location', location);
 
   for (const key of ['tokens', 'priorities', 'include_chains', 'diagnostics', 'only'] as const) {
     const v = sp.get(key);
@@ -57,7 +61,9 @@ export async function GET(req: NextRequest) {
     upstreamParams.set('enable_schools', premiumOk ? enableSchools : 'false');
   }
 
-  const url = `${RAILWAY_API_BASE_URL}/score?${upstreamParams.toString()}`;
+  const url = jobId
+    ? `${RAILWAY_API_BASE_URL}/score/jobs/${encodeURIComponent(jobId)}`
+    : `${RAILWAY_API_BASE_URL}/score/jobs?${upstreamParams.toString()}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SCORE_PROXY_TIMEOUT_MS);
@@ -65,7 +71,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const upstream = await fetch(url, {
-      method: 'GET',
+      method: jobId ? 'GET' : 'POST',
       headers: {
         Accept: 'application/json',
         ...(HOMEFIT_PROXY_SECRET ? { 'X-HomeFit-Proxy-Secret': HOMEFIT_PROXY_SECRET } : {}),
@@ -104,6 +110,41 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Normalization for job polling:
+    // - POST /score/jobs returns {job_id, status}
+    // - GET /score/jobs/{id} returns {status, result?}
+    // For the frontend we return either:
+    // - 202 {job_id, status} when not done yet
+    // - 200 <ScoreResponse> when done
+    // - propagate errors otherwise
+    if (contentType.includes('application/json')) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (jobId) {
+          const status = parsed?.status;
+          if (status === 'done' && parsed?.result) {
+            return NextResponse.json(parsed.result, { status: 200, headers: { 'Cache-Control': 'no-store' } });
+          }
+          if (status === 'queued' || status === 'running') {
+            return NextResponse.json(
+              { job_id: parsed?.job_id || jobId, status },
+              { status: 202, headers: { 'Cache-Control': 'no-store' } }
+            );
+          }
+        } else {
+          // Create job response
+          if (parsed?.job_id) {
+            return NextResponse.json(
+              { job_id: parsed.job_id, status: parsed.status || 'queued' },
+              { status: 202, headers: { 'Cache-Control': 'no-store' } }
+            );
+          }
+        }
+      } catch {
+        // fall through
+      }
+    }
+
     return new NextResponse(bodyText, {
       status: upstream.status,
       headers: {
@@ -113,7 +154,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     const durationMs = Date.now() - start;
-    const locationHash = md5(location.toLowerCase()).slice(0, 10);
+    const locationHash = md5((location || '').toLowerCase()).slice(0, 10);
     const ip = getClientIp(req);
     console.log(
       JSON.stringify({
