@@ -15,6 +15,11 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Cache key versioning.
+# Used to invalidate old/poisoned cache entries after a deploy (esp. OSM/Overpass transient empties).
+# Can be overridden via env without code changes.
+CACHE_KEY_VERSION = os.getenv("HOMEFIT_CACHE_KEY_VERSION", "2")
+
 # Try to import and initialize Redis
 _redis_client = None
 try:
@@ -90,7 +95,7 @@ CACHE_TTL = {
 def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
     """Generate a cache key from function name and arguments."""
     # Create a string representation of the arguments
-    args_str = str(args) + str(sorted(kwargs.items()))
+    args_str = f"v={CACHE_KEY_VERSION}|" + str(args) + str(sorted(kwargs.items()))
     # Hash the string to create a shorter key
     key_hash = hashlib.md5(args_str.encode()).hexdigest()
     return f"{func_name}:{key_hash}"

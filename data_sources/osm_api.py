@@ -483,12 +483,20 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
         if DEBUG_PARKS:
             logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds, {len(recreational_facilities)} recreational facilities")
 
-        return {
+        result = {
             "parks": parks,
             "playgrounds": playgrounds,
             "recreational_facilities": recreational_facilities,  # NEW: tennis courts, baseball fields, dog parks
             # tree_features removed (not used by any pillar; kept parks/playgrounds only)
         }
+
+        # Avoid caching "empty" results: these are frequently caused by transient Overpass failures
+        # or endpoint inconsistencies, and caching them poisons downstream scoring (e.g. Boulder parks=0).
+        if not parks and not playgrounds and not recreational_facilities:
+            result["_cache_skip"] = True
+            result["data_warning"] = "empty_green_spaces_result_not_cached"
+
+        return result
 
     except Exception as e:
         logger.error(f"OSM parks query error: {e}", exc_info=True)
