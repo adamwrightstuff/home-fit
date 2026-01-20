@@ -546,6 +546,20 @@ def get_active_outdoors_score_v2(
     def _fetch_parks():
         """Fetch local parks, playgrounds, and recreational facilities."""
         result = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+        # Debug metadata (no PII): helps distinguish live vs stale-cache vs empty results.
+        try:
+            result = result or {}
+            result["_debug_parks"] = {
+                "stale_cache": bool(result.get("_stale_cache")),
+                "cache_age_hours": result.get("_cache_age_hours"),
+                "data_warning": result.get("data_warning"),
+                "parks_count": len(result.get("parks", []) or []),
+                "playgrounds_count": len(result.get("playgrounds", []) or []),
+                "facilities_count": len(result.get("recreational_facilities", []) or []),
+            }
+        except Exception:
+            # Never fail scoring due to debug info
+            result = result or {}
         # DIAGNOSTIC: Log what we got from the query
         if result is None:
             logger.warning(
@@ -823,6 +837,9 @@ def get_active_outdoors_score_v2(
         ),
         "data_quality": dq,
         "area_classification": area_metadata,
+        "debug": {
+            "parks_query": (local.get("_debug_parks") if isinstance(local, dict) else None),
+        },
         "version": "active_outdoors_v2_ridge_regression",
         "weighted_sum": round(weighted_sum, 1),
         "scoring_method": "ridge_regression_global_model",
