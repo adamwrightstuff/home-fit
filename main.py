@@ -559,6 +559,45 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     return token_dict
 
 
+def _apply_schools_disabled_weight_override(
+    token_allocation: Dict[str, float],
+    *,
+    use_school_scoring: bool,
+) -> Dict[str, float]:
+    """
+    If school scoring is disabled for this request, ensure the Schools pillar
+    contributes 0% by setting its weight to 0 and renormalizing the remaining
+    pillars to sum to 100.
+
+    This prevents "Schools" (which will often have a fallback score of 0) from
+    dragging down the total score when the feature is disabled / premium-gated.
+    """
+    if use_school_scoring:
+        return token_allocation
+
+    if not isinstance(token_allocation, dict):
+        return token_allocation
+
+    if "quality_education" not in token_allocation:
+        return token_allocation
+
+    # Copy to avoid surprising callers that reuse dict instances.
+    out = dict(token_allocation)
+    out["quality_education"] = 0.0
+
+    remaining = sum(float(v or 0.0) for k, v in out.items() if k != "quality_education")
+    if remaining <= 0:
+        return out
+
+    scale = 100.0 / remaining
+    for k in list(out.keys()):
+        if k == "quality_education":
+            continue
+        out[k] = float(out.get(k, 0.0) or 0.0) * scale
+
+    return out
+
+
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 9 pillars",
@@ -662,6 +701,7 @@ def _apply_allocation_to_cached_response(
     *,
     tokens: Optional[str],
     priorities_dict: Optional[Dict[str, str]],
+    use_school_scoring: bool,
     only_pillars: Optional[set[str]] = None,
 ) -> Dict[str, Any]:
     """
@@ -710,6 +750,12 @@ def _apply_allocation_to_cached_response(
         if remaining > 0:
             scale = 100.0 / remaining
             token_allocation = {k: v * scale for k, v in token_allocation.items()}
+
+    # If schools are disabled for this request, force 0% Schools weight.
+    token_allocation = _apply_schools_disabled_weight_override(
+        token_allocation,
+        use_school_scoring=use_school_scoring,
+    )
 
     response["token_allocation"] = token_allocation
     response["allocation_type"] = allocation_type
@@ -848,6 +894,7 @@ def _compute_single_score_internal(
                     cached_template,
                     tokens=tokens,
                     priorities_dict=priorities_dict,
+                    use_school_scoring=use_school_scoring,
                     only_pillars=only_pillars,
                 )
                 return response
@@ -1320,6 +1367,12 @@ def _compute_single_score_internal(
             equal = 100.0 / len(only_pillars)
             token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
                              for pillar_name in token_allocation.keys()}
+
+    # If schools are disabled for this request, force 0% Schools weight.
+    token_allocation = _apply_schools_disabled_weight_override(
+        token_allocation,
+        use_school_scoring=use_school_scoring,
+    )
 
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
@@ -1901,6 +1954,7 @@ async def _stream_score_with_progress(
                         cached_template,
                         tokens=tokens,
                         priorities_dict=priorities_dict,
+                        use_school_scoring=use_school_scoring,
                         only_pillars=None,
                     )
 
@@ -2393,6 +2447,12 @@ async def _stream_score_with_progress(
             token_allocation = parse_token_allocation(tokens)
             allocation_type = "token_based" if tokens else "default_equal"
             priority_levels = None
+
+        # If schools are disabled for this request, force 0% Schools weight.
+        token_allocation = _apply_schools_disabled_weight_override(
+            token_allocation,
+            use_school_scoring=use_school_scoring,
+        )
         
         # Calculate weighted total
         total_score = (
@@ -3163,6 +3223,12 @@ async def stream_score(
                 equal = 100.0 / len(only_pillars)
                 token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
                                  for pillar_name in token_allocation.keys()}
+
+        # If schools are disabled for this request, force 0% Schools weight.
+        token_allocation = _apply_schools_disabled_weight_override(
+            token_allocation,
+            use_school_scoring=use_school_scoring,
+        )
 
         total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
