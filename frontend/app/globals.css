@@ -36,6 +36,17 @@ body {
   line-height: 1.6;
 }
 
+.hf-viewport {
+  /* iOS Safari: avoid 100vh issues with dynamic toolbars */
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.hf-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* -----------------------------
    Reusable layout + components
    ----------------------------- */

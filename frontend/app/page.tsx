@@ -154,7 +154,7 @@ export default function Home() {
         )}
 
         {loading && current_location && (
-          <div className="fixed inset-0 z-50 hf-page" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="fixed inset-0 z-50 hf-page hf-viewport">
             <SmartLoadingScreen
               location={current_location}
               priorities={JSON.stringify(search_options.priorities)}

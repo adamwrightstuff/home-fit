@@ -147,15 +147,13 @@ export default function SmartLoadingScreen({
   }, [completed_pillars, status])
 
   return (
-    <div className="hf-page" style={{ minHeight: '100vh', width: '100%', position: 'relative' }}>
+    <div className="hf-page hf-viewport hf-safe-bottom overflow-y-auto md:overflow-hidden" style={{ width: '100%', position: 'relative' }}>
       {/* Main content - always render so map can initialize */}
-      <div className="flex h-full w-full" style={{ minHeight: '100vh' }}>
+      <div className="flex flex-col md:flex-row h-full w-full">
         {/* Left side - Map */}
         <div 
-          className="w-1/2"
+          className="w-full md:w-1/2 h-[42svh] min-h-[260px] md:h-full"
           style={{ 
-            minHeight: '100vh', 
-            height: '100vh',
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -168,7 +166,10 @@ export default function SmartLoadingScreen({
         </div>
 
         {/* Right side - Progress */}
-        <div className="w-1/2 p-8 overflow-y-auto" style={{ minHeight: '100vh', position: 'relative' }}>
+        <div
+          className="w-full md:w-1/2 p-4 md:p-8 overflow-visible md:overflow-y-auto"
+          style={{ position: 'relative', WebkitOverflowScrolling: 'touch' }}
+        >
           {/* Loading overlay - only on right side */}
           {status === 'starting' && (
             <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'var(--hf-bg-gradient)' }}>

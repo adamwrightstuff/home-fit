@@ -166,6 +166,37 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run once on mount - map_ref is stable
 
+  // Keep the map sized correctly when its container changes (mobile Safari / flex layout)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!map_ref.current) return
+    if (!map_container_ref.current) return
+
+    const map = map_ref.current
+
+    const safeResize = () => {
+      try {
+        map.resize()
+      } catch {
+        // ignore resize errors during initialization/teardown
+      }
+    }
+
+    window.addEventListener('resize', safeResize)
+    safeResize()
+
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => safeResize())
+      ro.observe(map_container_ref.current)
+    }
+
+    return () => {
+      window.removeEventListener('resize', safeResize)
+      ro?.disconnect()
+    }
+  }, [map_loaded])
+
   // Update map when coordinates change
   useEffect(() => {
     if (!map_ref.current || !coordinates || !map_loaded) return
@@ -265,7 +296,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
     <div 
       className="w-full h-full relative" 
       style={{ 
-        height: '100vh',
+        height: '100%',
         width: '100%',
         position: 'relative',
         backgroundColor: '#f3f4f6' // Light gray background while loading
