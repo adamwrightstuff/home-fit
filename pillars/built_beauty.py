@@ -4,6 +4,7 @@ Built Beauty pillar implementation (architecture, form, and built enhancers).
 
 from __future__ import annotations
 
+import math
 from typing import Dict, List, Optional, Tuple
 
 from logging_config import get_logger
@@ -16,11 +17,43 @@ from pillars.beauty_common import BUILT_ENHANCER_CAP, normalize_beauty_score
 logger = get_logger(__name__)
 
 
+def _enhancer_linear_plus_tail(
+    count: int,
+    *,
+    per_unit: float,
+    linear_cap_count: int,
+    tail_max_points: float,
+    tail_halfsat: float,
+) -> float:
+    """
+    Map a feature count to points with:
+    - linear growth up to `linear_cap_count` (preserves current behavior)
+    - diminishing returns above that, saturating to `tail_max_points` additional points
+    """
+    try:
+        c = int(count)
+    except (TypeError, ValueError):
+        c = 0
+    c = max(0, c)
+
+    linear = min(c, linear_cap_count) * per_unit
+    if c <= linear_cap_count:
+        return float(linear)
+
+    # Diminishing-returns tail: saturating exponential.
+    # Tail starts at 0 when c == linear_cap_count.
+    tail_count = float(c - linear_cap_count)
+    halfsat = max(1e-6, float(tail_halfsat))
+    tail = float(tail_max_points) * (1.0 - math.exp(-tail_count / halfsat))
+    return float(linear + tail)
+
+
 def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
     """
     Fetch historic data once (OSM landmarks + Census building age).
     """
     from data_sources import census_api
+    from data_sources import nrhp
 
     year_built_data = census_api.get_year_built_data(lat, lon)
     median_year_built = year_built_data.get('median_year_built') if year_built_data else None
@@ -36,13 +69,26 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
         historic_landmarks = []
     historic_landmarks_count = len(historic_landmarks)
 
+    nrhp_result: Dict = {}
+    try:
+        nrhp_result = nrhp.query_nrhp(lat, lon, radius_m=radius_m) or {}
+    except Exception as exc:
+        logger.warning("NRHP lookup failed for %s, %s: %s", lat, lon, exc)
+        nrhp_result = {}
+
     return {
         'year_built_data': year_built_data,
         'median_year_built': median_year_built,
         'vintage_pct': vintage_pct,
         'charm_data': charm_data,
         'historic_landmarks': historic_landmarks,
-        'historic_landmarks_count': historic_landmarks_count
+        'historic_landmarks_count': historic_landmarks_count,
+        # Historic register (bundled dataset)
+        'nrhp': nrhp_result,
+        'nrhp_count': nrhp_result.get("count", 0) if isinstance(nrhp_result, dict) else 0,
+        'nrhp_nearest_distance_m': nrhp_result.get("nearest_distance_m") if isinstance(nrhp_result, dict) else None,
+        'nrhp_styles': nrhp_result.get("styles", []) if isinstance(nrhp_result, dict) else [],
+        'nrhp_periods': nrhp_result.get("periods", []) if isinstance(nrhp_result, dict) else [],
     }
 
 
@@ -113,6 +159,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)
         historic_landmarks = historic_data.get('historic_landmarks_count', 0)
         median_year_built = historic_data.get('median_year_built')
+        nrhp_count = historic_data.get("nrhp_count", 0)
         # Extract pre_1940_pct to distinguish historic neighborhoods with infill from modern areas
         year_built_data = historic_data.get('year_built_data', {})
         pre_1940_pct = year_built_data.get('pre_1940_pct') if isinstance(year_built_data, dict) else None
@@ -170,7 +217,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             type_category_diversity=diversity_metrics.get("type_category_diversity"),
             height_stats=diversity_metrics.get("height_stats"),
             contextual_tags=contextual_tags,
-            pre_1940_pct=pre_1940_pct
+            pre_1940_pct=pre_1940_pct,
+            nrhp_count=nrhp_count,
         )
 
         if isinstance(beauty_score_result, tuple):
@@ -232,6 +280,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "historic_context": {
                 "landmarks": historic_landmarks,
                 "median_year_built": median_year_built,
+                "nrhp_count": historic_data.get("nrhp_count", 0),
+                "nrhp_nearest_distance_m": historic_data.get("nrhp_nearest_distance_m"),
+                "nrhp_styles": historic_data.get("nrhp_styles", []),
+                "nrhp_periods": historic_data.get("nrhp_periods", []),
                 "heritage_buildings": (coverage_cap_metadata.get("heritage_profile") or {}).get("count", 0),
                 "heritage_designations": (coverage_cap_metadata.get("heritage_profile") or {}).get("designations", []),
                 "historic_tagged": (coverage_cap_metadata.get("heritage_profile") or {}).get("historic_tagged", 0),
@@ -262,6 +314,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             "bonus_breakdown": {
                 "material": _r2(coverage_cap_metadata.get("material_bonus")),
                 "heritage": _r2(coverage_cap_metadata.get("heritage_bonus")),
+                "register": _r2(coverage_cap_metadata.get("register_bonus")),
                 "age": _r2(coverage_cap_metadata.get("age_bonus")),
                 "age_mix": _r2(coverage_cap_metadata.get("age_mix_bonus")),
                 "modern_form": _r2(coverage_cap_metadata.get("modern_form_bonus")),
@@ -324,13 +377,41 @@ def calculate_built_beauty(lat: float,
 
     built_bonus_raw = 0.0
     built_bonus_scaled = 0.0
+    artwork_count: int = 0
+    fountain_count: int = 0
+    artwork_points: float = 0.0
+    fountain_points: float = 0.0
     if not disable_enhancers:
         if enhancers_data is None:
             enhancers_data = osm_api.query_beauty_enhancers(lat, lon, radius_m=enhancer_radius_m)
-        artwork_count = enhancers_data.get("artwork", 0)
-        fountain_count = enhancers_data.get("fountains", 0)
-        built_bonus_raw += min(4.5, artwork_count * 1.5)
-        built_bonus_raw += min(1.5, fountain_count * 0.5)
+        try:
+            artwork_count = int(enhancers_data.get("artwork", 0))
+        except (TypeError, ValueError):
+            artwork_count = 0
+        try:
+            fountain_count = int(enhancers_data.get("fountains", 0))
+        except (TypeError, ValueError):
+            fountain_count = 0
+
+        # Preserve current behavior for small counts, but allow additional differentiation
+        # at high counts via a diminishing-returns tail.
+        artwork_points = _enhancer_linear_plus_tail(
+            artwork_count,
+            per_unit=1.5,
+            linear_cap_count=3,      # current artwork cap point (3 * 1.5 = 4.5)
+            tail_max_points=2.0,     # additional points beyond the linear cap
+            tail_halfsat=8.0,        # how quickly the tail saturates
+        )
+        fountain_points = _enhancer_linear_plus_tail(
+            fountain_count,
+            per_unit=0.5,
+            linear_cap_count=3,      # current fountain cap point (3 * 0.5 = 1.5)
+            tail_max_points=1.0,
+            tail_halfsat=6.0,
+        )
+
+        built_bonus_raw += artwork_points
+        built_bonus_raw += fountain_points
 
         arch_conf = arch_details.get("confidence_0_1") if isinstance(arch_details, dict) else None
         built_scale = 1.0
@@ -352,6 +433,10 @@ def calculate_built_beauty(lat: float,
     )
 
     enhancer_meta = {
+        "artwork_count": int(artwork_count) if isinstance(artwork_count, (int, float)) else artwork_count,
+        "fountain_count": int(fountain_count) if isinstance(fountain_count, (int, float)) else fountain_count,
+        "artwork_points_raw": round(float(artwork_points), 2) if not disable_enhancers else 0.0,
+        "fountain_points_raw": round(float(fountain_points), 2) if not disable_enhancers else 0.0,
         "built_raw": round(built_bonus_raw, 2),
         "built_scaled": round(built_bonus_scaled, 2),
         "scaled_total": round(built_bonus_scaled, 2)

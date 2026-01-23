@@ -2062,7 +2062,8 @@ def score_architectural_diversity_as_beauty(
     type_category_diversity: Optional[float] = None,
     height_stats: Optional[Dict[str, Any]] = None,
     contextual_tags: Optional[List[str]] = None,
-    pre_1940_pct: Optional[float] = None
+    pre_1940_pct: Optional[float] = None,
+    nrhp_count: Optional[int] = None,
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -2509,6 +2510,24 @@ def score_architectural_diversity_as_beauty(
         # Re-score with adjusted CV (targets is still in scope from earlier)
         foot_raw = _score_band(footprint_area_cv_adjusted, targets["footprint"], max_points=16.67)
 
+    # Auto-oriented penalty: explicitly down-score parking/paved-dominated contexts.
+    # This is intended to pull strip-mall / big-parking patterns down without harming
+    # historic fabrics (which can have plazas/courtyards and should not be penalized).
+    auto_oriented_penalty = 0.0
+    if parking_share is not None:
+        is_historic_context = "historic" in (contextual_tags or [])
+        if not is_historic_context:
+            # Apply primarily outside dense urban contexts, but allow it to catch
+            # low-coverage urban-core edges that are actually auto-oriented.
+            apply_penalty = (
+                effective in ("suburban", "exurban", "rural", "unknown") or
+                (effective == "urban_core" and built_coverage_ratio is not None and built_coverage_ratio < 0.22)
+            )
+            if apply_penalty:
+                # Map parking_share from [0.15, 0.35+] → [0, 1] severity.
+                severity = _clamp01((parking_share - 0.15) / 0.20)
+                auto_oriented_penalty = 6.0 * severity  # max -6 points on the 0-50 architecture scale
+
     # WAVE 1.1: Apply coherence multiplier to diversity components
     height_raw, type_raw, foot_raw = _apply_diversity_coherence_multiplier(
         height_raw, type_raw, foot_raw,
@@ -2652,6 +2671,22 @@ def score_architectural_diversity_as_beauty(
     # Use rule-based scoring: design_score + form_score (0-50 native range)
     # Note: Both design_score and form_score are already in 0-50 native range
     final_score = min(50.0, design_score + form_score)
+
+    if auto_oriented_penalty > 0.0:
+        final_score = max(0.0, final_score - auto_oriented_penalty)
+
+    # Historic register bonus (NRHP): small, capped additive lift to reflect
+    # authoritative historic designations when present in the bundled dataset.
+    register_bonus = 0.0
+    if nrhp_count is not None:
+        try:
+            c = max(0.0, float(nrhp_count))
+        except (TypeError, ValueError):
+            c = 0.0
+        if c > 0:
+            import math
+            register_bonus = min(3.0, math.log1p(c) * 1.0)  # max +3 on 0-50 scale
+            final_score = min(50.0, final_score + register_bonus)
     
     # Compute modern_material_share for metadata
     modern_material_share = _modern_material_share(material_profile)
@@ -2716,7 +2751,11 @@ def score_architectural_diversity_as_beauty(
         "setback_consistency": setback_value,
         "setback_confidence": setback_confidence,
         "facade_rhythm": facade_rhythm_value,
-        "facade_rhythm_confidence": facade_rhythm_confidence
+        "facade_rhythm_confidence": facade_rhythm_confidence,
+        "nrhp_count": int(nrhp_count) if isinstance(nrhp_count, (int, float)) else nrhp_count,
+        "register_bonus": round(register_bonus, 2),
+        "parking_share_estimate": round(parking_share, 3) if isinstance(parking_share, (int, float)) else None,
+        "auto_oriented_penalty": round(auto_oriented_penalty, 2)
     }
     metadata["synthetic_metrics"] = {
         "streetwall_proxy_used": streetwall_proxy_used
