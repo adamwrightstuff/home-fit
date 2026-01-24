@@ -19,6 +19,40 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Overpass sometimes returns HTML / empty bodies (429/504/proxy pages) even with HTTP 200.
+# Treat "not JSON" as a soft failure and let callers fall back gracefully.
+def _safe_overpass_json(resp: Optional[requests.Response], *, context: str) -> Optional[Dict[str, Any]]:
+    if resp is None:
+        return None
+
+    # `requests.Response.json()` can raise ValueError/JSONDecodeError if body isn't JSON.
+    text = ""
+    try:
+        text = resp.text or ""
+    except Exception:
+        text = ""
+
+    if not text.strip():
+        logger.warning(f"OSM {context} returned empty body (status={getattr(resp, 'status_code', 'unknown')})")
+        return None
+
+    try:
+        data = resp.json()
+    except ValueError:
+        ct = (resp.headers or {}).get("Content-Type", "")
+        preview = text.strip().replace("\n", " ")[:200]
+        logger.warning(
+            f"OSM {context} returned non-JSON response "
+            f"(status={resp.status_code}, content_type={ct!r}, body_preview={preview!r})"
+        )
+        return None
+
+    if not isinstance(data, dict):
+        logger.warning(f"OSM {context} returned unexpected JSON type: {type(data).__name__}")
+        return None
+
+    return data
+
 # Build list of Overpass endpoints (primary + fallbacks)
 _default_overpass = os.environ.get("OVERPASS_URL")
 _fallback_endpoints = [
@@ -390,7 +424,9 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
                 logger.warning("OSM parks query returned no response")
             return None
 
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="parks query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
         
         # DIAGNOSTIC: Log raw park elements before processing
@@ -588,7 +624,9 @@ def query_nature_features(
         resp = _retry_overpass(_do_request, query_type="nature_features")
         if resp is None:
             return None
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="nature features query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
         
         # DIAGNOSTIC: Log raw camping elements before processing
@@ -726,7 +764,9 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         if resp is None or resp.status_code != 200:
             return None
         
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="water features query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
         
         water_features = []
@@ -931,7 +971,9 @@ def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Option
         if resp.status_code != 200:
             return None
 
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="enhanced trees query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
 
         tree_rows, street_trees, individual_trees, tree_areas = _process_enhanced_trees(
@@ -1014,7 +1056,9 @@ def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optio
                 logger.warning("OSM cultural assets query rate limited (429)")
             return None
         
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="cultural assets query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
         
         museums, galleries, theaters, public_art, cultural_venues = _process_cultural_assets(
@@ -1089,7 +1133,9 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
                 logger.warning("OSM charm query rate limited (429)")
             return None
     
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="charm features query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
     
         historic, artwork = _process_charm_features(elements, lat, lon)
@@ -1219,7 +1265,9 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
                 logger.warning("OSM business query rate limited (429)")
             return None
 
-        data = resp.json()
+        data = _safe_overpass_json(resp, context="businesses query")
+        if data is None:
+            return None
         elements = data.get("elements", [])
 
         # Diagnostic logging for amenities queries
@@ -1920,7 +1968,9 @@ def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) 
 
                 paths_resp = _retry_overpass(_do_paths_request, query_type="park_trails")
                 if paths_resp is not None and paths_resp.status_code == 200:
-                    paths_data = paths_resp.json()
+                    paths_data = _safe_overpass_json(paths_resp, context="park trails query")
+                    if paths_data is None:
+                        continue
                     paths = paths_data.get("elements", [])
                     
                     # Only count if park has multiple paths (indicating it's a substantial park with trails)
@@ -1964,7 +2014,10 @@ def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int =
         resp = requests.post(get_overpass_url(), data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
         if resp.status_code != 200:
             return 0
-        ways = resp.json().get("elements", [])
+        data = _safe_overpass_json(resp, context="local paths within green areas query")
+        if data is None:
+            return 0
+        ways = data.get("elements", [])
         def _centroid(w):
             pts = [(n.get('lat'), n.get('lon')) for n in (w.get('geometry') or []) if 'lat' in n and 'lon' in n]
             pts = [(a,b) for a,b in pts if a is not None and b is not None]
@@ -2684,7 +2737,9 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
             headers={"User-Agent": "HomeFit/1.0"}
         )
         if resp.status_code == 200:
-            data = resp.json()
+            data = _safe_overpass_json(resp, context="coverage check transport query")
+            if data is None:
+                return coverage
             coverage["transport_coverage"] = len(data.get("elements", [])) > 5
     except:
         pass
@@ -2985,7 +3040,12 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 time.sleep(0.2)
                 continue
             
-            data = resp.json()
+            data = _safe_overpass_json(resp, context=f"healthcare {category} query")
+            if data is None:
+                results["_query_failed"] = True
+                logger.warning(f"Healthcare {category} query returned non-JSON body")
+                time.sleep(0.2)
+                continue
             elements = data.get("elements", [])
             
             logger.debug(f"Healthcare {category} query returned {len(elements)} elements")
@@ -3088,7 +3148,9 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
         resp = requests.post(get_overpass_url(), data=query, timeout=30)
         
         if resp.status_code == 200:
-            data = resp.json()
+            data = _safe_overpass_json(resp, context="railway stations query")
+            if data is None:
+                return None
             elements = data.get("elements", [])
             
             stations = []

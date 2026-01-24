@@ -8,7 +8,7 @@ from typing import Dict, Optional, Tuple, Any, List
 from datetime import datetime
 import requests
 
-from .osm_api import get_overpass_url, _retry_overpass
+from .osm_api import get_overpass_url, _retry_overpass, _safe_overpass_json
 from .cache import cached, CACHE_TTL, _generate_cache_key, _get_redis_client, _cache, _cache_ttl
 import time
 import json
@@ -127,7 +127,25 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
                 # The cache decorator will handle TTL appropriately
             }
         
-        elements = resp.json().get("elements", [])
+        data = _safe_overpass_json(resp, context="architectural diversity buildings query")
+        if data is None:
+            print("⚠️  Overpass API returned a non-JSON/empty response for architectural diversity query")
+            return {
+                "levels_entropy": 0,
+                "building_type_diversity": 0,
+                "footprint_area_cv": 0,
+                "diversity_score": 0,
+                "built_coverage_ratio": 0.0,
+                "osm_building_coverage": 0.0,
+                "beauty_valid": True,  # Always true - no hard failure
+                "data_warning": "api_error",
+                "confidence_0_1": 0.0,  # Very low confidence for API errors
+                "error": "API invalid JSON response",
+                "user_message": "OSM API temporarily unavailable. Please try again in a few seconds.",
+                "retry_suggested": True,
+            }
+
+        elements = data.get("elements", [])
         if not elements:
             print(f"⚠️  No building elements found in OSM query (radius: {radius_m}m)")
             return {
