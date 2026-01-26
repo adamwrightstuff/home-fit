@@ -20,6 +20,14 @@ logger = get_logger(__name__)
 # Can be overridden via env without code changes.
 CACHE_KEY_VERSION = os.getenv("HOMEFIT_CACHE_KEY_VERSION", "2")
 
+# Cache schema versioning (structural changes).
+# Bump this when you change what is stored/returned in cached payloads.
+CACHE_SCHEMA_VERSION = os.getenv("HOMEFIT_CACHE_SCHEMA_VERSION", "1")
+
+# Cache key prefix (namespacing).
+# CRITICAL: prevents cache clear/stats from touching unrelated Redis keys.
+CACHE_KEY_PREFIX = os.getenv("HOMEFIT_CACHE_KEY_PREFIX", "homefit").strip() or "homefit"
+
 # Try to import and initialize Redis
 _redis_client = None
 try:
@@ -95,10 +103,10 @@ CACHE_TTL = {
 def _generate_cache_key(func_name: str, *args, **kwargs) -> str:
     """Generate a cache key from function name and arguments."""
     # Create a string representation of the arguments
-    args_str = f"v={CACHE_KEY_VERSION}|" + str(args) + str(sorted(kwargs.items()))
+    args_str = f"schema={CACHE_SCHEMA_VERSION}|v={CACHE_KEY_VERSION}|" + str(args) + str(sorted(kwargs.items()))
     # Hash the string to create a shorter key
     key_hash = hashlib.md5(args_str.encode()).hexdigest()
-    return f"{func_name}:{key_hash}"
+    return f"{CACHE_KEY_PREFIX}:{func_name}:{key_hash}"
 
 
 def cached(ttl_seconds: int = 3600):
@@ -206,13 +214,13 @@ def clear_cache(cache_type: Optional[str] = None):
     if redis_client:
         try:
             if cache_type is None:
-                # Clear all Redis keys
-                keys = redis_client.keys("*")
+                # Clear HomeFit Redis keys only (avoid nuking other apps)
+                keys = redis_client.keys(f"{CACHE_KEY_PREFIX}:*")
                 if keys:
                     redis_client.delete(*keys)
             else:
-                # Clear specific cache type
-                pattern = f"*{cache_type}:*"
+                # Clear specific cache type (function name)
+                pattern = f"{CACHE_KEY_PREFIX}:{cache_type}:*"
                 keys = redis_client.keys(pattern)
                 if keys:
                     redis_client.delete(*keys)
@@ -225,7 +233,7 @@ def clear_cache(cache_type: Optional[str] = None):
         _cache_ttl.clear()
         logger.info("Cleared all cache")
     else:
-        keys_to_remove = [key for key in _cache.keys() if key.startswith(f"{cache_type}:")]
+        keys_to_remove = [key for key in _cache.keys() if key.startswith(f"{CACHE_KEY_PREFIX}:{cache_type}:")]
         for key in keys_to_remove:
             _cache.pop(key, None)
             _cache_ttl.pop(key, None)
@@ -281,7 +289,7 @@ def get_cache_stats() -> Dict[str, Any]:
     # Add Redis stats if available
     if redis_client:
         try:
-            redis_keys = redis_client.keys("*")
+            redis_keys = redis_client.keys(f"{CACHE_KEY_PREFIX}:*")
             stats["redis_keys"] = len(redis_keys)
             info = redis_client.info("memory")
             stats["redis_memory_mb"] = info.get("used_memory", 0) / (1024 * 1024)
