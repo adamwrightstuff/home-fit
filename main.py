@@ -3879,6 +3879,13 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
         reasons.append("stale_cache_used")
         warnings.add("stale_cache_used")
 
+    # Treat data warnings as degraded so "zeros" don't masquerade as real zeros.
+    # We exclude warning strings that are already captured as reasons above.
+    warning_exclusions = {"stale_cache_used", "upstream_rate_limited"}
+    meaningful_warnings = {w for w in warnings if isinstance(w, str) and w and w not in warning_exclusions}
+    if meaningful_warnings:
+        reasons.append("data_warning")
+
     degraded = bool(reasons)
     return {
         "degraded": degraded,
@@ -3914,6 +3921,15 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
                 per_pillar_degraded[pillar_name] = sig
                 degraded_reasons.update(sig.get("reasons", []))
                 degraded_warnings.update(sig.get("warnings", []))
+            # Also attach to pillar payload so the UI can render warnings without
+            # having to read the top-level data_quality_summary.
+            dq = pillar_data.get("data_quality") or {}
+            if not isinstance(dq, dict):
+                dq = {}
+            dq["degraded"] = bool(sig.get("degraded"))
+            dq["degraded_reasons"] = sig.get("reasons", []) or []
+            dq["data_warnings"] = sig.get("warnings", []) or []
+            pillar_data["data_quality"] = dq
         except Exception:
             # Never fail the request due to diagnostics.
             pass
