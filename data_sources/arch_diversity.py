@@ -7,6 +7,7 @@ This module is sandbox-only and not wired into scoring by default.
 from typing import Dict, Optional, Tuple, Any, List
 from datetime import datetime
 import requests
+import math
 
 from .osm_api import get_overpass_url, _retry_overpass, _safe_overpass_json
 from .cache import cached, CACHE_TTL, _generate_cache_key, _get_redis_client, _cache, _cache_ttl
@@ -15,6 +16,114 @@ import json
 from logging_config import get_logger
 
 logger = get_logger(__name__)
+
+
+def _approx_bbox_for_radius(lat: float, lon: float, radius_m: int) -> Dict[str, float]:
+    """
+    Approximate bounding box for a circle query, for debug logging only.
+    """
+    # Degrees per meter approximations.
+    dlat = radius_m / 111_000.0
+    dlon = radius_m / (111_000.0 * math.cos(math.radians(lat)) + 1e-9)
+    return {
+        "min_lat": lat - dlat,
+        "max_lat": lat + dlat,
+        "min_lon": lon - dlon,
+        "max_lon": lon + dlon,
+    }
+
+
+def _polygon_area_sqm(coords_lat_lon: List[Tuple[float, float]], lat_ref: float) -> float:
+    """
+    Compute approximate polygon area in m² from (lat, lon) points.
+    Uses a planar shoelace area in degrees² and converts using latitude scaling.
+    """
+    if len(coords_lat_lon) < 3:
+        return 0.0
+    area_deg2 = 0.0
+    for i in range(len(coords_lat_lon)):
+        j = (i + 1) % len(coords_lat_lon)
+        area_deg2 += coords_lat_lon[i][0] * coords_lat_lon[j][1]
+        area_deg2 -= coords_lat_lon[j][0] * coords_lat_lon[i][1]
+    area_deg2 = abs(area_deg2) / 2.0
+    # Convert deg² → m². lat degrees ≈ 111km; lon degrees ≈ 111km*cos(lat).
+    return area_deg2 * 111_000.0 * 111_000.0 * max(0.0, math.cos(math.radians(lat_ref)))
+
+
+def _sum_polygon_areas_from_elements(elements: List[Dict[str, Any]], lat: float) -> Tuple[float, int, int]:
+    """
+    Sum polygon areas (m²) for way elements that have either geometry or resolvable nodes.
+    Returns: (area_sum_sqm, ways_count, ways_with_area_count)
+    """
+    ways = [e for e in elements if e.get("type") == "way"]
+    nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
+    areas: List[float] = []
+
+    for e in ways:
+        coords: List[Tuple[float, float]] = []
+        if "geometry" in e and e["geometry"]:
+            coords = [
+                (point.get("lat"), point.get("lon"))
+                for point in e["geometry"]
+                if isinstance(point, dict) and "lat" in point and "lon" in point
+            ]
+        elif "nodes" in e:
+            way_nodes = [nodes_dict.get(nid) for nid in e.get("nodes", []) if nid in nodes_dict]
+            coords = [
+                (n.get("lat"), n.get("lon"))
+                for n in way_nodes
+                if isinstance(n, dict) and "lat" in n and "lon" in n
+            ]
+
+        if len(coords) >= 3:
+            lat_ref = sum(p[0] for p in coords) / len(coords) if coords else lat
+            area_sqm = _polygon_area_sqm(coords, lat_ref=lat_ref)
+            if area_sqm > 1.0:
+                areas.append(area_sqm)
+
+    return (sum(areas) if areas else 0.0), len(ways), len(areas)
+
+
+def _estimate_water_area_sqm(lat: float, lon: float, radius_m: int) -> Dict[str, Any]:
+    """
+    Estimate water/wetland polygon area near the point for land-masking.
+
+    IMPORTANT: This is an *estimate* and can be imperfect (Overpass returns full polygons).
+    We conservatively cap the water area to avoid extreme over-subtraction.
+    """
+    query = f"""
+    [out:json][timeout:25];
+    (
+      way["natural"="water"](around:{radius_m},{lat},{lon});
+      way["waterway"="riverbank"](around:{radius_m},{lat},{lon});
+      way["landuse"="reservoir"](around:{radius_m},{lat},{lon});
+      way["natural"="wetland"](around:{radius_m},{lat},{lon});
+      way["wetland"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    try:
+        def _do_request():
+            return requests.post(get_overpass_url(), data={"data": query}, timeout=45, headers={"User-Agent": "HomeFit/1.0"})
+
+        resp = _retry_overpass(_do_request, query_type="water_mask")
+        if resp is None or resp.status_code != 200:
+            return {"water_area_sqm": 0.0, "water_ways": 0, "water_polygons": 0, "error": "api_error"}
+        data = _safe_overpass_json(resp, context="water mask query")
+        if not isinstance(data, dict):
+            return {"water_area_sqm": 0.0, "water_ways": 0, "water_polygons": 0, "error": "api_error"}
+        elements = data.get("elements", []) or []
+        water_area_sqm, water_ways, water_polygons = _sum_polygon_areas_from_elements(elements, lat=lat)
+        return {
+            "water_area_sqm": float(water_area_sqm),
+            "water_ways": int(water_ways),
+            "water_polygons": int(water_polygons),
+        }
+    except Exception as e:
+        logger.warning(f"Water mask query failed: {e}")
+        return {"water_area_sqm": 0.0, "water_ways": 0, "water_polygons": 0, "error": str(e)}
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
@@ -32,6 +141,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         [out:json][timeout:30];
         (
           way["building"](around:{radius_m},{lat},{lon});
+          way["building:part"](around:{radius_m},{lat},{lon});
         );
         out body;
         >;
@@ -209,7 +319,6 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             # Don't skip cache - allow stale cached data to be used if available
         }
 
-    import math
     def entropy(counts):
         s = sum(counts)
         if s <= 0:
@@ -347,8 +456,34 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         return val
 
     # Separate ways and nodes
-    ways = [e for e in elements if e.get("type") == "way"]
+    ways_all = [e for e in elements if e.get("type") == "way"]
     nodes_dict = {e.get("id"): e for e in elements if e.get("type") == "node"}
+
+    # Avoid double-counting `building:part` footprints.
+    # In many dense areas, parts overlap the parent building footprint; summing both inflates coverage.
+    building_ways: List[Dict[str, Any]] = []
+    part_ways: List[Dict[str, Any]] = []
+    other_ways: List[Dict[str, Any]] = []
+    for w in ways_all:
+        tags = w.get("tags", {}) or {}
+        if tags.get("building") is not None or tags.get("building:use") is not None:
+            building_ways.append(w)
+        elif tags.get("building:part") is not None:
+            part_ways.append(w)
+        else:
+            other_ways.append(w)
+
+    # Heuristic: use true `building=*` footprints when present; fall back to building:part only
+    # when buildings are extremely sparse but parts exist (OSM modeling oddity).
+    if len(building_ways) == 0 and len(part_ways) > 0:
+        ways = part_ways
+        ways_source = "building_part_fallback_no_buildings"
+    elif len(building_ways) < 25 and len(part_ways) > (len(building_ways) * 3):
+        ways = building_ways + part_ways
+        ways_source = "building_plus_parts_sparse_buildings"
+    else:
+        ways = building_ways
+        ways_source = "building"
     
     # Tag availability tracking
     total_buildings = len(ways)
@@ -363,6 +498,11 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
     types = {}
     type_categories: Dict[str, int] = {}
     areas = []
+    # Sanity bounds for footprint area. Extremely large "buildings" are often mapping errors
+    # (or non-building polygons tagged as buildings). Capping avoids coverage spikes in sprawl.
+    MAX_BUILDING_FOOTPRINT_SQM = 2_000_000.0
+    clamped_building_area_count = 0
+    max_building_area_sqm_seen = 0.0
     materials: Dict[str, int] = {}
     material_groups: Dict[str, int] = {}
     material_tagged = 0
@@ -385,7 +525,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         if tags:
             buildings_with_any_tag += 1
         
-        btype = tags.get("building") or "unknown"
+        btype = tags.get("building") or tags.get("building:use") or "unknown"
         types[btype] = types.get(btype, 0) + 1
         category = _categorize_building(tags)
         type_categories[category] = type_categories.get(category, 0) + 1
@@ -454,16 +594,12 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             coords = [(point.get("lat"), point.get("lon")) for point in e["geometry"] 
                      if "lat" in point and "lon" in point]
             if len(coords) >= 3:
-                # Calculate polygon area using shoelace formula
-                area = 0.0
-                for i in range(len(coords)):
-                    j = (i + 1) % len(coords)
-                    area += coords[i][0] * coords[j][1]
-                    area -= coords[j][0] * coords[i][1]
-                area = abs(area) / 2.0
-                # Convert to square meters (approximate at this latitude)
-                # Using average of lat/lon degrees to meters at this latitude
-                area_sqm = area * 111000 * 111000 * math.cos(math.radians(lat))
+                lat_ref = sum(p[0] for p in coords) / len(coords)
+                area_sqm = _polygon_area_sqm(coords, lat_ref=lat_ref)
+                if area_sqm > MAX_BUILDING_FOOTPRINT_SQM:
+                    clamped_building_area_count += 1
+                    max_building_area_sqm_seen = max(max_building_area_sqm_seen, area_sqm)
+                    area_sqm = MAX_BUILDING_FOOTPRINT_SQM
                 if area_sqm > 1.0:  # Only include if area is reasonable
                     areas.append(area_sqm)
         elif "nodes" in e:
@@ -472,13 +608,12 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
             coords = [(n.get("lat"), n.get("lon")) for n in way_nodes 
                      if "lat" in n and "lon" in n]
             if len(coords) >= 3:
-                area = 0.0
-                for i in range(len(coords)):
-                    j = (i + 1) % len(coords)
-                    area += coords[i][0] * coords[j][1]
-                    area -= coords[j][0] * coords[i][1]
-                area = abs(area) / 2.0
-                area_sqm = area * 111000 * 111000 * math.cos(math.radians(lat))
+                lat_ref = sum(p[0] for p in coords) / len(coords)
+                area_sqm = _polygon_area_sqm(coords, lat_ref=lat_ref)
+                if area_sqm > MAX_BUILDING_FOOTPRINT_SQM:
+                    clamped_building_area_count += 1
+                    max_building_area_sqm_seen = max(max_building_area_sqm_seen, area_sqm)
+                    area_sqm = MAX_BUILDING_FOOTPRINT_SQM
                 if area_sqm > 1.0:
                     areas.append(area_sqm)
 
@@ -597,11 +732,46 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         f"type={type_div:.1f}*0.4 + area={area_cv:.1f}*0.2 = {diversity_score:.1f}"
     )
     
-    # Calculate built coverage ratio: sum of building areas / circle land area
-    # This helps identify urban areas with lots of voids (low coverage = fragmented, less beautiful)
+    # Calculate built coverage ratio.
+    # IMPORTANT: We land-mask the denominator with a conservative water/wetland estimate,
+    # otherwise coastal/riverfront dense cores can read as artificially "sparse".
     circle_area_sqm = math.pi * (radius_m ** 2)
     total_built_area_sqm = sum(areas) if areas else 0.0
-    built_coverage_ratio = (total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
+
+    # Estimate nearby water/wetland area to avoid denominator inflation.
+    water_info = _estimate_water_area_sqm(lat, lon, radius_m=radius_m)
+    water_area_sqm = float(water_info.get("water_area_sqm", 0.0) or 0.0)
+    # Conservative cap: never subtract more than 80% of the circle (avoid huge polygons).
+    water_area_sqm_capped = min(max(0.0, water_area_sqm), circle_area_sqm * 0.80) if circle_area_sqm > 0 else 0.0
+    effective_land_area_sqm = max(1.0, circle_area_sqm - water_area_sqm_capped) if circle_area_sqm > 0 else 1.0
+
+    built_coverage_ratio_circle = (total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
+    built_coverage_ratio = (total_built_area_sqm / effective_land_area_sqm) if effective_land_area_sqm > 0 else 0.0
+
+    # Comprehensive debug logging (on-demand via log level).
+    try:
+        bbox = _approx_bbox_for_radius(lat, lon, radius_m)
+        logger.info("=== COVERAGE CALCULATION DEBUG ===")
+        logger.info(f"Bounding box coordinates (approx): {bbox}")
+        logger.info(f"Total area (denominator, circle): {circle_area_sqm:.2f} m²")
+        logger.info("Total area calculation method: circle area πr² minus capped water/wetland estimate")
+        logger.info(f"Estimated water/wetland area: {water_area_sqm:.2f} m² (capped to {water_area_sqm_capped:.2f} m²)")
+        logger.info(f"Effective land area (denominator): {effective_land_area_sqm:.2f} m²")
+        logger.info(f"Number of OSM ways retrieved (building + building:part): {len(ways_all)}")
+        logger.info(f"Building ways used for metrics: {len(ways)} (source={ways_source})")
+        logger.info(f"Number of building polygons with computed area: {len(areas)}")
+        logger.info(f"First 5 building areas: {areas[:5]}")
+        logger.info(f"Sum of all building areas (numerator): {total_built_area_sqm:.2f} m²")
+        if clamped_building_area_count > 0:
+            logger.info(
+                f"Clamped extreme building footprints: {clamped_building_area_count} "
+                f"(max_seen={max_building_area_sqm_seen:.2f} m², cap={MAX_BUILDING_FOOTPRINT_SQM:.2f} m²)"
+            )
+        logger.info(f"Resulting coverage ratio (circle): {built_coverage_ratio_circle:.4f}")
+        logger.info(f"Resulting coverage ratio (land-masked): {built_coverage_ratio:.4f}")
+        logger.info("=== END COVERAGE DEBUG ===")
+    except Exception as e:
+        logger.debug(f"Coverage debug logging failed: {e}")
     
     logger.debug(
         f"[ARCH_DIVERSITY] Coverage calculation: total_built_area={total_built_area_sqm:.0f}m², "
@@ -670,6 +840,17 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "type_category_diversity": round(type_category_div, 1),
         "diversity_score": round(diversity_score, 1),
         "built_coverage_ratio": round(built_coverage_ratio, 3),  # 0.0-1.0 scale
+        "built_coverage_ratio_circle": round(built_coverage_ratio_circle, 3),
+        "effective_land_area_sqm": round(effective_land_area_sqm, 1),
+        "water_area_sqm_estimate": round(water_area_sqm_capped, 1),
+        "water_area_sqm_raw": round(water_area_sqm, 1),
+        "water_ways": int(water_info.get("water_ways", 0) or 0),
+        "water_polygons": int(water_info.get("water_polygons", 0) or 0),
+        "ways_source": ways_source,
+        "ways_retrieved_total": int(len(ways_all)),
+        "ways_used": int(len(ways)),
+        "clamped_building_area_count": int(clamped_building_area_count),
+        "max_building_area_sqm_seen": round(max_building_area_sqm_seen, 1) if max_building_area_sqm_seen else 0.0,
         "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
         "beauty_valid": beauty_valid,  # Always True - no hard failure
         "data_warning": height_diversity_warning or data_warning,  # Height diversity warning or coverage warning
@@ -2596,6 +2777,7 @@ def score_architectural_diversity_as_beauty(
     # Built coverage: direct scoring component (10-15 points based on area type)
     # WAVE 2.1: Coverage with post-peak decline (hump shape)
     coverage_raw = None
+    coverage_max_points_used = None
     if built_coverage_ratio is not None:
         # Coverage max points vary by area type
         coverage_max_points = 12.0  # 12 points for most areas
@@ -2603,6 +2785,7 @@ def score_architectural_diversity_as_beauty(
             coverage_max_points = 15.0  # 15 points for urban core (more important)
         elif effective == "urban_residential":
             coverage_max_points = 13.0  # 13 points for urban residential
+        coverage_max_points_used = coverage_max_points
         
         # Use hump-shaped scoring (peaks at optimal, declines at very high coverage)
         coverage_raw = _score_coverage_with_hump(
@@ -2633,8 +2816,10 @@ def score_architectural_diversity_as_beauty(
         if facade_rhythm_value is not None:
             variable_points += 16.67
         if coverage_raw is not None:
-            # Coverage weight is already in coverage_raw (12.0-15.0)
-            variable_points += coverage_raw
+            # Use the weight (max points), NOT the achieved score, for expected_total normalization.
+            # Using achieved score here can distort the normalization (low coverage would shrink the
+            # denominator and artificially inflate the normalized design score).
+            variable_points += float(coverage_max_points_used or 12.0)
         
         expected_total = base_points + variable_points
         # Normalize to design scale (0-50 points native range)
