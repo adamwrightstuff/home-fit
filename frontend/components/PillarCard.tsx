@@ -66,7 +66,10 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
           type_diversity: builtMetrics.type_diversity ?? rawSummary.type_diversity,
           footprint_variation: builtMetrics.footprint_variation ?? rawSummary.footprint_variation,
           built_coverage_ratio: builtMetrics.built_coverage_ratio ?? rawSummary.built_coverage_ratio,
-          diversity_score: rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
+          // Prefer the real metric from architectural_analysis.metrics.
+          // (Summary values are sometimes placeholders.)
+          diversity_score:
+            builtMetrics.diversity_score ?? rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
         }
       : rawSummary
 

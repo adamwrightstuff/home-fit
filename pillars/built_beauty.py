@@ -262,6 +262,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "type_category_diversity": diversity_metrics.get("type_category_diversity"),
                 "footprint_variation": diversity_metrics.get("footprint_area_cv", 0),
                 "built_coverage_ratio": diversity_metrics.get("built_coverage_ratio", 0),
+                # This is the naive aggregate computed in `compute_arch_diversity` from
+                # height/type/footprint. The UI expects it for debugging/interpretability.
+                "diversity_score": diversity_metrics.get("diversity_score", 0),
                 "block_grain": coverage_cap_metadata.get("block_grain", 0),
                 "streetwall_continuity": coverage_cap_metadata.get("streetwall_continuity", 0),
                 "setback_consistency": coverage_cap_metadata.get("setback_consistency", 0),
