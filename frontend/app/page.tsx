@@ -31,6 +31,7 @@ export default function Home() {
           include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
           // Premium-gated: default OFF unless explicitly enabled by user with a premium code
           enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
+          job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
         }
       }
     } catch (e) {
@@ -40,6 +41,7 @@ export default function Home() {
       priorities: { ...DEFAULT_PRIORITIES },
       include_chains: true,
       enable_schools: false,
+      job_categories: [],
     }
   })
 
@@ -120,7 +122,7 @@ export default function Home() {
           <section style={{ marginTop: '3rem', marginBottom: '3rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <div className="hf-section-title" style={{ marginBottom: '0.5rem' }}>
-                9 Essential Livability Factors
+                10 Essential Livability Factors
               </div>
               <div className="hf-muted">We analyze every location across these key pillars.</div>
             </div>
@@ -135,6 +137,7 @@ export default function Home() {
                   'healthcare_access',
                   'public_transit_access',
                   'air_travel_access',
+                  'economic_security',
                   'quality_education',
                   'housing_value',
                 ] as PillarKey[]
@@ -158,6 +161,7 @@ export default function Home() {
             <SmartLoadingScreen
               location={current_location}
               priorities={JSON.stringify(search_options.priorities)}
+              job_categories={search_options.job_categories?.join(',') || undefined}
               include_chains={search_options.include_chains}
               enable_schools={search_options.enable_schools}
               on_complete={(response) => {

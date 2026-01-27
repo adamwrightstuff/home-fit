@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   const upstreamParams = new URLSearchParams();
   if (location) upstreamParams.set('location', location);
 
-  for (const key of ['tokens', 'priorities', 'include_chains', 'diagnostics', 'only'] as const) {
+  for (const key of ['tokens', 'priorities', 'include_chains', 'diagnostics', 'only', 'job_categories'] as const) {
     const v = sp.get(key);
     if (v !== null && v !== undefined) upstreamParams.set(key, v);
   }

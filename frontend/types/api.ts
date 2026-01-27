@@ -36,6 +36,9 @@ export interface AreaClassification {
 
 export interface LivabilityPillar {
   score: number;
+  base_score?: number;
+  selected_job_categories?: string[];
+  job_category_overlays?: any;
   weight: number;
   importance_level?: 'None' | 'Low' | 'Medium' | 'High' | null;
   contribution: number;
@@ -55,6 +58,7 @@ export interface LivabilityPillars {
   air_travel_access: LivabilityPillar;
   public_transit_access: LivabilityPillar;
   healthcare_access: LivabilityPillar;
+  economic_security: LivabilityPillar;
   quality_education: LivabilityPillar;
   housing_value: LivabilityPillar;
 }
@@ -105,6 +109,7 @@ export interface ScoreRequestParams {
   location: string;
   tokens?: string;
   priorities?: string;
+  job_categories?: string;
   include_chains?: boolean;
   enable_schools?: boolean;
 }

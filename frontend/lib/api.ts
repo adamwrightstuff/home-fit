@@ -14,6 +14,9 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   if (params.priorities) {
     searchParams.append('priorities', params.priorities);
   }
+  if (params.job_categories) {
+    searchParams.append('job_categories', params.job_categories);
+  }
   if (params.include_chains !== undefined) {
     searchParams.append('include_chains', params.include_chains.toString());
   }

@@ -14,6 +14,7 @@ interface PillarPriorities {
   air_travel_access: PriorityLevel
   public_transit_access: PriorityLevel
   healthcare_access: PriorityLevel
+  economic_security: PriorityLevel
   quality_education: PriorityLevel
   housing_value: PriorityLevel
 }
@@ -22,6 +23,7 @@ interface SearchOptions {
   priorities: PillarPriorities
   include_chains: boolean
   enable_schools: boolean
+  job_categories: string[]
 }
 
 interface SearchOptionsProps {
@@ -40,6 +42,7 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'healthcare_access',
   'public_transit_access',
   'air_travel_access',
+  'economic_security',
   'quality_education',
   'housing_value',
 ]
@@ -54,9 +57,20 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   air_travel_access: 'Medium',
   public_transit_access: 'Medium',
   healthcare_access: 'Medium',
+  economic_security: 'Medium',
   quality_education: 'Medium',
   housing_value: 'Medium',
 }
+
+const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [
+  { key: 'tech_professional', label: 'Tech / Product', description: 'Software, data, engineering, product, UX/UI' },
+  { key: 'business_finance_law', label: 'Business / Finance / Law', description: 'Finance, consulting, corporate, legal, accounting' },
+  { key: 'healthcare_education', label: 'Healthcare / Education', description: 'Doctors, nurses, teachers, professors, admin' },
+  { key: 'skilled_trades_logistics', label: 'Skilled trades / Logistics', description: 'Construction, manufacturing, transport, mechanics, electricians' },
+  { key: 'service_retail_hospitality', label: 'Service / Retail / Hospitality', description: 'Restaurants, retail, tourism, personal services' },
+  { key: 'public_sector_nonprofit', label: 'Public sector', description: 'Government and public administration (nonprofit proxy is limited)' },
+  { key: 'remote_flexible', label: 'Remote / Flexible', description: 'Work-from-home prevalence + earnings proxy' },
+]
 
 // Session storage key
 const STORAGE_KEY = 'homefit_search_options'
@@ -171,6 +185,15 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     onChange({
       ...options,
       enable_schools: false,
+    })
+  }
+
+  const handleJobCategoryToggle = (key: string, checked: boolean) => {
+    const current = Array.isArray(options.job_categories) ? options.job_categories : []
+    const next = checked ? Array.from(new Set([...current, key])) : current.filter((k) => k !== key)
+    onChange({
+      ...options,
+      job_categories: next,
     })
   }
 
@@ -450,6 +473,40 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                   </div>
                 )
               })}
+            </div>
+          </div>
+
+          {/* Economic Opportunity: Job category toggles */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Economic Opportunity Focus (optional)
+              </h4>
+            </div>
+            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Select job categories you care about. This will personalize the Economic Opportunity pillar and affect the total score.
+            </p>
+            <div className="hf-panel" style={{ padding: '1rem' }}>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                {JOB_CATEGORY_OPTIONS.map((opt) => {
+                  const checked = Array.isArray(options.job_categories) && options.job_categories.includes(opt.key)
+                  return (
+                    <label key={opt.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={disabled}
+                        onChange={(e) => handleJobCategoryToggle(opt.key, e.target.checked)}
+                        style={{ marginTop: '0.2rem' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{opt.label}</div>
+                        <div className="hf-muted" style={{ fontSize: '0.9rem' }}>{opt.description}</div>
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>

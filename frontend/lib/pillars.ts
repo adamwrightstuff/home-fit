@@ -6,6 +6,7 @@ export type PillarKey =
   | 'healthcare_access'
   | 'public_transit_access'
   | 'air_travel_access'
+  | 'economic_security'
   | 'quality_education'
   | 'housing_value'
 
@@ -51,6 +52,12 @@ export const PILLAR_META: Record<
     icon: '✈️',
     name: 'Air Travel Access',
     description: 'Good airports within reasonable reach—making trips to see family or explore new places less of a hassle',
+  },
+  economic_security: {
+    icon: '📈',
+    name: 'Economic Opportunity',
+    description:
+      'Local economic opportunity and resilience—job market health, earnings vs. cost, business dynamism, and diversification',
   },
   quality_education: {
     icon: '🏫',
