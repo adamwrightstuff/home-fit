@@ -1366,6 +1366,8 @@ class DataQualityManager:
             return self._assess_business_completeness(data, expected_minimums)
         elif pillar_name == 'neighborhood_beauty':
             return self._assess_beauty_completeness(data, expected_minimums)
+        elif pillar_name == 'economic_security':
+            return self._assess_economic_security_completeness(data, expected_minimums)
         elif pillar_name == 'housing_value':
             return self._assess_housing_completeness(data, expected_minimums)
         elif pillar_name == 'built_beauty':
@@ -1376,6 +1378,31 @@ class DataQualityManager:
             return self._assess_transit_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
+
+    def _assess_economic_security_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """
+        Assess economic_security completeness.
+
+        This pillar is metric-driven (not count-driven), so completeness reflects how many
+        submetrics were successfully computed.
+        """
+        if not data:
+            return 0.0, 'very_poor'
+
+        metrics_present = data.get("metrics_present", [])
+        if not isinstance(metrics_present, list):
+            metrics_present = []
+
+        # Current pillar uses 6 scored submetrics (see pillars/economic_security.py).
+        total_expected = 6
+        completeness = min(1.0, len(metrics_present) / max(1, total_expected))
+
+        # Floor: if we have at least job-market + earnings basics, don't drop below fair.
+        key_basics = {"unemployment_rate", "emp_pop_ratio", "median_earnings"}
+        if key_basics.issubset(set(metrics_present)):
+            completeness = max(completeness, 0.55)
+
+        return completeness, self._get_quality_tier(completeness)
     
     def _assess_outdoors_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Assess outdoor recreation data completeness."""

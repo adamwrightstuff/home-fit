@@ -13,6 +13,7 @@ from . import public_transit_access
 from . import healthcare_access
 from . import schools
 from . import housing_value
+from . import economic_security
 
 __all__ = [
     'active_outdoors',
@@ -23,6 +24,7 @@ __all__ = [
     'air_travel_access',
     'public_transit_access',
     'healthcare_access',
+    'economic_security',
     'schools',
     'housing_value'
 ]

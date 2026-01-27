@@ -17,7 +17,7 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# UPDATED IMPORTS - 9 Purpose-Driven Pillars
+# UPDATED IMPORTS - 10 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from data_sources.cache import (
     clear_cache,
@@ -36,6 +36,7 @@ from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
+from pillars.economic_security import get_economic_security_score
 from data_sources.arch_diversity import compute_arch_diversity
 
 ##########################
@@ -260,6 +261,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "air_travel_access",
         "public_transit_access",
         "healthcare_access",
+        "economic_security",
         "quality_education",
         "housing_value"
     ]
@@ -273,7 +275,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     }
     
     if priorities is None:
-        # Default equal distribution (100 tokens / 9 pillars = 11.11...)
+        # Default equal distribution across all pillars (totals 100)
         equal_tokens = 100.0 / len(primary_pillars)
         default_allocation = {}
         remainder = 100.0
@@ -349,11 +351,14 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
     arch_analysis = built_details.get("architectural_analysis", {})
     
     if isinstance(arch_analysis, dict):
-        summary["height_diversity"] = round(arch_analysis.get("height_diversity", 0), 2)
-        summary["type_diversity"] = round(arch_analysis.get("type_diversity", 0), 2)
-        summary["footprint_variation"] = round(arch_analysis.get("footprint_variation", 0), 2)
-        summary["built_coverage_ratio"] = round(arch_analysis.get("built_coverage_ratio", 0), 3)
-        summary["diversity_score"] = round(arch_analysis.get("diversity_score", 0), 2)
+        # Built Beauty stores metrics under architectural_analysis.metrics (the top-level keys
+        # were placeholders in earlier iterations).
+        metrics = arch_analysis.get("metrics", {}) if isinstance(arch_analysis.get("metrics"), dict) else {}
+        summary["height_diversity"] = round(metrics.get("height_diversity", arch_analysis.get("height_diversity", 0)) or 0, 2)
+        summary["type_diversity"] = round(metrics.get("type_diversity", arch_analysis.get("type_diversity", 0)) or 0, 2)
+        summary["footprint_variation"] = round(metrics.get("footprint_variation", arch_analysis.get("footprint_variation", 0)) or 0, 2)
+        summary["built_coverage_ratio"] = round(metrics.get("built_coverage_ratio", arch_analysis.get("built_coverage_ratio", 0)) or 0, 3)
+        summary["diversity_score"] = round(metrics.get("diversity_score", arch_analysis.get("diversity_score", 0)) or 0, 2)
         if arch_analysis.get("median_year_built"):
             summary["median_year_built"] = int(arch_analysis.get("median_year_built", 0))
         if arch_analysis.get("pre_1940_pct") is not None:
@@ -467,7 +472,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     Parse token allocation string or return default equal distribution.
     
     Format: "active_outdoors:5,built_beauty:4,natural_beauty:4,air_travel:3,..."
-    Default: Equal distribution across all 9 pillars (~11.11 tokens each, totaling 100).
+    Default: Equal distribution across all 10 pillars (totals 100).
     
     Note: This function now uses 100 tokens total (migrated from 20 tokens).
     For priority-based allocation, use parse_priority_allocation() instead.
@@ -480,6 +485,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "air_travel_access",
         "public_transit_access",
         "healthcare_access",
+        "economic_security",
         "quality_education",
         "housing_value"
     ]
@@ -487,7 +493,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     pillar_names = primary_pillars
     
     if tokens is None:
-        # Default equal distribution (100 tokens / 9 pillars = 11.11...)
+        # Default equal distribution (100 tokens / 10 pillars = 10 each)
         equal_tokens = 100.0 / len(primary_pillars)
         default_allocation = {}
         remainder = 100.0
@@ -600,7 +606,7 @@ def _apply_schools_disabled_weight_override(
 
 app = FastAPI(
     title="HomeFit API",
-    description="Purpose-driven livability scoring API with 9 pillars",
+    description="Purpose-driven livability scoring API with 10 pillars",
     version=API_VERSION
 )
 
@@ -645,8 +651,14 @@ def root():
     }
 
 
-def _generate_request_cache_key(location: str, tokens: Optional[str], priorities: Optional[Dict[str, str]], 
-                                include_chains: bool, enable_schools: Optional[bool]) -> str:
+def _generate_request_cache_key(
+    location: str,
+    tokens: Optional[str],
+    priorities: Optional[Dict[str, str]],
+    include_chains: bool,
+    enable_schools: Optional[bool],
+    job_categories: Optional[str] = None,
+) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
     import json
@@ -656,7 +668,8 @@ def _generate_request_cache_key(location: str, tokens: Optional[str], priorities
         str(tokens) if tokens else "default",
         json.dumps(priorities, sort_keys=True) if priorities else "default",
         str(include_chains),
-        str(enable_schools) if enable_schools is not None else "default"
+        str(enable_schools) if enable_schools is not None else "default",
+        str(job_categories).strip() if job_categories else "jobcats=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -670,6 +683,7 @@ def _generate_location_cache_key(
     include_chains: bool,
     use_school_scoring: bool,
     only_pillars: Optional[set[str]] = None,
+    job_categories: Optional[str] = None,
 ) -> str:
     """
     Key for a cross-user, location-based cached response template.
@@ -691,6 +705,7 @@ def _generate_location_cache_key(
         str(bool(include_chains)),
         str(bool(use_school_scoring)),
         "only=None" if not only_pillars else "only=set",
+        str(job_categories).strip() if job_categories else "jobcats=None",
     ]
     key_hash = hashlib.md5(":".join(parts).encode("utf-8")).hexdigest()
     return f"location_response_template:v{API_VERSION}:{key_hash}"
@@ -719,7 +734,7 @@ def _apply_allocation_to_cached_response(
         primary_pillars = [
             "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
-            "quality_education", "housing_value"
+            "economic_security", "quality_education", "housing_value"
         ]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
@@ -785,6 +800,7 @@ def _compute_single_score_internal(
     priorities_dict: Optional[Dict[str, str]] = None,
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
+    job_categories: Optional[str] = None,
     test_mode: bool = False,
     request: Optional[Request] = None,
     premium_code: Optional[str] = None,
@@ -886,6 +902,7 @@ def _compute_single_score_internal(
                 include_chains=include_chains,
                 use_school_scoring=use_school_scoring,
                 only_pillars=only_pillars,
+                job_categories=job_categories,
             )
             cached_template = redis_get_compressed_json(location_cache_key)
             if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
@@ -1133,6 +1150,14 @@ def _compute_single_score_internal(
                 'density': density
             })
         )
+    if _include_pillar('economic_security'):
+        pillar_tasks.append(
+            ('economic_security', get_economic_security_score, {
+                'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
+                'census_tract': census_tract,
+                'job_categories': job_categories,
+            })
+        )
     if _include_pillar('housing_value'):
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
@@ -1208,6 +1233,7 @@ def _compute_single_score_internal(
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
     # Extract built/natural beauty from parallel results
@@ -1320,7 +1346,7 @@ def _compute_single_score_internal(
         primary_pillars = [
             "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
-            "quality_education", "housing_value"
+            "economic_security", "quality_education", "housing_value"
         ]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
@@ -1382,6 +1408,7 @@ def _compute_single_score_internal(
         (air_travel_score * token_allocation["air_travel_access"] / 100) +
         (transit_score * token_allocation["public_transit_access"] / 100) +
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
+        (economic_security_score * token_allocation["economic_security"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
         (housing_score * token_allocation["housing_value"] / 100)
     )
@@ -1477,6 +1504,20 @@ def _compute_single_score_internal(
             "data_quality": healthcare_details.get("data_quality", {}),
             "area_classification": healthcare_details.get("area_classification", {})
         },
+        "economic_security": {
+            "score": economic_security_score,
+            "base_score": economic_security_details.get("base_score"),
+            "selected_job_categories": economic_security_details.get("selected_job_categories"),
+            "job_category_overlays": (economic_security_details.get("breakdown") or {}).get("job_category_overlays"),
+            "weight": token_allocation["economic_security"],
+            "importance_level": priority_levels.get("economic_security") if priority_levels else None,
+            "contribution": round(economic_security_score * token_allocation["economic_security"] / 100, 2),
+            "breakdown": economic_security_details.get("breakdown", {}),
+            "summary": economic_security_details.get("summary", {}),
+            "confidence": economic_security_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": economic_security_details.get("data_quality", {}),
+            "area_classification": economic_security_details.get("area_classification", {})
+        },
         "quality_education": {
             "score": school_avg,
             "weight": token_allocation["quality_education"],
@@ -1538,8 +1579,8 @@ def _compute_single_score_internal(
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
         "metadata": {
             "version": API_VERSION,
-            "architecture": "9 Purpose-Driven Pillars",
-            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default.",
+            "architecture": "10 Purpose-Driven Pillars",
+            "note": "Total score = weighted average of 10 pillars. Equal token distribution by default.",
             "test_mode": test_mode_enabled
         }
     }
@@ -1582,6 +1623,7 @@ def _compute_single_score_internal(
                 include_chains=include_chains,
                 use_school_scoring=use_school_scoring,
                 only_pillars=only_pillars,
+                job_categories=job_categories,
             )
             wrote = redis_set_compressed_json(
                 location_cache_key,
@@ -1604,6 +1646,7 @@ def get_livability_score(request: Request,
                          priorities: Optional[str] = None,
                          include_chains: bool = True,
                          enable_schools: Optional[bool] = None,
+                         job_categories: Optional[str] = None,
                          test_mode: Optional[bool] = False):
     """
     Calculate livability score for a given address.
@@ -1656,7 +1699,14 @@ def get_livability_score(request: Request,
         if not test_mode_enabled:
             from data_sources.cache import _redis_client, _cache, _cache_ttl
             
-            cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
+            cache_key = _generate_request_cache_key(
+                location,
+                tokens,
+                priorities_dict,
+                include_chains,
+                enable_schools,
+                job_categories=job_categories,
+            )
             # Differentiated cache TTL based on data stability
             # Use minimum TTL of requested pillars (conservative approach)
             # Stable data (Census, airports): 24-48h, Moderate (OSM amenities, transit routes): 1-6h, Dynamic (transit stops): 5-15min
@@ -1699,6 +1749,7 @@ def get_livability_score(request: Request,
             priorities_dict=priorities_dict,
             include_chains=include_chains,
             enable_schools=enable_schools,
+            job_categories=job_categories,
             test_mode=test_mode_enabled,
             request=request
         )
@@ -1719,7 +1770,14 @@ def get_livability_score(request: Request,
             try:
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
                 
-                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
+                cache_key = _generate_request_cache_key(
+                    location,
+                    tokens,
+                    priorities_dict,
+                    include_chains,
+                    enable_schools,
+                    job_categories=job_categories,
+                )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
                 # Add cache indicator to response metadata
@@ -1806,6 +1864,7 @@ def create_score_job(
     priorities: Optional[str] = None,
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
+    job_categories: Optional[str] = None,
     test_mode: Optional[bool] = False,
 ):
     """
@@ -1851,6 +1910,7 @@ def create_score_job(
                 priorities_dict=priorities_dict,
                 include_chains=include_chains,
                 enable_schools=enable_schools,
+                job_categories=job_categories,
                 test_mode=test_mode_enabled,
                 request=None,
                 premium_code=premium_code,
@@ -2167,6 +2227,13 @@ async def _stream_score_with_progress(
             })
         )
         pillar_tasks.append(
+            ('economic_security', get_economic_security_score, {
+                'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
+                'census_tract': census_tract,
+                'job_categories': job_categories,
+            })
+        )
+        pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city
@@ -2296,6 +2363,7 @@ async def _stream_score_with_progress(
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         
         # Extract built/natural beauty
@@ -2425,7 +2493,7 @@ async def _stream_score_with_progress(
             primary_pillars = [
                 "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
                 "air_travel_access", "public_transit_access", "healthcare_access",
-                "quality_education", "housing_value"
+                "economic_security", "quality_education", "housing_value"
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -2463,6 +2531,7 @@ async def _stream_score_with_progress(
             (air_travel_score * token_allocation["air_travel_access"] / 100) +
             (transit_score * token_allocation["public_transit_access"] / 100) +
             (healthcare_score * token_allocation["healthcare_access"] / 100) +
+            (economic_security_score * token_allocation["economic_security"] / 100) +
             (school_avg * token_allocation["quality_education"] / 100) +
             (housing_score * token_allocation["housing_value"] / 100)
         )
@@ -2556,6 +2625,20 @@ async def _stream_score_with_progress(
                 "data_quality": healthcare_details.get("data_quality", {}),
                 "area_classification": healthcare_details.get("area_classification", {})
             },
+            "economic_security": {
+                "score": economic_security_score,
+                "base_score": economic_security_details.get("base_score"),
+                "selected_job_categories": economic_security_details.get("selected_job_categories"),
+                "job_category_overlays": (economic_security_details.get("breakdown") or {}).get("job_category_overlays"),
+                "weight": token_allocation["economic_security"],
+                "importance_level": priority_levels.get("economic_security") if priority_levels else None,
+                "contribution": round(economic_security_score * token_allocation["economic_security"] / 100, 2),
+                "breakdown": economic_security_details.get("breakdown", {}),
+                "summary": economic_security_details.get("summary", {}),
+                "confidence": economic_security_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": economic_security_details.get("data_quality", {}),
+                "area_classification": economic_security_details.get("area_classification", {})
+            },
             "quality_education": {
                 "score": school_avg,
                 "weight": token_allocation["quality_education"],
@@ -2610,8 +2693,8 @@ async def _stream_score_with_progress(
             "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
             "metadata": {
                 "version": API_VERSION,
-                "architecture": "9 Purpose-Driven Pillars",
-                "note": "Total score = weighted average of 9 pillars. Equal token distribution by default.",
+                "architecture": "10 Purpose-Driven Pillars",
+                "note": "Total score = weighted average of 10 pillars. Equal token distribution by default.",
                 "test_mode": test_mode
             }
         }
@@ -2987,6 +3070,14 @@ async def stream_score(
                     'density': density  # Pass pre-computed density
                 })
             )
+        if _include_pillar('economic_security'):
+            pillar_tasks.append(
+                ('economic_security', get_economic_security_score, {
+                    'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
+                'census_tract': census_tract,
+                'job_categories': job_categories,
+                })
+            )
         if _include_pillar('housing_value'):
             pillar_tasks.append(
                 ('housing_value', get_housing_value_score, {
@@ -3065,6 +3156,7 @@ async def stream_score(
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
         # Extract built/natural beauty from parallel results
@@ -3171,7 +3263,7 @@ async def stream_score(
             primary_pillars = [
                 "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
                 "air_travel_access", "public_transit_access", "healthcare_access",
-                "quality_education", "housing_value"
+                "economic_security", "quality_education", "housing_value"
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -3238,6 +3330,7 @@ async def stream_score(
         (air_travel_score * token_allocation["air_travel_access"] / 100) +
         (transit_score * token_allocation["public_transit_access"] / 100) +
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
+            (economic_security_score * token_allocation["economic_security"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
         (housing_score * token_allocation["housing_value"] / 100)
         )
@@ -3348,6 +3441,19 @@ async def stream_score(
             "data_quality": healthcare_details.get("data_quality", {}),
             "area_classification": healthcare_details.get("area_classification", {})
         },
+        "economic_security": {
+                "score": economic_security_score,
+                "base_score": economic_security_details.get("base_score"),
+                "selected_job_categories": economic_security_details.get("selected_job_categories"),
+                "job_category_overlays": (economic_security_details.get("breakdown") or {}).get("job_category_overlays"),
+            "weight": token_allocation["economic_security"],
+            "contribution": round(economic_security_score * token_allocation["economic_security"] / 100, 2),
+            "breakdown": economic_security_details.get("breakdown", {}),
+            "summary": economic_security_details.get("summary", {}),
+            "confidence": economic_security_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": economic_security_details.get("data_quality", {}),
+            "area_classification": economic_security_details.get("area_classification", {})
+        },
         "quality_education": {
             "score": school_avg,
             "weight": token_allocation["quality_education"],
@@ -3399,7 +3505,7 @@ async def stream_score(
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
         "metadata": {
             "version": API_VERSION,
-            "architecture": "9 Purpose-Driven Pillars",
+            "architecture": "10 Purpose-Driven Pillars",
             "pillars": {
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
                 "built_beauty": "Are the buildings and streets visually harmonious? (Architecture, form, materials, heritage)",
@@ -3408,6 +3514,7 @@ async def stream_score(
                 "air_travel_access": "How easily can I fly? (Airport proximity and type)",
                 "public_transit_access": "Can I move without a car? (Rail, light rail, bus access)",
                 "healthcare_access": "Can I get medical care? (Hospitals, clinics, pharmacies)",
+                "economic_security": "Is the local economy resilient for a typical worker? (Jobs, earnings, diversification, resilience)",
                 "quality_education": "Can I raise kids well? (School ratings by level)",
                 "housing_value": "Can I afford space? (Affordability relative to local income)"
             },
@@ -3420,7 +3527,7 @@ async def stream_score(
                 "OurAirports (airport database)",
                 "Transitland API (public transit GTFS)"
             ],
-            "note": "Total score = weighted average of 9 pillars. Equal token distribution by default (~11.11 tokens each, totaling 100). Custom allocation via 'priorities' parameter (recommended) or 'tokens' parameter (legacy).",
+            "note": "Total score = weighted average of 10 pillars. Equal token distribution by default (totals 100). Custom allocation via 'priorities' parameter (recommended) or 'tokens' parameter (legacy).",
             "test_mode": test_mode_enabled
         }
         }
@@ -4028,7 +4135,7 @@ def health_check():
         "checks": checks,
         "cache_stats": cache_stats,
         "version": API_VERSION,
-        "architecture": "9 Purpose-Driven Pillars",
+        "architecture": "10 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
             "built_beauty",
@@ -4037,6 +4144,7 @@ def health_check():
             "air_travel_access",
             "public_transit_access",
             "healthcare_access",
+            "economic_security",
             "quality_education",
             "housing_value"
         ]

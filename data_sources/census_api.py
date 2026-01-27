@@ -118,13 +118,63 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
 
         tract_data = geographies["Census Tracts"][0]
         
-        # Extract CBSA data if available (Combined Statistical Areas or Metropolitan Statistical Areas)
+        # Extract CBSA/MSA + CSA data if available.
+        # NOTE: The Census geocoder returns multiple geography layers. For economic/metro queries
+        # we prefer Metropolitan/Micropolitan Statistical Areas (CBSA/MSA).
         cbsa_code = None
         cbsa_name = None
+        csa_code = None
+        csa_name = None
+
+        # Prefer CBSA/MSA (Metropolitan Statistical Areas).
+        # IMPORTANT: The default coordinates endpoint does NOT always include the MSA layer
+        # unless explicitly requested via a `layers=` param. If missing, do a targeted
+        # follow-up request for metro layers.
+        def _try_extract_msa(geo_dict):
+            nonlocal cbsa_code, cbsa_name
+            msa_layer = geo_dict.get("Metropolitan Statistical Areas") or geo_dict.get("Metropolitan Statistical Area")
+            if msa_layer:
+                msa_data = msa_layer[0]
+                cbsa_code = msa_data.get("GEOID")
+                cbsa_name = msa_data.get("NAME")
+
+        _try_extract_msa(geographies)
+
+        if not cbsa_code:
+            try:
+                # Targeted metro request (Seattle/NYC require this)
+                msa_params = dict(params)
+                msa_params["layers"] = "Metropolitan Statistical Areas"
+                msa_resp = _make_request_with_retry(GEOCODER_URL, msa_params, timeout=10)
+                if msa_resp is not None:
+                    msa_data = msa_resp.json()
+                    msa_geos = (msa_data.get("result", {}) or {}).get("geographies", {}) or {}
+                    _try_extract_msa(msa_geos)
+            except Exception:
+                pass
+
+        # If still missing, try micropolitan layer (for smaller towns)
+        if not cbsa_code:
+            try:
+                micro_params = dict(params)
+                micro_params["layers"] = "Micropolitan Statistical Areas"
+                micro_resp = _make_request_with_retry(GEOCODER_URL, micro_params, timeout=10)
+                if micro_resp is not None:
+                    micro_data = micro_resp.json()
+                    micro_geos = (micro_data.get("result", {}) or {}).get("geographies", {}) or {}
+                    layer = micro_geos.get("Micropolitan Statistical Areas") or micro_geos.get("Micropolitan Statistical Area")
+                    if layer:
+                        micro = layer[0]
+                        cbsa_code = micro.get("GEOID")
+                        cbsa_name = micro.get("NAME")
+            except Exception:
+                pass
+
+        # Also capture Combined Statistical Areas (CSA) when present
         if "Combined Statistical Areas" in geographies and geographies["Combined Statistical Areas"]:
             csa_data = geographies["Combined Statistical Areas"][0]
-            cbsa_code = csa_data.get("GEOID")
-            cbsa_name = csa_data.get("NAME")
+            csa_code = csa_data.get("GEOID")
+            csa_name = csa_data.get("NAME")
         
         result = {
             "state_fips": tract_data["STATE"],
@@ -135,10 +185,13 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
             "basename": tract_data.get("BASENAME", ""),
         }
         
-        # Add CBSA data if available
+        # Add metro geography data if available
         if cbsa_code:
             result["cbsa_code"] = cbsa_code
             result["cbsa_name"] = cbsa_name
+        if csa_code:
+            result["csa_code"] = csa_code
+            result["csa_name"] = csa_name
         
         return result
 

@@ -1,0 +1,37 @@
+{
+  "all": {
+    "all": {
+      "unemployment_rate": { "mean": 6.0, "std": 2.0, "n": 1 },
+      "emp_pop_ratio": { "mean": 58.0, "std": 6.0, "n": 1 },
+      "earnings_to_rent": { "mean": 4.5, "std": 1.2, "n": 1 },
+      "net_estab_entry_per_1k": { "mean": 0.5, "std": 1.0, "n": 1 },
+      "industry_hhi": { "mean": 0.12, "std": 0.03, "n": 1 },
+      "anchored_balance": { "mean": 0.0, "std": 0.08, "n": 1 }
+    },
+    "urban": {
+      "unemployment_rate": { "mean": 6.2, "std": 2.1, "n": 1 },
+      "emp_pop_ratio": { "mean": 57.0, "std": 6.0, "n": 1 },
+      "earnings_to_rent": { "mean": 4.3, "std": 1.1, "n": 1 },
+      "net_estab_entry_per_1k": { "mean": 0.6, "std": 1.0, "n": 1 },
+      "industry_hhi": { "mean": 0.13, "std": 0.03, "n": 1 },
+      "anchored_balance": { "mean": 0.03, "std": 0.09, "n": 1 }
+    },
+    "suburban": {
+      "unemployment_rate": { "mean": 5.8, "std": 1.9, "n": 1 },
+      "emp_pop_ratio": { "mean": 59.0, "std": 6.0, "n": 1 },
+      "earnings_to_rent": { "mean": 4.6, "std": 1.2, "n": 1 },
+      "net_estab_entry_per_1k": { "mean": 0.5, "std": 1.0, "n": 1 },
+      "industry_hhi": { "mean": 0.12, "std": 0.03, "n": 1 },
+      "anchored_balance": { "mean": 0.0, "std": 0.08, "n": 1 }
+    },
+    "rural": {
+      "unemployment_rate": { "mean": 6.0, "std": 2.1, "n": 1 },
+      "emp_pop_ratio": { "mean": 57.5, "std": 6.5, "n": 1 },
+      "earnings_to_rent": { "mean": 5.0, "std": 1.4, "n": 1 },
+      "net_estab_entry_per_1k": { "mean": 0.3, "std": 1.1, "n": 1 },
+      "industry_hhi": { "mean": 0.14, "std": 0.04, "n": 1 },
+      "anchored_balance": { "mean": 0.02, "std": 0.10, "n": 1 }
+    }
+  }
+}
+
