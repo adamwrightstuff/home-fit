@@ -15,6 +15,7 @@ const max_possible_scores: Record<keyof PillarPriorities, number> = {
   air_travel_access: 22,
   public_transit_access: 20,
   healthcare_access: 23,
+  economic_security: 2,
   quality_education: 32,
   housing_value: 45,
 }
@@ -27,6 +28,7 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'healthcare_access',
   'public_transit_access',
   'air_travel_access',
+  'economic_security',
   'quality_education',
   'housing_value',
 ]
@@ -66,9 +68,9 @@ const questions = [
     id: 4,
     text: "You're offered two jobs with identical pay. One major difference:",
     options: [
-      { text: 'Job A: 15-min subway ride downtown', pillars: { public_transit_access: 4 } },
+      { text: 'Job A: 15-min subway ride downtown', pillars: { public_transit_access: 4, economic_security: 1 } },
       { text: 'Job B: 30-min scenic drive through nature', pillars: { natural_beauty: 2, active_outdoors: 2 } },
-      { text: 'Job C: 5-min walk from your front door', pillars: { neighborhood_amenities: 4 } },
+      { text: 'Job C: 5-min walk from your front door', pillars: { neighborhood_amenities: 4, economic_security: 2 } },
       { text: 'Job D: Remote, but near a major airport for frequent travel', pillars: { air_travel_access: 4 } },
     ],
   },
@@ -266,6 +268,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       air_travel_access: 0,
       public_transit_access: 0,
       healthcare_access: 0,
+      economic_security: 0,
       quality_education: 0,
       housing_value: 0,
     }

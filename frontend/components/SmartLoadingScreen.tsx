@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getScore } from '@/lib/api'
 import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
@@ -15,6 +15,7 @@ interface SmartLoadingScreenProps {
   on_complete: (response: ScoreResponse) => void
   on_error?: (error: Error) => void
   priorities?: string
+  job_categories?: string
   include_chains?: boolean
   enable_schools?: boolean
 }
@@ -27,6 +28,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'healthcare_access',
   'public_transit_access',
   'air_travel_access',
+  'economic_security',
   'quality_education',
   'housing_value',
 ]
@@ -44,6 +46,7 @@ export default function SmartLoadingScreen({
   on_complete, 
   on_error,
   priorities,
+  job_categories,
   include_chains,
   enable_schools
 }: SmartLoadingScreenProps) {
@@ -53,9 +56,28 @@ export default function SmartLoadingScreen({
   const [coordinates, set_coordinates] = useState<{ lat: number; lon: number } | null>(null)
   const [status, set_status] = useState<'starting' | 'analyzing' | 'complete'>('starting')
   const [final_score, set_final_score] = useState<number | null>(null)
+  const progress_ref = useRef(0)
+
+  useEffect(() => {
+    progress_ref.current = progress
+  }, [progress])
 
   useEffect(() => {
     let cancelled = false
+    let soft_progress_interval: ReturnType<typeof setInterval> | null = null
+    const timeouts: Array<ReturnType<typeof setTimeout>> = []
+
+    const clear_soft_progress = () => {
+      if (soft_progress_interval) {
+        clearInterval(soft_progress_interval)
+        soft_progress_interval = null
+      }
+    }
+
+    const clear_all_timeouts = () => {
+      for (const t of timeouts) clearTimeout(t)
+      timeouts.length = 0
+    }
 
     // Reset UI state for new request
     set_current_pillar(null)
@@ -72,14 +94,33 @@ export default function SmartLoadingScreen({
         if (cancelled) return
         set_status('analyzing')
 
+        // While the backend job is running, gently advance progress so users
+        // don't feel "stuck at 0%". This is an estimate, capped well below 100,
+        // and will be superseded by pillar-by-pillar progress once results arrive.
+        const SOFT_FLOOR = 6
+        const SOFT_CAP = 32
+        const SOFT_EASE_MS = 9000
+        set_progress((p) => Math.max(p, SOFT_FLOOR))
+        const soft_start = Date.now()
+        clear_soft_progress()
+        soft_progress_interval = setInterval(() => {
+          if (cancelled) return
+          const elapsed = Date.now() - soft_start
+          const eased =
+            SOFT_CAP - (SOFT_CAP - SOFT_FLOOR) * Math.exp(-elapsed / SOFT_EASE_MS)
+          set_progress((p) => Math.max(p, Math.min(SOFT_CAP, eased)))
+        }, 250)
+
         const response = await getScore({
           location,
           priorities,
+          job_categories,
           include_chains,
           enable_schools,
         })
 
         if (cancelled) return
+        clear_soft_progress()
         if (!response || typeof response.total_score !== 'number') {
           throw new Error('Scoring response was incomplete. Please refresh and try again.')
         }
@@ -89,33 +130,42 @@ export default function SmartLoadingScreen({
 
         // Animate pillar completion in a deterministic order to keep the UX engaging.
         const pillarOrder = PILLAR_ORDER
+        const base_progress = Math.min(
+          SOFT_CAP,
+          Math.max(SOFT_FLOOR, progress_ref.current || 0)
+        )
         pillarOrder.forEach((pillarKey, idx) => {
           const delayMs = 220 * idx
-          setTimeout(() => {
+          const t = setTimeout(() => {
             if (cancelled) return
             const pillarData = (response.livability_pillars as any)?.[pillarKey]
             const score = Number(pillarData?.score ?? 0)
             set_completed_pillars((prev) => {
               const next = new Map(prev)
               next.set(pillarKey, { score, details: pillarData })
-              set_progress((next.size / 9) * 100)
+              const frac = next.size / pillarOrder.length
+              set_progress(base_progress + frac * (100 - base_progress))
               return next
             })
           }, delayMs)
+          timeouts.push(t)
         })
 
         const totalAnimationMs = 220 * pillarOrder.length
-        setTimeout(() => {
+        const done_timeout = setTimeout(() => {
           if (cancelled) return
           set_status('complete')
           set_progress(100)
           set_final_score(typeof response.total_score === 'number' ? response.total_score : null)
-          setTimeout(() => {
+          const finish_timeout = setTimeout(() => {
             if (!cancelled) on_complete(response)
           }, 500)
+          timeouts.push(finish_timeout)
         }, totalAnimationMs)
+        timeouts.push(done_timeout)
       } catch (e) {
         if (cancelled) return
+        clear_soft_progress()
         const err = e instanceof Error ? e : new Error('Unknown error')
         set_status('complete')
         set_progress(0)
@@ -127,8 +177,10 @@ export default function SmartLoadingScreen({
     run()
     return () => {
       cancelled = true
+      clear_soft_progress()
+      clear_all_timeouts()
     }
-  }, [location, priorities, include_chains, enable_schools, on_complete, on_error])
+  }, [location, priorities, job_categories, include_chains, enable_schools, on_complete, on_error])
 
   // Update current pillar based on which ones are not yet completed
   useEffect(() => {
