@@ -18,6 +18,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'healthcare_access',
   'public_transit_access',
   'air_travel_access',
+  'economic_security',
   'quality_education',
   'housing_value',
 ]
@@ -33,6 +34,9 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const [copied, setCopied] = useState(false)
 
+  // Be defensive: backend deployments can lag the frontend pillar list.
+  const available_pillars = PILLAR_ORDER.filter((k) => Boolean((livability_pillars as any)?.[k]))
+
   // Copy scores summary to clipboard
   const copyScores = async () => {
     const lines = [
@@ -40,7 +44,10 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
       `Total Score: ${total_score.toFixed(1)}/100`,
       '',
       'Pillar Scores:',
-      ...PILLAR_ORDER.map((key) => `  ${PILLAR_META[key].name}: ${livability_pillars[key].score.toFixed(1)}/100`),
+      ...available_pillars.map((key) => {
+        const score = Number((livability_pillars as any)?.[key]?.score ?? 0)
+        return `  ${PILLAR_META[key].name}: ${score.toFixed(1)}/100`
+      }),
     ]
     
     try {
@@ -52,8 +59,8 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
     }
   }
 
-  const pillar_ranked = PILLAR_ORDER
-    .map((key) => ({ key, score: livability_pillars[key].score }))
+  const pillar_ranked = available_pillars
+    .map((key) => ({ key, score: Number((livability_pillars as any)?.[key]?.score ?? 0) }))
     .sort((a, b) => b.score - a.score)
 
   const top2 = pillar_ranked.slice(0, 2)
@@ -64,7 +71,7 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
     (livability_pillars.quality_education as any)?.data_quality?.fallback_used === true &&
     String((livability_pillars.quality_education as any)?.data_quality?.reason || '').toLowerCase().includes('disabled')
 
-  const lowConfidencePillars = PILLAR_ORDER.filter((k) => (livability_pillars[k]?.confidence ?? 100) < 60)
+  const lowConfidencePillars = available_pillars.filter((k) => ((livability_pillars as any)?.[k]?.confidence ?? 100) < 60)
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
@@ -158,8 +165,8 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
           Pillar scores
         </div>
         <div className="hf-grid-3">
-          {PILLAR_ORDER.map((key) => (
-            <PillarCard key={key} pillar_key={key} pillar={livability_pillars[key]} />
+          {available_pillars.map((key) => (
+            <PillarCard key={key} pillar_key={key} pillar={(livability_pillars as any)[key]} />
           ))}
         </div>
       </div>

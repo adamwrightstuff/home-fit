@@ -58,7 +58,8 @@ export interface LivabilityPillars {
   air_travel_access: LivabilityPillar;
   public_transit_access: LivabilityPillar;
   healthcare_access: LivabilityPillar;
-  economic_security: LivabilityPillar;
+  // Defensive: some deployments may not include this pillar yet.
+  economic_security?: LivabilityPillar;
   quality_education: LivabilityPillar;
   housing_value: LivabilityPillar;
 }

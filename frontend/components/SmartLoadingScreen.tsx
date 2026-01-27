@@ -52,6 +52,7 @@ export default function SmartLoadingScreen({
 }: SmartLoadingScreenProps) {
   const [current_pillar, set_current_pillar] = useState<string | null>(null)
   const [completed_pillars, set_completed_pillars] = useState<Map<string, { score: number; details?: any }>>(new Map())
+  const [expected_pillars, set_expected_pillars] = useState<PillarKey[]>(PILLAR_ORDER)
   const [progress, set_progress] = useState(0)
   const [coordinates, set_coordinates] = useState<{ lat: number; lon: number } | null>(null)
   const [status, set_status] = useState<'starting' | 'analyzing' | 'complete'>('starting')
@@ -82,6 +83,7 @@ export default function SmartLoadingScreen({
     // Reset UI state for new request
     set_current_pillar(null)
     set_completed_pillars(new Map())
+    set_expected_pillars(PILLAR_ORDER)
     set_progress(0)
     set_coordinates(null)
     set_status('starting')
@@ -129,12 +131,17 @@ export default function SmartLoadingScreen({
         }
 
         // Animate pillar completion in a deterministic order to keep the UX engaging.
-        const pillarOrder = PILLAR_ORDER
+        // Use only pillars that actually exist in the response (backend deployments
+        // can lag the frontend list).
+        const respPillars = (response.livability_pillars as any) || {}
+        const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
+        const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
+        set_expected_pillars(effectiveOrder)
         const base_progress = Math.min(
           SOFT_CAP,
           Math.max(SOFT_FLOOR, progress_ref.current || 0)
         )
-        pillarOrder.forEach((pillarKey, idx) => {
+        effectiveOrder.forEach((pillarKey, idx) => {
           const delayMs = 220 * idx
           const t = setTimeout(() => {
             if (cancelled) return
@@ -143,7 +150,7 @@ export default function SmartLoadingScreen({
             set_completed_pillars((prev) => {
               const next = new Map(prev)
               next.set(pillarKey, { score, details: pillarData })
-              const frac = next.size / pillarOrder.length
+              const frac = next.size / effectiveOrder.length
               set_progress(base_progress + frac * (100 - base_progress))
               return next
             })
@@ -151,7 +158,7 @@ export default function SmartLoadingScreen({
           timeouts.push(t)
         })
 
-        const totalAnimationMs = 220 * pillarOrder.length
+        const totalAnimationMs = 220 * effectiveOrder.length
         const done_timeout = setTimeout(() => {
           if (cancelled) return
           set_status('complete')
@@ -185,18 +192,24 @@ export default function SmartLoadingScreen({
   // Update current pillar based on which ones are not yet completed
   useEffect(() => {
     if (status === 'analyzing') {
-      const all_pillars = Object.keys(PILLAR_CONFIG)
-      const remaining = all_pillars.filter(p => !completed_pillars.has(p))
+      // Before we have any pillar results, we can't truthfully claim a specific pillar
+      // is being computed (backend work is opaque and often parallel). Show a neutral
+      // "preparing data" phase instead.
+      if (completed_pillars.size === 0) {
+        set_current_pillar(null)
+        return
+      }
+      const remaining = expected_pillars.filter((p) => !completed_pillars.has(p))
       
       if (remaining.length > 0) {
-        set_current_pillar(remaining[0])
+        set_current_pillar(String(remaining[0]))
       } else {
         set_current_pillar(null)
       }
     } else {
       set_current_pillar(null)
     }
-  }, [completed_pillars, status])
+  }, [completed_pillars, expected_pillars, status])
 
   return (
     <div className="hf-page hf-viewport hf-safe-bottom overflow-y-auto md:overflow-hidden" style={{ width: '100%', position: 'relative' }}>
@@ -259,8 +272,29 @@ export default function SmartLoadingScreen({
               </div>
             )}
             
-            {current_pillar && status === 'analyzing' && (
-              <CurrentlyAnalyzing 
+            {status === 'analyzing' && completed_pillars.size === 0 && (
+              <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ fontSize: '2rem' }}>🧭</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>
+                      Preparing data…
+                    </div>
+                    <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+                      Geocoding your location and fetching shared datasets used across multiple pillars.
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.35rem' }} aria-hidden="true">
+                    <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.7 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.45 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--hf-primary-1)', opacity: 0.25 }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {current_pillar && status === 'analyzing' && completed_pillars.size > 0 && (
+              <CurrentlyAnalyzing
                 pillar_key={current_pillar}
                 config={(PILLAR_CONFIG as any)[current_pillar]}
               />
