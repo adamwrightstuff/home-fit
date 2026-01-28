@@ -8,7 +8,7 @@ import ScoreDisplay from '@/components/ScoreDisplay'
 import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
-import CoinWeightingInterface from '@/components/CoinWeightingInterface'
+import PokerCoinWeighting from '@/components/PokerCoinWeighting'
 import AppHeader from '@/components/AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
@@ -17,6 +17,7 @@ type WeightingMode = 'priorities' | 'tokens'
 const TOKENS_STORAGE_KEY = 'homefit_tokens'
 const WEIGHTING_MODE_STORAGE_KEY = 'homefit_weighting_mode'
 const COIN_ALLOCATIONS_LOCAL_KEY = 'homefit_coin_allocations_v1'
+const POKER_ALLOCATIONS_LOCAL_KEY = 'homefit_poker_coin_allocations_v1'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
@@ -135,9 +136,9 @@ export default function Home() {
     }))
 
     return (
-      <CoinWeightingInterface
+      <PokerCoinWeighting
         pillars={pillars}
-        totalCoins={20}
+        totalChips={20}
         onBack={() => set_show_token_game(false)}
         onComplete={(weights) => {
           // Convert weights (fractions) back to coin counts (0..20).
@@ -184,6 +185,8 @@ export default function Home() {
         out[key] = Math.max(0, Math.min(20, Math.floor(n)))
       }
       localStorage.setItem(COIN_ALLOCATIONS_LOCAL_KEY, JSON.stringify(out))
+      // Poker UI uses a different key; seed it too so "Edit" starts from saved tokens.
+      localStorage.setItem(POKER_ALLOCATIONS_LOCAL_KEY, JSON.stringify(out))
     } catch {
       // ignore
     }
