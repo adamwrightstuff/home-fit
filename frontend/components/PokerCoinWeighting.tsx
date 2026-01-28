@@ -20,8 +20,9 @@ export interface PokerCoinWeightingProps {
 
 type Allocations = Record<string, number>
 
-const STORAGE_KEY = 'homefit_poker_coin_allocations_v1'
-const SOUND_KEY = 'homefit_poker_sounds_v1'
+// Token budget interface persistence
+const STORAGE_KEY = 'homefit_token_budget_allocations_v1'
+const SOUND_KEY = 'homefit_token_budget_sounds_v1'
 
 function clampInt(n: number, min: number, max: number): number {
   if (!Number.isFinite(n)) return min
@@ -305,7 +306,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
     }
   }
 
-  const cashOut = () => {
+  const continueToResults = () => {
     if (placed <= 0) {
       setShowSkipModal(true)
       return
@@ -313,7 +314,12 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
     onComplete(weights)
   }
 
-  const title = placed === 0 ? 'Skip betting' : remaining === 0 ? 'Cash Out →' : `Cash Out (${placed} chips) →`
+  const title =
+    placed === 0
+      ? 'Continue →'
+      : remaining === 0
+        ? 'Continue →'
+        : `Continue (${placed} tokens) →`
 
   // Arc-ish layout offsets for desktop: push middle rows downward slightly.
   const desktopOffsets = [0, 10, 22, 10, 0, 0, 10, 22, 10, 0]
@@ -334,8 +340,10 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
             </div>
 
             <div style={{ textAlign: 'center', flex: '1 1 auto', minWidth: 280 }}>
-              <div className="hf-poker-title">🎰 Place Your Bets</div>
-              <div className="hf-poker-subtitle">You have {totalChips} chips. Bet on what matters most.</div>
+              <div className="hf-poker-title">💰 Spend your tokens</div>
+              <div className="hf-poker-subtitle">
+                You have {totalChips} tokens. Spend them on what matters most.
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -361,7 +369,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
           aria-atomic="true"
         >
           <div className="hf-chip-stack__label">
-            <Coins size={16} /> Your chip stack
+            <Coins size={16} /> Your token stack
           </div>
           <div className="hf-chip-stack__row" aria-hidden="true">
             {Array.from({ length: Math.min(remaining, 10) }).map((_, i) => (
@@ -369,7 +377,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
             ))}
           </div>
           <div className="hf-chip-stack__count">
-            <span className="hf-chip-stack__countValue">{remaining}</span> chips left
+            <span className="hf-chip-stack__countValue">{remaining}</span> tokens left
           </div>
         </div>
 
@@ -398,9 +406,9 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                       aria-label={
                         disabled
                           ? `${p.label} is locked.`
-                          : `Place 1 chip on ${p.label}. Currently ${chips} chips placed. ${remaining} remaining.`
+                          : `Add 1 token to ${p.label}. Currently ${chips} tokens allocated. ${remaining} remaining.`
                       }
-                      title={disabled ? 'Locked' : 'Tap to place 1 chip'}
+                      title={disabled ? 'Locked' : 'Tap to add 1 token'}
                     >
                       <div className="hf-bet-circle__icon">{p.icon}</div>
                       <div className="hf-bet-circle__label">{p.label}</div>
@@ -416,7 +424,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                             ))}
                           </div>
                         ) : (
-                          <div className="hf-bet-circle__empty">No chips</div>
+                          <div className="hf-bet-circle__empty">No tokens</div>
                         )}
                         <div className="hf-bet-circle__count">{chips}</div>
                       </div>
@@ -428,8 +436,8 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                         className="hf-bet-circle__btn"
                         onClick={() => handleRemoveOne(p.id)}
                         disabled={disabled || chips <= 0}
-                        aria-label={`Remove 1 chip from ${p.label}. Currently ${chips} chips placed.`}
-                        title="Remove 1"
+                        aria-label={`Remove 1 token from ${p.label}. Currently ${chips} tokens allocated.`}
+                        title="Remove 1 token"
                       >
                         –1
                       </button>
@@ -441,10 +449,10 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                           setShowAllIn(true)
                         }}
                         disabled={disabled || remaining <= 0}
-                        aria-label={`All in on ${p.label}. Place all remaining chips here.`}
-                        title="All in"
+                        aria-label={`Add all remaining tokens to ${p.label}.`}
+                        title="Add all remaining"
                       >
-                        All in
+                        Add all
                       </button>
                     </div>
 
@@ -470,9 +478,9 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
           <div className="hf-poker-footer__row">
             <div className="hf-poker-footer__left">
               {remaining === 0 ? (
-                <div className="hf-poker-footer__status hf-poker-footer__status--good">All chips placed. Ready to cash out.</div>
+                <div className="hf-poker-footer__status hf-poker-footer__status--good">All tokens allocated. Ready to continue.</div>
               ) : (
-                <div className="hf-poker-footer__status">Chips left to place: {remaining}</div>
+                <div className="hf-poker-footer__status">Tokens left to allocate: {remaining}</div>
               )}
             </div>
             <div className="hf-poker-footer__right">
@@ -487,7 +495,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
               <button
                 type="button"
                 className={remaining === 0 && placed > 0 ? 'hf-poker-primary hf-poker-primary--glow' : 'hf-poker-primary'}
-                onClick={cashOut}
+                onClick={continueToResults}
               >
                 {title}
               </button>
@@ -502,15 +510,15 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
           className="hf-modal-backdrop"
           role="dialog"
           aria-modal="true"
-          aria-label="All in confirmation"
+          aria-label="Add all remaining confirmation"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setShowAllIn(false)
           }}
         >
           <div className="hf-card" style={{ maxWidth: 560, width: '100%' }}>
-            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--hf-text-primary)' }}>Go all‑in?</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--hf-text-primary)' }}>Add all remaining tokens?</div>
             <div className="hf-muted" style={{ marginTop: '0.5rem' }}>
-              This will place <strong>all remaining chips</strong> on{' '}
+              This will place <strong>all remaining tokens</strong> on{' '}
               <strong>{pillars.find((p) => p.id === allInTarget)?.label || 'this pillar'}</strong>.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
@@ -531,7 +539,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                   handleAllIn(id)
                 }}
               >
-                All In
+                Add all
               </button>
             </div>
           </div>
@@ -544,13 +552,13 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
           className="hf-modal-backdrop"
           role="dialog"
           aria-modal="true"
-          aria-label="Skip betting confirmation"
+          aria-label="Skip token budgeting confirmation"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setShowSkipModal(false)
           }}
         >
           <div className="hf-card" style={{ maxWidth: 560, width: '100%' }}>
-            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--hf-text-primary)' }}>Skip betting?</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--hf-text-primary)' }}>Skip priorities?</div>
             <div className="hf-muted" style={{ marginTop: '0.5rem' }}>
               We’ll weight all pillars equally.
             </div>
@@ -571,7 +579,7 @@ export default function PokerCoinWeighting({ pillars, totalChips = 20, onComplet
                   onComplete({})
                 }}
               >
-                Skip betting
+                Skip
               </button>
             </div>
           </div>

@@ -17,7 +17,7 @@ type WeightingMode = 'priorities' | 'tokens'
 const TOKENS_STORAGE_KEY = 'homefit_tokens'
 const WEIGHTING_MODE_STORAGE_KEY = 'homefit_weighting_mode'
 const COIN_ALLOCATIONS_LOCAL_KEY = 'homefit_coin_allocations_v1'
-const POKER_ALLOCATIONS_LOCAL_KEY = 'homefit_poker_coin_allocations_v1'
+const POKER_ALLOCATIONS_LOCAL_KEY = 'homefit_token_budget_allocations_v1'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
