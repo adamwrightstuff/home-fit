@@ -479,3 +479,27 @@ body {
     text-wrap: balance;
   }
 }
+
+/* -----------------------------
+   Coin weighting micro-animations
+   ----------------------------- */
+
+@keyframes hf-shake-x {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* We generate unique classnames per shake counter to re-trigger animation */
+[class*="hf-coin-counter--shake-"] {
+  animation: hf-shake-x 0.42s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="hf-coin-counter--shake-"] {
+    animation: none;
+  }
+}

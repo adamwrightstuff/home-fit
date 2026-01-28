@@ -8,7 +8,7 @@ import ScoreDisplay from '@/components/ScoreDisplay'
 import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
-import TokenWeightsGame from '@/components/TokenWeightsGame'
+import CoinWeightingInterface from '@/components/CoinWeightingInterface'
 import AppHeader from '@/components/AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
@@ -16,6 +16,7 @@ type WeightingMode = 'priorities' | 'tokens'
 
 const TOKENS_STORAGE_KEY = 'homefit_tokens'
 const WEIGHTING_MODE_STORAGE_KEY = 'homefit_weighting_mode'
+const COIN_ALLOCATIONS_LOCAL_KEY = 'homefit_coin_allocations_v1'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
@@ -112,15 +113,53 @@ export default function Home() {
   }
 
   if (show_token_game) {
+    const pillars: Array<{ id: string; label: string; icon: string; description: string; disabled?: boolean }> = (
+      [
+        'natural_beauty',
+        'built_beauty',
+        'neighborhood_amenities',
+        'active_outdoors',
+        'healthcare_access',
+        'public_transit_access',
+        'air_travel_access',
+        'economic_security',
+        'quality_education',
+        'housing_value',
+      ] as PillarKey[]
+    ).map((k) => ({
+      id: k,
+      label: PILLAR_META[k].name,
+      icon: PILLAR_META[k].icon,
+      description: PILLAR_META[k].description,
+      disabled: k === 'quality_education' && !search_options.enable_schools,
+    }))
+
     return (
-      <TokenWeightsGame
-        enableSchools={search_options.enable_schools}
-        initialTokens={tokens || null}
-        onApplyTokens={(nextTokens) => {
+      <CoinWeightingInterface
+        pillars={pillars}
+        totalCoins={20}
+        onBack={() => set_show_token_game(false)}
+        onComplete={(weights) => {
+          // Convert weights (fractions) back to coin counts (0..20).
+          const order = pillars.map((p) => p.id)
+          const coinsById: Record<string, number> = {}
+          let totalCoins = 0
+          for (const id of order) {
+            const w = typeof weights?.[id] === 'number' ? Number(weights[id]) : 0
+            const coins = Math.max(0, Math.min(20, Math.round(w * 20)))
+            // Enforce disabled pillar to 0
+            const disabled = pillars.find((p) => p.id === id)?.disabled
+            coinsById[id] = disabled ? 0 : coins
+            totalCoins += coinsById[id]
+          }
+
+          const nextTokens = totalCoins > 0 ? order.map((id) => `${id}:${coinsById[id] || 0}`).join(',') : undefined
+
           set_tokens(nextTokens)
           set_weighting_mode('tokens')
           try {
-            sessionStorage.setItem(TOKENS_STORAGE_KEY, nextTokens)
+            if (nextTokens) sessionStorage.setItem(TOKENS_STORAGE_KEY, nextTokens)
+            else sessionStorage.removeItem(TOKENS_STORAGE_KEY)
             sessionStorage.setItem(WEIGHTING_MODE_STORAGE_KEY, 'tokens')
           } catch {
             // ignore
@@ -128,9 +167,26 @@ export default function Home() {
           set_show_token_game(false)
           set_search_options_expanded(true)
         }}
-        onBack={() => set_show_token_game(false)}
       />
     )
+  }
+
+  const seedCoinAllocationsFromTokens = (tokensStr?: string) => {
+    if (!tokensStr) return
+    try {
+      const out: Record<string, number> = {}
+      for (const pair of tokensStr.split(',')) {
+        const [k, v] = pair.split(':')
+        const key = (k || '').trim()
+        const n = Number((v || '').trim())
+        if (!key) continue
+        if (!Number.isFinite(n)) continue
+        out[key] = Math.max(0, Math.min(20, Math.floor(n)))
+      }
+      localStorage.setItem(COIN_ALLOCATIONS_LOCAL_KEY, JSON.stringify(out))
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -179,10 +235,6 @@ export default function Home() {
                   type="button"
                   className={weighting_mode === 'tokens' ? 'hf-btn-primary' : 'hf-btn-link'}
                   onClick={() => {
-                    if (!tokens) {
-                      set_show_token_game(true)
-                      return
-                    }
                     set_weighting_mode('tokens')
                     try {
                       sessionStorage.setItem(WEIGHTING_MODE_STORAGE_KEY, 'tokens')
@@ -199,7 +251,11 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() => set_show_token_game(true)}
+                  onClick={() => {
+                    // Seed localStorage for a good "edit" experience.
+                    seedCoinAllocationsFromTokens(tokens)
+                    set_show_token_game(true)
+                  }}
                   className="hf-btn-primary"
                 >
                   {tokens ? 'Edit coin weights' : 'Play coin game'}
@@ -220,7 +276,7 @@ export default function Home() {
                   Coin weights saved. {weighting_mode === 'tokens' ? <strong>Currently using coin weights.</strong> : 'Switch to “Use coin weights” to apply them.'}
                 </>
               ) : (
-                <>No coin weights yet.</>
+                <>No coin weights yet (coin mode will fall back to equal weighting).</>
               )}
             </div>
           </div>
