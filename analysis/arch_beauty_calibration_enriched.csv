@@ -1,0 +1,29 @@
+name,lat,lon,expected_score,actual_score,category,ParkingFraction,BlockSize,FrontageContinuity,StreetWidthToHeight,HistoricCoherence
+Beacon Hill Boston,42.3588,-71.0707,85,76,beautiful_historic,0.05,80,90,1.0,95
+Brooklyn Heights NYC,40.6958,-73.9961,85,64,beautiful_historic,0.03,100,95,0.9,98
+Charleston Historic,32.7765,-79.9311,90,64,beautiful_historic,0.08,90,85,1.1,97
+Savannah Historic,32.0809,-81.0912,90,66,beautiful_historic,0.06,100,80,1.2,96
+German Village Columbus,39.9496,-82.9882,80,66,beautiful_historic,0.12,70,75,1.1,90
+Pearl District Portland,45.5266,-122.6803,80,54,beautiful_urban,0.15,120,70,1.3,75
+SoHo NYC,40.7233,-74.0030,85,71,beautiful_urban,0.08,100,85,1.0,88
+Ann Arbor Downtown,42.2808,-83.7430,75,49,beautiful_urban,0.18,110,65,1.4,72
+Old Town Alexandria,38.8048,-77.0469,85,68,beautiful_urban,0.10,95,80,1.1,85
+Pike Place Seattle,47.6097,-122.3421,85,44,beautiful_urban,0.12,80,75,1.2,82
+Carmel-by-the-Sea,36.5553,-121.9233,75,51,beautiful_suburban,0.15,60,70,1.0,88
+Litchfield CT,41.7473,-73.1887,75,30,beautiful_suburban,0.20,150,60,1.8,85
+Celebration FL,28.3216,-81.5388,75,24,beautiful_suburban,0.22,110,65,1.5,80
+Seaside FL,30.3213,-86.1435,80,31,beautiful_suburban,0.18,90,70,1.3,92
+Asheville Downtown,35.5951,-82.5515,75,44,beautiful_suburban,0.25,130,55,1.6,70
+Hudson Yards NYC,40.7540,-74.0015,30,70,ugly_urban,0.25,400,30,2.5,15
+Downtown Phoenix,33.4484,-112.0740,30,33,ugly_urban,0.45,250,25,3.0,10
+Downtown Indianapolis,39.7684,-86.1581,35,66,ugly_urban,0.40,200,35,2.2,20
+Tysons Corner VA,38.9187,-77.2286,25,38,ugly_suburban,0.60,350,15,3.5,8
+Schaumburg IL,42.0486,-88.0365,25,28,ugly_suburban,0.65,400,20,3.2,12
+Houston Westheimer,29.7604,-95.5410,25,48,ugly_suburban,0.55,300,25,2.8,15
+Orange County Auto Mile,33.8366,-117.9212,20,59,ugly_suburban,0.70,500,10,4.0,5
+Phoenix Scottsdale Sprawl,33.6055,-111.9260,25,49,ugly_suburban,0.58,450,18,3.8,10
+NJ Turnpike Industrial,40.6331,-74.1790,20,25,ugly_exurban,0.50,600,8,4.5,5
+I-4 Orlando,28.4813,-81.4468,20,26,ugly_exurban,0.62,550,12,4.2,8
+Breezewood PA,40.0114,-78.2403,15,13,ugly_exurban,0.75,700,5,5.0,3
+Bakersfield Sprawl,35.3733,-119.0187,25,36,ugly_exurban,0.52,400,20,3.5,12
+Exurban Atlanta,34.0234,-84.5755,25,29,ugly_exurban,0.68,500,15,4.0,8
