@@ -15,6 +15,7 @@ interface SmartLoadingScreenProps {
   on_complete: (response: ScoreResponse) => void
   on_error?: (error: Error) => void
   priorities?: string
+  tokens?: string
   job_categories?: string
   include_chains?: boolean
   enable_schools?: boolean
@@ -46,6 +47,7 @@ export default function SmartLoadingScreen({
   on_complete, 
   on_error,
   priorities,
+  tokens,
   job_categories,
   include_chains,
   enable_schools
@@ -115,6 +117,7 @@ export default function SmartLoadingScreen({
 
         const response = await getScore({
           location,
+          tokens,
           priorities,
           job_categories,
           include_chains,
@@ -187,7 +190,7 @@ export default function SmartLoadingScreen({
       clear_soft_progress()
       clear_all_timeouts()
     }
-  }, [location, priorities, job_categories, include_chains, enable_schools, on_complete, on_error])
+  }, [location, priorities, tokens, job_categories, include_chains, enable_schools, on_complete, on_error])
 
   // Update current pillar based on which ones are not yet completed
   useEffect(() => {
