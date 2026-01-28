@@ -5,6 +5,7 @@ Built Beauty pillar implementation (architecture, form, and built enhancers).
 from __future__ import annotations
 
 import math
+import os
 from typing import Dict, List, Optional, Tuple
 
 from logging_config import get_logger
@@ -229,6 +230,76 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         else:
             beauty_score = beauty_score_result
             coverage_cap_metadata = {}
+
+        # ------------------------------------------------------------------
+        # Calibrated architecture scorer (0–100), mapped to 0–50 for Built Beauty.
+        # Enabled by default; can be disabled via env for rollback.
+        # ------------------------------------------------------------------
+        use_calibrated = os.getenv("HOMEFIT_USE_CALIBRATED_BUILT_BEAUTY", "1").strip() == "1"
+        legacy_beauty_score_0_50 = float(beauty_score or 0.0)
+        calibrated_beauty_score_0_100 = None
+        if use_calibrated and not (metric_overrides and "architecture_score" in metric_overrides):
+            try:
+                from pillars.architectural_beauty_calibrated import compute_calibrated_architectural_beauty_score
+
+                # Map existing pipeline outputs to the calibrated model's proxy fields.
+                parking_fraction = coverage_cap_metadata.get("parking_share_estimate")
+                try:
+                    parking_fraction = float(parking_fraction) if parking_fraction is not None else None
+                except (TypeError, ValueError):
+                    parking_fraction = None
+
+                block_grain = coverage_cap_metadata.get("block_grain")
+                try:
+                    block_grain = float(block_grain) if block_grain is not None else None
+                except (TypeError, ValueError):
+                    block_grain = None
+
+                # Heuristic conversion: higher block_grain (finer) -> smaller block size.
+                block_size_m = None
+                if block_grain is not None:
+                    block_size_m = max(60.0, min(700.0, 420.0 - 3.5 * block_grain))
+
+                frontage = coverage_cap_metadata.get("streetwall_continuity")
+                try:
+                    frontage = float(frontage) if frontage is not None else None
+                except (TypeError, ValueError):
+                    frontage = None
+
+                # Coherence proxy: use model coherence signal when available (0–1 -> 0–100),
+                # and boost when contextual tags indicate historic/rowhouse fabric.
+                coherence = coverage_cap_metadata.get("age_coherence_signal")
+                coherence_score = None
+                try:
+                    coherence_score = float(coherence) * 100.0 if coherence is not None else None
+                except (TypeError, ValueError):
+                    coherence_score = None
+                if coherence_score is None:
+                    coherence_score = 0.0
+                if "historic" in (contextual_tags or []):
+                    coherence_score = max(coherence_score, 92.0)
+                if "rowhouse" in (contextual_tags or []):
+                    coherence_score = max(coherence_score, 95.0)
+
+                calibrated_beauty_score_0_100 = compute_calibrated_architectural_beauty_score(
+                    {
+                        "height_diversity": diversity_metrics.get("levels_entropy", 0),
+                        "type_diversity": diversity_metrics.get("building_type_diversity", 0),
+                        "footprint_variation": diversity_metrics.get("footprint_area_cv", 0),
+                        "built_coverage": diversity_metrics.get("built_coverage_ratio", 0),
+                        "ParkingFraction": parking_fraction,
+                        "BlockSize": block_size_m,
+                        "FrontageContinuity": frontage,
+                        "StreetWidthToHeight": None,
+                        "HistoricCoherence": coherence_score,
+                    }
+                )
+
+                # Replace architecture score used by Built Beauty (0–50).
+                beauty_score = float(calibrated_beauty_score_0_100) / 2.0
+            except Exception as e:
+                logger.warning("Calibrated Built Beauty scorer failed; falling back to legacy: %s", e)
+                beauty_score = legacy_beauty_score_0_50
         
         # Use form_context if provided (computed once in main.py), otherwise compute it
         # This ensures form_context is shared across beauty pillars
@@ -327,6 +398,16 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "scenic": _r2(coverage_cap_metadata.get("scenic_bonus"))
             }
         }
+        # Expose calibrated scorer metadata for debugging.
+        if calibrated_beauty_score_0_100 is not None:
+            details["calibrated_score_0_100"] = round(float(calibrated_beauty_score_0_100), 2)
+            details["legacy_score_0_50"] = round(float(legacy_beauty_score_0_50), 2)
+            details["calibration_inputs"] = {
+                "ParkingFraction": coverage_cap_metadata.get("parking_share_estimate"),
+                "BlockSize": None,  # derived, stored for visibility in future if needed
+                "FrontageContinuity": coverage_cap_metadata.get("streetwall_continuity"),
+                "HistoricCoherence": coverage_cap_metadata.get("age_coherence_signal"),
+            }
 
         if coverage_cap_metadata.get("overrides_applied"):
             details["overrides"] = coverage_cap_metadata.get("overrides_applied", [])
