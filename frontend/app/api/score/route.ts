@@ -115,8 +115,7 @@ export async function GET(req: NextRequest) {
     // - GET /score/jobs/{id} returns {status, result?}
     // For the frontend we return either:
     // - 200 <ScoreResponse> when done
-    // - 409 {job_id, status} when not done yet (intentionally non-2xx so older clients don't treat it as a score)
-    // - 200 <ScoreResponse> when done
+    // - 202 {job_id, status} when not done yet (so the browser doesn't log it as a console error)
     // - propagate errors otherwise
     if (contentType.includes('application/json')) {
       try {
@@ -130,7 +129,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(
               { job_id: parsed?.job_id || jobId, status },
               {
-                status: 409,
+                status: 202,
                 headers: { 'Cache-Control': 'no-store', 'Retry-After': '1' },
               }
             );
@@ -141,7 +140,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(
               { job_id: parsed.job_id, status: parsed.status || 'queued' },
               {
-                status: 409,
+                status: 202,
                 headers: { 'Cache-Control': 'no-store', 'Retry-After': '1' },
               }
             );
