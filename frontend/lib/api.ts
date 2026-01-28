@@ -55,18 +55,33 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
-  while (response.status === 202 || response.status === 409) {
+  // Some environments return 409 {job_id} while queued/running.
+  // In rare dev-bundler edge cases we can also get 200 {job_id} with no total_score.
+  // Treat any {job_id} response as a pollable job until we get a real ScoreResponse.
+  while (response.status === 202 || response.status === 409 || response.status === 200) {
     const payload = await response.json().catch(() => null);
+
+    // Success case
+    if (payload && typeof payload.total_score === 'number') {
+      return payload as ScoreResponse;
+    }
+
     const jobId = payload?.job_id;
-    if (!jobId) {
-      throw new Error('Scoring is queued, but no job_id was returned');
+    const status = payload?.status;
+
+    // If we got a job payload, keep polling.
+    if (jobId && (response.status === 202 || response.status === 409 || status === 'queued' || status === 'running')) {
+      if (Date.now() - start > maxWaitMs) {
+        throw new Error('Scoring is taking longer than expected. Please try again.');
+      }
+      await new Promise((r) => setTimeout(r, pollDelayMs));
+      pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.25));
+      response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`);
+      continue;
     }
-    if (Date.now() - start > maxWaitMs) {
-      throw new Error('Scoring is taking longer than expected. Please try again.');
-    }
-    await new Promise((r) => setTimeout(r, pollDelayMs));
-    pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.25));
-    response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`);
+
+    // If we got here with a 200 but not a score (and no pollable job), break and error below.
+    break;
   }
 
   if (!response.ok) {
