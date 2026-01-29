@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScoreResponse } from '@/types/api'
 import LocationSearch from '@/components/LocationSearch'
 import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions, type PillarPriorities } from '@/components/SearchOptions'
@@ -11,6 +11,7 @@ import PlaceValuesGame from '@/components/PlaceValuesGame'
 import PokerCoinWeighting from '@/components/PokerCoinWeighting'
 import AppHeader from '@/components/AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 
 type WeightingMode = 'priorities' | 'tokens'
 
@@ -70,6 +71,15 @@ export default function Home() {
       job_categories: [],
     }
   })
+
+  // Live reweighting (client-side): when a score is already computed, let the user
+  // tweak the priority buttons and instantly see the updated total/weights without
+  // re-running the backend.
+  const display_score_data = useMemo(() => {
+    if (!score_data) return null
+    if (weighting_mode !== 'priorities') return score_data
+    return reweightScoreResponseFromPriorities(score_data, search_options.priorities)
+  }, [score_data, weighting_mode, search_options.priorities])
 
   const handle_search = (location: string) => {
     console.log('Page: handle_search called with location:', location)
@@ -353,7 +363,7 @@ export default function Home() {
         )}
 
         {score_data && !loading && (
-          <ScoreDisplay data={score_data} />
+          <ScoreDisplay data={display_score_data || score_data} />
         )}
       </div>
     </main>
