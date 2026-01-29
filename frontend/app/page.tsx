@@ -81,6 +81,30 @@ export default function Home() {
     return reweightScoreResponseFromPriorities(score_data, search_options.priorities)
   }, [score_data, weighting_mode, search_options.priorities])
 
+  const handleSearchOptionsChange = (next: SearchOptions) => {
+    // If the user tweaks priorities after scoring, automatically switch into
+    // "priorities" mode so the UI reflects their edits immediately.
+    try {
+      const prevPriorities = search_options.priorities
+      const nextPriorities = next.priorities
+      const priorityChanged = Object.keys(prevPriorities).some(
+        (k) => (prevPriorities as any)[k] !== (nextPriorities as any)[k]
+      )
+
+      if (score_data && priorityChanged && weighting_mode !== 'priorities') {
+        set_weighting_mode('priorities')
+        try {
+          sessionStorage.setItem(WEIGHTING_MODE_STORAGE_KEY, 'priorities')
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore compare errors
+    }
+    set_search_options(next)
+  }
+
   const handle_search = (location: string) => {
     console.log('Page: handle_search called with location:', location)
     set_loading(true)
@@ -215,7 +239,7 @@ export default function Home() {
           <LocationSearch onSearch={handle_search} disabled={loading} />
           <SearchOptionsComponent 
             options={search_options} 
-            onChange={set_search_options}
+            onChange={handleSearchOptionsChange}
             disabled={loading}
             expanded={search_options_expanded}
             onExpandedChange={set_search_options_expanded}
