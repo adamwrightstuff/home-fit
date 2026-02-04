@@ -236,6 +236,12 @@ logger.info(f"API Version: {API_VERSION} (auto-generated from scoring file hash)
 LOCATION_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours
 LOCATION_CACHE_MAX_BYTES = 256_000      # hard cap per entry (base64 text length)
 
+# Shared pre-pillar cache: census_tract, density, arch_diversity, area_type, tree_canopy, form_context.
+# Keyed only by (lat, lon) so any request for the same location reuses expensive pre-pillar work.
+# Used only when only_pillars is None (full score).
+SHARED_PREPILLAR_CACHE_TTL_SECONDS = 12 * 3600  # 12 hours, match location cache
+SHARED_PREPILLAR_CACHE_SCHEMA = 1
+
 
 def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
     """
@@ -711,6 +717,13 @@ def _generate_location_cache_key(
     return f"location_response_template:v{API_VERSION}:{key_hash}"
 
 
+def _generate_shared_prepillar_cache_key(lat: float, lon: float) -> str:
+    """Key for shared pre-pillar data (census_tract, density, arch_diversity, area_type, tree_canopy, form_context). Keyed by lat/lon only."""
+    lat_r = round(float(lat), 4)
+    lon_r = round(float(lon), 4)
+    return f"shared_prepillar:schema{SHARED_PREPILLAR_CACHE_SCHEMA}:{lat_r:.4f}:{lon_r:.4f}"
+
+
 def _apply_allocation_to_cached_response(
     cached_response: Dict[str, Any],
     *,
@@ -918,102 +931,209 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.warning(f"Location cache read failed (non-fatal): {e}")
 
-    # Compute a single area_type centrally for consistent radius profiles
-    # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+    # Shared pre-pillar cache: reuse census_tract, density, arch_diversity, area_type, tree_canopy, form_context
+    # when another request already computed them for this (lat, lon). Only used for full-score requests.
     census_tract = None
     density = 0.0
-    try:
-        from data_sources import census_api as _ca
-        from data_sources import data_quality as _dq
-        from data_sources import osm_api
-        from data_sources.arch_diversity import compute_arch_diversity
-        from data_sources.regional_baselines import RegionalBaselineManager
-        
-        # Parallelize independent API calls that don't depend on each other
-        def _fetch_census_tract():
-            try:
-                return _ca.get_census_tract(lat, lon)
-            except Exception as e:
-                logger.warning(f"Census tract lookup failed (non-fatal): {e}")
-                return None
-        
-        def _fetch_density(tract):
-            try:
-                return _ca.get_population_density(lat, lon, tract=tract) or 0.0
-            except Exception as e:
-                logger.warning(f"Density lookup failed (non-fatal): {e}")
-                return 0.0
-        
-        def _fetch_business_count():
-            if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
-                return 0
-            try:
-                business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                if business_data:
-                    all_businesses = (business_data.get("tier1_daily", []) + 
-                                    business_data.get("tier2_social", []) +
-                                    business_data.get("tier3_culture", []) +
-                                    business_data.get("tier4_services", []))
-                    return len(all_businesses)
-                return 0
-            except Exception as e:
-                logger.warning(f"Business count query failed (non-fatal): {e}")
-                return 0
-        
-        def _fetch_built_coverage():
-            if only_pillars is not None and "built_beauty" not in only_pillars:
-                logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
-                return None
-            try:
-                arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-                return arch_diversity
-            except Exception as e:
-                logger.warning(f"Built coverage query failed (non-fatal): {e}")
-                return None
-        
-        def _fetch_metro_distance():
-            try:
-                baseline_mgr = RegionalBaselineManager()
-                return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
-            except Exception as e:
-                logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
-                return None
-        
-        # Execute independent calls in parallel
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            future_census_tract = executor.submit(_fetch_census_tract)
-            future_business_count = executor.submit(_fetch_business_count)
-            future_metro_distance = executor.submit(_fetch_metro_distance)
+    arch_diversity_data = None
+    area_type = "unknown"
+    tree_canopy_5km = None
+    form_context = None
+
+    shared_blob = None
+    if not test_mode_enabled and only_pillars is None:
+        try:
+            shared_blob = redis_get_compressed_json(_generate_shared_prepillar_cache_key(lat, lon))
+        except Exception as e:
+            logger.warning(f"Shared pre-pillar cache read failed (non-fatal): {e}")
+
+    if isinstance(shared_blob, dict) and shared_blob.get("_schema") == SHARED_PREPILLAR_CACHE_SCHEMA and shared_blob.get("area_type"):
+        census_tract = shared_blob.get("census_tract")
+        density = float(shared_blob.get("density") or 0.0)
+        arch_diversity_data = shared_blob.get("arch_diversity_data")
+        area_type = str(shared_blob.get("area_type", "unknown"))
+        tree_canopy_5km = shared_blob.get("tree_canopy_5km")
+        if tree_canopy_5km is not None:
+            tree_canopy_5km = float(tree_canopy_5km)
+        form_context = shared_blob.get("form_context")
+        logger.debug("Shared pre-pillar cache hit")
+    else:
+        # Compute a single area_type centrally for consistent radius profiles
+        # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+        try:
+            from data_sources import census_api as _ca
+            from data_sources import data_quality as _dq
+            from data_sources import osm_api
+            from data_sources.arch_diversity import compute_arch_diversity
+            from data_sources.regional_baselines import RegionalBaselineManager
             
-            need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
-            if need_built_coverage:
-                future_built_coverage = executor.submit(_fetch_built_coverage)
-            else:
-                future_built_coverage = None
-            
-            census_tract = future_census_tract.result()
-            future_density = executor.submit(_fetch_density, census_tract)
-            
-            density = future_density.result()
-            business_count = future_business_count.result()
-            metro_distance_km = future_metro_distance.result()
-            arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
-        
-        built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
-        
-        area_type = _dq.detect_area_type(
-            lat, lon, 
-            density=density, 
-            city=city,
-            location_input=location,
-            business_count=business_count,
-            built_coverage=built_coverage,
-            metro_distance_km=metro_distance_km
-        )
-    except Exception:
-        area_type = "unknown"
-        arch_diversity_data = None
-        density = 0.0
+            # Parallelize independent API calls that don't depend on each other
+            def _fetch_census_tract():
+                try:
+                    return _ca.get_census_tract(lat, lon)
+                except Exception as e:
+                    logger.warning(f"Census tract lookup failed (non-fatal): {e}")
+                    return None
+
+            def _fetch_density(tract):
+                try:
+                    return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+                except Exception as e:
+                    logger.warning(f"Density lookup failed (non-fatal): {e}")
+                    return 0.0
+
+            def _fetch_business_count():
+                if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
+                    return 0
+                try:
+                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                    if business_data:
+                        all_businesses = (business_data.get("tier1_daily", []) +
+                                        business_data.get("tier2_social", []) +
+                                        business_data.get("tier3_culture", []) +
+                                        business_data.get("tier4_services", []))
+                        return len(all_businesses)
+                    return 0
+                except Exception as e:
+                    logger.warning(f"Business count query failed (non-fatal): {e}")
+                    return 0
+
+            def _fetch_built_coverage():
+                if only_pillars is not None and "built_beauty" not in only_pillars:
+                    logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
+                    return None
+                try:
+                    arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
+                    return arch_diversity
+                except Exception as e:
+                    logger.warning(f"Built coverage query failed (non-fatal): {e}")
+                    return None
+
+            def _fetch_metro_distance():
+                try:
+                    baseline_mgr = RegionalBaselineManager()
+                    return baseline_mgr.get_distance_to_principal_city(lat, lon, city=city)
+                except Exception as e:
+                    logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
+                    return None
+
+            # Execute independent calls in parallel
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_census_tract = executor.submit(_fetch_census_tract)
+                future_business_count = executor.submit(_fetch_business_count)
+                future_metro_distance = executor.submit(_fetch_metro_distance)
+
+                need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+                if need_built_coverage:
+                    future_built_coverage = executor.submit(_fetch_built_coverage)
+                else:
+                    future_built_coverage = None
+
+                census_tract = future_census_tract.result()
+                future_density = executor.submit(_fetch_density, census_tract)
+
+                density = future_density.result()
+                business_count = future_business_count.result()
+                metro_distance_km = future_metro_distance.result()
+                arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
+
+            built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
+
+            area_type = _dq.detect_area_type(
+                lat, lon,
+                density=density,
+                city=city,
+                location_input=location,
+                business_count=business_count,
+                built_coverage=built_coverage,
+                metro_distance_km=metro_distance_km
+            )
+        except Exception:
+            area_type = "unknown"
+            arch_diversity_data = None
+            density = 0.0
+
+        # Pre-compute tree canopy (5km) once for pillars that need it
+        tree_canopy_5km = None
+        if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
+            try:
+                from data_sources.gee_api import get_tree_canopy_gee
+                tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
+                logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
+            except Exception as e:
+                logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
+                tree_canopy_5km = None
+
+        # Compute form_context once when beauty pillars are requested
+        form_context = None
+        need_built_beauty = _include_pillar('built_beauty')
+        need_natural_beauty = _include_pillar('natural_beauty')
+        need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
+
+        if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
+            try:
+                from data_sources.data_quality import get_form_context
+                from data_sources import census_api
+                from data_sources import osm_api
+
+                if arch_diversity_data:
+                    levels_entropy = arch_diversity_data.get("levels_entropy")
+                    building_type_diversity = arch_diversity_data.get("building_type_diversity")
+                    built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
+                    footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
+                    material_profile = arch_diversity_data.get("material_profile")
+                else:
+                    levels_entropy = None
+                    building_type_diversity = None
+                    built_coverage_ratio = None
+                    footprint_area_cv = None
+                    material_profile = None
+
+                charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
+                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+
+                year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
+                median_year_built = year_built_data.get('median_year_built') if year_built_data else None
+                pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
+
+                form_context = get_form_context(
+                    area_type=area_type,
+                    density=density,
+                    levels_entropy=levels_entropy,
+                    building_type_diversity=building_type_diversity,
+                    historic_landmarks=historic_landmarks,
+                    median_year_built=median_year_built,
+                    built_coverage_ratio=built_coverage_ratio,
+                    footprint_area_cv=footprint_area_cv,
+                    pre_1940_pct=pre_1940_pct,
+                    material_profile=material_profile,
+                    use_multinomial=True
+                )
+                logger.debug(f"Computed form_context: {form_context}")
+            except Exception as e:
+                logger.warning(f"Form context computation failed (non-fatal): {e}")
+                form_context = None
+
+        # Write shared pre-pillar cache for future requests at this location
+        if not test_mode_enabled and only_pillars is None:
+            try:
+                blob = {
+                    "_schema": SHARED_PREPILLAR_CACHE_SCHEMA,
+                    "census_tract": census_tract,
+                    "density": density,
+                    "arch_diversity_data": arch_diversity_data,
+                    "area_type": area_type,
+                    "tree_canopy_5km": tree_canopy_5km,
+                    "form_context": form_context,
+                }
+                redis_set_compressed_json(
+                    _generate_shared_prepillar_cache_key(lat, lon),
+                    blob,
+                    SHARED_PREPILLAR_CACHE_TTL_SECONDS,
+                    max_bytes=LOCATION_CACHE_MAX_BYTES,
+                )
+            except Exception as e:
+                logger.debug(f"Shared pre-pillar cache write skipped/failed: {e}")
 
     # Step 2: Calculate all pillar scores in parallel
     logger.debug("Calculating pillar scores in parallel...")
@@ -1029,66 +1149,9 @@ def _compute_single_score_internal(
     def _include_pillar(name: str) -> bool:
         return only_pillars is None or name in only_pillars
 
-    # Pre-compute tree canopy (5km) once for pillars that need it
-    tree_canopy_5km = None
-    if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
-        try:
-            from data_sources.gee_api import get_tree_canopy_gee
-            tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
-            logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
-        except Exception as e:
-            logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
-            tree_canopy_5km = None
-
-    # Compute form_context once when beauty pillars are requested
-    form_context = None
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
     need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
-    
-    if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
-        try:
-            from data_sources.data_quality import get_form_context
-            from data_sources import census_api
-            from data_sources import osm_api
-            
-            if arch_diversity_data:
-                levels_entropy = arch_diversity_data.get("levels_entropy")
-                building_type_diversity = arch_diversity_data.get("building_type_diversity")
-                built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
-                footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
-                material_profile = arch_diversity_data.get("material_profile")
-            else:
-                levels_entropy = None
-                building_type_diversity = None
-                built_coverage_ratio = None
-                footprint_area_cv = None
-                material_profile = None
-            
-            charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
-            historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
-            
-            year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
-            median_year_built = year_built_data.get('median_year_built') if year_built_data else None
-            pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
-            
-            form_context = get_form_context(
-                area_type=area_type,
-                density=density,
-                levels_entropy=levels_entropy,
-                building_type_diversity=building_type_diversity,
-                historic_landmarks=historic_landmarks,
-                median_year_built=median_year_built,
-                built_coverage_ratio=built_coverage_ratio,
-                footprint_area_cv=footprint_area_cv,
-                pre_1940_pct=pre_1940_pct,
-                material_profile=material_profile,
-                use_multinomial=True
-            )
-            logger.debug(f"Computed form_context: {form_context}")
-        except Exception as e:
-            logger.warning(f"Form context computation failed (non-fatal): {e}")
-            form_context = None
 
     pillar_tasks = []
     if _include_pillar('active_outdoors'):
