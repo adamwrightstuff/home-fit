@@ -55,11 +55,12 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
+  let payload: Record<string, unknown> | null = null;
   // Some environments return 409 {job_id} while queued/running.
   // In rare dev-bundler edge cases we can also get 200 {job_id} with no total_score.
   // Treat any {job_id} response as a pollable job until we get a real ScoreResponse.
   while (response.status === 202 || response.status === 409 || response.status === 200) {
-    const payload = await response.json().catch(() => null);
+    payload = await response.json().catch(() => null);
 
     // Success case
     if (payload && typeof payload.total_score === 'number') {
@@ -85,15 +86,20 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error?.detail || `API error: ${response.status}`);
+    // Use payload if we already read the body in the loop; otherwise read once.
+    const errorPayload = payload ?? await response.json().catch(() => ({ detail: 'Unknown error' }));
+    const detail = errorPayload && typeof errorPayload === 'object' && 'detail' in errorPayload
+      ? (errorPayload as { detail?: string }).detail
+      : 'Unknown error';
+    throw new Error(detail || `API error: ${response.status}`);
   }
 
-  const json = await response.json();
+  // Reuse payload from loop—response body was already consumed above, avoid double-read.
+  const json = payload;
   if (!json || typeof json.total_score !== 'number') {
     throw new Error('Unexpected scoring response. Please refresh and try again.');
   }
-  return json;
+  return json as ScoreResponse;
 }
 
 export async function checkHealth(): Promise<any> {
