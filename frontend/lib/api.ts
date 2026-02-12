@@ -64,7 +64,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
 
     // Success case
     if (payload && typeof payload.total_score === 'number') {
-      return payload as ScoreResponse;
+      return payload as unknown as ScoreResponse;
     }
 
     const jobId = payload?.job_id;
@@ -77,7 +77,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
       }
       await new Promise((r) => setTimeout(r, pollDelayMs));
       pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.25));
-      response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`);
+      response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(String(jobId))}`);
       continue;
     }
 
@@ -99,7 +99,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   if (!json || typeof json.total_score !== 'number') {
     throw new Error('Unexpected scoring response. Please refresh and try again.');
   }
-  return json as ScoreResponse;
+  return json as unknown as ScoreResponse;
 }
 
 export async function checkHealth(): Promise<any> {

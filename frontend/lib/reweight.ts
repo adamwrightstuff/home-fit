@@ -1,5 +1,6 @@
 import type { ScoreResponse } from '@/types/api'
 import type { PillarKey } from '@/lib/pillars'
+import type { PillarPriorities } from '@/components/SearchOptions'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -120,9 +121,9 @@ function applySchoolsDisabledOverride(tokenAllocation: Record<string, number | u
 
 export function reweightScoreResponseFromPriorities(
   data: ScoreResponse,
-  priorities: Record<string, PriorityLevel>
+  priorities: Record<string, PriorityLevel> | PillarPriorities
 ): ScoreResponse {
-  const tokenAllocationInt = prioritiesToTokens(priorities)
+  const tokenAllocationInt = prioritiesToTokens(priorities as Partial<Record<string, string>>)
   const tokenAllocation = isSchoolsDisabledFromResult(data)
     ? applySchoolsDisabledOverride(tokenAllocationInt)
     : tokenAllocationInt
