@@ -81,6 +81,12 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
       continue;
     }
 
+    // Job failed on backend (status: 'error')—surface the actual error
+    if (payload && payload.status === 'error') {
+      const detail = (payload as { detail?: string }).detail ?? 'Scoring job failed';
+      throw new Error(detail);
+    }
+
     // If we got here with a 200 but not a score (and no pollable job), break and error below.
     break;
   }
@@ -97,7 +103,10 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   // Reuse payload from loop—response body was already consumed above, avoid double-read.
   const json = payload;
   if (!json || typeof json.total_score !== 'number') {
-    throw new Error('Unexpected scoring response. Please refresh and try again.');
+    const detail = json && typeof json === 'object' && 'detail' in json
+      ? (json as { detail?: string }).detail
+      : null;
+    throw new Error(detail || 'Unexpected scoring response. Please refresh and try again.');
   }
   return json as unknown as ScoreResponse;
 }

@@ -134,6 +134,14 @@ export async function GET(req: NextRequest) {
               }
             );
           }
+          // Job failed on backend: surface the error so frontend can show it
+          if (status === 'error') {
+            const detail = parsed?.detail || parsed?.error || 'Scoring job failed';
+            return NextResponse.json(
+              { detail },
+              { status: 502, headers: { 'Cache-Control': 'no-store' } }
+            );
+          }
         } else {
           // Create job response
           if (parsed?.job_id) {
