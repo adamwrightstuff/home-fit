@@ -144,10 +144,73 @@ export function streamScore(
   onEvent: (event: StreamEvent) => void,
   onError?: (error: Error) => void
 ): () => void {
-  // Launch-week hardening: SSE is disabled. Keep the function shape so
-  // older UI code won't crash, but fail fast.
-  const error = new Error('Streaming is disabled (launch hardening)');
-  if (onError) onError(error);
-  onEvent({ status: 'error', message: error.message });
-  return () => {};
+  const searchParams = new URLSearchParams({ location: params.location });
+  if (params.tokens) searchParams.append('tokens', params.tokens);
+  if (params.priorities) searchParams.append('priorities', params.priorities);
+  if (params.job_categories) searchParams.append('job_categories', params.job_categories);
+  if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
+  if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const premiumCode = window.sessionStorage.getItem('homefit_premium_code');
+      if (premiumCode) searchParams.append('premium_code', premiumCode);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const url = `${API_BASE_URL}/api/score/stream?${searchParams.toString()}`;
+  const controller = new AbortController();
+  let cancelled = false;
+
+  (async () => {
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'text/event-stream' },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const detail = (errBody as { detail?: string })?.detail || res.statusText || `HTTP ${res.status}`;
+        throw new Error(detail);
+      }
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6)) as StreamEvent;
+            onEvent(data);
+            if (data.status === 'done' && data.response) return;
+            if (data.status === 'error') {
+              const errData = data as { message?: string; error?: string }
+              throw new Error(errData.message || errData.error || 'Stream error')
+            }
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+            throw e;
+          }
+        }
+      }
+    } catch (e) {
+      if (cancelled) return;
+      const err = e instanceof Error ? e : new Error(String(e));
+      if (onError) onError(err);
+      onEvent({ status: 'error', message: err.message });
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+    controller.abort();
+  };
 }

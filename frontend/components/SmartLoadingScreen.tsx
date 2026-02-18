@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { getScore } from '@/lib/api'
+import { streamScore, getScore } from '@/lib/api'
 import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
@@ -82,7 +82,6 @@ export default function SmartLoadingScreen({
       timeouts.length = 0
     }
 
-    // Reset UI state for new request
     set_current_pillar(null)
     set_completed_pillars(new Map())
     set_expected_pillars(PILLAR_ORDER)
@@ -91,102 +90,113 @@ export default function SmartLoadingScreen({
     set_status('starting')
     set_final_score(null)
 
-    const run = async () => {
-      try {
-        // Brief "initializing" phase for UX parity with prior streaming UI
-        await new Promise((r) => setTimeout(r, 300))
+    const SOFT_FLOOR = 6
+    const SOFT_CAP = 32
+    const SOFT_EASE_MS = 9000
+
+    const stopStream = streamScore(
+      { location, tokens, priorities, job_categories, include_chains, enable_schools },
+      (ev) => {
         if (cancelled) return
-        set_status('analyzing')
-
-        // While the backend job is running, gently advance progress so users
-        // don't feel "stuck at 0%". This is an estimate, capped well below 100,
-        // and will be superseded by pillar-by-pillar progress once results arrive.
-        const SOFT_FLOOR = 6
-        const SOFT_CAP = 32
-        const SOFT_EASE_MS = 9000
-        set_progress((p) => Math.max(p, SOFT_FLOOR))
-        const soft_start = Date.now()
-        clear_soft_progress()
-        soft_progress_interval = setInterval(() => {
-          if (cancelled) return
-          const elapsed = Date.now() - soft_start
-          const eased =
-            SOFT_CAP - (SOFT_CAP - SOFT_FLOOR) * Math.exp(-elapsed / SOFT_EASE_MS)
-          set_progress((p) => Math.max(p, Math.min(SOFT_CAP, eased)))
-        }, 250)
-
-        const response = await getScore({
-          location,
-          tokens,
-          priorities,
-          job_categories,
-          include_chains,
-          enable_schools,
-        })
-
-        if (cancelled) return
-        clear_soft_progress()
-        if (!response || typeof response.total_score !== 'number') {
-          throw new Error('Scoring response was incomplete. Please refresh and try again.')
-        }
-        if (response.coordinates) {
-          set_coordinates(response.coordinates)
-        }
-
-        // Animate pillar completion in a deterministic order to keep the UX engaging.
-        // Use only pillars that actually exist in the response (backend deployments
-        // can lag the frontend list).
-        const respPillars = (response.livability_pillars as any) || {}
-        const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
-        const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
-        set_expected_pillars(effectiveOrder)
-        const base_progress = Math.min(
-          SOFT_CAP,
-          Math.max(SOFT_FLOOR, progress_ref.current || 0)
-        )
-        effectiveOrder.forEach((pillarKey, idx) => {
-          const delayMs = 220 * idx
-          const t = setTimeout(() => {
+        if (ev.status === 'started') {
+          set_status('analyzing')
+          set_progress((p) => Math.max(p, SOFT_FLOOR))
+          clear_soft_progress()
+          const soft_start = Date.now()
+          soft_progress_interval = setInterval(() => {
             if (cancelled) return
-            const pillarData = (response.livability_pillars as any)?.[pillarKey]
-            const score = Number(pillarData?.score ?? 0)
-            set_completed_pillars((prev) => {
-              const next = new Map(prev)
-              next.set(pillarKey, { score, details: pillarData })
-              const frac = next.size / effectiveOrder.length
-              set_progress(base_progress + frac * (100 - base_progress))
-              return next
-            })
-          }, delayMs)
-          timeouts.push(t)
-        })
-
-        const totalAnimationMs = 220 * effectiveOrder.length
-        const done_timeout = setTimeout(() => {
-          if (cancelled) return
+            const elapsed = Date.now() - soft_start
+            const eased = SOFT_CAP - (SOFT_CAP - SOFT_FLOOR) * Math.exp(-elapsed / SOFT_EASE_MS)
+            set_progress((p) => Math.max(p, Math.min(SOFT_CAP, eased)))
+          }, 250)
+        }
+        if (ev.status === 'analyzing' && ev.coordinates) {
+          set_coordinates(ev.coordinates)
+        }
+        if (ev.status === 'complete' && ev.pillar != null && ev.completed != null && ev.total != null) {
+          clear_soft_progress()
+          const base = Math.min(SOFT_CAP, Math.max(SOFT_FLOOR, progress_ref.current || 0))
+          const frac = ev.completed / Math.max(1, ev.total)
+          set_progress(base + frac * (100 - base))
+          set_completed_pillars((prev) => {
+            const next = new Map(prev)
+            next.set(ev.pillar!, { score: ev.score ?? 0 })
+            return next
+          })
+        }
+        if (ev.status === 'done' && ev.response) {
+          clear_soft_progress()
+          const resp = ev.response
+          const respPillars = (resp.livability_pillars as any) || {}
+          const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
+          const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
+          set_expected_pillars(effectiveOrder)
+          const completed = new Map<string, { score: number; details?: any }>()
+          for (const k of effectiveOrder) {
+            const pd = respPillars[k]
+            if (pd != null) completed.set(k, { score: Number(pd?.score ?? 0), details: pd })
+          }
+          set_completed_pillars(completed)
           set_status('complete')
           set_progress(100)
-          set_final_score(typeof response.total_score === 'number' ? response.total_score : null)
-          const finish_timeout = setTimeout(() => {
-            if (!cancelled) on_complete(response)
+          set_final_score(typeof resp.total_score === 'number' ? resp.total_score : null)
+          if (resp.coordinates) set_coordinates(resp.coordinates)
+          const t = setTimeout(() => {
+            if (!cancelled) on_complete(resp)
           }, 500)
-          timeouts.push(finish_timeout)
-        }, totalAnimationMs)
-        timeouts.push(done_timeout)
-      } catch (e) {
+          timeouts.push(t)
+        }
+        if (ev.status === 'error') {
+          clear_soft_progress()
+          set_status('complete')
+          set_progress(0)
+          set_final_score(null)
+          if (on_error) on_error(new Error(ev.message ?? ev.error ?? 'Stream error'))
+        }
+      },
+      (err) => {
         if (cancelled) return
         clear_soft_progress()
-        const err = e instanceof Error ? e : new Error('Unknown error')
-        set_status('complete')
-        set_progress(0)
-        set_final_score(null)
-        if (on_error) on_error(err)
+        const streamUnavailable = /404|Not Found|stream failed/i.test(String(err?.message ?? ''))
+        if (streamUnavailable) {
+          getScore({ location, tokens, priorities, job_categories, include_chains, enable_schools })
+            .then((r) => {
+              if (cancelled) return
+              set_completed_pillars((prev) => {
+                const pillars = (r.livability_pillars || {}) as Record<string, { score?: number }>
+                const next = new Map<string, { score: number; details?: any }>()
+                for (const k of PILLAR_ORDER) {
+                  const pd = pillars[k]
+                  if (pd != null) next.set(k, { score: Number(pd?.score ?? 0), details: pd })
+                }
+                return next
+              })
+              set_status('complete')
+              set_progress(100)
+              set_final_score(typeof r.total_score === 'number' ? r.total_score : null)
+              if (r.coordinates) set_coordinates(r.coordinates)
+              const t = setTimeout(() => { if (!cancelled) on_complete(r) }, 500)
+              timeouts.push(t)
+            })
+            .catch((e) => {
+              if (cancelled) return
+              set_status('complete')
+              set_progress(0)
+              set_final_score(null)
+              if (on_error) on_error(e)
+            })
+        } else {
+          set_status('complete')
+          set_progress(0)
+          set_final_score(null)
+          if (on_error) on_error(err)
+        }
       }
-    }
+    )
 
-    run()
     return () => {
       cancelled = true
+      stopStream()
       clear_soft_progress()
       clear_all_timeouts()
     }

@@ -61,8 +61,8 @@ def _env_bool(name: str, default: bool = False) -> bool:
 # Schools: default OFF for public launch (SchoolDigger free quota is extremely low)
 ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
 
-# Streaming (SSE): default OFF for launch week
-ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=False)
+# Streaming (SSE): default ON to avoid polling/job-404 issues; set ENABLE_STREAMING=false to disable
+ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
 
 # Batch: hard cap (server-side), do NOT trust client-provided values
 MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
@@ -2022,6 +2022,7 @@ async def _stream_score_with_progress(
     priorities_dict: Optional[Dict[str, str]] = None,
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
+    job_categories: Optional[str] = None,
     test_mode: bool = False,
     request: Optional[Request] = None
 ):
@@ -2802,6 +2803,7 @@ async def stream_score(
     priorities: Optional[str] = None,
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
+    job_categories: Optional[str] = None,
     test_mode: Optional[bool] = False
 ):
     """
@@ -2838,6 +2840,7 @@ async def stream_score(
                 priorities_dict=priorities_dict,
                 include_chains=include_chains,
                 enable_schools=enable_schools,
+                job_categories=job_categories,
                 test_mode=bool(test_mode),
                 request=request
             ),
