@@ -10,20 +10,29 @@ from __future__ import annotations
 
 import json
 import math
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 
 BASELINES_PATH = Path("data/economic_baselines.json")
 
+# Reload when file mtime changes so updated baselines (e.g. after a 40-location run) are used without restarting the server.
+_cached_baselines: Optional[Dict[str, Any]] = None
+_cached_mtime: Optional[float] = None
 
-@lru_cache(maxsize=1)
+
 def load_economic_baselines() -> Dict[str, Any]:
+    global _cached_baselines, _cached_mtime
     if not BASELINES_PATH.exists():
+        _cached_baselines = {}
         return {}
     try:
-        return json.loads(BASELINES_PATH.read_text(encoding="utf-8"))
+        mtime = BASELINES_PATH.stat().st_mtime
+        if _cached_baselines is not None and _cached_mtime == mtime:
+            return _cached_baselines
+        _cached_baselines = json.loads(BASELINES_PATH.read_text(encoding="utf-8"))
+        _cached_mtime = mtime
+        return _cached_baselines if isinstance(_cached_baselines, dict) else {}
     except Exception:
         return {}
 

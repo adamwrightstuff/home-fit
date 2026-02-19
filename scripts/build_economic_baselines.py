@@ -6,11 +6,14 @@ This script samples locations, computes raw economic-security submetrics at the
 pillar's evaluation geography (CBSA preferred, county fallback), then produces
 mean/std per (census_division × area_bucket × metric).
 
-Typical see-once usage:
-  python3 scripts/build_economic_baselines.py \\
+Typical usage (run from project root; set PYTHONPATH if needed):
+  PYTHONPATH=. python3 scripts/build_economic_baselines.py \\
     --input data/locations.csv \\
     --output data/economic_baselines.json \\
-    --limit 500
+    --limit 500 \\
+    --min-samples 20
+
+With fewer locations use --min-samples 5; script aggregates to division/"all" and "all"/"all" for fallbacks.
 """
 
 from __future__ import annotations
@@ -261,6 +264,7 @@ def main() -> None:
     ap.add_argument("--output", default="data/economic_baselines.json")
     ap.add_argument("--limit", type=int, default=0, help="Max rows to process (0 = no limit).")
     ap.add_argument("--sleep", type=float, default=0.1, help="Sleep seconds between locations (reduce API load).")
+    ap.add_argument("--min-samples", type=int, default=20, help="Min samples per (division, bucket, metric) to emit (default 20).")
     args = ap.parse_args()
 
     limit = args.limit if args.limit and args.limit > 0 else None
@@ -297,6 +301,24 @@ def main() -> None:
         if processed % 25 == 0:
             print(f"Processed {processed}/{len(locations)} ...")
 
+    # Aggregate to division/"all" and "all"/"all" for fallback when bucket has few samples
+    div_all: Dict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
+    all_bucket: Dict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
+    for div, buckets in values.items():
+        for bucket, metrics in buckets.items():
+            for metric, vals in metrics.items():
+                div_all[div][metric].extend(vals)
+                all_bucket[bucket][metric].extend(vals)
+    for div, metrics in div_all.items():
+        for metric, vals in metrics.items():
+            values[div]["all"][metric].extend(vals)
+    for bucket, metrics in all_bucket.items():
+        for metric, vals in metrics.items():
+            values["all"][bucket][metric].extend(vals)
+    for div, metrics in div_all.items():
+        for metric, vals in metrics.items():
+            values["all"]["all"][metric].extend(vals)
+
     # Build mean/std
     out: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
     for div, buckets in values.items():
@@ -305,7 +327,7 @@ def main() -> None:
             out[div].setdefault(bucket, {})
             for metric, vals in metrics.items():
                 vals = [v for v in vals if isinstance(v, (int, float)) and not math.isnan(v)]
-                if len(vals) < 20:
+                if len(vals) < args.min_samples:
                     continue
                 mean, std = _mean_std(vals)
                 out[div][bucket][metric] = {"mean": mean, "std": std, "n": len(vals)}
@@ -313,6 +335,7 @@ def main() -> None:
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, sort_keys=True)
     print(f"Wrote baselines to {args.output}")
+    print("If the API server is running, restart it so scoring uses the new baselines.")
 
 
 if __name__ == "__main__":
