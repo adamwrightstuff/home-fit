@@ -206,6 +206,10 @@ export async function getScoreWithProgress(
       onProgress(pollPayload.partial as PartialPillars);
     }
 
+    // Proxy returns 200 with body = result only (no wrapper); backend returns { status, result }
+    if (pollRes.status === 200 && pollPayload && typeof (pollPayload as { total_score?: number }).total_score === 'number') {
+      return pollPayload as unknown as ScoreResponse;
+    }
     if (status === 'done' && pollPayload?.result) {
       return pollPayload.result as unknown as ScoreResponse;
     }
