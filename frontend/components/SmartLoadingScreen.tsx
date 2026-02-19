@@ -100,7 +100,7 @@ export default function SmartLoadingScreen({
     )
       .then((resp) => {
         if (cancelledRef.current) return
-        const respPillars = (resp.livability_pillars as Record<string, { score?: number }>) || {}
+        const respPillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
         const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
         const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
         set_expected_pillars(effectiveOrder)
