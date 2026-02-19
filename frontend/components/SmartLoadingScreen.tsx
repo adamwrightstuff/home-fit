@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { streamScore, getScore } from '@/lib/api'
+import { getScoreWithProgress } from '@/lib/api'
 import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
@@ -65,140 +65,70 @@ export default function SmartLoadingScreen({
     progress_ref.current = progress
   }, [progress])
 
+  const cancelledRef = useRef(false)
+
   useEffect(() => {
-    let cancelled = false
-    let soft_progress_interval: ReturnType<typeof setInterval> | null = null
-    const timeouts: Array<ReturnType<typeof setTimeout>> = []
-
-    const clear_soft_progress = () => {
-      if (soft_progress_interval) {
-        clearInterval(soft_progress_interval)
-        soft_progress_interval = null
-      }
-    }
-
-    const clear_all_timeouts = () => {
-      for (const t of timeouts) clearTimeout(t)
-      timeouts.length = 0
-    }
-
+    cancelledRef.current = false
     set_current_pillar(null)
     set_completed_pillars(new Map())
     set_expected_pillars(PILLAR_ORDER)
     set_progress(0)
     set_coordinates(null)
-    set_status('starting')
+    set_status('analyzing')
     set_final_score(null)
 
     const SOFT_FLOOR = 6
     const SOFT_CAP = 32
-    const SOFT_EASE_MS = 9000
+    const totalPillars = PILLAR_ORDER.length
 
-    const stopStream = streamScore(
+    getScoreWithProgress(
       { location, tokens, priorities, job_categories, include_chains, enable_schools },
-      (ev) => {
-        if (cancelled) return
-        if (ev.status === 'started') {
-          set_status('analyzing')
-          set_progress((p) => Math.max(p, SOFT_FLOOR))
-          clear_soft_progress()
-          const soft_start = Date.now()
-          soft_progress_interval = setInterval(() => {
-            if (cancelled) return
-            const elapsed = Date.now() - soft_start
-            const eased = SOFT_CAP - (SOFT_CAP - SOFT_FLOOR) * Math.exp(-elapsed / SOFT_EASE_MS)
-            set_progress((p) => Math.max(p, Math.min(SOFT_CAP, eased)))
-          }, 250)
-        }
-        if (ev.status === 'analyzing' && ev.coordinates) {
-          set_coordinates(ev.coordinates)
-        }
-        if (ev.status === 'complete' && ev.pillar != null && ev.completed != null && ev.total != null) {
-          clear_soft_progress()
-          const base = Math.min(SOFT_CAP, Math.max(SOFT_FLOOR, progress_ref.current || 0))
-          const frac = ev.completed / Math.max(1, ev.total)
-          set_progress(base + frac * (100 - base))
-          set_completed_pillars((prev) => {
-            const next = new Map(prev)
-            next.set(ev.pillar!, { score: ev.score ?? 0 })
-            return next
-          })
-        }
-        if (ev.status === 'done' && ev.response) {
-          clear_soft_progress()
-          const resp = ev.response
-          const respPillars = (resp.livability_pillars as any) || {}
-          const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
-          const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
-          set_expected_pillars(effectiveOrder)
-          const completed = new Map<string, { score: number; details?: any }>()
-          for (const k of effectiveOrder) {
-            const pd = respPillars[k]
-            if (pd != null) completed.set(k, { score: Number(pd?.score ?? 0), details: pd })
+      (partial) => {
+        if (cancelledRef.current) return
+        set_completed_pillars((prev) => {
+          const next = new Map(prev)
+          for (const [name, data] of Object.entries(partial)) {
+            if (data && typeof data.score === 'number') next.set(name, { score: data.score })
           }
-          set_completed_pillars(completed)
-          set_status('complete')
-          set_progress(100)
-          set_final_score(typeof resp.total_score === 'number' ? resp.total_score : null)
-          if (resp.coordinates) set_coordinates(resp.coordinates)
-          const t = setTimeout(() => {
-            if (!cancelled) on_complete(resp)
-          }, 500)
-          timeouts.push(t)
-        }
-        if (ev.status === 'error') {
-          clear_soft_progress()
-          set_status('complete')
-          set_progress(0)
-          set_final_score(null)
-          if (on_error) on_error(new Error(ev.message ?? ev.error ?? 'Stream error'))
-        }
+          return next
+        })
+        const completed = Object.keys(partial).length
+        const frac = Math.min(1, completed / Math.max(1, totalPillars))
+        set_progress(SOFT_FLOOR + frac * (100 - SOFT_FLOOR))
       },
-      (err) => {
-        if (cancelled) return
-        clear_soft_progress()
-        const streamUnavailable = /404|Not Found|stream failed/i.test(String(err?.message ?? ''))
-        if (streamUnavailable) {
-          getScore({ location, tokens, priorities, job_categories, include_chains, enable_schools })
-            .then((r) => {
-              if (cancelled) return
-              set_completed_pillars((prev) => {
-                const pillars = (r.livability_pillars || {}) as Record<string, { score?: number }>
-                const next = new Map<string, { score: number; details?: any }>()
-                for (const k of PILLAR_ORDER) {
-                  const pd = pillars[k]
-                  if (pd != null) next.set(k, { score: Number(pd?.score ?? 0), details: pd })
-                }
-                return next
-              })
-              set_status('complete')
-              set_progress(100)
-              set_final_score(typeof r.total_score === 'number' ? r.total_score : null)
-              if (r.coordinates) set_coordinates(r.coordinates)
-              const t = setTimeout(() => { if (!cancelled) on_complete(r) }, 500)
-              timeouts.push(t)
-            })
-            .catch((e) => {
-              if (cancelled) return
-              set_status('complete')
-              set_progress(0)
-              set_final_score(null)
-              if (on_error) on_error(e)
-            })
-        } else {
-          set_status('complete')
-          set_progress(0)
-          set_final_score(null)
-          if (on_error) on_error(err)
-        }
-      }
+      { getCancelled: () => cancelledRef.current }
     )
+      .then((resp) => {
+        if (cancelledRef.current) return
+        const respPillars = (resp.livability_pillars as Record<string, { score?: number }>) || {}
+        const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
+        const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
+        set_expected_pillars(effectiveOrder)
+        const completed = new Map<string, { score: number; details?: any }>()
+        for (const k of effectiveOrder) {
+          const pd = respPillars[k]
+          if (pd != null) completed.set(k, { score: Number(pd?.score ?? 0), details: pd })
+        }
+        set_completed_pillars(completed)
+        set_status('complete')
+        set_progress(100)
+        set_final_score(typeof resp.total_score === 'number' ? resp.total_score : null)
+        if (resp.coordinates) set_coordinates(resp.coordinates)
+        setTimeout(() => {
+          if (!cancelledRef.current) on_complete(resp)
+        }, 500)
+      })
+      .catch((err) => {
+        if (cancelledRef.current) return
+        if (err?.message === 'Cancelled') return
+        set_status('complete')
+        set_progress(0)
+        set_final_score(null)
+        if (on_error) on_error(err instanceof Error ? err : new Error(String(err)))
+      })
 
     return () => {
-      cancelled = true
-      stopStream()
-      clear_soft_progress()
-      clear_all_timeouts()
+      cancelledRef.current = true
     }
   }, [location, priorities, tokens, job_categories, include_chains, enable_schools, on_complete, on_error])
 

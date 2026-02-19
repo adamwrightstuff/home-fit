@@ -126,6 +126,96 @@ export async function checkHealth(): Promise<any> {
   return response.json();
 }
 
+/** Partial pillar progress from job polling: pillar key -> { score } */
+export type PartialPillars = Record<string, { score: number }>;
+
+/** Optional options for getScoreWithProgress */
+export interface GetScoreWithProgressOptions {
+  /** When true, the function will throw a cancelled error and stop polling */
+  getCancelled?: () => boolean;
+}
+
+/**
+ * Job-based scoring with progress. Creates a job then polls until done.
+ * Avoids Vercel 60s limit; each request is short. onProgress(partial) is called on each poll when partial is present.
+ */
+export async function getScoreWithProgress(
+  params: ScoreRequestParams,
+  onProgress: (partial: PartialPillars) => void,
+  options?: GetScoreWithProgressOptions
+): Promise<ScoreResponse> {
+  const getCancelled = options?.getCancelled ?? (() => false);
+  const searchParams = new URLSearchParams({ location: params.location });
+  if (params.tokens) searchParams.append('tokens', params.tokens);
+  if (params.priorities) searchParams.append('priorities', params.priorities);
+  if (params.job_categories) searchParams.append('job_categories', params.job_categories);
+  if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
+  if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const premiumCode = window.sessionStorage.getItem('homefit_premium_code');
+      if (premiumCode) searchParams.append('premium_code', premiumCode);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const url = `${API_BASE_URL}/api/score?${searchParams.toString()}`;
+  const maxWaitMs = 4 * 60 * 1000;
+  let pollDelayMs = 800;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (getCancelled()) throw new Error('Cancelled');
+  const payload = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  const jobId = payload?.job_id as string | undefined;
+  if (!jobId || (res.status !== 202 && res.status !== 409 && res.status !== 200)) {
+    if (payload && typeof (payload as { total_score?: number }).total_score === 'number') {
+      return payload as unknown as ScoreResponse;
+    }
+    if (payload && (payload as { status?: string }).status === 'error') {
+      const detail = (payload as { detail?: string }).detail ?? 'Scoring job failed';
+      throw new Error(detail);
+    }
+    const detail = payload && typeof payload === 'object' && 'detail' in payload
+      ? (payload as { detail?: string }).detail
+      : res.statusText || 'Failed to start scoring job';
+    throw new Error(detail || `API error: ${res.status}`);
+  }
+
+  const start = Date.now();
+  for (;;) {
+    await new Promise((r) => setTimeout(r, pollDelayMs));
+    if (getCancelled()) throw new Error('Cancelled');
+    pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.15));
+    if (Date.now() - start > maxWaitMs) {
+      throw new Error('Scoring is taking longer than expected. Please try again.');
+    }
+
+    const pollRes = await fetch(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (getCancelled()) throw new Error('Cancelled');
+    const pollPayload = (await pollRes.json().catch(() => null)) as Record<string, unknown> | null;
+    const status = pollPayload?.status as string | undefined;
+
+    if (pollPayload?.partial && typeof pollPayload.partial === 'object') {
+      onProgress(pollPayload.partial as PartialPillars);
+    }
+
+    if (status === 'done' && pollPayload?.result) {
+      return pollPayload.result as unknown as ScoreResponse;
+    }
+    if (status === 'error') {
+      const detail = (pollPayload as { detail?: string }).detail ?? 'Scoring job failed';
+      throw new Error(detail);
+    }
+  }
+}
+
 export interface StreamEvent {
   status: 'started' | 'analyzing' | 'complete' | 'done' | 'error';
   pillar?: string;

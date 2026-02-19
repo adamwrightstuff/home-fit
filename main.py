@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import time
 import json
-from typing import Optional, Dict, Tuple, Any, List
+from typing import Optional, Dict, Tuple, Any, List, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import asyncio
@@ -817,6 +817,7 @@ def _compute_single_score_internal(
     test_mode: bool = False,
     request: Optional[Request] = None,
     premium_code: Optional[str] = None,
+    on_pillar_complete: Optional[Callable[[str, float], None]] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1053,6 +1054,9 @@ def _compute_single_score_internal(
             arch_diversity_data = None
             density = 0.0
 
+        def _include_pillar(name: str) -> bool:
+            return only_pillars is None or name in only_pillars
+
         # Pre-compute tree canopy (5km) once for pillars that need it
         tree_canopy_5km = None
         if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
@@ -1145,9 +1149,6 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.error(f"{name} pillar failed: {e}")
             return (name, None, e)
-
-    def _include_pillar(name: str) -> bool:
-        return only_pillars is None or name in only_pillars
 
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
@@ -1253,8 +1254,22 @@ def _compute_single_score_internal(
             if error:
                 exceptions[pillar_name] = error
                 pillar_results[pillar_name] = None
+                _score = 0.0
             else:
                 pillar_results[pillar_name] = result
+                if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                    _score = float(result.get('score', 0.0))
+                elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
+                    _score = float(result[0] if result[0] is not None else 0.0)
+                elif isinstance(result, (tuple, list)) and len(result) >= 1:
+                    _score = float(result[0] if result[0] is not None else 0.0)
+                else:
+                    _score = 0.0
+            if on_pillar_complete:
+                try:
+                    on_pillar_complete(pillar_name, _score)
+                except Exception as e:
+                    logger.warning(f"on_pillar_complete callback failed: {e}")
 
     # Handle school scoring separately
     schools_found = False
@@ -1961,6 +1976,15 @@ def create_score_job(
     with _SCORE_JOBS_LOCK:
         _SCORE_JOBS[job_id] = job
 
+    def _on_pillar_complete(pillar_name: str, score: float) -> None:
+        with _SCORE_JOBS_LOCK:
+            if job_id in _SCORE_JOBS:
+                job = _SCORE_JOBS[job_id]
+                if "partial" not in job:
+                    job["partial"] = {}
+                job["partial"][pillar_name] = {"score": round(score, 2)}
+                job["updated_at"] = time.time()
+
     def _run_job():
         with _SCORE_JOBS_LOCK:
             if job_id in _SCORE_JOBS:
@@ -1977,6 +2001,7 @@ def create_score_job(
                 test_mode=test_mode_enabled,
                 request=None,
                 premium_code=premium_code,
+                on_pillar_complete=_on_pillar_complete,
             )
             with _SCORE_JOBS_LOCK:
                 if job_id in _SCORE_JOBS:
@@ -1996,7 +2021,7 @@ def create_score_job(
 
 @app.get("/score/jobs/{job_id}", dependencies=[Depends(require_proxy_auth)])
 def get_score_job(job_id: str):
-    """Poll async score job status/result."""
+    """Poll async score job status/result. Returns partial pillar progress when status is running."""
     _score_jobs_cleanup()
     with _SCORE_JOBS_LOCK:
         job = _SCORE_JOBS.get(job_id)
@@ -2013,6 +2038,10 @@ def get_score_job(job_id: str):
             response["result"] = job.get("result")
         elif status == "error":
             response["detail"] = job.get("error") or "Job failed"
+        # Expose partial pillar progress for running (and done) so frontend can show progress
+        partial = job.get("partial")
+        if partial:
+            response["partial"] = partial
         return response
 
 
