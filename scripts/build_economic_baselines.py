@@ -43,10 +43,8 @@ from data_sources.job_category_overlays import (
     CATEGORY_GROUPS,
     S2401_TOTAL_EMPLOYED,
     S2401_COUNTS,
-    B24011_MEDIANS,
     B08301_TOTAL,
     B08301_WFH,
-    B24031_PUBLIC_ADMIN,
 )
 
 
@@ -124,15 +122,12 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
 
     dp03_now = fetch_acs_profile_dp03(year=year_now, geo=geo, variables=dp03_vars) or {}
 
-    rent_row = fetch_acs_table(year=year_now, geo=geo, variables=["B25064_001E"]) or {}
     pop_row = fetch_acs_table(year=year_now, geo=geo, variables=["B01001_001E"]) or {}
     bds_row = fetch_bds_establishment_dynamics(year=year_now, geo=geo) or {}
 
     pop16 = dp03_now.get("DP03_0001E")
     employed = dp03_now.get("DP03_0004E")
     unemp_rate = dp03_now.get("DP03_0009PE")
-    earnings = dp03_now.get("DP03_0092E")
-    rent = rent_row.get("B25064_001E")
     total_pop = pop_row.get("B01001_001E")
 
     if not isinstance(unemp_rate, (int, float)):
@@ -161,44 +156,39 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
     anchored_balance = compute_anchored_vs_cyclical_balance(industry_shares)
 
     net_estab_entry_per_1k = None
+    estabs_per_1k = None
     if isinstance(total_pop, (int, float)) and total_pop > 0:
         entry = bds_row.get("ESTABS_ENTRY")
         exit_ = bds_row.get("ESTABS_EXIT")
         if isinstance(entry, (int, float)) and isinstance(exit_, (int, float)):
             net_estab_entry_per_1k = (float(entry) - float(exit_)) / float(total_pop) * 1000.0
+        total_estab = bds_row.get("ESTAB")
+        if isinstance(total_estab, (int, float)) and float(total_estab) >= 0:
+            estabs_per_1k = float(total_estab) / float(total_pop) * 1000.0
 
     out: Dict[str, float] = {"unemployment_rate": float(unemp_rate)}
     if isinstance(emp_pop_ratio, (int, float)):
         out["emp_pop_ratio"] = float(emp_pop_ratio)
     if isinstance(net_estab_entry_per_1k, (int, float)):
         out["net_estab_entry_per_1k"] = float(net_estab_entry_per_1k)
+    if isinstance(estabs_per_1k, (int, float)):
+        out["estabs_per_1k"] = float(estabs_per_1k)
     if isinstance(industry_hhi, (int, float)):
         out["industry_hhi"] = float(industry_hhi)
     if isinstance(anchored_balance, (int, float)):
         out["anchored_balance"] = float(anchored_balance)
 
     # ------------------------------------------------------------------
-    # Job category overlay baselines (raw metrics only)
+    # Job category overlay baselines (density only; no earnings-to-rent)
     # ------------------------------------------------------------------
-    annual_rent = float(rent) * 12.0 if isinstance(rent, (int, float)) and rent > 0 else None
-
-    def _earnings_to_rent(v: Optional[float]) -> Optional[float]:
-        if not isinstance(v, (int, float)) or v <= 0 or not isinstance(annual_rent, (int, float)) or annual_rent <= 0:
-            return None
-        return float(v) / float(annual_rent)
-
-    # Occupation counts (S2401 subject table) + occupation median earnings (B24011)
     s2401_vars = [S2401_TOTAL_EMPLOYED, *sorted(set(S2401_COUNTS.values()))]
     s2401_row = fetch_acs_table(year=year_now, geo=geo, variables=s2401_vars, dataset="acs/acs5/subject") or {}
-    b24011_row = fetch_acs_table(year=year_now, geo=geo, variables=sorted(set(B24011_MEDIANS.values())), dataset="acs/acs5") or {}
     wfh_row = fetch_acs_table(year=year_now, geo=geo, variables=[B08301_TOTAL, B08301_WFH], dataset="acs/acs5") or {}
-    b24031_row = fetch_acs_table(year=year_now, geo=geo, variables=[B24031_PUBLIC_ADMIN], dataset="acs/acs5") or {}
 
     total_emp = s2401_row.get(S2401_TOTAL_EMPLOYED)
 
     for cat in JOB_CATEGORIES:
         density_share: Optional[float] = None
-        earn_ratio: Optional[float] = None
 
         if cat in CATEGORY_GROUPS:
             groups = CATEGORY_GROUPS[cat]
@@ -214,41 +204,19 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
                 if ok:
                     density_share = num / float(total_emp)
 
-            # Weighted mean of occupation medians, weighted by counts.
-            pairs = []
-            for gk in groups:
-                med_var = B24011_MEDIANS.get(gk)
-                cnt_var = S2401_COUNTS.get(gk)
-                med = b24011_row.get(med_var) if med_var else None
-                cnt = s2401_row.get(cnt_var) if cnt_var else None
-                if isinstance(med, (int, float)) and med > 0 and isinstance(cnt, (int, float)) and cnt > 0:
-                    pairs.append((float(med), float(cnt)))
-            if pairs:
-                total_w = sum(w for _, w in pairs)
-                if total_w > 0:
-                    cat_med = sum(v * w for v, w in pairs) / total_w
-                    earn_ratio = _earnings_to_rent(cat_med)
-
         elif cat == "public_sector_nonprofit":
             public_pct = dp03_now.get("DP03_0045PE")
             if isinstance(public_pct, (int, float)):
                 density_share = max(0.0, min(1.0, float(public_pct) / 100.0))
-            pub_earn = b24031_row.get(B24031_PUBLIC_ADMIN)
-            if isinstance(pub_earn, (int, float)) and pub_earn > 0:
-                earn_ratio = _earnings_to_rent(float(pub_earn))
 
         elif cat == "remote_flexible":
             tot = wfh_row.get(B08301_TOTAL)
             wfh = wfh_row.get(B08301_WFH)
             if isinstance(tot, (int, float)) and tot > 0 and isinstance(wfh, (int, float)) and wfh >= 0:
                 density_share = float(wfh) / float(tot)
-            if isinstance(earnings, (int, float)) and earnings > 0:
-                earn_ratio = _earnings_to_rent(float(earnings))
 
         if isinstance(density_share, (int, float)):
             out[f"jobcat_density_{cat}"] = float(density_share)
-        if isinstance(earn_ratio, (int, float)):
-            out[f"jobcat_earnings_to_rent_{cat}"] = float(earn_ratio)
     return out
 
 

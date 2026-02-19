@@ -182,19 +182,20 @@ def fetch_bds_establishment_dynamics(
     geo: EconomicGeo,
 ) -> Optional[Dict[str, Optional[float]]]:
     """
-    Fetch BDS establishment entry/exit metrics for the given geography.
+    Fetch BDS establishment metrics for the given geography (all sectors, NAICS=00).
 
-    Uses ESTABS_ENTRY / ESTABS_EXIT (counts) and *_RATE (rates) where available.
+    Returns ESTAB (total establishments), ESTABS_ENTRY, ESTABS_EXIT, and *_RATE.
     """
     if not CENSUS_API_KEY:
         return None
 
     base = "https://api.census.gov/data/timeseries/bds"
-    vars_needed = ["ESTABS_ENTRY", "ESTABS_EXIT", "ESTABS_ENTRY_RATE", "ESTABS_EXIT_RATE"]
+    vars_needed = ["ESTAB", "ESTABS_ENTRY", "ESTABS_EXIT", "ESTABS_ENTRY_RATE", "ESTABS_EXIT_RATE"]
 
     params: Dict[str, str] = {
         "get": ",".join([*vars_needed, "NAME"]),
         "YEAR": str(year),
+        "NAICS": "00",  # all sectors
         "key": CENSUS_API_KEY,
     }
 

@@ -72,6 +72,8 @@ def _fallback_normalize(metric: str, value: Optional[float], *, invert: bool = F
         "earnings_growth_5y": (-5.0, 0.0, 6.0, 12.0, 20.0),
         # net establishment entry per 1k residents
         "net_estab_entry_per_1k": (-2.0, -0.5, 0.5, 1.5, 3.0),
+        # total establishments per 1k residents (scale/depth)
+        "estabs_per_1k": (15.0, 25.0, 35.0, 50.0, 75.0),
         # anchored-cyclical balance (-1..+1)
         "anchored_balance": (-0.15, -0.05, 0.0, 0.08, 0.18),
     }
@@ -195,8 +197,7 @@ def get_economic_security_score(
 
     dp03_now = fetch_acs_profile_dp03(year=year_now, geo=geo, variables=dp03_vars) or {}
 
-    # Supplemental ACS tables
-    rent_row = fetch_acs_table(year=year_now, geo=geo, variables=["B25064_001E"]) or {}
+    # Supplemental ACS table (population for BDS per-capita)
     pop_row = fetch_acs_table(year=year_now, geo=geo, variables=["B01001_001E"]) or {}
 
     # BDS establishment dynamics (latest aligned year)
@@ -205,7 +206,7 @@ def get_economic_security_score(
     # If CBSA queries fail (some CBSA codes can yield empty/204 responses),
     # fall back to county-level data when possible.
     if geo.level == "cbsa" and geo.county_fips:
-        needs_fallback = (not dp03_now) or (not rent_row) or (not pop_row)
+        needs_fallback = (not dp03_now) or (not pop_row)
         if needs_fallback:
             county_geo = EconomicGeo(
                 level="county",
@@ -217,8 +218,6 @@ def get_economic_security_score(
             effective_geo = county_geo
             if not dp03_now:
                 dp03_now = fetch_acs_profile_dp03(year=year_now, geo=county_geo, variables=dp03_vars) or {}
-            if not rent_row:
-                rent_row = fetch_acs_table(year=year_now, geo=county_geo, variables=["B25064_001E"]) or {}
             if not pop_row:
                 pop_row = fetch_acs_table(year=year_now, geo=county_geo, variables=["B01001_001E"]) or {}
             if not bds_row:
@@ -229,7 +228,6 @@ def get_economic_security_score(
     unemp_rate = dp03_now.get("DP03_0009PE")
     earnings = dp03_now.get("DP03_0092E")
 
-    median_rent_monthly = rent_row.get("B25064_001E")
     total_pop = pop_row.get("B01001_001E")
 
     emp_pop_ratio = None
@@ -255,13 +253,17 @@ def get_economic_security_score(
     industry_hhi = compute_industry_hhi(industry_shares)
     anchored_balance = compute_anchored_vs_cyclical_balance(industry_shares)
 
-    # Resilience: net establishment entry per capita (1k residents)
+    # Business dynamism: net establishment entry and establishment density (per 1k residents)
     net_estab_entry_per_1k = None
+    estabs_per_1k = None
     if isinstance(total_pop, (int, float)) and total_pop > 0:
         entry = bds_row.get("ESTABS_ENTRY")
         exit_ = bds_row.get("ESTABS_EXIT")
         if isinstance(entry, (int, float)) and isinstance(exit_, (int, float)):
             net_estab_entry_per_1k = (float(entry) - float(exit_)) / float(total_pop) * 1000.0
+        total_estab = bds_row.get("ESTAB")
+        if isinstance(total_estab, (int, float)) and float(total_estab) >= 0:
+            estabs_per_1k = float(total_estab) / float(total_pop) * 1000.0
 
     # Normalize to 0-100 submetric scores
     sub_scores = {
@@ -269,6 +271,7 @@ def get_economic_security_score(
         "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, division=division, area_bucket=bucket, invert=True),
         "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket),
         "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket),
+        "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, division=division, area_bucket=bucket),
         # Lower HHI is better (more diversified) → invert
         "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, invert=True),
         "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
@@ -281,7 +284,11 @@ def get_economic_security_score(
         job_market_weights,
     )
 
-    dynamism_score = sub_scores.get("net_estab_entry_per_1k")
+    dynamism_weights = {"net_estab_entry_per_1k": 0.50, "estabs_per_1k": 0.50}
+    dynamism_score, dynamism_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in dynamism_weights.keys()},
+        dynamism_weights,
+    )
 
     resilience_weights = {"industry_diversity": 0.60, "anchored_balance": 0.40}
     resilience_score, resilience_renorm = _weighted_avg(
@@ -315,8 +322,6 @@ def get_economic_security_score(
             division=division,
             area_bucket=bucket,
             base_job_market_strength=float(base_job_market_score or 0.0),
-            median_gross_rent_monthly=median_rent_monthly if isinstance(median_rent_monthly, (int, float)) else None,
-            overall_median_earnings=earnings if isinstance(earnings, (int, float)) else None,
             public_admin_share_pct=dp03_now.get("DP03_0045PE") if isinstance(dp03_now.get("DP03_0045PE"), (int, float)) else None,
         )
         overlays = (overlays_payload or {}).get("job_category_overlays", {}) or {}
@@ -344,8 +349,8 @@ def get_economic_security_score(
             "employment_to_population_pct": emp_pop_ratio,
             "industry_hhi": industry_hhi,
             "median_earnings": earnings,
-            "median_gross_rent_monthly": median_rent_monthly,
             "net_estab_entry_per_1k": net_estab_entry_per_1k,
+            "estabs_per_1k": estabs_per_1k,
             "anchored_balance": anchored_balance,
         },
         "geo": {
@@ -367,8 +372,8 @@ def get_economic_security_score(
         },
         "business_dynamism": {
             "score": dynamism_score,
-            "weights": {"net_estab_entry_per_1k": 1.0} if isinstance(dynamism_score, (int, float)) else {},
-            "metrics": {"net_estab_entry_per_1k": sub_scores.get("net_estab_entry_per_1k")},
+            "weights": dynamism_renorm,
+            "metrics": {k: sub_scores.get(k) for k in dynamism_weights.keys()},
         },
         "resilience_and_diversification": {
             "score": resilience_score,
@@ -389,8 +394,8 @@ def get_economic_security_score(
         "unemployment_rate_pct": round(float(unemp_rate), 1) if isinstance(unemp_rate, (int, float)) else None,
         "employment_to_population_pct": round(float(emp_pop_ratio), 1) if isinstance(emp_pop_ratio, (int, float)) else None,
         "median_earnings": int(earnings) if isinstance(earnings, (int, float)) else None,
-        "median_gross_rent_monthly": int(median_rent_monthly) if isinstance(median_rent_monthly, (int, float)) else None,
         "net_estab_entry_per_1k": round(float(net_estab_entry_per_1k), 2) if isinstance(net_estab_entry_per_1k, (int, float)) else None,
+        "estabs_per_1k": round(float(estabs_per_1k), 2) if isinstance(estabs_per_1k, (int, float)) else None,
         "industry_diversity_hhi": round(float(industry_hhi), 4) if isinstance(industry_hhi, (int, float)) else None,
         "anchored_balance": round(float(anchored_balance), 3) if isinstance(anchored_balance, (int, float)) else None,
     }

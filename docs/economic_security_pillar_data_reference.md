@@ -2,11 +2,11 @@
 
 ## Does this pillar use Median Gross Rent? Why?
 
-**Only for job-category overlays.** The main pillar score no longer uses earnings-to-rent.
+**No.** The pillar does not use median gross rent.
 
-- **Source:** ACS table **B25064** — variable `B25064_001E` (Median gross rent, monthly).
-- **Use:** Rent is still fetched and passed to **job category overlays** (for category-specific earnings-to-rent when users select job categories). The base economic pillar score does **not** include an earnings-to-rent or earnings_vs_cost component.
-- **Historical:** The pillar previously used **earnings_to_rent** (median earnings / (median rent × 12)) in an "earnings_vs_cost" sub-index; that component has been removed.
+- The base pillar score has no earnings-to-rent or earnings_vs_cost component.
+- **Job category overlays** are density-only (occupation/industry share and WFH share); they do not use rent or earnings-to-rent.
+- **Historical:** The pillar and overlays previously used earnings-to-rent; those components have been removed.
 
 ---
 
@@ -66,7 +66,8 @@ So we have **no** metric for “growing vs declining industries” (e.g. employm
 |-------|--------|
 | Median gross rent | Fetched for job-category overlays only; not in base pillar score. |
 | Anchored balance | (anchored − cyclical) / 100 from industry shares; higher = more stable job mix. |
-| Growing vs declining industries | Not used; only level shares (HHI, anchored balance) and BDS establishment entry. |
+| Growing vs declining industries | Not used; only level shares (HHI, anchored balance) and BDS metrics. |
+| Business dynamism | Two metrics (50% each): **net establishment entry per 1k** (churn) and **total establishments per 1k** (scale/depth). Both from Census BDS; population from ACS B01001. |
 | Job growth rate | Can add; best via BLS QCEW; ACS year-over-year comparison is an option. |
 | Wage percentiles | Can add; ACS has income/earnings distribution tables (e.g. B19081, B20002). |
 | Underemployment | Can add only as an ACS-based proxy; true U-6 at area level is not standard in ACS. |
