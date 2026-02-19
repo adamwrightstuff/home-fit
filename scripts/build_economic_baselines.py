@@ -142,10 +142,6 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
     if isinstance(pop16, (int, float)) and pop16 > 0 and isinstance(employed, (int, float)):
         emp_pop_ratio = 100.0 * float(employed) / float(pop16)
 
-    earnings_to_rent = None
-    if isinstance(earnings, (int, float)) and isinstance(rent, (int, float)) and rent > 0:
-        earnings_to_rent = float(earnings) / (float(rent) * 12.0)
-
     industry_shares = {
         "ag_mining": dp03_now.get("DP03_0033PE"),
         "construction": dp03_now.get("DP03_0034PE"),
@@ -174,8 +170,6 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
     out: Dict[str, float] = {"unemployment_rate": float(unemp_rate)}
     if isinstance(emp_pop_ratio, (int, float)):
         out["emp_pop_ratio"] = float(emp_pop_ratio)
-    if isinstance(earnings_to_rent, (int, float)):
-        out["earnings_to_rent"] = float(earnings_to_rent)
     if isinstance(net_estab_entry_per_1k, (int, float)):
         out["net_estab_entry_per_1k"] = float(net_estab_entry_per_1k)
     if isinstance(industry_hhi, (int, float)):

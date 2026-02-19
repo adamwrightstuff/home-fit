@@ -70,8 +70,6 @@ def _fallback_normalize(metric: str, value: Optional[float], *, invert: bool = F
         "median_earnings": (28000, 38000, 48000, 60000, 80000),
         # 5y earnings growth (percent)
         "earnings_growth_5y": (-5.0, 0.0, 6.0, 12.0, 20.0),
-        # earnings / annual rent (ratio)
-        "earnings_to_rent": (2.5, 3.5, 4.5, 6.0, 9.0),
         # net establishment entry per 1k residents
         "net_estab_entry_per_1k": (-2.0, -0.5, 0.5, 1.5, 3.0),
         # anchored-cyclical balance (-1..+1)
@@ -238,11 +236,6 @@ def get_economic_security_score(
     if isinstance(pop16, (int, float)) and pop16 > 0 and isinstance(employed, (int, float)):
         emp_pop_ratio = 100.0 * float(employed) / float(pop16)
 
-    earnings_to_rent = None
-    if isinstance(earnings, (int, float)) and isinstance(median_rent_monthly, (int, float)) and median_rent_monthly > 0:
-        annual_rent = float(median_rent_monthly) * 12.0
-        earnings_to_rent = float(earnings) / annual_rent if annual_rent > 0 else None
-
     # Industry shares (broad)
     industry_shares = {
         "ag_mining": dp03_now.get("DP03_0033PE"),
@@ -275,21 +268,19 @@ def get_economic_security_score(
         # Lower unemployment is better → invert
         "unemployment_rate": _normalize(metric="unemployment_rate", value=unemp_rate, division=division, area_bucket=bucket, invert=True),
         "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket),
-        "earnings_to_rent": _normalize(metric="earnings_to_rent", value=earnings_to_rent, division=division, area_bucket=bucket),
         "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket),
         # Lower HHI is better (more diversified) → invert
         "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, invert=True),
         "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
     }
 
-    # 4-sub-index structure (per spec). Renormalize if missing.
+    # 3-sub-index structure (job market, dynamism, resilience). Renormalize if missing.
     job_market_weights = {"unemployment_rate": 0.60, "emp_pop_ratio": 0.40}
     base_job_market_score, job_market_renorm = _weighted_avg(
         {k: sub_scores.get(k) for k in job_market_weights.keys()},
         job_market_weights,
     )
 
-    earnings_cost_score = sub_scores.get("earnings_to_rent")
     dynamism_score = sub_scores.get("net_estab_entry_per_1k")
 
     resilience_weights = {"industry_diversity": 0.60, "anchored_balance": 0.40}
@@ -300,16 +291,14 @@ def get_economic_security_score(
 
     components = {
         "job_market_strength": base_job_market_score,
-        "earnings_vs_cost": earnings_cost_score,
         "business_dynamism": dynamism_score,
         "resilience_and_diversification": resilience_score,
     }
 
     component_weights = {
-        "job_market_strength": 0.35,
-        "earnings_vs_cost": 0.35,
-        "business_dynamism": 0.15,
-        "resilience_and_diversification": 0.15,
+        "job_market_strength": 0.54,
+        "business_dynamism": 0.23,
+        "resilience_and_diversification": 0.23,
     }
 
     base_final_score, base_component_renorm = _weighted_avg(components, component_weights)
@@ -356,7 +345,6 @@ def get_economic_security_score(
             "industry_hhi": industry_hhi,
             "median_earnings": earnings,
             "median_gross_rent_monthly": median_rent_monthly,
-            "earnings_to_rent_ratio": earnings_to_rent,
             "net_estab_entry_per_1k": net_estab_entry_per_1k,
             "anchored_balance": anchored_balance,
         },
@@ -376,11 +364,6 @@ def get_economic_security_score(
             "score": float(components["job_market_strength"] or 0.0),
             "weights": job_market_renorm,
             "metrics": {k: sub_scores.get(k) for k in job_market_weights.keys()},
-        },
-        "earnings_vs_cost": {
-            "score": earnings_cost_score,
-            "weights": {"earnings_to_rent": 1.0} if isinstance(earnings_cost_score, (int, float)) else {},
-            "metrics": {"earnings_to_rent": sub_scores.get("earnings_to_rent")},
         },
         "business_dynamism": {
             "score": dynamism_score,

@@ -72,7 +72,6 @@ ARCHETYPES = {
 
 COMPONENT_KEYS = [
     "job_market_strength",
-    "earnings_vs_cost",
     "business_dynamism",
     "resilience_and_diversification",
 ]
@@ -216,7 +215,6 @@ def main() -> None:
             "score": ec.get("score"),
             "base_score": ec.get("base_score"),
             "job_market_strength": components.get("job_market_strength"),
-            "earnings_vs_cost": components.get("earnings_vs_cost"),
             "business_dynamism": components.get("business_dynamism"),
             "resilience_and_diversification": components.get("resilience_and_diversification"),
             "industry_hhi": sm.get("industry_diversity_hhi"),
