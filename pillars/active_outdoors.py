@@ -20,8 +20,7 @@ from logging_config import get_logger
 # Initialize logger
 logger = get_logger(__name__)
 
-# Ridge regression coefficients (advisory only, legacy reference)
-# Scoring uses pure data-backed weighted component sum
+# Ridge regression coefficients (primary scoring: global model only)
 ACTIVE_OUTDOORS_RIDGE_GLOBAL = {
     "coefficients": [
         -0.836912876011333,      # Norm Daily
@@ -40,67 +39,6 @@ ACTIVE_OUTDOORS_RIDGE_GLOBAL = {
     "intercept": 77.55414775327147,
     "r2_score": 0.2497311792894693,
     "n_samples": 21,
-}
-
-# Area-type-specific models (for reference, sample sizes too small for reliable prediction)
-ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE = {
-    "rural": {
-        "coefficients": [
-            -0.4819985793078666,   # Norm Daily
-            0.016334957660023446,   # Norm Wild
-            0.8500622169067389,     # Norm Water
-            -0.010375588470873744,  # Norm ParkCount
-            0.0,                    # Norm Playground
-            -0.3558405114940178,    # Norm ParkArea
-            0.24351409578185473,    # Norm Trails5
-            0.7618125133176625,     # Norm SwimCount
-            0.8006927444461264,     # Norm SwimKM
-            -0.03109715910619764,   # Norm CampCount
-            0.4745870520129916,     # Norm CampKM
-            -0.22372815368551674,   # Norm Tree
-        ],
-        "intercept": 89.16171626384786,
-        "r2_score": 0.6897050183343025,
-        "n_samples": 5,
-    },
-    "suburban": {
-        "coefficients": [
-            -0.6378519537133754,   # Norm Daily
-            1.474725354113921,      # Norm Wild
-            -0.6803220064533304,    # Norm Water
-            -0.4688179453167545,    # Norm ParkCount
-            0.0,                    # Norm Playground
-            0.7321829873787588,     # Norm ParkArea
-            -0.39008443689858514,   # Norm Trails5
-            -0.6698236174684394,    # Norm SwimCount
-            0.2895326227083448,     # Norm SwimKM
-            -0.4239820818789273,    # Norm CampCount
-            0.3448683643491389,     # Norm CampKM
-            0.042957538884930596,   # Norm Tree
-        ],
-        "intercept": 83.31369233718962,
-        "r2_score": 0.4957744772188506,
-        "n_samples": 3,
-    },
-    "urban_core": {
-        "coefficients": [
-            3.014794871479455,      # Norm Daily
-            4.838975862659801,      # Norm Wild
-            5.2717420943592055,     # Norm Water
-            0.7614157230799612,     # Norm ParkCount
-            0.0,                    # Norm Playground
-            0.10422897889989345,   # Norm ParkArea
-            2.563286669719146,      # Norm Trails5
-            0.19747987098326006,   # Norm SwimCount
-            2.8364914003537445,     # Norm SwimKM
-            0.12645467330841734,   # Norm CampCount
-            1.2992475890715411,     # Norm CampKM
-            3.034112401143685,      # Norm Tree
-        ],
-        "intercept": 66.90465452647607,
-        "r2_score": 0.16398747369134614,
-        "n_samples": 7,
-    },
 }
 
 # Min-max values for normalization (from research-backed expected values)
@@ -773,57 +711,20 @@ def get_active_outdoors_score_v2(
         coef * feat for coef, feat in zip(global_model["coefficients"], normalized_features)
     )
     ridge_score = max(0.0, min(100.0, ridge_score))  # Clamp to [0, 100]
-    
-    # Also compute simple weighted sum for comparison/reference
-    W_DAILY = 0.30
-    W_WILD = 0.50
-    W_WATER = 0.20
-    weighted_sum = W_DAILY * daily_score + W_WILD * wild_score + W_WATER * water_score
-    
-    # Use Ridge regression score as primary (design-principles compliant statistical modeling)
     calibrated_total = ridge_score
     
-    # DEBUG: Log final aggregation
     logger.info(
         f"🔍 [ACTIVE OUTDOORS V2 FINAL] daily={daily_score:.2f}, wild={wild_score:.2f}, water={water_score:.2f}, "
-        f"weighted_sum={weighted_sum:.2f}, ridge_score={ridge_score:.2f}, final={calibrated_total:.2f}",
+        f"ridge_score={ridge_score:.2f}, final={calibrated_total:.2f}",
         extra={
             "pillar_name": "active_outdoors_v2",
             "daily_score": daily_score,
             "wild_score": wild_score,
             "water_score": water_score,
-            "weighted_sum": weighted_sum,
             "ridge_score": ridge_score,
             "calibrated_total": calibrated_total
         }
     )
-
-    # 6) Compute advisory Ridge regression predictions (for reference/comparison)
-    # Note: Primary scoring now uses Ridge regression global model (see section 5 above)
-    # These are kept for reference and area-type-specific comparisons
-    ridge_advisory = {}
-    
-    # Global model prediction (same as used for scoring, kept for consistency in response)
-    ridge_advisory["global"] = {
-        "predicted_score": round(ridge_score, 1),
-        "r2_score": global_model["r2_score"],
-        "n_samples": global_model["n_samples"],
-        "note": "This is the primary scoring method (not advisory)",
-    }
-    
-    # Area-type-specific model (if available, for reference only)
-    if scoring_area_type in ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE:
-        area_model = ACTIVE_OUTDOORS_RIDGE_BY_AREA_TYPE[scoring_area_type]
-        area_prediction = area_model["intercept"] + sum(
-            coef * feat for coef, feat in zip(area_model["coefficients"], normalized_features)
-        )
-        ridge_advisory["area_type_specific"] = {
-            "predicted_score": round(max(0.0, min(100.0, area_prediction)), 1),
-            "r2_score": area_model["r2_score"],
-            "n_samples": area_model["n_samples"],
-            "area_type": scoring_area_type,
-            "note": "Advisory only - small sample size. Primary scoring uses global model.",
-        }
 
     breakdown: Dict = {
         "score": round(calibrated_total, 1),
@@ -841,13 +742,12 @@ def get_active_outdoors_score_v2(
             "parks_query": (local.get("_debug_parks") if isinstance(local, dict) else None),
         },
         "version": "active_outdoors_v2_ridge_regression",
-        "weighted_sum": round(weighted_sum, 1),
         "scoring_method": "ridge_regression_global_model",
         "ridge_model_info": {
             "intercept": global_model["intercept"],
             "r2_score": global_model["r2_score"],
             "n_samples": global_model["n_samples"],
-            "note": "Using Ridge regression global model per DESIGN_PRINCIPLES.md Addendum. Statistical modeling with 21 samples, applied consistently across all locations.",
+            "note": "Ridge regression global model per DESIGN_PRINCIPLES.md Addendum.",
         },
         "context": {
             "area_type_for_scoring": scoring_area_type,
@@ -869,8 +769,6 @@ def get_active_outdoors_score_v2(
             "norm_camp_km": round(normalized_features[10], 4),
             "norm_tree": round(normalized_features[11], 4),
         },
-        "ridge_regression_advisory": ridge_advisory,
-        "ridge_regression_note": "Primary scoring uses Ridge regression global model (intercept + coefficients * normalized_features). This is design-principles compliant statistical modeling per DESIGN_PRINCIPLES.md Addendum. Weighted sum (0.30 * daily + 0.50 * wild + 0.20 * water) is computed for reference only.",
     }
 
     logger.info(

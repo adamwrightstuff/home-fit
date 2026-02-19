@@ -17,34 +17,6 @@ from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
 
 logger = get_logger(__name__)
 
-# Ridge regression coefficients (advisory only, not used for scoring)
-# Legacy reference data - scoring uses pure data-backed component sum
-# Updated: Removed circular "Natural Beauty Score" and redundant bonus features
-# High alpha (20k) indicates strong regularization still needed
-NATURAL_BEAUTY_RIDGE_INTERCEPT = 74.4512
-NATURAL_BEAUTY_RIDGE_WEIGHTS = {
-    "Tree Score (0-50)": 0.062,
-    "Water %": -0.0149,
-    "Slope Mean (deg)": 0.0066,
-    "Developed %": -0.1347,
-    "Neighborhood Canopy % (1000m)": 0.0216,
-    "Green View Index": -0.0173,
-    "Total Context Bonus": -0.0256
-}
-
-# Feature ranges for normalization (estimated from typical Natural Beauty data)
-# These are approximate ranges - actual training data statistics would be better
-# Updated: Removed ranges for dropped features
-NATURAL_BEAUTY_FEATURE_RANGES = {
-    "Tree Score (0-50)": {"min": 0.0, "max": 50.0},
-    "Water %": {"min": 0.0, "max": 50.0},
-    "Slope Mean (deg)": {"min": 0.0, "max": 30.0},
-    "Developed %": {"min": 0.0, "max": 100.0},
-    "Neighborhood Canopy % (1000m)": {"min": 0.0, "max": 80.0},
-    "Green View Index": {"min": 0.0, "max": 100.0},
-    "Total Context Bonus": {"min": 0.0, "max": 20.0}
-}
-
 # Try optional data sources that are only available in specific cities.
 try:
     from data_sources import nyc_api as nyc_api
@@ -408,110 +380,6 @@ def _get_adaptive_context_weights(
             adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
     
     return adjusted_weights
-
-
-def _normalize_natural_beauty_feature(value: float, min_val: float, max_val: float, invert: bool = False) -> float:
-    """
-    Normalize a Natural Beauty feature using min-max scaling.
-    
-    Args:
-        value: Raw feature value
-        min_val: Minimum value for normalization
-        max_val: Maximum value for normalization
-        invert: If True, invert the normalized value (1 - normalized)
-    
-    Returns:
-        Normalized value in [0, 1] range
-    """
-    if max_val == min_val:
-        return 0.0
-    
-    normalized = (value - min_val) / (max_val - min_val)
-    normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
-    
-    if invert:
-        return 1.0 - normalized
-    return normalized
-
-
-def _compute_natural_beauty_ridge_features(
-    tree_score: float,
-    water_pct: float,
-    slope_mean_deg: float,
-    developed_pct: float,
-    neighborhood_canopy_pct: float,
-    green_view_index: float,
-    total_context_bonus: float
-) -> Dict[str, float]:
-    """
-    Compute normalized Natural Beauty features for ridge regression.
-    
-    Updated: Removed circular "Natural Beauty Score" and redundant bonus features.
-    Now uses only 7 core features: Tree Score, Water %, Slope, Developed %, 
-    Neighborhood Canopy %, Green View Index, and Total Context Bonus.
-    
-    Returns:
-        Dict mapping feature names to normalized values
-    """
-    ranges = NATURAL_BEAUTY_FEATURE_RANGES
-    
-    normalized = {
-        "Tree Score (0-50)": _normalize_natural_beauty_feature(
-            tree_score, ranges["Tree Score (0-50)"]["min"], ranges["Tree Score (0-50)"]["max"]
-        ),
-        "Water %": _normalize_natural_beauty_feature(
-            water_pct, ranges["Water %"]["min"], ranges["Water %"]["max"]
-        ),
-        "Slope Mean (deg)": _normalize_natural_beauty_feature(
-            slope_mean_deg, ranges["Slope Mean (deg)"]["min"], ranges["Slope Mean (deg)"]["max"]
-        ),
-        "Developed %": _normalize_natural_beauty_feature(
-            developed_pct, ranges["Developed %"]["min"], ranges["Developed %"]["max"], invert=True
-        ),  # Invert: less developed = better
-        "Neighborhood Canopy % (1000m)": _normalize_natural_beauty_feature(
-            neighborhood_canopy_pct, ranges["Neighborhood Canopy % (1000m)"]["min"], ranges["Neighborhood Canopy % (1000m)"]["max"]
-        ),
-        "Green View Index": _normalize_natural_beauty_feature(
-            green_view_index, ranges["Green View Index"]["min"], ranges["Green View Index"]["max"]
-        ),
-        "Total Context Bonus": _normalize_natural_beauty_feature(
-            total_context_bonus, ranges["Total Context Bonus"]["min"], ranges["Total Context Bonus"]["max"]
-        )
-    }
-    
-    return normalized
-
-
-def _compute_ridge_regression_score(normalized_features: Dict[str, float]) -> float:
-    """
-    Compute Natural Beauty score using ridge regression formula with tanh bounding.
-    
-    Formula: tanh((intercept + sum(weight * normalized_feature)) / 50) * 100
-    
-    Tanh bounding prevents saturation at 100 while preserving high scores for exceptional
-    locations (e.g., rural areas). Fixed: Increased scaling factor from 30 to 50 to prevent
-    saturation at 98.6 for most locations. This allows better differentiation between scores.
-    
-    Args:
-        normalized_features: Dict of normalized feature values
-    
-    Returns:
-        Calibrated score (0-100) with smooth tanh bounding
-    """
-    linear_score = NATURAL_BEAUTY_RIDGE_INTERCEPT
-    
-    for feature_name, weight in NATURAL_BEAUTY_RIDGE_WEIGHTS.items():
-        feature_value = normalized_features.get(feature_name, 0.0)
-        if feature_value is not None and not math.isnan(feature_value):
-            linear_score += weight * feature_value
-        # NaN values default to 0 (no contribution)
-    
-    # Apply tanh bounding: tanh(linear_pred / 50) * 100
-    # Increased scaling factor from 30 to 50 to prevent saturation at 98.6
-    # This allows better differentiation: tanh(75/50) = tanh(1.5) ≈ 0.905 → 90.5 instead of 98.6
-    bounded_score = math.tanh(linear_score / 50.0) * 100.0
-    
-    return max(0.0, min(100.0, bounded_score))
 
 
 def _get_climate_adjustment(lat: float, lon: float, elevation_m: Optional[float] = None) -> float:
@@ -1010,93 +878,6 @@ def _score_nyc_trees(tree_count: int) -> float:
     # Diminishing returns as tree counts grow.
     score = min(50.0, 12.0 * math.log1p(tree_count))
     return score
-
-
-def _compute_viewshed_proxy(viewpoints: List[Dict], radius_m: int = 1500,
-                            natural_context_bonus: float = 0.0,
-                            landcover_metrics: Optional[Dict] = None) -> Tuple[float, Dict]:
-    """
-    Compute a lightweight scenic bonus based on nearby viewpoint features.
-    
-    Deduplication: Reduces scenic bonus if natural context already captures
-    similar features (e.g., viewpoints near water/parks already counted in context bonus).
-    
-    Args:
-        viewpoints: List of viewpoint features from OSM
-        radius_m: Search radius
-        natural_context_bonus: Total natural context bonus (for deduplication)
-        landcover_metrics: Optional landcover metrics (to detect water/parks overlap)
-    
-    Returns:
-        Tuple of (scenic_bonus, metadata_dict)
-    """
-    if not viewpoints:
-        return 0.0, {
-            "count": 0,
-            "closest_distance_m": None,
-            "weights_sum": 0.0,
-            "top_viewpoints": [],
-            "deduplication_applied": False
-        }
-
-    radius_m = max(radius_m, 1)
-    weights_sum = 0.0
-    viewpoint_summaries: List[Dict] = []
-
-    for feature in viewpoints:
-        distance = feature.get("distance_m", radius_m)
-        try:
-            distance = float(distance)
-        except (TypeError, ValueError):
-            distance = radius_m
-        distance = max(0.0, distance)
-
-        normalized = max(0.0, 1.0 - min(distance, radius_m) / radius_m)
-        weight = max(0.05, normalized)
-        weights_sum += weight
-
-        viewpoint_summaries.append({
-            "name": feature.get("name"),
-            "distance_m": round(distance, 1)
-        })
-
-    viewpoint_summaries.sort(key=lambda item: item.get("distance_m", float("inf")))
-    viewpoint_summaries = viewpoint_summaries[:5]
-
-    scenic_bonus_raw = min(6.0, weights_sum * 3.0)
-    
-    # Deduplication: Reduce scenic bonus if natural context already captures similar features
-    deduplication_factor = 1.0
-    deduplication_reason = None
-    
-    # If we have significant natural context bonus (water, parks, topography),
-    # reduce scenic bonus to avoid double-counting
-    if natural_context_bonus > 8.0:
-        # High context bonus suggests natural features already captured
-        # Reduce scenic bonus by up to 40% if context bonus is very high
-        deduplication_factor = max(0.6, 1.0 - (natural_context_bonus / 20.0) * 0.4)
-        deduplication_reason = f"High natural context bonus ({natural_context_bonus:.1f})"
-    elif landcover_metrics:
-        # Check if viewpoints are near water features (already counted in water bonus)
-        water_pct = float(landcover_metrics.get("water_pct", 0.0))
-        if water_pct > 10.0:
-            # Significant water coverage - viewpoints likely water-related
-            deduplication_factor = max(0.7, 1.0 - (water_pct / 50.0) * 0.3)
-            deduplication_reason = f"Water features present ({water_pct:.1f}%)"
-    
-    scenic_bonus = scenic_bonus_raw * deduplication_factor
-    
-    metadata = {
-        "count": len(viewpoints),
-        "closest_distance_m": viewpoint_summaries[0]["distance_m"] if viewpoint_summaries else None,
-        "weights_sum": round(weights_sum, 3),
-        "top_viewpoints": viewpoint_summaries,
-        "scenic_bonus_raw": round(scenic_bonus_raw, 2),
-        "deduplication_factor": round(deduplication_factor, 3),
-        "deduplication_applied": deduplication_factor < 1.0,
-        "deduplication_reason": deduplication_reason
-    }
-    return scenic_bonus, metadata
 
 
 def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Optional[str] = None,
@@ -2221,31 +2002,35 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             BIODIVERSITY_WEIGHTS["grass"] * float(landcover_metrics.get("grass_pct", 0.0))
         )
         natural_context_details["biodiversity_index"] = round(min(100.0, biodiversity_index), 2)
-        entropy_components = [
-            float(landcover_metrics.get("forest_pct", 0.0)),
-            float(landcover_metrics.get("wetland_pct", 0.0)),
-            float(landcover_metrics.get("shrub_pct", 0.0)),
-            float(landcover_metrics.get("grass_pct", 0.0))
-        ]
-        positive_components = [p for p in entropy_components if p > 0]
-        if len(positive_components) > 1:
-            total_pct = sum(positive_components)
-            normalized = [p / total_pct for p in positive_components if total_pct > 0]
-            if normalized:
-                entropy_value = 0.0
-                for val in normalized:
-                    entropy_value -= val * math.log(val, 2)
-                entropy_max = math.log(len(normalized), 2) if len(normalized) > 1 else 1.0
-                if entropy_max > 0:
-                    biodiversity_entropy = min(100.0, (entropy_value / entropy_max) * 100.0)
-                    # Biodiversity bonus disabled - redundant with landcover in context bonus
-                    # Both use same underlying data (forest, wetland, shrub, grass)
-                    # biodiversity_bonus = min(
-                    #     BIODIVERSITY_BONUS_MAX,
-                    #     (biodiversity_entropy / 100.0) * BIODIVERSITY_BONUS_MAX * CONTEXT_SCALERS.get(area_type_key, 1.0)
-                    # )
-                    biodiversity_bonus = 0.0
-        natural_context_details["biodiversity_entropy"] = round(biodiversity_entropy, 2)
+        # Skip entropy calculation when bonus is disabled (saves CPU; bonus is redundant with landcover)
+        if BIODIVERSITY_BONUS_MAX > 0:
+            biodiversity_bonus = 0.0
+            entropy_components = [
+                float(landcover_metrics.get("forest_pct", 0.0)),
+                float(landcover_metrics.get("wetland_pct", 0.0)),
+                float(landcover_metrics.get("shrub_pct", 0.0)),
+                float(landcover_metrics.get("grass_pct", 0.0))
+            ]
+            positive_components = [p for p in entropy_components if p > 0]
+            biodiversity_entropy = 0.0
+            if len(positive_components) > 1:
+                total_pct = sum(positive_components)
+                normalized = [p / total_pct for p in positive_components if total_pct > 0]
+                if normalized:
+                    entropy_value = 0.0
+                    for val in normalized:
+                        entropy_value -= val * math.log(val, 2)
+                    entropy_max = math.log(len(normalized), 2) if len(normalized) > 1 else 1.0
+                    if entropy_max > 0:
+                        biodiversity_entropy = min(100.0, (entropy_value / entropy_max) * 100.0)
+                        biodiversity_bonus = min(
+                            BIODIVERSITY_BONUS_MAX,
+                            (biodiversity_entropy / 100.0) * BIODIVERSITY_BONUS_MAX * CONTEXT_SCALERS.get(area_type_key, 1.0)
+                        )
+            natural_context_details["biodiversity_entropy"] = round(biodiversity_entropy, 2)
+        else:
+            biodiversity_bonus = 0.0
+            natural_context_details["biodiversity_entropy"] = 0.0
     else:
         natural_context_details["biodiversity_index"] = 0.0
 
@@ -3176,28 +2961,6 @@ def calculate_natural_beauty(lat: float,
     }
 
     # Compute ridge regression score (PRIMARY SCORING METHOD - v2_clean_weights_tanh_cap)
-    # Extract features for ridge regression
-    landcover_metrics = tree_details.get("natural_context", {}).get("landcover_metrics", {}) or {}
-    topography_metrics = tree_details.get("natural_context", {}).get("topography_metrics") or {}
-    multi_radius_canopy = tree_details.get("multi_radius_canopy", {}) or {}
-    
-    water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
-    developed_pct = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
-    slope_mean_deg = float(topography_metrics.get("slope_mean_deg", 0.0) or 0.0) if topography_metrics else 0.0
-    neighborhood_canopy_pct = float(multi_radius_canopy.get("neighborhood_1000m", 0.0) or 0.0)
-    green_view_index = float(tree_details.get("green_view_index", 0.0) or 0.0)
-    
-    # Compute normalized features (using only 7 core features after removing circular/redundant ones)
-    normalized_features = _compute_natural_beauty_ridge_features(
-        tree_score,
-        water_pct,
-        slope_mean_deg,
-        developed_pct,
-        neighborhood_canopy_pct,
-        green_view_index,
-        context_bonus_raw  # Total context bonus
-    )
-    
     # OPTION A: Multi-component model with separate weighting (no double-counting)
     # Rationale: Better reflects what someone experiences walking around their neighborhood:
     # 1. Base canopy coverage (with expectation adjustment) - 15%
@@ -3205,6 +2968,7 @@ def calculate_natural_beauty(lat: float,
     # 3. Street trees - 5%
     # 4. Local green spaces - 10%
     # 5. Natural context (topography + landcover + water) - 35%
+    green_view_index = float(tree_details.get("green_view_index", 0.0) or 0.0)
     
     # Extract bonus values from tree_details
     bonus_breakdown = tree_details.get("bonus_breakdown", {}) or {}
@@ -3356,34 +3120,11 @@ def calculate_natural_beauty(lat: float,
 
     # Ship v7 by default
     calibrated_raw = calibrated_raw_v7 if ENABLE_NATURAL_BEAUTY_V7 else calibrated_raw_v6
-    
-    # Ridge regression score (advisory only, kept for reference)
-    ridge_score = _compute_ridge_regression_score(normalized_features)
-    natural_score_raw_legacy = min(100.0, natural_native_v6 * 2.0)  # Legacy reference calculation
 
     natural_score_norm, natural_norm_meta = normalize_beauty_score(
         calibrated_raw,  # Using calibrated score
         area_type
     )
-    
-    # Add ridge regression metadata to tree_details (advisory only)
-    tree_details["ridge_regression"] = {
-        "intercept": NATURAL_BEAUTY_RIDGE_INTERCEPT,
-        "linear_prediction": round(ridge_score, 2),
-        "predicted_score": round(ridge_score, 2),
-        "r2_full": 0.2168,
-        "r2_cv": -0.1886,
-        "rmse": 13.1295,
-        "n_samples": 56,
-        "n_features": 7,
-        "optimal_alpha": 19952.6231,
-        "normalized_features": {k: round(v, 4) for k, v in normalized_features.items()},
-        "feature_weights": NATURAL_BEAUTY_RIDGE_WEIGHTS,
-        "removed_features": ["Natural Beauty Score", "Enhancer Bonus Raw", "Context Bonus Raw", "Enhancer Bonus Scaled"],
-        "output_transform": "tanh(linear_pred / 50) * 100",
-        "tuning_update": "v2_clean_weights_tanh_cap",
-        "note": "Ridge regression is now advisory only. Primary scoring uses data-backed component sum: (tree_score + natural_bonus_scaled) * (100/68). This ensures pure data-backed scoring aligned with design principles."
-    }
     
     # Validate score and detect anomalies
     validation_result = _validate_natural_beauty_score(
@@ -3463,7 +3204,6 @@ def calculate_natural_beauty(lat: float,
             "calibrated_score": calibrated_raw,
             "note": "Phase 6 uplift with Phase 7 smoothing/scenic cap when v7 enabled"
         },
-        "score_before_normalization_legacy": natural_score_raw_legacy,  # Keep for reference
         "scenic_metadata": scenic_meta,
         "score": natural_score_norm,
         "normalization": natural_norm_meta,

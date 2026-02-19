@@ -398,17 +398,6 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 "scenic": _r2(coverage_cap_metadata.get("scenic_bonus"))
             }
         }
-        # Expose calibrated scorer metadata for debugging.
-        if calibrated_beauty_score_0_100 is not None:
-            details["calibrated_score_0_100"] = round(float(calibrated_beauty_score_0_100), 2)
-            details["legacy_score_0_50"] = round(float(legacy_beauty_score_0_50), 2)
-            details["calibration_inputs"] = {
-                "ParkingFraction": coverage_cap_metadata.get("parking_share_estimate"),
-                "BlockSize": None,  # derived, stored for visibility in future if needed
-                "FrontageContinuity": coverage_cap_metadata.get("streetwall_continuity"),
-                "HistoricCoherence": coverage_cap_metadata.get("age_coherence_signal"),
-            }
-
         if coverage_cap_metadata.get("overrides_applied"):
             details["overrides"] = coverage_cap_metadata.get("overrides_applied", [])
             details["override_values"] = coverage_cap_metadata.get("override_values", {})
