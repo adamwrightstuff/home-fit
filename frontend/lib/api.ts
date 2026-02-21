@@ -75,6 +75,15 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
+  // Retry on 502 for initial request (cold start / upstream timeout); give upstream time to wake
+  if (response.status === 502 && !searchParams.has('job_id')) {
+    await new Promise((r) => setTimeout(r, 5000));
+    response = await fetchOnce(url);
+    if (response.status === 502) {
+      await new Promise((r) => setTimeout(r, 8000));
+      response = await fetchOnce(url);
+    }
+  }
   let payload: Record<string, unknown> | null = null;
   // Some environments return 409 {job_id} while queued/running.
   // In rare dev-bundler edge cases we can also get 200 {job_id} with no total_score.
@@ -120,7 +129,13 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
     const detail = errorPayload && typeof errorPayload === 'object' && 'detail' in errorPayload
       ? (errorPayload as { detail?: string }).detail
       : null;
-    const message = (typeof detail === 'string' && detail.trim()) || `Request failed (${response.status})`;
+    const sub = errorPayload && typeof errorPayload === 'object' && 'error' in errorPayload
+      ? (errorPayload as { error?: string }).error
+      : null;
+    const message =
+      (typeof detail === 'string' && detail.trim()) ||
+      (typeof sub === 'string' && sub.trim() ? `Upstream error: ${sub}` : null) ||
+      `Request failed (${response.status})`;
     throw new Error(message);
   }
 

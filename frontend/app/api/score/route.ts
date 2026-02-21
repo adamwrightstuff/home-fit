@@ -9,10 +9,10 @@ export const maxDuration = 60;
 const RAILWAY_API_BASE_URL =
   process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
-const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '55000');
+const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '65000');
 /** When Economic Opportunity Focus (job_categories) is used, pillar does 2 extra Census API calls. */
 const SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES = Number(
-  process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES || '90000'
+  process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES || '95000'
 );
 const PREMIUM_CODES = new Set(
   (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '')
