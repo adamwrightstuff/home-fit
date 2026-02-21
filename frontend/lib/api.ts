@@ -75,9 +75,9 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
-  // Retry on 502 for initial request (cold start); proxy times out at 50s so we're under Vercel 60s limit
+  // Retry on 502 for initial request (cold start). Backend can take ~20s to join LB pool after container start.
   if (response.status === 502 && !searchParams.has('job_id')) {
-    for (const delayMs of [5000, 8000, 12000]) {
+    for (const delayMs of [15000, 20000, 25000]) {
       await new Promise((r) => setTimeout(r, delayMs));
       response = await fetchOnce(url);
       if (response.status !== 502) break;
@@ -139,7 +139,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
       (typeof detail === 'string' && detail.trim()) ||
       (typeof sub === 'string' && sub.trim() ? `Upstream error: ${sub}` : null) ||
       `Request failed (${response.status})`;
-    if (response.status === 502) {
+    if (response.status === 502 && !/try again|waking up|timed out|unavailable/i.test(message)) {
       message += ' Try again in a moment—the server may be waking up.';
     }
     throw new Error(message);
@@ -223,9 +223,9 @@ export async function getScoreWithProgress(
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
-  // Retry on 502 (cold start), same as getScore
+  // Retry on 502 (cold start). Backend can take ~20s to join LB pool after container start.
   if (res.status === 502) {
-    for (const delayMs of [5000, 8000, 12000]) {
+    for (const delayMs of [15000, 20000, 25000]) {
       if (getCancelled()) throw new Error('Cancelled');
       await new Promise((r) => setTimeout(r, delayMs));
       res = await fetch(url, {
@@ -249,8 +249,16 @@ export async function getScoreWithProgress(
     let detail = payload && typeof payload === 'object' && 'detail' in payload
       ? (payload as { detail?: string }).detail
       : res.statusText || 'Failed to start scoring job';
+    const errSub = payload && typeof payload === 'object' && 'error' in payload
+      ? (payload as { error?: string }).error
+      : null;
     if (res.status === 502) {
-      detail = (detail && String(detail).trim() ? `${detail}. ` : '') + 'Try again in a moment—the server may be waking up.';
+      if (typeof errSub === 'string' && errSub.trim() && !detail.includes(errSub)) {
+        detail = detail && detail.trim() ? `${detail} (${errSub})` : errSub;
+      }
+      if (!/try again|waking up|timed out|unavailable/i.test(detail)) {
+        detail = (detail && String(detail).trim() ? `${detail}. ` : '') + 'Try again in a moment—the server may be waking up.';
+      }
     }
     throw new Error(detail || `API error: ${res.status}`);
   }

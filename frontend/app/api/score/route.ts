@@ -165,6 +165,26 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Upstream returned non-success; ensure we always return JSON so the client can show the real reason.
+    if (upstream.status === 502 || upstream.status === 503) {
+      let detail = 'Backend unavailable';
+      try {
+        if (contentType.includes('application/json')) {
+          const parsed = JSON.parse(bodyText);
+          if (parsed && typeof parsed.detail === 'string') detail = parsed.detail;
+          else if (parsed && typeof parsed.message === 'string') detail = parsed.message;
+        } else if (bodyText && bodyText.length > 0) {
+          detail = bodyText.slice(0, 200);
+        }
+      } catch {
+        /* use default detail */
+      }
+      return NextResponse.json(
+        { detail, error: 'upstream_502' },
+        { status: 502, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
     return new NextResponse(bodyText, {
       status: upstream.status,
       headers: {
@@ -176,21 +196,26 @@ export async function GET(req: NextRequest) {
     const durationMs = Date.now() - start;
     const locationHash = md5((location || '').toLowerCase()).slice(0, 10);
     const ip = getClientIp(req);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errName = err instanceof Error ? err.name : '';
     console.log(
       JSON.stringify({
         msg: 'proxy_score_error',
         duration_ms: durationMs,
         ip,
         location_hash: locationHash,
-        error: err instanceof Error ? err.message : String(err),
+        error: errMsg,
+        error_type: errName,
       })
     );
 
+    const isTimeout = errName === 'AbortError' || /timeout|aborted/i.test(errMsg);
     return NextResponse.json(
       {
-        detail: 'Upstream request failed or timed out',
-        // Safe debug: helps diagnose upstream fetch failures (no secrets).
-        error: err instanceof Error ? err.message : String(err),
+        detail: isTimeout
+          ? 'Request to backend timed out. The backend may be overloaded or still starting.'
+          : 'Upstream request failed or timed out',
+        error: isTimeout ? 'timeout' : errMsg,
       },
       { status: 502, headers: { 'Cache-Control': 'no-store' } }
     );
