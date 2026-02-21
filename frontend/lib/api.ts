@@ -1,7 +1,24 @@
-import { ScoreResponse, ScoreRequestParams } from '@/types/api';
+import { ScoreResponse, ScoreRequestParams, GeocodeResult } from '@/types/api';
 
 // For production, the browser should call same-origin Vercel API routes (which proxy to Railway).
 const API_BASE_URL = '';
+
+/** Geocode a place to show map and "you are about to search here". No pillar work. */
+export async function getGeocode(location: string): Promise<GeocodeResult> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/geocode?location=${encodeURIComponent(location.trim())}`,
+    { method: 'GET', headers: { Accept: 'application/json' } }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = typeof data?.detail === 'string' ? data.detail : 'Could not find that location.';
+    throw new Error(detail);
+  }
+  if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') {
+    throw new Error('Invalid geocode response.');
+  }
+  return data as GeocodeResult;
+}
 
 export async function getScore(params: ScoreRequestParams): Promise<ScoreResponse> {
   const searchParams = new URLSearchParams({
@@ -22,6 +39,9 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
   if (params.enable_schools !== undefined) {
     searchParams.append('enable_schools', params.enable_schools.toString());
+  }
+  if (params.only) {
+    searchParams.append('only', params.only);
   }
 
   // Premium schools gating: include saved premium code (if any).
@@ -109,6 +129,13 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
     throw new Error(detail || 'Unexpected scoring response. Please refresh and try again.');
   }
   return json as unknown as ScoreResponse;
+}
+
+/** Fetch a single pillar's score for a location (tap-to-score flow). Uses same polling as getScore. */
+export async function getScoreSinglePillar(
+  params: Omit<ScoreRequestParams, 'only'> & { pillar: string }
+): Promise<ScoreResponse> {
+  return getScore({ ...params, only: params.pillar });
 }
 
 export async function checkHealth(): Promise<any> {

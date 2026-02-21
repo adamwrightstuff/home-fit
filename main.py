@@ -829,6 +829,7 @@ def _compute_single_score_internal(
     request: Optional[Request] = None,
     premium_code: Optional[str] = None,
     on_pillar_complete: Optional[Callable[[str, float], None]] = None,
+    only_pillars: Optional[set[str]] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -878,8 +879,7 @@ def _compute_single_score_internal(
             if raw_key in override_params:
                 beauty_overrides[mapped_key] = override_params[raw_key]
 
-    only_pillars: Optional[set[str]] = None
-    if request and hasattr(request, 'query_params'):
+    if only_pillars is None and request and hasattr(request, 'query_params'):
         only_param = request.query_params.get("only")
         if only_param:
             raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
@@ -1990,12 +1990,27 @@ def create_score_job(
     enable_schools: Optional[bool] = None,
     job_categories: Optional[str] = None,
     test_mode: Optional[bool] = False,
+    only: Optional[str] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
 
     Use GET /score/jobs/{job_id} to poll status/result.
+    If only=pillar1,pillar2 is set, only those pillars are computed (tap-to-score flow).
     """
+    # Parse only_pillars (e.g. "economic_security" or "built_beauty,natural_beauty")
+    only_pillars: Optional[set[str]] = None
+    if only:
+        raw_only = {part.strip() for part in only.split(",") if part.strip()}
+        if raw_only:
+            expanded = set()
+            for name in raw_only:
+                if name == "beauty":
+                    expanded.update({"built_beauty", "natural_beauty"})
+                else:
+                    expanded.add(name)
+            only_pillars = expanded if expanded else None
+
     # Parse priorities JSON if provided
     priorities_dict: Optional[Dict[str, str]] = None
     if priorities:
@@ -2048,6 +2063,7 @@ def create_score_job(
                 request=None,
                 premium_code=premium_code,
                 on_pillar_complete=_on_pillar_complete,
+                only_pillars=only_pillars,
             )
             with _SCORE_JOBS_LOCK:
                 if job_id in _SCORE_JOBS:
@@ -4258,6 +4274,35 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         "degraded_reasons": sorted(degraded_reasons),
         "degraded_warnings": sorted(degraded_warnings),
         "per_pillar_degraded": per_pillar_degraded,
+    }
+
+
+@app.get("/geocode", dependencies=[Depends(require_proxy_auth)])
+def geocode_location(location: str):
+    """
+    Geocode a place to coordinates and display info. Used by the frontend to show
+    the map and "you are about to search here" before running any pillar scoring.
+    """
+    location = (location or "").strip()
+    if not location:
+        raise HTTPException(status_code=400, detail="Missing required query param: location")
+    try:
+        from data_sources.geocoding import geocode_with_full_result
+        geo_result = geocode_with_full_result(location)
+    except Exception as e:
+        logger.warning(f"Geocode error for {_safe_location_for_logs(location)}: {e}")
+        raise HTTPException(status_code=422, detail="Could not geocode the provided location. Please check the address.")
+    if not geo_result:
+        raise HTTPException(status_code=422, detail="Could not geocode the provided location. Please check the address.")
+    lat, lon, zip_code, state, city, geocode_data = geo_result
+    display_name = f"{city}, {state} {zip_code}".strip() if (city or state or zip_code) else location
+    return {
+        "lat": lat,
+        "lon": lon,
+        "city": city or "",
+        "state": state or "",
+        "zip_code": zip_code or "",
+        "display_name": display_name,
     }
 
 

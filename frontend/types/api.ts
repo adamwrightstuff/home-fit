@@ -113,4 +113,16 @@ export interface ScoreRequestParams {
   job_categories?: string;
   include_chains?: boolean;
   enable_schools?: boolean;
+  /** Request only these pillars (e.g. "economic_security"); backend param "only". */
+  only?: string;
+}
+
+/** Response from GET /geocode — used to show map before scoring. */
+export interface GeocodeResult {
+  lat: number;
+  lon: number;
+  city: string;
+  state: string;
+  zip_code: string;
+  display_name: string;
 }

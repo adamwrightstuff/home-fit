@@ -2,22 +2,23 @@
 
 import { useMemo, useState } from 'react'
 import { ScoreResponse } from '@/types/api'
+import type { GeocodeResult } from '@/types/api'
 import LocationSearch from '@/components/LocationSearch'
 import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions, type PillarPriorities } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
-import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
+import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { getGeocode } from '@/lib/api'
 
 export default function Home() {
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
   const [loading, set_loading] = useState(false)
   const [error, set_error] = useState<string | null>(null)
-  const [request_start_time, set_request_start_time] = useState<number | undefined>(undefined)
-  const [current_location, set_current_location] = useState<string>('')
+  const [place, set_place] = useState<(GeocodeResult & { location: string }) | null>(null)
   const [show_game, set_show_game] = useState(false)
   const [search_options_expanded, set_search_options_expanded] = useState(false)
   // Initialize from sessionStorage if available, otherwise use defaults
@@ -59,14 +60,19 @@ export default function Home() {
   }
 
   const handle_search = (location: string) => {
-    console.log('Page: handle_search called with location:', location)
     set_loading(true)
     set_error(null)
     set_score_data(null)
-    set_current_location(location)
-    const start_time = Date.now()
-    set_request_start_time(start_time)
-    // Note: SmartLoadingScreen will handle the API call via streamScore
+    set_place(null)
+    getGeocode(location)
+      .then((geo) => {
+        set_place({ ...geo, location })
+        set_loading(false)
+      })
+      .catch((err) => {
+        set_error(err instanceof Error ? err.message : 'Could not find that location.')
+        set_loading(false)
+      })
   }
 
   const handle_apply_priorities = (priorities: PillarPriorities) => {
@@ -131,7 +137,25 @@ export default function Home() {
           </div>
         </div>
 
-        {!loading && !score_data && !error && (
+        {loading && !place && (
+          <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
+              Finding location…
+            </div>
+            <div className="hf-muted">Geocoding your place and preparing the map.</div>
+          </div>
+        )}
+
+        {place && !score_data && (
+          <PlaceView
+            place={place}
+            searchOptions={search_options}
+            onError={(msg) => set_error(msg)}
+            onBack={() => { set_place(null); set_error(null) }}
+          />
+        )}
+
+        {!loading && !place && !score_data && !error && (
           <section style={{ marginTop: '3rem', marginBottom: '3rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <div className="hf-section-title" style={{ marginBottom: '0.5rem' }}>
@@ -169,29 +193,7 @@ export default function Home() {
           </section>
         )}
 
-        {loading && current_location && (
-          <div className="fixed inset-0 z-50 hf-page hf-viewport">
-            <SmartLoadingScreen
-              location={current_location}
-              priorities={JSON.stringify(search_options.priorities)}
-              job_categories={search_options.job_categories?.join(',') || undefined}
-              include_chains={search_options.include_chains}
-              enable_schools={search_options.enable_schools}
-              on_complete={(response) => {
-                set_score_data(response)
-                set_loading(false)
-                set_request_start_time(undefined)
-              }}
-              on_error={(error) => {
-                set_error(error.message)
-                set_loading(false)
-                set_request_start_time(undefined)
-              }}
-            />
-          </div>
-        )}
-
-        {!loading && error && (
+        {!loading && error && !place && (
           <div className="hf-card">
             <ErrorMessage message={error} />
           </div>
@@ -199,6 +201,12 @@ export default function Home() {
 
         {score_data && !loading && (
           <ScoreDisplay data={display_score_data || score_data} />
+        )}
+
+        {place && error && (
+          <div className="hf-card" style={{ marginTop: '1rem' }}>
+            <ErrorMessage message={error} />
+          </div>
         )}
       </div>
     </main>

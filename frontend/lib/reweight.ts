@@ -163,3 +163,31 @@ export function reweightScoreResponseFromPriorities(
   }
 }
 
+/**
+ * Running total from partial pillar scores (tap-to-score flow).
+ * Uses only completed pillars and renormalizes their weights to sum to 100.
+ */
+export function totalFromPartialPillarScores(
+  partialScores: Record<string, number>,
+  priorities: Partial<Record<string, string>> | null | undefined
+): number | null {
+  const completed = Object.entries(partialScores).filter(
+    ([_, s]) => typeof s === 'number' && Number.isFinite(s)
+  ) as [string, number][]
+  if (completed.length === 0) return null
+  const tokens = prioritiesToTokens(priorities)
+  let weightSum = 0
+  let weightedSum = 0
+  for (const [k, score] of completed) {
+    const w = Number(tokens[k] ?? 0)
+    if (w > 0) {
+      weightSum += w
+      weightedSum += score * w
+    }
+  }
+  if (weightSum <= 0) {
+    return completed.reduce((a, [, s]) => a + s, 0) / completed.length
+  }
+  return Math.round((weightedSum / weightSum) * 100) / 100
+}
+
