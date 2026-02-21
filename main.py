@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -623,22 +622,10 @@ def _apply_schools_disabled_weight_override(
     return out
 
 
-@asynccontextmanager
-async def _lifespan(app: FastAPI):
-    """Run blocking GEE init in executor so app does not accept traffic until GEE is ready (prevents 502)."""
-    logger.info("Startup: preloading GEE (can take 1–3 min)...")
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, lambda: __import__("data_sources.gee_api"))
-    logger.info("Startup: GEE preload done.")
-    yield
-    # shutdown if needed
-
-
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 10 pillars",
-    version=API_VERSION,
-    lifespan=_lifespan,
+    version=API_VERSION
 )
 
 # CORS middleware
