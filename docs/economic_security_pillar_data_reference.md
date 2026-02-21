@@ -68,6 +68,8 @@ So we have **no** metric for “growing vs declining industries” (e.g. employm
 | Anchored balance | (anchored − cyclical) / 100 from industry shares; higher = more stable job mix. |
 | Growing vs declining industries | Not used; only level shares (HHI, anchored balance) and BDS metrics. |
 | Business dynamism | Two metrics (50% each): **net establishment entry per 1k** (churn) and **total establishments per 1k** (scale/depth). Both from Census BDS; population from ACS B01001. |
+| Wage distribution | **OEWS 25th and 75th** percentile annual wages by metro (BLS). Pre-built file `data/oews_metro_wage_distribution.json`; build with `scripts/build_oews_metro_wages.py`. Spread shows whether the market pays well across the distribution. |
+| Demand-side | **QCEW** employment per 1k residents and **YoY employment growth %** (BLS). Volume and momentum in hiring; data from `data.bls.gov/cew` area slice CSV. |
 | Job growth rate | Can add; best via BLS QCEW; ACS year-over-year comparison is an option. |
 | Wage percentiles | Can add; ACS has income/earnings distribution tables (e.g. B19081, B20002). |
 | Underemployment | Can add only as an ACS-based proxy; true U-6 at area level is not standard in ACS. |

@@ -22,6 +22,7 @@ from data_sources.economic_security_data import (
     compute_industry_hhi,
     compute_anchored_vs_cyclical_balance,
 )
+from data_sources import bls_data
 from data_sources.normalization import normalize_metric_to_0_100
 from data_sources.us_census_divisions import get_division
 from data_sources.job_category_overlays import (
@@ -76,6 +77,12 @@ def _fallback_normalize(metric: str, value: Optional[float], *, invert: bool = F
         "estabs_per_1k": (15.0, 25.0, 35.0, 50.0, 75.0),
         # anchored-cyclical balance (-1..+1)
         "anchored_balance": (-0.15, -0.05, 0.0, 0.08, 0.18),
+        # OEWS wage distribution (annual $)
+        "wage_p25_annual": (22000, 32000, 42000, 55000, 75000),
+        "wage_p75_annual": (45000, 65000, 90000, 120000, 180000),
+        # QCEW demand-side
+        "qcew_employment_per_1k": (200, 350, 500, 700, 1000),
+        "qcew_employment_growth_pct": (-3.0, 0.0, 2.0, 4.0, 8.0),
     }
 
     t = thresholds.get(metric)
@@ -265,6 +272,41 @@ def get_economic_security_score(
         if isinstance(total_estab, (int, float)) and float(total_estab) >= 0:
             estabs_per_1k = float(total_estab) / float(total_pop) * 1000.0
 
+    # BLS QCEW: employment level and YoY growth (demand-side)
+    qcew_employment_per_1k = None
+    qcew_employment_growth_pct = None
+    if effective_geo.level == "cbsa" and effective_geo.cbsa_code:
+        qcew_area = bls_data.cbsa_to_qcew_area_code(effective_geo.cbsa_code)
+    elif effective_geo.county_fips and effective_geo.state_fips:
+        qcew_area = bls_data.county_to_qcew_area_code(effective_geo.state_fips, effective_geo.county_fips)
+    else:
+        qcew_area = ""
+    if qcew_area:
+        qcew_row = bls_data.fetch_qcew_annual_for_area(qcew_area, year=CURRENT_ACS_YEAR)
+        if qcew_row and isinstance(total_pop, (int, float)) and total_pop > 0:
+            empl = qcew_row.get("annual_avg_emplvl")
+            if isinstance(empl, (int, float)) and empl >= 0:
+                qcew_employment_per_1k = float(empl) / float(total_pop) * 1000.0
+            pct = qcew_row.get("oty_annual_avg_emplvl_pct_chg")
+            if isinstance(pct, (int, float)):
+                qcew_employment_growth_pct = float(pct)
+
+    # BLS OEWS: 25th and 75th percentile wages by metro (wage distribution)
+    wage_p25_annual = None
+    wage_p75_annual = None
+    oews_area = effective_geo.cbsa_code if effective_geo.level == "cbsa" else None
+    if not oews_area and effective_geo.state_fips and effective_geo.county_fips:
+        oews_area = effective_geo.state_fips + effective_geo.county_fips
+    if oews_area:
+        oews_row = bls_data.get_oews_wage_distribution(oews_area)
+        if oews_row:
+            wage_p25_annual = oews_row.get("wage_p25_annual")
+            wage_p75_annual = oews_row.get("wage_p75_annual")
+            if wage_p25_annual is not None:
+                wage_p25_annual = float(wage_p25_annual)
+            if wage_p75_annual is not None:
+                wage_p75_annual = float(wage_p75_annual)
+
     # Normalize to 0-100 submetric scores
     sub_scores = {
         # Lower unemployment is better → invert
@@ -272,22 +314,40 @@ def get_economic_security_score(
         "emp_pop_ratio": _normalize(metric="emp_pop_ratio", value=emp_pop_ratio, division=division, area_bucket=bucket),
         "net_estab_entry_per_1k": _normalize(metric="net_estab_entry_per_1k", value=net_estab_entry_per_1k, division=division, area_bucket=bucket),
         "estabs_per_1k": _normalize(metric="estabs_per_1k", value=estabs_per_1k, division=division, area_bucket=bucket),
+        # Wage distribution (OEWS 25th/75th)
+        "wage_p25_annual": _normalize(metric="wage_p25_annual", value=wage_p25_annual, division=division, area_bucket=bucket),
+        "wage_p75_annual": _normalize(metric="wage_p75_annual", value=wage_p75_annual, division=division, area_bucket=bucket),
+        # Demand-side (QCEW)
+        "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, division=division, area_bucket=bucket),
+        "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, division=division, area_bucket=bucket),
         # Lower HHI is better (more diversified) → invert
         "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, invert=True),
         "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
     }
 
-    # 3-sub-index structure (job market, dynamism, resilience). Renormalize if missing.
+    # Sub-index structure: job market, wage distribution, dynamism, demand, resilience
     job_market_weights = {"unemployment_rate": 0.60, "emp_pop_ratio": 0.40}
     base_job_market_score, job_market_renorm = _weighted_avg(
         {k: sub_scores.get(k) for k in job_market_weights.keys()},
         job_market_weights,
     )
 
+    wage_distribution_weights = {"wage_p25_annual": 0.50, "wage_p75_annual": 0.50}
+    wage_distribution_score, wage_dist_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in wage_distribution_weights.keys()},
+        wage_distribution_weights,
+    )
+
     dynamism_weights = {"net_estab_entry_per_1k": 0.50, "estabs_per_1k": 0.50}
     dynamism_score, dynamism_renorm = _weighted_avg(
         {k: sub_scores.get(k) for k in dynamism_weights.keys()},
         dynamism_weights,
+    )
+
+    demand_weights = {"qcew_employment_per_1k": 0.50, "qcew_employment_growth_pct": 0.50}
+    demand_score, demand_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in demand_weights.keys()},
+        demand_weights,
     )
 
     resilience_weights = {"industry_diversity": 0.60, "anchored_balance": 0.40}
@@ -298,14 +358,18 @@ def get_economic_security_score(
 
     components = {
         "job_market_strength": base_job_market_score,
+        "wage_distribution": wage_distribution_score,
         "business_dynamism": dynamism_score,
+        "demand_side": demand_score,
         "resilience_and_diversification": resilience_score,
     }
 
     component_weights = {
-        "job_market_strength": 0.54,
-        "business_dynamism": 0.23,
-        "resilience_and_diversification": 0.23,
+        "job_market_strength": 0.38,
+        "wage_distribution": 0.20,
+        "business_dynamism": 0.18,
+        "demand_side": 0.12,
+        "resilience_and_diversification": 0.12,
     }
 
     base_final_score, base_component_renorm = _weighted_avg(components, component_weights)
@@ -351,6 +415,10 @@ def get_economic_security_score(
             "median_earnings": earnings,
             "net_estab_entry_per_1k": net_estab_entry_per_1k,
             "estabs_per_1k": estabs_per_1k,
+            "wage_p25_annual": wage_p25_annual,
+            "wage_p75_annual": wage_p75_annual,
+            "qcew_employment_per_1k": qcew_employment_per_1k,
+            "qcew_employment_growth_pct": qcew_employment_growth_pct,
             "anchored_balance": anchored_balance,
         },
         "geo": {
@@ -370,10 +438,20 @@ def get_economic_security_score(
             "weights": job_market_renorm,
             "metrics": {k: sub_scores.get(k) for k in job_market_weights.keys()},
         },
+        "wage_distribution": {
+            "score": wage_distribution_score,
+            "weights": wage_dist_renorm,
+            "metrics": {k: sub_scores.get(k) for k in wage_distribution_weights.keys()},
+        },
         "business_dynamism": {
             "score": dynamism_score,
             "weights": dynamism_renorm,
             "metrics": {k: sub_scores.get(k) for k in dynamism_weights.keys()},
+        },
+        "demand_side": {
+            "score": demand_score,
+            "weights": demand_renorm,
+            "metrics": {k: sub_scores.get(k) for k in demand_weights.keys()},
         },
         "resilience_and_diversification": {
             "score": resilience_score,
@@ -396,6 +474,10 @@ def get_economic_security_score(
         "median_earnings": int(earnings) if isinstance(earnings, (int, float)) else None,
         "net_estab_entry_per_1k": round(float(net_estab_entry_per_1k), 2) if isinstance(net_estab_entry_per_1k, (int, float)) else None,
         "estabs_per_1k": round(float(estabs_per_1k), 2) if isinstance(estabs_per_1k, (int, float)) else None,
+        "wage_p25_annual": int(wage_p25_annual) if isinstance(wage_p25_annual, (int, float)) else None,
+        "wage_p75_annual": int(wage_p75_annual) if isinstance(wage_p75_annual, (int, float)) else None,
+        "qcew_employment_per_1k": round(float(qcew_employment_per_1k), 2) if isinstance(qcew_employment_per_1k, (int, float)) else None,
+        "qcew_employment_growth_pct": round(float(qcew_employment_growth_pct), 2) if isinstance(qcew_employment_growth_pct, (int, float)) else None,
         "industry_diversity_hhi": round(float(industry_hhi), 4) if isinstance(industry_hhi, (int, float)) else None,
         "anchored_balance": round(float(anchored_balance), 3) if isinstance(anchored_balance, (int, float)) else None,
     }

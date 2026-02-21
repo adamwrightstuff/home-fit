@@ -97,6 +97,7 @@ CACHE_TTL = {
     'transit_routes': 6 * 3600,        # 6 hours for transit routes (moderate stability)
     'transit_stops': 15 * 60,          # 15 minutes for transit stops (dynamic)
     'healthcare': 2 * 3600,            # 2 hours for healthcare data (moderate stability)
+    'bls_data': 7 * 24 * 3600,         # 7 days for BLS QCEW/OEWS (updates annually)
 }
 
 
@@ -200,15 +201,21 @@ def cached(ttl_seconds: int = 3600):
     return decorator
 
 
+# Key prefixes used in main.py for score/location caches (must match main.py key generation).
+SCORE_CACHE_PREFIXES = ("api_response:", "location_response_template:", "shared_prepillar:")
+
+
 def clear_cache(cache_type: Optional[str] = None):
     """
     Clear cache entries from both Redis (if available) and in-memory cache.
-    
+
     Args:
-        cache_type: If provided, only clear entries matching this type
+        cache_type: If None, clear all HomeFit caches. If "scores", clear only
+            score/location caches (api_response, location_response_template, shared_prepillar).
+            Otherwise clear decorator caches matching CACHE_KEY_PREFIX:cache_type:*
     """
     global _cache, _cache_ttl
-    
+
     # Clear Redis if available
     redis_client = _get_redis_client()
     if redis_client:
@@ -218,6 +225,16 @@ def clear_cache(cache_type: Optional[str] = None):
                 keys = redis_client.keys(f"{CACHE_KEY_PREFIX}:*")
                 if keys:
                     redis_client.delete(*keys)
+                # Also clear score/location caches (stored without homefit prefix in main.py)
+                for prefix in SCORE_CACHE_PREFIXES:
+                    keys = redis_client.keys(f"{prefix}*")
+                    if keys:
+                        redis_client.delete(*keys)
+            elif cache_type == "scores":
+                for prefix in SCORE_CACHE_PREFIXES:
+                    keys = redis_client.keys(f"{prefix}*")
+                    if keys:
+                        redis_client.delete(*keys)
             else:
                 # Clear specific cache type (function name)
                 pattern = f"{CACHE_KEY_PREFIX}:{cache_type}:*"
@@ -226,12 +243,21 @@ def clear_cache(cache_type: Optional[str] = None):
                     redis_client.delete(*keys)
         except Exception as e:
             logger.warning(f"Error clearing Redis cache: {e}")
-    
+
     # Clear in-memory cache
     if cache_type is None:
         _cache.clear()
         _cache_ttl.clear()
         logger.info("Cleared all cache")
+    elif cache_type == "scores":
+        keys_to_remove = [
+            k for k in _cache.keys()
+            if any(k.startswith(p) for p in SCORE_CACHE_PREFIXES)
+        ]
+        for key in keys_to_remove:
+            _cache.pop(key, None)
+            _cache_ttl.pop(key, None)
+        logger.info(f"Cleared {len(keys_to_remove)} score cache entries")
     else:
         keys_to_remove = [key for key in _cache.keys() if key.startswith(f"{CACHE_KEY_PREFIX}:{cache_type}:")]
         for key in keys_to_remove:

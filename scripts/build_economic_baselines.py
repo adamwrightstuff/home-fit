@@ -38,6 +38,7 @@ from data_sources.economic_security_data import (
     compute_anchored_vs_cyclical_balance,
 )
 from data_sources.us_census_divisions import get_division
+from data_sources import bls_data
 from data_sources.job_category_overlays import (
     JOB_CATEGORIES,
     CATEGORY_GROUPS,
@@ -177,6 +178,28 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
         out["industry_hhi"] = float(industry_hhi)
     if isinstance(anchored_balance, (int, float)):
         out["anchored_balance"] = float(anchored_balance)
+
+    # BLS QCEW: demand-side (employment per 1k, YoY growth)
+    qcew_area = bls_data.cbsa_to_qcew_area_code(geo.cbsa_code or "") if geo.level == "cbsa" else bls_data.county_to_qcew_area_code(geo.state_fips or "", geo.county_fips or "") if geo.county_fips else ""
+    if qcew_area and isinstance(total_pop, (int, float)) and total_pop > 0:
+        qcew_row = bls_data.fetch_qcew_annual_for_area(qcew_area, year=year_now)
+        if qcew_row:
+            empl = qcew_row.get("annual_avg_emplvl")
+            if isinstance(empl, (int, float)) and empl >= 0:
+                out["qcew_employment_per_1k"] = float(empl) / float(total_pop) * 1000.0
+            pct = qcew_row.get("oty_annual_avg_emplvl_pct_chg")
+            if isinstance(pct, (int, float)):
+                out["qcew_employment_growth_pct"] = float(pct)
+
+    # BLS OEWS: wage distribution (25th/75th percentile) from pre-built JSON
+    oews_area = geo.cbsa_code if geo.level == "cbsa" else (geo.state_fips + geo.county_fips if geo.county_fips else None)
+    if oews_area:
+        oews_row = bls_data.get_oews_wage_distribution(oews_area)
+        if oews_row:
+            if isinstance(oews_row.get("wage_p25_annual"), (int, float)):
+                out["wage_p25_annual"] = float(oews_row["wage_p25_annual"])
+            if isinstance(oews_row.get("wage_p75_annual"), (int, float)):
+                out["wage_p75_annual"] = float(oews_row["wage_p75_annual"])
 
     # ------------------------------------------------------------------
     # Job category overlay baselines (density only; no earnings-to-rent)
