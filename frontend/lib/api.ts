@@ -75,13 +75,12 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   let response = await fetchOnce(url);
-  // Retry on 502 for initial request (cold start / upstream timeout); give upstream time to wake
+  // Retry on 502 for initial request (cold start); proxy times out at 50s so we're under Vercel 60s limit
   if (response.status === 502 && !searchParams.has('job_id')) {
-    await new Promise((r) => setTimeout(r, 5000));
-    response = await fetchOnce(url);
-    if (response.status === 502) {
-      await new Promise((r) => setTimeout(r, 8000));
+    for (const delayMs of [5000, 8000, 12000]) {
+      await new Promise((r) => setTimeout(r, delayMs));
       response = await fetchOnce(url);
+      if (response.status !== 502) break;
     }
   }
   let payload: Record<string, unknown> | null = null;
@@ -129,7 +128,6 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   }
 
   if (!response.ok) {
-    // Use payload if we already read the body in the loop; otherwise read once.
     const errorPayload = payload ?? await response.json().catch(() => null);
     const detail = errorPayload && typeof errorPayload === 'object' && 'detail' in errorPayload
       ? (errorPayload as { detail?: string }).detail
@@ -137,10 +135,13 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
     const sub = errorPayload && typeof errorPayload === 'object' && 'error' in errorPayload
       ? (errorPayload as { error?: string }).error
       : null;
-    const message =
+    let message =
       (typeof detail === 'string' && detail.trim()) ||
       (typeof sub === 'string' && sub.trim() ? `Upstream error: ${sub}` : null) ||
       `Request failed (${response.status})`;
+    if (response.status === 502) {
+      message += ' Try again in a moment—the server may be waking up.';
+    }
     throw new Error(message);
   }
 
