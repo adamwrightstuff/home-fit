@@ -169,13 +169,13 @@ export function reweightScoreResponseFromPriorities(
  */
 export function totalFromPartialPillarScores(
   partialScores: Record<string, number>,
-  priorities: Partial<Record<string, string>> | null | undefined
+  priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
 ): number | null {
   const completed = Object.entries(partialScores).filter(
     ([_, s]) => typeof s === 'number' && Number.isFinite(s)
   ) as [string, number][]
   if (completed.length === 0) return null
-  const tokens = prioritiesToTokens(priorities)
+  const tokens = prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
   let weightSum = 0
   let weightedSum = 0
   for (const [k, score] of completed) {
