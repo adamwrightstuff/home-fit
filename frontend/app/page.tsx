@@ -10,7 +10,6 @@ import ErrorMessage from '@/components/ErrorMessage'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getGeocode } from '@/lib/api'
 
@@ -20,9 +19,7 @@ export default function Home() {
   const [error, set_error] = useState<string | null>(null)
   const [place, set_place] = useState<(GeocodeResult & { location: string }) | null>(null)
   const [show_game, set_show_game] = useState(false)
-  const [search_options_expanded, set_search_options_expanded] = useState(false)
-  // Initialize from sessionStorage if available, otherwise use defaults
-  // This ensures quiz priorities persist across page reloads
+  // Search options (priorities, job_categories, etc.) for scoring; persisted for quiz and PlaceView
   const [search_options, set_search_options] = useState<SearchOptions>(() => {
     try {
       const stored = sessionStorage.getItem('homefit_search_options')
@@ -31,13 +28,12 @@ export default function Home() {
         return {
           priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
           include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
-          // Premium-gated: default OFF unless explicitly enabled by user with a premium code
           enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
           job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
         }
       }
     } catch (e) {
-      // Ignore errors, fall back to defaults
+      // ignore
     }
     return {
       priorities: { ...DEFAULT_PRIORITIES },
@@ -47,17 +43,10 @@ export default function Home() {
     }
   })
 
-  // Live reweighting (client-side): when a score is already computed, let the user
-  // tweak the priority buttons and instantly see the updated total/weights without
-  // re-running the backend.
   const display_score_data = useMemo(() => {
     if (!score_data) return null
     return reweightScoreResponseFromPriorities(score_data, search_options.priorities)
   }, [score_data, search_options.priorities])
-
-  const handleSearchOptionsChange = (next: SearchOptions) => {
-    set_search_options(next)
-  }
 
   const handle_search = (location: string) => {
     set_loading(true)
@@ -77,136 +66,101 @@ export default function Home() {
 
   const handle_apply_priorities = (priorities: PillarPriorities) => {
     set_search_options(prev => {
-      const updated = {
-        ...prev,
-        priorities
-      }
-
-      // Immediately save to sessionStorage to prevent SearchOptions from overwriting
+      const updated = { ...prev, priorities }
       try {
         sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
       } catch (e) {
-        // Ignore storage errors
+        // ignore
       }
-
       return updated
     })
     set_show_game(false)
-    set_search_options_expanded(true) // Expand the search options to show the applied priorities
   }
 
-  // Show game if active
   if (show_game) {
     return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} onBack={() => set_show_game(false)} />
   }
 
-  return (
-    <main className="hf-page">
-      <AppHeader
-        tagline="Find the neighborhood where you truly belong"
-        heroImageUrl="https://images.unsplash.com/photo-1653664346737-485ad147ab18?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        heroImageAlt="Neighborhood street with homes"
-      />
-      <div className="hf-container">
-
-        <div id="search" className="hf-card">
-          <LocationSearch onSearch={handle_search} disabled={loading} />
-          <SearchOptionsComponent
-            options={search_options}
-            onChange={handleSearchOptionsChange}
-            disabled={loading}
-            expanded={search_options_expanded}
-            onExpandedChange={set_search_options_expanded}
-          />
-          <div style={{ marginTop: '1.25rem' }} className="hf-panel">
-            <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
-              Personalize your score
-            </div>
-            <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '0.75rem' }}>
-              Take the quiz to set your priorities, or use equal weighting.
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+  // Page 1: Landing / Search — hero, search bar, Take quiz only. No pillar grid.
+  if (!place && !score_data) {
+    return (
+      <main className="hf-page">
+        <AppHeader
+          tagline="Where are you thinking of moving?"
+          heroImageUrl="https://images.unsplash.com/photo-1653664346737-485ad147ab18?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          heroImageAlt="Neighborhood street with homes"
+        />
+        <div className="hf-container">
+          <div id="search" className="hf-card">
+            <LocationSearch onSearch={handle_search} disabled={loading} />
+            <div style={{ marginTop: '1.25rem' }} className="hf-panel">
               <button
                 type="button"
                 onClick={() => set_show_game(true)}
-                className="hf-btn-primary"
+                className="hf-btn-secondary"
+                style={{ width: '100%' }}
               >
                 Take quiz
               </button>
             </div>
           </div>
-        </div>
 
-        {loading && !place && (
-          <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
-              Finding location…
+          {loading && (
+            <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
+                Finding location…
+              </div>
+              <div className="hf-muted">Geocoding your place and preparing the map.</div>
             </div>
-            <div className="hf-muted">Geocoding your place and preparing the map.</div>
-          </div>
-        )}
+          )}
 
-        {place && !score_data && (
+          {!loading && error && (
+            <div className="hf-card" style={{ marginTop: '1.5rem' }}>
+              <ErrorMessage message={error} />
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  // Page 2: Score this location — location + map, quiz CTA, pillar grid, sticky Run Score
+  if (place && !score_data) {
+    return (
+      <main className="hf-page">
+        <div className="hf-container">
           <PlaceView
             place={place}
             searchOptions={search_options}
             onError={(msg) => set_error(msg)}
             onBack={() => { set_place(null); set_error(null) }}
+            onTakeQuiz={() => set_show_game(true)}
           />
-        )}
-
-        {!loading && !place && !score_data && !error && (
-          <section style={{ marginTop: '3rem', marginBottom: '3rem' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <div className="hf-section-title" style={{ marginBottom: '0.5rem' }}>
-                10 Essential Livability Factors
-              </div>
-              <div className="hf-muted">We analyze every location across these key pillars.</div>
+          {place && error && (
+            <div className="hf-card" style={{ marginTop: '1rem' }}>
+              <ErrorMessage message={error} />
             </div>
+          )}
+        </div>
+      </main>
+    )
+  }
 
-            <div className="hf-grid-3">
-              {(
-                [
-                  'natural_beauty',
-                  'built_beauty',
-                  'neighborhood_amenities',
-                  'active_outdoors',
-                  'healthcare_access',
-                  'public_transit_access',
-                  'air_travel_access',
-                  'economic_security',
-                  'quality_education',
-                  'housing_value',
-                ] as PillarKey[]
-              ).map((key) => (
-                <div key={key} className="hf-card-sm" style={{ cursor: 'default' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{PILLAR_META[key].icon}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.35rem' }}>
-                    {PILLAR_META[key].name}
-                  </div>
-                  <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
-                    {PILLAR_META[key].description}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+  // After scoring: show results; "Search another location" resets to Page 1
+  const handleSearchAnother = () => {
+    set_place(null)
+    set_score_data(null)
+    set_error(null)
+  }
 
-        {!loading && error && !place && (
-          <div className="hf-card">
-            <ErrorMessage message={error} />
-          </div>
-        )}
-
-        {score_data && !loading && (
-          <ScoreDisplay data={display_score_data || score_data} />
-        )}
-
-        {place && error && (
-          <div className="hf-card" style={{ marginTop: '1rem' }}>
-            <ErrorMessage message={error} />
-          </div>
+  return (
+    <main className="hf-page">
+      <div className="hf-container">
+        {score_data && (
+          <ScoreDisplay
+            data={display_score_data || score_data}
+            onSearchAnother={handleSearchAnother}
+          />
         )}
       </div>
     </main>

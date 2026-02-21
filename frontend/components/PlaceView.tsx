@@ -24,14 +24,23 @@ const PILLAR_ORDER: PillarKey[] = [
 
 type Importance = 'Low' | 'Medium' | 'High'
 
+/** Prefer neighborhood-style label: strip trailing zip so we show "Gowanus, Brooklyn" not "New York, NY 11217". */
+function formatPlaceLabel(place: GeocodeResult & { location: string }): string {
+  const name = place.display_name || place.location
+  const withoutZip = name.replace(/,?\s*\d{5}(-\d{4})?$/, '').trim()
+  if (withoutZip) return withoutZip
+  return `${place.city}, ${place.state}`
+}
+
 export interface PlaceViewProps {
   place: GeocodeResult & { location: string }
   searchOptions: SearchOptions
   onError: (message: string) => void
   onBack: () => void
+  onTakeQuiz?: () => void
 }
 
-export default function PlaceView({ place, searchOptions, onError, onBack }: PlaceViewProps) {
+export default function PlaceView({ place, searchOptions, onError, onBack, onTakeQuiz }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
@@ -104,17 +113,18 @@ export default function PlaceView({ place, searchOptions, onError, onBack }: Pla
   }, [place.location, searchOptions, selectedPillars, selectedPriorities, onError])
 
   const hasResults = Object.keys(pillarScores).length > 0
+  const locationLabel = formatPlaceLabel(place)
 
   return (
-    <div className="hf-card" style={{ marginTop: '1.5rem' }}>
+    <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
         <div>
           <div className="hf-label" style={{ marginBottom: '0.25rem' }}>Location</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}>
-            {place.display_name || place.location}
+            {locationLabel}
           </div>
           <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            Tap pillars to select, set importance, then Run Score.
+            Select pillars and set importance, then Run Score.
           </div>
         </div>
         <button type="button" onClick={onBack} className="hf-btn-link">
@@ -134,23 +144,10 @@ export default function PlaceView({ place, searchOptions, onError, onBack }: Pla
         }}
       >
         <InteractiveMap
-          location={place.location}
+          location={locationLabel}
           coordinates={{ lat: place.lat, lon: place.lon }}
           completed_pillars={Object.keys(pillarScores)}
         />
-      </div>
-
-      {/* Run Score button */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <button
-          type="button"
-          onClick={runScore}
-          disabled={selectedPillars.size === 0 || loading}
-          className="hf-btn-primary"
-          style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
-        >
-          {loading ? 'Scoring…' : `Run Score${selectedPillars.size > 0 ? ` (${selectedPillars.size} pillar${selectedPillars.size === 1 ? '' : 's'})` : ''}`}
-        </button>
       </div>
 
       {/* Total score result */}
@@ -161,6 +158,20 @@ export default function PlaceView({ place, searchOptions, onError, onBack }: Pla
             <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>{totalScore.toFixed(1)}</div>
             <div className="hf-score-hero__label">Weighted total</div>
           </div>
+        </div>
+      )}
+
+      {/* Quiz CTA: collapsed at top of pillar grid */}
+      {onTakeQuiz && (
+        <div className="hf-panel" style={{ marginBottom: '1rem' }}>
+          <button
+            type="button"
+            onClick={onTakeQuiz}
+            className="hf-btn-link"
+            style={{ width: '100%', textAlign: 'center', padding: '0.75rem' }}
+          >
+            Not sure what matters to you? Take the quiz
+          </button>
         </div>
       )}
 
@@ -236,6 +247,37 @@ export default function PlaceView({ place, searchOptions, onError, onBack }: Pla
             </div>
           )
         })}
+      </div>
+
+      {/* Sticky Run Score at bottom */}
+      <div
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '1rem 0',
+          marginTop: '1rem',
+          marginLeft: '-2.5rem',
+          marginRight: '-2.5rem',
+          marginBottom: '-2.5rem',
+          paddingLeft: '2.5rem',
+          paddingRight: '2.5rem',
+          paddingBottom: '2.5rem',
+          background: 'var(--hf-card-bg)',
+          borderTop: '1px solid var(--hf-border)',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={runScore}
+          disabled={selectedPillars.size === 0 || loading}
+          className="hf-btn-primary"
+          style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
+        >
+          {loading ? 'Scoring…' : `Run Score${selectedPillars.size > 0 ? ` (${selectedPillars.size} pillar${selectedPillars.size === 1 ? '' : 's'})` : ''}`}
+        </button>
       </div>
     </div>
   )

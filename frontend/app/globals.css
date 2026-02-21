@@ -241,6 +241,24 @@ body {
   color: var(--hf-text-primary);
 }
 
+.hf-btn-secondary {
+  padding: 1rem 1.5rem;
+  background: transparent;
+  color: var(--hf-primary-1);
+  border: 2px solid var(--hf-primary-1);
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hf-btn-secondary:hover {
+  background: rgba(102, 126, 234, 0.08);
+  color: var(--hf-primary-2);
+  border-color: var(--hf-primary-2);
+}
+
 .hf-input {
   padding: 1.2rem 1.5rem;
   border: 2px solid var(--hf-border);

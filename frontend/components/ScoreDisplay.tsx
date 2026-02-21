@@ -8,6 +8,8 @@ import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
 interface ScoreDisplayProps {
   data: ScoreResponse
+  /** When provided, "Search another location" calls this instead of linking to #search */
+  onSearchAnother?: () => void
 }
 
 const PILLAR_ORDER: PillarKey[] = [
@@ -30,7 +32,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const [copied, setCopied] = useState(false)
 
@@ -100,9 +102,15 @@ export default function ScoreDisplay({ data }: ScoreDisplayProps) {
             >
               {copied ? 'Copied!' : 'Copy scores'}
             </button>
-            <a className="hf-btn-link" href="#search">
-              Search another location
-            </a>
+            {onSearchAnother ? (
+              <button type="button" onClick={onSearchAnother} className="hf-btn-link">
+                Search another location
+              </button>
+            ) : (
+              <a className="hf-btn-link" href="#search">
+                Search another location
+              </a>
+            )}
           </div>
         </div>
 
