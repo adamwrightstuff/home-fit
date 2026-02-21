@@ -1611,20 +1611,29 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         if key == 'topography' and isinstance(result, dict):
                             topography_metrics = result
                             # #region agent log
-                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1518","message":"Topography metrics fetched","data":{{"relief_m":{topography_metrics.get("relief_range_m")},"prominence_m":{topography_metrics.get("terrain_prominence_m")},"ruggedness_m":{topography_metrics.get("ruggedness_index_m")}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            try:
+                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1518","message":"Topography metrics fetched","data":{{"relief_m":{topography_metrics.get("relief_range_m")},"prominence_m":{topography_metrics.get("terrain_prominence_m")},"ruggedness_m":{topography_metrics.get("ruggedness_index_m")}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            except OSError:
+                                pass
                             # #endregion
                         elif key == 'landcover' and isinstance(result, dict):
                             landcover_metrics = result
                             # #region agent log
-                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"B","location":"natural_beauty.py:1520","message":"Landcover metrics fetched","data":{{"source":"{landcover_metrics.get("source","unknown")}","forest_pct":{landcover_metrics.get("forest_pct",0)},"water_pct":{landcover_metrics.get("water_pct",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            try:
+                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"B","location":"natural_beauty.py:1520","message":"Landcover metrics fetched","data":{{"source":"{landcover_metrics.get("source","unknown")}","forest_pct":{landcover_metrics.get("forest_pct",0)},"water_pct":{landcover_metrics.get("water_pct",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            except OSError:
+                                pass
                             # #endregion
                         elif key == 'water' and isinstance(result, dict):
                             water_proximity_data = result
                             # #region agent log
-                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1522","message":"Water proximity data fetched","data":{{"nearest_distance_km":{water_proximity_data.get("nearest_distance_km")},"count":{water_proximity_data.get("count",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            try:
+                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1522","message":"Water proximity data fetched","data":{{"nearest_distance_km":{water_proximity_data.get("nearest_distance_km")},"count":{water_proximity_data.get("count",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                            except OSError:
+                                pass
                             # #endregion
                         break
             except Exception as exc:
@@ -1633,8 +1642,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     if f == future:
                         logger.debug(f"Parallel {key} data fetch failed: {exc}, using defaults")
                         # #region agent log
-                        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1528","message":"Parallel data fetch failed","data":{{"key":"{key}","error":"{str(exc)[:100]}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                        try:
+                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1528","message":"Parallel data fetch failed","data":{{"key":"{key}","error":"{str(exc)[:100]}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                        except OSError:
+                            pass
                         # #endregion
                         break
     
@@ -1934,9 +1946,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
         # #region agent log
-        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-            bonus_info = f'"bonus_total":{topography_bonus_total}' if topography_bonuses else '"bonuses":"none"'
-            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1893","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"base":{topography_score_base},{bonus_info},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+        try:
+            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                bonus_info = f'"bonus_total":{topography_bonus_total}' if topography_bonuses else '"bonuses":"none"'
+                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1893","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"base":{topography_score_base},{bonus_info},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+        except OSError:
+            pass
         # #endregion
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
@@ -1966,10 +1981,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "water_density_km2": water_proximity_data.get("water_density")
             }
             # #region agent log
-            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                nearest_water_km = water_proximity_data.get("nearest_distance_km")
-                waterbody = water_proximity_data.get("nearest_waterbody", {})
-                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1609","message":"Water proximity stored in details","data":{{"nearest_km":{nearest_water_km},"waterbody_type":"{waterbody.get("type","none") if isinstance(waterbody,dict) else "none"}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            try:
+                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                    nearest_water_km = water_proximity_data.get("nearest_distance_km")
+                    waterbody = water_proximity_data.get("nearest_waterbody", {})
+                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1609","message":"Water proximity stored in details","data":{{"nearest_km":{nearest_water_km},"waterbody_type":"{waterbody.get("type","none") if isinstance(waterbody,dict) else "none"}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            except OSError:
+                pass
             # #endregion
         # Apply area-type-specific weights (adjusted for high-relief areas)
         # Ensure scores are always valid numbers
@@ -2127,8 +2145,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             logger.debug(f"Applied water visibility bonus ({water_visibility_bonus:.2f}) for {nearest_distance_km:.1f}km {water_proximity_type} with {visible_natural_pct:.1f}% visible natural")
                 
                 # #region agent log
-                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"mountain_backdrop_bonus":{mountain_backdrop_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                try:
+                    with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                        f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"mountain_backdrop_bonus":{mountain_backdrop_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+                except OSError:
+                    pass
                 # #endregion
         except Exception as viewshed_error:
             logger.debug("Viewshed proxy calculation failed: %s, using defaults", viewshed_error)
@@ -2136,8 +2157,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     total_context_before_cap = context_bonus_total
     # #region agent log
-    with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-        f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"E","location":"natural_beauty.py:1686","message":"Context bonus before cap","data":{{"total":{context_bonus_total},"cap":{NATURAL_CONTEXT_BONUS_CAP},"area_type":"{area_type_key}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+    try:
+        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"E","location":"natural_beauty.py:1686","message":"Context bonus before cap","data":{{"total":{context_bonus_total},"cap":{NATURAL_CONTEXT_BONUS_CAP},"area_type":"{area_type_key}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+    except OSError:
+        pass
     # #endregion
     if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
         context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
@@ -2470,8 +2494,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             
             expectation_penalty = base_penalty * penalty_reduction_factor
             # #region agent log
-            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1969","message":"Penalty reduction calculated","data":{{"base_penalty":{base_penalty},"reduction_factor":{penalty_reduction_factor},"final_penalty":{expectation_penalty},"context_bonus":{context_bonus_total},"water_km":{nearest_water_km},"reasons":{reduction_reasons}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            try:
+                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1969","message":"Penalty reduction calculated","data":{{"base_penalty":{base_penalty},"reduction_factor":{penalty_reduction_factor},"final_penalty":{expectation_penalty},"context_bonus":{context_bonus_total},"water_km":{nearest_water_km},"reasons":{reduction_reasons}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+            except OSError:
+                pass
             # #endregion
             if penalty_reduction_factor < 1.0:
                 details["canopy_expectation"]["penalty_reduction"] = {

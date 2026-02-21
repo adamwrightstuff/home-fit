@@ -445,8 +445,11 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     if isinstance(natural_context, dict):
         water_proximity = natural_context.get("water_proximity", {})
         # #region agent log
-        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"F","location":"main.py:340","message":"Extracting water proximity from summary","data":{{"water_proximity_present":{bool(water_proximity)},"nearest_km":{water_proximity.get("nearest_distance_km") if isinstance(water_proximity,dict) else None}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+        try:
+            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
+                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"F","location":"main.py:340","message":"Extracting water proximity from summary","data":{{"water_proximity_present":{bool(water_proximity)},"nearest_km":{water_proximity.get("nearest_distance_km") if isinstance(water_proximity,dict) else None}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
+        except OSError:
+            pass
         # #endregion
         if isinstance(water_proximity, dict):
             if water_proximity.get("nearest_distance_km") is not None:
