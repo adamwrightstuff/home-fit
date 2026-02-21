@@ -1540,8 +1540,25 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         data = response.json()
 
         if not data:
-            _log_timing("total", t0_geocode)
-            return None
+            # Fallback: for "Neighborhood NY" or "Neighborhood, NY", retry with "Neighborhood, Brooklyn, NY"
+            # so NYC neighborhoods (e.g. Gowanus, Park Slope) resolve
+            if query_state == "NY":
+                parts = [p.strip() for p in address.replace(",", " ").split() if p.strip()]
+                if parts and parts[-1].upper() == "NY":
+                    place_name = " ".join(parts[:-1]).strip()
+                    if place_name and "brooklyn" not in address.lower():
+                        brooklyn_query = f"{place_name}, Brooklyn, New York"
+                        retry_params = {"q": brooklyn_query, "format": "json", "addressdetails": 1, "limit": 1}
+                        retry_resp = requests.get(NOMINATIM_URL, params=retry_params, headers=headers, timeout=10)
+                        if retry_resp.status_code == 200:
+                            retry_data = retry_resp.json()
+                            if retry_data:
+                                data = retry_data
+                                result = data[0]
+                                print(f"✅ Geocoded '{address}' via Brooklyn fallback: {brooklyn_query}")
+            if not data:
+                _log_timing("total", t0_geocode)
+                return None
 
         result = data[0]
         

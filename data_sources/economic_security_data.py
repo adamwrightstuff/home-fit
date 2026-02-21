@@ -30,6 +30,27 @@ class EconomicGeo:
     county_fips: Optional[str]
     cbsa_code: Optional[str]
 
+    def to_dict(self) -> Dict[str, Any]:
+        """JSON-serializable dict for Redis cache."""
+        return {
+            "level": self.level,
+            "name": self.name,
+            "state_fips": self.state_fips,
+            "county_fips": self.county_fips,
+            "cbsa_code": self.cbsa_code,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> EconomicGeo:
+        """Reconstruct from cached dict."""
+        return cls(
+            level=str(d["level"]),
+            name=d.get("name"),
+            state_fips=str(d["state_fips"]),
+            county_fips=d.get("county_fips"),
+            cbsa_code=d.get("cbsa_code"),
+        )
+
 
 def _geo_from_tract(tract: Dict[str, Any]) -> Optional[EconomicGeo]:
     state_fips = tract.get("state_fips")
@@ -62,12 +83,20 @@ def _geo_from_tract(tract: Dict[str, Any]) -> Optional[EconomicGeo]:
 @cached(ttl_seconds=CACHE_TTL["census_data"])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=20)
-def get_economic_geography(lat: float, lon: float, tract: Optional[Dict[str, Any]] = None) -> Optional[EconomicGeo]:
+def _get_economic_geography_cached(lat: float, lon: float, tract: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """Returns JSON-serializable dict for Redis cache; None if no geography."""
     if tract is None:
         tract = get_census_tract(lat, lon)
     if not tract:
         return None
-    return _geo_from_tract(tract)
+    geo = _geo_from_tract(tract)
+    return geo.to_dict() if geo else None
+
+
+def get_economic_geography(lat: float, lon: float, tract: Optional[Dict[str, Any]] = None) -> Optional[EconomicGeo]:
+    """Public API: returns EconomicGeo, using cached dict in Redis and converting to dataclass."""
+    raw = _get_economic_geography_cached(lat, lon, tract)
+    return EconomicGeo.from_dict(raw) if raw else None
 
 
 def _acs_geo_params(geo: EconomicGeo) -> Dict[str, str]:

@@ -841,6 +841,7 @@ def _compute_single_score_internal(
     use_school_scoring = _is_schools_allowed(request, enable_schools, premium_code=premium_code)
     
     start_time = time.time()
+    start_perf = time.perf_counter()  # for place_sourcing_total (must use perf_counter)
     logger.info(f"HomeFit Score Request: {_safe_location_for_logs(location)}")
     if enable_schools is not None:
         logger.info(f"School scoring: {'enabled' if use_school_scoring else 'disabled'} (via query parameter)")
@@ -945,7 +946,7 @@ def _compute_single_score_internal(
                     use_school_scoring=use_school_scoring,
                     only_pillars=only_pillars,
                 )
-                _log_place_timing("total", start_time)
+                _log_place_timing("total", start_perf)
                 return response
         except Exception as e:
             logger.warning(f"Location cache read failed (non-fatal): {e}")
@@ -1537,7 +1538,7 @@ def _compute_single_score_internal(
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
-    _log_place_timing("total", start_time)
+    _log_place_timing("total", start_perf)
 
     # Build livability_pillars dict
     livability_pillars = {

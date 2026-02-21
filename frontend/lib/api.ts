@@ -82,9 +82,12 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   while (response.status === 202 || response.status === 409 || response.status === 200) {
     payload = await response.json().catch(() => null);
 
-    // Success case
-    if (payload && typeof payload.total_score === 'number') {
+    // Success case: proxy may return either the result object or the full job wrapper
+    if (payload && typeof (payload as { total_score?: number }).total_score === 'number') {
       return payload as unknown as ScoreResponse;
+    }
+    if (payload && (payload as { result?: unknown }).result && typeof ((payload as { result: { total_score?: number } }).result?.total_score) === 'number') {
+      return (payload as { result: ScoreResponse }).result;
     }
 
     const jobId = payload?.job_id;
@@ -113,22 +116,26 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
 
   if (!response.ok) {
     // Use payload if we already read the body in the loop; otherwise read once.
-    const errorPayload = payload ?? await response.json().catch(() => ({ detail: 'Unknown error' }));
+    const errorPayload = payload ?? await response.json().catch(() => null);
     const detail = errorPayload && typeof errorPayload === 'object' && 'detail' in errorPayload
       ? (errorPayload as { detail?: string }).detail
-      : 'Unknown error';
-    throw new Error(detail || `API error: ${response.status}`);
+      : null;
+    const message = (typeof detail === 'string' && detail.trim()) || `Request failed (${response.status})`;
+    throw new Error(message);
   }
 
   // Reuse payload from loop—response body was already consumed above, avoid double-read.
   const json = payload;
-  if (!json || typeof json.total_score !== 'number') {
-    const detail = json && typeof json === 'object' && 'detail' in json
-      ? (json as { detail?: string }).detail
-      : null;
-    throw new Error(detail || 'Unexpected scoring response. Please refresh and try again.');
+  if (json && typeof (json as { total_score?: number }).total_score === 'number') {
+    return json as unknown as ScoreResponse;
   }
-  return json as unknown as ScoreResponse;
+  if (json && (json as { result?: unknown }).result && typeof ((json as { result: { total_score?: number } }).result?.total_score) === 'number') {
+    return (json as { result: ScoreResponse }).result;
+  }
+  const detail = json && typeof json === 'object' && 'detail' in json
+    ? (json as { detail?: string }).detail
+    : null;
+  throw new Error(detail || 'Unexpected scoring response. Please refresh and try again.');
 }
 
 /** Fetch a single pillar's score for a location (tap-to-score flow). Uses same polling as getScore. */
