@@ -1,0 +1,19 @@
+---
+description: Commit and push changes to GitHub at the end of work sessions
+alwaysApply: true
+---
+
+# Commit and push after making changes
+
+When you have made code or config changes in this repo:
+
+1. **Before ending your turn**: run `git status` and, if there are modified or new files that belong to the current work:
+   - Stage the relevant files (do not stage unrelated local-only files like `.venv312/`, `analysis/*.jsonl`, or other artifacts the user may not want committed).
+   - Commit with a clear, concise message that describes what changed.
+   - Push to `origin main` (or the current branch).
+
+2. **Do not** leave uncommitted changes from the current session unless the user explicitly asks to leave them uncommitted.
+
+3. If the user has other unstaged changes (e.g. data files, cache) that are unrelated to the current task, only stage and commit the files that are part of the work you did.
+
+This ensures changes are always saved to GitHub without the user having to remind you.
