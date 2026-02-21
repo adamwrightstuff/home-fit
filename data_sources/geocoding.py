@@ -4,9 +4,19 @@ Uses Census API (for US addresses) with Nominatim fallback
 """
 
 import re
+import time
+import logging
 import requests
 from typing import Optional, Tuple, Dict
 from .cache import cached, CACHE_TTL
+
+logger = logging.getLogger(__name__)
+
+
+def _log_timing(phase: str, start: float) -> None:
+    """Log elapsed time for place-sourcing diagnostics. Grep logs for [TIMING]."""
+    elapsed = time.perf_counter() - start
+    logger.info(f"[TIMING] geocode_{phase} {elapsed:.3f}s")
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address"
@@ -1395,14 +1405,18 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         (lat, lon, zip_code, state, city, full_result) or None if failed
         full_result: Complete geocoding response including address structure
     """
+    t0_geocode = time.perf_counter()
     # Check if this is a US zip code (5-digit number)
     is_us_zip = _is_us_zip_code(address)
     
     # Try Census API first (for US addresses WITH street numbers, or US zip codes)
     query_state = _extract_state_from_query(address)
     if query_state and _has_street_number(address):  # Only use Census if street number present
+        t_census = time.perf_counter()
         census_result = _geocode_census(address)
         if census_result:
+            _log_timing("census", t_census)
+            _log_timing("total", t0_geocode)
             lat, lon, zip_code, state, city = census_result
             # Create a Nominatim-like result structure for compatibility
             full_result = {
@@ -1420,6 +1434,7 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             return lat, lon, zip_code, state, city, full_result
     elif is_us_zip:
         # For US zip codes, try Census API with zip code
+        t_census_zip = time.perf_counter()
         # Extract just the 5-digit zip code (remove ZIP+4 extension if present)
         zip_match = re.match(r'^(\d{5})', address.strip())
         if zip_match:
@@ -1465,12 +1480,15 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                                     },
                                     "type": "city"
                                 }
+                                _log_timing("census_zip", t_census_zip)
+                                _log_timing("total", t0_geocode)
                                 return lat, lon, zip_code, state, city, full_result
             except Exception as e:
                 print(f"⚠️  Census API zip code lookup failed: {e}, falling back to Nominatim")
     
     # Fall back to Nominatim
     try:
+        t_nominatim = time.perf_counter()
         # Extract state code from query to prioritize results from that state
         query_state = _extract_state_from_query(address)
         
@@ -1509,13 +1527,16 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
 
         response = requests.get(
             NOMINATIM_URL, params=params, headers=headers, timeout=10)
+        _log_timing("nominatim_first", t_nominatim)
 
         if response.status_code != 200:
+            _log_timing("total", t0_geocode)
             return None
 
         data = response.json()
 
         if not data:
+            _log_timing("total", t0_geocode)
             return None
 
         result = data[0]
@@ -1538,9 +1559,11 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         # OR if state mismatch detected, retry to find correct state
         if (is_neighborhood_query and is_city_result_type and not is_neighborhood_result_type) or state_mismatch:
             # Retry with limit=5 to find better matches
+            t_nominatim_retry = time.perf_counter()
             params["limit"] = 5
             retry_response = requests.get(
                 NOMINATIM_URL, params=params, headers=headers, timeout=10)
+            _log_timing("nominatim_retry", t_nominatim_retry)
             
             if retry_response.status_code == 200:
                 retry_data = retry_response.json()
@@ -1559,6 +1582,7 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                             result = best_match
                     # If no better match found, keep original result
 
+        t_osm_refine = time.perf_counter()
         # Check if this is a relation (city boundary) - if so, get better coordinates from OSM
         osm_type = result.get("osm_type")
         osm_id = result.get("osm_id")
@@ -1774,6 +1798,7 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                     else:
                         print(f"⚠️  Could not find alternative coordinates, using original (may be in water)")
 
+        _log_timing("osm_refinement", t_osm_refine)
         # Extract address details
         address_details = result.get("address", {})
         zip_code = address_details.get("postcode", "")
@@ -1781,10 +1806,12 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         city = address_details.get("city") or address_details.get(
             "town") or address_details.get("village", "")
 
+        _log_timing("total", t0_geocode)
         return lat, lon, zip_code, state, city, result
 
     except Exception as e:
         print(f"Geocoding error: {e}")
+        _log_timing("total", t0_geocode)
         return None
 
 

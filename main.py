@@ -17,6 +17,12 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+
+def _log_place_timing(phase: str, start: float) -> None:
+    """Log elapsed time for place-sourcing diagnostics. Grep logs for [TIMING]."""
+    elapsed = time.perf_counter() - start
+    logger.info(f"[TIMING] place_sourcing_{phase} {elapsed:.3f}s")
+
 # UPDATED IMPORTS - 10 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from data_sources.cache import (
@@ -885,7 +891,9 @@ def _compute_single_score_internal(
 
     # Step 1: Geocode the location (with full result for neighborhood detection)
     from data_sources.geocoding import geocode_with_full_result
+    t_geocode = time.perf_counter()
     geo_result = geocode_with_full_result(location)
+    _log_place_timing("geocode", t_geocode)
 
     if not geo_result:
         raise HTTPException(
@@ -899,7 +907,9 @@ def _compute_single_score_internal(
     
     # Detect if this is a neighborhood vs. standalone city
     from data_sources.data_quality import detect_location_scope
+    t_scope = time.perf_counter()
     location_scope = detect_location_scope(lat, lon, geocode_data)
+    _log_place_timing("detect_location_scope", t_scope)
     logger.info(f"Location scope: {location_scope}")
 
     # ------------------------------------------------------------------
@@ -909,6 +919,7 @@ def _compute_single_score_internal(
     # ------------------------------------------------------------------
     if not test_mode_enabled and only_pillars is None:
         try:
+            t_location_cache = time.perf_counter()
             location_cache_key = _generate_location_cache_key(
                 lat=lat,
                 lon=lon,
@@ -919,6 +930,7 @@ def _compute_single_score_internal(
                 job_categories=job_categories,
             )
             cached_template = redis_get_compressed_json(location_cache_key)
+            _log_place_timing("location_cache_read", t_location_cache)
             if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
                 cached_template["input"] = location  # reflect current user query string
                 response = _apply_allocation_to_cached_response(
@@ -928,6 +940,7 @@ def _compute_single_score_internal(
                     use_school_scoring=use_school_scoring,
                     only_pillars=only_pillars,
                 )
+                _log_place_timing("total", start_time)
                 return response
         except Exception as e:
             logger.warning(f"Location cache read failed (non-fatal): {e}")
@@ -944,7 +957,9 @@ def _compute_single_score_internal(
     shared_blob = None
     if not test_mode_enabled and only_pillars is None:
         try:
+            t_shared_read = time.perf_counter()
             shared_blob = redis_get_compressed_json(_generate_shared_prepillar_cache_key(lat, lon))
+            _log_place_timing("shared_prepillar_cache_read", t_shared_read)
         except Exception as e:
             logger.warning(f"Shared pre-pillar cache read failed (non-fatal): {e}")
 
@@ -961,6 +976,7 @@ def _compute_single_score_internal(
     else:
         # Compute a single area_type centrally for consistent radius profiles
         # Also pre-compute census_tract and density for pillars to avoid duplicate API calls
+        t_shared_compute = time.perf_counter()
         try:
             from data_sources import census_api as _ca
             from data_sources import data_quality as _dq
@@ -1118,6 +1134,7 @@ def _compute_single_score_internal(
                 logger.warning(f"Form context computation failed (non-fatal): {e}")
                 form_context = None
 
+        _log_place_timing("shared_data_compute", t_shared_compute)
         # Write shared pre-pillar cache for future requests at this location
         if not test_mode_enabled and only_pillars is None:
             try:
@@ -1141,6 +1158,7 @@ def _compute_single_score_internal(
 
     # Step 2: Calculate all pillar scores in parallel
     logger.debug("Calculating pillar scores in parallel...")
+    t_pillars = time.perf_counter()
 
     def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
         try:
@@ -1271,6 +1289,7 @@ def _compute_single_score_internal(
                 except Exception as e:
                     logger.warning(f"on_pillar_complete callback failed: {e}")
 
+    _log_place_timing("pillars_parallel", t_pillars)
     # Handle school scoring separately
     schools_found = False
     school_breakdown = {
@@ -1492,6 +1511,7 @@ def _compute_single_score_internal(
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
+    _log_place_timing("total", start_time)
 
     # Build livability_pillars dict
     livability_pillars = {
@@ -2059,6 +2079,7 @@ async def _stream_score_with_progress(
     Async generator that streams score calculation with real-time progress.
     Streams events as each pillar completes (no artificial delays).
     """
+    t0_stream = time.perf_counter()
     try:
         # Send started event immediately and flush
         yield f"event: started\n"
@@ -2069,7 +2090,9 @@ async def _stream_score_with_progress(
         
         # Step 1: Geocode
         from data_sources.geocoding import geocode_with_full_result
+        t_geocode = time.perf_counter()
         geo_result = await loop.run_in_executor(None, geocode_with_full_result, location)
+        _log_place_timing("geocode", t_geocode)
         
         if not geo_result:
             yield f"event: error\n"
@@ -2084,7 +2107,9 @@ async def _stream_score_with_progress(
         
         # Step 2: Detect location scope
         from data_sources.data_quality import detect_location_scope
+        t_scope = time.perf_counter()
         location_scope = await loop.run_in_executor(None, detect_location_scope, lat, lon, geocode_data)
+        _log_place_timing("detect_location_scope", t_scope)
 
         # Shared cross-user cache (Redis): if we have a cached response template for this location,
         # skip all heavy computation and stream results immediately.
@@ -2092,6 +2117,7 @@ async def _stream_score_with_progress(
         use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
         if not test_mode_enabled:
             try:
+                t_location_cache = time.perf_counter()
                 location_cache_key = _generate_location_cache_key(
                     lat=lat,
                     lon=lon,
@@ -2101,6 +2127,7 @@ async def _stream_score_with_progress(
                     only_pillars=None,
                 )
                 cached_template = redis_get_compressed_json(location_cache_key)
+                _log_place_timing("location_cache_read", t_location_cache)
                 if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
                     cached_template["input"] = location
                     response = _apply_allocation_to_cached_response(
@@ -2140,6 +2167,7 @@ async def _stream_score_with_progress(
 
                     yield f"event: done\n"
                     yield f"data: {json.dumps({'status': 'done', 'response': response})}\n\n"
+                    _log_place_timing("total", t0_stream)
                     return
             except Exception as e:
                 logger.warning(f"Stream location cache read failed (non-fatal): {e}")
@@ -2201,20 +2229,25 @@ async def _stream_score_with_progress(
                 logger.warning(f"Shared data preparation failed: {e}")
                 return None, 0.0, None, "unknown"
         
+        t_prepare_shared = time.perf_counter()
         census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
+        _log_place_timing("shared_data_compute", t_prepare_shared)
         
         # Pre-compute tree canopy
         tree_canopy_5km = None
         try:
             from data_sources.gee_api import get_tree_canopy_gee
+            t_tree = time.perf_counter()
             tree_canopy_5km = await loop.run_in_executor(
                 None, get_tree_canopy_gee, lat, lon, 5000, area_type
             )
+            _log_place_timing("tree_canopy", t_tree)
         except Exception:
             tree_canopy_5km = None
         
         # Compute form_context
         form_context = None
+        t_form = time.perf_counter()
         try:
             from data_sources.data_quality import get_form_context
             from data_sources import census_api, osm_api
@@ -2261,6 +2294,7 @@ async def _stream_score_with_progress(
         except Exception as e:
             logger.warning(f"Form context computation failed: {e}")
             form_context = None
+        _log_place_timing("form_context", t_form)
         
         # Build pillar tasks
         use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
@@ -2377,6 +2411,7 @@ async def _stream_score_with_progress(
                 loop.call_soon_threadsafe(all_pillars_complete.set)
         
         # Start pillar execution in background thread
+        t_pillars = time.perf_counter()
         pillar_thread = threading.Thread(target=run_pillars_parallel, daemon=True)
         pillar_thread.start()
         
@@ -2443,6 +2478,7 @@ async def _stream_score_with_progress(
         
         # Wait for thread to complete (brief wait)
         pillar_thread.join(timeout=1.0)
+        _log_place_timing("pillars_parallel", t_pillars)
         
         # Now build the final response using existing internal function
         # We've already computed all pillars, so we can reuse the internal function
@@ -2816,6 +2852,7 @@ async def _stream_score_with_progress(
                 logger.debug(f"Stream location cache write skipped/failed: {e}")
         
         yield f"event: done\n"
+        _log_place_timing("total", t0_stream)
         yield f"data: {json.dumps({'status': 'done', 'response': final_response})}\n\n"
         
     except Exception as e:
