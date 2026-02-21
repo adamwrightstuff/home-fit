@@ -26,6 +26,7 @@ def _log_place_timing(phase: str, start: float) -> None:
 # UPDATED IMPORTS - 10 Purpose-Driven Pillars
 from data_sources.geocoding import geocode
 from data_sources.cache import (
+    CACHE_KEY_PREFIX,
     clear_cache,
     get_cache_stats,
     cleanup_expired_cache,
@@ -1957,6 +1958,24 @@ _SCORE_JOBS_TTL_SECONDS = int(os.getenv("HOMEFIT_SCORE_JOBS_TTL_SECONDS", "900")
 _SCORE_JOBS_MAX = int(os.getenv("HOMEFIT_SCORE_JOBS_MAX", "500"))
 _SCORE_JOB_WORKERS = int(os.getenv("HOMEFIT_SCORE_JOB_WORKERS", "2"))
 _SCORE_JOB_EXECUTOR = ThreadPoolExecutor(max_workers=max(1, _SCORE_JOB_WORKERS))
+_SCORE_JOB_REDIS_MAX_BYTES = 512_000  # allow large result payload in Redis
+
+
+def _score_job_redis_key(job_id: str) -> str:
+    return f"{CACHE_KEY_PREFIX}:score_job:{job_id}"
+
+
+def _score_job_sync_to_redis(job_id: str, job: Dict[str, Any]) -> None:
+    """Write job state to Redis so other replicas can serve GET /score/jobs/{id}."""
+    try:
+        redis_set_compressed_json(
+            _score_job_redis_key(job_id),
+            job,
+            _SCORE_JOBS_TTL_SECONDS,
+            max_bytes=_SCORE_JOB_REDIS_MAX_BYTES,
+        )
+    except Exception as e:
+        logger.debug("Score job Redis sync (non-fatal): %s", e)
 
 
 def _score_jobs_cleanup(now_ts: Optional[float] = None) -> None:
@@ -2037,6 +2056,7 @@ def create_score_job(
     _score_jobs_cleanup(now_ts=now)
     with _SCORE_JOBS_LOCK:
         _SCORE_JOBS[job_id] = job
+    _score_job_sync_to_redis(job_id, job)
 
     def _on_pillar_complete(pillar_name: str, score: float) -> None:
         with _SCORE_JOBS_LOCK:
@@ -2048,10 +2068,14 @@ def create_score_job(
                 job["updated_at"] = time.time()
 
     def _run_job():
+        snap = None
         with _SCORE_JOBS_LOCK:
             if job_id in _SCORE_JOBS:
                 _SCORE_JOBS[job_id]["status"] = "running"
                 _SCORE_JOBS[job_id]["updated_at"] = time.time()
+                snap = dict(_SCORE_JOBS[job_id])
+        if snap:
+            _score_job_sync_to_redis(job_id, snap)
         try:
             result = _compute_single_score_internal(
                 location=location,
@@ -2066,17 +2090,25 @@ def create_score_job(
                 on_pillar_complete=_on_pillar_complete,
                 only_pillars=only_pillars,
             )
+            done_snap = None
             with _SCORE_JOBS_LOCK:
                 if job_id in _SCORE_JOBS:
                     _SCORE_JOBS[job_id]["status"] = "done"
                     _SCORE_JOBS[job_id]["result"] = result
                     _SCORE_JOBS[job_id]["updated_at"] = time.time()
+                    done_snap = dict(_SCORE_JOBS[job_id])
+            if done_snap:
+                _score_job_sync_to_redis(job_id, done_snap)
         except Exception as e:
+            err_snap = None
             with _SCORE_JOBS_LOCK:
                 if job_id in _SCORE_JOBS:
                     _SCORE_JOBS[job_id]["status"] = "error"
                     _SCORE_JOBS[job_id]["error"] = str(e)
                     _SCORE_JOBS[job_id]["updated_at"] = time.time()
+                    err_snap = dict(_SCORE_JOBS[job_id])
+            if err_snap:
+                _score_job_sync_to_redis(job_id, err_snap)
 
     _SCORE_JOB_EXECUTOR.submit(_run_job)
     return {"job_id": job_id, "status": "queued"}
@@ -2084,28 +2116,30 @@ def create_score_job(
 
 @app.get("/score/jobs/{job_id}", dependencies=[Depends(require_proxy_auth)])
 def get_score_job(job_id: str):
-    """Poll async score job status/result. Returns partial pillar progress when status is running."""
+    """Poll async score job status/result. Reads from Redis first so any replica can serve (multi-replica safe)."""
     _score_jobs_cleanup()
-    with _SCORE_JOBS_LOCK:
-        job = _SCORE_JOBS.get(job_id)
-        if not job:
-            raise HTTPException(status_code=404, detail="Job not found")
-        status = str(job.get("status") or "unknown")
-        response: Dict[str, Any] = {
-            "job_id": job_id,
-            "status": status,
-            "created_at": job.get("created_at"),
-            "updated_at": job.get("updated_at"),
-        }
-        if status == "done":
-            response["result"] = job.get("result")
-        elif status == "error":
-            response["detail"] = job.get("error") or "Job failed"
-        # Expose partial pillar progress for running (and done) so frontend can show progress
-        partial = job.get("partial")
-        if partial:
-            response["partial"] = partial
-        return response
+    # Redis first: so poll from another replica finds the job
+    job = redis_get_compressed_json(_score_job_redis_key(job_id))
+    if not job:
+        with _SCORE_JOBS_LOCK:
+            job = _SCORE_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    status = str(job.get("status") or "unknown")
+    response: Dict[str, Any] = {
+        "job_id": job_id,
+        "status": status,
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
+    if status == "done":
+        response["result"] = job.get("result")
+    elif status == "error":
+        response["detail"] = job.get("error") or "Job failed"
+    partial = job.get("partial")
+    if partial:
+        response["partial"] = partial
+    return response
 
 
 async def _stream_score_with_progress(

@@ -110,6 +110,11 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
       await new Promise((r) => setTimeout(r, pollDelayMs));
       pollDelayMs = Math.min(2500, Math.round(pollDelayMs * 1.25));
       response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(String(jobId))}`);
+      // Retry once on 404 (e.g. poll hit a different replica before Redis sync)
+      if (response.status === 404) {
+        await new Promise((r) => setTimeout(r, 1500));
+        response = await fetchOnce(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(String(jobId))}`);
+      }
       continue;
     }
 
