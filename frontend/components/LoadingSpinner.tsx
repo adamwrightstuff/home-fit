@@ -22,13 +22,13 @@ export default function LoadingSpinner({ startTime }: LoadingSpinnerProps) {
 
   const getTimeMessage = () => {
     if (elapsedSeconds === 0) {
-      return 'This typically takes 20-40 seconds'
-    } else if (elapsedSeconds < 20) {
-      return `Calculating... (${elapsedSeconds}s elapsed)`
-    } else if (elapsedSeconds < 40) {
-      return `Still processing... (${elapsedSeconds}s elapsed)`
+      return 'This typically takes 20–90 seconds; some pillars take longer.'
+    } else if (elapsedSeconds < 30) {
+      return `Calculating... (${elapsedSeconds}s)`
+    } else if (elapsedSeconds < 90) {
+      return `Still calculating... (${elapsedSeconds}s)`
     } else {
-      return `Taking longer than usual... (${elapsedSeconds}s elapsed)`
+      return `Taking longer than usual... (${elapsedSeconds}s)`
     }
   }
 

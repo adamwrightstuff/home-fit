@@ -62,7 +62,7 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   // Launch hardening: scoring can take longer than a serverless request limit.
   // We transparently handle async job polling when the API returns 202 {job_id}.
   const start = Date.now();
-  const maxWaitMs = 4 * 60 * 1000; // client-side cap (keep UI responsive)
+  const maxWaitMs = 8 * 60 * 1000; // 8 min — slow pillars (Natural Beauty, Census retries) can take 1–2 min
   let pollDelayMs = 750;
 
   async function fetchOnce(fetchUrl: string): Promise<Response> {
@@ -217,7 +217,7 @@ export async function getScoreWithProgress(
   }
 
   const url = `${API_BASE_URL}/api/score?${searchParams.toString()}`;
-  const maxWaitMs = 4 * 60 * 1000;
+  const maxWaitMs = 8 * 60 * 1000; // 8 min — Natural Beauty / Economic Security can take 1–2 min with retries
   let pollDelayMs = 800;
 
   let res = await fetch(url, {
