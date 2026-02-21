@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react'
 import InteractiveMap from './InteractiveMap'
+import ProgressBar from './ProgressBar'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
-import { getScore } from '@/lib/api'
+import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
@@ -46,6 +47,8 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
   const [totalScore, setTotalScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
 
   const togglePillar = useCallback((key: string) => {
     setSelectedPillars((prev) => {
@@ -73,6 +76,8 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
     const selected = Array.from(selectedPillars)
     if (selected.length === 0) return
     setLoading(true)
+    setProgress(5)
+    setScoreProgress({})
     try {
       const prioritiesForRequest: PillarPriorities = {
         active_outdoors: 'None',
@@ -89,14 +94,23 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
       })
-      const resp = await getScore({
-        location: place.location,
-        only: selected.join(','),
-        priorities: JSON.stringify(prioritiesForRequest),
-        job_categories: searchOptions.job_categories?.join(','),
-        include_chains: searchOptions.include_chains,
-        enable_schools: searchOptions.enable_schools,
-      })
+      const resp = await getScoreWithProgress(
+        {
+          location: place.location,
+          only: selected.join(','),
+          priorities: JSON.stringify(prioritiesForRequest),
+          job_categories: searchOptions.job_categories?.join(','),
+          include_chains: searchOptions.include_chains,
+          enable_schools: searchOptions.enable_schools,
+        },
+        (partial) => {
+          setScoreProgress((prev) => ({ ...prev, ...partial }))
+          const completed = Object.keys(partial).length
+          const total = selected.length
+          const pct = total > 0 ? Math.min(98, 5 + (completed / total) * 90) : 5
+          setProgress(pct)
+        }
+      )
       const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
       const scores: Record<string, { score: number }> = {}
       selected.forEach((k) => {
@@ -105,10 +119,13 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
       })
       setPillarScores(scores)
       setTotalScore(typeof resp.total_score === 'number' ? resp.total_score : null)
+      setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
     } finally {
       setLoading(false)
+      setProgress(0)
+      setScoreProgress({})
     }
   }, [place.location, searchOptions, selectedPillars, selectedPriorities, onError])
 
@@ -269,6 +286,33 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
           boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
         }}
       >
+        {loading && (
+          <div style={{ marginBottom: '1rem' }}>
+            <ProgressBar progress={progress} />
+            <div className="hf-muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem 0.75rem', alignItems: 'center' }}>
+              {Object.keys(scoreProgress).length === 0 ? (
+                <span>Preparing location and shared data…</span>
+              ) : (
+                PILLAR_ORDER.filter((k) => selectedPillars.has(k)).map((key) => {
+                  const meta = PILLAR_META[key]
+                  const done = key in scoreProgress
+                  return (
+                    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      {done ? (
+                        <>
+                          <span style={{ color: 'var(--hf-success, #22c55e)' }} aria-hidden>✓</span>
+                          <span>{meta.icon} {meta.name}</span>
+                        </>
+                      ) : (
+                        <span style={{ opacity: 0.85 }}>{meta.icon} {meta.name}…</span>
+                      )}
+                    </span>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        )}
         <button
           type="button"
           onClick={runScore}
