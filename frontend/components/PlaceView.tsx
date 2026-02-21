@@ -52,7 +52,7 @@ export default function PlaceView({ place, searchOptions, onError, onBack }: Pla
           include_chains: searchOptions.include_chains,
           enable_schools: searchOptions.enable_schools,
         })
-        const pillars = (resp.livability_pillars as Record<string, { score?: number }>) || {}
+        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
         const data = pillars[pillar]
         if (data != null && typeof data.score === 'number') {
           setPillarScores((prev) => ({ ...prev, [pillar]: { score: data.score! } }))
