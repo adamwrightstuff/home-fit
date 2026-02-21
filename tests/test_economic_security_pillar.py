@@ -77,7 +77,10 @@ class TestEconomicSecurityPillar(unittest.TestCase):
         self.assertIn("breakdown", details)
         self.assertIn("summary", details)
         self.assertIn("data_quality", details)
-        self.assertIn("resilience_and_diversification", details["breakdown"])
+        self.assertIn("resilience", details["breakdown"])
+        self.assertIn("density", details["breakdown"])
+        self.assertIn("mobility", details["breakdown"])
+        self.assertIn("ecosystem", details["breakdown"])
 
     def test_job_category_overlays_adjust_score_when_requested(self):
         import pillars.economic_security as econ

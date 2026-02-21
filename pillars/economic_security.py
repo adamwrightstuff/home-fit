@@ -1,10 +1,14 @@
 """
-Economic Security & Opportunity (profession-agnostic)
+Economic Security & Opportunity (Career Ecosystem)
 
-Core idea: How strong and resilient is the local economic ecosystem for a typical worker,
-regardless of occupation?
+Score: S = w1·D + w2·M + w3·E + w4·R (0–100)
 
-This pillar is area-level (not person-level) and normalized within
+- D = Density: volume of jobs and labor-market depth (employment ratio, QCEW jobs/1k, estabs/1k, wage floor).
+- M = Mobility: upward trajectory and hot market (job growth, establishment churn, wage upside).
+- E = Ecosystem: skill adjacency and activity (industry diversity, establishment density).
+- R = Resilience: market stability (industry diversification, anchored vs cyclical balance).
+
+All inputs from free public APIs (Census ACS/BDS, BLS QCEW/OEWS). Normalized within
 (Census Division × area-type bucket) so rural economies aren't punished for being smaller.
 """
 
@@ -325,29 +329,23 @@ def get_economic_security_score(
         "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
     }
 
-    # Sub-index structure: job market, wage distribution, dynamism, demand, resilience
-    job_market_weights = {"unemployment_rate": 0.60, "emp_pop_ratio": 0.40}
-    base_job_market_score, job_market_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in job_market_weights.keys()},
-        job_market_weights,
+    # Career ecosystem: S = w1·D + w2·M + w3·E + w4·R
+    density_weights = {"emp_pop_ratio": 0.25, "qcew_employment_per_1k": 0.30, "estabs_per_1k": 0.25, "wage_p25_annual": 0.20}
+    density_score, density_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in density_weights.keys()},
+        density_weights,
     )
 
-    wage_distribution_weights = {"wage_p25_annual": 0.50, "wage_p75_annual": 0.50}
-    wage_distribution_score, wage_dist_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in wage_distribution_weights.keys()},
-        wage_distribution_weights,
+    mobility_weights = {"qcew_employment_growth_pct": 0.40, "net_estab_entry_per_1k": 0.35, "wage_p75_annual": 0.25}
+    mobility_score, mobility_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in mobility_weights.keys()},
+        mobility_weights,
     )
 
-    dynamism_weights = {"net_estab_entry_per_1k": 0.50, "estabs_per_1k": 0.50}
-    dynamism_score, dynamism_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in dynamism_weights.keys()},
-        dynamism_weights,
-    )
-
-    demand_weights = {"qcew_employment_per_1k": 0.50, "qcew_employment_growth_pct": 0.50}
-    demand_score, demand_renorm = _weighted_avg(
-        {k: sub_scores.get(k) for k in demand_weights.keys()},
-        demand_weights,
+    ecosystem_weights = {"industry_diversity": 0.70, "estabs_per_1k": 0.30}
+    ecosystem_score, ecosystem_renorm = _weighted_avg(
+        {k: sub_scores.get(k) for k in ecosystem_weights.keys()},
+        ecosystem_weights,
     )
 
     resilience_weights = {"industry_diversity": 0.60, "anchored_balance": 0.40}
@@ -357,27 +355,19 @@ def get_economic_security_score(
     )
 
     components = {
-        "job_market_strength": base_job_market_score,
-        "wage_distribution": wage_distribution_score,
-        "business_dynamism": dynamism_score,
-        "demand_side": demand_score,
-        "resilience_and_diversification": resilience_score,
+        "density": density_score,
+        "mobility": mobility_score,
+        "ecosystem": ecosystem_score,
+        "resilience": resilience_score,
     }
-
-    component_weights = {
-        "job_market_strength": 0.38,
-        "wage_distribution": 0.20,
-        "business_dynamism": 0.18,
-        "demand_side": 0.12,
-        "resilience_and_diversification": 0.12,
-    }
+    component_weights = {"density": 0.30, "mobility": 0.30, "ecosystem": 0.20, "resilience": 0.20}
 
     base_final_score, base_component_renorm = _weighted_avg(components, component_weights)
     base_final_score = float(base_final_score or 0.0)
 
     selected = parse_job_categories(job_categories)
     overlays_payload: Optional[Dict[str, Any]] = None
-    personalized_job_market: Optional[float] = None
+    personalized_density: Optional[float] = None
 
     if selected:
         overlays_payload = compute_job_category_overlays(
@@ -385,7 +375,7 @@ def get_economic_security_score(
             geo=effective_geo,
             division=division,
             area_bucket=bucket,
-            base_job_market_strength=float(base_job_market_score or 0.0),
+            base_job_market_strength=float(density_score or 0.0),
             public_admin_share_pct=dp03_now.get("DP03_0045PE") if isinstance(dp03_now.get("DP03_0045PE"), (int, float)) else None,
         )
         overlays = (overlays_payload or {}).get("job_category_overlays", {}) or {}
@@ -395,11 +385,10 @@ def get_economic_security_score(
             if isinstance(v, (int, float)):
                 vals.append(float(v))
         if vals:
-            personalized_job_market = sum(vals) / len(vals)
+            personalized_density = sum(vals) / len(vals)
 
-    # If personalized job-market is available, replace only that component and recompute pillar.
-    if isinstance(personalized_job_market, (int, float)):
-        components["job_market_strength"] = float(personalized_job_market)
+    if isinstance(personalized_density, (int, float)):
+        components["density"] = float(personalized_density)
         final_score, component_renorm = _weighted_avg(components, component_weights)
     else:
         final_score, component_renorm = base_final_score, base_component_renorm
@@ -433,28 +422,23 @@ def get_economic_security_score(
     dq = assess_pillar_data_quality("economic_security", combined_data, lat, lon, area_type or "suburban")
 
     breakdown = {
-        "job_market_strength": {
-            "score": float(components["job_market_strength"] or 0.0),
-            "weights": job_market_renorm,
-            "metrics": {k: sub_scores.get(k) for k in job_market_weights.keys()},
+        "density": {
+            "score": float(components["density"] or 0.0),
+            "weights": density_renorm,
+            "metrics": {k: sub_scores.get(k) for k in density_weights.keys()},
         },
-        "wage_distribution": {
-            "score": wage_distribution_score,
-            "weights": wage_dist_renorm,
-            "metrics": {k: sub_scores.get(k) for k in wage_distribution_weights.keys()},
+        "mobility": {
+            "score": float(components["mobility"] or 0.0),
+            "weights": mobility_renorm,
+            "metrics": {k: sub_scores.get(k) for k in mobility_weights.keys()},
         },
-        "business_dynamism": {
-            "score": dynamism_score,
-            "weights": dynamism_renorm,
-            "metrics": {k: sub_scores.get(k) for k in dynamism_weights.keys()},
+        "ecosystem": {
+            "score": float(components["ecosystem"] or 0.0),
+            "weights": ecosystem_renorm,
+            "metrics": {k: sub_scores.get(k) for k in ecosystem_weights.keys()},
         },
-        "demand_side": {
-            "score": demand_score,
-            "weights": demand_renorm,
-            "metrics": {k: sub_scores.get(k) for k in demand_weights.keys()},
-        },
-        "resilience_and_diversification": {
-            "score": resilience_score,
+        "resilience": {
+            "score": float(components["resilience"] or 0.0),
             "weights": resilience_renorm,
             "metrics": {k: sub_scores.get(k) for k in resilience_weights.keys()},
         },

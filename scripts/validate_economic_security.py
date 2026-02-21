@@ -70,13 +70,7 @@ ARCHETYPES = {
     "Boise, ID": "smaller_interior",
 }
 
-COMPONENT_KEYS = [
-    "job_market_strength",
-    "wage_distribution",
-    "business_dynamism",
-    "demand_side",
-    "resilience_and_diversification",
-]
+COMPONENT_KEYS = ["density", "mobility", "ecosystem", "resilience"]
 
 
 def _percentile(sorted_vals: List[float], p: float) -> float:
@@ -216,16 +210,15 @@ def main() -> None:
             "area_bucket": area_bucket,
             "score": ec.get("score"),
             "base_score": ec.get("base_score"),
-            "job_market_strength": components.get("job_market_strength"),
-            "wage_distribution": components.get("wage_distribution"),
-            "business_dynamism": components.get("business_dynamism"),
-            "demand_side": components.get("demand_side"),
-            "resilience_and_diversification": components.get("resilience_and_diversification"),
+            "density": components.get("density"),
+            "mobility": components.get("mobility"),
+            "ecosystem": components.get("ecosystem"),
+            "resilience": components.get("resilience"),
             "industry_hhi": sm.get("industry_diversity_hhi"),
             "anchored_balance": sm.get("anchored_balance"),
         }
         rows.append(row)
-        print(f"score={ec.get('score')} resilience={row.get('resilience_and_diversification')}")
+        print(f"score={ec.get('score')} resilience={row.get('resilience')}")
 
         if i < len(LOCATIONS) - 1 and args.delay > 0:
             time.sleep(args.delay)
@@ -263,12 +256,12 @@ def main() -> None:
         grp = by_arch.get(arch, [])
         if not grp:
             continue
-        res_vals = [r["resilience_and_diversification"] for r in grp if r.get("resilience_and_diversification") is not None]
+        res_vals = [r["resilience"] for r in grp if r.get("resilience") is not None]
         avg = sum(res_vals) / len(res_vals) if res_vals else 0
         locs = ", ".join(r["location"] for r in grp)
         print(f"\n  {arch}: avg_resilience={round(avg, 1)} ({locs})")
         for r in grp:
-            res = r.get("resilience_and_diversification")
+            res = r.get("resilience")
             hhi = r.get("industry_hhi")
             ab = r.get("anchored_balance")
             print(f"    {r['location']}: resilience={res} HHI={hhi} anchored_balance={ab}")
