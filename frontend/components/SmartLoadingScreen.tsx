@@ -42,6 +42,13 @@ const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; descriptio
   {} as Record<PillarKey, { emoji: string; name: string; description: string }>
 )
 
+/** Progress never shows 0%: start here and ramp while waiting for first pillar. */
+const PROGRESS_FLOOR = 8
+/** Cap for optimistic ramp while no pillars have completed (so we don't sit at floor for ages). */
+const PROGRESS_WAITING_CAP = 28
+/** How long (ms) to ramp from floor to waiting cap when no partial data yet. */
+const PROGRESS_RAMP_MS = 8000
+
 export default function SmartLoadingScreen({ 
   location, 
   on_complete, 
@@ -55,11 +62,12 @@ export default function SmartLoadingScreen({
   const [current_pillar, set_current_pillar] = useState<string | null>(null)
   const [completed_pillars, set_completed_pillars] = useState<Map<string, { score: number; details?: any }>>(new Map())
   const [expected_pillars, set_expected_pillars] = useState<PillarKey[]>(PILLAR_ORDER)
-  const [progress, set_progress] = useState(0)
+  const [progress, set_progress] = useState(PROGRESS_FLOOR)
   const [coordinates, set_coordinates] = useState<{ lat: number; lon: number } | null>(null)
   const [status, set_status] = useState<'starting' | 'analyzing' | 'complete'>('starting')
   const [final_score, set_final_score] = useState<number | null>(null)
-  const progress_ref = useRef(0)
+  const progress_ref = useRef(PROGRESS_FLOOR)
+  const ramp_start_ref = useRef<number | null>(null)
 
   useEffect(() => {
     progress_ref.current = progress
@@ -72,19 +80,19 @@ export default function SmartLoadingScreen({
     set_current_pillar(null)
     set_completed_pillars(new Map())
     set_expected_pillars(PILLAR_ORDER)
-    set_progress(0)
+    set_progress(PROGRESS_FLOOR)
     set_coordinates(null)
     set_status('analyzing')
     set_final_score(null)
+    ramp_start_ref.current = Date.now()
 
-    const SOFT_FLOOR = 6
-    const SOFT_CAP = 32
     const totalPillars = PILLAR_ORDER.length
 
     getScoreWithProgress(
       { location, tokens, priorities, job_categories, include_chains, enable_schools },
       (partial) => {
         if (cancelledRef.current) return
+        ramp_start_ref.current = null // stop optimistic ramp once we have real data
         set_completed_pillars((prev) => {
           const next = new Map(prev)
           for (const [name, data] of Object.entries(partial)) {
@@ -94,7 +102,7 @@ export default function SmartLoadingScreen({
         })
         const completed = Object.keys(partial).length
         const frac = Math.min(1, completed / Math.max(1, totalPillars))
-        set_progress(SOFT_FLOOR + frac * (100 - SOFT_FLOOR))
+        set_progress(PROGRESS_FLOOR + frac * (100 - PROGRESS_FLOOR))
       },
       { getCancelled: () => cancelledRef.current }
     )
@@ -131,6 +139,29 @@ export default function SmartLoadingScreen({
       cancelledRef.current = true
     }
   }, [location, priorities, tokens, job_categories, include_chains, enable_schools, on_complete, on_error])
+
+  // While we have no pillar results yet, ramp progress from floor to waiting cap so the bar doesn't sit at one value for too long
+  useEffect(() => {
+    if (status !== 'analyzing' || completed_pillars.size > 0) return
+    const start = ramp_start_ref.current ?? Date.now()
+    let rafId: number
+    const tick = () => {
+      if (cancelledRef.current) return
+      // Stop ramping once we have real partial data (callback sets ramp_start_ref.current = null)
+      if (ramp_start_ref.current === null) return
+      const elapsed = Date.now() - start
+      if (elapsed >= PROGRESS_RAMP_MS) {
+        set_progress((p) => Math.max(p, PROGRESS_WAITING_CAP))
+        return
+      }
+      const t = elapsed / PROGRESS_RAMP_MS
+      const ramped = PROGRESS_FLOOR + t * (PROGRESS_WAITING_CAP - PROGRESS_FLOOR)
+      set_progress((p) => (p < PROGRESS_WAITING_CAP ? Math.max(p, Math.round(ramped)) : p))
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [status, completed_pillars.size])
 
   // Update current pillar based on which ones are not yet completed
   useEffect(() => {
