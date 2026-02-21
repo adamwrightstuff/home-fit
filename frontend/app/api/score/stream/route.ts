@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const params = new URLSearchParams();
   params.set('location', location);
-  for (const key of ['tokens', 'priorities', 'include_chains', 'job_categories'] as const) {
+  for (const key of ['tokens', 'priorities', 'include_chains', 'job_categories', 'only'] as const) {
     const v = sp.get(key);
     if (v != null) params.set(key, v);
   }

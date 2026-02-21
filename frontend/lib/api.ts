@@ -203,6 +203,7 @@ export async function getScoreWithProgress(
   const searchParams = new URLSearchParams({ location: params.location });
   if (params.tokens) searchParams.append('tokens', params.tokens);
   if (params.priorities) searchParams.append('priorities', params.priorities);
+  if (params.only) searchParams.append('only', params.only);
   if (params.job_categories) searchParams.append('job_categories', params.job_categories);
   if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
   if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -622,10 +623,22 @@ def _apply_schools_disabled_weight_override(
     return out
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Run blocking GEE init in executor so app does not accept traffic until GEE is ready (prevents 502)."""
+    logger.info("Startup: preloading GEE (can take 1–3 min)...")
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, lambda: __import__("data_sources.gee_api"))
+    logger.info("Startup: GEE preload done.")
+    yield
+    # shutdown if needed
+
+
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 10 pillars",
-    version=API_VERSION
+    version=API_VERSION,
+    lifespan=_lifespan,
 )
 
 # CORS middleware
@@ -642,14 +655,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def _startup_warm_gee():
-    """Initialize GEE before accepting requests. Prevents first request from blocking ~3 min and causing 502 (proxy timeout)."""
-    logger.info("Startup: preloading GEE (can take 1–3 min)...")
-    import data_sources.gee_api  # noqa: F401
-    logger.info("Startup: GEE preload done.")
 
 
 @app.get("/")
@@ -2158,12 +2163,16 @@ async def _stream_score_with_progress(
     enable_schools: Optional[bool] = None,
     job_categories: Optional[str] = None,
     test_mode: bool = False,
-    request: Optional[Request] = None
+    request: Optional[Request] = None,
+    only_pillars: Optional[set[str]] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
     Streams events as each pillar completes (no artificial delays).
+    If only_pillars is set, only those pillars are computed and shared work (GEE, form_context) is gated.
     """
+    def _include_pillar(name: str) -> bool:
+        return only_pillars is None or name in only_pillars
     t0_stream = time.perf_counter()
     try:
         # Send started event immediately and flush
@@ -2275,22 +2284,25 @@ async def _stream_score_with_progress(
                 density = _ca.get_population_density(lat, lon, tract=census_tract) or 0.0
                 
                 business_count = 0
-                try:
-                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                    if business_data:
-                        all_businesses = (business_data.get("tier1_daily", []) + 
-                                        business_data.get("tier2_social", []) +
-                                        business_data.get("tier3_culture", []) +
-                                        business_data.get("tier4_services", []))
-                        business_count = len(all_businesses)
-                except Exception:
-                    pass
-                
-                try:
-                    arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
-                except Exception:
-                    arch_diversity_data = None
-                
+                if only_pillars is None or "neighborhood_amenities" in only_pillars:
+                    try:
+                        business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
+                        if business_data:
+                            all_businesses = (business_data.get("tier1_daily", []) +
+                                            business_data.get("tier2_social", []) +
+                                            business_data.get("tier3_culture", []) +
+                                            business_data.get("tier4_services", []))
+                            business_count = len(all_businesses)
+                    except Exception:
+                        pass
+
+                arch_diversity_data = None
+                if only_pillars is None or "built_beauty" in only_pillars:
+                    try:
+                        arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
+                    except Exception:
+                        arch_diversity_data = None
+
                 built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
                 
                 try:
@@ -2317,69 +2329,71 @@ async def _stream_score_with_progress(
         t_prepare_shared = time.perf_counter()
         census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
         _log_place_timing("shared_data_compute", t_prepare_shared)
-        
-        # Pre-compute tree canopy
+
+        # Pre-compute tree canopy only when pillars that need it are requested
         tree_canopy_5km = None
-        try:
-            from data_sources.gee_api import get_tree_canopy_gee
-            t_tree = time.perf_counter()
-            tree_canopy_5km = await loop.run_in_executor(
-                None, get_tree_canopy_gee, lat, lon, 5000, area_type
-            )
-            _log_place_timing("tree_canopy", t_tree)
-        except Exception:
-            tree_canopy_5km = None
-        
-        # Compute form_context
+        if _include_pillar("active_outdoors") or _include_pillar("natural_beauty"):
+            try:
+                from data_sources.gee_api import get_tree_canopy_gee
+                t_tree = time.perf_counter()
+                tree_canopy_5km = await loop.run_in_executor(
+                    None, get_tree_canopy_gee, lat, lon, 5000, area_type
+                )
+                _log_place_timing("tree_canopy", t_tree)
+            except Exception:
+                tree_canopy_5km = None
+
+        # Compute form_context only when beauty pillars are requested
         form_context = None
-        t_form = time.perf_counter()
-        try:
-            from data_sources.data_quality import get_form_context
-            from data_sources import census_api, osm_api
-            
-            if arch_diversity_data:
-                levels_entropy = arch_diversity_data.get("levels_entropy")
-                building_type_diversity = arch_diversity_data.get("building_type_diversity")
-                built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
-                footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
-                material_profile = arch_diversity_data.get("material_profile")
-            else:
-                levels_entropy = building_type_diversity = built_coverage_ratio = footprint_area_cv = material_profile = None
-            
+        if _include_pillar("built_beauty") or _include_pillar("natural_beauty"):
+            t_form = time.perf_counter()
             try:
-                charm_data = await loop.run_in_executor(None, osm_api.query_charm_features, lat, lon, 1000)
-                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
-            except Exception:
-                historic_landmarks = 0
-            
-            year_built_data = None
-            median_year_built = None
-            pre_1940_pct = None
-            try:
-                year_built_data = await loop.run_in_executor(None, census_api.get_year_built_data, lat, lon)
-                if year_built_data:
-                    median_year_built = year_built_data.get('median_year_built')
-                    pre_1940_pct = year_built_data.get('pre_1940_pct')
-            except Exception:
-                pass
-            
-            form_context = get_form_context(
-                area_type=area_type,
-                density=density,
-                levels_entropy=levels_entropy,
-                building_type_diversity=building_type_diversity,
-                historic_landmarks=historic_landmarks,
-                median_year_built=median_year_built,
-                built_coverage_ratio=built_coverage_ratio,
-                footprint_area_cv=footprint_area_cv,
-                pre_1940_pct=pre_1940_pct,
-                material_profile=material_profile,
-                use_multinomial=True
-            )
-        except Exception as e:
-            logger.warning(f"Form context computation failed: {e}")
-            form_context = None
-        _log_place_timing("form_context", t_form)
+                from data_sources.data_quality import get_form_context
+                from data_sources import census_api, osm_api
+
+                if arch_diversity_data:
+                    levels_entropy = arch_diversity_data.get("levels_entropy")
+                    building_type_diversity = arch_diversity_data.get("building_type_diversity")
+                    built_coverage_ratio = arch_diversity_data.get("built_coverage_ratio")
+                    footprint_area_cv = arch_diversity_data.get("footprint_area_cv")
+                    material_profile = arch_diversity_data.get("material_profile")
+                else:
+                    levels_entropy = building_type_diversity = built_coverage_ratio = footprint_area_cv = material_profile = None
+
+                try:
+                    charm_data = await loop.run_in_executor(None, osm_api.query_charm_features, lat, lon, 1000)
+                    historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+                except Exception:
+                    historic_landmarks = 0
+
+                year_built_data = None
+                median_year_built = None
+                pre_1940_pct = None
+                try:
+                    year_built_data = await loop.run_in_executor(None, census_api.get_year_built_data, lat, lon)
+                    if year_built_data:
+                        median_year_built = year_built_data.get('median_year_built')
+                        pre_1940_pct = year_built_data.get('pre_1940_pct')
+                except Exception:
+                    pass
+
+                form_context = get_form_context(
+                    area_type=area_type,
+                    density=density,
+                    levels_entropy=levels_entropy,
+                    building_type_diversity=building_type_diversity,
+                    historic_landmarks=historic_landmarks,
+                    median_year_built=median_year_built,
+                    built_coverage_ratio=built_coverage_ratio,
+                    footprint_area_cv=footprint_area_cv,
+                    pre_1940_pct=pre_1940_pct,
+                    material_profile=material_profile,
+                    use_multinomial=True
+                )
+            except Exception as e:
+                logger.warning(f"Form context computation failed: {e}")
+                form_context = None
+            _log_place_timing("form_context", t_form)
         
         # Build pillar tasks
         use_school_scoring = enable_schools if enable_schools is not None else ENABLE_SCHOOL_SCORING
@@ -2458,7 +2472,10 @@ async def _stream_score_with_progress(
                     'lat': lat, 'lon': lon, 'area_type': area_type
                 })
             )
-        
+
+        if only_pillars is not None:
+            pillar_tasks = [(name, func, kwargs) for name, func, kwargs in pillar_tasks if name in only_pillars]
+
         # Execute pillars (parallel or sequential) and stream as each completes
         def _execute_pillar(name: str, func, **kwargs):
             try:
@@ -2956,11 +2973,13 @@ async def stream_score(
     include_chains: bool = True,
     enable_schools: Optional[bool] = None,
     job_categories: Optional[str] = None,
-    test_mode: Optional[bool] = False
+    test_mode: Optional[bool] = False,
+    only: Optional[str] = None,
 ):
     """
     Server-Sent Events endpoint for streaming score calculation progress.
     Streams events as each pillar completes in real-time (no artificial delays).
+    If only=pillar1,pillar2 is set, only those pillars are computed (same as /score/jobs).
     
     Events:
     - 'started': Calculation begins
@@ -2972,6 +2991,18 @@ async def stream_score(
     if not ENABLE_STREAMING:
         # Launch default: disable SSE to reduce long-lived connection load.
         raise HTTPException(status_code=404, detail="Streaming is disabled")
+
+    only_pillars: Optional[set[str]] = None
+    if only:
+        raw_only = {part.strip() for part in only.split(",") if part.strip()}
+        if raw_only:
+            expanded = set()
+            for name in raw_only:
+                if name == "beauty":
+                    expanded.update({"built_beauty", "natural_beauty"})
+                else:
+                    expanded.add(name)
+            only_pillars = expanded if expanded else None
 
     try:
         # Parse priorities
@@ -2994,7 +3025,8 @@ async def stream_score(
                 enable_schools=enable_schools,
                 job_categories=job_categories,
                 test_mode=bool(test_mode),
-                request=request
+                request=request,
+                only_pillars=only_pillars,
             ),
             media_type="text/event-stream",
             headers={

@@ -16,6 +16,7 @@ interface SmartLoadingScreenProps {
   on_error?: (error: Error) => void
   priorities?: string
   tokens?: string
+  only?: string
   job_categories?: string
   include_chains?: boolean
   enable_schools?: boolean
@@ -55,6 +56,7 @@ export default function SmartLoadingScreen({
   on_error,
   priorities,
   tokens,
+  only,
   job_categories,
   include_chains,
   enable_schools
@@ -89,7 +91,7 @@ export default function SmartLoadingScreen({
     const totalPillars = PILLAR_ORDER.length
 
     getScoreWithProgress(
-      { location, tokens, priorities, job_categories, include_chains, enable_schools },
+      { location, tokens, priorities, only, job_categories, include_chains, enable_schools },
       (partial) => {
         if (cancelledRef.current) return
         ramp_start_ref.current = null // stop optimistic ramp once we have real data
@@ -138,7 +140,7 @@ export default function SmartLoadingScreen({
     return () => {
       cancelledRef.current = true
     }
-  }, [location, priorities, tokens, job_categories, include_chains, enable_schools, on_complete, on_error])
+  }, [location, priorities, tokens, only, job_categories, include_chains, enable_schools, on_complete, on_error])
 
   // While we have no pillar results yet, ramp progress from floor to waiting cap so the bar doesn't sit at one value for too long
   useEffect(() => {
