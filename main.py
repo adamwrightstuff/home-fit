@@ -644,6 +644,14 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def _startup_warm_gee():
+    """Initialize GEE before accepting requests. Prevents first request from blocking ~3 min and causing 502 (proxy timeout)."""
+    logger.info("Startup: preloading GEE (can take 1–3 min)...")
+    import data_sources.gee_api  # noqa: F401
+    logger.info("Startup: GEE preload done.")
+
+
 @app.get("/")
 def root():
     """Health check endpoint."""
