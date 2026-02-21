@@ -219,10 +219,22 @@ export async function getScoreWithProgress(
   const maxWaitMs = 4 * 60 * 1000;
   let pollDelayMs = 800;
 
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
+  // Retry on 502 (cold start), same as getScore
+  if (res.status === 502) {
+    for (const delayMs of [5000, 8000, 12000]) {
+      if (getCancelled()) throw new Error('Cancelled');
+      await new Promise((r) => setTimeout(r, delayMs));
+      res = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.status !== 502) break;
+    }
+  }
   if (getCancelled()) throw new Error('Cancelled');
   const payload = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   const jobId = payload?.job_id as string | undefined;
@@ -234,9 +246,12 @@ export async function getScoreWithProgress(
       const detail = (payload as { detail?: string }).detail ?? 'Scoring job failed';
       throw new Error(detail);
     }
-    const detail = payload && typeof payload === 'object' && 'detail' in payload
+    let detail = payload && typeof payload === 'object' && 'detail' in payload
       ? (payload as { detail?: string }).detail
       : res.statusText || 'Failed to start scoring job';
+    if (res.status === 502) {
+      detail = (detail && String(detail).trim() ? `${detail}. ` : '') + 'Try again in a moment—the server may be waking up.';
+    }
     throw new Error(detail || `API error: ${res.status}`);
   }
 
