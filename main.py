@@ -72,7 +72,8 @@ ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
 
 # Pillars: run one at a time (sequential) instead of in parallel. Reduces API burst and rate-limit risk;
 # shared work (geocode, census tract, density, arch_diversity, tree canopy, form_context) is still done once.
-PILLARS_SEQUENTIAL = _env_bool("HOMEFIT_PILLARS_SEQUENTIAL", default=False)
+# Set HOMEFIT_PILLARS_SEQUENTIAL=false to use parallel execution.
+PILLARS_SEQUENTIAL = _env_bool("HOMEFIT_PILLARS_SEQUENTIAL", default=True)
 
 # Batch: hard cap (server-side), do NOT trust client-provided values
 MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
