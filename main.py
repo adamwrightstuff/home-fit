@@ -70,6 +70,10 @@ ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
 # Streaming (SSE): default ON to avoid polling/job-404 issues; set ENABLE_STREAMING=false to disable
 ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
 
+# Pillars: run one at a time (sequential) instead of in parallel. Reduces API burst and rate-limit risk;
+# shared work (geocode, census tract, density, arch_diversity, tree canopy, form_context) is still done once.
+PILLARS_SEQUENTIAL = _env_bool("HOMEFIT_PILLARS_SEQUENTIAL", default=False)
+
 # Batch: hard cap (server-side), do NOT trust client-provided values
 MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
 
@@ -1255,29 +1259,22 @@ def _compute_single_score_internal(
             })
         )
 
-    # Execute all pillars in parallel
+    # Execute pillars (parallel or sequential; sequential reduces API burst / rate-limit risk)
     pillar_results = {}
     exceptions = {}
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        future_to_pillar = {
-            executor.submit(_execute_pillar, name, func, **kwargs): name
-            for name, func, kwargs in pillar_tasks
-        }
-        
-        for future in as_completed(future_to_pillar):
-            pillar_name = future_to_pillar[future]
-            name, result, error = future.result()
-            
+    if PILLARS_SEQUENTIAL:
+        for name, func, kwargs in pillar_tasks:
+            name, result, error = _execute_pillar(name, func, **kwargs)
             if error:
-                exceptions[pillar_name] = error
-                pillar_results[pillar_name] = None
+                exceptions[name] = error
+                pillar_results[name] = None
                 _score = 0.0
             else:
-                pillar_results[pillar_name] = result
-                if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                pillar_results[name] = result
+                if name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
                     _score = float(result.get('score', 0.0))
-                elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
+                elif name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
                     _score = float(result[0] if result[0] is not None else 0.0)
                 elif isinstance(result, (tuple, list)) and len(result) >= 1:
                     _score = float(result[0] if result[0] is not None else 0.0)
@@ -1285,11 +1282,39 @@ def _compute_single_score_internal(
                     _score = 0.0
             if on_pillar_complete:
                 try:
-                    on_pillar_complete(pillar_name, _score)
+                    on_pillar_complete(name, _score)
                 except Exception as e:
                     logger.warning(f"on_pillar_complete callback failed: {e}")
+    else:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            future_to_pillar = {
+                executor.submit(_execute_pillar, name, func, **kwargs): name
+                for name, func, kwargs in pillar_tasks
+            }
+            for future in as_completed(future_to_pillar):
+                pillar_name = future_to_pillar[future]
+                name, result, error = future.result()
+                if error:
+                    exceptions[pillar_name] = error
+                    pillar_results[pillar_name] = None
+                    _score = 0.0
+                else:
+                    pillar_results[pillar_name] = result
+                    if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                        _score = float(result.get('score', 0.0))
+                    elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
+                        _score = float(result[0] if result[0] is not None else 0.0)
+                    elif isinstance(result, (tuple, list)) and len(result) >= 1:
+                        _score = float(result[0] if result[0] is not None else 0.0)
+                    else:
+                        _score = 0.0
+                if on_pillar_complete:
+                    try:
+                        on_pillar_complete(pillar_name, _score)
+                    except Exception as e:
+                        logger.warning(f"on_pillar_complete callback failed: {e}")
 
-    _log_place_timing("pillars_parallel", t_pillars)
+    _log_place_timing("pillars_sequential" if PILLARS_SEQUENTIAL else "pillars_parallel", t_pillars)
     # Handle school scoring separately
     schools_found = False
     school_breakdown = {
@@ -2374,7 +2399,7 @@ async def _stream_score_with_progress(
                 })
             )
         
-        # Execute pillars in parallel and stream as they complete
+        # Execute pillars (parallel or sequential) and stream as each completes
         def _execute_pillar(name: str, func, **kwargs):
             try:
                 result = func(**kwargs)
@@ -2382,103 +2407,104 @@ async def _stream_score_with_progress(
             except Exception as e:
                 logger.error(f"{name} pillar failed: {e}", exc_info=True)
                 return (name, None, e)
-        
-        # Use asyncio-compatible queue for async generator
-        async_queue = asyncio.Queue()
+
+        def _emit_pillar_result(pillar_name: str, result, error, completed_count: int, total_pillars: int):
+            """Yield SSE event for one pillar result (shared by parallel and sequential paths)."""
+            if error:
+                return (
+                    f"event: complete\n"
+                    f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
+                )
+            if pillar_name in ['built_beauty', 'natural_beauty']:
+                score = result.get('score', 0.0) if isinstance(result, dict) else 0.0
+            elif pillar_name == 'quality_education':
+                if isinstance(result, tuple) and len(result) >= 2:
+                    score = result[0] if result[0] is not None else 0.0
+                else:
+                    score = 0.0
+            else:
+                score = result[0] if (isinstance(result, (tuple, list)) and len(result) >= 1 and result[0] is not None) else 0.0
+            return (
+                f"event: complete\n"
+                f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed_count, 'total': total_pillars})}\n\n"
+            )
+
         exceptions = {}
         pillar_results = {}
-        all_pillars_complete = threading.Event()
-        
-        def run_pillars_parallel():
-            """Execute all pillars in parallel and put results in async queue as they complete."""
-            try:
-                with ThreadPoolExecutor(max_workers=8) as executor:
-                    future_to_pillar = {
-                        executor.submit(_execute_pillar, name, func, **kwargs): name
-                        for name, func, kwargs in pillar_tasks
-                    }
-                    
-                    for future in as_completed(future_to_pillar):
-                        pillar_name = future_to_pillar[future]
-                        name, result, error = future.result()
-                        # Put result in async queue from thread (thread-safe)
-                        loop.call_soon_threadsafe(async_queue.put_nowait, (pillar_name, result, error))
-                
-                # Signal completion
-                loop.call_soon_threadsafe(all_pillars_complete.set)
-            except Exception as e:
-                logger.error(f"Error in pillar execution thread: {e}", exc_info=True)
-                loop.call_soon_threadsafe(all_pillars_complete.set)
-        
-        # Start pillar execution in background thread
-        t_pillars = time.perf_counter()
-        pillar_thread = threading.Thread(target=run_pillars_parallel, daemon=True)
-        pillar_thread.start()
-        
-        # Stream results as they arrive (async-compatible)
         total_pillars = len(pillar_tasks)
-        completed_count = 0
-        
-        while completed_count < total_pillars:
-            try:
-                # Wait for next result asynchronously (5 minute timeout per pillar)
-                # Use asyncio.wait_for with timeout to prevent hanging
+        t_pillars = time.perf_counter()
+
+        if PILLARS_SEQUENTIAL:
+            # Run one pillar at a time to reduce API burst and rate-limit risk. Shared data already computed once.
+            completed_count = 0
+            for name, func, kwargs in pillar_tasks:
                 try:
-                    pillar_name, result, error = await asyncio.wait_for(async_queue.get(), timeout=300.0)
+                    name, result, error = await asyncio.wait_for(
+                        loop.run_in_executor(None, lambda n=name, f=func, k=kwargs: _execute_pillar(n, f, **k)),
+                        timeout=300.0,
+                    )
                 except asyncio.TimeoutError:
-                    # Check if thread is done (maybe all pillars finished but queue is empty)
-                    if all_pillars_complete.is_set() and async_queue.empty():
-                        logger.warning(f"Thread completed but only {completed_count}/{total_pillars} pillars received")
-                        break
-                    raise
-                
+                    logger.error(f"Timeout running pillar {name}")
+                    error = TimeoutError("Pillar timed out")
+                    result = None
                 completed_count += 1
-                
                 if error:
-                    exceptions[pillar_name] = error
-                    pillar_results[pillar_name] = None
-                    yield f"event: complete\n"
-                    yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
-                    # Force flush the event
-                    await asyncio.sleep(0)  # Yield control to allow event to be sent
+                    exceptions[name] = error
+                    pillar_results[name] = None
                 else:
-                    pillar_results[pillar_name] = result
-                    
-                    # Extract score based on pillar type
-                    if pillar_name in ['built_beauty', 'natural_beauty']:
-                        score = result.get('score', 0.0) if isinstance(result, dict) else 0.0
-                        details = result.get('details', {}) if isinstance(result, dict) else {}
-                    elif pillar_name == 'quality_education':
-                        if isinstance(result, tuple) and len(result) >= 2:
-                            score = result[0] if result[0] is not None else 0.0
-                            details = {'schools_by_level': result[1] if len(result) > 1 else {}}
-                            if len(result) > 2:
-                                details['breakdown'] = result[2]
-                        else:
-                            score = 0.0
-                            details = {}
+                    pillar_results[name] = result
+                yield _emit_pillar_result(name, result, error, completed_count, total_pillars)
+                await asyncio.sleep(0)
+            _log_place_timing("pillars_sequential", t_pillars)
+        else:
+            # Parallel: thread + queue, stream as each completes
+            async_queue = asyncio.Queue()
+            all_pillars_complete = threading.Event()
+
+            def run_pillars_parallel():
+                try:
+                    with ThreadPoolExecutor(max_workers=8) as executor:
+                        future_to_pillar = {
+                            executor.submit(_execute_pillar, name, func, **kwargs): name
+                            for name, func, kwargs in pillar_tasks
+                        }
+                        for future in as_completed(future_to_pillar):
+                            pillar_name = future_to_pillar[future]
+                            name, result, error = future.result()
+                            loop.call_soon_threadsafe(async_queue.put_nowait, (pillar_name, result, error))
+                    loop.call_soon_threadsafe(all_pillars_complete.set)
+                except Exception as e:
+                    logger.error(f"Error in pillar execution thread: {e}", exc_info=True)
+                    loop.call_soon_threadsafe(all_pillars_complete.set)
+
+            pillar_thread = threading.Thread(target=run_pillars_parallel, daemon=True)
+            pillar_thread.start()
+            completed_count = 0
+
+            while completed_count < total_pillars:
+                try:
+                    try:
+                        pillar_name, result, error = await asyncio.wait_for(async_queue.get(), timeout=300.0)
+                    except asyncio.TimeoutError:
+                        if all_pillars_complete.is_set() and async_queue.empty():
+                            logger.warning(f"Thread completed but only {completed_count}/{total_pillars} pillars received")
+                            break
+                        raise
+                    completed_count += 1
+                    if error:
+                        exceptions[pillar_name] = error
+                        pillar_results[pillar_name] = None
                     else:
-                        if isinstance(result, tuple) and len(result) >= 2:
-                            score = result[0] if result[0] is not None else 0.0
-                            details = result[1] if len(result) > 1 else {}
-                        else:
-                            score = 0.0
-                            details = {}
-                    
-                    yield f"event: complete\n"
-                    yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed_count, 'total': total_pillars})}\n\n"
-                    # Force flush the event to ensure it's sent immediately
-                    await asyncio.sleep(0)  # Yield control to allow event to be sent
-                    
-            except asyncio.TimeoutError:
-                logger.error(f"Timeout waiting for pillar results after {completed_count}/{total_pillars} completed")
-                yield f"event: error\n"
-                yield f"data: {json.dumps({'status': 'error', 'message': f'Timeout: Only {completed_count}/{total_pillars} pillars completed'})}\n\n"
-                break
-        
-        # Wait for thread to complete (brief wait)
-        pillar_thread.join(timeout=1.0)
-        _log_place_timing("pillars_parallel", t_pillars)
+                        pillar_results[pillar_name] = result
+                    yield _emit_pillar_result(pillar_name, result, error, completed_count, total_pillars)
+                    await asyncio.sleep(0)
+                except asyncio.TimeoutError:
+                    logger.error(f"Timeout waiting for pillar results after {completed_count}/{total_pillars} completed")
+                    yield f"event: error\n"
+                    yield f"data: {json.dumps({'status': 'error', 'message': f'Timeout: Only {completed_count}/{total_pillars} pillars completed'})}\n\n"
+                    break
+            pillar_thread.join(timeout=1.0)
+            _log_place_timing("pillars_parallel", t_pillars)
         
         # Now build the final response using existing internal function
         # We've already computed all pillars, so we can reuse the internal function
@@ -3226,27 +3252,32 @@ async def stream_score(
                 })
             )
 
-        # Execute all pillars in parallel (including built/natural beauty)
+        # Execute pillars (parallel or sequential)
         pillar_results = {}
         exceptions = {}
 
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            # Submit all tasks
-            future_to_pillar = {
-                executor.submit(_execute_pillar, name, func, **kwargs): name
-                for name, func, kwargs in pillar_tasks
-            }
-            
-            # Collect results as they complete
-            for future in as_completed(future_to_pillar):
-                pillar_name = future_to_pillar[future]
-                name, result, error = future.result()
-                
+        if PILLARS_SEQUENTIAL:
+            for name, func, kwargs in pillar_tasks:
+                name, result, error = _execute_pillar(name, func, **kwargs)
                 if error:
-                    exceptions[pillar_name] = error
-                    pillar_results[pillar_name] = None
+                    exceptions[name] = error
+                    pillar_results[name] = None
                 else:
-                    pillar_results[pillar_name] = result
+                    pillar_results[name] = result
+        else:
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                future_to_pillar = {
+                    executor.submit(_execute_pillar, name, func, **kwargs): name
+                    for name, func, kwargs in pillar_tasks
+                }
+                for future in as_completed(future_to_pillar):
+                    pillar_name = future_to_pillar[future]
+                    name, result, error = future.result()
+                    if error:
+                        exceptions[pillar_name] = error
+                        pillar_results[pillar_name] = None
+                    else:
+                        pillar_results[pillar_name] = result
 
         # Handle school scoring separately (conditional)
         schools_found = False

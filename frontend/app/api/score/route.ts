@@ -10,6 +10,10 @@ const RAILWAY_API_BASE_URL =
   process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
 const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '55000');
+/** When Economic Opportunity Focus (job_categories) is used, pillar does 2 extra Census API calls. */
+const SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES = Number(
+  process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES || '90000'
+);
 const PREMIUM_CODES = new Set(
   (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '')
     .split(',')
@@ -65,8 +69,10 @@ export async function GET(req: NextRequest) {
     ? `${RAILWAY_API_BASE_URL}/score/jobs/${encodeURIComponent(jobId)}`
     : `${RAILWAY_API_BASE_URL}/score/jobs?${upstreamParams.toString()}`;
 
+  const hasJobCategories = sp.get('job_categories')?.trim().length > 0;
+  const proxyTimeoutMs = hasJobCategories ? SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES : SCORE_PROXY_TIMEOUT_MS;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SCORE_PROXY_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), proxyTimeoutMs);
   const start = Date.now();
 
   try {

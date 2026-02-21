@@ -484,7 +484,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               </h4>
             </div>
             <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
-              Select job categories you care about. This will personalize the Economic Opportunity pillar and affect the total score.
+              Select job categories you care about. This will personalize the Economic Opportunity pillar and affect the total score. Scoring may take a bit longer when categories are selected.
             </p>
             <div className="hf-panel" style={{ padding: '1rem' }}>
               <div style={{ display: 'grid', gap: '0.75rem' }}>

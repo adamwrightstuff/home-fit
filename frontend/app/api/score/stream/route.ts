@@ -1,12 +1,17 @@
 import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+// 120s so Economic Opportunity Focus (job_categories) has time to complete extra Census calls
+export const maxDuration = 120;
 
 const RAILWAY_API_BASE_URL =
   process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
 const STREAM_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '90000');
+/** Extra time when Economic Opportunity Focus (job_categories) is used — pillar does 2 more Census API calls. */
+const STREAM_TIMEOUT_MS_WITH_JOB_CATEGORIES = Number(
+  process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES || '150000'
+);
 const PREMIUM_CODES = new Set(
   (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '')
     .split(',')
@@ -45,8 +50,10 @@ export async function GET(req: NextRequest) {
   }
 
   const url = `${RAILWAY_API_BASE_URL}/score/stream?${params.toString()}`;
+  const hasJobCategories = sp.get('job_categories')?.trim().length > 0;
+  const streamTimeoutMs = hasJobCategories ? STREAM_TIMEOUT_MS_WITH_JOB_CATEGORIES : STREAM_TIMEOUT_MS;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), streamTimeoutMs);
 
   try {
     const upstream = await fetch(url, {
