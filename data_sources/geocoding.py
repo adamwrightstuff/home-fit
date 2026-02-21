@@ -20,6 +20,7 @@ def _log_timing(phase: str, start: float) -> None:
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address"
+CENSUS_ONELINE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
 
 
 def _is_coordinate_in_water(lat: float, lon: float) -> bool:
@@ -711,90 +712,93 @@ def _geocode_census(address: str) -> Optional[Tuple[float, float, str, str, str]
     """
     Geocode using Census API (US addresses only).
     More accurate for US addresses than Nominatim.
-    
+    Tries onelineaddress first (handles "111 2nd Street Brooklyn NY"), then structured address.
+
     Args:
         address: Address string
-        
+
     Returns:
         (lat, lon, zip_code, state, city) or None if failed
     """
     try:
-        # Census API requires structured address components
-        # For now, try to parse the address or use it as-is
-        # Census API format: street, city, state, zip (all optional)
-        
-        # Extract state code if available
+        # 1) Try Census onelineaddress first (accepts full address in one string)
+        oneline_params = {
+            "address": address.strip(),
+            "benchmark": "Public_AR_Current",
+            "format": "json",
+        }
+        response = requests.get(
+            CENSUS_ONELINE_URL, params=oneline_params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data and "result" in data and "addressMatches" in data["result"]:
+                matches = data["result"]["addressMatches"]
+                if matches:
+                    match = matches[0]
+                    coordinates = match.get("coordinates", {})
+                    if "y" in coordinates and "x" in coordinates:
+                        lat = float(coordinates["y"])
+                        lon = float(coordinates["x"])
+                        comp = match.get("addressComponents", {})
+                        zip_code = comp.get("zip", "")
+                        state = comp.get("state", "")
+                        city = comp.get("city", "")
+                        return lat, lon, zip_code, state, city
+
+        # 2) Fall back to structured address (street, city, state)
         query_state = _extract_state_from_query(address)
-        
-        # Parse address - try to extract components
-        # Simple approach: if it looks like "City, State" or "City State", use that
-        address_parts = address.split(',')
-        if len(address_parts) >= 2:
-            # Likely "City, State" format
-            city_part = address_parts[0].strip()
-            state_part = address_parts[1].strip()
+        address_clean = address.strip()
+        parts_by_comma = address_clean.split(",")
+        if len(parts_by_comma) >= 2:
+            city_part = parts_by_comma[0].strip()
+            state_part = parts_by_comma[1].strip()
             if state_part.upper() in VALID_STATE_CODES:
                 query_state = state_part.upper()
-                address = city_part
-        
+                address_clean = city_part
+
+        street, city, state_val = "", address_clean, query_state or ""
+        if query_state and "," not in address_clean:
+            # Parse "111 2nd Street Brooklyn NY" -> street, city, state
+            words = address_clean.split()
+            if len(words) >= 2 and words[-1].upper() in VALID_STATE_CODES:
+                state_val = words[-1].upper()
+                city = words[-2]
+                street = " ".join(words[:-2]) if len(words) > 2 else ""
+
         params = {
-            "street": "",  # Census API prefers structured, but we can try with full address
-            "city": address if not query_state else address.split(',')[0].strip(),
-            "state": query_state if query_state else "",
+            "street": street,
+            "city": city,
+            "state": state_val,
             "zip": "",
             "benchmark": "Public_AR_Current",
             "vintage": "Current_Current",
-            "format": "json"
+            "format": "json",
         }
-        
-        # If we have a state, use structured format
-        if query_state:
-            # Try structured format first
-            if ',' in address:
-                parts = [p.strip() for p in address.split(',')]
-                params["city"] = parts[0]
-                if len(parts) > 1:
-                    params["state"] = parts[1] if parts[1].upper() in VALID_STATE_CODES else query_state
-            else:
-                params["city"] = address
-                params["state"] = query_state
-        else:
-            # No state - try with full address as city
-            params["city"] = address
-        
         response = requests.get(
-            CENSUS_GEOCODER_URL, params=params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10)
-        
+            CENSUS_GEOCODER_URL, params=params, headers={"User-Agent": "HomeFit/1.0"}, timeout=10
+        )
         if response.status_code != 200:
             return None
-        
         data = response.json()
-        if not data or "result" not in data:
+        if not data or "result" not in data or "addressMatches" not in data["result"]:
             return None
-        
-        result = data["result"]
-        if "addressMatches" not in result or not result["addressMatches"]:
+        matches = data["result"]["addressMatches"]
+        if not matches:
             return None
-        
-        match = result["addressMatches"][0]
+        match = matches[0]
         coordinates = match.get("coordinates", {})
-        
         if "y" not in coordinates or "x" not in coordinates:
             return None
-        
         lat = float(coordinates["y"])
         lon = float(coordinates["x"])
-        
-        # Extract address components
-        address_components = match.get("addressComponents", {})
-        zip_code = address_components.get("zip", "")
-        state = address_components.get("state", query_state or "")
-        city = address_components.get("city", "")
-        
+        comp = match.get("addressComponents", {})
+        zip_code = comp.get("zip", "")
+        state = comp.get("state", state_val or "")
+        city = comp.get("city", "")
         return lat, lon, zip_code, state, city
-        
-    except Exception as e:
-        # Census API failed - will fall back to Nominatim
+
+    except Exception:
         return None
 
 
