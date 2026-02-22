@@ -124,6 +124,15 @@ export default function Home() {
     )
   }
 
+  const handleSearchOptionsChange = (options: SearchOptions) => {
+    set_search_options(options)
+    try {
+      sessionStorage.setItem('homefit_search_options', JSON.stringify(options))
+    } catch (e) {
+      // ignore
+    }
+  }
+
   // Page 2: Score this location — location + map, quiz CTA, pillar grid, sticky Run Score
   if (place && !score_data) {
     return (
@@ -132,6 +141,7 @@ export default function Home() {
           <PlaceView
             place={place}
             searchOptions={search_options}
+            onSearchOptionsChange={handleSearchOptionsChange}
             onError={(msg) => set_error(msg)}
             onBack={() => { set_place(null); set_error(null) }}
             onTakeQuiz={() => set_show_game(true)}

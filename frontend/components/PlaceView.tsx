@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -33,15 +33,18 @@ function formatPlaceLabel(place: GeocodeResult & { location: string }): string {
   return `${place.city}, ${place.state}`
 }
 
+const PREMIUM_CODE_KEY = 'homefit_premium_code'
+
 export interface PlaceViewProps {
   place: GeocodeResult & { location: string }
   searchOptions: SearchOptions
+  onSearchOptionsChange?: (options: SearchOptions) => void
   onError: (message: string) => void
   onBack: () => void
   onTakeQuiz?: () => void
 }
 
-export default function PlaceView({ place, searchOptions, onError, onBack, onTakeQuiz }: PlaceViewProps) {
+export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
@@ -49,6 +52,15 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
+  const [premiumCodeInput, setPremiumCodeInput] = useState('')
+  const [savedPremiumCode, setSavedPremiumCode] = useState('')
+  useEffect(() => {
+    try {
+      const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
+      setPremiumCodeInput(v)
+      setSavedPremiumCode(v)
+    } catch (_) {}
+  }, [])
 
   const togglePillar = useCallback((key: string) => {
     setSelectedPillars((prev) => {
@@ -238,27 +250,85 @@ export default function PlaceView({ place, searchOptions, onError, onBack, onTak
                 </div>
               </div>
               {selected && (
-                <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Importance:</span>
-                  {(['Low', 'Medium', 'High'] as const).map((level) => (
-                    <button
-                      key={level}
-                      type="button"
-                      onClick={() => setPillarImportance(key, level)}
-                      style={{
-                        padding: '0.35rem 0.65rem',
-                        borderRadius: 8,
-                        fontSize: '0.85rem',
-                        fontWeight: importance === level ? 700 : 400,
-                        background: importance === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                        color: importance === level ? 'white' : 'var(--hf-text-secondary)',
-                        border: '1px solid var(--hf-border)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {level}
-                    </button>
-                  ))}
+                <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Importance:</span>
+                    {(['Low', 'Medium', 'High'] as const).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setPillarImportance(key, level)}
+                        style={{
+                          padding: '0.35rem 0.65rem',
+                          borderRadius: 8,
+                          fontSize: '0.85rem',
+                          fontWeight: importance === level ? 700 : 400,
+                          background: importance === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                          color: importance === level ? 'white' : 'var(--hf-text-secondary)',
+                          border: '1px solid var(--hf-border)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                  {key === 'quality_education' && (
+                    <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label className="hf-muted" style={{ fontSize: '0.85rem' }}>Premium code (enables school scoring)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input
+                          type="text"
+                          value={premiumCodeInput}
+                          onChange={(e) => setPremiumCodeInput(e.target.value)}
+                          placeholder="Enter code"
+                          className="hf-input"
+                          disabled={loading}
+                          style={{ flex: 1, minWidth: 140 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const v = premiumCodeInput.trim()
+                            setSavedPremiumCode(v)
+                            try {
+                              if (v) window.sessionStorage?.setItem(PREMIUM_CODE_KEY, v)
+                              else window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
+                            } catch (_) {}
+                          }}
+                          disabled={loading}
+                          className="hf-premium-btn"
+                        >
+                          Save
+                        </button>
+                        {savedPremiumCode ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPremiumCodeInput('')
+                              setSavedPremiumCode('')
+                              try { window.sessionStorage?.removeItem(PREMIUM_CODE_KEY) } catch (_) {}
+                            }}
+                            disabled={loading}
+                            className="hf-premium-btn hf-premium-btn--outline"
+                          >
+                            Clear
+                          </button>
+                        ) : null}
+                      </div>
+                      {onSearchOptionsChange && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer', marginTop: '0.25rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={searchOptions.enable_schools}
+                            disabled={loading}
+                            onChange={(e) => onSearchOptionsChange({ ...searchOptions, enable_schools: e.target.checked })}
+                          />
+                          <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
