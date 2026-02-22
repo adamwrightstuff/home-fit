@@ -24,7 +24,7 @@ def _log_place_timing(phase: str, start: float) -> None:
     logger.info(f"[TIMING] place_sourcing_{phase} {elapsed:.3f}s")
 
 # UPDATED IMPORTS - 10 Purpose-Driven Pillars
-from data_sources.geocoding import geocode
+from data_sources.geocoding import geocode, GeocodeTemporaryError
 from data_sources.cache import (
     CACHE_KEY_PREFIX,
     clear_cache,
@@ -4354,6 +4354,9 @@ def geocode_location(location: str):
     try:
         from data_sources.geocoding import geocode_with_full_result
         geo_result = geocode_with_full_result(location)
+    except GeocodeTemporaryError as e:
+        logger.warning(f"Geocode temporary error for {_safe_location_for_logs(location)}: {e}")
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.warning(f"Geocode error for {_safe_location_for_logs(location)}: {e}")
         raise HTTPException(status_code=422, detail="Could not geocode the provided location. Please check the address.")

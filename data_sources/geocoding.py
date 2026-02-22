@@ -22,6 +22,55 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address"
 CENSUS_ONELINE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
 
+# Raised when Nominatim is rate-limited or temporarily unavailable (caller may return 503).
+class GeocodeTemporaryError(Exception):
+    """Geocoding failed due to rate limit or temporary service issue; retry may succeed."""
+    pass
+
+
+def _nominatim_get_with_retries(
+    params: dict,
+    headers: dict,
+    timeout: int = 10,
+    max_attempts: int = 3,
+) -> Tuple[int, Optional[list]]:
+    """
+    GET Nominatim search with retries. Retries on 429, 503, timeout, or 200 with empty list.
+    Returns (status_code, data). On final failure after retries due to 429 or timeout,
+    raises GeocodeTemporaryError so the API can return 503.
+    """
+    last_status: Optional[int] = None
+    last_data: Optional[list] = None
+    last_was_rate_limit_or_timeout = False
+    for attempt in range(max_attempts):
+        if attempt > 0:
+            delay = 1.0 * (2 ** (attempt - 1))
+            time.sleep(delay)
+        try:
+            resp = requests.get(NOMINATIM_URL, params=params, headers=headers, timeout=timeout)
+            last_status = resp.status_code
+            if resp.status_code == 200:
+                last_data = resp.json() if resp.content else None
+                if last_data:
+                    return (200, last_data)
+                # Empty result – retry in case transient
+            elif resp.status_code in (429, 503):
+                last_was_rate_limit_or_timeout = True
+                logger.warning(
+                    "Nominatim returned %s (attempt %d/%d), will retry",
+                    resp.status_code,
+                    attempt + 1,
+                    max_attempts,
+                )
+                continue
+        except (requests.Timeout, requests.RequestException) as e:
+            last_was_rate_limit_or_timeout = True
+            logger.warning("Nominatim request failed (attempt %d/%d): %s", attempt + 1, max_attempts, e)
+            continue
+    if last_was_rate_limit_or_timeout:
+        raise GeocodeTemporaryError("Location service is busy; please try again in a moment.")
+    return (last_status or 0, last_data)
+
 
 def _is_coordinate_in_water(lat: float, lon: float) -> bool:
     """
@@ -898,15 +947,8 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
             "User-Agent": "HomeFit/1.0"
         }
 
-        response = requests.get(
-            NOMINATIM_URL, params=params, headers=headers, timeout=10)
-
-        if response.status_code != 200:
-            return None
-
-        data = response.json()
-
-        if not data:
+        status, data = _nominatim_get_with_retries(params, headers, timeout=10)
+        if status != 200 or not data:
             return None
 
         result = data[0]
@@ -1529,17 +1571,10 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             "User-Agent": "HomeFit/1.0"
         }
 
-        response = requests.get(
-            NOMINATIM_URL, params=params, headers=headers, timeout=10)
+        status, data = _nominatim_get_with_retries(params, headers, timeout=10)
         _log_timing("nominatim_first", t_nominatim)
 
-        if response.status_code != 200:
-            _log_timing("total", t0_geocode)
-            return None
-
-        data = response.json()
-
-        if not data:
+        if status != 200 or not data:
             # Fallback: for "Neighborhood NY" or "Neighborhood, NY", retry with "Neighborhood, Brooklyn, NY"
             # so NYC neighborhoods (e.g. Gowanus, Park Slope) resolve
             if query_state == "NY":
@@ -1549,13 +1584,14 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                     if place_name and "brooklyn" not in address.lower():
                         brooklyn_query = f"{place_name}, Brooklyn, New York"
                         retry_params = {"q": brooklyn_query, "format": "json", "addressdetails": 1, "limit": 1}
-                        retry_resp = requests.get(NOMINATIM_URL, params=retry_params, headers=headers, timeout=10)
-                        if retry_resp.status_code == 200:
-                            retry_data = retry_resp.json()
-                            if retry_data:
-                                data = retry_data
-                                result = data[0]
-                                print(f"✅ Geocoded '{address}' via Brooklyn fallback: {brooklyn_query}")
+                        time.sleep(1)  # Respect Nominatim 1 req/s before extra request
+                        brooklyn_status, retry_data = _nominatim_get_with_retries(
+                            retry_params, headers, timeout=10, max_attempts=2
+                        )
+                        if brooklyn_status == 200 and retry_data:
+                            data = retry_data
+                            result = data[0]
+                            print(f"✅ Geocoded '{address}' via Brooklyn fallback: {brooklyn_query}")
             if not data:
                 _log_timing("total", t0_geocode)
                 return None
@@ -1582,26 +1618,26 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
             # Retry with limit=5 to find better matches
             t_nominatim_retry = time.perf_counter()
             params["limit"] = 5
-            retry_response = requests.get(
-                NOMINATIM_URL, params=params, headers=headers, timeout=10)
+            time.sleep(1)  # Respect Nominatim 1 req/s before extra request
+            retry_status, retry_data = _nominatim_get_with_retries(
+                params, headers, timeout=10, max_attempts=2
+            )
             _log_timing("nominatim_retry", t_nominatim_retry)
-            
-            if retry_response.status_code == 200:
-                retry_data = retry_response.json()
-                if retry_data:
-                    # If state mismatch, prioritize results matching the query state
-                    if state_mismatch:
-                        for candidate in retry_data:
-                            candidate_state = candidate.get("address", {}).get("state", "")
-                            if _validate_state_match(query_state, candidate_state):
-                                result = candidate
-                                break
-                    else:
-                        # Try to find a neighborhood match
-                        best_match = _find_best_neighborhood_match(retry_data)
-                        if best_match:
-                            result = best_match
-                    # If no better match found, keep original result
+
+            if retry_status == 200 and retry_data:
+                # If state mismatch, prioritize results matching the query state
+                if state_mismatch:
+                    for candidate in retry_data:
+                        candidate_state = candidate.get("address", {}).get("state", "")
+                        if _validate_state_match(query_state, candidate_state):
+                            result = candidate
+                            break
+                else:
+                    # Try to find a neighborhood match
+                    best_match = _find_best_neighborhood_match(retry_data)
+                    if best_match:
+                        result = best_match
+                # If no better match found, keep original result
 
         t_osm_refine = time.perf_counter()
         # Check if this is a relation (city boundary) - if so, get better coordinates from OSM
