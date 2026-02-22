@@ -3,17 +3,21 @@ Economic Security & Opportunity (Career Ecosystem)
 
 Score: S = w1·D + w2·M + w3·E + w4·R (0–100)
 
-- D = Density: volume of jobs and labor-market depth (employment ratio, QCEW jobs/1k, estabs/1k, wage floor).
-- M = Mobility: upward trajectory and hot market (job growth, establishment churn, wage upside).
-- E = Ecosystem: skill adjacency and activity (industry diversity, establishment density).
-- R = Resilience: market stability (industry diversification, anchored vs cyclical balance).
+Pillar weights: Density 0.40, Mobility 0.15, Ecosystem 0.20, Resilience 0.25 (capacity and
+stability over velocity).
+
+- D = Density: volume and depth — employment ratio, scale (log10 jobs + estabs), estabs/1k, wage floor. Rewards market size.
+- M = Mobility: upward trajectory — job growth, establishment churn, wage upside. Growth sub-score has a floor (40) when anchor is high.
+- E = Ecosystem: industry diversity and establishment density.
+- R = Resilience: industry diversification and anchored vs cyclical balance.
 
 All inputs from free public APIs (Census ACS/BDS, BLS QCEW/OEWS). Normalized within
-(Census Division × area-type bucket) so rural economies aren't punished for being smaller.
+(Census Division × area-type bucket). Scale metrics use log10(employment+1) and log10(establishments+1).
 """
 
 from __future__ import annotations
 
+import math
 from typing import Dict, Optional, Tuple, Any
 
 from data_sources.data_quality import assess_pillar_data_quality
@@ -87,6 +91,9 @@ def _fallback_normalize(metric: str, value: Optional[float], *, invert: bool = F
         # QCEW demand-side
         "qcew_employment_per_1k": (200, 350, 500, 700, 1000),
         "qcew_employment_growth_pct": (-3.0, 0.0, 2.0, 4.0, 8.0),
+        # Scale (log10 of absolute counts): employment ~10k–2M, estabs ~300–30k
+        "log10_employment": (4.0, 4.5, 5.0, 5.5, 6.3),
+        "log10_establishments": (2.5, 3.0, 3.5, 4.0, 4.5),
     }
 
     t = thresholds.get(metric)
@@ -267,6 +274,7 @@ def get_economic_security_score(
     # Business dynamism: net establishment entry and establishment density (per 1k residents)
     net_estab_entry_per_1k = None
     estabs_per_1k = None
+    total_establishments = None
     if isinstance(total_pop, (int, float)) and total_pop > 0:
         entry = bds_row.get("ESTABS_ENTRY")
         exit_ = bds_row.get("ESTABS_EXIT")
@@ -274,11 +282,13 @@ def get_economic_security_score(
             net_estab_entry_per_1k = (float(entry) - float(exit_)) / float(total_pop) * 1000.0
         total_estab = bds_row.get("ESTAB")
         if isinstance(total_estab, (int, float)) and float(total_estab) >= 0:
-            estabs_per_1k = float(total_estab) / float(total_pop) * 1000.0
+            total_establishments = float(total_estab)
+            estabs_per_1k = total_establishments / float(total_pop) * 1000.0
 
     # BLS QCEW: employment level and YoY growth (demand-side)
     qcew_employment_per_1k = None
     qcew_employment_growth_pct = None
+    total_employment = None
     if effective_geo.level == "cbsa" and effective_geo.cbsa_code:
         qcew_area = bls_data.cbsa_to_qcew_area_code(effective_geo.cbsa_code)
     elif effective_geo.county_fips and effective_geo.state_fips:
@@ -290,7 +300,8 @@ def get_economic_security_score(
         if qcew_row and isinstance(total_pop, (int, float)) and total_pop > 0:
             empl = qcew_row.get("annual_avg_emplvl")
             if isinstance(empl, (int, float)) and empl >= 0:
-                qcew_employment_per_1k = float(empl) / float(total_pop) * 1000.0
+                total_employment = float(empl)
+                qcew_employment_per_1k = total_employment / float(total_pop) * 1000.0
             pct = qcew_row.get("oty_annual_avg_emplvl_pct_chg")
             if isinstance(pct, (int, float)):
                 qcew_employment_growth_pct = float(pct)
@@ -311,6 +322,10 @@ def get_economic_security_score(
             if wage_p75_annual is not None:
                 wage_p75_annual = float(wage_p75_annual)
 
+    # Scale: log10 of absolute counts (reward market depth, not just per-capita)
+    log10_employment = math.log10(total_employment + 1) if isinstance(total_employment, (int, float)) and total_employment >= 0 else None
+    log10_establishments = math.log10(total_establishments + 1) if isinstance(total_establishments, (int, float)) and total_establishments >= 0 else None
+
     # Normalize to 0-100 submetric scores
     sub_scores = {
         # Lower unemployment is better → invert
@@ -324,13 +339,28 @@ def get_economic_security_score(
         # Demand-side (QCEW)
         "qcew_employment_per_1k": _normalize(metric="qcew_employment_per_1k", value=qcew_employment_per_1k, division=division, area_bucket=bucket),
         "qcew_employment_growth_pct": _normalize(metric="qcew_employment_growth_pct", value=qcew_employment_growth_pct, division=division, area_bucket=bucket),
+        # Scale (log10 absolute counts)
+        "log10_employment": _normalize(metric="log10_employment", value=log10_employment, division=division, area_bucket=bucket),
+        "log10_establishments": _normalize(metric="log10_establishments", value=log10_establishments, division=division, area_bucket=bucket),
         # Lower HHI is better (more diversified) → invert
         "industry_diversity": _normalize(metric="industry_hhi", value=industry_hhi, division=division, area_bucket=bucket, invert=True),
         "anchored_balance": _normalize(metric="anchored_balance", value=anchored_balance, division=division, area_bucket=bucket),
     }
 
+    # Scale score: average of normalized log10 employment and establishments (rewards market depth)
+    scale_vals = [sub_scores.get("log10_employment"), sub_scores.get("log10_establishments")]
+    scale_vals = [v for v in scale_vals if isinstance(v, (int, float))]
+    if scale_vals:
+        sub_scores["scale"] = sum(scale_vals) / len(scale_vals)
+
+    # Anchor floor: high-anchor markets (gov/health/edu) don't get crushed by low growth
+    if sub_scores.get("anchored_balance") is not None and sub_scores["anchored_balance"] > 75:
+        growth = sub_scores.get("qcew_employment_growth_pct")
+        if growth is not None:
+            sub_scores["qcew_employment_growth_pct"] = max(float(growth), 40.0)
+
     # Career ecosystem: S = w1·D + w2·M + w3·E + w4·R
-    density_weights = {"emp_pop_ratio": 0.25, "qcew_employment_per_1k": 0.30, "estabs_per_1k": 0.25, "wage_p25_annual": 0.20}
+    density_weights = {"emp_pop_ratio": 0.25, "scale": 0.30, "estabs_per_1k": 0.25, "wage_p25_annual": 0.20}
     density_score, density_renorm = _weighted_avg(
         {k: sub_scores.get(k) for k in density_weights.keys()},
         density_weights,
@@ -360,7 +390,7 @@ def get_economic_security_score(
         "ecosystem": ecosystem_score,
         "resilience": resilience_score,
     }
-    component_weights = {"density": 0.30, "mobility": 0.30, "ecosystem": 0.20, "resilience": 0.20}
+    component_weights = {"density": 0.40, "mobility": 0.15, "ecosystem": 0.20, "resilience": 0.25}
 
     base_final_score, base_component_renorm = _weighted_avg(components, component_weights)
     base_final_score = float(base_final_score or 0.0)
@@ -409,6 +439,10 @@ def get_economic_security_score(
             "qcew_employment_per_1k": qcew_employment_per_1k,
             "qcew_employment_growth_pct": qcew_employment_growth_pct,
             "anchored_balance": anchored_balance,
+            "total_employment": total_employment,
+            "total_establishments": total_establishments,
+            "log10_employment": log10_employment,
+            "log10_establishments": log10_establishments,
         },
         "geo": {
             "level": effective_geo.level,

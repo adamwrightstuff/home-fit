@@ -6,12 +6,12 @@ The pillar score **S** (0–100) is a weighted sum of four components:
 
 | Component | Weight | Meaning | Metrics (with sub-weights) |
 |-----------|--------|---------|----------------------------|
-| **D (Density)** | 0.30 | Volume of jobs and labor-market depth | `emp_pop_ratio` 0.25, `qcew_employment_per_1k` 0.30, `estabs_per_1k` 0.25, `wage_p25_annual` 0.20 |
-| **M (Mobility)** | 0.30 | Upward trajectory and hot market | `qcew_employment_growth_pct` 0.40, `net_estab_entry_per_1k` 0.35, `wage_p75_annual` 0.25 |
+| **D (Density)** | 0.40 | Volume and depth (rewards market size) | `emp_pop_ratio` 0.25, `scale` 0.30 (avg of normalized log₁₀ employment & estabs), `estabs_per_1k` 0.25, `wage_p25_annual` 0.20 |
+| **M (Mobility)** | 0.15 | Upward trajectory and hot market | `qcew_employment_growth_pct` 0.40 (floor 40 when anchored_balance > 75), `net_estab_entry_per_1k` 0.35, `wage_p75_annual` 0.25 |
 | **E (Ecosystem)** | 0.20 | Skill adjacency and activity (networking & learning) | `industry_diversity` 0.70, `estabs_per_1k` 0.30 |
-| **R (Resilience)** | 0.20 | Market stability | `industry_diversity` 0.60, `anchored_balance` 0.40 |
+| **R (Resilience)** | 0.25 | Market stability | `industry_diversity` 0.60, `anchored_balance` 0.40 |
 
-**Data sources:** Census ACS (DP03, B01001, B25064), Census BDS (establishments, entry/exit), BLS QCEW (employment level and YoY growth), BLS OEWS (wage P25/P75). All normalized within (Census Division × area-type bucket). Job-category overlays personalize the **density** component when requested; the same weights then recompute S.
+**Data sources:** Census ACS (DP03, B01001, B25064), Census BDS (establishments, entry/exit), BLS QCEW (employment level and YoY growth), BLS OEWS (wage P25/P75). Scale = log₁₀(total_employment+1) and log₁₀(total_establishments+1), normalized within (Census Division × area-type bucket). Job-category overlays personalize the **density** component when requested; the same weights then recompute S.
 
 ---
 
@@ -82,8 +82,8 @@ So we have **no** metric for “growing vs declining industries” (e.g. employm
 | Median gross rent | Fetched for job-category overlays only; not in base pillar score. |
 | Anchored balance | (anchored − cyclical) / 100 from industry shares; higher = more stable job mix. |
 | Growing vs declining industries | Not used; only level shares (HHI, anchored balance) and BDS metrics. |
-| Density (D) | Employment-to-population (ACS), **QCEW** jobs per 1k, **establishments per 1k** (BDS), **OEWS P25** wage. Volume and wage floor. |
-| Mobility (M) | **QCEW** YoY employment growth %, **net establishment entry per 1k** (BDS), **OEWS P75** wage. Trajectory and upside. |
+| Density (D) | Employment-to-population (ACS), **scale** (log₁₀ employment + log₁₀ establishments, normalized), **establishments per 1k** (BDS), **OEWS P25** wage. Volume and wage floor. |
+| Mobility (M) | **QCEW** YoY employment growth % (floor 40 when anchored_balance > 75), **net establishment entry per 1k** (BDS), **OEWS P75** wage. Trajectory and upside. |
 | Ecosystem (E) | Industry diversity (1−HHI from ACS), establishments per 1k. Networking and activity. |
 | Resilience (R) | Industry diversity (60%), **anchored balance** (40%). Market stability. |
 | Wage percentiles | **OEWS 25th and 75th** annual wages (BLS). P25 in density, P75 in mobility. Build: `scripts/build_oews_metro_wages.py` → `data/oews_metro_wage_distribution.json`. |

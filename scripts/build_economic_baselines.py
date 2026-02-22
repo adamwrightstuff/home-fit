@@ -158,6 +158,7 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
 
     net_estab_entry_per_1k = None
     estabs_per_1k = None
+    total_estab_val: Optional[float] = None
     if isinstance(total_pop, (int, float)) and total_pop > 0:
         entry = bds_row.get("ESTABS_ENTRY")
         exit_ = bds_row.get("ESTABS_EXIT")
@@ -165,7 +166,8 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
             net_estab_entry_per_1k = (float(entry) - float(exit_)) / float(total_pop) * 1000.0
         total_estab = bds_row.get("ESTAB")
         if isinstance(total_estab, (int, float)) and float(total_estab) >= 0:
-            estabs_per_1k = float(total_estab) / float(total_pop) * 1000.0
+            total_estab_val = float(total_estab)
+            estabs_per_1k = total_estab_val / float(total_pop) * 1000.0
 
     out: Dict[str, float] = {"unemployment_rate": float(unemp_rate)}
     if isinstance(emp_pop_ratio, (int, float)):
@@ -174,6 +176,8 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
         out["net_estab_entry_per_1k"] = float(net_estab_entry_per_1k)
     if isinstance(estabs_per_1k, (int, float)):
         out["estabs_per_1k"] = float(estabs_per_1k)
+    if total_estab_val is not None:
+        out["log10_establishments"] = math.log10(total_estab_val + 1)
     if isinstance(industry_hhi, (int, float)):
         out["industry_hhi"] = float(industry_hhi)
     if isinstance(anchored_balance, (int, float)):
@@ -181,15 +185,19 @@ def _compute_raw_metrics(lat: float, lon: float, state_abbrev: str, area_type: s
 
     # BLS QCEW: demand-side (employment per 1k, YoY growth)
     qcew_area = bls_data.cbsa_to_qcew_area_code(geo.cbsa_code or "") if geo.level == "cbsa" else bls_data.county_to_qcew_area_code(geo.state_fips or "", geo.county_fips or "") if geo.county_fips else ""
+    empl_val: Optional[float] = None
     if qcew_area and isinstance(total_pop, (int, float)) and total_pop > 0:
         qcew_row = bls_data.fetch_qcew_annual_for_area(qcew_area, year=year_now)
         if qcew_row:
             empl = qcew_row.get("annual_avg_emplvl")
             if isinstance(empl, (int, float)) and empl >= 0:
-                out["qcew_employment_per_1k"] = float(empl) / float(total_pop) * 1000.0
+                empl_val = float(empl)
+                out["qcew_employment_per_1k"] = empl_val / float(total_pop) * 1000.0
             pct = qcew_row.get("oty_annual_avg_emplvl_pct_chg")
             if isinstance(pct, (int, float)):
                 out["qcew_employment_growth_pct"] = float(pct)
+    if empl_val is not None:
+        out["log10_employment"] = math.log10(empl_val + 1)
 
     # BLS OEWS: wage distribution (25th/75th percentile) from pre-built JSON
     oews_area = geo.cbsa_code if geo.level == "cbsa" else (geo.state_fips + geo.county_fips if geo.county_fips else None)
