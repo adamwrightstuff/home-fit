@@ -14,12 +14,10 @@ const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS
 const SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES = Number(
   process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES || '55000'
 );
-const PREMIUM_CODES = new Set(
-  (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-);
+const PREMIUM_CODES = (() => {
+  const raw = (process.env.HOMEFIT_SCHOOLS_PREMIUM_CODES || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return new Set(raw.length > 0 ? raw : ['silverlake']);
+})();
 
 function md5(input: string): string {
   return crypto.createHash('md5').update(input).digest('hex');

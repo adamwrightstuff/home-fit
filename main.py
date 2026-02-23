@@ -53,11 +53,11 @@ load_dotenv()
 
 # Launch hardening toggles (env-driven)
 HOMEFIT_PROXY_SECRET = os.getenv("HOMEFIT_PROXY_SECRET", "")
-HOMEFIT_SCHOOLS_PREMIUM_CODES = {
-    c.strip()
-    for c in os.getenv("HOMEFIT_SCHOOLS_PREMIUM_CODES", "").split(",")
-    if c.strip()
-}
+def _parse_premium_codes(raw: str) -> set[str]:
+    codes = {c.strip() for c in (raw or "").split(",") if c.strip()}
+    return codes if codes else {"silverlake"}  # default code when no env set
+
+HOMEFIT_SCHOOLS_PREMIUM_CODES = _parse_premium_codes(os.getenv("HOMEFIT_SCHOOLS_PREMIUM_CODES", ""))
 
 def _env_bool(name: str, default: bool = False) -> bool:
     raw = os.getenv(name)
