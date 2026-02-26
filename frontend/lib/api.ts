@@ -5,14 +5,28 @@ const API_BASE_URL = '';
 
 /** Geocode a place to show map and "you are about to search here". No pillar work. */
 export async function getGeocode(location: string): Promise<GeocodeResult> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/geocode?location=${encodeURIComponent(location.trim())}`,
-    { method: 'GET', headers: { Accept: 'application/json' } }
-  );
+  const url = `${API_BASE_URL}/api/geocode?location=${encodeURIComponent(location.trim())}`;
+  const fetchOpts: RequestInit = { method: 'GET', headers: { Accept: 'application/json' } };
+
+  let res = await fetch(url, fetchOpts);
+  // Retry on 502/503 (cold start or temporary). Backend can take a while to join LB after container start.
+  if ((res.status === 502 || res.status === 503) && !url.includes('job_id')) {
+    for (const delayMs of [5000, 10000, 15000]) {
+      await new Promise((r) => setTimeout(r, delayMs));
+      res = await fetch(url, fetchOpts);
+      if (res.status !== 502 && res.status !== 503) break;
+    }
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const detail = typeof data?.detail === 'string' ? data.detail : 'Could not find that location.';
-    throw new Error(detail);
+    // Use a friendlier message for infrastructure errors so users know to try again
+    const message =
+      res.status === 502 || res.status === 503
+        ? (detail.toLowerCase().includes('try again') ? detail : 'Location service is starting up. Please try again in a moment.')
+        : detail;
+    throw new Error(message);
   }
   if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') {
     throw new Error('Invalid geocode response.');

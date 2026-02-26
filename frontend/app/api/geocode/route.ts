@@ -25,14 +25,20 @@ export async function GET(req: NextRequest) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return NextResponse.json(
-        typeof data?.detail === 'string' ? { detail: data.detail } : { detail: 'Geocode failed' },
-        { status: res.status }
-      );
+      const detail =
+        typeof data?.detail === 'string'
+          ? data.detail
+          : res.status === 502 || res.status === 503
+            ? 'Location service is temporarily unavailable. Please try again in a moment.'
+            : 'Geocode failed';
+      return NextResponse.json({ detail }, { status: res.status });
     }
     return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ detail: msg || 'Geocode request failed' }, { status: 502 });
+    return NextResponse.json(
+      { detail: msg?.trim() ? msg : 'Location service is temporarily unavailable. Please try again in a moment.' },
+      { status: 502 }
+    );
   }
 }

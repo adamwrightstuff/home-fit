@@ -110,7 +110,7 @@ export default function Home() {
               <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
                 Finding location…
               </div>
-              <div className="hf-muted">Geocoding your place and preparing the map.</div>
+              <div className="hf-muted">Geocoding your place and preparing the map. First search may take a moment if the server is waking up.</div>
             </div>
           )}
 
