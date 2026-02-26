@@ -4,6 +4,10 @@ import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
 import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, type PillarKey } from '@/lib/pillars'
+import { getScoreWithProgress } from '@/lib/api'
+import type { GeocodeResult } from '@/types/api'
+import type { SearchOptions } from './SearchOptions'
+import type { PillarPriorities } from './SearchOptions'
 
 const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
