@@ -1295,6 +1295,117 @@ def get_landcover_context_gee(lat: float, lon: float, radius_m: int = 3000) -> O
         return None
 
 
+# ---------------------------------------------------------------------------
+# Climate & Flood Risk pillar (Phase 1A: GEE only — heat + air quality)
+# ---------------------------------------------------------------------------
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))
+def get_heat_exposure_lst(
+    lat: float, lon: float, local_radius_m: int = 500, regional_radius_m: int = 5000
+) -> Optional[Dict]:
+    """
+    Landsat 8/9 Collection 2 L2 surface temperature (ST_B10).
+    JJA (June–August) composite; heat_excess = local_mean - regional_mean (urban heat island).
+    Returns heat_excess_deg_c, local_lst_c, regional_lst_c for climate_risk pillar.
+    """
+    if not GEE_AVAILABLE:
+        return None
+    try:
+        point = ee.Geometry.Point([lon, lat])
+        local_buffer = point.buffer(local_radius_m)
+        regional_buffer = point.buffer(regional_radius_m)
+
+        # Landsat 8 + 9 C02 T1_L2: ST_B10 = surface temp (Kelvin: scale 0.00341802, offset 149.0)
+        l8 = (ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+              .filterDate('2022-06-01', '2022-08-31')
+              .filterBounds(regional_buffer)
+              .filter(ee.Filter.lt('CLOUD_COVER', 30)))
+        l9 = (ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')
+              .filterDate('2022-06-01', '2022-08-31')
+              .filterBounds(regional_buffer)
+              .filter(ee.Filter.lt('CLOUD_COVER', 30)))
+        combined = l8.merge(l9)
+        composite = combined.mean()
+
+        # ST_B10: Kelvin = scale * DN + offset
+        scale = 0.00341802
+        offset = 149.0
+        lst_k = composite.select('ST_B10').multiply(scale).add(offset)
+        lst_c = lst_k.subtract(273.15)
+
+        local_mean = lst_c.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=local_buffer,
+            scale=100,
+            maxPixels=1e9
+        )
+        regional_mean = lst_c.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=regional_buffer,
+            scale=100,
+            maxPixels=1e9
+        )
+        local_info = local_mean.getInfo()
+        regional_info = regional_mean.getInfo()
+        if not local_info or not regional_info:
+            return None
+        local_c = local_info.get('ST_B10')
+        regional_c = regional_info.get('ST_B10')
+        if local_c is None or regional_c is None:
+            return None
+        heat_excess = float(local_c) - float(regional_c)
+        return {
+            'heat_excess_deg_c': round(heat_excess, 2),
+            'local_lst_c': round(float(local_c), 2),
+            'regional_lst_c': round(float(regional_c), 2),
+        }
+    except Exception as e:
+        print(f"   ⚠️  GEE LST heat exposure error: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))
+def get_air_quality_aer_ai(lat: float, lon: float, radius_m: int = 2000) -> Optional[Dict]:
+    """
+    Sentinel-5P NRTI L3 Aerosol Index (UV AI). Used as air-quality proxy for climate_risk pillar.
+    PRD uses PM2.5 (ug/m³); GEE S5P does not provide PM2.5 directly. We use AER_AI mean and
+    map to a 0–35 proxy scale for scoring (higher AI = worse). Returns pm25_proxy_ugm3 (0–35 scale).
+    """
+    if not GEE_AVAILABLE:
+        return None
+    try:
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+        # COPERNICUS/S5P/NRTI/L3_AER_AI; use recent year
+        col = (ee.ImageCollection('COPERNICUS/S5P/NRTI/L3_AER_AI')
+               .filterDate('2023-01-01', '2024-12-31')
+               .filterBounds(buffer)
+               .select('absorbing_aerosol_index'))
+        img = col.mean()
+        stats = img.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=11132,
+            maxPixels=1e9
+        )
+        info = stats.getInfo()
+        if not info:
+            return None
+        ai_val = info.get('absorbing_aerosol_index')
+        if ai_val is None:
+            return None
+        # Aerosol index typically -1 to 5; map to 0–35 proxy (higher = worse). Rough: 0 -> 0, 2 -> 20, 4+ -> 35
+        ai_float = float(ai_val)
+        pm25_proxy = max(0, min(35, ai_float * 8.75))
+        return {
+            'aer_ai_mean': round(ai_float, 3),
+            'pm25_proxy_ugm3': round(pm25_proxy, 1),
+        }
+    except Exception as e:
+        print(f"   ⚠️  GEE air quality (AER_AI) error: {e}")
+        return None
+
+
 def authenticate_gee():
     """
     Authenticate with Google Earth Engine using your existing project.

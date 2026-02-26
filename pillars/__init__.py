@@ -14,6 +14,7 @@ from . import healthcare_access
 from . import schools
 from . import housing_value
 from . import economic_security
+from . import climate_risk
 
 __all__ = [
     'active_outdoors',
@@ -26,5 +27,6 @@ __all__ = [
     'healthcare_access',
     'economic_security',
     'schools',
-    'housing_value'
+    'housing_value',
+    'climate_risk'
 ]

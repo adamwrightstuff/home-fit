@@ -1376,6 +1376,8 @@ class DataQualityManager:
             return self._assess_natural_beauty_completeness(data, expected_minimums)
         elif pillar_name == 'public_transit_access':
             return self._assess_transit_completeness(data, expected_minimums)
+        elif pillar_name == 'climate_risk':
+            return self._assess_climate_risk_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
 
@@ -1675,6 +1677,22 @@ class DataQualityManager:
         if has_routes or route_type_count > 0:
             completeness = max(completeness, 0.3)
         
+        return completeness, self._get_quality_tier(completeness)
+    
+    def _assess_climate_risk_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """Assess climate_risk (Phase 1A GEE-only) data completeness."""
+        if not data:
+            return 0.0, 'very_poor'
+        heat_data = data.get('heat_data')
+        air_data = data.get('air_data')
+        has_heat = heat_data is not None and isinstance(heat_data, dict)
+        has_air = air_data is not None and isinstance(air_data, dict)
+        if has_heat and has_air:
+            completeness = 1.0
+        elif has_heat or has_air:
+            completeness = 0.5
+        else:
+            completeness = 0.0
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_generic_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:

@@ -44,6 +44,7 @@ from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
 from pillars.economic_security import get_economic_security_score
+from pillars.climate_risk import get_climate_risk_score
 from data_sources.arch_diversity import compute_arch_diversity
 
 ##########################
@@ -281,7 +282,8 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "healthcare_access",
         "economic_security",
         "quality_education",
-        "housing_value"
+        "housing_value",
+        "climate_risk"
     ]
     
     # Priority to weight mapping
@@ -508,7 +510,8 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "healthcare_access",
         "economic_security",
         "quality_education",
-        "housing_value"
+        "housing_value",
+        "climate_risk"
     ]
     alias_pillars = {"neighborhood_beauty"}
     pillar_names = primary_pillars
@@ -1257,6 +1260,13 @@ def _compute_single_score_internal(
             })
         )
 
+    if _include_pillar('climate_risk'):
+        pillar_tasks.append(
+            ('climate_risk', get_climate_risk_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+            })
+        )
+
     if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
             ('quality_education', get_school_data, {
@@ -1363,6 +1373,7 @@ def _compute_single_score_internal(
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
     # Extract built/natural beauty from parallel results
     built_calc = pillar_results.get('built_beauty')
@@ -1538,7 +1549,8 @@ def _compute_single_score_internal(
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
         (economic_security_score * token_allocation["economic_security"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
-        (housing_score * token_allocation["housing_value"] / 100)
+        (housing_score * token_allocation["housing_value"] / 100) +
+        (climate_risk_score * token_allocation["climate_risk"] / 100)
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -1685,6 +1697,17 @@ def _compute_single_score_internal(
             "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": housing_details.get("data_quality", {}),
             "area_classification": housing_details.get("area_classification", {})
+        },
+        "climate_risk": {
+            "score": climate_risk_score,
+            "weight": token_allocation["climate_risk"],
+            "importance_level": priority_levels.get("climate_risk") if priority_levels else None,
+            "contribution": round(climate_risk_score * token_allocation["climate_risk"] / 100, 2),
+            "breakdown": climate_risk_details.get("breakdown", {}),
+            "summary": climate_risk_details.get("summary", {}),
+            "confidence": climate_risk_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": climate_risk_details.get("data_quality", {}),
+            "area_classification": climate_risk_details.get("area_classification", {})
         }
     }
 
@@ -1708,8 +1731,8 @@ def _compute_single_score_internal(
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
         "metadata": {
             "version": API_VERSION,
-            "architecture": "10 Purpose-Driven Pillars",
-            "note": "Total score = weighted average of 10 pillars. Equal token distribution by default.",
+            "architecture": "11 Purpose-Driven Pillars",
+            "note": "Total score = weighted average of 11 pillars. Equal token distribution by default.",
             "test_mode": test_mode_enabled
         }
     }
@@ -2453,6 +2476,11 @@ async def _stream_score_with_progress(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city
+            })
+        )
+        pillar_tasks.append(
+            ('climate_risk', get_climate_risk_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
         if use_school_scoring:
@@ -3325,6 +3353,13 @@ async def stream_score(
                 })
             )
 
+        if _include_pillar('climate_risk'):
+            pillar_tasks.append(
+                ('climate_risk', get_climate_risk_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                })
+            )
+
         # Add school scoring if enabled (check per-request parameter)
         if use_school_scoring and _include_pillar('quality_education'):
             pillar_tasks.append(
@@ -3403,6 +3438,7 @@ async def stream_score(
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
         # Extract built/natural beauty from parallel results
         built_calc = pillar_results.get('built_beauty')
@@ -3508,7 +3544,7 @@ async def stream_score(
             primary_pillars = [
                 "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
                 "air_travel_access", "public_transit_access", "healthcare_access",
-                "economic_security", "quality_education", "housing_value"
+                "economic_security", "quality_education", "housing_value", "climate_risk"
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -3577,7 +3613,8 @@ async def stream_score(
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
             (economic_security_score * token_allocation["economic_security"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
-        (housing_score * token_allocation["housing_value"] / 100)
+        (housing_score * token_allocation["housing_value"] / 100) +
+        (climate_risk_score * token_allocation["climate_risk"] / 100)
         )
 
         logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -3727,6 +3764,16 @@ async def stream_score(
             "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": housing_details.get("data_quality", {}),
             "area_classification": housing_details.get("area_classification", {})
+        },
+        "climate_risk": {
+            "score": climate_risk_score,
+            "weight": token_allocation["climate_risk"],
+            "contribution": round(climate_risk_score * token_allocation["climate_risk"] / 100, 2),
+            "breakdown": climate_risk_details.get("breakdown", {}),
+            "summary": climate_risk_details.get("summary", {}),
+            "confidence": climate_risk_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": climate_risk_details.get("data_quality", {}),
+            "area_classification": climate_risk_details.get("area_classification", {})
         }
         }
 
