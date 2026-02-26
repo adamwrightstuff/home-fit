@@ -58,18 +58,44 @@ def get_climate_risk_score(
 
     # Heat exposure (0-30 pts). Inverse: lower heat_excess = higher score.
     if heat_data is not None:
-        heat_excess = heat_data.get("heat_excess_deg_c", 0.0) or 0.0
-        heat_pts = max(0.0, HEAT_MAX_PTS - (heat_excess / HEAT_EXCESS_FOR_ZERO) * HEAT_MAX_PTS)
-        heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
+        raw_heat = heat_data.get("heat_excess_deg_c")
+        # Use 0 only when key is missing; 0 is valid (no excess = best)
+        heat_excess = 0.0 if raw_heat is None else raw_heat
+        try:
+            heat_excess = float(heat_excess)
+        except (TypeError, ValueError):
+            heat_excess = None
+        if heat_excess is not None and (heat_excess != heat_excess or abs(heat_excess) > 100):
+            heat_excess = None
+        if heat_excess is not None:
+            heat_pts = max(0.0, HEAT_MAX_PTS - (heat_excess / HEAT_EXCESS_FOR_ZERO) * HEAT_MAX_PTS)
+            heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
+        else:
+            heat_excess = None
+            heat_pts = 0.0
     else:
         heat_excess = None
         heat_pts = 0.0
 
     # Air quality (0-20 pts). Inverse: lower pm25_proxy = higher score.
     if air_data is not None:
-        pm25_proxy = air_data.get("pm25_proxy_ugm3", 35.0) or 35.0
-        air_pts = max(0.0, AIR_MAX_PTS - (pm25_proxy / PM25_UNHEALTHY) * AIR_MAX_PTS)
-        air_pts = round(min(AIR_MAX_PTS, air_pts), 2)
+        raw_pm = air_data.get("pm25_proxy_ugm3")
+        # Use 35 (worst) only when key is missing; 0 is valid (best air)
+        pm25_proxy = 35.0 if raw_pm is None else raw_pm
+        try:
+            pm25_proxy = float(pm25_proxy)
+        except (TypeError, ValueError):
+            pm25_proxy = None
+        if pm25_proxy is not None and (pm25_proxy != pm25_proxy or pm25_proxy < 0):
+            pm25_proxy = None
+        if pm25_proxy is not None and pm25_proxy > 35:
+            pm25_proxy = min(35.0, pm25_proxy)
+        if pm25_proxy is not None:
+            air_pts = max(0.0, AIR_MAX_PTS - (pm25_proxy / PM25_UNHEALTHY) * AIR_MAX_PTS)
+            air_pts = round(min(AIR_MAX_PTS, air_pts), 2)
+        else:
+            pm25_proxy = None
+            air_pts = 0.0
     else:
         pm25_proxy = None
         air_pts = 0.0
@@ -124,7 +150,12 @@ def get_climate_risk_score(
     }
 
     logger.info(
-        "Climate Risk Score: %s/100 (heat_pts=%s, air_pts=%s)",
-        score, heat_pts, air_pts,
+        "Climate Risk Score: %s/100 (heat_pts=%s, air_pts=%s) heat_excess=%s pm25_proxy=%s",
+        score, heat_pts, air_pts, heat_excess, pm25_proxy,
     )
+    if score == 0 and not no_data:
+        logger.warning(
+            "Climate risk score 0 with data: heat_excess=%s pm25_proxy=%s (check units or thresholds)",
+            heat_excess, pm25_proxy,
+        )
     return score, details

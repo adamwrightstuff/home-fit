@@ -1341,9 +1341,13 @@ def get_heat_exposure_lst(
               .filterBounds(regional_buffer)
               .filter(ee.Filter.lt('CLOUD_COVER', 30)))
         combined = l8.merge(l9)
+        n_images = combined.size().getInfo()
+        if not n_images or n_images == 0:
+            print("   ⚠️  GEE LST: no Landsat images in date range / bounds")
+            return None
         composite = combined.mean()
 
-        # ST_B10: Kelvin = scale * DN + offset
+        # ST_B10: Kelvin = scale * DN + offset (USGS C02 L2)
         scale = 0.00341802
         offset = 149.0
         lst_k = composite.select('ST_B10').multiply(scale).add(offset)
@@ -1365,15 +1369,27 @@ def get_heat_exposure_lst(
         regional_info = regional_mean.getInfo()
         if not local_info or not regional_info:
             return None
+        # Band name is ST_B10; fallback to first value if key differs (e.g. some GEE versions)
         local_c = local_info.get('ST_B10')
         regional_c = regional_info.get('ST_B10')
+        if local_c is None and len(local_info) == 1:
+            local_c = next(iter(local_info.values()))
+        if regional_c is None and len(regional_info) == 1:
+            regional_c = next(iter(regional_info.values()))
         if local_c is None or regional_c is None:
             return None
-        heat_excess = float(local_c) - float(regional_c)
+        try:
+            local_f = float(local_c)
+            regional_f = float(regional_c)
+        except (TypeError, ValueError):
+            return None
+        if not (abs(local_f) < 1e6 and abs(regional_f) < 1e6):
+            return None
+        heat_excess = local_f - regional_f
         return {
             'heat_excess_deg_c': round(heat_excess, 2),
-            'local_lst_c': round(float(local_c), 2),
-            'regional_lst_c': round(float(regional_c), 2),
+            'local_lst_c': round(local_f, 2),
+            'regional_lst_c': round(regional_f, 2),
         }
     except Exception as e:
         print(f"   ⚠️  GEE LST heat exposure error: {e}")
@@ -1397,6 +1413,10 @@ def get_air_quality_aer_ai(lat: float, lon: float, radius_m: int = 2000) -> Opti
                .filterDate('2023-01-01', '2024-12-31')
                .filterBounds(buffer)
                .select('absorbing_aerosol_index'))
+        n_images = col.size().getInfo()
+        if not n_images or n_images == 0:
+            print("   ⚠️  GEE AER_AI: no S5P images in date range / bounds")
+            return None
         img = col.mean()
         stats = img.reduceRegion(
             reducer=ee.Reducer.mean(),
@@ -1408,10 +1428,15 @@ def get_air_quality_aer_ai(lat: float, lon: float, radius_m: int = 2000) -> Opti
         if not info:
             return None
         ai_val = info.get('absorbing_aerosol_index')
+        if ai_val is None and len(info) == 1:
+            ai_val = next(iter(info.values()))
         if ai_val is None:
             return None
+        try:
+            ai_float = float(ai_val)
+        except (TypeError, ValueError):
+            return None
         # Aerosol index typically -1 to 5; map to 0–35 proxy (higher = worse). Rough: 0 -> 0, 2 -> 20, 4+ -> 35
-        ai_float = float(ai_val)
         pm25_proxy = max(0, min(35, ai_float * 8.75))
         return {
             'aer_ai_mean': round(ai_float, 3),
