@@ -4438,7 +4438,10 @@ def health_check():
     except Exception:
         GEE_AVAILABLE = False
     import os
-    gee_env_present = bool(os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON"))
+    gee_env_present = bool(
+        os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        or (os.getenv("GOOGLE_APPLICATION_CREDENTIALS") and os.path.isfile(os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")))
+    )
     
     # Clean up expired cache entries
     cleanup_expired_cache()
@@ -4451,7 +4454,7 @@ def health_check():
         "nyc_trees": "✅ NYC Open Data (no credentials required)",
         "airports": "✅ OurAirports database (static data)",
         "transit": "✅ Transitland API (no credentials required)",
-        "gee": ("✅ Google Earth Engine initialized" if GEE_AVAILABLE else ("⚠️ GEE disabled - set GOOGLE_APPLICATION_CREDENTIALS_JSON" if not gee_env_present else "⚠️ GEE not initialized - check credentials / roles"))
+        "gee": ("✅ Google Earth Engine initialized" if GEE_AVAILABLE else ("⚠️ GEE disabled - set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_JSON" if not gee_env_present else "⚠️ GEE not initialized - check credentials / roles"))
     }
 
     return {

@@ -52,7 +52,7 @@ def get_climate_risk_score(
     if no_data:
         logger.warning(
             "Climate risk: no GEE data (heat=%s, air=%s). GEE_AVAILABLE=%s. "
-            "Set GOOGLE_APPLICATION_CREDENTIALS_JSON in production for real scores.",
+            "Set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_JSON in production for real scores.",
             no_heat, no_air, GEE_AVAILABLE,
         )
 

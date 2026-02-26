@@ -24,78 +24,94 @@ except Exception:
 
 # Initialize GEE with service account credentials
 def _initialize_gee():
-    """Initialize GEE with service account credentials from environment variable."""
+    """Initialize GEE with service account credentials.
+
+    Tries in order:
+    1. GOOGLE_APPLICATION_CREDENTIALS_JSON - raw JSON string (e.g. Vercel/Railway secrets)
+    2. GOOGLE_APPLICATION_CREDENTIALS - path to key file (standard Google env var)
+    3. ee.Initialize(project=...) - application default credentials / local dev
+    """
     import tempfile
-    
+
     try:
-        # Try to get service account credentials from environment variable
+        # 1) Inline JSON (common in serverless / PaaS)
         credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-        
         if credentials_json:
-            # Parse to get the email for debugging
             try:
                 creds_dict = json.loads(credentials_json)
                 client_email = creds_dict.get('client_email', 'unknown')
-                print(f"🔑 Found GEE service account: {client_email}")
-            except:
+                print(f"🔑 GEE: using GOOGLE_APPLICATION_CREDENTIALS_JSON ({client_email})")
+            except Exception:
                 pass
-            # Create a temporary file with the service account credentials
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
                 f.write(credentials_json)
                 temp_credentials_file = f.name
-            
             try:
-                # Initialize with the credentials file
-                # Parse client_email from the credentials
                 creds_dict = json.loads(credentials_json)
                 client_email = creds_dict.get('client_email')
-                
                 credentials = ee.ServiceAccountCredentials(
                     email=client_email,
                     key_file=temp_credentials_file
                 )
                 ee.Initialize(credentials, project='homefit-475718')
-                
-                # Test the connection by checking if we can access basic GEE functionality
-                try:
-                    # Try a simple operation to verify GEE is working
-                    test_point = ee.Geometry.Point([0, 0])
-                    _ = test_point.getInfo()
-                    print("✅ Google Earth Engine initialized and working with service account credentials")
-                except Exception as test_error:
-                    print(f"⚠️  GEE initialized but may have limited access: {test_error}")
-                
-                # Clean up temp file after successful initialization
                 try:
                     os.unlink(temp_credentials_file)
-                except:
+                except Exception:
                     pass
+                _log_gee_success("service account (GOOGLE_APPLICATION_CREDENTIALS_JSON)")
                 return True
             except Exception as e3:
-                print(f"⚠️  Failed to initialize GEE with service account: {e3}")
-                print("💡 The service account may need the 'roles/serviceusage.serviceUsageConsumer' role")
-                print("💡 Visit: https://console.cloud.google.com/iam-admin/iam/project?project=homefit-475718")
-                
-                # Clean up temp file
+                print(f"⚠️  GEE init failed (GOOGLE_APPLICATION_CREDENTIALS_JSON): {e3}")
                 try:
                     os.unlink(temp_credentials_file)
-                except:
+                except Exception:
                     pass
                 return False
-        else:
-            # Fallback: try to initialize without credentials (for local development)
+
+        # 2) Key file path (standard Google env var - use existing credentials)
+        credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if credentials_path and os.path.isfile(credentials_path):
             try:
-                ee.Initialize(project='homefit-475718')
-                print("✅ Google Earth Engine initialized with default credentials")
+                with open(credentials_path, 'r') as f:
+                    creds_dict = json.load(f)
+                client_email = creds_dict.get('client_email')
+                if not client_email:
+                    print("⚠️  GEE: GOOGLE_APPLICATION_CREDENTIALS file missing client_email")
+                    return False
+                credentials = ee.ServiceAccountCredentials(
+                    email=client_email,
+                    key_file=credentials_path
+                )
+                ee.Initialize(credentials, project='homefit-475718')
+                print(f"🔑 GEE: using GOOGLE_APPLICATION_CREDENTIALS ({client_email})")
+                _log_gee_success("service account (GOOGLE_APPLICATION_CREDENTIALS)")
                 return True
             except Exception as e2:
-                print(f"⚠️  Google Earth Engine not initialized: {e2}")
-                print("💡 Set GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable")
+                print(f"⚠️  GEE init failed (GOOGLE_APPLICATION_CREDENTIALS): {e2}")
                 return False
-                
-    except Exception as e1:
-        print(f"⚠️  Google Earth Engine initialization failed: {e1}")
+
+        # 3) Application default credentials / local dev
+        try:
+            ee.Initialize(project='homefit-475718')
+            print("✅ GEE: initialized with default credentials")
+            return True
+        except Exception as e1:
+            print(f"⚠️  GEE not initialized: {e1}")
+            print("💡 Set GOOGLE_APPLICATION_CREDENTIALS (path to key file) or GOOGLE_APPLICATION_CREDENTIALS_JSON")
+            return False
+
+    except Exception as e0:
+        print(f"⚠️  GEE initialization failed: {e0}")
         return False
+
+
+def _log_gee_success(source: str):
+    try:
+        test_point = ee.Geometry.Point([0, 0])
+        _ = test_point.getInfo()
+        print(f"✅ Google Earth Engine initialized and working ({source})")
+    except Exception as e:
+        print(f"⚠️  GEE initialized but may have limited access: {e}")
 
 # Initialize GEE safely - don't crash the app if it fails
 try:
