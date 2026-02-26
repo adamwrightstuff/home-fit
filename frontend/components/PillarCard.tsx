@@ -99,6 +99,9 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
           <span style={{ fontSize: '0.9rem', fontWeight: 600, color: getScoreBandColor(pillar.score) }}>
             {getScoreBandLabel(pillar.score)}
           </span>
+          {pillar_key === 'climate_risk' && (pillar.summary as Record<string, unknown>)?.data_available === false && (
+            <span className="hf-muted" style={{ fontSize: '0.8rem' }}>— Data unavailable</span>
+          )}
         </div>
       </div>
 

@@ -11,7 +11,7 @@ All sub-scores are inverse: higher raw value = worse; pillar score 0 = very high
 
 from typing import Dict, Tuple, Optional
 
-from data_sources.gee_api import get_heat_exposure_lst, get_air_quality_aer_ai
+from data_sources.gee_api import get_heat_exposure_lst, get_air_quality_aer_ai, GEE_AVAILABLE
 from data_sources.data_quality import assess_pillar_data_quality, detect_area_type
 from logging_config import get_logger
 
@@ -46,6 +46,16 @@ def get_climate_risk_score(
     heat_data = get_heat_exposure_lst(lat, lon)
     air_data = get_air_quality_aer_ai(lat, lon)
 
+    no_heat = heat_data is None
+    no_air = air_data is None
+    no_data = no_heat and no_air
+    if no_data:
+        logger.warning(
+            "Climate risk: no GEE data (heat=%s, air=%s). GEE_AVAILABLE=%s. "
+            "Set GOOGLE_APPLICATION_CREDENTIALS_JSON in production for real scores.",
+            no_heat, no_air, GEE_AVAILABLE,
+        )
+
     # Heat exposure (0-30 pts). Inverse: lower heat_excess = higher score.
     if heat_data is not None:
         heat_excess = heat_data.get("heat_excess_deg_c", 0.0) or 0.0
@@ -65,8 +75,9 @@ def get_climate_risk_score(
         air_pts = 0.0
 
     # Phase 1: no flood, no 30-year trend. Scale heat+air (max 50) to 0-100.
+    # When no GEE data (both None), use neutral score 50 so we don't show "worst risk" for missing data.
     total_raw = heat_pts + air_pts
-    score = min(100.0, total_raw * PHASE1_SCALE)
+    score = min(100.0, total_raw * PHASE1_SCALE) if not no_data else 50.0
     score = round(score, 1)
 
     # Sub-scores for API (0-100 scale for consistency)
@@ -102,6 +113,7 @@ def get_climate_risk_score(
         "aer_ai_mean": air_data.get("aer_ai_mean") if air_data else None,
         "flood_zone_score": None,
         "climate_trend_score": None,
+        "data_available": not no_data,
     }
     details = {
         "breakdown": breakdown,
