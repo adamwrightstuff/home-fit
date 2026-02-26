@@ -273,6 +273,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       economic_security: 0,
       quality_education: 0,
       housing_value: 0,
+      climate_risk: 0,
     }
 
     answers.forEach((selectedIdx, qIdx) => {
