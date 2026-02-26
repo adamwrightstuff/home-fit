@@ -23,6 +23,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'economic_security',
   'quality_education',
   'housing_value',
+  'climate_risk',
 ]
 
 function overallTier(score: number): { label: string; tone: string } {

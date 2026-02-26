@@ -17,6 +17,7 @@ interface PillarPriorities {
   economic_security: PriorityLevel
   quality_education: PriorityLevel
   housing_value: PriorityLevel
+  climate_risk: PriorityLevel
 }
 
 interface SearchOptions {
@@ -45,6 +46,7 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'economic_security',
   'quality_education',
   'housing_value',
+  'climate_risk',
 ]
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
@@ -60,6 +62,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   economic_security: 'Medium',
   quality_education: 'Medium',
   housing_value: 'Medium',
+  climate_risk: 'Medium',
 }
 
 const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [

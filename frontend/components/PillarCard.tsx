@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LivabilityPillar } from '@/types/api'
-import { PILLAR_META, getScoreBadgeClass, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, type PillarKey } from '@/lib/pillars'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -94,7 +94,12 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
             </div>
           </div>
         </div>
-        <div className={getScoreBadgeClass(pillar.score)}>{pillar.score.toFixed(0)}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className={getScoreBadgeClass(pillar.score)}>{pillar.score.toFixed(0)}</div>
+          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: getScoreBandColor(pillar.score) }}>
+            {getScoreBandLabel(pillar.score)}
+          </span>
+        </div>
       </div>
 
       <div
@@ -135,6 +140,11 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
 
       {expanded ? (
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--hf-border)' }}>
+          {PILLAR_LONG_DESCRIPTIONS[pillar_key] ? (
+            <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem', lineHeight: 1.5 }}>
+              {PILLAR_LONG_DESCRIPTIONS[pillar_key]}
+            </div>
+          ) : null}
           <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
             Details
           </div>

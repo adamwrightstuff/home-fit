@@ -18,6 +18,7 @@ const max_possible_scores: Record<keyof PillarPriorities, number> = {
   economic_security: 2,
   quality_education: 32,
   housing_value: 45,
+  climate_risk: 50,
 }
 
 const PILLAR_ORDER: Array<keyof PillarPriorities> = [
@@ -31,6 +32,7 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'economic_security',
   'quality_education',
   'housing_value',
+  'climate_risk',
 ]
 
 const questions = [

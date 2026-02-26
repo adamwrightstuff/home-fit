@@ -62,6 +62,8 @@ export interface LivabilityPillars {
   economic_security?: LivabilityPillar;
   quality_education: LivabilityPillar;
   housing_value: LivabilityPillar;
+  /** Climate & Flood Risk (Phase 1A); may be absent in older deployments. */
+  climate_risk?: LivabilityPillar;
 }
 
 export interface OverallConfidence {

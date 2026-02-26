@@ -3,12 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
-import { getScoreWithProgress } from '@/lib/api'
-import type { GeocodeResult } from '@/types/api'
-import type { SearchOptions } from './SearchOptions'
-import type { PillarPriorities } from './SearchOptions'
-import { getScoreBadgeClass } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, type PillarKey } from '@/lib/pillars'
 
 const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
@@ -21,6 +16,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'economic_security',
   'quality_education',
   'housing_value',
+  'climate_risk',
 ]
 
 type Importance = 'Low' | 'Medium' | 'High'
@@ -102,6 +98,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         economic_security: 'None',
         quality_education: 'None',
         housing_value: 'None',
+        climate_risk: 'None',
       }
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
@@ -240,8 +237,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {score != null && (
-                    <span className={getScoreBadgeClass(score.score)} style={{ padding: '0.35rem 0.75rem', borderRadius: 8 }}>
-                      {score.score.toFixed(0)}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span className={getScoreBadgeClass(score.score)} style={{ padding: '0.35rem 0.75rem', borderRadius: 8 }}>
+                        {score.score.toFixed(0)}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: getScoreBandColor(score.score) }}>
+                        {getScoreBandLabel(score.score)}
+                      </span>
                     </span>
                   )}
                   {score == null && selected && (

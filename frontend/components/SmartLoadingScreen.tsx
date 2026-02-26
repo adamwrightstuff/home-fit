@@ -33,6 +33,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'economic_security',
   'quality_education',
   'housing_value',
+  'climate_risk',
 ]
 
 const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; description: string }> = PILLAR_ORDER.reduce(
