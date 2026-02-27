@@ -546,6 +546,59 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
+def query_layout_network(lat: float, lon: float, radius_m: int) -> Optional[Dict[str, Any]]:
+    """
+    Fetch OSM road + rail network around a point using Overpass (cached).
+    Used by the Layout & Street Network pillar. Returns {"nodes": {...}, "ways": [...]} or None.
+    On failure, the @cached decorator serves stale cache if available (up to TTL window).
+    """
+    query = f"""
+    [out:json][timeout:35];
+    (
+      way["highway"](around:{radius_m},{lat},{lon});
+      way["railway"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+
+    def _do_request():
+        r = requests.post(
+            get_overpass_url(),
+            data={"data": query},
+            timeout=35,
+            headers={"User-Agent": "HomeFit/1.0"},
+        )
+        if r.status_code != 200:
+            raise RuntimeError(f"Overpass status={r.status_code}")
+        return r
+
+    resp = _retry_overpass(_do_request, query_type="block_grain")
+    if resp is None or getattr(resp, "status_code", None) != 200:
+        logger.warning("Layout network OSM query failed")
+        return None
+
+    data = _safe_overpass_json(resp, context="layout_network")
+    if data is None:
+        return None
+    elements = data.get("elements", [])
+    if not elements:
+        logger.warning("Layout network OSM query returned no elements")
+        return None
+
+    nodes: Dict[int, Dict[str, Any]] = {}
+    ways: List[Dict[str, Any]] = []
+    for elem in elements:
+        if elem.get("type") == "node":
+            nodes[elem["id"]] = elem
+        elif elem.get("type") == "way":
+            ways.append(elem)
+
+    return {"nodes": nodes, "ways": ways}
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=25)  # Reduced from 40s
 def query_nature_features(

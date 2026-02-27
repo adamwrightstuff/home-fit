@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Tuple, Any
 
 from logging_config import get_logger
 
-from data_sources.osm_api import get_overpass_url, _retry_overpass
+from data_sources.osm_api import query_layout_network
 from data_sources.utils import haversine_distance
 from data_sources.radius_profiles import get_radius_profile
 from data_sources import data_quality
@@ -104,56 +104,11 @@ def _piecewise_score(x: float, points: List[Tuple[float, float]]) -> float:
 
 def _fetch_network(lat: float, lon: float, radius_m: int) -> Optional[Dict[str, Any]]:
     """
-    Fetch OSM road + rail network around a point using Overpass.
-
-    Returns a dict with nodes and ways, or None on hard failure.
+    Fetch OSM road + rail network around a point (cached, production-resilient).
+    Delegates to data_sources.osm_api.query_layout_network which uses 6hr cache,
+    longer timeout (35s), and stale cache on failure.
     """
-    import requests
-
-    query = f"""
-    [out:json][timeout:25];
-    (
-      way["highway"](around:{radius_m},{lat},{lon});
-      way["railway"](around:{radius_m},{lat},{lon});
-    );
-    out body;
-    >;
-    out skel qt;
-    """
-
-    def _do_request():
-        return requests.post(
-            get_overpass_url(),
-            data={"data": query},
-            timeout=20,
-            headers={"User-Agent": "HomeFit/1.0"},
-        )
-
-    resp = _retry_overpass(_do_request, query_type="block_grain")
-    if resp is None or getattr(resp, "status_code", None) != 200:
-        logger.warning("Layout network OSM query failed")
-        return None
-
-    try:
-        data = resp.json()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Layout network OSM response JSON parse failed: %s", exc)
-        return None
-
-    elements = data.get("elements", [])
-    if not elements:
-        logger.warning("Layout network OSM query returned no elements")
-        return None
-
-    nodes: Dict[int, Dict[str, Any]] = {}
-    ways: List[Dict[str, Any]] = []
-    for elem in elements:
-        if elem.get("type") == "node":
-            nodes[elem["id"]] = elem
-        elif elem.get("type") == "way":
-            ways.append(elem)
-
-    return {"nodes": nodes, "ways": ways}
+    return query_layout_network(lat, lon, radius_m)
 
 
 def _build_layout_metrics(
