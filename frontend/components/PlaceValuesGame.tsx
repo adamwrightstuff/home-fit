@@ -271,6 +271,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       built_beauty: 0,
       natural_beauty: 0,
       neighborhood_amenities: 0,
+      layout_network: 0,
       air_travel_access: 0,
       public_transit_access: 0,
       healthcare_access: 0,
