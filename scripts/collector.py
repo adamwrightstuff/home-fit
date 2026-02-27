@@ -42,6 +42,7 @@ HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
 # Conservative delay: wait for full response + additional delay to avoid overwhelming external APIs (OSM, Census, etc.)
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0  # Minimum delay after receiving a response
 ADAPTIVE_DELAY_FACTOR = 0.1  # Add 10% of response time as additional delay
+INITIAL_DELAY_SECONDS = 10.0  # Initial backoff delay before first retry
 MAX_RETRIES = 3
 RETRY_BACKOFF_FACTOR = 2.0  # Exponential backoff multiplier
 REQUEST_TIMEOUT_SECONDS = 300  # 5 minutes for API calls

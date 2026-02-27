@@ -1,41 +1,51 @@
-location
-Downtown Detroit MI
-Midtown Memphis TN
-Shadyside Pittsburgh PA
-North Loop Minneapolis MN
-Capitol Hill Seattle WA
-Fremont Seattle WA
-Over-the-Rhine Cincinnati OH
-Short North Columbus OH
-Hampden Baltimore MD
-Fells Point Baltimore MD
-Downtown Tampa FL
-Seminole Heights Tampa FL
-Avondale Chicago IL
-Pilsen Chicago IL
-Wicker Park Chicago IL
-Five Points Denver CO
-Highlands Denver CO
-Brickell Miami FL
-Wynwood Miami FL
-Coconut Grove Miami FL
-Mission District San Francisco CA
-Noe Valley San Francisco CA
-Laurelhurst Portland OR
-Sellwood-Moreland Portland OR
-North Park San Diego CA
-Hillcrest San Diego CA
-Chestnut Hill Philadelphia PA
-Manayunk Philadelphia PA
-South End Boston MA
-Jamaica Plain Boston MA
-Decatur GA
-Roswell GA
-Cary NC
-Downtown Durham NC
-Boise Bench Boise ID
-University District Missoula MT
-Leavenworth WA
-Marfa TX
-Taos NM
-Traverse City MI
+location,city,state,division,area_bucket
+"New York, NY",New York,NY,Middle Atlantic,urban
+"Reading, PA",Reading,PA,Middle Atlantic,urban
+"Scranton, PA",Scranton,PA,Middle Atlantic,urban
+"Ocean City, NJ",Ocean City,NJ,Middle Atlantic,suburban
+"Buffalo, NY",Buffalo,NY,Middle Atlantic,urban
+"Chicago, IL",Chicago,IL,East North Central,urban
+"Gary, IN",Gary,IN,East North Central,urban
+"Madison, WI",Madison,WI,East North Central,urban
+"Carmel, IN",Carmel,IN,East North Central,suburban
+"Detroit, MI",Detroit,MI,East North Central,urban
+"Columbus, OH",Columbus,OH,East North Central,urban
+"Sioux Falls, SD",Sioux Falls,SD,West North Central,urban
+"Rochester, MN",Rochester,MN,West North Central,urban
+"Des Moines, IA",Des Moines,IA,West North Central,urban
+"St. Louis, MO",St. Louis,MO,West North Central,urban
+"Cherry County, NE",Cherry County,NE,West North Central,rural
+"Atlanta, GA",Atlanta,GA,South Atlantic,urban
+"Miami, FL",Miami,FL,South Atlantic,urban
+"Orlando, FL",Orlando,FL,South Atlantic,urban
+"Reston, VA",Reston,VA,South Atlantic,suburban
+"Charleston, WV",Charleston,WV,South Atlantic,urban
+"Wilmington, NC",Wilmington,NC,South Atlantic,urban
+"Pikeville, KY",Pikeville,KY,East South Central,rural
+"Huntsville, AL",Huntsville,AL,East South Central,urban
+"Nashville, TN",Nashville,TN,East South Central,urban
+"Jackson, MS",Jackson,MS,East South Central,urban
+"Mobile, AL",Mobile,AL,East South Central,urban
+"Dallas, TX",Dallas,TX,West South Central,urban
+"Austin, TX",Austin,TX,West South Central,urban
+"Bentonville, AR",Bentonville,AR,West South Central,suburban
+"McAllen, TX",McAllen,TX,West South Central,urban
+"New Orleans, LA",New Orleans,LA,West South Central,urban
+"Oklahoma City, OK",Oklahoma City,OK,West South Central,urban
+"Denver, CO",Denver,CO,Mountain,urban
+"Salt Lake City, UT",Salt Lake City,UT,Mountain,urban
+"Boise, ID",Boise,ID,Mountain,urban
+"St. George, UT",St. George,UT,Mountain,urban
+"Phoenix, AZ",Phoenix,AZ,Mountain,urban
+"Henderson, NV",Henderson,NV,Mountain,suburban
+"Elko, NV",Elko,NV,Mountain,rural
+"Los Angeles, CA",Los Angeles,CA,Pacific,urban
+"San Jose, CA",San Jose,CA,Pacific,urban
+"Seattle, WA",Seattle,WA,Pacific,urban
+"Yakima, WA",Yakima,WA,Pacific,urban
+"Anchorage, AK",Anchorage,AK,Pacific,urban
+"Honolulu, HI",Honolulu,HI,Pacific,urban
+"Irvine, CA",Irvine,CA,Pacific,suburban
+"Aroostook County, ME",Aroostook County,ME,New England,rural
+"Boston, MA",Boston,MA,New England,urban
+"Stamford, CT",Stamford,CT,New England,suburban
