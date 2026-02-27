@@ -19,6 +19,7 @@ const max_possible_scores: Record<keyof PillarPriorities, number> = {
   quality_education: 32,
   housing_value: 45,
   climate_risk: 50,
+  social_fabric: 40,
 }
 
 const PILLAR_ORDER: Array<keyof PillarPriorities> = [
@@ -33,6 +34,7 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'quality_education',
   'housing_value',
   'climate_risk',
+  'social_fabric',
 ]
 
 const questions = [
@@ -274,6 +276,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       quality_education: 0,
       housing_value: 0,
       climate_risk: 0,
+      social_fabric: 0,
     }
 
     answers.forEach((selectedIdx, qIdx) => {

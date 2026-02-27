@@ -17,6 +17,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'quality_education',
   'housing_value',
   'climate_risk',
+  'social_fabric',
 ]
 
 function equalAllocation(pillars: PillarKey[]): Record<string, number> {

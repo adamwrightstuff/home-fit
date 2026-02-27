@@ -25,6 +25,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'quality_education',
   'housing_value',
   'climate_risk',
+  'social_fabric',
 ]
 
 function overallTier(score: number): { label: string; tone: string } {

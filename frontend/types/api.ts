@@ -66,6 +66,8 @@ export interface LivabilityPillars {
   housing_value: LivabilityPillar;
   /** Climate & Flood Risk (Phase 1A); may be absent in older deployments. */
   climate_risk?: LivabilityPillar;
+  /** Social Fabric (Phase 2B); may be absent in older deployments. */
+  social_fabric?: LivabilityPillar;
 }
 
 export interface OverallConfidence {

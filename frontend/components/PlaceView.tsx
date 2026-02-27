@@ -23,6 +23,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'quality_education',
   'housing_value',
   'climate_risk',
+  'social_fabric',
 ]
 
 type Importance = 'Low' | 'Medium' | 'High'
@@ -122,6 +123,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         quality_education: 'None',
         housing_value: 'None',
         climate_risk: 'None',
+        social_fabric: 'None',
       }
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'

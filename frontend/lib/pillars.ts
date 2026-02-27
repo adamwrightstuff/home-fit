@@ -11,6 +11,7 @@ export type PillarKey =
   | 'quality_education'
   | 'housing_value'
   | 'climate_risk'
+  | 'social_fabric'
 
 export const PILLAR_META: Record<
   PillarKey,
@@ -83,6 +84,12 @@ export const PILLAR_META: Record<
     description:
       'Lower exposure to heat, flooding, and poor air quality—so the place stays livable for decades',
   },
+  social_fabric: {
+    icon: '🤝',
+    name: 'Social Fabric',
+    description:
+      'Neighbors, civic spaces, and local rootedness that support belonging—not just shops but libraries, community centers, and long-term residents.',
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +146,8 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Exposure to flooding, extreme heat, and poor air quality can affect safety, insurance costs, and health over time. Lower risk supports long-term livability and peace of mind.',
   layout_network:
     'Street layout and network design shape how easy it is to move through a place on foot or by bike. Fine-grained, connected streets with calm local traffic and few hard barriers support low-stress daily movement and reduce car dependence.',
+  social_fabric:
+    'A strong social fabric means people know their neighbors, share civic spaces, and have places to gather that are not tied to spending money. Stable residency and civic third places—like libraries, community centers, and town halls—are linked to higher trust, informal support, and long-term wellbeing.',
 }
 
 export function getScoreBadgeClass(score: number): string {
