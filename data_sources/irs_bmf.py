@@ -42,10 +42,22 @@ def _load_json_if_exists(path: str) -> Optional[dict]:
         return None
 
 
-# Try to load preprocessed BMF data from environment-configured paths.
-_TRACT_COUNTS_PATH = os.getenv("IRS_BMF_TRACT_COUNTS_PATH")
-_TRACT_NEIGHBORS_PATH = os.getenv("IRS_BMF_TRACT_NEIGHBORS_PATH")
-_ENGAGEMENT_STATS_PATH = os.getenv("IRS_BMF_ENGAGEMENT_STATS_PATH")
+# Default data locations (relative to repo root) with env var overrides.
+_BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+_DEFAULT_DATA_DIR = os.path.join(_BASE_DIR, "data")
+
+_TRACT_COUNTS_PATH = os.getenv(
+    "IRS_BMF_TRACT_COUNTS_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "irs_bmf_tract_counts.json"),
+)
+_TRACT_NEIGHBORS_PATH = os.getenv(
+    "IRS_BMF_TRACT_NEIGHBORS_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "irs_bmf_tract_neighbors.json"),
+)
+_ENGAGEMENT_STATS_PATH = os.getenv(
+    "IRS_BMF_ENGAGEMENT_STATS_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "irs_bmf_engagement_stats.json"),
+)
 
 _tract_counts_data = _load_json_if_exists(_TRACT_COUNTS_PATH) or {}
 if isinstance(_tract_counts_data, dict):
@@ -89,6 +101,63 @@ def get_civic_orgs_per_1k(
     If no BMF data or population is available, returns None.
     """
     from data_sources.census_api import get_census_tract, get_population  # avoid circular import
+    from data_sources.us_census_divisions import get_division
+
+    # Mapping from state FIPS to 2-letter state abbreviation for division lookup.
+    STATE_FIPS_TO_ABBREV = {
+        "01": "AL",
+        "02": "AK",
+        "04": "AZ",
+        "05": "AR",
+        "06": "CA",
+        "08": "CO",
+        "09": "CT",
+        "10": "DE",
+        "11": "DC",
+        "12": "FL",
+        "13": "GA",
+        "15": "HI",
+        "16": "ID",
+        "17": "IL",
+        "18": "IN",
+        "19": "IA",
+        "20": "KS",
+        "21": "KY",
+        "22": "LA",
+        "23": "ME",
+        "24": "MD",
+        "25": "MA",
+        "26": "MI",
+        "27": "MN",
+        "28": "MS",
+        "29": "MO",
+        "30": "MT",
+        "31": "NE",
+        "32": "NV",
+        "33": "NH",
+        "34": "NJ",
+        "35": "NM",
+        "36": "NY",
+        "37": "NC",
+        "38": "ND",
+        "39": "OH",
+        "40": "OK",
+        "41": "OR",
+        "42": "PA",
+        "44": "RI",
+        "45": "SC",
+        "46": "SD",
+        "47": "TN",
+        "48": "TX",
+        "49": "UT",
+        "50": "VT",
+        "51": "VA",
+        "53": "WA",
+        "54": "WV",
+        "55": "WI",
+        "56": "WY",
+        "72": "PR",
+    }
 
     if not org_count_by_tract:
         # No BMF data configured
@@ -121,6 +190,12 @@ def get_civic_orgs_per_1k(
         return None
 
     orgs_per_1k = (org_count_eff / float(population)) * 1000.0
+
+    # Derive division code automatically if not provided.
+    if division_code is None:
+        state_fips = tract.get("state_fips")
+        state_abbrev = STATE_FIPS_TO_ABBREV.get(state_fips) if state_fips else None
+        division_code = get_division(state_abbrev) if state_abbrev else None
 
     stats = None
     if division_code and engagement_stats_by_division:

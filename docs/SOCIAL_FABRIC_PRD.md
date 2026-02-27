@@ -7,12 +7,12 @@ New pillar `social_fabric` (Phase 2B). Scores structural and demographic factors
 - Distinct from `neighborhood_amenities` (commercial businesses, convenience).
 - Distinct from `active_outdoors` (parks, trails, outdoor recreation).
 
-Version 1 (Phase 2B) ships with:
+Current implementation (v2) ships with:
 
 1. **Stability** (residential rootedness; Census B07003)  
-2. **Civic gathering** (civic, non-commercial third places; OSM)
-
-The **Diversity** and **Engagement** sub-indices are defined here but can be implemented in a later sub-phase (2B′).
+2. **Diversity** (race / income / age entropy; Census B02001, B19001, B01001)  
+3. **Civic gathering** (civic, non-commercial third places; OSM)  
+4. **Engagement** (civic org density; IRS BMF, when preprocessed data is present)
 
 All sub-scores and the pillar score are on 0–100.
 
@@ -40,17 +40,26 @@ Add the following ACS tables to the Census pipeline (tract or block-group geogra
 
 For SFI v1, only B07003 is required. Diversity can be implemented once B02001/B19001/age are wired up.
 
-#### 2.2 IRS BMF (optional; Phase 2B′)
+#### 2.2 IRS BMF (Engagement, implemented via offline build script)
 
-Defined but **not required** for SFI v1.
-
-- Source: IRS Exempt Organizations Business Master File.  
-- Filter:
-  - NTEE codes: `A`, `O`, `P`, `S` (Arts/Culture, Youth Development, Human Services, Community Improvement).  
-  - Active status: use the appropriate BMF field/value indicating currently active exemption (to be confirmed in ingest spec).  
+- Source: IRS Exempt Organizations Business Master File (EO BMF), supplied as one or more CSVs.  
+- Filter (offline ETL in `scripts/build_irs_engagement_baselines.py`):
+  - NTEE codes starting with `A`, `O`, `P`, `S` (Arts/Culture, Youth Development, Human Services, Community Improvement).  
+  - Status codes `01`–`03` only (rough proxy for currently exempt; can be refined later).  
+  - US 2-letter state and 5-digit ZIP present.  
 - Geography:
-  - Tract-based or radius-based lookup from preprocessed data files; no PostGIS assumed.
-  - Denominator for per-capita: matching tract (or area) population from Census.
+  - Each qualifying org is assigned to a 2020 Census tract by:
+    1. Geocoding its ZIP (via Census geocoder, using `geocode(zip)`),  
+    2. Looking up the tract that contains that point (`get_census_tract`).  
+  - Per-tract population is fetched from ACS 5-year (`get_population`), and org density is computed as `orgs_per_1k = count / pop * 1000`.
+  - Per-division baselines are built by aggregating `orgs_per_1k` using the 9 Census Divisions (`get_division(state)`).
+
+The offline script writes:
+
+- `data/irs_bmf_tract_counts.json` – `{geoid: count}` of qualifying orgs per tract.  
+- `data/irs_bmf_engagement_stats.json` – `{division_code: {"mean": float, "std": float, "n": int}}` baselines for engagement.
+
+At runtime, `data_sources.irs_bmf` loads these files (or skips Engagement gracefully when they are absent).
 
 #### 2.3 OSM – civic nodes
 
@@ -99,7 +108,7 @@ Handle missing / zero totals gracefully (score = null or 0 with low data_quality
 
 SFI v1 **must** include this sub-score.
 
-#### 3.2 Diversity (0–100) — defined, may ship later
+#### 3.2 Diversity (0–100)
 
 Compute three entropies and combine:
 
@@ -150,7 +159,7 @@ Implementation can start with a simple threshold curve; z-score normalization ca
 
 SFI v1 **must** include this sub-score.
 
-#### 3.4 Engagement (0–100) — optional / Phase 2B′
+#### 3.4 Engagement (0–100)
 
 - Input: `orgs_per_1k = (count of active NTEE A/O/P/S orgs in area) / (population / 1000)`.
 - Normalize per region (Census Division or CBSA), similar to Civic:
@@ -198,7 +207,7 @@ Handle missing sub-indices by rescaling weights only over available components a
 
 ### 5. Normalization strategy
 
-- **Reference region:** Census Division (or CBSA where available) for any z-score–based normalizations (Diversity sub-components, Civic, Engagement).
+- **Reference region:** Census Division (or CBSA where available) for any z-score–based normalizations (Diversity sub-components, Civic, Engagement). Engagement currently uses Census Division only.
 - **Clipping:** For any z-score \(z\), clip to [-3, 3] before mapping to 0–100.
 - **Mapping:** e.g.
 \[
