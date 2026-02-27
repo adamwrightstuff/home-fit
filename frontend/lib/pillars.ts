@@ -2,6 +2,7 @@ export type PillarKey =
   | 'natural_beauty'
   | 'built_beauty'
   | 'neighborhood_amenities'
+  | 'layout_network'
   | 'active_outdoors'
   | 'healthcare_access'
   | 'public_transit_access'
@@ -26,6 +27,12 @@ export const PILLAR_META: Record<
     name: 'Built Beauty',
     description:
       "Architecture and streetscapes that feel thoughtfully designed—not cookie-cutter, but crafted with character",
+  },
+  layout_network: {
+    icon: '🧭',
+    name: 'Layout & Street Network',
+    description:
+      'Street connectivity, calm local streets, and low-severance networks that make everyday walking and rolling feel natural',
   },
   neighborhood_amenities: {
     icon: '🏘️',
@@ -130,6 +137,8 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Affordability relative to income and space per dollar affect financial stress and quality of life. Places that offer more space and value for the money can support wellbeing and long-term stability.',
   climate_risk:
     'Exposure to flooding, extreme heat, and poor air quality can affect safety, insurance costs, and health over time. Lower risk supports long-term livability and peace of mind.',
+  layout_network:
+    'Street layout and network design shape how easy it is to move through a place on foot or by bike. Fine-grained, connected streets with calm local traffic and few hard barriers support low-stress daily movement and reduce car dependence.',
 }
 
 export function getScoreBadgeClass(score: number): string {

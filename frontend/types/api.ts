@@ -55,6 +55,8 @@ export interface LivabilityPillars {
   built_beauty: LivabilityPillar;
   natural_beauty: LivabilityPillar;
   neighborhood_amenities: LivabilityPillar;
+  /** Layout & street network; may be absent in older deployments. */
+  layout_network?: LivabilityPillar;
   air_travel_access: LivabilityPillar;
   public_transit_access: LivabilityPillar;
   healthcare_access: LivabilityPillar;

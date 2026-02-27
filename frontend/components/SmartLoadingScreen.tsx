@@ -26,6 +26,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
   'built_beauty',
   'neighborhood_amenities',
+  'layout_network',
   'active_outdoors',
   'healthcare_access',
   'public_transit_access',
