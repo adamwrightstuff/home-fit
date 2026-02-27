@@ -15,6 +15,7 @@ from . import schools
 from . import housing_value
 from . import economic_security
 from . import climate_risk
+from . import social_fabric
 from . import layout_network
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "schools",
     "housing_value",
     "climate_risk",
+    "social_fabric",
     "layout_network",
 ]

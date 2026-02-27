@@ -1153,6 +1153,157 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
+def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[Dict]:
+    """
+    Query OSM for civic, non-commercial third places (Social Fabric civic gathering).
+
+    Includes:
+      - amenity=library
+      - amenity=community_centre
+      - amenity=place_of_worship
+      - amenity=townhall
+      - leisure=community_garden
+
+    Excludes parks/playgrounds/dog_parks (scored in active_outdoors) and all
+    commercial businesses (scored in neighborhood_amenities).
+
+    Returns:
+        {
+            "nodes": [
+                {
+                    "name": str,
+                    "lat": float,
+                    "lon": float,
+                    "distance_m": float,
+                    "type": str,  # library, community_centre, place_of_worship, townhall, community_garden
+                    "osm_id": int
+                },
+                ...
+            ]
+        } or None on failure.
+    """
+    query = f"""
+    [out:json][timeout:40];
+    (
+      // Libraries and community centres
+      node["amenity"="library"](around:{radius_m},{lat},{lon});
+      way["amenity"="library"](around:{radius_m},{lat},{lon});
+      node["amenity"="community_centre"](around:{radius_m},{lat},{lon});
+      way["amenity"="community_centre"](around:{radius_m},{lat},{lon});
+
+      // Town halls and civic administration
+      node["amenity"="townhall"](around:{radius_m},{lat},{lon});
+      way["amenity"="townhall"](around:{radius_m},{lat},{lon});
+
+      // Places of worship
+      node["amenity"="place_of_worship"](around:{radius_m},{lat},{lon});
+      way["amenity"="place_of_worship"](around:{radius_m},{lat},{lon});
+
+      // Community gardens
+      node["leisure"="community_garden"](around:{radius_m},{lat},{lon});
+      way["leisure"="community_garden"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+
+    try:
+        def _do_request():
+            return requests.post(
+                get_overpass_url(),
+                data={"data": query},
+                timeout=40,
+                headers={"User-Agent": "HomeFit/1.0"},
+            )
+
+        resp = _retry_overpass(_do_request, query_type="civic_nodes")
+        if resp is None or resp.status_code != 200:
+            if resp and resp.status_code == 429:
+                logger.warning("OSM civic nodes query rate limited (429)")
+            return None
+
+        data = _safe_overpass_json(resp, context="civic nodes query")
+        if data is None:
+            return None
+        elements = data.get("elements", [])
+
+        nodes = []
+        # Use center for ways to compute position
+        for elem in elements:
+            etype = elem.get("type")
+            tags = elem.get("tags", {}) or {}
+
+            if etype == "node":
+                elem_lat = elem.get("lat")
+                elem_lon = elem.get("lon")
+            elif etype == "way":
+                center = elem.get("center")
+                if center and "lat" in center and "lon" in center:
+                    elem_lat = center["lat"]
+                    elem_lon = center["lon"]
+                else:
+                    # Fallback: compute way center if helper is available
+                    try:
+                        center_lat, center_lon = get_way_center(elem)
+                        elem_lat = center_lat
+                        elem_lon = center_lon
+                    except Exception:
+                        continue
+            else:
+                continue
+
+            if elem_lat is None or elem_lon is None:
+                continue
+
+            name = tags.get("name")
+            amenity = tags.get("amenity", "")
+            leisure = tags.get("leisure", "")
+
+            if amenity == "library":
+                node_type = "library"
+            elif amenity == "community_centre":
+                node_type = "community_centre"
+            elif amenity == "place_of_worship":
+                node_type = "place_of_worship"
+            elif amenity == "townhall":
+                node_type = "townhall"
+            elif leisure == "community_garden":
+                node_type = "community_garden"
+            else:
+                # Only keep explicitly whitelisted civic types
+                continue
+
+            distance_m = haversine_distance(lat, lon, elem_lat, elem_lon)
+            nodes.append(
+                {
+                    "name": name,
+                    "lat": float(elem_lat),
+                    "lon": float(elem_lon),
+                    "distance_m": round(distance_m, 1),
+                    "type": node_type,
+                    "osm_id": elem.get("id"),
+                }
+            )
+
+        if not nodes:
+            logger.info(
+                "🔍 [CIVIC NODES] No civic nodes found for lat=%s lon=%s radius=%sm",
+                lat,
+                lon,
+                radius_m,
+            )
+
+        return {"nodes": nodes}
+
+    except Exception as e:
+        logger.error(f"OSM civic nodes query error: {e}", exc_info=True)
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+@safe_api_call("osm", required=False)
+@handle_api_timeout(timeout_seconds=60)
 def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True) -> Optional[Dict]:
     """
     Query OSM for local businesses within walking distance.
