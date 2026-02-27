@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
 import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, type PillarKey } from '@/lib/pillars'
+import { totalFromPartialPillarScores } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
@@ -52,6 +53,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
+  const [pillarsInProgress, setPillarsInProgress] = useState<string[]>([])
   const [premiumCodeInput, setPremiumCodeInput] = useState('')
   const [savedPremiumCode, setSavedPremiumCode] = useState('')
   useEffect(() => {
@@ -87,9 +89,24 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const runScore = useCallback(async () => {
     const selected = Array.from(selectedPillars)
     if (selected.length === 0) return
+
+    // Only run pillars that don't have a score yet (incremental scoring).
+    const toRun = selected.filter((k) => !(k in pillarScores))
+
+    // If all selected pillars already have scores, just recompute total from current priorities.
+    if (toRun.length === 0) {
+      const partialScores = Object.fromEntries(
+        Object.entries(pillarScores).map(([k, v]) => [k, v.score])
+      )
+      const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
+      setTotalScore(total ?? null)
+      return
+    }
+
     setLoading(true)
     setProgress(5)
     setScoreProgress({})
+    setPillarsInProgress(toRun)
     try {
       const prioritiesForRequest: PillarPriorities = {
         active_outdoors: 'None',
@@ -110,7 +127,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       const resp = await getScoreWithProgress(
         {
           location: place.location,
-          only: selected.join(','),
+          only: toRun.join(','),
           priorities: JSON.stringify(prioritiesForRequest),
           job_categories: searchOptions.job_categories?.join(','),
           include_chains: searchOptions.include_chains,
@@ -119,19 +136,23 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         (partial) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
           const completed = Object.keys(partial).length
-          const total = selected.length
+          const total = toRun.length
           const pct = total > 0 ? Math.min(98, 5 + (completed / total) * 90) : 5
           setProgress(pct)
         }
       )
       const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
-      const scores: Record<string, { score: number }> = {}
-      selected.forEach((k) => {
+      const mergedScores = { ...pillarScores }
+      toRun.forEach((k) => {
         const data = pillars[k]
-        if (data != null && typeof data.score === 'number') scores[k] = { score: data.score }
+        if (data != null && typeof data.score === 'number') mergedScores[k] = { score: data.score }
       })
-      setPillarScores(scores)
-      setTotalScore(typeof resp.total_score === 'number' ? resp.total_score : null)
+      setPillarScores(mergedScores)
+      const partialScores = Object.fromEntries(
+        Object.entries(mergedScores).map(([k, v]) => [k, v.score])
+      )
+      const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
+      setTotalScore(total ?? null)
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
@@ -139,8 +160,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setLoading(false)
       setProgress(0)
       setScoreProgress({})
+      setPillarsInProgress([])
     }
-  }, [place.location, searchOptions, selectedPillars, selectedPriorities, onError])
+  }, [place.location, searchOptions, selectedPillars, selectedPriorities, pillarScores, onError])
 
   const hasResults = Object.keys(pillarScores).length > 0
   const locationLabel = formatPlaceLabel(place)
@@ -369,7 +391,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               {Object.keys(scoreProgress).length === 0 ? (
                 <span>Preparing location and shared data…</span>
               ) : (
-                PILLAR_ORDER.filter((k) => selectedPillars.has(k)).map((key) => {
+                (pillarsInProgress.length > 0 ? pillarsInProgress : PILLAR_ORDER.filter((k) => selectedPillars.has(k))).map((key) => {
                   const meta = PILLAR_META[key]
                   const done = key in scoreProgress
                   return (
