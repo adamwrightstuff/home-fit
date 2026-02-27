@@ -1,17 +1,22 @@
 """
-Social Fabric pillar (Phase 2B, v1).
+Social Fabric pillar (Phase 2B).
 
 Measures structural conditions for local belonging:
 - Stability: residential rootedness (Census B07003)
+- Diversity: race / income / age mix (Census B02001, B19001, B01001)
 - Civic gathering: civic, non-commercial third places (OSM civic nodes)
+- Engagement: civic org density (IRS BMF; optional, when data is available)
 
-Version 1 uses Stability + Civic gathering only. Diversity (race/income/age)
-and Engagement (IRS BMF) can be added later without changing the core API.
+When some sub-indices are unavailable (e.g. no BMF data), the pillar
+renormalizes over the available components so the combined score remains
+in [0, 100].
 """
 
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Iterable
+import math
 
 from data_sources import census_api, data_quality, osm_api
+from data_sources import irs_bmf
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -63,6 +68,53 @@ def _score_civic_gathering_from_count(count_civic: int) -> float:
     return 100.0
 
 
+def _entropy(counts: Iterable[int]) -> float:
+    total = sum(c for c in counts if c is not None)
+    if total <= 0:
+        return 0.0
+    h = 0.0
+    for c in counts:
+        if c is None or c <= 0:
+            continue
+        p = c / total
+        h -= p * math.log(p)
+    return h
+
+
+def _normalized_entropy(counts: Iterable[int], n_categories: int) -> float:
+    """Shannon entropy normalized to 0–100."""
+    if n_categories <= 1:
+        return 0.0
+    h = _entropy(counts)
+    h_max = math.log(n_categories)
+    if h_max <= 0:
+        return 0.0
+    return max(0.0, min(100.0, (h / h_max) * 100.0))
+
+
+def _score_engagement_from_rate(orgs_per_1k: float, mean: float, std: float, clip_z: float = 2.5) -> float:
+    """
+    Normalize civic org density (orgs per 1k) to a 0–100 Engagement score using a
+    clipped z-score vs regional (division/CBSA) stats.
+    """
+    try:
+        v = float(orgs_per_1k)
+    except (TypeError, ValueError):
+        return 0.0
+    if std <= 0:
+        return 0.0
+
+    z = (v - mean) / std
+    if z > clip_z:
+        z = clip_z
+    elif z < -clip_z:
+        z = -clip_z
+
+    # Map [-clip_z, +clip_z] → [0, 100]
+    score = ((z + clip_z) / (2 * clip_z)) * 100.0
+    return max(0.0, min(100.0, score))
+
+
 def get_social_fabric_score(
     lat: float,
     lon: float,
@@ -88,28 +140,86 @@ def get_social_fabric_score(
         same_house_pct = None
         stability_score = 0.0
 
+    # Diversity: Race, Income, Age entropy
+    diversity_score = None
+    diversity_data = census_api.get_diversity_data(lat, lon, tract=tract)
+    if diversity_data:
+        race_counts = diversity_data.get("race_counts") or {}
+        income_counts = diversity_data.get("income_counts") or {}
+        age_counts_dict = diversity_data.get("age_counts") or {}
+
+        components = []
+
+        if race_counts:
+            n_race = sum(1 for v in race_counts.values() if v > 0)
+            if n_race >= 2:
+                components.append(_normalized_entropy(race_counts.values(), n_race))
+
+        if income_counts:
+            n_inc = sum(1 for v in income_counts.values() if v > 0)
+            if n_inc >= 2:
+                components.append(_normalized_entropy(income_counts.values(), n_inc))
+
+        youth = age_counts_dict.get("youth", 0)
+        prime = age_counts_dict.get("prime", 0)
+        seniors = age_counts_dict.get("seniors", 0)
+        if youth + prime + seniors > 0:
+            components.append(_normalized_entropy([youth, prime, seniors], 3))
+
+        if components:
+            diversity_score = sum(components) / len(components)
+
     # Civic gathering: OSM civic nodes (library, community_centre, place_of_worship, townhall, community_garden)
     civic = osm_api.query_civic_nodes(lat, lon, radius_m=800)
     nodes = (civic or {}).get("nodes", []) if civic else []
     civic_count = len(nodes)
     civic_score = _score_civic_gathering_from_count(civic_count)
 
-    # Combine into Social Fabric Index v1.
-    # v1 uses Stability + Civic only with equal 1.2 weights (see SOCIAL_FABRIC_PRD):
-    #   SFI = (1.2*S + 1.2*C) / 2.4
-    total_weight = 0.0
-    weighted_sum = 0.0
+    # Engagement: IRS BMF civic org density (optional; requires preprocessed data)
+    engagement_score = None
+    orgs_per_1k = None
+    engagement_stats = None
+    # Try to use division code from tract metadata if available
+    division_code = None
+    # (Could be extended later to infer division from state_fips)
+    bmf_result = irs_bmf.get_civic_orgs_per_1k(lat, lon, tract=tract)
+    if bmf_result is not None:
+        orgs_per_1k, engagement_stats = bmf_result
+        if engagement_stats and orgs_per_1k is not None:
+            mean = engagement_stats.get("mean", 0.0)
+            std = engagement_stats.get("std", 0.0)
+            engagement_score = _score_engagement_from_rate(orgs_per_1k, mean, std)
 
-    # Always include both components (they are required for v1).
-    total_weight += 1.2
-    weighted_sum += 1.2 * stability_score
+    # Combine into Social Fabric Index.
+    # Weights: Stability 1.2, Civic 1.2, Diversity 1.0, Engagement 1.0 (when present).
+    weights = []
+    values = []
 
-    total_weight += 1.2
-    weighted_sum += 1.2 * civic_score
+    # Stability (always)
+    weights.append(1.2)
+    values.append(stability_score)
 
-    score = 0.0
-    if total_weight > 0:
+    # Civic (always)
+    weights.append(1.2)
+    values.append(civic_score)
+
+    # Diversity
+    if diversity_score is not None:
+        weights.append(1.0)
+        values.append(diversity_score)
+
+    # Engagement
+    if engagement_score is not None:
+        weights.append(1.0)
+        values.append(engagement_score)
+
+    if weights:
+        total_weight = sum(weights)
+        weighted_sum = sum(w * v for w, v in zip(weights, values))
         score = weighted_sum / total_weight
+    else:
+        score = 0.0
+
     score = max(0.0, min(100.0, round(score, 1)))
 
     # Area type for data_quality / context
@@ -121,9 +231,12 @@ def get_social_fabric_score(
     combined_data = {
         "stability_score": stability_score,
         "civic_score": civic_score,
+        "diversity_score": diversity_score,
+        "engagement_score": engagement_score,
         "score": score,
         "mobility": mobility,
         "civic_nodes_count": civic_count,
+        "orgs_per_1k": orgs_per_1k,
     }
 
     quality_metrics = data_quality.assess_pillar_data_quality(
@@ -133,16 +246,16 @@ def get_social_fabric_score(
     breakdown = {
         "stability": stability_score,
         "civic_gathering": civic_score,
-        # Placeholders for future sub-indices
-        "diversity": None,
-        "engagement": None,
+        "diversity": diversity_score,
+        "engagement": engagement_score,
     }
 
     summary = {
         "same_house_pct": round(same_house_pct, 1) if same_house_pct is not None else None,
         "civic_node_count_800m": civic_count,
-        "diversity_available": False,
-        "engagement_available": False,
+        "diversity_available": diversity_score is not None,
+        "engagement_available": engagement_score is not None,
+        "orgs_per_1k": orgs_per_1k,
     }
 
     details = {
@@ -150,15 +263,18 @@ def get_social_fabric_score(
         "summary": summary,
         "data_quality": quality_metrics,
         "area_classification": {"area_type": area_type},
-        "version": "v1_stability_plus_civic",
+        "version": "v2_stability_diversity_civic_engagement",
     }
 
     logger.info(
-        "Social Fabric Score: %s/100 (stability=%s, civic=%s, civic_nodes=%s)",
+        "Social Fabric Score: %s/100 (stability=%s, civic=%s, diversity=%s, engagement=%s, civic_nodes=%s, orgs_per_1k=%s)",
         score,
         stability_score,
         civic_score,
+        diversity_score,
+        engagement_score,
         civic_count,
+        orgs_per_1k,
     )
     return score, details
 

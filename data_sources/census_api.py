@@ -685,6 +685,164 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         return None
 
 
+def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Get race, income, and age distributions for Social Fabric Diversity scoring.
+
+    Returns:
+        {
+            "race_counts": Dict[str, int],
+            "income_counts": Dict[str, int],
+            "age_counts": {
+                "youth": int,
+                "prime": int,
+                "seniors": int,
+            },
+        }
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+
+    try:
+        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+
+        # ---- Race: B02001 (total + race categories) ----
+        race_vars = [
+            "B02001_001E",  # Total
+            "B02001_002E",  # White alone
+            "B02001_003E",  # Black or African American alone
+            "B02001_004E",  # American Indian and Alaska Native alone
+            "B02001_005E",  # Asian alone
+            "B02001_006E",  # Native Hawaiian and Other Pacific Islander alone
+            "B02001_007E",  # Some other race alone
+            "B02001_008E",  # Two or more races
+            "B02001_009E",  # Two races including some other race
+            "B02001_010E",  # Two races excluding some other race, and 3+ races
+        ]
+        params_race = {
+            "get": ",".join(race_vars),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        resp_race = _make_request_with_retry(base_acs5, params_race, timeout=15, max_retries=3)
+        if resp_race is None:
+            return None
+        data_race = resp_race.json()
+        if len(data_race) < 2:
+            return None
+        race_row = data_race[1]
+        try:
+            race_total = int(race_row[0]) if race_row[0] else 0
+        except (ValueError, TypeError):
+            race_total = 0
+        race_counts: Dict[str, int] = {}
+        for i, var in enumerate(race_vars[1:], start=1):
+            try:
+                v = int(race_row[i]) if race_row[i] else 0
+            except (ValueError, TypeError):
+                v = 0
+            race_counts[var] = v
+
+        # ---- Income: B19001 (total + 16 income brackets) ----
+        income_vars = [
+            "B19001_001E",  # Total
+            "B19001_002E", "B19001_003E", "B19001_004E", "B19001_005E",
+            "B19001_006E", "B19001_007E", "B19001_008E", "B19001_009E",
+            "B19001_010E", "B19001_011E", "B19001_012E", "B19001_013E",
+            "B19001_014E", "B19001_015E", "B19001_016E", "B19001_017E",
+        ]
+        params_inc = {
+            "get": ",".join(income_vars),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        resp_inc = _make_request_with_retry(base_acs5, params_inc, timeout=15, max_retries=3)
+        if resp_inc is None:
+            return None
+        data_inc = resp_inc.json()
+        if len(data_inc) < 2:
+            return None
+        inc_row = data_inc[1]
+        try:
+            income_total = int(inc_row[0]) if inc_row[0] else 0
+        except (ValueError, TypeError):
+            income_total = 0
+        income_counts: Dict[str, int] = {}
+        for i, var in enumerate(income_vars[1:], start=1):
+            try:
+                v = int(inc_row[i]) if inc_row[i] else 0
+            except (ValueError, TypeError):
+                v = 0
+            income_counts[var] = v
+
+        # ---- Age buckets: aggregate B01001 into Youth / Prime / Seniors ----
+        # Youth: <18 (Male B01001_003–006, Female B01001_027–030)
+        # Prime: 18–64 (Male B01001_007–019, Female B01001_031–043)
+        # Seniors: 65+ (Male B01001_020–025, Female B01001_044–049)
+        age_vars = [
+            "B01001_003E", "B01001_004E", "B01001_005E", "B01001_006E",  # Youth male
+            "B01001_007E", "B01001_008E", "B01001_009E", "B01001_010E", "B01001_011E",
+            "B01001_012E", "B01001_013E", "B01001_014E", "B01001_015E", "B01001_016E",
+            "B01001_017E", "B01001_018E", "B01001_019E",  # Prime male
+            "B01001_020E", "B01001_021E", "B01001_022E", "B01001_023E",
+            "B01001_024E", "B01001_025E",  # Seniors male
+            "B01001_027E", "B01001_028E", "B01001_029E", "B01001_030E",  # Youth female
+            "B01001_031E", "B01001_032E", "B01001_033E", "B01001_034E", "B01001_035E",
+            "B01001_036E", "B01001_037E", "B01001_038E", "B01001_039E", "B01001_040E",
+            "B01001_041E", "B01001_042E", "B01001_043E",  # Prime female
+            "B01001_044E", "B01001_045E", "B01001_046E", "B01001_047E",
+            "B01001_048E", "B01001_049E",  # Seniors female
+        ]
+        params_age = {
+            "get": ",".join(age_vars),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        resp_age = _make_request_with_retry(base_acs5, params_age, timeout=15, max_retries=3)
+        if resp_age is None:
+            return None
+        data_age = resp_age.json()
+        if len(data_age) < 2:
+            return None
+        age_row = data_age[1]
+
+        def _val(idx: int) -> int:
+            try:
+                return int(age_row[idx]) if age_row[idx] else 0
+            except (ValueError, TypeError, IndexError):
+                return 0
+
+        # Indices here are 0-based into age_row which aligns with age_vars order
+        youth_male = sum(_val(i) for i in range(0, 4))        # 003–006
+        prime_male = sum(_val(i) for i in range(4, 4 + 13))   # 007–019
+        seniors_male = sum(_val(i) for i in range(17, 23))    # 020–025
+
+        youth_female = sum(_val(i) for i in range(23, 27))    # 027–030
+        prime_female = sum(_val(i) for i in range(27, 27 + 13))  # 031–043
+        seniors_female = sum(_val(i) for i in range(40, 46))  # 044–049
+
+        youth = youth_male + youth_female
+        prime = prime_male + prime_female
+        seniors = seniors_male + seniors_female
+
+        age_counts = {"youth": youth, "prime": prime, "seniors": seniors}
+
+        return {
+            "race_counts": race_counts,
+            "income_counts": income_counts,
+            "age_counts": age_counts,
+        }
+
+    except Exception as e:
+        print(f"   ⚠️  Diversity data lookup failed: {e}")
+        return None
+
+
 def classify_area_by_density(density: float) -> Dict[str, str]:
     """
     Classify area type based on population density.
