@@ -8,30 +8,56 @@ export async function getGeocode(location: string): Promise<GeocodeResult> {
   const url = `${API_BASE_URL}/api/geocode?location=${encodeURIComponent(location.trim())}`;
   const fetchOpts: RequestInit = { method: 'GET', headers: { Accept: 'application/json' } };
 
-  let res = await fetch(url, fetchOpts);
-  // Retry on 502/503 (cold start or temporary). Backend can take a while to join LB after container start.
-  if ((res.status === 502 || res.status === 503) && !url.includes('job_id')) {
-    for (const delayMs of [5000, 10000, 15000]) {
-      await new Promise((r) => setTimeout(r, delayMs));
-      res = await fetch(url, fetchOpts);
-      if (res.status !== 502 && res.status !== 503) break;
+  const maxAttempts = 3;
+  const retryDelaysMs = [2000, 4000]; // delay before 2nd and 3rd attempt
+
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      let res = await fetch(url, fetchOpts);
+      // Retry on 502/503 (cold start or temporary). Backend can take a while to join LB after container start.
+      if ((res.status === 502 || res.status === 503) && !url.includes('job_id')) {
+        for (const delayMs of [5000, 10000, 15000]) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          res = await fetch(url, fetchOpts);
+          if (res.status !== 502 && res.status !== 503) break;
+        }
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = typeof data?.detail === 'string' ? data.detail : 'Could not find that location.';
+        const message =
+          res.status === 502 || res.status === 503
+            ? (detail.toLowerCase().includes('try again') ? detail : 'Location service is starting up. Please try again in a moment.')
+            : detail;
+        lastError = new Error(message);
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
+          continue;
+        }
+        throw lastError;
+      }
+      if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') {
+        lastError = new Error('Invalid geocode response.');
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
+          continue;
+        }
+        throw lastError;
+      }
+      return data as GeocodeResult;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
+        continue;
+      }
+      throw lastError;
     }
   }
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const detail = typeof data?.detail === 'string' ? data.detail : 'Could not find that location.';
-    // Use a friendlier message for infrastructure errors so users know to try again
-    const message =
-      res.status === 502 || res.status === 503
-        ? (detail.toLowerCase().includes('try again') ? detail : 'Location service is starting up. Please try again in a moment.')
-        : detail;
-    throw new Error(message);
-  }
-  if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') {
-    throw new Error('Invalid geocode response.');
-  }
-  return data as GeocodeResult;
+  throw lastError ?? new Error('Could not find that location.');
 }
 
 export async function getScore(params: ScoreRequestParams): Promise<ScoreResponse> {
