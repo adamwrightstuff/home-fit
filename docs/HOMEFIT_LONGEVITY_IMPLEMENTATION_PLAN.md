@@ -56,7 +56,9 @@ Before implementation, update the PRD so the plan and estimates are accurate.
 - [ ] Frontend: Accordion per pillar card with sub-criteria rows.
 
 ### Phase 2B: Social Fabric pillar — 2–3 weeks
-- [ ] Census B07003, B02001; OSM third places; IRS BMF (or defer to 2B').
+- [ ] Implement `social_fabric` pillar per `docs/SOCIAL_FABRIC_PRD.md`:
+  - v1: Stability (Census B07003) + Civic gathering (OSM civic nodes).
+  - Later 2B′: add Diversity (B02001/B19001/age) and Engagement (IRS BMF).
 
 ### Phase 2C: Purpose Density pillar — 1–2 weeks
 - [ ] OSM, IMLS, IPEDS, IRS BMF (volunteer org density).

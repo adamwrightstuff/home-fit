@@ -15,18 +15,20 @@ from . import schools
 from . import housing_value
 from . import economic_security
 from . import climate_risk
+from . import layout_network
 
 __all__ = [
-    'active_outdoors',
-    'neighborhood_beauty',
-    'built_beauty',
-    'natural_beauty',
-    'neighborhood_amenities',
-    'air_travel_access',
-    'public_transit_access',
-    'healthcare_access',
-    'economic_security',
-    'schools',
-    'housing_value',
-    'climate_risk'
+    "active_outdoors",
+    "neighborhood_beauty",
+    "built_beauty",
+    "natural_beauty",
+    "neighborhood_amenities",
+    "air_travel_access",
+    "public_transit_access",
+    "healthcare_access",
+    "economic_security",
+    "schools",
+    "housing_value",
+    "climate_risk",
+    "layout_network",
 ]

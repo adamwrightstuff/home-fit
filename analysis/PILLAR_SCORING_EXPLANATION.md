@@ -461,6 +461,103 @@ total_score = normalized_base + beauty_bonus
 
 ---
 
+## 10. Layout & Street Network (`pillars/layout_network.py`)
+
+### Scoring Method
+**Data-backed component sum** (no calibration)
+
+### Formula
+```
+connectivity_score   # 0–35
+hierarchy_score      # 0–30
+barriers_penalty     # 0–20 (subtractive)
+infra_bonus          # 0–15
+
+raw_score = connectivity_score + hierarchy_score - barriers_penalty + infra_bonus
+final_score = clamp(raw_score, 0.0, 100.0)
+```
+
+### Components
+
+#### Connectivity & Grain (0–35 points)
+- **Goal:** Reward fine-grained, well-connected networks and penalize cul-de-sac sprawl.
+- **Inputs:** OSM road graph built from walkable classes (local/collector streets and selected paths).
+- **Metrics:**
+  - **Intersection density (0–15):**
+    - Nodes with degree ≥3 within a fixed radius (default ≈1000m).
+    - Converted to intersections per km² and mapped via area-type-specific bands:
+      - Urban core / urban residential: thresholds centered around 40/80/120 intersections per km².
+      - Suburban: lower “good enough” thresholds (e.g., 25/50/80).
+      - Rural/exurban: even lower expectations (e.g., 15/30/50).
+  - **Median block length (0–10):**
+    - Median segment length on the local street network.
+    - Shorter typical segments → higher score, with relaxed thresholds for suburban/rural.
+  - **Cul‑de‑sac ratio (0–10):**
+    - Share of dead-end nodes (degree 1) in the local street network.
+    - Lower dead-end share → more points, with softer expectations in suburban/rural contexts.
+- **Score:** `connectivity_score = clamp(intersection + block + culdesac, 0, 35)`.
+
+#### Street Hierarchy & Speed Environment (0–30 points)
+- **Goal:** Favor environments dominated by calm local streets and penalize heavy arterial dominance.
+- **Inputs:** `highway=*`, `lanes`, `maxspeed` (when present).
+- **Metrics:**
+  - **Local vs major road mix (0–15):**
+    - Local-ish: `residential`, `living_street`, `unclassified`, `tertiary`, `service`.
+    - Major: `primary`, `trunk`, `motorway`.
+    - Score % of total drivable length that is local, with bands adjusted by area type.
+  - **Arterial dominance (0–10):**
+    - Lane-km of primary/trunk/motorway within the radius.
+    - Fewer lane-km → higher score, using thresholds that vary by area type but preserve the 0–10 cap.
+  - **Inferred speed environment (0–5):**
+    - For local streets, use `maxspeed` when available, with simple defaults by class/country when missing.
+    - Score share of local street length at or below a “calm” threshold (≈30 km/h / 25 mph).
+- **Score:** `hierarchy_score = clamp(local_mix + arterial + speed, 0, 30)`.
+
+#### Barriers & Severance (0–20 points, subtractive)
+- **Goal:** Penalize big pieces of infrastructure that chop up the neighborhood.
+- **Inputs:** `highway=motorway/trunk/primary`, `railway=*`, plus network geometry.
+- **Metrics:**
+  - **Hard barrier penalty (0–12):**
+    - Count major road/rail corridors that traverse the analysis radius (enter/exit on different sides).
+    - Map number of effective corridors to a penalty curve (more corridors → more penalty, capped at 12).
+  - **Superblock / mega‑parcel proxy (0–8):**
+    - Detect contexts with:
+      - Very long median block lengths (e.g. >250m), and
+      - Low intersection density (e.g. <30/km²).
+    - When both hold, assign an additional penalty up to 8, representing severed or coarse fabrics.
+- **Score:** `barriers_penalty = min(20, hard_barrier_penalty + superblock_penalty)`.
+
+#### Pedestrian & Cycle Infrastructure Bonus (0–15 points)
+- **Goal:** Add signal where rich tags exist, without punishing missing data.
+- **Inputs:** `sidewalk=*`, `cycleway=*`, `highway=footway/path/cycleway`.
+- **Metrics:**
+  - **Sidewalk presence (0–8):**
+    - On local/collector roads, compute share of length tagged with sidewalks.
+    - More tagged sidewalks → more bonus; no tags yields 0 bonus (not a penalty).
+  - **Cycling infrastructure (0–5):**
+    - Share of road/path length with `cycleway=*` or `highway=cycleway`.
+  - **Dedicated paths / greenways (0–2):**
+    - Length of `highway=footway/path` segments not adjacent to major roads, as a proxy for off-street paths.
+- **Score:** `infra_bonus = min(15, sidewalk_score + cycle_score + path_score)`.
+
+### Area-Type Context
+- Uses the same area-type detection as other pillars.
+- Adjusts thresholds and “good enough” bands for:
+  - **Urban core / urban residential:** Higher expectations for connectivity and local share; tolerant of some arterials.
+  - **Suburban:** Lower intersection density thresholds; more tolerance for cul-de-sacs but still penalizing extreme sprawl.
+  - **Rural / exurban:** Much lower expectations on intersection density and block length; barrier penalties remain active.
+- As with other pillars, expectations change by area type, but scores are not rescaled afterward (no calibration).
+
+### Non-Overlap with Other Pillars
+- **Neighborhood amenities:** Remains focused purely on access to POIs (density, variety, proximity, vibrancy).
+- **Built beauty:** Continues to score architectural form, facade rhythm, setbacks, and heritage using building footprints and frontage; the layout pillar owns street network connectivity/hierarchy.
+- This keeps:
+  - `neighborhood_amenities` = **where things are**
+  - `built_beauty` = **how it looks and feels visually**
+  - `layout_network` = **how the street skeleton functions for movement**
+
+---
+
 ## Summary: Calibration/Tuning Status
 
 | Pillar | Calibration | Tuning | Ridge Regression | Status |
@@ -474,6 +571,7 @@ total_score = normalized_base + beauty_bonus
 | **built_beauty** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **air_travel_access** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **neighborhood_beauty** | ❌ None | ❌ None | ❌ None | ✅ Composes other pillars |
+| **layout_network** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 
 ### Key Points
 

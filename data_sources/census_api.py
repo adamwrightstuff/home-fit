@@ -620,6 +620,71 @@ def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) ->
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Get residential mobility data (same house 1 year ago) from ACS B07003.
+
+    Returns:
+        {
+            "same_house_pct": float,  # percent 0-100
+            "same_house_count": int,
+            "total_population_1yr": int,
+        }
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+
+    try:
+        print("🏡 Fetching mobility data (B07003) from Census ACS...")
+
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        # B07003_001E: Total population 1 year and over
+        # B07003_002E: Same house 1 year ago
+        params = {
+            "get": "B07003_001E,B07003_002E,NAME",
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+
+        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+        if response is None:
+            print("   ⚠️  ACS mobility request failed after retries")
+            return None
+
+        data = response.json()
+        if len(data) < 2:
+            print("   ⚠️  No mobility data returned")
+            return None
+
+        row = data[1]
+        try:
+            total_1yr = int(row[0]) if row[0] else 0
+            same_house = int(row[1]) if row[1] else 0
+        except (ValueError, TypeError):
+            return None
+
+        if total_1yr <= 0 or same_house < 0 or same_house > total_1yr:
+            print("   ⚠️  Mobility data invalid or missing")
+            return None
+
+        same_house_pct = (same_house / total_1yr) * 100.0
+        return {
+            "same_house_pct": same_house_pct,
+            "same_house_count": same_house,
+            "total_population_1yr": total_1yr,
+        }
+
+    except Exception as e:
+        print(f"   ⚠️  Mobility data lookup failed: {e}")
+        return None
+
+
 def classify_area_by_density(density: float) -> Dict[str, str]:
     """
     Classify area type based on population density.
