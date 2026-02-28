@@ -219,6 +219,15 @@ def build_engagement_baselines(
         mean, std = _mean_std(clean_vals)
         engagement_stats[division] = {"mean": mean, "std": std, "n": len(clean_vals)}
 
+    # National fallback: aggregate orgs_per_1k across all divisions so tracts in
+    # divisions missing from this run (e.g. middle_atlantic) still get a score.
+    all_vals: List[float] = []
+    for vals in division_values.values():
+        all_vals.extend(v for v in vals if isinstance(v, (int, float)) and not math.isnan(v))
+    if all_vals:
+        mean_all, std_all = _mean_std(all_vals)
+        engagement_stats["all"] = {"mean": mean_all, "std": std_all, "n": len(all_vals)}
+
     os.makedirs(os.path.dirname(output_engagement_stats) or ".", exist_ok=True)
     with open(output_engagement_stats, "w", encoding="utf-8") as f:
         json.dump(engagement_stats, f, indent=2, sort_keys=True)

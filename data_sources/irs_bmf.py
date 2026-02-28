@@ -200,6 +200,9 @@ def get_civic_orgs_per_1k(
     stats = None
     if division_code and engagement_stats_by_division:
         stats = engagement_stats_by_division.get(division_code)
+        # Fallback to national baseline when division has no stats (e.g. partial BMF build).
+        if stats is None:
+            stats = engagement_stats_by_division.get("all")
 
     return orgs_per_1k, stats
 
