@@ -16,7 +16,6 @@ from . import housing_value
 from . import economic_security
 from . import climate_risk
 from . import social_fabric
-from . import layout_network
 
 __all__ = [
     "active_outdoors",
@@ -32,5 +31,4 @@ __all__ = [
     "housing_value",
     "climate_risk",
     "social_fabric",
-    "layout_network",
 ]

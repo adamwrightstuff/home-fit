@@ -46,7 +46,6 @@ from pillars.housing_value import get_housing_value_score
 from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
-from pillars.layout_network import get_layout_network_score
 from data_sources.arch_diversity import compute_arch_diversity
 
 ##########################
@@ -279,7 +278,6 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "built_beauty",
         "natural_beauty",
         "neighborhood_amenities",
-        "layout_network",
         "air_travel_access",
         "public_transit_access",
         "healthcare_access",
@@ -1199,16 +1197,6 @@ def _compute_single_score_internal(
                 'precomputed_tree_canopy_5km': tree_canopy_5km
             })
         )
-    if _include_pillar('layout_network'):
-        pillar_tasks.append(
-            ('layout_network', get_layout_network_score, {
-                'lat': lat,
-                'lon': lon,
-                'area_type': area_type,
-                'location_scope': location_scope,
-                'density': density,
-            })
-        )
     if need_built_beauty:
         pillar_tasks.append(
             ('built_beauty', built_beauty.calculate_built_beauty, {
@@ -1397,8 +1385,6 @@ def _compute_single_score_internal(
     climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
-    layout_network_score, layout_network_details = pillar_results.get('layout_network') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-
     # Extract built/natural beauty from parallel results
     built_calc = pillar_results.get('built_beauty')
     natural_calc = pillar_results.get('natural_beauty')
@@ -1577,7 +1563,6 @@ def _compute_single_score_internal(
         + (built_score * token_allocation["built_beauty"] / 100)
         + (natural_score * token_allocation["natural_beauty"] / 100)
         + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
-        + (layout_network_score * token_allocation["layout_network"] / 100)
         + (air_travel_score * token_allocation["air_travel_access"] / 100)
         + (transit_score * token_allocation["public_transit_access"] / 100)
         + (healthcare_score * token_allocation["healthcare_access"] / 100)
@@ -1644,17 +1629,6 @@ def _compute_single_score_internal(
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),
             "area_classification": amenities_details.get("area_classification", {})
-        },
-        "layout_network": {
-            "score": layout_network_score,
-            "weight": token_allocation["layout_network"],
-            "importance_level": priority_levels.get("layout_network") if priority_levels else None,
-            "contribution": round(layout_network_score * token_allocation["layout_network"] / 100, 2),
-            "breakdown": layout_network_details.get("breakdown", {}),
-            "summary": layout_network_details.get("summary", {}),
-            "confidence": layout_network_details.get("data_quality", {}).get("confidence", 0),
-            "data_quality": layout_network_details.get("data_quality", {}),
-            "area_classification": layout_network_details.get("area_classification", {}),
         },
         "air_travel_access": {
             "score": air_travel_score,
@@ -2844,7 +2818,6 @@ async def _stream_score_with_progress(
             + (built_score * token_allocation["built_beauty"] / 100)
             + (natural_score * token_allocation["natural_beauty"] / 100)
             + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
-            + (layout_network_score * token_allocation["layout_network"] / 100)
             + (air_travel_score * token_allocation["air_travel_access"] / 100)
             + (transit_score * token_allocation["public_transit_access"] / 100)
             + (healthcare_score * token_allocation["healthcare_access"] / 100)
@@ -2908,17 +2881,6 @@ async def _stream_score_with_progress(
                 "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": amenities_details.get("data_quality", {}),
                 "area_classification": amenities_details.get("area_classification", {})
-            },
-            "layout_network": {
-                "score": layout_network_score,
-                "weight": token_allocation["layout_network"],
-                "importance_level": priority_levels.get("layout_network") if priority_levels else None,
-                "contribution": round(layout_network_score * token_allocation["layout_network"] / 100, 2),
-                "breakdown": layout_network_details.get("breakdown", {}),
-                "summary": layout_network_details.get("summary", {}),
-                "confidence": layout_network_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": layout_network_details.get("data_quality", {}),
-                "area_classification": layout_network_details.get("area_classification", {}),
             },
             "air_travel_access": {
                 "score": air_travel_score,
@@ -4543,13 +4505,12 @@ def health_check():
         "checks": checks,
         "cache_stats": cache_stats,
         "version": API_VERSION,
-        "architecture": "12 Purpose-Driven Pillars",
+        "architecture": "11 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
             "built_beauty",
             "natural_beauty",
             "neighborhood_amenities",
-            "layout_network",
             "air_travel_access",
             "public_transit_access",
             "healthcare_access",

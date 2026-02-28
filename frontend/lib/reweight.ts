@@ -9,7 +9,6 @@ const PILLAR_ORDER: PillarKey[] = [
   'built_beauty',
   'natural_beauty',
   'neighborhood_amenities',
-  'layout_network',
   'air_travel_access',
   'public_transit_access',
   'healthcare_access',

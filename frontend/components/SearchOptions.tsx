@@ -11,7 +11,6 @@ interface PillarPriorities {
   built_beauty: PriorityLevel
   natural_beauty: PriorityLevel
   neighborhood_amenities: PriorityLevel
-  layout_network: PriorityLevel
   air_travel_access: PriorityLevel
   public_transit_access: PriorityLevel
   healthcare_access: PriorityLevel
@@ -41,7 +40,6 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'natural_beauty',
   'built_beauty',
   'neighborhood_amenities',
-  'layout_network',
   'active_outdoors',
   'healthcare_access',
   'public_transit_access',
@@ -60,7 +58,6 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   built_beauty: 'Medium',
   natural_beauty: 'Medium',
   neighborhood_amenities: 'Medium',
-  layout_network: 'Medium',
   air_travel_access: 'Medium',
   public_transit_access: 'Medium',
   healthcare_access: 'Medium',
