@@ -468,19 +468,26 @@ total_score = normalized_base + beauty_bonus
 
 ### Formula
 ```
-connectivity_score   # 0–35
-hierarchy_score      # 0–30
-barriers_penalty     # 0–20 (subtractive)
-infra_bonus          # 0–15
+connectivity_score      # 0–35  (Connectivity & Grain)
+route_character_score   # 0–30  (Route Character)
+barrier_impact_penalty  # 0–20  (subtractive; Barrier Impact)
+comfort_safety_score    # 0–15  (Comfort & Safety)
 
-raw_score = connectivity_score + hierarchy_score - barriers_penalty + infra_bonus
+raw_score = connectivity_score + route_character_score - barrier_impact_penalty + comfort_safety_score
 final_score = clamp(raw_score, 0.0, 100.0)
 ```
+
+### Criteria bands (targets)
+
+1. **Connectivity & Grain (0–35):** Fine-grained, well-connected grid → score ≥25; low-density, cul-de-sac-dominated → ≤15.
+2. **Route Character (0–30):** Local, low-capacity, low-speed routes → ≥18; arterial-dominated → ≤10.
+3. **Barrier Impact (0–20 deducted):** Severe (few/unsafe crossings) → ≥14 deducted; multiple safe crossings → ≤12 deducted.
+4. **Comfort & Safety (0–15):** Good sidewalk-like space + frequent crossings → ≥9; lacking → ≤8 without pulling final below 40s.
 
 ### Components
 
 #### Connectivity & Grain (0–35 points)
-- **Goal:** Reward fine-grained, well-connected networks and penalize cul-de-sac sprawl.
+- **Goal:** Fine-grained, well-connected grids score ≥25; low-density, cul-de-sac-dominated networks score ≤15.
 - **Inputs:** OSM road graph built from walkable classes (local/collector streets and selected paths).
 - **Metrics:**
   - **Intersection density (0–15):**
@@ -497,8 +504,8 @@ final_score = clamp(raw_score, 0.0, 100.0)
     - Lower dead-end share → more points, with softer expectations in suburban/rural contexts.
 - **Score:** `connectivity_score = clamp(intersection + block + culdesac, 0, 35)`.
 
-#### Street Hierarchy & Speed Environment (0–30 points)
-- **Goal:** Favor environments dominated by calm local streets and penalize heavy arterial dominance.
+#### Route Character (0–30 points)
+- **Goal:** Local, low-capacity, low-speed routes → ≥18; arterial-dominated → ≤10.
 - **Inputs:** `highway=*`, `lanes`, `maxspeed` (when present).
 - **Metrics:**
   - **Local vs major road mix (0–15):**
@@ -511,34 +518,24 @@ final_score = clamp(raw_score, 0.0, 100.0)
   - **Inferred speed environment (0–5):**
     - For local streets, use `maxspeed` when available, with simple defaults by class/country when missing.
     - Score share of local street length at or below a “calm” threshold (≈30 km/h / 25 mph).
-- **Score:** `hierarchy_score = clamp(local_mix + arterial + speed, 0, 30)`.
+- **Score:** `route_character_score = clamp(local_mix + arterial + speed, 0, 30)` (exposed as `route_character_score` in breakdown).
 
-#### Barriers & Severance (0–20 points, subtractive)
-- **Goal:** Penalize big pieces of infrastructure that chop up the neighborhood.
+#### Barrier Impact (0–20 points, subtractive)
+- **Goal:** Severe (few/unsafe crossings) → ≥14 deducted; multiple safe crossings → ≤12 deducted.
 - **Inputs:** `highway=motorway/trunk/primary`, `railway=*`, plus network geometry.
 - **Metrics:**
-  - **Hard barrier penalty (0–12):**
-    - Count major road/rail corridors that traverse the analysis radius (enter/exit on different sides).
-    - Map number of effective corridors to a penalty curve (more corridors → more penalty, capped at 12).
-  - **Superblock / mega‑parcel proxy (0–8):**
-    - Detect contexts with:
-      - Very long median block lengths (e.g. >250m), and
-      - Low intersection density (e.g. <30/km²).
-    - When both hold, assign an additional penalty up to 8, representing severed or coarse fabrics.
-- **Score:** `barriers_penalty = min(20, hard_barrier_penalty + superblock_penalty)`.
+  - **Hard barrier penalty (0–20):** Count of major road/rail corridors; 0→0, 1→~5, 2→~11 (≤12), 3+→14–20.
+  - **Superblock proxy (0–6):** Long blocks + low intersection density add up to 6 pts penalty.
+- **Score:** `barrier_impact_penalty = min(20, hard_barrier_penalty + superblock_penalty)` (exposed as `barrier_impact_penalty`).
 
-#### Pedestrian & Cycle Infrastructure Bonus (0–15 points)
-- **Goal:** Add signal where rich tags exist, without punishing missing data.
+#### Comfort & Safety (0–15 points)
+- **Goal:** Good sidewalk-like space + frequent crossings → ≥9; lacking → ≤8 without pulling final below 40s.
 - **Inputs:** `sidewalk=*`, `cycleway=*`, `highway=footway/path/cycleway`.
 - **Metrics:**
-  - **Sidewalk presence (0–8):**
-    - On local/collector roads, compute share of length tagged with sidewalks.
-    - More tagged sidewalks → more bonus; no tags yields 0 bonus (not a penalty).
-  - **Cycling infrastructure (0–5):**
-    - Share of road/path length with `cycleway=*` or `highway=cycleway`.
-  - **Dedicated paths / greenways (0–2):**
-    - Length of `highway=footway/path` segments not adjacent to major roads, as a proxy for off-street paths.
-- **Score:** `infra_bonus = min(15, sidewalk_score + cycle_score + path_score)`.
+  - **Sidewalk presence (0–10):** Share of local road length with sidewalks; 90%+ → 10 pts, &lt;35% → 0–2.
+  - **Cycling infrastructure (0–5):** Share of road/path length with cycleway tags.
+  - **Dedicated paths / greenways (0–2):** Length of footway/path not adjacent to major roads.
+- **Score:** `comfort_safety_score = min(15, sidewalk_score + cycle_score + path_score)` (exposed as `comfort_safety_score`).
 
 ### Area-Type Context
 - Uses the same area-type detection as other pillars.

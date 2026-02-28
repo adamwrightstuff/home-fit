@@ -330,80 +330,93 @@ def _build_layout_metrics(
 
 
 def _score_connectivity(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[float, Dict[str, float]]:
-    # Intersection density bands by area_type
+    """
+    Connectivity & Grain (0-35).
+    Fine-grained, well-connected grids → ≥25; low-density, cul-de-sac-dominated → ≤15.
+    """
+    # Intersection density: good grids get 12-15 pts, low-density gets 0-5
     if area_type in ("urban_core", "urban_residential"):
         inter_points = [
-            (20.0, 0.0),
-            (40.0, 8.0),
-            (80.0, 13.0),
+            (15.0, 0.0),
+            (35.0, 5.0),
+            (60.0, 10.0),
+            (90.0, 13.0),
             (120.0, 15.0),
         ]
     elif area_type in ("suburban",):
         inter_points = [
-            (10.0, 0.0),
-            (25.0, 8.0),
-            (50.0, 13.0),
-            (80.0, 15.0),
+            (8.0, 0.0),
+            (22.0, 5.0),
+            (45.0, 10.0),
+            (70.0, 13.0),
+            (100.0, 15.0),
         ]
     else:  # rural/exurban/unknown
         inter_points = [
-            (5.0, 0.0),
-            (15.0, 8.0),
-            (30.0, 13.0),
-            (50.0, 15.0),
+            (3.0, 0.0),
+            (12.0, 4.0),
+            (25.0, 8.0),
+            (45.0, 12.0),
+            (65.0, 15.0),
         ]
     inter_score = _piecewise_score(metrics.intersection_density_per_sqkm, inter_points)
 
-    # Block length bands
+    # Block length: short blocks → 8-10 pts, long (irregular) → 0-5
     bl = metrics.median_block_length_m or 0.0
     if area_type in ("urban_core", "urban_residential"):
         block_points = [
-            (250.0, 0.0),
-            (200.0, 3.0),
-            (150.0, 6.0),
-            (100.0, 8.0),
-            (80.0, 10.0),
+            (300.0, 0.0),
+            (220.0, 2.0),
+            (160.0, 5.0),
+            (120.0, 7.0),
+            (90.0, 9.0),
+            (70.0, 10.0),
         ]
     elif area_type in ("suburban",):
         block_points = [
-            (350.0, 0.0),
-            (250.0, 3.0),
-            (180.0, 6.0),
-            (130.0, 8.0),
-            (100.0, 10.0),
+            (400.0, 0.0),
+            (280.0, 2.0),
+            (200.0, 5.0),
+            (150.0, 7.0),
+            (110.0, 9.0),
+            (85.0, 10.0),
         ]
     else:
         block_points = [
             (500.0, 0.0),
-            (350.0, 3.0),
-            (250.0, 6.0),
-            (180.0, 8.0),
-            (130.0, 10.0),
+            (350.0, 2.0),
+            (250.0, 5.0),
+            (180.0, 7.0),
+            (130.0, 9.0),
+            (100.0, 10.0),
         ]
     block_score = _piecewise_score(bl, block_points)
 
-    # Cul-de-sac ratio (dead-end share, lower is better)
+    # Cul-de-sac ratio: low dead-end share → 8-10 pts, high → 0-5 (so bad grids ≤15 total)
     dead = metrics.culdesac_ratio
     if area_type in ("urban_core", "urban_residential"):
         cul_points = [
-            (0.40, 0.0),
-            (0.30, 3.0),
-            (0.20, 7.0),
-            (0.10, 10.0),
+            (0.55, 0.0),
+            (0.40, 2.0),
+            (0.28, 5.0),
+            (0.18, 7.0),
+            (0.08, 10.0),
         ]
     elif area_type in ("suburban",):
         cul_points = [
-            (0.60, 0.0),
-            (0.45, 3.0),
-            (0.30, 7.0),
-            (0.15, 10.0),
+            (0.70, 0.0),
+            (0.52, 2.0),
+            (0.38, 5.0),
+            (0.25, 7.0),
+            (0.12, 10.0),
         ]
     else:
         cul_points = [
-            (0.80, 0.0),
-            (0.60, 3.0),
-            (0.40, 7.0),
-            (0.25, 10.0),
+            (0.85, 0.0),
+            (0.65, 2.0),
+            (0.45, 5.0),
+            (0.30, 7.0),
+            (0.18, 10.0),
         ]
     cul_score = _piecewise_score(dead, cul_points)
 
@@ -416,66 +429,78 @@ def _score_connectivity(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[
 
 
 def _score_hierarchy(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[float, Dict[str, float]]:
+    """
+    Route Character (0-30).
+    Local, low-capacity, low-speed routes → ≥18; high-capacity arterials dominate → ≤10.
+    """
     total_road_km = metrics.local_road_length_km + metrics.major_road_length_km
     local_share = (
         metrics.local_road_length_km / total_road_km if total_road_km > 0 else 0.0
     )
 
+    # Local vs major mix: local-dominated → 10-15 pts, arterial-dominated → 0-5
     if area_type in ("urban_core", "urban_residential"):
         mix_points = [
-            (0.40, 0.0),
-            (0.60, 7.0),
-            (0.80, 12.0),
-            (0.90, 15.0),
+            (0.35, 0.0),
+            (0.50, 3.0),
+            (0.65, 7.0),
+            (0.80, 11.0),
+            (0.92, 15.0),
         ]
     elif area_type in ("suburban",):
         mix_points = [
-            (0.30, 0.0),
-            (0.55, 7.0),
-            (0.75, 12.0),
+            (0.25, 0.0),
+            (0.45, 3.0),
+            (0.60, 7.0),
+            (0.75, 11.0),
             (0.90, 15.0),
         ]
     else:
         mix_points = [
-            (0.20, 0.0),
-            (0.45, 7.0),
-            (0.70, 12.0),
-            (0.90, 15.0),
+            (0.15, 0.0),
+            (0.40, 3.0),
+            (0.55, 7.0),
+            (0.72, 11.0),
+            (0.88, 15.0),
         ]
     local_mix_score = _piecewise_score(local_share, mix_points)
 
-    # Arterial dominance: lower lane-km is better
+    # Arterial dominance (lane-km): low → 6-10 pts, high → 0-3 pts
     lane_km = metrics.lane_km_major
     if area_type in ("urban_core", "urban_residential"):
         lane_points = [
-            (6.0, 0.0),
-            (4.0, 3.0),
-            (2.0, 7.0),
-            (1.0, 10.0),
+            (8.0, 0.0),
+            (5.0, 2.0),
+            (3.0, 5.0),
+            (1.5, 8.0),
+            (0.5, 10.0),
         ]
     elif area_type in ("suburban",):
         lane_points = [
-            (4.0, 0.0),
-            (3.0, 3.0),
-            (1.8, 7.0),
-            (0.8, 10.0),
+            (5.0, 0.0),
+            (3.5, 2.0),
+            (2.0, 5.0),
+            (1.0, 8.0),
+            (0.4, 10.0),
         ]
     else:
         lane_points = [
-            (3.0, 0.0),
-            (2.0, 3.0),
-            (1.2, 7.0),
-            (0.5, 10.0),
+            (4.0, 0.0),
+            (2.5, 2.0),
+            (1.5, 5.0),
+            (0.8, 8.0),
+            (0.3, 10.0),
         ]
     arterial_score = _piecewise_score(lane_km, lane_points)
 
-    # Speed environment on local roads
+    # Calm-speed share on local roads: high → 4-5 pts, low → 0-2
     calm_share = metrics.local_calm_speed_share
     speed_points = [
-        (0.20, 0.0),
-        (0.40, 2.0),
-        (0.60, 4.0),
-        (0.80, 5.0),
+        (0.15, 0.0),
+        (0.35, 1.0),
+        (0.55, 3.0),
+        (0.75, 4.5),
+        (0.90, 5.0),
     ]
     speed_score = _piecewise_score(calm_share, speed_points)
 
@@ -490,23 +515,28 @@ def _score_hierarchy(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[flo
 
 
 def _score_barriers(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[float, Dict[str, float]]:
-    # Simple corridor count mapped to penalty; treat area_type uniformly for now
+    """
+    Barrier Impact (0-20 deducted).
+    Severe (few/unsafe crossings) → ≥14 deducted; multiple safe crossings → ≤12 deducted.
+    """
     corridors = metrics.barrier_corridors
+    # Corridor penalty: 0→0, 1→~5, 2→~11 (≤12), 3+→14-20
     hard_penalty_points = [
         (0.0, 0.0),
-        (1.0, 4.0),
-        (2.0, 7.0),
-        (3.0, 10.0),
-        (4.0, 12.0),
+        (1.0, 5.0),
+        (2.0, 11.0),
+        (3.0, 14.0),
+        (4.0, 17.0),
+        (5.0, 20.0),
     ]
     hard_penalty = _piecewise_score(float(corridors), hard_penalty_points)
 
-    # Superblock proxy: very long blocks + low intersection density
+    # Superblock proxy: very long blocks + low intersection density (adds to penalty)
     superblock_penalty = 0.0
     if metrics.median_block_length_m > 250.0 and metrics.intersection_density_per_sqkm < 30.0:
         excess_block = (metrics.median_block_length_m - 250.0) / 200.0
         lack_intersections = max(0.0, (30.0 - metrics.intersection_density_per_sqkm) / 30.0)
-        superblock_penalty = max(0.0, min(8.0, 8.0 * excess_block * lack_intersections))
+        superblock_penalty = max(0.0, min(6.0, 6.0 * excess_block * lack_intersections))
 
     total_penalty = min(20.0, hard_penalty + superblock_penalty)
     return total_penalty, {
@@ -517,26 +547,34 @@ def _score_barriers(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[floa
 
 
 def _score_infra_bonus(metrics: LayoutNetworkMetrics, area_type: str) -> Tuple[float, Dict[str, float]]:
+    """
+    Comfort & Safety (0-15).
+    Good sidewalk-like space + frequent crossings → ≥9; lacking → ≤8 without pulling final below 40s.
+    """
+    # Sidewalk-weighted: continuous usable sidewalk on key routes → up to 10 pts
     sidewalk_points = [
-        (0.20, 0.0),
-        (0.40, 3.0),
-        (0.60, 5.0),
-        (0.80, 8.0),
+        (0.15, 0.0),
+        (0.35, 2.0),
+        (0.55, 5.0),
+        (0.75, 8.0),
+        (0.90, 10.0),
     ]
     sidewalk_score = _piecewise_score(metrics.sidewalk_share_local, sidewalk_points)
 
     cycle_points = [
-        (0.10, 0.0),
-        (0.25, 2.0),
-        (0.50, 4.0),
-        (0.75, 5.0),
+        (0.08, 0.0),
+        (0.20, 1.0),
+        (0.40, 2.5),
+        (0.65, 4.0),
+        (0.85, 5.0),
     ]
     cycle_score = _piecewise_score(metrics.cycleway_share, cycle_points)
 
     path_points = [
         (0.0, 0.0),
-        (0.2, 1.0),
-        (0.5, 2.0),
+        (0.15, 0.5),
+        (0.35, 1.0),
+        (0.6, 2.0),
     ]
     path_score = _piecewise_score(metrics.greenway_length_km, path_points)
 
@@ -583,9 +621,9 @@ def get_layout_network_score(
         breakdown: Dict[str, Any] = {
             "layout_score": 0.0,
             "connectivity_score": 0.0,
-            "hierarchy_score": 0.0,
-            "barriers_penalty": 0.0,
-            "infra_bonus": 0.0,
+            "route_character_score": 0.0,
+            "barrier_impact_penalty": 0.0,
+            "comfort_safety_score": 0.0,
             "metrics": {},
             "area_type": area_type,
             "radius_m": effective_radius,
@@ -607,9 +645,9 @@ def get_layout_network_score(
         "layout_score": final_score,
         "raw_score": raw_score,
         "connectivity_score": connectivity_score,
-        "hierarchy_score": hierarchy_score,
-        "barriers_penalty": barriers_penalty,
-        "infra_bonus": infra_bonus,
+        "route_character_score": hierarchy_score,
+        "barrier_impact_penalty": barriers_penalty,
+        "comfort_safety_score": infra_bonus,
         "metrics": {
             "intersection_density_per_sqkm": metrics.intersection_density_per_sqkm,
             "median_block_length_m": metrics.median_block_length_m,
@@ -625,9 +663,9 @@ def get_layout_network_score(
         },
         "component_details": {
             "connectivity": connectivity_meta,
-            "hierarchy": hierarchy_meta,
-            "barriers": barriers_meta,
-            "infra_bonus": infra_meta,
+            "route_character": hierarchy_meta,
+            "barrier_impact": barriers_meta,
+            "comfort_safety": infra_meta,
         },
         "area_type": area_type,
         "radius_m": effective_radius,

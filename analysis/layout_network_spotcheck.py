@@ -17,13 +17,13 @@ def _print_result(name: str, lat: float, lon: float) -> None:
     print(f"Score: {score:.1f}")
     comps = (
         details.get("connectivity_score", 0.0),
-        details.get("hierarchy_score", 0.0),
-        details.get("barriers_penalty", 0.0),
-        details.get("infra_bonus", 0.0),
+        details.get("route_character_score", details.get("hierarchy_score", 0.0)),
+        details.get("barrier_impact_penalty", details.get("barriers_penalty", 0.0)),
+        details.get("comfort_safety_score", details.get("infra_bonus", 0.0)),
     )
     print(
-        f"Components  conn={comps[0]:.1f}  hier={comps[1]:.1f}  "
-        f"barrier_penalty={comps[2]:.1f}  infra_bonus={comps[3]:.1f}"
+        f"Components  connectivity={comps[0]:.1f}  route_character={comps[1]:.1f}  "
+        f"barrier_impact_penalty={comps[2]:.1f}  comfort_safety={comps[3]:.1f}"
     )
     metrics = details.get("metrics", {})
     print(
