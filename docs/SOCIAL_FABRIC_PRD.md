@@ -87,7 +87,8 @@ Implement as a new function (e.g. `query_civic_nodes(lat, lon, radius_m=800)`).
 #### 3.1 Stability (0–100)
 
 - Input: stability ratio \(x = \text{same_house_1yr} / \text{total_1yr}\) from B07003.
-- Curve (x in percentage points 0–100):
+- **Regional normalization (preferred):** When `data/stability_baselines.json` is present (built by `scripts/build_stability_baselines.py`), stability is scored as a z-score vs the tract’s Census Division (or "all"): higher same-house % than region average → higher score. So 50% in a high-churn region (e.g. Manhattan) scores higher than 50% in a low-churn region (e.g. rural suburb).
+- **Fixed curve (fallback when no baselines):** x in percentage points 0–100:
 
 If \(x \le 85\):
 \[

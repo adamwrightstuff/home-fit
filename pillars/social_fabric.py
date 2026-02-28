@@ -13,7 +13,9 @@ in [0, 100].
 """
 
 from typing import Dict, Tuple, Optional, Iterable
+import json
 import math
+import os
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
@@ -21,10 +23,42 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# State FIPS to 2-letter abbreviation (for division lookup from tract)
+_STATE_FIPS_TO_ABBREV = {
+    "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT",
+    "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL",
+    "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD",
+    "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE",
+    "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND",
+    "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD",
+    "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV",
+    "55": "WI", "56": "WY", "72": "PR",
+}
+
+# Optional regional stability baselines: {division: {"mean": float, "std": float}}
+# Built by scripts/build_stability_baselines.py. When present, stability uses z-score vs region.
+_stability_baselines_path = os.getenv(
+    "STABILITY_BASELINES_PATH",
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "stability_baselines.json"),
+)
+_stability_baselines: Dict[str, Dict[str, float]] = {}
+if _stability_baselines_path and os.path.isfile(_stability_baselines_path):
+    try:
+        with open(_stability_baselines_path, "r") as f:
+            raw = json.load(f)
+        for k, v in (raw or {}).items():
+            if isinstance(v, dict) and "mean" in v and "std" in v:
+                _stability_baselines[str(k)] = {"mean": float(v["mean"]), "std": float(v["std"])}
+        if _stability_baselines:
+            logger.info("Loaded stability baselines for %d regions", len(_stability_baselines))
+    except Exception as e:
+        logger.warning("Failed to load stability baselines from %s: %s", _stability_baselines_path, e)
+
 
 def _score_stability_from_pct(same_house_pct: float) -> float:
     """
     Convert same-house-1yr percentage (0-100) into Stability score (0-100).
+    Fixed curve (used when regional baselines are not available).
 
     Curve (x in percentage points):
       - x <= 85: score = (x / 85) * 100
@@ -42,6 +76,23 @@ def _score_stability_from_pct(same_house_pct: float) -> float:
     # Gentle penalty for "stagnation" above 85%
     score = 100.0 - 2.0 * (x - 85.0)
     return max(0.0, min(100.0, score))
+
+
+def _score_stability_from_z(same_house_pct: float, mean: float, std: float, clip_z: float = 2.5) -> float:
+    """
+    Regional stability: z-score of same_house_pct vs division mean/std, mapped to 0-100.
+    Higher same_house_pct than region average → higher score (more rooted).
+    """
+    try:
+        x = float(same_house_pct)
+    except (TypeError, ValueError):
+        return 0.0
+    if std <= 0:
+        return _score_stability_from_pct(x)
+    z = (x - mean) / std
+    z = max(-clip_z, min(clip_z, z))
+    # Map [-clip_z, +clip_z] → [0, 100]
+    return max(0.0, min(100.0, ((z + clip_z) / (2 * clip_z)) * 100.0))
 
 
 def _score_civic_gathering_from_count(count_civic: int) -> float:
@@ -66,6 +117,25 @@ def _score_civic_gathering_from_count(count_civic: int) -> float:
     if n <= 5:
         return 70.0
     return 100.0
+
+
+def _score_civic_proximity_from_count(count_civic: int) -> float:
+    """
+    Softer curve for civic nodes found in 1500m "proximity" radius (drive vs walk).
+    Same shape as density but slightly lower so "1 place at 1.5km" < "1 place at 800m".
+    """
+    try:
+        n = int(count_civic)
+    except (TypeError, ValueError):
+        return 0.0
+
+    if n <= 0:
+        return 0.0
+    if n <= 2:
+        return 30.0
+    if n <= 5:
+        return 55.0
+    return 85.0
 
 
 def _entropy(counts: Iterable[int]) -> float:
@@ -132,10 +202,29 @@ def get_social_fabric_score(
     tract = census_api.get_census_tract(lat, lon)
 
     # Stability: B07003 (same house 1 year ago)
+    # Use regional z-score when baselines exist; else fixed curve.
     mobility = census_api.get_mobility_data(lat, lon, tract=tract)
     if mobility is not None:
         same_house_pct = mobility.get("same_house_pct")
-        stability_score = _score_stability_from_pct(same_house_pct)
+        if same_house_pct is not None:
+            from data_sources.us_census_divisions import get_division
+            division_code = None
+            if tract:
+                state_fips = tract.get("state_fips")
+                state_abbrev = _STATE_FIPS_TO_ABBREV.get(state_fips) if state_fips else None
+                if state_abbrev:
+                    division_code = get_division(state_abbrev)
+            baseline = None
+            if division_code and _stability_baselines:
+                baseline = _stability_baselines.get(division_code) or _stability_baselines.get("all")
+            if baseline:
+                stability_score = _score_stability_from_z(
+                    same_house_pct, baseline["mean"], baseline["std"]
+                )
+            else:
+                stability_score = _score_stability_from_pct(same_house_pct)
+        else:
+            stability_score = 0.0
     else:
         same_house_pct = None
         stability_score = 0.0
@@ -170,10 +259,24 @@ def get_social_fabric_score(
             diversity_score = sum(components) / len(components)
 
     # Civic gathering: OSM civic nodes (library, community_centre, place_of_worship, townhall, community_garden)
+    # If 800m returns 0, expand to 1500m and use "Proximity" score so it doesn't feel broken.
     civic = osm_api.query_civic_nodes(lat, lon, radius_m=800)
     nodes = (civic or {}).get("nodes", []) if civic else []
     civic_count = len(nodes)
-    civic_score = _score_civic_gathering_from_count(civic_count)
+    civic_radius_m = 800
+    civic_score_type = "density"  # walking distance
+    if civic_count == 0:
+        civic_expanded = osm_api.query_civic_nodes(lat, lon, radius_m=1500)
+        nodes_expanded = (civic_expanded or {}).get("nodes", []) if civic_expanded else []
+        if nodes_expanded:
+            civic_count = len(nodes_expanded)
+            civic_radius_m = 1500
+            civic_score_type = "proximity"  # ~1 mi / short drive
+            civic_score = _score_civic_proximity_from_count(civic_count)
+        else:
+            civic_score = _score_civic_gathering_from_count(0)
+    else:
+        civic_score = _score_civic_gathering_from_count(civic_count)
 
     # Engagement: IRS BMF civic org density (optional; requires preprocessed data)
     engagement_score = None
@@ -252,7 +355,10 @@ def get_social_fabric_score(
 
     summary = {
         "same_house_pct": round(same_house_pct, 1) if same_house_pct is not None else None,
-        "civic_node_count_800m": civic_count,
+        "civic_node_count_800m": civic_count if civic_radius_m == 800 else 0,
+        "civic_node_count_1500m": civic_count if civic_radius_m == 1500 else None,
+        "civic_radius_m": civic_radius_m,
+        "civic_score_type": civic_score_type,
         "diversity_available": diversity_score is not None,
         "engagement_available": engagement_score is not None,
         "orgs_per_1k": orgs_per_1k,
