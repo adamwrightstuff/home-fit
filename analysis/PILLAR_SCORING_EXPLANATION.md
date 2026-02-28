@@ -1,7 +1,7 @@
 # Pillar Scoring Logic - Complete Explanation
 
-**Date:** 2025-12-09  
-**Status:** All pillars use pure data-backed scoring per design principles
+**Date:** 2026-02-28  
+**Status:** All pillars use pure data-backed scoring per design principles. This document covers all 13 pillars (including economic_security, quality_education, social_fabric, climate_risk).
 
 ---
 
@@ -461,6 +461,168 @@ total_score = normalized_base + beauty_bonus
 
 ---
 
+## 10. Economic Security (`pillars/economic_security.py`)
+
+### Scoring Method
+**Weighted component sum** (Density, Mobility, Ecosystem, Resilience). Pure data-backed; no calibration toward target scores.
+
+### Formula
+```
+S = w_D·D + w_M·M + w_E·E + w_R·R
+
+D = density_score   (weight 0.40)
+M = mobility_score (weight 0.15)
+E = ecosystem_score (weight 0.20)
+R = resilience_score (weight 0.25)
+```
+
+### Components
+
+| Component | Weight | Meaning | Metrics (sub-weights) |
+|-----------|--------|---------|------------------------|
+| **D (Density)** | 0.40 | Volume and depth (market size) | `emp_pop_ratio` 0.25, `scale` 0.30 (normalized log₁₀ employment & estabs), `estabs_per_1k` 0.25, `wage_p25_annual` 0.20 |
+| **M (Mobility)** | 0.15 | Upward trajectory | `qcew_employment_growth_pct` 0.40 (floor 40 when anchored_balance > 75), `net_estab_entry_per_1k` 0.35, `wage_p75_annual` 0.25 |
+| **E (Ecosystem)** | 0.20 | Skill adjacency, networking | `industry_diversity` 0.70, `estabs_per_1k` 0.30 |
+| **R (Resilience)** | 0.25 | Market stability | `industry_diversity` 0.60, `anchored_balance` 0.40 |
+
+#### Anchored balance
+- **Formula:** `(anchored_share - cyclical_share) / 100` (normalized to 0–100 for resilience).
+- **Anchored:** Education & health + Public administration (ACS industry shares).
+- **Cyclical:** Construction + Manufacturing + Leisure & hospitality.
+
+### Calibration/Tuning
+- ❌ **No calibration** - Component weights and sub-metrics are fixed.
+- ✅ **Normalization:** Scale (log employment/establishments) normalized within Census Division × area-type bucket.
+- **Job-category overlays:** Optional; personalize density only; same weights recompute S.
+
+### Data Sources
+- Census ACS (DP03, B01001, B25064) — employment, industry shares, income
+- Census BDS — establishments, entry/exit (net establishment entry per 1k)
+- BLS QCEW — employment level, YoY growth
+- BLS OEWS — wage P25/P75
+- Economic baselines (e.g. `data/economic_baselines.json`) — normalized scale, expectations
+
+---
+
+## 11. Quality Education (`pillars/schools.py`)
+
+### Scoring Method
+**Data-backed average of school ratings** with quality boost and small bonuses for early education and colleges. No calibration toward target scores.
+
+### Formula
+```
+base_avg_rating = mean(school_ratings)   # 0–5 stars → 0–100 (×20)
+quality_boost = f(base_avg_rating, excellent_schools_count)  # 0–10 pts
+avg_rating = base_avg_rating + quality_boost
+early_ed_bonus = 0–5 pts (OSM kindergarten/preschool within 2 km)
+college_bonus = 0–5 pts (OSM university/college within 10 km)
+total_score = min(100, avg_rating + early_ed_bonus + college_bonus)
+```
+
+### Components
+
+#### K–12 core (0–100)
+- **Rating source:** SchoolDigger API `rankStars` (0–5) → ×20 for 0–100 scale; fallback: `rankStatewidePercentage`.
+- **Schools included:** Top schools per level (elementary, middle, high); exclude unrated or very low-rated when better options exist.
+- **Quality boost:** Extra points when district has multiple highly-rated schools (e.g. base ≥80 and ≥3 schools → up to +10; 70+ with 3+ excellent → up to +8; etc.).
+
+#### Early education bonus (0–5)
+- **Data source:** OSM `amenity` ~ kindergarten|preschool|nursery within 2 km.
+- **Thresholds:** 3+ → 5 pts, 2 → 3 pts, 1 → 2 pts; reduced if closest >1 km.
+
+#### College bonus (0–5)
+- **Data source:** OSM `amenity` ~ university|college within 10 km.
+- **Thresholds:** 2+ → 5 pts; 1 → 2–5 pts by distance (≤2 km → 5, ≤5 km → 3, ≤10 km → 2).
+
+### Calibration/Tuning
+- ❌ **No calibration** - Direct use of external ratings and OSM counts.
+- ✅ **Quality boost** - Rewards consistency of high ratings (not location-specific tuning).
+
+### Data Sources
+- SchoolDigger API (schools, ratings, rank history, level)
+- OSM Overpass API (early education, colleges/universities)
+
+---
+
+## 12. Social Fabric (`pillars/social_fabric.py`)
+
+### Scoring Method
+**Weighted average of sub-indices** (Stability, Civic gathering, Diversity, Engagement). When a sub-index is missing (e.g. no IRS BMF data), renormalize over available components so score stays 0–100.
+
+### Formula
+```
+weights = [1.2 (Stability), 1.2 (Civic), 1.0 (Diversity), 1.0 (Engagement)]
+# Diversity and Engagement included only when data available
+score = weighted_sum(values) / sum(weights)   # 0–100
+```
+
+### Components
+
+#### Stability (0–100)
+- **Data source:** Census B07003 (same house 1 year ago) → `same_house_pct`.
+- **Scoring:** When regional baselines exist: z-score vs division mean/std, clipped, mapped to 0–100. Else: fixed curve (e.g. ≤85% → linear; >85% → gentle penalty for stagnation).
+
+#### Civic gathering (0–100)
+- **Data source:** OSM civic nodes (library, community_centre, place_of_worship, townhall, community_garden) within 800 m (walk); if 0, expand to 1500 m and use "proximity" curve.
+- **Thresholds:** 0 → 0; 1–2 → 40; 3–5 → 70; 6+ → 100 (density). Proximity curve: 1–2 → 30; 3–5 → 55; 6+ → 85.
+
+#### Diversity (0–100, optional)
+- **Data source:** Census (race B02001, income B19001, age B01001).
+- **Scoring:** Normalized Shannon entropy over race, income, and age (youth/prime/seniors); average of available dimensions.
+
+#### Engagement (0–100, optional)
+- **Data source:** IRS BMF (civic orgs); preprocessed to orgs per 1k.
+- **Scoring:** Z-score vs regional (division/CBSA) mean/std, clipped, mapped to 0–100.
+
+### Calibration/Tuning
+- ❌ **No calibration** - Fixed weights and threshold curves.
+- ✅ **Renormalization** - When Engagement (or Diversity) is missing, weights sum over present components only.
+
+### Data Sources
+- Census API (B07003 mobility, B02001/B19001/B01001 diversity)
+- OSM API (civic nodes)
+- IRS BMF (engagement; optional, when `data/` and build outputs available)
+- Stability baselines (e.g. `data/stability_baselines.json`) for regional stability z-score
+
+---
+
+## 13. Climate Risk (`pillars/climate_risk.py`)
+
+### Scoring Method
+**Inverse risk:** higher raw risk → lower pillar score. Score 0 = very high risk, 100 = very low risk. Phase 1A: heat + air only; flood and trend planned.
+
+### Formula
+```
+heat_pts = max(0, 30 - (heat_excess_deg_c / 5) * 30)   # 0–30 pts
+air_pts = max(0, 20 - (pm25_proxy_ugm3 / 35) * 20)     # 0–20 pts
+total_raw = heat_pts + air_pts   # max 50
+score = min(100, total_raw * 2.0)   # scale to 0–100
+# If no GEE data: score = 50 (neutral)
+```
+
+### Components
+
+#### Heat exposure (0–30 points)
+- **Data source:** GEE (LST — land surface temperature); excess = local minus regional.
+- **Threshold:** 5 °C excess → 0 pts; linear in between.
+
+#### Air quality (0–20 points)
+- **Data source:** GEE (Sentinel-5P Aerosol Index as PM2.5 proxy).
+- **Threshold:** 35 µg/m³ (EPA Unhealthy) → 0 pts; linear below.
+
+#### Flood / trend (planned)
+- **Flood zone:** FEMA NFHL or First Street (Phase 2).
+- **Climate trend:** 30-year trend (Phase 4, optional).
+
+### Calibration/Tuning
+- ❌ **No calibration** - Fixed thresholds (5 °C, 35 µg/m³).
+- ✅ **Neutral when missing** - No GEE data → score 50.
+
+### Data Sources
+- GEE API (LST for heat; Sentinel-5P Aerosol Index for air quality)
+
+---
+
 
 ## Summary: Calibration/Tuning Status
 
@@ -475,6 +637,10 @@ total_score = normalized_base + beauty_bonus
 | **built_beauty** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **air_travel_access** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **neighborhood_beauty** | ❌ None | ❌ None | ❌ None | ✅ Composes other pillars |
+| **economic_security** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
+| **quality_education** | ❌ None | ❌ None | ❌ None | ✅ Data-backed + bonuses |
+| **social_fabric** | ❌ None | ❌ None | ❌ None | ✅ Data-backed, renormalize when optional missing |
+| **climate_risk** | ❌ None | ❌ None | ❌ None | ✅ Inverse risk, GEE data-backed |
 
 ### Key Points
 
@@ -503,13 +669,18 @@ total_score = normalized_base + beauty_bonus
 
 | Source | Used By | Purpose |
 |--------|---------|---------|
-| **OSM API** | All pillars | Buildings, businesses, parks, healthcare, transit stations |
-| **GEE API** | natural_beauty, active_outdoors | Tree canopy, topography, landcover |
-| **Census API** | All pillars | Population density, housing, commute time, tree canopy |
+| **OSM API** | natural_beauty, active_outdoors, neighborhood_amenities, built_beauty, healthcare_access, quality_education, social_fabric | Parks, businesses, buildings, civic nodes, early ed, colleges |
+| **GEE API** | natural_beauty, active_outdoors, climate_risk | Tree canopy, topography, landcover; LST heat; Sentinel-5P air quality |
+| **Census API** | All pillars (as needed) | Population density, housing, commute time, tree canopy, mobility B07003, diversity B02001/B19001/B01001 |
 | **Transitland API** | public_transit_access | Transit routes, stops, schedules |
 | **NYC API** | natural_beauty | Street trees (NYC only) |
 | **Airport Database** | air_travel_access | Airport locations and types |
 | **MAJOR_HOSPITALS** | healthcare_access | Hospital fallback database |
+| **SchoolDigger API** | quality_education | Schools, ratings, rank history |
+| **Census BDS / BLS QCEW / BLS OEWS** | economic_security | Establishments, employment growth, wage P25/P75 |
+| **IRS BMF** | social_fabric | Civic org density (engagement; optional) |
+| **Stability baselines** | social_fabric | Regional stability z-score |
+| **Economic baselines** | economic_security | Normalized scale, expectations |
 
 ---
 
