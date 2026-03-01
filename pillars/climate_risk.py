@@ -8,6 +8,7 @@ All sub-scores are inverse: higher raw value = worse; pillar score 0 = very high
 100 = very low risk.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Tuple, Optional
 
 from data_sources.gee_api import (
@@ -52,10 +53,16 @@ def get_climate_risk_score(
         (score_0_100, details) where details has breakdown, summary, data_quality.
         Score is inverse risk: 100 = very low risk, 0 = very high risk.
     """
-    heat_data = get_heat_exposure_lst(lat, lon)
-    air_data = get_air_quality_aer_ai(lat, lon)
-    flood_data = get_fema_flood_zone(lat, lon)
-    trend_data = get_climate_trend_terraclimate(lat, lon)
+    # Fetch all four data sources in parallel (same requests, less wall time; no extra error risk).
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        f_heat = executor.submit(get_heat_exposure_lst, lat, lon)
+        f_air = executor.submit(get_air_quality_aer_ai, lat, lon)
+        f_flood = executor.submit(get_fema_flood_zone, lat, lon)
+        f_trend = executor.submit(get_climate_trend_terraclimate, lat, lon)
+        heat_data = f_heat.result()
+        air_data = f_air.result()
+        flood_data = f_flood.result()
+        trend_data = f_trend.result()
 
     no_heat = heat_data is None
     no_air = air_data is None

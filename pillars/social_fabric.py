@@ -16,6 +16,7 @@ from typing import Dict, Tuple, Optional, Iterable
 import json
 import math
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
@@ -198,12 +199,34 @@ def get_social_fabric_score(
     Returns:
         (score_0_100, details) where details has breakdown, summary, data_quality.
     """
-    # Fetch Census tract once to reuse across mobility and any future Census calls.
+    # Fetch Census tract once to reuse across mobility, diversity, and BMF.
     tract = census_api.get_census_tract(lat, lon)
+
+    # Fetch mobility, diversity, civic (800m), and BMF in parallel (same requests, less wall time).
+    def _get_mobility():
+        return census_api.get_mobility_data(lat, lon, tract=tract)
+
+    def _get_diversity():
+        return census_api.get_diversity_data(lat, lon, tract=tract)
+
+    def _get_civic():
+        return osm_api.query_civic_nodes(lat, lon, radius_m=800)
+
+    def _get_bmf():
+        return irs_bmf.get_civic_orgs_per_1k(lat, lon, tract=tract)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        f_mobility = executor.submit(_get_mobility)
+        f_diversity = executor.submit(_get_diversity)
+        f_civic = executor.submit(_get_civic)
+        f_bmf = executor.submit(_get_bmf)
+        mobility = f_mobility.result()
+        diversity_data = f_diversity.result()
+        civic = f_civic.result()
+        bmf_result = f_bmf.result()
 
     # Stability: B07003 — use rooted_pct (same house + same county) so local moves don't count as churn.
     # Use regional z-score when baselines exist; else fixed curve.
-    mobility = census_api.get_mobility_data(lat, lon, tract=tract)
     if mobility is not None:
         same_house_pct = mobility.get("same_house_pct")
         rooted_pct = mobility.get("rooted_pct")  # same house + moved within same county
@@ -234,7 +257,6 @@ def get_social_fabric_score(
 
     # Diversity: Race, Income, Age entropy
     diversity_score = None
-    diversity_data = census_api.get_diversity_data(lat, lon, tract=tract)
     if diversity_data:
         race_counts = diversity_data.get("race_counts") or {}
         income_counts = diversity_data.get("income_counts") or {}
@@ -263,7 +285,6 @@ def get_social_fabric_score(
 
     # Civic gathering: OSM civic nodes (library, community_centre, place_of_worship, townhall, community_garden)
     # If 800m returns 0, expand to 1500m and use "Proximity" score so it doesn't feel broken.
-    civic = osm_api.query_civic_nodes(lat, lon, radius_m=800)
     nodes = (civic or {}).get("nodes", []) if civic else []
     civic_count = len(nodes)
     civic_radius_m = 800
@@ -288,7 +309,6 @@ def get_social_fabric_score(
     # Try to use division code from tract metadata if available
     division_code = None
     # (Could be extended later to infer division from state_fips)
-    bmf_result = irs_bmf.get_civic_orgs_per_1k(lat, lon, tract=tract)
     if bmf_result is not None:
         orgs_per_1k, engagement_stats = bmf_result
         if engagement_stats and orgs_per_1k is not None:
