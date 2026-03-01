@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LivabilityPillar } from '@/types/api'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, isLongevityPillar, type PillarKey } from '@/lib/pillars'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -88,7 +88,24 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
           <div style={{ fontSize: '1.6rem' }}>{meta.icon}</div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>{meta.name}</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+              {isLongevityPillar(pillar_key) && (
+                <span
+                  className="hf-muted"
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: 6,
+                    background: 'var(--hf-bg-subtle)',
+                    border: '1px solid var(--hf-border)',
+                  }}
+                >
+                  Longevity
+                </span>
+              )}
+            </div>
             <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
               {meta.description}
             </div>

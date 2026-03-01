@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -313,7 +313,24 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
                   <span style={{ fontSize: '1.75rem' }}>{meta.icon}</span>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                      {isLongevityPillar(key) && (
+                        <span
+                          className="hf-muted"
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: 6,
+                            background: 'var(--hf-bg-subtle)',
+                            border: '1px solid var(--hf-border)',
+                          }}
+                        >
+                          Longevity
+                        </span>
+                      )}
+                    </div>
                     <div className="hf-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
                   </div>
                 </div>

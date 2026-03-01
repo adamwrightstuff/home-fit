@@ -12,6 +12,20 @@ export type PillarKey =
   | 'climate_risk'
   | 'social_fabric'
 
+/** Pillars that contribute to the Longevity Index (fixed weighted blend). */
+export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set([
+  'social_fabric',
+  'active_outdoors',
+  'neighborhood_amenities',
+  'natural_beauty',
+  'climate_risk',
+  'quality_education',
+])
+
+export function isLongevityPillar(key: PillarKey): boolean {
+  return LONGEVITY_PILLAR_KEYS.has(key)
+}
+
 export const PILLAR_META: Record<
   PillarKey,
   { icon: string; name: string; description: string }
