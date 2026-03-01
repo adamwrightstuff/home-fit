@@ -201,12 +201,14 @@ def get_social_fabric_score(
     # Fetch Census tract once to reuse across mobility and any future Census calls.
     tract = census_api.get_census_tract(lat, lon)
 
-    # Stability: B07003 (same house 1 year ago)
+    # Stability: B07003 — use rooted_pct (same house + same county) so local moves don't count as churn.
     # Use regional z-score when baselines exist; else fixed curve.
     mobility = census_api.get_mobility_data(lat, lon, tract=tract)
     if mobility is not None:
         same_house_pct = mobility.get("same_house_pct")
-        if same_house_pct is not None:
+        rooted_pct = mobility.get("rooted_pct")  # same house + moved within same county
+        stability_pct = rooted_pct if rooted_pct is not None else same_house_pct
+        if stability_pct is not None:
             from data_sources.us_census_divisions import get_division
             division_code = None
             if tract:
@@ -219,14 +221,15 @@ def get_social_fabric_score(
                 baseline = _stability_baselines.get(division_code) or _stability_baselines.get("all")
             if baseline:
                 stability_score = _score_stability_from_z(
-                    same_house_pct, baseline["mean"], baseline["std"]
+                    stability_pct, baseline["mean"], baseline["std"]
                 )
             else:
-                stability_score = _score_stability_from_pct(same_house_pct)
+                stability_score = _score_stability_from_pct(stability_pct)
         else:
             stability_score = 0.0
     else:
         same_house_pct = None
+        rooted_pct = None
         stability_score = 0.0
 
     # Diversity: Race, Income, Age entropy
@@ -355,6 +358,7 @@ def get_social_fabric_score(
 
     summary = {
         "same_house_pct": round(same_house_pct, 1) if same_house_pct is not None else None,
+        "rooted_pct": round(rooted_pct, 1) if rooted_pct is not None else None,
         "civic_node_count_800m": civic_count if civic_radius_m == 800 else 0,
         "civic_node_count_1500m": civic_count if civic_radius_m == 1500 else None,
         "civic_radius_m": civic_radius_m,

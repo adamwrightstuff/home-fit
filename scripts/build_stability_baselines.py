@@ -2,9 +2,9 @@
 """
 Build data/stability_baselines.json for Social Fabric Stability (regional z-score).
 
-Samples locations, fetches B07003 same-house-1yr % per tract, aggregates by
-Census Division, and writes mean/std so the pillar can score stability as
-z-score vs region instead of a fixed 85% peak.
+Samples locations, fetches B07003 rooted % (same house + same county) per tract,
+aggregates by Census Division, and writes mean/std so the pillar can score
+stability as z-score vs region.
 
 Typical usage (from project root):
 
@@ -86,7 +86,7 @@ def main() -> None:
             mobility = get_mobility_data(lat, lon, tract=tract)
             if not mobility:
                 continue
-            pct = mobility.get("same_house_pct")
+            pct = mobility.get("rooted_pct")
             if pct is None or not isinstance(pct, (int, float)):
                 continue
             division = get_division(state)

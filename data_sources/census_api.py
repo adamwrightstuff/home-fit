@@ -625,14 +625,19 @@ def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) ->
 @handle_api_timeout(timeout_seconds=15)
 def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
-    Get residential mobility data (same house 1 year ago) from ACS B07003.
+    Get residential mobility data from ACS B07003.
 
     Returns:
         {
-            "same_house_pct": float,  # percent 0-100
+            "same_house_pct": float,   # same house 1 yr ago (percent 0-100)
+            "rooted_pct": float,       # same house + moved within same county (percent 0-100)
             "same_house_count": int,
+            "same_county_count": int,
             "total_population_1yr": int,
         }
+
+    For Social Fabric stability we use rooted_pct: a neighbor moving two blocks
+    (same county) preserves fabric; only long-distance moves count as churn.
     """
     if tract is None:
         tract = get_census_tract(lat, lon)
@@ -645,8 +650,9 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         # B07003_001E: Total population 1 year and over
         # B07003_002E: Same house 1 year ago
+        # B07003_003E: Moved from elsewhere in same county
         params = {
-            "get": "B07003_001E,B07003_002E,NAME",
+            "get": "B07003_001E,B07003_002E,B07003_003E,NAME",
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
@@ -666,17 +672,26 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         try:
             total_1yr = int(row[0]) if row[0] else 0
             same_house = int(row[1]) if row[1] else 0
+            same_county = int(row[2]) if row[2] else 0
         except (ValueError, TypeError):
             return None
 
-        if total_1yr <= 0 or same_house < 0 or same_house > total_1yr:
+        if total_1yr <= 0:
             print("   ⚠️  Mobility data invalid or missing")
             return None
 
+        same_house = max(0, min(same_house, total_1yr))
+        same_county = max(0, min(same_county, total_1yr))
+        rooted = same_house + same_county
+        rooted = min(rooted, total_1yr)
+
         same_house_pct = (same_house / total_1yr) * 100.0
+        rooted_pct = (rooted / total_1yr) * 100.0
         return {
             "same_house_pct": same_house_pct,
+            "rooted_pct": rooted_pct,
             "same_house_count": same_house,
+            "same_county_count": same_county,
             "total_population_1yr": total_1yr,
         }
 

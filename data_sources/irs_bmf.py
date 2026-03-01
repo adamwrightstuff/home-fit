@@ -4,26 +4,39 @@ IRS BMF helpers for Social Fabric Engagement sub-score.
 This module expects a preprocessed mapping from Census tract GEOID to the
 count of qualifying civic organizations (NTEE A/O/P/S, active only).
 
-Offline pipeline (not implemented here) should:
-  - Geocode IRS BMF records.
-  - Join to 2020 Census tracts.
-  - Filter by NTEE and active status.
-  - Produce:
-      org_count_by_tract[geoid] = int
-      neighbors_by_tract[geoid] = [neighbor_geoid, ...]  # optional, for halo
-      engagement_stats_by_division[division_code] = {"mean": float, "std": float}
-
-At runtime, if no data files are present, functions will gracefully return
-None and Engagement will be omitted from the combined Social Fabric score.
+At runtime, when a tract has 0 orgs we use a "runtime halo": sample nearby
+points (~800m) and average org counts from those tracts so PO-box / adjacent
+addresses don't put the tract in a data shadow.
 """
 
 import json
+import math
 import os
 from typing import Dict, List, Optional, Tuple
 
 from logging_config import get_logger
 
 logger = get_logger(__name__)
+
+# Halo radius in meters when tract has 0 orgs (pull from surrounding ~1.5km context)
+_HALO_RADIUS_M = 800
+
+
+def _point_at_bearing(lat: float, lon: float, bearing_deg: float, distance_m: float) -> Tuple[float, float]:
+    """Return (lat, lon) at given bearing and distance from (lat, lon)."""
+    R = 6371000.0  # Earth radius in meters
+    lat_rad = math.radians(lat)
+    lon_rad = math.radians(lon)
+    br = math.radians(bearing_deg)
+    lat2 = math.asin(
+        math.sin(lat_rad) * math.cos(distance_m / R)
+        + math.cos(lat_rad) * math.sin(distance_m / R) * math.cos(br)
+    )
+    lon2 = lon_rad + math.atan2(
+        math.sin(br) * math.sin(distance_m / R) * math.cos(lat_rad),
+        math.cos(distance_m / R) - math.sin(lat_rad) * math.sin(lat2),
+    )
+    return math.degrees(lat2), math.degrees(lon2)
 
 # In-memory stores (populated at import time if data files are present)
 org_count_by_tract: Dict[str, int] = {}
@@ -174,14 +187,31 @@ def get_civic_orgs_per_1k(
 
     base_count = org_count_by_tract.get(geoid, 0)
 
-    # Halo adjustment: include neighbors if available
+    # Halo: use precomputed neighbors if available; else when tract has 0 orgs
+    # sample nearby points (~800m) so PO-box / adjacent addresses don't create a data shadow.
     neighbors = neighbors_by_tract.get(geoid, [])
     counts = [base_count]
     for n in neighbors:
         c = org_count_by_tract.get(n)
         if c is not None:
             counts.append(c)
-    org_count_eff = sum(counts) / len(counts) if counts else 0.0
+
+    if base_count == 0 and not neighbors:
+        # Runtime halo: 8 points at 800m (N, S, E, W, NE, NW, SE, SW)
+        seen = {geoid}
+        for bearing in (0, 90, 180, 270, 45, 135, 225, 315):
+            lat2, lon2 = _point_at_bearing(lat, lon, bearing, _HALO_RADIUS_M)
+            t = get_census_tract(lat2, lon2)
+            if t and t.get("geoid") and t["geoid"] not in seen:
+                seen.add(t["geoid"])
+                c = org_count_by_tract.get(t["geoid"], 0)
+                counts.append(c)
+        if len(counts) > 1:
+            org_count_eff = sum(counts) / len(counts)
+        else:
+            org_count_eff = 0.0
+    else:
+        org_count_eff = sum(counts) / len(counts) if counts else 0.0
 
     if population is None:
         population = get_population(tract) or 0

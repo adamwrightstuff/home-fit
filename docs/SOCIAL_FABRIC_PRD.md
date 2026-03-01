@@ -27,7 +27,9 @@ Add the following ACS tables to the Census pipeline (tract or block-group geogra
 - **B07003 – Geographical Mobility (1-year)**
   - `B07003_001E` – total population 1 year and over.  
   - `B07003_002E` – same house 1 year ago.  
-  - **Stability ratio** = `B07003_002E / B07003_001E`.
+  - `B07003_003E` – moved from elsewhere in same county.  
+  - **Stability (rooted) ratio** = \((B07003\_002E + B07003\_003E) / B07003\_001E\).  
+  - Using rooted captures “local” movers (same county); only long-distance moves count as churn.
 
 - **B02001 – Race**
   - Full race distribution, for future Diversity entropy.
@@ -59,7 +61,7 @@ The offline script writes:
 - `data/irs_bmf_tract_counts.json` – `{geoid: count}` of qualifying orgs per tract.  
 - `data/irs_bmf_engagement_stats.json` – `{division_code: {"mean": float, "std": float, "n": int}}` baselines for engagement.
 
-At runtime, `data_sources.irs_bmf` loads these files (or skips Engagement gracefully when they are absent).
+At runtime, `data_sources.irs_bmf` loads these files (or skips Engagement gracefully when they are absent). When a tract has 0 orgs, a **runtime halo** samples 8 points at 800 m and averages org counts from nearby tracts so PO-box or adjacent addresses don’t put the tract in a data shadow.
 
 #### 2.3 OSM – civic nodes
 
@@ -86,8 +88,8 @@ Implement as a new function (e.g. `query_civic_nodes(lat, lon, radius_m=800)`).
 
 #### 3.1 Stability (0–100)
 
-- Input: stability ratio \(x = \text{same_house_1yr} / \text{total_1yr}\) from B07003.
-- **Regional normalization (preferred):** When `data/stability_baselines.json` is present (built by `scripts/build_stability_baselines.py`), stability is scored as a z-score vs the tract’s Census Division (or "all"): higher same-house % than region average → higher score. So 50% in a high-churn region (e.g. Manhattan) scores higher than 50% in a low-churn region (e.g. rural suburb).
+- Input: **rooted** ratio \(x = (\text{same\_house\_1yr} + \text{same\_county\_1yr}) / \text{total\_1yr}\) from B07003. A neighbor moving two blocks (same county) preserves fabric.
+- **Regional normalization (preferred):** When `data/stability_baselines.json` is present (built by `scripts/build_stability_baselines.py`), stability is scored as a z-score vs the tract’s Census Division (or "all"): higher rooted % than region average → higher score.
 - **Fixed curve (fallback when no baselines):** x in percentage points 0–100:
 
 If \(x \le 85\):

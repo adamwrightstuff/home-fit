@@ -1203,7 +1203,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
       node["leisure"="community_garden"](around:{radius_m},{lat},{lon});
       way["leisure"="community_garden"](around:{radius_m},{lat},{lon});
     );
-    out body;
+    out body center;
     >;
     out skel qt;
     """
