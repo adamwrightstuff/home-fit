@@ -20,7 +20,7 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set([
   'natural_beauty',
   'climate_risk',
   'quality_education',
-])
+] as const)
 
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
