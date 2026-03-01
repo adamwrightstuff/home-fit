@@ -2709,6 +2709,8 @@ async def _stream_score_with_progress(
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         
         # Extract built/natural beauty
         built_calc = pillar_results.get('built_beauty')
@@ -3032,6 +3034,28 @@ async def _stream_score_with_progress(
                 "confidence": housing_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": housing_details.get("data_quality", {}),
                 "area_classification": housing_details.get("area_classification", {})
+            },
+            "climate_risk": {
+                "score": climate_risk_score,
+                "weight": token_allocation["climate_risk"],
+                "importance_level": priority_levels.get("climate_risk") if priority_levels else None,
+                "contribution": round(climate_risk_score * token_allocation["climate_risk"] / 100, 2),
+                "breakdown": climate_risk_details.get("breakdown", {}),
+                "summary": climate_risk_details.get("summary", {}),
+                "confidence": climate_risk_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": climate_risk_details.get("data_quality", {}),
+                "area_classification": climate_risk_details.get("area_classification", {})
+            },
+            "social_fabric": {
+                "score": social_fabric_score,
+                "weight": token_allocation["social_fabric"],
+                "importance_level": priority_levels.get("social_fabric") if priority_levels else None,
+                "contribution": round(social_fabric_score * token_allocation["social_fabric"] / 100, 2),
+                "breakdown": social_fabric_details.get("breakdown", {}),
+                "summary": social_fabric_details.get("summary", {}),
+                "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": social_fabric_details.get("data_quality", {}),
+                "area_classification": social_fabric_details.get("area_classification", {})
             }
         }
         
@@ -3723,7 +3747,8 @@ async def stream_score(
             (economic_security_score * token_allocation["economic_security"] / 100) +
         (school_avg * token_allocation["quality_education"] / 100) +
         (housing_score * token_allocation["housing_value"] / 100) +
-        (climate_risk_score * token_allocation["climate_risk"] / 100)
+        (climate_risk_score * token_allocation["climate_risk"] / 100) +
+        (social_fabric_score * token_allocation["social_fabric"] / 100)
         )
 
         logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -3883,6 +3908,16 @@ async def stream_score(
             "confidence": climate_risk_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": climate_risk_details.get("data_quality", {}),
             "area_classification": climate_risk_details.get("area_classification", {})
+        },
+        "social_fabric": {
+            "score": social_fabric_score,
+            "weight": token_allocation["social_fabric"],
+            "contribution": round(social_fabric_score * token_allocation["social_fabric"] / 100, 2),
+            "breakdown": social_fabric_details.get("breakdown", {}),
+            "summary": social_fabric_details.get("summary", {}),
+            "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": social_fabric_details.get("data_quality", {}),
+            "area_classification": social_fabric_details.get("area_classification", {})
         }
         }
 
