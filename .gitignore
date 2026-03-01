@@ -11,6 +11,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv312/
 ENV/
 
 # IDEs
@@ -25,6 +26,9 @@ ENV/
 # Database
 *.db
 *.sqlite3.env
+
+# Data: raw BMF CSVs (large, external); regenerate with script
+data/irs_bmf_raw/
 
 # Frontend
 frontend/node_modules/
