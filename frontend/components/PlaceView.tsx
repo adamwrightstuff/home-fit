@@ -190,7 +190,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const locationLabel = formatPlaceLabel(place)
 
   return (
-    <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '5rem' }}>
+    <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '12rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
         <div>
           <div className="hf-label" style={{ marginBottom: '0.25rem' }}>Location</div>
@@ -457,26 +457,28 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         })}
       </div>
 
-      {/* Sticky Run Score at bottom */}
+      {/* Fixed bottom bar: pillar count, Run Score, and importance prompt */}
       <div
         style={{
-          position: 'sticky',
+          position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          padding: '1rem 0',
-          marginTop: '1rem',
-          marginLeft: '-2.5rem',
-          marginRight: '-2.5rem',
-          marginBottom: '-2.5rem',
-          paddingLeft: '2.5rem',
-          paddingRight: '2.5rem',
-          paddingBottom: '2.5rem',
+          zIndex: 10,
+          padding: '1rem 1.25rem',
+          paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
+          paddingRight: 'max(1.25rem, env(safe-area-inset-right))',
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
           background: 'var(--hf-card-bg)',
           borderTop: '1px solid var(--hf-border)',
           boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
         }}
       >
+        {selectedPillars.size > 0 && !loading && (
+          <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
+            Set importance to customize your score
+          </p>
+        )}
         {loading && (
           <div style={{ marginBottom: '1rem' }}>
             <ProgressBar progress={progress} />
@@ -511,7 +513,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           className="hf-btn-primary"
           style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
         >
-          {loading ? 'Scoring…' : `Run Score${selectedPillars.size > 0 ? ` (${selectedPillars.size} pillar${selectedPillars.size === 1 ? '' : 's'})` : ''}`}
+          {loading ? 'Scoring…' : selectedPillars.size > 0 ? `Run Score (${selectedPillars.size})` : 'Run Score'}
         </button>
       </div>
     </div>
