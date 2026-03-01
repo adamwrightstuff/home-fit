@@ -100,14 +100,14 @@ export const PILLAR_META: Record<
 }
 
 // ---------------------------------------------------------------------------
-// Phase 1B: Score bands (PRD 5.5)
+// Phase 1B: Score bands (PRD 5.5) — Score Badge acceptance criteria
+// 85–100: Excellent | 70–84: Good | 45–69: Fair | 0–44: Low
 // ---------------------------------------------------------------------------
 export const SCORE_BANDS = [
-  { min: 80, max: 100, label: 'Excellent', color: '#4A9E6B' },
-  { min: 60, max: 79, label: 'Good', color: '#7AB87A' },
-  { min: 40, max: 59, label: 'Fair', color: '#C8B84A' },
-  { min: 20, max: 39, label: 'Needs Work', color: '#C8854A' },
-  { min: 0, max: 19, label: 'Poor', color: '#C85A5A' },
+  { min: 85, max: 100, label: 'Excellent', color: '#4A9E6B' },
+  { min: 70, max: 84, label: 'Good', color: '#7AB87A' },
+  { min: 45, max: 69, label: 'Fair', color: '#C8B84A' },
+  { min: 0, max: 44, label: 'Low', color: '#C8854A' },
 ] as const
 
 export function getScoreBand(score: number): { label: string; color: string } {

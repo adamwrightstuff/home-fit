@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LivabilityPillar } from '@/types/api'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, isLongevityPillar, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, isLongevityPillar, type PillarKey } from '@/lib/pillars'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -112,8 +112,21 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <div className={getScoreBadgeClass(pillar.score)}>{pillar.score.toFixed(0)}</div>
-          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: getScoreBandColor(pillar.score) }}>
+          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>
+            {pillar.score.toFixed(0)}
+          </span>
+          <span
+            className="hf-muted"
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              padding: '0.2rem 0.5rem',
+              borderRadius: 6,
+              background: 'var(--hf-bg-subtle)',
+              border: '1px solid var(--hf-border)',
+              color: getScoreBandColor(pillar.score),
+            }}
+          >
             {getScoreBandLabel(pillar.score)}
           </span>
           {pillar_key === 'climate_risk' && (pillar.summary as Record<string, unknown>)?.data_available === false && (
