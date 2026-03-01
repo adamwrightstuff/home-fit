@@ -162,7 +162,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
       setLongevityIndex(li)
       if (process.env.NODE_ENV === 'development') {
-        console.log('[PlaceView] longevity_index from API:', rawLongevity, 'from result:', fromResult, '→', li)
+        const keys = typeof resp === 'object' && resp !== null ? Object.keys(resp) : []
+        console.log('[PlaceView] longevity_index from API:', rawLongevity, 'from result:', fromResult, '→', li, '| response keys:', keys.slice(0, 25))
       }
       setProgress(100)
     } catch (e) {
@@ -215,25 +216,44 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
 
       {/* Total score + Longevity Index — always show when we have results */}
       {hasResults && (
-        <div className="hf-panel" style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', alignItems: 'center' }}>
-          {totalScore != null && (
-            <div style={{ textAlign: 'center' }}>
-              <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Total score</div>
-              <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
-                <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>{totalScore.toFixed(1)}</div>
-                <div className="hf-score-hero__label">Weighted total</div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div className="hf-section-title" style={{ marginBottom: '0.75rem', fontSize: '1.1rem' }}>
+            Scores
+          </div>
+          <div className="hf-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center', alignItems: 'center' }}>
+            {totalScore != null && (
+              <div style={{ textAlign: 'center' }}>
+                <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Total score</div>
+                <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
+                  <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>{totalScore.toFixed(1)}</div>
+                  <div className="hf-score-hero__label">Weighted total</div>
+                </div>
               </div>
-            </div>
-          )}
-          <div style={{ textAlign: 'center' }}>
-            <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Longevity Index</div>
-            <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
-              <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>
-                {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+            )}
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '1rem 1.5rem',
+                borderRadius: 16,
+                borderLeft: '4px solid var(--hf-primary-1, #2d6a4f)',
+                background: 'var(--hf-bg-subtle)',
+              }}
+              data-longevity-index
+            >
+              <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Longevity Index</div>
+              <div className="hf-score-hero" style={{ display: 'inline-block' }}>
+                <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>
+                  {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+                </div>
+                <div className="hf-score-hero__label">
+                  {longevityIndex != null ? '0–100 (fixed blend)' : 'Run all pillars for full index'}
+                </div>
               </div>
-              <div className="hf-score-hero__label">
-                {longevityIndex != null ? '0–100 (fixed blend)' : 'Run all pillars for full index'}
-              </div>
+              {longevityIndex == null && (
+                <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                  If still — after a full run, ensure backend is deployed with Longevity Index.
+                </div>
+              )}
             </div>
           </div>
         </div>
