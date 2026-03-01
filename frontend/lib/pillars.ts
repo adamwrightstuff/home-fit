@@ -13,14 +13,14 @@ export type PillarKey =
   | 'social_fabric'
 
 /** Pillars that contribute to the Longevity Index (fixed weighted blend). */
-export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set([
+export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
   'social_fabric',
   'active_outdoors',
   'neighborhood_amenities',
   'natural_beauty',
   'climate_risk',
   'quality_education',
-] as const)
+])
 
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
