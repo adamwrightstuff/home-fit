@@ -589,20 +589,22 @@ score = weighted_sum(values) / sum(weights)   # 0–100
 ## 13. Climate Risk (`pillars/climate_risk.py`)
 
 ### Scoring Method
-**Inverse risk:** higher raw risk → lower pillar score. Score 0 = very high risk, 100 = very low risk. Phase 1A: heat + air only; flood and trend planned.
+**Inverse risk:** higher raw risk → lower pillar score. Score 0 = very high risk, 100 = very low risk. **Phase 2:** heat + air + flood (FEMA NFHL) + climate trend (TerraClimate 30-year).
 
 ### Formula
 ```
-heat_pts = max(0, 30 - (heat_excess_deg_c / 5) * 30)   # 0–30 pts
+heat_pts = max(0, 25 - (heat_excess_deg_c / 5) * 25)   # 0–25 pts
 air_pts = max(0, 20 - (pm25_proxy_ugm3 / 35) * 20)     # 0–20 pts
-total_raw = heat_pts + air_pts   # max 50
-score = min(100, total_raw * 2.0)   # scale to 0–100
-# If no GEE data: score = 50 (neutral)
+flood_pts = from FEMA NFHL (floodway=0, SFHA=15%, X/D/minimal scaled)  # 0–30 pts
+trend_pts = max(0, 25 - (trend_c_per_decade / 0.5) * 25)  # 0–25 pts, 0.5°C/decade = 0
+total_raw = heat_pts + air_pts + flood_pts + trend_pts   # max 100
+score = min(100, total_raw)
+# If all data missing: score = 50 (neutral). Missing flood or trend → neutral pts (half of max).
 ```
 
 ### Components
 
-#### Heat exposure (0–30 points)
+#### Heat exposure (0–25 points)
 - **Data source:** GEE (LST — land surface temperature); excess = local minus regional.
 - **Threshold:** 5 °C excess → 0 pts; linear in between.
 
@@ -610,16 +612,24 @@ score = min(100, total_raw * 2.0)   # scale to 0–100
 - **Data source:** GEE (Sentinel-5P Aerosol Index as PM2.5 proxy).
 - **Threshold:** 35 µg/m³ (EPA Unhealthy) → 0 pts; linear below.
 
-#### Flood / trend (planned)
-- **Flood zone:** FEMA NFHL or First Street (Phase 2).
-- **Climate trend:** 30-year trend (Phase 4, optional).
+#### Flood zone (0–30 points)
+- **Data source:** FEMA National Flood Hazard Layer (ArcGIS FeatureServer point-in-polygon).
+- **Risk tiers:** floodway → 0 pts; SFHA (1% annual chance) → 15% of max; X (0.2%) → 55%; D → 45%; minimal/not in zone → 100%.
+- **Neutral when missing:** 15 pts if FEMA request fails.
+
+#### Climate trend (0–25 points)
+- **Data source:** GEE TerraClimate (IDAHO_EPSCOR/TERRACLIMATE) monthly tmmx, 1990–2020.
+- **Metric:** Linear trend in °C per decade (warming = worse).
+- **Threshold:** 0.5 °C/decade warming → 0 pts; 0 → max pts; linear in between.
+- **Neutral when missing:** 12.5 pts if GEE trend unavailable.
 
 ### Calibration/Tuning
-- ❌ **No calibration** - Fixed thresholds (5 °C, 35 µg/m³).
-- ✅ **Neutral when missing** - No GEE data → score 50.
+- ❌ **No calibration** - Fixed thresholds (5 °C, 35 µg/m³, 0.5 °C/decade, FEMA tiers).
+- ✅ **Neutral when missing** - No GEE data → score 50; missing flood or trend → half of that component’s max.
 
 ### Data Sources
-- GEE API (LST for heat; Sentinel-5P Aerosol Index for air quality)
+- GEE API (LST for heat; Sentinel-5P Aerosol Index for air; TerraClimate for trend)
+- FEMA NFHL (ArcGIS REST FeatureServer)
 
 ---
 
@@ -670,7 +680,8 @@ score = min(100, total_raw * 2.0)   # scale to 0–100
 | Source | Used By | Purpose |
 |--------|---------|---------|
 | **OSM API** | natural_beauty, active_outdoors, neighborhood_amenities, built_beauty, healthcare_access, quality_education, social_fabric | Parks, businesses, buildings, civic nodes, early ed, colleges |
-| **GEE API** | natural_beauty, active_outdoors, climate_risk | Tree canopy, topography, landcover; LST heat; Sentinel-5P air quality |
+| **GEE API** | natural_beauty, active_outdoors, climate_risk | Tree canopy, topography, landcover; LST heat; Sentinel-5P air quality; TerraClimate trend |
+| **FEMA NFHL** | climate_risk | Flood zone (ArcGIS FeatureServer point-in-polygon) |
 | **Census API** | All pillars (as needed) | Population density, housing, commute time, tree canopy, mobility B07003, diversity B02001/B19001/B01001 |
 | **Transitland API** | public_transit_access | Transit routes, stops, schedules |
 | **NYC API** | natural_beauty | Street trees (NYC only) |

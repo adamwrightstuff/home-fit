@@ -1,9 +1,8 @@
 """
-Climate & Flood Risk pillar (Phase 1A: GEE only).
+Climate & Flood Risk pillar (Phase 2: heat, air, flood, climate trend).
 
-Scores forward-looking environmental risk: heat exposure (urban heat island) and
-air quality (PM2.5 proxy from Sentinel-5P Aerosol Index). Flood zone and 30-year
-trend are planned for a later phase (FEMA NFHL, First Street API).
+Scores forward-looking environmental risk: heat exposure (urban heat island), air quality
+(PM2.5 proxy from Sentinel-5P), FEMA flood zone, and 30-year temperature trend (TerraClimate).
 
 All sub-scores are inverse: higher raw value = worse; pillar score 0 = very high risk,
 100 = very low risk.
@@ -11,22 +10,32 @@ All sub-scores are inverse: higher raw value = worse; pillar score 0 = very high
 
 from typing import Dict, Tuple, Optional
 
-from data_sources.gee_api import get_heat_exposure_lst, get_air_quality_aer_ai, GEE_AVAILABLE
+from data_sources.gee_api import (
+    get_heat_exposure_lst,
+    get_air_quality_aer_ai,
+    get_climate_trend_terraclimate,
+    GEE_AVAILABLE,
+)
+from data_sources.fema_flood import get_fema_flood_zone
 from data_sources.data_quality import assess_pillar_data_quality, detect_area_type
 from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# PRD: Heat (0-30 pts). Score = max(0, 30 - (heat_excess_deg_c / 5) * 30). 5°C excess = 0 pts.
-HEAT_MAX_PTS = 30.0
+# Heat (0-25 pts). Score = max(0, 25 - (heat_excess_deg_c / 5) * 25). 5°C excess = 0 pts.
+HEAT_MAX_PTS = 25.0
 HEAT_EXCESS_FOR_ZERO = 5.0  # degrees C above regional = 0 pts
 
-# PRD: Air (0-20 pts). Score = max(0, 20 - (pm25_ugm3 / 35) * 20). 35 ug/m3 = 0 pts.
+# Air (0-20 pts). Score = max(0, 20 - (pm25_ugm3 / 35) * 20). 35 ug/m3 = 0 pts.
 AIR_MAX_PTS = 20.0
 PM25_UNHEALTHY = 35.0  # EPA Unhealthy threshold (ug/m3)
 
-# Phase 1: no FEMA, no First Street. Heat + Air max = 50 pts; scale to 0-100.
-PHASE1_SCALE = 2.0  # (heat_pts + air_pts) * PHASE1_SCALE = pillar score, cap 100
+# Flood (0-30 pts). From FEMA NFHL; floodway=0, SFHA=15%, X/D/minimal scaled. Neutral when missing.
+FLOOD_MAX_PTS = 30.0
+
+# Climate trend (0-25 pts). 30-year TerraClimate tmax trend; 0°C/decade = max, 0.5°C/decade = 0.
+TREND_MAX_PTS = 25.0
+TREND_C_PER_DECADE_FOR_ZERO = 0.5  # °C per decade warming → 0 pts
 
 
 def get_climate_risk_score(
@@ -37,7 +46,7 @@ def get_climate_risk_score(
     city: Optional[str] = None,
 ) -> Tuple[float, Dict]:
     """
-    Compute Climate & Flood Risk pillar score (Phase 1A: GEE only).
+    Compute Climate & Flood Risk pillar score (Phase 2: heat, air, flood, trend).
 
     Returns:
         (score_0_100, details) where details has breakdown, summary, data_quality.
@@ -45,6 +54,8 @@ def get_climate_risk_score(
     """
     heat_data = get_heat_exposure_lst(lat, lon)
     air_data = get_air_quality_aer_ai(lat, lon)
+    flood_data = get_fema_flood_zone(lat, lon)
+    trend_data = get_climate_trend_terraclimate(lat, lon)
 
     no_heat = heat_data is None
     no_air = air_data is None
@@ -100,23 +111,55 @@ def get_climate_risk_score(
         pm25_proxy = None
         air_pts = 0.0
 
-    # Phase 1: no flood, no 30-year trend. Scale heat+air (max 50) to 0-100.
-    # When no GEE data (both None), use neutral score 50 so we don't show "worst risk" for missing data.
-    total_raw = heat_pts + air_pts
-    score = min(100.0, total_raw * PHASE1_SCALE) if not no_data else 50.0
+    # Flood (0-30 pts). From FEMA NFHL; neutral when FEMA unavailable.
+    if flood_data is not None:
+        flood_pts = float(flood_data.get("flood_zone_pts", FLOOD_MAX_PTS * 0.5))
+        flood_pts = round(min(FLOOD_MAX_PTS, max(0.0, flood_pts)), 2)
+        risk_tier = flood_data.get("risk_tier")
+        fld_zone = flood_data.get("fld_zone")
+        flood_label = flood_data.get("label")
+    else:
+        flood_pts = round(FLOOD_MAX_PTS * 0.5, 2)  # neutral when missing
+        risk_tier = None
+        fld_zone = None
+        flood_label = None
+
+    # Climate trend (0-25 pts). Warming = fewer pts; neutral when GEE trend unavailable.
+    if trend_data is not None:
+        trend_c_per_decade = float(trend_data.get("trend_c_per_decade", 0.0) or 0.0)
+        trend_pts = max(
+            0.0,
+            TREND_MAX_PTS - (max(0.0, trend_c_per_decade) / TREND_C_PER_DECADE_FOR_ZERO) * TREND_MAX_PTS,
+        )
+        trend_pts = round(min(TREND_MAX_PTS, trend_pts), 2)
+    else:
+        trend_c_per_decade = None
+        trend_pts = round(TREND_MAX_PTS * 0.5, 2)  # neutral when missing
+
+    # Total: heat 25 + air 20 + flood 30 + trend 25 = 100 max.
+    total_raw = heat_pts + air_pts + flood_pts + trend_pts
+    score = min(100.0, total_raw)
+    if no_data and flood_data is None and trend_data is None:
+        score = 50.0  # all data missing → neutral
     score = round(score, 1)
 
     # Sub-scores for API (0-100 scale for consistency)
     lst_score_0_100 = round((heat_pts / HEAT_MAX_PTS) * 100.0, 1) if HEAT_MAX_PTS else 0.0
     aqi_score_0_100 = round((air_pts / AIR_MAX_PTS) * 100.0, 1) if AIR_MAX_PTS else 0.0
+    flood_score_0_100 = round((flood_pts / FLOOD_MAX_PTS) * 100.0, 1) if FLOOD_MAX_PTS else 0.0
+    trend_score_0_100 = round((trend_pts / TREND_MAX_PTS) * 100.0, 1) if TREND_MAX_PTS else 0.0
 
     # Data quality
     combined_data = {
         "heat_data": heat_data,
         "air_data": air_data,
+        "flood_data": flood_data,
+        "trend_data": trend_data,
         "score": score,
         "heat_pts": heat_pts,
         "air_pts": air_pts,
+        "flood_pts": flood_pts,
+        "trend_pts": trend_pts,
     }
     area_type_dq = detect_area_type(lat, lon, density=density, city=city)
     quality_metrics = assess_pillar_data_quality(
@@ -126,10 +169,12 @@ def get_climate_risk_score(
     breakdown = {
         "heat_exposure_pts": heat_pts,
         "air_quality_pts": air_pts,
-        "flood_zone_pts": None,  # Phase 2
-        "climate_trend_pts": None,  # Phase 4 optional
+        "flood_zone_pts": flood_pts,
+        "climate_trend_pts": trend_pts,
         "lst_score": lst_score_0_100,
         "aqi_score": aqi_score_0_100,
+        "flood_zone_score_0_100": flood_score_0_100,
+        "climate_trend_score_0_100": trend_score_0_100,
     }
     summary = {
         "heat_excess_deg_c": heat_excess,
@@ -137,8 +182,12 @@ def get_climate_risk_score(
         "regional_lst_c": heat_data.get("regional_lst_c") if heat_data else None,
         "pm25_proxy_ugm3": pm25_proxy,
         "aer_ai_mean": air_data.get("aer_ai_mean") if air_data else None,
-        "flood_zone_score": None,
-        "climate_trend_score": None,
+        "flood_zone_score": flood_score_0_100,
+        "flood_risk_tier": risk_tier,
+        "fld_zone": fld_zone,
+        "flood_label": flood_label,
+        "climate_trend_score": trend_score_0_100,
+        "trend_c_per_decade": trend_c_per_decade,
         "data_available": not no_data,
     }
     details = {
@@ -146,12 +195,12 @@ def get_climate_risk_score(
         "summary": summary,
         "data_quality": quality_metrics,
         "area_classification": {"area_type": area_type or area_type_dq},
-        "phase": "1a_gee_only",
+        "phase": "2_heat_air_flood_trend",
     }
 
     logger.info(
-        "Climate Risk Score: %s/100 (heat_pts=%s, air_pts=%s) heat_excess=%s pm25_proxy=%s",
-        score, heat_pts, air_pts, heat_excess, pm25_proxy,
+        "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) heat_excess=%s pm25=%s flood_tier=%s trend_c_decade=%s",
+        score, heat_pts, air_pts, flood_pts, trend_pts, heat_excess, pm25_proxy, risk_tier, trend_c_per_decade,
     )
     if score == 0 and not no_data:
         logger.warning(

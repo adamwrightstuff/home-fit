@@ -1447,6 +1447,71 @@ def get_air_quality_aer_ai(lat: float, lon: float, radius_m: int = 2000) -> Opti
         return None
 
 
+# ---------------------------------------------------------------------------
+# Climate trend (30-year): TerraClimate tmax linear trend for climate_risk pillar
+# ---------------------------------------------------------------------------
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))
+def get_climate_trend_terraclimate(
+    lat: float, lon: float, radius_m: int = 5000,
+    start_year: int = 1990, end_year: int = 2020,
+) -> Optional[Dict]:
+    """
+    30-year trend in max temperature from TerraClimate (monthly tmax, scale 0.1 → °C).
+    Used for climate_risk pillar: warming = worse = fewer trend_pts.
+
+    Returns:
+        - trend_c_per_decade: float (positive = warming, °C per decade)
+        - source: "IDAHO_EPSCOR/TERRACLIMATE"
+    """
+    if not GEE_AVAILABLE:
+        return None
+    try:
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+        start_ms = ee.Date.fromYMD(start_year, 1, 1).millis()
+        one_year_ms = 365.25 * 24 * 3600 * 1000
+
+        col = (ee.ImageCollection('IDAHO_EPSCOR/TERRACLIMATE')
+               .filterDate(f'{start_year}-01-01', f'{end_year}-12-31')
+               .select('tmmx'))
+
+        def add_time(img):
+            t = ee.Number(ee.Date(img.get('system:time_start')).subtract(start_ms).divide(one_year_ms))
+            tmax_c = img.select('tmmx').multiply(0.1)
+            return ee.Image.cat([ee.Image.constant(t).rename('x'), tmax_c.rename('y')])
+
+        col_xy = col.map(add_time)
+        fit = col_xy.reduce(ee.Reducer.linearFit())
+        fit_info = fit.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=4000,
+            maxPixels=1e9,
+            bestEffort=True
+        ).getInfo()
+        if not fit_info:
+            return None
+        slope_per_year = fit_info.get('scale')
+        if slope_per_year is None and len(fit_info) >= 1:
+            slope_per_year = next(iter(fit_info.values()))
+        try:
+            slope_per_year = float(slope_per_year)
+        except (TypeError, ValueError):
+            return None
+        trend_c_per_decade = round(slope_per_year * 10.0, 3)
+
+        return {
+            'trend_c_per_decade': trend_c_per_decade,
+            'source': 'IDAHO_EPSCOR/TERRACLIMATE',
+            'start_year': start_year,
+            'end_year': end_year,
+        }
+    except Exception as e:
+        print(f"   ⚠️  GEE climate trend error: {e}")
+        return None
+
+
 def authenticate_gee():
     """
     Authenticate with Google Earth Engine using your existing project.
