@@ -1318,21 +1318,35 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # This allows very small canopy values to be scored properly
         # Design principle: Objective and data-driven - use actual measured values, not arbitrary thresholds
         if gee_canopy is not None and gee_canopy >= 0.0:
-            # Populate multi-radius canopy data first
-            for label, rad in MULTI_RADIUS_CANOPY.items():
-                value = None
-                if tree_radius_used and rad == tree_radius_used:
-                    value = gee_canopy
-                elif rad == radius_m:
-                    value = gee_canopy
-                else:
-                    # Always attempt to fetch, especially for 1000m
+            # Populate multi-radius canopy data: fetch needed radii in parallel
+            radii_to_fetch = [
+                (label, rad) for label, rad in MULTI_RADIUS_CANOPY.items()
+                if (not tree_radius_used or rad != tree_radius_used) and rad != radius_m
+            ]
+            if radii_to_fetch:
+                def _fetch_rad(label: str, rad: int):
                     try:
-                        value = get_tree_canopy_gee(lat, lon, radius_m=rad, area_type=area_type)
+                        return label, get_tree_canopy_gee(lat, lon, radius_m=rad, area_type=area_type)
                     except Exception as multi_error:
                         logger.debug("Optional canopy radius fetch (%s) failed: %s", label, multi_error)
-                        value = None
-                canopy_multi[label] = value
+                        return label, None
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    future_to_label = {
+                        executor.submit(_fetch_rad, label, rad): label
+                        for label, rad in radii_to_fetch
+                    }
+                    for future in as_completed(future_to_label):
+                        label, value = future.result()
+                        canopy_multi[label] = value
+            for label, rad in MULTI_RADIUS_CANOPY.items():
+                if canopy_multi.get(label) is not None:
+                    continue
+                if tree_radius_used and rad == tree_radius_used:
+                    canopy_multi[label] = gee_canopy
+                elif rad == radius_m:
+                    canopy_multi[label] = gee_canopy
+                else:
+                    canopy_multi[label] = None
             
             # CRITICAL FIX: Ensure 1000m canopy is always populated as fallback
             # Design principle: Scalable and general - works for all locations, not just specific cases
@@ -1357,18 +1371,37 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             details['canopy_weights'] = {"400m": 0.50, "1000m": 0.35, "2000m": 0.15}
             primary_canopy_pct = primary_canopy
 
+            # Fetch Census validation and GVI in parallel to cut latency
+            area_desc = area_type if area_type else "area"
+            census_canopy = None
+            gvi_metrics = None
+            gvi_radius_used = min(1200, tree_radius_used or radius_m) if (tree_radius_used or radius_m) else 1200
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                def _get_census():
+                    return census_api.get_tree_canopy(lat, lon)
+                def _get_gvi():
+                    if not gvi_radius_used:
+                        return None
+                    try:
+                        return get_urban_greenness_gee(lat, lon, radius_m=gvi_radius_used)
+                    except Exception:
+                        return None
+                f_census = executor.submit(_get_census)
+                f_gvi = executor.submit(_get_gvi)
+                try:
+                    census_canopy = f_census.result()
+                except Exception as census_error:
+                    logger.debug("Census/USFS canopy lookup failed during validation: %s", census_error)
+                try:
+                    gvi_metrics = f_gvi.result()
+                except Exception as gvi_error:
+                    logger.warning("GEE greenness analysis error: %s", gvi_error)
+
             # Validate GEE data with Census/USFS - always cross-check for data quality
             # More aggressive validation to catch underestimation issues:
             # - Always check Census/USFS if available (even if GEE seems reasonable)
             # - Use Census/USFS if it's significantly higher (indicates GEE underestimation)
             # - For PNW/temperate climates, be especially cautious about low GEE values
-            area_desc = area_type if area_type else "area"
-            census_canopy = None
-            try:
-                census_canopy = census_api.get_tree_canopy(lat, lon)
-            except Exception as census_error:
-                logger.debug("Census/USFS canopy lookup failed during validation: %s", census_error)
-            
             if census_canopy is not None:
                 # Check if Census/USFS suggests GEE is underestimating
                 diff = census_canopy - gee_canopy
@@ -1460,13 +1493,15 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             gvi_radius = min(1200, tree_radius_used)
         else:
             gvi_radius = min(1200, radius_m)
-        if gvi_radius and gvi_radius > 0:
+        if gvi_radius and gvi_radius > 0 and gvi_metrics is None:
             gvi_radius_used = gvi_radius
             try:
                 gvi_metrics = get_urban_greenness_gee(lat, lon, radius_m=gvi_radius)
             except Exception as gvi_error:
                 logger.warning("GEE greenness analysis error: %s", gvi_error)
                 gvi_metrics = None
+        elif gvi_radius and gvi_radius > 0:
+            gvi_radius_used = gvi_radius
     except Exception as exc:
         logger.warning("GEE canopy lookup failed: %s", exc)
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import math
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional, Tuple
 
 from logging_config import get_logger
@@ -51,31 +52,44 @@ def _enhancer_linear_plus_tail(
 
 def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
     """
-    Fetch historic data once (OSM landmarks + Census building age).
+    Fetch historic data once (OSM landmarks + Census building age + NRHP) in parallel.
     """
     from data_sources import census_api
     from data_sources import nrhp
 
-    year_built_data = census_api.get_year_built_data(lat, lon)
-    median_year_built = year_built_data.get('median_year_built') if year_built_data else None
-    vintage_pct = year_built_data.get('vintage_pct', 0) if year_built_data else None
+    def _year_built():
+        data = census_api.get_year_built_data(lat, lon)
+        return (
+            data.get('median_year_built') if data else None,
+            data.get('vintage_pct', 0) if data else None,
+            data,
+        )
 
-    charm_data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
-    if charm_data:
-        historic_landmarks = charm_data.get('historic', [])
-        if len(historic_landmarks) == 0:
-            logger.warning("No historic landmarks found in charm_data for %s, %s. Keys: %s", lat, lon, list(charm_data.keys()))
-    else:
-        logger.warning("charm_data query returned None for %s, %s", lat, lon)
-        historic_landmarks = []
-    historic_landmarks_count = len(historic_landmarks)
+    def _charm():
+        data = osm_api.query_charm_features(lat, lon, radius_m=radius_m)
+        if data:
+            landmarks = data.get('historic', [])
+            if len(landmarks) == 0:
+                logger.warning("No historic landmarks found in charm_data for %s, %s. Keys: %s", lat, lon, list(data.keys()))
+        else:
+            logger.warning("charm_data query returned None for %s, %s", lat, lon)
+            landmarks = []
+        return data, landmarks, len(landmarks)
 
-    nrhp_result: Dict = {}
-    try:
-        nrhp_result = nrhp.query_nrhp(lat, lon, radius_m=radius_m) or {}
-    except Exception as exc:
-        logger.warning("NRHP lookup failed for %s, %s: %s", lat, lon, exc)
-        nrhp_result = {}
+    def _nrhp():
+        try:
+            return nrhp.query_nrhp(lat, lon, radius_m=radius_m) or {}
+        except Exception as exc:
+            logger.warning("NRHP lookup failed for %s, %s: %s", lat, lon, exc)
+            return {}
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        f_year = executor.submit(_year_built)
+        f_charm = executor.submit(_charm)
+        f_nrhp = executor.submit(_nrhp)
+        median_year_built, vintage_pct, year_built_data = f_year.result()
+        charm_data, historic_landmarks, historic_landmarks_count = f_charm.result()
+        nrhp_result = f_nrhp.result()
 
     return {
         'year_built_data': year_built_data,
@@ -84,7 +98,6 @@ def _fetch_historic_data(lat: float, lon: float, radius_m: int = 1000) -> Dict:
         'charm_data': charm_data,
         'historic_landmarks': historic_landmarks,
         'historic_landmarks_count': historic_landmarks_count,
-        # Historic register (bundled dataset)
         'nrhp': nrhp_result,
         'nrhp_count': nrhp_result.get("count", 0) if isinstance(nrhp_result, dict) else 0,
         'nrhp_nearest_distance_m': nrhp_result.get("nearest_distance_m") if isinstance(nrhp_result, dict) else None,
