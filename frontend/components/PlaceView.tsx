@@ -58,6 +58,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [pillarsInProgress, setPillarsInProgress] = useState<string[]>([])
   const [premiumCodeInput, setPremiumCodeInput] = useState('')
   const [savedPremiumCode, setSavedPremiumCode] = useState('')
+  /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
+  const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
   useEffect(() => {
     try {
       const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
@@ -97,6 +99,24 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
     setTotalScore(total ?? null)
   }, [pillarScores, selectedPriorities])
+
+  // Scoring overlay: reveal pillar names one by one over ~5s when loading
+  const overlayPillarList = PILLAR_ORDER.filter((k) => selectedPillars.has(k))
+  useEffect(() => {
+    if (!loading || overlayPillarList.length === 0) {
+      setOverlayRevealedCount(0)
+      return
+    }
+    const N = overlayPillarList.length
+    const intervalMs = N > 0 ? Math.max(80, 5000 / N) : 5000
+    let count = 0
+    const id = setInterval(() => {
+      count += 1
+      setOverlayRevealedCount((prev) => Math.min(prev + 1, N))
+      if (count >= N) clearInterval(id)
+    }, intervalMs)
+    return () => clearInterval(id)
+  }, [loading, overlayPillarList.length])
 
   const runScore = useCallback(async () => {
     const selected = Array.from(selectedPillars)
@@ -516,6 +536,75 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           {loading ? 'Scoring…' : selectedPillars.size > 0 ? `Run Score (${selectedPillars.size})` : 'Run Score'}
         </button>
       </div>
+
+      {/* Scoring overlay: dimmed, non-interactive; shows headline, subtitle, pillar names appearing over ~5s */}
+      {loading && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="scoring-overlay-headline"
+          aria-describedby="scoring-overlay-subtitle"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+            padding: '1.5rem',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <div
+            className="hf-panel"
+            style={{
+              maxWidth: 400,
+              width: '100%',
+              padding: '1.5rem 1.75rem',
+              borderRadius: 12,
+              background: 'var(--hf-card-bg)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="scoring-overlay-headline"
+              style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}
+            >
+              Analyzing HomeFit
+            </h2>
+            <p
+              id="scoring-overlay-subtitle"
+              className="hf-muted"
+              style={{ fontSize: '0.95rem', marginTop: '0.35rem', marginBottom: 0 }}
+            >
+              Scoring {overlayPillarList.length} pillar{overlayPillarList.length === 1 ? '' : 's'}…
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {overlayPillarList.slice(0, overlayRevealedCount).map((key) => {
+                const meta = PILLAR_META[key]
+                return (
+                  <li key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: 'var(--hf-primary-1)',
+                        flexShrink: 0,
+                      }}
+                      aria-hidden
+                    />
+                    <span style={{ fontSize: '0.95rem', color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
