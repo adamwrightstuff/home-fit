@@ -31,13 +31,16 @@ Total: 100%. All other pillars (e.g. built beauty, air travel, transit, healthca
 
 ## Implementation
 
-- **Backend:** `main.py` defines `LONGEVITY_INDEX_WEIGHTS` and `_compute_longevity_index(livability_pillars)`. The index is computed after `livability_pillars` is built and added to every score response as:
+- **Backend:** `main.py` defines `LONGEVITY_INDEX_WEIGHTS` and `_compute_longevity_index(livability_pillars, token_allocation=None)`. The index is computed after `livability_pillars` is built and added to every score response as:
   - `longevity_index`: number (0–100)
   - `longevity_index_contributions`: `Record<pillar_name, contribution>`
+
+**Partial pillars / same logic as total score:** When `token_allocation` is provided (normal for all score responses), only longevity pillars that **have a score** (already run) **and are selected** (non-zero weight in the current allocation) are used. The fixed Longevity weights are **renormalized** over that subset so the index stays 0–100. You do not need to run all 6 pillars to see a Longevity Index. When you change priorities (weights), both total score and Longevity Index are recomputed from the same cached pillar scores—no rerun required.
+
 - **Frontend:** `ScoreDisplay` shows a “Longevity Index” panel when `longevity_index` is present; types in `frontend/types/api.ts` extend `ScoreResponse` with optional `longevity_index` and `longevity_index_contributions`.
 
 ---
 
 ## Data
 
-Uses the same pillar scores as the main livability score (no extra API or pillar runs). If a pillar is missing (e.g. quality_education when schools are disabled), its contribution is 0.
+Uses the same pillar scores as the main livability score (no extra API or pillar runs). Only longevity pillars that have been run and are currently selected (non-zero weight) are included; their fixed weights are renormalized to sum to 100% so the index remains 0–100.
