@@ -88,6 +88,16 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
+  // When user changes prioritization for pillars that already have scores, recompute total immediately (no new run).
+  useEffect(() => {
+    if (Object.keys(pillarScores).length === 0) return
+    const partialScores = Object.fromEntries(
+      Object.entries(pillarScores).map(([k, v]) => [k, v.score])
+    )
+    const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
+    setTotalScore(total ?? null)
+  }, [pillarScores, selectedPriorities])
+
   const runScore = useCallback(async () => {
     const selected = Array.from(selectedPillars)
     if (selected.length === 0) return
