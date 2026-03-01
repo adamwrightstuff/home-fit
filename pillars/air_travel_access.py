@@ -220,6 +220,11 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
         "data_quality": quality_metrics,
         "area_classification": area_metadata
     }
+    # For "Did you know" facts: airport count and nearest distance
+    breakdown["summary"]["airport_count"] = len(airports_with_distance)
+    breakdown["summary"]["nearest_airport_km"] = round(
+        primary_airport["distance_km"], 1
+    ) if primary_airport else None
 
     # Log results
     if primary_airport:

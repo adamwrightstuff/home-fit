@@ -384,6 +384,12 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
             summary["median_year_built"] = int(arch_analysis.get("median_year_built", 0))
         if arch_analysis.get("pre_1940_pct") is not None:
             summary["pre_1940_pct"] = round(arch_analysis.get("pre_1940_pct", 0), 1)
+        # For "Did you know" facts: total heritage structures (OSM historic + NRHP)
+        historic_ctx = arch_analysis.get("historic_context") or {}
+        if isinstance(historic_ctx, dict):
+            landmarks = historic_ctx.get("landmarks") or 0
+            nrhp = historic_ctx.get("nrhp_count") or 0
+            summary["heritage_count"] = int(landmarks) + int(nrhp)
     
     summary["component_score"] = round(built_details.get("component_score_0_50", 0), 2)
     summary["enhancer_bonus"] = round(built_details.get("enhancer_bonus_scaled", 0), 2)
