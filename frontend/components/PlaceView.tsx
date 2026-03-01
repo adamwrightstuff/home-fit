@@ -51,6 +51,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
   const [totalScore, setTotalScore] = useState<number | null>(null)
+  const [longevityIndex, setLongevityIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -126,6 +127,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
       })
+      setLongevityIndex(null)
       const resp = await getScoreWithProgress(
         {
           location: place.location,
@@ -155,6 +157,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       )
       const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
       setTotalScore(total ?? null)
+      const rawLongevity = (resp as { longevity_index?: number }).longevity_index
+      const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
+      const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
+      setLongevityIndex(li)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[PlaceView] longevity_index from API:', rawLongevity, 'from result:', fromResult, '→', li)
+      }
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
@@ -204,13 +213,28 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         />
       </div>
 
-      {/* Total score result */}
-      {hasResults && totalScore != null && (
-        <div className="hf-panel" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-          <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Total score</div>
-          <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
-            <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>{totalScore.toFixed(1)}</div>
-            <div className="hf-score-hero__label">Weighted total</div>
+      {/* Total score + Longevity Index — always show when we have results */}
+      {hasResults && (
+        <div className="hf-panel" style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', alignItems: 'center' }}>
+          {totalScore != null && (
+            <div style={{ textAlign: 'center' }}>
+              <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Total score</div>
+              <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
+                <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>{totalScore.toFixed(1)}</div>
+                <div className="hf-score-hero__label">Weighted total</div>
+              </div>
+            </div>
+          )}
+          <div style={{ textAlign: 'center' }}>
+            <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>Longevity Index</div>
+            <div className="hf-score-hero" style={{ display: 'inline-block', padding: '1rem 1.5rem', borderRadius: 16 }}>
+              <div className="hf-score-hero__value" style={{ fontSize: '2.25rem' }}>
+                {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+              </div>
+              <div className="hf-score-hero__label">
+                {longevityIndex != null ? '0–100 (fixed blend)' : 'Run all pillars for full index'}
+              </div>
+            </div>
           </div>
         </div>
       )}
