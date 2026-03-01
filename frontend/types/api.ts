@@ -103,6 +103,10 @@ export interface ScoreResponse {
   location_info: LocationInfo;
   livability_pillars: LivabilityPillars;
   total_score: number;
+  /** Longevity Index: fixed weighted score over 6 pillars (social fabric, active outdoors, amenities, natural beauty, climate risk, education). Separate from total_score. */
+  longevity_index?: number;
+  /** Per-pillar contribution to longevity_index (same pillars as longevity_index). */
+  longevity_index_contributions?: Record<string, number>;
   token_allocation: Record<string, number>;
   allocation_type: string;
   overall_confidence: OverallConfidence;

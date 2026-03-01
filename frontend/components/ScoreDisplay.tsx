@@ -36,6 +36,7 @@ function overallTier(score: number): { label: string; tone: string } {
 
 export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
+  const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
   const [copied, setCopied] = useState(false)
 
   // Be defensive: backend deployments can lag the frontend pillar list.
@@ -46,6 +47,7 @@ export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProp
     const lines = [
       `HomeFit Livability Score: ${location_info.city}, ${location_info.state} ${location_info.zip}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
+      ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
       '',
       'Pillar Scores:',
       ...available_pillars.map((key) => {
@@ -116,8 +118,27 @@ export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProp
           </div>
         </div>
 
-        <div className="hf-grid-2" style={{ marginTop: '2rem' }}>
+        <div
+          className="hf-grid-2"
+          style={{
+            marginTop: '2rem',
+            display: 'grid',
+            gridTemplateColumns: longevity_index != null ? '1fr 1fr 1.2fr' : '1fr 1.2fr',
+            gap: '1.5rem',
+          }}
+        >
           <TotalScore score={total_score} confidence={overall_confidence} />
+          {longevity_index != null && (
+            <div className="hf-panel">
+              <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
+                <div className="hf-score-hero__value">{longevity_index.toFixed(1)}</div>
+                <div className="hf-score-hero__label">Longevity Index (0–100)</div>
+              </div>
+              <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+                Fixed blend: Social Fabric, Active Outdoors, Amenities, Natural Beauty, Climate Risk, Education. Independent of your priorities.
+              </div>
+            </div>
+          )}
           <div className="hf-panel">
             <div className="hf-label" style={{ marginBottom: '0.75rem' }}>
               Quick summary

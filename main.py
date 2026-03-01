@@ -631,6 +631,31 @@ def _apply_schools_disabled_weight_override(
     return out
 
 
+# Longevity Index: fixed weighted score over 6 pillars (separate from user-priority total_score).
+# Rationale: Social Fabric (strongest predictor), Active Outdoors, Neighborhood Amenities,
+# Natural Beauty, Climate Risk, Quality Education (purpose/cognitive engagement).
+LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
+    "social_fabric": 30.0,
+    "active_outdoors": 25.0,
+    "neighborhood_amenities": 20.0,
+    "natural_beauty": 10.0,
+    "climate_risk": 10.0,
+    "quality_education": 5.0,
+}
+
+
+def _compute_longevity_index(livability_pillars: Dict[str, Any]) -> Tuple[float, Dict[str, float]]:
+    """Compute Longevity Index (0-100) from livability_pillars using LONGEVITY_INDEX_WEIGHTS."""
+    total = 0.0
+    contributions: Dict[str, float] = {}
+    for pillar, weight in LONGEVITY_INDEX_WEIGHTS.items():
+        score = float((livability_pillars.get(pillar) or {}).get("score", 0.0) or 0.0)
+        contrib = score * weight / 100.0
+        contributions[pillar] = round(contrib, 2)
+        total += contrib
+    return round(total, 2), contributions
+
+
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 10 pillars",
@@ -820,6 +845,9 @@ def _apply_allocation_to_cached_response(
         total_score += score * weight / 100.0
 
     response["total_score"] = round(total_score, 2)
+    longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars)
+    response["longevity_index"] = longevity_index
+    response["longevity_index_contributions"] = longevity_contributions
 
     if isinstance(response.get("metadata"), dict):
         response["metadata"]["cache_hit"] = True
@@ -1743,6 +1771,7 @@ def _compute_single_score_internal(
     }
 
     # Build response
+    longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars)
     response = {
         "input": location,
         "coordinates": {
@@ -1756,6 +1785,8 @@ def _compute_single_score_internal(
         },
         "livability_pillars": livability_pillars,
         "total_score": round(total_score, 2),
+        "longevity_index": longevity_index,
+        "longevity_index_contributions": longevity_contributions,
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
@@ -2973,12 +3004,15 @@ async def _stream_score_with_progress(
         }
         
         # Build final response
+        longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars)
         final_response = {
             "input": location,
             "coordinates": {"lat": lat, "lon": lon},
             "location_info": {"city": city, "state": state, "zip": zip_code},
             "livability_pillars": livability_pillars,
             "total_score": round(total_score, 2),
+            "longevity_index": longevity_index,
+            "longevity_index_contributions": longevity_contributions,
             "token_allocation": token_allocation,
             "allocation_type": allocation_type,
             "overall_confidence": _calculate_overall_confidence(livability_pillars),
@@ -3821,6 +3855,7 @@ async def stream_score(
         }
 
         # Build response with enhanced metadata
+        longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars)
         response = {
         "input": location,
         "coordinates": {
@@ -3834,6 +3869,8 @@ async def stream_score(
         },
         "livability_pillars": livability_pillars,
         "total_score": round(total_score, 2),
+        "longevity_index": longevity_index,
+        "longevity_index_contributions": longevity_contributions,
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
