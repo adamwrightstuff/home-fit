@@ -318,6 +318,26 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   </div>
                 </div>
                 <div style={{ flexShrink: 0 }}>
+                  {!selected && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        togglePillar(key)
+                      }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      className="hf-btn-primary"
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: 8,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Add
+                    </button>
+                  )}
                   {score != null && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span className={getScoreBadgeClass(score.score)} style={{ padding: '0.35rem 0.75rem', borderRadius: 8 }}>
