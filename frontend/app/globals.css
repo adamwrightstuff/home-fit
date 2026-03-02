@@ -26,6 +26,10 @@
   --hf-border-strong: rgba(102, 126, 234, 0.35);
 
   --hf-danger: #dc3545;
+
+  /* Score summary colors */
+  --hf-homefit-green: #2d6a4f;
+  --hf-longevity-purple: #764ba2;
 }
 
 body {
