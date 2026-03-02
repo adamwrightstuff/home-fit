@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import AppHeader from './AppHeader'
@@ -327,9 +327,18 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     [weights]
   )
 
-  const handle_apply = useCallback(() => {
-    if (onApplyPriorities) onApplyPriorities(priorities)
-  }, [onApplyPriorities, priorities])
+  // Auto-apply quiz results when user reaches the results screen (once per results view).
+  const appliedRef = useRef(false)
+  useEffect(() => {
+    if (game_state !== 'results') {
+      appliedRef.current = false
+      return
+    }
+    if (!appliedRef.current && onApplyPriorities) {
+      onApplyPriorities(priorities)
+      appliedRef.current = true
+    }
+  }, [game_state, priorities, onApplyPriorities])
 
   // --- Intro
   if (game_state === 'intro') {
@@ -547,9 +556,9 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             })}
           </div>
 
-          {onApplyPriorities && (
+          {onBack && (
             <button
-              onClick={handle_apply}
+              onClick={onBack}
               className="hf-btn-primary"
               style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
             >

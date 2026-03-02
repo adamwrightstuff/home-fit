@@ -19,6 +19,8 @@ export default function Home() {
   const [error, set_error] = useState<string | null>(null)
   const [place, set_place] = useState<(GeocodeResult & { location: string }) | null>(null)
   const [show_game, set_show_game] = useState(false)
+  /** When true, PlaceView should select all pillars and sync from applied quiz priorities. */
+  const [justAppliedQuizPriorities, setJustAppliedQuizPriorities] = useState(false)
   // Search options (priorities, job_categories, etc.) for scoring; persisted for quiz and PlaceView
   const [search_options, set_search_options] = useState<SearchOptions>(() => {
     try {
@@ -74,14 +76,15 @@ export default function Home() {
       }
       return updated
     })
-    set_show_game(false)
+    setJustAppliedQuizPriorities(true)
+    // Do not close quiz here; user closes via "Search a place" or Back (onBack).
   }
 
   if (show_game) {
     return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} onBack={() => set_show_game(false)} />
   }
 
-  // Page 1: Landing / Search — hero, search bar, Take quiz only. No pillar grid.
+  // Page 1: Landing / Search — hero, search bar. No quiz here; quiz is after a location is searched.
   if (!place && !score_data) {
     return (
       <main className="hf-page">
@@ -93,16 +96,6 @@ export default function Home() {
         <div className="hf-container">
           <div id="search" className="hf-card">
             <LocationSearch onSearch={handle_search} disabled={loading} />
-            <div style={{ marginTop: '1.25rem' }} className="hf-panel">
-              <button
-                type="button"
-                onClick={() => set_show_game(true)}
-                className="hf-btn-secondary"
-                style={{ width: '100%' }}
-              >
-                Take quiz
-              </button>
-            </div>
           </div>
 
           {loading && (
@@ -145,6 +138,8 @@ export default function Home() {
             onError={(msg) => set_error(msg)}
             onBack={() => { set_place(null); set_error(null) }}
             onTakeQuiz={() => set_show_game(true)}
+            justAppliedQuizPriorities={justAppliedQuizPriorities}
+            onAppliedQuizPrioritiesConsumed={() => setJustAppliedQuizPriorities(false)}
           />
           {place && error && (
             <div className="hf-card" style={{ marginTop: '1rem' }}>

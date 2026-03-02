@@ -46,9 +46,13 @@ export interface PlaceViewProps {
   onError: (message: string) => void
   onBack: () => void
   onTakeQuiz?: () => void
+  /** When true, select all pillars and sync priorities from searchOptions (e.g. after quiz apply). */
+  justAppliedQuizPriorities?: boolean
+  /** Called after syncing pillar selection from quiz priorities. */
+  onAppliedQuizPrioritiesConsumed?: () => void
 }
 
-export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz }: PlaceViewProps) {
+export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
@@ -70,6 +74,20 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setSavedPremiumCode(v)
     } catch (_) {}
   }, [])
+
+  // When quiz results were just applied: select all pillars and sync priorities from searchOptions.
+  useEffect(() => {
+    if (!justAppliedQuizPriorities || !searchOptions?.priorities) return
+    const priorities = searchOptions.priorities
+    setSelectedPillars(new Set(PILLAR_ORDER))
+    const importance: Record<string, Importance> = {}
+    for (const key of PILLAR_ORDER) {
+      const p = priorities[key as keyof typeof priorities]
+      importance[key] = p === 'High' || p === 'Low' ? p : 'Medium'
+    }
+    setSelectedPriorities(importance)
+    onAppliedQuizPrioritiesConsumed?.()
+  }, [justAppliedQuizPriorities, searchOptions?.priorities, onAppliedQuizPrioritiesConsumed])
 
   const togglePillar = useCallback((key: string) => {
     setSelectedPillars((prev) => {
