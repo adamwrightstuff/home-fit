@@ -438,7 +438,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   </div>
                 </div>
                 <div style={{ flexShrink: 0 }}>
-                  {!selected && (
+                  {!selected && score == null && (
                     <button
                       type="button"
                       onClick={(e) => {
