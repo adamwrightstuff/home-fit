@@ -4486,16 +4486,24 @@ def _format_transit_modes(modes: list) -> str:
     """Format transit modes conversationally; max 2 by name, then 'multiple transit options'."""
     if not modes or not isinstance(modes, (list, tuple)):
         return "local buses"
-    # Normalize: Heavy Rail, Subway/Metro -> subway; Light Rail -> light rail; Bus -> local buses; Ferry -> ferry
+    # Normalize: distinguish subway/metro vs commuter rail; Light Rail -> light rail; Bus -> local buses; Ferry -> ferry
     normalized = []
     seen = set()
     for m in modes:
         if not m:
             continue
         m_lower = str(m).lower()
-        if "heavy" in m_lower or "subway" in m_lower or "metro" in m_lower:
+        # Commuter rail / trains (e.g., "Commuter Rail (Trains)")
+        if "commuter rail" in m_lower or ("train" in m_lower and "light" not in m_lower):
+            key = "commuter trains"
+        # Subway / metro (e.g., "Subway/Metro")
+        elif "subway" in m_lower or "metro" in m_lower:
             key = "subway"
-        elif "light" in m_lower and "rail" in m_lower:
+        # Generic heavy rail fallback when we know it's rail but not which subtype
+        elif "heavy" in m_lower and "rail" in m_lower:
+            key = "trains"
+        # Light rail / streetcar / tram
+        elif ("light" in m_lower and "rail" in m_lower) or "streetcar" in m_lower or "tram" in m_lower:
             key = "light rail"
         elif "bus" in m_lower:
             key = "local buses"
@@ -4505,7 +4513,7 @@ def _format_transit_modes(modes: list) -> str:
             key = m_lower
         if key not in seen:
             seen.add(key)
-            normalized.append("subway" if key == "subway" else key)
+            normalized.append(key)
     if len(normalized) >= 3:
         return "multiple transit options"
     if len(normalized) == 2:

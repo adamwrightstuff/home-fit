@@ -1990,8 +1990,18 @@ def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, al
             "pillar_name": "public_transit_access"
         })
 
+    # Mode labels for summaries: distinguish subway/metro vs commuter rail using GTFS route_type
     if heavy_rail:
-        summary["transit_modes_available"].append("Heavy Rail (Subway/Metro)")
+        subway_routes = [r for r in heavy_rail if r.get("route_type") == 1]
+        commuter_routes = [r for r in heavy_rail if r.get("route_type") == 2]
+
+        if subway_routes:
+            summary["transit_modes_available"].append("Subway/Metro")
+        if commuter_routes:
+            summary["transit_modes_available"].append("Commuter Rail (Trains)")
+        # Fallback label if route_type is missing or unrecognized
+        if not subway_routes and not commuter_routes:
+            summary["transit_modes_available"].append("Heavy Rail")
 
     if light_rail:
         summary["transit_modes_available"].append("Light Rail/Streetcar")
