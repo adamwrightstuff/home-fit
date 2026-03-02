@@ -1,28 +1,12 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, MapPin, RefreshCcw } from 'lucide-react'
+import React, { useMemo, useState, useCallback } from 'react'
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import AppHeader from './AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 
-// Maximum possible points per pillar (audited across all 20 questions)
-const max_possible_scores: Record<keyof PillarPriorities, number> = {
-  active_outdoors: 43,
-  built_beauty: 41,
-  natural_beauty: 39,
-  neighborhood_amenities: 60,
-  air_travel_access: 22,
-  public_transit_access: 20,
-  healthcare_access: 23,
-  economic_security: 2,
-  quality_education: 32,
-  housing_value: 45,
-  climate_risk: 50,
-  social_fabric: 40,
-}
-
-const PILLAR_ORDER: Array<keyof PillarPriorities> = [
+const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
   'built_beauty',
   'neighborhood_amenities',
@@ -37,208 +21,202 @@ const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'social_fabric',
 ]
 
-const questions = [
+const TOTAL_QUESTIONS = 5
+
+const QUESTIONS = [
   {
-    id: 1,
-    text: "It's Saturday morning. What sounds most appealing?",
+    id: 'life_stage',
+    type: 'single' as const,
+    prompt: 'What best describes your household right now?',
     options: [
-      { text: 'Hiking a mountain trail with epic views', pillars: { active_outdoors: 3, natural_beauty: 2 } },
-      { text: 'Wandering through a historic district with unique architecture', pillars: { built_beauty: 4 } },
-      { text: 'Browsing the farmers market and grabbing brunch at a local café', pillars: { neighborhood_amenities: 4 } },
-      { text: 'Staying in and enjoying a spacious, comfortable home', pillars: { housing_value: 4 } },
+      { value: 'single_couple', text: 'Single or couple, no kids' },
+      { value: 'family_young', text: 'Family with young kids' },
+      { value: 'family_older', text: 'Family with older kids / teens' },
+      { value: 'empty_nester', text: 'Empty nester or retired' },
+      { value: 'flexible', text: 'Flexible — things will change soon' },
     ],
   },
   {
-    id: 2,
-    text: 'Your ideal evening walk takes you past...',
+    id: 'weekend_energy',
+    type: 'single' as const,
+    prompt: "On a free weekend, you're most likely to be—",
     options: [
-      { text: 'Tree-lined streets with mature canopy and gardens', pillars: { natural_beauty: 4 } },
-      { text: 'Charming rowhouses with character and front porches', pillars: { built_beauty: 4 } },
-      { text: 'Bustling sidewalks with shops, restaurants, and street performers', pillars: { neighborhood_amenities: 4 } },
-      { text: 'A waterfront path with sunset views', pillars: { active_outdoors: 2, natural_beauty: 2 } },
+      { value: 'outdoors', text: 'Outside — hiking, biking, on the water' },
+      { value: 'neighborhood', text: 'Exploring the neighborhood' },
+      { value: 'home_social', text: 'At home or with close friends' },
+      { value: 'travel', text: 'Traveling somewhere new' },
     ],
   },
   {
-    id: 3,
-    text: "You're considering two neighborhoods. What's most reassuring?",
+    id: 'car_relationship',
+    type: 'single' as const,
+    prompt: 'Your relationship with a car?',
     options: [
-      { text: 'Top-rated hospital within 10 minutes', pillars: { healthcare_access: 5 } },
-      { text: 'Highly-rated schools and educational programs', pillars: { quality_education: 5 } },
-      { text: 'Beautiful tree-covered streets and nearby parks', pillars: { natural_beauty: 3, active_outdoors: 2 } },
-      { text: 'More space and lower cost per square foot', pillars: { housing_value: 5 } },
+      { value: 'no_car', text: "I'd rather not own one" },
+      { value: 'mixed', text: 'Fine driving, but want good alternatives' },
+      { value: 'car_dependent', text: "I drive everywhere — transit doesn't matter" },
     ],
   },
   {
-    id: 4,
-    text: "You're offered two jobs with identical pay. One major difference:",
+    id: 'beautiful_place',
+    type: 'multi' as const,
+    prompt: 'What does "beautiful place" mean to you?',
+    hint: 'Pick up to 2',
     options: [
-      { text: 'Job A: 15-min subway ride downtown', pillars: { public_transit_access: 4, economic_security: 1 } },
-      { text: 'Job B: 30-min scenic drive through nature', pillars: { natural_beauty: 2, active_outdoors: 2 } },
-      { text: 'Job C: 5-min walk from your front door', pillars: { neighborhood_amenities: 4, economic_security: 2 } },
-      { text: 'Job D: Remote, but near a major airport for frequent travel', pillars: { air_travel_access: 4 } },
+      { value: 'nature', text: 'Nature — trees, water, open sky' },
+      { value: 'architecture', text: 'Architecture and historic streetscapes' },
+      { value: 'both', text: 'Both equally' },
+      { value: 'none', text: 'Honestly not a priority' },
     ],
   },
   {
-    id: 5,
-    text: 'If you had kids (or have kids now), what matters most about where you live?',
+    id: 'horizon',
+    type: 'single' as const,
+    prompt: 'How are you thinking about this move?',
     options: [
-      { text: 'Top-rated schools with excellent academics', pillars: { quality_education: 5 } },
-      { text: "Safe streets where they can walk to friends' houses", pillars: { neighborhood_amenities: 5 } },
-      { text: 'Nearby parks, trails, and outdoor play spaces', pillars: { active_outdoors: 3, natural_beauty: 2 } },
-      { text: 'A bigger, more affordable home with space to grow', pillars: { housing_value: 5 } },
-    ],
-  },
-  {
-    id: 6,
-    text: "What's the biggest dealbreaker for a potential home?",
-    options: [
-      { text: 'Poor school ratings in the district', pillars: { quality_education: 5 } },
-      { text: 'Far from hospitals and urgent care', pillars: { healthcare_access: 5 } },
-      { text: 'Cookie-cutter development with zero character', pillars: { built_beauty: 4, natural_beauty: 1 } },
-      { text: "Nothing walkable—you'd need to drive everywhere", pillars: { neighborhood_amenities: 5 } },
-    ],
-  },
-  {
-    id: 7,
-    text: "You've saved up for something special. What excites you most?",
-    options: [
-      { text: 'A beautifully designed home with architectural details', pillars: { built_beauty: 4 } },
-      { text: 'A bigger place where everyone has their own space', pillars: { housing_value: 5 } },
-      { text: 'A home in a top school district', pillars: { quality_education: 5 } },
-      { text: 'A property backing onto nature trails or a park', pillars: { active_outdoors: 2, natural_beauty: 2 } },
-    ],
-  },
-  {
-    id: 8,
-    text: 'How do you feel about the cost of living where you want to be?',
-    options: [
-      { text: 'I want maximum space and value for my budget', pillars: { housing_value: 5 } },
-      { text: "I'll pay more for beautiful architecture and character", pillars: { built_beauty: 4 } },
-      { text: 'Affordability matters, but so does access to good schools', pillars: { housing_value: 3, quality_education: 2 } },
-      { text: "I'll prioritize location over square footage", pillars: { neighborhood_amenities: 4 } },
-    ],
-  },
-  {
-    id: 9,
-    text: 'Your perfect weekend getaway is...',
-    options: [
-      { text: 'A 2-hour drive to a national park', pillars: { active_outdoors: 3, natural_beauty: 2 } },
-      { text: 'A quick flight to a new city to explore', pillars: { air_travel_access: 5 } },
-      { text: 'A train ride to a charming historic town', pillars: { public_transit_access: 3, built_beauty: 1 } },
-      { text: 'Actually, I love staying home—my neighborhood has everything', pillars: { neighborhood_amenities: 4 } },
-    ],
-  },
-  {
-    id: 10,
-    text: "When you think about getting around and traveling, what's most important?",
-    options: [
-      { text: 'Being near a major international airport', pillars: { air_travel_access: 5 } },
-      { text: 'Having comprehensive public transit (buses, trains, rail)', pillars: { public_transit_access: 5 } },
-      { text: 'Living close enough to walk to most places', pillars: { neighborhood_amenities: 4 } },
-      { text: 'Having scenic routes for driving and road trips', pillars: { natural_beauty: 3, active_outdoors: 1 } },
-    ],
-  },
-  {
-    id: 11,
-    text: 'What would make you feel instantly at home in a new place?',
-    options: [
-      { text: 'Discovering a network of biking and hiking trails', pillars: { active_outdoors: 5 } },
-      { text: 'Finding excellent doctors and healthcare nearby', pillars: { healthcare_access: 5 } },
-      { text: 'A welcoming neighborhood with friendly local shops and cafes', pillars: { neighborhood_amenities: 5 } },
-      { text: 'Noticing tree-lined streets and parks everywhere', pillars: { natural_beauty: 5 } },
-    ],
-  },
-  {
-    id: 12,
-    text: "Imagine your daily commute. What's ideal?",
-    options: [
-      { text: 'A quick train or subway ride', pillars: { public_transit_access: 5 } },
-      { text: 'A 10-minute walk through my neighborhood', pillars: { neighborhood_amenities: 4 } },
-      { text: 'A scenic drive with nature views', pillars: { natural_beauty: 2, active_outdoors: 2 } },
-      { text: 'Working from home with occasional airport trips', pillars: { air_travel_access: 3 } },
-    ],
-  },
-  {
-    id: 13,
-    text: 'When you imagine your ideal view from your window...',
-    options: [
-      { text: 'Mountains, hills, or dramatic natural landscapes', pillars: { natural_beauty: 3, active_outdoors: 1 } },
-      { text: 'A vibrant street scene with people and activity', pillars: { neighborhood_amenities: 4 } },
-      { text: 'Water—ocean, lake, or river', pillars: { active_outdoors: 2, natural_beauty: 2 } },
-      { text: 'Beautiful buildings and interesting architecture', pillars: { built_beauty: 4 } },
-    ],
-  },
-  {
-    id: 14,
-    text: 'A family member needs regular medical appointments. What setup works best?',
-    options: [
-      { text: 'Multiple specialists and a major hospital nearby', pillars: { healthcare_access: 5 } },
-      { text: 'A reliable clinic within walking distance', pillars: { healthcare_access: 3, neighborhood_amenities: 2 } },
-      { text: 'Good transit connections to medical facilities', pillars: { healthcare_access: 3, public_transit_access: 2 } },
-      { text: "Honestly, we'd drive wherever needed—proximity isn't critical", pillars: { housing_value: 3 } },
-    ],
-  },
-  {
-    id: 15,
-    text: 'How do you envision spending time with your family or future family?',
-    options: [
-      { text: 'At great local schools and educational activities', pillars: { quality_education: 5 } },
-      { text: 'Exploring hiking trails and outdoor adventures', pillars: { active_outdoors: 3, natural_beauty: 1 } },
-      { text: 'In a spacious, affordable home with room to grow', pillars: { housing_value: 4 } },
-      { text: 'Walking to parks, cafes, and neighborhood events', pillars: { neighborhood_amenities: 4 } },
-    ],
-  },
-  {
-    id: 16,
-    text: 'What kind of recreational opportunities do you want nearby?',
-    options: [
-      { text: 'Serious hiking, climbing, or mountain sports', pillars: { active_outdoors: 5 } },
-      { text: 'Cultural venues—theaters, museums, galleries', pillars: { neighborhood_amenities: 3, built_beauty: 2 } },
-      { text: 'Casual urban parks for walking and relaxation', pillars: { active_outdoors: 2, natural_beauty: 2 } },
-      { text: 'Historic sites and architecturally significant areas', pillars: { built_beauty: 4 } },
-    ],
-  },
-  {
-    id: 17,
-    text: "You're house hunting. Which feature makes you say 'this is it'?",
-    options: [
-      { text: "It's near top-rated schools", pillars: { quality_education: 5 } },
-      { text: "It's spacious and affordable with room to grow", pillars: { housing_value: 5 } },
-      { text: 'It backs onto a forest, park, or greenbelt', pillars: { natural_beauty: 3, active_outdoors: 1 } },
-      { text: "It's in a neighborhood with stunning homes and streetscapes", pillars: { built_beauty: 4 } },
-    ],
-  },
-  {
-    id: 18,
-    text: "When considering a place's connectivity, what matters most?",
-    options: [
-      { text: 'Major airport within an hour—I travel frequently', pillars: { air_travel_access: 5 } },
-      { text: 'Excellent public transit network throughout the region', pillars: { public_transit_access: 5 } },
-      { text: 'Easy access to daily amenities—walkable or short drive works', pillars: { neighborhood_amenities: 4 } },
-      { text: 'Highway access for weekend trips to nature', pillars: { active_outdoors: 2, natural_beauty: 2 } },
-    ],
-  },
-  {
-    id: 19,
-    text: "What aspect of a neighborhood's character speaks to you most?",
-    options: [
-      { text: 'Architectural diversity and historic buildings', pillars: { built_beauty: 5 } },
-      { text: 'Tree canopy and natural green spaces', pillars: { natural_beauty: 5 } },
-      { text: 'Strong sense of community and local culture', pillars: { neighborhood_amenities: 4 } },
-      { text: 'Access to trails and outdoor recreation', pillars: { active_outdoors: 5 } },
-    ],
-  },
-  {
-    id: 20,
-    text: "What's your non-negotiable when choosing where to live?",
-    options: [
-      { text: 'Access to nature and outdoor activities', pillars: { active_outdoors: 3, natural_beauty: 2 } },
-      { text: 'Top-tier schools and educational opportunities', pillars: { quality_education: 5 } },
-      { text: 'Excellent healthcare facilities and medical access', pillars: { healthcare_access: 5 } },
-      { text: 'Excellent value and space for the price', pillars: { housing_value: 5 } },
+      { value: 'short_term', text: 'Next few years — things may change again' },
+      { value: 'long_term', text: 'Long term — I want to put down real roots' },
+      { value: 'forever', text: 'Retirement or forever home' },
     ],
   },
 ] as const
+
+type QuizAnswers = {
+  life_stage: string | null
+  weekend_energy: string | null
+  car_relationship: string | null
+  beautiful_place: string[]
+  horizon: string | null
+}
+
+function getInitialAnswers(): QuizAnswers {
+  return {
+    life_stage: null,
+    weekend_energy: null,
+    car_relationship: null,
+    beautiful_place: [],
+    horizon: null,
+  }
+}
+
+type PillarWeights = Record<PillarKey, number>
+
+function inferWeights(answers: QuizAnswers): PillarWeights {
+  const w: PillarWeights = {
+    natural_beauty: 50,
+    built_beauty: 50,
+    neighborhood_amenities: 50,
+    active_outdoors: 50,
+    healthcare_access: 50,
+    public_transit_access: 50,
+    air_travel_access: 50,
+    economic_security: 30,
+    quality_education: 50,
+    housing_value: 50,
+    climate_risk: 50,
+    social_fabric: 50,
+  }
+
+  const get = (k: PillarKey) => w[k]
+  const set = (k: PillarKey, v: number) => { w[k] = Math.max(0, Math.min(100, v)) }
+
+  // life_stage
+  const ls = answers.life_stage
+  if (ls === 'family_young') {
+    set('quality_education', 90)
+    set('social_fabric', 80)
+    set('neighborhood_amenities', 70)
+  } else if (ls === 'family_older') {
+    set('quality_education', 85)
+    set('social_fabric', 75)
+  } else if (ls === 'empty_nester') {
+    set('healthcare_access', 80)
+    set('climate_risk', 70)
+    set('quality_education', 20)
+  } else if (ls === 'single_couple') {
+    set('neighborhood_amenities', 75)
+    set('air_travel_access', 65)
+    set('quality_education', 20)
+  }
+  // flexible: no change
+
+  // weekend_energy
+  const we = answers.weekend_energy
+  if (we === 'outdoors') {
+    set('active_outdoors', 85)
+    set('natural_beauty', 80)
+  } else if (we === 'neighborhood') {
+    set('neighborhood_amenities', 85)
+    set('built_beauty', 70)
+  } else if (we === 'home_social') {
+    set('social_fabric', 80)
+  } else if (we === 'travel') {
+    set('air_travel_access', 85)
+    set('neighborhood_amenities', 60)
+  }
+
+  // car_relationship
+  const cr = answers.car_relationship
+  if (cr === 'no_car') {
+    set('public_transit_access', 90)
+    set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 75))
+  } else if (cr === 'mixed') {
+    set('public_transit_access', 60)
+  } else if (cr === 'car_dependent') {
+    set('public_transit_access', 15)
+  }
+
+  // beautiful_place (multi)
+  const bp = answers.beautiful_place
+  for (const sel of bp) {
+    if (sel === 'nature') {
+      set('natural_beauty', Math.max(get('natural_beauty'), 80))
+    } else if (sel === 'architecture') {
+      set('built_beauty', Math.max(get('built_beauty'), 80))
+    } else if (sel === 'both') {
+      set('natural_beauty', Math.max(get('natural_beauty'), 75))
+      set('built_beauty', Math.max(get('built_beauty'), 75))
+    } else if (sel === 'none') {
+      set('natural_beauty', Math.min(get('natural_beauty'), 30))
+      set('built_beauty', Math.min(get('built_beauty'), 30))
+    }
+  }
+
+  // horizon
+  const h = answers.horizon
+  if (h === 'long_term') {
+    set('climate_risk', Math.max(get('climate_risk'), 70))
+    set('social_fabric', Math.max(get('social_fabric'), 70))
+  } else if (h === 'forever') {
+    set('climate_risk', Math.max(get('climate_risk'), 70))
+    set('social_fabric', Math.max(get('social_fabric'), 70))
+    set('healthcare_access', Math.max(get('healthcare_access'), 75))
+    set('housing_value', Math.max(get('housing_value'), 65))
+  } else if (h === 'short_term') {
+    set('housing_value', Math.max(get('housing_value'), 70))
+    set('climate_risk', Math.min(get('climate_risk'), 40))
+  }
+
+  return w
+}
+
+function weightsToPriorities(weights: PillarWeights): PillarPriorities {
+  const p: PillarPriorities = {} as PillarPriorities
+  for (const k of PILLAR_ORDER) {
+    const v = weights[k]
+    if (v >= 80) p[k] = 'High'
+    else if (v >= 55) p[k] = 'Medium'
+    else if (v > 0) p[k] = 'Low'
+    else p[k] = 'None'
+  }
+  return p
+}
+
+function weightToBand(weight: number): PriorityLevel {
+  if (weight >= 80) return 'High'
+  if (weight >= 55) return 'Medium'
+  return 'Low'
+}
 
 interface PlaceValuesGameProps {
   onApplyPriorities?: (priorities: PillarPriorities) => void
@@ -252,72 +230,82 @@ function priorityBadgeStyle(level: PriorityLevel): React.CSSProperties {
   return { background: '#f1f3f5', color: 'var(--hf-text-secondary)' }
 }
 
+const LONGEVITY_NOTE =
+  'Longevity score is calculated separately — it measures how well a place supports a long, healthy life based on Blue Zone research, independent of your priorities.'
+
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const [game_state, set_game_state] = useState<'intro' | 'playing' | 'results'>('intro')
-  const [current_question, set_current_question] = useState(0)
-  const [answers, set_answers] = useState<Array<number | null>>(() => Array(questions.length).fill(null))
+  const [current_step, set_current_step] = useState(0)
+  const [answers, set_answers] = useState<QuizAnswers>(getInitialAnswers)
 
-  const start_game = () => {
+  const start_game = useCallback(() => {
     set_game_state('playing')
-    set_current_question(0)
-    set_answers(Array(questions.length).fill(null))
-  }
+    set_current_step(0)
+    set_answers(getInitialAnswers())
+  }, [])
 
-  const scores = useMemo(() => {
-    const next: Record<keyof PillarPriorities, number> = {
-      active_outdoors: 0,
-      built_beauty: 0,
-      natural_beauty: 0,
-      neighborhood_amenities: 0,
-      air_travel_access: 0,
-      public_transit_access: 0,
-      healthcare_access: 0,
-      economic_security: 0,
-      quality_education: 0,
-      housing_value: 0,
-      climate_risk: 0,
-      social_fabric: 0,
+  const question = QUESTIONS[current_step]
+  const is_multi = question?.type === 'multi'
+
+  const can_advance = useMemo(() => {
+    if (!question) return false
+    if (question.type === 'single') {
+      const key = question.id as keyof QuizAnswers
+      return answers[key] !== null && answers[key] !== undefined
     }
+    if (question.type === 'multi') {
+      return answers.beautiful_place.length > 0
+    }
+    return false
+  }, [question, answers])
 
-    answers.forEach((selectedIdx, qIdx) => {
-      if (selectedIdx === null) return
-      const option = questions[qIdx]?.options?.[selectedIdx]
-      if (!option) return
-      Object.entries(option.pillars).forEach(([pillar, points]) => {
-        const key = pillar as keyof PillarPriorities
-        next[key] = (next[key] || 0) + (points || 0)
-      })
-    })
+  const set_single = useCallback((key: keyof QuizAnswers, value: string) => {
+    set_answers((prev) => ({ ...prev, [key]: value }))
+  }, [])
 
-    return next
-  }, [answers])
-
-  const set_answer_for_current = (option_index: number) => {
+  const toggle_multi_option = useCallback((value: string) => {
     set_answers((prev) => {
-      const next = [...prev]
-      next[current_question] = option_index
-      return next
-    })
-  }
+      const current = prev.beautiful_place
+      const is_none = value === 'none'
+      const has_none = current.includes('none')
 
-  const go_prev = () => {
-    if (current_question > 0) {
-      set_current_question((q) => q - 1)
+      if (is_none) {
+        return { ...prev, beautiful_place: current.includes('none') ? [] : ['none'] }
+      }
+      if (has_none) {
+        const without_none = current.filter((x) => x !== 'none')
+        const next = without_none.includes(value)
+          ? without_none.filter((x) => x !== value)
+          : [...without_none, value].slice(0, 2)
+        return { ...prev, beautiful_place: next }
+      }
+      const next = current.includes(value)
+        ? current.filter((x) => x !== value)
+        : current.length >= 2
+          ? [...current.slice(1), value]
+          : [...current, value]
+      return { ...prev, beautiful_place: next }
+    })
+  }, [])
+
+  const go_prev = useCallback(() => {
+    if (current_step > 0) {
+      set_current_step((s) => s - 1)
       return
     }
     set_game_state('intro')
-  }
+  }, [current_step])
 
-  const go_next = () => {
-    if (answers[current_question] === null) return
-    if (current_question < questions.length - 1) {
-      set_current_question((q) => q + 1)
+  const go_next = useCallback(() => {
+    if (!can_advance) return
+    if (current_step < TOTAL_QUESTIONS - 1) {
+      set_current_step((s) => s + 1)
       return
     }
     set_game_state('results')
-  }
+  }, [can_advance, current_step])
 
-  const handle_back = () => {
+  const handle_back = useCallback(() => {
     if (game_state === 'playing') {
       go_prev()
       return
@@ -327,83 +315,23 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       return
     }
     if (game_state === 'intro' && onBack) onBack()
-  }
+  }, [game_state, go_prev, onBack])
 
-  const convert_scores_to_priorities = (): PillarPriorities => {
-    const pillar_data: Array<{ pillar: keyof PillarPriorities; score: number; percentage: number }> = []
+  const weights = useMemo(() => inferWeights(answers), [answers])
+  const priorities = useMemo(() => weightsToPriorities(weights), [weights])
+  const ranked_pillars = useMemo(
+    () =>
+      [...PILLAR_ORDER]
+        .map((pillar) => ({ pillar, weight: weights[pillar] }))
+        .sort((a, b) => b.weight - a.weight),
+    [weights]
+  )
 
-    Object.keys(scores).forEach((pillar_key) => {
-      const pillar = pillar_key as keyof PillarPriorities
-      const score = scores[pillar]
-      const max_possible = max_possible_scores[pillar]
-      const percentage = max_possible > 0 ? (score / max_possible) * 100 : 0
-      pillar_data.push({ pillar, score, percentage })
-    })
-
-    pillar_data.sort((a, b) => b.score - a.score)
-    const non_zero_pillars = pillar_data.filter((p) => p.score > 0)
-
-    if (non_zero_pillars.length === 0) {
-      const all_medium: PillarPriorities = {} as PillarPriorities
-      PILLAR_ORDER.forEach((key) => {
-        all_medium[key] = 'Medium'
-      })
-      return all_medium
-    }
-
-    const priorities: PillarPriorities = {} as PillarPriorities
-
-    non_zero_pillars.forEach((item, index) => {
-      const percentile_rank = (index + 1) / non_zero_pillars.length
-      let priority: PriorityLevel
-
-      if (percentile_rank <= 0.33 && item.percentage >= 25) priority = 'High'
-      else if (percentile_rank <= 0.7 || (item.percentage >= 15 && item.percentage < 25)) priority = 'Medium'
-      else if (item.percentage >= 5 || item.score > 0) priority = 'Low'
-      else priority = 'None'
-
-      priorities[item.pillar] = priority
-    })
-
-    pillar_data.forEach((item) => {
-      if (item.score === 0) priorities[item.pillar] = 'None'
-    })
-
-    PILLAR_ORDER.forEach((pillar_key) => {
-      if (!priorities[pillar_key]) priorities[pillar_key] = 'None'
-    })
-
-    const has_high = Object.values(priorities).some((p) => p === 'High')
-    if (!has_high && non_zero_pillars.length > 0) {
-      priorities[non_zero_pillars[0].pillar] = 'High'
-    }
-
-    return priorities
-  }
-
-  const get_all_pillars = () => {
-    const priorities = convert_scores_to_priorities()
-    return PILLAR_ORDER
-      .map((pillar) => ({
-        pillar,
-        score: scores[pillar],
-        priority: priorities[pillar],
-      }))
-      .sort((a, b) => b.score - a.score)
-  }
-
-  const get_profile_summary = (sorted_pillars: ReturnType<typeof get_all_pillars>) => {
-    const top = sorted_pillars.filter((p) => p.priority === 'High' || p.priority === 'Medium').slice(0, 3)
-    if (top.length === 0) return 'Your answers suggest you’re still exploring what matters most in a location.'
-    const names = top.map((p) => PILLAR_META[p.pillar as PillarKey].name)
-    return `Your Place Values profile highlights what you want to optimize for in a neighborhood. Your top priorities are **${names[0]}**${names[1] ? `, **${names[1]}**` : ''}${names[2] ? `, and **${names[2]}**` : ''}.`
-  }
-
-  const handle_apply_priorities = () => {
-    const priorities = convert_scores_to_priorities()
+  const handle_apply = useCallback(() => {
     if (onApplyPriorities) onApplyPriorities(priorities)
-  }
+  }, [onApplyPriorities, priorities])
 
+  // --- Intro
   if (game_state === 'intro') {
     return (
       <main className="hf-page">
@@ -420,11 +348,10 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                 <span />
               )}
               <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Place Values Quiz
+                HomeFit Quiz
               </div>
               <span />
             </div>
-
             <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
               <div
                 style={{
@@ -444,7 +371,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                 Discover what matters most to you
               </h2>
               <p className="hf-muted" style={{ maxWidth: 720, margin: '0 auto 2rem' }}>
-                Answer 20 quick scenarios. We’ll turn your preferences into priorities you can apply to your HomeFit score.
+                Answer 5 quick questions. We’ll infer your priority weights and personalize your HomeFit score.
               </p>
               <button onClick={start_game} className="hf-btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                 Start Quiz <ChevronRight size={18} />
@@ -456,10 +383,11 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     )
   }
 
-  if (game_state === 'playing') {
-    const question = questions[current_question]
-    const progress = ((current_question + 1) / questions.length) * 100
-    const selected = answers[current_question]
+  // --- Playing (one question at a time)
+  if (game_state === 'playing' && question) {
+    const progress_pct = ((current_step + 1) / TOTAL_QUESTIONS) * 100
+    const single_value = question.type === 'single' ? (answers[question.id as keyof QuizAnswers] as string | null) : null
+    const multi_selected = question.type === 'multi' ? answers.beautiful_place : []
 
     return (
       <main className="hf-page">
@@ -471,70 +399,76 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               Back
             </button>
             <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Question {current_question + 1} of {questions.length}
+              Question {current_step + 1} of {TOTAL_QUESTIONS}
             </div>
             <div className="hf-muted" style={{ fontWeight: 800 }}>
-              {Math.round(progress)}%
+              {Math.round(progress_pct)}%
             </div>
           </div>
-
           <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
             <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${progress}%`, background: 'var(--hf-primary-gradient)', transition: 'all 0.3s ease' }} />
+              <div style={{ height: '100%', width: `${progress_pct}%`, background: 'var(--hf-primary-gradient)', transition: 'all 0.3s ease' }} />
             </div>
           </div>
-
           <div className="hf-card">
-            <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '1.5rem', color: 'var(--hf-text-primary)' }}>
-              {question.text}
+            <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--hf-text-primary)' }}>
+              {question.prompt}
             </div>
-
+            {'hint' in question && question.hint && (
+              <div className="hf-muted" style={{ marginBottom: '1rem', fontSize: '0.95rem' }}>
+                {question.hint}
+              </div>
+            )}
             <div className="hf-grid-2">
-              {question.options.map((option, idx) => {
-                const isActive = selected === idx
+              {question.options.map((opt) => {
+                const is_selected =
+                  question.type === 'single'
+                    ? single_value === opt.value
+                    : multi_selected.includes(opt.value)
                 return (
                   <button
-                    key={idx}
+                    key={opt.value}
                     type="button"
-                    onClick={() => set_answer_for_current(idx)}
+                    onClick={() =>
+                      question.type === 'single'
+                        ? set_single(question.id as keyof QuizAnswers, opt.value)
+                        : toggle_multi_option(opt.value)
+                    }
                     className="hf-card-sm"
                     style={{
                       textAlign: 'left',
-                      borderColor: isActive ? 'var(--hf-primary-1)' : undefined,
-                      transform: isActive ? 'translateY(-3px)' : undefined,
-                      boxShadow: isActive ? '0 8px 25px rgba(0, 0, 0, 0.12)' : undefined,
+                      borderColor: is_selected ? 'var(--hf-primary-1)' : undefined,
+                      borderWidth: 2,
+                      transform: is_selected ? 'translateY(-3px)' : undefined,
+                      boxShadow: is_selected ? '0 8px 25px rgba(0, 0, 0, 0.12)' : undefined,
                     }}
                   >
                     <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'flex-start' }}>
-                      <div
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 10,
-                          background: isActive ? 'var(--hf-primary-gradient)' : '#f1f3f5',
-                          color: isActive ? '#ffffff' : 'var(--hf-text-secondary)',
-                          fontWeight: 800,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flex: '0 0 auto',
-                        }}
-                      >
-                        {idx + 1}
-                      </div>
-                      <div style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>{option.text}</div>
+                      {question.type === 'multi' && (
+                        <div
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 8,
+                            border: `2px solid ${is_selected ? 'var(--hf-primary-1)' : '#dee2e6'}`,
+                            background: is_selected ? 'var(--hf-primary-1)' : 'transparent',
+                            flex: '0 0 auto',
+                            marginTop: 2,
+                          }}
+                        />
+                      )}
+                      <div style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>{opt.text}</div>
                     </div>
                   </button>
                 )
               })}
             </div>
-
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '2rem' }}>
-              <button type="button" onClick={go_prev} className="hf-btn-primary" disabled={current_question === 0}>
+              <button type="button" onClick={go_prev} className="hf-btn-primary" disabled={current_step === 0}>
                 Previous
               </button>
-              <button type="button" onClick={go_next} className="hf-btn-primary" disabled={answers[current_question] === null}>
-                {current_question === questions.length - 1 ? 'View Results' : 'Next'}
+              <button type="button" onClick={go_next} className="hf-btn-primary" disabled={!can_advance}>
+                {current_step === TOTAL_QUESTIONS - 1 ? 'See my weights →' : 'Next'}
               </button>
             </div>
           </div>
@@ -543,8 +477,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     )
   }
 
-  const all_pillars = get_all_pillars()
-
+  // --- Results
   return (
     <main className="hf-page">
       <AppHeader />
@@ -556,91 +489,76 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
           </button>
           <span />
         </div>
-
         <div className="hf-card">
           <h2 className="hf-section-title" style={{ marginBottom: '0.75rem' }}>
-            Your Place Values Profile
+            Your priority weights
           </h2>
+          <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
+            All 12 pillars ranked by importance. Use these to personalize your HomeFit score.
+          </p>
 
-          <div className="hf-panel" style={{ background: 'rgba(102,126,234,0.08)', border: '1px solid rgba(102,126,234,0.18)', marginBottom: '2rem' }}>
-            <div
-              className="hf-muted"
-              style={{ margin: 0, fontSize: '1.05rem' }}
-              dangerouslySetInnerHTML={{
-                __html: get_profile_summary(all_pillars).replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--hf-primary-2)">$1</strong>'),
-              }}
-            />
-            <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.95rem' }}>
-              We translate this profile into priority weights (None/Low/Medium/High) that personalize your HomeFit score.
-            </div>
+          <div className="hf-panel" style={{ background: 'rgba(102,126,234,0.06)', border: '1px solid rgba(102,126,234,0.18)', marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
+            <p className="hf-muted" style={{ margin: 0, fontSize: '0.95rem' }}>
+              {LONGEVITY_NOTE}
+            </p>
           </div>
 
           <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            Results by pillar
+            Ranked by weight
           </div>
-
-          <div className="hf-grid-3" style={{ marginBottom: '2rem' }}>
-            {all_pillars.map(({ pillar, score, priority }) => {
-              const meta = PILLAR_META[pillar as PillarKey]
-              const max = max_possible_scores[pillar]
-              const pct = max > 0 ? Math.min(100, Math.max(0, (score / max) * 100)) : 0
-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+            {ranked_pillars.map(({ pillar, weight }) => {
+              const meta = PILLAR_META[pillar]
+              const band = weightToBand(weight)
               return (
-                <div key={pillar} className="hf-panel">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                <div key={pillar} className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                      <div style={{ fontSize: '1.5rem' }}>{meta.icon}</div>
-                      <div>
-                        <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{meta.name}</div>
-                        <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
-                          {meta.description}
-                        </div>
-                      </div>
+                      <span style={{ fontSize: '1.5rem' }}>{meta.icon}</span>
+                      <span style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                     </div>
                     <span
                       style={{
-                        ...priorityBadgeStyle(priority),
+                        ...priorityBadgeStyle(band),
                         padding: '0.35rem 0.6rem',
                         borderRadius: 999,
                         fontWeight: 800,
                         fontSize: '0.85rem',
                       }}
                     >
-                      {priority}
+                      {band}
                     </span>
                   </div>
-
-                  <div style={{ marginTop: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                      <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
-                        Strength
-                      </span>
-                      <span className="hf-muted" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-                        {pct.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden', marginTop: '0.5rem' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'var(--hf-primary-gradient)', transition: 'all 0.3s ease' }} />
-                    </div>
+                  <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${weight}%`,
+                        background: 'var(--hf-primary-gradient)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
+                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                    {weight}
                   </div>
                 </div>
               )
             })}
           </div>
 
-          {onApplyPriorities ? (
+          {onApplyPriorities && (
             <button
-              onClick={handle_apply_priorities}
+              onClick={handle_apply}
               className="hf-btn-primary"
-              style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
             >
-              <Check size={18} /> View Your Personalized Score
+              <Search size={18} /> Search a place →
             </button>
-          ) : null}
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button onClick={start_game} className="hf-btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              <RefreshCcw size={16} /> Reset quiz
+              <RefreshCcw size={16} /> ← Retake
             </button>
           </div>
         </div>
@@ -648,4 +566,3 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     </main>
   )
 }
-
