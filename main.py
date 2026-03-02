@@ -4458,6 +4458,30 @@ def _summary_band(score: float) -> str:
     return "weak"
 
 
+def _km_to_us_distance(km: float) -> str:
+    """Convert km to American-friendly string: miles or feet. 1 km ≈ 0.621 mi ≈ 3,281 ft."""
+    if km is None or km < 0:
+        return "0 miles"
+    km_f = float(km)
+    if km_f < 0.16:
+        # Under ~0.16 km (~525 ft): show feet, round to nearest 100
+        feet = round(km_f * 3280.84 / 100) * 100
+        if feet < 100:
+            feet = round(feet / 50) * 50
+        return f"about {int(feet):,} feet"
+    if km_f < 1.0:
+        # 0.16–1 km: show miles with 1 decimal
+        miles = km_f * 0.621371
+        return f"{miles:.1f} miles"
+    if km_f < 15:
+        # 1–15 km: one decimal
+        miles = km_f * 0.621371
+        return f"about {miles:.1f} miles"
+    # 15+ km: round to whole miles
+    miles = round(km_f * 0.621371)
+    return f"about {miles} miles"
+
+
 def _format_transit_modes(modes: list) -> str:
     """Format transit modes conversationally; max 2 by name, then 'multiple transit options'."""
     if not modes or not isinstance(modes, (list, tuple)):
@@ -4521,6 +4545,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     downtown_m = am_sum.get("downtown_center_distance_m")
     downtown_km = round(downtown_m / 1000, 1) if downtown_m is not None else None
     omit_downtown_positive = downtown_km is not None and downtown_km > 5
+    downtown_display = _km_to_us_distance(downtown_km) if downtown_km is not None else None
 
     hc = livability_pillars.get("healthcare_access") or {}
     hc_sum = hc.get("summary") or {}
@@ -4531,6 +4556,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
         hospital_km = nearest_h.get("distance_km")
     if hospital_km is not None:
         hospital_km = round(float(hospital_km), 1)
+    hospital_display = _km_to_us_distance(hospital_km) if hospital_km is not None else None
     pharmacy_count = (hc_sum.get("pharmacy_count") or 0) + (hc_sum.get("clinic_count") or 0)
     pharmacy_count = int(pharmacy_count) if pharmacy_count is not None else 0
 
@@ -4550,6 +4576,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
         airport_name = primary.get("name") or primary.get("code") or "The nearest airport"
         d = primary.get("distance_km")
         airport_km = round(float(d), 1) if d is not None else None
+    airport_display = _km_to_us_distance(airport_km) if airport_km is not None else None
 
     ed = livability_pillars.get("quality_education") or {}
     ed_sum = ed.get("summary") or {}
@@ -4595,13 +4622,13 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     if walk_10 is not None:
         band = _summary_band(am_score)
         if band == "strong":
-            center_phrase = f", with the center of {place} just {downtown_km} km away" if (downtown_km is not None and downtown_km > 0 and not omit_downtown_positive) else ""
+            center_phrase = f", with the center of {place} just {downtown_display} away" if (downtown_km is not None and downtown_km > 0 and not omit_downtown_positive) else ""
             amenities_sentence = f"The neighborhood has real street-level energy — walkable shops, cafés, and daily errands are all within easy reach{center_phrase}."
         elif band == "solid":
             center_phrase = ", and the town center a short trip away" if (downtown_km is not None and downtown_km > 0 and downtown_km <= 5) else ""
             amenities_sentence = f"There's a comfortable local feel here, with a reasonable spread of walkable businesses{center_phrase}."
         else:
-            center_phrase = f", and the nearest center is {downtown_km} km out" if downtown_km is not None else ""
+            center_phrase = f", and the nearest center is {downtown_display} out" if downtown_display else ""
             amenities_sentence = f"Day-to-day amenities are limited — most errands will need a car{center_phrase}."
 
     # --- Combine Outdoors + Amenities when both strong ---
@@ -4622,17 +4649,17 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     if hospital_km is not None:
         band = _summary_band(hc_score)
         if hospital_km < 3 and pharmacy_count >= 2:
-            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_km} km away and pharmacies are close by for everyday needs."
+            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_display} away and pharmacies are close by for everyday needs."
         elif band == "strong":
-            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_km} km away and pharmacies are close by for everyday needs."
+            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_display} away and pharmacies are close by for everyday needs."
         elif hospital_km <= 8 and pharmacy_count >= 1:
             ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
-            healthcare_sentence = f"A hospital is {hospital_km} km out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
+            healthcare_sentence = f"A hospital is {hospital_display} out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
         elif band == "solid":
             ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
-            healthcare_sentence = f"A hospital is {hospital_km} km out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
+            healthcare_sentence = f"A hospital is {hospital_display} out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
         else:
-            healthcare_sentence = f"Healthcare requires a longer trip — the nearest hospital is {hospital_km} km away and local pharmacy options are limited."
+            healthcare_sentence = f"Healthcare requires a longer trip — the nearest hospital is {hospital_display} away and local pharmacy options are limited."
 
     # --- 4. Transit ---
     transit_sentence = None
@@ -4653,7 +4680,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     # --- Combine Healthcare + Transit when both present and we have real transit (saves a sentence for education+housing) ---
     if healthcare_sentence and transit_sentence and hospital_km is not None and has_transit:
         mode_str_combined = _format_transit_modes(list(modes_raw) if isinstance(modes_raw, (list, tuple)) else [modes_raw])
-        sentences.append(f"A hospital is {hospital_km} km out and {mode_str_combined} cover the basics for getting around.")
+        sentences.append(f"A hospital is {hospital_display} out and {mode_str_combined} cover the basics for getting around.")
         healthcare_sentence = None
         transit_sentence = None
     else:
@@ -4713,12 +4740,12 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
         if not skip_air:
             if airport_km < 30:
                 intl_phrase = ", with international connections" if has_intl else ""
-                sentences.append(f"{airport_name} is just {airport_km} km away{intl_phrase}, making longer trips straightforward.")
+                sentences.append(f"{airport_name} is just {airport_display} away{intl_phrase}, making longer trips straightforward.")
             elif airport_km <= 60:
                 intl_phrase = ", and it handles international routes" if has_intl else ""
-                sentences.append(f"For longer trips, {airport_name} is about {airport_km} km away — an easy drive{intl_phrase}.")
+                sentences.append(f"For longer trips, {airport_name} is {airport_display} away — an easy drive{intl_phrase}.")
             else:
-                sentences.append(f"The nearest airport is a longer haul at {airport_km} km, so frequent flyers will want to factor that in.")
+                sentences.append(f"The nearest airport is a longer haul at {airport_display}, so frequent flyers will want to factor that in.")
 
     # Cap at 4 sentences
     chosen = sentences[:4]
