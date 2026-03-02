@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
 import LongevityInfo from './LongevityInfo'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
+import HomeFitInfo from './HomeFitInfo'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -280,6 +281,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </div>
           <div
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
               fontSize: '0.875rem',
               fontWeight: 600,
               color: 'var(--hf-text-primary)',
@@ -287,9 +290,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             }}
           >
             HomeFit Score
+            <HomeFitInfo />
           </div>
-          <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
-            Weighted · your pillars
+          <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
+            {HOMEFIT_COPY.subtitle}
           </div>
         </div>
 

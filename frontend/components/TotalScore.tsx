@@ -1,4 +1,6 @@
 import { OverallConfidence } from '@/types/api'
+import { HOMEFIT_COPY } from '@/lib/pillars'
+import HomeFitInfo from './HomeFitInfo'
 
 interface TotalScoreProps {
   score: number
@@ -10,7 +12,13 @@ export default function TotalScore({ score, confidence }: TotalScoreProps) {
     <div className="hf-panel">
       <div className="hf-score-hero">
         <div className="hf-score-hero__value">{score.toFixed(1)}</div>
-        <div className="hf-score-hero__label">Overall HomeFit Score (0–100)</div>
+        <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          Overall HomeFit Score (0–100)
+          <HomeFitInfo />
+        </div>
+      </div>
+      <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+        {HOMEFIT_COPY.subtitle}
       </div>
 
       <div

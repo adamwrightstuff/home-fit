@@ -38,6 +38,22 @@ export const LONGEVITY_COPY = {
     'HomeFit = right for you. Longevity = right for your health over time.',
 } as const
 
+/** Copy for HomeFit Score UX: tooltip, subtitle, full modal, and callout distinction. */
+export const HOMEFIT_COPY = {
+  /** Full body for modal. */
+  full:
+    "The HomeFit Score measures how well a place matches your priorities — not anyone else's. Before scoring, you tell us what matters to you: how much you care about schools, walkability, natural beauty, transit, and more. The score is weighted accordingly, so two people can look at the same place and get completely different HomeFit scores based on their lives.",
+  /** Subtitle under "HomeFit Score" label. */
+  subtitle:
+    'How well this place meets your lifestyle needs based on your personalized preferences.',
+  /** One-line tooltip for ? button. */
+  tooltip:
+    'How well this place meets your lifestyle needs based on your personalized preferences.',
+  /** Callout in modal. */
+  distinction:
+    'HomeFit = right for you. Longevity = right for your health over time.',
+} as const
+
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
 }
