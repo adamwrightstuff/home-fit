@@ -52,6 +52,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
   const [totalScore, setTotalScore] = useState<number | null>(null)
   const [longevityIndex, setLongevityIndex] = useState<number | null>(null)
+  const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -191,6 +192,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
       const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
       setLongevityIndex(li)
+      const summary = (resp as { place_summary?: string }).place_summary
+      setPlaceSummary(summary ?? null)
       if (process.env.NODE_ENV === 'development') {
         const keys = typeof resp === 'object' && resp !== null ? Object.keys(resp) : []
         console.log('[PlaceView] longevity_index from API:', rawLongevity, 'from result:', fromResult, '→', li, '| response keys:', keys.slice(0, 25))
@@ -336,6 +339,29 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </div>
         </div>
       </div>
+
+      {/* Place summary from pillar data (when present) */}
+      {hasResults && placeSummary && (
+        <div
+          className="hf-panel"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '1rem 1.25rem',
+          }}
+        >
+          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Summary</div>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.95rem',
+              lineHeight: 1.5,
+              color: 'var(--hf-text-primary)',
+            }}
+          >
+            {placeSummary}
+          </p>
+        </div>
+      )}
 
       {/* Quiz CTA: collapsed at top of pillar grid */}
       {onTakeQuiz && (

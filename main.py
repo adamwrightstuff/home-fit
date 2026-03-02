@@ -1810,18 +1810,16 @@ def _compute_single_score_internal(
 
     # Build response
     longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+    location_info = {"city": city, "state": state, "zip": zip_code}
     response = {
         "input": location,
         "coordinates": {
             "lat": lat,
             "lon": lon
         },
-        "location_info": {
-            "city": city,
-            "state": state,
-            "zip": zip_code
-        },
+        "location_info": location_info,
         "livability_pillars": livability_pillars,
+        "place_summary": _build_place_summary(livability_pillars, location_info),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -3067,11 +3065,13 @@ async def _stream_score_with_progress(
         
         # Build final response
         longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+        location_info = {"city": city, "state": state, "zip": zip_code}
         final_response = {
             "input": location,
             "coordinates": {"lat": lat, "lon": lon},
-            "location_info": {"city": city, "state": state, "zip": zip_code},
+            "location_info": location_info,
             "livability_pillars": livability_pillars,
+            "place_summary": _build_place_summary(livability_pillars, location_info),
             "total_score": round(total_score, 2),
             "longevity_index": longevity_index,
             "longevity_index_contributions": longevity_contributions,
@@ -3929,18 +3929,16 @@ async def stream_score(
 
         # Build response with enhanced metadata
         longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+        location_info = {"city": city, "state": state, "zip": zip_code}
         response = {
         "input": location,
         "coordinates": {
             "lat": lat,
             "lon": lon
         },
-        "location_info": {
-            "city": city,
-            "state": state,
-            "zip": zip_code
-        },
+        "location_info": location_info,
         "livability_pillars": livability_pillars,
+        "place_summary": _build_place_summary(livability_pillars, location_info),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -4444,6 +4442,172 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
         "reasons": reasons,
         "warnings": sorted(warnings),
     }
+
+
+def _tone_for_score(score: float) -> str:
+    """Return tone modifier band for summary copy (80+, 50-79, below 50)."""
+    if score is None or (isinstance(score, (int, float)) and score >= 80):
+        return "strong"
+    if isinstance(score, (int, float)) and score >= 50:
+        return "solid"
+    return "limited"
+
+
+def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
+    """
+    Build a 2-4 sentence factual summary from pillar data using template rules.
+    Uses only data already in livability_pillars and location_info; no external calls.
+    """
+    place = (location_info or {}).get("city") or "This area"
+    sentences = []
+
+    # --- Outdoors ---
+    ao = livability_pillars.get("active_outdoors") or {}
+    ao_sum = ao.get("summary") or {}
+    ao_score = ao.get("score")
+    lp = ao_sum.get("local_parks") or {}
+    park_count = lp.get("count") if isinstance(lp, dict) else None
+    trails = None
+    trails_obj = ao_sum.get("trails")
+    if isinstance(trails_obj, dict):
+        trails = trails_obj.get("count_within_5km")
+    tree_pct = None
+    env = ao_sum.get("environment") or {}
+    if isinstance(env, dict):
+        tree_pct = env.get("tree_canopy_pct_5km")
+    water_features = None
+    water_obj = ao_sum.get("water") or {}
+    if isinstance(water_obj, dict):
+        water_features = water_obj.get("features")
+
+    if (park_count is not None and park_count > 0) or (trails is not None and trails > 0):
+        tone = _tone_for_score(ao_score)
+        if tone == "limited" and (park_count or 0) == 0 and (trails or 0) < 2:
+            sentences.append(
+                f"Outdoor options here are limited, with {park_count or 0} parks nearby and "
+                f"{'few' if (trails or 0) < 2 else str(trails)} dedicated trails."
+            )
+        else:
+            opt = []
+            if tree_pct is not None and tree_pct > 10:
+                opt.append(f"{round(float(tree_pct))}% tree canopy cover")
+            if water_features and water_features > 0:
+                opt.append("access to water nearby")
+            opt_str = " — " + " / ".join(opt) if opt else ""
+            sentences.append(
+                f"With {park_count or 0} parks and {trails or 0} trails within reach, {place} is "
+                f"{'well set up' if tone == 'strong' else 'set up'} for getting outside{opt_str}."
+            )
+
+    # --- Amenities ---
+    am = livability_pillars.get("neighborhood_amenities") or {}
+    am_sum = am.get("summary") or {}
+    am_score = am.get("score")
+    walk_10 = am_sum.get("within_10min_walk")
+    if walk_10 is not None:
+        tone = _tone_for_score(am_score)
+        char = "vibrant" if tone == "strong" else ("moderate" if tone == "solid" else "quiet")
+        downtown_m = am_sum.get("downtown_center_distance_m")
+        downtown_km = round(downtown_m / 1000, 1) if downtown_m is not None else None
+        if downtown_km is not None and downtown_km > 0:
+            sentences.append(
+                f"{walk_10} businesses are within a 10-minute walk, giving the area a {char} day-to-day character, "
+                f"with the center about {downtown_km} km away."
+            )
+        else:
+            sentences.append(
+                f"{walk_10} businesses are within a 10-minute walk, giving the area a {char} day-to-day character."
+            )
+
+    # --- Healthcare ---
+    hc = livability_pillars.get("healthcare_access") or {}
+    hc_sum = hc.get("summary") or {}
+    hc_score = hc.get("score")
+    nearest_h = hc_sum.get("nearest_hospital")
+    dist_km = None
+    if isinstance(nearest_h, dict):
+        dist_km = nearest_h.get("distance_km")
+    if dist_km is not None:
+        phr = round(float(dist_km), 1)
+        tone = _tone_for_score(hc_score)
+        serv = "well-served" if tone == "strong" else ("accessible" if tone == "solid" else "a bit of a trek")
+        pharm = hc_sum.get("pharmacy_count") or hc_sum.get("clinic_count") or 0
+        sentences.append(
+            f"Healthcare is {serv}, with the nearest hospital {phr} km away and {pharm} pharmacies or clinics close by."
+        )
+
+    # --- Transit ---
+    pt = livability_pillars.get("public_transit_access") or {}
+    pt_sum = pt.get("summary") or {}
+    pt_score = pt.get("score")
+    modes = pt_sum.get("transit_modes_available")
+    access_level = pt_sum.get("access_level") or ""
+    if modes is not None and len(modes) > 0 and str(access_level).lower() not in ("none", "no access", ""):
+        tone = _tone_for_score(pt_score)
+        conn = "well-connected" if tone == "strong" else ("moderately served" if tone == "solid" else "lightly served")
+        mode_str = ", ".join(str(m) for m in modes[:4]) if isinstance(modes, (list, tuple)) else str(modes)
+        sentences.append(
+            f"{place} is {conn} by public transit, with {mode_str} options in the area."
+        )
+    elif pt_score is not None and pt_score < 50 and (not modes or len(modes) == 0):
+        sentences.append(
+            "Transit access here is limited, which may mean a car is helpful for getting around."
+        )
+
+    # --- Air travel ---
+    air = livability_pillars.get("air_travel_access") or {}
+    primary = air.get("primary_airport")
+    air_sum = air.get("summary") or {}
+    has_intl = air_sum.get("has_international_hub")
+    if primary and isinstance(primary, dict):
+        name = primary.get("name") or primary.get("code") or "The nearest airport"
+        dist = primary.get("distance_km")
+        if dist is not None:
+            dist_round = round(float(dist), 1)
+            intl = ", with international connections" if has_intl else " (domestic routes)"
+            sentences.append(f"For longer trips, {name} is about {dist_round} km away{intl}.")
+
+    # --- Education ---
+    ed = livability_pillars.get("quality_education") or {}
+    ed_break = ed.get("breakdown") or {}
+    ed_sum = ed.get("summary") or {}
+    total_schools = ed_sum.get("total_schools_rated") or ed.get("total_schools_rated")
+    excellent = ed_sum.get("excellent_schools_count") or ed_break.get("excellent_schools_count")
+    if total_schools is not None and total_schools > 0:
+        tone = _tone_for_score(ed.get("score"))
+        pic = "strong" if tone == "strong" else ("solid" if tone == "solid" else "mixed")
+        exc = excellent if excellent is not None else 0
+        sentences.append(
+            f"{total_schools} schools serve the area, {exc} of which are rated excellent — a {pic} picture for families."
+        )
+
+    # --- Housing ---
+    hv = livability_pillars.get("housing_value") or {}
+    hv_sum = hv.get("summary") or {}
+    hv_score = hv.get("score")
+    med_val = hv_sum.get("median_home_value")
+    aff = hv_sum.get("affordability_rating")
+    pti = hv_sum.get("price_to_income_ratio")
+    if med_val is not None or aff is not None or pti is not None:
+        tone = _tone_for_score(hv_score)
+        if med_val is not None and aff is not None:
+            val_str = f"${int(med_val):,}" if isinstance(med_val, (int, float)) else str(med_val)
+            if tone in ("strong", "solid"):
+                sentences.append(
+                    f"Homes here have a median value of {val_str}, and at {aff}, it's among the more attainable markets relative to local incomes."
+                )
+            else:
+                sentences.append(
+                    f"Homes here have a median value of {val_str}, and at {aff}, it's a pricier market relative to local incomes."
+                )
+        elif pti is not None:
+            pti_r = round(float(pti), 1) if isinstance(pti, (int, float)) else pti
+            reach = "accessible" if tone == "strong" else ("stretching" if tone == "solid" else "out of reach")
+            sentences.append(f"With a price-to-income ratio of {pti_r}, housing here is {reach} for median earners.")
+
+    # Cap at 4 sentences and join
+    chosen = sentences[:4]
+    return " ".join(chosen) if chosen else f"{place} has been scored across livability pillars; check the breakdown for details."
 
 
 def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict

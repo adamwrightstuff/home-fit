@@ -102,6 +102,8 @@ export interface ScoreResponse {
   coordinates: Coordinates;
   location_info: LocationInfo;
   livability_pillars: LivabilityPillars;
+  /** Short factual summary (2–4 sentences) from pillar data; template-based, no LLM. */
+  place_summary?: string;
   total_score: number;
   /** Longevity Index: fixed weighted score over 6 pillars (social fabric, active outdoors, amenities, natural beauty, climate risk, education). Separate from total_score. */
   longevity_index?: number;
