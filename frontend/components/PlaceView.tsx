@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
 import ProgressBar from './ProgressBar'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, type PillarKey } from '@/lib/pillars'
+import LongevityInfo from './LongevityInfo'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -326,6 +327,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </div>
           <div
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
               fontSize: '0.875rem',
               fontWeight: 600,
               color: 'var(--hf-text-primary)',
@@ -333,9 +336,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             }}
           >
             Longevity Index
+            <LongevityInfo />
           </div>
-          <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
-            Fixed blend · 6 pillars
+          <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
+            {LONGEVITY_COPY.short}
           </div>
         </div>
       </div>
@@ -412,6 +416,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       {isLongevityPillar(key) && (
                         <span
                           className="hf-muted"
+                          title={LONGEVITY_COPY.tooltip}
                           style={{
                             fontSize: '0.7rem',
                             fontWeight: 600,

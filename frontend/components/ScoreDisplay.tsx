@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { ScoreResponse } from '@/types/api'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import LongevityInfo from './LongevityInfo'
+import { PILLAR_META, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
 
 interface ScoreDisplayProps {
   data: ScoreResponse
@@ -132,10 +133,13 @@ export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProp
             <div className="hf-panel">
               <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
                 <div className="hf-score-hero__value">{longevity_index.toFixed(1)}</div>
-                <div className="hf-score-hero__label">Longevity Index (0–100)</div>
+                <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  Longevity Index (0–100)
+                  <LongevityInfo />
+                </div>
               </div>
               <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
-                Fixed blend: Social Fabric, Active Outdoors, Amenities, Natural Beauty, Climate Risk, Education. Independent of your priorities.
+                {LONGEVITY_COPY.short}
               </div>
             </div>
           )}

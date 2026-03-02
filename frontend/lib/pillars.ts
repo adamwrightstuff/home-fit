@@ -22,6 +22,22 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'quality_education',
 ])
 
+/** Copy for Longevity Score UX: tooltip, short subtitle, full modal, and key distinction. */
+export const LONGEVITY_COPY = {
+  /** Full version for tooltip/modal. */
+  full:
+    "The Longevity Score measures how well a place supports a long, healthy life — not just whether it fits your preferences today. It's built on six factors that research links to lifespan and wellbeing: social connectedness, opportunities for natural movement, walkable daily life, restorative natural environments, climate stability, and cognitive engagement. The weights come from Blue Zone research — the places in the world where people live longest share these traits in common. A high Longevity Score means the place itself is working in your favor over time.",
+  /** Short version for subtitle or card label. */
+  short:
+    'How well this place supports a long, healthy life — based on Blue Zone research.',
+  /** One-line tooltip next to the score. */
+  tooltip:
+    'Measures long-term livability across social fabric, movement, nature, and climate — independent of your personal priorities.',
+  /** Key distinction to communicate. */
+  distinction:
+    'HomeFit = right for you. Longevity = right for your health over time.',
+} as const
+
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
 }

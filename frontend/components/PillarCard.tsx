@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LivabilityPillar } from '@/types/api'
-import { PILLAR_META, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, isLongevityPillar, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBandLabel, getScoreBandColor, PILLAR_LONG_DESCRIPTIONS, isLongevityPillar, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -93,6 +93,7 @@ export default function PillarCard({ pillar_key, pillar }: PillarCardProps) {
               {isLongevityPillar(pillar_key) && (
                 <span
                   className="hf-muted"
+                  title={LONGEVITY_COPY.tooltip}
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
