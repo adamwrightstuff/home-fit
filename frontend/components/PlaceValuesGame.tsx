@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, RefreshCcw, Search } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import AppHeader from './AppHeader'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
@@ -234,7 +234,7 @@ const LONGEVITY_NOTE =
   'Longevity score is calculated separately — it measures how well a place supports a long, healthy life based on Blue Zone research, independent of your priorities.'
 
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
-  const [game_state, set_game_state] = useState<'intro' | 'playing' | 'results'>('intro')
+  const [game_state, set_game_state] = useState<'playing' | 'results'>('playing')
   const [current_step, set_current_step] = useState(0)
   const [answers, set_answers] = useState<QuizAnswers>(getInitialAnswers)
 
@@ -245,7 +245,6 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   }, [])
 
   const question = QUESTIONS[current_step]
-  const is_multi = question?.type === 'multi'
 
   const can_advance = useMemo(() => {
     if (!question) return false
@@ -293,8 +292,8 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       set_current_step((s) => s - 1)
       return
     }
-    set_game_state('intro')
-  }, [current_step])
+    onBack?.()
+  }, [current_step, onBack])
 
   const go_next = useCallback(() => {
     if (!can_advance) return
@@ -311,11 +310,10 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       return
     }
     if (game_state === 'results') {
-      set_game_state('intro')
+      start_game()
       return
     }
-    if (game_state === 'intro' && onBack) onBack()
-  }, [game_state, go_prev, onBack])
+  }, [game_state, go_prev, start_game])
 
   const weights = useMemo(() => inferWeights(answers), [answers])
   const priorities = useMemo(() => weightsToPriorities(weights), [weights])
@@ -339,58 +337,6 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       appliedRef.current = true
     }
   }, [game_state, priorities, onApplyPriorities])
-
-  // --- Intro
-  if (game_state === 'intro') {
-    return (
-      <main className="hf-page">
-        <AppHeader />
-        <div className="hf-container">
-          <div className="hf-card" style={{ maxWidth: 900, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
-              {onBack ? (
-                <button onClick={handle_back} className="hf-btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
-              ) : (
-                <span />
-              )}
-              <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                HomeFit Quiz
-              </div>
-              <span />
-            </div>
-            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 18,
-                  margin: '0 auto 1.5rem',
-                  background: 'rgba(102,126,234,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <MapPin size={32} color="var(--hf-primary-1)" />
-              </div>
-              <h2 className="hf-section-title" style={{ marginBottom: '0.75rem' }}>
-                Discover what matters most to you
-              </h2>
-              <p className="hf-muted" style={{ maxWidth: 720, margin: '0 auto 2rem' }}>
-                Answer 5 quick questions. We’ll infer your priority weights and personalize your HomeFit score.
-              </p>
-              <button onClick={start_game} className="hf-btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                Start Quiz <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
   // --- Playing (one question at a time)
   if (game_state === 'playing' && question) {
