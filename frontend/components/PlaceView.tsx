@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import InteractiveMap from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
+import ExportScoresModal from './ExportScoresModal'
+import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
@@ -66,6 +68,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [savedPremiumCode, setSavedPremiumCode] = useState('')
   /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
   const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
+  const [exportModalOpen, setExportModalOpen] = useState(false)
   useEffect(() => {
     try {
       const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
@@ -230,6 +233,19 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
 
   const hasResults = Object.keys(pillarScores).length > 0
   const locationLabel = formatPlaceLabel(place)
+  const exportRow = useMemo(
+    () =>
+      buildExportRow({
+        locationName: locationLabel,
+        lat: place.lat,
+        lon: place.lon,
+        homefitScore: totalScore,
+        longevityScore: longevityIndex,
+        pillarScores,
+        selectedPriorities,
+      }),
+    [locationLabel, place.lat, place.lon, totalScore, longevityIndex, pillarScores, selectedPriorities]
+  )
 
   return (
     <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '12rem' }}>
@@ -364,6 +380,37 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </div>
         </div>
       </div>
+
+      {/* Export scores — only when we have results */}
+      {hasResults && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <button
+            type="button"
+            onClick={() => setExportModalOpen(true)}
+            className="hf-btn-link"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+            aria-label="Export scores"
+          >
+            <span aria-hidden>📤</span>
+            Export scores
+          </button>
+        </div>
+      )}
+
+      <ExportScoresModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        locationName={locationLabel}
+        csvHeaderLine={exportRow.csvHeaderLine}
+        csvDataLine={exportRow.csvDataLine}
+        copyBlock={exportRow.copyBlock}
+      />
 
       {/* Place summary from pillar data (when present) */}
       {hasResults && placeSummary && (
