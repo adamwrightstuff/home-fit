@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { PILLAR_META } from '@/lib/pillars'
 
 interface InteractiveMapProps {
   location: string
   coordinates?: { lat: number; lon: number } | null
   completed_pillars: string[]
 }
+
+const TOTAL_PILLARS = Object.keys(PILLAR_META).length
 
 export default function InteractiveMap({ location, coordinates, completed_pillars }: InteractiveMapProps) {
   const map_container_ref = useRef<HTMLDivElement>(null)
@@ -342,7 +345,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
           </div>
           {completed_pillars.length > 0 && (
             <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.35rem', fontWeight: 700 }}>
-              {completed_pillars.length}/9 pillars complete
+              {Math.min(completed_pillars.length, TOTAL_PILLARS)}/{TOTAL_PILLARS} pillars complete
             </div>
           )}
         </div>
