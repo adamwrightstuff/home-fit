@@ -658,6 +658,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {overlayPillarList.slice(0, overlayRevealedCount).map((key) => {
                 const meta = PILLAR_META[key]
+                const isComplete = key in scoreProgress
                 return (
                   <li key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span
@@ -665,7 +666,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        background: 'var(--hf-primary-1)',
+                        background: isComplete ? 'var(--hf-homefit-green, #4A9E6B)' : 'var(--hf-primary-1)',
                         flexShrink: 0,
                       }}
                       aria-hidden
