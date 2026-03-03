@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import InteractiveMap from './InteractiveMap'
-import ProgressBar from './ProgressBar'
 import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, type PillarKey } from '@/lib/pillars'
@@ -599,33 +598,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
             Set importance to customize your score
           </p>
-        )}
-        {loading && (
-          <div style={{ marginBottom: '1rem' }}>
-            <ProgressBar progress={progress} />
-            <div className="hf-muted" style={{ fontSize: '0.875rem', marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem 0.75rem', alignItems: 'center' }}>
-              {Object.keys(scoreProgress).length === 0 ? (
-                <span>Preparing location and shared data…</span>
-              ) : (
-                (pillarsInProgress.length > 0 ? pillarsInProgress : PILLAR_ORDER.filter((k) => selectedPillars.has(k))).map((key) => {
-                  const meta = PILLAR_META[key]
-                  const done = key in scoreProgress
-                  return (
-                    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                      {done ? (
-                        <>
-                          <span style={{ color: 'var(--hf-success, #22c55e)' }} aria-hidden>✓</span>
-                          <span>{meta.icon} {meta.name}</span>
-                        </>
-                      ) : (
-                        <span style={{ opacity: 0.85 }}>{meta.icon} {meta.name}…</span>
-                      )}
-                    </span>
-                  )
-                })
-              )}
-            </div>
-          </div>
         )}
         <button
           type="button"
