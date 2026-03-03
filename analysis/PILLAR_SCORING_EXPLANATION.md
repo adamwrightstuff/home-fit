@@ -291,7 +291,7 @@ total_score = base_supply + multimodal_bonus + commute_weight + commuter_bonuses
 
 ---
 
-## 6. Housing Value (`pillars/housing_value.py`)
+## 6. 🏠 Price-to-Space (`pillars/housing_value.py`)
 
 ### Scoring Method
 **Pure data-backed component sum** (no calibration)
@@ -643,7 +643,7 @@ score = min(100, total_raw)
 | **neighborhood_amenities** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed |
 | **healthcare_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed ratios |
 | **public_transit_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed breakpoints |
-| **housing_value** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
+| **Price-to-Space (housing_value)** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **built_beauty** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **air_travel_access** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **neighborhood_beauty** | ❌ None | ❌ None | ❌ None | ✅ Composes other pillars |
