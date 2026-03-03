@@ -7,6 +7,9 @@ const DEBOUNCE_MS = 350
 const MIN_QUERY_LENGTH = 2
 const SUGGESTION_LIMIT = 5
 
+/** US + territories; matches data coverage (Census, FEMA, etc.). ISO 3166-1 alpha-2. */
+const ALLOWED_COUNTRY_CODES = new Set(['us', 'pr', 'vi', 'gu', 'as', 'mp'])
+
 interface PhotonFeature {
   type: string
   properties: {
@@ -14,6 +17,7 @@ interface PhotonFeature {
     city?: string
     state?: string
     country?: string
+    countrycode?: string
     street?: string
     housenumber?: string
     postcode?: string
@@ -41,12 +45,21 @@ function buildDisplayName(props: PhotonFeature['properties']): string {
 }
 
 function fetchPhotonSuggestions(query: string): Promise<LocationSuggestion[]> {
-  const params = new URLSearchParams({ q: query.trim(), limit: String(SUGGESTION_LIMIT) })
+  const params = new URLSearchParams({
+    q: query.trim(),
+    limit: '15', // request extra so after filtering to US/territories we still have up to SUGGESTION_LIMIT
+  })
   return fetch(`${PHOTON_API}?${params.toString()}`, { method: 'GET' })
     .then((res) => (res.ok ? res.json() : Promise.resolve({ features: [] })))
     .then((data: { features?: PhotonFeature[] }) => {
       const features = data.features ?? []
-      return features.map((f) => {
+      const allowed = features
+        .filter((f) => {
+          const code = (f.properties.countrycode ?? '').toLowerCase()
+          return code && ALLOWED_COUNTRY_CODES.has(code)
+        })
+        .slice(0, SUGGESTION_LIMIT)
+      return allowed.map((f) => {
         const displayName = buildDisplayName(f.properties)
         return { displayName, searchQuery: displayName }
       })
