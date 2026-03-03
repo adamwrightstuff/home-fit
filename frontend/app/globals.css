@@ -285,6 +285,44 @@ body {
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.12);
 }
 
+.hf-location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 2px solid var(--hf-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.hf-location-suggestion {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--hf-text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid var(--hf-border);
+}
+
+.hf-location-suggestion:last-child {
+  border-bottom: none;
+}
+
+.hf-location-suggestion:hover,
+.hf-location-suggestion--active {
+  background: var(--hf-hover-bg);
+}
+
+.hf-location-suggestion--muted {
+  color: var(--hf-text-secondary);
+  cursor: default;
+}
+
 .hf-helper {
   color: var(--hf-text-secondary);
   font-size: 0.9rem;
