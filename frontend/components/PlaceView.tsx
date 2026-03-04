@@ -29,6 +29,15 @@ const PILLAR_ORDER: PillarKey[] = [
   'social_fabric',
 ]
 
+/** Natural Beauty inner-weight preference (single-select on main scoring page). */
+const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'mountains', label: 'Mountains' },
+  { value: 'ocean', label: 'Ocean' },
+  { value: 'lakes_rivers', label: 'Lakes & rivers' },
+  { value: 'canopy', label: 'Canopy' },
+]
+
 type Importance = 'Low' | 'Medium' | 'High'
 
 /** Prefer neighborhood-style label: strip trailing zip so we show "Gowanus, Brooklyn" not "New York, NY 11217". */
@@ -452,6 +461,49 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           >
             Not sure what matters to you? Take the quiz
           </button>
+        </div>
+      )}
+
+      {/* Natural Beauty preference chips — single-select, updates inner weights */}
+      {onSearchOptionsChange && (
+        <div className="hf-panel" style={{ marginBottom: '1rem', padding: '1rem 1.25rem' }}>
+          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Natural scenery preference</div>
+          <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
+            Adjusts how Natural Beauty is scored for this run (e.g. more weight on mountains or water).
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
+              const pref = searchOptions.natural_beauty_preference
+              const isAny = value === null
+              const selected = isAny
+                ? !pref?.length || (pref.length === 1 && pref[0] === 'no_preference')
+                : pref?.length === 1 && pref[0] === value
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    onSearchOptionsChange({
+                      ...searchOptions,
+                      natural_beauty_preference: isAny ? null : value ? [value] : null,
+                    })
+                  }}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: 8,
+                    fontSize: '0.9rem',
+                    fontWeight: selected ? 600 : 400,
+                    background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                    color: selected ? 'white' : 'var(--hf-text-primary)',
+                    border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 
