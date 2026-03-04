@@ -22,7 +22,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'social_fabric',
 ]
 
-const TOTAL_QUESTIONS = 5
+const TOTAL_QUESTIONS = 6
 
 const QUESTIONS = [
   {
@@ -80,6 +80,19 @@ const QUESTIONS = [
       { value: 'forever', text: 'Retirement or forever home' },
     ],
   },
+  {
+    id: 'natural_scenery',
+    type: 'multi' as const,
+    prompt: 'What kind of natural scenery matters most to you?',
+    hint: 'Pick up to 2. "No strong preference" cannot be combined with others.',
+    options: [
+      { value: 'mountains', text: 'Mountains or dramatic terrain' },
+      { value: 'ocean', text: 'Ocean or coastline' },
+      { value: 'lakes_rivers', text: 'Lakes or rivers' },
+      { value: 'canopy', text: 'Tree canopy and greenery' },
+      { value: 'no_preference', text: 'No strong preference' },
+    ],
+  },
 ] as const
 
 type QuizAnswers = {
@@ -88,6 +101,7 @@ type QuizAnswers = {
   car_relationship: string | null
   beautiful_place: string[]
   horizon: string | null
+  natural_scenery: string[]
 }
 
 function getInitialAnswers(): QuizAnswers {
@@ -97,6 +111,7 @@ function getInitialAnswers(): QuizAnswers {
     car_relationship: null,
     beautiful_place: [],
     horizon: null,
+    natural_scenery: [],
   }
 }
 
@@ -224,7 +239,7 @@ function weightToBand(weight: number): PriorityLevel {
 }
 
 interface PlaceValuesGameProps {
-  onApplyPriorities?: (priorities: PillarPriorities) => void
+  onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[]) => void
   onBack?: () => void
 }
 
@@ -258,7 +273,9 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       return answers[key] !== null && answers[key] !== undefined
     }
     if (question.type === 'multi') {
-      return answers.beautiful_place.length > 0
+      if (question.id === 'beautiful_place') return answers.beautiful_place.length > 0
+      if (question.id === 'natural_scenery') return true // 0 = no preference, 1 or 2 = valid
+      return false
     }
     return false
   }, [question, answers])
@@ -289,6 +306,29 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
           ? [...current.slice(1), value]
           : [...current, value]
       return { ...prev, beautiful_place: next }
+    })
+  }, [])
+
+  const toggle_natural_scenery = useCallback((value: string) => {
+    set_answers((prev) => {
+      const current = prev.natural_scenery
+      const is_no_pref = value === 'no_preference'
+      const has_no_pref = current.includes('no_preference')
+
+      if (is_no_pref) {
+        return { ...prev, natural_scenery: current.includes('no_preference') ? [] : ['no_preference'] }
+      }
+      if (has_no_pref) {
+        const next = current.filter((x) => x !== 'no_preference')
+        const withValue = next.includes(value) ? next.filter((x) => x !== value) : [...next, value].slice(0, 2)
+        return { ...prev, natural_scenery: withValue }
+      }
+      const next = current.includes(value)
+        ? current.filter((x) => x !== value)
+        : current.length >= 2
+          ? [...current.slice(1), value]
+          : [...current, value]
+      return { ...prev, natural_scenery: next }
     })
   }, [])
 
@@ -332,22 +372,32 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   // Auto-apply quiz results when user reaches the results screen (once per results view).
   const appliedRef = useRef(false)
+  const naturalBeautyPreference = useMemo(() => {
+    const sel = answers.natural_scenery.filter((v) => v !== 'no_preference')
+    if (sel.length === 0) return undefined
+    return sel.length <= 2 ? sel : sel.slice(0, 2)
+  }, [answers.natural_scenery])
   useEffect(() => {
     if (game_state !== 'results') {
       appliedRef.current = false
       return
     }
     if (!appliedRef.current && onApplyPriorities) {
-      onApplyPriorities(priorities)
+      onApplyPriorities(priorities, naturalBeautyPreference)
       appliedRef.current = true
     }
-  }, [game_state, priorities, onApplyPriorities])
+  }, [game_state, priorities, naturalBeautyPreference, onApplyPriorities])
 
   // --- Playing (one question at a time)
   if (game_state === 'playing' && question) {
     const progress_pct = ((current_step + 1) / TOTAL_QUESTIONS) * 100
     const single_value = question.type === 'single' ? (answers[question.id as keyof QuizAnswers] as string | null) : null
-    const multi_selected = question.type === 'multi' ? answers.beautiful_place : []
+    const multi_selected =
+      question.type === 'multi'
+        ? question.id === 'natural_scenery'
+          ? answers.natural_scenery
+          : answers.beautiful_place
+        : []
 
     return (
       <main className="hf-page">
@@ -392,7 +442,9 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                     onClick={() =>
                       question.type === 'single'
                         ? set_single(question.id as keyof QuizAnswers, opt.value)
-                        : toggle_multi_option(opt.value)
+                        : question.id === 'natural_scenery'
+                          ? toggle_natural_scenery(opt.value)
+                          : toggle_multi_option(opt.value)
                     }
                     className="hf-card-sm"
                     style={{

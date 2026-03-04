@@ -127,6 +127,8 @@ export interface ScoreRequestParams {
   enable_schools?: boolean;
   /** Request only these pillars (e.g. "economic_security"); backend param "only". */
   only?: string;
+  /** Natural Beauty preference: JSON array of 1–2 of mountains, ocean, lakes_rivers, canopy. */
+  natural_beauty_preference?: string;
 }
 
 /** Response from GET /geocode — used to show map before scoring. */

@@ -27,12 +27,13 @@ export default function Home() {
       const stored = sessionStorage.getItem('homefit_search_options')
       if (stored) {
         const parsed = JSON.parse(stored)
-        return {
-          priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
-          include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
-          enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
-          job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
-        }
+    return {
+      priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
+      include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
+      enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
+      job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
+      natural_beauty_preference: Array.isArray(parsed.natural_beauty_preference) ? parsed.natural_beauty_preference : null,
+    }
       }
     } catch (e) {
       // ignore
@@ -42,6 +43,7 @@ export default function Home() {
       include_chains: true,
       enable_schools: false,
       job_categories: [],
+      natural_beauty_preference: null,
     }
   })
 
@@ -66,9 +68,13 @@ export default function Home() {
       })
   }
 
-  const handle_apply_priorities = (priorities: PillarPriorities) => {
+  const handle_apply_priorities = (priorities: PillarPriorities, naturalBeautyPreference?: string[]) => {
     set_search_options(prev => {
-      const updated = { ...prev, priorities }
+      const updated = {
+        ...prev,
+        priorities,
+        natural_beauty_preference: naturalBeautyPreference?.length ? naturalBeautyPreference : null,
+      }
       try {
         sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
       } catch (e) {

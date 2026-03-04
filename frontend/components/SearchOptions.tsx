@@ -27,6 +27,8 @@ interface SearchOptions {
   include_chains: boolean
   enable_schools: boolean
   job_categories: string[]
+  /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
+  natural_beauty_preference?: string[] | null
 }
 
 interface SearchOptionsProps {

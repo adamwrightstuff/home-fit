@@ -191,6 +191,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           job_categories: searchOptions.job_categories?.join(','),
           include_chains: searchOptions.include_chains,
           enable_schools: searchOptions.enable_schools,
+          natural_beauty_preference:
+            searchOptions.natural_beauty_preference?.length ?
+              JSON.stringify(searchOptions.natural_beauty_preference) :
+              undefined,
         },
         (partial) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
