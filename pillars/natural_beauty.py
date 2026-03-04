@@ -44,6 +44,9 @@ ENABLE_NATURAL_BEAUTY_V7 = True
 ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING = True
 ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
 
+# Phase 8 (V8): Overhaul formula - 40% topo/viewshed, 30% water (Natural Earth + GEE), 20% greenery (single-radius GEE + Census), 10% context. No uplift.
+ENABLE_NATURAL_BEAUTY_V8 = True
+
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
 # Relief threshold lowered from 600m to 300m in _score_topography_component
@@ -2926,6 +2929,196 @@ def _apply_component_dominance_guard(context_bonus_raw: float,
     return context_bonus_raw
 
 
+def _landcover_to_context_score_0_100(landcover: Optional[Dict]) -> float:
+    """Convert GEE landcover dict to natural context score 0-100 (forest, wetland, shrub, grass)."""
+    if not landcover:
+        return 0.0
+    forest = float(landcover.get("forest_pct") or 0.0)
+    wetland = float(landcover.get("wetland_pct") or 0.0)
+    shrub = float(landcover.get("shrub_pct") or 0.0)
+    grass = float(landcover.get("grass_pct") or 0.0)
+    raw = forest + 0.5 * wetland + 0.25 * shrub + 0.125 * grass
+    return min(100.0, raw)
+
+
+def _topography_viewshed_score_0_100(lat: float, lon: float) -> Tuple[float, Dict]:
+    """Combine GEE topography and viewshed into single 0-100 score. No water bonus here."""
+    from data_sources.gee_api import get_topography_context, get_viewshed_proxy
+    topo = get_topography_context(lat, lon, radius_m=5000)
+    viewshed = get_viewshed_proxy(lat, lon, radius_m=5000)
+    score = 0.0
+    details: Dict = {}
+    if topo:
+        relief = float(topo.get("relief_range_m") or 0.0)
+        prominence = float(topo.get("terrain_prominence_m") or 0.0)
+        ruggedness = float(topo.get("ruggedness_index_m") or 0.0)
+        # Scale to 0-50: relief up to 600m, prominence up to 300m, ruggedness up to 150m
+        r = min(50.0, (relief / 600.0) * 25 + (prominence / 300.0) * 15 + (ruggedness / 150.0) * 10)
+        score += r
+        details["topography"] = {"relief_m": relief, "prominence_m": prominence, "ruggedness_m": ruggedness, "contribution": round(r, 2)}
+    if viewshed and isinstance(viewshed, dict):
+        scenic = float(viewshed.get("scenic_viewshed_score") or 0.0)
+        # scenic_viewshed_score is 0-100; weight 50% of component
+        v = min(50.0, scenic * 0.5)
+        score += v
+        details["viewshed"] = {"scenic_viewshed_score": scenic, "contribution": round(v, 2)}
+    return min(100.0, score), details
+
+
+def _calculate_natural_beauty_v8(
+    lat: float,
+    lon: float,
+    city: Optional[str] = None,
+    area_type: Optional[str] = None,
+    location_scope: Optional[str] = None,
+    location_name: Optional[str] = None,
+    overrides: Optional[Dict[str, float]] = None,
+    density: Optional[float] = None,
+) -> Dict:
+    """
+    Natural Beauty V8: 40% topo/viewshed, 30% water (Natural Earth + GEE), 20% greenery (GEE 1km + Census), 10% context. No uplift.
+    """
+    from data_sources import census_api, data_quality
+    from data_sources.gee_api import get_tree_canopy_gee, get_landcover_context_gee
+    from data_sources.water_proximity_ne import calculate_water_score as water_score_v8
+
+    if area_type is None or density is None:
+        if density is None:
+            try:
+                density = census_api.get_population_density(lat, lon) or 0.0
+            except Exception:
+                density = 0.0
+        if area_type is None:
+            area_type = data_quality.detect_area_type(
+                lat, lon, density=density, city=city, location_input=location_name
+            )
+
+    # Overrides (e.g. for testing)
+    landcover = get_landcover_context_gee(lat, lon, radius_m=3000)
+    gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=1000, area_type=area_type)
+    census_canopy = None
+    try:
+        census_canopy = census_api.get_tree_canopy(lat, lon)
+    except Exception:
+        pass
+
+    if overrides:
+        if "topography_viewshed" in overrides:
+            topo_score = max(0.0, min(100.0, float(overrides["topography_viewshed"])))
+            topo_details = {"override": True}
+        else:
+            topo_score, topo_details = _topography_viewshed_score_0_100(lat, lon)
+        if "water" in overrides:
+            water_score = max(0.0, min(100.0, float(overrides["water"])))
+            water_details = {"override": True}
+        else:
+            water_score, water_details = water_score_v8(lat, lon, landcover=landcover)
+        if "greenery" in overrides:
+            greenery_score = max(0.0, min(100.0, float(overrides["greenery"])))
+        elif gee_canopy is not None and census_canopy is not None:
+            greenery_score = 0.70 * float(gee_canopy) + 0.30 * float(census_canopy)
+        elif gee_canopy is not None:
+            greenery_score = float(gee_canopy)
+        elif census_canopy is not None:
+            greenery_score = float(census_canopy)
+        else:
+            greenery_score = 0.0
+        if "natural_context" in overrides:
+            context_score = max(0.0, min(100.0, float(overrides["natural_context"])))
+        else:
+            context_score = _landcover_to_context_score_0_100(landcover)
+    else:
+        topo_score, topo_details = _topography_viewshed_score_0_100(lat, lon)
+        water_score, water_details = water_score_v8(lat, lon, landcover=landcover)
+        if gee_canopy is not None and census_canopy is not None:
+            greenery_score = 0.70 * float(gee_canopy) + 0.30 * float(census_canopy)
+        elif gee_canopy is not None:
+            greenery_score = float(gee_canopy)
+        elif census_canopy is not None:
+            greenery_score = float(census_canopy)
+        else:
+            greenery_score = 0.0
+        context_score = _landcover_to_context_score_0_100(landcover)
+
+    # Final score: no uplift; optional small combo bonus when both topo and water exceptional
+    base_score = (
+        0.40 * topo_score
+        + 0.30 * water_score
+        + 0.20 * min(100.0, greenery_score)
+        + 0.10 * context_score
+    )
+    combo_bonus = 0.0
+    if topo_score >= 70.0 and water_score >= 70.0:
+        combo_bonus = min(10.0, (topo_score - 70.0) / 30.0 * 5.0 + (water_score - 70.0) / 30.0 * 5.0)
+    final_score = max(0.0, min(100.0, base_score + combo_bonus))
+
+    # Compatible details for get_natural_beauty_score and API
+    tree_details_v8 = {
+        "tree_base_score": round(greenery_score / 2.0, 2),  # 0-100 -> 0-50 scale
+        "multi_radius_canopy": {"neighborhood_1000m": gee_canopy},
+        "natural_context": {"component_scores": {"landcover": context_score}},
+        "bonus_breakdown": {},
+        "green_view_index": None,
+        "gvi_metrics": None,
+        "expectation_effect": None,
+    }
+
+    quality_metrics = assess_pillar_data_quality(
+        "natural_beauty", {"v8_components": True}, lat, lon, area_type or "suburban"
+    )
+
+    return {
+        "tree_score_0_50": round(greenery_score / 2.0, 2),
+        "details": tree_details_v8,
+        "enhancers": None,
+        "natural_bonus_raw": 0.0,
+        "natural_bonus_scaled": 0.0,
+        "scenic_bonus_raw": 0.0,
+        "context_bonus_raw": round(context_score, 2),
+        "score_before_normalization": final_score,
+        "score_before_calibration": final_score,
+        "score_before_uplift": final_score,
+        "uplift_bonus": 0.0,
+        "scoring_version": "v8",
+        "score_v6": round(final_score, 2),
+        "score_v7": round(final_score, 2),
+        "native_points_v6": round(final_score, 3),
+        "native_points_v7": round(final_score, 3),
+        "scenic_weighted_pre_cap": None,
+        "scenic_weighted_v6": None,
+        "scenic_weighted_v7": None,
+        "scenic_cap_v7": None,
+        "uplift_v6": 0.0,
+        "uplift_v7": 0.0,
+        "uplift_debug_v7": None,
+        "component_weights": {
+            "topography_viewshed": 0.40,
+            "water": 0.30,
+            "greenery": 0.20,
+            "natural_context": 0.10,
+        },
+        "v8_components": {
+            "topography_viewshed": round(topo_score, 2),
+            "water": round(water_score, 2),
+            "greenery": round(min(100.0, greenery_score), 2),
+            "natural_context": round(context_score, 2),
+            "combo_bonus": round(combo_bonus, 2),
+            "topography_viewshed_details": topo_details,
+            "water_details": water_details,
+        },
+        "calibration": {
+            "calibration_type": "none",
+            "uplift_bonus": 0.0,
+            "note": "V8: no uplift; reweighted components only",
+        },
+        "scenic_metadata": {},
+        "score": final_score,
+        "normalization": {},
+        "validation": {"warnings": [], "anomalies": []},
+        "data_quality": quality_metrics,
+    }
+
+
 def calculate_natural_beauty(lat: float,
                              lon: float,
                              city: Optional[str] = None,
@@ -2942,6 +3135,15 @@ def calculate_natural_beauty(lat: float,
     """
     Compute natural beauty components prior to normalization.
     """
+    # -------------------------------------------------------------------------
+    # V8: New formula 40% topo/viewshed, 30% water (NE + GEE), 20% greenery, 10% context. No uplift.
+    # -------------------------------------------------------------------------
+    if ENABLE_NATURAL_BEAUTY_V8:
+        return _calculate_natural_beauty_v8(
+            lat, lon, city=city, area_type=area_type, location_scope=location_scope,
+            location_name=location_name, overrides=overrides, density=density,
+        )
+
     tree_score, tree_details = _score_trees(
         lat,
         lon,

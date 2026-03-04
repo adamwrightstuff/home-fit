@@ -7,3 +7,6 @@ aiofiles==23.2.1
 pydantic==2.5.0
 redis==5.0.1
 earthengine-api
+geopandas>=0.14.0
+pyproj>=3.6.0
+shapely>=2.0
