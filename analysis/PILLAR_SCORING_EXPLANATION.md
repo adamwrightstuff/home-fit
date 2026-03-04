@@ -129,6 +129,18 @@ When **ENABLE_NATURAL_BEAUTY_PREFERENCE** is True, the pillar accepts a quiz-der
 
 **API:** Request parameter `natural_beauty_preference` (JSON array string, e.g. `["mountains"]` or `["ocean","canopy"]`). Used in `/score`, `/score/jobs`, and `/score/stream`. Cache key includes preference so different preferences do not share cached responses.
 
+#### Token allocation vs natural_beauty_preference (why Natural Beauty can show weight 50)
+These are **two separate mechanisms**:
+
+1. **Token allocation (pillar importance in total score)**  
+   The **priorities** from the quiz (Life stage, Weekend energy, Car, Horizon) are converted to pillar weights in the frontend (`inferWeights`), then to Low/Medium/High. The backend turns those into a **100-token allocation** (None=0, Low=1, Medium=2, High=3, then proportional). So the "weight" you see for Natural Beauty (e.g. 50 or ~8 tokens) is **only** from that priority logic.  
+   **Currently**, the "What kind of natural scenery matters most to you?" answers are **not** used in `inferWeights`, so they do not change Natural Beauty’s priority. If no other answer (e.g. "Outside — hiking, biking, on the water") raises Natural Beauty, it stays at the default **50** (Medium).
+
+2. **natural_beauty_preference (how the pillar score is computed)**  
+   Your 1–2 scenery choices are sent as `natural_beauty_preference` and **only** change the **internal** Natural Beauty formula: tree vs topography vs water weights, water type split (coast/lake/river), and viewshed blend for mountains. They change **what** we score (e.g. more weight on mountains or ocean), not **how much** that pillar contributes to the total. So you can have Natural Beauty at weight 50 (Medium) and still have the pillar score personalized (e.g. mountain-heavy or ocean-heavy).
+
+**Optional:** The frontend boosts Natural Beauty’s importance (to High when possible) when the user selects one or two scenery options and not "No strong preference", so the pillar gets more tokens and the displayed weight reflects that they care about natural scenery.
+
 ---
 
 ## 2. Active Outdoors (`pillars/active_outdoors.py`)

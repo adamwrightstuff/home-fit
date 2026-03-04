@@ -184,6 +184,12 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('climate_risk', Math.min(get('climate_risk'), 40))
   }
 
+  // natural_scenery: if user picked 1–2 scenery types (not "no strong preference"), boost Natural Beauty importance
+  const scenery = answers.natural_scenery.filter((v) => v !== 'no_preference')
+  if (scenery.length > 0) {
+    set('natural_beauty', Math.max(get('natural_beauty'), 80))
+  }
+
   return w
 }
 
