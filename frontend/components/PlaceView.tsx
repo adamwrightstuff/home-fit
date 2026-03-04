@@ -464,49 +464,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         </div>
       )}
 
-      {/* Natural Beauty preference chips — single-select, updates inner weights */}
-      {onSearchOptionsChange && (
-        <div className="hf-panel" style={{ marginBottom: '1rem', padding: '1rem 1.25rem' }}>
-          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Natural scenery preference</div>
-          <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
-            Adjusts how Natural Beauty is scored for this run (e.g. more weight on mountains or water).
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
-              const pref = searchOptions.natural_beauty_preference
-              const isAny = value === null
-              const selected = isAny
-                ? !pref?.length || (pref.length === 1 && pref[0] === 'no_preference')
-                : pref?.length === 1 && pref[0] === value
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => {
-                    onSearchOptionsChange({
-                      ...searchOptions,
-                      natural_beauty_preference: isAny ? null : value ? [value] : null,
-                    })
-                  }}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: 8,
-                    fontSize: '0.9rem',
-                    fontWeight: selected ? 600 : 400,
-                    background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                    color: selected ? 'white' : 'var(--hf-text-primary)',
-                    border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Pillar list: tap to select, importance only when selected */}
       <div style={{ display: 'grid', gap: '0.75rem' }}>
         {PILLAR_ORDER.map((key) => {
@@ -619,6 +576,43 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       </button>
                     ))}
                   </div>
+                  {key === 'natural_beauty' && onSearchOptionsChange && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
+                      {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
+                        const pref = searchOptions.natural_beauty_preference
+                        const isAny = value === null
+                        const chipSelected = isAny
+                          ? !pref?.length || (pref.length === 1 && pref[0] === 'no_preference')
+                          : pref?.length === 1 && pref[0] === value
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onSearchOptionsChange({
+                                ...searchOptions,
+                                natural_beauty_preference: isAny ? null : value ? [value] : null,
+                              })
+                            }}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: chipSelected ? 600 : 400,
+                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
+                              border: '1px solid var(--hf-border)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                   {key === 'quality_education' && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <label className="hf-muted" style={{ fontSize: '0.85rem' }}>Premium code (enables school scoring)</label>
