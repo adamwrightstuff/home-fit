@@ -463,7 +463,7 @@ total_score = affordability + space + efficiency  # 0-100
 
 ---
 
-## 7. Built Beauty (`pillars/built_beauty.py`)
+## 7. Built Character (`pillars/built_beauty.py`)
 
 ### Scoring Method
 **Pure data-backed component sum** (no calibration)
@@ -555,7 +555,7 @@ airport_score = base_score(airport_type) * exp(-decay_rate * (distance - optimal
 ## 9. Neighborhood Beauty (`pillars/neighborhood_beauty.py`)
 
 ### Scoring Method
-**Composition of Built + Natural Beauty** (no calibration)
+**Composition of Built Character + Natural Beauty** (no calibration)
 
 ### Formula
 ```
@@ -570,7 +570,7 @@ total_score = normalized_base + beauty_bonus
 ```
 
 ### Components
-- **Built Beauty:** Architectural diversity + built enhancers
+- **Built Character:** Architectural diversity + built enhancers
 - **Natural Beauty:** Tree score + scenic bonus
 - **Weights:** Area-type-specific (default: 50/50)
 
