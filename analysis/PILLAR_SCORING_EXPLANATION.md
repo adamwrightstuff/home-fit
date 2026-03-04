@@ -490,7 +490,7 @@ total_score = affordability + space + efficiency  # 0-100
 
 ---
 
-## 7. Built Character (`pillars/built_beauty.py`)
+## 7. Built Beauty (`pillars/built_beauty.py`)
 
 ### Scoring Method
 **Pure data-backed component sum** (no calibration)
@@ -530,6 +530,21 @@ final_score = normalize_beauty_score(built_raw, area_type)
 - OSM API (buildings, landmarks, artwork, fountains)
 - Census API (year built, building age)
 - Architectural diversity module (computed metrics)
+
+### Built Beauty Personalization (preference-based weights)
+When personalization is enabled, the pillar accepts **inline preference selectors** (not quiz questions). These live in the **expanded Built Beauty pillar card** in the UI.
+
+**Two independent preference axes:**
+
+1. **Character preference** — *What kind of architectural character feels like home?*
+   - **Options:** Historic character | Contemporary design | No preference (single select).
+   - **No preference:** Built Beauty’s weight in the HomeFit composite is halved; design score uses default weights.
+
+2. **Density preference** — *What kind of built environment feels right day-to-day?*
+   - **Options:** Houses and open space | Neighborhood blocks | City center (single select).
+   - Shifts form-score component weights and area-type scoring targets (block grain, streetwall continuity) to match the selected profile.
+
+**UX interaction:** Preferences are set **inline** on the Built Beauty pillar. The user **taps the Built Beauty pillar card** to expand it, then selects **chips** for character and density inside the expanded card. The **score updates immediately** when a chip is selected; there is **no separate quiz flow** for these preferences.
 
 ---
 
@@ -582,7 +597,7 @@ airport_score = base_score(airport_type) * exp(-decay_rate * (distance - optimal
 ## 9. Neighborhood Beauty (`pillars/neighborhood_beauty.py`)
 
 ### Scoring Method
-**Composition of Built Character + Natural Beauty** (no calibration)
+**Composition of Built Beauty + Natural Beauty** (no calibration)
 
 ### Formula
 ```
@@ -597,7 +612,7 @@ total_score = normalized_base + beauty_bonus
 ```
 
 ### Components
-- **Built Character:** Architectural diversity + built enhancers
+- **Built Beauty:** Architectural diversity + built enhancers
 - **Natural Beauty:** Tree score + scenic bonus
 - **Weights:** Area-type-specific (default: 50/50)
 

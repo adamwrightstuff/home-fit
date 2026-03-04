@@ -51,9 +51,9 @@ Since you already use Railway for your API, you can deploy the frontend there to
 
 ---
 
-## NRHP dataset (Built Character historic register) on Railway
+## NRHP dataset (Built Beauty historic register) on Railway
 
-Built Character can use NRHP “historic register” signals **without calling an external API at request time** by building a local SQLite index during Railway deploy.
+Built Beauty can use NRHP “historic register” signals **without calling an external API at request time** by building a local SQLite index during Railway deploy.
 
 ### What this repo does
 

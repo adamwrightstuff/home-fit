@@ -372,12 +372,12 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
 
 
 def _extract_built_beauty_summary(built_details: Dict) -> Dict:
-    """Extract summary data from Built Character details for display in UI."""
+    """Extract summary data from Built Beauty details for display in UI."""
     summary = {}
     arch_analysis = built_details.get("architectural_analysis", {})
     
     if isinstance(arch_analysis, dict):
-        # Built Character stores metrics under architectural_analysis.metrics (the top-level keys
+        # Built Beauty stores metrics under architectural_analysis.metrics (the top-level keys
         # were placeholders in earlier iterations).
         metrics = arch_analysis.get("metrics", {}) if isinstance(arch_analysis.get("metrics"), dict) else {}
         summary["height_diversity"] = round(metrics.get("height_diversity", arch_analysis.get("height_diversity", 0)) or 0, 2)
@@ -1969,7 +1969,7 @@ def get_livability_score(request: Request,
 
     Returns scores across 9 purpose-driven pillars:
     - Active Outdoors: Can I be active outside regularly?
-    - Built Character: Are the buildings cohesive, historic, and well-crafted?
+    - Built Beauty: Are the buildings cohesive, historic, and well-crafted?
     - Natural Beauty: Is the landscape/tree canopy beautiful and calming?
     - Neighborhood Amenities: Can I walk to great local spots?
     - Air Travel Access: How easily can I fly somewhere?
@@ -3863,7 +3863,7 @@ async def stream_score(
 
         logger.info(f"Final Livability Score: {total_score:.1f}/100")
         logger.debug(f"Active Outdoors: {active_outdoors_score:.1f}/100 | "
-                f"Built Character: {built_score:.1f}/100 | "
+                f"Built Beauty: {built_score:.1f}/100 | "
                 f"Natural Beauty: {natural_score:.1f}/100 | "
                 f"Neighborhood Amenities: {amenities_score:.1f}/100 | "
                 f"Air Travel Access: {air_travel_score:.1f}/100 | "
@@ -5211,7 +5211,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         
         raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus - penalty
         mult = DENSITY_MULTIPLIER.get(effective_area_type, 1.0)
-        # Built Character component score is capped at 33.0 to maintain balance with other pillars.
+        # Built Beauty component score is capped at 33.0 to maintain balance with other pillars.
         # This cap is based on the architectural diversity scoring system where:
         # - Component scores (height, type, footprint, coherence) are additive
         # - The cap prevents any single component from dominating the overall livability score

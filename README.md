@@ -56,7 +56,7 @@ Measures access to outdoor recreation and adventure opportunities. Evaluates loc
 
 **Components**: Daily Urban Outdoors (30%) - local parks and facilities; Wild Adventure Backbone (50%) - trails, camping, canopy; Waterfront Lifestyle (20%) - beaches, lakes, coastlines
 
-### 2. Built Character
+### 2. Built Beauty
 Assesses architectural quality, urban form, and street character. Evaluates building diversity (height variety, type diversity, footprint variation), architectural character (materials, historic fabric, modern design), and street-scale qualities (block grain, streetwall continuity, setback consistency, facade rhythm). Rewards cohesive, well-designed built environments that create appealing neighborhoods.
 
 **Components**: Architectural diversity (0-50 points) - height, type, form metrics; Built enhancers (0-6 points) - artwork, fountains, landmarks
@@ -111,7 +111,7 @@ The system automatically adapts search radii and expectations based on:
 - Neighborhood Amenities: Query 1km (neighborhood) or 1.5km (city); walkability 800m/1000m
 - Public Transit: Nearby routes within ~1.5km
 - Healthcare: Facilities 5–20km and pharmacies 2–8km by area type
-- Built Character: 2km default context window, area-type adjustments via radius profiles
+- Built Beauty: 2km default context window, area-type adjustments via radius profiles
 - Natural Beauty: 1km canopy core (urban core/residential), up to 3km fallback for cities
 - Air Travel: Airports within 150km
 

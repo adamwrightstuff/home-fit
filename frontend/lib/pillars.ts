@@ -71,7 +71,7 @@ export const PILLAR_META: Record<
   },
   built_beauty: {
     icon: '🏛️',
-    name: 'Built Character',
+    name: 'Built Beauty',
     description:
       "Architecture and streetscapes that feel thoughtfully designed—not cookie-cutter, but crafted with character",
   },
