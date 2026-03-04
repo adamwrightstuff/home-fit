@@ -45,7 +45,7 @@ ENABLE_NATURAL_BEAUTY_V7_UPLIFT_SMOOTHING = True
 ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
 
 # Phase 8 (V8): Overhaul formula - 40% topo/viewshed, 30% water (Natural Earth + GEE), 20% greenery (single-radius GEE + Census), 10% context. No uplift.
-ENABLE_NATURAL_BEAUTY_V8 = True
+ENABLE_NATURAL_BEAUTY_V8 = False
 
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
