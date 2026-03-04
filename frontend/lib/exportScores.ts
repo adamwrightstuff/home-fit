@@ -9,6 +9,7 @@ import type { PillarKey } from '@/lib/pillars'
 const EXPORT_PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
   'built_beauty',
+  'access_to_nature',
   'neighborhood_amenities',
   'active_outdoors',
   'healthcare_access',

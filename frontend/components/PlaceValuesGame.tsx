@@ -9,6 +9,7 @@ import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
   'built_beauty',
+  'access_to_nature',
   'neighborhood_amenities',
   'active_outdoors',
   'healthcare_access',
@@ -105,6 +106,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   const w: PillarWeights = {
     natural_beauty: 50,
     built_beauty: 50,
+    access_to_nature: 50,
     neighborhood_amenities: 50,
     active_outdoors: 50,
     healthcare_access: 50,
@@ -171,14 +173,17 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   for (const sel of bp) {
     if (sel === 'nature') {
       set('natural_beauty', Math.max(get('natural_beauty'), 80))
+      set('access_to_nature', Math.max(get('access_to_nature'), 80))
     } else if (sel === 'architecture') {
       set('built_beauty', Math.max(get('built_beauty'), 80))
     } else if (sel === 'both') {
       set('natural_beauty', Math.max(get('natural_beauty'), 75))
       set('built_beauty', Math.max(get('built_beauty'), 75))
+      set('access_to_nature', Math.max(get('access_to_nature'), 75))
     } else if (sel === 'none') {
       set('natural_beauty', Math.min(get('natural_beauty'), 30))
       set('built_beauty', Math.min(get('built_beauty'), 30))
+      set('access_to_nature', Math.min(get('access_to_nature'), 30))
     }
   }
 
@@ -449,7 +454,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             Your priority weights
           </h2>
           <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
-            All 12 pillars ranked by importance. Use these to personalize your HomeFit score.
+            All {PILLAR_ORDER.length} pillars ranked by importance. Use these to personalize your HomeFit score.
           </p>
 
           <div className="hf-panel" style={{ background: 'rgba(102,126,234,0.06)', border: '1px solid rgba(102,126,234,0.18)', marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>

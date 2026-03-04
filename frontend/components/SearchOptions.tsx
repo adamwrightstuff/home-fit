@@ -10,6 +10,7 @@ interface PillarPriorities {
   active_outdoors: PriorityLevel
   built_beauty: PriorityLevel
   natural_beauty: PriorityLevel
+  access_to_nature: PriorityLevel
   neighborhood_amenities: PriorityLevel
   air_travel_access: PriorityLevel
   public_transit_access: PriorityLevel
@@ -39,6 +40,7 @@ interface SearchOptionsProps {
 const PILLAR_ORDER: Array<keyof PillarPriorities> = [
   'natural_beauty',
   'built_beauty',
+  'access_to_nature',
   'neighborhood_amenities',
   'active_outdoors',
   'healthcare_access',
@@ -57,6 +59,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
   built_beauty: 'Medium',
   natural_beauty: 'Medium',
+  access_to_nature: 'Medium',
   neighborhood_amenities: 'Medium',
   air_travel_access: 'Medium',
   public_transit_access: 'Medium',
