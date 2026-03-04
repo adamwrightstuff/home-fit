@@ -370,9 +370,13 @@ def resolve_natural_beauty_preference(
         if not prof:
             return None
         ctx = prof["context_weights"].get(area_key, prof["context_weights"]["urban_core"])
+        # Ensure float values for downstream use
+        context_weights = {k: float(ctx[k]) for k in ("topography", "landcover", "water") if k in ctx}
+        if len(context_weights) != 3:
+            return None
         return {
-            "tree_weight": prof["tree_weight"],
-            "context_weights": dict(ctx),
+            "tree_weight": float(prof["tree_weight"]),
+            "context_weights": context_weights,
             "water_type_weights": prof["water_type_weights"] if prof["water_type_weights"] is not None else dict(WATER_TYPE_WEIGHTS_DEFAULT),
             "use_viewshed_blend": prof.get("use_viewshed_blend", False) and ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND,
             "profile_names": [name],
@@ -386,11 +390,11 @@ def resolve_natural_beauty_preference(
         return None
     ctx_a = pa["context_weights"].get(area_key, pa["context_weights"]["urban_core"])
     ctx_b = pb["context_weights"].get(area_key, pb["context_weights"]["urban_core"])
-    tree_weight = (pa["tree_weight"] + pb["tree_weight"]) / 2.0
+    tree_weight = (float(pa["tree_weight"]) + float(pb["tree_weight"])) / 2.0
     context_weights = {
-        "topography": (ctx_a["topography"] + ctx_b["topography"]) / 2.0,
-        "landcover": (ctx_a["landcover"] + ctx_b["landcover"]) / 2.0,
-        "water": (ctx_a["water"] + ctx_b["water"]) / 2.0,
+        "topography": (float(ctx_a["topography"]) + float(ctx_b["topography"])) / 2.0,
+        "landcover": (float(ctx_a["landcover"]) + float(ctx_b["landcover"])) / 2.0,
+        "water": (float(ctx_a["water"]) + float(ctx_b["water"])) / 2.0,
     }
     if pa["water_type_weights"] and pb["water_type_weights"]:
         water_type_weights = {
@@ -1794,12 +1798,21 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     # Get area-type-specific context bonus weights
     area_type_key = (area_type or "").lower() or "unknown"
     # Base weights - from preference profile or CONTEXT_BONUS_WEIGHTS
-    if preference_context_weights is not None and len(preference_context_weights) == 3:
-        base_context_weights = dict(preference_context_weights)
-        use_preference_weights = True
-    else:
+    use_preference_weights = False
+    if preference_context_weights is not None and len(preference_context_weights) >= 3:
+        required_keys = ("topography", "landcover", "water")
+        if all(k in preference_context_weights for k in required_keys):
+            try:
+                base_context_weights = {}
+                for k in required_keys:
+                    v = preference_context_weights[k]
+                    base_context_weights[k] = float(v) if v is not None else 0.0
+                if all(0 - 1e-6 <= base_context_weights[k] <= 1 + 1e-6 for k in required_keys):
+                    use_preference_weights = True
+            except (TypeError, ValueError):
+                pass
+    if not use_preference_weights:
         base_context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
-        use_preference_weights = False
     
     # PHASE 1: Detect landscape context tags (after fetching data)
     # Initialize landscape_tags - will be populated after data fetch
