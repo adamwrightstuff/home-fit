@@ -29,7 +29,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'social_fabric',
 ]
 
-/** Natural Beauty inner-weight preference (single-select on main scoring page). */
+/** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
 const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Any' },
   { value: 'mountains', label: 'Mountains' },
@@ -579,32 +579,58 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   {key === 'natural_beauty' && onSearchOptionsChange && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
+                      <span className="hf-muted" style={{ fontSize: '0.75rem', marginRight: '0.35rem' }}>(up to 2)</span>
                       {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
-                        const pref = searchOptions.natural_beauty_preference
+                        const pref = searchOptions.natural_beauty_preference ?? []
                         const isAny = value === null
+                        const hasAny = !pref.length || (pref.length === 1 && pref[0] === 'no_preference')
                         const chipSelected = isAny
-                          ? !pref?.length || (pref.length === 1 && pref[0] === 'no_preference')
-                          : pref?.length === 1 && pref[0] === value
+                          ? hasAny
+                          : pref.includes(value as string)
+                        const atMax = !isAny && pref.length >= 2 && !pref.includes(value as string)
+                        const handleClick = () => {
+                          if (isAny) {
+                            onSearchOptionsChange({ ...searchOptions, natural_beauty_preference: null })
+                            return
+                          }
+                          const current = pref.filter((v) => v !== 'no_preference')
+                          if (current.includes(value as string)) {
+                            const next = current.filter((v) => v !== value)
+                            onSearchOptionsChange({
+                              ...searchOptions,
+                              natural_beauty_preference: next.length ? next : null,
+                            })
+                          } else if (current.length >= 2) {
+                            onSearchOptionsChange({
+                              ...searchOptions,
+                              natural_beauty_preference: [current[1], value as string],
+                            })
+                          } else {
+                            onSearchOptionsChange({
+                              ...searchOptions,
+                              natural_beauty_preference: [...current, value as string],
+                            })
+                          }
+                        }
                         return (
                           <button
                             key={label}
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
-                              onSearchOptionsChange({
-                                ...searchOptions,
-                                natural_beauty_preference: isAny ? null : value ? [value] : null,
-                              })
+                              handleClick()
                             }}
+                            disabled={atMax}
                             style={{
                               padding: '0.35rem 0.65rem',
                               borderRadius: 8,
                               fontSize: '0.85rem',
                               fontWeight: chipSelected ? 600 : 400,
                               background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
-                              border: '1px solid var(--hf-border)',
-                              cursor: 'pointer',
+                              color: chipSelected ? 'white' : atMax ? 'var(--hf-text-tertiary)' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: atMax ? 'not-allowed' : 'pointer',
+                              opacity: atMax ? 0.7 : 1,
                             }}
                           >
                             {label}
