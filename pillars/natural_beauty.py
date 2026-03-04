@@ -2026,14 +2026,32 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     has_significant_water = False
     has_mountain_tag = False
 
+    # Initialize these so they're always defined for debug_breakdown (used when preference weights skip the block below)
+    relief = topography_metrics.get("relief_range_m") if topography_metrics else None
+    prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
+    developed_pct_for_weights: Optional[float] = None
+    nearest_water_km_for_weights: Optional[float] = None
+    nearest_water_type_for_weights: Optional[str] = None
+    if landcover_metrics:
+        try:
+            developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
+        except Exception:
+            pass
+    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+        nearest_water_km_for_weights = float(water_proximity_data.get("nearest_distance_km") or 0.0)
+        nearest_waterbody = water_proximity_data.get("nearest_waterbody") or {}
+        if isinstance(nearest_waterbody, dict):
+            nearest_water_type_for_weights = nearest_waterbody.get("type")
+    if nearest_water_type_for_weights == "stream":
+        nearest_water_type_for_weights = "river"
+
     # NEW: Adjust context bonus weights for high-relief scenic areas (skip when preference is set)
     if not use_preference_weights:
         # BUT: Preserve water weight if water proximity is significant (<15km)
         # Note: This adjustment happens AFTER adaptive weights from landscape tags
         # If landscape tags already increased topography (e.g., "mountain"), this preserves that boost
         terrain_adjusted_weights = context_weights.copy()
-        relief = topography_metrics.get("relief_range_m") if topography_metrics else None
-        prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
+        # relief, prominence, developed_pct_for_weights, nearest_water_* already set above for debug_breakdown
 
         # Check if water proximity is significant BEFORE adjusting weights
         # For mountain/rural areas, use a more generous threshold (15km) since water is a major scenic feature
@@ -2053,10 +2071,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # When water is *very close*, increase water weight so proximity isn't washed out in suburban/urban contexts.
         # Guard: don't inflate extremely dense waterfronts where the "natural" experience is limited.
         near_water_reweight_applied = False
-        near_water_reweight_meta: Dict[str, float] = {}
-        nearest_water_km_for_weights = None
-        nearest_water_type_for_weights = None
-        developed_pct_for_weights = None
+        near_water_reweight_meta = {}
+        # developed_pct_for_weights, nearest_water_km_for_weights, nearest_water_type_for_weights already set above
         if landcover_metrics:
             try:
                 developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
