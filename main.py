@@ -37,7 +37,7 @@ from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score_v2
-from pillars import built_beauty, natural_beauty
+from pillars import built_beauty, natural_beauty, access_to_nature
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -69,6 +69,9 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 # Schools: default OFF for public launch (SchoolDigger free quota is extremely low)
 ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
+
+# Optional pillars / features
+ENABLE_ACCESS_TO_NATURE = _env_bool("ENABLE_ACCESS_TO_NATURE", default=False)
 
 # Streaming (SSE): default ON to avoid polling/job-404 issues; set ENABLE_STREAMING=false to disable
 ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
@@ -525,18 +528,29 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     pillar_names = primary_pillars
     
     if tokens is None:
-        # Default equal distribution (100 tokens / 10 pillars = 10 each)
+        # Default equal distribution across primary pillars (100 tokens total).
+        # Access to Nature is experimental; when enabled, it starts with 0 weight so it
+        # does not affect total score until explicitly prioritized.
+        base_pillars = list(primary_pillars)
+        if ENABLE_ACCESS_TO_NATURE:
+            base_pillars.append("access_to_nature")
+
         equal_tokens = 100.0 / len(primary_pillars)
-        default_allocation = {}
+        default_allocation: Dict[str, float] = {}
         remainder = 100.0
         for i, pillar in enumerate(primary_pillars):
             if i < len(primary_pillars) - 1:
-                tokens = int(equal_tokens)
-                default_allocation[pillar] = float(tokens)
-                remainder -= tokens
+                t = int(equal_tokens)
+                default_allocation[pillar] = float(t)
+                remainder -= t
             else:
-                # Last pillar gets remainder to ensure exact 100
+                # Last primary pillar gets remainder to ensure exact 100
                 default_allocation[pillar] = remainder
+
+        # When experimental pillar is enabled, give it 0 weight by default.
+        if ENABLE_ACCESS_TO_NATURE:
+            default_allocation["access_to_nature"] = 0.0
+
         return default_allocation
     
     # Parse custom allocation
@@ -732,8 +746,9 @@ def root():
             "public_transit_access",
             "healthcare_access",
             "quality_education",
-            "housing_value"
-        ],
+            "housing_value",
+        ]
+        + (["access_to_nature"] if ENABLE_ACCESS_TO_NATURE else []),
         "endpoints": {
             "score": "/score?location=ADDRESS",
             "docs": "/docs"
@@ -1252,6 +1267,7 @@ def _compute_single_score_internal(
 
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
+    need_access_to_nature = ENABLE_ACCESS_TO_NATURE and _include_pillar("access_to_nature")
     need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
     pillar_tasks = []
@@ -1283,6 +1299,21 @@ def _compute_single_score_internal(
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
                 'form_context': form_context
             })
+        )
+    if need_access_to_nature:
+        pillar_tasks.append(
+            (
+                "access_to_nature",
+                access_to_nature.calculate_access_to_nature,
+                {
+                    "lat": lat,
+                    "lon": lon,
+                    "city": city,
+                    "area_type": area_type,
+                    "location_scope": location_scope,
+                    "location_name": location,
+                },
+            )
         )
     
     if _include_pillar('neighborhood_amenities'):
@@ -1637,6 +1668,13 @@ def _compute_single_score_internal(
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
+        + (
+            (pillar_results.get("access_to_nature") or {}).get("score", 0.0)
+            * float(token_allocation.get("access_to_nature", 0.0) or 0.0)
+            / 100.0
+            if ENABLE_ACCESS_TO_NATURE
+            else 0.0
+        )
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -1805,8 +1843,27 @@ def _compute_single_score_internal(
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
             "area_classification": social_fabric_details.get("area_classification", {})
-        }
+        },
     }
+
+    if ENABLE_ACCESS_TO_NATURE and "access_to_nature" in (pillar_results or {}):
+        atn_calc = pillar_results.get("access_to_nature") or {}
+        atn_score = float(atn_calc.get("score", 0.0) or 0.0)
+        atn_details = atn_calc.get("details", {})
+        atn_quality = atn_calc.get("data_quality", {})
+        livability_pillars["access_to_nature"] = {
+            "score": atn_score,
+            "weight": float(token_allocation.get("access_to_nature", 0.0) or 0.0),
+            "importance_level": priority_levels.get("access_to_nature") if priority_levels else None,
+            "contribution": round(
+                atn_score * float(token_allocation.get("access_to_nature", 0.0) or 0.0) / 100.0, 2
+            ),
+            "details": atn_details,
+            "summary": atn_details.get("components", {}),
+            "confidence": atn_quality.get("confidence", 0),
+            "data_quality": atn_quality,
+            "area_classification": {},
+        }
 
     # Build response
     longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
