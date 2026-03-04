@@ -5,6 +5,11 @@ Download Natural Earth 10m physical data for water proximity scoring.
 Puts files in data_sources/static/ (or HOMEFIT_NE_DATA_DIR).
 Run once; then water_proximity_ne.py will load them at runtime.
 
+If the Natural Earth server returns 406/500, download manually from:
+  https://www.naturalearthdata.com/downloads/10m-physical-vectors/
+Then unzip ne_10m_coastline.zip, ne_10m_lakes.zip, ne_10m_rivers_lake_centerlines.zip
+into data_sources/static/ (or HOMEFIT_NE_DATA_DIR).
+
 Usage:
   python scripts/download_natural_earth_water.py
   HOMEFIT_NE_DATA_DIR=/path/to/dir python scripts/download_natural_earth_water.py
@@ -44,7 +49,10 @@ def main():
             url = f"{BASE_URL}/{name}"
             print(f"  Fetching {url} ...")
             try:
-                urllib.request.urlretrieve(url, path_zip)
+                req = urllib.request.Request(url, headers={"User-Agent": "HomeFit/1.0 (https://github.com/adamwrightstuff/home-fit)"})
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    with open(path_zip, "wb") as f:
+                        f.write(resp.read())
             except Exception as e:
                 print(f"  ERROR: {e}")
                 sys.exit(1)

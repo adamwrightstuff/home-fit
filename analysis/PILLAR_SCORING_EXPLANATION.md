@@ -19,16 +19,61 @@ All pillars follow **pure data-backed scoring** principles:
 
 ## 1. Natural Beauty (`pillars/natural_beauty.py`)
 
-### Scoring Method
+### Active scoring: V8 (ENABLE_NATURAL_BEAUTY_V8 = True)
+
+**Formula (no calibration, no uplift):**
+```
+final_score = 0.40 × topography_viewshed + 0.30 × water + 0.20 × greenery + 0.10 × natural_context
+            + combo_bonus  # optional: up to +10 when both topography and water ≥ 70
+```
+
+### V8 Components
+
+#### Topography/Viewshed (40% weight)
+- **Data sources:** GEE only
+- **Topography:** `get_topography_context(lat, lon, 5km)` — relief, prominence, ruggedness (metric CRS)
+- **Viewshed:** `get_viewshed_proxy(lat, lon, 5km)` — scenic_viewshed_score (0–100)
+- **Combined:** Topography contribution (relief/prominence/ruggedness scaled) + viewshed contribution, capped 0–100
+- **No caps or dampening** on mountain contexts
+
+#### Water (30% weight)
+- **Data sources:** Natural Earth 10m (proximity) + GEE landcover (visibility)
+- **Proximity (50% of water score):** Distance to coastline, major lakes (scalerank ≤ 2), major rivers (scalerank ≤ 4). Linear decay: coast 50 km, lakes 30 km, rivers 20 km. Weights: 60% coast, 30% lake, 10% river. Implemented in `data_sources/water_proximity_ne.py`. Requires one-time download: `python scripts/download_natural_earth_water.py`
+- **Visibility (50% of water score):** GEE `get_landcover_context_gee` water_pct (micro-scale water visibility)
+- **OSM water queries:** Not used (removed for reliability)
+
+#### Greenery (20% weight)
+- **Data sources:** GEE (single radius 1000 m) + Census/USFS (validation)
+- **Formula:** When both available: `0.70 × GEE_canopy_1000m + 0.30 × Census_canopy`; else GEE or Census alone. Already 0–100 (canopy %).
+- **Removed:** Multi-radius canopy (400/1000/2000/3000 m), NYC street trees, GVI, OSM parks fallback
+
+#### Natural Context (10% weight)
+- **Data sources:** GEE landcover (same call as used for water visibility when possible)
+- **Formula:** `forest_pct + 0.5×wetland_pct + 0.25×shrub_pct + 0.125×grass_pct`, capped at 100
+- **Unchanged** from previous landcover-based context
+
+### Combo bonus (optional)
+- When **both** topography/viewshed ≥ 70 **and** water ≥ 70: add up to +10 points (scaled by how far above 70).
+- No other uplift; raw component sum speaks for itself.
+
+### Data sources (V8)
+- **GEE API:** Topography, viewshed, tree canopy (1 km), landcover
+- **Census/USFS:** Tree canopy (blend with GEE for greenery)
+- **Natural Earth 10m:** Coastline, major lakes, major rivers (proximity; optional — if missing, proximity = 0)
+- **Not used in V8:** OSM water, NYC street trees, multi-radius canopy, GVI, uplift system
+
+### Legacy (V6/V7) — when ENABLE_NATURAL_BEAUTY_V8 = False
+
+#### Scoring Method
 **Data-backed weighted component sum** (no calibration)
 
-### Formula
+#### Formula (legacy)
 ```
 raw_score = (tree_score * 0.3) + min(35.0, scenic_bonus * 2.0)
 final_score = min(100.0, raw_score * 2.0)  # Scale 0-50 to 0-100
 ```
 
-### Components
+#### Components (legacy)
 
 #### Tree Score (0-50 points)
 - **Data Sources:**
@@ -53,7 +98,7 @@ final_score = min(100.0, raw_score * 2.0)  # Scale 0-50 to 0-100
 - **Urban Core:** Topography 50%, Landcover 30%, Water 20%
 - **Suburban:** Topography 50%, Landcover 30%, Water 20%
 
-### Climate Adjustments
+### Climate Adjustments (legacy)
 - **Climate-first expectations:** Base expectations by climate zone (arid: 8%, temperate: 35%, etc.)
 - **Area-type adjustments:** Multipliers within climate (urban_core: 0.75x, rural: 1.25x)
 - **Water expectations:** Adjusted for climate (arid: 0.5x, tropical: 1.5x)
@@ -63,7 +108,7 @@ final_score = min(100.0, raw_score * 2.0)  # Scale 0-50 to 0-100
 - ✅ **Pure data-backed** - Component weights based on measurement importance
 - 📊 **Ridge regression:** Advisory only (not used for scoring)
 
-### Data Sources
+### Data Sources (legacy)
 - GEE API (tree canopy, topography, landcover)
 - Census API (tree canopy validation)
 - OSM API (parks, viewpoints, enhancers)
