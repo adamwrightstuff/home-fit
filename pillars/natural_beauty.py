@@ -47,6 +47,73 @@ ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
 # Phase 8 (V8): Overhaul formula - 40% topo/viewshed, 30% water (Natural Earth + GEE), 20% greenery (single-radius GEE + Census), 10% context. No uplift.
 ENABLE_NATURAL_BEAUTY_V8 = False
 
+# Personalization: weight profiles from "What kind of natural scenery matters most to you?" quiz.
+ENABLE_NATURAL_BEAUTY_PREFERENCE = True
+# When True and Mountains preference is active, blend V8 viewshed into topography: 0.6*V7 + 0.4*viewshed.
+ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND = True
+# Canopy profile: if GEE canopy confidence below this (0-1), fall back to V7 default weights.
+CANOPY_CONFIDENCE_THRESHOLD = 0.5
+
+# Preference profile keys (quiz options)
+PREFERENCE_MOUNTAINS = "mountains"
+PREFERENCE_OCEAN = "ocean"
+PREFERENCE_LAKES_RIVERS = "lakes_rivers"
+PREFERENCE_CANOPY = "canopy"
+PREFERENCE_NONE = "no_preference"
+
+# V7 default tree_score weight and scenic cap (unchanged by preference)
+TREE_WEIGHT_DEFAULT = 0.30
+SCENIC_CAP_DEFAULT = 35.0
+
+# Preference profiles: tree_weight and context_weights (topography, landcover, water) by area type.
+# Area type mapping: rural, suburban, urban_core (urban_* and exurban -> suburban/urban_core).
+# Doc Section 5: Mountains, Ocean, Lakes/Rivers, Canopy.
+NATURAL_BEAUTY_PREFERENCE_PROFILES = {
+    PREFERENCE_MOUNTAINS: {
+        "tree_weight": 0.20,
+        "context_weights": {
+            "rural": {"topography": 0.75, "landcover": 0.15, "water": 0.10},
+            "suburban": {"topography": 0.68, "landcover": 0.20, "water": 0.12},
+            "urban_core": {"topography": 0.68, "landcover": 0.20, "water": 0.12},
+        },
+        "water_type_weights": None,  # use default 60/30/10
+        "use_viewshed_blend": True,
+    },
+    PREFERENCE_OCEAN: {
+        "tree_weight": 0.20,
+        "context_weights": {
+            "rural": {"topography": 0.25, "landcover": 0.15, "water": 0.60},
+            "suburban": {"topography": 0.20, "landcover": 0.15, "water": 0.65},
+            "urban_core": {"topography": 0.20, "landcover": 0.15, "water": 0.65},
+        },
+        "water_type_weights": {"coast": 0.80, "lake": 0.10, "river": 0.10},
+        "use_viewshed_blend": False,
+    },
+    PREFERENCE_LAKES_RIVERS: {
+        "tree_weight": 0.22,
+        "context_weights": {
+            "rural": {"topography": 0.28, "landcover": 0.17, "water": 0.55},
+            "suburban": {"topography": 0.22, "landcover": 0.18, "water": 0.60},
+            "urban_core": {"topography": 0.22, "landcover": 0.18, "water": 0.60},
+        },
+        "water_type_weights": {"coast": 0.15, "lake": 0.55, "river": 0.30},
+        "use_viewshed_blend": False,
+    },
+    PREFERENCE_CANOPY: {
+        "tree_weight": 0.50,
+        "context_weights": {
+            "rural": {"topography": 0.40, "landcover": 0.45, "water": 0.15},
+            "suburban": {"topography": 0.35, "landcover": 0.50, "water": 0.15},
+            "urban_core": {"topography": 0.35, "landcover": 0.50, "water": 0.15},
+        },
+        "water_type_weights": None,
+        "use_viewshed_blend": False,
+    },
+}
+
+# Default water type weights (coast/lake/river) when no preference override
+WATER_TYPE_WEIGHTS_DEFAULT = {"coast": 0.60, "lake": 0.30, "river": 0.10}
+
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
 # Relief threshold lowered from 600m to 300m in _score_topography_component
@@ -253,6 +320,121 @@ CONTEXT_BONUS_WEIGHTS = {
         "water": 0.2         # Decreased from 0.25
     }
 }
+
+
+def _area_type_for_preference(area_type: Optional[str]) -> str:
+    """Map pillar area_type to preference profile key: rural, suburban, urban_core."""
+    key = (area_type or "").lower() or "unknown"
+    if key == "rural":
+        return "rural"
+    if key in ("suburban", "exurban"):
+        return "suburban"
+    return "urban_core"
+
+
+def resolve_natural_beauty_preference(
+    preference: Optional[List[str]],
+    area_type: Optional[str],
+) -> Optional[Dict]:
+    """
+    Resolve quiz preference to effective weights. Returns None if no personalization.
+
+    - No preference / no_preference / empty: None (use V7 defaults)
+    - 1 option: that profile's weights
+    - 2 options: interpolate component-by-component (Section 7)
+    - 3+: treat as no preference, log warning
+    - If "no_preference" in list with another option: invalid, treat as single other option
+    """
+    if not ENABLE_NATURAL_BEAUTY_PREFERENCE or not preference:
+        return None
+    prefs = [p.strip().lower() for p in preference if p and isinstance(p, str)]
+    prefs = [p for p in prefs if p in (PREFERENCE_MOUNTAINS, PREFERENCE_OCEAN, PREFERENCE_LAKES_RIVERS, PREFERENCE_CANOPY, PREFERENCE_NONE)]
+    if not prefs:
+        return None
+    if PREFERENCE_NONE in prefs:
+        if len(prefs) > 1:
+            prefs = [p for p in prefs if p != PREFERENCE_NONE]
+        else:
+            return None
+    if not prefs:
+        return None
+    if len(prefs) > 2:
+        logger.warning("natural_beauty_preference: 3+ options received, using V7 defaults")
+        return None
+
+    area_key = _area_type_for_preference(area_type)
+
+    if len(prefs) == 1:
+        name = prefs[0]
+        prof = NATURAL_BEAUTY_PREFERENCE_PROFILES.get(name)
+        if not prof:
+            return None
+        ctx = prof["context_weights"].get(area_key, prof["context_weights"]["urban_core"])
+        return {
+            "tree_weight": prof["tree_weight"],
+            "context_weights": dict(ctx),
+            "water_type_weights": prof["water_type_weights"] if prof["water_type_weights"] is not None else dict(WATER_TYPE_WEIGHTS_DEFAULT),
+            "use_viewshed_blend": prof.get("use_viewshed_blend", False) and ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND,
+            "profile_names": [name],
+        }
+
+    # Two preferences: interpolate
+    a, b = prefs[0], prefs[1]
+    pa = NATURAL_BEAUTY_PREFERENCE_PROFILES.get(a)
+    pb = NATURAL_BEAUTY_PREFERENCE_PROFILES.get(b)
+    if not pa or not pb:
+        return None
+    ctx_a = pa["context_weights"].get(area_key, pa["context_weights"]["urban_core"])
+    ctx_b = pb["context_weights"].get(area_key, pb["context_weights"]["urban_core"])
+    tree_weight = (pa["tree_weight"] + pb["tree_weight"]) / 2.0
+    context_weights = {
+        "topography": (ctx_a["topography"] + ctx_b["topography"]) / 2.0,
+        "landcover": (ctx_a["landcover"] + ctx_b["landcover"]) / 2.0,
+        "water": (ctx_a["water"] + ctx_b["water"]) / 2.0,
+    }
+    if pa["water_type_weights"] and pb["water_type_weights"]:
+        water_type_weights = {
+            "coast": (pa["water_type_weights"]["coast"] + pb["water_type_weights"]["coast"]) / 2.0,
+            "lake": (pa["water_type_weights"]["lake"] + pb["water_type_weights"]["lake"]) / 2.0,
+            "river": (pa["water_type_weights"]["river"] + pb["water_type_weights"]["river"]) / 2.0,
+        }
+    elif pa["water_type_weights"]:
+        water_type_weights = dict(pa["water_type_weights"])
+    elif pb["water_type_weights"]:
+        water_type_weights = dict(pb["water_type_weights"])
+    else:
+        water_type_weights = dict(WATER_TYPE_WEIGHTS_DEFAULT)
+    use_viewshed_blend = (pa.get("use_viewshed_blend", False) or pb.get("use_viewshed_blend", False)) and ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND
+    return {
+        "tree_weight": tree_weight,
+        "context_weights": context_weights,
+        "water_type_weights": water_type_weights,
+        "use_viewshed_blend": use_viewshed_blend,
+        "profile_names": [a, b],
+    }
+
+
+def _water_type_multiplier(
+    nearest_water_type: Optional[str],
+    water_type_weights: Dict[str, float],
+) -> float:
+    """Return multiplier for water score based on nearest waterbody type and profile weights. 1.0 = default weight."""
+    if not nearest_water_type or not water_type_weights:
+        return 1.0
+    t = (nearest_water_type or "").lower()
+    if t == "stream":
+        t = "river"
+    if t not in ("ocean", "coast", "coastline", "lake", "river"):
+        return 1.0
+    # Map ocean/coast/coastline -> coast
+    if t in ("ocean", "coastline"):
+        t = "coast"
+    default = WATER_TYPE_WEIGHTS_DEFAULT
+    w = water_type_weights.get(t, default.get(t, 1.0 / 3.0))
+    d = default.get(t, 1.0 / 3.0)
+    if d <= 0:
+        return 1.0
+    return w / d
 
 
 def _get_adaptive_context_weights(
@@ -887,7 +1069,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                  area_type: Optional[str] = None, location_name: Optional[str] = None,
                  overrides: Optional[Dict[str, float]] = None,
                  density: Optional[float] = None,
-                 precomputed_tree_canopy_5km: Optional[float] = None) -> Tuple[float, Dict]:
+                 precomputed_tree_canopy_5km: Optional[float] = None,
+                 preference_context_weights: Optional[Dict[str, float]] = None,
+                 preference_water_type_weights: Optional[Dict[str, float]] = None,
+                 preference_viewshed_blend: bool = False) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
     # #region agent log
     try:
@@ -1608,8 +1793,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
     # Get area-type-specific context bonus weights
     area_type_key = (area_type or "").lower() or "unknown"
-    # Base weights - will be adjusted by landscape tags if available
-    base_context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
+    # Base weights - from preference profile or CONTEXT_BONUS_WEIGHTS
+    if preference_context_weights is not None and len(preference_context_weights) == 3:
+        base_context_weights = dict(preference_context_weights)
+        use_preference_weights = True
+    else:
+        base_context_weights = CONTEXT_BONUS_WEIGHTS.get(area_type_key, CONTEXT_BONUS_WEIGHTS["unknown"])
+        use_preference_weights = False
     
     # PHASE 1: Detect landscape context tags (after fetching data)
     # Initialize landscape_tags - will be populated after data fetch
@@ -1809,125 +1999,136 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         logger.warning(f"Landscape tag detection failed: {tag_error}, using base weights only")
         landscape_tags = []
     
-    # PHASE 2: Get adaptive context weights based on landscape tags
-    context_weights = _get_adaptive_context_weights(area_type_key, landscape_tags)
-    
-    # NEW: Adjust context bonus weights for high-relief scenic areas
-    # When relief > 300m or prominence > 200m, increase topography weight
-    # BUT: Preserve water weight if water proximity is significant (<15km)
-    # Note: This adjustment happens AFTER adaptive weights from landscape tags
-    # If landscape tags already increased topography (e.g., "mountain"), this preserves that boost
-    terrain_adjusted_weights = context_weights.copy()
-    relief = topography_metrics.get("relief_range_m") if topography_metrics else None
-    prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
-    
-    # Check if water proximity is significant BEFORE adjusting weights
-    # For mountain/rural areas, use a more generous threshold (15km) since water is a major scenic feature
-    # even when slightly further away (e.g., Truckee to Lake Tahoe is ~12-15km)
-    has_significant_water = False
-    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
-        nearest_water_km = water_proximity_data.get("nearest_distance_km")
-        # Use area-type-specific threshold: rural/exurban get 15km, others get 10km
-        water_threshold_km = 15.0 if area_type_key in ("rural", "exurban") else 10.0
-        has_significant_water = nearest_water_km < water_threshold_km
-    
-    # Only apply high-relief adjustment if relief is high AND landscape tags haven't already adjusted weights
-    # If "mountain" tag is present, it already increased topography weight by 30%, so don't double-adjust
-    has_mountain_tag = "mountain" in landscape_tags if landscape_tags else False
+    # PHASE 2: Get adaptive context weights (skip when preference profile supplies weights)
+    if use_preference_weights:
+        context_weights = base_context_weights.copy()
+        terrain_adjusted_weights = base_context_weights.copy()
+    else:
+        context_weights = _get_adaptive_context_weights(area_type_key, landscape_tags)
+        terrain_adjusted_weights = context_weights.copy()
 
-    # NEW: Near-water reweighting (greenbelts / riverwalks / lakeside neighborhoods)
-    # When water is *very close*, increase water weight so proximity isn't washed out in suburban/urban contexts.
-    # Guard: don't inflate extremely dense waterfronts where the "natural" experience is limited.
     near_water_reweight_applied = False
     near_water_reweight_meta: Dict[str, float] = {}
-    nearest_water_km_for_weights = None
-    nearest_water_type_for_weights = None
-    developed_pct_for_weights = None
-    if landcover_metrics:
-        try:
-            developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
-        except Exception:
-            developed_pct_for_weights = None
-    if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
-        nearest_water_km_for_weights = float(water_proximity_data.get("nearest_distance_km") or 0.0)
-        nearest_waterbody = water_proximity_data.get("nearest_waterbody") or {}
-        if isinstance(nearest_waterbody, dict):
-            nearest_water_type_for_weights = nearest_waterbody.get("type")
-    if nearest_water_type_for_weights == "stream":
-        nearest_water_type_for_weights = "river"
 
-    if (
-        nearest_water_km_for_weights is not None
-        and nearest_water_km_for_weights <= 0.75
-        and nearest_water_type_for_weights in ("river", "lake", "ocean")
-        and area_type_key in ("historic_urban", "urban_residential", "suburban", "urban_core_lowrise")
-        and (developed_pct_for_weights is None or developed_pct_for_weights < 85.0)
-    ):
-        base_topography = terrain_adjusted_weights.get("topography", context_weights.get("topography", 0.5))
-        base_water = terrain_adjusted_weights.get("water", context_weights.get("water", 0.2))
-        base_landcover = terrain_adjusted_weights.get("landcover", context_weights.get("landcover", 0.3))
+    has_significant_water = False
+    has_mountain_tag = False
 
-        target_water = max(base_water, 0.30)
-        # Keep topography fixed; take the increase from landcover.
-        new_landcover = max(0.10, 1.0 - base_topography - target_water)
-        new_water = 1.0 - base_topography - new_landcover
+    # NEW: Adjust context bonus weights for high-relief scenic areas (skip when preference is set)
+    if not use_preference_weights:
+        # BUT: Preserve water weight if water proximity is significant (<15km)
+        # Note: This adjustment happens AFTER adaptive weights from landscape tags
+        # If landscape tags already increased topography (e.g., "mountain"), this preserves that boost
+        terrain_adjusted_weights = context_weights.copy()
+        relief = topography_metrics.get("relief_range_m") if topography_metrics else None
+        prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
 
-        near_water_reweight_applied = new_water > base_water + 1e-6
-        if near_water_reweight_applied:
-            terrain_adjusted_weights["topography"] = base_topography
-            terrain_adjusted_weights["water"] = new_water
-            terrain_adjusted_weights["landcover"] = new_landcover
-            near_water_reweight_meta = {
-                "water_weight_before": round(base_water, 3),
-                "water_weight_after": round(new_water, 3),
-                "landcover_weight_before": round(base_landcover, 3),
-                "landcover_weight_after": round(new_landcover, 3),
-            }
-            logger.debug(
-                "Near-water reweight applied: area=%s type=%s dist=%.2fkm dev=%.1f%% (water %.2f→%.2f, landcover %.2f→%.2f)",
-                area_type_key,
-                nearest_water_type_for_weights,
-                nearest_water_km_for_weights,
-                developed_pct_for_weights or 0.0,
-                base_water,
-                new_water,
-                base_landcover,
-                new_landcover,
-            )
-    
-    if relief is not None and relief > 300.0 and not has_mountain_tag:
-        # High relief WITHOUT mountain tag: apply standard high-relief adjustment
-        # If mountain tag is present, it already handled the topography boost
-        base_topography = context_weights.get("topography", 0.5)
-        base_water = context_weights.get("water", 0.2)
-        base_landcover = context_weights.get("landcover", 0.3)
-        
-        if has_significant_water:
-            # Preserve water weight: increase topography moderately, only scale landcover
-            terrain_adjusted_weights["topography"] = min(0.65, base_topography + 0.10)
-            terrain_adjusted_weights["water"] = base_water  # Preserve water weight
-            # Scale landcover to maintain total = 1.0
-            remaining_for_landcover = 1.0 - terrain_adjusted_weights["topography"] - terrain_adjusted_weights["water"]
-            terrain_adjusted_weights["landcover"] = max(0.15, remaining_for_landcover)  # Min 0.15
-            logger.debug(f"Adjusted weights for high relief ({relief:.1f}m) WITH significant water (no mountain tag): topography={terrain_adjusted_weights['topography']:.2f}, water={terrain_adjusted_weights['water']:.2f} (preserved), landcover={terrain_adjusted_weights['landcover']:.2f}")
-        else:
-            # No significant water: standard high-relief adjustment
-            terrain_adjusted_weights["topography"] = min(0.7, base_topography + 0.15)
-            # Reduce other weights proportionally to maintain total
-            total_other = base_landcover + base_water
-            if total_other > 0:
-                scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
-                terrain_adjusted_weights["landcover"] = base_landcover * scale
-                terrain_adjusted_weights["water"] = base_water * scale
-            logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m) without significant water (no mountain tag)")
-    elif has_mountain_tag:
-        # Mountain tag is present: adaptive weights already increased topography
-        # Just ensure water weight is preserved if significant water is present
-        if has_significant_water:
-            # Preserve water weight - it's already set correctly by adaptive weights
-            # Just log that we're using mountain tag weights
-            logger.debug(f"Using mountain tag adaptive weights (topography={context_weights.get('topography', 0.5):.2f}) with significant water preserved (water={context_weights.get('water', 0.2):.2f})")
-    
+        # Check if water proximity is significant BEFORE adjusting weights
+        # For mountain/rural areas, use a more generous threshold (15km) since water is a major scenic feature
+        # even when slightly further away (e.g., Truckee to Lake Tahoe is ~12-15km)
+        has_significant_water = False
+        if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+            nearest_water_km = water_proximity_data.get("nearest_distance_km")
+            # Use area-type-specific threshold: rural/exurban get 15km, others get 10km
+            water_threshold_km = 15.0 if area_type_key in ("rural", "exurban") else 10.0
+            has_significant_water = nearest_water_km < water_threshold_km
+
+        # Only apply high-relief adjustment if relief is high AND landscape tags haven't already adjusted weights
+        # If "mountain" tag is present, it already increased topography weight by 30%, so don't double-adjust
+        has_mountain_tag = "mountain" in landscape_tags if landscape_tags else False
+
+        # NEW: Near-water reweighting (greenbelts / riverwalks / lakeside neighborhoods)
+        # When water is *very close*, increase water weight so proximity isn't washed out in suburban/urban contexts.
+        # Guard: don't inflate extremely dense waterfronts where the "natural" experience is limited.
+        near_water_reweight_applied = False
+        near_water_reweight_meta: Dict[str, float] = {}
+        nearest_water_km_for_weights = None
+        nearest_water_type_for_weights = None
+        developed_pct_for_weights = None
+        if landcover_metrics:
+            try:
+                developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
+            except Exception:
+                developed_pct_for_weights = None
+        if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
+            nearest_water_km_for_weights = float(water_proximity_data.get("nearest_distance_km") or 0.0)
+            nearest_waterbody = water_proximity_data.get("nearest_waterbody") or {}
+            if isinstance(nearest_waterbody, dict):
+                nearest_water_type_for_weights = nearest_waterbody.get("type")
+        if nearest_water_type_for_weights == "stream":
+            nearest_water_type_for_weights = "river"
+
+        if (
+            nearest_water_km_for_weights is not None
+            and nearest_water_km_for_weights <= 0.75
+            and nearest_water_type_for_weights in ("river", "lake", "ocean")
+            and area_type_key in ("historic_urban", "urban_residential", "suburban", "urban_core_lowrise")
+            and (developed_pct_for_weights is None or developed_pct_for_weights < 85.0)
+        ):
+            base_topography = terrain_adjusted_weights.get("topography", context_weights.get("topography", 0.5))
+            base_water = terrain_adjusted_weights.get("water", context_weights.get("water", 0.2))
+            base_landcover = terrain_adjusted_weights.get("landcover", context_weights.get("landcover", 0.3))
+
+            target_water = max(base_water, 0.30)
+            # Keep topography fixed; take the increase from landcover.
+            new_landcover = max(0.10, 1.0 - base_topography - target_water)
+            new_water = 1.0 - base_topography - new_landcover
+
+            near_water_reweight_applied = new_water > base_water + 1e-6
+            if near_water_reweight_applied:
+                terrain_adjusted_weights["topography"] = base_topography
+                terrain_adjusted_weights["water"] = new_water
+                terrain_adjusted_weights["landcover"] = new_landcover
+                near_water_reweight_meta = {
+                    "water_weight_before": round(base_water, 3),
+                    "water_weight_after": round(new_water, 3),
+                    "landcover_weight_before": round(base_landcover, 3),
+                    "landcover_weight_after": round(new_landcover, 3),
+                }
+                logger.debug(
+                    "Near-water reweight applied: area=%s type=%s dist=%.2fkm dev=%.1f%% (water %.2f→%.2f, landcover %.2f→%.2f)",
+                    area_type_key,
+                    nearest_water_type_for_weights,
+                    nearest_water_km_for_weights,
+                    developed_pct_for_weights or 0.0,
+                    base_water,
+                    new_water,
+                    base_landcover,
+                    new_landcover,
+                )
+
+        if relief is not None and relief > 300.0 and not has_mountain_tag:
+            # High relief WITHOUT mountain tag: apply standard high-relief adjustment
+            # If mountain tag is present, it already handled the topography boost
+            base_topography = context_weights.get("topography", 0.5)
+            base_water = context_weights.get("water", 0.2)
+            base_landcover = context_weights.get("landcover", 0.3)
+
+            if has_significant_water:
+                # Preserve water weight: increase topography moderately, only scale landcover
+                terrain_adjusted_weights["topography"] = min(0.65, base_topography + 0.10)
+                terrain_adjusted_weights["water"] = base_water  # Preserve water weight
+                # Scale landcover to maintain total = 1.0
+                remaining_for_landcover = 1.0 - terrain_adjusted_weights["topography"] - terrain_adjusted_weights["water"]
+                terrain_adjusted_weights["landcover"] = max(0.15, remaining_for_landcover)  # Min 0.15
+                logger.debug(f"Adjusted weights for high relief ({relief:.1f}m) WITH significant water (no mountain tag): topography={terrain_adjusted_weights['topography']:.2f}, water={terrain_adjusted_weights['water']:.2f} (preserved), landcover={terrain_adjusted_weights['landcover']:.2f}")
+            else:
+                # No significant water: standard high-relief adjustment
+                terrain_adjusted_weights["topography"] = min(0.7, base_topography + 0.15)
+                # Reduce other weights proportionally to maintain total
+                total_other = base_landcover + base_water
+                if total_other > 0:
+                    scale = (1.0 - terrain_adjusted_weights["topography"]) / total_other
+                    terrain_adjusted_weights["landcover"] = base_landcover * scale
+                    terrain_adjusted_weights["water"] = base_water * scale
+                logger.debug(f"Adjusted topography weight to {terrain_adjusted_weights['topography']:.2f} for high relief ({relief:.1f}m) without significant water (no mountain tag)")
+        elif has_mountain_tag:
+            # Mountain tag is present: adaptive weights already increased topography
+            # Just ensure water weight is preserved if significant water is present
+            if has_significant_water:
+                # Preserve water weight - it's already set correctly by adaptive weights
+                # Just log that we're using mountain tag weights
+                logger.debug(f"Using mountain tag adaptive weights (topography={context_weights.get('topography', 0.5):.2f}) with significant water preserved (water={context_weights.get('water', 0.2):.2f})")
+
     # Always initialize topography_score with safe default
     topography_score = 0.0
     landcover_score = 0.0
@@ -1936,7 +2137,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if topography_metrics:
         # Calculate topography raw score once (with improved scoring for relief/ruggedness)
         topography_score_raw = _score_topography_component(topography_metrics)
-        
+
+        # Mountains preference: blend V8 viewshed proxy so flat high-altitude doesn't match dramatic ridgeline
+        if preference_viewshed_blend and get_viewshed_proxy:
+            try:
+                viewshed_result = get_viewshed_proxy(lat, lon, radius_m=5000, landcover_metrics=landcover_metrics)
+                if viewshed_result and isinstance(viewshed_result, dict):
+                    viewshed_score = float(viewshed_result.get("scenic_viewshed_score") or 0.0)
+                    if not math.isnan(viewshed_score) and 0 <= viewshed_score <= 100:
+                        viewshed_scaled = (viewshed_score / 100.0) * TOPOGRAPHY_BONUS_MAX
+                        topography_score_raw = 0.60 * topography_score_raw + 0.40 * viewshed_scaled
+            except Exception as e:
+                logger.debug("Viewshed blend failed (using V7 topography only): %s", e)
+
         # Convert multipliers to additive bonuses (following design principles: additive bonus structure)
         # Design principle: Use additive bonuses, not multiplicative multipliers
         # This prevents compounding effects and makes scoring more predictable and debuggable
@@ -2010,7 +2223,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             water_proximity_data,
             park_data_for_tags,
         )
-        
+
+        # Preference water-type multiplier (Ocean/Lakes profiles): emphasize or de-emphasize by nearest water type
+        if preference_water_type_weights and water_proximity_data:
+            nearest_wb = water_proximity_data.get("nearest_waterbody") or {}
+            nearest_type = nearest_wb.get("type") if isinstance(nearest_wb, dict) else None
+            mult = _water_type_multiplier(nearest_type, preference_water_type_weights)
+            water_score_raw = float(water_score_raw) * mult
+
         # Store water proximity metadata in natural_context_details
         if water_proximity_data:
             natural_context_details["water_proximity"] = {
@@ -3131,7 +3351,8 @@ def calculate_natural_beauty(lat: float,
                              enhancer_radius_m: int = 1500,
                              precomputed_tree_canopy_5km: Optional[float] = None,
                              density: Optional[float] = None,
-                             form_context: Optional[str] = None) -> Dict:
+                             form_context: Optional[str] = None,
+                             natural_beauty_preference: Optional[List[str]] = None) -> Dict:
     """
     Compute natural beauty components prior to normalization.
     """
@@ -3144,6 +3365,14 @@ def calculate_natural_beauty(lat: float,
             location_name=location_name, overrides=overrides, density=density,
         )
 
+    resolved_preference = None
+    if ENABLE_NATURAL_BEAUTY_PREFERENCE and natural_beauty_preference:
+        resolved_preference = resolve_natural_beauty_preference(natural_beauty_preference, area_type)
+
+    preference_context_weights = resolved_preference["context_weights"] if resolved_preference else None
+    preference_water_type_weights = resolved_preference.get("water_type_weights") if resolved_preference else None
+    preference_viewshed_blend = resolved_preference.get("use_viewshed_blend", False) if resolved_preference else False
+
     tree_score, tree_details = _score_trees(
         lat,
         lon,
@@ -3153,7 +3382,10 @@ def calculate_natural_beauty(lat: float,
         location_name=location_name,
         overrides=overrides,
         density=density,
-        precomputed_tree_canopy_5km=precomputed_tree_canopy_5km
+        precomputed_tree_canopy_5km=precomputed_tree_canopy_5km,
+        preference_context_weights=preference_context_weights,
+        preference_water_type_weights=preference_water_type_weights,
+        preference_viewshed_blend=preference_viewshed_blend,
     )
 
     context_info = tree_details.get("natural_context", {}) or {}
@@ -3250,8 +3482,23 @@ def calculate_natural_beauty(lat: float,
     base_with_expectation = base_tree_score_only + expectation_adjustment - capped_penalty
     base_with_expectation = max(0.0, min(50.0, base_with_expectation))  # Cap at 50
     
+    # Tree weight: from preference profile or V7 default. Canopy profile: fall back to default if GEE confidence low.
+    tree_weight = TREE_WEIGHT_DEFAULT
+    if resolved_preference is not None:
+        tree_weight = resolved_preference["tree_weight"]
+        if PREFERENCE_CANOPY in (resolved_preference.get("profile_names") or []):
+            try:
+                tree_analysis = tree_details.get("tree_analysis") or {}
+                conf = tree_analysis.get("confidence")
+                if conf is not None:
+                    c = float(conf) if isinstance(conf, (int, float)) else None
+                    if c is not None and not math.isnan(c) and c < CANOPY_CONFIDENCE_THRESHOLD:
+                        tree_weight = TREE_WEIGHT_DEFAULT
+            except Exception:
+                pass
+    
     # Weight each component separately
-    tree_weighted = base_with_expectation * 0.30  # 50 * 0.30 = 15 points max (base canopy with expectation adjustment)
+    tree_weighted = base_with_expectation * tree_weight  # was 0.30 fixed
     gvi_weighted = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
     street_tree_weighted = street_tree_bonus * 1.0  # 5 points max (already 0-5 scale)
     local_green_weighted = local_green_score * 1.0  # 10 points max (already 0-10 scale)

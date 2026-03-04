@@ -765,6 +765,7 @@ def _generate_request_cache_key(
     include_chains: bool,
     enable_schools: Optional[bool],
     job_categories: Optional[str] = None,
+    natural_beauty_preference: Optional[List[str]] = None,
 ) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
@@ -777,6 +778,7 @@ def _generate_request_cache_key(
         str(include_chains),
         str(enable_schools) if enable_schools is not None else "default",
         str(job_categories).strip() if job_categories else "jobcats=None",
+        json.dumps(sorted(natural_beauty_preference)) if natural_beauty_preference else "nb_pref=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -923,6 +925,7 @@ def _compute_single_score_internal(
     premium_code: Optional[str] = None,
     on_pillar_complete: Optional[Callable[[str, float], None]] = None,
     only_pillars: Optional[set[str]] = None,
+    natural_beauty_preference: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1299,7 +1302,8 @@ def _compute_single_score_internal(
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': beauty_overrides if beauty_overrides else None,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
-                'form_context': form_context
+                'form_context': form_context,
+                'natural_beauty_preference': natural_beauty_preference,
             })
         )
     if need_access_to_nature:
@@ -1958,7 +1962,8 @@ def get_livability_score(request: Request,
                          include_chains: bool = True,
                          enable_schools: Optional[bool] = None,
                          job_categories: Optional[str] = None,
-                         test_mode: Optional[bool] = False):
+                         test_mode: Optional[bool] = False,
+                         natural_beauty_preference: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -2005,6 +2010,16 @@ def get_livability_score(request: Request,
             except (json.JSONDecodeError, TypeError):
                 logger.warning(f"Invalid priorities format: {priorities}, ignoring")
                 priorities_dict = None
+
+        # Parse natural_beauty_preference (JSON array string, e.g. '["mountains"]' or '["ocean","canopy"]')
+        natural_beauty_preference_parsed: Optional[List[str]] = None
+        if natural_beauty_preference:
+            try:
+                raw = json.loads(natural_beauty_preference) if isinstance(natural_beauty_preference, str) else natural_beauty_preference
+                if isinstance(raw, list) and 1 <= len(raw) <= 2:
+                    natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
+            except (json.JSONDecodeError, TypeError):
+                pass
         
         # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
         if not test_mode_enabled:
@@ -2017,6 +2032,7 @@ def get_livability_score(request: Request,
                 include_chains,
                 enable_schools,
                 job_categories=job_categories,
+                natural_beauty_preference=natural_beauty_preference_parsed,
             )
             # Differentiated cache TTL based on data stability
             # Use minimum TTL of requested pillars (conservative approach)
@@ -2062,7 +2078,8 @@ def get_livability_score(request: Request,
             enable_schools=enable_schools,
             job_categories=job_categories,
             test_mode=test_mode_enabled,
-            request=request
+            request=request,
+            natural_beauty_preference=natural_beauty_preference_parsed,
         )
         
         # Extract lat/lon for telemetry and caching
@@ -2088,6 +2105,7 @@ def get_livability_score(request: Request,
                     include_chains,
                     enable_schools,
                     job_categories=job_categories,
+                    natural_beauty_preference=natural_beauty_preference_parsed,
                 )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
@@ -2196,6 +2214,7 @@ def create_score_job(
     job_categories: Optional[str] = None,
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
+    natural_beauty_preference: Optional[str] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
@@ -2223,6 +2242,15 @@ def create_score_job(
             priorities_dict = json.loads(priorities) if isinstance(priorities, str) else priorities
         except (json.JSONDecodeError, TypeError):
             priorities_dict = None
+
+    natural_beauty_preference_parsed: Optional[List[str]] = None
+    if natural_beauty_preference:
+        try:
+            raw = json.loads(natural_beauty_preference) if isinstance(natural_beauty_preference, str) else natural_beauty_preference
+            if isinstance(raw, list) and 1 <= len(raw) <= 2:
+                natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
+        except (json.JSONDecodeError, TypeError):
+            pass
 
     premium_code = request.headers.get("X-HomeFit-Premium-Code", "").strip() or None
     test_mode_enabled = bool(test_mode)
@@ -2274,6 +2302,7 @@ def create_score_job(
                 premium_code=premium_code,
                 on_pillar_complete=_on_pillar_complete,
                 only_pillars=only_pillars,
+                natural_beauty_preference=natural_beauty_preference_parsed,
             )
             done_snap = None
             with _SCORE_JOBS_LOCK:
@@ -2337,6 +2366,7 @@ async def _stream_score_with_progress(
     test_mode: bool = False,
     request: Optional[Request] = None,
     only_pillars: Optional[set[str]] = None,
+    natural_beauty_preference: Optional[List[str]] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
@@ -2594,7 +2624,8 @@ async def _stream_score_with_progress(
                 'location_scope': location_scope, 'location_name': location,
                 'overrides': None,
                 'precomputed_tree_canopy_5km': tree_canopy_5km,
-                'form_context': form_context
+                'form_context': form_context,
+                'natural_beauty_preference': natural_beauty_preference,
             })
         )
         pillar_tasks.append(
@@ -3192,6 +3223,7 @@ async def stream_score(
     job_categories: Optional[str] = None,
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
+    natural_beauty_preference: Optional[str] = None,
 ):
     """
     Server-Sent Events endpoint for streaming score calculation progress.
@@ -3232,6 +3264,15 @@ async def stream_score(
                     priorities_dict = priorities
             except (json.JSONDecodeError, TypeError):
                 priorities_dict = None
+
+        natural_beauty_preference_parsed: Optional[List[str]] = None
+        if natural_beauty_preference:
+            try:
+                raw = json.loads(natural_beauty_preference) if isinstance(natural_beauty_preference, str) else natural_beauty_preference
+                if isinstance(raw, list) and 1 <= len(raw) <= 2:
+                    natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
+            except (json.JSONDecodeError, TypeError):
+                pass
         
         return StreamingResponse(
             _stream_score_with_progress(
@@ -3244,6 +3285,7 @@ async def stream_score(
                 test_mode=bool(test_mode),
                 request=request,
                 only_pillars=only_pillars,
+                natural_beauty_preference=natural_beauty_preference_parsed,
             ),
             media_type="text/event-stream",
             headers={
@@ -3504,7 +3546,8 @@ async def stream_score(
                     'location_scope': location_scope, 'location_name': location,
                     'overrides': beauty_overrides if beauty_overrides else None,
                     'precomputed_tree_canopy_5km': tree_canopy_5km,  # Optional: pre-computed tree canopy
-                    'form_context': form_context  # Pass shared form_context
+                    'form_context': form_context,  # Pass shared form_context
+                    'natural_beauty_preference': natural_beauty_preference,
                 })
             )
         
@@ -4075,7 +4118,7 @@ async def stream_score(
             try:
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
                 
-                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools)
+                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools, natural_beauty_preference=None)
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
                 # Add cache indicator to response metadata

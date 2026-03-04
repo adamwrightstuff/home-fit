@@ -114,6 +114,21 @@ final_score = min(100.0, raw_score * 2.0)  # Scale 0-50 to 0-100
 - OSM API (parks, viewpoints, enhancers)
 - NYC API (street trees, NYC only)
 
+### Natural Beauty Personalization (preference-based weights)
+When **ENABLE_NATURAL_BEAUTY_PREFERENCE** is True, the pillar accepts a quiz-derived preference and shifts only **internal component weights**; the V7 formula shape, data sources, and caps are unchanged.
+
+- **Quiz question:** “What kind of natural scenery matters most to you?”
+- **Options:** `mountains` | `ocean` | `lakes_rivers` | `canopy` | `no_preference`
+- **Rules:** Max 2 selections; `no_preference` is single-select only. If 2 options: interpolate (average the two profiles component-by-component).
+
+**Profiles (overrides to V7 weights):**
+- **Mountains:** tree_weight 0.20; scenic weights shift to topography-heavy (e.g. rural 75% topo, 15% landcover, 10% water). When **ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND** is True, topography is blended with V8 viewshed: `0.6×V7_topography + 0.4×viewshed_proxy` (fallback: V7 topography only if GEE viewshed fails).
+- **Ocean:** tree_weight 0.20; water-heavy scenic weights; water sub-weights 80% coast, 10% lake, 10% river.
+- **Lakes/Rivers:** tree_weight 0.22; water sub-weights 15% coast, 55% lake, 30% river.
+- **Canopy:** tree_weight 0.50; landcover-heavy scenic weights. If GEE canopy confidence &lt; **CANOPY_CONFIDENCE_THRESHOLD** (default 0.5), fall back to V7 default weights for that request.
+
+**API:** Request parameter `natural_beauty_preference` (JSON array string, e.g. `["mountains"]` or `["ocean","canopy"]`). Used in `/score`, `/score/jobs`, and `/score/stream`. Cache key includes preference so different preferences do not share cached responses.
+
 ---
 
 ## 2. Active Outdoors (`pillars/active_outdoors.py`)
