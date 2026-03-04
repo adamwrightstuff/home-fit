@@ -22,7 +22,7 @@ const PILLAR_ORDER: PillarKey[] = [
   'social_fabric',
 ]
 
-const TOTAL_QUESTIONS = 6
+const TOTAL_QUESTIONS = 5
 
 const QUESTIONS = [
   {
@@ -59,18 +59,6 @@ const QUESTIONS = [
     ],
   },
   {
-    id: 'beautiful_place',
-    type: 'multi' as const,
-    prompt: 'What does "beautiful place" mean to you?',
-    hint: 'Pick up to 2',
-    options: [
-      { value: 'nature', text: 'Nature — trees, water, open sky' },
-      { value: 'architecture', text: 'Architecture and historic streetscapes' },
-      { value: 'both', text: 'Both equally' },
-      { value: 'none', text: 'Honestly not a priority' },
-    ],
-  },
-  {
     id: 'horizon',
     type: 'single' as const,
     prompt: 'How are you thinking about this move?',
@@ -99,7 +87,6 @@ type QuizAnswers = {
   life_stage: string | null
   weekend_energy: string | null
   car_relationship: string | null
-  beautiful_place: string[]
   horizon: string | null
   natural_scenery: string[]
 }
@@ -109,7 +96,6 @@ function getInitialAnswers(): QuizAnswers {
     life_stage: null,
     weekend_energy: null,
     car_relationship: null,
-    beautiful_place: [],
     horizon: null,
     natural_scenery: [],
   }
@@ -183,25 +169,6 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('public_transit_access', 15)
   }
 
-  // beautiful_place (multi)
-  const bp = answers.beautiful_place
-  for (const sel of bp) {
-    if (sel === 'nature') {
-      set('natural_beauty', Math.max(get('natural_beauty'), 80))
-      set('access_to_nature', Math.max(get('access_to_nature'), 80))
-    } else if (sel === 'architecture') {
-      set('built_beauty', Math.max(get('built_beauty'), 80))
-    } else if (sel === 'both') {
-      set('natural_beauty', Math.max(get('natural_beauty'), 75))
-      set('built_beauty', Math.max(get('built_beauty'), 75))
-      set('access_to_nature', Math.max(get('access_to_nature'), 75))
-    } else if (sel === 'none') {
-      set('natural_beauty', Math.min(get('natural_beauty'), 30))
-      set('built_beauty', Math.min(get('built_beauty'), 30))
-      set('access_to_nature', Math.min(get('access_to_nature'), 30))
-    }
-  }
-
   // horizon
   const h = answers.horizon
   if (h === 'long_term') {
@@ -273,40 +240,13 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       return answers[key] !== null && answers[key] !== undefined
     }
     if (question.type === 'multi') {
-      if (question.id === 'beautiful_place') return answers.beautiful_place.length > 0
-      if (question.id === 'natural_scenery') return true // 0 = no preference, 1 or 2 = valid
-      return false
+      return true // natural_scenery: 0 = no preference, 1 or 2 = valid
     }
     return false
   }, [question, answers])
 
   const set_single = useCallback((key: keyof QuizAnswers, value: string) => {
     set_answers((prev) => ({ ...prev, [key]: value }))
-  }, [])
-
-  const toggle_multi_option = useCallback((value: string) => {
-    set_answers((prev) => {
-      const current = prev.beautiful_place
-      const is_none = value === 'none'
-      const has_none = current.includes('none')
-
-      if (is_none) {
-        return { ...prev, beautiful_place: current.includes('none') ? [] : ['none'] }
-      }
-      if (has_none) {
-        const without_none = current.filter((x) => x !== 'none')
-        const next = without_none.includes(value)
-          ? without_none.filter((x) => x !== value)
-          : [...without_none, value].slice(0, 2)
-        return { ...prev, beautiful_place: next }
-      }
-      const next = current.includes(value)
-        ? current.filter((x) => x !== value)
-        : current.length >= 2
-          ? [...current.slice(1), value]
-          : [...current, value]
-      return { ...prev, beautiful_place: next }
-    })
   }, [])
 
   const toggle_natural_scenery = useCallback((value: string) => {
@@ -394,9 +334,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     const single_value = question.type === 'single' ? (answers[question.id as keyof QuizAnswers] as string | null) : null
     const multi_selected =
       question.type === 'multi'
-        ? question.id === 'natural_scenery'
-          ? answers.natural_scenery
-          : answers.beautiful_place
+        ? answers.natural_scenery
         : []
 
     return (
@@ -442,9 +380,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                     onClick={() =>
                       question.type === 'single'
                         ? set_single(question.id as keyof QuizAnswers, opt.value)
-                        : question.id === 'natural_scenery'
-                          ? toggle_natural_scenery(opt.value)
-                          : toggle_multi_option(opt.value)
+                        : toggle_natural_scenery(opt.value)
                     }
                     className="hf-card-sm"
                     style={{
