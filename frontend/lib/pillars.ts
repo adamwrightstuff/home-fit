@@ -82,10 +82,10 @@ export const PILLAR_META: Record<
       'What it feels like when you step outside—tree-lined streets, nearby parks, water, and hills for everyday downshift',
   },
   neighborhood_amenities: {
-    icon: '🏘️',
-    name: 'Neighborhood Amenities',
+    icon: '🛒',
+    name: 'Daily Amenities',
     description:
-      "Walkable variety and neighborhood character—where you have choices for coffee, groceries, and daily needs without driving",
+      'A town center with a variety of daily amenities — from coffee and groceries to shops and restaurants — within reach.',
   },
   active_outdoors: {
     icon: '🏃',
