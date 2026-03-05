@@ -667,18 +667,28 @@ def _compute_longevity_index(
     When only_pillars is set (partial request), a longevity pillar is also eligible if it
     was requested (in only_pillars), so the index reflects run longevity pillars instead of 0.
     When token_allocation is None, all 6 longevity pillars are used (missing = 0).
+
+    Fallback: if no pillar is "eligible" (weight/requested) but livability_pillars contains
+    at least one longevity pillar with a numeric score, compute the index over those pillars
+    so we never show 0 when we have data (e.g. partial cache or eligibility edge case).
     """
     contributions: Dict[str, float] = {}
     if token_allocation is not None:
         # Eligible = longevity pillars that have a score AND (user selected them with weight > 0
         # OR this was a partial request and we ran this pillar)
+        def _has_score(p: str) -> bool:
+            raw = (livability_pillars.get(p) or {}).get("score")
+            return raw is not None and isinstance(raw, (int, float))
+
         def _eligible(p: str) -> bool:
-            has_score = (livability_pillars.get(p) or {}).get("score") is not None
             has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0)
             was_requested = only_pillars is not None and p in only_pillars
-            return has_score and (has_weight or was_requested)
+            return _has_score(p) and (has_weight or was_requested)
 
         eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _eligible(p)]
+        if not eligible:
+            # Fallback: use any longevity pillar that has a score so we don't show 0 when we have data
+            eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _has_score(p)]
         if not eligible:
             return 0.0, contributions
         total_weight = sum(LONGEVITY_INDEX_WEIGHTS[p] for p in eligible)
