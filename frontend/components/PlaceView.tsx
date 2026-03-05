@@ -7,7 +7,7 @@ import HomeFitInfo from './HomeFitInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, type PillarKey } from '@/lib/pillars'
-import { totalFromPartialPillarScores } from '@/lib/reweight'
+import { totalFromPartialPillarScores, getPillarWeightsAndContributions } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
@@ -136,32 +136,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
-  // When user changes a preference that affects how a pillar is scored, clear that pillar's cached score
-  // so the next Run Score re-runs it and the pillar score updates.
+  // Pass through to parent; no invalidation — pillar scores stay as-is when Scenery/Character/Density change.
   const handleSearchOptionsChange = useCallback(
     (newOptions: SearchOptions) => {
-      if (onSearchOptionsChange == null) return
-      const prev = searchOptions
-      if (prev.natural_beauty_preference !== newOptions.natural_beauty_preference) {
-        setPillarScores((s) => {
-          const next = { ...s }
-          delete next.natural_beauty
-          return next
-        })
-      }
-      if (
-        prev.built_character_preference !== newOptions.built_character_preference ||
-        prev.built_density_preference !== newOptions.built_density_preference
-      ) {
-        setPillarScores((s) => {
-          const next = { ...s }
-          delete next.built_beauty
-          return next
-        })
-      }
-      onSearchOptionsChange(newOptions)
+      onSearchOptionsChange?.(newOptions)
     },
-    [onSearchOptionsChange, searchOptions]
+    [onSearchOptionsChange]
   )
 
   // Merge page-level priorities with local so total updates whether user changes Importance here or in SearchOptions.
@@ -177,6 +157,15 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     )
     if (Object.keys(partialScores).length === 0) return null
     return totalFromPartialPillarScores(partialScores, effectivePriorities) ?? null
+  }, [pillarScores, effectivePriorities])
+
+  // Per-pillar weight % and contribution from current priorities (recalculation without API — updates when Importance changes).
+  const pillarWeightsAndContributions = useMemo(() => {
+    const partialScores = Object.fromEntries(
+      Object.entries(pillarScores).map(([k, v]) => [k, v.score])
+    )
+    if (Object.keys(partialScores).length === 0) return {}
+    return getPillarWeightsAndContributions(partialScores, effectivePriorities)
   }, [pillarScores, effectivePriorities])
 
   // When user changes prioritization for pillars that already have scores, total is recomputed above (no effect needed).
@@ -589,6 +578,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         {getScoreBandLabel(score.score)}
                       </span>
                     </span>
+                  )}
+                  {score != null && pillarWeightsAndContributions[key] && (
+                    <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                      Weight {pillarWeightsAndContributions[key].weight.toFixed(1)}% → contributes {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
+                    </div>
                   )}
                   {score == null && selected && (
                     <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Selected</span>

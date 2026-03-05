@@ -194,3 +194,35 @@ export function totalFromPartialPillarScores(
   return Math.round((weightedSum / weightSum) * 100) / 100
 }
 
+/** Expose token allocation for UI: weight % per pillar from current priorities (no API). */
+export function getPillarWeightsFromPriorities(
+  priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
+): Record<string, number> {
+  return prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
+}
+
+/** Per-pillar weight % and contribution from scores + priorities (recalculation without API). */
+export function getPillarWeightsAndContributions(
+  partialScores: Record<string, number>,
+  priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
+): Record<string, { weight: number; contribution: number }> {
+  const tokens = prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
+  const completed = Object.entries(partialScores).filter(
+    ([_, s]) => typeof s === 'number' && Number.isFinite(s)
+  ) as [string, number][]
+  let weightSum = 0
+  for (const [k] of completed) {
+    weightSum += Number(tokens[k] ?? 0)
+  }
+  const scale = weightSum > 0 ? 100 / weightSum : 0
+  const out: Record<string, { weight: number; contribution: number }> = {}
+  for (const [k, score] of completed) {
+    const w = Number(tokens[k] ?? 0)
+    const weight = weightSum > 0 ? Math.round(w * scale * 10) / 10 : 0
+    // Contribution so that sum(contributions) = total (weight is renormalized %).
+    const contribution = weightSum > 0 ? Math.round((score * (w * scale)) / 100 * 100) / 100 : 0
+    out[k] = { weight, contribution }
+  }
+  return out
+}
+
