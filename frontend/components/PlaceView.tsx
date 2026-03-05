@@ -48,7 +48,7 @@ const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_pr
 const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
   { value: 'spread_out_residential', label: 'Spread out residential' },
   { value: 'walkable_residential', label: 'Walkable residential' },
-  { value: 'dense_urban_living', label: 'Dense urban living' },
+  { value: 'dense_urban_living', label: 'Downtown living' },
 ]
 
 type Importance = 'Low' | 'Medium' | 'High'
