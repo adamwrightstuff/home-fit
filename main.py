@@ -47,6 +47,7 @@ from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
 from data_sources.arch_diversity import compute_arch_diversity
+from data_sources.job_category_overlays import parse_job_categories
 
 ##########################
 # CONFIGURATION FLAGS
@@ -1348,9 +1349,12 @@ def _compute_single_score_internal(
             })
         )
     if _include_pillar('housing_value'):
+        _selected_jobcats = parse_job_categories(job_categories)
+        _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
-                'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+                'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
+                'use_national_income_for_affordability': _remote_only,
             })
         )
 
@@ -2703,10 +2707,13 @@ async def _stream_score_with_progress(
                 'job_categories': job_categories,
             })
         )
+        _selected_jobcats = parse_job_categories(job_categories)
+        _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
-                'density': density, 'city': city
+                'density': density, 'city': city,
+                'use_national_income_for_affordability': _remote_only,
             })
         )
         pillar_tasks.append(
@@ -3669,9 +3676,12 @@ async def stream_score(
                 })
             )
         if _include_pillar('housing_value'):
+            _selected_jobcats = parse_job_categories(job_categories)
+            _remote_only = len(_selected_jobcats) == 1 and _selected_jobcats[0] == "remote_flexible"
             pillar_tasks.append(
                 ('housing_value', get_housing_value_score, {
-                    'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city
+                    'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
+                    'use_national_income_for_affordability': _remote_only,
                 })
             )
 

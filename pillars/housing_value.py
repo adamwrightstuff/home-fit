@@ -10,12 +10,13 @@ from data_sources import census_api, data_quality
 def get_housing_value_score(lat: float, lon: float, 
                            census_tract: Optional[Dict] = None,
                            density: Optional[float] = None,
-                           city: Optional[str] = None) -> Tuple[float, Dict]:
+                           city: Optional[str] = None,
+                           use_national_income_for_affordability: bool = False) -> Tuple[float, Dict]:
     """
     Calculate housing value score (0-100) based on affordability and space.
 
     Scoring:
-    - Local Affordability (0-50): Home price ÷ local income
+    - Local Affordability (0-50): Home price ÷ local income (or US median when use_national_income_for_affordability)
     - Space/Size (0-30): Median rooms per unit
     - Value Efficiency (0-20): Usable space per dollar (rooms per $100k)
 
@@ -23,6 +24,8 @@ def get_housing_value_score(lat: float, lon: float,
         census_tract: Pre-computed census tract data (optional, will fetch if None)
         density: Pre-computed population density (optional, will fetch if None)
         city: City name for data quality assessment (optional)
+        use_national_income_for_affordability: If True, use US median household income for affordability
+            (for remote/flexible workers; same home price vs national income).
 
     Returns:
         (total_score, detailed_breakdown)
@@ -122,6 +125,20 @@ def get_housing_value_score(lat: float, lon: float,
     median_income = housing_data["median_household_income"]
     median_rooms = housing_data["median_rooms"]
 
+    # When remote/flexible only: affordability vs US median income (no extra API call)
+    affordability_denominator = "local_median"
+    if use_national_income_for_affordability:
+        from data_sources.normalization import load_economic_baselines
+        baselines = load_economic_baselines()
+        national_income = baselines.get("us_median_household_income")
+        if isinstance(national_income, (int, float)) and national_income > 0:
+            median_income_for_affordability = float(national_income)
+        else:
+            median_income_for_affordability = 91016.0  # ACS 2022 1-year US median fallback
+        affordability_denominator = "us_median"
+    else:
+        median_income_for_affordability = median_income
+
     # Detect metro area for contextual adjustments
     metro_name = None
     if city:
@@ -133,7 +150,7 @@ def get_housing_value_score(lat: float, lon: float,
 
     # Score components
     affordability_score = _score_local_affordability(
-        median_value, median_income)
+        median_value, median_income_for_affordability)
     space_score = _score_space(median_rooms)
     efficiency_score = _score_value_efficiency(median_value, median_rooms, metro_name)
 
@@ -154,7 +171,8 @@ def get_housing_value_score(lat: float, lon: float,
     area_type = data_quality.detect_area_type(lat, lon, density, city=city)
     quality_metrics = data_quality.assess_pillar_data_quality('housing_value', combined_data, lat, lon, area_type)
 
-    # Build response
+    # Build response (summary uses income denominator that was used for affordability)
+    summary_income = median_income_for_affordability if affordability_denominator == "us_median" else median_income
     breakdown = {
         "score": round(total_score, 1),
         "breakdown": {
@@ -162,7 +180,7 @@ def get_housing_value_score(lat: float, lon: float,
             "space": round(space_score, 1),
             "value_efficiency": round(efficiency_score, 1)
         },
-        "summary": _build_summary(median_value, median_income, median_rooms),
+        "summary": _build_summary(median_value, summary_income, median_rooms, affordability_denominator=affordability_denominator),
         "data_quality": quality_metrics,
         "area_classification": {}
     }
@@ -325,7 +343,7 @@ def _score_value_efficiency(home_value: float, median_rooms: float, metro_name: 
             return 0.0
 
 
-def _build_summary(home_value: float, income: float, rooms: float) -> Dict:
+def _build_summary(home_value: float, income: float, rooms: float, *, affordability_denominator: str = "local_median") -> Dict:
     """Build summary of housing value characteristics."""
     ratio = home_value / income if income > 0 else 0
     cost_per_room = home_value / rooms if rooms > 0 else 0
@@ -353,7 +371,7 @@ def _build_summary(home_value: float, income: float, rooms: float) -> Dict:
     else:
         affordability = "Expensive"
 
-    return {
+    out: Dict = {
         "median_home_value": int(home_value),
         "median_household_income": int(income),
         "median_rooms": round(rooms, 1),
@@ -363,6 +381,9 @@ def _build_summary(home_value: float, income: float, rooms: float) -> Dict:
         "housing_type": housing_type,
         "affordability_rating": affordability
     }
+    if affordability_denominator == "us_median":
+        out["affordability_denominator"] = "us_median"
+    return out
 
 
 def _empty_breakdown() -> Dict:
