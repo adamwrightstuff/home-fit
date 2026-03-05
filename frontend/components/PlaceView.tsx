@@ -136,14 +136,20 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
-  // Derive total from pillar scores and current priorities so changing priority updates total immediately (no API call).
+  // Merge page-level priorities with local so total updates whether user changes Importance here or in SearchOptions.
+  const effectivePriorities = useMemo(
+    () => ({ ...searchOptions.priorities, ...selectedPriorities }),
+    [searchOptions.priorities, selectedPriorities]
+  )
+
+  // Derive total from pillar scores and effective priorities so changing priority updates total immediately (no API call).
   const totalScore = useMemo(() => {
     const partialScores = Object.fromEntries(
       Object.entries(pillarScores).map(([k, v]) => [k, v.score])
     )
     if (Object.keys(partialScores).length === 0) return null
-    return totalFromPartialPillarScores(partialScores, selectedPriorities) ?? null
-  }, [pillarScores, selectedPriorities])
+    return totalFromPartialPillarScores(partialScores, effectivePriorities) ?? null
+  }, [pillarScores, effectivePriorities])
 
   // When user changes prioritization for pillars that already have scores, total is recomputed above (no effect needed).
   // Removed previous useEffect that set totalScore; total is now derived so it always reflects current priorities.
@@ -569,7 +575,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       <button
                         key={level}
                         type="button"
-                        onClick={() => setPillarImportance(key, level)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPillarImportance(key, level)
+                        }}
                         style={{
                           padding: '0.35rem 0.65rem',
                           borderRadius: 8,
