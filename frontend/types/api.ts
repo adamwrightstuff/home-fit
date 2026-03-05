@@ -131,7 +131,7 @@ export interface ScoreRequestParams {
   natural_beauty_preference?: string;
   /** Built Beauty character: historic | contemporary | no_preference. */
   built_character_preference?: string;
-  /** Built Beauty density: houses_and_open_space | neighborhood_blocks | city_center. */
+  /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living. */
   built_density_preference?: string;
 }
 

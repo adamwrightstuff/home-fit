@@ -541,8 +541,11 @@ When personalization is enabled, the pillar accepts **inline preference selector
    - **No preference:** Built Beauty’s weight in the HomeFit composite is halved; design score uses default weights.
 
 2. **Density preference** — *What kind of built environment feels right day-to-day?*
-   - **Options:** Houses and open space | Neighborhood blocks | City center (single select).
-   - Shifts form-score component weights and area-type scoring targets (block grain, streetwall continuity) to match the selected profile.
+   - **Options:** Spread out residential | Walkable residential | Dense urban living (single select).
+   - Shifts form-score targets (block grain, streetwall continuity) to match the selected profile:
+     - **Spread out residential** → exurban/rural profile (coarse block grain sweet spot 20–45; streetwall peak 50–70, penalize very high).
+     - **Walkable residential** → suburban profile (moderate block grain 40–65; streetwall peak 60–80).
+     - **Dense urban living** → urban_core profile (fine block grain 60–85; linear streetwall, more continuity = higher score).
 
 **UX interaction:** Preferences are set **inline** on the Built Beauty pillar. The user **taps the Built Beauty pillar card** to expand it, then selects **chips** for character and density inside the expanded card. The **score updates immediately** when a chip is selected; there is **no separate quiz flow** for these preferences.
 

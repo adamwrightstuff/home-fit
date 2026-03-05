@@ -46,10 +46,10 @@ const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_pr
 ]
 
 /** Built Beauty density preference (single select). */
-const BUILT_DENSITY_CHIPS: Array<{ value: 'houses_and_open_space' | 'neighborhood_blocks' | 'city_center'; label: string }> = [
-  { value: 'houses_and_open_space', label: 'Houses and open space' },
-  { value: 'neighborhood_blocks', label: 'Neighborhood blocks' },
-  { value: 'city_center', label: 'City center' },
+const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
+  { value: 'spread_out_residential', label: 'Spread out residential' },
+  { value: 'walkable_residential', label: 'Walkable residential' },
+  { value: 'dense_urban_living', label: 'Dense urban living' },
 ]
 
 type Importance = 'Low' | 'Medium' | 'High'

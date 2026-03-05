@@ -31,8 +31,8 @@ interface SearchOptions {
   natural_beauty_preference?: string[] | null
   /** Built Beauty character: historic | contemporary | no_preference; null = no selection. */
   built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
-  /** Built Beauty density: houses_and_open_space | neighborhood_blocks | city_center; null = no selection. */
-  built_density_preference?: 'houses_and_open_space' | 'neighborhood_blocks' | 'city_center' | null
+  /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living; null = no selection. */
+  built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
 }
 
 interface SearchOptionsProps {
@@ -137,7 +137,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           enable_schools: parsed.enable_schools && !storedPremiumCode ? false : parsed.enable_schools,
         }
         const validCharacter = ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference)
-        const validDensity = ['houses_and_open_space', 'neighborhood_blocks', 'city_center'].includes(parsed.built_density_preference)
+        const validDensity = ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference)
         onChange({
           ...options,
           ...migrated,
