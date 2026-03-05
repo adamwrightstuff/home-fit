@@ -112,7 +112,7 @@ export const PILLAR_META: Record<
     icon: '📈',
     name: 'Economic Opportunity',
     description:
-      'Local economic opportunity and resilience—job market health, earnings vs. cost, business dynamism, and diversification',
+      'The strength of the local job market for your profession—or the health of the local economy if you work remotely.',
   },
   quality_education: {
     icon: '🏫',
@@ -185,7 +185,7 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   air_travel_access:
     'Reasonable access to airports makes it easier to stay connected with family, travel for work, and take trips. It supports social bonds and life satisfaction, especially for those who value mobility.',
   economic_security:
-    'Local job variety, wage levels, and business dynamism affect financial security and opportunity. Strong, diversified economies tend to offer better job matches and resilience during downturns.',
+    'Local job market strength for your profession, or overall economic health if you work remotely. Job category focus personalizes density, ecosystem, and resilience.',
   quality_education:
     'Strong local schools support child development and family satisfaction. Access to good K–12 and nearby higher education is associated with long-term outcomes and neighborhood stability.',
   housing_value:

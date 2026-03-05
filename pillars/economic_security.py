@@ -18,7 +18,7 @@ All inputs from free public APIs (Census ACS/BDS, BLS QCEW/OEWS). Normalized wit
 from __future__ import annotations
 
 import math
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 
 from data_sources.data_quality import assess_pillar_data_quality
 from data_sources.economic_security_data import (
@@ -398,6 +398,8 @@ def get_economic_security_score(
     selected = parse_job_categories(job_categories)
     overlays_payload: Optional[Dict[str, Any]] = None
     personalized_density: Optional[float] = None
+    remote_only = len(selected) == 1 and selected[0] == "remote_flexible"
+    selected_professional = [c for c in selected if c != "remote_flexible"]
 
     if selected:
         overlays_payload = compute_job_category_overlays(
@@ -409,17 +411,41 @@ def get_economic_security_score(
             public_admin_share_pct=dp03_now.get("DP03_0045PE") if isinstance(dp03_now.get("DP03_0045PE"), (int, float)) else None,
         )
         overlays = (overlays_payload or {}).get("job_category_overlays", {}) or {}
-        vals: List[float] = []
-        for k in selected:
-            v = (overlays.get(k, {}) or {}).get("final_job_market_score")
-            if isinstance(v, (int, float)):
-                vals.append(float(v))
-        if vals:
-            personalized_density = sum(vals) / len(vals)
 
-    if isinstance(personalized_density, (int, float)):
-        components["density"] = float(personalized_density)
-        final_score, component_renorm = _weighted_avg(components, component_weights)
+        if remote_only:
+            # User does not depend on local job market: zero D and M, reweight E and R
+            components["density"] = 0.0
+            components["mobility"] = 0.0
+            component_weights_remote = {"density": 0.0, "mobility": 0.0, "ecosystem": 0.444, "resilience": 0.556}
+            final_score, component_renorm = _weighted_avg(components, component_weights_remote)
+        elif selected_professional:
+            # Density: average over professional categories only (not remote_flexible)
+            density_vals: List[float] = []
+            for k in selected_professional:
+                v = (overlays.get(k, {}) or {}).get("final_job_market_score")
+                if isinstance(v, (int, float)):
+                    density_vals.append(float(v))
+            if density_vals:
+                personalized_density = sum(density_vals) / len(density_vals)
+                components["density"] = float(personalized_density)
+
+            # E/R: replace industry_diversity with category_concentration_score when we have it
+            conc_vals: List[float] = []
+            for k in selected_professional:
+                v = (overlays.get(k, {}) or {}).get("category_concentration_score")
+                if isinstance(v, (int, float)):
+                    conc_vals.append(float(v))
+            if conc_vals:
+                category_concentration_avg = sum(conc_vals) / len(conc_vals)
+                estabs_score = sub_scores.get("estabs_per_1k")
+                anchored_score = sub_scores.get("anchored_balance")
+                components["ecosystem"] = 0.70 * category_concentration_avg + 0.30 * (float(estabs_score) if isinstance(estabs_score, (int, float)) else 0.0)
+                components["resilience"] = 0.60 * category_concentration_avg + 0.40 * (float(anchored_score) if isinstance(anchored_score, (int, float)) else 0.0)
+
+            final_score, component_renorm = _weighted_avg(components, component_weights)
+        else:
+            # Selected but only remote_flexible (handled above) or no valid overlay data
+            final_score, component_renorm = _weighted_avg(components, component_weights)
     else:
         final_score, component_renorm = base_final_score, base_component_renorm
     final_score = float(final_score or 0.0)

@@ -178,11 +178,24 @@ def compute_job_category_overlays(
         adjustment = _clamp((density_pct - 0.5) * 30.0, -15.0, 15.0)
         final_job_market = _clamp(float(base_job_market_strength) + adjustment, 0.0, 100.0)
 
-        overlays[cat] = {
+        entry: Dict[str, Any] = {
             "adjustment": round(adjustment, 2),
             "final_job_market_score": round(final_job_market, 1),
             "density_percentile": round(density_pct, 3),
         }
+        # 0-100 concentration score for E/R personalization (professional categories only)
+        if cat != "remote_flexible" and density_share is not None:
+            conc_score = normalize_metric_to_0_100(
+                metric=f"jobcat_density_{cat}",
+                value=density_share,
+                division=division,
+                area_bucket=area_bucket,
+            )
+            if isinstance(conc_score, (int, float)):
+                entry["category_concentration_score"] = round(float(conc_score), 1)
+        else:
+            entry["category_concentration_score"] = None
+        overlays[cat] = entry
 
     return {"job_category_overlays": overlays}
 
