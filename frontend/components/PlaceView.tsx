@@ -6,7 +6,7 @@ import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -80,7 +80,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
-  const [longevityIndex, setLongevityIndex] = useState<number | null>(null)
+  const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
   const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -185,10 +185,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         if (data != null && typeof data.score === 'number') {
           setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score } }))
         }
-        const rawLongevity = (resp as { longevity_index?: number }).longevity_index
-        const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
-        const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
-        if (typeof li === 'number') setLongevityIndex(li)
         const summary = (resp as { place_summary?: string }).place_summary
         if (summary != null) setPlaceSummary(summary)
         setProgress(100)
@@ -308,7 +304,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
       })
-      setLongevityIndex(null)
       const resp = await getScoreWithProgress(
         {
           location: place.location,
@@ -339,16 +334,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         if (data != null && typeof data.score === 'number') mergedScores[k] = { score: data.score }
       })
       setPillarScores(mergedScores)
-      const rawLongevity = (resp as { longevity_index?: number }).longevity_index
-      const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
-      const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
-      setLongevityIndex(li)
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
-      if (process.env.NODE_ENV === 'development') {
-        const keys = typeof resp === 'object' && resp !== null ? Object.keys(resp) : []
-        console.log('[PlaceView] longevity_index from API:', rawLongevity, 'from result:', fromResult, '→', li, '| response keys:', keys.slice(0, 25))
-      }
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')

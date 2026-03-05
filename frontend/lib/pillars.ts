@@ -22,6 +22,39 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'quality_education',
 ])
 
+/** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
+export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
+  social_fabric: 30,
+  active_outdoors: 25,
+  neighborhood_amenities: 20,
+  natural_beauty: 10,
+  climate_risk: 10,
+  quality_education: 5,
+}
+
+/**
+ * Compute Longevity Index (0–100) from pillar scores using fixed longevity weights.
+ * Uses only longevity pillars that have a score; renormalizes weights over that subset.
+ * Returns null if no longevity pillar has a score.
+ */
+export function computeLongevityIndex(
+  pillarScores: Record<string, { score?: number }>
+): number | null {
+  const eligible = (Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]).filter((p) => {
+    const s = pillarScores[p]?.score
+    return typeof s === 'number'
+  })
+  if (eligible.length === 0) return null
+  const totalWeight = eligible.reduce((sum, p) => sum + LONGEVITY_INDEX_WEIGHTS[p], 0)
+  if (totalWeight <= 0) return null
+  let total = 0
+  for (const p of eligible) {
+    const score = pillarScores[p]!.score!
+    total += score * (LONGEVITY_INDEX_WEIGHTS[p] / totalWeight)
+  }
+  return Math.round(total * 100) / 100
+}
+
 /** Copy for Longevity Score UX: tooltip, short subtitle, full modal, and key distinction. */
 export const LONGEVITY_COPY = {
   /** Full version for tooltip/modal. */
