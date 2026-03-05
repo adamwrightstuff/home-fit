@@ -686,7 +686,7 @@ def _compute_longevity_index(
         # OR this was a partial request and we ran this pillar)
         def _eligible(p: str) -> bool:
             has_score = (livability_pillars.get(p) or {}).get("score") is not None
-            has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0
+            has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0)
             was_requested = only_pillars is not None and p in only_pillars
             return has_score and (has_weight or was_requested)
 
