@@ -11,8 +11,9 @@ computes division-level mean/std for z-score normalization, and writes:
 - data/voter_registration_engagement_stats.json
     {division_code: {"mean": float, "std": float, "n": int}}
 
-If --input-csv is missing or empty, writes empty dicts so runtime skips
-voter registration gracefully.
+If --input-csv is missing or empty, writes empty dicts. At runtime, the pillar
+uses state-level registration rates from data/state_registration_rates.json instead
+(no build step required—engagement works out of the box).
 
 Input CSV format (one of):
   - geoid, registration_rate   (rate 0–1)
