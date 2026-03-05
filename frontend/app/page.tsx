@@ -33,6 +33,8 @@ export default function Home() {
       enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
       job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
       natural_beauty_preference: Array.isArray(parsed.natural_beauty_preference) ? parsed.natural_beauty_preference : null,
+      built_character_preference: ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference) ? parsed.built_character_preference : null,
+      built_density_preference: ['houses_and_open_space', 'neighborhood_blocks', 'city_center'].includes(parsed.built_density_preference) ? parsed.built_density_preference : null,
     }
       }
     } catch (e) {
@@ -44,6 +46,8 @@ export default function Home() {
       enable_schools: false,
       job_categories: [],
       natural_beauty_preference: null,
+      built_character_preference: null,
+      built_density_preference: null,
     }
   })
 

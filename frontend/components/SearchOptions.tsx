@@ -29,6 +29,10 @@ interface SearchOptions {
   job_categories: string[]
   /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
   natural_beauty_preference?: string[] | null
+  /** Built Beauty character: historic | contemporary | no_preference; null = no selection. */
+  built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
+  /** Built Beauty density: houses_and_open_space | neighborhood_blocks | city_center; null = no selection. */
+  built_density_preference?: 'houses_and_open_space' | 'neighborhood_blocks' | 'city_center' | null
 }
 
 interface SearchOptionsProps {
@@ -132,7 +136,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           ...parsed,
           enable_schools: parsed.enable_schools && !storedPremiumCode ? false : parsed.enable_schools,
         }
-        onChange({ ...options, ...migrated })
+        const validCharacter = ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference)
+        const validDensity = ['houses_and_open_space', 'neighborhood_blocks', 'city_center'].includes(parsed.built_density_preference)
+        onChange({
+          ...options,
+          ...migrated,
+          built_character_preference: validCharacter ? parsed.built_character_preference : null,
+          built_density_preference: validDensity ? parsed.built_density_preference : null,
+        })
       }
       hasLoadedRef.current = true
     } catch (e) {

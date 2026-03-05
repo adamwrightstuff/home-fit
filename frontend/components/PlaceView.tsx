@@ -38,6 +38,20 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'canopy', label: 'Canopy' },
 ]
 
+/** Built Beauty character preference (single select). */
+const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
+  { value: 'historic', label: 'Historic character' },
+  { value: 'contemporary', label: 'Contemporary design' },
+  { value: 'no_preference', label: 'No preference' },
+]
+
+/** Built Beauty density preference (single select). */
+const BUILT_DENSITY_CHIPS: Array<{ value: 'houses_and_open_space' | 'neighborhood_blocks' | 'city_center'; label: string }> = [
+  { value: 'houses_and_open_space', label: 'Houses and open space' },
+  { value: 'neighborhood_blocks', label: 'Neighborhood blocks' },
+  { value: 'city_center', label: 'City center' },
+]
+
 type Importance = 'Low' | 'Medium' | 'High'
 
 /** Prefer neighborhood-style label: strip trailing zip so we show "Gowanus, Brooklyn" not "New York, NY 11217". */
@@ -204,6 +218,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             searchOptions.natural_beauty_preference?.length ?
               JSON.stringify(searchOptions.natural_beauty_preference) :
               undefined,
+          built_character_preference: searchOptions.built_character_preference ?? undefined,
+          built_density_preference: searchOptions.built_density_preference ?? undefined,
         },
         (partial) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
@@ -638,6 +654,72 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         )
                       })}
                     </div>
+                  )}
+                  {key === 'built_beauty' && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Character:</span>
+                        {BUILT_CHARACTER_CHIPS.map(({ value, label }) => {
+                          const selected = searchOptions.built_character_preference === value
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onSearchOptionsChange?.({
+                                  ...searchOptions,
+                                  built_character_preference: selected ? null : value,
+                                })
+                              }}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: 8,
+                                fontSize: '0.85rem',
+                                fontWeight: selected ? 600 : 400,
+                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                color: selected ? 'white' : 'var(--hf-text-secondary)',
+                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Density:</span>
+                        {BUILT_DENSITY_CHIPS.map(({ value, label }) => {
+                          const selected = searchOptions.built_density_preference === value
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onSearchOptionsChange?.({
+                                  ...searchOptions,
+                                  built_density_preference: selected ? null : value,
+                                })
+                              }}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: 8,
+                                fontSize: '0.85rem',
+                                fontWeight: selected ? 600 : 400,
+                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                color: selected ? 'white' : 'var(--hf-text-secondary)',
+                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </>
                   )}
                   {key === 'quality_education' && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
