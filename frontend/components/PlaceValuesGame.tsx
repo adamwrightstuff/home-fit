@@ -77,7 +77,7 @@ const QUESTIONS = [
       { value: 'mountains', text: 'Mountains or dramatic terrain' },
       { value: 'ocean', text: 'Ocean or coastline' },
       { value: 'lakes_rivers', text: 'Lakes or rivers' },
-      { value: 'canopy', text: 'Tree canopy and greenery' },
+      { value: 'canopy', text: 'Greenery' },
       { value: 'no_preference', text: 'No strong preference' },
     ],
   },

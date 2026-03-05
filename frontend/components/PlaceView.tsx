@@ -35,7 +35,7 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'mountains', label: 'Mountains' },
   { value: 'ocean', label: 'Ocean' },
   { value: 'lakes_rivers', label: 'Lakes & rivers' },
-  { value: 'canopy', label: 'Canopy' },
+  { value: 'canopy', label: 'Greenery' },
 ]
 
 /** Built Beauty character preference (single select). */

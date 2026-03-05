@@ -67,7 +67,7 @@ export const PILLAR_META: Record<
     icon: '🌳',
     name: 'Natural Beauty',
     description:
-      'The natural landscape around you — mountains, water, canopy, or open terrain — scored for what matters to you',
+      'The natural landscape around you — mountains, water, or greenery — scored for what matters to you',
   },
   built_beauty: {
     icon: '🏛️',
