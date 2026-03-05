@@ -136,12 +136,95 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
-  // Pass through to parent; no invalidation — pillar scores stay as-is when Scenery/Character/Density change.
+  // Re-run a single pillar with given options (e.g. after Scenery/Character/Density change). Updates that pillar's score and total.
+  const runSinglePillar = useCallback(
+    async (pillarKey: 'natural_beauty' | 'built_beauty', options: SearchOptions) => {
+      setLoading(true)
+      setProgress(5)
+      setScoreProgress({})
+      setPillarsInProgress([pillarKey])
+      const prioritiesForRequest: PillarPriorities = {
+        active_outdoors: 'None',
+        built_beauty: 'None',
+        natural_beauty: 'None',
+        access_to_nature: 'None',
+        neighborhood_amenities: 'None',
+        air_travel_access: 'None',
+        public_transit_access: 'None',
+        healthcare_access: 'None',
+        economic_security: 'None',
+        quality_education: 'None',
+        housing_value: 'None',
+        climate_risk: 'None',
+        social_fabric: 'None',
+      }
+      selectedPillars.forEach((k) => {
+        prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
+      })
+      try {
+        const resp = await getScoreWithProgress(
+          {
+            location: place.location,
+            only: pillarKey,
+            priorities: JSON.stringify(prioritiesForRequest),
+            job_categories: options.job_categories?.join(','),
+            include_chains: options.include_chains,
+            enable_schools: options.enable_schools,
+            natural_beauty_preference:
+              options.natural_beauty_preference?.length
+                ? JSON.stringify(options.natural_beauty_preference)
+                : undefined,
+            built_character_preference: options.built_character_preference ?? undefined,
+            built_density_preference: options.built_density_preference ?? undefined,
+          },
+          (partial) => {
+            setScoreProgress((prev) => ({ ...prev, ...partial }))
+            setProgress(Math.min(98, 5 + 90))
+          }
+        )
+        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
+        const data = pillars[pillarKey]
+        if (data != null && typeof data.score === 'number') {
+          setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score } }))
+        }
+        const rawLongevity = (resp as { longevity_index?: number }).longevity_index
+        const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
+        const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
+        if (typeof li === 'number') setLongevityIndex(li)
+        const summary = (resp as { place_summary?: string }).place_summary
+        if (summary != null) setPlaceSummary(summary)
+        setProgress(100)
+      } catch (e) {
+        onError(e instanceof Error ? e.message : 'Failed to update score.')
+      } finally {
+        setLoading(false)
+        setProgress(0)
+        setScoreProgress({})
+        setPillarsInProgress([])
+      }
+    },
+    [place.location, selectedPillars, selectedPriorities, onError]
+  )
+
+  // When user changes Scenery / Character / Density, update parent options and re-run only that pillar so its score updates.
   const handleSearchOptionsChange = useCallback(
     (newOptions: SearchOptions) => {
+      const prev = searchOptions
       onSearchOptionsChange?.(newOptions)
+
+      const naturalChanged = prev.natural_beauty_preference !== newOptions.natural_beauty_preference
+      const builtChanged =
+        prev.built_character_preference !== newOptions.built_character_preference ||
+        prev.built_density_preference !== newOptions.built_density_preference
+
+      if (naturalChanged && pillarScores.natural_beauty && selectedPillars.has('natural_beauty')) {
+        runSinglePillar('natural_beauty', newOptions)
+      }
+      if (builtChanged && pillarScores.built_beauty && selectedPillars.has('built_beauty')) {
+        runSinglePillar('built_beauty', newOptions)
+      }
     },
-    [onSearchOptionsChange]
+    [onSearchOptionsChange, searchOptions, pillarScores, selectedPillars, runSinglePillar]
   )
 
   // Merge page-level priorities with local so total updates whether user changes Importance here or in SearchOptions.
@@ -172,7 +255,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   // Removed previous useEffect that set totalScore; total is now derived so it always reflects current priorities.
 
   // Scoring overlay: reveal pillar names one by one over ~5s when loading
-  const overlayPillarList = PILLAR_ORDER.filter((k) => selectedPillars.has(k))
+  const overlayPillarList = pillarsInProgress.length > 0
+    ? PILLAR_ORDER.filter((k) => pillarsInProgress.includes(k))
+    : PILLAR_ORDER.filter((k) => selectedPillars.has(k))
   useEffect(() => {
     if (!loading || overlayPillarList.length === 0) {
       setOverlayRevealedCount(0)
