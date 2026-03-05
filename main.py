@@ -771,6 +771,7 @@ def _generate_request_cache_key(
     enable_schools: Optional[bool],
     job_categories: Optional[str] = None,
     natural_beauty_preference: Optional[List[str]] = None,
+    only_pillars: Optional[set[str]] = None,
 ) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
@@ -784,6 +785,7 @@ def _generate_request_cache_key(
         str(enable_schools) if enable_schools is not None else "default",
         str(job_categories).strip() if job_categories else "jobcats=None",
         json.dumps(sorted(natural_beauty_preference)) if natural_beauty_preference else "nb_pref=None",
+        json.dumps(sorted(only_pillars)) if only_pillars else "only=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -2390,6 +2392,67 @@ async def _stream_score_with_progress(
         yield f"event: started\n"
         yield f"data: {json.dumps({'status': 'started'})}\n\n"
         await asyncio.sleep(0.01)  # Small delay to ensure event is flushed
+
+        # REQUEST-LEVEL CACHE: Check before geocoding so same pillar+preferences is fast on rerun
+        test_mode_enabled = bool(test_mode)
+        if not test_mode_enabled:
+            try:
+                from data_sources.cache import _redis_client, _cache, _cache_ttl
+                request_cache_ttl = 300
+                cache_key = _generate_request_cache_key(
+                    location,
+                    tokens,
+                    priorities_dict,
+                    include_chains,
+                    enable_schools,
+                    job_categories=job_categories,
+                    natural_beauty_preference=natural_beauty_preference,
+                    only_pillars=only_pillars,
+                )
+                cached_response = None
+                if _redis_client:
+                    try:
+                        cached_data = _redis_client.get(cache_key)
+                        if cached_data:
+                            data = json.loads(cached_data)
+                            cache_time = data.get("timestamp", 0)
+                            if (time.time() - cache_time) < request_cache_ttl:
+                                cached_response = data.get("value")
+                                if cached_response:
+                                    logger.info(f"Stream request cache hit for {_safe_location_for_logs(location)}")
+                    except Exception as e:
+                        logger.debug(f"Stream cache read (Redis): {e}")
+                if cached_response is None and cache_key in _cache:
+                    cache_time = _cache_ttl.get(cache_key, 0)
+                    if (time.time() - cache_time) < request_cache_ttl:
+                        cached_response = _cache[cache_key]
+                        logger.info(f"Stream request cache hit (in-memory) for {_safe_location_for_logs(location)}")
+                if cached_response and isinstance(cached_response, dict):
+                    if "metadata" in cached_response and isinstance(cached_response["metadata"], dict):
+                        cached_response["metadata"]["cache_hit"] = True
+                    # Emit analyzing (minimal; we don't have coords without geocoding)
+                    yield f"event: analyzing\n"
+                    yield f"data: {json.dumps({'status': 'analyzing', 'location': location})}\n\n"
+                    await asyncio.sleep(0.01)
+                    pillars_in_response = cached_response.get("livability_pillars") or {}
+                    order = sorted(only_pillars) if only_pillars else sorted(pillars_in_response.keys())
+                    order = [p for p in order if p in pillars_in_response]
+                    total_pillars = len(order)
+                    for completed, pillar_name in enumerate(order, 1):
+                        score = 0.0
+                        try:
+                            score = float(pillars_in_response[pillar_name].get("score", 0))
+                        except (TypeError, ValueError):
+                            pass
+                        yield f"event: complete\n"
+                        yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed, 'total': total_pillars})}\n\n"
+                        await asyncio.sleep(0)
+                    yield f"event: done\n"
+                    yield f"data: {json.dumps({'status': 'done', 'response': cached_response})}\n\n"
+                    _log_place_timing("total", t0_stream)
+                    return
+            except Exception as e:
+                logger.warning(f"Stream request cache read failed (non-fatal): {e}")
         
         loop = asyncio.get_event_loop()
         
@@ -3212,6 +3275,35 @@ async def _stream_score_with_progress(
                     final_response["metadata"]["location_cache_write"] = True
             except Exception as e:
                 logger.debug(f"Stream location cache write skipped/failed: {e}")
+
+        # REQUEST-LEVEL CACHING: Store so same pillar+preferences is fast on rerun
+        if not test_mode_enabled:
+            try:
+                from data_sources.cache import _redis_client, _cache, _cache_ttl
+                request_cache_ttl = 300
+                cache_key = _generate_request_cache_key(
+                    location,
+                    tokens,
+                    priorities_dict,
+                    include_chains,
+                    enable_schools,
+                    job_categories=job_categories,
+                    natural_beauty_preference=natural_beauty_preference,
+                    only_pillars=only_pillars,
+                )
+                if isinstance(final_response.get("metadata"), dict):
+                    final_response["metadata"]["cache_hit"] = False
+                    final_response["metadata"]["cache_timestamp"] = time.time()
+                cache_data = {"value": final_response, "timestamp": time.time()}
+                if _redis_client:
+                    try:
+                        _redis_client.setex(cache_key, request_cache_ttl, json.dumps(cache_data))
+                    except Exception as e:
+                        logger.warning(f"Redis cache write error: {e}")
+                _cache[cache_key] = final_response
+                _cache_ttl[cache_key] = time.time()
+            except Exception as e:
+                logger.warning(f"Stream request cache write failed: {e}")
         
         yield f"event: done\n"
         _log_place_timing("total", t0_stream)
@@ -4131,7 +4223,12 @@ async def stream_score(
             try:
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
                 
-                cache_key = _generate_request_cache_key(location, tokens, priorities_dict, include_chains, enable_schools, natural_beauty_preference=None)
+                cache_key = _generate_request_cache_key(
+                    location, tokens, priorities_dict, include_chains, enable_schools,
+                    job_categories=job_categories,
+                    natural_beauty_preference=natural_beauty_preference,
+                    only_pillars=only_pillars,
+                )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
                 # Add cache indicator to response metadata
