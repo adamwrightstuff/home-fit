@@ -107,7 +107,7 @@ So the **expected** order is:
 2. **historic + walkable** (middle)
 3. **contemporary + walkable** (lowest)
 
-If you observe **contemporary + walkable** > **historic + walkable**, that contradicts the current logic (same raw suburban score, historic has no penalty, contemporary has -8). Things to check:
+If you observe **contemporary + walkable** > **historic + walkable**, that contradicted the intended logic. **Fix (2026-03):** The multinomial was sometimes predicting `urban_core` instead of `historic_urban` for dense historic neighborhoods (e.g. Carroll Gardens), so the character penalty was applied to "historic" and not "contemporary". A post-multinomial override in `get_effective_area_type` now forces `historic_urban` when the model predicts urban_core/urban_residential and Census shows strong historic signal (median_year_built &lt; 1940 or pre_1940_pct ≥ 10%). Things to check if the issue reappears:
 
 - Confirm **effective_area_type** in the API response for Carroll Gardens (e.g. in `details.architectural_analysis.classification.effective_area_type`). If it is not `historic_urban`, the -8 penalty would not apply for “contemporary.”
 - Confirm you are comparing **built beauty** scores (or total livability with same pillar weights), not a different metric.

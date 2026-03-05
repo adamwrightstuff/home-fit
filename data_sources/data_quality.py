@@ -1128,6 +1128,24 @@ def get_effective_area_type(
                     f"(probabilities: {probabilities})"
                 )
                 
+                # Override: clearly historic urban neighborhoods (Census signal) must be
+                # classified as historic_urban so Built Beauty character-preference penalty
+                # applies correctly (contemporary preference → -8 for historic places).
+                # Without this, multinomial can predict urban_core for dense brownstone
+                # neighborhoods (e.g. Carroll Gardens), causing historic→penalized, contemporary→no penalty.
+                if predicted_type in ("urban_core", "urban_residential"):
+                    strong_historic = (
+                        (median_year_built is not None and median_year_built < 1940)
+                        or (pre_1940_pct is not None and pre_1940_pct >= 10.0)
+                    )
+                    if strong_historic:
+                        predicted_type = "historic_urban"
+                        logger.debug(
+                            "Effective area type overridden to historic_urban (median_year_built=%s, pre_1940_pct=%s)",
+                            median_year_built,
+                            pre_1940_pct,
+                        )
+                
                 return predicted_type
                 
             except Exception as e:
