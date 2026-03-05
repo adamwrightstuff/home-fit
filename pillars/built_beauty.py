@@ -113,7 +113,9 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                                    test_overrides: Optional[Dict[str, float]] = None,
                                    precomputed_arch_diversity: Optional[Dict] = None,
                                    density: Optional[float] = None,
-                                   form_context: Optional[str] = None) -> Tuple[Optional[float], Dict]:
+                                   form_context: Optional[str] = None,
+                                   built_character_preference: Optional[str] = None,
+                                   built_density_preference: Optional[str] = None) -> Tuple[Optional[float], Dict]:
     """
     Score architectural beauty (0-50 points native range).
     """
@@ -213,11 +215,23 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             pre_1940_pct=pre_1940_pct
         )
 
+        # When user has a density preference, score using that profile so the result reflects fit.
+        # Spread out -> exurban; Walkable -> suburban; Dense urban -> urban_core.
+        area_type_for_scoring = area_type
+        if built_density_preference:
+            pref = (built_density_preference or "").strip().lower()
+            if pref == "spread_out_residential":
+                area_type_for_scoring = "exurban"
+            elif pref == "walkable_residential":
+                area_type_for_scoring = "suburban"
+            elif pref == "dense_urban_living":
+                area_type_for_scoring = "urban_core"
+
         beauty_score_result = arch_diversity.score_architectural_diversity_as_beauty(
             diversity_metrics.get("levels_entropy", 0),
             diversity_metrics.get("building_type_diversity", 0),
             diversity_metrics.get("footprint_area_cv", 0),
-            area_type,
+            area_type_for_scoring,
             density,
             diversity_metrics.get("built_coverage_ratio"),
             historic_landmarks=historic_landmarks,
@@ -436,7 +450,9 @@ def calculate_built_beauty(lat: float,
                            enhancer_radius_m: int = 1500,
                            precomputed_arch_diversity: Optional[Dict] = None,
                            density: Optional[float] = None,
-                           form_context: Optional[str] = None) -> Dict:
+                           form_context: Optional[str] = None,
+                           built_character_preference: Optional[str] = None,
+                           built_density_preference: Optional[str] = None) -> Dict:
     """
     Compute built beauty components prior to normalization.
     """
@@ -450,7 +466,9 @@ def calculate_built_beauty(lat: float,
         test_overrides=test_overrides,
         precomputed_arch_diversity=precomputed_arch_diversity,
         density=density,
-        form_context=form_context
+        form_context=form_context,
+        built_character_preference=built_character_preference,
+        built_density_preference=built_density_preference,
     )
 
     if arch_score is None:
@@ -512,6 +530,19 @@ def calculate_built_beauty(lat: float,
     # Cap at 100 to keep scores in 0-100 range while preserving natural distribution below 100
     # This only affects exceptional locations (built_native > 50) that would score > 100
     built_score_raw = min(100.0, built_native * 2.0)
+
+    # Character preference: penalize mismatch between what the user wants and what the place is.
+    # Historic place (effective_area_type historic_urban) vs contemporary preference -> penalize.
+    # Contemporary place vs historic preference -> penalize.
+    CHARACTER_MISMATCH_PENALTY = 8.0  # points on 0-100 scale
+    if built_character_preference and effective_area_type:
+        pref = (built_character_preference or "").strip().lower()
+        is_historic_place = (effective_area_type == "historic_urban")
+        if pref == "historic" and not is_historic_place:
+            built_score_raw = max(0.0, built_score_raw - CHARACTER_MISMATCH_PENALTY)
+        elif pref == "contemporary" and is_historic_place:
+            built_score_raw = max(0.0, built_score_raw - CHARACTER_MISMATCH_PENALTY)
+    # no_preference -> no adjustment
 
     built_score_norm, built_norm_meta = normalize_beauty_score(
         built_score_raw,

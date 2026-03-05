@@ -78,7 +78,7 @@ export const PILLAR_META: Record<
     icon: '🛒',
     name: 'Daily Amenities',
     description:
-      'A town center with a variety of daily amenities — from coffee and groceries to shops and restaurants — within reach.',
+      'A walkable town center with a variety of daily amenities — from coffee and groceries to shops and restaurants — within reach.',
   },
   active_outdoors: {
     icon: '🏃',
