@@ -668,6 +668,7 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 def _compute_longevity_index(
     livability_pillars: Dict[str, Any],
     token_allocation: Optional[Dict[str, float]] = None,
+    only_pillars: Optional[set[str]] = None,
 ) -> Tuple[float, Dict[str, float]]:
     """
     Compute Longevity Index (0-100) from livability_pillars using LONGEVITY_INDEX_WEIGHTS.
@@ -675,17 +676,21 @@ def _compute_longevity_index(
     When token_allocation is provided, only pillars that have a score and are selected
     (non-zero weight) are used; fixed longevity weights are renormalized over that subset
     so the index stays 0-100 without requiring all 6 pillars. Same logic as total score.
+    When only_pillars is set (partial request), a longevity pillar is also eligible if it
+    was requested (in only_pillars), so the index reflects run longevity pillars instead of 0.
     When token_allocation is None, all 6 longevity pillars are used (missing = 0).
     """
     contributions: Dict[str, float] = {}
     if token_allocation is not None:
-        # Selected = longevity pillars that have a score and are selected (non-zero weight)
-        eligible = [
-            p
-            for p in LONGEVITY_INDEX_WEIGHTS
-            if (livability_pillars.get(p) or {}).get("score") is not None
-            and (float(token_allocation.get(p, 0.0) or 0.0) > 0)
-        ]
+        # Eligible = longevity pillars that have a score AND (user selected them with weight > 0
+        # OR this was a partial request and we ran this pillar)
+        def _eligible(p: str) -> bool:
+            has_score = (livability_pillars.get(p) or {}).get("score") is not None
+            has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0
+            was_requested = only_pillars is not None and p in only_pillars
+            return has_score and (has_weight or was_requested)
+
+        eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _eligible(p)]
         if not eligible:
             return 0.0, contributions
         total_weight = sum(LONGEVITY_INDEX_WEIGHTS[p] for p in eligible)
@@ -902,7 +907,9 @@ def _apply_allocation_to_cached_response(
         total_score += score * weight / 100.0
 
     response["total_score"] = round(total_score, 2)
-    longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+    longevity_index, longevity_contributions = _compute_longevity_index(
+        livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
+    )
     response["longevity_index"] = longevity_index
     response["longevity_index_contributions"] = longevity_contributions
 
@@ -1874,7 +1881,9 @@ def _compute_single_score_internal(
         }
 
     # Build response
-    longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+    longevity_index, longevity_contributions = _compute_longevity_index(
+        livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
+    )
     location_info = {"city": city, "state": state, "zip": zip_code}
     response = {
         "input": location,
@@ -3156,7 +3165,9 @@ async def _stream_score_with_progress(
         }
         
         # Build final response
-        longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+        longevity_index, longevity_contributions = _compute_longevity_index(
+            livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
+        )
         location_info = {"city": city, "state": state, "zip": zip_code}
         final_response = {
             "input": location,
@@ -4032,7 +4043,9 @@ async def stream_score(
         }
 
         # Build response with enhanced metadata
-        longevity_index, longevity_contributions = _compute_longevity_index(livability_pillars, token_allocation=token_allocation)
+        longevity_index, longevity_contributions = _compute_longevity_index(
+            livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
+        )
         location_info = {"city": city, "state": state, "zip": zip_code}
         response = {
         "input": location,
