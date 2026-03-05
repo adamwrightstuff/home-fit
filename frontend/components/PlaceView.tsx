@@ -64,6 +64,28 @@ function formatPlaceLabel(place: GeocodeResult & { location: string }): string {
 
 const PREMIUM_CODE_KEY = 'homefit_premium_code'
 
+/**
+ * Returns a serializable snapshot of options that affect this pillar's score.
+ * Used to decide if we need to re-run the pillar when the user clicks Run Score.
+ */
+function getRelevantOptionsForPillar(
+  pillarKey: string,
+  selectedPriorities: Record<string, Importance>,
+  searchOptions: SearchOptions
+): Record<string, unknown> {
+  const opts: Record<string, unknown> = {
+    priority: selectedPriorities[pillarKey] ?? 'Medium',
+  }
+  if (pillarKey === 'natural_beauty') {
+    opts.natural_beauty_preference = searchOptions.natural_beauty_preference ?? null
+  }
+  if (pillarKey === 'built_beauty') {
+    opts.built_character_preference = searchOptions.built_character_preference ?? null
+    opts.built_density_preference = searchOptions.built_density_preference ?? null
+  }
+  return opts
+}
+
 export interface PlaceViewProps {
   place: GeocodeResult & { location: string }
   searchOptions: SearchOptions
@@ -93,6 +115,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
   const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
   const [exportModalOpen, setExportModalOpen] = useState(false)
+  /** Snapshot of options used when we last ran each pillar (JSON string). Used to avoid re-running when nothing changed. */
+  const [lastRunOptionsPerPillar, setLastRunOptionsPerPillar] = useState<Record<string, string>>({})
   useEffect(() => {
     try {
       const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
@@ -169,10 +193,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     const selected = Array.from(selectedPillars)
     if (selected.length === 0) return
 
-    // Only run pillars that don't have a score yet (incremental scoring).
-    const toRun = selected.filter((k) => !(k in pillarScores))
+    // Re-run a pillar if: it has no score yet, OR its priority/preferences changed since we last ran it.
+    const toRun = selected.filter((k) => {
+      const hasScore = k in pillarScores
+      const currentOpts = JSON.stringify(getRelevantOptionsForPillar(k, selectedPriorities, searchOptions))
+      const lastOpts = lastRunOptionsPerPillar[k]
+      if (!hasScore) return true
+      if (lastOpts === undefined) return true
+      return currentOpts !== lastOpts
+    })
 
-    // If all selected pillars already have scores, just recompute total from current priorities.
+    // If no pillars need re-running, just recompute total from current priorities (and keep existing scores).
     if (toRun.length === 0) {
       const partialScores = Object.fromEntries(
         Object.entries(pillarScores).map(([k, v]) => [k, v.score])
@@ -236,6 +267,14 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         if (data != null && typeof data.score === 'number') mergedScores[k] = { score: data.score }
       })
       setPillarScores(mergedScores)
+      // Remember options used for each pillar we just ran (so we only re-run when they change).
+      setLastRunOptionsPerPillar((prev) => {
+        const next = { ...prev }
+        toRun.forEach((k) => {
+          next[k] = JSON.stringify(getRelevantOptionsForPillar(k, selectedPriorities, searchOptions))
+        })
+        return next
+      })
       const partialScores = Object.fromEntries(
         Object.entries(mergedScores).map(([k, v]) => [k, v.score])
       )
@@ -260,7 +299,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setScoreProgress({})
       setPillarsInProgress([])
     }
-  }, [place.location, searchOptions, selectedPillars, selectedPriorities, pillarScores, onError])
+  }, [place.location, searchOptions, selectedPillars, selectedPriorities, pillarScores, lastRunOptionsPerPillar, onError])
 
   const hasResults = Object.keys(pillarScores).length > 0
   const locationLabel = formatPlaceLabel(place)
