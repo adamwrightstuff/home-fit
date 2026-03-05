@@ -81,7 +81,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
-  const [totalScore, setTotalScore] = useState<number | null>(null)
   const [longevityIndex, setLongevityIndex] = useState<number | null>(null)
   const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -137,15 +136,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
-  // When user changes prioritization for pillars that already have scores, recompute total immediately (no new run).
-  useEffect(() => {
-    if (Object.keys(pillarScores).length === 0) return
+  // Derive total from pillar scores and current priorities so changing priority updates total immediately (no API call).
+  const totalScore = useMemo(() => {
     const partialScores = Object.fromEntries(
       Object.entries(pillarScores).map(([k, v]) => [k, v.score])
     )
-    const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
-    setTotalScore(total ?? null)
+    if (Object.keys(partialScores).length === 0) return null
+    return totalFromPartialPillarScores(partialScores, selectedPriorities) ?? null
   }, [pillarScores, selectedPriorities])
+
+  // When user changes prioritization for pillars that already have scores, total is recomputed above (no effect needed).
+  // Removed previous useEffect that set totalScore; total is now derived so it always reflects current priorities.
 
   // Scoring overlay: reveal pillar names one by one over ~5s when loading
   const overlayPillarList = PILLAR_ORDER.filter((k) => selectedPillars.has(k))
@@ -174,13 +175,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     // existing scores and current weights (see useEffect below).
     const toRun = selected.filter((k) => !(k in pillarScores))
 
-    // If all selected pillars already have scores, just recompute total from current priorities.
+    // If all selected pillars already have scores, total is derived from priorities (no API call).
     if (toRun.length === 0) {
-      const partialScores = Object.fromEntries(
-        Object.entries(pillarScores).map(([k, v]) => [k, v.score])
-      )
-      const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
-      setTotalScore(total ?? null)
       return
     }
 
@@ -238,11 +234,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         if (data != null && typeof data.score === 'number') mergedScores[k] = { score: data.score }
       })
       setPillarScores(mergedScores)
-      const partialScores = Object.fromEntries(
-        Object.entries(mergedScores).map(([k, v]) => [k, v.score])
-      )
-      const total = totalFromPartialPillarScores(partialScores, selectedPriorities)
-      setTotalScore(total ?? null)
       const rawLongevity = (resp as { longevity_index?: number }).longevity_index
       const fromResult = (resp as { result?: { longevity_index?: number } }).result?.longevity_index
       const li = typeof rawLongevity === 'number' ? rawLongevity : typeof fromResult === 'number' ? fromResult : null
