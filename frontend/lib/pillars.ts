@@ -67,7 +67,7 @@ export const PILLAR_META: Record<
     icon: '🌳',
     name: 'Natural Beauty',
     description:
-      'Tree-lined streets, nearby water, and access to dramatic landscapes—from urban canopy to mountain views',
+      'The natural landscape around you — mountains, water, canopy, or open terrain — scored for what matters to you',
   },
   built_beauty: {
     icon: '🏛️',
