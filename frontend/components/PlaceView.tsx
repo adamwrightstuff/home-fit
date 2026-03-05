@@ -136,6 +136,34 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
+  // When user changes a preference that affects how a pillar is scored, clear that pillar's cached score
+  // so the next Run Score re-runs it and the pillar score updates.
+  const handleSearchOptionsChange = useCallback(
+    (newOptions: SearchOptions) => {
+      if (onSearchOptionsChange == null) return
+      const prev = searchOptions
+      if (prev.natural_beauty_preference !== newOptions.natural_beauty_preference) {
+        setPillarScores((s) => {
+          const next = { ...s }
+          delete next.natural_beauty
+          return next
+        })
+      }
+      if (
+        prev.built_character_preference !== newOptions.built_character_preference ||
+        prev.built_density_preference !== newOptions.built_density_preference
+      ) {
+        setPillarScores((s) => {
+          const next = { ...s }
+          delete next.built_beauty
+          return next
+        })
+      }
+      onSearchOptionsChange(newOptions)
+    },
+    [onSearchOptionsChange, searchOptions]
+  )
+
   // Merge page-level priorities with local so total updates whether user changes Importance here or in SearchOptions.
   const effectivePriorities = useMemo(
     () => ({ ...searchOptions.priorities, ...selectedPriorities }),
@@ -608,23 +636,23 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         const atMax = !isAny && pref.length >= 2 && !pref.includes(value as string)
                         const handleClick = () => {
                           if (isAny) {
-                            onSearchOptionsChange({ ...searchOptions, natural_beauty_preference: null })
+                            handleSearchOptionsChange({ ...searchOptions, natural_beauty_preference: null })
                             return
                           }
                           const current = pref.filter((v) => v !== 'no_preference')
                           if (current.includes(value as string)) {
                             const next = current.filter((v) => v !== value)
-                            onSearchOptionsChange({
+                            handleSearchOptionsChange({
                               ...searchOptions,
                               natural_beauty_preference: next.length ? next : null,
                             })
                           } else if (current.length >= 2) {
-                            onSearchOptionsChange({
+                            handleSearchOptionsChange({
                               ...searchOptions,
                               natural_beauty_preference: [current[1], value as string],
                             })
                           } else {
-                            onSearchOptionsChange({
+                            handleSearchOptionsChange({
                               ...searchOptions,
                               natural_beauty_preference: [...current, value as string],
                             })
@@ -669,7 +697,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onSearchOptionsChange?.({
+                                handleSearchOptionsChange({
                                   ...searchOptions,
                                   built_character_preference: selected ? null : value,
                                 })
@@ -700,7 +728,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onSearchOptionsChange?.({
+                                handleSearchOptionsChange({
                                   ...searchOptions,
                                   built_density_preference: selected ? null : value,
                                 })
@@ -772,7 +800,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                             type="checkbox"
                             checked={searchOptions.enable_schools}
                             disabled={loading}
-                            onChange={(e) => onSearchOptionsChange({ ...searchOptions, enable_schools: e.target.checked })}
+                            onChange={(e) => handleSearchOptionsChange({ ...searchOptions, enable_schools: e.target.checked })}
                           />
                           <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
                         </label>
