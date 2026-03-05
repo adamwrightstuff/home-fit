@@ -113,9 +113,10 @@ export const PILLAR_META: Record<
     description: 'Strong local schools that set kids up for success—from early education through high school and beyond',
   },
   housing_value: {
-    icon: '💰',
-    name: 'Housing Value',
-    description: "More space and quality for your money—where housing costs make sense for what you're getting",
+    icon: '🏠',
+    name: 'Home Price to Space',
+    description:
+      "More space and quality for your money — where housing costs make sense for what you're getting",
   },
   climate_risk: {
     icon: '🌡️',
