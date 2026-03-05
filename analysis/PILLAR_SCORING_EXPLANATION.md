@@ -1,7 +1,7 @@
 # Pillar Scoring Logic - Complete Explanation
 
 **Date:** 2026-02-28  
-**Status:** All pillars use pure data-backed scoring per design principles. This document covers all 13 pillars (including economic_security, quality_education, social_fabric, climate_risk).
+**Status:** All pillars use pure data-backed scoring per design principles. This document covers all 12 pillars (including economic_security, quality_education, social_fabric, climate_risk).
 
 ---
 
@@ -197,89 +197,7 @@ final_score = raw_total  # No calibration
 
 ---
 
-## 3. Access to Nature (`pillars/access_to_nature.py`)
-
-### Scoring Method
-**Data-backed weighted component sum** (no calibration)
-
-### Question
-“What does it feel like when I step outside my front door?  
-How quickly can I be in a natural environment – trees/greenery, water, or hills?”
-
-### Formula
-Access to Nature combines three equal-footing components:
-
-```
-greenery = local-biased canopy + neighborhood canopy + park access
-water    = proximity + visibility (coast / lakes / rivers)
-elev     = local relief / topographic variety (5 km radius)
-
-final_score = 0.35 × greenery + 0.35 × water + 0.30 × elev
-```
-
-### Components
-
-#### Greenery Access (0–100, 35% weight)
-- **Goal:** “Tree-lined streets and everyday neighborhood green.”
-- **Signals:**
-  - Local canopy (GEE 1000 m radius, blended with Census/USFS canopy when available)
-  - Neighborhood canopy (GEE 3000 m radius)
-  - Distance to nearest park / large green space (OSM parks, ~5 km search, favoring 10+ acre parks)
-- **Scoring (illustrative):**
-  - Local canopy: `local_canopy_score = min(100, canopy_local_pct × 2.0)` → 50% canopy = 100 pts
-  - Neighborhood canopy: `neighborhood_canopy_score = min(100, canopy_neighborhood_pct × 1.5)`  
-  - Park access: `park_access_score = distance_decay(nearest_park_km, max_dist=5)` (0 km → 100, 5 km → 0)
-  - Combined:
-    - 50% local canopy
-    - 20% neighborhood canopy
-    - 30% park access
-
-#### Water Access (0–100, 35% weight)
-- **Goal:** “Living near real water – ocean, lakes, or rivers – with visible water nearby.”
-- **Signals:**
-  - **Natural Earth 10m**:
-    - Distance to coastline
-    - Distance to major lakes (scalerank ≤ 2)
-    - Distance to major rivers (scalerank ≤ 4)
-  - **GEE landcover**: `water_pct` near the point (micro-scale visibility)
-- **Scoring:**
-  - Proximity subscore 0–100 from Natural Earth (coast, lakes, rivers) with distance decay.
-  - Visibility subscore 0–100 from GEE water_pct.
-  - Combined 50% proximity + 50% visibility (implemented via `data_sources.water_proximity_ne.calculate_water_score`).
-
-#### Elevation Access (0–100, 30% weight)
-- **Goal:** “Hills and relief you can feel nearby,” not just raw altitude.
-- **Signals:**
-  - GEE `get_topography_context(lat, lon, 5km)`:
-    - `relief_range_m` (max–min elevation in 5 km radius)
-- **Scoring (piecewise example):**
-  - 0 m relief → 0 pts (flat)
-  - 100 m relief → ~25 pts (gentle hills)
-  - 500 m relief → ~75 pts (significant hills)
-  - 1000 m+ relief → 100 pts (mountainous terrain)
-- **Design choice:** No large absolute-elevation bonus – this component measures local **variety/relief**, not just being at high elevation.
-
-### Relationship to Active Outdoors and Natural Beauty
-- **Active Outdoors** answers: “Can I be **active** outside regularly?”  
-  - Focuses on recreation: trails, camping, swimming, playgrounds, rec facilities.
-- **Access to Nature** answers: “Does nature feel like part of my **everyday environment**?”  
-  - Focuses on ambient environment at the front door: tree-lined streets, nearby parks, water, and hills.
-- **Natural Beauty (legacy)** remains a broader scenic/beauty construct and can be deprecated in favor of Access to Nature if this pillar performs well in practice.
-
-### Calibration/Tuning
-- ❌ **No calibration** – final score is direct weighted average of component scores.
-- ✅ **Pure data-backed** – components are objective (canopy %, park distance, water distance, relief).
-- ✅ **Graceful degradation** – if a data source is missing (e.g., Natural Earth water not installed), that component safely contributes 0 instead of failing.
-
-### Data Sources
-- **GEE API:** Tree canopy (1000m, 3000m), topography context (relief).
-- **Census/USFS:** Tree canopy (blended with GEE for local canopy).
-- **OSM API:** Parks and green spaces (for park access).
-- **Natural Earth 10m:** Coastline, major lakes, major rivers (water proximity).
-
----
-
-## 4. Neighborhood Amenities (`pillars/neighborhood_amenities.py`)
+## 3. Neighborhood Amenities (`pillars/neighborhood_amenities.py`)
 
 ### Scoring Method
 **Data-backed component sum** (no calibration)
@@ -812,7 +730,6 @@ score = min(100, total_raw)
 |--------|-------------|--------|------------------|--------|
 | **natural_beauty** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed (legacy scenic / canopy) |
 | **active_outdoors** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed (recreation) |
-| **access_to_nature** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed (front-door nature access) |
 | **neighborhood_amenities** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed |
 | **healthcare_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed ratios |
 | **public_transit_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed breakpoints |

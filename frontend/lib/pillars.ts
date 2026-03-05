@@ -1,7 +1,6 @@
 export type PillarKey =
   | 'natural_beauty'
   | 'built_beauty'
-  | 'access_to_nature'
   | 'neighborhood_amenities'
   | 'active_outdoors'
   | 'healthcare_access'
@@ -74,12 +73,6 @@ export const PILLAR_META: Record<
     name: 'Built Beauty',
     description:
       "Architecture and streetscapes that feel thoughtfully designed—not cookie-cutter, but crafted with character",
-  },
-  access_to_nature: {
-    icon: '🌿',
-    name: 'Access to Nature',
-    description:
-      'What it feels like when you step outside—tree-lined streets, nearby parks, water, and hills for everyday downshift',
   },
   neighborhood_amenities: {
     icon: '🛒',
@@ -172,8 +165,6 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Access to trees, water, and scenic landscapes is linked to lower stress and better mental health. Neighborhoods with strong canopy and natural features tend to support walking and outdoor time, which supports long-term wellbeing.',
   built_beauty:
     'Thoughtfully designed streets and buildings create a sense of place and belonging. Diverse, human-scale architecture is associated with higher satisfaction and walkability, which in turn supports health and social connection.',
-  access_to_nature:
-    'Living near trees, parks, water, and hills supports mental restoration and a sense of escape from the built environment. This pillar measures how quickly you can be in nature from your front door—not recreation, but everyday exposure.',
   neighborhood_amenities:
     'Being able to walk to cafés, groceries, and daily needs reduces car dependence and encourages routine activity. Neighborhoods with a mix of local businesses tend to foster social interaction and a stronger sense of community.',
   active_outdoors:

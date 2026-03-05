@@ -9,7 +9,6 @@ import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 const PILLAR_ORDER: PillarKey[] = [
   'natural_beauty',
   'built_beauty',
-  'access_to_nature',
   'neighborhood_amenities',
   'active_outdoors',
   'healthcare_access',
@@ -107,7 +106,6 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   const w: PillarWeights = {
     natural_beauty: 50,
     built_beauty: 50,
-    access_to_nature: 50,
     neighborhood_amenities: 50,
     active_outdoors: 50,
     healthcare_access: 50,

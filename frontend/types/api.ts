@@ -66,8 +66,6 @@ export interface LivabilityPillars {
   climate_risk?: LivabilityPillar;
   /** Social Fabric (Phase 2B); may be absent in older deployments. */
   social_fabric?: LivabilityPillar;
-  /** Access to Nature (front-door greenery, water, hills); behind ENABLE_ACCESS_TO_NATURE. */
-  access_to_nature?: LivabilityPillar;
 }
 
 export interface OverallConfidence {

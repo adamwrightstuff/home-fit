@@ -37,7 +37,7 @@ from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score_v2
-from pillars import built_beauty, natural_beauty, access_to_nature
+from pillars import built_beauty, natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -69,9 +69,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 # Schools: default OFF for public launch (SchoolDigger free quota is extremely low)
 ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
-
-# Optional pillars / features
-ENABLE_ACCESS_TO_NATURE = _env_bool("ENABLE_ACCESS_TO_NATURE", default=True)
 
 # Streaming (SSE): default ON to avoid polling/job-404 issues; set ENABLE_STREAMING=false to disable
 ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
@@ -289,8 +286,6 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "climate_risk",
         "social_fabric",
     ]
-    if ENABLE_ACCESS_TO_NATURE:
-        primary_pillars = list(primary_pillars) + ["access_to_nature"]
 
     # Priority to weight mapping
     priority_weights = {
@@ -531,11 +526,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     
     if tokens is None:
         # Default equal distribution across primary pillars (100 tokens total).
-        # Access to Nature is experimental; when enabled, it starts with 0 weight so it
-        # does not affect total score until explicitly prioritized.
         base_pillars = list(primary_pillars)
-        if ENABLE_ACCESS_TO_NATURE:
-            base_pillars.append("access_to_nature")
 
         equal_tokens = 100.0 / len(primary_pillars)
         default_allocation: Dict[str, float] = {}
@@ -548,10 +539,6 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
             else:
                 # Last primary pillar gets remainder to ensure exact 100
                 default_allocation[pillar] = remainder
-
-        # When experimental pillar is enabled, give it 0 weight by default.
-        if ENABLE_ACCESS_TO_NATURE:
-            default_allocation["access_to_nature"] = 0.0
 
         return default_allocation
     
@@ -755,7 +742,7 @@ def root():
             "quality_education",
             "housing_value",
         ]
-        + (["access_to_nature"] if ENABLE_ACCESS_TO_NATURE else []),
+        ,
         "endpoints": {
             "score": "/score?location=ADDRESS",
             "docs": "/docs"
@@ -772,6 +759,8 @@ def _generate_request_cache_key(
     job_categories: Optional[str] = None,
     natural_beauty_preference: Optional[List[str]] = None,
     only_pillars: Optional[set[str]] = None,
+    built_character_preference: Optional[str] = None,
+    built_density_preference: Optional[str] = None,
 ) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
@@ -786,6 +775,8 @@ def _generate_request_cache_key(
         str(job_categories).strip() if job_categories else "jobcats=None",
         json.dumps(sorted(natural_beauty_preference)) if natural_beauty_preference else "nb_pref=None",
         json.dumps(sorted(only_pillars)) if only_pillars else "only=None",
+        (built_character_preference or "").strip() or "char=None",
+        (built_density_preference or "").strip() or "dens=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -935,6 +926,8 @@ def _compute_single_score_internal(
     on_pillar_complete: Optional[Callable[[str, float], None]] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
+    built_character_preference: Optional[str] = None,
+    built_density_preference: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1281,7 +1274,6 @@ def _compute_single_score_internal(
 
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')
-    need_access_to_nature = ENABLE_ACCESS_TO_NATURE and _include_pillar("access_to_nature")
     need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
     pillar_tasks = []
@@ -1301,7 +1293,9 @@ def _compute_single_score_internal(
                 'test_overrides': beauty_overrides if beauty_overrides else None,
                 'precomputed_arch_diversity': arch_diversity_data,
                 'density': density,
-                'form_context': form_context
+                'form_context': form_context,
+                'built_character_preference': built_character_preference,
+                'built_density_preference': built_density_preference,
             })
         )
     if need_natural_beauty:
@@ -1314,21 +1308,6 @@ def _compute_single_score_internal(
                 'form_context': form_context,
                 'natural_beauty_preference': natural_beauty_preference,
             })
-        )
-    if need_access_to_nature:
-        pillar_tasks.append(
-            (
-                "access_to_nature",
-                access_to_nature.calculate_access_to_nature,
-                {
-                    "lat": lat,
-                    "lon": lon,
-                    "city": city,
-                    "area_type": area_type,
-                    "location_scope": location_scope,
-                    "location_name": location,
-                },
-            )
         )
     
     if _include_pillar('neighborhood_amenities'):
@@ -1618,8 +1597,6 @@ def _compute_single_score_internal(
             "climate_risk",
             "social_fabric",
         ]
-        if ENABLE_ACCESS_TO_NATURE:
-            primary_pillars = list(primary_pillars) + ["access_to_nature"]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
             if original_priority:
@@ -1685,13 +1662,6 @@ def _compute_single_score_internal(
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
-        + (
-            (pillar_results.get("access_to_nature") or {}).get("score", 0.0)
-            * float(token_allocation.get("access_to_nature", 0.0) or 0.0)
-            / 100.0
-            if ENABLE_ACCESS_TO_NATURE
-            else 0.0
-        )
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -1863,25 +1833,6 @@ def _compute_single_score_internal(
         },
     }
 
-    if ENABLE_ACCESS_TO_NATURE and "access_to_nature" in (pillar_results or {}):
-        atn_calc = pillar_results.get("access_to_nature") or {}
-        atn_score = float(atn_calc.get("score", 0.0) or 0.0)
-        atn_details = atn_calc.get("details", {})
-        atn_quality = atn_calc.get("data_quality", {})
-        livability_pillars["access_to_nature"] = {
-            "score": atn_score,
-            "weight": float(token_allocation.get("access_to_nature", 0.0) or 0.0),
-            "importance_level": priority_levels.get("access_to_nature") if priority_levels else None,
-            "contribution": round(
-                atn_score * float(token_allocation.get("access_to_nature", 0.0) or 0.0) / 100.0, 2
-            ),
-            "details": atn_details,
-            "summary": atn_details.get("components", {}),
-            "confidence": atn_quality.get("confidence", 0),
-            "data_quality": atn_quality,
-            "area_classification": {},
-        }
-
     # Build response
     longevity_index, longevity_contributions = _compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
@@ -1974,7 +1925,9 @@ def get_livability_score(request: Request,
                          enable_schools: Optional[bool] = None,
                          job_categories: Optional[str] = None,
                          test_mode: Optional[bool] = False,
-                         natural_beauty_preference: Optional[str] = None):
+                         natural_beauty_preference: Optional[str] = None,
+                         built_character_preference: Optional[str] = None,
+                         built_density_preference: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -2044,6 +1997,8 @@ def get_livability_score(request: Request,
                 enable_schools,
                 job_categories=job_categories,
                 natural_beauty_preference=natural_beauty_preference_parsed,
+                built_character_preference=built_character_preference,
+                built_density_preference=built_density_preference,
             )
             # Differentiated cache TTL based on data stability
             # Use minimum TTL of requested pillars (conservative approach)
@@ -2091,6 +2046,8 @@ def get_livability_score(request: Request,
             test_mode=test_mode_enabled,
             request=request,
             natural_beauty_preference=natural_beauty_preference_parsed,
+            built_character_preference=built_character_preference,
+            built_density_preference=built_density_preference,
         )
         
         # Extract lat/lon for telemetry and caching
@@ -2117,6 +2074,8 @@ def get_livability_score(request: Request,
                     enable_schools,
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference_parsed,
+                    built_character_preference=built_character_preference,
+                    built_density_preference=built_density_preference,
                 )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
@@ -2226,6 +2185,8 @@ def create_score_job(
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
     natural_beauty_preference: Optional[str] = None,
+    built_character_preference: Optional[str] = None,
+    built_density_preference: Optional[str] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
@@ -2314,6 +2275,8 @@ def create_score_job(
                 on_pillar_complete=_on_pillar_complete,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
+                built_character_preference=built_character_preference,
+                built_density_preference=built_density_preference,
             )
             done_snap = None
             with _SCORE_JOBS_LOCK:
@@ -2378,6 +2341,8 @@ async def _stream_score_with_progress(
     request: Optional[Request] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
+    built_character_preference: Optional[str] = None,
+    built_density_preference: Optional[str] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
@@ -2408,6 +2373,8 @@ async def _stream_score_with_progress(
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference,
                     only_pillars=only_pillars,
+                    built_character_preference=built_character_preference,
+                    built_density_preference=built_density_preference,
                 )
                 cached_response = None
                 if _redis_client:
@@ -2687,7 +2654,9 @@ async def _stream_score_with_progress(
                 'test_overrides': None,
                 'precomputed_arch_diversity': arch_diversity_data,
                 'density': density,
-                'form_context': form_context
+                'form_context': form_context,
+                'built_character_preference': built_character_preference,
+                'built_density_preference': built_density_preference,
             })
         )
         pillar_tasks.append(
@@ -3290,6 +3259,8 @@ async def _stream_score_with_progress(
                     job_categories=job_categories,
                     natural_beauty_preference=natural_beauty_preference,
                     only_pillars=only_pillars,
+                    built_character_preference=built_character_preference,
+                    built_density_preference=built_density_preference,
                 )
                 if isinstance(final_response.get("metadata"), dict):
                     final_response["metadata"]["cache_hit"] = False
@@ -3327,6 +3298,8 @@ async def stream_score(
     test_mode: Optional[bool] = False,
     only: Optional[str] = None,
     natural_beauty_preference: Optional[str] = None,
+    built_character_preference: Optional[str] = None,
+    built_density_preference: Optional[str] = None,
 ):
     """
     Server-Sent Events endpoint for streaming score calculation progress.
@@ -3389,6 +3362,8 @@ async def stream_score(
                 request=request,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
+                built_character_preference=built_character_preference,
+                built_density_preference=built_density_preference,
             ),
             media_type="text/event-stream",
             headers={
@@ -3639,7 +3614,9 @@ async def stream_score(
                     'test_overrides': beauty_overrides if beauty_overrides else None,
                     'precomputed_arch_diversity': arch_diversity_data,  # Pass precomputed data
                     'density': density,  # Pass pre-computed density
-                    'form_context': form_context  # Pass shared form_context
+                    'form_context': form_context,  # Pass shared form_context
+                    'built_character_preference': built_character_preference,
+                    'built_density_preference': built_density_preference,
                 })
             )
         if need_natural_beauty:
