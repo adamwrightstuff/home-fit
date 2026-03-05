@@ -7,12 +7,14 @@ New pillar `social_fabric` (Phase 2B). Scores structural and demographic factors
 - Distinct from `neighborhood_amenities` (commercial businesses, convenience).
 - Distinct from `active_outdoors` (parks, trails, outdoor recreation).
 
-Current implementation (v2) ships with:
+Current implementation (v3) ships with:
 
 1. **Stability** (residential rootedness; Census B07003)  
 2. **Diversity** (race / income / age entropy; Census B02001, B19001, B01001)  
 3. **Civic gathering** (civic, non-commercial third places; OSM)  
-4. **Engagement** (civic org density; IRS BMF, when preprocessed data is present)
+4. **Engagement** (voter registration and/or civic org density; optional)
+   - When **both** voter registration and IRS BMF data are available: Engagement = **0.60 × voter_reg_score + 0.40 × bmf_score**.
+   - When only one is available, that component is used as the full Engagement sub-score.
 
 All sub-scores and the pillar score are on 0–100.
 
@@ -62,6 +64,14 @@ The offline script writes:
 - `data/irs_bmf_engagement_stats.json` – `{division_code: {"mean": float, "std": float, "n": int}}` baselines for engagement.
 
 At runtime, `data_sources.irs_bmf` loads these files (or skips Engagement gracefully when they are absent). When a tract has 0 orgs, a **runtime halo** samples 8 points at 800 m and averages org counts from nearby tracts so PO-box or adjacent addresses don’t put the tract in a data shadow.
+
+#### 2.2a Voter registration (Engagement, optional)
+
+- Source: Tract-level registration rates from state/county or other providers; supplied as a CSV (e.g. `data/voter_registration_raw.csv`).
+- Build script: `scripts/build_voter_registration_baselines.py` reads a CSV with columns either `geoid, registration_rate` (rate 0–1) or `geoid, registered, cvap`, computes per-division mean/std for z-score normalization, and writes:
+  - `data/voter_registration_tract_rates.json` – `{geoid: registration_rate}` (0–1).
+  - `data/voter_registration_engagement_stats.json` – `{division_code: {"mean", "std", "n"}}`.
+- At runtime, `data_sources.voter_registration` loads these files (or skips voter-reg Engagement when absent). When both voter registration and BMF are available, Engagement = **0.60 × voter_reg_score + 0.40 × bmf_score**.
 
 #### 2.3 OSM – civic nodes
 
@@ -164,10 +174,11 @@ SFI v1 **must** include this sub-score.
 
 #### 3.4 Engagement (0–100)
 
-- Input: `orgs_per_1k = (count of active NTEE A/O/P/S orgs in area) / (population / 1000)`.
-- Normalize per region (Census Division or CBSA), similar to Civic:
-  - Compute mean and SD of `orgs_per_1k`; z-score; clip ±3; map to 0–100.
-- If BMF is not yet integrated, Engagement can be omitted (null) and excluded from the combined SFI until Phase 2B′.
+- **Inputs (optional, either or both):**
+  1. **Voter registration:** Preprocessed tract-level registration rate (0–1). Z-score vs division mean/std, clipped, mapped to 0–100.
+  2. **IRS BMF:** `orgs_per_1k = (count of active NTEE A/O/P/S orgs in area) / (population / 1000)`. Same z-score normalization as above.
+- **Combination:** When **both** are present: Engagement = **0.60 × voter_reg_score + 0.40 × bmf_score**. When only one is present, that score is used as Engagement.
+- If neither is yet integrated, Engagement can be omitted (null) and excluded from the combined SFI until data is available.
 
 ---
 

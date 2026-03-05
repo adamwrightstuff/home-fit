@@ -30,6 +30,9 @@ ENV/
 # Data: raw BMF CSVs (large, external); regenerate with script
 data/irs_bmf_raw/
 
+# Data: raw voter registration CSV (optional input for build script)
+data/voter_registration_raw.csv
+
 # Natural Earth 10m shapefiles (large; run scripts/download_natural_earth_water.py)
 data_sources/static/ne_10m_*
 

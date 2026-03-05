@@ -5,11 +5,12 @@ Measures structural conditions for local belonging:
 - Stability: residential rootedness (Census B07003)
 - Diversity: race / income / age mix (Census B02001, B19001, B01001)
 - Civic gathering: civic, non-commercial third places (OSM civic nodes)
-- Engagement: civic org density (IRS BMF; optional, when data is available)
+- Engagement: voter registration (optional) and/or civic org density (IRS BMF; optional)
 
 When some sub-indices are unavailable (e.g. no BMF data), the pillar
 renormalizes over the available components so the combined score remains
-in [0, 100].
+in [0, 100]. When both voter registration and BMF are available,
+Engagement = 0.60 × voter_reg_score + 0.40 × bmf_score.
 """
 
 from typing import Dict, Tuple, Optional, Iterable
@@ -20,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
+from data_sources import voter_registration
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -202,7 +204,7 @@ def get_social_fabric_score(
     # Fetch Census tract once to reuse across mobility, diversity, and BMF.
     tract = census_api.get_census_tract(lat, lon)
 
-    # Fetch mobility, diversity, civic (800m), and BMF in parallel (same requests, less wall time).
+    # Fetch mobility, diversity, civic (800m), BMF, and voter registration in parallel.
     def _get_mobility():
         return census_api.get_mobility_data(lat, lon, tract=tract)
 
@@ -215,15 +217,20 @@ def get_social_fabric_score(
     def _get_bmf():
         return irs_bmf.get_civic_orgs_per_1k(lat, lon, tract=tract)
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    def _get_voter_reg():
+        return voter_registration.get_voter_registration_score(tract=tract)
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
         f_mobility = executor.submit(_get_mobility)
         f_diversity = executor.submit(_get_diversity)
         f_civic = executor.submit(_get_civic)
         f_bmf = executor.submit(_get_bmf)
+        f_voter_reg = executor.submit(_get_voter_reg)
         mobility = f_mobility.result()
         diversity_data = f_diversity.result()
         civic = f_civic.result()
         bmf_result = f_bmf.result()
+        voter_reg_result = f_voter_reg.result()
 
     # Stability: B07003 — use rooted_pct (same house + same county) so local moves don't count as churn.
     # Use regional z-score when baselines exist; else fixed curve.
@@ -302,19 +309,30 @@ def get_social_fabric_score(
     else:
         civic_score = _score_civic_gathering_from_count(civic_count)
 
-    # Engagement: IRS BMF civic org density (optional; requires preprocessed data)
+    # Engagement: voter registration (optional) and/or IRS BMF civic org density (optional).
+    # When both available: 0.60 × voter_reg + 0.40 × BMF; else use whichever is present.
     engagement_score = None
     orgs_per_1k = None
-    engagement_stats = None
-    # Try to use division code from tract metadata if available
-    division_code = None
-    # (Could be extended later to infer division from state_fips)
+    voter_reg_rate = None
+    bmf_score = None
+    voter_reg_score = None
+
     if bmf_result is not None:
         orgs_per_1k, engagement_stats = bmf_result
         if engagement_stats and orgs_per_1k is not None:
             mean = engagement_stats.get("mean", 0.0)
             std = engagement_stats.get("std", 0.0)
-            engagement_score = _score_engagement_from_rate(orgs_per_1k, mean, std)
+            bmf_score = _score_engagement_from_rate(orgs_per_1k, mean, std)
+
+    if voter_reg_result is not None:
+        voter_reg_score, _voter_stats, voter_reg_rate = voter_reg_result
+
+    if voter_reg_score is not None and bmf_score is not None:
+        engagement_score = 0.60 * voter_reg_score + 0.40 * bmf_score
+    elif voter_reg_score is not None:
+        engagement_score = voter_reg_score
+    elif bmf_score is not None:
+        engagement_score = bmf_score
 
     # Combine into Social Fabric Index.
     # Weights: Stability 1.2, Civic 1.2, Diversity 1.0, Engagement 1.0 (when present).
@@ -386,6 +404,7 @@ def get_social_fabric_score(
         "diversity_available": diversity_score is not None,
         "engagement_available": engagement_score is not None,
         "orgs_per_1k": orgs_per_1k,
+        "voter_registration_rate": round(voter_reg_rate, 3) if voter_reg_rate is not None else None,
     }
 
     details = {
@@ -393,11 +412,11 @@ def get_social_fabric_score(
         "summary": summary,
         "data_quality": quality_metrics,
         "area_classification": {"area_type": area_type},
-        "version": "v2_stability_diversity_civic_engagement",
+        "version": "v3_stability_diversity_civic_engagement_voter_bmf",
     }
 
     logger.info(
-        "Social Fabric Score: %s/100 (stability=%s, civic=%s, diversity=%s, engagement=%s, civic_nodes=%s, orgs_per_1k=%s)",
+        "Social Fabric Score: %s/100 (stability=%s, civic=%s, diversity=%s, engagement=%s, civic_nodes=%s, orgs_per_1k=%s, voter_reg_rate=%s)",
         score,
         stability_score,
         civic_score,
@@ -405,6 +424,7 @@ def get_social_fabric_score(
         engagement_score,
         civic_count,
         orgs_per_1k,
+        voter_reg_rate,
     )
     return score, details
 

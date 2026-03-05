@@ -661,8 +661,8 @@ score = weighted_sum(values) / sum(weights)   # 0–100
 - **Scoring:** Normalized Shannon entropy over race, income, and age (youth/prime/seniors); average of available dimensions.
 
 #### Engagement (0–100, optional)
-- **Data source:** IRS BMF (civic orgs); preprocessed to orgs per 1k.
-- **Scoring:** Z-score vs regional (division/CBSA) mean/std, clipped, mapped to 0–100.
+- **Data sources:** (1) Voter registration – preprocessed tract-level registration rate (0–1); (2) IRS BMF – civic orgs per 1k.
+- **Scoring:** Each component: z-score vs regional (division) mean/std, clipped, mapped to 0–100. When **both** are available: Engagement = **0.60 × voter_reg_score + 0.40 × bmf_score**. When only one is available, that component is used as the full Engagement sub-score.
 
 ### Calibration/Tuning
 - ❌ **No calibration** - Fixed weights and threshold curves.
@@ -672,6 +672,7 @@ score = weighted_sum(values) / sum(weights)   # 0–100
 - Census API (B07003 mobility, B02001/B19001/B01001 diversity)
 - OSM API (civic nodes)
 - IRS BMF (engagement; optional, when `data/` and build outputs available)
+- Voter registration (engagement; optional, preprocessed via `scripts/build_voter_registration_baselines.py`)
 - Stability baselines (e.g. `data/stability_baselines.json`) for regional stability z-score
 
 ---
