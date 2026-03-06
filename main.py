@@ -670,9 +670,35 @@ def _apply_pillar_failure_overrides(
         dq = dict(entry.get("data_quality") or {})
         dq["fallback_used"] = True
         dq["reason"] = "Pillar execution failed"
+        dq["fallback_reason"] = "Pillar execution failed"
         dq["error"] = "Pillar execution failed"
+        # Ensure quality_tier for frontend state derivation
+        dq.setdefault("quality_tier", "very_poor")
         entry["data_quality"] = dq
         entry["error"] = exc.__class__.__name__ if exc else "PillarExecutionFailed"
+
+
+def _set_pillar_status(
+    livability_pillars: Dict[str, Any],
+    exceptions: Dict[str, Exception],
+) -> None:
+    """Set per-pillar status ('success' | 'fallback' | 'failed') and ensure data_quality has quality_tier and fallback_reason where needed."""
+    for pillar_name, entry in livability_pillars.items():
+        if not isinstance(entry, dict):
+            continue
+        dq = dict(entry.get("data_quality") or {})
+        if pillar_name in exceptions:
+            entry["status"] = "failed"
+            dq.setdefault("quality_tier", "very_poor")
+            dq.setdefault("fallback_reason", dq.get("reason", "Pillar execution failed"))
+        elif dq.get("fallback_used"):
+            entry["status"] = "fallback"
+            dq.setdefault("quality_tier", "poor")
+            dq.setdefault("fallback_reason", dq.get("reason", "Fallback score used"))
+        else:
+            entry["status"] = "success"
+            dq.setdefault("quality_tier", "fair")
+        entry["data_quality"] = dq
 
 
 def _compute_longevity_index(
@@ -932,6 +958,7 @@ def _apply_allocation_to_cached_response(
         pillar_data["importance_level"] = priority_levels.get(pillar_name) if priority_levels else None
         total_score += score * weight / 100.0
 
+    _set_pillar_status(livability_pillars, {})  # Ensure status/quality_tier on cached pillars
     response["total_score"] = round(total_score, 2)
     longevity_index, longevity_contributions = _compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
@@ -1834,7 +1861,9 @@ def _compute_single_score_internal(
             "data_quality": {
                 "fallback_used": not use_school_scoring or not schools_found,
                 "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
-                "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+                "error": "Pillar execution failed" if 'quality_education' in exceptions else None,
+                "quality_tier": "poor" if (not use_school_scoring or not schools_found) else "fair",
+                "fallback_reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else None),
             },
             "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
         },
@@ -1874,6 +1903,7 @@ def _compute_single_score_internal(
     }
 
     _apply_pillar_failure_overrides(livability_pillars, exceptions)
+    _set_pillar_status(livability_pillars, exceptions)
 
     # Build response
     longevity_index, longevity_contributions = _compute_longevity_index(
@@ -3244,6 +3274,7 @@ async def _stream_score_with_progress(
         }
 
         _apply_pillar_failure_overrides(livability_pillars, exceptions)
+        _set_pillar_status(livability_pillars, exceptions)
 
         # Build final response
         longevity_index, longevity_contributions = _compute_longevity_index(
@@ -4131,7 +4162,9 @@ async def stream_score(
             "data_quality": {
                 "fallback_used": not use_school_scoring or not schools_found,
                 "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
-                "error": "Pillar execution failed" if 'quality_education' in exceptions else None
+                "error": "Pillar execution failed" if 'quality_education' in exceptions else None,
+                "quality_tier": "poor" if (not use_school_scoring or not schools_found) else "fair",
+                "fallback_reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else None),
             },
             "error": exceptions.get('quality_education').__class__.__name__ if 'quality_education' in exceptions and exceptions.get('quality_education') else None
         },
@@ -4168,6 +4201,7 @@ async def stream_score(
         }
 
         _apply_pillar_failure_overrides(livability_pillars, exceptions)
+        _set_pillar_status(livability_pillars, exceptions)
 
         # Build response with enhanced metadata
         longevity_index, longevity_contributions = _compute_longevity_index(

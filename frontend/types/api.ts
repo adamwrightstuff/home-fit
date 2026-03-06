@@ -23,6 +23,8 @@ export interface DataQuality {
   confidence?: number;
   quality_tier?: string;
   fallback_used?: boolean;
+  /** Human-readable reason when fallback was used (for tooltips). */
+  fallback_reason?: string;
   data_sources?: string[];
   [key: string]: any;
 }
@@ -50,6 +52,8 @@ export interface LivabilityPillar {
   area_classification?: AreaClassification;
   /** Set when pillar execution failed; client should show low confidence and "Rerun" prompt. */
   error?: string;
+  /** Source of truth for UI state: 'success' | 'fallback' | 'failed'. */
+  status?: 'success' | 'fallback' | 'failed';
 }
 
 export interface LivabilityPillars {

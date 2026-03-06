@@ -195,6 +195,27 @@ export function getScoreBandColor(score: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// Pillar data quality / failure state (derived from status + quality_tier)
+// ---------------------------------------------------------------------------
+export type PillarFailureType = 'none' | 'incomplete' | 'fallback' | 'execution_error'
+
+export function getPillarFailureType(pillar: {
+  status?: string
+  error?: string
+  data_quality?: { quality_tier?: string }
+}): PillarFailureType {
+  const status = pillar.status ?? (pillar.error ? 'failed' : 'success')
+  const tier = pillar.data_quality?.quality_tier ?? 'fair'
+  if (status === 'failed') return 'execution_error'
+  if (status === 'fallback') return 'fallback'
+  if (status === 'success') {
+    if (tier === 'poor' || tier === 'very_poor') return 'incomplete'
+    return 'none'
+  }
+  return 'none'
+}
+
+// ---------------------------------------------------------------------------
 // Phase 1B: Long descriptions ("why this matters") for expand/tooltip
 // ---------------------------------------------------------------------------
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {

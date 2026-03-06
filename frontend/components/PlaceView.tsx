@@ -6,7 +6,7 @@ import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -79,7 +79,13 @@ export interface PlaceViewProps {
 export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
-  const [pillarScores, setPillarScores] = useState<Record<string, { score: number; failed?: boolean; confidence?: number }>>({})
+  const [pillarScores, setPillarScores] = useState<Record<string, {
+    score: number
+    failed?: boolean
+    confidence?: number
+    status?: 'success' | 'fallback' | 'failed'
+    data_quality?: { quality_tier?: string }
+  }>>({})
   const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
   const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -91,6 +97,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
   const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
   const [exportModalOpen, setExportModalOpen] = useState(false)
+  /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
+  const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
   useEffect(() => {
     try {
       const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
@@ -138,6 +146,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   // Re-run a single pillar with given options (e.g. after Scenery/Character/Density change, or Rerun after failure). Updates that pillar's score and total.
   const runSinglePillar = useCallback(
     async (pillarKey: string, options: SearchOptions) => {
+      setRerunFailedPillar(null)
       setLoading(true)
       setProgress(5)
       setScoreProgress({})
@@ -180,20 +189,23 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             setProgress(Math.min(98, 5 + 90))
           }
         )
-        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean } }>) || {}
+        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean; quality_tier?: string }; status?: string }>) || {}
         const data = pillars[pillarKey]
         if (data != null) {
           const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
+          const status = data.status ?? (failed ? 'failed' : 'success')
           if (failed) {
-            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: 0, failed: true, confidence: 0 } }))
+            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: 0, failed: true, confidence: 0, status: status as 'failed', data_quality: data.data_quality } }))
           } else if (typeof data.score === 'number') {
-            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score!, confidence: data.confidence ?? 0 } }))
+            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score!, confidence: data.confidence ?? 0, status: status as 'success' | 'fallback', data_quality: data.data_quality } }))
           }
         }
         const summary = (resp as { place_summary?: string }).place_summary
         if (summary != null) setPlaceSummary(summary)
         setProgress(100)
       } catch (e) {
+        setRerunFailedPillar(pillarKey)
+        setTimeout(() => setRerunFailedPillar(null), 5000)
         onError(e instanceof Error ? e.message : 'Failed to update score.')
       } finally {
         setLoading(false)
@@ -329,16 +341,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           setProgress(pct)
         }
       )
-      const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean } }>) || {}
+      const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean; quality_tier?: string }; status?: string }>) || {}
       const mergedScores = { ...pillarScores }
       toRun.forEach((k) => {
         const data = pillars[k]
         if (data == null) return
         const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
+        const status = data.status ?? (failed ? 'failed' : 'success')
         if (failed) {
-          mergedScores[k] = { score: 0, failed: true, confidence: 0 }
+          mergedScores[k] = { score: 0, failed: true, confidence: 0, status: status as 'failed', data_quality: data.data_quality }
         } else if (typeof data.score === 'number') {
-          mergedScores[k] = { score: data.score, confidence: data.confidence ?? 0 }
+          mergedScores[k] = { score: data.score, confidence: data.confidence ?? 0, status: status as 'success' | 'fallback', data_quality: data.data_quality }
         }
       })
       setPillarScores(mergedScores)
@@ -646,43 +659,108 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       Add
                     </button>
                   )}
-                  {score != null && !score.failed && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span className={getScoreBadgeClass(score.score)} style={{ padding: '0.35rem 0.75rem', borderRadius: 8 }}>
-                        {score.score.toFixed(0)}
+                  {score != null && (() => {
+                    const failureType = getPillarFailureType({
+                      status: score.status,
+                      error: score.failed ? 'PillarExecutionFailed' : undefined,
+                      data_quality: score.data_quality,
+                    })
+                    const showRerun = (failureType === 'fallback' || failureType === 'execution_error')
+                    const rerunDisabled = loading || pillarsInProgress.length > 0
+                    const isRerunning = pillarsInProgress.includes(key)
+                    const isFailed = failureType === 'execution_error'
+                    const isFallback = failureType === 'fallback'
+                    const isIncomplete = failureType === 'incomplete'
+                    if (isRerunning) {
+                      return (
+                        <span className="hf-muted" style={{ fontSize: '0.85rem' }}>
+                          Updating…
+                        </span>
+                      )
+                    }
+                    return (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'baseline',
+                            gap: '0.25rem',
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                            padding: '0.3rem 0.55rem',
+                            borderRadius: 8,
+                            background: isFailed ? 'var(--hf-bg-subtle)' : undefined,
+                            border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(score.score)}`,
+                            color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(score.score),
+                          }}
+                        >
+                          {isFailed ? (
+                            '?'
+                          ) : (
+                            <>
+                              {isFallback && <span style={{ opacity: 0.9 }}>~</span>}
+                              <span style={{ color: isFailed ? undefined : 'var(--hf-text-primary)' }}>{score.score.toFixed(0)}</span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.95 }}>· {getScoreBandLabel(score.score)}</span>
+                            </>
+                          )}
+                        </span>
+                        {isIncomplete && (
+                          <span
+                            title="Score is based on incomplete data for this location and may not be fully accurate."
+                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
+                          >
+                            Limited data
+                          </span>
+                        )}
+                        {isFallback && (
+                          <span
+                            title="Real data wasn't available — this score is estimated."
+                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
+                          >
+                            Estimated score
+                          </span>
+                        )}
+                        {isFailed && (
+                          <span
+                            title="We weren't able to retrieve data for this pillar."
+                            className="hf-muted"
+                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)' }}
+                          >
+                            Data unavailable
+                          </span>
+                        )}
+                        {showRerun && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                runSinglePillar(key, searchOptions)
+                              }}
+                              disabled={rerunDisabled}
+                              aria-label="Rerun this pillar"
+                              className="hf-btn-primary"
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: 8,
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                cursor: rerunDisabled ? 'not-allowed' : 'pointer',
+                                opacity: rerunDisabled ? 0.6 : 1,
+                              }}
+                            >
+                              Rerun
+                            </button>
+                            {rerunFailedPillar === key && (
+                              <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
+                                Still unable to retrieve data
+                              </span>
+                            )}
+                          </>
+                        )}
                       </span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: getScoreBandColor(score.score) }}>
-                        {getScoreBandLabel(score.score)}
-                      </span>
-                    </span>
-                  )}
-                  {score != null && score.failed && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span className="hf-muted" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                        Score unavailable
-                      </span>
-                      <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
-                        ({(score.confidence ?? 0)}% confidence)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          runSinglePillar(key, searchOptions)
-                        }}
-                        className="hf-btn-primary"
-                        style={{
-                          padding: '0.35rem 0.65rem',
-                          borderRadius: 8,
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Rerun
-                      </button>
-                    </span>
-                  )}
+                    )
+                  })()}
                   {score != null && !score.failed && pillarWeightsAndContributions[key] && (
                     <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
                       Weight {pillarWeightsAndContributions[key].weight.toFixed(1)}% → contributes {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
@@ -937,11 +1015,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         <button
           type="button"
           onClick={runScore}
-          disabled={selectedPillars.size === 0 || loading}
+          disabled={selectedPillars.size === 0 || loading || pillarsInProgress.length > 0}
           className="hf-btn-primary"
           style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
         >
-          {loading ? 'Scoring…' : selectedPillars.size > 0 ? `Run Score (${selectedPillars.size})` : 'Run Score'}
+          {loading ? 'Scoring…' : pillarsInProgress.length > 0 ? 'Rerunning…' : selectedPillars.size > 0 ? `Run Score (${selectedPillars.size})` : 'Run Score'}
         </button>
       </div>
 
