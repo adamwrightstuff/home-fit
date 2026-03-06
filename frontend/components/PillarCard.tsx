@@ -160,7 +160,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
                 >
                   Estimated score
                   <span id={`pillar-${pillar_key}-fallback-desc`} style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-                    Real data wasn't available — this score is estimated and may not reflect this location accurately.
+                    Real data wasn&apos;t available — this score is estimated and may not reflect this location accurately.
                   </span>
                 </span>
               )}
@@ -180,7 +180,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
                 >
                   Data unavailable
                   <span id={`pillar-${pillar_key}-failed-desc`} style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-                    We weren't able to retrieve data for this pillar.
+                    We weren&apos;t able to retrieve data for this pillar.
                   </span>
                 </span>
               )}
