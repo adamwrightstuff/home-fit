@@ -550,3 +550,237 @@ body {
   padding: 1.25rem;
   z-index: 80;
 }
+
+/* -----------------------------
+   Auth bar + modal (Supabase)
+   ----------------------------- */
+
+.hf-auth-bar {
+  background: var(--hf-card-bg);
+  border-bottom: 1px solid var(--hf-border);
+  box-shadow: var(--hf-card-shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.hf-auth-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hf-auth-bar-logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--hf-primary-1);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.hf-auth-bar-logo:hover {
+  color: var(--hf-primary-2);
+}
+
+.hf-auth-bar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hf-auth-bar-muted {
+  color: var(--hf-text-secondary);
+  font-size: 0.9rem;
+}
+
+.hf-auth-bar-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  color: var(--hf-text-secondary);
+}
+
+.hf-auth-bar-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--hf-border);
+  background: #fff;
+  color: var(--hf-text-primary);
+  transition: all 0.2s ease;
+}
+
+.hf-auth-bar-btn:hover {
+  background: var(--hf-hover-bg);
+  border-color: var(--hf-border-strong);
+}
+
+.hf-auth-bar-btn-primary {
+  background: var(--hf-primary-gradient);
+  color: #fff;
+  border: none;
+}
+
+.hf-auth-bar-btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+  background: var(--hf-primary-gradient);
+  color: #fff;
+}
+
+/* Auth modal */
+.hf-auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+
+.hf-auth-modal {
+  background: var(--hf-card-bg);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.hf-auth-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.hf-auth-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--hf-text-primary);
+}
+
+.hf-auth-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--hf-hover-bg);
+  color: var(--hf-text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hf-auth-close:hover {
+  background: var(--hf-border);
+  color: var(--hf-text-primary);
+}
+
+.hf-auth-field {
+  margin-bottom: 1.25rem;
+}
+
+.hf-auth-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--hf-text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.hf-auth-field input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--hf-border);
+  border-radius: 10px;
+  font-size: 1rem;
+  color: var(--hf-text-primary);
+  background: #fff;
+}
+
+.hf-auth-field input:focus {
+  outline: none;
+  border-color: var(--hf-primary-1);
+}
+
+.hf-auth-field input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.hf-auth-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 10px;
+  color: var(--hf-danger);
+  font-size: 0.9rem;
+}
+
+.hf-auth-success {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: rgba(45, 106, 79, 0.12);
+  border-radius: 10px;
+  color: var(--hf-homefit-green);
+  font-size: 0.9rem;
+}
+
+.hf-auth-actions {
+  margin-top: 1.25rem;
+}
+
+.hf-auth-submit {
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: var(--hf-primary-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hf-auth-submit:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.hf-auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.hf-auth-switch {
+  margin: 1.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--hf-text-secondary);
+  text-align: center;
+}
+
+.hf-auth-link {
+  background: none;
+  border: none;
+  color: var(--hf-primary-1);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.hf-auth-link:hover {
+  color: var(--hf-primary-2);
+}

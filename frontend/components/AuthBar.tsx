@@ -1,0 +1,66 @@
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
+import AuthModal from '@/components/AuthModal'
+
+export default function AuthBar() {
+  const { user, loading, isConfigured, signOut } = useAuth()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'signin' | 'signup'>('signin')
+
+  if (!isConfigured) return null
+
+  return (
+    <>
+      <header className="hf-auth-bar">
+        <div className="hf-auth-bar-inner">
+          <Link href="/" className="hf-auth-bar-logo">
+            HomeFit
+          </Link>
+          <nav className="hf-auth-bar-nav" aria-label="Account">
+            {loading ? (
+              <span className="hf-auth-bar-muted">Loading…</span>
+            ) : user ? (
+              <>
+                <span className="hf-auth-bar-email" title={user.email ?? undefined}>
+                  {user.email}
+                </span>
+                <button
+                  type="button"
+                  className="hf-auth-bar-btn"
+                  onClick={() => signOut()}
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="hf-auth-bar-btn"
+                  onClick={() => { setModalMode('signin'); setModalOpen(true); }}
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  className="hf-auth-bar-btn hf-auth-bar-btn-primary"
+                  onClick={() => { setModalMode('signup'); setModalOpen(true); }}
+                >
+                  Sign up
+                </button>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
+      <AuthModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialMode={modalMode}
+      />
+    </>
+  )
+}

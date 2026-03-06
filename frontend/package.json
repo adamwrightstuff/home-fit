@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "@types/maplibre-gl": "^1.13.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.1",

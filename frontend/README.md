@@ -15,6 +15,13 @@ npm install
 NEXT_PUBLIC_API_URL=https://home-fit-production.up.railway.app
 ```
 
+For optional **Sign in / Sign up** (Supabase Auth), add:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+See `.env.example` for a template. If these are not set, the auth bar is hidden and the app works without an account.
+
 3. Run development server:
 ```bash
 npm run dev
