@@ -13,7 +13,7 @@ All pillars follow **pure data-backed scoring** principles:
 - ✅ **Objective metrics** - Based on measurable data (OSM, Census, GEE, Transitland)
 - ✅ **Transparent** - All scoring logic is explicit and documented
 
-**Legacy References:** Some pillars retain ridge regression coefficients as "advisory only" for reference, but these are **NOT used for scoring**. Primary scoring uses pure data-backed component sums.
+**Legacy References:** The **active_outdoors** pillar uses a ridge regression global model as its primary scoring method (see Addendum). Some other pillars previously retained ridge coefficients as "advisory only" for reference; those are not used for scoring. Natural beauty and neighborhood amenities use pure data-backed component sums.
 
 ---
 
@@ -187,8 +187,8 @@ final_score = raw_total  # No calibration
 
 ### Calibration/Tuning
 - ❌ **No calibration** - `calibrated_total = raw_total`
-- ✅ **Pure data-backed** - Component weights: 30% daily, 50% wild, 20% water
-- 📊 **Ridge regression:** Advisory only (not used for scoring)
+- ✅ **Data-backed** - Component weights: 30% daily, 50% wild, 20% water; final score from ridge regression global model (intercept + normalized features)
+- 📊 **Ridge regression:** **Primary scoring method** (global model; see DESIGN_PRINCIPLES.md Addendum)
 
 ### Data Sources
 - OSM API (parks, trails, water, camping)
@@ -730,8 +730,8 @@ score = min(100, total_raw)
 | Pillar | Calibration | Tuning | Ridge Regression | Status |
 |--------|-------------|--------|------------------|--------|
 | **natural_beauty** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed (legacy scenic / canopy) |
-| **active_outdoors** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed (recreation) |
-| **neighborhood_amenities** | ❌ None | ❌ None | 📊 Advisory only | ✅ Pure data-backed |
+| **active_outdoors** | ❌ None | ❌ None | ✅ **Primary scoring** | ✅ Ridge global model + data-backed components |
+| **neighborhood_amenities** | ❌ None | ❌ None | ❌ Removed | ✅ Pure data-backed |
 | **healthcare_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed ratios |
 | **public_transit_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed breakpoints |
 | **Price-to-Space (housing_value)** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
@@ -747,7 +747,7 @@ score = min(100, total_raw)
 
 1. **No Calibration:** All pillars removed `CAL_A`/`CAL_B` transforms
 2. **No Tuning:** No location-specific adjustments or target-score-based tuning
-3. **Ridge Regression:** Only exists as "advisory only" metadata (not used for scoring)
+3. **Ridge Regression:** Used as **primary scoring** for active_outdoors only; removed from neighborhood_amenities; natural_beauty has no ridge (weighted component sum only)
 4. **Data-Backed:** All scoring based on objective metrics and research-backed thresholds
 5. **Context-Aware:** Area-type-specific expectations and weights (not calibration)
 6. **Fallback Scoring:** Conservative minimums for API failures (not calibration)
@@ -788,7 +788,7 @@ score = min(100, total_raw)
 
 ## Notes
 
-- **Ridge Regression Coefficients:** Present in code but marked "advisory only" - not used for scoring
+- **Ridge Regression:** active_outdoors uses a ridge global model for scoring; natural_beauty uses a weighted component sum (no ridge). Legacy advisory ridge references were removed from neighborhood_amenities.
 - **Expected Values:** Research-backed area-type-specific expectations (not target scores)
 - **Fallback Scoring:** Handles API failures, not calibration
 - **Context Adjustments:** Area-type-specific weights/expectations (not location-specific tuning)

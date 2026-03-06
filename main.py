@@ -1458,18 +1458,22 @@ def _compute_single_score_internal(
     if use_school_scoring:
         if 'quality_education' in pillar_results and pillar_results['quality_education']:
             result = pillar_results['quality_education']
-            if len(result) == 3:
+            if isinstance(result, (tuple, list)) and len(result) == 3:
                 school_avg, schools_by_level, school_breakdown = result
             else:
-                # Handle legacy return format (backward compatibility)
-                school_avg, schools_by_level = result
+                logger.warning(
+                    "quality_education returned unexpected format (expected 3-tuple); using safe fallback. len=%s",
+                    len(result) if isinstance(result, (tuple, list)) else "n/a",
+                )
+                school_avg = result[0] if isinstance(result, (tuple, list)) and len(result) >= 1 else None
+                schools_by_level = result[1] if isinstance(result, (tuple, list)) and len(result) >= 2 else {"elementary": [], "middle": [], "high": []}
                 school_breakdown = {
                     "base_avg_rating": 0.0,
                     "quality_boost": 0.0,
                     "early_ed_bonus": 0.0,
                     "college_bonus": 0.0,
                     "total_schools_rated": 0,
-                    "excellent_schools_count": 0
+                    "excellent_schools_count": 0,
                 }
         else:
             school_avg = None
@@ -2949,21 +2953,23 @@ async def _stream_score_with_progress(
         if use_school_scoring:
             if 'quality_education' in pillar_results and pillar_results['quality_education']:
                 result = pillar_results['quality_education']
-                if isinstance(result, tuple) and len(result) == 3:
+                if isinstance(result, (tuple, list)) and len(result) == 3:
                     school_avg, schools_by_level, school_breakdown = result
-                elif isinstance(result, tuple) and len(result) >= 2:
-                    school_avg, schools_by_level = result[0], result[1]
+                else:
+                    logger.warning(
+                        "quality_education returned unexpected format (expected 3-tuple); using safe fallback. len=%s",
+                        len(result) if isinstance(result, (tuple, list)) else "n/a",
+                    )
+                    school_avg = result[0] if isinstance(result, (tuple, list)) and len(result) >= 1 else None
+                    schools_by_level = result[1] if isinstance(result, (tuple, list)) and len(result) >= 2 else {"elementary": [], "middle": [], "high": []}
                     school_breakdown = {
                         "base_avg_rating": 0.0,
                         "quality_boost": 0.0,
                         "early_ed_bonus": 0.0,
                         "college_bonus": 0.0,
                         "total_schools_rated": 0,
-                        "excellent_schools_count": 0
+                        "excellent_schools_count": 0,
                     }
-                else:
-                    school_avg = None
-                    schools_by_level = {"elementary": [], "middle": [], "high": []}
             else:
                 school_avg = None
                 schools_by_level = {"elementary": [], "middle": [], "high": []}
@@ -3751,18 +3757,22 @@ async def stream_score(
         if use_school_scoring:
             if 'quality_education' in pillar_results and pillar_results['quality_education']:
                 result = pillar_results['quality_education']
-                if len(result) == 3:
+                if isinstance(result, (tuple, list)) and len(result) == 3:
                     school_avg, schools_by_level, school_breakdown = result
                 else:
-                    # Handle legacy return format (backward compatibility)
-                    school_avg, schools_by_level = result
+                    logger.warning(
+                        "quality_education returned unexpected format (expected 3-tuple); using safe fallback. len=%s",
+                        len(result) if isinstance(result, (tuple, list)) else "n/a",
+                    )
+                    school_avg = result[0] if isinstance(result, (tuple, list)) and len(result) >= 1 else None
+                    schools_by_level = result[1] if isinstance(result, (tuple, list)) and len(result) >= 2 else {"elementary": [], "middle": [], "high": []}
                     school_breakdown = {
                         "base_avg_rating": 0.0,
                         "quality_boost": 0.0,
                         "early_ed_bonus": 0.0,
                         "college_bonus": 0.0,
                         "total_schools_rated": 0,
-                        "excellent_schools_count": 0
+                        "excellent_schools_count": 0,
                     }
             else:
                 school_avg = None  # Real failure, not fake score

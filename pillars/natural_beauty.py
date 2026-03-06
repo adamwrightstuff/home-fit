@@ -3485,8 +3485,7 @@ def calculate_natural_beauty(lat: float,
         "components": context_info.get("component_scores", {})
     }
 
-    # Compute ridge regression score (PRIMARY SCORING METHOD - v2_clean_weights_tanh_cap)
-    # OPTION A: Multi-component model with separate weighting (no double-counting)
+    # Compute weighted component score (v2_clean_weights_tanh_cap). Multi-component model with separate weighting (no double-counting).
     # Rationale: Better reflects what someone experiences walking around their neighborhood:
     # 1. Base canopy coverage (with expectation adjustment) - 15%
     # 2. Visible greenery (GVI) - 20%

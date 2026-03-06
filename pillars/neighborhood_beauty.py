@@ -1,8 +1,8 @@
 """
-Legacy neighborhood beauty aggregator (kept for backwards compatibility).
+Neighborhood beauty aggregator.
 
-This module now composes the dedicated built_beauty and natural_beauty pillars
-to provide the historic single "neighborhood_beauty" score.
+Composes the dedicated built_beauty and natural_beauty pillars
+to provide the combined "neighborhood_beauty" score.
 """
 
 from __future__ import annotations
@@ -38,9 +38,9 @@ def get_neighborhood_beauty_score(lat: float, lon: float, city: Optional[str] = 
                                    density: Optional[float] = None,
                                    form_context: Optional[str] = None) -> Tuple[float, Dict]:
     """
-    Calculate the legacy neighborhood beauty score (0-100) and detailed breakdown.
+    Calculate neighborhood beauty score (0-100) and detailed breakdown.
     """
-    logger.info("Analyzing neighborhood beauty (legacy aggregate)...")
+    logger.info("Analyzing neighborhood beauty (aggregate)...")
 
     disable_enhancers = os.getenv("BEAUTY_DISABLE_ENHANCERS", "false").lower() == "true"
 
