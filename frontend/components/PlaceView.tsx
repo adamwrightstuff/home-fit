@@ -639,6 +639,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         const incomplete = ft === 'incomplete'
                         const fallback = ft === 'fallback'
                         const failed = ft === 'execution_error'
+                        const showRerun = fallback || failed
+                        const rerunDisabled = loading || pillarsInProgress.length > 0
                         return (
                           <>
                             {incomplete && (
@@ -665,6 +667,35 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               >
                                 Data unavailable
                               </span>
+                            )}
+                            {showRerun && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    runSinglePillar(key, searchOptions)
+                                  }}
+                                  disabled={rerunDisabled}
+                                  aria-label="Rerun this pillar"
+                                  className="hf-btn-primary"
+                                  style={{
+                                    padding: '0.35rem 0.65rem',
+                                    borderRadius: 8,
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    cursor: rerunDisabled ? 'not-allowed' : 'pointer',
+                                    opacity: rerunDisabled ? 0.6 : 1,
+                                  }}
+                                >
+                                  Rerun
+                                </button>
+                                {rerunFailedPillar === key && (
+                                  <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
+                                    Still unable to retrieve data
+                                  </span>
+                                )}
+                              </>
                             )}
                           </>
                         )
@@ -739,35 +770,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                             </>
                           )}
                         </span>
-                        {showRerun && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                runSinglePillar(key, searchOptions)
-                              }}
-                              disabled={rerunDisabled}
-                              aria-label="Rerun this pillar"
-                              className="hf-btn-primary"
-                              style={{
-                                padding: '0.35rem 0.65rem',
-                                borderRadius: 8,
-                                fontSize: '0.85rem',
-                                fontWeight: 600,
-                                cursor: rerunDisabled ? 'not-allowed' : 'pointer',
-                                opacity: rerunDisabled ? 0.6 : 1,
-                              }}
-                            >
-                              Rerun
-                            </button>
-                            {rerunFailedPillar === key && (
-                              <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
-                                Still unable to retrieve data
-                              </span>
-                            )}
-                          </>
-                        )}
                       </span>
                     )
                   })()}
