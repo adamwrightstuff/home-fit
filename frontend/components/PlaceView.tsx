@@ -79,7 +79,7 @@ export interface PlaceViewProps {
 export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
-  const [pillarScores, setPillarScores] = useState<Record<string, { score: number }>>({})
+  const [pillarScores, setPillarScores] = useState<Record<string, { score: number; failed?: boolean; confidence?: number }>>({})
   const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
   const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -135,9 +135,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setSelectedPriorities((prev) => ({ ...prev, [key]: level }))
   }, [])
 
-  // Re-run a single pillar with given options (e.g. after Scenery/Character/Density change). Updates that pillar's score and total.
+  // Re-run a single pillar with given options (e.g. after Scenery/Character/Density change, or Rerun after failure). Updates that pillar's score and total.
   const runSinglePillar = useCallback(
-    async (pillarKey: 'natural_beauty' | 'built_beauty', options: SearchOptions) => {
+    async (pillarKey: string, options: SearchOptions) => {
       setLoading(true)
       setProgress(5)
       setScoreProgress({})
@@ -180,10 +180,15 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             setProgress(Math.min(98, 5 + 90))
           }
         )
-        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
+        const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean } }>) || {}
         const data = pillars[pillarKey]
-        if (data != null && typeof data.score === 'number') {
-          setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score } }))
+        if (data != null) {
+          const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
+          if (failed) {
+            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: 0, failed: true, confidence: 0 } }))
+          } else if (typeof data.score === 'number') {
+            setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score!, confidence: data.confidence ?? 0 } }))
+          }
         }
         const summary = (resp as { place_summary?: string }).place_summary
         if (summary != null) setPlaceSummary(summary)
@@ -228,21 +233,16 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   )
 
   // Derive total from pillar scores and effective priorities so changing priority updates total immediately (no API call).
+  // Excludes failed pillars from total.
   const totalScore = useMemo(() => {
-    const partialScores = Object.fromEntries(
-      Object.entries(pillarScores).map(([k, v]) => [k, v.score])
-    )
-    if (Object.keys(partialScores).length === 0) return null
-    return totalFromPartialPillarScores(partialScores, effectivePriorities) ?? null
+    if (Object.keys(pillarScores).length === 0) return null
+    return totalFromPartialPillarScores(pillarScores, effectivePriorities) ?? null
   }, [pillarScores, effectivePriorities])
 
-  // Per-pillar weight % and contribution from current priorities (recalculation without API — updates when Importance changes).
+  // Per-pillar weight % and contribution from current priorities (recalculation without API — updates when Importance changes). Excludes failed pillars.
   const pillarWeightsAndContributions = useMemo(() => {
-    const partialScores = Object.fromEntries(
-      Object.entries(pillarScores).map(([k, v]) => [k, v.score])
-    )
-    if (Object.keys(partialScores).length === 0) return {}
-    return getPillarWeightsAndContributions(partialScores, effectivePriorities)
+    if (Object.keys(pillarScores).length === 0) return {}
+    return getPillarWeightsAndContributions(pillarScores, effectivePriorities)
   }, [pillarScores, effectivePriorities])
 
   // When user changes prioritization for pillars that already have scores, total is recomputed above (no effect needed).
@@ -272,10 +272,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     const selected = Array.from(selectedPillars)
     if (selected.length === 0) return
 
-    // Only run pillars that don't have a score yet. Once a pillar has been run for this location,
-    // changing its priority or preferences does not re-run it; we just recompute the total from
-    // existing scores and current weights (see useEffect below).
-    const toRun = selected.filter((k) => !(k in pillarScores))
+    // Only run pillars that don't have a valid score yet (or had a failed run). Once a pillar has a valid score,
+    // changing its priority or preferences does not re-run it; we just recompute the total from existing scores and current weights.
+    const toRun = selected.filter((k) => {
+      const entry = pillarScores[k]
+      return !entry || entry.failed
+    })
 
     // If all selected pillars already have scores, total is derived from priorities (no API call).
     if (toRun.length === 0) {
@@ -327,11 +329,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           setProgress(pct)
         }
       )
-      const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
+      const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean } }>) || {}
       const mergedScores = { ...pillarScores }
       toRun.forEach((k) => {
         const data = pillars[k]
-        if (data != null && typeof data.score === 'number') mergedScores[k] = { score: data.score }
+        if (data == null) return
+        const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
+        if (failed) {
+          mergedScores[k] = { score: 0, failed: true, confidence: 0 }
+        } else if (typeof data.score === 'number') {
+          mergedScores[k] = { score: data.score, confidence: data.confidence ?? 0 }
+        }
       })
       setPillarScores(mergedScores)
       const summary = (resp as { place_summary?: string }).place_summary
@@ -638,7 +646,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       Add
                     </button>
                   )}
-                  {score != null && (
+                  {score != null && !score.failed && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span className={getScoreBadgeClass(score.score)} style={{ padding: '0.35rem 0.75rem', borderRadius: 8 }}>
                         {score.score.toFixed(0)}
@@ -648,7 +656,34 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       </span>
                     </span>
                   )}
-                  {score != null && pillarWeightsAndContributions[key] && (
+                  {score != null && score.failed && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="hf-muted" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                        Score unavailable
+                      </span>
+                      <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
+                        ({(score.confidence ?? 0)}% confidence)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          runSinglePillar(key, searchOptions)
+                        }}
+                        className="hf-btn-primary"
+                        style={{
+                          padding: '0.35rem 0.65rem',
+                          borderRadius: 8,
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Rerun
+                      </button>
+                    </span>
+                  )}
+                  {score != null && !score.failed && pillarWeightsAndContributions[key] && (
                     <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
                       Weight {pillarWeightsAndContributions[key].weight.toFixed(1)}% → contributes {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
                     </div>

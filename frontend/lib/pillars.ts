@@ -34,15 +34,18 @@ export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
 
 /**
  * Compute Longevity Index (0–100) from pillar scores using fixed longevity weights.
- * Uses only longevity pillars that have a score; renormalizes weights over that subset.
- * Returns null if no longevity pillar has a score.
+ * Uses only longevity pillars that have a valid score (excludes failed runs); renormalizes weights over that subset.
+ * Returns null if no longevity pillar has a valid score.
  */
 export function computeLongevityIndex(
-  pillarScores: Record<string, { score?: number }>
+  pillarScores: Record<string, { score?: number; failed?: boolean }>
 ): number | null {
   const eligible = (Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]).filter((p) => {
-    const s = pillarScores[p]?.score
-    return typeof s === 'number'
+    const entry = pillarScores[p]
+    if (!entry) return false
+    if (entry.failed) return false
+    const s = entry.score
+    return typeof s === 'number' && Number.isFinite(s)
   })
   if (eligible.length === 0) return null
   const totalWeight = eligible.reduce((sum, p) => sum + LONGEVITY_INDEX_WEIGHTS[p], 0)

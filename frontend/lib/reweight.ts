@@ -167,20 +167,26 @@ export function reweightScoreResponseFromPriorities(
 
 /**
  * Running total from partial pillar scores (tap-to-score flow).
- * Uses only completed pillars and renormalizes their weights to sum to 100.
+ * Uses only completed pillars with valid scores (excludes failed runs) and renormalizes their weights to sum to 100.
  */
 export function totalFromPartialPillarScores(
-  partialScores: Record<string, number>,
+  partialScores: Record<string, number | { score: number; failed?: boolean }>,
   priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
 ): number | null {
-  const completed = Object.entries(partialScores).filter(
-    ([_, s]) => typeof s === 'number' && Number.isFinite(s)
-  ) as [string, number][]
-  if (completed.length === 0) return null
+  const completed = Object.entries(partialScores).filter(([_, s]) => {
+    if (typeof s === 'number') return Number.isFinite(s)
+    if (s && typeof s === 'object' && typeof s.score === 'number') return !(s as { failed?: boolean }).failed
+    return false
+  }) as [string, number][]
+  const scores: Record<string, number> = {}
+  for (const [k, s] of completed) {
+    scores[k] = typeof s === 'number' ? s : (s as { score: number }).score
+  }
+  if (Object.keys(scores).length === 0) return null
   const tokens = prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
   let weightSum = 0
   let weightedSum = 0
-  for (const [k, score] of completed) {
+  for (const [k, score] of Object.entries(scores)) {
     const w = Number(tokens[k] ?? 0)
     if (w > 0) {
       weightSum += w
@@ -188,7 +194,7 @@ export function totalFromPartialPillarScores(
     }
   }
   if (weightSum <= 0) {
-    return completed.reduce((a, [, s]) => a + s, 0) / completed.length
+    return Object.values(scores).reduce((a, s) => a + s, 0) / Object.keys(scores).length
   }
   return Math.round((weightedSum / weightSum) * 100) / 100
 }
@@ -200,25 +206,30 @@ export function getPillarWeightsFromPriorities(
   return prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
 }
 
-/** Per-pillar weight % and contribution from scores + priorities (recalculation without API). */
+/** Per-pillar weight % and contribution from scores + priorities (recalculation without API). Excludes failed pillars. */
 export function getPillarWeightsAndContributions(
-  partialScores: Record<string, number>,
+  partialScores: Record<string, number | { score: number; failed?: boolean }>,
   priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
 ): Record<string, { weight: number; contribution: number }> {
   const tokens = prioritiesToTokens(priorities as Partial<Record<string, string>> | null | undefined)
-  const completed = Object.entries(partialScores).filter(
-    ([_, s]) => typeof s === 'number' && Number.isFinite(s)
-  ) as [string, number][]
+  const completed = Object.entries(partialScores).filter(([_, s]) => {
+    if (typeof s === 'number') return Number.isFinite(s)
+    if (s && typeof s === 'object' && typeof s.score === 'number') return !(s as { failed?: boolean }).failed
+    return false
+  }) as [string, number][]
+  const scores: Record<string, number> = {}
+  for (const [k, s] of completed) {
+    scores[k] = typeof s === 'number' ? s : (s as { score: number }).score
+  }
   let weightSum = 0
   for (const [k] of completed) {
     weightSum += Number(tokens[k] ?? 0)
   }
   const scale = weightSum > 0 ? 100 / weightSum : 0
   const out: Record<string, { weight: number; contribution: number }> = {}
-  for (const [k, score] of completed) {
+  for (const [k, score] of Object.entries(scores)) {
     const w = Number(tokens[k] ?? 0)
     const weight = weightSum > 0 ? Math.round(w * scale * 10) / 10 : 0
-    // Contribution so that sum(contributions) = total (weight is renormalized %).
     const contribution = weightSum > 0 ? Math.round((score * (w * scale)) / 100 * 100) / 100 : 0
     out[k] = { weight, contribution }
   }

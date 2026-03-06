@@ -48,6 +48,8 @@ export interface LivabilityPillar {
   confidence: number;
   data_quality: DataQuality;
   area_classification?: AreaClassification;
+  /** Set when pillar execution failed; client should show low confidence and "Rerun" prompt. */
+  error?: string;
 }
 
 export interface LivabilityPillars {

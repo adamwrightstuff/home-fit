@@ -51,8 +51,8 @@ export interface ExportInput {
   lon: number
   homefitScore: number | null
   longevityScore: number | null
-  /** Pillar key -> score (only pillars with scores) */
-  pillarScores: Record<string, { score: number }>
+  /** Pillar key -> score (only pillars with valid scores; failed runs excluded) */
+  pillarScores: Record<string, { score: number; failed?: boolean }>
   /** Pillar key -> user-selected importance */
   selectedPriorities: Record<string, Importance>
 }
@@ -93,7 +93,7 @@ export function buildExportRow(input: ExportInput): ExportRow {
 
   for (const key of EXPORT_PILLAR_ORDER) {
     const scoreEntry = pillarScores[key]
-    if (!scoreEntry || typeof scoreEntry.score !== 'number') continue
+    if (!scoreEntry || typeof scoreEntry.score !== 'number' || scoreEntry.failed) continue
     const weight = selectedPriorities[key] ?? 'Medium'
     headers.push(key, `${key}_weight`)
     values.push(Math.round(scoreEntry.score), weightToExport(weight))

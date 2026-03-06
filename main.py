@@ -653,6 +653,28 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 }
 
 
+def _apply_pillar_failure_overrides(
+    livability_pillars: Dict[str, Any],
+    exceptions: Dict[str, Exception],
+) -> None:
+    """For each pillar that failed (in exceptions), set confidence=0, data_quality.reason/fallback_used, and error."""
+    for pillar_name, exc in exceptions.items():
+        if pillar_name not in livability_pillars:
+            continue
+        entry = livability_pillars[pillar_name]
+        if not isinstance(entry, dict):
+            continue
+        entry["score"] = 0.0
+        entry["confidence"] = 0
+        entry["contribution"] = 0.0
+        dq = dict(entry.get("data_quality") or {})
+        dq["fallback_used"] = True
+        dq["reason"] = "Pillar execution failed"
+        dq["error"] = "Pillar execution failed"
+        entry["data_quality"] = dq
+        entry["error"] = exc.__class__.__name__ if exc else "PillarExecutionFailed"
+
+
 def _compute_longevity_index(
     livability_pillars: Dict[str, Any],
     token_allocation: Optional[Dict[str, float]] = None,
@@ -1850,6 +1872,8 @@ def _compute_single_score_internal(
             "area_classification": social_fabric_details.get("area_classification", {})
         },
     }
+
+    _apply_pillar_failure_overrides(livability_pillars, exceptions)
 
     # Build response
     longevity_index, longevity_contributions = _compute_longevity_index(
@@ -3218,7 +3242,9 @@ async def _stream_score_with_progress(
                 "area_classification": social_fabric_details.get("area_classification", {})
             }
         }
-        
+
+        _apply_pillar_failure_overrides(livability_pillars, exceptions)
+
         # Build final response
         longevity_index, longevity_contributions = _compute_longevity_index(
             livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
@@ -4140,6 +4166,8 @@ async def stream_score(
             "area_classification": social_fabric_details.get("area_classification", {})
         }
         }
+
+        _apply_pillar_failure_overrides(livability_pillars, exceptions)
 
         # Build response with enhanced metadata
         longevity_index, longevity_contributions = _compute_longevity_index(
