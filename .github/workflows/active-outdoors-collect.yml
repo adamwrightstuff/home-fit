@@ -1,0 +1,43 @@
+# Active Outdoors pillar: run scores with details across 120 locations.
+# Output: analysis/active_outdoors_scores_YYYYMMDD.jsonl and active_outdoors_summary_YYYYMMDD.csv
+# uploaded as artifacts.
+#
+# Trigger: Actions → Active Outdoors collect → Run workflow.
+# Secrets: HOMEFIT_BASE_URL (required), optionally HOMEFIT_API_KEY.
+
+name: Active Outdoors collect
+
+on:
+  workflow_dispatch:
+
+jobs:
+  collect-active-outdoors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run Active Outdoors collector (120 locations, details)
+        env:
+          HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL || 'https://home-fit-production.up.railway.app' }}
+          HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
+        run: python scripts/collect_active_outdoors.py
+
+      - name: Upload Active Outdoors artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: active-outdoors-scores-${{ github.run_number }}
+          path: |
+            analysis/active_outdoors_scores_*.jsonl
+            analysis/active_outdoors_summary_*.csv
