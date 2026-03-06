@@ -6,6 +6,7 @@ import {
   PILLAR_META,
   getScoreBandLabel,
   getScoreBandColor,
+  getScoreBandBackground,
   getPillarFailureType,
   PILLAR_LONG_DESCRIPTIONS,
   isLongevityPillar,
@@ -223,7 +224,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
               fontSize: '1.1rem',
               padding: '0.35rem 0.6rem',
               borderRadius: 8,
-              background: isFailed ? 'var(--hf-bg-subtle)' : undefined,
+              background: isFailed ? 'var(--hf-bg-subtle)' : getScoreBandBackground(pillar.score),
               border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(pillar.score)}`,
               color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
             }}

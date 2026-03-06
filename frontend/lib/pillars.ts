@@ -194,6 +194,16 @@ export function getScoreBandColor(score: number): string {
   return getScoreBand(score).color
 }
 
+/** Badge background tint (band color at ~15% opacity) for spec Section 1 "Badge color maps to band". */
+export function getScoreBandBackground(score: number): string {
+  const hex = getScoreBandColor(score)
+  const n = parseInt(hex.slice(1), 16)
+  const r = (n >> 16) & 0xff
+  const g = (n >> 8) & 0xff
+  const b = n & 0xff
+  return `rgba(${r}, ${g}, ${b}, 0.15)`
+}
+
 // ---------------------------------------------------------------------------
 // Pillar data quality / failure state (derived from status + quality_tier)
 // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -634,6 +634,41 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                           Longevity
                         </span>
                       )}
+                      {score != null && (() => {
+                        const ft = getPillarFailureType({ status: score.status, error: score.failed ? 'PillarExecutionFailed' : undefined, data_quality: score.data_quality })
+                        const incomplete = ft === 'incomplete'
+                        const fallback = ft === 'fallback'
+                        const failed = ft === 'execution_error'
+                        return (
+                          <>
+                            {incomplete && (
+                              <span
+                                title="Score is based on incomplete data for this location and may not be fully accurate."
+                                style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
+                              >
+                                Limited data
+                              </span>
+                            )}
+                            {fallback && (
+                              <span
+                                title="Real data wasn't available — this score is estimated."
+                                style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
+                              >
+                                Estimated score
+                              </span>
+                            )}
+                            {failed && (
+                              <span
+                                title="We weren't able to retrieve data for this pillar."
+                                className="hf-muted"
+                                style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)' }}
+                              >
+                                Data unavailable
+                              </span>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                     <div className="hf-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
                   </div>
@@ -689,7 +724,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                             fontSize: '1rem',
                             padding: '0.3rem 0.55rem',
                             borderRadius: 8,
-                            background: isFailed ? 'var(--hf-bg-subtle)' : undefined,
+                            background: isFailed ? 'var(--hf-bg-subtle)' : getScoreBandBackground(score.score),
                             border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(score.score)}`,
                             color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(score.score),
                           }}
@@ -704,31 +739,6 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                             </>
                           )}
                         </span>
-                        {isIncomplete && (
-                          <span
-                            title="Score is based on incomplete data for this location and may not be fully accurate."
-                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
-                          >
-                            Limited data
-                          </span>
-                        )}
-                        {isFallback && (
-                          <span
-                            title="Real data wasn't available — this score is estimated."
-                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: '#C8B84A', color: 'rgba(0,0,0,0.75)' }}
-                          >
-                            Estimated score
-                          </span>
-                        )}
-                        {isFailed && (
-                          <span
-                            title="We weren't able to retrieve data for this pillar."
-                            className="hf-muted"
-                            style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)' }}
-                          >
-                            Data unavailable
-                          </span>
-                        )}
                         {showRerun && (
                           <>
                             <button
