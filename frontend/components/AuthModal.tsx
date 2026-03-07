@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 type Mode = 'signin' | 'signup'
@@ -21,6 +21,11 @@ export default function AuthModal({
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // When modal opens or initialMode changes, show the correct tab (Sign in vs Sign up)
+  useEffect(() => {
+    if (isOpen) setMode(initialMode)
+  }, [isOpen, initialMode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
