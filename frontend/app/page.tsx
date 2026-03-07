@@ -155,6 +155,18 @@ export default function Home() {
             onTakeQuiz={() => set_show_game(true)}
             justAppliedQuizPriorities={justAppliedQuizPriorities}
             onAppliedQuizPrioritiesConsumed={() => setJustAppliedQuizPriorities(false)}
+            onSave={async (payload, priorities) => {
+              try {
+                const { id } = await saveScore(payload, priorities)
+                setSavedScoreId(id)
+                return { id }
+              } catch (e) {
+                return { error: e instanceof Error ? e.message : 'Failed to save' }
+              }
+            }}
+            isSignedIn={!!user}
+            isAuthConfigured={isConfigured}
+            savedScoreId={savedScoreId}
           />
           {place && error && (
             <div className="hf-card" style={{ marginTop: '1rem' }}>

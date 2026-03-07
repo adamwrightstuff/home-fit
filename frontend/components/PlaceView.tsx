@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import InteractiveMap from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
-import { totalFromPartialPillarScores, getPillarWeightsAndContributions } from '@/lib/reweight'
+import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
+import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
 
@@ -59,9 +61,14 @@ export interface PlaceViewProps {
   justAppliedQuizPriorities?: boolean
   /** Called after syncing pillar selection from quiz priorities. */
   onAppliedQuizPrioritiesConsumed?: () => void
+  /** When provided and user has results, show Save / Sign in to save. */
+  onSave?: (payload: ScoreResponse, priorities: PillarPriorities) => Promise<{ id?: string; error?: string }>
+  isSignedIn?: boolean
+  isAuthConfigured?: boolean
+  savedScoreId?: string | null
 }
 
-export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed }: PlaceViewProps) {
+export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed, onSave, isSignedIn, isAuthConfigured = true, savedScoreId }: PlaceViewProps) {
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, {
@@ -84,6 +91,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [exportModalOpen, setExportModalOpen] = useState(false)
   /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
   const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   useEffect(() => {
     try {
       const v = window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? ''
@@ -241,6 +250,66 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     if (Object.keys(pillarScores).length === 0) return {}
     return getPillarWeightsAndContributions(pillarScores, effectivePriorities)
   }, [pillarScores, effectivePriorities])
+
+  /** Build ScoreResponse payload for save (only when has results). */
+  const savePayload = useMemo((): ScoreResponse | null => {
+    if (Object.keys(pillarScores).length === 0 || totalScore == null) return null
+    const tokenAllocation = getPillarWeightsFromPriorities(effectivePriorities)
+    const livability_pillars: Record<string, unknown> = {}
+    for (const k of Object.keys(pillarScores)) {
+      const entry = pillarScores[k]
+      if (!entry || entry.failed) continue
+      const wc = pillarWeightsAndContributions[k]
+      const weight = wc ? wc.weight : 0
+      const contribution = wc ? wc.contribution : 0
+      const importanceLevel = selectedPriorities[k] === 'Low' || selectedPriorities[k] === 'Medium' || selectedPriorities[k] === 'High' ? selectedPriorities[k] : 'None'
+      livability_pillars[k] = {
+        score: entry.score,
+        weight,
+        contribution,
+        confidence: entry.confidence ?? 0,
+        data_quality: entry.data_quality ?? {},
+        status: entry.status ?? 'success',
+        importance_level: importanceLevel,
+      }
+    }
+    const location_info = { city: place.city, state: place.state, zip: place.zip_code ?? '' }
+    return {
+      input: place.location,
+      coordinates: { lat: place.lat, lon: place.lon },
+      location_info,
+      livability_pillars: livability_pillars as unknown as ScoreResponse['livability_pillars'],
+      place_summary: placeSummary ?? undefined,
+      total_score: totalScore,
+      longevity_index: longevityIndex ?? undefined,
+      token_allocation: tokenAllocation as Record<string, number>,
+      allocation_type: 'priority_based',
+      overall_confidence: { average_confidence: 80, pillars_using_fallback: 0, fallback_percentage: 0, quality_tier_distribution: {}, overall_quality: 'good' },
+      data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
+      metadata: { version: '', architecture: '', note: '', test_mode: false },
+    }
+  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, effectivePriorities])
+
+  /** Priorities object for save (all pillars, selected use current importance). */
+  const savePriorities = useMemo((): PillarPriorities => {
+    const p: Record<string, 'None' | 'Low' | 'Medium' | 'High'> = {}
+    for (const k of PILLAR_ORDER) {
+      p[k] = (selectedPriorities[k] as 'Low' | 'Medium' | 'High') ?? 'None'
+    }
+    return p as unknown as PillarPriorities
+  }, [selectedPriorities])
+
+  const handleSave = useCallback(async () => {
+    if (!onSave || !savePayload) return
+    setSaveError(null)
+    setSaving(true)
+    try {
+      const result = await onSave(savePayload, savePriorities)
+      if (result.error) setSaveError(result.error)
+    } finally {
+      setSaving(false)
+    }
+  }, [onSave, savePayload, savePriorities])
 
   // When user changes prioritization for pillars that already have scores, total is recomputed above (no effect needed).
   // Removed previous useEffect that set totalScore; total is now derived so it always reflects current priorities.
@@ -1006,6 +1075,39 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
         }}
       >
+        {/* Save this place — show when we have results and save is available */}
+        {hasResults && onSave && savePayload && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {isSignedIn ? (
+              savedScoreId ? (
+                <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.95rem' }}>
+                  ✓ Saved
+                  <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>My places</Link>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="hf-btn-secondary"
+                  style={{ padding: '0.6rem 1rem', borderRadius: 10, fontSize: '0.95rem' }}
+                >
+                  {saving ? 'Saving…' : 'Save this place'}
+                </button>
+              )
+            ) : isAuthConfigured ? (
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                className="hf-btn-secondary"
+                style={{ padding: '0.6rem 1rem', borderRadius: 10, fontSize: '0.95rem', textDecoration: 'none', color: 'inherit' }}
+              >
+                Sign in to save this place
+              </a>
+            ) : null}
+            {saveError && <span className="hf-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>{saveError}</span>}
+          </div>
+        )}
         {selectedPillars.size > 0 && !loading && (
           <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
             Set importance to customize your score
