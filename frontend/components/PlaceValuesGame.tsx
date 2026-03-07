@@ -4,22 +4,7 @@ import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { ArrowLeft, ChevronLeft, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import AppHeader from './AppHeader'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
-
-const PILLAR_ORDER: PillarKey[] = [
-  'natural_beauty',
-  'built_beauty',
-  'neighborhood_amenities',
-  'active_outdoors',
-  'healthcare_access',
-  'public_transit_access',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
+import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
 const TOTAL_QUESTIONS = 5
 

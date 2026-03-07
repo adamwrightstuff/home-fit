@@ -1,33 +1,29 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { ScoreResponse } from '@/types/api'
+import type { PillarPriorities } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
 import LongevityInfo from './LongevityInfo'
-import { PILLAR_META, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
 
 interface ScoreDisplayProps {
   data: ScoreResponse
   /** When provided, "Search another location" calls this instead of linking to #search */
   onSearchAnother?: () => void
+  /** When true, show Save button (requires onSave). */
+  isSignedIn?: boolean
+  /** If set, show "Saved" and optional link to My places. */
+  savedScoreId?: string | null
+  /** Called when user clicks Save; receives current display score and priorities. */
+  onSave?: (payload: ScoreResponse, priorities: PillarPriorities) => Promise<{ id?: string; error?: string }>
+  /** Current priorities (for save payload). */
+  priorities?: PillarPriorities
 }
 
-const PILLAR_ORDER: PillarKey[] = [
-  'natural_beauty',
-  'built_beauty',
-  'neighborhood_amenities',
-  'active_outdoors',
-  'healthcare_access',
-  'public_transit_access',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
-
+// Use shared pillar order from lib/pillars
 function overallTier(score: number): { label: string; tone: string } {
   if (score >= 80) return { label: 'Excellent', tone: 'high' }
   if (score >= 60) return { label: 'Strong', tone: 'mid' }
@@ -35,10 +31,12 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, savedScoreId, onSave, priorities }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
   const [copied, setCopied] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Be defensive: backend deployments can lag the frontend pillar list.
   const available_pillars = PILLAR_ORDER.filter((k) => Boolean((livability_pillars as any)?.[k]))
@@ -80,6 +78,18 @@ export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProp
 
   const lowConfidencePillars = available_pillars.filter((k) => ((livability_pillars as any)?.[k]?.confidence ?? 100) < 60)
 
+  const handleSave = async () => {
+    if (!onSave || !priorities) return
+    setSaveError(null)
+    setSaving(true)
+    try {
+      const result = await onSave(data, priorities)
+      if (result.error) setSaveError(result.error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
       <div className="hf-card">
@@ -100,6 +110,31 @@ export default function ScoreDisplay({ data, onSearchAnother }: ScoreDisplayProp
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            {isSignedIn && onSave && priorities && (
+              <>
+                {savedScoreId ? (
+                  <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    ✓ Saved
+                    <Link href="/saved" className="hf-auth-link" style={{ fontSize: '0.95rem' }}>
+                      My places
+                    </Link>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="hf-btn-secondary"
+                    style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
+                  >
+                    {saving ? 'Saving…' : 'Save this place'}
+                  </button>
+                )}
+                {saveError && (
+                  <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
+                )}
+              </>
+            )}
             <button
               onClick={copyScores}
               className="hf-btn-primary"

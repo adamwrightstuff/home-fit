@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Info } from 'lucide-react'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
 export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -41,21 +41,6 @@ interface SearchOptionsProps {
   expanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
 }
-
-const PILLAR_ORDER: Array<keyof PillarPriorities> = [
-  'natural_beauty',
-  'built_beauty',
-  'neighborhood_amenities',
-  'active_outdoors',
-  'healthcare_access',
-  'public_transit_access',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 

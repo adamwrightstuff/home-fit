@@ -8,7 +8,7 @@ import CompletedPillars from './CompletedPillars'
 import ProgressBar from './ProgressBar'
 import InteractiveMap from './InteractiveMap'
 import LoadingQuotes from './LoadingQuotes'
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
 interface SmartLoadingScreenProps {
   location: string
@@ -21,21 +21,6 @@ interface SmartLoadingScreenProps {
   include_chains?: boolean
   enable_schools?: boolean
 }
-
-const PILLAR_ORDER: PillarKey[] = [
-  'natural_beauty',
-  'built_beauty',
-  'neighborhood_amenities',
-  'active_outdoors',
-  'healthcare_access',
-  'public_transit_access',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
 
 const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; description: string }> = PILLAR_ORDER.reduce(
   (acc, key) => {
@@ -65,7 +50,7 @@ export default function SmartLoadingScreen({
 }: SmartLoadingScreenProps) {
   const [current_pillar, set_current_pillar] = useState<string | null>(null)
   const [completed_pillars, set_completed_pillars] = useState<Map<string, { score: number; details?: any }>>(new Map())
-  const [expected_pillars, set_expected_pillars] = useState<PillarKey[]>(PILLAR_ORDER)
+  const [expected_pillars, set_expected_pillars] = useState<PillarKey[]>(() => Array.from(PILLAR_ORDER))
   const [progress, set_progress] = useState(PROGRESS_FLOOR)
   const [coordinates, set_coordinates] = useState<{ lat: number; lon: number } | null>(null)
   const [status, set_status] = useState<'starting' | 'analyzing' | 'complete'>('starting')
@@ -83,7 +68,7 @@ export default function SmartLoadingScreen({
     cancelledRef.current = false
     set_current_pillar(null)
     set_completed_pillars(new Map())
-    set_expected_pillars(PILLAR_ORDER)
+    set_expected_pillars(Array.from(PILLAR_ORDER))
     set_progress(PROGRESS_FLOOR)
     set_coordinates(null)
     set_status('analyzing')
@@ -114,7 +99,7 @@ export default function SmartLoadingScreen({
         if (cancelledRef.current) return
         const respPillars = (resp.livability_pillars as unknown as Record<string, { score?: number }>) || {}
         const pillarOrder = PILLAR_ORDER.filter((k) => Boolean(respPillars?.[k]))
-        const effectiveOrder = pillarOrder.length ? pillarOrder : PILLAR_ORDER
+        const effectiveOrder = pillarOrder.length ? pillarOrder : Array.from(PILLAR_ORDER)
         set_expected_pillars(effectiveOrder)
         const completed = new Map<string, { score: number; details?: any }>()
         for (const k of effectiveOrder) {

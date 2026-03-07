@@ -1,23 +1,8 @@
 import type { ScoreResponse } from '@/types/api'
-import type { PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
-
-const PILLAR_ORDER: PillarKey[] = [
-  'active_outdoors',
-  'built_beauty',
-  'natural_beauty',
-  'neighborhood_amenities',
-  'air_travel_access',
-  'public_transit_access',
-  'healthcare_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
 
 function equalAllocation(pillars: PillarKey[]): Record<string, number> {
   const out: Record<string, number> = {}

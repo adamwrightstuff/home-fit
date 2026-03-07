@@ -12,7 +12,21 @@ export type PillarKey =
   | 'climate_risk'
   | 'social_fabric'
 
-/** Pillars that contribute to the Longevity Index (fixed weighted blend). */
+/** Display order for pillars on HomeFit pillar screen and related UIs. */
+export const PILLAR_ORDER: PillarKey[] = [
+  'quality_education',
+  'neighborhood_amenities',
+  'economic_security',
+  'climate_risk',
+  'active_outdoors',
+  'natural_beauty',
+  'social_fabric',
+  'built_beauty',
+  'healthcare_access',
+  'public_transit_access',
+  'air_travel_access',
+  'housing_value',
+]
 export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
   'social_fabric',
   'active_outdoors',

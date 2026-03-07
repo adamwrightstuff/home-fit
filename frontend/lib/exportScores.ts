@@ -3,25 +3,9 @@
  * Only includes pillars that have a score; omits incomplete pillars.
  */
 
-import type { PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
-/** Stable pillar order for export columns (matches PlaceView pillar order). */
-const EXPORT_PILLAR_ORDER: PillarKey[] = [
-  'natural_beauty',
-  'built_beauty',
-  'neighborhood_amenities',
-  'active_outdoors',
-  'healthcare_access',
-  'public_transit_access',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-  'housing_value',
-  'climate_risk',
-  'social_fabric',
-]
-
-export type Importance = 'Low' | 'Medium' | 'High'
+type Importance = 'None' | 'Low' | 'Medium' | 'High'
 
 function weightToExport(importance: Importance): string {
   switch (importance) {
@@ -91,7 +75,7 @@ export function buildExportRow(input: ExportInput): ExportRow {
     longevityScore ?? '',
   ]
 
-  for (const key of EXPORT_PILLAR_ORDER) {
+  for (const key of PILLAR_ORDER) {
     const scoreEntry = pillarScores[key]
     if (!scoreEntry || typeof scoreEntry.score !== 'number' || scoreEntry.failed) continue
     const weight = selectedPriorities[key] ?? 'Medium'
