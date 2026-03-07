@@ -204,7 +204,6 @@ export default function SavedDetailPage() {
           <SearchOptionsComponent
             options={searchOptions}
             onChange={handleSearchOptionsChange}
-            expanded={false}
           />
         </div>
 
