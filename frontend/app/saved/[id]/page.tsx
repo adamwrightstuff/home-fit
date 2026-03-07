@@ -73,10 +73,12 @@ export default function SavedDetailPage() {
   }, [])
 
   const rawPayload = row?.score_payload as ScoreResponse | undefined
+  // Depend on serialized priorities so any change in priority values triggers reweight (avoids stale display).
+  const prioritiesSignature = priorities ? JSON.stringify(priorities) : ''
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
     return reweightScoreResponseFromPriorities(rawPayload, priorities)
-  }, [rawPayload, priorities])
+  }, [rawPayload, prioritiesSignature, priorities])
 
   const handleScoreAgain = useCallback(async () => {
     if (!row || !priorities) return
