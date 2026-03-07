@@ -14,17 +14,21 @@ export default function AuthModal({
   onClose: () => void
   initialMode?: Mode
 }) {
-  const { signIn, signUp, isConfigured } = useAuth()
+  const { signIn, signUp, resendConfirmation, isConfigured } = useAuth()
   const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
+  const [resendSent, setResendSent] = useState(false)
 
   // When modal opens or initialMode changes, show the correct tab (Sign in vs Sign up)
   useEffect(() => {
-    if (isOpen) setMode(initialMode)
+    if (isOpen) {
+      setMode(initialMode)
+      setResendSent(false)
+    }
   }, [isOpen, initialMode])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +67,18 @@ export default function AuthModal({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleResend = async () => {
+    if (!email.trim()) return
+    setError(null)
+    setResendSent(false)
+    const { error: err } = await resendConfirmation(email.trim())
+    if (err) {
+      setError(err.message)
+      return
+    }
+    setResendSent(true)
   }
 
   if (!isOpen) return null
@@ -149,6 +165,25 @@ export default function AuthModal({
           {success && (
             <p className="hf-auth-success" role="status">
               {success}
+              {mode === 'signup' && (
+                <>
+                  {' '}
+                  Didn&apos;t get it?{' '}
+                  <button
+                    type="button"
+                    className="hf-auth-link"
+                    onClick={handleResend}
+                    disabled={submitting}
+                  >
+                    Resend email
+                  </button>
+                </>
+              )}
+            </p>
+          )}
+          {resendSent && (
+            <p className="hf-auth-success" role="status">
+              Confirmation email sent again. Check your inbox.
             </p>
           )}
           <div className="hf-auth-actions">
@@ -156,6 +191,14 @@ export default function AuthModal({
               {submitting ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Sign up'}
             </button>
           </div>
+          {mode === 'signin' && email.trim() && (
+            <p className="hf-auth-switch" style={{ marginTop: '0.75rem' }}>
+              Waiting for confirmation email?{' '}
+              <button type="button" className="hf-auth-link" onClick={handleResend} disabled={submitting}>
+                Resend
+              </button>
+            </p>
+          )}
         </form>
         <p className="hf-auth-switch">
           {mode === 'signin' ? (

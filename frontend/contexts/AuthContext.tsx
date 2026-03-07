@@ -11,6 +11,7 @@ interface AuthContextValue {
   isConfigured: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
+  resendConfirmation: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
 
@@ -70,6 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (client) await client.auth.signOut()
   }, [client])
 
+  const resendConfirmation = useCallback(
+    async (email: string) => {
+      if (!client) return { error: new Error('Auth not configured') }
+      const { error } = await client.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+      })
+      return { error: error ?? null }
+    },
+    [client]
+  )
+
   const value: AuthContextValue = {
     user,
     session,
@@ -77,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isConfigured: isConfigured ?? false,
     signIn,
     signUp,
+    resendConfirmation,
     signOut,
   }
 
