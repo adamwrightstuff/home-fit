@@ -142,10 +142,9 @@ export function reweightScoreResponseFromPriorities(
     const pillar = nextPillars[k]
     if (!pillar || typeof pillar.score !== 'number') continue
 
-    let weight = Number(tokenAllocation[k] ?? 0)
-    if (weight === 0 && fallbackAllocation != null) {
-      weight = Number(fallbackAllocation[k] ?? 0)
-    }
+    // Use a single allocation for all pillars so weights always sum to 100.
+    const allocation = fallbackAllocation ?? tokenAllocation
+    const weight = Number(allocation[k] ?? 0)
     const score = Number(pillar.score ?? 0)
     const contribution = (score * weight) / 100
     total += contribution
