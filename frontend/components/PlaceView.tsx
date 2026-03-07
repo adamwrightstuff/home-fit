@@ -240,23 +240,34 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     [searchOptions.priorities, selectedPriorities]
   )
 
-  // Derive total from pillar scores and effective priorities so changing priority updates total immediately (no API call).
-  // Excludes failed pillars from total.
+  // For total and weight display: only pillars that have scores get weight; others are None.
+  // Otherwise with 1 pillar run you'd get 1/12 of the weight (e.g. 8.6 instead of 96).
+  const prioritiesForScoredOnly = useMemo(() => {
+    const out: Record<string, 'None' | 'Low' | 'Medium' | 'High'> = {}
+    for (const k of PILLAR_ORDER) {
+      const entry = pillarScores[k]
+      const hasScore = entry && typeof entry.score === 'number' && !entry.failed
+      out[k] = hasScore ? (selectedPriorities[k] ?? 'Medium') : 'None'
+    }
+    return out
+  }, [pillarScores, selectedPriorities])
+
+  // Derive total from pillar scores. Only run pillars count so 1 pillar => total = that score.
   const totalScore = useMemo(() => {
     if (Object.keys(pillarScores).length === 0) return null
-    return totalFromPartialPillarScores(pillarScores, effectivePriorities) ?? null
-  }, [pillarScores, effectivePriorities])
+    return totalFromPartialPillarScores(pillarScores, prioritiesForScoredOnly) ?? null
+  }, [pillarScores, prioritiesForScoredOnly])
 
-  // Per-pillar weight % and contribution from current priorities (recalculation without API — updates when Importance changes). Excludes failed pillars.
+  // Per-pillar weight % and contribution. Only scored pillars get weight.
   const pillarWeightsAndContributions = useMemo(() => {
     if (Object.keys(pillarScores).length === 0) return {}
-    return getPillarWeightsAndContributions(pillarScores, effectivePriorities)
-  }, [pillarScores, effectivePriorities])
+    return getPillarWeightsAndContributions(pillarScores, prioritiesForScoredOnly)
+  }, [pillarScores, prioritiesForScoredOnly])
 
   /** Build ScoreResponse payload for save (only when has results). */
   const savePayload = useMemo((): ScoreResponse | null => {
     if (Object.keys(pillarScores).length === 0 || totalScore == null) return null
-    const tokenAllocation = getPillarWeightsFromPriorities(effectivePriorities)
+    const tokenAllocation = getPillarWeightsFromPriorities(prioritiesForScoredOnly)
     const livability_pillars: Record<string, unknown> = {}
     for (const k of Object.keys(pillarScores)) {
       const entry = pillarScores[k]
@@ -290,7 +301,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
       metadata: { version: '', architecture: '', note: '', test_mode: false },
     }
-  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, effectivePriorities])
+  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly])
 
   /** Priorities object for save (all pillars, selected use current importance). */
   const savePriorities = useMemo((): PillarPriorities => {
