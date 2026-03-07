@@ -612,8 +612,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 background: selected ? 'var(--hf-bg-subtle)' : undefined,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+              <div className="hf-pillar-row">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0, flex: '1 1 0' }}>
                   <span style={{ fontSize: '1.75rem' }}>{meta.icon}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -680,7 +680,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                                   aria-label="Rerun this pillar"
                                   className="hf-btn-primary"
                                   style={{
-                                    padding: '0.35rem 0.65rem',
+                                    padding: '0.5rem 0.75rem',
+                                    minHeight: 44,
+                                    minWidth: 44,
                                     borderRadius: 8,
                                     fontSize: '0.85rem',
                                     fontWeight: 600,
@@ -704,7 +706,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     <div className="hf-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
                   </div>
                 </div>
-                <div style={{ flexShrink: 0 }}>
+                <div className="hf-pillar-row-right" style={{ flexShrink: 0 }}>
                   {!selected && score == null && (
                     <button
                       type="button"
