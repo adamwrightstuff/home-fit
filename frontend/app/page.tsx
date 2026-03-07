@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, isConfigured } = useAuth()
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
   const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
   const [loading, set_loading] = useState(false)
@@ -181,6 +181,7 @@ export default function Home() {
             data={display_score_data || score_data}
             onSearchAnother={handleSearchAnother}
             isSignedIn={!!user}
+            isAuthConfigured={isConfigured}
             savedScoreId={savedScoreId}
             priorities={search_options.priorities}
             onSave={async (payload, priorities) => {

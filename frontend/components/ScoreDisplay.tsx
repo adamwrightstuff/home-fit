@@ -15,6 +15,8 @@ interface ScoreDisplayProps {
   onSearchAnother?: () => void
   /** When true, show Save button (requires onSave). */
   isSignedIn?: boolean
+  /** When true, auth is configured (show "Sign in to save" when not signed in). */
+  isAuthConfigured?: boolean
   /** If set, show "Saved" and optional link to My places. */
   savedScoreId?: string | null
   /** Called when user clicks Save; receives current display score and priorities. */
@@ -31,7 +33,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, savedScoreId, onSave, priorities }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities }: ScoreDisplayProps) {
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
   const [copied, setCopied] = useState(false)
@@ -110,26 +112,37 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, savedS
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {isSignedIn && onSave && priorities && (
+            {onSave && priorities && (
               <>
-                {savedScoreId ? (
-                  <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                    ✓ Saved
-                    <Link href="/saved" className="hf-auth-link" style={{ fontSize: '0.95rem' }}>
-                      My places
-                    </Link>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving}
+                {isSignedIn ? (
+                  savedScoreId ? (
+                    <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      ✓ Saved
+                      <Link href="/saved" className="hf-auth-link" style={{ fontSize: '0.95rem' }}>
+                        My places
+                      </Link>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="hf-btn-secondary"
+                      style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
+                    >
+                      {saving ? 'Saving…' : 'Save this place'}
+                    </button>
+                  )
+                ) : isAuthConfigured ? (
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                     className="hf-btn-secondary"
-                    style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
+                    style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', textDecoration: 'none', color: 'inherit' }}
                   >
-                    {saving ? 'Saving…' : 'Save this place'}
-                  </button>
-                )}
+                    Sign in to save this place
+                  </a>
+                ) : null}
                 {saveError && (
                   <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
                 )}
