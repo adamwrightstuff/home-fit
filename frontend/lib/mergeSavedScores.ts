@@ -3,7 +3,8 @@
  * Used by POST /api/me/saved-scores to merge incoming pillars with existing so we don't lose previous pillars.
  */
 
-import { PILLAR_ORDER } from '@/lib/pillars'
+import { PILLAR_ORDER, LONGEVITY_INDEX_WEIGHTS, computeLongevityIndex } from '@/lib/pillars'
+import type { PillarKey } from '@/lib/pillars'
 
 function prioritiesToTokens(priorities: Record<string, unknown> | null | undefined): Record<string, number> {
   if (!priorities || typeof priorities !== 'object') {
@@ -73,6 +74,23 @@ function getScoreFromPillar(pillar: unknown): number | null {
   return null
 }
 
+function isPillarFailed(pillar: unknown): boolean {
+  if (!pillar || typeof pillar !== 'object') return true
+  const p = pillar as { error?: string; status?: string }
+  return Boolean(p.error) || p.status === 'failed'
+}
+
+/** Build pillarScores map for computeLongevityIndex from merged livability_pillars (longevity pillars only). */
+function longevityScoresFromMergedPillars(mergedPillars: Record<string, unknown>): Record<string, { score: number; failed?: boolean }> {
+  const out: Record<string, { score: number; failed?: boolean }> = {}
+  for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
+    const pillar = mergedPillars[k]
+    const score = getScoreFromPillar(pillar)
+    if (score != null) out[k] = { score, failed: isPillarFailed(pillar) }
+  }
+  return out
+}
+
 /**
  * Merge existing livability_pillars with incoming. Incoming overwrites per pillar.
  * Returns merged payload and total_score from merged pillars + priorities (only pillars with scores get weight).
@@ -93,10 +111,12 @@ export function mergeSavedScorePayload(
   }
   if (Object.keys(scores).length === 0) {
     const total = typeof incomingPayload.total_score === 'number' ? incomingPayload.total_score : 0
-    return {
-      mergedPayload: { ...incomingPayload, livability_pillars: mergedPillars, total_score: total },
-      total_score: total,
-    }
+    const merged: Record<string, unknown> = { ...incomingPayload, livability_pillars: mergedPillars, total_score: total }
+    const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
+    const longevity_index = computeLongevityIndex(longevityScores)
+    if (longevity_index != null) merged.longevity_index = longevity_index
+    else if (existingPayload && typeof existingPayload.longevity_index === 'number') merged.longevity_index = existingPayload.longevity_index
+    return { mergedPayload: merged, total_score: total }
   }
 
   // Only pillars with scores get weight; others treated as None so total = weighted sum of scored pillars only.
@@ -121,6 +141,13 @@ export function mergeSavedScorePayload(
     ...incomingPayload,
     livability_pillars: mergedPillars,
     total_score,
+  }
+  const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
+  const longevity_index = computeLongevityIndex(longevityScores)
+  if (longevity_index != null) {
+    mergedPayload.longevity_index = longevity_index
+  } else if (existingPayload && typeof existingPayload.longevity_index === 'number') {
+    mergedPayload.longevity_index = existingPayload.longevity_index
   }
   return { mergedPayload, total_score }
 }
