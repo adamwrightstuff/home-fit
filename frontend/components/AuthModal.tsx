@@ -61,7 +61,35 @@ export default function AuthModal({
   }
 
   if (!isOpen) return null
-  if (!isConfigured) return null
+  if (!isConfigured) {
+    return (
+      <div
+        className="hf-auth-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="hf-auth-modal">
+          <div className="hf-auth-modal-header">
+            <h2 id="auth-modal-title">Sign in</h2>
+            <button
+              type="button"
+              className="hf-auth-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          <p className="hf-auth-success">
+            Auth is not configured. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
+            <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your deployment environment (e.g. Vercel project settings), then redeploy.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div

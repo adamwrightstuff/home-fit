@@ -10,8 +10,6 @@ export default function AuthBar() {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'signin' | 'signup'>('signin')
 
-  if (!isConfigured) return null
-
   return (
     <>
       <header className="hf-auth-bar">
@@ -20,7 +18,16 @@ export default function AuthBar() {
             HomeFit
           </Link>
           <nav className="hf-auth-bar-nav" aria-label="Account">
-            {loading ? (
+            {!isConfigured ? (
+              <button
+                type="button"
+                className="hf-auth-bar-btn"
+                onClick={() => { setModalMode('signin'); setModalOpen(true); }}
+                title="Sign in (configure Supabase env to enable)"
+              >
+                Sign in
+              </button>
+            ) : loading ? (
               <span className="hf-auth-bar-muted">Loading…</span>
             ) : user ? (
               <>
