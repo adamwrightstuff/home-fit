@@ -95,6 +95,56 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
       <div className="hf-card">
+        {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
+        {onSave && priorities && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '1rem 1.25rem',
+              marginBottom: '0.5rem',
+              background: 'var(--hf-bg-subtle)',
+              borderRadius: 12,
+              border: '1px solid var(--hf-border)',
+            }}
+          >
+            {isSignedIn ? (
+              savedScoreId ? (
+                <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '1rem' }}>
+                  ✓ Saved to My places
+                  <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
+                    View saved places →
+                  </Link>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="hf-btn-primary"
+                  style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600 }}
+                >
+                  {saving ? 'Saving…' : 'Save this place'}
+                </button>
+              )
+            ) : isAuthConfigured ? (
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                className="hf-btn-primary"
+                style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600, textDecoration: 'none', color: 'inherit' }}
+              >
+                Sign in to save this place
+              </a>
+            ) : null}
+            {saveError && (
+              <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ minWidth: 260 }}>
             <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
@@ -112,45 +162,9 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {onSave && priorities && (
-              <>
-                {isSignedIn ? (
-                  savedScoreId ? (
-                    <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                      ✓ Saved
-                      <Link href="/saved" className="hf-auth-link" style={{ fontSize: '0.95rem' }}>
-                        My places
-                      </Link>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="hf-btn-secondary"
-                      style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
-                    >
-                      {saving ? 'Saving…' : 'Save this place'}
-                    </button>
-                  )
-                ) : isAuthConfigured ? (
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                    className="hf-btn-secondary"
-                    style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', textDecoration: 'none', color: 'inherit' }}
-                  >
-                    Sign in to save this place
-                  </a>
-                ) : null}
-                {saveError && (
-                  <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
-                )}
-              </>
-            )}
             <button
               onClick={copyScores}
-              className="hf-btn-primary"
+              className="hf-btn-secondary"
               style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
             >
               {copied ? 'Copied!' : 'Copy scores'}
