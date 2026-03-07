@@ -12,9 +12,13 @@ import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getGeocode } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import { saveScore } from '@/lib/savedScores'
 
 export default function Home() {
+  const { user } = useAuth()
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
+  const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
   const [loading, set_loading] = useState(false)
   const [error, set_error] = useState<string | null>(null)
   const [place, set_place] = useState<(GeocodeResult & { location: string }) | null>(null)
@@ -61,6 +65,7 @@ export default function Home() {
     set_error(null)
     set_score_data(null)
     set_place(null)
+    setSavedScoreId(null)
     getGeocode(location)
       .then((geo) => {
         set_place({ ...geo, location })
@@ -175,6 +180,18 @@ export default function Home() {
           <ScoreDisplay
             data={display_score_data || score_data}
             onSearchAnother={handleSearchAnother}
+            isSignedIn={!!user}
+            savedScoreId={savedScoreId}
+            priorities={search_options.priorities}
+            onSave={async (payload, priorities) => {
+              try {
+                const { id } = await saveScore(payload, priorities)
+                setSavedScoreId(id)
+                return { id }
+              } catch (e) {
+                return { error: e instanceof Error ? e.message : 'Failed to save' }
+              }
+            }}
           />
         )}
       </div>

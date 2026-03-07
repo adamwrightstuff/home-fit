@@ -31,6 +31,9 @@ export default function AuthBar() {
               <span className="hf-auth-bar-muted">Loading…</span>
             ) : user ? (
               <>
+                <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none' }}>
+                  My places
+                </Link>
                 <span className="hf-auth-bar-email" title={user.email ?? undefined}>
                   {user.email}
                 </span>
