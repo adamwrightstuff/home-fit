@@ -118,17 +118,40 @@ export function reweightScoreResponseFromPriorities(
   const nextPillars: any = { ...data.livability_pillars }
   let total = 0
 
+  // If any pillar with a score gets weight 0 from tokenAllocation, priorities may not match payload keys.
+  // Fallback: derive priorities from payload importance_level so we never show 0% for configured pillars.
+  const payloadKeys = Object.keys(nextPillars).filter(
+    (k) => nextPillars[k] && typeof nextPillars[k].score === 'number'
+  )
+  const anyZeroWeight = payloadKeys.some((k) => Number(tokenAllocation[k] ?? 0) === 0)
+  const fallbackAllocation =
+    anyZeroWeight && payloadKeys.length > 0
+      ? (() => {
+          const fromPayload: Record<string, string> = {}
+          for (const k of payloadKeys) {
+            const level = (nextPillars[k] as any)?.importance_level
+            const s = String(level ?? 'Medium').trim()
+            fromPayload[k] = s === 'Low' || s === 'Medium' || s === 'High' ? s : 'Medium'
+          }
+          const alloc = prioritiesToTokens(fromPayload)
+          return isSchoolsDisabledFromResult(data) ? applySchoolsDisabledOverride(alloc) : alloc
+        })()
+      : null
+
   for (const k of Object.keys(nextPillars)) {
     const pillar = nextPillars[k]
     if (!pillar || typeof pillar.score !== 'number') continue
 
-    const weight = Number(tokenAllocation[k] ?? 0)
+    let weight = Number(tokenAllocation[k] ?? 0)
+    if (weight === 0 && fallbackAllocation != null) {
+      weight = Number(fallbackAllocation[k] ?? 0)
+    }
     const score = Number(pillar.score ?? 0)
     const contribution = (score * weight) / 100
     total += contribution
 
     // Normalize priority label casing to backend style.
-    const p = String((priorities as any)?.[k] ?? 'None')
+    const p = String((priorities as any)?.[k] ?? pillar.importance_level ?? 'None')
     const importanceLevel = p === 'Low' || p === 'Medium' || p === 'High' ? p : 'None'
 
     nextPillars[k] = {
@@ -140,12 +163,13 @@ export function reweightScoreResponseFromPriorities(
   }
 
   const nextTotal = Math.round(total * 100) / 100
+  const finalTokenAllocation = fallbackAllocation ?? tokenAllocation
 
   return {
     ...data,
     livability_pillars: nextPillars,
     total_score: nextTotal,
-    token_allocation: tokenAllocation as Record<string, number>,
+    token_allocation: finalTokenAllocation as Record<string, number>,
     allocation_type: 'priority_based',
   }
 }
