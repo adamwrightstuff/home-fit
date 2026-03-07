@@ -12,6 +12,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   resendConfirmation: (email: string) => Promise<{ error: Error | null }>
+  resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
 
@@ -83,6 +84,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [client]
   )
 
+  const resetPasswordForEmail = useCallback(
+    async (email: string) => {
+      if (!client) return { error: new Error('Auth not configured') }
+      const redirectTo =
+        typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined
+      const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo,
+      })
+      return { error: error ?? null }
+    },
+    [client]
+  )
+
   const value: AuthContextValue = {
     user,
     session,
@@ -91,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     resendConfirmation,
+    resetPasswordForEmail,
     signOut,
   }
 

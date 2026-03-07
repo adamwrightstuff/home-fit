@@ -24,6 +24,7 @@ export default function AuthCallbackPage() {
 
     const access_token = params.get('access_token')
     const refresh_token = params.get('refresh_token')
+    const type = params.get('type')
     const error = params.get('error_description') || params.get('error')
 
     if (error) {
@@ -37,7 +38,11 @@ export default function AuthCallbackPage() {
       client.auth
         .setSession({ access_token, refresh_token })
         .then(() => {
-          router.replace('/')
+          if (type === 'recovery') {
+            router.replace('/auth/update-password')
+          } else {
+            router.replace('/')
+          }
         })
         .catch((err) => {
           console.error('setSession error:', err)

@@ -14,8 +14,9 @@ export default function AuthModal({
   onClose: () => void
   initialMode?: Mode
 }) {
-  const { signIn, signUp, resendConfirmation, isConfigured } = useAuth()
+  const { signIn, signUp, resendConfirmation, resetPasswordForEmail, isConfigured } = useAuth()
   const [mode, setMode] = useState<Mode>(initialMode)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +29,7 @@ export default function AuthModal({
     if (isOpen) {
       setMode(initialMode)
       setResendSent(false)
+      setShowForgotPassword(false)
     }
   }, [isOpen, initialMode])
 
@@ -81,6 +83,27 @@ export default function AuthModal({
     setResendSent(true)
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) {
+      setError('Email is required')
+      return
+    }
+    setError(null)
+    setSuccess(null)
+    setSubmitting(true)
+    try {
+      const { error: err } = await resetPasswordForEmail(email.trim())
+      if (err) {
+        setError(err.message)
+        return
+      }
+      setSuccess('Check your email for a link to reset your password.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (!isOpen) return null
   if (!isConfigured) {
     return (
@@ -122,7 +145,9 @@ export default function AuthModal({
     >
       <div className="hf-auth-modal">
         <div className="hf-auth-modal-header">
-          <h2 id="auth-modal-title">{mode === 'signin' ? 'Sign in' : 'Create account'}</h2>
+          <h2 id="auth-modal-title">
+            {showForgotPassword ? 'Forgot password' : mode === 'signin' ? 'Sign in' : 'Create account'}
+          </h2>
           <button
             type="button"
             className="hf-auth-close"
@@ -132,6 +157,34 @@ export default function AuthModal({
             ×
           </button>
         </div>
+        {showForgotPassword ? (
+          <form onSubmit={handleForgotPassword}>
+            <div className="hf-auth-field">
+              <label htmlFor="auth-forgot-email">Email</label>
+              <input
+                id="auth-forgot-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                disabled={submitting}
+              />
+            </div>
+            {error && <p className="hf-auth-error" role="alert">{error}</p>}
+            {success && <p className="hf-auth-success" role="status">{success}</p>}
+            <div className="hf-auth-actions">
+              <button type="submit" className="hf-auth-submit" disabled={submitting}>
+                {submitting ? 'Sending…' : 'Send reset link'}
+              </button>
+            </div>
+            <p className="hf-auth-switch" style={{ marginTop: '1rem' }}>
+              <button type="button" className="hf-auth-link" onClick={() => { setShowForgotPassword(false); setError(null); setSuccess(null); }}>
+                Back to sign in
+              </button>
+            </p>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit}>
           <div className="hf-auth-field">
             <label htmlFor="auth-email">Email</label>
@@ -200,12 +253,18 @@ export default function AuthModal({
             </p>
           )}
         </form>
+        )}
+        {!showForgotPassword && (
         <p className="hf-auth-switch">
           {mode === 'signin' ? (
             <>
               Don&apos;t have an account?{' '}
               <button type="button" className="hf-auth-link" onClick={() => { setMode('signup'); setError(null); setSuccess(null); }}>
                 Sign up
+              </button>
+              {' · '}
+              <button type="button" className="hf-auth-link" onClick={() => { setShowForgotPassword(true); setError(null); setSuccess(null); }}>
+                Forgot password?
               </button>
             </>
           ) : (
@@ -217,6 +276,7 @@ export default function AuthModal({
             </>
           )}
         </p>
+        )}
       </div>
     </div>
   )
