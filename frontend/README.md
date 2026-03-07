@@ -22,6 +22,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 See `.env.example` for a template. If these are not set, the auth bar is hidden and the app works without an account.
 
+**Supabase redirect URLs (for email confirmation):** In Supabase → Authentication → URL Configuration, set **Site URL** to your app URL (e.g. `https://home-fit-topaz.vercel.app`) and add **Redirect URLs** such as `https://your-domain.com/**`, `https://your-domain.com/auth/callback`, and `https://*-.vercel.app/**` for Vercel. Otherwise the confirmation link may 404. To customize the confirmation email (e.g. app name), edit Authentication → Email Templates → Confirm signup.
+
 3. Run development server:
 ```bash
 npm run dev

@@ -54,7 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = useCallback(
     async (email: string, password: string) => {
       if (!client) return { error: new Error('Auth not configured') }
-      const { error } = await client.auth.signUp({ email, password })
+      const emailRedirectTo =
+        typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined
+      const { error } = await client.auth.signUp({
+        email,
+        password,
+        options: emailRedirectTo ? { emailRedirectTo } : undefined,
+      })
       return { error: error ?? null }
     },
     [client]
