@@ -18,8 +18,9 @@ Save (My places) will fail with **"Could not find the table 'public.saved_scores
 
 ### 3. If the error persists
 
-- **Schema cache:** Supabase's API caches the schema. After creating the table, wait **30–60 seconds** and try **Save this place** again.
+- **Reload schema cache:** In SQL Editor run: `NOTIFY pgrst, 'reload schema';` then try **Save this place** again (works within seconds).
+- **Schema cache (alternative):** After creating the table, wait 30-60 seconds and retry.
 - **Same project:** Ensure the app's Supabase URL is the project where you ran the SQL (Dashboard → Project Settings → API → Project URL should match `NEXT_PUBLIC_SUPABASE_URL`).
-- **Policies:** The migration creates RLS policies. If you edited them or the table was created by hand, re-run the full `001_saved_scores.sql` script.
+- **Policies:** The migration creates RLS policies. If you edited them or the table was created by hand, re-run the full `001_saved_scores.sql` script (it now ends with `NOTIFY pgrst, 'reload schema';` so the API picks up the table).
 
 After the table exists and the cache has updated, sign in and **Save this place** should work.

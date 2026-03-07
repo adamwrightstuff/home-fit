@@ -50,3 +50,6 @@ drop trigger if exists saved_scores_updated_at on public.saved_scores;
 create trigger saved_scores_updated_at
   before update on public.saved_scores
   for each row execute function public.set_updated_at();
+
+-- Tell PostgREST to reload schema so the API sees the new table immediately.
+NOTIFY pgrst, 'reload schema';
