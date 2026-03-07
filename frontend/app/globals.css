@@ -655,8 +655,13 @@ body {
   cursor: pointer;
   border: 1px solid var(--hf-border);
   background: #fff;
-  color: var(--hf-text-primary);
+  color: var(--hf-text-primary, #2c3e50);
   transition: all 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hf-auth-bar-nav a.hf-auth-bar-btn {
+  color: var(--hf-text-primary, #2c3e50);
 }
 
 .hf-auth-bar-btn:hover {
@@ -666,7 +671,7 @@ body {
 
 .hf-auth-bar-btn-primary {
   background: var(--hf-primary-gradient);
-  color: #fff;
+  color: #fff !important;
   border: none;
 }
 

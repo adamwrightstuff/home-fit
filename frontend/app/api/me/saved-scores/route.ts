@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { mergeSavedScorePayload } from '@/lib/mergeSavedScores'
 
 export async function GET() {
   const supabase = await createClient()
@@ -53,13 +54,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'scorePayload.input required' }, { status: 400 })
   }
 
+  const prioritiesObj = priorities as Record<string, unknown>
+
+  // If we already have a saved row for this place, merge incoming pillars with existing so we don't lose previous pillars.
+  const { data: existingRow } = await supabase
+    .from('saved_scores')
+    .select('score_payload')
+    .eq('user_id', user.id)
+    .eq('input', input)
+    .maybeSingle()
+
+  const existingPayload = (existingRow?.score_payload as Record<string, unknown>) ?? null
+  const { mergedPayload } = mergeSavedScorePayload(existingPayload, payload, prioritiesObj)
+
   const row = {
     user_id: user.id,
     input,
     coordinates,
     location_info,
-    score_payload: payload,
-    priorities: priorities as Record<string, unknown>,
+    score_payload: mergedPayload,
+    priorities: prioritiesObj,
   }
 
   const { data, error } = await supabase

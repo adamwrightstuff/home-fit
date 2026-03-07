@@ -22,23 +22,25 @@ export default function AuthBar() {
                 className="hf-auth-bar-btn"
                 onClick={() => openAuthModal('signin')}
                 title="Sign in (configure Supabase env to enable)"
+                style={{ color: '#1a1a2e' }}
               >
                 Sign in
               </button>
             ) : loading ? (
-              <span className="hf-auth-bar-muted">Loading…</span>
+              <span className="hf-auth-bar-muted" style={{ color: '#5a5a6e' }}>Loading…</span>
             ) : user ? (
               <>
-                <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none' }}>
+                <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
                   My places
                 </Link>
-                <span className="hf-auth-bar-email" title={user.email ?? undefined}>
+                <span className="hf-auth-bar-email" title={user.email ?? undefined} style={{ color: '#5a5a6e' }}>
                   {user.email}
                 </span>
                 <button
                   type="button"
                   className="hf-auth-bar-btn"
                   onClick={() => signOut()}
+                  style={{ color: '#1a1a2e' }}
                 >
                   Sign out
                 </button>
@@ -49,6 +51,7 @@ export default function AuthBar() {
                   type="button"
                   className="hf-auth-bar-btn"
                   onClick={() => openAuthModal('signin')}
+                  style={{ color: '#1a1a2e' }}
                 >
                   Sign in
                 </button>
@@ -56,6 +59,7 @@ export default function AuthBar() {
                   type="button"
                   className="hf-auth-bar-btn hf-auth-bar-btn-primary"
                   onClick={() => openAuthModal('signup')}
+                  style={{ color: '#fff' }}
                 >
                   Sign up
                 </button>
