@@ -14,6 +14,7 @@ import type { GeocodeResult } from '@/types/api'
 import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
+import { useAuth } from '@/contexts/AuthContext'
 
 /** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
 const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
@@ -69,6 +70,7 @@ export interface PlaceViewProps {
 }
 
 export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed, onSave, isSignedIn, isAuthConfigured = true, savedScoreId }: PlaceViewProps) {
+  const { openAuthModal } = useAuth()
   const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
   const [pillarScores, setPillarScores] = useState<Record<string, {
@@ -1096,14 +1098,14 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 </button>
               )
             ) : isAuthConfigured ? (
-              <a
-                href="#"
-                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              <button
+                type="button"
+                onClick={() => openAuthModal('signin')}
                 className="hf-btn-secondary"
-                style={{ padding: '0.6rem 1rem', borderRadius: 10, fontSize: '0.95rem', textDecoration: 'none', color: 'inherit' }}
+                style={{ padding: '0.6rem 1rem', borderRadius: 10, fontSize: '0.95rem' }}
               >
                 Sign in to save this place
-              </a>
+              </button>
             ) : null}
             {saveError && <span className="hf-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>{saveError}</span>}
           </div>

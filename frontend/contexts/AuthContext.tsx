@@ -14,6 +14,11 @@ interface AuthContextValue {
   resendConfirmation: (email: string) => Promise<{ error: Error | null }>
   resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  /** Open the auth modal (sign-in or sign-up). Call from anywhere (e.g. "Sign in to save this place"). */
+  openAuthModal: (mode?: 'signin' | 'signup') => void
+  closeAuthModal: () => void
+  authModalOpen: boolean
+  authModalMode: 'signin' | 'signup'
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -22,8 +27,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin')
   const client = createClient()
   const isConfigured = client !== null
+
+  const openAuthModal = useCallback((mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode)
+    setAuthModalOpen(true)
+  }, [])
+  const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
 
   useEffect(() => {
     if (!client) {
@@ -107,6 +120,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resendConfirmation,
     resetPasswordForEmail,
     signOut,
+    openAuthModal,
+    closeAuthModal,
+    authModalOpen,
+    authModalMode,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

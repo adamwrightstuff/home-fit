@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthModal from '@/components/AuthModal'
 
 export default function AuthBar() {
-  const { user, loading, isConfigured, signOut } = useAuth()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'signin' | 'signup'>('signin')
+  const { user, loading, isConfigured, signOut, openAuthModal, closeAuthModal, authModalOpen, authModalMode } = useAuth()
 
   return (
     <>
@@ -22,7 +20,7 @@ export default function AuthBar() {
               <button
                 type="button"
                 className="hf-auth-bar-btn"
-                onClick={() => { setModalMode('signin'); setModalOpen(true); }}
+                onClick={() => openAuthModal('signin')}
                 title="Sign in (configure Supabase env to enable)"
               >
                 Sign in
@@ -50,14 +48,14 @@ export default function AuthBar() {
                 <button
                   type="button"
                   className="hf-auth-bar-btn"
-                  onClick={() => { setModalMode('signin'); setModalOpen(true); }}
+                  onClick={() => openAuthModal('signin')}
                 >
                   Sign in
                 </button>
                 <button
                   type="button"
                   className="hf-auth-bar-btn hf-auth-bar-btn-primary"
-                  onClick={() => { setModalMode('signup'); setModalOpen(true); }}
+                  onClick={() => openAuthModal('signup')}
                 >
                   Sign up
                 </button>
@@ -67,9 +65,9 @@ export default function AuthBar() {
         </div>
       </header>
       <AuthModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        initialMode={modalMode}
+        isOpen={authModalOpen}
+        onClose={closeAuthModal}
+        initialMode={authModalMode}
       />
     </>
   )

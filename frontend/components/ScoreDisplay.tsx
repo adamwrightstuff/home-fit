@@ -8,6 +8,7 @@ import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
 import LongevityInfo from './LongevityInfo'
 import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface ScoreDisplayProps {
   data: ScoreResponse
@@ -34,6 +35,7 @@ function overallTier(score: number): { label: string; tone: string } {
 }
 
 export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities }: ScoreDisplayProps) {
+  const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
   const [copied, setCopied] = useState(false)
@@ -130,14 +132,14 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                 </button>
               )
             ) : isAuthConfigured ? (
-              <a
-                href="#"
-                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              <button
+                type="button"
+                onClick={() => openAuthModal('signin')}
                 className="hf-btn-primary"
-                style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600, textDecoration: 'none', color: 'inherit' }}
+                style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600 }}
               >
                 Sign in to save this place
-              </a>
+              </button>
             ) : null}
             {saveError && (
               <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
