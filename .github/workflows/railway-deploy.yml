@@ -1,0 +1,37 @@
+# Deploy backend API to Railway on every push to main.
+#
+# Setup (one-time):
+# 1. Railway dashboard → your project → Settings → Tokens → create a token (or use Project Settings → Variables).
+# 2. GitHub repo → Settings → Secrets and variables → Actions → New repository secret:
+#    - Name: RAILWAY_TOKEN
+#    - Value: paste the Railway token
+# 3. (Optional) If you have multiple services, add secret RAILWAY_SERVICE_ID with the service ID from Railway.
+#
+# Alternatively, connect the repo in Railway: Service → Settings → connect GitHub repo and branch.
+# Then Railway deploys automatically on push; this workflow is a backup so deploy always runs from GitHub.
+
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -n "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            railway up --service "${{ secrets.RAILWAY_SERVICE_ID }}"
+          else
+            railway up
+          fi

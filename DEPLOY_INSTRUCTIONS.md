@@ -51,6 +51,29 @@ Since you already use Railway for your API, you can deploy the frontend there to
 
 ---
 
+## GitHub push → Railway (backend API)
+
+Every push to `main` can trigger a Railway deploy for the backend API in two ways:
+
+### A. Connect GitHub in Railway (recommended)
+
+1. Railway dashboard → your **project** (the one with the API service) → **Service** (the one running `uvicorn main:app`).
+2. **Settings** → **Source** / **GitHub** → **Connect repo**.
+3. Choose this repo and branch `main`. Save.
+4. From then on, every push to `main` triggers a deploy (and optionally enable **Wait for CI** if you want Railway to wait for GitHub Actions to pass).
+
+### B. GitHub Actions workflow (backup / CI-driven)
+
+This repo includes `.github/workflows/railway-deploy.yml`, which runs `railway up` on every push to `main`. To use it:
+
+1. **Railway token:** Railway dashboard → Project → **Settings** → **Tokens** (or **Variables**) → create a token. Copy it.
+2. **GitHub secret:** Repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → name `RAILWAY_TOKEN`, value = the token.
+3. (Optional) If the project has multiple services, create a second secret `RAILWAY_SERVICE_ID` with the API service ID from Railway (e.g. from the service URL or Settings).
+
+After that, every push to `main` runs the workflow and deploys the backend to Railway.
+
+---
+
 ## NRHP dataset (Built Beauty historic register) on Railway
 
 Built Beauty can use NRHP “historic register” signals **without calling an external API at request time** by building a local SQLite index during Railway deploy.
