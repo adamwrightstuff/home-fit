@@ -706,7 +706,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     <div className="hf-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
                   </div>
                 </div>
-                <div className="hf-pillar-row-right" style={{ flexShrink: 0 }}>
+                <div className="hf-pillar-row-right">
                   {!selected && score == null && (
                     <button
                       type="button"
@@ -776,8 +776,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     )
                   })()}
                   {score != null && !score.failed && pillarWeightsAndContributions[key] && (
-                    <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      Weight {pillarWeightsAndContributions[key].weight.toFixed(1)}% → contributes {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
+                    <div className="hf-muted hf-pillar-weight-line" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                      {pillarWeightsAndContributions[key].weight.toFixed(1)}% · {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
                     </div>
                   )}
                   {score == null && selected && (
