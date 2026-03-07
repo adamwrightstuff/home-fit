@@ -103,8 +103,8 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
       }}
       style={{ cursor: 'pointer' }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', minWidth: 0 }}>
           <div style={{ fontSize: '1.6rem' }}>{meta.icon}</div>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -198,7 +198,9 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
                   style={{
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    padding: '0.25rem 0.5rem',
+                    padding: '0.35rem 0.6rem',
+                    minHeight: 44,
+                    minWidth: 44,
                     borderRadius: 6,
                     cursor: rerunDisabled ? 'not-allowed' : 'pointer',
                     opacity: rerunDisabled ? 0.6 : 1,
