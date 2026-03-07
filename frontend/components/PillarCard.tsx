@@ -21,6 +21,10 @@ interface PillarCardProps {
   onRerun?: (pillarKey: PillarKey) => void
   /** When true, Rerun is disabled (e.g. full run or another rerun in progress). */
   rerunDisabled?: boolean
+  /** Current importance for this pillar (for inline weight editing on Results). */
+  importanceLevel?: 'Low' | 'Medium' | 'High'
+  /** When provided, show Low/Medium/High toggle and call with new level (client-side reweight). */
+  onImportanceChange?: (level: 'Low' | 'Medium' | 'High') => void
 }
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -64,7 +68,7 @@ function formatValue(value: any, depth: number = 0): string {
   return String(value)
 }
 
-export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled }: PillarCardProps) {
+export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled, importanceLevel, onImportanceChange }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
   const rawSummary = pillar.summary || {}
@@ -253,6 +257,34 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled 
           alignItems: 'baseline',
         }}
       >
+        {onImportanceChange && importanceLevel != null ? (
+          <div style={{ minWidth: 160 }}>
+            <div className="hf-label">Importance</div>
+            <div style={{ display: 'inline-flex', gap: 0, borderRadius: 8, border: '1px solid var(--hf-border)', overflow: 'hidden' }}>
+              {(['Low', 'Medium', 'High'] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onImportanceChange(level)
+                  }}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    background: importanceLevel === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                    color: importanceLevel === level ? 'white' : 'var(--hf-text-secondary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <div style={{ minWidth: 110 }}>
           <div className="hf-label">Weight</div>
           <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.weight.toFixed(1)}%</div>

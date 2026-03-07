@@ -24,6 +24,10 @@ interface ScoreDisplayProps {
   onSave?: (payload: ScoreResponse, priorities: PillarPriorities) => Promise<{ id?: string; error?: string }>
   /** Current priorities (for save payload). */
   priorities?: PillarPriorities
+  /** When provided, show "Edit pillars" and call this to return to Configure with same place/state. */
+  onReconfigure?: () => void
+  /** When user changes importance on a pillar card, call with updated priorities (client-side reweight; no API). */
+  onPrioritiesChange?: (priorities: PillarPriorities) => void
 }
 
 // Use shared pillar order from lib/pillars
@@ -34,7 +38,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
@@ -171,6 +175,11 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
             >
               {copied ? 'Copied!' : 'Copy scores'}
             </button>
+            {onReconfigure && (
+              <button type="button" onClick={onReconfigure} className="hf-btn-link">
+                Edit pillars
+              </button>
+            )}
             {onSearchAnother ? (
               <button type="button" onClick={onSearchAnother} className="hf-btn-link">
                 Search another location
@@ -264,9 +273,28 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           Pillar scores
         </div>
         <div className="hf-grid-3">
-          {available_pillars.map((key) => (
-            <PillarCard key={key} pillar_key={key} pillar={(livability_pillars as any)[key]} />
-          ))}
+          {available_pillars.map((key) => {
+            const pillar = (livability_pillars as any)[key]
+            const importanceLevel = priorities?.[key as keyof typeof priorities]
+            const level = importanceLevel === 'Low' || importanceLevel === 'Medium' || importanceLevel === 'High' ? importanceLevel : undefined
+            return (
+              <PillarCard
+                key={key}
+                pillar_key={key}
+                pillar={pillar}
+                importanceLevel={level}
+                onImportanceChange={
+                  onPrioritiesChange && level != null
+                    ? (newLevel) => {
+                        const next = { ...priorities } as PillarPriorities
+                        next[key as keyof PillarPriorities] = newLevel
+                        onPrioritiesChange(next)
+                      }
+                    : undefined
+                }
+              />
+            )
+          })}
         </div>
       </div>
     </div>

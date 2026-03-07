@@ -18,6 +18,8 @@ import { saveScore } from '@/lib/savedScores'
 export default function Home() {
   const { user, isConfigured } = useAuth()
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
+  /** When user clicks "View results", we store payload + priorities so we can rehydrate Configure when they click "Edit pillars". */
+  const [configureState, set_configure_state] = useState<{ payload: ScoreResponse; priorities: PillarPriorities } | null>(null)
   const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
   const [loading, set_loading] = useState(false)
   const [error, set_error] = useState<string | null>(null)
@@ -57,13 +59,14 @@ export default function Home() {
 
   const display_score_data = useMemo(() => {
     if (!score_data) return null
-    return reweightScoreResponseFromPriorities(score_data, search_options.priorities)
-  }, [score_data, search_options.priorities])
+    return reweightScoreResponseFromPriorities(score_data, configureState?.priorities ?? search_options.priorities)
+  }, [score_data, configureState?.priorities, search_options.priorities])
 
   const handle_search = (location: string) => {
     set_loading(true)
     set_error(null)
     set_score_data(null)
+    set_configure_state(null)
     set_place(null)
     setSavedScoreId(null)
     getGeocode(location)
@@ -164,6 +167,12 @@ export default function Home() {
                 return { error: e instanceof Error ? e.message : 'Failed to save' }
               }
             }}
+            onShowResults={(payload, priorities) => {
+              set_score_data(payload)
+              set_configure_state({ payload, priorities })
+            }}
+            initialPayload={configureState?.payload ?? null}
+            initialPriorities={configureState?.priorities ?? null}
             isSignedIn={!!user}
             isAuthConfigured={isConfigured}
             savedScoreId={savedScoreId}
@@ -182,6 +191,7 @@ export default function Home() {
   const handleSearchAnother = () => {
     set_place(null)
     set_score_data(null)
+    set_configure_state(null)
     set_error(null)
   }
 
@@ -195,7 +205,11 @@ export default function Home() {
             isSignedIn={!!user}
             isAuthConfigured={isConfigured}
             savedScoreId={savedScoreId}
-            priorities={search_options.priorities}
+            priorities={configureState?.priorities ?? search_options.priorities}
+            onReconfigure={() => set_score_data(null)}
+            onPrioritiesChange={(priorities) =>
+              set_configure_state((prev) => (prev ? { ...prev, priorities } : null))
+            }
             onSave={async (payload, priorities) => {
               try {
                 const { id } = await saveScore(payload, priorities)

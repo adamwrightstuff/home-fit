@@ -64,24 +64,67 @@ export interface PlaceViewProps {
   onAppliedQuizPrioritiesConsumed?: () => void
   /** When provided and user has results, show Save / Sign in to save. */
   onSave?: (payload: ScoreResponse, priorities: PillarPriorities) => Promise<{ id?: string; error?: string }>
+  /** When user has scores and clicks "View results", call with current payload and priorities to show Results screen. */
+  onShowResults?: (payload: ScoreResponse, priorities: PillarPriorities) => void
+  /** When coming back from Results (Edit pillars), optional initial state from the last payload. */
+  initialPayload?: ScoreResponse | null
+  /** Priorities to use when initialPayload is provided (pillar selection and importance). */
+  initialPriorities?: PillarPriorities | null
   isSignedIn?: boolean
   isAuthConfigured?: boolean
   savedScoreId?: string | null
 }
 
-export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed, onSave, isSignedIn, isAuthConfigured = true, savedScoreId }: PlaceViewProps) {
+export default function PlaceView({ place, searchOptions, onSearchOptionsChange, onError, onBack, onTakeQuiz, justAppliedQuizPriorities, onAppliedQuizPrioritiesConsumed, onSave, onShowResults, initialPayload, initialPriorities, isSignedIn, isAuthConfigured = true, savedScoreId }: PlaceViewProps) {
   const { openAuthModal } = useAuth()
-  const [selectedPillars, setSelectedPillars] = useState<Set<string>>(new Set())
-  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>({})
+  const [selectedPillars, setSelectedPillars] = useState<Set<string>>(() => {
+    if (initialPayload?.livability_pillars && initialPriorities) {
+      const pillars = Object.keys(initialPayload.livability_pillars) as (keyof typeof initialPayload.livability_pillars)[]
+      const pri = initialPriorities as unknown as Record<string, string>
+      return new Set(pillars.filter((k) => pri[k] && pri[k] !== 'None'))
+    }
+    return new Set()
+  })
+  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, Importance>>(() => {
+    if (initialPriorities) {
+      const out: Record<string, Importance> = {}
+      const pri = initialPriorities as unknown as Record<string, string>
+      for (const k of PILLAR_ORDER) {
+        const v = pri[k]
+        if (v === 'Low' || v === 'Medium' || v === 'High') out[k] = v
+      }
+      return out
+    }
+    return {}
+  })
   const [pillarScores, setPillarScores] = useState<Record<string, {
     score: number
     failed?: boolean
     confidence?: number
     status?: 'success' | 'fallback' | 'failed'
     data_quality?: { quality_tier?: string }
-  }>>({})
+  }>>(() => {
+    if (initialPayload?.livability_pillars) {
+      const out: Record<string, { score: number; failed?: boolean; confidence?: number; status?: 'success' | 'fallback' | 'failed'; data_quality?: { quality_tier?: string } }> = {}
+      const pillars = initialPayload.livability_pillars as unknown as Record<string, { score?: number; weight?: number; contribution?: number; confidence?: number; data_quality?: { quality_tier?: string }; status?: string; error?: string }>
+      for (const k of Object.keys(pillars)) {
+        const p = pillars[k]
+        if (!p || typeof p.score !== 'number') continue
+        const failed = p.error != null
+        out[k] = {
+          score: p.score,
+          failed,
+          confidence: p.confidence ?? 0,
+          status: (p.status as 'success' | 'fallback' | 'failed') ?? (failed ? 'failed' : 'success'),
+          data_quality: p.data_quality,
+        }
+      }
+      return out
+    }
+    return {}
+  })
+  const [placeSummary, setPlaceSummary] = useState<string | null>(() => initialPayload?.place_summary ?? null)
   const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
-  const [placeSummary, setPlaceSummary] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -434,6 +477,15 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setPillarsInProgress([])
     }
   }, [place.location, searchOptions, selectedPillars, selectedPriorities, pillarScores, onError])
+
+  // Net-new pillars: configured but not yet scored (or failed). Run Score (N) uses this count; when 0, show "View results".
+  const netNewPillars = useMemo(() => {
+    return Array.from(selectedPillars).filter((k) => {
+      const entry = pillarScores[k]
+      return !entry || entry.failed
+    })
+  }, [selectedPillars, pillarScores])
+  const netNewCount = netNewPillars.length
 
   const hasResults = Object.keys(pillarScores).length > 0
   const locationLabel = formatPlaceLabel(place)
@@ -1123,18 +1175,42 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         )}
         {selectedPillars.size > 0 && !loading && (
           <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
-            Set importance to customize your score
+            {netNewCount === 0 ? (
+              <>All {selectedPillars.size} pillar{selectedPillars.size === 1 ? '' : 's'} scored</>
+            ) : (
+              <>Run score for {netNewCount} new pillar{netNewCount === 1 ? '' : 's'}</>
+            )}
           </p>
         )}
-        <button
-          type="button"
-          onClick={runScore}
-          disabled={selectedPillars.size === 0 || loading || pillarsInProgress.length > 0}
-          className="hf-btn-primary"
-          style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
-        >
-          {loading ? 'Scoring…' : pillarsInProgress.length > 0 ? 'Rerunning…' : selectedPillars.size > 0 ? `Run Score (${selectedPillars.size})` : 'Run Score'}
-        </button>
+        {netNewCount > 0 ? (
+          <button
+            type="button"
+            onClick={runScore}
+            disabled={loading || pillarsInProgress.length > 0}
+            className="hf-btn-primary"
+            style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
+          >
+            {loading ? 'Scoring…' : pillarsInProgress.length > 0 ? 'Rerunning…' : `Run Score (${netNewCount})`}
+          </button>
+        ) : hasResults && savePayload && onShowResults ? (
+          <button
+            type="button"
+            onClick={() => onShowResults(savePayload, savePriorities)}
+            className="hf-btn-primary"
+            style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
+          >
+            View results
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="hf-btn-primary"
+            style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem', opacity: 0.6, cursor: 'not-allowed' }}
+          >
+            Run Score
+          </button>
+        )}
       </div>
 
       {/* Scoring overlay: dimmed, non-interactive; shows headline, subtitle, pillar names appearing over ~5s */}
