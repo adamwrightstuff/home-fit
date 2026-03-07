@@ -19,7 +19,11 @@ function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const out: Record<string, (typeof levels)[number]> = { ...DEFAULT_PRIORITIES }
   for (const k of Object.keys(out)) {
     const v = String(p[k] ?? '').trim()
-    if (levels.includes(v as (typeof levels)[number])) out[k] = v as (typeof levels)[number]
+    if (levels.includes(v as (typeof levels)[number])) {
+      out[k] = v as (typeof levels)[number]
+    }
+    // If saved value is None or missing, keep default (Medium) so the UI doesn't show "None" for everything.
+    if (out[k] === 'None') out[k] = 'Medium'
   }
   return out as unknown as PillarPriorities
 }
@@ -204,6 +208,7 @@ export default function SavedDetailPage() {
           <SearchOptionsComponent
             options={searchOptions}
             onChange={handleSearchOptionsChange}
+            skipSessionRestore
           />
         </div>
 

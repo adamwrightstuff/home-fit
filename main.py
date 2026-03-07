@@ -1918,7 +1918,7 @@ def _compute_single_score_internal(
         },
         "location_info": location_info,
         "livability_pillars": livability_pillars,
-        "place_summary": _build_place_summary(livability_pillars, location_info),
+        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -3286,7 +3286,7 @@ async def _stream_score_with_progress(
             "coordinates": {"lat": lat, "lon": lon},
             "location_info": location_info,
             "livability_pillars": livability_pillars,
-            "place_summary": _build_place_summary(livability_pillars, location_info),
+            "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
             "total_score": round(total_score, 2),
             "longevity_index": longevity_index,
             "longevity_index_contributions": longevity_contributions,
@@ -4216,7 +4216,7 @@ async def stream_score(
         },
         "location_info": location_info,
         "livability_pillars": livability_pillars,
-        "place_summary": _build_place_summary(livability_pillars, location_info),
+        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -4806,13 +4806,17 @@ def _format_transit_modes(modes: list) -> str:
     return "local buses"
 
 
-def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
+def _build_place_summary(livability_pillars: dict, location_info: dict, only_pillars: Optional[set[str]] = None) -> str:
     """
     Build a 2-4 sentence character-first summary per LIVABILITY SUMMARY SPEC.
     Uses only data already in livability_pillars and location_info; no external calls.
+    When only_pillars is set (incremental run), only include sentences for those pillars.
     """
     place = (location_info or {}).get("city") or "This area"
     sentences = []
+
+    def include(pillar_key: str) -> bool:
+        return only_pillars is None or pillar_key in only_pillars
 
     # --- Extract data ---
     ao = livability_pillars.get("active_outdoors") or {}
@@ -4856,6 +4860,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     pt_score = pt.get("score")
     modes_raw = pt_sum.get("transit_modes_available") or []
     access_level = (pt_sum.get("access_level") or "").lower()
+    has_transit = bool(modes_raw and str(access_level) not in ("none", "no access", ""))
 
     air = livability_pillars.get("air_travel_access") or {}
     primary = air.get("primary_airport")
@@ -4891,9 +4896,12 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
     else:
         med_val_str = None
 
+    nb = livability_pillars.get("natural_beauty") or {}
+    nb_score = nb.get("score")
+
     # --- 1. Outdoors (skip if no parks and no trails) ---
     outdoors_sentence = None
-    if park_count > 0 or trail_count > 0:
+    if include("active_outdoors") and (park_count > 0 or trail_count > 0):
         band = _summary_band(ao_score)
         if band == "strong":
             tree_phrase = "well-treed" if (tree_pct and tree_pct >= 25) else "heavily wooded"
@@ -4910,7 +4918,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
 
     # --- 2. Amenities ---
     amenities_sentence = None
-    if walk_10 is not None:
+    if include("neighborhood_amenities") and walk_10 is not None:
         band = _summary_band(am_score)
         if band == "strong":
             center_phrase = f", with the center of {place} just {downtown_display} away" if (downtown_km is not None and downtown_km > 0 and not omit_downtown_positive) else ""
@@ -4937,7 +4945,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
 
     # --- 3. Healthcare (skip if no hospital data) ---
     healthcare_sentence = None
-    if hospital_km is not None:
+    if include("healthcare_access") and hospital_km is not None:
         band = _summary_band(hc_score)
         if hospital_km < 3 and pharmacy_count >= 2:
             healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_display} away and pharmacies are close by for everyday needs."
@@ -4954,19 +4962,19 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
 
     # --- 4. Transit ---
     transit_sentence = None
-    has_transit = modes_raw and str(access_level) not in ("none", "no access", "")
-    if has_transit:
-        band = _summary_band(pt_score)
-        mode_str = _format_transit_modes(list(modes_raw) if isinstance(modes_raw, (list, tuple)) else [modes_raw])
-        if band == "strong":
-            transit_sentence = f"{place} is well-connected — {mode_str} serve the area, making it easy to get around without a car."
-        elif band == "solid":
-            transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
+    if include("public_transit_access"):
+        if has_transit:
+            band = _summary_band(pt_score)
+            mode_str = _format_transit_modes(list(modes_raw) if isinstance(modes_raw, (list, tuple)) else [modes_raw])
+            if band == "strong":
+                transit_sentence = f"{place} is well-connected — {mode_str} serve the area, making it easy to get around without a car."
+            elif band == "solid":
+                transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
+            else:
+                transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
         else:
-            transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
-    else:
-        if pt_score is not None and pt_score < 40:
-            transit_sentence = "Transit options are limited, so most residents rely on a car for getting around."
+            if pt_score is not None and pt_score < 40:
+                transit_sentence = "Transit options are limited, so most residents rely on a car for getting around."
 
     # --- Combine Healthcare + Transit when both present and we have real transit (saves a sentence for education+housing) ---
     if healthcare_sentence and transit_sentence and hospital_km is not None and has_transit:
@@ -4982,7 +4990,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
 
     # --- 6. Education (skip if 0 schools) ---
     education_sentence = None
-    if total_schools is not None and total_schools > 0:
+    if include("quality_education") and total_schools is not None and total_schools > 0:
         if excellent >= 2:
             education_sentence = f"{total_schools} schools serve the area, {excellent} of them rated excellent — a strong picture for families."
         elif excellent == 1:
@@ -4991,42 +4999,55 @@ def _build_place_summary(livability_pillars: dict, location_info: dict) -> str:
             education_sentence = f"School options are limited here, with {total_schools} nearby and none rated excellent — worth researching further for families."
 
     # --- 7. Housing (full sentence or closing clause) ---
-    housing_affordable = aff and str(aff).lower() in ("affordable", "very affordable")
-    housing_expensive = aff and str(aff).lower() in ("expensive", "very expensive", "unaffordable")
-    housing_moderate = not housing_affordable and not housing_expensive
-    use_housing_clause = housing_moderate and med_val_str and len(sentences) >= 3
+    if include("quality_education") or include("housing_value"):
+        housing_affordable = aff and str(aff).lower() in ("affordable", "very affordable")
+        housing_expensive = aff and str(aff).lower() in ("expensive", "very expensive", "unaffordable")
+        housing_moderate = not housing_affordable and not housing_expensive
+        use_housing_clause = housing_moderate and med_val_str and len(sentences) >= 3
 
-    if education_sentence and (med_val_str or aff):
-        if use_housing_clause:
-            sentences.append(f"{education_sentence.rstrip('.')} — and housing sits at a reasonable {med_val_str} median.")
-        elif housing_affordable and med_val_str:
-            sentences.append(f"{education_sentence.rstrip('.')} — and homes here are affordable at a {med_val_str} median.")
-        elif housing_expensive and med_val_str:
-            sentences.append(f"{education_sentence.rstrip('.')} — and housing is on the pricier side at a {med_val_str} median.")
-        elif housing_moderate and med_val_str:
-            sentences.append(f"{education_sentence.rstrip('.')} — and home prices are in the moderate range at around {med_val_str}.")
+        if education_sentence and (med_val_str or aff):
+            if use_housing_clause and include("housing_value"):
+                sentences.append(f"{education_sentence.rstrip('.')} — and housing sits at a reasonable {med_val_str} median.")
+            elif housing_affordable and med_val_str and include("housing_value"):
+                sentences.append(f"{education_sentence.rstrip('.')} — and homes here are affordable at a {med_val_str} median.")
+            elif housing_expensive and med_val_str and include("housing_value"):
+                sentences.append(f"{education_sentence.rstrip('.')} — and housing is on the pricier side at a {med_val_str} median.")
+            elif housing_moderate and med_val_str and include("housing_value"):
+                sentences.append(f"{education_sentence.rstrip('.')} — and home prices are in the moderate range at around {med_val_str}.")
+            else:
+                sentences.append(education_sentence)
+                if include("housing_value") and med_val_str:
+                    if housing_affordable:
+                        sentences.append(f"On the housing side, {place} is genuinely accessible — a median home value of {med_val_str} sits comfortably within reach for most earners.")
+                    elif housing_expensive:
+                        sentences.append(f"Housing is on the pricier side — a median value of {med_val_str} reflects strong demand, and buyers will need to budget accordingly.")
+                    else:
+                        sentences.append(f"Home prices are in the moderate range, with a median of {med_val_str}, reasonable relative to local incomes though not cheap.")
         else:
-            sentences.append(education_sentence)
-            if med_val_str:
-                if housing_affordable:
+            if education_sentence:
+                sentences.append(education_sentence)
+            if include("housing_value") and (med_val_str or aff) and not use_housing_clause:
+                if housing_affordable and med_val_str:
                     sentences.append(f"On the housing side, {place} is genuinely accessible — a median home value of {med_val_str} sits comfortably within reach for most earners.")
-                elif housing_expensive:
+                elif housing_expensive and med_val_str:
                     sentences.append(f"Housing is on the pricier side — a median value of {med_val_str} reflects strong demand, and buyers will need to budget accordingly.")
-                else:
-                    sentences.append(f"Home prices are in the moderate range, with a median of {med_val_str}, reasonable relative to local incomes though not cheap.")
-    else:
-        if education_sentence:
-            sentences.append(education_sentence)
-        if (med_val_str or aff) and not use_housing_clause:
-            if housing_affordable and med_val_str:
-                sentences.append(f"On the housing side, {place} is genuinely accessible — a median home value of {med_val_str} sits comfortably within reach for most earners.")
-            elif housing_expensive and med_val_str:
-                sentences.append(f"Housing is on the pricier side — a median value of {med_val_str} reflects strong demand, and buyers will need to budget accordingly.")
             elif housing_moderate and med_val_str:
                 sentences.append(f"Home prices are in the moderate range, with a median of {med_val_str}, reasonable relative to local incomes though not cheap.")
 
+    # --- Natural Beauty ---
+    if include("natural_beauty") and nb_score is not None:
+        band = _summary_band(nb_score)
+        if band == "strong":
+            sentences.append(f"The natural setting stands out — {place} scores well for scenery, greenery, and outdoor character.")
+        elif band == "solid":
+            sentences.append(f"The area has a solid natural setting — decent scenery and greenery that add to livability.")
+        elif band == "moderate":
+            sentences.append(f"Natural beauty is moderate here — some greenery and scenic elements, with room to explore further.")
+        else:
+            sentences.append(f"Natural setting is modest — limited scenery and greenery; check the breakdown for details.")
+
     # --- 5. Air (distance bands; skip if >60 km and no intl and already 4 sentences) ---
-    if airport_name and airport_km is not None:
+    if include("air_travel_access") and airport_name and airport_km is not None:
         skip_air = airport_km > 60 and not has_intl and len(sentences) >= 4
         if not skip_air:
             if airport_km < 30:

@@ -40,6 +40,8 @@ interface SearchOptionsProps {
   disabled?: boolean
   expanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
+  /** When true, do not load from or write to session storage (e.g. on saved place detail so row priorities are used). */
+  skipSessionRestore?: boolean
 }
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
@@ -73,7 +75,7 @@ const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: str
 const STORAGE_KEY = 'homefit_search_options'
 const PREMIUM_CODE_KEY = 'homefit_premium_code'
 
-function SearchOptionsComponent({ options, onChange, disabled, expanded: externalExpanded, onExpandedChange }: SearchOptionsProps) {
+function SearchOptionsComponent({ options, onChange, disabled, expanded: externalExpanded, onExpandedChange, skipSessionRestore = false }: SearchOptionsProps) {
   const [internalExpanded, setInternalExpanded] = useState(false)
   const [showTooltip, setShowTooltip] = useState<{ type: string | null }>({ type: null })
   const [showSchoolsWaitlist, setShowSchoolsWaitlist] = useState(false)
@@ -92,16 +94,19 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     }
   }
 
-  // Load from session storage on mount - but only on initial mount, never overwrite programmatic changes
-  // Use a ref to track if we've already loaded to prevent multiple loads
+  // Load from session storage on mount - but only on initial mount, and skip when skipSessionRestore (e.g. saved place detail).
   const hasLoadedRef = useRef(false)
-  
+
   useEffect(() => {
+    if (skipSessionRestore) {
+      hasLoadedRef.current = true
+      return
+    }
     // Only load once on initial mount
     if (hasLoadedRef.current) {
       return
     }
-    
+
     try {
       const storedPremiumCode = sessionStorage.getItem(PREMIUM_CODE_KEY)
       if (storedPremiumCode) {
@@ -135,8 +140,9 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Save to session storage when options change
+  // Save to session storage when options change (skip when skipSessionRestore so we don't overwrite main search options).
   useEffect(() => {
+    if (skipSessionRestore) return
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(options))
     } catch (e) {
