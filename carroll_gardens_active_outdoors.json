@@ -1,0 +1,105 @@
+{
+  "score": 87.2,
+  "details": {
+    "score": 87.2,
+    "breakdown": {
+      "daily_urban_outdoors": 30.0,
+      "wild_adventure": 48.4,
+      "waterfront_lifestyle": 10.8
+    },
+    "summary": {
+      "local_parks": {
+        "count": 407,
+        "playgrounds": 53,
+        "total_park_area_ha": 951.48
+      },
+      "trails": {
+        "count_total": 10,
+        "count_within_5km": 10
+      },
+      "water": {
+        "features": 1573,
+        "nearest_km": 1.47
+      },
+      "camping": {
+        "sites": 19,
+        "nearest_km": 10.08
+      },
+      "environment": {
+        "tree_canopy_pct_5km": 4.1
+      }
+    },
+    "data_quality": {
+      "completeness": 1.0,
+      "quality_tier": "excellent",
+      "needs_fallback": false,
+      "fallback_score": null,
+      "fallback_metadata": {
+        "fallback_used": false
+      },
+      "confidence": 90,
+      "expected_minimums": {
+        "local_facilities": 10,
+        "regional_facilities": 5,
+        "hospitals": 2,
+        "urgent_care": 8,
+        "pharmacies": 5,
+        "clinics": 6,
+        "major_airports": 1,
+        "regional_airports": 2,
+        "business_count": 50,
+        "business_types": 12
+      },
+      "data_sources": [
+        "osm"
+      ]
+    },
+    "area_classification": {
+      "density": 37504.32692554606,
+      "metro_name": "New York",
+      "area_type": "urban_residential",
+      "classification_confidence": 1.0
+    },
+    "debug": {
+      "parks_query": {
+        "stale_cache": false,
+        "cache_age_hours": null,
+        "data_warning": null,
+        "parks_count": 407,
+        "playgrounds_count": 53,
+        "facilities_count": 81
+      }
+    },
+    "version": "active_outdoors_v2_ridge_regression",
+    "scoring_method": "ridge_regression_global_model",
+    "ridge_model_info": {
+      "intercept": 77.55414775327147,
+      "r2_score": 0.2497311792894693,
+      "n_samples": 21,
+      "note": "Ridge regression global model per DESIGN_PRINCIPLES.md Addendum."
+    },
+    "context": {
+      "area_type_for_scoring": "urban_residential",
+      "is_mountain_town": false,
+      "is_desert_context": false,
+      "trail_stats": {
+        "total": 103,
+        "within_5km": 10
+      }
+    },
+    "normalized_features": {
+      "norm_daily": 1.0,
+      "norm_wild": 0.9679,
+      "norm_water": 0.54,
+      "norm_park_count": 1.0,
+      "norm_playground": 1.0,
+      "norm_park_area": 1.0,
+      "norm_trails5": 0.0402,
+      "norm_swim_count": 1.0,
+      "norm_swim_km": 0.8668,
+      "norm_camp_count": 1.0,
+      "norm_camp_km": 0.3648,
+      "norm_tree": 0.0407
+    }
+  }
+}

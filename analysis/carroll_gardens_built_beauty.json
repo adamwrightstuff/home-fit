@@ -1,0 +1,95 @@
+{
+  "location": {
+    "name": "Carroll Gardens",
+    "lat": 40.679,
+    "lon": -73.991
+  },
+  "shared": {
+    "area_type": "urban_core",
+    "form_context": "historic_urban",
+    "density": 44082.261247179806
+  },
+  "runs": [
+    {
+      "permutation": [
+        "historic",
+        "spread_out_residential"
+      ],
+      "summary": {
+        "built_character_preference": "historic",
+        "built_density_preference": "spread_out_residential",
+        "area_type_for_scoring": "exurban",
+        "effective_area_type": "historic_urban",
+        "arch_component_0_50": 20.1,
+        "inferred_raw_before_penalty": 40.2,
+        "score_before_normalization": 40.2,
+        "character_penalty_applied": false,
+        "final_score": 40.2,
+        "details_keys": [
+          "component_score_0_50",
+          "enhancer_bonus_raw",
+          "enhancer_bonus_scaled",
+          "score_before_normalization",
+          "normalization",
+          "architectural_analysis",
+          "enhancer_bonus",
+          "source"
+        ]
+      }
+    },
+    {
+      "permutation": [
+        "contemporary",
+        "walkable_residential"
+      ],
+      "summary": {
+        "built_character_preference": "contemporary",
+        "built_density_preference": "walkable_residential",
+        "area_type_for_scoring": "suburban",
+        "effective_area_type": "historic_urban",
+        "arch_component_0_50": 20.1,
+        "inferred_raw_before_penalty": 40.2,
+        "score_before_normalization": 32.2,
+        "character_penalty_applied": true,
+        "final_score": 32.2,
+        "details_keys": [
+          "component_score_0_50",
+          "enhancer_bonus_raw",
+          "enhancer_bonus_scaled",
+          "score_before_normalization",
+          "normalization",
+          "architectural_analysis",
+          "enhancer_bonus",
+          "source"
+        ]
+      }
+    },
+    {
+      "permutation": [
+        "historic",
+        "walkable_residential"
+      ],
+      "summary": {
+        "built_character_preference": "historic",
+        "built_density_preference": "walkable_residential",
+        "area_type_for_scoring": "suburban",
+        "effective_area_type": "historic_urban",
+        "arch_component_0_50": 32.0,
+        "inferred_raw_before_penalty": 64.0,
+        "score_before_normalization": 64.0,
+        "character_penalty_applied": false,
+        "final_score": 64.0,
+        "details_keys": [
+          "component_score_0_50",
+          "enhancer_bonus_raw",
+          "enhancer_bonus_scaled",
+          "score_before_normalization",
+          "normalization",
+          "architectural_analysis",
+          "enhancer_bonus",
+          "source"
+        ]
+      }
+    }
+  ]
+}
