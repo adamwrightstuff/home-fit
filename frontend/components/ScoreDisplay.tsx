@@ -400,7 +400,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
         <div className="hf-section-title" style={{ marginBottom: '1rem' }}>
           YOUR SCORED PILLARS
         </div>
-        <div className="hf-grid-3">
+        <div className="hf-pillar-cards-grid">
           {included_pillars.map((key) => {
             const pillar = (livability_pillars as any)[key]
             const importanceLevel = priorities?.[key as keyof typeof priorities]
