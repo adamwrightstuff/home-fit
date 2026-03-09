@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -55,7 +55,7 @@ function getTier(score: number): { label: string } {
   return { label: 'Poor' }
 }
 
-export default function ComparePage() {
+function CompareContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -99,11 +99,6 @@ export default function ComparePage() {
       cancelled = true
     }
   }, [idA, idB, user])
-
-  if (!authLoading && !user) {
-    router.replace('/saved')
-    return null
-  }
 
   const scoredA = rowA?.score_payload as ScoreResponse | undefined
   const scoredB = rowB?.score_payload as ScoreResponse | undefined
@@ -222,6 +217,11 @@ export default function ComparePage() {
       : 'tie'
 
   const totalPillars = PILLAR_ORDER.length
+
+  if (!authLoading && !user) {
+    router.replace('/saved')
+    return null
+  }
 
   return (
     <main className="hf-page hf-page-no-hero">
@@ -746,6 +746,22 @@ export default function ComparePage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="hf-page hf-page-no-hero">
+          <div className="hf-container">
+            <p className="hf-muted" style={{ marginTop: '1.5rem' }}>Loading comparison…</p>
+          </div>
+        </main>
+      }
+    >
+      <CompareContent />
+    </Suspense>
   )
 }
 
