@@ -124,9 +124,13 @@ export function reweightScoreResponseFromPriorities(
   const payloadKeys = Object.keys(nextPillars).filter(
     (k) => nextPillars[k] && typeof nextPillars[k].score === 'number'
   )
-  const anyZeroWeight = payloadKeys.some((k) => Number(tokenAllocation[k] ?? 0) === 0)
+  // Use fallback only when a pillar with a score has 0 weight but the user did NOT set it to None (e.g. key mismatch).
+  // When the user explicitly set a pillar to None, use tokenAllocation so that pillar gets 0% and the total is correct.
+  const anyZeroWeightNeedingFallback = payloadKeys.some(
+    (k) => Number(tokenAllocation[k] ?? 0) === 0 && String((priorities as Record<string, string>)[k] ?? 'none').toLowerCase().trim() !== 'none'
+  )
   const fallbackAllocation =
-    anyZeroWeight && payloadKeys.length > 0
+    anyZeroWeightNeedingFallback && payloadKeys.length > 0
       ? (() => {
           const userPriorities = priorities as Partial<Record<string, string>>
           const merged: Record<string, string> = {}
