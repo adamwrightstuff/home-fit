@@ -13,6 +13,7 @@ import type { PillarKey } from '@/lib/pillars'
 import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
+import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -117,6 +118,28 @@ export default function SavedDetailPage() {
           [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
         } as ScoreResponse['livability_pillars'],
         place_summary: response.place_summary ?? current.place_summary,
+      }
+      // Recompute Longevity Index from updated pillar scores so it reflects any new longevity pillars.
+      try {
+        const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
+        const pillars = merged.livability_pillars as unknown as Record<
+          string,
+          { score?: number; status?: string }
+        >
+        for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
+          const pillar = pillars[key]
+          if (!pillar || typeof pillar.score !== 'number') continue
+          longevityPillarScores[key] = {
+            score: pillar.score,
+            failed: pillar.status === 'failed',
+          }
+        }
+        const longevityIndex = computeLongevityIndex(longevityPillarScores)
+        if (longevityIndex != null) {
+          merged.longevity_index = longevityIndex
+        }
+      } catch {
+        // If anything goes wrong recomputing longevity, fall back to existing value.
       }
       await updateSavedScore(row.id, { scorePayload: merged, priorities: options.priorities })
       setRow((prev) =>
