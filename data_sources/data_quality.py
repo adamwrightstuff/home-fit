@@ -1396,6 +1396,8 @@ class DataQualityManager:
             return self._assess_transit_completeness(data, expected_minimums)
         elif pillar_name == 'climate_risk':
             return self._assess_climate_risk_completeness(data, expected_minimums)
+        elif pillar_name == 'social_fabric':
+            return self._assess_social_fabric_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
 
@@ -1713,6 +1715,35 @@ class DataQualityManager:
             completeness = 0.0
         return completeness, self._get_quality_tier(completeness)
     
+    def _assess_social_fabric_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """
+        Assess social_fabric completeness from its four sub-components.
+        Combined_data has: stability_score, civic_score, diversity_score, engagement_score,
+        mobility, civic_nodes_count, orgs_per_1k. Stability and Civic are always computed;
+        Diversity and Engagement are optional (Census diversity tables, voter reg / IRS BMF).
+        """
+        if not data:
+            return 0.0, 'very_poor'
+
+        mobility = data.get("mobility")
+        diversity_score = data.get("diversity_score")
+        engagement_score = data.get("engagement_score")
+
+        # Four components: Stability (Census B07003), Civic (OSM), Diversity (Census), Engagement (voter/BMF).
+        has_stability = mobility is not None
+        has_civic = True  # OSM civic count always returned (may be 0)
+        has_diversity = diversity_score is not None
+        has_engagement = engagement_score is not None
+
+        components_available = sum([has_stability, has_civic, has_diversity, has_engagement])
+        completeness = components_available / 4.0
+
+        # Floor: if we have at least the two required components (Stability + Civic), don't drop below fair.
+        if has_stability and has_civic and completeness < 0.55:
+            completeness = max(completeness, 0.55)
+
+        return completeness, self._get_quality_tier(completeness)
+    
     def _assess_generic_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Generic completeness assessment."""
         if not data:
@@ -1863,6 +1894,8 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
     
     # Create confidence score
     data_sources = ['osm'] if data else []
+    if pillar_name == 'social_fabric' and data:
+        data_sources = ['census', 'osm'] if data.get('mobility') is not None else ['osm']
     confidence = data_quality_manager.create_confidence_score(
         completeness, data_sources, False  # needs_fallback always False
     )
