@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { listSavedScores, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
@@ -77,6 +78,9 @@ export default function SavedPage() {
   const [list, setList] = useState<SavedScoreRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [compareMode, setCompareMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     if (!user) {
@@ -105,18 +109,50 @@ export default function SavedPage() {
     )
   }
 
+  const toggleSelected = (id: string, hasScore: boolean) => {
+    if (!compareMode || !hasScore) return
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (prev.length >= 2) return [prev[1], id]
+      return [...prev, id]
+    })
+  }
+
+  const handleStartCompare = () => {
+    if (selectedIds.length !== 2) return
+    const [a, b] = selectedIds
+    router.push(`/saved/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`)
+  }
+
   return (
     <main className="hf-page hf-page-no-hero">
       <div className="hf-container">
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
-            ← Back to search
-          </Link>
+        <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <Link href="/" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
+              ← Back to search
+            </Link>
+            <h1 className="hf-section-title" style={{ marginBottom: '0.25rem', marginTop: '0.75rem' }}>My saved places</h1>
+            <p className="hf-muted" style={{ marginBottom: 0 }}>
+              {compareMode
+                ? 'Select two scored places to compare side by side.'
+                : 'Tap a place to view scores and adjust weights, or compare two places.'}
+            </p>
+          </div>
+          {list.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setCompareMode((prev) => !prev)
+                setSelectedIds([])
+              }}
+              className={compareMode ? 'hf-btn-secondary' : 'hf-btn-primary'}
+              style={{ minHeight: 40, padding: '0.5rem 1rem', borderRadius: 999, fontSize: '0.9rem' }}
+            >
+              {compareMode ? 'Done comparing' : 'Compare places'}
+            </button>
+          )}
         </div>
-        <h1 className="hf-section-title" style={{ marginBottom: '0.5rem' }}>My saved places</h1>
-        <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
-          Tap a place to view scores and adjust weights. You can re-run the score and save again to update.
-        </p>
 
         {loading && <p className="hf-muted">Loading…</p>}
         {error && <p className="hf-auth-error" role="alert">{error}</p>}
@@ -134,14 +170,40 @@ export default function SavedPage() {
           <div className="hf-grid-2" style={{ gap: '1rem' }}>
             {list.map((row) => {
               const { total, top2, bottom1 } = summaryFromPayload(row.score_payload, row)
+              const hasScore = row.score_payload != null
+              const selected = selectedIds.includes(row.id)
               return (
-                <Link
+                <div
                   key={row.id}
-                  href={`/saved/${row.id}`}
                   className="hf-card-sm"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    position: 'relative',
+                    borderWidth: compareMode && selected ? 2 : undefined,
+                    borderColor: compareMode && selected ? 'var(--hf-primary-1)' : undefined,
+                    cursor: compareMode ? (hasScore ? 'pointer' : 'default') : 'pointer',
+                  }}
+                  onClick={() => {
+                    if (compareMode) {
+                      toggleSelected(row.id, hasScore)
+                    } else {
+                      router.push(`/saved/${row.id}`)
+                    }
+                  }}
                 >
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem' }}>
+                  {compareMode && (
+                    <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        disabled={!hasScore}
+                        onChange={() => toggleSelected(row.id, hasScore)}
+                        aria-label={hasScore ? 'Select place for compare' : 'Run a score first to compare'}
+                      />
+                    </div>
+                  )}
+                  <div style={{ fontWeight: 700, fontSize: '1.15rem', paddingRight: compareMode ? '1.5rem' : 0 }}>
                     {placeDisplayName(row)}
                   </div>
                   <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -151,12 +213,54 @@ export default function SavedPage() {
                   <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
                     Strongest: {top2}. Weakest: {bottom1}.
                   </div>
-                </Link>
+                  {!hasScore && (
+                    <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                      Run a score first to compare this place.
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
         )}
       </div>
+
+      {compareMode && list.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            padding: '0.85rem 1.25rem',
+            paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
+            paddingRight: 'max(1.25rem, env(safe-area-inset-right))',
+            paddingBottom: 'max(0.85rem, env(safe-area-inset-bottom))',
+            background: 'var(--hf-card-bg)',
+            borderTop: '1px solid var(--hf-border)',
+            boxShadow: '0 -6px 18px rgba(0,0,0,0.06)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="hf-muted" style={{ fontSize: '0.9rem' }}>
+              {selectedIds.length === 0 && 'Select 2 places to compare.'}
+              {selectedIds.length === 1 && 'Select 1 more place to compare.'}
+              {selectedIds.length === 2 && 'Ready to compare these 2 places.'}
+              {selectedIds.length > 2 && 'Only the last two selected places will be compared.'}
+            </div>
+            <button
+              type="button"
+              onClick={handleStartCompare}
+              disabled={selectedIds.length !== 2}
+              className="hf-btn-primary"
+              style={{ minWidth: 180, minHeight: 44, opacity: selectedIds.length === 2 ? 1 : 0.6 }}
+            >
+              {selectedIds.length === 2 ? 'Compare' : 'Select 2 places to compare'}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

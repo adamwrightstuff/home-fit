@@ -78,6 +78,11 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
   const isNone = importanceLevel === 'None'
   const mutedStyle = isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : undefined
   const rawSummary = pillar.summary || {}
+  // Backend may send details in summary and/or breakdown; use whichever has keys so we show something.
+  const rawBreakdown = pillar.breakdown || {}
+  const hasSummary = isRecord(rawSummary) && Object.keys(rawSummary).length > 0
+  const hasBreakdown = isRecord(rawBreakdown) && Object.keys(rawBreakdown).length > 0
+  const detailsSource = hasSummary ? rawSummary : hasBreakdown ? rawBreakdown : null
   const failureType = getPillarFailureType(pillar)
   const showRerun = (failureType === 'fallback' || failureType === 'execution_error') && onRerun
   const isFailed = failureType === 'execution_error'
@@ -100,7 +105,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
           diversity_score:
             builtMetrics.diversity_score ?? rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
         }
-      : rawSummary
+      : detailsSource ?? {}
 
   return (
     <div
