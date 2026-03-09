@@ -66,7 +66,7 @@ export default function SavedPage() {
   }
 
   return (
-    <main className="hf-page">
+    <main className="hf-page hf-page-no-hero">
       <div className="hf-container">
         <div style={{ marginBottom: '1.5rem' }}>
           <Link href="/" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>

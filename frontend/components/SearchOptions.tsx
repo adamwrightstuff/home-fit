@@ -486,7 +486,8 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
             </div>
           </div>
 
-          {/* Economic Opportunity: Job category toggles */}
+          {/* Economic Opportunity: Job category toggles — only when pillar is included */}
+          {options.priorities.economic_security !== 'None' && (
           <div style={{ marginTop: '1.5rem' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -519,6 +520,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               </div>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>

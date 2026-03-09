@@ -48,6 +48,10 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
   // Be defensive: backend deployments can lag the frontend pillar list.
   const available_pillars = PILLAR_ORDER.filter((k) => Boolean((livability_pillars as any)?.[k]))
+  // Main list: all pillars that have a score (fixed order). When priority is None, show muted on card.
+  const included_pillars = PILLAR_ORDER.filter((k) => available_pillars.includes(k))
+  // Not included: only pillars with no score in the payload (compact "+ Add" section).
+  const not_included_pillars = PILLAR_ORDER.filter((k) => !available_pillars.includes(k))
 
   // Copy scores summary to clipboard
   const copyScores = async () => {
@@ -100,7 +104,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
-      <div className="hf-card">
+      <div className="hf-card hf-score-summary-sticky">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
         {onSave && priorities && (
           <div
@@ -130,7 +134,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                   onClick={handleSave}
                   disabled={saving}
                   className="hf-btn-primary"
-                  style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600 }}
+                  style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600, minHeight: 44 }}
                 >
                   {saving ? 'Saving…' : 'Save this place'}
                 </button>
@@ -151,41 +155,41 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ minWidth: 260 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+          <div style={{ minWidth: 0, flex: '1 1 260px' }}>
             <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
               Score summary for
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
+            <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
               {location_info.city}, {location_info.state} {location_info.zip}
             </div>
-            <div className="hf-muted" style={{ marginTop: '0.5rem' }}>
+            <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
               Input: {data.input}
             </div>
-            <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.95rem' }}>
+            <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
               Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <button
-              onClick={copyScores}
-              className="hf-btn-secondary"
-              style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem' }}
-            >
-              {copied ? 'Copied!' : 'Copy scores'}
-            </button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             {onReconfigure && (
-              <button type="button" onClick={onReconfigure} className="hf-btn-link">
+              <button type="button" onClick={onReconfigure} className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
                 Edit pillars
               </button>
             )}
+            <button
+              onClick={copyScores}
+              className="hf-btn-secondary"
+              style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+            >
+              {copied ? 'Copied!' : 'Copy scores'}
+            </button>
             {onSearchAnother ? (
-              <button type="button" onClick={onSearchAnother} className="hf-btn-link">
+              <button type="button" onClick={onSearchAnother} className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
                 Search another location
               </button>
             ) : (
-              <a className="hf-btn-link" href="#search">
+              <a className="hf-btn-link" href="#search" style={{ fontSize: '0.95rem' }}>
                 Search another location
               </a>
             )}
@@ -193,13 +197,8 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
         </div>
 
         <div
-          className="hf-grid-2"
-          style={{
-            marginTop: '2rem',
-            display: 'grid',
-            gridTemplateColumns: longevity_index != null ? '1fr 1fr 1.2fr' : '1fr 1.2fr',
-            gap: '1.5rem',
-          }}
+          className={`hf-score-summary-grid ${longevity_index != null ? 'hf-score-summary-grid-3' : ''}`}
+          style={{ marginTop: '2rem' }}
         >
           <TotalScore score={total_score} confidence={overall_confidence} />
           {longevity_index != null && (
@@ -227,11 +226,15 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
             <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
               Strongest pillars:{' '}
-              {top2
-                .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
-                .join(' and ')}
+              {top2.length >= 2
+                ? top2
+                    .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
+                    .join(' and ')
+                : top2.map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`).join(' and ')}
               . Biggest opportunity:{' '}
-              {`${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`}.
+              {bottom1
+                ? `${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`
+                : '—'}
             </div>
 
             <div style={{ marginTop: '1rem' }}>
@@ -273,10 +276,10 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           Pillar scores
         </div>
         <div className="hf-grid-3">
-          {available_pillars.map((key) => {
+          {included_pillars.map((key) => {
             const pillar = (livability_pillars as any)[key]
             const importanceLevel = priorities?.[key as keyof typeof priorities]
-            const level = importanceLevel === 'Low' || importanceLevel === 'Medium' || importanceLevel === 'High' ? importanceLevel : undefined
+            const level = importanceLevel === 'None' || importanceLevel === 'Low' || importanceLevel === 'Medium' || importanceLevel === 'High' ? importanceLevel : 'Medium'
             return (
               <PillarCard
                 key={key}
@@ -284,7 +287,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                 pillar={pillar}
                 importanceLevel={level}
                 onImportanceChange={
-                  onPrioritiesChange && level != null
+                  onPrioritiesChange
                     ? (newLevel) => {
                         const next = { ...priorities } as PillarPriorities
                         next[key as keyof PillarPriorities] = newLevel
@@ -296,6 +299,73 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
             )
           })}
         </div>
+
+        {not_included_pillars.length > 0 && (
+          <div style={{ marginTop: '2rem' }}>
+            <div className="hf-label" style={{ marginBottom: '0.75rem', color: 'var(--hf-text-secondary)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Not included in your score
+            </div>
+            <div className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {not_included_pillars.map((key) => {
+                  const pillar = (livability_pillars as any)[key]
+                  const hasScore = pillar && typeof pillar.score === 'number'
+                  const score = hasScore ? Number(pillar.score) : null
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                        <span style={{ fontSize: '1.25rem' }}>{PILLAR_META[key].icon}</span>
+                        <span style={{ fontWeight: 700, color: 'var(--hf-text-secondary)', fontSize: '0.95rem' }}>
+                          {PILLAR_META[key].name}
+                        </span>
+                        {score != null && (
+                          <span
+                            className="hf-muted"
+                            style={{
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: 6,
+                              background: 'var(--hf-bg-subtle)',
+                              border: '1px solid var(--hf-border)',
+                              opacity: 0.85,
+                            }}
+                          >
+                            {score.toFixed(0)}
+                          </span>
+                        )}
+                      </div>
+                      {onPrioritiesChange && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            const next = { ...priorities } as PillarPriorities
+                            next[key as keyof PillarPriorities] = 'Medium'
+                            onPrioritiesChange(next)
+                          }}
+                          className="hf-btn-link"
+                          style={{ fontSize: '0.9rem', padding: '0.35rem 0.65rem', minHeight: 36 }}
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

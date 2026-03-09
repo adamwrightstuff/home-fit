@@ -136,6 +136,12 @@ body {
   padding: 0 2rem 4rem;
 }
 
+/* Pages with auth bar only (no hero): do not pull container under the header so nav/buttons stay visible */
+.hf-page-no-hero .hf-container {
+  margin-top: 0;
+  padding-top: 1rem;
+}
+
 .hf-section-title {
   font-size: 2rem;
   font-weight: 700;
@@ -532,6 +538,64 @@ body {
   .hf-card { padding: 1.75rem; }
   .hf-hero-grid { grid-template-columns: 1fr; text-align: left; }
   .hf-hero-image { height: 300px; max-width: 100%; }
+}
+
+/* Score summary block: sticky on scroll, responsive grid */
+.hf-score-summary-sticky {
+  position: sticky;
+  top: 3.5rem; /* below auth bar */
+  z-index: 40;
+  background: var(--hf-card-bg);
+  margin-top: 1.5rem;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--hf-card-shadow);
+}
+@media (max-width: 768px) {
+  .hf-score-summary-sticky {
+    top: 3rem;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+  }
+}
+.hf-score-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.hf-score-summary-grid.hf-score-summary-grid-3 {
+  grid-template-columns: 1fr 1fr 1.2fr;
+}
+@media (max-width: 900px) {
+  .hf-score-summary-grid.hf-score-summary-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .hf-score-summary-grid,
+  .hf-score-summary-grid.hf-score-summary-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* Saved detail / results nav: touch-friendly on mobile */
+@media (max-width: 640px) {
+  .hf-saved-detail-nav {
+    gap: 0.5rem;
+  }
+  .hf-saved-detail-nav .hf-btn-secondary {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
+/* Touch-friendly tap targets on small screens */
+@media (max-width: 640px) {
+  .hf-btn-primary,
+  .hf-btn-secondary {
+    min-height: 44px;
+  }
 }
 
 /* PlaceView pillar row: stack on narrow viewports so score/weight don't overlap description */

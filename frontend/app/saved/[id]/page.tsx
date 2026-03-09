@@ -9,7 +9,7 @@ import { getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/saved
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getScore } from '@/lib/api'
 import type { PillarPriorities } from '@/components/SearchOptions'
-import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
@@ -22,8 +22,6 @@ function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
     if (levels.includes(v as (typeof levels)[number])) {
       out[k] = v as (typeof levels)[number]
     }
-    // If saved value is None or missing, keep default (Medium) so the UI doesn't show "None" for everything.
-    if (out[k] === 'None') out[k] = 'Medium'
   }
   return out as unknown as PillarPriorities
 }
@@ -37,6 +35,7 @@ export default function SavedDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [priorities, setPriorities] = useState<PillarPriorities | null>(null)
+  const [jobCategories, setJobCategories] = useState<string[]>([])
   const [scoreAgainLoading, setScoreAgainLoading] = useState(false)
   const [scoreAgainError, setScoreAgainError] = useState<string | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
@@ -55,23 +54,6 @@ export default function SavedDetailPage() {
       .finally(() => setLoading(false))
   }, [id, user])
 
-  const searchOptions: SearchOptions = useMemo(
-    () => ({
-      priorities: priorities ?? DEFAULT_PRIORITIES,
-      include_chains: true,
-      enable_schools: false,
-      job_categories: [],
-      natural_beauty_preference: null,
-      built_character_preference: null,
-      built_density_preference: null,
-    }),
-    [priorities]
-  )
-
-  const handleSearchOptionsChange = useCallback((options: SearchOptions) => {
-    setPriorities(options.priorities)
-  }, [])
-
   const rawPayload = row?.score_payload as ScoreResponse | undefined
   // Depend on serialized priorities so any change in priority values triggers reweight (avoids stale display).
   const prioritiesSignature = priorities ? JSON.stringify(priorities) : ''
@@ -88,6 +70,7 @@ export default function SavedDetailPage() {
       const newResponse = await getScore({
         location: row.input,
         priorities: JSON.stringify(priorities),
+        job_categories: jobCategories.length > 0 ? jobCategories.join(',') : undefined,
       })
       await updateSavedScore(row.id, { scorePayload: newResponse, priorities })
       setRow((prev) =>
@@ -105,9 +88,9 @@ export default function SavedDetailPage() {
     } finally {
       setScoreAgainLoading(false)
     }
-  }, [row, priorities])
+  }, [row, priorities, jobCategories])
 
-  const handleSavePreferences = useCallback(async () => {
+  const handleSave = useCallback(async () => {
     if (!row || !priorities) return
     setSavingPreferences(true)
     try {
@@ -173,9 +156,19 @@ export default function SavedDetailPage() {
   }
 
   return (
-    <main className="hf-page">
+    <main className="hf-page hf-page-no-hero">
       <div className="hf-container">
-        <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+        <nav
+          className="hf-saved-detail-nav"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '0.75rem',
+            marginBottom: '1rem',
+          }}
+          aria-label="Actions"
+        >
           <Link href="/saved" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
             ← My places
           </Link>
@@ -184,37 +177,29 @@ export default function SavedDetailPage() {
             onClick={handleScoreAgain}
             disabled={scoreAgainLoading}
             className="hf-btn-secondary"
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem' }}
+            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem', minHeight: 44 }}
           >
             {scoreAgainLoading ? 'Scoring…' : 'Score again'}
           </button>
           <button
             type="button"
-            onClick={handleSavePreferences}
+            onClick={handleSave}
             disabled={savingPreferences || !row}
             className="hf-btn-secondary"
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem' }}
+            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem', minHeight: 44 }}
           >
-            {savingPreferences ? 'Saving…' : 'Save preferences'}
+            {savingPreferences ? 'Saving…' : 'Save'}
           </button>
           {scoreAgainError && (
             <span className="hf-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>{scoreAgainError}</span>
           )}
-        </div>
+        </nav>
 
-        <div className="hf-card" style={{ marginBottom: '1.5rem' }}>
-          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Adjust weights</div>
-          <p className="hf-muted" style={{ marginBottom: '0.75rem', fontSize: '0.95rem' }}>
-            Changing priorities updates the total score below instantly (no new API run). Use &quot;Score again&quot; to fetch fresh data for this place.
-          </p>
-          <SearchOptionsComponent
-            options={searchOptions}
-            onChange={handleSearchOptionsChange}
-            skipSessionRestore
-          />
-        </div>
-
-        <ScoreDisplay data={displayData} />
+        <ScoreDisplay
+          data={displayData}
+          priorities={priorities ?? DEFAULT_PRIORITIES}
+          onPrioritiesChange={(next) => setPriorities(next)}
+        />
       </div>
     </main>
   )

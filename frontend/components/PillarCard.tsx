@@ -22,9 +22,9 @@ interface PillarCardProps {
   /** When true, Rerun is disabled (e.g. full run or another rerun in progress). */
   rerunDisabled?: boolean
   /** Current importance for this pillar (for inline weight editing on Results). */
-  importanceLevel?: 'Low' | 'Medium' | 'High'
-  /** When provided, show Low/Medium/High toggle and call with new level (client-side reweight). */
-  onImportanceChange?: (level: 'Low' | 'Medium' | 'High') => void
+  importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
+  /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
+  onImportanceChange?: (level: 'None' | 'Low' | 'Medium' | 'High') => void
 }
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -71,6 +71,8 @@ function formatValue(value: any, depth: number = 0): string {
 export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled, importanceLevel, onImportanceChange }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
+  const isNone = importanceLevel === 'None'
+  const mutedStyle = isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : undefined
   const rawSummary = pillar.summary || {}
   const failureType = getPillarFailureType(pillar)
   const showRerun = (failureType === 'fallback' || failureType === 'execution_error') && onRerun
@@ -220,7 +222,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {/* Single score badge: number + band label (or ? for failed) */}
+          {/* Single score badge: number + band label (or ? for failed); muted when importance is None */}
           <span
             style={{
               display: 'inline-flex',
@@ -233,6 +235,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
               background: isFailed ? 'var(--hf-bg-subtle)' : getScoreBandBackground(pillar.score),
               border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(pillar.score)}`,
               color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
+              ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85, background: 'var(--hf-bg-subtle)', borderColor: 'var(--hf-border)' } : {}),
             }}
           >
             {isFailed ? (
@@ -257,11 +260,11 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
           alignItems: 'baseline',
         }}
       >
-        {onImportanceChange && importanceLevel != null ? (
+        {onImportanceChange != null ? (
           <div style={{ minWidth: 160 }}>
             <div className="hf-label">Importance</div>
-            <div style={{ display: 'inline-flex', gap: 0, borderRadius: 8, border: '1px solid var(--hf-border)', overflow: 'hidden' }}>
-              {(['Low', 'Medium', 'High'] as const).map((level) => (
+            <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+              {(['None', 'Low', 'Medium', 'High'] as const).map((level) => (
                 <button
                   key={level}
                   type="button"
@@ -270,10 +273,12 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
                     onImportanceChange(level)
                   }}
                   style={{
-                    padding: '0.35rem 0.65rem',
+                    padding: '0.4rem 0.65rem',
+                    minHeight: 44,
                     fontSize: '0.85rem',
                     fontWeight: 600,
-                    border: 'none',
+                    borderRadius: 8,
+                    border: '1px solid var(--hf-border)',
                     background: importanceLevel === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
                     color: importanceLevel === level ? 'white' : 'var(--hf-text-secondary)',
                     cursor: 'pointer',
@@ -287,15 +292,21 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
         ) : null}
         <div style={{ minWidth: 110 }}>
           <div className="hf-label">Weight</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.weight.toFixed(1)}%</div>
+          <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
+            {Number(pillar.weight).toFixed(1)}%
+          </div>
         </div>
         <div style={{ minWidth: 130 }}>
           <div className="hf-label">Contribution</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.contribution.toFixed(1)}</div>
+          <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
+            {pillar.contribution.toFixed(1)}
+          </div>
         </div>
         <div style={{ minWidth: 120 }}>
           <div className="hf-label">Confidence</div>
-          <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', fontSize: '1rem' }}>{pillar.confidence.toFixed(0)}%</div>
+          <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
+            {pillar.confidence.toFixed(0)}%
+          </div>
         </div>
       </div>
 
