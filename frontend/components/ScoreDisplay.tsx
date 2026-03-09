@@ -58,7 +58,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
   // Copy scores summary to clipboard
   const copyScores = async () => {
     const lines = [
-      `HomeFit Livability Score: ${location_info.city}, ${location_info.state} ${location_info.zip}`,
+      `HomeFit Livability Score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
       ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
       '',
@@ -85,6 +85,10 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
   const top2 = pillar_ranked.slice(0, 2)
   const bottom1 = pillar_ranked[pillar_ranked.length - 1]
   const tier = overallTier(total_score)
+
+  /** Prefer original search input; fall back to city, state zip for display. */
+  const locationDisplayName =
+    (typeof data.input === 'string' && data.input.trim()) || [location_info.city, location_info.state, location_info.zip].filter(Boolean).join(', ') || 'Unknown location'
 
   const schoolsDisabled =
     (livability_pillars.quality_education as any)?.data_quality?.fallback_used === true &&
@@ -163,11 +167,13 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
               Score summary for
             </div>
             <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
-              {location_info.city}, {location_info.state} {location_info.zip}
+              {locationDisplayName}
             </div>
-            <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
-              Input: {data.input}
-            </div>
+            {(typeof data.input === 'string' && data.input.trim()) && (
+              <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
+                Location: {location_info.city}, {location_info.state} {location_info.zip}
+              </div>
+            )}
             <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
               Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
             </div>
