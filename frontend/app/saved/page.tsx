@@ -63,6 +63,15 @@ function formatDate(s: string): string {
   }
 }
 
+/** Prefer saved search input (e.g. "Carroll Gardens Brooklyn"); fall back to city, state zip. */
+function placeDisplayName(row: SavedScoreRow): string {
+  const input = typeof row.input === 'string' ? row.input.trim() : ''
+  if (input) return input
+  const loc = row.location_info as { city?: string; state?: string; zip?: string }
+  const fallback = [loc.city ?? '', loc.state ?? '', loc.zip ?? ''].filter(Boolean).join(', ')
+  return fallback || 'Unknown location'
+}
+
 export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const [list, setList] = useState<SavedScoreRow[]>([])
@@ -124,7 +133,6 @@ export default function SavedPage() {
         {!loading && !error && list.length > 0 && (
           <div className="hf-grid-2" style={{ gap: '1rem' }}>
             {list.map((row) => {
-              const loc = row.location_info as { city?: string; state?: string; zip?: string }
               const { total, top2, bottom1 } = summaryFromPayload(row.score_payload, row)
               return (
                 <Link
@@ -134,7 +142,7 @@ export default function SavedPage() {
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <div style={{ fontWeight: 700, fontSize: '1.15rem' }}>
-                    {loc.city ?? ''}, {loc.state ?? ''} {loc.zip ?? ''}
+                    {placeDisplayName(row)}
                   </div>
                   <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span className="hf-score-badge hf-score-badge--blue">{total.toFixed(1)}</span>
