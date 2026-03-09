@@ -28,6 +28,8 @@ interface ScoreDisplayProps {
   onReconfigure?: () => void
   /** When user changes importance on a pillar card, call with updated priorities (client-side reweight; no API). */
   onPrioritiesChange?: (priorities: PillarPriorities) => void
+  /** When set, show this as the main summary (e.g. from Configuration page) instead of the built-in quick summary. */
+  placeSummary?: string | null
 }
 
 // Use shared pillar order from lib/pillars
@@ -38,7 +40,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
@@ -217,25 +219,41 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           )}
           <div className="hf-panel">
             <div className="hf-label" style={{ marginBottom: '0.75rem' }}>
-              Quick summary
+              {placeSummary != null && placeSummary !== '' ? 'Summary' : 'Quick summary'}
             </div>
 
-            <div style={{ fontSize: '1.05rem', color: 'var(--hf-text-primary)', fontWeight: 650, lineHeight: 1.45 }}>
-              {tier.label} overall fit ({total_score.toFixed(1)}/100).
-            </div>
+            {placeSummary != null && placeSummary !== '' ? (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '1.05rem',
+                  lineHeight: 1.45,
+                  color: 'var(--hf-text-primary)',
+                  fontWeight: 500,
+                }}
+              >
+                {placeSummary}
+              </p>
+            ) : (
+              <>
+                <div style={{ fontSize: '1.05rem', color: 'var(--hf-text-primary)', fontWeight: 650, lineHeight: 1.45 }}>
+                  {tier.label} overall fit ({total_score.toFixed(1)}/100).
+                </div>
 
-            <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
-              Strongest pillars:{' '}
-              {top2.length >= 2
-                ? top2
-                    .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
-                    .join(' and ')
-                : top2.map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`).join(' and ')}
-              . Biggest opportunity:{' '}
-              {bottom1
-                ? `${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`
-                : '—'}
-            </div>
+                <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
+                  Strongest pillars:{' '}
+                  {top2.length >= 2
+                    ? top2
+                        .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
+                        .join(' and ')
+                    : top2.map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`).join(' and ')}
+                  . Biggest opportunity:{' '}
+                  {bottom1
+                    ? `${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`
+                    : '—'}
+                </div>
+              </>
+            )}
 
             <div style={{ marginTop: '1rem' }}>
               <div className="hf-label" style={{ marginBottom: '0.5rem' }}>

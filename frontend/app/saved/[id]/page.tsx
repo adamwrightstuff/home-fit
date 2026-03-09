@@ -199,6 +199,7 @@ export default function SavedDetailPage() {
           data={displayData}
           priorities={priorities ?? DEFAULT_PRIORITIES}
           onPrioritiesChange={(next) => setPriorities(next)}
+          placeSummary={displayData.place_summary ?? null}
         />
       </div>
     </main>

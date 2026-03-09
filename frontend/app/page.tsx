@@ -210,6 +210,7 @@ export default function Home() {
             onPrioritiesChange={(priorities) =>
               set_configure_state((prev) => (prev ? { ...prev, priorities } : null))
             }
+            placeSummary={(display_score_data || score_data)?.place_summary ?? null}
             onSave={async (payload, priorities) => {
               try {
                 const { id } = await saveScore(payload, priorities)
