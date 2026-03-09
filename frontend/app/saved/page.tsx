@@ -35,7 +35,7 @@ function summaryFromPayload(score_payload: unknown, row?: SavedScoreRow | null):
       const priorities = prioritiesFromRow(row)
       const reweighted = reweightScoreResponseFromPriorities(score_payload as import('@/types/api').ScoreResponse, priorities)
       total = reweighted.total_score
-      pillarsForRank = (reweighted.livability_pillars as Record<string, { score?: number }>) ?? pillars
+      pillarsForRank = (reweighted.livability_pillars as unknown as Record<string, { score?: number }>) ?? pillars
     } catch {
       // keep raw total and pillars
     }
