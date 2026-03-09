@@ -101,20 +101,17 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
   return (
     <div
       className="hf-card-sm"
-      role="button"
-      tabIndex={0}
-      onClick={() => setExpanded((v) => !v)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') setExpanded((v) => !v)
-      }}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'default' }}
     >
+      {/* Top row: left = icon + name + tags; right = score + quality label */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', minWidth: 0 }}>
-          <div style={{ fontSize: '1.6rem' }}>{meta.icon}</div>
-          <div>
+        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', minWidth: 0, flex: '1 1 0' }}>
+          <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>{meta.icon}</div>
+          <div style={{ minWidth: 0 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
               {isLongevityPillar(pillar_key) && (
                 <span
                   className="hf-muted"
@@ -124,8 +121,9 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
                     fontWeight: 600,
                     padding: '0.2rem 0.45rem',
                     borderRadius: 6,
-                    background: 'var(--hf-bg-subtle)',
-                    border: '1px solid var(--hf-border)',
+                    background: 'rgba(45, 106, 79, 0.12)',
+                    color: 'var(--hf-homefit-green)',
+                    border: '1px solid rgba(45, 106, 79, 0.3)',
                   }}
                 >
                   Longevity
@@ -216,94 +214,118 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
                 </button>
               )}
             </div>
-            <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+            <div className="hf-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
               {meta.description}
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {/* Single score badge: number + band label (or ? for failed); muted when importance is None */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
           <span
             style={{
               display: 'inline-flex',
-              alignItems: 'baseline',
-              gap: '0.35rem',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
               fontWeight: 800,
-              fontSize: '1.1rem',
-              padding: '0.35rem 0.6rem',
-              borderRadius: 8,
-              background: isFailed ? 'var(--hf-bg-subtle)' : getScoreBandBackground(pillar.score),
-              border: `1px solid ${isFailed ? 'var(--hf-border)' : getScoreBandColor(pillar.score)}`,
+              fontSize: '1.75rem',
+              lineHeight: 1.2,
               color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
-              ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85, background: 'var(--hf-bg-subtle)', borderColor: 'var(--hf-border)' } : {}),
+              ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
             }}
           >
-            {isFailed ? (
-              '?'
-            ) : (
-              <>
-                {isFallback && <span style={{ opacity: 0.9 }}>~</span>}
-                <span style={{ color: isFailed ? undefined : 'var(--hf-text-primary)' }}>{pillar.score.toFixed(0)}</span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.95 }}>· {getScoreBandLabel(pillar.score)}</span>
-              </>
-            )}
+            {isFailed ? '?' : <>{isFallback && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
           </span>
+          {!isFailed && (
+            <span
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                marginTop: '0.2rem',
+                color: getScoreBandColor(pillar.score),
+                ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
+              }}
+            >
+              {getScoreBandLabel(pillar.score)}
+            </span>
+          )}
         </div>
       </div>
 
+      {/* Importance: pill-style Low / Medium / High (and None when editable) */}
+      {onImportanceChange != null ? (
+        <div style={{ marginTop: '1rem' }}>
+          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Importance</div>
+          <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+            {(['None', 'Low', 'Medium', 'High'] as const).map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onImportanceChange(level)
+                }}
+                style={{
+                  padding: '0.4rem 0.75rem',
+                  minHeight: 40,
+                  fontSize: '0.9rem',
+                  fontWeight: importanceLevel === level ? 700 : 500,
+                  borderRadius: 999,
+                  border: `1px solid ${importanceLevel === level ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                  background: importanceLevel === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                  color: importanceLevel === level ? 'white' : 'var(--hf-text-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+          {/* Status bar: green fill representing weight (or score) */}
+          <div
+            style={{
+              marginTop: '0.6rem',
+              height: 6,
+              borderRadius: 999,
+              background: 'var(--hf-border)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (pillar.weight ?? 0))}%`,
+                borderRadius: 999,
+                background: 'var(--hf-homefit-green)',
+                transition: 'width 0.25s ease',
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {/* Metrics: Weight, Contribution, Confidence */}
       <div
         style={{
           marginTop: '1rem',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.9rem 1.2rem',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '0.75rem 1rem',
           alignItems: 'baseline',
         }}
       >
-        {onImportanceChange != null ? (
-          <div style={{ minWidth: 160 }}>
-            <div className="hf-label">Importance</div>
-            <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-              {(['None', 'Low', 'Medium', 'High'] as const).map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onImportanceChange(level)
-                  }}
-                  style={{
-                    padding: '0.4rem 0.65rem',
-                    minHeight: 44,
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    borderRadius: 8,
-                    border: '1px solid var(--hf-border)',
-                    background: importanceLevel === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                    color: importanceLevel === level ? 'white' : 'var(--hf-text-secondary)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {level}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        <div style={{ minWidth: 110 }}>
-          <div className="hf-label">Weight</div>
+        <div>
+          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Weight</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {Number(pillar.weight).toFixed(1)}%
           </div>
         </div>
-        <div style={{ minWidth: 130 }}>
-          <div className="hf-label">Contribution</div>
+        <div>
+          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Contribution</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {pillar.contribution.toFixed(1)}
           </div>
         </div>
-        <div style={{ minWidth: 120 }}>
-          <div className="hf-label">Confidence</div>
+        <div>
+          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Confidence</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {pillar.confidence.toFixed(0)}%
           </div>
@@ -314,10 +336,7 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
         <button
           type="button"
           className="hf-btn-link"
-          onClick={(e) => {
-            e.stopPropagation()
-            setExpanded((v) => !v)
-          }}
+          onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? 'Hide' : 'Show'} details
         </button>

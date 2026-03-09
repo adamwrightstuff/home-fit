@@ -398,7 +398,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
       <div>
         <div className="hf-section-title" style={{ marginBottom: '1rem' }}>
-          Pillar scores
+          YOUR SCORED PILLARS
         </div>
         <div className="hf-grid-3">
           {included_pillars.map((key) => {
