@@ -7,8 +7,10 @@ import { ScoreResponse } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { getScore } from '@/lib/api'
+import { getScore, getScoreWithProgress } from '@/lib/api'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import type { PillarKey } from '@/lib/pillars'
+import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
 
@@ -100,6 +102,48 @@ export default function SavedDetailPage() {
       setSavingPreferences(false)
     }
   }, [row, priorities])
+
+  const handleRunPillarScore = useCallback(
+    async (pillarKey: PillarKey, options: RunPillarScoreOptions) => {
+      if (!row) return
+      const response = await getScoreWithProgress(
+        {
+          location: row.input,
+          only: pillarKey,
+          priorities: JSON.stringify(options.priorities),
+          job_categories: options.job_categories?.length ? options.job_categories.join(',') : undefined,
+          natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
+          built_character_preference: options.built_character_preference ?? undefined,
+          built_density_preference: options.built_density_preference ?? undefined,
+          include_chains: options.include_chains ?? true,
+          enable_schools: options.enable_schools ?? false,
+        },
+        () => {}
+      )
+      const current = rawPayload as ScoreResponse
+      const merged: ScoreResponse = {
+        ...current,
+        livability_pillars: {
+          ...current.livability_pillars,
+          [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
+        } as ScoreResponse['livability_pillars'],
+        place_summary: response.place_summary ?? current.place_summary,
+      }
+      await updateSavedScore(row.id, { scorePayload: merged, priorities: options.priorities })
+      setRow((prev) =>
+        prev
+          ? {
+              ...prev,
+              score_payload: merged,
+              priorities: options.priorities,
+              updated_at: new Date().toISOString(),
+            }
+          : null
+      )
+      setPriorities(options.priorities)
+    },
+    [row, rawPayload]
+  )
 
   if (!authLoading && !user) {
     router.replace('/saved')
@@ -200,6 +244,7 @@ export default function SavedDetailPage() {
           priorities={priorities ?? DEFAULT_PRIORITIES}
           onPrioritiesChange={(next) => setPriorities(next)}
           placeSummary={displayData.place_summary ?? null}
+          onRunPillarScore={handleRunPillarScore}
         />
       </div>
     </main>

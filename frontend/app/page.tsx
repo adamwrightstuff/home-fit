@@ -11,7 +11,7 @@ import PlaceValuesGame from '@/components/PlaceValuesGame'
 import PlaceView from '@/components/PlaceView'
 import AppHeader from '@/components/AppHeader'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { getGeocode } from '@/lib/api'
+import { getGeocode, getScoreWithProgress } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
 
@@ -195,6 +195,39 @@ export default function Home() {
     set_error(null)
   }
 
+  const handleRunPillarScore = async (
+    pillarKey: import('@/lib/pillars').PillarKey,
+    options: import('@/components/ScoreDisplay').RunPillarScoreOptions
+  ) => {
+    if (!score_data) return
+    const location = typeof score_data.input === 'string' && score_data.input.trim() ? score_data.input : [score_data.location_info?.city, score_data.location_info?.state, score_data.location_info?.zip].filter(Boolean).join(', ')
+    if (!location) throw new Error('Missing location')
+    const response = await getScoreWithProgress(
+      {
+        location,
+        only: pillarKey,
+        priorities: JSON.stringify(options.priorities),
+        job_categories: options.job_categories?.length ? options.job_categories.join(',') : undefined,
+        natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
+        built_character_preference: options.built_character_preference ?? undefined,
+        built_density_preference: options.built_density_preference ?? undefined,
+        include_chains: options.include_chains ?? true,
+        enable_schools: options.enable_schools ?? false,
+      },
+      () => {}
+    )
+    const merged: ScoreResponse = {
+      ...score_data,
+      livability_pillars: {
+        ...score_data.livability_pillars,
+        [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
+      } as ScoreResponse['livability_pillars'],
+      place_summary: response.place_summary ?? score_data.place_summary,
+    }
+    set_score_data(merged)
+    set_configure_state({ payload: merged, priorities: options.priorities })
+  }
+
   return (
     <main className="hf-page">
       <div className="hf-container">
@@ -211,6 +244,8 @@ export default function Home() {
               set_configure_state((prev) => (prev ? { ...prev, priorities } : null))
             }
             placeSummary={(display_score_data || score_data)?.place_summary ?? null}
+            searchOptions={search_options}
+            onRunPillarScore={handleRunPillarScore}
             onSave={async (payload, priorities) => {
               try {
                 const { id } = await saveScore(payload, priorities)

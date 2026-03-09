@@ -1,14 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ScoreResponse } from '@/types/api'
-import type { PillarPriorities } from '@/components/SearchOptions'
+import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
 import LongevityInfo from './LongevityInfo'
 import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
 import { useAuth } from '@/contexts/AuthContext'
+
+/** Options passed to onRunPillarScore when user runs a score for a single pillar from the "+ Add" expand. */
+export interface RunPillarScoreOptions {
+  priorities: PillarPriorities
+  job_categories?: string[]
+  natural_beauty_preference?: string[] | null
+  built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
+  built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
+  include_chains?: boolean
+  enable_schools?: boolean
+}
+
+// Preference UI constants for the "+ Add" inline expand (mirrors PlaceView / SearchOptions).
+const ADD_JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string }> = [
+  { key: 'tech_professional', label: 'Tech / Product' },
+  { key: 'business_finance_law', label: 'Business / Finance / Law' },
+  { key: 'healthcare_education', label: 'Healthcare / Education' },
+  { key: 'skilled_trades_logistics', label: 'Skilled trades / Logistics' },
+  { key: 'service_retail_hospitality', label: 'Service / Retail / Hospitality' },
+  { key: 'public_sector_nonprofit', label: 'Public sector' },
+  { key: 'remote_flexible', label: 'Remote / Flexible' },
+]
+const ADD_NATURAL_BEAUTY_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'mountains', label: 'Mountains' },
+  { value: 'ocean', label: 'Ocean' },
+  { value: 'lakes_rivers', label: 'Lakes & rivers' },
+  { value: 'canopy', label: 'Greenery' },
+]
+const ADD_BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
+  { value: 'historic', label: 'Historic' },
+  { value: 'contemporary', label: 'Contemporary' },
+  { value: 'no_preference', label: 'No preference' },
+]
+const ADD_BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
+  { value: 'spread_out_residential', label: 'Spread out' },
+  { value: 'walkable_residential', label: 'Walkable' },
+  { value: 'dense_urban_living', label: 'Downtown' },
+]
 
 interface ScoreDisplayProps {
   data: ScoreResponse
@@ -30,6 +69,10 @@ interface ScoreDisplayProps {
   onPrioritiesChange?: (priorities: PillarPriorities) => void
   /** When set, show this as the main summary (e.g. from Configuration page) instead of the built-in quick summary. */
   placeSummary?: string | null
+  /** Optional search options to prefill preference inputs when expanding "+ Add" (e.g. job categories, natural beauty). */
+  searchOptions?: SearchOptions | null
+  /** When provided, "+ Add" expands inline with importance + preferences and "Run Score"; called to run single-pillar score. */
+  onRunPillarScore?: (pillarKey: PillarKey, options: RunPillarScoreOptions) => Promise<void>
 }
 
 // Use shared pillar order from lib/pillars
@@ -40,7 +83,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary, searchOptions, onRunPillarScore }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
@@ -48,12 +91,30 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Inline expand for "+ Add" pillar: which pillar is expanded and its local importance + preferences.
+  const [expandedAddPillar, setExpandedAddPillar] = useState<PillarKey | null>(null)
+  const [addPillarImportance, setAddPillarImportance] = useState<'Low' | 'Medium' | 'High'>('Medium')
+  const [addPillarJobCategories, setAddPillarJobCategories] = useState<string[]>([])
+  const [addPillarNaturalBeauty, setAddPillarNaturalBeauty] = useState<string[] | null>(null)
+  const [addPillarBuiltCharacter, setAddPillarBuiltCharacter] = useState<'historic' | 'contemporary' | 'no_preference' | null>(null)
+  const [addPillarBuiltDensity, setAddPillarBuiltDensity] = useState<'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null>(null)
+  const [runPillarLoading, setRunPillarLoading] = useState(false)
+  const [runPillarError, setRunPillarError] = useState<string | null>(null)
+
   // Be defensive: backend deployments can lag the frontend pillar list.
   const available_pillars = PILLAR_ORDER.filter((k) => Boolean((livability_pillars as any)?.[k]))
   // Main list: all pillars that have a score (fixed order). When priority is None, show muted on card.
   const included_pillars = PILLAR_ORDER.filter((k) => available_pillars.includes(k))
   // Not included: only pillars with no score in the payload (compact "+ Add" section).
   const not_included_pillars = PILLAR_ORDER.filter((k) => !available_pillars.includes(k))
+
+  // When the expanded pillar gets a score (merged by parent), it leaves not_included_pillars; collapse expand.
+  useEffect(() => {
+    if (expandedAddPillar && !not_included_pillars.includes(expandedAddPillar)) {
+      setExpandedAddPillar(null)
+      setRunPillarError(null)
+    }
+  }, [expandedAddPillar, not_included_pillars])
 
   // Copy scores summary to clipboard
   const copyScores = async () => {
@@ -105,6 +166,46 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
       if (result.error) setSaveError(result.error)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleAddPillarClick = (key: PillarKey) => {
+    if (onRunPillarScore) {
+      setExpandedAddPillar(key)
+      setAddPillarImportance('Medium')
+      setAddPillarJobCategories(Array.isArray(searchOptions?.job_categories) ? [...searchOptions.job_categories] : [])
+      const nb = searchOptions?.natural_beauty_preference
+      setAddPillarNaturalBeauty(nb && nb.length > 0 ? [...nb] : null)
+      setAddPillarBuiltCharacter(searchOptions?.built_character_preference ?? null)
+      setAddPillarBuiltDensity(searchOptions?.built_density_preference ?? null)
+      setRunPillarError(null)
+    } else if (onPrioritiesChange && priorities) {
+      const next = { ...priorities } as PillarPriorities
+      next[key as keyof PillarPriorities] = 'Medium'
+      onPrioritiesChange(next)
+    }
+  }
+
+  const handleRunPillarScore = async () => {
+    if (!expandedAddPillar || !onRunPillarScore || !priorities) return
+    setRunPillarError(null)
+    setRunPillarLoading(true)
+    try {
+      const nextPriorities = { ...priorities } as PillarPriorities
+      nextPriorities[expandedAddPillar as keyof PillarPriorities] = addPillarImportance
+      await onRunPillarScore(expandedAddPillar, {
+        priorities: nextPriorities,
+        job_categories: addPillarJobCategories.length > 0 ? addPillarJobCategories : undefined,
+        natural_beauty_preference: addPillarNaturalBeauty && addPillarNaturalBeauty.length > 0 ? addPillarNaturalBeauty : null,
+        built_character_preference: addPillarBuiltCharacter,
+        built_density_preference: addPillarBuiltDensity,
+        include_chains: searchOptions?.include_chains,
+        enable_schools: searchOptions?.enable_schools,
+      })
+    } catch (e) {
+      setRunPillarError(e instanceof Error ? e.message : 'Failed to run score')
+    } finally {
+      setRunPillarLoading(false)
     }
   }
 
@@ -335,53 +436,234 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                   const pillar = (livability_pillars as any)[key]
                   const hasScore = pillar && typeof pillar.score === 'number'
                   const score = hasScore ? Number(pillar.score) : null
+                  const isExpanded = expandedAddPillar === key
+                  const canRunScore = Boolean(onRunPillarScore)
                   return (
                     <div
                       key={key}
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        flexDirection: 'column',
                         gap: '0.75rem',
-                        flexWrap: 'wrap',
+                        padding: isExpanded ? '0.75rem' : 0,
+                        borderRadius: 8,
+                        background: isExpanded ? 'var(--hf-bg-subtle)' : undefined,
+                        border: isExpanded ? '1px solid var(--hf-border)' : undefined,
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                        <span style={{ fontSize: '1.25rem' }}>{PILLAR_META[key].icon}</span>
-                        <span style={{ fontWeight: 700, color: 'var(--hf-text-secondary)', fontSize: '0.95rem' }}>
-                          {PILLAR_META[key].name}
-                        </span>
-                        {score != null && (
-                          <span
-                            className="hf-muted"
-                            style={{
-                              fontSize: '0.85rem',
-                              fontWeight: 700,
-                              padding: '0.2rem 0.5rem',
-                              borderRadius: 6,
-                              background: 'var(--hf-bg-subtle)',
-                              border: '1px solid var(--hf-border)',
-                              opacity: 0.85,
-                            }}
-                          >
-                            {score.toFixed(0)}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                          <span style={{ fontSize: '1.25rem' }}>{PILLAR_META[key].icon}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--hf-text-secondary)', fontSize: '0.95rem' }}>
+                            {PILLAR_META[key].name}
                           </span>
+                          {score != null && (
+                            <span
+                              className="hf-muted"
+                              style={{
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                padding: '0.2rem 0.5rem',
+                                borderRadius: 6,
+                                background: 'var(--hf-bg-subtle)',
+                                border: '1px solid var(--hf-border)',
+                                opacity: 0.85,
+                              }}
+                            >
+                              {score.toFixed(0)}
+                            </span>
+                          )}
+                        </div>
+                        {(onPrioritiesChange || onRunPillarScore) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              if (isExpanded) {
+                                setExpandedAddPillar(null)
+                                setRunPillarError(null)
+                              } else {
+                                handleAddPillarClick(key)
+                              }
+                            }}
+                            className="hf-btn-link"
+                            style={{ fontSize: '0.9rem', padding: '0.35rem 0.65rem', minHeight: 36 }}
+                          >
+                            {isExpanded ? 'Cancel' : '+ Add'}
+                          </button>
                         )}
                       </div>
-                      {onPrioritiesChange && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            const next = { ...priorities } as PillarPriorities
-                            next[key as keyof PillarPriorities] = 'Medium'
-                            onPrioritiesChange(next)
-                          }}
-                          className="hf-btn-link"
-                          style={{ fontSize: '0.9rem', padding: '0.35rem 0.65rem', minHeight: 36 }}
-                        >
-                          + Add
-                        </button>
+
+                      {isExpanded && (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Importance:</span>
+                            {(['Low', 'Medium', 'High'] as const).map((level) => (
+                              <button
+                                key={level}
+                                type="button"
+                                onClick={() => setAddPillarImportance(level)}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: 8,
+                                  fontSize: '0.85rem',
+                                  fontWeight: addPillarImportance === level ? 700 : 400,
+                                  background: addPillarImportance === level ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                  color: addPillarImportance === level ? 'white' : 'var(--hf-text-secondary)',
+                                  border: `1px solid ${addPillarImportance === level ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {level}
+                              </button>
+                            ))}
+                          </div>
+
+                          {key === 'economic_security' && (
+                            <div>
+                              <div className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Job categories (optional)</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                {ADD_JOB_CATEGORY_OPTIONS.map((opt) => {
+                                  const checked = addPillarJobCategories.includes(opt.key)
+                                  return (
+                                    <label key={opt.key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          if (e.target.checked) setAddPillarJobCategories((prev) => [...prev, opt.key])
+                                          else setAddPillarJobCategories((prev) => prev.filter((k) => k !== opt.key))
+                                        }}
+                                      />
+                                      <span>{opt.label}</span>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {key === 'natural_beauty' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Scenery (up to 2):</span>
+                              {ADD_NATURAL_BEAUTY_CHIPS.map(({ value, label }) => {
+                                const isAny = value === null
+                                const hasAny = !addPillarNaturalBeauty?.length || (addPillarNaturalBeauty.length === 1 && addPillarNaturalBeauty[0] === 'no_preference')
+                                const selected = isAny ? hasAny : (addPillarNaturalBeauty?.includes(value as string) ?? false)
+                                const atMax = !isAny && (addPillarNaturalBeauty?.length ?? 0) >= 2 && !addPillarNaturalBeauty?.includes(value as string)
+                                return (
+                                  <button
+                                    key={label}
+                                    type="button"
+                                    onClick={() => {
+                                      if (isAny) {
+                                        setAddPillarNaturalBeauty(null)
+                                        return
+                                      }
+                                      const current = (addPillarNaturalBeauty ?? []).filter((v) => v !== 'no_preference')
+                                      if (current.includes(value as string)) {
+                                        const next = current.filter((v) => v !== value)
+                                        setAddPillarNaturalBeauty(next.length ? next : null)
+                                      } else if (current.length >= 2) {
+                                        setAddPillarNaturalBeauty([current[1], value as string])
+                                      } else {
+                                        setAddPillarNaturalBeauty([...current, value as string])
+                                      }
+                                    }}
+                                    disabled={atMax}
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: 8,
+                                      fontSize: '0.85rem',
+                                      fontWeight: selected ? 600 : 400,
+                                      background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                      color: selected ? 'white' : atMax ? 'var(--hf-text-tertiary)' : 'var(--hf-text-secondary)',
+                                      border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                      cursor: atMax ? 'not-allowed' : 'pointer',
+                                      opacity: atMax ? 0.7 : 1,
+                                    }}
+                                  >
+                                    {label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          {key === 'built_beauty' && (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Character:</span>
+                                {ADD_BUILT_CHARACTER_CHIPS.map(({ value, label }) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setAddPillarBuiltCharacter(addPillarBuiltCharacter === value ? null : value)}
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: 8,
+                                      fontSize: '0.85rem',
+                                      fontWeight: addPillarBuiltCharacter === value ? 600 : 400,
+                                      background: addPillarBuiltCharacter === value ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                      color: addPillarBuiltCharacter === value ? 'white' : 'var(--hf-text-secondary)',
+                                      border: `1px solid ${addPillarBuiltCharacter === value ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Density:</span>
+                                {ADD_BUILT_DENSITY_CHIPS.map(({ value, label }) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setAddPillarBuiltDensity(addPillarBuiltDensity === value ? null : value)}
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: 8,
+                                      fontSize: '0.85rem',
+                                      fontWeight: addPillarBuiltDensity === value ? 600 : 400,
+                                      background: addPillarBuiltDensity === value ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                      color: addPillarBuiltDensity === value ? 'white' : 'var(--hf-text-secondary)',
+                                      border: `1px solid ${addPillarBuiltDensity === value ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+
+                          {canRunScore && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                onClick={handleRunPillarScore}
+                                disabled={runPillarLoading}
+                                className="hf-btn-primary"
+                                style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.9rem', minHeight: 40 }}
+                              >
+                                {runPillarLoading ? 'Running score…' : 'Run Score'}
+                              </button>
+                              {runPillarError && (
+                                <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{runPillarError}</span>
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )
