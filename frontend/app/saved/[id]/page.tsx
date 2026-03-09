@@ -66,7 +66,13 @@ export default function SavedDetailPage() {
 
   const handleScoreAgain = useCallback(async () => {
     if (!row || !priorities) return
-    if (!window.confirm('Refresh all pillar data? This may take a moment')) return
+    if (
+      !window.confirm(
+        'Refresh all pillar data for this place?\n\nThis will overwrite your existing pillar scores and longevity index with freshly pulled data and cannot be undone.'
+      )
+    ) {
+      return
+    }
     setScoreAgainError(null)
     setScoreAgainLoading(true)
     try {
