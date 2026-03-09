@@ -540,24 +540,7 @@ body {
   .hf-hero-image { height: 300px; max-width: 100%; }
 }
 
-/* Score summary block: sticky on scroll, responsive grid */
-.hf-score-summary-sticky {
-  position: sticky;
-  top: 3.5rem; /* below auth bar */
-  z-index: 40;
-  background: var(--hf-card-bg);
-  margin-top: 1.5rem;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: var(--hf-card-shadow);
-}
-@media (max-width: 768px) {
-  .hf-score-summary-sticky {
-    top: 3rem;
-    padding: 1rem 1.25rem;
-    margin-top: 1rem;
-  }
-}
+/* Score summary block: responsive grid (no sticky) */
 .hf-score-summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

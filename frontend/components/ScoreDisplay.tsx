@@ -104,7 +104,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
-      <div className="hf-card hf-score-summary-sticky">
+      <div className="hf-card">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
         {onSave && priorities && (
           <div
