@@ -94,38 +94,6 @@ export default function SavedDetailPage() {
     }
   }, [row, priorities, jobCategories])
 
-  const handleRescorePillar = useCallback(
-    async (pillarKey: PillarKey) => {
-      if (!row || !priorities) return
-      setRescoringPillarKey(pillarKey)
-      try {
-        await handleRunPillarScore(pillarKey, {
-          priorities,
-          job_categories: jobCategories.length > 0 ? jobCategories : undefined,
-          natural_beauty_preference: null,
-          built_character_preference: undefined,
-          built_density_preference: undefined,
-          include_chains: true,
-          enable_schools: false,
-        })
-      } finally {
-        setRescoringPillarKey(null)
-      }
-    },
-    [row, priorities, jobCategories, handleRunPillarScore]
-  )
-
-  const handleSave = useCallback(async () => {
-    if (!row || !priorities) return
-    setSavingPreferences(true)
-    try {
-      await updateSavedScore(row.id, { priorities })
-      setRow((prev) => (prev ? { ...prev, priorities } : null))
-    } finally {
-      setSavingPreferences(false)
-    }
-  }, [row, priorities])
-
   const handleRunPillarScore = useCallback(
     async (pillarKey: PillarKey, options: RunPillarScoreOptions) => {
       if (!row) return
@@ -167,6 +135,38 @@ export default function SavedDetailPage() {
     },
     [row, rawPayload]
   )
+
+  const handleRescorePillar = useCallback(
+    async (pillarKey: PillarKey) => {
+      if (!row || !priorities) return
+      setRescoringPillarKey(pillarKey)
+      try {
+        await handleRunPillarScore(pillarKey, {
+          priorities,
+          job_categories: jobCategories.length > 0 ? jobCategories : undefined,
+          natural_beauty_preference: null,
+          built_character_preference: undefined,
+          built_density_preference: undefined,
+          include_chains: true,
+          enable_schools: false,
+        })
+      } finally {
+        setRescoringPillarKey(null)
+      }
+    },
+    [row, priorities, jobCategories, handleRunPillarScore]
+  )
+
+  const handleSave = useCallback(async () => {
+    if (!row || !priorities) return
+    setSavingPreferences(true)
+    try {
+      await updateSavedScore(row.id, { priorities })
+      setRow((prev) => (prev ? { ...prev, priorities } : null))
+    } finally {
+      setSavingPreferences(false)
+    }
+  }, [row, priorities])
 
   if (!authLoading && !user) {
     router.replace('/saved')
