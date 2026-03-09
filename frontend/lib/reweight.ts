@@ -118,8 +118,9 @@ export function reweightScoreResponseFromPriorities(
   const nextPillars: any = { ...data.livability_pillars }
   let total = 0
 
-  // If any pillar with a score gets weight 0 from tokenAllocation, priorities may not match payload keys.
-  // Fallback: derive priorities from payload importance_level so we never show 0% for configured pillars.
+  // If any pillar with a score gets weight 0 from tokenAllocation, we need a fallback so we don't show 0%.
+  // Build fallback by merging user priorities with payload importance_level only for pillars that would be 0,
+  // so the total always reflects the user's current preferences.
   const payloadKeys = Object.keys(nextPillars).filter(
     (k) => nextPillars[k] && typeof nextPillars[k].score === 'number'
   )
@@ -127,13 +128,24 @@ export function reweightScoreResponseFromPriorities(
   const fallbackAllocation =
     anyZeroWeight && payloadKeys.length > 0
       ? (() => {
-          const fromPayload: Record<string, string> = {}
-          for (const k of payloadKeys) {
-            const level = (nextPillars[k] as any)?.importance_level
-            const s = String(level ?? 'Medium').trim()
-            fromPayload[k] = s === 'Low' || s === 'Medium' || s === 'High' ? s : 'Medium'
+          const userPriorities = priorities as Partial<Record<string, string>>
+          const merged: Record<string, string> = {}
+          for (const k of PILLAR_ORDER) {
+            const userLevel = String(userPriorities[k] ?? 'none').toLowerCase().trim()
+            const hasScore = payloadKeys.includes(k)
+            if (hasScore && (userLevel === 'none' || userLevel === '')) {
+              const fromPayload = (nextPillars[k] as any)?.importance_level
+              const s = String(fromPayload ?? 'Medium').trim()
+              merged[k] = s === 'Low' || s === 'Medium' || s === 'High' ? s : 'Medium'
+            } else {
+              merged[k] = userLevel === 'low' || userLevel === 'medium' || userLevel === 'high'
+                ? (userPriorities[k] ?? 'Medium')
+                : userLevel === 'none'
+                  ? 'none'
+                  : 'Medium'
+            }
           }
-          const alloc = prioritiesToTokens(fromPayload)
+          const alloc = prioritiesToTokens(merged)
           return isSchoolsDisabledFromResult(data) ? applySchoolsDisabledOverride(alloc) : alloc
         })()
       : null
