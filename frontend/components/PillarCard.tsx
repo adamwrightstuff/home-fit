@@ -21,6 +21,10 @@ interface PillarCardProps {
   onRerun?: (pillarKey: PillarKey) => void
   /** When true, Rerun is disabled (e.g. full run or another rerun in progress). */
   rerunDisabled?: boolean
+  /** When provided, show "Rescore this pillar" in expanded details (below data breakdown). */
+  onRescorePillar?: (pillarKey: PillarKey) => void
+  /** When true, rescore link shows "Rescoring…" and is disabled. */
+  rescoring?: boolean
   /** Current importance for this pillar (for inline weight editing on Results). */
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
@@ -68,7 +72,7 @@ function formatValue(value: any, depth: number = 0): string {
   return String(value)
 }
 
-export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled, importanceLevel, onImportanceChange }: PillarCardProps) {
+export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled, onRescorePillar, rescoring, importanceLevel, onImportanceChange }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
   const isNone = importanceLevel === 'None'
@@ -411,6 +415,44 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
               <div>No additional details available.</div>
             )}
           </div>
+
+          {onRescorePillar ? (
+            <div style={{ marginTop: '1.25rem' }}>
+              {pillar.confidence < 50 && (
+                <div
+                  role="status"
+                  style={{
+                    fontSize: '0.9rem',
+                    padding: '0.6rem 0.75rem',
+                    marginBottom: '0.75rem',
+                    borderRadius: 8,
+                    background: 'rgba(200, 184, 74, 0.15)',
+                    border: '1px solid rgba(168, 154, 58, 0.4)',
+                    color: 'var(--hf-text-primary)',
+                  }}
+                >
+                  Low confidence data — rescore for better results
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onRescorePillar(pillar_key)
+                }}
+                disabled={rescoring}
+                className="hf-btn-link"
+                style={{
+                  fontSize: pillar.confidence >= 50 ? '0.85rem' : '0.95rem',
+                  padding: pillar.confidence >= 50 ? '0.25rem 0' : '0.5rem 0',
+                  opacity: rescoring ? 0.7 : 1,
+                  ...(pillar.confidence >= 50 ? { color: 'var(--hf-text-secondary)' } : {}),
+                }}
+              >
+                {rescoring ? 'Rescoring…' : 'Rescore this pillar'}
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

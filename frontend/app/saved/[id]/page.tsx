@@ -40,6 +40,7 @@ export default function SavedDetailPage() {
   const [jobCategories, setJobCategories] = useState<string[]>([])
   const [scoreAgainLoading, setScoreAgainLoading] = useState(false)
   const [scoreAgainError, setScoreAgainError] = useState<string | null>(null)
+  const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function SavedDetailPage() {
 
   const handleScoreAgain = useCallback(async () => {
     if (!row || !priorities) return
+    if (!window.confirm('Refresh all pillar data? This may take a moment')) return
     setScoreAgainError(null)
     setScoreAgainLoading(true)
     try {
@@ -91,6 +93,27 @@ export default function SavedDetailPage() {
       setScoreAgainLoading(false)
     }
   }, [row, priorities, jobCategories])
+
+  const handleRescorePillar = useCallback(
+    async (pillarKey: PillarKey) => {
+      if (!row || !priorities) return
+      setRescoringPillarKey(pillarKey)
+      try {
+        await handleRunPillarScore(pillarKey, {
+          priorities,
+          job_categories: jobCategories.length > 0 ? jobCategories : undefined,
+          natural_beauty_preference: null,
+          built_character_preference: undefined,
+          built_density_preference: undefined,
+          include_chains: true,
+          enable_schools: false,
+        })
+      } finally {
+        setRescoringPillarKey(null)
+      }
+    },
+    [row, priorities, jobCategories, handleRunPillarScore]
+  )
 
   const handleSave = useCallback(async () => {
     if (!row || !priorities) return
@@ -220,10 +243,10 @@ export default function SavedDetailPage() {
             type="button"
             onClick={handleScoreAgain}
             disabled={scoreAgainLoading}
-            className="hf-btn-secondary"
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem', minHeight: 44 }}
+            className="hf-btn-link"
+            style={{ fontSize: '0.95rem', padding: '0.5rem 0.75rem' }}
           >
-            {scoreAgainLoading ? 'Scoring…' : 'Score again'}
+            {scoreAgainLoading ? 'Refreshing…' : 'Refresh data'}
           </button>
           <button
             type="button"
@@ -245,6 +268,8 @@ export default function SavedDetailPage() {
           onPrioritiesChange={(next) => setPriorities(next)}
           placeSummary={displayData.place_summary ?? null}
           onRunPillarScore={handleRunPillarScore}
+          onRescorePillar={handleRescorePillar}
+          rescoringPillarKey={rescoringPillarKey}
         />
       </div>
     </main>

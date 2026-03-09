@@ -73,6 +73,10 @@ interface ScoreDisplayProps {
   searchOptions?: SearchOptions | null
   /** When provided, "+ Add" expands inline with importance + preferences and "Run Score"; called to run single-pillar score. */
   onRunPillarScore?: (pillarKey: PillarKey, options: RunPillarScoreOptions) => Promise<void>
+  /** When provided, pillar cards show "Rescore this pillar" in expanded details; called to run single-pillar score with current state. */
+  onRescorePillar?: (pillarKey: PillarKey) => void | Promise<void>
+  /** When set, the matching pillar card shows rescore link as "Rescoring…" and disables it. */
+  rescoringPillarKey?: PillarKey | null
 }
 
 // Use shared pillar order from lib/pillars
@@ -83,7 +87,7 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary, searchOptions, onRunPillarScore }: ScoreDisplayProps) {
+export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary, searchOptions, onRunPillarScore, onRescorePillar, rescoringPillarKey }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
@@ -420,6 +424,8 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                       }
                     : undefined
                 }
+                onRescorePillar={onRescorePillar}
+                rescoring={rescoringPillarKey === key}
               />
             )
           })}
