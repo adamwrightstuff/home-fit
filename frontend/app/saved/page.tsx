@@ -4,14 +4,45 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { listSavedScores, type SavedScoreRow } from '@/lib/savedScores'
+import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import type { PillarPriorities } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 
-function summaryFromPayload(score_payload: unknown): { total: number; top2: string; bottom1: string } {
+function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
+  const p = row.priorities as Record<string, string> | null | undefined
+  if (!p || typeof p !== 'object') return { ...DEFAULT_PRIORITIES }
+  const levels = ['None', 'Low', 'Medium', 'High'] as const
+  const out: Record<string, (typeof levels)[number]> = { ...DEFAULT_PRIORITIES }
+  for (const k of Object.keys(out)) {
+    const v = String(p[k] ?? '').trim()
+    if (levels.includes(v as (typeof levels)[number])) {
+      out[k] = v as (typeof levels)[number]
+    }
+  }
+  return out as unknown as PillarPriorities
+}
+
+function summaryFromPayload(score_payload: unknown, row?: SavedScoreRow | null): { total: number; top2: string; bottom1: string } {
   const p = score_payload as Record<string, unknown>
   const pillars = (p?.livability_pillars as Record<string, { score?: number }>) ?? {}
-  const total = Number(p?.total_score ?? 0)
-  const ranked = PILLAR_ORDER.filter((k) => pillars[k]?.score != null)
-    .map((k) => ({ key: k, score: Number(pillars[k]?.score ?? 0) }))
+  let total = Number(p?.total_score ?? 0)
+  let pillarsForRank = pillars
+
+  // Use same reweight as detail page so list and detail show the same score
+  if (row && p && typeof p === 'object' && p !== null) {
+    try {
+      const priorities = prioritiesFromRow(row)
+      const reweighted = reweightScoreResponseFromPriorities(score_payload as import('@/types/api').ScoreResponse, priorities)
+      total = reweighted.total_score
+      pillarsForRank = (reweighted.livability_pillars as Record<string, { score?: number }>) ?? pillars
+    } catch {
+      // keep raw total and pillars
+    }
+  }
+
+  const ranked = PILLAR_ORDER.filter((k) => pillarsForRank[k]?.score != null)
+    .map((k) => ({ key: k, score: Number(pillarsForRank[k]?.score ?? 0) }))
     .sort((a, b) => b.score - a.score)
   const top2 = ranked.slice(0, 2).map((r) => `${PILLAR_META[r.key].name} (${r.score.toFixed(0)})`).join(', ')
   const bottom1 = ranked.length ? `${PILLAR_META[ranked[ranked.length - 1].key].name} (${ranked[ranked.length - 1].score.toFixed(0)})` : '—'
@@ -94,7 +125,7 @@ export default function SavedPage() {
           <div className="hf-grid-2" style={{ gap: '1rem' }}>
             {list.map((row) => {
               const loc = row.location_info as { city?: string; state?: string; zip?: string }
-              const { total, top2, bottom1 } = summaryFromPayload(row.score_payload)
+              const { total, top2, bottom1 } = summaryFromPayload(row.score_payload, row)
               return (
                 <Link
                   key={row.id}
