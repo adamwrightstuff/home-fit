@@ -1918,7 +1918,7 @@ def _compute_single_score_internal(
         },
         "location_info": location_info,
         "livability_pillars": livability_pillars,
-        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
+        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars=None),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -3286,7 +3286,7 @@ async def _stream_score_with_progress(
             "coordinates": {"lat": lat, "lon": lon},
             "location_info": location_info,
             "livability_pillars": livability_pillars,
-            "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
+            "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars=None),
             "total_score": round(total_score, 2),
             "longevity_index": longevity_index,
             "longevity_index_contributions": longevity_contributions,
@@ -4216,7 +4216,7 @@ async def stream_score(
         },
         "location_info": location_info,
         "livability_pillars": livability_pillars,
-        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars),
+        "place_summary": _build_place_summary(livability_pillars, location_info, only_pillars=None),
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
@@ -4810,7 +4810,8 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     """
     Build a 2-4 sentence character-first summary per LIVABILITY SUMMARY SPEC.
     Uses only data already in livability_pillars and location_info; no external calls.
-    When only_pillars is set (incremental run), only include sentences for those pillars.
+    Call with only_pillars=None so the summary includes all pillars that have data
+    (avoids showing only the most recently run pillar on incremental/rescore).
     """
     place = (location_info or {}).get("city") or "This area"
     sentences = []
