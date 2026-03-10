@@ -73,7 +73,7 @@ interface LocationSearchProps {
   examples?: string[]
 }
 
-const DEFAULT_EXAMPLES = ['New York, NY', '90210', '1600 Pennsylvania Avenue NW, Washington, DC']
+const DEFAULT_EXAMPLES = ['New York, NY', '1600 Pennsylvania Avenue NW, Washington, DC']
 
 export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_EXAMPLES }: LocationSearchProps) {
   const [location, setLocation] = useState('')
@@ -198,7 +198,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             onChange={(e) => setLocation(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
-            placeholder="Enter an address or ZIP code (e.g., 123 Main St, New York, NY)"
+            placeholder="Enter an address (e.g., 123 Main St, New York, NY)"
             className={`hf-input ${isInvalid ? 'hf-input--invalid' : ''}`}
             disabled={disabled}
             autoComplete="off"
@@ -252,7 +252,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
       </div>
       {isInvalid ? (
         <div className="hf-helper" style={{ color: 'var(--hf-danger)' }}>
-          Please enter a location (city/state, ZIP code, or address).
+          Please enter a location (city/state or address).
         </div>
       ) : null}
       <div className="hf-chip-row" aria-label="Search examples">
