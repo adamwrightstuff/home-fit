@@ -14,6 +14,7 @@ import type { GeocodeResult } from '@/types/api'
 import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
+import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import { useAuth } from '@/contexts/AuthContext'
 
 /** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
@@ -992,6 +993,40 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                           </button>
                         )
                       })}
+                    </div>
+                  )}
+                  {key === 'economic_security' && onSearchOptionsChange && (
+                    <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>Economic Opportunity Focus (optional)</span>
+                      <p className="hf-muted" style={{ fontSize: '0.8rem', margin: 0 }}>
+                        Select job categories you care about. Scoring may take a bit longer when categories are selected.
+                      </p>
+                      <div style={{ display: 'grid', gap: '0.5rem' }}>
+                        {JOB_CATEGORY_OPTIONS.map((opt) => {
+                          const current = Array.isArray(searchOptions.job_categories) ? searchOptions.job_categories : []
+                          const checked = current.includes(opt.key)
+                          return (
+                            <label key={opt.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }} onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={loading}
+                                onChange={(e) => {
+                                  const next = e.target.checked
+                                    ? Array.from(new Set([...current, opt.key]))
+                                    : current.filter((k) => k !== opt.key)
+                                  handleSearchOptionsChange({ ...searchOptions, job_categories: next })
+                                }}
+                                style={{ marginTop: '0.2rem' }}
+                              />
+                              <span style={{ flex: 1 }}>
+                                <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)', fontSize: '0.9rem' }}>{opt.label}</span>
+                                <span className="hf-muted" style={{ display: 'block', fontSize: '0.8rem' }}>{opt.description}</span>
+                              </span>
+                            </label>
+                          )
+                        })}
+                      </div>
                     </div>
                   )}
                   {key === 'built_beauty' && (

@@ -61,7 +61,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   social_fabric: 'Medium',
 }
 
-const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [
+export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [
   { key: 'tech_professional', label: 'Tech / Product', description: 'Software, data, engineering, product, UX/UI' },
   { key: 'business_finance_law', label: 'Business / Finance / Law', description: 'Finance, consulting, corporate, legal, accounting' },
   { key: 'healthcare_education', label: 'Healthcare / Education', description: 'Doctors, nurses, teachers, professors, admin' },
