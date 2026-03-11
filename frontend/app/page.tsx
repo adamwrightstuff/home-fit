@@ -14,9 +14,12 @@ import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getGeocode, getScoreWithProgress } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
+import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const { user, isConfigured } = useAuth()
+  const router = useRouter()
   const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
   /** When user clicks "View results", we store payload + priorities so we can rehydrate Configure when they click "Edit pillars". */
   const [configureState, set_configure_state] = useState<{ payload: ScoreResponse; priorities: PillarPriorities } | null>(null)
@@ -35,7 +38,7 @@ export default function Home() {
         const parsed = JSON.parse(stored)
     return {
       priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
-      include_chains: parsed.include_chains !== undefined ? parsed.include_chains : true,
+      include_chains: parsed.include_chains !== undefined ? parsed.include_chains : false,
       enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
       job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
       natural_beauty_preference: Array.isArray(parsed.natural_beauty_preference) ? parsed.natural_beauty_preference : null,
@@ -48,7 +51,7 @@ export default function Home() {
     }
     return {
       priorities: { ...DEFAULT_PRIORITIES },
-      include_chains: true,
+      include_chains: false,
       enable_schools: false,
       job_categories: [],
       natural_beauty_preference: null,
@@ -169,8 +172,23 @@ export default function Home() {
               }
             }}
             onShowResults={(payload, priorities) => {
-              set_score_data(payload)
-              set_configure_state({ payload, priorities })
+              const params: ResultsRouteParams = {
+                location: place.location,
+                prioritiesJson: JSON.stringify(priorities),
+                job_categories: search_options.job_categories?.length ? search_options.job_categories.join(',') : null,
+                include_chains: Boolean(search_options.include_chains),
+                enable_schools: Boolean(search_options.enable_schools),
+                natural_beauty_preference: search_options.natural_beauty_preference?.length ? JSON.stringify(search_options.natural_beauty_preference) : null,
+                built_character_preference: search_options.built_character_preference ?? null,
+                built_density_preference: search_options.built_density_preference ?? null,
+              }
+              try {
+                const cacheKey = buildResultsCacheKey(params)
+                sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), payload }))
+              } catch {
+                // ignore cache failures
+              }
+              router.push(buildResultsUrl(params))
             }}
             initialPayload={configureState?.payload ?? null}
             initialPriorities={configureState?.priorities ?? null}

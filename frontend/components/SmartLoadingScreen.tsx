@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { getScoreWithProgress } from '@/lib/api'
+import { getScoreWithProgress, type PartialPillars } from '@/lib/api'
 import { ScoreResponse } from '@/types/api'
 import CurrentlyAnalyzing from './CurrentlyAnalyzing'
 import CompletedPillars from './CompletedPillars'
@@ -14,6 +14,8 @@ interface SmartLoadingScreenProps {
   location: string
   on_complete: (response: ScoreResponse) => void
   on_error?: (error: Error) => void
+  /** Optional: receive partial pillar progress as it arrives (job polling). */
+  on_partial?: (partial: PartialPillars) => void
   priorities?: string
   tokens?: string
   only?: string
@@ -41,6 +43,7 @@ export default function SmartLoadingScreen({
   location, 
   on_complete, 
   on_error,
+  on_partial,
   priorities,
   tokens,
   only,
@@ -81,6 +84,7 @@ export default function SmartLoadingScreen({
       { location, tokens, priorities, only, job_categories, include_chains, enable_schools },
       (partial) => {
         if (cancelledRef.current) return
+        if (on_partial) on_partial(partial)
         ramp_start_ref.current = null // stop optimistic ramp once we have real data
         set_completed_pillars((prev) => {
           const next = new Map(prev)
@@ -127,7 +131,7 @@ export default function SmartLoadingScreen({
     return () => {
       cancelledRef.current = true
     }
-  }, [location, priorities, tokens, only, job_categories, include_chains, enable_schools, on_complete, on_error])
+  }, [location, priorities, tokens, only, job_categories, include_chains, enable_schools, on_complete, on_error, on_partial])
 
   // While we have no pillar results yet, ramp progress from floor to waiting cap so the bar doesn't sit at one value for too long
   useEffect(() => {

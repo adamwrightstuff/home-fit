@@ -148,7 +148,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
     } catch (e) {
       // Ignore storage errors
     }
-  }, [options])
+  }, [options, skipSessionRestore])
 
   const handlePriorityChange = (pillar: keyof PillarPriorities, priority: PriorityLevel) => {
     const newOptions = {

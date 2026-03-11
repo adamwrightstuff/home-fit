@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import time
 import json
 from typing import Optional, Dict, Tuple, Any, List, Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 import os
 import asyncio
 import queue
@@ -77,6 +77,29 @@ ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
 # Pillars: run in parallel by default for faster natural/built character. Set HOMEFIT_PILLARS_SEQUENTIAL=true
 # to run one-by-one (reduces API burst and rate-limit risk).
 PILLARS_SEQUENTIAL = _env_bool("HOMEFIT_PILLARS_SEQUENTIAL", default=False)
+
+# Launch performance knob: time budget profiles (affects how long we wait for pillars).
+# - launch: fast UI, more graceful timeouts (recommended for Product Hunt)
+# - normal: balanced defaults
+# - relaxed: prioritize completeness over speed
+HOMEFIT_TIMEOUT_PROFILE = (os.getenv("HOMEFIT_TIMEOUT_PROFILE", "normal") or "normal").strip().lower()
+if HOMEFIT_TIMEOUT_PROFILE not in {"launch", "normal", "relaxed"}:
+    HOMEFIT_TIMEOUT_PROFILE = "normal"
+
+def _profile_seconds(name: str, *, launch: float, normal: float, relaxed: float) -> float:
+    if HOMEFIT_TIMEOUT_PROFILE == "launch":
+        return float(os.getenv(name, str(launch)))
+    if HOMEFIT_TIMEOUT_PROFILE == "relaxed":
+        return float(os.getenv(name, str(relaxed)))
+    return float(os.getenv(name, str(normal)))
+
+# How long (seconds) we wait for the pillar stage before returning fallback/limited-data pillars.
+HOMEFIT_PILLARS_BUDGET_SECONDS = _profile_seconds(
+    "HOMEFIT_PILLARS_BUDGET_SECONDS",
+    launch=22.0,
+    normal=45.0,
+    relaxed=90.0,
+)
 
 # Batch: hard cap (server-side), do NOT trust client-provided values
 MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "10"))
@@ -1441,9 +1464,20 @@ def _compute_single_score_internal(
     # Execute pillars (parallel or sequential; sequential reduces API burst / rate-limit risk)
     pillar_results = {}
     exceptions = {}
+    pillars_deadline = time.time() + float(HOMEFIT_PILLARS_BUDGET_SECONDS or 0.0)
 
     if PILLARS_SEQUENTIAL:
         for name, func, kwargs in pillar_tasks:
+            # Enforce a global time budget for the pillar stage (launch-week reliability).
+            if HOMEFIT_PILLARS_BUDGET_SECONDS and time.time() >= pillars_deadline:
+                exceptions[name] = RuntimeError("Pillar time budget exceeded")
+                pillar_results[name] = None
+                if on_pillar_complete:
+                    try:
+                        on_pillar_complete(name, 0.0)
+                    except Exception as e:
+                        logger.warning(f"on_pillar_complete callback failed: {e}")
+                continue
             name, result, error = _execute_pillar(name, func, **kwargs)
             if error:
                 exceptions[name] = error
@@ -1470,28 +1504,49 @@ def _compute_single_score_internal(
                 executor.submit(_execute_pillar, name, func, **kwargs): name
                 for name, func, kwargs in pillar_tasks
             }
-            for future in as_completed(future_to_pillar):
-                pillar_name = future_to_pillar[future]
-                name, result, error = future.result()
-                if error:
-                    exceptions[pillar_name] = error
-                    pillar_results[pillar_name] = None
-                    _score = 0.0
-                else:
-                    pillar_results[pillar_name] = result
-                    if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
-                        _score = float(result.get('score', 0.0))
-                    elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
-                        _score = float(result[0] if result[0] is not None else 0.0)
-                    elif isinstance(result, (tuple, list)) and len(result) >= 1:
-                        _score = float(result[0] if result[0] is not None else 0.0)
-                    else:
+            completed = set()
+            try:
+                for future in as_completed(future_to_pillar, timeout=float(HOMEFIT_PILLARS_BUDGET_SECONDS or 0.0) or None):
+                    completed.add(future)
+                    pillar_name = future_to_pillar[future]
+                    name, result, error = future.result()
+                    if error:
+                        exceptions[pillar_name] = error
+                        pillar_results[pillar_name] = None
                         _score = 0.0
-                if on_pillar_complete:
+                    else:
+                        pillar_results[pillar_name] = result
+                        if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                            _score = float(result.get('score', 0.0))
+                        elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
+                            _score = float(result[0] if result[0] is not None else 0.0)
+                        elif isinstance(result, (tuple, list)) and len(result) >= 1:
+                            _score = float(result[0] if result[0] is not None else 0.0)
+                        else:
+                            _score = 0.0
+                    if on_pillar_complete:
+                        try:
+                            on_pillar_complete(pillar_name, _score)
+                        except Exception as e:
+                            logger.warning(f"on_pillar_complete callback failed: {e}")
+            except FuturesTimeoutError:
+                # Mark unfinished pillars as timed out (graceful degradation).
+                pass
+            finally:
+                for future, pillar_name in future_to_pillar.items():
+                    if future in completed:
+                        continue
                     try:
-                        on_pillar_complete(pillar_name, _score)
-                    except Exception as e:
-                        logger.warning(f"on_pillar_complete callback failed: {e}")
+                        future.cancel()
+                    except Exception:
+                        pass
+                    exceptions[pillar_name] = RuntimeError("Pillar time budget exceeded")
+                    pillar_results[pillar_name] = None
+                    if on_pillar_complete:
+                        try:
+                            on_pillar_complete(pillar_name, 0.0)
+                        except Exception as e:
+                            logger.warning(f"on_pillar_complete callback failed: {e}")
 
     _log_place_timing("pillars_sequential" if PILLARS_SEQUENTIAL else "pillars_parallel", t_pillars)
     # Handle school scoring separately

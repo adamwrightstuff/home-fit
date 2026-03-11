@@ -19,6 +19,31 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Launch-week performance knob: cap Overpass timeouts by profile.
+# This does NOT change scoring formulas, only how long we wait for upstream data.
+_TIMEOUT_PROFILE = (os.getenv("HOMEFIT_TIMEOUT_PROFILE", "normal") or "normal").strip().lower()
+if _TIMEOUT_PROFILE not in {"launch", "normal", "relaxed"}:
+    _TIMEOUT_PROFILE = "normal"
+
+def _overpass_timeout(seconds: int) -> int:
+    """
+    Cap Overpass timeouts for launch reliability.
+    - launch: cap to HOMEFIT_OVERPASS_TIMEOUT_S (default 12s)
+    - normal: use requested timeout
+    - relaxed: allow larger timeouts (but never smaller than requested)
+    """
+    try:
+        s = int(seconds)
+    except Exception:
+        s = 25
+    if _TIMEOUT_PROFILE == "launch":
+        cap = int(os.getenv("HOMEFIT_OVERPASS_TIMEOUT_S", "12"))
+        return max(1, min(s, cap))
+    if _TIMEOUT_PROFILE == "relaxed":
+        cap = int(os.getenv("HOMEFIT_OVERPASS_TIMEOUT_S", "60"))
+        return max(s, cap)
+    return s
+
 # Overpass sometimes returns HTML / empty bodies (429/504/proxy pages) even with HTTP 200.
 # Treat "not JSON" as a soft failure and let callers fall back gracefully.
 def _safe_overpass_json(resp: Optional[requests.Response], *, context: str) -> Optional[Dict[str, Any]]:
@@ -355,7 +380,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
             r = requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=20,  # Reduced from 40s for faster failure
+                timeout=_overpass_timeout(20),  # Reduced from 40s for faster failure
                 headers={"User-Agent": "HomeFit/1.0"}
             )
             # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
@@ -613,7 +638,7 @@ def query_nature_features(
             r = requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=25,  # Reduced from 50s for faster failure
+                timeout=_overpass_timeout(25),  # Reduced from 50s for faster failure
                 headers={"User-Agent": "HomeFit/1.0"}
             )
             if r.status_code != 200:
@@ -753,7 +778,7 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
             return requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=40,
+                timeout=_overpass_timeout(40),
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
@@ -964,7 +989,7 @@ def query_enhanced_trees(lat: float, lon: float, radius_m: int = 1000) -> Option
         resp = requests.post(
             get_overpass_url(),
             data={"data": query},
-            timeout=40,
+            timeout=_overpass_timeout(40),
             headers={"User-Agent": "HomeFit/1.0"}
         )
 
@@ -1045,7 +1070,7 @@ def query_cultural_assets(lat: float, lon: float, radius_m: int = 1000) -> Optio
             return requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=45,
+                timeout=_overpass_timeout(45),
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
@@ -1122,7 +1147,7 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
             return requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=35,
+                timeout=_overpass_timeout(35),
                 headers={"User-Agent": "HomeFit/1.0"}
             )
 
@@ -1213,7 +1238,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
             return requests.post(
                 get_overpass_url(),
                 data={"data": query},
-                timeout=40,
+                timeout=_overpass_timeout(40),
                 headers={"User-Agent": "HomeFit/1.0"},
             )
 
@@ -1397,7 +1422,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
         r = requests.post(
             get_overpass_url(),
             data={"data": query},
-            timeout=30,  # Reduced from 70s for faster failure
+            timeout=_overpass_timeout(30),  # Reduced from 70s for faster failure
             headers={"User-Agent": "HomeFit/1.0"}
         )
         # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
@@ -2113,7 +2138,7 @@ def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) 
                     return requests.post(
                         get_overpass_url(),
                         data={"data": paths_query},
-                        timeout=25,
+                        timeout=_overpass_timeout(25),
                         headers={"User-Agent": "HomeFit/1.0"}
                     )
 
@@ -2162,7 +2187,7 @@ def query_local_paths_within_green_areas(lat: float, lon: float, radius_m: int =
         );
         out geom;
         """
-        resp = requests.post(get_overpass_url(), data={"data": q}, timeout=25, headers={"User-Agent":"HomeFit/1.0"})
+        resp = requests.post(get_overpass_url(), data={"data": q}, timeout=_overpass_timeout(25), headers={"User-Agent":"HomeFit/1.0"})
         if resp.status_code != 200:
             return 0
         data = _safe_overpass_json(resp, context="local paths within green areas query")
@@ -2324,7 +2349,7 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
         r = requests.post(
             OVERPASS_URL,
             data={"data": q},
-            timeout=35,
+            timeout=_overpass_timeout(35),
             headers={"User-Agent": "HomeFit/1.0"}
         )
         if r.status_code == 200:
@@ -2396,7 +2421,7 @@ def query_beauty_enhancers(lat: float, lon: float, radius_m: int = 1500) -> Dict
         way["natural"="coastline"](around:2000,{lat},{lon});
         out center 1;
         """
-        rc = requests.post(get_overpass_url(), data={"data": qc}, timeout=20, headers={"User-Agent": "HomeFit/1.0"})
+        rc = requests.post(get_overpass_url(), data={"data": qc}, timeout=_overpass_timeout(20), headers={"User-Agent": "HomeFit/1.0"})
         if rc.status_code == 200 and rc.json().get("elements"):
             out["waterfront"] = 1
     except Exception:
@@ -2884,7 +2909,7 @@ def validate_osm_completeness(lat: float, lon: float) -> Dict[str, Any]:
         resp = requests.post(
             OVERPASS_URL,
             data={"data": query},
-            timeout=15,
+            timeout=_overpass_timeout(15),
             headers={"User-Agent": "HomeFit/1.0"}
         )
         if resp.status_code == 200:
@@ -3164,7 +3189,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
                 return requests.post(
                     get_overpass_url(), 
                     data={"data": query}, 
-                    timeout=30,  # Shorter timeout for simpler queries
+                    timeout=_overpass_timeout(30),  # Shorter timeout for simpler queries
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
             
@@ -3296,7 +3321,7 @@ def query_railway_stations(lat: float, lon: float, radius_m: int = 2000) -> Opti
     
     try:
         logger.debug(f"Querying OSM for railway stations within {radius_m/1000:.1f}km...")
-        resp = requests.post(get_overpass_url(), data=query, timeout=30)
+        resp = requests.post(get_overpass_url(), data=query, timeout=_overpass_timeout(30))
         
         if resp.status_code == 200:
             data = _safe_overpass_json(resp, context="railway stations query")

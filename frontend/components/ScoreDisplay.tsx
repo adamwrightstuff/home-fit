@@ -51,6 +51,10 @@ const ADD_BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkab
 
 interface ScoreDisplayProps {
   data: ScoreResponse
+  /** When true, show progressive/skeleton state (used while async job is running). */
+  loading?: boolean
+  /** When loading, which pillar cards should render as loading. */
+  pillarLoadingKeys?: Set<PillarKey>
   /** When provided, "Search another location" calls this instead of linking to #search */
   onSearchAnother?: () => void
   /** When true, show Save button (requires onSave). */
@@ -71,6 +75,8 @@ interface ScoreDisplayProps {
   placeSummary?: string | null
   /** Optional search options to prefill preference inputs when expanding "+ Add" (e.g. job categories, natural beauty). */
   searchOptions?: SearchOptions | null
+  /** Optional: update searchOptions from within results UI (e.g. Amenities include_chains toggle). */
+  onSearchOptionsChange?: (options: SearchOptions) => void
   /** When provided, "+ Add" expands inline with importance + preferences and "Run Score"; called to run single-pillar score. */
   onRunPillarScore?: (pillarKey: PillarKey, options: RunPillarScoreOptions) => Promise<void>
   /** When provided, pillar cards show "Rescore this pillar" in expanded details; called to run single-pillar score with current state. */
@@ -87,9 +93,28 @@ function overallTier(score: number): { label: string; tone: string } {
   return { label: 'Challenging', tone: 'low' }
 }
 
-export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuthConfigured = true, savedScoreId, onSave, priorities, onReconfigure, onPrioritiesChange, placeSummary, searchOptions, onRunPillarScore, onRescorePillar, rescoringPillarKey }: ScoreDisplayProps) {
+export default function ScoreDisplay({
+  data,
+  loading,
+  pillarLoadingKeys,
+  onSearchAnother,
+  isSignedIn,
+  isAuthConfigured = true,
+  savedScoreId,
+  onSave,
+  priorities,
+  onReconfigure,
+  onPrioritiesChange,
+  placeSummary,
+  searchOptions,
+  onSearchOptionsChange,
+  onRunPillarScore,
+  onRescorePillar,
+  rescoringPillarKey,
+}: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
+  const isLoading = Boolean(loading)
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -122,6 +147,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
 
   // Copy scores summary to clipboard
   const copyScores = async () => {
+    if (isLoading) return
     const lines = [
       `HomeFit Livability Score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
@@ -294,6 +320,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
               onClick={copyScores}
               className="hf-btn-secondary"
               style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+              disabled={isLoading}
             >
               {copied ? 'Copied!' : 'Copy scores'}
             </button>
@@ -313,7 +340,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
           className={`hf-score-summary-grid ${longevity_index != null ? 'hf-score-summary-grid-3' : ''}`}
           style={{ marginTop: '2rem' }}
         >
-          <TotalScore score={total_score} confidence={overall_confidence} />
+          <TotalScore score={total_score} confidence={overall_confidence} loading={isLoading} />
           {longevity_index != null && (
             <div className="hf-panel">
               <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
@@ -333,7 +360,11 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
               {placeSummary != null && placeSummary !== '' ? 'Summary' : 'Quick summary'}
             </div>
 
-            {placeSummary != null && placeSummary !== '' ? (
+            {isLoading ? (
+              <div className="hf-muted" style={{ fontSize: '1.05rem', lineHeight: 1.45 }}>
+                Calculating your full results…
+              </div>
+            ) : placeSummary != null && placeSummary !== '' ? (
               <p
                 style={{
                   margin: 0,
@@ -414,6 +445,7 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                 key={key}
                 pillar_key={key}
                 pillar={pillar}
+                loading={Boolean(isLoading && pillarLoadingKeys?.has(key))}
                 importanceLevel={level}
                 onImportanceChange={
                   onPrioritiesChange
@@ -426,6 +458,16 @@ export default function ScoreDisplay({ data, onSearchAnother, isSignedIn, isAuth
                 }
                 onRescorePillar={onRescorePillar}
                 rescoring={rescoringPillarKey === key}
+                includeChainsValue={key === 'neighborhood_amenities' ? Boolean(searchOptions?.include_chains) : undefined}
+                onIncludeChainsChange={
+                  key === 'neighborhood_amenities' && onSearchOptionsChange && searchOptions
+                    ? (next) => {
+                        onSearchOptionsChange({ ...searchOptions, include_chains: next })
+                        // Immediately rescore just this pillar when available.
+                        if (onRescorePillar) onRescorePillar('neighborhood_amenities')
+                      }
+                    : undefined
+                }
               />
             )
           })}

@@ -174,7 +174,7 @@ export default function SavedDetailPage() {
           natural_beauty_preference: null,
           built_character_preference: undefined,
           built_density_preference: undefined,
-          include_chains: true,
+          include_chains: false,
           enable_schools: false,
         })
       } finally {

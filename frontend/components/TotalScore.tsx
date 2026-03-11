@@ -5,13 +5,18 @@ import HomeFitInfo from './HomeFitInfo'
 interface TotalScoreProps {
   score: number
   confidence: OverallConfidence
+  /** When true, render skeleton placeholders (avoid misleading mid-load score). */
+  loading?: boolean
 }
 
-export default function TotalScore({ score, confidence }: TotalScoreProps) {
+export default function TotalScore({ score, confidence, loading }: TotalScoreProps) {
+  const isLoading = Boolean(loading)
   return (
     <div className="hf-panel">
       <div className="hf-score-hero">
-        <div className="hf-score-hero__value">{score.toFixed(1)}</div>
+        <div className="hf-score-hero__value" aria-busy={isLoading}>
+          {isLoading ? '—' : score.toFixed(1)}
+        </div>
         <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
           Overall HomeFit Score (0–100)
           <HomeFitInfo />
@@ -34,13 +39,13 @@ export default function TotalScore({ score, confidence }: TotalScoreProps) {
         <div>
           <div className="hf-label">Confidence</div>
           <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>
-            {confidence.average_confidence.toFixed(1)}%
+            {isLoading ? '—' : `${confidence.average_confidence.toFixed(1)}%`}
           </div>
         </div>
         <div>
           <div className="hf-label">Data quality</div>
           <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)', textTransform: 'capitalize' }}>
-            {confidence.overall_quality}
+            {isLoading ? '—' : confidence.overall_quality}
           </div>
         </div>
       </div>

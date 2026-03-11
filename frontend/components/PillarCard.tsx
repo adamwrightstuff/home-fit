@@ -17,6 +17,8 @@ import {
 interface PillarCardProps {
   pillar_key: PillarKey
   pillar: LivabilityPillar
+  /** When true, render this card in a loading/skeleton state. */
+  loading?: boolean
   /** When provided, Rerun button is shown for fallback/failed pillars. */
   onRerun?: (pillarKey: PillarKey) => void
   /** When true, Rerun is disabled (e.g. full run or another rerun in progress). */
@@ -25,6 +27,10 @@ interface PillarCardProps {
   onRescorePillar?: (pillarKey: PillarKey) => void
   /** When true, rescore link shows "Rescoring…" and is disabled. */
   rescoring?: boolean
+  /** Neighborhood Amenities only: whether chain businesses are included. */
+  includeChainsValue?: boolean
+  /** Neighborhood Amenities only: toggle include_chains and (optionally) rescore. */
+  onIncludeChainsChange?: (next: boolean) => void
   /** Current importance for this pillar (for inline weight editing on Results). */
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
@@ -72,9 +78,22 @@ function formatValue(value: any, depth: number = 0): string {
   return String(value)
 }
 
-export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled, onRescorePillar, rescoring, importanceLevel, onImportanceChange }: PillarCardProps) {
+export default function PillarCard({
+  pillar_key,
+  pillar,
+  loading,
+  onRerun,
+  rerunDisabled,
+  onRescorePillar,
+  rescoring,
+  includeChainsValue,
+  onIncludeChainsChange,
+  importanceLevel,
+  onImportanceChange,
+}: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
+  const isLoading = Boolean(loading)
   const isNone = importanceLevel === 'None'
   const mutedStyle = isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : undefined
   const rawSummary = pillar.summary || {}
@@ -237,13 +256,13 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
               fontWeight: 800,
               fontSize: '1.75rem',
               lineHeight: 1.2,
-              color: isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
+              color: isLoading ? 'var(--hf-text-secondary)' : isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
               ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
             }}
           >
-            {isFailed ? '?' : <>{isFallback && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
+            {isLoading ? '—' : isFailed ? '?' : <>{isFallback && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
           </span>
-          {!isFailed && (
+          {!isFailed && !isLoading && (
             <span
               style={{
                 fontSize: '0.8rem',
@@ -254,6 +273,11 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
               }}
             >
               {getScoreBandLabel(pillar.score)}
+            </span>
+          )}
+          {isLoading && (
+            <span className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              Computing…
             </span>
           )}
         </div>
@@ -345,7 +369,10 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
         <button
           type="button"
           className="hf-btn-link"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => {
+            if (!isLoading) setExpanded((v) => !v)
+          }}
+          disabled={isLoading}
         >
           {expanded ? 'Hide' : 'Show'} details
         </button>
@@ -363,6 +390,28 @@ export default function PillarCard({ pillar_key, pillar, onRerun, rerunDisabled,
           </div>
 
           <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+            {pillar_key === 'neighborhood_amenities' && onIncludeChainsChange ? (
+              <div style={{ marginBottom: '0.85rem' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    color: 'var(--hf-text-primary)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(includeChainsValue)}
+                    onChange={(e) => onIncludeChainsChange(e.target.checked)}
+                    disabled={rescoring}
+                  />
+                  <span>Include chain businesses</span>
+                </label>
+              </div>
+            ) : null}
             {pillar.data_quality?.quality_tier ? (
               <div style={{ marginBottom: '0.75rem' }}>
                 Data quality: <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textTransform: 'capitalize' }}>{pillar.data_quality.quality_tier}</span>
