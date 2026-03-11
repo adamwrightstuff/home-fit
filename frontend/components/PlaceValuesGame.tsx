@@ -3,10 +3,11 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { ArrowLeft, ChevronLeft, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
+import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import AppHeader from './AppHeader'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
-const TOTAL_QUESTIONS = 5
+const TOTAL_QUESTIONS = 6
 
 const QUESTIONS = [
   {
@@ -65,6 +66,13 @@ const QUESTIONS = [
       { value: 'no_preference', text: 'No strong preference' },
     ],
   },
+  {
+    id: 'work',
+    type: 'multi' as const,
+    prompt: 'Which job sectors matter to you — or are you mainly remote?',
+    hint: 'Optional. Select any that apply to personalize Economic Opportunity.',
+    options: JOB_CATEGORY_OPTIONS.map((o) => ({ value: o.key, text: o.label, description: o.description })),
+  },
 ] as const
 
 type QuizAnswers = {
@@ -73,6 +81,7 @@ type QuizAnswers = {
   car_relationship: string | null
   horizon: string | null
   natural_scenery: string[]
+  job_categories: string[]
 }
 
 function getInitialAnswers(): QuizAnswers {
@@ -82,6 +91,7 @@ function getInitialAnswers(): QuizAnswers {
     car_relationship: null,
     horizon: null,
     natural_scenery: [],
+    job_categories: [],
   }
 }
 
@@ -173,6 +183,11 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('natural_beauty', Math.max(get('natural_beauty'), 80))
   }
 
+  // job_categories: if user selected any sector or remote, boost Economic Opportunity
+  if (answers.job_categories.length > 0) {
+    set('economic_security', Math.max(get('economic_security'), 65))
+  }
+
   return w
 }
 
@@ -195,7 +210,7 @@ function weightToBand(weight: number): PriorityLevel {
 }
 
 interface PlaceValuesGameProps {
-  onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[]) => void
+  onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => void
   onBack?: () => void
 }
 
@@ -261,6 +276,14 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     })
   }, [])
 
+  const toggle_job_categories = useCallback((value: string) => {
+    set_answers((prev) => {
+      const current = prev.job_categories
+      const next = current.includes(value) ? current.filter((x) => x !== value) : [...current, value]
+      return { ...prev, job_categories: next }
+    })
+  }, [])
+
   const go_prev = useCallback(() => {
     if (current_step > 0) {
       set_current_step((s) => s - 1)
@@ -312,10 +335,10 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       return
     }
     if (!appliedRef.current && onApplyPriorities) {
-      onApplyPriorities(priorities, naturalBeautyPreference)
+      onApplyPriorities(priorities, naturalBeautyPreference, answers.job_categories)
       appliedRef.current = true
     }
-  }, [game_state, priorities, naturalBeautyPreference, onApplyPriorities])
+  }, [game_state, priorities, naturalBeautyPreference, answers.job_categories, onApplyPriorities])
 
   // --- Playing (one question at a time)
   if (game_state === 'playing' && question) {
@@ -323,8 +346,13 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     const single_value = question.type === 'single' ? (answers[question.id as keyof QuizAnswers] as string | null) : null
     const multi_selected =
       question.type === 'multi'
-        ? answers.natural_scenery
+        ? question.id === 'natural_scenery'
+          ? answers.natural_scenery
+          : question.id === 'work'
+            ? answers.job_categories
+            : []
         : []
+    const handle_multi_toggle = question.id === 'natural_scenery' ? toggle_natural_scenery : question.id === 'work' ? toggle_job_categories : (() => {})
 
     return (
       <main className="hf-page">
@@ -369,7 +397,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                     onClick={() =>
                       question.type === 'single'
                         ? set_single(question.id as keyof QuizAnswers, opt.value)
-                        : toggle_natural_scenery(opt.value)
+                        : handle_multi_toggle(opt.value)
                     }
                     className="hf-card-sm"
                     style={{
@@ -394,7 +422,14 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                           }}
                         />
                       )}
-                      <div style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>{opt.text}</div>
+                      <div style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>
+                        {opt.text}
+                        {'description' in opt && opt.description && (
+                          <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem', fontWeight: 400 }}>
+                            {opt.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 )

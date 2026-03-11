@@ -80,12 +80,13 @@ export default function Home() {
       })
   }
 
-  const handle_apply_priorities = (priorities: PillarPriorities, naturalBeautyPreference?: string[]) => {
+  const handle_apply_priorities = (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => {
     set_search_options(prev => {
       const updated = {
         ...prev,
         priorities,
         natural_beauty_preference: naturalBeautyPreference?.length ? naturalBeautyPreference : null,
+        ...(job_categories !== undefined ? { job_categories } : {}),
       }
       try {
         sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
