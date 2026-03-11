@@ -183,9 +183,21 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('natural_beauty', Math.max(get('natural_beauty'), 80))
   }
 
-  // job_categories: if user selected any sector or remote, boost Economic Opportunity
+  // job_categories:
+  // - If user selected any local sector(s), increase Economic Opportunity importance
+  // - If they ONLY selected Remote / Flexible, local economy should matter less
   if (answers.job_categories.length > 0) {
-    set('economic_security', Math.max(get('economic_security'), 65))
+    const jobs = answers.job_categories
+    const hasRemote = jobs.includes('remote_flexible')
+    const hasNonRemote = jobs.some((k) => k !== 'remote_flexible')
+
+    if (hasNonRemote) {
+      // At least one concrete local sector: boost Economic Opportunity
+      set('economic_security', Math.max(get('economic_security'), 65))
+    } else if (hasRemote) {
+      // Remote only: local job market matters less than default
+      set('economic_security', Math.min(get('economic_security'), 20))
+    }
   }
 
   return w

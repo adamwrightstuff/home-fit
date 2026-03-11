@@ -38,12 +38,12 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
 export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
-  social_fabric: 30,
-  active_outdoors: 25,
-  neighborhood_amenities: 20,
+  social_fabric: 40,
+  neighborhood_amenities: 25,
+  active_outdoors: 15,
   natural_beauty: 10,
-  climate_risk: 10,
-  quality_education: 5,
+  climate_risk: 8,
+  quality_education: 2,
 }
 
 /**

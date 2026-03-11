@@ -664,15 +664,20 @@ def _apply_schools_disabled_weight_override(
 
 
 # Longevity Index: fixed weighted score over 6 pillars (separate from user-priority total_score).
-# Rationale: Social Fabric (strongest predictor), Active Outdoors, Neighborhood Amenities,
-# Natural Beauty, Climate Risk, Quality Education (purpose/cognitive engagement).
+# Rationale (Blue Zone–inspired):
+# - Social Fabric (strongest predictor)
+# - Daily Amenities / walkable life
+# - Natural movement via Active Outdoors
+# - Restorative Natural Beauty
+# - Climate Risk
+# - Schools / Quality Education (purpose, cognitive engagement).
 LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
-    "social_fabric": 30.0,
-    "active_outdoors": 25.0,
-    "neighborhood_amenities": 20.0,
+    "social_fabric": 40.0,
+    "neighborhood_amenities": 25.0,
+    "active_outdoors": 15.0,
     "natural_beauty": 10.0,
-    "climate_risk": 10.0,
-    "quality_education": 5.0,
+    "climate_risk": 8.0,
+    "quality_education": 2.0,
 }
 
 

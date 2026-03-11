@@ -18,12 +18,12 @@ The **Longevity Index** is a fixed weighted score over six pillars, designed to 
 
 | Pillar                  | Weight | Rationale |
 |-------------------------|--------|-----------|
-| Social Fabric           | 30%    | Single strongest longevity predictor |
-| Active Outdoors         | 25%    | Natural movement is foundational |
-| Neighborhood Amenities | 20%    | Walkability enables daily movement + social connection |
+| Social Fabric           | 40%    | Single strongest longevity predictor; core Blue Zone factor |
+| Neighborhood Amenities  | 25%    | Walkable daily life enables movement + social connection |
+| Active Outdoors         | 15%    | Natural movement and access to outdoor activity |
 | Natural Beauty          | 10%    | Stress reduction, restorative environment |
-| Climate Risk            | 10%    | Direct health impact, Blue Zone climate correlation |
-| Quality Education       | 5%     | Purpose, cognitive engagement |
+| Climate Risk            | 8%     | Direct health impact, Blue Zone climate correlation |
+| Quality Education       | 2%     | Purpose, cognitive engagement |
 
 Total: 100%. All other pillars (e.g. built beauty, air travel, transit, healthcare, economic security, housing) are not included in the Longevity Index.
 
