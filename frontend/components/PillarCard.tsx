@@ -13,6 +13,15 @@ import {
   LONGEVITY_COPY,
   type PillarKey,
 } from '@/lib/pillars'
+import {
+  PILLAR_DETAILS_SPEC,
+  getPillarValue,
+  getPillarString,
+  formatPercent,
+  resolveQualitative,
+  type DetailMetric,
+  type DetailMetricStatic,
+} from '@/lib/pillarDetailsSpec'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -76,6 +85,51 @@ function formatValue(value: any, depth: number = 0): string {
   }
 
   return String(value)
+}
+
+/** Format one spec metric value for display. Returns null if metric should be omitted (no value). */
+function formatSpecMetricValue(
+  pillar: Record<string, unknown>,
+  metric: DetailMetric,
+  staticTexts: { local_vs_chains?: string }
+): string | null {
+  if (metric.format === 'static') {
+    const key = (metric as DetailMetricStatic).textKey
+    const t = staticTexts[key as keyof typeof staticTexts]
+    return t ?? null
+  }
+  const path = 'path' in metric ? metric.path : ''
+  const num = getPillarValue(pillar, path)
+  const str = getPillarString(pillar, path)
+
+  switch (metric.format) {
+    case 'percent':
+      if (num === undefined) return null
+      return formatPercent(num, metric.max)
+    case 'count':
+      if (num === undefined && (str === undefined || str === '')) return null
+      const n = num ?? (str !== undefined && str !== '' ? parseFloat(str) : NaN)
+      if (!Number.isFinite(n)) return null
+      const suffix = metric.suffix ?? ''
+      return `${Math.round(n)}${suffix}`
+    case 'distance':
+      if (num === undefined && (str === undefined || str === '')) return null
+      const d = num ?? (str !== undefined ? parseFloat(str) : NaN)
+      if (!Number.isFinite(d)) return str ?? null
+      return `${d.toFixed(1)} km`
+    case 'qualitative':
+      if (num !== undefined) return resolveQualitative(num, metric.bands, metric.valueLabels)
+      if (str !== undefined && str !== '') {
+        if (metric.valueLabels && metric.valueLabels[str]) return metric.valueLabels[str]
+        return str
+      }
+      return null
+    case 'text':
+      if (str !== undefined && str !== '') return str
+      return null
+    default:
+      return null
+  }
 }
 
 export default function PillarCard({
@@ -412,62 +466,111 @@ export default function PillarCard({
                 </label>
               </div>
             ) : null}
-            {pillar.data_quality?.quality_tier ? (
-              <div style={{ marginBottom: '0.75rem' }}>
-                Data quality: <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textTransform: 'capitalize' }}>{pillar.data_quality.quality_tier}</span>
-              </div>
-            ) : null}
 
-            {summary && Object.keys(summary).length > 0 ? (
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {Object.entries(summary).map(([key, value]) => {
-                  // Nested objects (e.g., Active Outdoors summary)
-                  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                    return (
-                      <div key={key}>
-                        <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', textTransform: 'capitalize', marginBottom: '0.25rem' }}>
-                          {key.replace(/_/g, ' ')}
-                        </div>
-                        <div style={{ display: 'grid', gap: '0.35rem', paddingLeft: '0.75rem' }}>
-                          {Object.entries(value).map(([subKey, subValue]) => (
-                            <div key={subKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                              <span style={{ textTransform: 'capitalize' }}>{subKey.replace(/_/g, ' ')}</span>
-                              <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
-                                {formatValue(subValue, 1)}
-                              </span>
+            {(() => {
+              const spec = PILLAR_DETAILS_SPEC[pillar_key]
+              const pillarObj = pillar as unknown as Record<string, unknown>
+              const staticTexts: { local_vs_chains?: string } = {}
+              if (pillar_key === 'neighborhood_amenities') {
+                staticTexts.local_vs_chains = includeChainsValue
+                  ? 'Score includes both chains and local places.'
+                  : 'Score focuses on independent/local businesses.'
+              }
+
+              if (spec) {
+                const metricRows = spec.metrics
+                  .map((metric) => {
+                    const value = formatSpecMetricValue(pillarObj, metric, staticTexts)
+                    if (value === null) return null
+                    return { label: metric.label, value }
+                  })
+                  .filter((row): row is { label: string; value: string } => row !== null)
+
+                return (
+                  <>
+                    <p style={{ margin: 0, marginBottom: '0.75rem', color: 'var(--hf-text-primary)', lineHeight: 1.45 }}>
+                      {spec.topLine}
+                    </p>
+                    {Boolean(pillar.data_quality?.degraded) && (
+                      <div
+                        role="status"
+                        style={{
+                          marginBottom: '0.75rem',
+                          padding: '0.5rem 0.65rem',
+                          borderRadius: 8,
+                          background: 'rgba(200, 184, 74, 0.12)',
+                          border: '1px solid rgba(168, 154, 58, 0.35)',
+                          fontSize: '0.9rem',
+                          color: 'var(--hf-text-primary)',
+                        }}
+                      >
+                        {spec.degradedMessage}
+                      </div>
+                    )}
+                    {metricRows.length > 0 ? (
+                      <div style={{ display: 'grid', gap: '0.5rem' }}>
+                        {metricRows.map(({ label, value }) => (
+                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'baseline' }}>
+                            <span style={{ textTransform: 'capitalize' }}>{label}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textAlign: 'right' }}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div>No additional details available.</div>
+                    )}
+                  </>
+                )
+              }
+
+              // Fallback: generic summary/breakdown when no spec or missing data
+              if (summary && Object.keys(summary).length > 0) {
+                return (
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    {Object.entries(summary).map(([key, value]) => {
+                      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        return (
+                          <div key={key}>
+                            <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', textTransform: 'capitalize', marginBottom: '0.25rem' }}>
+                              {key.replace(/_/g, ' ')}
                             </div>
-                          ))}
+                            <div style={{ display: 'grid', gap: '0.35rem', paddingLeft: '0.75rem' }}>
+                              {Object.entries(value).map(([subKey, subValue]) => (
+                                <div key={subKey} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                                  <span style={{ textTransform: 'capitalize' }}>{subKey.replace(/_/g, ' ')}</span>
+                                  <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
+                                    {formatValue(subValue, 1)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (Array.isArray(value)) {
+                        return (
+                          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                            <span style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textAlign: 'right' }}>
+                              {value.length ? value.map((v) => String(v)).join(', ') : '—'}
+                            </span>
+                          </div>
+                        )
+                      }
+                      return (
+                        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                          <span style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
+                            {formatValue(value)}
+                          </span>
                         </div>
-                      </div>
-                    )
-                  }
-
-                  // Arrays: show as comma-separated
-                  if (Array.isArray(value)) {
-                    return (
-                      <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                        <span style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
-                        <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textAlign: 'right' }}>
-                          {value.length ? value.map((v) => String(v)).join(', ') : '—'}
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  // Simple values
-                  return (
-                    <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                      <span style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
-                      <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>
-                        {formatValue(value)}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div>No additional details available.</div>
-            )}
+                      )
+                    })}
+                  </div>
+                )
+              }
+              return <div>No additional details available.</div>
+            })()}
           </div>
 
           {onRescorePillar ? (

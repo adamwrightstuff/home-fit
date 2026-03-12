@@ -1,0 +1,252 @@
+/**
+ * Per-pillar config for the "Show details" panel on Place Results.
+ * Matches docs/pillar_details_show_spec.md: scores as %, qualitative labels, no duplicate Confidence/Data Quality.
+ */
+
+import type { PillarKey } from './pillars'
+
+export type DetailFormat = 'percent' | 'count' | 'distance' | 'qualitative' | 'text'
+
+/** Bands for converting a numeric value to a qualitative label (e.g. median_distance_m -> "Very close" / "Short walk"). */
+export interface QualitativeBand {
+  max: number
+  label: string
+}
+
+export interface DetailMetricBase {
+  label: string
+}
+
+export interface DetailMetricPercent extends DetailMetricBase {
+  path: string
+  format: 'percent'
+  max: number
+}
+
+export interface DetailMetricCount extends DetailMetricBase {
+  path: string
+  format: 'count'
+  /** e.g. " businesses within ~10–15 min" */
+  suffix?: string
+}
+
+export interface DetailMetricDistance extends DetailMetricBase {
+  path: string
+  format: 'distance'
+}
+
+export interface DetailMetricQualitative extends DetailMetricBase {
+  path: string
+  format: 'qualitative'
+  /** Map numeric value to label using bands (check value <= band.max in order). */
+  bands?: QualitativeBand[]
+  /** Or map specific values to labels. */
+  valueLabels?: Record<string, string>
+}
+
+export interface DetailMetricText extends DetailMetricBase {
+  path: string
+  format: 'text'
+}
+
+/** Static text from props (e.g. Local vs chains from includeChainsValue). */
+export interface DetailMetricStatic extends DetailMetricBase {
+  format: 'static'
+  /** Key used by PillarCard to resolve text (e.g. 'local_vs_chains'). */
+  textKey: string
+}
+
+export type DetailMetric =
+  | DetailMetricPercent
+  | DetailMetricCount
+  | DetailMetricDistance
+  | DetailMetricQualitative
+  | DetailMetricText
+  | DetailMetricStatic
+
+export interface PillarDetailsSpec {
+  topLine: string
+  metrics: DetailMetric[]
+  degradedMessage: string
+}
+
+function get(obj: unknown, path: string): unknown {
+  if (!path) return obj
+  const parts = path.split('.')
+  let cur: unknown = obj
+  for (const p of parts) {
+    if (cur == null || typeof cur !== 'object') return undefined
+    cur = (cur as Record<string, unknown>)[p]
+  }
+  return cur
+}
+
+/** Get numeric value from pillar by path. */
+export function getPillarValue(pillar: Record<string, unknown>, path: string): number | undefined {
+  const v = get(pillar, path)
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string') {
+    const n = parseFloat(v)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+
+/** Get string value from pillar by path. */
+export function getPillarString(pillar: Record<string, unknown>, path: string): string | undefined {
+  const v = get(pillar, path)
+  if (v == null) return undefined
+  return String(v)
+}
+
+/** Format a component score as percentage (no denominator shown). */
+export function formatPercent(score: number, max: number): string {
+  if (max <= 0) return '—'
+  const pct = Math.round((score / max) * 100)
+  return `${Math.min(100, Math.max(0, pct))}%`
+}
+
+/** Resolve qualitative label from numeric value and bands. */
+export function resolveQualitative(value: number | undefined, bands?: QualitativeBand[], valueLabels?: Record<string, string>): string {
+  if (value === undefined || value === null) return '—'
+  if (valueLabels && valueLabels[String(value)] !== undefined) return valueLabels[String(value)]
+  if (bands && bands.length > 0) {
+    for (const b of bands) {
+      if (value <= b.max) return b.label
+    }
+    return bands[bands.length - 1].label
+  }
+  return String(value)
+}
+
+const AMENITIES_DISTANCE_BANDS: QualitativeBand[] = [
+  { max: 200, label: 'Very close (≤3 min walk)' },
+  { max: 400, label: 'Short walk (3–6 min)' },
+  { max: 800, label: 'Moderate walk (6–10 min)' },
+  { max: 10000, label: 'Further (10+ min)' },
+]
+
+const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
+  { max: 0.5, label: 'Under 10 min walk' },
+  { max: 1.5, label: '10–20 min walk' },
+  { max: 100, label: 'Further' },
+]
+
+export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
+  natural_beauty: {
+    topLine: 'Natural scenery based on topography/views, water, greenery, and land cover.',
+    metrics: [
+      { label: 'Topography & views', path: 'breakdown.topography_viewshed', format: 'percent', max: 100 },
+      { label: 'Water access', path: 'breakdown.water', format: 'percent', max: 100 },
+      { label: 'Tree canopy', path: 'breakdown.greenery', format: 'percent', max: 100 },
+      { label: 'Natural land cover', path: 'breakdown.natural_context', format: 'percent', max: 100 },
+    ],
+    degradedMessage: 'Limited data: some natural data sources were unavailable.',
+  },
+  active_outdoors: {
+    topLine: 'Access to parks, trails, and water for an active lifestyle.',
+    metrics: [
+      { label: 'Local parks & playgrounds', path: 'breakdown.breakdown.local_parks_playgrounds', format: 'percent', max: 40 },
+      { label: 'Trail access', path: 'breakdown.breakdown.trail_access', format: 'percent', max: 30 },
+      { label: 'Water access', path: 'breakdown.breakdown.water_access', format: 'percent', max: 20 },
+      { label: 'Camping access', path: 'breakdown.breakdown.camping_access', format: 'percent', max: 10 },
+    ],
+    degradedMessage: 'Limited data: some outdoor data sources were unavailable.',
+  },
+  neighborhood_amenities: {
+    topLine: 'Walkable access to daily needs, social spots, and services.',
+    metrics: [
+      { label: 'Home walkability', path: 'breakdown.breakdown.home_walkability.score', format: 'percent', max: 60 },
+      { label: 'Daily needs nearby', path: 'breakdown.diagnostics.businesses_within_walkable', format: 'count', suffix: ' businesses within ~10–15 min' },
+      { label: 'Distance to daily needs', path: 'breakdown.diagnostics.median_distance_m', format: 'qualitative', bands: AMENITIES_DISTANCE_BANDS },
+      { label: 'Town center & vibrancy', path: 'breakdown.breakdown.location_quality', format: 'percent', max: 40 },
+      { label: 'Local vs chains', format: 'static', textKey: 'local_vs_chains' },
+    ],
+    degradedMessage: 'Limited data: OSM coverage is sparse here; this score may undercount amenities.',
+  },
+  built_beauty: {
+    topLine: 'Street and building design, diversity, and human scale.',
+    metrics: [
+      { label: 'Architecture diversity', path: 'details.architectural_analysis.metrics.diversity_score', format: 'percent', max: 100 },
+      { label: 'Street character', path: 'summary.street_character', format: 'qualitative', valueLabels: { strong: 'Strong', moderate: 'Moderate', limited: 'Limited' } },
+    ],
+    degradedMessage: 'Limited data: some built environment data were unavailable.',
+  },
+  healthcare_access: {
+    topLine: 'Access to hospitals, urgent care, clinics, and pharmacies.',
+    metrics: [
+      { label: 'Hospital access', path: 'breakdown.hospital_access', format: 'percent', max: 35 },
+      { label: 'Primary care', path: 'breakdown.primary_care', format: 'percent', max: 25 },
+      { label: 'Specialized care', path: 'breakdown.specialized_care', format: 'percent', max: 15 },
+      { label: 'Emergency services', path: 'breakdown.emergency_services', format: 'percent', max: 10 },
+      { label: 'Pharmacies', path: 'breakdown.pharmacies', format: 'percent', max: 15 },
+      { label: 'Facilities', path: 'summary.hospital_count', format: 'count', suffix: ' hospitals' },
+    ],
+    degradedMessage: 'Limited data: some healthcare data sources were unavailable.',
+  },
+  public_transit_access: {
+    topLine: 'Access to rail and key transit within walking distance.',
+    metrics: [
+      { label: 'Heavy rail', path: 'breakdown.heavy_rail', format: 'percent', max: 100 },
+      { label: 'Light rail', path: 'breakdown.light_rail', format: 'percent', max: 100 },
+      { label: 'Bus', path: 'breakdown.bus', format: 'percent', max: 100 },
+      { label: 'Nearest heavy rail', path: 'summary.nearest_heavy_rail_distance_km', format: 'distance' },
+      { label: 'Connectivity', path: 'summary.heavy_rail_connectivity_tier', format: 'text' },
+    ],
+    degradedMessage: 'Limited data: some transit data sources were unavailable.',
+  },
+  air_travel_access: {
+    topLine: 'Access to major airports from this location.',
+    metrics: [
+      { label: 'Nearest airport', path: 'summary.nearest_airport_name', format: 'text' },
+      { label: 'Distance', path: 'summary.nearest_airport_km', format: 'distance' },
+      { label: 'Airports within range', path: 'summary.airport_count', format: 'count', suffix: ' airports' },
+    ],
+    degradedMessage: 'Limited data: airport data unavailable.',
+  },
+  economic_security: {
+    topLine: 'Local job market strength for your focus (or general economic health).',
+    metrics: [
+      { label: 'Job market fit', path: 'breakdown.base_score', format: 'percent', max: 100 },
+      { label: 'Area', path: 'summary.division', format: 'text' },
+    ],
+    degradedMessage: 'Limited data: some economic data were unavailable.',
+  },
+  quality_education: {
+    topLine: 'Quality and availability of nearby schools (when enabled).',
+    metrics: [
+      { label: 'Average school rating', path: 'summary.base_avg_rating', format: 'percent', max: 10 },
+      { label: 'Schools rated', path: 'summary.total_schools_rated', format: 'count', suffix: ' schools' },
+      { label: 'Excellent schools', path: 'summary.excellent_schools_count', format: 'count', suffix: ' excellent' },
+    ],
+    degradedMessage: 'Limited data: school data unavailable or scoring disabled.',
+  },
+  housing_value: {
+    topLine: 'How far your money goes on housing here.',
+    metrics: [
+      { label: 'Local affordability', path: 'breakdown.local_affordability', format: 'percent', max: 50 },
+      { label: 'Space', path: 'breakdown.space', format: 'percent', max: 30 },
+      { label: 'Value efficiency', path: 'breakdown.value_efficiency', format: 'percent', max: 20 },
+      { label: 'Median home value', path: 'summary.median_value', format: 'text' },
+    ],
+    degradedMessage: 'Limited data: some housing or income data were unavailable.',
+  },
+  climate_risk: {
+    topLine: 'Exposure to flooding, heat, and air quality.',
+    metrics: [
+      { label: 'Flood risk', path: 'breakdown.flood_risk', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
+      { label: 'Heat risk', path: 'breakdown.heat_risk', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
+      { label: 'Air quality', path: 'breakdown.air_quality', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
+    ],
+    degradedMessage: 'Limited data: some climate/flood data were unavailable.',
+  },
+  social_fabric: {
+    topLine: 'Community stability and civic places to connect.',
+    metrics: [
+      { label: 'Residential stability', path: 'summary.residential_stability', format: 'qualitative', valueLabels: { stable: 'Stable', moderate: 'Moderate', high_turnover: 'High turnover' } },
+      { label: 'Civic & third places', path: 'summary.civic_places_count', format: 'count', suffix: ' civic places nearby' },
+      { label: 'Community strength', path: 'summary.community_strength', format: 'qualitative', valueLabels: { strong: 'Strong', moderate: 'Moderate', fragile: 'Fragile' } },
+    ],
+    degradedMessage: 'Limited data: some community data were unavailable.',
+  },
+}
