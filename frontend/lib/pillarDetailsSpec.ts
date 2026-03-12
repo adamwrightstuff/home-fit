@@ -146,10 +146,9 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   active_outdoors: {
     topLine: 'Access to parks, trails, and water for an active lifestyle.',
     metrics: [
-      { label: 'Local parks & playgrounds', path: 'breakdown.breakdown.local_parks_playgrounds', format: 'percent', max: 40 },
-      { label: 'Trail access', path: 'breakdown.breakdown.trail_access', format: 'percent', max: 30 },
-      { label: 'Water access', path: 'breakdown.breakdown.water_access', format: 'percent', max: 20 },
-      { label: 'Camping access', path: 'breakdown.breakdown.camping_access', format: 'percent', max: 10 },
+      { label: 'Daily urban outdoors', path: 'breakdown.breakdown.daily_urban_outdoors', format: 'percent', max: 30 },
+      { label: 'Wild adventure', path: 'breakdown.breakdown.wild_adventure', format: 'percent', max: 50 },
+      { label: 'Waterfront lifestyle', path: 'breakdown.breakdown.waterfront_lifestyle', format: 'percent', max: 20 },
     ],
     degradedMessage: 'Limited data: some outdoor data sources were unavailable.',
   },
@@ -234,9 +233,10 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   climate_risk: {
     topLine: 'Exposure to flooding, heat, and air quality.',
     metrics: [
-      { label: 'Flood risk', path: 'breakdown.flood_risk', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
-      { label: 'Heat risk', path: 'breakdown.heat_risk', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
-      { label: 'Air quality', path: 'breakdown.air_quality', format: 'qualitative', valueLabels: { low: 'Low', medium: 'Medium', high: 'High' } },
+      { label: 'Flood risk', path: 'summary.flood_risk_tier', format: 'qualitative', valueLabels: { floodway: 'High', sfha: 'High', x_500yr: 'Moderate', d: 'Moderate', minimal: 'Low' } },
+      { label: 'Heat exposure', path: 'breakdown.lst_score', format: 'percent', max: 100 },
+      { label: 'Air quality', path: 'breakdown.aqi_score', format: 'percent', max: 100 },
+      { label: 'Climate trend', path: 'breakdown.climate_trend_score_0_100', format: 'percent', max: 100 },
     ],
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
   },
