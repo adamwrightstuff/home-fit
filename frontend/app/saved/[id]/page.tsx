@@ -59,6 +59,15 @@ export default function SavedDetailPage() {
   }, [id, user])
 
   const rawPayload = row?.score_payload as ScoreResponse | undefined
+  const hadSchoolScoring = useMemo(() => {
+    if (!rawPayload) return false
+    const qe = rawPayload.livability_pillars?.quality_education
+    if (!qe || typeof qe !== 'object') return false
+    const dq = qe.data_quality as { fallback_reason?: string } | undefined
+    const reason = dq?.fallback_reason ?? (dq as { reason?: string } | undefined)?.reason
+    // When school scoring is disabled, backend sets fallback_reason/reason to "School scoring disabled".
+    return typeof reason === 'string' ? reason.toLowerCase().includes('school scoring disabled') === false : true
+  }, [rawPayload])
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
     return reweightScoreResponseFromPriorities(rawPayload, priorities)
@@ -175,13 +184,14 @@ export default function SavedDetailPage() {
           built_character_preference: undefined,
           built_density_preference: undefined,
           include_chains: false,
-          enable_schools: false,
+          // Request school scoring on rescore when the original saved payload had it enabled.
+          enable_schools: hadSchoolScoring,
         })
       } finally {
         setRescoringPillarKey(null)
       }
     },
-    [row, priorities, jobCategories, handleRunPillarScore]
+    [row, priorities, jobCategories, handleRunPillarScore, hadSchoolScoring]
   )
 
   const handleSave = useCallback(async () => {
