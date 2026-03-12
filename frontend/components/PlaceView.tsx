@@ -124,6 +124,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     }
     return {}
   })
+  const [fullPillarData, setFullPillarData] = useState<Record<string, Record<string, unknown>>>(() => {
+    if (initialPayload?.livability_pillars) {
+      const pillars = initialPayload.livability_pillars as unknown as Record<string, Record<string, unknown>>
+      const out: Record<string, Record<string, unknown>> = {}
+      for (const k of Object.keys(pillars)) {
+        if (pillars[k] && typeof pillars[k] === 'object') out[k] = { ...pillars[k] }
+      }
+      return out
+    }
+    return {}
+  })
   const [placeSummary, setPlaceSummary] = useState<string | null>(() => initialPayload?.place_summary ?? null)
   const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
   const [loading, setLoading] = useState(false)
@@ -239,6 +250,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           } else if (typeof data.score === 'number') {
             setPillarScores((prev) => ({ ...prev, [pillarKey]: { score: data.score!, confidence: data.confidence ?? 0, status: status as 'success' | 'fallback', data_quality: data.data_quality } }))
           }
+          const fullPillar = (resp.livability_pillars as unknown as Record<string, unknown>)[pillarKey]
+          if (fullPillar && typeof fullPillar === 'object') {
+            setFullPillarData((prev) => ({ ...prev, [pillarKey]: { ...(fullPillar as Record<string, unknown>) } }))
+          }
         }
         const summary = (resp as { place_summary?: string }).place_summary
         if (summary != null) setPlaceSummary(summary)
@@ -308,7 +323,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     return getPillarWeightsAndContributions(pillarScores, prioritiesForScoredOnly)
   }, [pillarScores, prioritiesForScoredOnly])
 
-  /** Build ScoreResponse payload for save (only when has results). */
+  /** Build ScoreResponse payload for save (only when has results). Uses full pillar data when available so Show details has breakdown/summary. */
   const savePayload = useMemo((): ScoreResponse | null => {
     if (Object.keys(pillarScores).length === 0 || totalScore == null) return null
     const tokenAllocation = getPillarWeightsFromPriorities(prioritiesForScoredOnly)
@@ -320,15 +335,27 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       const weight = wc ? wc.weight : 0
       const contribution = wc ? wc.contribution : 0
       const importanceLevel = selectedPriorities[k] === 'Low' || selectedPriorities[k] === 'Medium' || selectedPriorities[k] === 'High' ? selectedPriorities[k] : 'None'
-      livability_pillars[k] = {
-        score: entry.score,
-        weight,
-        contribution,
-        confidence: entry.confidence ?? 0,
-        data_quality: entry.data_quality ?? {},
-        status: entry.status ?? 'success',
-        importance_level: importanceLevel,
-      }
+      const full = fullPillarData[k]
+      livability_pillars[k] = full
+        ? {
+            ...full,
+            score: entry.score,
+            weight,
+            contribution,
+            confidence: entry.confidence ?? 0,
+            data_quality: entry.data_quality ?? full.data_quality ?? {},
+            status: entry.status ?? full.status ?? 'success',
+            importance_level: importanceLevel,
+          }
+        : {
+            score: entry.score,
+            weight,
+            contribution,
+            confidence: entry.confidence ?? 0,
+            data_quality: entry.data_quality ?? {},
+            status: entry.status ?? 'success',
+            importance_level: importanceLevel,
+          }
     }
     const location_info = { city: place.city, state: place.state, zip: place.zip_code ?? '' }
     return {
@@ -345,7 +372,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
       metadata: { version: '', architecture: '', note: '', test_mode: false },
     }
-  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly])
+  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
 
   /** Priorities object for save (all pillars, selected use current importance). */
   const savePriorities = useMemo((): PillarPriorities => {
@@ -466,6 +493,17 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         }
       })
       setPillarScores(mergedScores)
+      const fullPillars = resp.livability_pillars as unknown as Record<string, Record<string, unknown>>
+      if (fullPillars && typeof fullPillars === 'object') {
+        setFullPillarData((prev) => {
+          const next = { ...prev }
+          toRun.forEach((k) => {
+            const fp = fullPillars[k]
+            if (fp && typeof fp === 'object') next[k] = { ...fp }
+          })
+          return next
+        })
+      }
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
       setProgress(100)

@@ -161,6 +161,11 @@ export default function PillarCard({
   const isFailed = failureType === 'execution_error'
   const isFallback = failureType === 'fallback'
   const isIncomplete = failureType === 'incomplete'
+  const isSchoolsNotScored =
+    pillar_key === 'quality_education' &&
+    pillar.score === 0 &&
+    (pillar.data_quality as { fallback_used?: boolean; reason?: string } | undefined)?.fallback_used === true &&
+    String((pillar.data_quality as { reason?: string } | undefined)?.reason ?? '').toLowerCase().includes('disabled')
 
   // Built Beauty: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
@@ -231,7 +236,7 @@ export default function PillarCard({
                   </span>
                 </span>
               )}
-              {isFallback && (
+              {isFallback && !isSchoolsNotScored && (
                 <span
                   style={{
                     fontSize: '0.7rem',
@@ -248,6 +253,26 @@ export default function PillarCard({
                   Estimated score
                   <span id={`pillar-${pillar_key}-fallback-desc`} style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
                     Real data wasn&apos;t available — this score is estimated and may not reflect this location accurately.
+                  </span>
+                </span>
+              )}
+              {isSchoolsNotScored && (
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: 6,
+                    background: 'var(--hf-bg-subtle)',
+                    color: 'var(--hf-text-secondary)',
+                    border: '1px solid var(--hf-border)',
+                  }}
+                  title="School scoring was not run for this location."
+                  aria-describedby={`pillar-${pillar_key}-not-scored-desc`}
+                >
+                  Not scored
+                  <span id={`pillar-${pillar_key}-not-scored-desc`} style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+                    School scoring was not run for this location.
                   </span>
                 </span>
               )}
@@ -314,7 +339,7 @@ export default function PillarCard({
               ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
             }}
           >
-            {isLoading ? '—' : isFailed ? '?' : <>{isFallback && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
+            {isLoading ? '—' : isFailed ? '?' : <>{isFallback && !isSchoolsNotScored && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
           </span>
           {!isFailed && !isLoading && (
             <span

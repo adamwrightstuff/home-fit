@@ -1917,7 +1917,7 @@ def _compute_single_score_internal(
                 "high": schools_by_level.get("high", [])
             },
             "total_schools_rated": total_schools,
-            "confidence": 50 if not use_school_scoring else 85,
+            "confidence": 0 if not use_school_scoring else 85,
             "data_quality": {
                 "fallback_used": not use_school_scoring or not schools_found,
                 "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
@@ -3290,7 +3290,7 @@ async def _stream_score_with_progress(
                     "high": schools_by_level.get("high", [])
                 },
                 "total_schools_rated": total_schools,
-                "confidence": 50 if not use_school_scoring else 85,
+                "confidence": 0 if not use_school_scoring else 85,
                 "data_quality": {
                     "fallback_used": not use_school_scoring or not schools_found,
                     "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
@@ -4218,7 +4218,7 @@ async def stream_score(
                 "high": schools_by_level.get("high", [])
             },
             "total_schools_rated": total_schools,
-            "confidence": 50 if not use_school_scoring else 85,  # Lower confidence when disabled
+            "confidence": 0 if not use_school_scoring else 85,  # Lower confidence when disabled
             "data_quality": {
                 "fallback_used": not use_school_scoring or not schools_found,
                 "reason": "School scoring disabled" if not use_school_scoring else ("No schools with ratings found" if not schools_found else "School data available"),
