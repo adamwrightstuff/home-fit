@@ -264,7 +264,7 @@ export default function PillarCard({
               {isLongevityPillar(pillar_key) && (
                 <span
                   className="hf-muted"
-                  title={LONGEVITY_COPY.tooltip}
+                  title={pillarNarrative ?? LONGEVITY_COPY.tooltip}
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,

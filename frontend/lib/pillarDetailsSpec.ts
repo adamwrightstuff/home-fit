@@ -213,7 +213,6 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   quality_education: {
     topLine: 'Quality and availability of nearby schools (when enabled).',
     metrics: [
-      { label: 'Average school rating', path: 'summary.base_avg_rating', format: 'percent', max: 10 },
       { label: 'Schools rated', path: 'summary.total_schools_rated', format: 'count', suffix: ' schools' },
       { label: 'Excellent schools', path: 'summary.excellent_schools_count', format: 'count', suffix: ' excellent' },
     ],
