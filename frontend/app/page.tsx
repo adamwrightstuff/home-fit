@@ -164,7 +164,14 @@ export default function Home() {
             onAppliedQuizPrioritiesConsumed={() => setJustAppliedQuizPriorities(false)}
             onSave={async (payload, priorities) => {
               try {
-                const { id } = await saveScore(payload, priorities)
+                const payloadWithConfig: ScoreResponse = {
+                  ...payload,
+                  metadata: {
+                    ...(payload.metadata ?? {}),
+                    saved_search_options: search_options,
+                  },
+                }
+                const { id } = await saveScore(payloadWithConfig, priorities)
                 setSavedScoreId(id)
                 return { id }
               } catch (e) {
@@ -267,7 +274,14 @@ export default function Home() {
             onRunPillarScore={handleRunPillarScore}
             onSave={async (payload, priorities) => {
               try {
-                const { id } = await saveScore(payload, priorities)
+                const payloadWithConfig: ScoreResponse = {
+                  ...payload,
+                  metadata: {
+                    ...(payload.metadata ?? {}),
+                    saved_search_options: search_options,
+                  },
+                }
+                const { id } = await saveScore(payloadWithConfig, priorities)
                 setSavedScoreId(id)
                 return { id }
               } catch (e) {

@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getScore, getScoreWithProgress } from '@/lib/api'
-import type { PillarPriorities } from '@/components/SearchOptions'
+import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import type { PillarKey } from '@/lib/pillars'
 import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
@@ -43,6 +43,7 @@ export default function SavedDetailPage() {
   const [scoreAgainError, setScoreAgainError] = useState<string | null>(null)
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
+  const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
 
   useEffect(() => {
     if (!id || !user) {
@@ -52,7 +53,25 @@ export default function SavedDetailPage() {
     getSavedScore(id)
       .then((r) => {
         setRow(r)
-        setPriorities(prioritiesFromRow(r))
+        const rowPriorities = prioritiesFromRow(r)
+        setPriorities(rowPriorities)
+        const payload = r.score_payload as ScoreResponse | undefined
+        const saved = (payload?.metadata as any)?.saved_search_options
+        const initialSearchOptions: SearchOptions = {
+          priorities: rowPriorities,
+          include_chains: Boolean(saved?.include_chains),
+          enable_schools: Boolean(saved?.enable_schools),
+          job_categories: Array.isArray(saved?.job_categories) ? saved.job_categories : [],
+          natural_beauty_preference: Array.isArray(saved?.natural_beauty_preference)
+            ? saved.natural_beauty_preference
+            : null,
+          built_character_preference:
+            typeof saved?.built_character_preference === 'string' ? saved.built_character_preference : null,
+          built_density_preference:
+            typeof saved?.built_density_preference === 'string' ? saved.built_density_preference : null,
+        }
+        setSearchOptions(initialSearchOptions)
+        setJobCategories(initialSearchOptions.job_categories ?? [])
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => setLoading(false))
@@ -90,12 +109,19 @@ export default function SavedDetailPage() {
         priorities: JSON.stringify(priorities),
         job_categories: jobCategories.length > 0 ? jobCategories.join(',') : undefined,
       })
-      await updateSavedScore(row.id, { scorePayload: newResponse, priorities })
+      const payloadWithConfig: ScoreResponse = {
+        ...newResponse,
+        metadata: {
+          ...(newResponse.metadata ?? {}),
+          saved_search_options: searchOptions,
+        },
+      }
+      await updateSavedScore(row.id, { scorePayload: payloadWithConfig, priorities })
       setRow((prev) =>
         prev
           ? {
               ...prev,
-              score_payload: newResponse,
+              score_payload: payloadWithConfig,
               priorities,
               updated_at: new Date().toISOString(),
             }
@@ -106,7 +132,7 @@ export default function SavedDetailPage() {
     } finally {
       setScoreAgainLoading(false)
     }
-  }, [row, priorities, jobCategories])
+  }, [row, priorities, jobCategories, searchOptions])
 
   const handleRunPillarScore = useCallback(
     async (pillarKey: PillarKey, options: RunPillarScoreOptions) => {
@@ -126,13 +152,20 @@ export default function SavedDetailPage() {
         () => {}
       )
       const current = rawPayload as ScoreResponse
-      const merged: ScoreResponse = {
+      const mergedBase: ScoreResponse = {
         ...current,
         livability_pillars: {
           ...current.livability_pillars,
           [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
         } as ScoreResponse['livability_pillars'],
         place_summary: response.place_summary ?? current.place_summary,
+      }
+      const merged: ScoreResponse = {
+        ...mergedBase,
+        metadata: {
+          ...(mergedBase.metadata ?? {}),
+          saved_search_options: searchOptions,
+        },
       }
       // Recompute Longevity Index from updated pillar scores so it reflects any new longevity pillars.
       try {
@@ -169,7 +202,7 @@ export default function SavedDetailPage() {
       )
       setPriorities(options.priorities)
     },
-    [row, rawPayload]
+    [row, rawPayload, searchOptions]
   )
 
   const handleRescorePillar = useCallback(
@@ -180,10 +213,10 @@ export default function SavedDetailPage() {
         await handleRunPillarScore(pillarKey, {
           priorities,
           job_categories: jobCategories.length > 0 ? jobCategories : undefined,
-          natural_beauty_preference: null,
-          built_character_preference: undefined,
-          built_density_preference: undefined,
-          include_chains: false,
+          natural_beauty_preference: searchOptions?.natural_beauty_preference ?? null,
+          built_character_preference: searchOptions?.built_character_preference ?? undefined,
+          built_density_preference: searchOptions?.built_density_preference ?? undefined,
+          include_chains: searchOptions?.include_chains ?? false,
           // Request school scoring on rescore when the original saved payload had it enabled.
           enable_schools: hadSchoolScoring,
         })
@@ -191,7 +224,7 @@ export default function SavedDetailPage() {
         setRescoringPillarKey(null)
       }
     },
-    [row, priorities, jobCategories, handleRunPillarScore, hadSchoolScoring]
+    [row, priorities, jobCategories, handleRunPillarScore, hadSchoolScoring, searchOptions]
   )
 
   const handleSave = useCallback(async () => {
@@ -304,6 +337,11 @@ export default function SavedDetailPage() {
           priorities={priorities ?? DEFAULT_PRIORITIES}
           onPrioritiesChange={(next) => setPriorities(next)}
           placeSummary={displayData.place_summary ?? null}
+          searchOptions={searchOptions}
+          onSearchOptionsChange={(next) => {
+            setSearchOptions(next)
+            setJobCategories(next.job_categories ?? [])
+          }}
           onRunPillarScore={handleRunPillarScore}
           onRescorePillar={handleRescorePillar}
           rescoringPillarKey={rescoringPillarKey}
