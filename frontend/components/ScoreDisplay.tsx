@@ -445,6 +445,7 @@ export default function ScoreDisplay({
                 key={key}
                 pillar_key={key}
                 pillar={pillar}
+                placeLabel={locationDisplayName}
                 loading={Boolean(isLoading && pillarLoadingKeys?.has(key))}
                 importanceLevel={level}
                 onImportanceChange={

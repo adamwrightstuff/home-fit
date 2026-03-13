@@ -22,10 +22,13 @@ import {
   type DetailMetric,
   type DetailMetricStatic,
 } from '@/lib/pillarDetailsSpec'
+import { getPillarNarrative } from '@/lib/pillarNarratives'
 
 interface PillarCardProps {
   pillar_key: PillarKey
   pillar: LivabilityPillar
+  /** Human-readable place label (e.g. "Carroll Gardens, Brooklyn") for location-specific narratives. */
+  placeLabel?: string
   /** When true, render this card in a loading/skeleton state. */
   loading?: boolean
   /** When provided, Rerun button is shown for fallback/failed pillars. */
@@ -138,9 +141,56 @@ function formatSpecMetricValue(
   }
 }
 
+const METRIC_EXPLAINERS: Record<string, string> = {
+  'natural_beauty:Tree score': 'How much of the nearby area is covered by trees and greenery.',
+  'natural_beauty:Neighborhood canopy': 'Share of your neighborhood area with tree cover.',
+  'natural_beauty:Local canopy': 'Tree cover close to your home.',
+  'natural_beauty:Extended canopy': 'Tree cover in the wider surroundings.',
+  'active_outdoors:Daily urban outdoors': 'Parks and everyday green spaces for short walks and play.',
+  'active_outdoors:Wild adventure': 'Trails and wilder areas for hiking and exploring.',
+  'active_outdoors:Waterfront lifestyle': 'Nearby lakes, rivers, or coasts you can enjoy.',
+  'neighborhood_amenities:Home walkability': 'How many daily needs you can reach on foot from home.',
+  'neighborhood_amenities:Daily needs nearby': 'Rough count of shops and services within about a 10–15 minute walk.',
+  'neighborhood_amenities:Town center & vibrancy': 'Strength of the nearest main street or town center.',
+  'neighborhood_amenities:Local vs chains': 'Whether the score focuses on local spots or includes chain businesses.',
+  'built_beauty:Architecture diversity': 'Variety of building types and styles nearby.',
+  'built_beauty:Street character': 'How human-scale and interesting the surrounding streets feel.',
+  'healthcare_access:Hospital access': 'Number of hospitals nearby and how far they are.',
+  'healthcare_access:Primary care': 'Access to everyday doctors and clinics.',
+  'healthcare_access:Specialized care': 'Access to specialists for specific conditions.',
+  'healthcare_access:Emergency services': 'Access to emergency rooms and urgent care.',
+  'healthcare_access:Pharmacies': 'Nearby places to fill prescriptions.',
+  'healthcare_access:Facilities': 'Total hospitals within a reasonable drive.',
+  'public_transit_access:Heavy rail': 'Access to subway or commuter rail within reach.',
+  'public_transit_access:Light rail': 'Access to trams or light rail lines.',
+  'public_transit_access:Bus': 'Availability of useful bus routes nearby.',
+  'public_transit_access:Nearest heavy rail': 'Distance to the closest major rail stop.',
+  'public_transit_access:Connectivity': 'How well that rail line connects to the wider region.',
+  'air_travel_access:Nearest airport': 'Main airport you’re most likely to use.',
+  'air_travel_access:Distance': 'Travel distance from this place to that airport.',
+  'air_travel_access:Airports within range': 'Major airports you can reasonably reach from here.',
+  'economic_security:Job market fit': 'Overall strength of the local job market for this kind of work.',
+  'economic_security:Area': 'Broader U.S. region this place is compared against.',
+  'quality_education:Average school rating': 'Average quality of nearby schools on a 0–10 scale.',
+  'quality_education:Schools rated': 'How many nearby schools have rating data.',
+  'quality_education:Excellent schools': 'Count of top-rated schools nearby.',
+  'housing_value:Local affordability': 'How manageable housing costs are relative to local incomes.',
+  'housing_value:Space': 'How much room you generally get for the price.',
+  'housing_value:Value efficiency': 'Overall “bang for your buck” on housing here.',
+  'housing_value:Median home value': 'Typical home price in this area.',
+  'climate_risk:Flood risk': 'Overall chance of flooding based on local flood zones.',
+  'climate_risk:Heat exposure': 'How often this area runs hotter than is comfortable.',
+  'climate_risk:Air quality': 'How often the air is clean versus polluted.',
+  'climate_risk:Climate trend': 'How much climate risks here are expected to change over time.',
+  'social_fabric:Residential stability': 'Share of people who stayed in the same home or county over the past year.',
+  'social_fabric:Civic & third places': 'Libraries, community centers, and other non-commercial gathering places within about an 800m walk.',
+  'social_fabric:Community strength': 'Civic engagement and voter participation compared with similar regions.',
+}
+
 export default function PillarCard({
   pillar_key,
   pillar,
+  placeLabel,
   loading,
   onRerun,
   rerunDisabled,
@@ -190,6 +240,9 @@ export default function PillarCard({
             builtMetrics.diversity_score ?? rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
         }
       : detailsSource ?? {}
+
+  const locationLabel = placeLabel || 'This area'
+  const pillarNarrative = getPillarNarrative(pillar_key, locationLabel, pillar as unknown as Record<string, unknown>)
 
   return (
     <div
@@ -465,6 +518,11 @@ export default function PillarCard({
 
       {expanded ? (
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--hf-border)' }}>
+          {pillarNarrative && (
+            <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+              {pillarNarrative}
+            </div>
+          )}
           {PILLAR_LONG_DESCRIPTIONS[pillar_key] ? (
             <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem', lineHeight: 1.5 }}>
               {PILLAR_LONG_DESCRIPTIONS[pillar_key]}
@@ -519,7 +577,7 @@ export default function PillarCard({
                   .map((metric) => {
                     const value = formatSpecMetricValue(pillarObj, metric, staticTexts)
                     if (value === null) return null
-                    return { label: metric.label, value }
+                      return { label: metric.label, value }
                   })
                   .filter((row): row is { label: string; value: string } => row !== null)
 
@@ -546,12 +604,51 @@ export default function PillarCard({
                     )}
                     {metricRows.length > 0 ? (
                       <div style={{ display: 'grid', gap: '0.5rem' }}>
-                        {metricRows.map(({ label, value }) => (
-                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'baseline' }}>
-                            <span style={{ textTransform: 'capitalize' }}>{label}</span>
-                            <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)', textAlign: 'right' }}>{value}</span>
-                          </div>
-                        ))}
+                        {metricRows.map(({ label, value }) => {
+                          const explainer = METRIC_EXPLAINERS[`${pillar_key}:${label}`]
+                          return (
+                            <div
+                              key={label}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.15rem',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'baseline',
+                                  gap: '0.5rem',
+                                }}
+                              >
+                                <span style={{ textTransform: 'none' }}>{label}</span>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    color: 'var(--hf-text-primary)',
+                                    textAlign: 'right',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {value}
+                                </span>
+                              </div>
+                              {explainer && (
+                                <span
+                                  style={{
+                                    fontSize: '0.8rem',
+                                    color: 'var(--hf-text-secondary)',
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  {explainer}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     ) : (
                       <div>No additional details available.</div>
