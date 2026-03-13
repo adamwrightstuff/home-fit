@@ -40,6 +40,12 @@ interface PillarCardProps {
   includeChainsValue?: boolean
   /** Neighborhood Amenities only: toggle include_chains and (optionally) rescore. */
   onIncludeChainsChange?: (next: boolean) => void
+  /** Natural Beauty only: preference profile applied when scoring. */
+  naturalBeautyPreference?: string[] | null
+  /** Built Beauty only: character preference applied when scoring. */
+  builtCharacterPreference?: string | null
+  /** Built Beauty only: density preference applied when scoring. */
+  builtDensityPreference?: string | null
   /** Current importance for this pillar (for inline weight editing on Results). */
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
@@ -469,6 +475,12 @@ export default function PillarCard({
           </div>
 
           <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+            {pillar_key === 'natural_beauty' && naturalBeautyPreference && naturalBeautyPreference.length > 0 && (
+              <div style={{ marginBottom: '0.5rem' }}>
+                <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>{' '}
+                {naturalBeautyPreference.join(', ')}
+              </div>
+            )}
             {pillar_key === 'neighborhood_amenities' && onIncludeChainsChange ? (
               <div style={{ marginBottom: '0.85rem' }}>
                 <label

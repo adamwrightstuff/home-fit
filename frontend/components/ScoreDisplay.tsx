@@ -468,6 +468,9 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
+                naturalBeautyPreference={key === 'natural_beauty' ? searchOptions?.natural_beauty_preference ?? null : undefined}
+                builtCharacterPreference={key === 'built_beauty' ? searchOptions?.built_character_preference ?? null : undefined}
+                builtDensityPreference={key === 'built_beauty' ? searchOptions?.built_density_preference ?? null : undefined}
               />
             )
           })}
