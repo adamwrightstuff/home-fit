@@ -101,6 +101,13 @@ export interface Metadata {
   test_mode: boolean;
   cache_hit?: boolean;
   cache_timestamp?: number;
+  /**
+   * Optional: persisted client search configuration used when the score was generated.
+   * Stored so saved scores can restore the user's original preferences.
+   */
+  saved_search_options?: import('@/components/SearchOptions').SearchOptions | null;
+  /** Allow forward-compatible metadata keys without breaking the type. */
+  [key: string]: unknown;
 }
 
 export interface ScoreResponse {
