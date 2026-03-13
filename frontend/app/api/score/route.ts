@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 const RAILWAY_API_BASE_URL =
-  process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
+  process.env.RAILWAY_API_BASE_URL || 'http://127.0.0.1:8000';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
 // Must be under Vercel maxDuration (60s) so we return a proper 502 and client can retry (cold start).
 const SCORE_PROXY_TIMEOUT_MS = Number(process.env.HOMEFIT_SCORE_PROXY_TIMEOUT_MS || '50000');

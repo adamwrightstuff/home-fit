@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 15;
 
 const RAILWAY_API_BASE_URL =
-  process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
+  process.env.RAILWAY_API_BASE_URL || 'http://127.0.0.1:8000';
 const HOMEFIT_PROXY_SECRET = process.env.HOMEFIT_PROXY_SECRET || '';
 
 export async function GET(req: NextRequest) {

@@ -1229,6 +1229,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   disabled={saving}
                   className="hf-btn-secondary"
                   style={{ padding: '0.6rem 1rem', borderRadius: 10, fontSize: '0.95rem' }}
+                  data-testid="save-place"
                 >
                   {saving ? 'Saving…' : 'Save this place'}
                 </button>
@@ -1262,6 +1263,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             disabled={loading || pillarsInProgress.length > 0}
             className="hf-btn-primary"
             style={{ width: '100%', padding: '1rem 1.5rem', fontSize: '1.1rem' }}
+            data-testid="run-score"
           >
             {loading ? 'Scoring…' : pillarsInProgress.length > 0 ? 'Rerunning…' : `Run Score (${netNewCount})`}
           </button>

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 const RAILWAY_API_BASE_URL =
-  process.env.RAILWAY_API_BASE_URL || 'https://home-fit-production.up.railway.app';
+  process.env.RAILWAY_API_BASE_URL || 'http://127.0.0.1:8000';
 
 export async function GET() {
   try {

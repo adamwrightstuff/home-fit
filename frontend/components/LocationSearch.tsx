@@ -202,12 +202,14 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             className={`hf-input ${isInvalid ? 'hf-input--invalid' : ''}`}
             disabled={disabled}
             autoComplete="off"
+            aria-label="Search for a place"
             aria-autocomplete="list"
             aria-haspopup="listbox"
             aria-expanded={suggestionsOpen && suggestions.length > 0}
             aria-controls="location-suggestions"
             aria-activedescendant={activeIndex >= 0 ? `location-suggestion-${activeIndex}` : undefined}
             role="combobox"
+            data-testid="location-search-input"
           />
           {suggestionsOpen && (suggestions.length > 0 || suggestionsLoading) && (
             <ul
@@ -228,6 +230,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
                     role="option"
                     aria-selected={i === activeIndex ? 'true' : 'false'}
                     className={`hf-location-suggestion ${i === activeIndex ? 'hf-location-suggestion--active' : ''}`}
+                    data-testid="location-suggestion"
                     onMouseEnter={() => setActiveIndex(i)}
                     onMouseDown={(e) => {
                       e.preventDefault()
