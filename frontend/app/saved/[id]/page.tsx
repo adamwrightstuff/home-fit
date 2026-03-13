@@ -111,10 +111,11 @@ export default function SavedDetailPage() {
       })
       const payloadWithConfig: ScoreResponse = {
         ...newResponse,
+        // Allow custom metadata field for saved search options.
         metadata: {
           ...(newResponse.metadata ?? {}),
           saved_search_options: searchOptions,
-        },
+        } as any,
       }
       await updateSavedScore(row.id, { scorePayload: payloadWithConfig, priorities })
       setRow((prev) =>
@@ -162,10 +163,11 @@ export default function SavedDetailPage() {
       }
       const merged: ScoreResponse = {
         ...mergedBase,
+        // Allow custom metadata field for saved search options.
         metadata: {
           ...(mergedBase.metadata ?? {}),
           saved_search_options: searchOptions,
-        },
+        } as any,
       }
       // Recompute Longevity Index from updated pillar scores so it reflects any new longevity pillars.
       try {
