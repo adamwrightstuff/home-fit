@@ -166,10 +166,11 @@ export default function Home() {
               try {
                 const payloadWithConfig: ScoreResponse = {
                   ...payload,
+                  // Allow custom metadata field for saved search options.
                   metadata: {
                     ...(payload.metadata ?? {}),
                     saved_search_options: search_options,
-                  },
+                  } as any,
                 }
                 const { id } = await saveScore(payloadWithConfig, priorities)
                 setSavedScoreId(id)
@@ -276,10 +277,11 @@ export default function Home() {
               try {
                 const payloadWithConfig: ScoreResponse = {
                   ...payload,
+                  // Allow custom metadata field for saved search options.
                   metadata: {
                     ...(payload.metadata ?? {}),
                     saved_search_options: search_options,
-                  },
+                  } as any,
                 }
                 const { id } = await saveScore(payloadWithConfig, priorities)
                 setSavedScoreId(id)
