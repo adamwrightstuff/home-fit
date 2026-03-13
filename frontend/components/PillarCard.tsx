@@ -200,6 +200,9 @@ export default function PillarCard({
   onIncludeChainsChange,
   importanceLevel,
   onImportanceChange,
+  naturalBeautyPreference,
+  builtCharacterPreference,
+  builtDensityPreference,
 }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
