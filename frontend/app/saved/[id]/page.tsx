@@ -399,98 +399,67 @@ export default function SavedDetailPage() {
             />
           </div>
 
-          {/* HomeFit + Longevity score row (same layout as PlaceView) */}
+          {/* HomeFit on top, Longevity & Status Signal below (same layout as PlaceView) */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'stretch',
+              flexDirection: 'column',
+              alignItems: 'center',
               marginBottom: 0,
-              gap: 0,
+              padding: '1rem 0.75rem',
             }}
           >
             <div
               style={{
-                flex: '1 1 50%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '1rem 0.75rem',
+                fontSize: '2.25rem',
+                fontWeight: 800,
+                color: totalScore != null ? 'var(--hf-homefit-green)' : 'var(--hf-text-secondary)',
+                lineHeight: 1.1,
               }}
             >
-              <div
-                style={{
-                  fontSize: '2.25rem',
-                  fontWeight: 800,
-                  color: totalScore != null ? 'var(--hf-homefit-green)' : 'var(--hf-text-secondary)',
-                  lineHeight: 1.1,
-                }}
-              >
-                {totalScore != null ? totalScore.toFixed(1) : '—'}
-              </div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--hf-text-primary)',
-                  marginTop: '0.25rem',
-                }}
-              >
-                HomeFit Score
-                <HomeFitInfo />
-              </div>
-              <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
-                {HOMEFIT_COPY.subtitle}
-              </div>
+              {totalScore != null ? totalScore.toFixed(1) : '—'}
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--hf-text-primary)',
+                marginTop: '0.25rem',
+              }}
+            >
+              HomeFit Score
+              <HomeFitInfo />
+            </div>
+            <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
+              {HOMEFIT_COPY.subtitle}
             </div>
 
             <div
               style={{
-                width: 1,
-                minHeight: 60,
-                background: 'var(--hf-border)',
-                flexShrink: 0,
-              }}
-            />
-
-            <div
-              style={{
-                flex: '1 1 50%',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '1rem 0.75rem',
+                gap: '1.25rem',
+                marginTop: '1rem',
+                fontSize: '0.8rem',
+                color: 'var(--hf-text-secondary)',
               }}
             >
-              <div
-                style={{
-                  fontSize: '2.25rem',
-                  fontWeight: 800,
-                  color: longevityIndex != null ? 'var(--hf-longevity-purple)' : 'var(--hf-text-secondary)',
-                  lineHeight: 1.1,
-                }}
-              >
-                {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
-              </div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--hf-text-primary)',
-                  marginTop: '0.25rem',
-                }}
-              >
-                Longevity Index
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="hf-muted">Longevity Index</span>
+                <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--hf-longevity-purple)' : 'var(--hf-text-secondary)' }}>
+                  {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+                </span>
                 <LongevityInfo />
-              </div>
-              <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
-                {LONGEVITY_COPY.short}
-              </div>
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="hf-muted">Status Signal</span>
+                <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
+                  {typeof displayData.status_signal === 'number' ? displayData.status_signal.toFixed(1) : '—'}
+                </span>
+              </span>
             </div>
           </div>
         </div>

@@ -122,6 +122,8 @@ export interface ScoreResponse {
   longevity_index?: number;
   /** Per-pillar contribution to longevity_index (same pillars as longevity_index). */
   longevity_index_contributions?: Record<string, number>;
+  /** Status Signal: post-pillars derived score (wealth, education, occupation, brands). Only present when all four pillars have data. */
+  status_signal?: number;
   token_allocation: Record<string, number>;
   allocation_type: string;
   overall_confidence: OverallConfidence;
