@@ -702,7 +702,7 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 
 def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
-    Get race, income, and age distributions for Social Fabric Diversity scoring.
+    Get race, income, age distributions, and education attainment for Social Fabric / Status Signal.
 
     Returns:
         {
@@ -713,6 +713,7 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
                 "prime": int,
                 "seniors": int,
             },
+            "education_attainment": Optional[Dict] with population_25_plus (int), bachelor_pct (float 0-100)
         }
     """
     if tract is None:
@@ -847,10 +848,54 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
 
         age_counts = {"youth": youth, "prime": prime, "seniors": seniors}
 
+        # ---- Education attainment: S1501 (for Status Signal) ----
+        # S1501_C01_001E = Total population 25+, S1501_C01_006E = % Bachelor's degree or higher
+        education_attainment: Optional[Dict] = None
+        base_acs5_subject = f"{CENSUS_BASE_URL}/2022/acs/acs5/subject"
+        edu_vars = ["S1501_C01_001E", "S1501_C01_006E"]
+        params_edu = {
+            "get": ",".join(edu_vars + ["NAME"]),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        resp_edu = _make_request_with_retry(base_acs5_subject, params_edu, timeout=15, max_retries=3)
+        if resp_edu is not None:
+            try:
+                data_edu = resp_edu.json()
+                if isinstance(data_edu, list) and len(data_edu) >= 2:
+                    header = data_edu[0]
+                    row = data_edu[1]
+                    idx = {name: i for i, name in enumerate(header)}
+                    pop_25 = None
+                    bach_pct = None
+                    if "S1501_C01_001E" in idx:
+                        raw = row[idx["S1501_C01_001E"]]
+                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
+                            try:
+                                pop_25 = int(float(raw))
+                            except (ValueError, TypeError):
+                                pass
+                    if "S1501_C01_006E" in idx:
+                        raw = row[idx["S1501_C01_006E"]]
+                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
+                            try:
+                                bach_pct = float(raw)
+                            except (ValueError, TypeError):
+                                pass
+                    if pop_25 is not None or bach_pct is not None:
+                        education_attainment = {
+                            "population_25_plus": pop_25,
+                            "bachelor_pct": round(bach_pct, 2) if bach_pct is not None else None,
+                        }
+            except Exception:
+                pass
+
         return {
             "race_counts": race_counts,
             "income_counts": income_counts,
             "age_counts": age_counts,
+            "education_attainment": education_attainment,
         }
 
     except Exception as e:
