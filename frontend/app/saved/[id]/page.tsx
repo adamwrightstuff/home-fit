@@ -13,7 +13,10 @@ import type { PillarKey } from '@/lib/pillars'
 import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
-import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS } from '@/lib/pillars'
+import InteractiveMap from '@/components/InteractiveMap'
+import HomeFitInfo from '@/components/HomeFitInfo'
+import LongevityInfo from '@/components/LongevityInfo'
+import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS, LONGEVITY_COPY, HOMEFIT_COPY } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -294,47 +297,206 @@ export default function SavedDetailPage() {
     )
   }
 
+  const locationLabel =
+    (typeof row.input === 'string' && row.input.trim()) ||
+    [row.location_info?.city, row.location_info?.state, row.location_info?.zip]
+      .filter(Boolean)
+      .join(', ') ||
+    'Unknown location'
+  const coordinates = rawPayload?.coordinates ?? row.coordinates
+  const totalScore = displayData.total_score
+  const longevityIndex = typeof displayData.longevity_index === 'number' ? displayData.longevity_index : null
+  const { location_info } = displayData
+
   return (
     <main className="hf-page hf-page-no-hero">
       <div className="hf-container">
-        <nav
-          className="hf-saved-detail-nav"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1rem',
-          }}
-          aria-label="Actions"
-        >
-          <Link href="/saved" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
-            ← My places
-          </Link>
-          <button
-            type="button"
-            onClick={handleScoreAgain}
-            disabled={scoreAgainLoading}
-            className="hf-btn-link"
-            style={{ fontSize: '0.95rem', padding: '0.5rem 0.75rem' }}
+        <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '1.5rem' }}>
+          {/* Header row: location block (View Results style) + Saved actions */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '1rem',
+              marginBottom: '1.5rem',
+            }}
           >
-            {scoreAgainLoading ? 'Refreshing…' : 'Refresh data'}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={savingPreferences || !row}
-            className="hf-btn-secondary"
-            style={{ padding: '0.5rem 1rem', borderRadius: 8, fontSize: '0.95rem', minHeight: 44 }}
+            <div
+              style={{
+                minWidth: 0,
+                flex: '1 1 260px',
+                padding: '1rem 1.25rem',
+                background: 'var(--hf-bg-subtle)',
+                borderRadius: 12,
+                border: '1px solid var(--hf-border)',
+              }}
+            >
+              <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+                Score summary for
+              </div>
+              <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
+                {locationLabel}
+              </div>
+              <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
+                Location: {location_info?.city}, {location_info?.state} {location_info?.zip}
+              </div>
+              <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
+                Coordinates: {coordinates.lat.toFixed(6)}, {coordinates.lon.toFixed(6)}
+              </div>
+            </div>
+
+            <nav
+              className="hf-saved-detail-nav"
+              aria-label="Actions"
+              style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}
+            >
+              <Link href="/saved" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
+                ← My places
+              </Link>
+              <button
+                type="button"
+                onClick={handleScoreAgain}
+                disabled={scoreAgainLoading}
+                className="hf-btn-link"
+                style={{ fontSize: '0.95rem', padding: '0.5rem 0.75rem' }}
+              >
+                {scoreAgainLoading ? 'Refreshing…' : 'Refresh data'}
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={savingPreferences || !row}
+                className="hf-btn-secondary"
+                style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+              >
+                {savingPreferences ? 'Saving…' : 'Save'}
+              </button>
+              {scoreAgainError && (
+                <span className="hf-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>
+                  {scoreAgainError}
+                </span>
+              )}
+            </nav>
+          </div>
+
+          {/* Map */}
+          <div
+            style={{
+              width: '100%',
+              height: '280px',
+              borderRadius: 12,
+              overflow: 'hidden',
+              marginBottom: '1.5rem',
+              background: 'var(--hf-bg-subtle)',
+            }}
           >
-            {savingPreferences ? 'Saving…' : 'Save'}
-          </button>
-          {scoreAgainError && (
-            <span className="hf-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>{scoreAgainError}</span>
-          )}
-        </nav>
+            <InteractiveMap
+              location={locationLabel}
+              coordinates={coordinates}
+              completed_pillars={Object.keys(displayData.livability_pillars ?? {})}
+            />
+          </div>
+
+          {/* HomeFit + Longevity score row (same layout as PlaceView) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              marginBottom: 0,
+              gap: 0,
+            }}
+          >
+            <div
+              style={{
+                flex: '1 1 50%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem 0.75rem',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '2.25rem',
+                  fontWeight: 800,
+                  color: totalScore != null ? 'var(--hf-homefit-green)' : 'var(--hf-text-secondary)',
+                  lineHeight: 1.1,
+                }}
+              >
+                {totalScore != null ? totalScore.toFixed(1) : '—'}
+              </div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--hf-text-primary)',
+                  marginTop: '0.25rem',
+                }}
+              >
+                HomeFit Score
+                <HomeFitInfo />
+              </div>
+              <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
+                {HOMEFIT_COPY.subtitle}
+              </div>
+            </div>
+
+            <div
+              style={{
+                width: 1,
+                minHeight: 60,
+                background: 'var(--hf-border)',
+                flexShrink: 0,
+              }}
+            />
+
+            <div
+              style={{
+                flex: '1 1 50%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem 0.75rem',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '2.25rem',
+                  fontWeight: 800,
+                  color: longevityIndex != null ? 'var(--hf-longevity-purple)' : 'var(--hf-text-secondary)',
+                  lineHeight: 1.1,
+                }}
+              >
+                {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
+              </div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--hf-text-primary)',
+                  marginTop: '0.25rem',
+                }}
+              >
+                Longevity Index
+                <LongevityInfo />
+              </div>
+              <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 260 }}>
+                {LONGEVITY_COPY.short}
+              </div>
+            </div>
+          </div>
+        </div>
 
         <ScoreDisplay
+          hideSummaryCard
           data={displayData}
           priorities={priorities ?? DEFAULT_PRIORITIES}
           onPrioritiesChange={(next) => setPriorities(next)}

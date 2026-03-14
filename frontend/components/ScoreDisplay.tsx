@@ -241,6 +241,7 @@ export default function ScoreDisplay({
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+      {!hideSummaryCard && (
       <div className="hf-card">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
         {onSave && priorities && (
@@ -430,6 +431,7 @@ export default function ScoreDisplay({
           </div>
         </div>
       </div>
+      )}
 
       <div>
         <div className="hf-section-title" style={{ marginBottom: '1rem' }}>
