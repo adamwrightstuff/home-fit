@@ -479,7 +479,6 @@ export default function ScoreDisplay({
                   key === 'natural_beauty' && onSearchOptionsChange && searchOptions
                     ? (preference) => {
                         onSearchOptionsChange({ ...searchOptions, natural_beauty_preference: preference })
-                        if (onRescorePillar) onRescorePillar('natural_beauty')
                       }
                     : undefined
                 }
