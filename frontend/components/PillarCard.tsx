@@ -536,12 +536,19 @@ export default function PillarCard({
           </div>
 
           <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
-            {pillar_key === 'natural_beauty' && naturalBeautyPreference && naturalBeautyPreference.length > 0 && (
-              <div style={{ marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>{' '}
-                {naturalBeautyPreference.join(', ')}
-              </div>
-            )}
+            {pillar_key === 'natural_beauty' && (() => {
+              const fromProps = naturalBeautyPreference && naturalBeautyPreference.length > 0 ? naturalBeautyPreference : null
+              const fromPillar = Array.isArray((pillar as any)?.summary?.natural_beauty_preference) && (pillar as any).summary.natural_beauty_preference.length > 0
+                ? (pillar as any).summary.natural_beauty_preference as string[]
+                : null
+              const displayPreference = fromProps ?? fromPillar
+              return displayPreference ? (
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>{' '}
+                  {displayPreference.join(', ')}
+                </div>
+              ) : null
+            })()}
             {pillar_key === 'neighborhood_amenities' && onIncludeChainsChange ? (
               <div style={{ marginBottom: '0.85rem' }}>
                 <label

@@ -462,7 +462,7 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     
     summary["scenic_bonus"] = round(natural_details.get("enhancer_bonus_scaled", 0), 2)
     summary["context_bonus"] = round(natural_details.get("context_bonus_raw", 0), 2)
-    
+
     # NEW: Add terrain metrics
     if isinstance(natural_context, dict):
         topography_metrics = natural_context.get("topography_metrics", {})
@@ -518,6 +518,16 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
             }
             summary["landscape_context"] = [tag_labels.get(tag, tag.title()) for tag in landscape_tags]
     
+    return summary
+
+
+def _natural_beauty_summary_with_preference(
+    natural_details: Dict, natural_beauty_preference: Optional[List[str]] = None
+) -> Dict:
+    """Summary for natural_beauty pillar, including preference when provided (for display on Results/Saved)."""
+    summary = _extract_natural_beauty_summary(natural_details)
+    if natural_beauty_preference:
+        summary["natural_beauty_preference"] = natural_beauty_preference
     return summary
 
 
@@ -1831,7 +1841,7 @@ def _compute_single_score_internal(
                 "tree_score_0_50": natural_details["tree_score_0_50"],
                 "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
             },
-            "summary": _extract_natural_beauty_summary(natural_details),
+            "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
             "details": natural_details,
             "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
             "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
@@ -3204,7 +3214,7 @@ async def _stream_score_with_progress(
                     "tree_score_0_50": natural_details.get("tree_score_0_50", 0),
                     "enhancer_bonus_raw": natural_details.get("enhancer_bonus_raw", 0)
                 },
-                "summary": _extract_natural_beauty_summary(natural_details),
+                "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference_parsed),
                 "details": natural_details,
                 "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
                 "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
@@ -4143,7 +4153,7 @@ async def stream_score(
                 "tree_score_0_50": natural_details["tree_score_0_50"],
                 "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
             },
-            "summary": _extract_natural_beauty_summary(natural_details),
+            "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
             "details": natural_details,
             "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
             "data_quality": natural_calc.get("data_quality", {}) if natural_calc else {},
