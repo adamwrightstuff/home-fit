@@ -83,6 +83,8 @@ interface ScoreDisplayProps {
   onRescorePillar?: (pillarKey: PillarKey) => void | Promise<void>
   /** When set, the matching pillar card shows rescore link as "Rescoring…" and disables it. */
   rescoringPillarKey?: PillarKey | null
+  /** When true, omit the summary card (location, Copy scores, score grid, Summary); show only pillar cards. Used when parent provides its own header (e.g. saved place detail). */
+  hideSummaryCard?: boolean
 }
 
 // Use shared pillar order from lib/pillars
@@ -111,6 +113,7 @@ export default function ScoreDisplay({
   onRunPillarScore,
   onRescorePillar,
   rescoringPillarKey,
+  hideSummaryCard = false,
 }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
