@@ -45,6 +45,8 @@ interface PillarCardProps {
   onIncludeChainsChange?: (next: boolean) => void
   /** Natural Beauty only: preference profile applied when scoring. */
   naturalBeautyPreference?: string[] | null
+  /** Natural Beauty only: when provided, show scenery preference chips and call with new value (can trigger rescore). */
+  onNaturalBeautyPreferenceChange?: (preference: string[] | null) => void
   /** Built Beauty only: character preference applied when scoring. */
   builtCharacterPreference?: string | null
   /** Built Beauty only: density preference applied when scoring. */
@@ -54,6 +56,15 @@ interface PillarCardProps {
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
   onImportanceChange?: (level: 'None' | 'Low' | 'Medium' | 'High') => void
 }
+
+/** Natural Beauty scenery preference options (max 2; "Any" clears selection). */
+const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'mountains', label: 'Mountains' },
+  { value: 'ocean', label: 'Ocean' },
+  { value: 'lakes_rivers', label: 'Lakes & rivers' },
+  { value: 'canopy', label: 'Greenery' },
+]
 
 function isRecord(value: unknown): value is Record<string, any> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -201,6 +212,7 @@ export default function PillarCard({
   importanceLevel,
   onImportanceChange,
   naturalBeautyPreference,
+  onNaturalBeautyPreferenceChange,
   builtCharacterPreference,
   builtDensityPreference,
 }: PillarCardProps) {
@@ -542,12 +554,62 @@ export default function PillarCard({
                 ? (pillar as any).summary.natural_beauty_preference as string[]
                 : null
               const displayPreference = fromProps ?? fromPillar
-              return displayPreference ? (
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>{' '}
-                  {displayPreference.join(', ')}
+              const pref = displayPreference ?? []
+              const canChange = Boolean(onNaturalBeautyPreferenceChange)
+              return (
+                <div style={{ marginBottom: canChange ? '0.85rem' : '0.5rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>
+                  {canChange ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                      {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
+                        const isAny = value === null
+                        const hasAny = !pref.length || (pref.length === 1 && pref[0] === 'no_preference')
+                        const chipSelected = isAny ? hasAny : pref.includes(value as string)
+                        const atMax = !isAny && pref.length >= 2 && !pref.includes(value as string)
+                        const handleClick = () => {
+                          if (isAny) {
+                            onNaturalBeautyPreferenceChange!(null)
+                            return
+                          }
+                          const current = pref.filter((v) => v !== 'no_preference')
+                          if (current.includes(value as string)) {
+                            const next = current.filter((v) => v !== value)
+                            onNaturalBeautyPreferenceChange!(next.length ? next : null)
+                          } else if (current.length >= 2) {
+                            onNaturalBeautyPreferenceChange!([current[1], value as string])
+                          } else {
+                            onNaturalBeautyPreferenceChange!([...current, value as string])
+                          }
+                        }
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleClick() }}
+                            disabled={atMax || rescoring}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: chipSelected ? 600 : 400,
+                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: chipSelected ? 'white' : atMax ? 'var(--hf-text-tertiary)' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: atMax || rescoring ? 'not-allowed' : 'pointer',
+                              opacity: atMax || rescoring ? 0.7 : 1,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                      <span className="hf-muted" style={{ fontSize: '0.75rem' }}>(up to 2)</span>
+                    </div>
+                  ) : (
+                    displayPreference ? <>{' '}{displayPreference.join(', ')}</> : null
+                  )}
                 </div>
-              ) : null
+              )
             })()}
             {pillar_key === 'neighborhood_amenities' && onIncludeChainsChange ? (
               <div style={{ marginBottom: '0.85rem' }}>
