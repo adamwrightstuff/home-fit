@@ -15,27 +15,42 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-# Brand categories for Status Signal (taste / status brands)
+# Brand categories for Status Signal (discriminating taste/status brands only).
+# Whole Foods, Trader Joe's, Lululemon removed as too ubiquitous.
 STATUS_SIGNAL_BRAND_CONFIG = {
-    "luxury_gym": {
-        "weight": 0.25,
-        "partial_match_types": ["fitness_centre", "sports_centre"],
-        "brand_names": ["Equinox", "Life Time", "Exhale", "Barry's", "Solidcore", "Equilibrium", "Forge"],
-    },
-    "design_perfumery": {
-        "weight": 0.25,
+    "personal_care": {
+        "weight": 0.20,
         "partial_match_types": ["perfumery", "cosmetics"],
-        "brand_names": ["Aesop", "Le Labo", "Diptyque", "Byredo", "Frederic Malle"],
+        "brand_names": ["Aesop", "Bluemercury", "Space NK", "Le Labo", "Diptyque", "Byredo", "Frederic Malle"],
     },
-    "organic_supermarket": {
-        "weight": 0.25,
-        "partial_match_types": ["supermarket", "greengrocer"],
-        "brand_names": ["Whole Foods", "Erewhon", "Dean & DeLuca", "Zabar's", "Fairway", "Trader Joe's"],
+    "luxury_gym": {
+        "weight": 0.17,
+        "partial_match_types": ["fitness_centre", "sports_centre"],
+        "brand_names": ["Equinox", "Barry's Bootcamp", "Barry's"],
+    },
+    "hospitality": {
+        "weight": 0.17,
+        "brand_names": ["Soho House", "Arlo Hotels", "Ace Hotel"],
     },
     "boutique_fitness": {
-        "weight": 0.25,
-        "partial_match_types": ["fitness_centre", "studio"],
-        "brand_names": ["Pilates", "CorePower", "YogaWorks", "Modo Yoga", "SoulCycle", "The Sculpt Society"],
+        "weight": 0.13,
+        "partial_match_types": ["fitness_centre", "sports_centre"],
+        "brand_names": ["Rumble Boxing", "Rumble", "Natural Pilates"],
+    },
+    "coffee": {
+        "weight": 0.13,
+        "partial_match_types": ["cafe"],
+        "brand_names": ["Blue Bottle", "Intelligentsia", "Stumptown", "Verve"],
+    },
+    "grocery": {
+        "weight": 0.11,
+        "partial_match_types": ["supermarket", "greengrocer"],
+        "brand_names": ["Erewhon", "Bristol Farms", "The Fresh Market", "Wegmans", "Citarella"],
+    },
+    "retail": {
+        "weight": 0.09,
+        "partial_match_types": ["clothes", "fashion", "boutique"],
+        "brand_names": ["Reformation", "Aritzia", "Theory", "Faherty"],
     },
 }
 
