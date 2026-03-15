@@ -1,11 +1,11 @@
 """
-Status Signal: post-pillars derived score (wealth, education, occupation, brands).
+Status Signal: post-pillars derived score (status + desirability).
 
-Only computed when all four pillars have data: housing_value, social_fabric,
-economic_security, neighborhood_amenities. Uses per-division min-max baselines
-from data/status_signal_baselines.json.
+Status = wealth + education + occupation. Desirability = home cost + luxury presence.
+Uses per-division min-max baselines from data/status_signal_baselines.json.
 
-Composite: Brand×0.35 + Wealth×0.25 + Education×0.20 + Occupation×0.20
+Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5%.
+Wealth gap (mean vs median) is used as a quality-control label: super_zip vs unequal vs typical.
 """
 
 from __future__ import annotations
@@ -112,6 +112,40 @@ def compute_wealth(
     if min_gap is not None and max_gap is not None:
         n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
     return 0.6 * n_mean + 0.4 * n_gap
+
+
+# Home cost: $1M threshold, linear 0->100 from $1M to $3M
+HOME_COST_THRESHOLD = 1_000_000
+HOME_COST_MAX = 3_000_000
+
+
+def compute_home_cost(median_home_value: Optional[float]) -> float:
+    """Desirability: 0 below $1M; 0-100 linear from $1M to $3M; cap 100 above $3M."""
+    if median_home_value is None or not isinstance(median_home_value, (int, float)) or median_home_value < HOME_COST_THRESHOLD:
+        return 0.0
+    val = float(median_home_value)
+    if val >= HOME_COST_MAX:
+        return 100.0
+    return 100.0 * (val - HOME_COST_THRESHOLD) / (HOME_COST_MAX - HOME_COST_THRESHOLD)
+
+
+def _wealth_character(housing_details: Dict[str, Any]) -> str:
+    """Quality-control label from wealth gap: super_zip (widespread affluence) vs unequal (few ultra-wealthy) vs typical."""
+    summary = housing_details.get("summary") or housing_details
+    mean_income = summary.get("mean_household_income")
+    median_income = summary.get("median_household_income")
+    if median_income is None or not isinstance(median_income, (int, float)) or median_income <= 0:
+        return "typical"
+    if mean_income is None or not isinstance(mean_income, (int, float)):
+        mean_income = median_income
+    median_f = float(median_income)
+    mean_f = float(mean_income)
+    gap = (mean_f - median_f) / median_f if median_f else 0.0
+    if median_f >= 150_000 and gap < 0.25:
+        return "super_zip"
+    if gap >= 0.5:
+        return "unequal"
+    return "typical"
 
 
 def compute_education(
@@ -263,14 +297,37 @@ def _brand_matches_for_business_list(business_list: List[Dict[str, Any]]) -> Lis
     return out
 
 
-def compute_brand(business_list: List[Dict[str, Any]]) -> float:
-    """Brand score 0-100 from config categories (presence of status brands)."""
+def brand_raw_score(business_list: List[Dict[str, Any]]) -> float:
+    """Raw luxury-presence score 0-100 (same scale used for baselines). Exported for baseline script."""
     if not business_list:
         return 0.0
     raw = 0.0
     for item in _brand_matches_for_business_list(business_list):
         raw += item["cat_score"] * item["weight"]
     return min(100.0, raw * 100.0)
+
+
+def compute_brand(
+    business_list: List[Dict[str, Any]],
+    division: Optional[str] = None,
+    baselines: Optional[Dict[str, Any]] = None,
+) -> float:
+    """Luxury presence 0-100; normalized by division baselines when available."""
+    raw = brand_raw_score(business_list or [])
+    if not division or not baselines:
+        return raw
+    min_b, max_b = _get_baseline(baselines, division, "brand", "brand_raw_score")
+    if min_b is not None and max_b is not None:
+        return _normalize_min_max(raw, min_b, max_b)
+    return raw
+
+
+# Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5% (normalized to sum 1)
+W_WEALTH = 0.35 / 0.95
+W_HOME_COST = 0.25 / 0.95
+W_EDUCATION = 0.20 / 0.95
+W_OCCUPATION = 0.10 / 0.95
+W_LUXURY = 0.05 / 0.95
 
 
 def compute_status_signal(
@@ -282,50 +339,15 @@ def compute_status_signal(
     state_abbrev: Optional[str],
 ) -> Optional[float]:
     """
-    Compute Status Signal (0-100) when all four pillar inputs are present.
+    Compute Status Signal (0-100): wealth + home_cost + education + occupation + luxury_presence.
 
-    Returns None if any required data is missing.
+    Returns None if required data is missing.
     """
-    if not housing_details or not social_fabric_details or not economic_security_details:
-        return None
-    from data_sources.us_census_divisions import get_division
-    division = get_division(state_abbrev) if state_abbrev else "all"
-    baselines = _load_baselines()
-    if not baselines:
-        division = "all"
-
-    wealth = compute_wealth(housing_details, division, baselines)
-    education = compute_education(social_fabric_details, division, baselines)
-    occupation = compute_occupation(
-        economic_security_details, social_fabric_details, tract, division, baselines
+    result, _ = compute_status_signal_with_breakdown(
+        housing_details, social_fabric_details, economic_security_details,
+        business_list, tract, state_abbrev,
     )
-    brand = compute_brand(business_list or [])
-
-    if wealth is None and education is None and occupation is None:
-        return None
-    w_wealth = 0.25
-    w_education = 0.20
-    w_occupation = 0.20
-    w_brand = 0.35
-    total_w = 0.0
-    score = 0.0
-    if wealth is not None:
-        total_w += w_wealth
-        score += w_wealth * wealth
-    if education is not None:
-        total_w += w_education
-        score += w_education * education
-    if occupation is not None:
-        total_w += w_occupation
-        score += w_occupation * occupation
-    score += w_brand * brand  # brand already 0-100, same scale as wealth/education/occupation
-    total_w += w_brand
-    if total_w <= 0:
-        return None
-    # Weighted average of 0-100 components -> already 0-100; do not multiply by 100
-    raw = score / total_w
-    final = round(max(0.0, min(100.0, raw)), 1)
-    return final
+    return result
 
 
 def compute_status_signal_with_breakdown(
@@ -335,12 +357,19 @@ def compute_status_signal_with_breakdown(
     business_list: Optional[List[Dict[str, Any]]],
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
-) -> Tuple[Optional[float], Dict[str, Optional[float]]]:
+) -> Tuple[Optional[float], Dict[str, Any]]:
     """
-    Same as compute_status_signal but also returns the four components (0-100 each).
-    Returns (score, {"wealth": _, "education": _, "occupation": _, "brand": _}).
+    Returns (score, breakdown) with components 0-100 and wealth_character (super_zip | unequal | typical).
+    Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character.
     """
-    breakdown: Dict[str, Optional[float]] = {"wealth": None, "education": None, "occupation": None, "brand": None}
+    breakdown: Dict[str, Any] = {
+        "wealth": None,
+        "home_cost": None,
+        "education": None,
+        "occupation": None,
+        "luxury_presence": None,
+        "wealth_character": "typical",
+    }
     if not housing_details or not social_fabric_details or not economic_security_details:
         return None, breakdown
     from data_sources.us_census_divisions import get_division
@@ -350,35 +379,42 @@ def compute_status_signal_with_breakdown(
         division = "all"
 
     wealth = compute_wealth(housing_details, division, baselines)
+    summary = housing_details.get("summary") or housing_details
+    median_home = summary.get("median_home_value")
+    home_cost = compute_home_cost(median_home)
     education = compute_education(social_fabric_details, division, baselines)
     occupation = compute_occupation(
         economic_security_details, social_fabric_details, tract, division, baselines
     )
-    brand = compute_brand(business_list or [])
+    luxury = compute_brand(business_list or [], division, baselines)
+    wealth_character = _wealth_character(housing_details)
+
     breakdown["wealth"] = wealth
+    breakdown["home_cost"] = home_cost
     breakdown["education"] = education
     breakdown["occupation"] = occupation
-    breakdown["brand"] = brand
+    breakdown["luxury_presence"] = luxury
+    breakdown["wealth_character"] = wealth_character
 
     if wealth is None and education is None and occupation is None:
         return None, breakdown
-    w_wealth = 0.25
-    w_education = 0.20
-    w_occupation = 0.20
-    w_brand = 0.35
+
     total_w = 0.0
     score = 0.0
     if wealth is not None:
-        total_w += w_wealth
-        score += w_wealth * wealth
+        total_w += W_WEALTH
+        score += W_WEALTH * wealth
+    total_w += W_HOME_COST
+    score += W_HOME_COST * home_cost
     if education is not None:
-        total_w += w_education
-        score += w_education * education
+        total_w += W_EDUCATION
+        score += W_EDUCATION * education
     if occupation is not None:
-        total_w += w_occupation
-        score += w_occupation * occupation
-    score += w_brand * brand
-    total_w += w_brand
+        total_w += W_OCCUPATION
+        score += W_OCCUPATION * occupation
+    total_w += W_LUXURY
+    score += W_LUXURY * luxury
+
     if total_w <= 0:
         return None, breakdown
     raw = score / total_w

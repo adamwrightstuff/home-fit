@@ -111,6 +111,13 @@ def extract_metrics_from_response(
     if white_collar_pct is not None and isinstance(white_collar_pct, (int, float)):
         out["white_collar_pct"] = float(white_collar_pct)
 
+    # Brand: raw luxury-presence score 0-100 from business_list (for baseline normalization)
+    na = pillars.get("neighborhood_amenities") or {}
+    business_list = (na.get("breakdown") or {}).get("business_list") or na.get("business_list") or []
+    if business_list:
+        from pillars.status_signal import brand_raw_score
+        out["brand_raw_score"] = float(brand_raw_score(business_list))
+
     if not out:
         return None
     return out
@@ -201,8 +208,12 @@ def main() -> None:
             v = by_metric.get(m)
             if v and len(v) >= args.min_samples:
                 occupation[m] = {"min": min(v), "max": max(v)}
-        if wealth or education or occupation:
-            result[div] = {"wealth": wealth, "education": education, "occupation": occupation}
+        brand = {}
+        v = by_metric.get("brand_raw_score")
+        if v and len(v) >= args.min_samples:
+            brand["brand_raw_score"] = {"min": min(v), "max": max(v)}
+        if wealth or education or occupation or brand:
+            result[div] = {"wealth": wealth, "education": education, "occupation": occupation, "brand": brand}
 
     # Pool "all" from all divisions (including values that were in unknown-state rows)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
@@ -224,8 +235,12 @@ def main() -> None:
             v = all_vals.get(m)
             if v and len(v) >= args.min_samples:
                 occupation_all[m] = {"min": min(v), "max": max(v)}
-        if wealth_all or education_all or occupation_all:
-            result["all"] = {"wealth": wealth_all, "education": education_all, "occupation": occupation_all}
+        brand_all = {}
+        v = all_vals.get("brand_raw_score")
+        if v and len(v) >= args.min_samples:
+            brand_all["brand_raw_score"] = {"min": min(v), "max": max(v)}
+        if wealth_all or education_all or occupation_all or brand_all:
+            result["all"] = {"wealth": wealth_all, "education": education_all, "occupation": occupation_all, "brand": brand_all}
 
     # Merge with existing baselines so we don't drop education/occupation when results lack them
     # When --recompute-education was used, do not merge in old education (it was count-scale).
@@ -235,12 +250,14 @@ def main() -> None:
                 existing = json.load(f)
             for div, comps in existing.items():
                 if div not in result:
-                    result[div] = {"wealth": {}, "education": {}, "occupation": {}}
-                for comp in ["wealth", "education", "occupation"]:
+                    result[div] = {"wealth": {}, "education": {}, "occupation": {}, "brand": {}}
+                for comp in ["wealth", "education", "occupation", "brand"]:
                     if comp == "education" and args.recompute_education:
                         continue  # keep only newly computed education (0-100 scale)
                     if comp == "occupation" and args.recompute_occupation:
                         continue  # keep only newly computed occupation (white_collar_pct from S2401)
+                    if comp not in result[div]:
+                        result[div][comp] = {}
                     existing_comp = (comps or {}).get(comp) or {}
                     result_comp = result[div].get(comp) or {}
                     for m, minmax in existing_comp.items():

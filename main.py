@@ -46,7 +46,7 @@ from pillars.housing_value import get_housing_value_score
 from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
-from pillars.status_signal import compute_status_signal
+from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 
@@ -825,15 +825,15 @@ def _compute_status_signal_for_response(
     amenities_details: Dict[str, Any],
     census_tract: Optional[Dict[str, Any]],
     state: Optional[str],
-) -> Optional[float]:
+) -> Optional[tuple]:
     """
-    Compute Status Signal (0-100) when all four pillars have data.
-    Uses housing_value, social_fabric, economic_security, neighborhood_amenities details.
+    Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
+    Returns (score, breakdown) or None when score cannot be computed.
     """
     if not state and not census_tract:
         return None
     business_list = (amenities_details.get("breakdown") or {}).get("business_list") or amenities_details.get("business_list") or []
-    return compute_status_signal(
+    return compute_status_signal_with_breakdown(
         housing_details,
         social_fabric_details,
         economic_security_details,
@@ -1067,7 +1067,7 @@ def _apply_allocation_to_cached_response(
             try:
                 from data_sources import census_api as _ca
                 census_tract = _ca.get_census_tract(lat, lon)
-                status_signal_val = _compute_status_signal_for_response(
+                status_signal_result = _compute_status_signal_for_response(
                     housing_details,
                     social_fabric_details,
                     economic_security_details,
@@ -1075,8 +1075,11 @@ def _apply_allocation_to_cached_response(
                     census_tract,
                     state,
                 )
-                if status_signal_val is not None:
-                    response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
+                if status_signal_result is not None:
+                    score, breakdown = status_signal_result
+                    if score is not None:
+                        response["status_signal"] = max(0.0, min(100.0, float(score)))
+                    response["status_signal_breakdown"] = breakdown
             except Exception:
                 pass
 
@@ -2085,11 +2088,14 @@ def _compute_single_score_internal(
             "test_mode": test_mode_enabled
         }
     }
-    status_signal_val = _compute_status_signal_for_response(
+    status_signal_result = _compute_status_signal_for_response(
         housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
     )
-    if status_signal_val is not None:
-        response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
+    if status_signal_result is not None:
+        score, breakdown = status_signal_result
+        if score is not None:
+            response["status_signal"] = max(0.0, min(100.0, float(score)))
+        response["status_signal_breakdown"] = breakdown
 
     if test_mode_enabled and beauty_overrides:
         arch_override_keys = {
@@ -3462,11 +3468,14 @@ async def _stream_score_with_progress(
                 "test_mode": test_mode
             }
         }
-        status_signal_val = _compute_status_signal_for_response(
+        status_signal_result = _compute_status_signal_for_response(
             housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
         )
-        if status_signal_val is not None:
-            final_response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
+        if status_signal_result is not None:
+            score, breakdown = status_signal_result
+            if score is not None:
+                final_response["status_signal"] = max(0.0, min(100.0, float(score)))
+            final_response["status_signal_breakdown"] = breakdown
 
         # Store a shared, cross-user response template (compressed) for future requests.
         # Bounded by TTL + size cap to avoid unbounded Redis growth.
@@ -4422,11 +4431,14 @@ async def stream_score(
             "test_mode": test_mode_enabled
         }
         }
-        status_signal_val = _compute_status_signal_for_response(
+        status_signal_result = _compute_status_signal_for_response(
             housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
         )
-        if status_signal_val is not None:
-            response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
+        if status_signal_result is not None:
+            score, breakdown = status_signal_result
+            if score is not None:
+                response["status_signal"] = max(0.0, min(100.0, float(score)))
+            response["status_signal_breakdown"] = breakdown
 
         if test_mode_enabled and beauty_overrides:
             arch_override_keys = {
