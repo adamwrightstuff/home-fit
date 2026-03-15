@@ -63,13 +63,9 @@ export async function GET(req: NextRequest) {
     upstreamParams.set('enable_schools', premiumOk ? enableSchools : 'false');
   }
 
-  // When `only` is set (e.g. Status Signal refresh: four pillars), use sync GET /score so we get one response without job/poll.
-  const hasOnly = sp.get('only')?.trim().length > 0;
   const url = jobId
     ? `${RAILWAY_API_BASE_URL}/score/jobs/${encodeURIComponent(jobId)}`
-    : hasOnly
-      ? `${RAILWAY_API_BASE_URL}/score?${upstreamParams.toString()}`
-      : `${RAILWAY_API_BASE_URL}/score/jobs?${upstreamParams.toString()}`;
+    : `${RAILWAY_API_BASE_URL}/score/jobs?${upstreamParams.toString()}`;
 
   const hasJobCategories = sp.get('job_categories')?.trim().length > 0;
   const proxyTimeoutMs = hasJobCategories ? SCORE_PROXY_TIMEOUT_MS_JOB_CATEGORIES : SCORE_PROXY_TIMEOUT_MS;
@@ -78,9 +74,8 @@ export async function GET(req: NextRequest) {
   const start = Date.now();
 
   try {
-    const method = jobId ? 'GET' : hasOnly ? 'GET' : 'POST';
     const upstream = await fetch(url, {
-      method,
+      method: jobId ? 'GET' : 'POST',
       headers: {
         Accept: 'application/json',
         ...(HOMEFIT_PROXY_SECRET ? { 'X-HomeFit-Proxy-Secret': HOMEFIT_PROXY_SECRET } : {}),
