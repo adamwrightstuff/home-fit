@@ -16,7 +16,8 @@ import ScoreDisplay from '@/components/ScoreDisplay'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
-import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS, LONGEVITY_COPY, HOMEFIT_COPY } from '@/lib/pillars'
+import StatusSignalInfo from '@/components/StatusSignalInfo'
+import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -44,6 +45,7 @@ export default function SavedDetailPage() {
   const [jobCategories, setJobCategories] = useState<string[]>([])
   const [scoreAgainLoading, setScoreAgainLoading] = useState(false)
   const [scoreAgainError, setScoreAgainError] = useState<string | null>(null)
+  const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
   const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
@@ -209,6 +211,58 @@ export default function SavedDetailPage() {
     },
     [row, rawPayload, searchOptions]
   )
+
+  const handleRefreshStatusSignal = useCallback(async () => {
+    if (!row || !priorities) return
+    setStatusSignalRefreshLoading(true)
+    try {
+      const response = await getScoreWithProgress(
+        {
+          location: row.input,
+          only: STATUS_SIGNAL_ONLY_PILLARS,
+          priorities: JSON.stringify(priorities),
+          job_categories: jobCategories.length > 0 ? jobCategories.join(',') : undefined,
+          natural_beauty_preference: searchOptions?.natural_beauty_preference?.length ? JSON.stringify(searchOptions.natural_beauty_preference) : undefined,
+          built_character_preference: searchOptions?.built_character_preference ?? undefined,
+          built_density_preference: searchOptions?.built_density_preference ?? undefined,
+          include_chains: searchOptions?.include_chains ?? true,
+          enable_schools: searchOptions?.enable_schools ?? false,
+        },
+        () => {}
+      )
+      const current = rawPayload as ScoreResponse
+      const fourKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      const incoming = response.livability_pillars as unknown as Record<string, unknown>
+      const mergedPillars = { ...(current.livability_pillars ?? {}), ...Object.fromEntries(fourKeys.map((k) => [k, incoming[k]]).filter(([, v]) => v != null)) }
+      const mergedBase: ScoreResponse = {
+        ...current,
+        livability_pillars: mergedPillars as ScoreResponse['livability_pillars'],
+        place_summary: response.place_summary ?? current.place_summary,
+        status_signal: typeof (response as { status_signal?: number }).status_signal === 'number' ? (response as { status_signal: number }).status_signal : current.status_signal,
+      }
+      const merged: ScoreResponse = {
+        ...mergedBase,
+        metadata: { ...(mergedBase.metadata ?? {}), saved_search_options: searchOptions } as any,
+      }
+      try {
+        const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
+        const pillars = merged.livability_pillars as unknown as Record<string, { score?: number; status?: string }>
+        for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
+          const pillar = pillars[key]
+          if (!pillar || typeof pillar.score !== 'number') continue
+          longevityPillarScores[key] = { score: pillar.score, failed: pillar.status === 'failed' }
+        }
+        const longevityIndex = computeLongevityIndex(longevityPillarScores)
+        if (longevityIndex != null) merged.longevity_index = longevityIndex
+      } catch {
+        /* ignore */
+      }
+      await updateSavedScore(row.id, { scorePayload: merged, priorities })
+      setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
+    } finally {
+      setStatusSignalRefreshLoading(false)
+    }
+  }, [row, rawPayload, priorities, jobCategories, searchOptions])
 
   const handleRescorePillar = useCallback(
     async (pillarKey: PillarKey) => {
@@ -459,6 +513,7 @@ export default function SavedDetailPage() {
                 <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
                   {typeof displayData.status_signal === 'number' ? displayData.status_signal.toFixed(1) : '—'}
                 </span>
+                <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
               </span>
             </div>
           </div>

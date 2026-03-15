@@ -5,9 +5,10 @@ import Link from 'next/link'
 import InteractiveMap from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
+import StatusSignalInfo from './StatusSignalInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -146,6 +147,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
   const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
   const [exportModalOpen, setExportModalOpen] = useState(false)
+  /** Status Signal (post-pillars); set from initialPayload or after running the four pillars. */
+  const [statusSignal, setStatusSignal] = useState<number | null>(() => initialPayload?.status_signal ?? null)
+  const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
   /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
   const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -272,6 +276,65 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     [place.location, selectedPillars, selectedPriorities, onError]
   )
 
+  const handleRefreshStatusSignal = useCallback(async () => {
+    setStatusSignalRefreshLoading(true)
+    try {
+      const prioritiesForRequest: Record<string, string> = {}
+      selectedPillars.forEach((k) => {
+        prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
+      })
+      const resp = await getScoreWithProgress(
+        {
+          location: place.location,
+          only: STATUS_SIGNAL_ONLY_PILLARS,
+          priorities: JSON.stringify(prioritiesForRequest),
+          job_categories: searchOptions.job_categories?.join(','),
+          include_chains: searchOptions.include_chains,
+          enable_schools: searchOptions.enable_schools,
+          natural_beauty_preference:
+            searchOptions.natural_beauty_preference?.length
+              ? JSON.stringify(searchOptions.natural_beauty_preference)
+              : undefined,
+          built_character_preference: searchOptions.built_character_preference ?? undefined,
+          built_density_preference: searchOptions.built_density_preference ?? undefined,
+        },
+        () => {}
+      )
+      const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean; quality_tier?: string }; status?: string }>) || {}
+      const fourKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      setPillarScores((prev) => {
+        const next = { ...prev }
+        for (const key of fourKeys) {
+          const data = pillars[key]
+          if (data == null) continue
+          const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
+          const status = data.status ?? (failed ? 'failed' : 'success')
+          if (failed) {
+            next[key] = { score: 0, failed: true, confidence: 0, status: status as 'failed', data_quality: data.data_quality }
+          } else if (typeof data.score === 'number') {
+            next[key] = { score: data.score, confidence: data.confidence ?? 0, status: status as 'success' | 'fallback', data_quality: data.data_quality }
+          }
+        }
+        return next
+      })
+      setFullPillarData((prev) => {
+        const next = { ...prev }
+        const full = resp.livability_pillars as unknown as Record<string, unknown>
+        for (const key of fourKeys) {
+          if (full[key] && typeof full[key] === 'object') next[key] = { ...(full[key] as Record<string, unknown>) }
+        }
+        return next
+      })
+      if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
+        setStatusSignal((resp as { status_signal: number }).status_signal)
+      }
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'Failed to refresh Status Signal.')
+    } finally {
+      setStatusSignalRefreshLoading(false)
+    }
+  }, [place.location, selectedPillars, selectedPriorities, searchOptions, onError])
+
   // When user changes Scenery / Character / Density, update parent options and re-run only that pillar so its score updates.
   const handleSearchOptionsChange = useCallback(
     (newOptions: SearchOptions) => {
@@ -366,13 +429,14 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       place_summary: placeSummary ?? undefined,
       total_score: totalScore,
       longevity_index: longevityIndex ?? undefined,
+      status_signal: statusSignal ?? undefined,
       token_allocation: tokenAllocation as Record<string, number>,
       allocation_type: 'priority_based',
       overall_confidence: { average_confidence: 80, pillars_using_fallback: 0, fallback_percentage: 0, quality_tier_distribution: {}, overall_quality: 'good' },
       data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
       metadata: { version: '', architecture: '', note: '', test_mode: false },
     }
-  }, [place, pillarScores, totalScore, longevityIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
+  }, [place, pillarScores, totalScore, longevityIndex, statusSignal, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
 
   /** Priorities object for save (all pillars, selected use current importance). */
   const savePriorities = useMemo((): PillarPriorities => {
@@ -506,6 +570,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       }
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
+      if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
+        setStatusSignal((resp as { status_signal: number }).status_signal)
+      }
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
@@ -636,7 +703,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Status Signal</span>
-            <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>—</span>
+            <span style={{ fontWeight: 600, color: statusSignal != null ? 'var(--hf-text-secondary)' : 'var(--hf-text-secondary)' }}>
+              {statusSignal != null ? statusSignal.toFixed(1) : '—'}
+            </span>
+            <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
           </span>
         </div>
       </div>

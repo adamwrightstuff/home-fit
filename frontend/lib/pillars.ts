@@ -104,6 +104,18 @@ export const HOMEFIT_COPY = {
     'HomeFit = right for you. Longevity = right for your health over time.',
 } as const
 
+/** Copy for Status Signal UX: tooltip and modal. */
+export const STATUS_SIGNAL_COPY = {
+  tooltip:
+    'Measures wealth concentration, education level, occupation mix, and presence of taste brands (e.g. luxury gyms, design perfumeries).',
+  full:
+    'Status Signal combines four ingredients into a 0–100 score: wealth (household income and inequality), education (bachelor’s and graduate attainment, self-employment), occupation (finance/arts/creative jobs and white-collar share), and local brands (luxury gyms, design perfumeries, organic grocers, boutique fitness). It only appears when we have data for all four. You can refresh it by running just those four pillars.',
+} as const
+
+/** Comma-separated pillar names required to compute Status Signal (for only= param). */
+export const STATUS_SIGNAL_ONLY_PILLARS =
+  'housing_value,social_fabric,economic_security,neighborhood_amenities'
+
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
 }
