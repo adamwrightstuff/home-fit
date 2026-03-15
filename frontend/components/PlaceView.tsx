@@ -279,24 +279,29 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const handleRefreshStatusSignal = useCallback(async () => {
     setStatusSignalRefreshLoading(true)
     try {
+      // Explicit priorities for the four Status Signal pillars so backend has valid allocation
+      const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
       const prioritiesForRequest: Record<string, string> = {}
-      selectedPillars.forEach((k) => {
-        prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
+      fourPillarKeys.forEach((k) => {
+        prioritiesForRequest[k] = selectedPriorities[k] ?? 'Medium'
       })
       const resp = await getScoreWithProgress(
         {
           location: place.location,
           only: STATUS_SIGNAL_ONLY_PILLARS,
           priorities: JSON.stringify(prioritiesForRequest),
-          job_categories: searchOptions.job_categories?.join(','),
-          include_chains: searchOptions.include_chains,
-          enable_schools: searchOptions.enable_schools,
-          natural_beauty_preference:
-            searchOptions.natural_beauty_preference?.length
-              ? JSON.stringify(searchOptions.natural_beauty_preference)
-              : undefined,
-          built_character_preference: searchOptions.built_character_preference ?? undefined,
-          built_density_preference: searchOptions.built_density_preference ?? undefined,
+          ...(searchOptions.job_categories?.length ? { job_categories: searchOptions.job_categories.join(',') } : {}),
+          ...(searchOptions.include_chains !== undefined ? { include_chains: searchOptions.include_chains } : {}),
+          ...(searchOptions.enable_schools !== undefined ? { enable_schools: searchOptions.enable_schools } : {}),
+          ...(searchOptions.natural_beauty_preference?.length
+            ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
+            : {}),
+          ...(searchOptions.built_character_preference
+            ? { built_character_preference: searchOptions.built_character_preference }
+            : {}),
+          ...(searchOptions.built_density_preference
+            ? { built_density_preference: searchOptions.built_density_preference }
+            : {}),
         },
         () => {}
       )

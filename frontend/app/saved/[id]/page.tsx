@@ -213,18 +213,29 @@ export default function SavedDetailPage() {
   )
 
   const handleRefreshStatusSignal = useCallback(async () => {
-    if (!row || !priorities) return
+    if (!row) return
     setStatusSignalRefreshLoading(true)
     try {
+      const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      const prioritiesForFour: Record<string, string> = {}
+      fourPillarKeys.forEach((k) => {
+        prioritiesForFour[k] = (priorities && (priorities as Record<string, string>)[k]) ?? 'Medium'
+      })
       const response = await getScoreWithProgress(
         {
           location: row.input,
           only: STATUS_SIGNAL_ONLY_PILLARS,
-          priorities: JSON.stringify(priorities),
-          job_categories: jobCategories.length > 0 ? jobCategories.join(',') : undefined,
-          natural_beauty_preference: searchOptions?.natural_beauty_preference?.length ? JSON.stringify(searchOptions.natural_beauty_preference) : undefined,
-          built_character_preference: searchOptions?.built_character_preference ?? undefined,
-          built_density_preference: searchOptions?.built_density_preference ?? undefined,
+          priorities: JSON.stringify(prioritiesForFour),
+          ...(jobCategories.length > 0 ? { job_categories: jobCategories.join(',') } : {}),
+          ...(searchOptions?.natural_beauty_preference?.length
+            ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
+            : {}),
+          ...(searchOptions?.built_character_preference
+            ? { built_character_preference: searchOptions.built_character_preference }
+            : {}),
+          ...(searchOptions?.built_density_preference
+            ? { built_density_preference: searchOptions.built_density_preference }
+            : {}),
           include_chains: searchOptions?.include_chains ?? true,
           enable_schools: searchOptions?.enable_schools ?? false,
         },
