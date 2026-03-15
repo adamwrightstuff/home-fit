@@ -210,7 +210,9 @@ def compute_occupation(
     elif lh is not None:
         finance_arts_pct = float(lh)
 
-    white_collar_pct = _fetch_white_collar_pct_tract(tract) if tract else None
+    white_collar_pct = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
+    if white_collar_pct is None and tract:
+        white_collar_pct = _fetch_white_collar_pct_tract(tract)
     self_employed_pct = social_fabric_details.get("self_employed_pct")
 
     if finance_arts_pct is None and white_collar_pct is None and self_employed_pct is None:

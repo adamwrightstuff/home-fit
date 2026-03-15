@@ -800,6 +800,24 @@ def _compute_longevity_index(
     return round(total, 2), contributions
 
 
+def _inject_white_collar_into_economic_security(
+    economic_security_details: Dict[str, Any],
+    census_tract: Optional[Dict[str, Any]],
+) -> None:
+    """Set economic_security_details['breakdown']['white_collar_pct'] from S2401 when tract is available."""
+    if not census_tract:
+        return
+    try:
+        from pillars.status_signal import _fetch_white_collar_pct_tract
+        wc = _fetch_white_collar_pct_tract(census_tract)
+        if wc is not None:
+            if economic_security_details.get("breakdown") is None:
+                economic_security_details["breakdown"] = {}
+            economic_security_details["breakdown"]["white_collar_pct"] = wc
+    except Exception:
+        pass
+
+
 def _compute_status_signal_for_response(
     housing_details: Dict[str, Any],
     social_fabric_details: Dict[str, Any],
@@ -1670,6 +1688,8 @@ def _compute_single_score_internal(
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+
+    _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
     # Extract built/natural beauty from parallel results
     built_calc = pillar_results.get('built_beauty')
@@ -3060,7 +3080,9 @@ async def _stream_score_with_progress(
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-        
+
+        _inject_white_collar_into_economic_security(economic_security_details, census_tract)
+
         # Extract built/natural beauty
         built_calc = pillar_results.get('built_beauty')
         natural_calc = pillar_results.get('natural_beauty')
@@ -3993,6 +4015,8 @@ async def stream_score(
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+
+        _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
         # Extract built/natural beauty from parallel results
         built_calc = pillar_results.get('built_beauty')

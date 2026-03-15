@@ -37,9 +37,11 @@ def get_division(state_abbrev: Optional[str]) -> str:
 def extract_metrics_from_response(
     raw: Dict[str, Any],
     recompute_education: bool = False,
+    recompute_occupation: bool = False,
 ) -> Optional[Dict[str, float]]:
     """Extract Status Signal input metrics from one API response. Returns None if too little data.
-    If recompute_education is True, fetch fresh education (0-100%) from Census B15003 for this location."""
+    If recompute_education is True, fetch fresh education (0-100%%) from Census B15003 for this location.
+    If recompute_occupation is True and white_collar_pct is missing, fetch S2401 for this location."""
     out: Dict[str, float] = {}
 
     # Wealth: housing_value summary
@@ -79,8 +81,9 @@ def extract_metrics_from_response(
     if self_emp is not None and isinstance(self_emp, (int, float)):
         out["self_employed_pct"] = float(self_emp)
 
-    # Occupation: economic_security industry_shares_pct (finance_arts; white_collar not in response)
+    # Occupation: economic_security industry_shares_pct + white_collar_pct from breakdown or S2401
     econ = pillars.get("economic_security") or {}
+    breakdown = econ.get("breakdown") or {}
     industry = econ.get("industry_shares_pct") or {}
     fr = industry.get("finance_realestate")
     lh = industry.get("leisure_hospitality")
@@ -91,6 +94,22 @@ def extract_metrics_from_response(
         if lh is not None:
             fa += float(lh)
         out["finance_arts_pct"] = fa
+
+    white_collar_pct = breakdown.get("white_collar_pct")
+    if white_collar_pct is None and recompute_occupation:
+        coords = raw.get("coordinates") or {}
+        lat, lon = coords.get("lat"), coords.get("lon")
+        if lat is not None and lon is not None:
+            try:
+                from data_sources.census_api import get_census_tract
+                from pillars.status_signal import _fetch_white_collar_pct_tract
+                tract = get_census_tract(float(lat), float(lon))
+                if tract:
+                    white_collar_pct = _fetch_white_collar_pct_tract(tract)
+            except Exception:
+                pass
+    if white_collar_pct is not None and isinstance(white_collar_pct, (int, float)):
+        out["white_collar_pct"] = float(white_collar_pct)
 
     if not out:
         return None
@@ -104,6 +123,7 @@ def main() -> None:
     ap.add_argument("--min-samples", type=int, default=3, help="Min samples per division to emit")
     ap.add_argument("--last", type=int, default=None, help="Use only the last N rows from results (e.g. 50 for latest run)")
     ap.add_argument("--recompute-education", action="store_true", help="Fetch education (0-100%%) from Census B15003 per row so baselines match current API scale")
+    ap.add_argument("--recompute-occupation", action="store_true", help="Fetch white_collar_pct from S2401 per row when missing in response")
     args = ap.parse_args()
 
     if not os.path.isfile(args.input):
@@ -136,7 +156,11 @@ def main() -> None:
                 continue
             state = (raw.get("location_info") or {}).get("state")
             division = get_division(state)
-            metrics = extract_metrics_from_response(raw, recompute_education=args.recompute_education)
+            metrics = extract_metrics_from_response(
+                raw,
+                recompute_education=args.recompute_education,
+                recompute_occupation=args.recompute_occupation,
+            )
             if not metrics:
                 continue
             used += 1
@@ -215,6 +239,8 @@ def main() -> None:
                 for comp in ["wealth", "education", "occupation"]:
                     if comp == "education" and args.recompute_education:
                         continue  # keep only newly computed education (0-100 scale)
+                    if comp == "occupation" and args.recompute_occupation:
+                        continue  # keep only newly computed occupation (white_collar_pct from S2401)
                     existing_comp = (comps or {}).get(comp) or {}
                     result_comp = result[div].get(comp) or {}
                     for m, minmax in existing_comp.items():
