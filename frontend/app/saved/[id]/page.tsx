@@ -213,7 +213,9 @@ export default function SavedDetailPage() {
   )
 
   const handleRefreshStatusSignal = useCallback(async () => {
-    if (!row) return
+    if (!row) throw new Error('Saved place not loaded.')
+    const location = typeof row.input === 'string' ? row.input.trim() : ''
+    if (!location) throw new Error('No address for this place.')
     setStatusSignalRefreshLoading(true)
     try {
       const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
@@ -223,7 +225,7 @@ export default function SavedDetailPage() {
       })
       const response = await getScoreWithProgress(
         {
-          location: row.input,
+          location,
           only: STATUS_SIGNAL_ONLY_PILLARS,
           priorities: JSON.stringify(prioritiesForFour),
           ...(jobCategories.length > 0 ? { job_categories: jobCategories.join(',') } : {}),
@@ -270,6 +272,9 @@ export default function SavedDetailPage() {
       }
       await updateSavedScore(row.id, { scorePayload: merged, priorities })
       setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Refresh failed.'
+      throw new Error(msg)
     } finally {
       setStatusSignalRefreshLoading(false)
     }

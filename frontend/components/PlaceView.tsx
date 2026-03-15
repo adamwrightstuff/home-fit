@@ -277,6 +277,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   )
 
   const handleRefreshStatusSignal = useCallback(async () => {
+    const location = place?.location?.trim()
+    if (!location) {
+      throw new Error('No address to refresh. Search for a place first.')
+    }
     setStatusSignalRefreshLoading(true)
     try {
       // Explicit priorities for the four Status Signal pillars so backend has valid allocation
@@ -287,7 +291,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       })
       const resp = await getScoreWithProgress(
         {
-          location: place.location,
+          location,
           only: STATUS_SIGNAL_ONLY_PILLARS,
           priorities: JSON.stringify(prioritiesForRequest),
           ...(searchOptions.job_categories?.length ? { job_categories: searchOptions.job_categories.join(',') } : {}),
@@ -334,7 +338,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Failed to refresh Status Signal.')
+      const msg = e instanceof Error ? e.message : 'Failed to refresh Status Signal.'
+      onError(msg)
+      throw new Error(msg)
     } finally {
       setStatusSignalRefreshLoading(false)
     }

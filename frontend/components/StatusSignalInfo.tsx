@@ -12,6 +12,7 @@ export interface StatusSignalInfoProps {
 /** "?" button + modal for Status Signal explanation and optional refresh. Use next to the Status Signal label or score. */
 export default function StatusSignalInfo({ onRefresh, refreshing = false }: StatusSignalInfoProps) {
   const [showModal, setShowModal] = useState(false)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
   return (
     <>
@@ -19,6 +20,7 @@ export default function StatusSignalInfo({ onRefresh, refreshing = false }: Stat
         type="button"
         onClick={(e) => {
           e.stopPropagation()
+          setRefreshError(null)
           setShowModal(true)
         }}
         title={STATUS_SIGNAL_COPY.tooltip}
@@ -51,7 +53,7 @@ export default function StatusSignalInfo({ onRefresh, refreshing = false }: Stat
           aria-modal="true"
           aria-labelledby="status-signal-modal-title"
           aria-describedby="status-signal-modal-desc"
-          onClick={() => setShowModal(false)}
+          onClick={() => { setRefreshError(null); setShowModal(false) }}
         >
           <div
             className="hf-panel"
@@ -87,27 +89,39 @@ export default function StatusSignalInfo({ onRefresh, refreshing = false }: Stat
               {STATUS_SIGNAL_COPY.full}
             </p>
             {onRefresh != null && (
-              <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="hf-btn-link"
-                  style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await onRefresh()
-                    setShowModal(false)
-                  }}
-                  disabled={refreshing}
-                  className="hf-btn-primary"
-                  style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem' }}
-                >
-                  {refreshing ? 'Refreshing…' : 'Refresh Status Signal'}
-                </button>
+              <div style={{ marginTop: '1.25rem' }}>
+                {refreshError && (
+                  <p role="alert" style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', color: 'var(--hf-danger, #c00)' }}>
+                    {refreshError}
+                  </p>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setRefreshError(null); setShowModal(false) }}
+                    className="hf-btn-link"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setRefreshError(null)
+                      try {
+                        await onRefresh()
+                        setShowModal(false)
+                      } catch (err) {
+                        setRefreshError(err instanceof Error ? err.message : 'Refresh failed.')
+                      }
+                    }}
+                    disabled={refreshing}
+                    className="hf-btn-primary"
+                    style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem' }}
+                  >
+                    {refreshing ? 'Refreshing…' : 'Refresh Status Signal'}
+                  </button>
+                </div>
               </div>
             )}
             {onRefresh == null && (
