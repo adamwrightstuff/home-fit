@@ -3,20 +3,50 @@ import { ScoreResponse, ScoreRequestParams, GeocodeResult } from '@/types/api';
 // For production, the browser should call same-origin Vercel API routes (which proxy to Railway).
 const API_BASE_URL = '';
 
-/** Geocode a place to show map and "you are about to search here". No pillar work. */
+/** OpenStreetMap Nominatim fallback when our backend is down. Returns GeocodeResult shape. */
+async function geocodeWithNominatim(location: string): Promise<GeocodeResult | null> {
+  try {
+    const q = location.trim();
+    if (!q) return null;
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?${new URLSearchParams({
+        q,
+        format: 'json',
+        limit: '1',
+      })}`,
+      { headers: { Accept: 'application/json', 'User-Agent': 'HomeFit/1.0 (location search fallback)' } }
+    );
+    if (!res.ok) return null;
+    const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name?: string; address?: Record<string, string> }>;
+    const first = arr?.[0];
+    if (!first || first.lat == null || first.lon == null) return null;
+    const lat = parseFloat(first.lat);
+    const lon = parseFloat(first.lon);
+    if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+    const addr = first.address || {};
+    const city = addr.city || addr.town || addr.village || addr.municipality || '';
+    const state = addr.state || '';
+    const zip_code = addr.postcode || '';
+    const display_name = first.display_name || [city, state, zip_code].filter(Boolean).join(', ') || location;
+    return { lat, lon, city, state, zip_code, display_name };
+  } catch {
+    return null;
+  }
+}
+
+/** Geocode a place to show map and "you are about to search here". No pillar work. Uses backend; if backend is down (502/503) or unreachable, falls back to OpenStreetMap Nominatim so location search still works. */
 export async function getGeocode(location: string): Promise<GeocodeResult> {
   const url = `${API_BASE_URL}/api/geocode?location=${encodeURIComponent(location.trim())}`;
   const fetchOpts: RequestInit = { method: 'GET', headers: { Accept: 'application/json' } };
 
   const maxAttempts = 3;
-  const retryDelaysMs = [2000, 4000]; // delay before 2nd and 3rd attempt
+  const retryDelaysMs = [2000, 4000];
 
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       let res = await fetch(url, fetchOpts);
-      // Retry on 502/503 (cold start or temporary). Backend can take a while to join LB after container start.
-      if ((res.status === 502 || res.status === 503) && !url.includes('job_id')) {
+      if (res.status === 502 || res.status === 503) {
         for (const delayMs of [5000, 10000, 15000]) {
           await new Promise((r) => setTimeout(r, delayMs));
           res = await fetch(url, fetchOpts);
@@ -36,7 +66,7 @@ export async function getGeocode(location: string): Promise<GeocodeResult> {
           await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
           continue;
         }
-        throw lastError;
+        break;
       }
       if (typeof data?.lat !== 'number' || typeof data?.lon !== 'number') {
         lastError = new Error('Invalid geocode response.');
@@ -44,7 +74,7 @@ export async function getGeocode(location: string): Promise<GeocodeResult> {
           await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
           continue;
         }
-        throw lastError;
+        break;
       }
       return data as GeocodeResult;
     } catch (e) {
@@ -53,9 +83,13 @@ export async function getGeocode(location: string): Promise<GeocodeResult> {
         await new Promise((r) => setTimeout(r, retryDelaysMs[attempt - 1]));
         continue;
       }
-      throw lastError;
+      break;
     }
   }
+
+  // Backend down or unreachable: try OpenStreetMap so user can at least search and see the map
+  const fallback = await geocodeWithNominatim(location.trim());
+  if (fallback) return fallback;
 
   throw lastError ?? new Error('Could not find that location.');
 }
