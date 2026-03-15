@@ -6,8 +6,9 @@ and appends raw JSON to data/results.csv.
 
 Idempotent: skips locations already in results.csv. Restartable.
 
-Usage (from project root, backend running):
-  export HOMEFIT_BASE_URL="http://localhost:8000"
+Default API: https://home-fit-production.up.railway.app (override with HOMEFIT_BASE_URL for local).
+
+Usage (from project root):
   python3 scripts/collect_status_signal.py
 """
 
