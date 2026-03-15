@@ -34,7 +34,7 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 LOCATIONS_CSV = DATA_DIR / "locations.csv"
 RESULTS_CSV = DATA_DIR / "results.csv"
 
-HOMEFIT_BASE_URL = os.getenv("HOMEFIT_BASE_URL", "").strip()
+HOMEFIT_BASE_URL = (os.getenv("HOMEFIT_BASE_URL", "https://home-fit-production.up.railway.app") or "https://home-fit-production.up.railway.app").strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
 
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0
