@@ -1,0 +1,21 @@
+# Don't ship frontend or dev/cache into the API image
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+node_modules
+frontend
+analysis
+*.jsonl
+*.webm
+*.png
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
