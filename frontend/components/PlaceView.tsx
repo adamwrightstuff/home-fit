@@ -715,7 +715,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Status Signal</span>
             <span style={{ fontWeight: 600, color: statusSignal != null ? 'var(--hf-text-secondary)' : 'var(--hf-text-secondary)' }}>
-              {statusSignal != null ? statusSignal.toFixed(1) : '—'}
+              {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
             </span>
             <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
           </span>

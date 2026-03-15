@@ -1058,7 +1058,7 @@ def _apply_allocation_to_cached_response(
                     state,
                 )
                 if status_signal_val is not None:
-                    response["status_signal"] = status_signal_val
+                    response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
             except Exception:
                 pass
 
@@ -2065,7 +2065,7 @@ def _compute_single_score_internal(
         housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
     )
     if status_signal_val is not None:
-        response["status_signal"] = status_signal_val
+        response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
 
     if test_mode_enabled and beauty_overrides:
         arch_override_keys = {
@@ -3438,7 +3438,7 @@ async def _stream_score_with_progress(
             housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
         )
         if status_signal_val is not None:
-            final_response["status_signal"] = status_signal_val
+            final_response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
 
         # Store a shared, cross-user response template (compressed) for future requests.
         # Bounded by TTL + size cap to avoid unbounded Redis growth.
@@ -4394,18 +4394,18 @@ async def stream_score(
             housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
         )
         if status_signal_val is not None:
-            response["status_signal"] = status_signal_val
+            response["status_signal"] = max(0.0, min(100.0, float(status_signal_val)))
 
         if test_mode_enabled and beauty_overrides:
             arch_override_keys = {
-                "levels_entropy",
-                "building_type_diversity",
-                "footprint_area_cv",
-                "block_grain",
-                "streetwall_continuity",
-                "setback_consistency",
-                "facade_rhythm",
-                "architecture_score"
+            "levels_entropy",
+            "building_type_diversity",
+            "footprint_area_cv",
+            "block_grain",
+            "streetwall_continuity",
+            "setback_consistency",
+            "facade_rhythm",
+            "architecture_score"
             }
             tree_override_keys = {
                 "tree_canopy_pct",

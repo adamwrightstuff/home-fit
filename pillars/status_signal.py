@@ -304,4 +304,5 @@ def compute_status_signal(
     total_w += w_brand
     if total_w <= 0:
         return None
-    return round(score / total_w * 100.0, 1)
+    raw = score / total_w * 100.0
+    return round(max(0.0, min(100.0, raw)), 1)

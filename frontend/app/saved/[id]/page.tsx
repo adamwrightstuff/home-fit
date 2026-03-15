@@ -527,7 +527,7 @@ export default function SavedDetailPage() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="hf-muted">Status Signal</span>
                 <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
-                  {typeof displayData.status_signal === 'number' ? displayData.status_signal.toFixed(1) : '—'}
+                  {typeof displayData.status_signal === 'number' ? Math.max(0, Math.min(100, displayData.status_signal)).toFixed(1) : '—'}
                 </span>
                 <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
               </span>
