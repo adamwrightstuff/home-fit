@@ -86,6 +86,7 @@ def main() -> None:
     ap.add_argument("--input", default=os.path.join(ROOT, "data", "results.csv"), help="Path to results.csv")
     ap.add_argument("--output", default=os.path.join(ROOT, "data", "status_signal_baselines.json"))
     ap.add_argument("--min-samples", type=int, default=3, help="Min samples per division to emit")
+    ap.add_argument("--last", type=int, default=None, help="Use only the last N rows from results (e.g. 50 for latest run)")
     args = ap.parse_args()
 
     if not os.path.isfile(args.input):
@@ -103,7 +104,11 @@ def main() -> None:
         if not header or (len(header) < 3 or header[0].strip().lower() != "location"):
             print("Error: expected CSV with columns location,timestamp,raw_json")
             return
-        for row in reader:
+        rows = list(reader)
+    if args.last is not None and args.last > 0:
+        rows = rows[-args.last:]
+        print(f"Using only last {args.last} rows.")
+    for row in rows:
             if len(row) < 3:
                 continue
             location, _ts, json_str = row[0], row[1], row[2]
