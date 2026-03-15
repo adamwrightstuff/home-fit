@@ -7,11 +7,15 @@ and appends raw JSON to data/results.csv.
 Idempotent: skips locations already in results.csv. Restartable.
 
 Default API: https://home-fit-production.up.railway.app (override with HOMEFIT_BASE_URL for local).
+If production requires auth, set HOMEFIT_PROXY_SECRET (sent as X-HomeFit-Proxy-Secret).
 
 Usage (from project root):
+  export HOMEFIT_PROXY_SECRET="your-secret"   # if required by API
   python3 scripts/collect_status_signal.py
+  python3 scripts/collect_status_signal.py --limit 50
 """
 
+import argparse
 import csv
 import json
 import logging
@@ -37,6 +41,7 @@ RESULTS_CSV = DATA_DIR / "results.csv"
 
 HOMEFIT_BASE_URL = (os.getenv("HOMEFIT_BASE_URL", "https://home-fit-production.up.railway.app") or "https://home-fit-production.up.railway.app").strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
+HOMEFIT_PROXY_SECRET = os.getenv("HOMEFIT_PROXY_SECRET", "").strip()
 
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0
 ADAPTIVE_DELAY_FACTOR = 0.1
@@ -62,6 +67,8 @@ def call_api(location: str) -> Optional[Dict]:
     headers = {}
     if HOMEFIT_API_KEY:
         headers["Authorization"] = f"Bearer {HOMEFIT_API_KEY}"
+    if HOMEFIT_PROXY_SECRET:
+        headers["X-HomeFit-Proxy-Secret"] = HOMEFIT_PROXY_SECRET
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -138,6 +145,9 @@ def append_result(location: str, raw_json: Dict):
 
 
 def main():
+    p = argparse.ArgumentParser(description="Collect Status Signal (4 pillars) from API into results.csv")
+    p.add_argument("--limit", type=int, default=None, help="Max locations to process this run (default: all)")
+    args = p.parse_args()
     if not HOMEFIT_BASE_URL:
         logger.error("Set HOMEFIT_BASE_URL (e.g. export HOMEFIT_BASE_URL=http://localhost:8000)")
         sys.exit(1)
@@ -145,6 +155,8 @@ def main():
     all_locs = load_locations()
     processed = load_processed()
     unprocessed = [loc for loc in all_locs if loc not in processed]
+    if args.limit is not None and args.limit > 0:
+        unprocessed = unprocessed[: args.limit]
     to_process = len(unprocessed)
     if to_process == 0:
         logger.info("All locations already in results.csv. Done.")
