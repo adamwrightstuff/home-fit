@@ -805,14 +805,14 @@ def _compute_status_signal_for_response(
     social_fabric_details: Dict[str, Any],
     economic_security_details: Dict[str, Any],
     amenities_details: Dict[str, Any],
-    census_tract: Optional[str],
+    census_tract: Optional[Dict[str, Any]],
     state: Optional[str],
 ) -> Optional[float]:
     """
     Compute Status Signal (0-100) when all four pillars have data.
     Uses housing_value, social_fabric, economic_security, neighborhood_amenities details.
     """
-    if not census_tract and not state:
+    if not state and not census_tract:
         return None
     business_list = (amenities_details.get("breakdown") or {}).get("business_list") or amenities_details.get("business_list") or []
     return compute_status_signal(
@@ -1029,6 +1029,38 @@ def _apply_allocation_to_cached_response(
     )
     response["longevity_index"] = longevity_index
     response["longevity_index_contributions"] = longevity_contributions
+
+    # Compute Status Signal on cache hit when missing (so cached places still show it)
+    if response.get("status_signal") is None:
+        coords = response.get("coordinates") or {}
+        lat = coords.get("lat")
+        lon = coords.get("lon")
+        state = (response.get("location_info") or {}).get("state")
+        pillars = response.get("livability_pillars") or {}
+        housing_details = pillars.get("housing_value")
+        social_fabric_details = pillars.get("social_fabric")
+        economic_security_details = pillars.get("economic_security")
+        amenities_details = pillars.get("neighborhood_amenities")
+        if (
+            lat is not None and lon is not None
+            and housing_details and social_fabric_details
+            and economic_security_details and amenities_details
+        ):
+            try:
+                from data_sources import census_api as _ca
+                census_tract = _ca.get_census_tract(lat, lon)
+                status_signal_val = _compute_status_signal_for_response(
+                    housing_details,
+                    social_fabric_details,
+                    economic_security_details,
+                    amenities_details,
+                    census_tract,
+                    state,
+                )
+                if status_signal_val is not None:
+                    response["status_signal"] = status_signal_val
+            except Exception:
+                pass
 
     if isinstance(response.get("metadata"), dict):
         response["metadata"]["cache_hit"] = True
