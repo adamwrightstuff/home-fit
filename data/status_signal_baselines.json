@@ -2,11 +2,11 @@
   "all": {
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 30.0
+        "max": 85.78,
+        "min": 3.33
       },
       "grad_pct": {
-        "max": 406.0,
+        "max": 45.44,
         "min": 0.0
       },
       "self_employed_pct": {
@@ -38,12 +38,12 @@
   "east_north_central": {
     "education": {
       "bach_pct": {
-        "max": 4198.0,
-        "min": 672.0
+        "max": 84.68,
+        "min": 68.12
       },
       "grad_pct": {
-        "max": 108.0,
-        "min": 0.0
+        "max": 45.39,
+        "min": 25.7
       },
       "self_employed_pct": {
         "max": 93.58,
@@ -65,12 +65,12 @@
   "east_south_central": {
     "education": {
       "bach_pct": {
-        "max": 2895.0,
-        "min": 636.0
+        "max": 80.46,
+        "min": 64.15
       },
       "grad_pct": {
-        "max": 45.0,
-        "min": 0.0
+        "max": 45.44,
+        "min": 22.96
       },
       "self_employed_pct": {
         "max": 101.04,
@@ -92,11 +92,11 @@
   "middle_atlantic": {
     "education": {
       "bach_pct": {
-        "max": 3206.0,
-        "min": 30.0
+        "max": 69.54,
+        "min": 3.33
       },
       "grad_pct": {
-        "max": 85.0,
+        "max": 43.54,
         "min": 0.0
       },
       "self_employed_pct": {
@@ -119,12 +119,12 @@
   "mountain": {
     "education": {
       "bach_pct": {
-        "max": 1388.0,
-        "min": 277.0
+        "max": 74.5,
+        "min": 18.8
       },
       "grad_pct": {
-        "max": 26.0,
-        "min": 0.0
+        "max": 35.38,
+        "min": 7.29
       },
       "self_employed_pct": {
         "max": 123.55,
@@ -144,20 +144,7 @@
     }
   },
   "new_england": {
-    "education": {
-      "bach_pct": {
-        "max": 2522.0,
-        "min": 1960.0
-      },
-      "grad_pct": {
-        "max": 7.0,
-        "min": 0.0
-      },
-      "self_employed_pct": {
-        "max": 77.31,
-        "min": 68.11
-      }
-    },
+    "education": {},
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
@@ -173,12 +160,12 @@
   "pacific": {
     "education": {
       "bach_pct": {
-        "max": 3340.0,
-        "min": 1786.0
+        "max": 57.22,
+        "min": 23.9
       },
       "grad_pct": {
-        "max": 263.0,
-        "min": 16.0
+        "max": 21.28,
+        "min": 6.97
       },
       "self_employed_pct": {
         "max": 77.55,
@@ -200,12 +187,12 @@
   "south_atlantic": {
     "education": {
       "bach_pct": {
-        "max": 4962.0,
-        "min": 850.0
+        "max": 85.78,
+        "min": 22.64
       },
       "grad_pct": {
-        "max": 172.0,
-        "min": 0.0
+        "max": 43.84,
+        "min": 5.31
       },
       "self_employed_pct": {
         "max": 113.51,
@@ -227,12 +214,12 @@
   "west_north_central": {
     "education": {
       "bach_pct": {
-        "max": 3887.0,
-        "min": 1248.0
+        "max": 58.94,
+        "min": 27.93
       },
       "grad_pct": {
-        "max": 80.0,
-        "min": 44.0
+        "max": 23.13,
+        "min": 9.05
       },
       "self_employed_pct": {
         "max": 92.85,
@@ -254,12 +241,12 @@
   "west_south_central": {
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 897.0
+        "max": 76.44,
+        "min": 4.91
       },
       "grad_pct": {
-        "max": 406.0,
-        "min": 0.0
+        "max": 37.82,
+        "min": 1.0
       },
       "self_employed_pct": {
         "max": 104.09,

@@ -34,8 +34,12 @@ def get_division(state_abbrev: Optional[str]) -> str:
     return _gd(state_abbrev)
 
 
-def extract_metrics_from_response(raw: Dict[str, Any]) -> Optional[Dict[str, float]]:
-    """Extract Status Signal input metrics from one API response. Returns None if too little data."""
+def extract_metrics_from_response(
+    raw: Dict[str, Any],
+    recompute_education: bool = False,
+) -> Optional[Dict[str, float]]:
+    """Extract Status Signal input metrics from one API response. Returns None if too little data.
+    If recompute_education is True, fetch fresh education (0-100%) from Census B15003 for this location."""
     out: Dict[str, float] = {}
 
     # Wealth: housing_value summary
@@ -50,9 +54,21 @@ def extract_metrics_from_response(raw: Dict[str, Any]) -> Optional[Dict[str, flo
         out["mean_hh_income"] = float(mean_income)
         out["wealth_gap_ratio"] = (float(mean_income) - float(median_income)) / float(median_income)
 
-    # Education: social_fabric
+    # Education: from response or recompute from Census (0-100% scale)
     social = pillars.get("social_fabric") or {}
     edu = social.get("education_attainment") or {}
+    if recompute_education:
+        coords = raw.get("coordinates") or {}
+        lat, lon = coords.get("lat"), coords.get("lon")
+        if lat is not None and lon is not None:
+            try:
+                from data_sources.census_api import get_census_tract, get_diversity_data
+                tract = get_census_tract(float(lat), float(lon))
+                div_data = get_diversity_data(float(lat), float(lon), tract) if tract else None
+                if div_data and div_data.get("education_attainment"):
+                    edu = div_data["education_attainment"]
+            except Exception:
+                pass
     bach = edu.get("bachelor_pct")
     grad = edu.get("grad_pct")
     if bach is not None and isinstance(bach, (int, float)):
@@ -87,6 +103,7 @@ def main() -> None:
     ap.add_argument("--output", default=os.path.join(ROOT, "data", "status_signal_baselines.json"))
     ap.add_argument("--min-samples", type=int, default=3, help="Min samples per division to emit")
     ap.add_argument("--last", type=int, default=None, help="Use only the last N rows from results (e.g. 50 for latest run)")
+    ap.add_argument("--recompute-education", action="store_true", help="Fetch education (0-100%%) from Census B15003 per row so baselines match current API scale")
     args = ap.parse_args()
 
     if not os.path.isfile(args.input):
@@ -119,7 +136,7 @@ def main() -> None:
                 continue
             state = (raw.get("location_info") or {}).get("state")
             division = get_division(state)
-            metrics = extract_metrics_from_response(raw)
+            metrics = extract_metrics_from_response(raw, recompute_education=args.recompute_education)
             if not metrics:
                 continue
             used += 1
@@ -187,6 +204,7 @@ def main() -> None:
             result["all"] = {"wealth": wealth_all, "education": education_all, "occupation": occupation_all}
 
     # Merge with existing baselines so we don't drop education/occupation when results lack them
+    # When --recompute-education was used, do not merge in old education (it was count-scale).
     if os.path.isfile(args.output):
         try:
             with open(args.output, "r", encoding="utf-8") as f:
@@ -195,6 +213,8 @@ def main() -> None:
                 if div not in result:
                     result[div] = {"wealth": {}, "education": {}, "occupation": {}}
                 for comp in ["wealth", "education", "occupation"]:
+                    if comp == "education" and args.recompute_education:
+                        continue  # keep only newly computed education (0-100 scale)
                     existing_comp = (comps or {}).get(comp) or {}
                     result_comp = result[div].get(comp) or {}
                     for m, minmax in existing_comp.items():
