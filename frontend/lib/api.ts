@@ -276,9 +276,9 @@ export async function getScoreWithProgress(
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
-  // Retry on 502 (cold start). Backend can take ~20s to join LB pool after container start.
+  // Retry on 502 (cold start). Backend can take 60s+ to join LB pool after container start.
   if (res.status === 502) {
-    for (const delayMs of [15000, 20000, 25000]) {
+    for (const delayMs of [20000, 35000, 50000, 65000]) {
       if (getCancelled()) throw new Error('Cancelled');
       await new Promise((r) => setTimeout(r, delayMs));
       res = await fetch(url, {
@@ -317,6 +317,7 @@ export async function getScoreWithProgress(
   }
 
   const start = Date.now();
+  const pollUrl = `${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`;
   for (;;) {
     await new Promise((r) => setTimeout(r, pollDelayMs));
     if (getCancelled()) throw new Error('Cancelled');
@@ -325,13 +326,33 @@ export async function getScoreWithProgress(
       throw new Error('Scoring is taking longer than expected. Please try again.');
     }
 
-    const pollRes = await fetch(`${API_BASE_URL}/api/score?job_id=${encodeURIComponent(jobId)}`, {
+    let pollRes = await fetch(pollUrl, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
+    // Retry poll on 502 (backend cold start or transient failure)
+    if (pollRes.status === 502) {
+      for (const delayMs of [2000, 3000, 4000]) {
+        if (getCancelled()) throw new Error('Cancelled');
+        await new Promise((r) => setTimeout(r, delayMs));
+        pollRes = await fetch(pollUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (pollRes.status !== 502) break;
+      }
+    }
     if (getCancelled()) throw new Error('Cancelled');
     const pollPayload = (await pollRes.json().catch(() => null)) as Record<string, unknown> | null;
     const status = pollPayload?.status as string | undefined;
+
+    if (pollRes.status === 502) {
+      const detail =
+        (pollPayload && typeof (pollPayload as { detail?: string }).detail === 'string')
+          ? (pollPayload as { detail: string }).detail
+          : 'Backend temporarily unavailable.';
+      throw new Error(detail + ' Try again in a moment.');
+    }
 
     if (pollPayload?.partial && typeof pollPayload.partial === 'object') {
       onProgress(pollPayload.partial as PartialPillars);
