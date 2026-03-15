@@ -1,17 +1,128 @@
 {
   "all": {
     "education": {
-      "bach_pct": {"min": 15, "max": 55},
-      "grad_pct": {"min": 5, "max": 25},
-      "self_employed_pct": {"min": 3, "max": 15}
+      "bach_pct": {
+        "max": 55,
+        "min": 15
+      },
+      "grad_pct": {
+        "max": 25,
+        "min": 5
+      },
+      "self_employed_pct": {
+        "max": 15,
+        "min": 3
+      }
     },
     "occupation": {
-      "finance_arts_pct": {"min": 5, "max": 25},
-      "white_collar_pct": {"min": 25, "max": 65}
+      "finance_arts_pct": {
+        "max": 25,
+        "min": 5
+      },
+      "white_collar_pct": {
+        "max": 65,
+        "min": 25
+      }
     },
     "wealth": {
-      "mean_hh_income": {"min": 35000, "max": 180000},
-      "wealth_gap_ratio": {"min": 0.05, "max": 0.75}
+      "mean_hh_income": {
+        "max": 250001.0,
+        "min": 14174.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.75,
+        "min": 0.05
+      }
+    }
+  },
+  "east_north_central": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 162143.0,
+        "min": 22356.0
+      }
+    }
+  },
+  "east_south_central": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 104216.0,
+        "min": 23056.0
+      }
+    }
+  },
+  "middle_atlantic": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 190769.0,
+        "min": 21631.0
+      }
+    }
+  },
+  "mountain": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 98194.0,
+        "min": 19500.0
+      }
+    }
+  },
+  "new_england": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 143846.0,
+        "min": 24728.0
+      }
+    }
+  },
+  "pacific": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 234243.0,
+        "min": 19524.0
+      }
+    }
+  },
+  "south_atlantic": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 250001.0,
+        "min": 14174.0
+      }
+    }
+  },
+  "west_north_central": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 129861.0,
+        "min": 27973.0
+      }
+    }
+  },
+  "west_south_central": {
+    "education": {},
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 177583.0,
+        "min": 27340.0
+      }
     }
   }
 }
