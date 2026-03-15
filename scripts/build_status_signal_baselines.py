@@ -35,19 +35,30 @@ from data_sources.geocoding import geocode
 from data_sources.us_census_divisions import get_division
 
 
+# Fallback cities if no CSV or file missing (no setup required)
+_DEFAULT_LOCATIONS = [
+    "Seattle, WA", "Portland, OR", "San Francisco, CA", "Denver, CO",
+    "Austin, TX", "Chicago, IL", "Boston, MA", "New York, NY",
+    "Minneapolis, MN", "Atlanta, GA", "Miami, FL", "Phoenix, AZ",
+]
+
+
 def _load_locations(path: str, limit: Optional[int]) -> List[str]:
     out: List[str] = []
-    with open(path, newline="", encoding="utf-8") as f:
-        for row in f:
-            row = row.strip()
-            if not row or row.lower().startswith("location"):
-                continue
-            loc = row.split(",")[0].strip().strip('"')
-            if not loc:
-                continue
-            out.append(loc)
-            if limit and len(out) >= limit:
-                break
+    if path and os.path.isfile(path):
+        with open(path, newline="", encoding="utf-8") as f:
+            for row in f:
+                row = row.strip()
+                if not row or row.lower().startswith("location"):
+                    continue
+                loc = row.split(",")[0].strip().strip('"')
+                if not loc:
+                    continue
+                out.append(loc)
+                if limit and len(out) >= limit:
+                    break
+    if not out:
+        out = _DEFAULT_LOCATIONS[: (limit or len(_DEFAULT_LOCATIONS))]
     return out
 
 

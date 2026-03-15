@@ -1,0 +1,17 @@
+{
+  "all": {
+    "education": {
+      "bach_pct": {"min": 15, "max": 55},
+      "grad_pct": {"min": 5, "max": 25},
+      "self_employed_pct": {"min": 3, "max": 15}
+    },
+    "occupation": {
+      "finance_arts_pct": {"min": 5, "max": 25},
+      "white_collar_pct": {"min": 25, "max": 65}
+    },
+    "wealth": {
+      "mean_hh_income": {"min": 35000, "max": 180000},
+      "wealth_gap_ratio": {"min": 0.05, "max": 0.75}
+    }
+  }
+}

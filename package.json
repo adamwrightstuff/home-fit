@@ -1,0 +1,11 @@
+{
+  "name": "home-fit-root",
+  "private": true,
+  "version": "0.0.1",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  },
+  "scripts": {
+    "build-status-baselines": "PYTHONPATH=. python3 scripts/build_status_signal_baselines.py --input data/locations.csv --output data/status_signal_baselines.json --limit 200 --min-samples 3"
+  }
+}
