@@ -118,6 +118,18 @@ After this initial setup, all future deployments happen automatically when you p
 
 ---
 
+## Viewing deploy and runtime logs
+
+- **Vercel (frontend + `/api/score` proxy)**  
+  - [Dashboard](https://vercel.com/dashboard) → your project → **Deployments** → click a deployment to see **build logs**.  
+  - For **runtime logs** (e.g. proxy 502s, `console.log` from API routes): **Logs** tab (or **Monitoring** → **Logs**). Filter by time or search for `proxy_score` to see score requests.
+
+- **Railway (backend API)**  
+  - [Dashboard](https://railway.app/dashboard) → your project → **Service** (the API) → **Deployments** for **deploy logs** (build + start).  
+  - **View** (or **Logs**) for **runtime logs** (stdout/stderr from `uvicorn`). Use this to see Python errors, request logs, and why the server might return 502 (e.g. cold start, crash, timeout).
+
+---
+
 ## Which should you choose?
 
 - **Option 1 (Vercel Token)**: Best if you want CLI-only deployment
