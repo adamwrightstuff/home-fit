@@ -219,7 +219,7 @@ export default function SavedDetailPage() {
       const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
       const prioritiesForFour: Record<string, string> = {}
       fourPillarKeys.forEach((k) => {
-        prioritiesForFour[k] = (priorities && (priorities as Record<string, string>)[k]) ?? 'Medium'
+        prioritiesForFour[k] = (priorities && (priorities as unknown as Record<string, string>)[k]) ?? 'Medium'
       })
       const response = await getScoreWithProgress(
         {

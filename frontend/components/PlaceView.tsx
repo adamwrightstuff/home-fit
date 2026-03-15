@@ -338,7 +338,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     } finally {
       setStatusSignalRefreshLoading(false)
     }
-  }, [place.location, selectedPillars, selectedPriorities, searchOptions, onError])
+  }, [place.location, selectedPriorities, searchOptions, onError])
 
   // When user changes Scenery / Character / Density, update parent options and re-run only that pillar so its score updates.
   const handleSearchOptionsChange = useCallback(
