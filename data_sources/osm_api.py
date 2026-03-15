@@ -2516,7 +2516,10 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             "lon": elem_lon,
             "distance_m": round(distance_m, 0),
             "osm_id": osm_id,
-            "coordinate_source": coord_source
+            "coordinate_source": coord_source,
+            "shop": shop if shop else None,
+            "leisure": leisure if leisure else None,
+            "amenity": amenity if amenity else None,
         }
 
         if amenity == "cafe":
@@ -2561,7 +2564,7 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
         elif shop == "music":
             business["type"] = "records"
             tier4_services.append(business)
-        elif leisure == "fitness_centre":
+        elif leisure == "fitness_centre" or amenity in ("fitness_centre", "sports_centre"):
             business["type"] = "fitness"
             tier4_services.append(business)
         elif shop in ["garden_centre", "florist"]:

@@ -238,12 +238,16 @@ def compute_brand(business_list: List[Dict[str, Any]]) -> float:
         if not names_re:
             continue
         pattern = re.compile("|".join(re.escape(n) for n in names_re), re.I)
+        types_lower = [t.lower() for t in types_ok]
         matches = [
             b for b in business_list
             if (b.get("name") and pattern.search(b.get("name", "")))
-            or (b.get("type") and str(b.get("type", "")).lower() in [t.lower() for t in types_ok])
-            or (b.get("shop") and str(b.get("shop", "")).lower() in [t.lower() for t in types_ok])
-            or (b.get("leisure") and str(b.get("leisure", "")).lower() in [t.lower() for t in types_ok])
+            or (b.get("type") and str(b.get("type", "")).lower() in types_lower)
+            or (b.get("shop") and str(b.get("shop", "")).lower() in types_lower)
+            or (b.get("leisure") and str(b.get("leisure", "")).lower() in types_lower)
+            or (b.get("amenity") and str(b.get("amenity", "")).lower() in types_lower)
+            or (b.get("type") == "fitness" and any(t in ("fitness_centre", "sports_centre") for t in types_ok))
+            or (b.get("type") == "grocery" and any(t in ("supermarket", "greengrocer") for t in types_ok))
         ]
         if not matches:
             cat_score = 0.0
@@ -306,4 +310,63 @@ def compute_status_signal(
         return None
     # Weighted average of 0-100 components -> already 0-100; do not multiply by 100
     raw = score / total_w
-    return round(max(0.0, min(100.0, raw)), 1)
+    final = round(max(0.0, min(100.0, raw)), 1)
+    return final
+
+
+def compute_status_signal_with_breakdown(
+    housing_details: Optional[Dict[str, Any]],
+    social_fabric_details: Optional[Dict[str, Any]],
+    economic_security_details: Optional[Dict[str, Any]],
+    business_list: Optional[List[Dict[str, Any]]],
+    tract: Optional[Dict[str, Any]],
+    state_abbrev: Optional[str],
+) -> Tuple[Optional[float], Dict[str, Optional[float]]]:
+    """
+    Same as compute_status_signal but also returns the four components (0-100 each).
+    Returns (score, {"wealth": _, "education": _, "occupation": _, "brand": _}).
+    """
+    breakdown: Dict[str, Optional[float]] = {"wealth": None, "education": None, "occupation": None, "brand": None}
+    if not housing_details or not social_fabric_details or not economic_security_details:
+        return None, breakdown
+    from data_sources.us_census_divisions import get_division
+    division = get_division(state_abbrev) if state_abbrev else "all"
+    baselines = _load_baselines()
+    if not baselines:
+        division = "all"
+
+    wealth = compute_wealth(housing_details, division, baselines)
+    education = compute_education(social_fabric_details, division, baselines)
+    occupation = compute_occupation(
+        economic_security_details, social_fabric_details, tract, division, baselines
+    )
+    brand = compute_brand(business_list or [])
+    breakdown["wealth"] = wealth
+    breakdown["education"] = education
+    breakdown["occupation"] = occupation
+    breakdown["brand"] = brand
+
+    if wealth is None and education is None and occupation is None:
+        return None, breakdown
+    w_wealth = 0.25
+    w_education = 0.20
+    w_occupation = 0.20
+    w_brand = 0.35
+    total_w = 0.0
+    score = 0.0
+    if wealth is not None:
+        total_w += w_wealth
+        score += w_wealth * wealth
+    if education is not None:
+        total_w += w_education
+        score += w_education * education
+    if occupation is not None:
+        total_w += w_occupation
+        score += w_occupation * occupation
+    score += w_brand * brand
+    total_w += w_brand
+    if total_w <= 0:
+        return None, breakdown
+    raw = score / total_w
+    final = round(max(0.0, min(100.0, raw)), 1)
+    return final, breakdown

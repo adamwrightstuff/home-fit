@@ -65,9 +65,9 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
             }
 
     if p == "neighborhood_amenities":
-        # Neighborhood scope uses smaller radii to avoid bleeding into adjacent areas
+        # Neighborhood scope: 1200m so status brands at edges (e.g. Tribeca/SoHo) are included
         if s == "neighborhood":
-            return {"query_radius_m": 1000, "walkable_distance_m": 800}
+            return {"query_radius_m": 1200, "walkable_distance_m": 800}
         return {"query_radius_m": 1500, "walkable_distance_m": 1000}
 
     if p == "public_transit_access":

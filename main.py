@@ -2026,7 +2026,9 @@ def _compute_single_score_internal(
             "summary": social_fabric_details.get("summary", {}),
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
-            "area_classification": social_fabric_details.get("area_classification", {})
+            "area_classification": social_fabric_details.get("area_classification", {}),
+            "education_attainment": social_fabric_details.get("education_attainment"),
+            "self_employed_pct": social_fabric_details.get("self_employed_pct"),
         },
     }
 
