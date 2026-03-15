@@ -74,6 +74,25 @@ After that, every push to `main` runs the workflow and deploys the backend to Ra
 
 ---
 
+## Getting the API to start (fixing "python3: command not found")
+
+The repo has a **Dockerfile** in the root. Railway will use it automatically — you don’t have to turn anything on. You just need a new deploy so Railway builds from the Dockerfile.
+
+**Steps:**
+
+1. Open **https://railway.app** in your browser and log in.
+2. Click your **project** (the one that has your API).
+3. Click the **service** that runs the API (the one that was giving "python3: command not found" in the logs).
+4. In the left sidebar, click **"Deployments"**.
+5. At the top, click **"Deploy"** or **"Redeploy"** (or the **⋮** menu on the latest deployment → **Redeploy**). That starts a new build from the latest code.
+6. Wait for the new deployment to finish. In the build logs you should see something like **"Using detected Dockerfile!"** — that means it’s using the Dockerfile and Python will be available when the app starts.
+7. Check **View** / **Logs**. You should see the app start (e.g. "Uvicorn running ...") instead of "python3: command not found".
+
+**If the service uses a "Root Directory":**  
+In the service **Settings**, if **Root Directory** (or **Source**) is set to a subfolder (e.g. `backend`), clear it or set it to **/** or the repo root so Railway can see the `Dockerfile` in the root. Then redeploy.
+
+---
+
 ## NRHP dataset (Built Beauty historic register) on Railway
 
 Built Beauty can use NRHP “historic register” signals **without calling an external API at request time** by building a local SQLite index during Railway deploy.
