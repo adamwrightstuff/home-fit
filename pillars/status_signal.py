@@ -300,9 +300,10 @@ def compute_status_signal(
     if occupation is not None:
         total_w += w_occupation
         score += w_occupation * occupation
-    score += w_brand * (brand / 100.0)
+    score += w_brand * brand  # brand already 0-100, same scale as wealth/education/occupation
     total_w += w_brand
     if total_w <= 0:
         return None
-    raw = score / total_w * 100.0
+    # Weighted average of 0-100 components -> already 0-100; do not multiply by 100
+    raw = score / total_w
     return round(max(0.0, min(100.0, raw)), 1)
