@@ -526,6 +526,12 @@ def get_economic_security_score(
         "anchored_balance": round(float(anchored_balance), 3) if isinstance(anchored_balance, (int, float)) else None,
     }
 
+    # Expose industry shares for Status Signal (finance + arts)
+    industry_shares_pct = {
+        "finance_realestate": dp03_now.get("DP03_0040PE"),
+        "leisure_hospitality": dp03_now.get("DP03_0043PE"),
+    }
+
     return round(final_score, 1), {
         "score": round(final_score, 1),
         "base_score": round(base_final_score, 1),
@@ -534,5 +540,6 @@ def get_economic_security_score(
         "summary": summary,
         "data_quality": dq,
         "area_classification": {"area_type": area_type},
+        "industry_shares_pct": industry_shares_pct,
     }
 

@@ -184,6 +184,8 @@ def get_housing_value_score(lat: float, lon: float,
         "data_quality": quality_metrics,
         "area_classification": {}
     }
+    if housing_data.get("mean_household_income") is not None:
+        breakdown["summary"] = {**(breakdown["summary"] or {}), "mean_household_income": housing_data["mean_household_income"]}
 
     # Log results
     print(f"✅ Housing Value Score: {total_score:.0f}/100")

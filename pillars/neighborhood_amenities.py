@@ -201,7 +201,9 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             "tier2_count": len(tier2_all),
             "tier3_count": len(tier3_all),
             "tier4_count": len(tier4_all),
-        }
+        },
+        # For Status Signal (post-pillars); exclude from client response in main
+        "business_list": [{"name": b.get("name"), "type": b.get("type"), "shop": b.get("shop"), "leisure": b.get("leisure")} for b in all_businesses],
     }
     
     # Log results

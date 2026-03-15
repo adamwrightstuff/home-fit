@@ -398,7 +398,7 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
 
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         params = {
-            "get": "B25077_001E,B19013_001E,B25018_001E,NAME",  # home value, income, rooms
+            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,NAME",  # + aggregate income, total HH (for mean)
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
@@ -438,10 +438,16 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         median_value = parse_census_value(data[1][0])
         median_income = parse_census_value(data[1][1])
         median_rooms = parse_census_value(data[1][2])
+        aggregate_income = parse_census_value(data[1][3])
+        total_households = parse_census_value(data[1][4])
 
         if not median_value or not median_income or not median_rooms:
             print("   ⚠️  Incomplete housing data (missing or error-coded values)")
             return None
+
+        mean_household_income: Optional[float] = None
+        if aggregate_income and total_households and total_households > 0:
+            mean_household_income = aggregate_income / total_households
 
         # Validation: Flag suspiciously low income values
         # Income below $30k is suspicious for most areas (could be student housing, etc.)
@@ -458,11 +464,14 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         print(f"   💰 Median household income: ${int(median_income):,}")
         print(f"   🏡 Median rooms: {median_rooms:.1f}")
 
-        return {
+        result: Dict[str, Optional[float]] = {
             "median_home_value": median_value,
             "median_household_income": median_income,
-            "median_rooms": median_rooms
+            "median_rooms": median_rooms,
         }
+        if mean_household_income is not None:
+            result["mean_household_income"] = mean_household_income
+        return result
 
     except Exception as e:
         print(f"   ⚠️  Housing data lookup failed: {e}")
@@ -849,10 +858,10 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         age_counts = {"youth": youth, "prime": prime, "seniors": seniors}
 
         # ---- Education attainment: S1501 (for Status Signal) ----
-        # S1501_C01_001E = Total population 25+, S1501_C01_006E = % Bachelor's degree or higher
+        # S1501_C01_001E = Total population 25+, S1501_C01_006E = % Bachelor's+, S1501_C01_007E = % Graduate degree
         education_attainment: Optional[Dict] = None
         base_acs5_subject = f"{CENSUS_BASE_URL}/2022/acs/acs5/subject"
-        edu_vars = ["S1501_C01_001E", "S1501_C01_006E"]
+        edu_vars = ["S1501_C01_001E", "S1501_C01_006E", "S1501_C01_007E"]
         params_edu = {
             "get": ",".join(edu_vars + ["NAME"]),
             "for": f"tract:{tract['tract_fips']}",
@@ -869,6 +878,7 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
                     idx = {name: i for i, name in enumerate(header)}
                     pop_25 = None
                     bach_pct = None
+                    grad_pct = None
                     if "S1501_C01_001E" in idx:
                         raw = row[idx["S1501_C01_001E"]]
                         if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
@@ -883,19 +893,54 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
                                 bach_pct = float(raw)
                             except (ValueError, TypeError):
                                 pass
-                    if pop_25 is not None or bach_pct is not None:
+                    if "S1501_C01_007E" in idx:
+                        raw = row[idx["S1501_C01_007E"]]
+                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
+                            try:
+                                grad_pct = float(raw)
+                            except (ValueError, TypeError):
+                                pass
+                    if pop_25 is not None or bach_pct is not None or grad_pct is not None:
                         education_attainment = {
                             "population_25_plus": pop_25,
                             "bachelor_pct": round(bach_pct, 2) if bach_pct is not None else None,
+                            "grad_pct": round(grad_pct, 2) if grad_pct is not None else None,
                         }
             except Exception:
                 pass
+
+        # ---- Self-employed %: B24080 (for Status Signal) ----
+        self_employed_pct: Optional[float] = None
+        try:
+            params_se = {
+                "get": "B24080_001E,B24080_003E,B24080_004E",
+                "for": f"tract:{tract['tract_fips']}",
+                "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+                "key": CENSUS_API_KEY,
+            }
+            resp_se = _make_request_with_retry(base_acs5, params_se, timeout=15, max_retries=3)
+            if resp_se is not None:
+                data_se = resp_se.json()
+                if isinstance(data_se, list) and len(data_se) >= 2:
+                    row = data_se[1]
+                    total_emp = row[0] if len(row) > 0 else None
+                    se_incorp = row[1] if len(row) > 1 else None
+                    se_not_incorp = row[2] if len(row) > 2 else None
+                    err = (None, "", "-666666666", "-999999999", "-888888888", "-555555555")
+                    if total_emp not in err and total_emp and float(total_emp) > 0:
+                        t = float(total_emp)
+                        s1 = float(se_incorp) if se_incorp not in err else 0
+                        s2 = float(se_not_incorp) if se_not_incorp not in err else 0
+                        self_employed_pct = round(100.0 * (s1 + s2) / t, 2)
+        except Exception:
+            pass
 
         return {
             "race_counts": race_counts,
             "income_counts": income_counts,
             "age_counts": age_counts,
             "education_attainment": education_attainment,
+            "self_employed_pct": self_employed_pct,
         }
 
     except Exception as e:

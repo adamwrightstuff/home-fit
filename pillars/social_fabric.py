@@ -414,6 +414,12 @@ def get_social_fabric_score(
         "area_classification": {"area_type": area_type},
         "version": "v3_stability_diversity_civic_engagement_voter_bmf",
     }
+    # Pass through for Status Signal (post-pillars derived score)
+    if diversity_data:
+        if diversity_data.get("education_attainment") is not None:
+            details["education_attainment"] = diversity_data["education_attainment"]
+        if diversity_data.get("self_employed_pct") is not None:
+            details["self_employed_pct"] = diversity_data["self_employed_pct"]
 
     logger.info(
         "Social Fabric Score: %s/100 (stability=%s, civic=%s, diversity=%s, engagement=%s, civic_nodes=%s, orgs_per_1k=%s, voter_reg_rate=%s)",
