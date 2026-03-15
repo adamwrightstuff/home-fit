@@ -1862,7 +1862,9 @@ def _compute_single_score_internal(
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
     _log_place_timing("total", start_perf)
 
-    # Build livability_pillars dict
+    # Build livability_pillars dict (include business_list in neighborhood_amenities for status-signal breakdown / inspect scripts)
+    _na_breakdown = amenities_details.get("breakdown", {})
+    _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
     livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,
@@ -1910,7 +1912,7 @@ def _compute_single_score_internal(
             "weight": token_allocation["neighborhood_amenities"],
             "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
-            "breakdown": amenities_details.get("breakdown", {}),
+            "breakdown": _na_breakdown_with_business,
             "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),
@@ -3243,6 +3245,8 @@ async def _stream_score_with_progress(
         )
         
         # Build livability_pillars dict (reuse helper functions)
+        _na_breakdown = amenities_details.get("breakdown", {})
+        _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
         livability_pillars = {
             "active_outdoors": {
                 "score": active_outdoors_score,
@@ -3290,7 +3294,7 @@ async def _stream_score_with_progress(
                 "weight": token_allocation["neighborhood_amenities"],
                 "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
                 "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
-                "breakdown": amenities_details.get("breakdown", {}),
+                "breakdown": _na_breakdown_with_business,
                 "summary": amenities_details.get("summary", {}),
                 "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": amenities_details.get("data_quality", {}),
@@ -4187,7 +4191,9 @@ async def stream_score(
         ])
         schools_found = total_schools > 0
 
-        # Build livability_pillars dict first
+        # Build livability_pillars dict first (include business_list for status-signal / inspect scripts)
+        _na_breakdown = amenities_details.get("breakdown", {})
+        _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
         livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,
@@ -4234,7 +4240,7 @@ async def stream_score(
             "weight": token_allocation["neighborhood_amenities"],
             "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
             "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
-            "breakdown": amenities_details.get("breakdown", {}),
+            "breakdown": _na_breakdown_with_business,
             "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": amenities_details.get("data_quality", {}),

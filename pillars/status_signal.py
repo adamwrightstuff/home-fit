@@ -241,11 +241,11 @@ def compute_occupation(
     return 0.5 * n_fa + 0.3 * n_wc + 0.2 * n_se
 
 
-def compute_brand(business_list: List[Dict[str, Any]]) -> float:
-    """Brand score 0-100 from config categories (presence of status brands)."""
+def _brand_matches_for_business_list(business_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Return per-category match details (category, weight, cat_score, matched_names) for inspection."""
     if not business_list:
-        return 0.0
-    raw = 0.0
+        return []
+    out: List[Dict[str, Any]] = []
     for category, config in STATUS_SIGNAL_BRAND_CONFIG.items():
         weight = config.get("weight", 0.25)
         types_ok = config.get("partial_match_types", [])
@@ -270,7 +270,23 @@ def compute_brand(business_list: List[Dict[str, Any]]) -> float:
             cat_score = 1.0
         else:
             cat_score = 0.5
-        raw += cat_score * weight
+        matched_names = [b.get("name") or "(no name)" for b in matches]
+        out.append({
+            "category": category,
+            "weight": weight,
+            "cat_score": cat_score,
+            "matched_names": matched_names,
+        })
+    return out
+
+
+def compute_brand(business_list: List[Dict[str, Any]]) -> float:
+    """Brand score 0-100 from config categories (presence of status brands)."""
+    if not business_list:
+        return 0.0
+    raw = 0.0
+    for item in _brand_matches_for_business_list(business_list):
+        raw += item["cat_score"] * item["weight"]
     return min(100.0, raw * 100.0)
 
 
