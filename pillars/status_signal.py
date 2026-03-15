@@ -17,39 +17,30 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # Brand categories for Status Signal (discriminating taste/status brands only).
 # Whole Foods, Trader Joe's, Lululemon removed as too ubiquitous.
+# Name-only matching; luxury_gym merges Equinox/Barry's with Rumble/Natural Pilates to avoid double-counting.
 STATUS_SIGNAL_BRAND_CONFIG = {
     "personal_care": {
         "weight": 0.20,
-        "partial_match_types": ["perfumery", "cosmetics"],
         "brand_names": ["Aesop", "Bluemercury", "Space NK", "Le Labo", "Diptyque", "Byredo", "Frederic Malle"],
     },
     "luxury_gym": {
-        "weight": 0.17,
-        "partial_match_types": ["fitness_centre", "sports_centre"],
-        "brand_names": ["Equinox", "Barry's Bootcamp", "Barry's"],
+        "weight": 0.30,
+        "brand_names": ["Equinox", "Barry's Bootcamp", "Barry's", "Rumble Boxing", "Rumble", "Natural Pilates"],
     },
     "hospitality": {
         "weight": 0.17,
         "brand_names": ["Soho House", "Arlo Hotels", "Ace Hotel"],
     },
-    "boutique_fitness": {
-        "weight": 0.13,
-        "partial_match_types": ["fitness_centre", "sports_centre"],
-        "brand_names": ["Rumble Boxing", "Rumble", "Natural Pilates"],
-    },
     "coffee": {
         "weight": 0.13,
-        "partial_match_types": ["cafe"],
         "brand_names": ["Blue Bottle", "Intelligentsia", "Stumptown", "Verve"],
     },
     "grocery": {
         "weight": 0.11,
-        "partial_match_types": ["supermarket", "greengrocer"],
         "brand_names": ["Erewhon", "Bristol Farms", "The Fresh Market", "Wegmans", "Citarella"],
     },
     "retail": {
         "weight": 0.09,
-        "partial_match_types": ["clothes", "fashion", "boutique"],
         "brand_names": ["Reformation", "Aritzia", "Theory", "Faherty"],
     },
 }
@@ -242,28 +233,18 @@ def compute_occupation(
 
 
 def _brand_matches_for_business_list(business_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Return per-category match details (category, weight, cat_score, matched_names) for inspection."""
+    """Return per-category match details (category, weight, cat_score, matched_names) for inspection.
+    Name-only matching: only businesses whose name matches a configured brand name count."""
     if not business_list:
         return []
     out: List[Dict[str, Any]] = []
     for category, config in STATUS_SIGNAL_BRAND_CONFIG.items():
         weight = config.get("weight", 0.25)
-        types_ok = config.get("partial_match_types", [])
         names_re = config.get("brand_names", [])
         if not names_re:
             continue
         pattern = re.compile("|".join(re.escape(n) for n in names_re), re.I)
-        types_lower = [t.lower() for t in types_ok]
-        matches = [
-            b for b in business_list
-            if (b.get("name") and pattern.search(b.get("name", "")))
-            or (b.get("type") and str(b.get("type", "")).lower() in types_lower)
-            or (b.get("shop") and str(b.get("shop", "")).lower() in types_lower)
-            or (b.get("leisure") and str(b.get("leisure", "")).lower() in types_lower)
-            or (b.get("amenity") and str(b.get("amenity", "")).lower() in types_lower)
-            or (b.get("type") == "fitness" and any(t in ("fitness_centre", "sports_centre") for t in types_ok))
-            or (b.get("type") == "grocery" and any(t in ("supermarket", "greengrocer") for t in types_ok))
-        ]
+        matches = [b for b in business_list if (b.get("name") and pattern.search(b.get("name", "")))]
         if not matches:
             cat_score = 0.0
         elif len(matches) >= 2:

@@ -857,18 +857,18 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
 
         age_counts = {"youth": youth, "prime": prime, "seniors": seniors}
 
-        # ---- Education attainment: S1501 (for Status Signal) ----
-        # S1501_C01_001E = Total population 25+, S1501_C01_006E = % Bachelor's+, S1501_C01_007E = % Graduate degree
+        # ---- Education attainment: B15003 counts -> percentages (for Status Signal) ----
+        # B15003_001E = Total pop 25+, 022 = Bachelor's, 023 = Master's, 024 = Professional, 025 = Doctorate
+        # bachelor_pct = 100 * (022+023+024+025) / 001, grad_pct = 100 * (023+024+025) / 001
         education_attainment: Optional[Dict] = None
-        base_acs5_subject = f"{CENSUS_BASE_URL}/2022/acs/acs5/subject"
-        edu_vars = ["S1501_C01_001E", "S1501_C01_006E", "S1501_C01_007E"]
+        edu_vars = ["B15003_001E", "B15003_022E", "B15003_023E", "B15003_024E", "B15003_025E"]
         params_edu = {
             "get": ",".join(edu_vars + ["NAME"]),
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
         }
-        resp_edu = _make_request_with_retry(base_acs5_subject, params_edu, timeout=15, max_retries=3)
+        resp_edu = _make_request_with_retry(base_acs5, params_edu, timeout=15, max_retries=3)
         if resp_edu is not None:
             try:
                 data_edu = resp_edu.json()
@@ -876,35 +876,33 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
                     header = data_edu[0]
                     row = data_edu[1]
                     idx = {name: i for i, name in enumerate(header)}
-                    pop_25 = None
-                    bach_pct = None
-                    grad_pct = None
-                    if "S1501_C01_001E" in idx:
-                        raw = row[idx["S1501_C01_001E"]]
-                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
-                            try:
-                                pop_25 = int(float(raw))
-                            except (ValueError, TypeError):
-                                pass
-                    if "S1501_C01_006E" in idx:
-                        raw = row[idx["S1501_C01_006E"]]
-                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
-                            try:
-                                bach_pct = float(raw)
-                            except (ValueError, TypeError):
-                                pass
-                    if "S1501_C01_007E" in idx:
-                        raw = row[idx["S1501_C01_007E"]]
-                        if raw not in (None, "", "-666666666", "-999999999", "-888888888", "-555555555"):
-                            try:
-                                grad_pct = float(raw)
-                            except (ValueError, TypeError):
-                                pass
-                    if pop_25 is not None or bach_pct is not None or grad_pct is not None:
+                    err = (None, "", "-666666666", "-999999999", "-888888888", "-555555555")
+
+                    def _safe_int(name: str) -> Optional[int]:
+                        if name not in idx:
+                            return None
+                        raw = row[idx[name]]
+                        if raw in err:
+                            return None
+                        try:
+                            return int(float(raw))
+                        except (ValueError, TypeError):
+                            return None
+
+                    pop_25 = _safe_int("B15003_001E")
+                    bach = _safe_int("B15003_022E")
+                    master = _safe_int("B15003_023E")
+                    prof = _safe_int("B15003_024E")
+                    doc = _safe_int("B15003_025E")
+                    if pop_25 is not None and pop_25 > 0:
+                        bach_plus = (bach or 0) + (master or 0) + (prof or 0) + (doc or 0)
+                        grad_count = (master or 0) + (prof or 0) + (doc or 0)
+                        bach_pct = round(100.0 * bach_plus / pop_25, 2)
+                        grad_pct = round(100.0 * grad_count / pop_25, 2)
                         education_attainment = {
                             "population_25_plus": pop_25,
-                            "bachelor_pct": round(bach_pct, 2) if bach_pct is not None else None,
-                            "grad_pct": round(grad_pct, 2) if grad_pct is not None else None,
+                            "bachelor_pct": bach_pct,
+                            "grad_pct": grad_pct,
                         }
             except Exception:
                 pass
