@@ -2,16 +2,16 @@
   "all": {
     "education": {
       "bach_pct": {
-        "max": 55,
-        "min": 15
+        "max": 5184.0,
+        "min": 30.0
       },
       "grad_pct": {
-        "max": 25,
-        "min": 5
+        "max": 406.0,
+        "min": 0.0
       },
       "self_employed_pct": {
-        "max": 15,
-        "min": 3
+        "max": 123.55,
+        "min": 0.0
       }
     },
     "occupation": {
@@ -26,102 +26,255 @@
     },
     "wealth": {
       "mean_hh_income": {
-        "max": 250001.0,
+        "max": 260606.35324015247,
         "min": 14174.0
       },
       "wealth_gap_ratio": {
-        "max": 0.75,
-        "min": 0.05
+        "max": 1.8653804644326826,
+        "min": 0.0
       }
     }
   },
   "east_north_central": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 4198.0,
+        "min": 672.0
+      },
+      "grad_pct": {
+        "max": 108.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 93.58,
+        "min": 60.17
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 162143.0,
         "min": 22356.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.432353055085785,
+        "min": 0.0
       }
     }
   },
   "east_south_central": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 2895.0,
+        "min": 636.0
+      },
+      "grad_pct": {
+        "max": 45.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 101.04,
+        "min": 38.29
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 104216.0,
+        "max": 128353.64145658263,
         "min": 23056.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.6749790089597106,
+        "min": 0.0
       }
     }
   },
   "middle_atlantic": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 3206.0,
+        "min": 30.0
+      },
+      "grad_pct": {
+        "max": 85.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 77.05,
+        "min": 0.0
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 190769.0,
         "min": 21631.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.4554955243253621,
+        "min": 0.0
       }
     }
   },
   "mountain": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 1388.0,
+        "min": 277.0
+      },
+      "grad_pct": {
+        "max": 26.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 123.55,
+        "min": 58.82
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 98194.0,
         "min": 19500.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.3871741237092239,
+        "min": 0.0
       }
     }
   },
   "new_england": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 2522.0,
+        "min": 1960.0
+      },
+      "grad_pct": {
+        "max": 7.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 77.31,
+        "min": 68.11
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 143846.0,
         "min": 24728.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.3317962883996282,
+        "min": 0.0
       }
     }
   },
   "pacific": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 3340.0,
+        "min": 1786.0
+      },
+      "grad_pct": {
+        "max": 263.0,
+        "min": 16.0
+      },
+      "self_employed_pct": {
+        "max": 77.55,
+        "min": 70.74
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 234243.0,
         "min": 19524.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.6093415688757209,
+        "min": 0.0
       }
     }
   },
   "south_atlantic": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 4962.0,
+        "min": 850.0
+      },
+      "grad_pct": {
+        "max": 172.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 113.51,
+        "min": 55.06
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 250001.0,
+        "max": 260606.35324015247,
         "min": 14174.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.8653804644326826,
+        "min": 0.0
       }
     }
   },
   "west_north_central": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 3887.0,
+        "min": 1248.0
+      },
+      "grad_pct": {
+        "max": 80.0,
+        "min": 44.0
+      },
+      "self_employed_pct": {
+        "max": 92.85,
+        "min": 70.21
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 129861.0,
         "min": 27973.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.0409339743935666,
+        "min": 0.0
       }
     }
   },
   "west_south_central": {
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 5184.0,
+        "min": 897.0
+      },
+      "grad_pct": {
+        "max": 406.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 104.09,
+        "min": 79.62
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 177583.0,
         "min": 27340.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.6832112263298123,
+        "min": 0.0
       }
     }
   }
