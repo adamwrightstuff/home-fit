@@ -107,7 +107,7 @@ Built Beauty can use NRHP “historic register” signals **without calling an e
 This repo includes a root `railway.json` that tells Railway to run the NRHP build during deploy:
 
 - **Build command**: `python3 scripts/build_nrhp_db.py --out data_cache/nrhp.sqlite || true`
-- **Start command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Start command**: `python3 main.py` (reads `PORT` from the environment)
 
 After you push these changes, Railway should rebuild and include `data_cache/nrhp.sqlite` in the deployed backend.
 

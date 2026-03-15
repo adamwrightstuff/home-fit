@@ -14,6 +14,6 @@ COPY . .
 # Create data_cache and build NRHP DB at image build time (optional; app works without it)
 RUN mkdir -p data_cache && python3 scripts/build_nrhp_db.py --out data_cache/nrhp.sqlite || true
 
-# Railway sets PORT at runtime
+# Railway sets PORT at runtime; main.py reads it from env
 EXPOSE 8000
-CMD python3 -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["python3", "main.py"]
