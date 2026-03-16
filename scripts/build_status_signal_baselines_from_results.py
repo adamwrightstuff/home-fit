@@ -56,6 +56,10 @@ def extract_metrics_from_response(
         out["mean_hh_income"] = float(mean_income)
         out["wealth_gap_ratio"] = (float(mean_income) - float(median_income)) / float(median_income)
 
+    median_home = summary.get("median_home_value")
+    if median_home is not None and isinstance(median_home, (int, float)) and median_home > 0:
+        out["median_home_value"] = float(median_home)
+
     # Education: from response or recompute from Census (0-100% scale)
     social = pillars.get("social_fabric") or {}
     edu = social.get("education_attainment") or {}
@@ -212,8 +216,12 @@ def main() -> None:
         v = by_metric.get("brand_raw_score")
         if v and len(v) >= args.min_samples:
             brand["brand_raw_score"] = {"min": min(v), "max": max(v)}
-        if wealth or education or occupation or brand:
-            result[div] = {"wealth": wealth, "education": education, "occupation": occupation, "brand": brand}
+        home_cost = {}
+        v = by_metric.get("median_home_value")
+        if v and len(v) >= args.min_samples:
+            home_cost["median_home_value"] = {"min": min(v), "max": max(v)}
+        if wealth or education or occupation or brand or home_cost:
+            result[div] = {"wealth": wealth, "education": education, "occupation": occupation, "brand": brand, "home_cost": home_cost}
 
     # Pool "all" from all divisions (including values that were in unknown-state rows)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
@@ -239,8 +247,12 @@ def main() -> None:
         v = all_vals.get("brand_raw_score")
         if v and len(v) >= args.min_samples:
             brand_all["brand_raw_score"] = {"min": min(v), "max": max(v)}
-        if wealth_all or education_all or occupation_all or brand_all:
-            result["all"] = {"wealth": wealth_all, "education": education_all, "occupation": occupation_all, "brand": brand_all}
+        home_cost_all = {}
+        v = all_vals.get("median_home_value")
+        if v and len(v) >= args.min_samples:
+            home_cost_all["median_home_value"] = {"min": min(v), "max": max(v)}
+        if wealth_all or education_all or occupation_all or brand_all or home_cost_all:
+            result["all"] = {"wealth": wealth_all, "education": education_all, "occupation": occupation_all, "brand": brand_all, "home_cost": home_cost_all}
 
     # Merge with existing baselines so we don't drop education/occupation when results lack them
     # When --recompute-education was used, do not merge in old education (it was count-scale).
@@ -250,8 +262,8 @@ def main() -> None:
                 existing = json.load(f)
             for div, comps in existing.items():
                 if div not in result:
-                    result[div] = {"wealth": {}, "education": {}, "occupation": {}, "brand": {}}
-                for comp in ["wealth", "education", "occupation", "brand"]:
+                    result[div] = {"wealth": {}, "education": {}, "occupation": {}, "brand": {}, "home_cost": {}}
+                for comp in ["wealth", "education", "occupation", "brand", "home_cost"]:
                     if comp == "education" and args.recompute_education:
                         continue  # keep only newly computed education (0-100 scale)
                     if comp == "occupation" and args.recompute_occupation:

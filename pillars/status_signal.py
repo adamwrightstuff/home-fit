@@ -114,16 +114,27 @@ def compute_wealth(
     return 0.6 * n_mean + 0.4 * n_gap
 
 
-# Home cost: $1M threshold, linear 0->100 from $1M to $3M
+# Home cost: fallback when no division baselines ($1M threshold, linear 0->100 from $1M to $3M)
 HOME_COST_THRESHOLD = 1_000_000
 HOME_COST_MAX = 3_000_000
 
 
-def compute_home_cost(median_home_value: Optional[float]) -> float:
-    """Desirability: 0 below $1M; 0-100 linear from $1M to $3M; cap 100 above $3M."""
-    if median_home_value is None or not isinstance(median_home_value, (int, float)) or median_home_value < HOME_COST_THRESHOLD:
+def compute_home_cost(
+    median_home_value: Optional[float],
+    division: Optional[str] = None,
+    baselines: Optional[Dict[str, Any]] = None,
+) -> float:
+    """Desirability: normalized by division median_home_value min/max when available; else 0 below $1M, linear 0-100 from $1M to $3M."""
+    if median_home_value is None or not isinstance(median_home_value, (int, float)):
         return 0.0
     val = float(median_home_value)
+    if division and baselines:
+        min_v, max_v = _get_baseline(baselines, division, "home_cost", "median_home_value")
+        if min_v is not None and max_v is not None and max_v > min_v:
+            return _normalize_min_max(val, min_v, max_v)
+    # Fallback: fixed $1M-$3M band
+    if val < HOME_COST_THRESHOLD:
+        return 0.0
     if val >= HOME_COST_MAX:
         return 100.0
     return 100.0 * (val - HOME_COST_THRESHOLD) / (HOME_COST_MAX - HOME_COST_THRESHOLD)
@@ -381,7 +392,7 @@ def compute_status_signal_with_breakdown(
     wealth = compute_wealth(housing_details, division, baselines)
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
-    home_cost = compute_home_cost(median_home)
+    home_cost = compute_home_cost(median_home, division, baselines)
     education = compute_education(social_fabric_details, division, baselines)
     occupation = compute_occupation(
         economic_security_details, social_fabric_details, tract, division, baselines
