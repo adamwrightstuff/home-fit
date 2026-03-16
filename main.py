@@ -1107,6 +1107,8 @@ def _compute_single_score_internal(
     natural_beauty_preference: Optional[List[str]] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    lat_override: Optional[float] = None,
+    lon_override: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1172,19 +1174,32 @@ def _compute_single_score_internal(
             if not only_pillars:
                 only_pillars = None
 
-    # Step 1: Geocode the location (with full result for neighborhood detection)
-    from data_sources.geocoding import geocode_with_full_result
-    t_geocode = time.perf_counter()
-    geo_result = geocode_with_full_result(location)
-    _log_place_timing("geocode", t_geocode)
-
-    if not geo_result:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not geocode the provided location. Please check the address."
-        )
-
-    lat, lon, zip_code, state, city, geocode_data = geo_result
+    # Step 1: Geocode the location (or use provided lat/lon so refresh uses same point as initial score)
+    lat: float
+    lon: float
+    zip_code: str
+    state: str
+    city: str
+    geocode_data: Dict[str, Any]
+    if lat_override is not None and lon_override is not None and -90 <= lat_override <= 90 and -180 <= lon_override <= 180:
+        lat = float(lat_override)
+        lon = float(lon_override)
+        zip_code = ""
+        state = ""
+        city = ""
+        geocode_data = {}
+        logger.info(f"Using provided coordinates: {lat}, {lon}")
+    else:
+        from data_sources.geocoding import geocode_with_full_result
+        t_geocode = time.perf_counter()
+        geo_result = geocode_with_full_result(location)
+        _log_place_timing("geocode", t_geocode)
+        if not geo_result:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not geocode the provided location. Please check the address."
+            )
+        lat, lon, zip_code, state, city, geocode_data = geo_result
     logger.info(f"Coordinates: {lat}, {lon}")
     logger.info(f"Location: {city}, {state} {zip_code}")
     
@@ -2424,6 +2439,8 @@ def create_score_job(
     natural_beauty_preference: Optional[str] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    lat: Optional[str] = None,
+    lon: Optional[str] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
@@ -2463,6 +2480,18 @@ def create_score_job(
 
     premium_code = request.headers.get("X-HomeFit-Premium-Code", "").strip() or None
     test_mode_enabled = bool(test_mode)
+
+    lat_override: Optional[float] = None
+    lon_override: Optional[float] = None
+    if lat is not None and lon is not None:
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+            if -90 <= lat_f <= 90 and -180 <= lon_f <= 180:
+                lat_override = lat_f
+                lon_override = lon_f
+        except (TypeError, ValueError):
+            pass
 
     job_id = uuid.uuid4().hex
     now = time.time()
@@ -2514,6 +2543,8 @@ def create_score_job(
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
+                lat_override=lat_override,
+                lon_override=lon_override,
             )
             done_snap = None
             with _SCORE_JOBS_LOCK:

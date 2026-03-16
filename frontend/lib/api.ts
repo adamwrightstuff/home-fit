@@ -293,6 +293,10 @@ export async function getScoreWithProgress(
   if (params.job_categories) searchParams.append('job_categories', params.job_categories);
   if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
   if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());
+  if (params.lat != null && params.lon != null && Number.isFinite(params.lat) && Number.isFinite(params.lon)) {
+    searchParams.append('lat', String(params.lat));
+    searchParams.append('lon', String(params.lon));
+  }
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
       const premiumCode = window.sessionStorage.getItem('homefit_premium_code');

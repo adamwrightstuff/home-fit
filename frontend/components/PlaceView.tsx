@@ -294,6 +294,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           location,
           only: STATUS_SIGNAL_ONLY_PILLARS,
           priorities: JSON.stringify(prioritiesForRequest),
+          ...(typeof place.lat === 'number' && typeof place.lon === 'number' ? { lat: place.lat, lon: place.lon } : {}),
           ...(searchOptions.job_categories?.length ? { job_categories: searchOptions.job_categories.join(',') } : {}),
           ...(searchOptions.include_chains !== undefined ? { include_chains: searchOptions.include_chains } : {}),
           ...(searchOptions.enable_schools !== undefined ? { enable_schools: searchOptions.enable_schools } : {}),
@@ -344,7 +345,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     } finally {
       setStatusSignalRefreshLoading(false)
     }
-  }, [place.location, selectedPriorities, searchOptions, onError])
+  }, [place?.location, place?.lat, place?.lon, selectedPriorities, searchOptions, onError])
 
   // When user changes Scenery / Character / Density, update parent options and re-run only that pillar so its score updates.
   const handleSearchOptionsChange = useCallback(

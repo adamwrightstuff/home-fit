@@ -146,6 +146,9 @@ export interface ScoreRequestParams {
   built_character_preference?: string;
   /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living. */
   built_density_preference?: string;
+  /** When set, backend uses these coordinates instead of geocoding location (ensures refresh uses same point). */
+  lat?: number;
+  lon?: number;
 }
 
 /** Response from GET /geocode — used to show map before scoring. */
