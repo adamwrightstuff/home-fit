@@ -216,6 +216,9 @@ export default function SavedDetailPage() {
     if (!row) throw new Error('Saved place not loaded.')
     const location = typeof row.input === 'string' ? row.input.trim() : ''
     if (!location) throw new Error('No address for this place.')
+    const coords = rawPayload?.coordinates ?? row.coordinates
+    const lat = typeof coords?.lat === 'number' && Number.isFinite(coords.lat) ? coords.lat : undefined
+    const lon = typeof coords?.lon === 'number' && Number.isFinite(coords.lon) ? coords.lon : undefined
     setStatusSignalRefreshLoading(true)
     try {
       const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
@@ -228,6 +231,7 @@ export default function SavedDetailPage() {
           location,
           only: STATUS_SIGNAL_ONLY_PILLARS,
           priorities: JSON.stringify(prioritiesForFour),
+          ...(lat != null && lon != null ? { lat, lon } : {}),
           ...(jobCategories.length > 0 ? { job_categories: jobCategories.join(',') } : {}),
           ...(searchOptions?.natural_beauty_preference?.length
             ? { natural_beauty_preference: JSON.stringify(searchOptions.natural_beauty_preference) }
