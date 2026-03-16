@@ -232,12 +232,14 @@ def _compute_scoring_hash() -> str:
         "pillars/housing_value.py",
         "pillars/schools.py",
         "pillars/beauty_common.py",
+        "pillars/status_signal.py",
         # Data source logic that materially affects scoring outputs / reliability
         "data_sources/osm_api.py",
         "data_sources/cache.py",
         "data_sources/retry_config.py",
         # Expected values and baselines
         "data_sources/regional_baselines.py",
+        "data/status_signal_baselines.json",
         # Area type classification
         "data_sources/data_quality.py",
         # Token allocation logic (in main.py)
