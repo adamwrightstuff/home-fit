@@ -312,6 +312,11 @@ export default function ScoreDisplay({
             <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
               Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
             </div>
+            {metadata?.version && (
+              <div className="hf-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
+                API version: {metadata.version}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
