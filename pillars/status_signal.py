@@ -164,7 +164,7 @@ def compute_education(
     division: str,
     baselines: Dict[str, Any],
 ) -> Optional[float]:
-    """Education Density: 50% grad_pct + 30% bach_pct + 20% self_employed_pct (all normalized)."""
+    """Education Density: 50% grad_pct + 30% bach_pct + 20% self_employed_pct (all normalized). Uses 0-100 scale."""
     edu = social_fabric_details.get("education_attainment") or {}
     grad_pct = edu.get("grad_pct")
     bach_pct = edu.get("bachelor_pct")
@@ -172,16 +172,22 @@ def compute_education(
     if grad_pct is None and bach_pct is None and self_employed_pct is None:
         return None
 
+    # Clamp to 0-100 so legacy/wrong-scale data does not break normalization
+    if grad_pct is not None:
+        grad_pct = max(0.0, min(100.0, float(grad_pct)))
+    if bach_pct is not None:
+        bach_pct = max(0.0, min(100.0, float(bach_pct)))
+
     min_grad, max_grad = _get_baseline(baselines, division, "education", "grad_pct")
     min_bach, max_bach = _get_baseline(baselines, division, "education", "bach_pct")
     min_se, max_se = _get_baseline(baselines, division, "education", "self_employed_pct")
 
     n_grad = 50.0
     if grad_pct is not None and min_grad is not None and max_grad is not None:
-        n_grad = _normalize_min_max(float(grad_pct), min_grad, max_grad)
+        n_grad = _normalize_min_max(grad_pct, min_grad, max_grad)
     n_bach = 50.0
     if bach_pct is not None and min_bach is not None and max_bach is not None:
-        n_bach = _normalize_min_max(float(bach_pct), min_bach, max_bach)
+        n_bach = _normalize_min_max(bach_pct, min_bach, max_bach)
     n_se = 50.0
     if self_employed_pct is not None and min_se is not None and max_se is not None:
         n_se = _normalize_min_max(float(self_employed_pct), min_se, max_se)

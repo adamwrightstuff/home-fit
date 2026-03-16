@@ -897,8 +897,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
                     if pop_25 is not None and pop_25 > 0:
                         bach_plus = (bach or 0) + (master or 0) + (prof or 0) + (doc or 0)
                         grad_count = (master or 0) + (prof or 0) + (doc or 0)
-                        bach_pct = round(100.0 * bach_plus / pop_25, 2)
-                        grad_pct = round(100.0 * grad_count / pop_25, 2)
+                        bach_pct = min(100.0, round(100.0 * bach_plus / pop_25, 2))
+                        grad_pct = min(100.0, round(100.0 * grad_count / pop_25, 2))
                         education_attainment = {
                             "population_25_plus": pop_25,
                             "bachelor_pct": bach_pct,
