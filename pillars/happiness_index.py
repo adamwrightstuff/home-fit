@@ -4,7 +4,7 @@ Happiness Index: 0–100 composite from existing pillar data (not a pillar).
 Components (all 0–100, renormalized when missing):
 - C (Commute): existing commute score from public_transit (shorter = better).
 - H (Housing): 2 × local_affordability from housing_value (price-to-income).
-- U (Unemployment): baseline-normalized unemployment (division × area_bucket), inverted.
+- U (Unemployment): absolute band 100 − 10×(rate − 2) (rate in %), inverted.
 - E (Equality): peer-normalized wealth gap (mean vs median) from status_signal baselines; higher gap = lower E.
 - G (Green): full Natural Beauty pillar score (canopy, parks, water, scenery).
 
@@ -92,33 +92,19 @@ def _component_housing(housing_details: Optional[Dict[str, Any]]) -> Optional[fl
 def _component_unemployment(
     economic_security_details: Optional[Dict[str, Any]],
 ) -> Optional[float]:
-    """U: 0–100 from baseline-normalized unemployment (inverted: lower unemp = higher U)."""
+    """U: 0–100 from absolute unemployment band (inverted: lower unemp = higher U). Formula: 100 − 10×(rate − 2), clamped."""
     if not economic_security_details:
         return None
     summary = economic_security_details.get("summary") or {}
     rate = summary.get("unemployment_rate_pct")
-    division = summary.get("division")
-    area_bucket = summary.get("area_bucket")
-    if not isinstance(rate, (int, float)) or division is None or area_bucket is None:
+    if not isinstance(rate, (int, float)):
         return None
-    try:
-        from data_sources.normalization import normalize_metric_to_0_100
-        u = normalize_metric_to_0_100(
-            metric="unemployment_rate",
-            value=float(rate),
-            division=str(division),
-            area_bucket=str(area_bucket),
-            invert=True,
-        )
-        return u
-    except Exception:
-        # Fallback: wider band so 4–8% doesn't cluster at 85–95
-        r = float(rate)
-        if r <= 2.0:
-            return 100.0
-        if r >= 10.0:
-            return 0.0
-        return max(0.0, min(100.0, 100.0 - (r - 2.0) * (100.0 / 8.0)))
+    r = float(rate)
+    if r <= 2.0:
+        return 100.0
+    if r >= 12.0:
+        return 0.0
+    return max(0.0, min(100.0, 100.0 - 10.0 * (r - 2.0)))
 
 
 def _component_equality(
