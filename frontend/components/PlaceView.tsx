@@ -373,7 +373,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     setRecomputeLoading(true)
     try {
       const resp = await recomputeComposites({
-        livability_pillars: livability_pillars as ScoreResponse['livability_pillars'],
+        livability_pillars: livability_pillars as unknown as ScoreResponse['livability_pillars'],
         location_info: { city: place.city, state: place.state, zip: place.zip_code ?? '' },
         coordinates: { lat: place.lat, lon: place.lon },
         token_allocation: initialPayload?.token_allocation,
