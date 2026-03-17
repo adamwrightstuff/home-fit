@@ -26,6 +26,65 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPT_DIR)
 
 
+def get_cbsa_key(city: str, state: str) -> str:
+    """Approximate CBSA key from city/state; extend as needed for richer grouping.
+
+    This groups obvious metro clusters (e.g. NYC core + rich suburbs) so that
+    wealth/home_cost baselines reflect the true upper end of that metro rather
+    than an entire Census division.
+    """
+    key = f"{city}, {state}".strip()
+
+    # NYC metro: core (boroughs/neighborhoods) and nearby suburbs.
+    # Include both abbreviated (NY, CT, NJ) and full state names so API
+    # location_info matches (e.g. "City of New York", "New York").
+    nyc_cluster = {
+        "New York, NY",
+        "Brooklyn, NY",
+        "Queens, NY",
+        "Bronx, NY",
+        "Scarsdale, NY",
+        "The Hamptons, NY",
+        "Greenwich, CT",
+        "Westport, CT",
+        "Princeton, NJ",
+        "Ithaca, NY",
+        "New York, New York",
+        "City of New York, New York",
+        "Brooklyn, New York",
+        "Queens, New York",
+        "Bronx, New York",
+        "Scarsdale, New York",
+        "Village of Scarsdale, New York",
+        "The Hamptons, New York",
+        "Greenwich, Connecticut",
+        "Westport, Connecticut",
+        "Princeton, New Jersey",
+        "Ithaca, New York",
+    }
+    if key in nyc_cluster:
+        return "nyc_metro"
+
+    philly_cluster = {
+        "Philadelphia, PA",
+        # Extend with Main Line suburbs if desired.
+    }
+    if key in philly_cluster:
+        return "philly_metro"
+
+    dc_cluster = {
+        "Washington, DC",
+        "Bethesda, MD",
+        "Arlington, VA",
+        "Fairfax, VA",
+    }
+    if key in dc_cluster:
+        return "dc_metro"
+
+    # Fallback: treat each city, state as its own cbsa-style bucket
+    return key.lower().replace(" ", "_")
+
+
 def get_division(state_abbrev: Optional[str]) -> str:
     """Census division for state; 'unknown' if missing."""
     if not state_abbrev:
@@ -142,6 +201,7 @@ def main() -> None:
         return
 
     division_values: Dict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
+    cbsa_values: Dict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
     all_vals: Dict[str, List[float]] = defaultdict(list)
     seen = 0
     used = 0
@@ -166,7 +226,11 @@ def main() -> None:
             except json.JSONDecodeError:
                 continue
             state = (raw.get("location_info") or {}).get("state")
+            loc_info = raw.get("location_info") or {}
+            city = str(loc_info.get("city") or "").strip()
+            state_str = str(state or "").strip()
             division = get_division(state)
+            cbsa = get_cbsa_key(city, state_str)
             metrics = extract_metrics_from_response(
                 raw,
                 recompute_education=args.recompute_education,
@@ -177,8 +241,12 @@ def main() -> None:
             used += 1
             for k, v in metrics.items():
                 if isinstance(v, (int, float)):
-                    division_values[division][k].append(float(v))
-                    all_vals[k].append(float(v))
+                    val_f = float(v)
+                    division_values[division][k].append(val_f)
+                    all_vals[k].append(val_f)
+                    # For CBSA-level baselines, track only wealth + home_cost metrics.
+                    if k in {"mean_hh_income", "wealth_gap_ratio", "median_home_value"}:
+                        cbsa_values[cbsa][k].append(val_f)
 
     print(f"Read {seen} rows from {args.input}, extracted metrics from {used} responses.")
 
@@ -208,7 +276,7 @@ def main() -> None:
             if v and len(v) >= args.min_samples:
                 education[m] = {"min": min(v), "max": max(v)}
         occupation = {}
-        for m in ["finance_arts_pct", "white_collar_pct"]:
+        for m in ["finance_arts_pct", "white_collar_pct", "self_employed_pct"]:
             v = by_metric.get(m)
             if v and len(v) >= args.min_samples:
                 occupation[m] = {"min": min(v), "max": max(v)}
@@ -222,6 +290,35 @@ def main() -> None:
             home_cost["median_home_value"] = {"min": min(v), "max": max(v)}
         if wealth or education or occupation or brand or home_cost:
             result[div] = {"wealth": wealth, "education": education, "occupation": occupation, "brand": brand, "home_cost": home_cost}
+
+    # Build CBSA-level baselines for wealth + home_cost so metros like NYC have
+    # realistic upper bounds independent of the broader Census division.
+    for cbsa_key, by_metric in cbsa_values.items():
+        if sum(len(v) for v in by_metric.values()) < args.min_samples:
+            continue
+        wealth = {}
+        v_income = by_metric.get("mean_hh_income")
+        v_gap = by_metric.get("wealth_gap_ratio")
+        if v_income and len(v_income) >= args.min_samples:
+            wealth["mean_hh_income"] = {"min": min(v_income), "max": max(v_income)}
+        if v_gap and len(v_gap) >= args.min_samples:
+            mn, mx = min(v_gap), max(v_gap)
+            if not (mn == 0 and mx == 0):
+                wealth["wealth_gap_ratio"] = {"min": mn, "max": mx}
+        home_cost = {}
+        v_home = by_metric.get("median_home_value")
+        if v_home and len(v_home) >= args.min_samples:
+            home_cost["median_home_value"] = {"min": min(v_home), "max": max(v_home)}
+        if wealth or home_cost:
+            existing = result.get(cbsa_key) or {}
+            # Preserve any existing education/occupation/brand entries if present.
+            result[cbsa_key] = {
+                "wealth": wealth,
+                "education": existing.get("education", {}),
+                "occupation": existing.get("occupation", {}),
+                "brand": existing.get("brand", {}),
+                "home_cost": home_cost,
+            }
 
     # Pool "all" from all divisions (including values that were in unknown-state rows)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
@@ -239,7 +336,7 @@ def main() -> None:
             if v and len(v) >= args.min_samples:
                 education_all[m] = {"min": min(v), "max": max(v)}
         occupation_all = {}
-        for m in ["finance_arts_pct", "white_collar_pct"]:
+        for m in ["finance_arts_pct", "white_collar_pct", "self_employed_pct"]:
             v = all_vals.get(m)
             if v and len(v) >= args.min_samples:
                 occupation_all[m] = {"min": min(v), "max": max(v)}

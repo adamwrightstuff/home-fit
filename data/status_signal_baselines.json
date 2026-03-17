@@ -1,140 +1,603 @@
 {
+  ",_california": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1305400.0,
+        "min": 287400.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 167117.94692737432,
+        "min": 48953.5858178888
+      },
+      "wealth_gap_ratio": {
+        "max": 0.7990091610200106,
+        "min": 0.3181027958837938
+      }
+    }
+  },
+  "alexandria,_virginia": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 967200.0,
+        "min": 395800.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 195208.0,
+        "min": 67961.0
+      }
+    }
+  },
   "all": {
-    "education": {
-      "bach_pct": {
-        "max": 85.78,
-        "min": 3.33
-      },
-      "grad_pct": {
-        "max": 45.44,
-        "min": 0.0
-      },
-      "self_employed_pct": {
-        "max": 123.55,
+    "brand": {
+      "brand_raw_score": {
+        "max": 52.0,
         "min": 0.0
       }
     },
+    "education": {
+      "bach_pct": {
+        "max": 5184.0,
+        "min": 3.89
+      },
+      "grad_pct": {
+        "max": 406.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 148.11,
+        "min": 0.0
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 20400.0
+      }
+    },
     "occupation": {
-      "finance_arts_pct": {
-        "max": 25,
-        "min": 5
+      "self_employed_pct": {
+        "max": 148.11,
+        "min": 0.0
       },
       "white_collar_pct": {
-        "max": 65,
-        "min": 25
+        "max": 66.66666666666667,
+        "min": 2.360876897133221
       }
     },
     "wealth": {
       "mean_hh_income": {
-        "max": 260606.35324015247,
-        "min": 38738.91194098663
+        "max": 513775.5478662053,
+        "min": 14174.0
       },
       "wealth_gap_ratio": {
         "max": 1.8653804644326826,
-        "min": 0.08007115010975639
+        "min": 0.0
       }
     }
   },
-  "east_north_central": {
-    "education": {
-      "bach_pct": {
-        "max": 84.68,
-        "min": 68.12
+  "atlanta,_georgia": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 831500.0,
+        "min": 216900.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 161855.0,
+        "min": 46157.0
+      }
+    }
+  },
+  "austin,_texas": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 676300.0,
+        "min": 462500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 101936.0,
+        "min": 51091.0
+      }
+    }
+  },
+  "baltimore,_maryland": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 416900.0,
+        "min": 312500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 107895.0,
+        "min": 67277.0
       },
-      "grad_pct": {
-        "max": 45.39,
-        "min": 25.7
+      "wealth_gap_ratio": {
+        "max": 0.2594292620957353,
+        "min": 0.0
+      }
+    }
+  },
+  "boise,_idaho": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 606100.0,
+        "min": 273200.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 63789.0,
+        "min": 19500.0
+      }
+    }
+  },
+  "boston,_massachusetts": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1134900.0,
+        "min": 618600.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 143846.0,
+        "min": 24728.0
+      }
+    }
+  },
+  "burlington,_vermont": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 491400.0,
+        "min": 383200.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 116691.0,
+        "min": 57386.0
       },
-      "self_employed_pct": {
-        "max": 93.58,
-        "min": 60.17
+      "wealth_gap_ratio": {
+        "max": 0.6508987796022574,
+        "min": 0.0
+      }
+    }
+  },
+  "charlotte,_north_carolina": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 633200.0,
+        "min": 200000.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 181654.13333333333,
+        "min": 72475.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.6529640144621581,
+        "min": 0.0
+      }
+    }
+  },
+  "chicago,_illinois": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 842600.0,
+        "min": 336900.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 162143.0,
+        "min": 73508.0
+      }
+    }
+  },
+  "cincinnati,_ohio": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 412400.0,
+        "min": 221900.0
       }
     },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
         "max": 142913.57018054745,
-        "min": 61035.035211267605
+        "min": 63977.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.3946324939062343,
+        "min": 0.0
+      }
+    }
+  },
+  "city_of_new_york,_new_york": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 880100.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 155804.0,
+        "min": 31250.0
+      }
+    }
+  },
+  "cleveland,_ohio": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 645800.0,
+        "min": 354500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 86719.0,
+        "min": 46915.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.34253078466467546,
+        "min": 0.0
+      }
+    }
+  },
+  "columbus,_ohio": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 504500.0,
+        "min": 449700.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 118500.0,
+        "min": 73348.0
+      }
+    }
+  },
+  "dallas,_texas": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 419900.0,
+        "min": 385600.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 93808.0,
+        "min": 53512.0
+      }
+    }
+  },
+  "denver,_colorado": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 722400.0,
+        "min": 704500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 89298.0,
+        "min": 77303.0
+      }
+    }
+  },
+  "detroit,_michigan": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 660700.0,
+        "min": 284800.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 88281.0,
+        "min": 50179.0
+      }
+    }
+  },
+  "east_north_central": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 30.0,
+        "min": 0.0
+      }
+    },
+    "education": {
+      "bach_pct": {
+        "max": 4198.0,
+        "min": 5.69
+      },
+      "grad_pct": {
+        "max": 108.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 115.82,
+        "min": 51.6
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 842600.0,
+        "min": 20400.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 115.82,
+        "min": 51.6
+      },
+      "white_collar_pct": {
+        "max": 57.84123910939012,
+        "min": 2.360876897133221
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 170234.88372093023,
+        "min": 22356.0
       },
       "wealth_gap_ratio": {
         "max": 1.432353055085785,
-        "min": 0.2000501143007855
+        "min": 0.0
       }
     }
   },
   "east_south_central": {
+    "brand": {},
     "education": {
       "bach_pct": {
-        "max": 80.46,
-        "min": 64.15
+        "max": 2895.0,
+        "min": 636.0
       },
       "grad_pct": {
-        "max": 45.44,
-        "min": 22.96
+        "max": 45.0,
+        "min": 0.0
       },
       "self_employed_pct": {
         "max": 101.04,
         "min": 38.29
       }
     },
-    "occupation": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 691700.0,
+        "min": 66200.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 101.04,
+        "min": 38.29
+      },
+      "white_collar_pct": {
+        "max": 50.450450450450454,
+        "min": 39.49579831932773
+      }
+    },
     "wealth": {
       "mean_hh_income": {
         "max": 128353.64145658263,
-        "min": 75428.1081081081
+        "min": 23056.0
       },
       "wealth_gap_ratio": {
         "max": 0.6749790089597106,
-        "min": 0.27662494259204023
+        "min": 0.0
+      }
+    }
+  },
+  "houston,_texas": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 797700.0,
+        "min": 359800.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 177583.0,
+        "min": 127409.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.35527045503469973,
+        "min": 0.0
+      }
+    }
+  },
+  "los_angeles,_california": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 938200.0,
+        "min": 696300.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 87125.0,
+        "min": 68450.0
       }
     }
   },
   "middle_atlantic": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 9.0,
+        "min": 0.0
+      }
+    },
     "education": {
       "bach_pct": {
-        "max": 69.54,
-        "min": 3.33
+        "max": 3206.0,
+        "min": 6.82
       },
       "grad_pct": {
-        "max": 43.54,
+        "max": 85.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 77.05,
+        "max": 109.05,
         "min": 0.0
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 57200.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 109.05,
+        "min": 0.0
+      },
+      "white_collar_pct": {
+        "max": 63.65330848089469,
+        "min": 6.7269076305220885
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 411571.4185393258,
+        "min": 21631.0
+      },
+      "wealth_gap_ratio": {
+        "max": 1.4559272300469486,
+        "min": 0.0
+      }
+    }
+  },
+  "missoula,_montana": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 591000.0,
+        "min": 290500.0
       }
     },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 135469.1724137931,
-        "min": 90043.02059496568
+        "max": 67823.0,
+        "min": 36563.0
       },
       "wealth_gap_ratio": {
-        "max": 0.4554955243253621,
-        "min": 0.25997733956909325
+        "max": 0.33974822051639925,
+        "min": 0.0
       }
     }
   },
   "mountain": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 9.0,
+        "min": 0.0
+      }
+    },
     "education": {
       "bach_pct": {
-        "max": 74.5,
-        "min": 18.8
+        "max": 1388.0,
+        "min": 4.3
       },
       "grad_pct": {
-        "max": 35.38,
-        "min": 7.29
+        "max": 36.66,
+        "min": 0.0
       },
       "self_employed_pct": {
         "max": 123.55,
-        "min": 58.82
+        "min": 29.68
       }
     },
-    "occupation": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1601200.0,
+        "min": 195400.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 123.55,
+        "min": 29.68
+      },
+      "white_collar_pct": {
+        "max": 51.31042516016308,
+        "min": 3.527106466361855
+      }
+    },
     "wealth": {
       "mean_hh_income": {
-        "max": 98194.0,
+        "max": 229848.2558139535,
         "min": 19500.0
       },
       "wealth_gap_ratio": {
@@ -143,13 +606,64 @@
       }
     }
   },
-  "new_england": {
+  "nashville,_tennessee": {
+    "brand": {},
     "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 495800.0,
+        "min": 325100.0
+      }
+    },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 143846.0,
-        "min": 24728.0
+        "max": 104216.0,
+        "min": 23056.0
+      }
+    }
+  },
+  "new_england": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 9.0,
+        "min": 0.0
+      }
+    },
+    "education": {
+      "bach_pct": {
+        "max": 2522.0,
+        "min": 9.53
+      },
+      "grad_pct": {
+        "max": 62.38,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 148.11,
+        "min": 27.17
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 1731300.0,
+        "min": 111900.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 148.11,
+        "min": 27.17
+      },
+      "white_collar_pct": {
+        "max": 58.07486631016043,
+        "min": 8.747514910536779
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 335267.3707210488,
+        "min": 21802.787162162163
       },
       "wealth_gap_ratio": {
         "max": 1.3317962883996282,
@@ -157,111 +671,383 @@
       }
     }
   },
-  "pacific": {
-    "education": {
-      "bach_pct": {
-        "max": 57.22,
-        "min": 23.9
-      },
-      "grad_pct": {
-        "max": 21.28,
-        "min": 6.97
-      },
-      "self_employed_pct": {
-        "max": 77.55,
-        "min": 70.74
+  "new_york,_new_york": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1178600.0,
+        "min": 302700.0
       }
     },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 125399.73958333333,
-        "min": 38738.91194098663
+        "max": 190769.0,
+        "min": 90043.02059496568
+      },
+      "wealth_gap_ratio": {
+        "max": 0.3597226981209786,
+        "min": 0.0
+      }
+    }
+  },
+  "nyc_metro": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 302700.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 411571.4185393258,
+        "min": 31250.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.7538481736392297,
+        "min": 0.0
+      }
+    }
+  },
+  "pacific": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 52.0,
+        "min": 0.0
+      }
+    },
+    "education": {
+      "bach_pct": {
+        "max": 3340.0,
+        "min": 3.89
+      },
+      "grad_pct": {
+        "max": 263.0,
+        "min": 0.28
+      },
+      "self_employed_pct": {
+        "max": 97.54,
+        "min": 45.86
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 174100.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 97.54,
+        "min": 45.86
+      },
+      "white_collar_pct": {
+        "max": 58.11915887850467,
+        "min": 11.367127496159755
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 234243.0,
+        "min": 19524.0
       },
       "wealth_gap_ratio": {
         "max": 1.6093415688757209,
-        "min": 0.08007115010975639
+        "min": 0.0
+      }
+    }
+  },
+  "philadelphia,_pennsylvania": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 656100.0,
+        "min": 291400.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 125625.0,
+        "min": 84861.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.38495955788215874,
+        "min": 0.0
+      }
+    }
+  },
+  "pittsburgh,_pennsylvania": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 434200.0,
+        "min": 66500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 132051.2869399428,
+        "min": 39331.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.4554955243253621,
+        "min": 0.0
+      }
+    }
+  },
+  "portland,_oregon": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 866900.0,
+        "min": 434500.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 168279.0,
+        "min": 64888.0
+      }
+    }
+  },
+  "salt_lake_city,_utah": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 631500.0,
+        "min": 468700.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 76605.0,
+        "min": 58333.0
+      }
+    }
+  },
+  "san_diego,_california": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1871400.0,
+        "min": 799100.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 204154.3103448276,
+        "min": 86688.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.7159140871330391,
+        "min": 0.0
+      }
+    }
+  },
+  "san_francisco,_california": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 2000001.0,
+        "min": 1531300.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 228125.0,
+        "min": 101696.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.34117368538324416,
+        "min": 0.0
+      }
+    }
+  },
+  "seattle,_washington": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1490900.0,
+        "min": 637700.0
+      }
+    },
+    "occupation": {},
+    "wealth": {
+      "mean_hh_income": {
+        "max": 160313.0,
+        "min": 74367.0
       }
     }
   },
   "south_atlantic": {
+    "brand": {
+      "brand_raw_score": {
+        "max": 39.0,
+        "min": 0.0
+      }
+    },
     "education": {
       "bach_pct": {
-        "max": 85.78,
-        "min": 22.64
+        "max": 4962.0,
+        "min": 29.43
       },
       "grad_pct": {
-        "max": 43.84,
-        "min": 5.31
+        "max": 172.0,
+        "min": 0.0
       },
       "self_employed_pct": {
         "max": 113.51,
         "min": 55.06
       }
     },
-    "occupation": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 1776000.0,
+        "min": 157100.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 113.51,
+        "min": 55.06
+      },
+      "white_collar_pct": {
+        "max": 66.66666666666667,
+        "min": 17.2108635947513
+      }
+    },
     "wealth": {
       "mean_hh_income": {
-        "max": 260606.35324015247,
-        "min": 54751.41430948419
+        "max": 513775.5478662053,
+        "min": 14174.0
       },
       "wealth_gap_ratio": {
         "max": 1.8653804644326826,
-        "min": 0.21984137823198516
+        "min": 0.0
       }
     }
   },
-  "west_north_central": {
-    "education": {
-      "bach_pct": {
-        "max": 58.94,
-        "min": 27.93
-      },
-      "grad_pct": {
-        "max": 23.13,
-        "min": 9.05
-      },
-      "self_employed_pct": {
-        "max": 92.85,
-        "min": 70.21
+  "tampa,_florida": {
+    "brand": {},
+    "education": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 395200.0,
+        "min": 276800.0
       }
     },
     "occupation": {},
     "wealth": {
       "mean_hh_income": {
-        "max": 94366.46048109965,
-        "min": 64112.63157894737
+        "max": 113645.7627118644,
+        "min": 43266.0
+      },
+      "wealth_gap_ratio": {
+        "max": 0.25970739904079543,
+        "min": 0.0
+      }
+    }
+  },
+  "west_north_central": {
+    "brand": {},
+    "education": {
+      "bach_pct": {
+        "max": 3887.0,
+        "min": 66.19
+      },
+      "grad_pct": {
+        "max": 80.0,
+        "min": 36.62
+      },
+      "self_employed_pct": {
+        "max": 92.85,
+        "min": 59.38
+      }
+    },
+    "home_cost": {
+      "median_home_value": {
+        "max": 554200.0,
+        "min": 122300.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 92.85,
+        "min": 59.38
+      },
+      "white_collar_pct": {
+        "max": 51.269370260468186,
+        "min": 40.334855403348556
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 129861.0,
+        "min": 27973.0
       },
       "wealth_gap_ratio": {
         "max": 1.0409339743935666,
-        "min": 0.09168763756551163
+        "min": 0.0
       }
     }
   },
   "west_south_central": {
+    "brand": {},
     "education": {
       "bach_pct": {
-        "max": 76.44,
-        "min": 4.91
+        "max": 5184.0,
+        "min": 897.0
       },
       "grad_pct": {
-        "max": 37.82,
-        "min": 1.0
+        "max": 406.0,
+        "min": 0.0
       },
       "self_employed_pct": {
         "max": 104.09,
         "min": 79.62
       }
     },
-    "occupation": {},
+    "home_cost": {
+      "median_home_value": {
+        "max": 797700.0,
+        "min": 77500.0
+      }
+    },
+    "occupation": {
+      "self_employed_pct": {
+        "max": 104.09,
+        "min": 79.62
+      },
+      "white_collar_pct": {
+        "max": 63.10756972111554,
+        "min": 17.727272727272727
+      }
+    },
     "wealth": {
       "mean_hh_income": {
-        "max": 176948.1764206955,
-        "min": 62543.711248892825
+        "max": 177583.0,
+        "min": 27340.0
       },
       "wealth_gap_ratio": {
         "max": 0.6832112263298123,
-        "min": 0.35527045503469973
+        "min": 0.0
       }
     }
   }
