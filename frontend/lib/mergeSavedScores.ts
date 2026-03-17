@@ -116,6 +116,8 @@ export function mergeSavedScorePayload(
     const longevity_index = computeLongevityIndex(longevityScores)
     if (longevity_index != null) merged.longevity_index = longevity_index
     else if (existingPayload && typeof existingPayload.longevity_index === 'number') merged.longevity_index = existingPayload.longevity_index
+    if (typeof (incomingPayload as { happiness_index?: number }).happiness_index === 'number') merged.happiness_index = (incomingPayload as { happiness_index: number }).happiness_index
+    else if (existingPayload && typeof (existingPayload as { happiness_index?: number }).happiness_index === 'number') merged.happiness_index = (existingPayload as { happiness_index: number }).happiness_index
     return { mergedPayload: merged, total_score: total }
   }
 
@@ -148,6 +150,11 @@ export function mergeSavedScorePayload(
     mergedPayload.longevity_index = longevity_index
   } else if (existingPayload && typeof existingPayload.longevity_index === 'number') {
     mergedPayload.longevity_index = existingPayload.longevity_index
+  }
+  if (typeof (incomingPayload as { happiness_index?: number }).happiness_index === 'number') {
+    mergedPayload.happiness_index = (incomingPayload as { happiness_index: number }).happiness_index
+  } else if (existingPayload && typeof (existingPayload as { happiness_index?: number }).happiness_index === 'number') {
+    mergedPayload.happiness_index = (existingPayload as { happiness_index: number }).happiness_index
   }
   return { mergedPayload, total_score }
 }

@@ -35,6 +35,7 @@ export interface ExportInput {
   lon: number
   homefitScore: number | null
   longevityScore: number | null
+  happinessScore?: number | null
   /** Pillar key -> score (only pillars with valid scores; failed runs excluded) */
   pillarScores: Record<string, { score: number; failed?: boolean }>
   /** Pillar key -> user-selected importance */
@@ -51,7 +52,7 @@ export interface ExportRow {
 }
 
 /**
- * Build one row of export data: fixed columns (location, lat, lng, homefit_score, longevity_score)
+ * Build one row of export data: fixed columns (location, lat, lng, homefit_score, longevity_score, happiness_score)
  * then for each active pillar: pillar_name, pillar_name_weight.
  * Pillars with no score are omitted.
  */
@@ -62,17 +63,19 @@ export function buildExportRow(input: ExportInput): ExportRow {
     lon,
     homefitScore,
     longevityScore,
+    happinessScore,
     pillarScores,
     selectedPriorities,
   } = input
 
-  const headers: string[] = ['location', 'lat', 'lng', 'homefit_score', 'longevity_score']
+  const headers: string[] = ['location', 'lat', 'lng', 'homefit_score', 'longevity_score', 'happiness_score']
   const values: (string | number)[] = [
     locationName,
     lat,
     lon,
     homefitScore ?? '',
     longevityScore ?? '',
+    happinessScore ?? '',
   ]
 
   for (const key of PILLAR_ORDER) {

@@ -7,7 +7,8 @@ import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
 import LongevityInfo from './LongevityInfo'
-import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, type PillarKey } from '@/lib/pillars'
+import HappinessInfo from './HappinessInfo'
+import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, type PillarKey } from '@/lib/pillars'
 import { useAuth } from '@/contexts/AuthContext'
 
 /** Options passed to onRunPillarScore when user runs a score for a single pillar from the "+ Add" expand. */
@@ -119,6 +120,7 @@ export default function ScoreDisplay({
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const isLoading = Boolean(loading)
   const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
+  const happiness_index = typeof data.happiness_index === 'number' ? data.happiness_index : null
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -155,6 +157,7 @@ export default function ScoreDisplay({
       `HomeFit Livability Score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
       ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
+      ...(typeof happiness_index === 'number' ? [`Happiness Index: ${happiness_index.toFixed(1)}/100`] : []),
       '',
       'Pillar Scores:',
       ...available_pillars.map((key) => {
@@ -346,7 +349,7 @@ export default function ScoreDisplay({
         </div>
 
         <div
-          className={`hf-score-summary-grid ${longevity_index != null ? 'hf-score-summary-grid-3' : ''}`}
+          className={`hf-score-summary-grid ${longevity_index != null && happiness_index != null ? 'hf-score-summary-grid-4' : (longevity_index != null || happiness_index != null) ? 'hf-score-summary-grid-3' : ''}`}
           style={{ marginTop: '2rem' }}
         >
           <TotalScore score={total_score} confidence={overall_confidence} loading={isLoading} />
@@ -361,6 +364,20 @@ export default function ScoreDisplay({
               </div>
               <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
                 {LONGEVITY_COPY.short}
+              </div>
+            </div>
+          )}
+          {happiness_index != null && (
+            <div className="hf-panel">
+              <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
+                <div className="hf-score-hero__value" style={{ color: 'var(--hf-happiness-teal)' }}>{happiness_index.toFixed(1)}</div>
+                <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  Happiness Index (0–100)
+                  <HappinessInfo />
+                </div>
+              </div>
+              <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+                {HAPPINESS_INDEX_COPY.short}
               </div>
             </div>
           )}

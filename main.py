@@ -47,6 +47,7 @@ from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
+from pillars.happiness_index import compute_happiness_index_with_breakdown
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 
@@ -845,6 +846,29 @@ def _compute_status_signal_for_response(
     )
 
 
+def _compute_happiness_index_for_response(
+    housing_details: Optional[Dict[str, Any]],
+    public_transit_details: Optional[Dict[str, Any]],
+    economic_security_details: Optional[Dict[str, Any]],
+    natural_beauty_details: Optional[Dict[str, Any]],
+    state: Optional[str],
+) -> Optional[tuple]:
+    """
+    Compute Happiness Index (0-100) and breakdown from existing pillar data.
+    Returns (score, breakdown) or None when score cannot be computed.
+    """
+    try:
+        return compute_happiness_index_with_breakdown(
+            housing_details,
+            public_transit_details,
+            economic_security_details,
+            natural_beauty_details,
+            state,
+        )
+    except Exception:
+        return None
+
+
 app = FastAPI(
     title="HomeFit API",
     description="Purpose-driven livability scoring API with 10 pillars",
@@ -1082,6 +1106,22 @@ def _apply_allocation_to_cached_response(
                     if score is not None:
                         response["status_signal"] = max(0.0, min(100.0, float(score)))
                     response["status_signal_breakdown"] = breakdown
+                # Happiness Index (composite from existing pillar data)
+                if response.get("happiness_index") is None:
+                    public_transit_details = pillars.get("public_transit_access")
+                    natural_beauty_details = pillars.get("natural_beauty")
+                    happiness_result = _compute_happiness_index_for_response(
+                        housing_details,
+                        public_transit_details,
+                        economic_security_details,
+                        natural_beauty_details,
+                        state,
+                    )
+                    if happiness_result is not None:
+                        hi_score, hi_breakdown = happiness_result
+                        if hi_score is not None:
+                            response["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
+                        response["happiness_index_breakdown"] = hi_breakdown
             except Exception:
                 pass
 
@@ -2113,6 +2153,17 @@ def _compute_single_score_internal(
         if score is not None:
             response["status_signal"] = max(0.0, min(100.0, float(score)))
         response["status_signal_breakdown"] = breakdown
+
+    public_transit_details = livability_pillars.get("public_transit_access")
+    natural_beauty_details = livability_pillars.get("natural_beauty")
+    happiness_result = _compute_happiness_index_for_response(
+        housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+    )
+    if happiness_result is not None:
+        hi_score, hi_breakdown = happiness_result
+        if hi_score is not None:
+            response["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
+        response["happiness_index_breakdown"] = hi_breakdown
 
     if test_mode_enabled and beauty_overrides:
         arch_override_keys = {
@@ -3510,6 +3561,17 @@ async def _stream_score_with_progress(
                 final_response["status_signal"] = max(0.0, min(100.0, float(score)))
             final_response["status_signal_breakdown"] = breakdown
 
+        public_transit_details = livability_pillars.get("public_transit_access")
+        natural_beauty_details = livability_pillars.get("natural_beauty")
+        happiness_result = _compute_happiness_index_for_response(
+            housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+        )
+        if happiness_result is not None:
+            hi_score, hi_breakdown = happiness_result
+            if hi_score is not None:
+                final_response["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
+            final_response["happiness_index_breakdown"] = hi_breakdown
+
         # Store a shared, cross-user response template (compressed) for future requests.
         # Bounded by TTL + size cap to avoid unbounded Redis growth.
         if not test_mode_enabled:
@@ -4472,6 +4534,17 @@ async def stream_score(
             if score is not None:
                 response["status_signal"] = max(0.0, min(100.0, float(score)))
             response["status_signal_breakdown"] = breakdown
+
+        public_transit_details = livability_pillars.get("public_transit_access")
+        natural_beauty_details = livability_pillars.get("natural_beauty")
+        happiness_result = _compute_happiness_index_for_response(
+            housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+        )
+        if happiness_result is not None:
+            hi_score, hi_breakdown = happiness_result
+            if hi_score is not None:
+                response["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
+            response["happiness_index_breakdown"] = hi_breakdown
 
         if test_mode_enabled and beauty_overrides:
             arch_override_keys = {

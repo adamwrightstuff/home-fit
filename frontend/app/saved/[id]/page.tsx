@@ -17,6 +17,7 @@ import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
+import HappinessInfo from '@/components/HappinessInfo'
 import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
@@ -196,6 +197,12 @@ export default function SavedDetailPage() {
       } catch {
         // If anything goes wrong recomputing longevity, fall back to existing value.
       }
+      if (typeof (response as { happiness_index?: number }).happiness_index === 'number') {
+        merged.happiness_index = (response as { happiness_index: number }).happiness_index
+      }
+      if ((response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown != null) {
+        merged.happiness_index_breakdown = (response as { happiness_index_breakdown: Record<string, unknown> }).happiness_index_breakdown
+      }
       await updateSavedScore(row.id, { scorePayload: merged, priorities: options.priorities })
       setRow((prev) =>
         prev
@@ -256,6 +263,8 @@ export default function SavedDetailPage() {
         livability_pillars: mergedPillars as ScoreResponse['livability_pillars'],
         place_summary: response.place_summary ?? current.place_summary,
         status_signal: typeof (response as { status_signal?: number }).status_signal === 'number' ? (response as { status_signal: number }).status_signal : current.status_signal,
+        happiness_index: typeof (response as { happiness_index?: number }).happiness_index === 'number' ? (response as { happiness_index: number }).happiness_index : current.happiness_index,
+        happiness_index_breakdown: (response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown ?? current.happiness_index_breakdown,
       }
       const merged: ScoreResponse = {
         ...mergedBase,
@@ -380,6 +389,7 @@ export default function SavedDetailPage() {
   const coordinates = rawPayload?.coordinates ?? row.coordinates
   const totalScore = displayData.total_score
   const longevityIndex = typeof displayData.longevity_index === 'number' ? displayData.longevity_index : null
+  const happinessIndex = typeof displayData.happiness_index === 'number' ? displayData.happiness_index : null
   const { location_info } = displayData
 
   return (
@@ -515,6 +525,7 @@ export default function SavedDetailPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexWrap: 'wrap',
                 gap: '1.25rem',
                 marginTop: '1rem',
                 fontSize: '0.8rem',
@@ -534,6 +545,13 @@ export default function SavedDetailPage() {
                   {typeof displayData.status_signal === 'number' ? Math.max(0, Math.min(100, displayData.status_signal)).toFixed(1) : '—'}
                 </span>
                 <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="hf-muted">Happiness Index</span>
+                <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--hf-happiness-teal)' : 'var(--hf-text-secondary)' }}>
+                  {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
+                </span>
+                <HappinessInfo />
               </span>
             </div>
           </div>

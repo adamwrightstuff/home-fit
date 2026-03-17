@@ -30,6 +30,7 @@
   /* Score summary colors */
   --hf-homefit-green: #2d6a4f;
   --hf-longevity-purple: #764ba2;
+  --hf-happiness-teal: #0d9488;
 }
 
 body {
@@ -569,14 +570,21 @@ body {
 .hf-score-summary-grid.hf-score-summary-grid-3 {
   grid-template-columns: 1fr 1fr 1.2fr;
 }
+.hf-score-summary-grid.hf-score-summary-grid-4 {
+  grid-template-columns: 1fr 1fr 1fr 1.2fr;
+}
 @media (max-width: 900px) {
   .hf-score-summary-grid.hf-score-summary-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hf-score-summary-grid.hf-score-summary-grid-4 {
     grid-template-columns: 1fr 1fr;
   }
 }
 @media (max-width: 640px) {
   .hf-score-summary-grid,
-  .hf-score-summary-grid.hf-score-summary-grid-3 {
+  .hf-score-summary-grid.hf-score-summary-grid-3,
+  .hf-score-summary-grid.hf-score-summary-grid-4 {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }

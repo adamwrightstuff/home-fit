@@ -6,6 +6,7 @@ import InteractiveMap from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import StatusSignalInfo from './StatusSignalInfo'
+import HappinessInfo from './HappinessInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
@@ -150,6 +151,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Status Signal (post-pillars); set from initialPayload or after running the four pillars. */
   const [statusSignal, setStatusSignal] = useState<number | null>(() => initialPayload?.status_signal ?? null)
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
+  /** Happiness Index (composite); set from initialPayload or after scoring. */
+  const [happinessIndex, setHappinessIndex] = useState<number | null>(() => initialPayload?.happiness_index ?? null)
   /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
   const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -338,6 +341,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
+      if (typeof (resp as { happiness_index?: number }).happiness_index === 'number') {
+        setHappinessIndex((resp as { happiness_index: number }).happiness_index)
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to refresh Status Signal.'
       onError(msg)
@@ -442,13 +448,14 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       total_score: totalScore,
       longevity_index: longevityIndex ?? undefined,
       status_signal: statusSignal ?? undefined,
+      happiness_index: happinessIndex ?? undefined,
       token_allocation: tokenAllocation as Record<string, number>,
       allocation_type: 'priority_based',
       overall_confidence: { average_confidence: 80, pillars_using_fallback: 0, fallback_percentage: 0, quality_tier_distribution: {}, overall_quality: 'good' },
       data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
       metadata: { version: '', architecture: '', note: '', test_mode: false },
     }
-  }, [place, pillarScores, totalScore, longevityIndex, statusSignal, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
+  }, [place, pillarScores, totalScore, longevityIndex, statusSignal, happinessIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
 
   /** Priorities object for save (all pillars, selected use current importance). */
   const savePriorities = useMemo((): PillarPriorities => {
@@ -585,6 +592,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
+      if (typeof (resp as { happiness_index?: number }).happiness_index === 'number') {
+        setHappinessIndex((resp as { happiness_index: number }).happiness_index)
+      }
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
@@ -615,10 +625,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         lon: place.lon,
         homefitScore: totalScore,
         longevityScore: longevityIndex,
+        happinessScore: happinessIndex,
         pillarScores,
         selectedPriorities,
       }),
-    [locationLabel, place.lat, place.lon, totalScore, longevityIndex, pillarScores, selectedPriorities]
+    [locationLabel, place.lat, place.lon, totalScore, longevityIndex, happinessIndex, pillarScores, selectedPriorities]
   )
 
   return (
@@ -693,12 +704,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           {HOMEFIT_COPY.subtitle}
         </div>
 
-        {/* Longevity Index & Status Signal — below, smaller font */}
+        {/* Longevity Index, Status Signal & Happiness Index — below, smaller font */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexWrap: 'wrap',
             gap: '1.25rem',
             marginTop: '1rem',
             fontSize: '0.8rem',
@@ -719,6 +731,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
             </span>
             <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span className="hf-muted">Happiness Index</span>
+            <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--hf-happiness-teal)' : 'var(--hf-text-secondary)' }}>
+              {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
+            </span>
+            <HappinessInfo />
           </span>
         </div>
       </div>

@@ -124,6 +124,9 @@ export interface ScoreResponse {
   longevity_index_contributions?: Record<string, number>;
   /** Status Signal: post-pillars derived score (wealth, education, occupation, brands). Only present when all four pillars have data. */
   status_signal?: number;
+  /** Happiness Index: composite from commute, housing affordability, unemployment, equality, green space. Not a pillar. */
+  happiness_index?: number;
+  happiness_index_breakdown?: Record<string, unknown>;
   token_allocation: Record<string, number>;
   allocation_type: string;
   overall_confidence: OverallConfidence;

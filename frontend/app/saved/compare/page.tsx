@@ -119,6 +119,8 @@ function CompareContent() {
   const homefitB = typeof displayB?.total_score === 'number' ? displayB.total_score : null
   const longevityA = typeof displayA?.longevity_index === 'number' ? displayA.longevity_index : null
   const longevityB = typeof displayB?.longevity_index === 'number' ? displayB.longevity_index : null
+  const happinessA = typeof displayA?.happiness_index === 'number' ? displayA.happiness_index : null
+  const happinessB = typeof displayB?.happiness_index === 'number' ? displayB.happiness_index : null
 
   const placeNameA = rowA ? placeDisplayName(rowA) : 'Place A'
   const placeNameB = rowB ? placeDisplayName(rowB) : 'Place B'
@@ -334,6 +336,9 @@ function CompareContent() {
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-longevity-purple)' }}>
                     {longevityA != null ? `Longevity ${longevityA.toFixed(1)}` : 'Longevity —'}
                   </div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
+                    {happinessA != null ? `Happiness ${happinessA.toFixed(1)}` : 'Happiness —'}
+                  </div>
                   <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                     Wins {wins.aWins} of {totalPillars} pillars
                   </div>
@@ -369,6 +374,9 @@ function CompareContent() {
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-homefit-green)' }}>
                     {longevityB != null ? `Longevity ${longevityB.toFixed(1)}` : 'Longevity —'}
+                  </div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
+                    {happinessB != null ? `Happiness ${happinessB.toFixed(1)}` : 'Happiness —'}
                   </div>
                   <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                     Wins {wins.bWins} of {totalPillars} pillars

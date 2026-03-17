@@ -112,6 +112,19 @@ export const STATUS_SIGNAL_COPY = {
     'Status Signal combines four ingredients into a 0–100 score: wealth (household income and inequality), education (bachelor’s and graduate attainment, self-employment), occupation (finance/arts/creative jobs and white-collar share), and local brands (luxury gyms, design perfumeries, organic grocers, boutique fitness). It only appears when we have data for all four. You can refresh it by running just those four pillars.',
 } as const
 
+/** Copy for Happiness Index UX: tooltip and modal. */
+export const HAPPINESS_INDEX_COPY = {
+  /** One-line tooltip next to the score. */
+  tooltip:
+    'Measures daily friction and material wellbeing — commute stress, housing affordability, economic security, income equality, and access to nature.',
+  /** Full version for modal. */
+  full:
+    'Happiness Index measures daily friction and material wellbeing — commute stress, housing affordability, economic security, income equality, and access to nature. Lower friction, lower cost burden, and more green and blue space all point to happier daily life.',
+  /** Short version for subtitle or card label. */
+  short:
+    'Daily friction and material wellbeing — commute, affordability, jobs, equality, and nature.',
+} as const
+
 /** Comma-separated pillar names required to compute Status Signal (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
   'housing_value,social_fabric,economic_security,neighborhood_amenities'
