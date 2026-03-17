@@ -3,7 +3,7 @@ Status Signal: post-pillars derived score (status + desirability).
 
 Status = wealth + education + occupation. Desirability = home cost + luxury presence.
 Uses per-division and per-CBSA min-max baselines from data/status_signal_baselines.json.
-When (city, state) matches a metro cluster (e.g. NYC), uses that CBSA key first (e.g. nyc_metro), then division, then "all".
+For each component we try baseline keys in order: CBSA (e.g. nyc_metro) when in a metro cluster, then Census division, then "all". If a key has no data for that component, we fall back to the next (so metro-only baselines still get division/all for education/occupation).
 
 Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5%.
 Wealth gap (mean vs median) is used as a quality-control label: super_zip vs unequal vs typical.
@@ -101,21 +101,23 @@ def _get_cbsa_baseline_key(city: Optional[str], state: Optional[str]) -> Optiona
 
 def _get_baseline(
     baselines: Dict[str, Any],
-    division: str,
+    keys_to_try: List[str],
     component: str,
     metric: str,
 ) -> Tuple[Optional[float], Optional[float]]:
-    div_data = baselines.get(division) or baselines.get("all") or {}
-    comp = div_data.get(component, {})
-    m = comp.get(metric, {})
-    if isinstance(m, dict) and "min" in m and "max" in m:
-        return float(m["min"]), float(m["max"])
+    """Try each key in order; return (min, max) from the first key that has data for this component/metric."""
+    for key in keys_to_try:
+        div_data = baselines.get(key) or {}
+        comp = div_data.get(component, {})
+        m = comp.get(metric, {})
+        if isinstance(m, dict) and "min" in m and "max" in m:
+            return float(m["min"]), float(m["max"])
     return None, None
 
 
 def compute_wealth(
     housing_details: Dict[str, Any],
-    division: str,
+    keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
     """Wealth Concentration: 60% mean income normalized + 40% wealth gap normalized."""
@@ -128,8 +130,8 @@ def compute_wealth(
         mean_income = median_income
     wealth_gap = (float(mean_income) - float(median_income)) / float(median_income)
 
-    min_mean, max_mean = _get_baseline(baselines, division, "wealth", "mean_hh_income")
-    min_gap, max_gap = _get_baseline(baselines, division, "wealth", "wealth_gap_ratio")
+    min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
+    min_gap, max_gap = _get_baseline(baselines, keys_to_try, "wealth", "wealth_gap_ratio")
     if min_mean is None or max_mean is None:
         return None
     n_mean = _normalize_min_max(float(mean_income), min_mean, max_mean)
@@ -146,15 +148,15 @@ HOME_COST_MAX = 3_000_000
 
 def compute_home_cost(
     median_home_value: Optional[float],
-    division: Optional[str] = None,
+    keys_to_try: Optional[List[str]] = None,
     baselines: Optional[Dict[str, Any]] = None,
 ) -> float:
-    """Desirability: normalized by division median_home_value min/max when available; else 0 below $1M, linear 0-100 from $1M to $3M."""
+    """Desirability: normalized by baseline median_home_value min/max when available; else 0 below $1M, linear 0-100 from $1M to $3M."""
     if median_home_value is None or not isinstance(median_home_value, (int, float)):
         return 0.0
     val = float(median_home_value)
-    if division and baselines:
-        min_v, max_v = _get_baseline(baselines, division, "home_cost", "median_home_value")
+    if keys_to_try and baselines:
+        min_v, max_v = _get_baseline(baselines, keys_to_try, "home_cost", "median_home_value")
         if min_v is not None and max_v is not None and max_v > min_v:
             return _normalize_min_max(val, min_v, max_v)
     # Fallback: fixed $1M-$3M band
@@ -186,7 +188,7 @@ def _wealth_character(housing_details: Dict[str, Any]) -> str:
 
 def compute_education(
     social_fabric_details: Dict[str, Any],
-    division: str,
+    keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
     """Education Density: 50% grad_pct + 30% bach_pct + 20% self_employed_pct (all normalized). Uses 0-100 scale."""
@@ -203,9 +205,9 @@ def compute_education(
     if bach_pct is not None:
         bach_pct = max(0.0, min(100.0, float(bach_pct)))
 
-    min_grad, max_grad = _get_baseline(baselines, division, "education", "grad_pct")
-    min_bach, max_bach = _get_baseline(baselines, division, "education", "bach_pct")
-    min_se, max_se = _get_baseline(baselines, division, "education", "self_employed_pct")
+    min_grad, max_grad = _get_baseline(baselines, keys_to_try, "education", "grad_pct")
+    min_bach, max_bach = _get_baseline(baselines, keys_to_try, "education", "bach_pct")
+    min_se, max_se = _get_baseline(baselines, keys_to_try, "education", "self_employed_pct")
 
     n_grad = 50.0
     if grad_pct is not None and min_grad is not None and max_grad is not None:
@@ -268,7 +270,7 @@ def compute_occupation(
     economic_security_details: Dict[str, Any],
     social_fabric_details: Dict[str, Any],
     tract: Optional[Dict[str, Any]],
-    division: str,
+    keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
     """Occupation Mix: 50% (finance+arts) + 30% white_collar + 20% self_employed (normalized)."""
@@ -294,9 +296,9 @@ def compute_occupation(
     if finance_arts_pct is None and white_collar_pct is None and self_employed_pct is None:
         return None
 
-    min_fa, max_fa = _get_baseline(baselines, division, "occupation", "finance_arts_pct")
-    min_wc, max_wc = _get_baseline(baselines, division, "occupation", "white_collar_pct")
-    min_se, max_se = _get_baseline(baselines, division, "occupation", "self_employed_pct")
+    min_fa, max_fa = _get_baseline(baselines, keys_to_try, "occupation", "finance_arts_pct")
+    min_wc, max_wc = _get_baseline(baselines, keys_to_try, "occupation", "white_collar_pct")
+    min_se, max_se = _get_baseline(baselines, keys_to_try, "occupation", "self_employed_pct")
 
     n_fa = 50.0
     if finance_arts_pct is not None and min_fa is not None and max_fa is not None:
@@ -351,14 +353,14 @@ def brand_raw_score(business_list: List[Dict[str, Any]]) -> float:
 
 def compute_brand(
     business_list: List[Dict[str, Any]],
-    division: Optional[str] = None,
+    keys_to_try: Optional[List[str]] = None,
     baselines: Optional[Dict[str, Any]] = None,
 ) -> float:
-    """Luxury presence 0-100; normalized by division baselines when available."""
+    """Luxury presence 0-100; normalized by baselines when available."""
     raw = brand_raw_score(business_list or [])
-    if not division or not baselines:
+    if not keys_to_try or not baselines:
         return raw
-    min_b, max_b = _get_baseline(baselines, division, "brand", "brand_raw_score")
+    min_b, max_b = _get_baseline(baselines, keys_to_try, "brand", "brand_raw_score")
     if min_b is not None and max_b is not None:
         return _normalize_min_max(raw, min_b, max_b)
     return raw
@@ -421,20 +423,26 @@ def compute_status_signal_with_breakdown(
     division = get_division(state_abbrev) if state_abbrev else "all"
     baselines = _load_baselines()
     if not baselines:
-        division = "all"
-    # Prefer CBSA baseline (e.g. nyc_metro) when location is in a metro cluster and we have that baseline
-    cbsa_key = _get_cbsa_baseline_key(city, state_abbrev)
-    baseline_key = cbsa_key if (cbsa_key and baselines.get(cbsa_key)) else division
+        keys_to_try = [division, "all"]
+    else:
+        # Try CBSA first when in a metro cluster, then division, then "all"
+        cbsa_key = _get_cbsa_baseline_key(city, state_abbrev)
+        baseline_key = cbsa_key if (cbsa_key and baselines.get(cbsa_key)) else division
+        keys_to_try = [baseline_key]
+        if division not in keys_to_try:
+            keys_to_try.append(division)
+        if "all" not in keys_to_try:
+            keys_to_try.append("all")
 
-    wealth = compute_wealth(housing_details, baseline_key, baselines)
+    wealth = compute_wealth(housing_details, keys_to_try, baselines)
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
-    home_cost = compute_home_cost(median_home, baseline_key, baselines)
-    education = compute_education(social_fabric_details, baseline_key, baselines)
+    home_cost = compute_home_cost(median_home, keys_to_try, baselines)
+    education = compute_education(social_fabric_details, keys_to_try, baselines)
     occupation = compute_occupation(
-        economic_security_details, social_fabric_details, tract, baseline_key, baselines
+        economic_security_details, social_fabric_details, tract, keys_to_try, baselines
     )
-    luxury = compute_brand(business_list or [], baseline_key, baselines)
+    luxury = compute_brand(business_list or [], keys_to_try, baselines)
     wealth_character = _wealth_character(housing_details)
 
     breakdown["wealth"] = wealth
