@@ -1,4 +1,4 @@
-import { ScoreResponse, ScoreRequestParams, GeocodeResult } from '@/types/api';
+import { ScoreResponse, ScoreRequestParams, GeocodeResult, RecomputePayload, RecomputeResponse } from '@/types/api';
 
 // For production, the browser should call same-origin Vercel API routes (which proxy to Railway).
 const API_BASE_URL = '';
@@ -247,6 +247,26 @@ export async function getScoreSinglePillar(
   params: Omit<ScoreRequestParams, 'only'> & { pillar: string }
 ): Promise<ScoreResponse> {
   return getScore({ ...params, only: params.pillar });
+}
+
+/** Recompute longevity_index, status_signal, happiness_index from existing pillar data (no pillar re-run). */
+export async function recomputeComposites(payload: RecomputePayload): Promise<RecomputeResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/score/recompute-composites`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      livability_pillars: payload.livability_pillars,
+      location_info: payload.location_info ?? undefined,
+      coordinates: payload.coordinates ?? undefined,
+      token_allocation: payload.token_allocation ?? undefined,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = typeof data?.detail === 'string' ? data.detail : 'Recompute failed';
+    throw new Error(detail);
+  }
+  return data as RecomputeResponse;
 }
 
 export async function checkHealth(): Promise<any> {

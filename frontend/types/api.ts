@@ -163,3 +163,21 @@ export interface GeocodeResult {
   zip_code: string;
   display_name: string;
 }
+
+/** Payload for POST /score/recompute_composites — recompute indices from existing pillar data. */
+export interface RecomputePayload {
+  livability_pillars: LivabilityPillars;
+  location_info?: LocationInfo | Record<string, unknown>;
+  coordinates?: Coordinates | { lat: number; lon: number };
+  token_allocation?: Record<string, number>;
+}
+
+/** Response from POST /score/recompute_composites. */
+export interface RecomputeResponse {
+  longevity_index: number | null;
+  longevity_index_contributions: Record<string, number> | null;
+  status_signal: number | null;
+  status_signal_breakdown: Record<string, unknown> | null;
+  happiness_index: number | null;
+  happiness_index_breakdown: Record<string, unknown> | null;
+}

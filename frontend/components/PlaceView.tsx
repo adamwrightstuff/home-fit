@@ -11,7 +11,7 @@ import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
-import { getScoreWithProgress } from '@/lib/api'
+import { getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
 import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
@@ -138,7 +138,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     return {}
   })
   const [placeSummary, setPlaceSummary] = useState<string | null>(() => initialPayload?.place_summary ?? null)
-  const longevityIndex = useMemo(() => computeLongevityIndex(pillarScores), [pillarScores])
+  /** Backend longevity index when set (from initial payload, full run, or recompute); else we use client-computed. */
+  const [longevityIndexState, setLongevityIndexState] = useState<number | null>(() => initialPayload?.longevity_index ?? null)
+  const longevityIndex = useMemo(() => longevityIndexState ?? computeLongevityIndex(pillarScores), [longevityIndexState, pillarScores])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -153,6 +155,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
   /** Happiness Index (composite); set from initialPayload or after scoring. */
   const [happinessIndex, setHappinessIndex] = useState<number | null>(() => initialPayload?.happiness_index ?? null)
+  const [recomputeLoading, setRecomputeLoading] = useState(false)
   /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
   const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -352,6 +355,38 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setStatusSignalRefreshLoading(false)
     }
   }, [place?.location, place?.lat, place?.lon, selectedPriorities, searchOptions, onError])
+
+  const handleRecomputeComposites = useCallback(async () => {
+    const livability_pillars: Record<string, unknown> = {}
+    for (const k of Object.keys(pillarScores)) {
+      const entry = pillarScores[k]
+      if (!entry || entry.failed) continue
+      const full = fullPillarData[k]
+      livability_pillars[k] = full
+        ? { ...full, score: entry.score }
+        : { score: entry.score }
+    }
+    if (Object.keys(livability_pillars).length === 0) {
+      onError('No pillar data to recompute indices from. Run a score first.')
+      return
+    }
+    setRecomputeLoading(true)
+    try {
+      const resp = await recomputeComposites({
+        livability_pillars: livability_pillars as ScoreResponse['livability_pillars'],
+        location_info: { city: place.city, state: place.state, zip: place.zip_code ?? '' },
+        coordinates: { lat: place.lat, lon: place.lon },
+        token_allocation: initialPayload?.token_allocation,
+      })
+      if (resp.longevity_index != null) setLongevityIndexState(resp.longevity_index)
+      if (resp.status_signal != null) setStatusSignal(resp.status_signal)
+      if (resp.happiness_index != null) setHappinessIndex(resp.happiness_index)
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'Failed to refresh indices.')
+    } finally {
+      setRecomputeLoading(false)
+    }
+  }, [place, pillarScores, fullPillarData, initialPayload?.token_allocation, onError])
 
   // When user changes Scenery / Character / Density, update parent options and re-run only that pillar so its score updates.
   const handleSearchOptionsChange = useCallback(
@@ -589,6 +624,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       }
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
+      if (typeof (resp as { longevity_index?: number }).longevity_index === 'number') {
+        setLongevityIndexState((resp as { longevity_index: number }).longevity_index)
+      }
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
@@ -739,6 +777,18 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             </span>
             <HappinessInfo />
           </span>
+          {hasResults && (
+            <button
+              type="button"
+              onClick={() => handleRecomputeComposites()}
+              disabled={recomputeLoading}
+              className="hf-btn-link"
+              style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: recomputeLoading ? 0.6 : 1 }}
+              aria-label="Refresh indices"
+            >
+              {recomputeLoading ? 'Refreshing…' : 'Refresh indices'}
+            </button>
+          )}
         </div>
       </div>
 

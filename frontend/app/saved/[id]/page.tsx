@@ -7,7 +7,7 @@ import { ScoreResponse } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { getScore, getScoreWithProgress } from '@/lib/api'
+import { getScore, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import type { PillarKey } from '@/lib/pillars'
 import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
@@ -47,6 +47,7 @@ export default function SavedDetailPage() {
   const [scoreAgainLoading, setScoreAgainLoading] = useState(false)
   const [scoreAgainError, setScoreAgainError] = useState<string | null>(null)
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
+  const [recomputeLoading, setRecomputeLoading] = useState(false)
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
   const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
@@ -292,6 +293,42 @@ export default function SavedDetailPage() {
       setStatusSignalRefreshLoading(false)
     }
   }, [row, rawPayload, priorities, jobCategories, searchOptions])
+
+  const handleRecomputeComposites = useCallback(async () => {
+    if (!row || !rawPayload) return
+    const pillars = rawPayload.livability_pillars
+    if (!pillars || Object.keys(pillars).length === 0) {
+      setError('No pillar data to recompute indices from.')
+      return
+    }
+    setRecomputeLoading(true)
+    setError(null)
+    try {
+      const resp = await recomputeComposites({
+        livability_pillars: pillars,
+        location_info: rawPayload.location_info,
+        coordinates: rawPayload.coordinates,
+        token_allocation: rawPayload.token_allocation,
+      })
+      const current = rawPayload as ScoreResponse
+      const merged: ScoreResponse = {
+        ...current,
+        longevity_index: resp.longevity_index ?? current.longevity_index,
+        longevity_index_contributions: resp.longevity_index_contributions ?? (current as any).longevity_index_contributions,
+        status_signal: resp.status_signal ?? current.status_signal,
+        status_signal_breakdown: resp.status_signal_breakdown ?? (current as any).status_signal_breakdown,
+        happiness_index: resp.happiness_index ?? current.happiness_index,
+        happiness_index_breakdown: resp.happiness_index_breakdown ?? current.happiness_index_breakdown,
+        metadata: { ...(current.metadata ?? {}), saved_search_options: searchOptions ?? undefined } as any,
+      }
+      await updateSavedScore(row.id, { scorePayload: merged, priorities: priorities ?? undefined })
+      setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to refresh indices.')
+    } finally {
+      setRecomputeLoading(false)
+    }
+  }, [row, rawPayload, priorities, searchOptions])
 
   const handleRescorePillar = useCallback(
     async (pillarKey: PillarKey) => {
@@ -553,6 +590,16 @@ export default function SavedDetailPage() {
                 </span>
                 <HappinessInfo />
               </span>
+              <button
+                type="button"
+                onClick={() => handleRecomputeComposites()}
+                disabled={recomputeLoading}
+                className="hf-btn-link"
+                style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: recomputeLoading ? 0.6 : 1 }}
+                aria-label="Refresh indices"
+              >
+                {recomputeLoading ? 'Refreshing…' : 'Refresh indices'}
+              </button>
             </div>
           </div>
         </div>

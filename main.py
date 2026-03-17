@@ -171,6 +171,14 @@ class BatchLocationResult(BaseModel):
     retry_count: int = 0
 
 
+class RecomputeCompositesRequest(BaseModel):
+    """Payload for recomputing longevity_index, status_signal, happiness_index from existing pillar data."""
+    livability_pillars: Dict[str, Any]
+    location_info: Optional[Dict[str, Any]] = None
+    coordinates: Optional[Dict[str, Any]] = None
+    token_allocation: Optional[Dict[str, float]] = None
+
+
 def _get_optimal_delay(telemetry_stats: Optional[Dict] = None) -> float:
     """
     Calculate optimal delay between batch requests based on historical performance.
@@ -5458,6 +5466,98 @@ def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_c
         "degraded_warnings": sorted(degraded_warnings),
         "per_pillar_degraded": per_pillar_degraded,
     }
+
+
+@app.post("/score/recompute_composites", dependencies=[Depends(require_proxy_auth)])
+def recompute_composites(body: RecomputeCompositesRequest):
+    """
+    Recompute longevity_index, status_signal, and happiness_index from existing
+    livability_pillars (no pillar re-run). Use when formula or baselines change
+    or to refresh indices for a saved place.
+    """
+    pillars = body.livability_pillars or {}
+    location_info = body.location_info or {}
+    coordinates = body.coordinates or {}
+    state = (location_info.get("state") or "").strip() or None
+    lat = coordinates.get("lat")
+    lon = coordinates.get("lon")
+    if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+        lat, lon = float(lat), float(lon)
+    else:
+        lat, lon = None, None
+
+    out: Dict[str, Any] = {
+        "longevity_index": None,
+        "longevity_index_contributions": None,
+        "status_signal": None,
+        "status_signal_breakdown": None,
+        "happiness_index": None,
+        "happiness_index_breakdown": None,
+    }
+
+    # Longevity: from pillar scores only
+    try:
+        li, contrib = _compute_longevity_index(
+            pillars,
+            token_allocation=body.token_allocation,
+            only_pillars=None,
+        )
+        if li is not None:
+            out["longevity_index"] = round(li, 2)
+            out["longevity_index_contributions"] = contrib
+    except Exception:
+        pass
+
+    # Status Signal: needs housing, social_fabric, economic_security, amenities + tract + state
+    census_tract = None
+    if lat is not None and lon is not None:
+        try:
+            from data_sources import census_api as _ca
+            census_tract = _ca.get_census_tract(lat, lon)
+        except Exception:
+            pass
+    housing_details = pillars.get("housing_value")
+    social_fabric_details = pillars.get("social_fabric")
+    economic_security_details = pillars.get("economic_security")
+    amenities_details = pillars.get("neighborhood_amenities")
+    if housing_details and social_fabric_details and economic_security_details:
+        try:
+            result = _compute_status_signal_for_response(
+                housing_details,
+                social_fabric_details,
+                economic_security_details,
+                amenities_details or {},
+                census_tract,
+                state,
+            )
+            if result is not None:
+                score, breakdown = result
+                if score is not None:
+                    out["status_signal"] = max(0.0, min(100.0, float(score)))
+                out["status_signal_breakdown"] = breakdown
+        except Exception:
+            pass
+
+    # Happiness Index: housing, transit, economic, natural_beauty + state
+    public_transit_details = pillars.get("public_transit_access")
+    natural_beauty_details = pillars.get("natural_beauty")
+    try:
+        happiness_result = _compute_happiness_index_for_response(
+            housing_details,
+            public_transit_details,
+            economic_security_details,
+            natural_beauty_details,
+            state,
+        )
+        if happiness_result is not None:
+            hi_score, hi_breakdown = happiness_result
+            if hi_score is not None:
+                out["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
+            out["happiness_index_breakdown"] = hi_breakdown
+    except Exception:
+        pass
+
+    return out
 
 
 @app.get("/geocode", dependencies=[Depends(require_proxy_auth)])
