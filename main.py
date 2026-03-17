@@ -828,9 +828,11 @@ def _compute_status_signal_for_response(
     amenities_details: Dict[str, Any],
     census_tract: Optional[Dict[str, Any]],
     state: Optional[str],
+    city: Optional[str] = None,
 ) -> Optional[tuple]:
     """
     Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
+    When city is provided, uses CBSA baseline (e.g. nyc_metro) when the location is in a known metro cluster.
     Returns (score, breakdown) or None when score cannot be computed.
     """
     if not state and not census_tract:
@@ -843,6 +845,7 @@ def _compute_status_signal_for_response(
         business_list,
         census_tract,
         state,
+        city=city,
     )
 
 
@@ -1079,7 +1082,9 @@ def _apply_allocation_to_cached_response(
         coords = response.get("coordinates") or {}
         lat = coords.get("lat")
         lon = coords.get("lon")
-        state = (response.get("location_info") or {}).get("state")
+        loc_info = response.get("location_info") or {}
+        state = loc_info.get("state")
+        city = loc_info.get("city")
         pillars = response.get("livability_pillars") or {}
         housing_details = pillars.get("housing_value")
         social_fabric_details = pillars.get("social_fabric")
@@ -1100,6 +1105,7 @@ def _apply_allocation_to_cached_response(
                     amenities_details,
                     census_tract,
                     state,
+                    city=city,
                 )
                 if status_signal_result is not None:
                     score, breakdown = status_signal_result
@@ -2146,7 +2152,7 @@ def _compute_single_score_internal(
         }
     }
     status_signal_result = _compute_status_signal_for_response(
-        housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
+        housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
     )
     if status_signal_result is not None:
         score, breakdown = status_signal_result
@@ -3553,7 +3559,7 @@ async def _stream_score_with_progress(
             }
         }
         status_signal_result = _compute_status_signal_for_response(
-            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
+            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result
@@ -4527,7 +4533,7 @@ async def stream_score(
         }
         }
         status_signal_result = _compute_status_signal_for_response(
-            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state
+            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result

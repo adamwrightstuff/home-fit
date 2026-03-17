@@ -2,7 +2,8 @@
 Status Signal: post-pillars derived score (status + desirability).
 
 Status = wealth + education + occupation. Desirability = home cost + luxury presence.
-Uses per-division min-max baselines from data/status_signal_baselines.json.
+Uses per-division and per-CBSA min-max baselines from data/status_signal_baselines.json.
+When (city, state) matches a metro cluster (e.g. NYC), uses that CBSA key first (e.g. nyc_metro), then division, then "all".
 
 Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5%.
 Wealth gap (mean vs median) is used as a quality-control label: super_zip vs unequal vs typical.
@@ -72,6 +73,30 @@ def _normalize_min_max(value: float, min_val: float, max_val: float) -> float:
         return 50.0
     x = (value - min_val) / (max_val - min_val)
     return max(0.0, min(100.0, x * 100.0))
+
+
+def _get_cbsa_baseline_key(city: Optional[str], state: Optional[str]) -> Optional[str]:
+    """Return CBSA baseline key (e.g. nyc_metro) when (city, state) is in a known metro cluster; else None.
+    Must match the same clusters as scripts/build_status_signal_baselines_from_results.get_cbsa_key.
+    """
+    if not city or not state:
+        return None
+    key = f"{city}, {state}".strip()
+    nyc_cluster = {
+        "New York, NY", "Brooklyn, NY", "Queens, NY", "Bronx, NY", "Scarsdale, NY",
+        "The Hamptons, NY", "Greenwich, CT", "Westport, CT", "Princeton, NJ", "Ithaca, NY",
+        "New York, New York", "City of New York, New York", "Brooklyn, New York",
+        "Queens, New York", "Bronx, New York", "Scarsdale, New York", "Village of Scarsdale, New York",
+        "The Hamptons, New York", "Greenwich, Connecticut", "Westport, Connecticut",
+        "Princeton, New Jersey", "Ithaca, New York",
+    }
+    if key in nyc_cluster:
+        return "nyc_metro"
+    if key in {"Philadelphia, PA"}:
+        return "philly_metro"
+    if key in {"Washington, DC", "Bethesda, MD", "Arlington, VA", "Fairfax, VA"}:
+        return "dc_metro"
+    return None
 
 
 def _get_baseline(
@@ -300,10 +325,10 @@ def _brand_matches_for_business_list(business_list: List[Dict[str, Any]]) -> Lis
         matches = [b for b in business_list if (b.get("name") and pattern.search(b.get("name", "")))]
         if not matches:
             cat_score = 0.0
-        elif len(matches) >= 2:
-            cat_score = 1.0
         else:
-            cat_score = 0.5
+            # Universal logic: at least one matching brand in this category
+            # earns full credit for that category.
+            cat_score = 1.0
         matched_names = [b.get("name") or "(no name)" for b in matches]
         out.append({
             "category": category,
@@ -374,10 +399,13 @@ def compute_status_signal_with_breakdown(
     business_list: Optional[List[Dict[str, Any]]],
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
+    city: Optional[str] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100 and wealth_character (super_zip | unequal | typical).
     Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character.
+    When city is provided, uses CBSA baseline (e.g. nyc_metro) if the location is in a known cluster and
+    that key exists in baselines; otherwise uses Census division, then "all".
     """
     breakdown: Dict[str, Any] = {
         "wealth": None,
@@ -394,16 +422,19 @@ def compute_status_signal_with_breakdown(
     baselines = _load_baselines()
     if not baselines:
         division = "all"
+    # Prefer CBSA baseline (e.g. nyc_metro) when location is in a metro cluster and we have that baseline
+    cbsa_key = _get_cbsa_baseline_key(city, state_abbrev)
+    baseline_key = cbsa_key if (cbsa_key and baselines.get(cbsa_key)) else division
 
-    wealth = compute_wealth(housing_details, division, baselines)
+    wealth = compute_wealth(housing_details, baseline_key, baselines)
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
-    home_cost = compute_home_cost(median_home, division, baselines)
-    education = compute_education(social_fabric_details, division, baselines)
+    home_cost = compute_home_cost(median_home, baseline_key, baselines)
+    education = compute_education(social_fabric_details, baseline_key, baselines)
     occupation = compute_occupation(
-        economic_security_details, social_fabric_details, tract, division, baselines
+        economic_security_details, social_fabric_details, tract, baseline_key, baselines
     )
-    luxury = compute_brand(business_list or [], division, baselines)
+    luxury = compute_brand(business_list or [], baseline_key, baselines)
     wealth_character = _wealth_character(housing_details)
 
     breakdown["wealth"] = wealth
