@@ -863,6 +863,7 @@ def _compute_happiness_index_for_response(
     economic_security_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state: Optional[str],
+    social_fabric_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
     """
     Compute Happiness Index (0-100) and breakdown from existing pillar data.
@@ -875,6 +876,7 @@ def _compute_happiness_index_for_response(
             economic_security_details,
             natural_beauty_details,
             state,
+            social_fabric_details=social_fabric_details,
         )
     except Exception:
         return None
@@ -1130,6 +1132,7 @@ def _apply_allocation_to_cached_response(
                         economic_security_details,
                         natural_beauty_details,
                         state,
+                        social_fabric_details=pillars.get("social_fabric"),
                     )
                     if happiness_result is not None:
                         hi_score, hi_breakdown = happiness_result
@@ -2171,7 +2174,12 @@ def _compute_single_score_internal(
     public_transit_details = livability_pillars.get("public_transit_access")
     natural_beauty_details = livability_pillars.get("natural_beauty")
     happiness_result = _compute_happiness_index_for_response(
-        housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+        housing_details,
+        public_transit_details,
+        economic_security_details,
+        natural_beauty_details,
+        state,
+        social_fabric_details=livability_pillars.get("social_fabric"),
     )
     if happiness_result is not None:
         hi_score, hi_breakdown = happiness_result
@@ -3578,7 +3586,12 @@ async def _stream_score_with_progress(
         public_transit_details = livability_pillars.get("public_transit_access")
         natural_beauty_details = livability_pillars.get("natural_beauty")
         happiness_result = _compute_happiness_index_for_response(
-            housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+            housing_details,
+            public_transit_details,
+            economic_security_details,
+            natural_beauty_details,
+            state,
+            social_fabric_details=livability_pillars.get("social_fabric"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result
@@ -4552,7 +4565,12 @@ async def stream_score(
         public_transit_details = livability_pillars.get("public_transit_access")
         natural_beauty_details = livability_pillars.get("natural_beauty")
         happiness_result = _compute_happiness_index_for_response(
-            housing_details, public_transit_details, economic_security_details, natural_beauty_details, state
+            housing_details,
+            public_transit_details,
+            economic_security_details,
+            natural_beauty_details,
+            state,
+            social_fabric_details=livability_pillars.get("social_fabric"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result

@@ -16,33 +16,29 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-# Brand categories for Status Signal (discriminating taste/status brands only).
-# Whole Foods, Trader Joe's, Lululemon removed as too ubiquitous.
-# Name-only matching; luxury_gym merges Equinox/Barry's with Rumble/Natural Pilates to avoid double-counting.
+# High-barrier services for Status Signal luxury presence.
+# business_list is expected to come from OSM / POI aggregation; we use simple
+# name-based matching here as a proxy for richer tagging:
+# - Architectural firms (e.g. "Architects", "Architecture")
+# - Art galleries ("Gallery", "Galleries")
+# - Private marinas / yacht clubs ("Marina", "Yacht Club")
+# - High-end wellness studios ("Pilates", "Reformer", "Barre")
 STATUS_SIGNAL_BRAND_CONFIG = {
-    "personal_care": {
-        "weight": 0.20,
-        "brand_names": ["Aesop", "Bluemercury", "Space NK", "Le Labo", "Diptyque", "Byredo", "Frederic Malle"],
-    },
-    "luxury_gym": {
+    "architect_firms": {
         "weight": 0.30,
-        "brand_names": ["Equinox", "Barry's Bootcamp", "Barry's", "Rumble Boxing", "Rumble", "Natural Pilates"],
+        "brand_names": ["Architects", "Architecture", "Architectural"],
     },
-    "hospitality": {
-        "weight": 0.17,
-        "brand_names": ["Soho House", "Arlo Hotels", "Ace Hotel"],
+    "art_galleries": {
+        "weight": 0.30,
+        "brand_names": ["Gallery", "Galleries", "Art Gallery"],
     },
-    "coffee": {
-        "weight": 0.13,
-        "brand_names": ["Blue Bottle", "Intelligentsia", "Stumptown", "Verve"],
+    "private_marinas": {
+        "weight": 0.20,
+        "brand_names": ["Marina", "Yacht Club", "YachtClub"],
     },
-    "grocery": {
-        "weight": 0.11,
-        "brand_names": ["Erewhon", "Bristol Farms", "The Fresh Market", "Wegmans", "Citarella"],
-    },
-    "retail": {
-        "weight": 0.09,
-        "brand_names": ["Reformation", "Aritzia", "Theory", "Faherty"],
+    "high_end_wellness": {
+        "weight": 0.20,
+        "brand_names": ["Pilates", "Reformer", "Barre"],
     },
 }
 
@@ -191,7 +187,7 @@ def compute_education(
     keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
-    """Education Density: 50% grad_pct + 30% bach_pct + 20% self_employed_pct (all normalized). Uses 0-100 scale."""
+    """Education Density: 65% grad_pct + 15% bach_pct + 20% self_employed_pct (all normalized). Uses 0-100 scale."""
     edu = social_fabric_details.get("education_attainment") or {}
     grad_pct = edu.get("grad_pct")
     bach_pct = edu.get("bachelor_pct")
@@ -218,7 +214,7 @@ def compute_education(
     n_se = 50.0
     if self_employed_pct is not None and min_se is not None and max_se is not None:
         n_se = _normalize_min_max(float(self_employed_pct), min_se, max_se)
-    return 0.5 * n_grad + 0.3 * n_bach + 0.2 * n_se
+    return 0.65 * n_grad + 0.15 * n_bach + 0.20 * n_se
 
 
 def _fetch_white_collar_pct_tract(tract: Dict[str, Any]) -> Optional[float]:

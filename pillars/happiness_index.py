@@ -3,12 +3,11 @@ Happiness Index: 0–100 composite from existing pillar data (not a pillar).
 
 Components (all 0–100, renormalized when missing):
 - C (Commute): existing commute score from public_transit (shorter = better).
-- H (Housing): 2 × local_affordability from housing_value (price-to-income).
-- U (Unemployment): absolute band 100 − 10×(rate − 2) (rate in %), inverted.
-- E (Equality): peer-normalized wealth gap (mean vs median) from status_signal baselines; higher gap = lower E.
+- S (Social Fabric): Social Fabric pillar score (rootedness, civic spaces, long-term neighbors).
+- H (Home Space-to-Price): Home Price to Space pillar score (enough space without crushing debt).
 - G (Green): full Natural Beauty pillar score (canopy, parks, water, scenery).
 
-Weights: C 0.25, H 0.25, U 0.20, E 0.15, G 0.15.
+Base weights: C 0.35, S 0.30, H 0.20, G 0.15 (renormalized over available components).
 """
 
 from __future__ import annotations
@@ -17,11 +16,10 @@ import json
 import os
 from typing import Any, Dict, Optional, Tuple
 
-# Weights (must sum to 1.0)
-W_COMMUTE = 0.25
-W_HOUSING = 0.25
-W_UNEMPLOYMENT = 0.20
-W_EQUALITY = 0.15
+# Weights (must sum to 1.0 before renormalization over available components)
+W_COMMUTE = 0.35
+W_SOCIAL = 0.30
+W_HOME = 0.20
 W_GREEN = 0.15
 
 _BASELINES_CACHE: Optional[Dict[str, Any]] = None
@@ -76,61 +74,25 @@ def _component_commute(public_transit_details: Optional[Dict[str, Any]]) -> Opti
     if isinstance(commute_from_details, (int, float)):
         return max(0.0, min(100.0, float(commute_from_details)))
     return None
-
-
-def _component_housing(housing_details: Optional[Dict[str, Any]]) -> Optional[float]:
-    """H: 0–100 = 2 × local_affordability (0–50)."""
-    if not housing_details:
+ 
+def _component_social(social_fabric_details: Optional[Dict[str, Any]]) -> Optional[float]:
+    """S: 0–100 = Social Fabric pillar score (neighbors, civic spaces, rootedness)."""
+    if not social_fabric_details:
         return None
-    breakdown = housing_details.get("breakdown") or {}
-    aff = breakdown.get("local_affordability")
-    if isinstance(aff, (int, float)):
-        return max(0.0, min(100.0, 2.0 * float(aff)))
+    score = social_fabric_details.get("score")
+    if isinstance(score, (int, float)):
+        return max(0.0, min(100.0, float(score)))
     return None
 
 
-def _component_unemployment(
-    economic_security_details: Optional[Dict[str, Any]],
-) -> Optional[float]:
-    """U: 0–100 from absolute unemployment band (inverted: lower unemp = higher U). Formula: 100 − 10×(rate − 2), clamped."""
-    if not economic_security_details:
-        return None
-    summary = economic_security_details.get("summary") or {}
-    rate = summary.get("unemployment_rate_pct")
-    if not isinstance(rate, (int, float)):
-        return None
-    r = float(rate)
-    if r <= 2.0:
-        return 100.0
-    if r >= 12.0:
-        return 0.0
-    return max(0.0, min(100.0, 100.0 - 10.0 * (r - 2.0)))
-
-
-def _component_equality(
-    housing_details: Optional[Dict[str, Any]],
-    division: str,
-) -> Optional[float]:
-    """E: 0–100 from peer-normalized wealth gap (higher gap = lower E)."""
+def _component_home_space(housing_details: Optional[Dict[str, Any]]) -> Optional[float]:
+    """H: 0–100 = Home Price-to-Space pillar score (more space and quality for your money)."""
     if not housing_details:
         return None
-    summary = housing_details.get("summary") or housing_details
-    mean_income = summary.get("mean_household_income")
-    median_income = summary.get("median_household_income")
-    if median_income is None or not isinstance(median_income, (int, float)) or median_income <= 0:
-        return None
-    if mean_income is None or not isinstance(mean_income, (int, float)):
-        mean_income = median_income
-    gap = (float(mean_income) - float(median_income)) / float(median_income)
-
-    baselines = _load_status_signal_baselines()
-    min_gap, max_gap = _get_wealth_gap_baseline(baselines, division)
-    if min_gap is not None and max_gap is not None:
-        # Peer-normalized: higher gap → lower score
-        n = _normalize_min_max(gap, min_gap, max_gap)
-        return max(0.0, min(100.0, 100.0 - n))
-    # Fallback: absolute band so high-cost metros don't all hit 0
-    return max(0.0, min(100.0, 100.0 - 100.0 * gap))
+    score = housing_details.get("score")
+    if isinstance(score, (int, float)):
+        return max(0.0, min(100.0, float(score)))
+    return None
 
 
 def _component_green(natural_beauty_details: Optional[Dict[str, Any]]) -> Optional[float]:
@@ -149,11 +111,12 @@ def compute_happiness_index_with_breakdown(
     economic_security_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
+    social_fabric_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Compute Happiness Index (0–100) and component breakdown.
 
-    Returns (score, breakdown) with breakdown keys: commute, housing, unemployment, equality, green,
+    Returns (score, breakdown) with breakdown keys: commute, social, home_space, green,
     and component_weights used (after renormalization for missing components).
     """
     from data_sources.us_census_divisions import get_division
@@ -161,23 +124,21 @@ def compute_happiness_index_with_breakdown(
 
     breakdown: Dict[str, Any] = {
         "commute": None,
-        "housing": None,
-        "unemployment": None,
-        "equality": None,
+        "social": None,
+        "home_space": None,
         "green": None,
         "component_weights": {},
     }
 
+    # Components
     C = _component_commute(public_transit_details)
-    H = _component_housing(housing_details)
-    U = _component_unemployment(economic_security_details)
-    E = _component_equality(housing_details, division)
+    S = _component_social(social_fabric_details)
+    H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
 
     breakdown["commute"] = round(C, 1) if C is not None else None
-    breakdown["housing"] = round(H, 1) if H is not None else None
-    breakdown["unemployment"] = round(U, 1) if U is not None else None
-    breakdown["equality"] = round(E, 1) if E is not None else None
+    breakdown["social"] = round(S, 1) if S is not None else None
+    breakdown["home_space"] = round(H, 1) if H is not None else None
     breakdown["green"] = round(G, 1) if G is not None else None
 
     weights = []
@@ -185,15 +146,12 @@ def compute_happiness_index_with_breakdown(
     if C is not None:
         weights.append(W_COMMUTE)
         components.append((C, "commute"))
+    if S is not None:
+        weights.append(W_SOCIAL)
+        components.append((S, "social"))
     if H is not None:
-        weights.append(W_HOUSING)
-        components.append((H, "housing"))
-    if U is not None:
-        weights.append(W_UNEMPLOYMENT)
-        components.append((U, "unemployment"))
-    if E is not None:
-        weights.append(W_EQUALITY)
-        components.append((E, "equality"))
+        weights.append(W_HOME)
+        components.append((H, "home_space"))
     if G is not None:
         weights.append(W_GREEN)
         components.append((G, "green"))
@@ -214,6 +172,7 @@ def compute_happiness_index(
     economic_security_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
+    social_fabric_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """Convenience: return only the score."""
     result, _ = compute_happiness_index_with_breakdown(
@@ -222,5 +181,6 @@ def compute_happiness_index(
         economic_security_details,
         natural_beauty_details,
         state_abbrev,
+        social_fabric_details=social_fabric_details,
     )
     return result
