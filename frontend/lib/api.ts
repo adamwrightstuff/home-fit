@@ -297,9 +297,14 @@ export interface GetScoreWithProgressOptions {
  * Job-based scoring with progress. Creates a job then polls until done.
  * Avoids Vercel 60s limit; each request is short. onProgress(partial) is called on each poll when partial is present.
  */
+export type ScoreProgressMeta = {
+  /** Backend-computed longevity while job pillars complete (matches token weights). */
+  partialLongevityIndex?: number;
+};
+
 export async function getScoreWithProgress(
   params: ScoreRequestParams,
-  onProgress: (partial: PartialPillars) => void,
+  onProgress: (partial: PartialPillars, meta?: ScoreProgressMeta) => void,
   options?: GetScoreWithProgressOptions
 ): Promise<ScoreResponse> {
   const getCancelled = options?.getCancelled ?? (() => false);
@@ -412,8 +417,14 @@ export async function getScoreWithProgress(
       throw new Error(detail + ' Try again in a moment.');
     }
 
-    if (pollPayload?.partial && typeof pollPayload.partial === 'object') {
-      onProgress(pollPayload.partial as PartialPillars);
+    const partialRaw = pollPayload?.partial;
+    const pli = pollPayload?.partial_longevity_index;
+    const meta: ScoreProgressMeta | undefined =
+      typeof pli === 'number' && Number.isFinite(pli) ? { partialLongevityIndex: pli } : undefined;
+    if (partialRaw && typeof partialRaw === 'object') {
+      onProgress(partialRaw as PartialPillars, meta);
+    } else if (meta) {
+      onProgress({}, meta);
     }
 
     // Proxy returns 200 with body = result only (no wrapper); backend returns { status, result }

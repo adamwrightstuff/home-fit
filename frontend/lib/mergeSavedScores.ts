@@ -112,10 +112,15 @@ export function mergeSavedScorePayload(
   if (Object.keys(scores).length === 0) {
     const total = typeof incomingPayload.total_score === 'number' ? incomingPayload.total_score : 0
     const merged: Record<string, unknown> = { ...incomingPayload, livability_pillars: mergedPillars, total_score: total }
-    const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
-    const longevity_index = computeLongevityIndex(longevityScores)
-    if (longevity_index != null) merged.longevity_index = longevity_index
-    else if (existingPayload && typeof existingPayload.longevity_index === 'number') merged.longevity_index = existingPayload.longevity_index
+    if (typeof (incomingPayload as { longevity_index?: number }).longevity_index === 'number') {
+      merged.longevity_index = (incomingPayload as { longevity_index: number }).longevity_index
+    } else {
+      const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
+      const longevity_index = computeLongevityIndex(longevityScores)
+      if (longevity_index != null) merged.longevity_index = longevity_index
+      else if (existingPayload && typeof existingPayload.longevity_index === 'number')
+        merged.longevity_index = existingPayload.longevity_index
+    }
     if (typeof (incomingPayload as { happiness_index?: number }).happiness_index === 'number') merged.happiness_index = (incomingPayload as { happiness_index: number }).happiness_index
     else if (existingPayload && typeof (existingPayload as { happiness_index?: number }).happiness_index === 'number') merged.happiness_index = (existingPayload as { happiness_index: number }).happiness_index
     return { mergedPayload: merged, total_score: total }
@@ -144,12 +149,16 @@ export function mergeSavedScorePayload(
     livability_pillars: mergedPillars,
     total_score,
   }
-  const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
-  const longevity_index = computeLongevityIndex(longevityScores)
-  if (longevity_index != null) {
-    mergedPayload.longevity_index = longevity_index
-  } else if (existingPayload && typeof existingPayload.longevity_index === 'number') {
-    mergedPayload.longevity_index = existingPayload.longevity_index
+  if (typeof (incomingPayload as { longevity_index?: number }).longevity_index === 'number') {
+    mergedPayload.longevity_index = (incomingPayload as { longevity_index: number }).longevity_index
+  } else {
+    const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
+    const longevity_index = computeLongevityIndex(longevityScores)
+    if (longevity_index != null) {
+      mergedPayload.longevity_index = longevity_index
+    } else if (existingPayload && typeof existingPayload.longevity_index === 'number') {
+      mergedPayload.longevity_index = existingPayload.longevity_index
+    }
   }
   if (typeof (incomingPayload as { happiness_index?: number }).happiness_index === 'number') {
     mergedPayload.happiness_index = (incomingPayload as { happiness_index: number }).happiness_index

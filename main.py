@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import time
 import json
-from typing import Optional, Dict, Tuple, Any, List, Callable
+from typing import Optional, Dict, Tuple, Any, List, Callable, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 import os
 import asyncio
@@ -48,6 +48,12 @@ from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from pillars.happiness_index import compute_happiness_index_with_breakdown
+from pillars.composite_indices import (
+    compute_longevity_index,
+    attach_indices_version,
+    backfill_status_happiness_if_missing,
+    recompute_composites_from_payload,
+)
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 
@@ -685,22 +691,90 @@ def _apply_schools_disabled_weight_override(
     return out
 
 
-# Longevity Index: fixed weighted score over 6 pillars (separate from user-priority total_score).
-# Rationale (Blue Zone–inspired):
-# - Social Fabric (strongest predictor)
-# - Daily Amenities / walkable life
-# - Natural movement via Active Outdoors
-# - Restorative Natural Beauty
-# - Climate Risk
-# - Schools / Quality Education (purpose, cognitive engagement).
-LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
-    "social_fabric": 40.0,
-    "neighborhood_amenities": 25.0,
-    "active_outdoors": 15.0,
-    "natural_beauty": 10.0,
-    "climate_risk": 8.0,
-    "quality_education": 2.0,
-}
+def _derive_token_allocation_for_scoring(
+    priorities_dict: Optional[Dict[str, str]],
+    tokens: Optional[str],
+    only_pillars: Optional[Set[str]],
+    use_school_scoring: bool,
+) -> Tuple[Dict[str, float], str, Optional[Dict[str, str]]]:
+    """
+    Token weights for HomeFit total score and longevity eligibility.
+    Must run before pillar execution when partial job longevity is computed per pillar.
+    """
+    if priorities_dict:
+        token_allocation = parse_priority_allocation(priorities_dict)
+        allocation_type = "priority_based"
+        priority_levels: Dict[str, str] = {}
+        primary_pillars = [
+            "active_outdoors",
+            "built_beauty",
+            "natural_beauty",
+            "neighborhood_amenities",
+            "air_travel_access",
+            "public_transit_access",
+            "healthcare_access",
+            "economic_security",
+            "quality_education",
+            "housing_value",
+            "climate_risk",
+            "social_fabric",
+        ]
+        for pillar in primary_pillars:
+            original_priority = priorities_dict.get(pillar, "none")
+            if original_priority:
+                priority_str = original_priority.strip().lower()
+                if priority_str == "none":
+                    priority_levels[pillar] = "None"
+                elif priority_str == "low":
+                    priority_levels[pillar] = "Low"
+                elif priority_str == "medium":
+                    priority_levels[pillar] = "Medium"
+                elif priority_str == "high":
+                    priority_levels[pillar] = "High"
+                else:
+                    priority_levels[pillar] = "None"
+            else:
+                priority_levels[pillar] = "None"
+    else:
+        token_allocation = parse_token_allocation(tokens)
+        allocation_type = "token_based" if tokens else "default_equal"
+        priority_levels = None
+
+    if only_pillars:
+        for pillar_name in list(token_allocation.keys()):
+            if pillar_name not in only_pillars:
+                token_allocation[pillar_name] = 0.0
+        remaining = sum(token_allocation.values())
+        if remaining > 0:
+            scale = 100.0 / remaining
+            token_allocation = {k: v * scale for k, v in token_allocation.items()}
+            rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
+            total_rounded = sum(rounded.values())
+            remainder = 100 - total_rounded
+            if remainder > 0:
+                fractional_parts = [
+                    (pillar, tokens - int(tokens))
+                    for pillar, tokens in token_allocation.items()
+                    if tokens > 0
+                ]
+                if fractional_parts:
+                    fractional_parts.sort(key=lambda x: x[1], reverse=True)
+                    for i in range(remainder):
+                        pillar = fractional_parts[i][0]
+                        rounded[pillar] = rounded.get(pillar, 0) + 1
+            token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
+        else:
+            equal = 100.0 / len(only_pillars)
+            token_allocation = {
+                pillar_name: equal if pillar_name in only_pillars else 0.0
+                for pillar_name in token_allocation.keys()
+            }
+
+    token_allocation = _apply_schools_disabled_weight_override(
+        token_allocation,
+        use_school_scoring=use_school_scoring,
+    )
+    return token_allocation, allocation_type, priority_levels
 
 
 def _apply_pillar_failure_overrides(
@@ -749,66 +823,6 @@ def _set_pillar_status(
             entry["status"] = "success"
             dq.setdefault("quality_tier", "fair")
         entry["data_quality"] = dq
-
-
-def _compute_longevity_index(
-    livability_pillars: Dict[str, Any],
-    token_allocation: Optional[Dict[str, float]] = None,
-    only_pillars: Optional[set[str]] = None,
-) -> Tuple[float, Dict[str, float]]:
-    """
-    Compute Longevity Index (0-100) from livability_pillars using LONGEVITY_INDEX_WEIGHTS.
-
-    When token_allocation is provided, only pillars that have a score and are selected
-    (non-zero weight) are used; fixed longevity weights are renormalized over that subset
-    so the index stays 0-100 without requiring all 6 pillars. Same logic as total score.
-    When only_pillars is set (partial request), a longevity pillar is also eligible if it
-    was requested (in only_pillars), so the index reflects run longevity pillars instead of 0.
-    When token_allocation is None, all 6 longevity pillars are used (missing = 0).
-
-    Fallback: if no pillar is "eligible" (weight/requested) but livability_pillars contains
-    at least one longevity pillar with a numeric score, compute the index over those pillars
-    so we never show 0 when we have data (e.g. partial cache or eligibility edge case).
-    """
-    contributions: Dict[str, float] = {}
-    if token_allocation is not None:
-        # Eligible = longevity pillars that have a score AND (user selected them with weight > 0
-        # OR this was a partial request and we ran this pillar)
-        def _has_score(p: str) -> bool:
-            raw = (livability_pillars.get(p) or {}).get("score")
-            return raw is not None and isinstance(raw, (int, float))
-
-        def _eligible(p: str) -> bool:
-            has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0)
-            was_requested = only_pillars is not None and p in only_pillars
-            return _has_score(p) and (has_weight or was_requested)
-
-        eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _eligible(p)]
-        if not eligible:
-            # Fallback: use any longevity pillar that has a score so we don't show 0 when we have data
-            eligible = [p for p in LONGEVITY_INDEX_WEIGHTS if _has_score(p)]
-        if not eligible:
-            return 0.0, contributions
-        total_weight = sum(LONGEVITY_INDEX_WEIGHTS[p] for p in eligible)
-        if total_weight <= 0:
-            return 0.0, contributions
-        total = 0.0
-        for p in eligible:
-            score = float((livability_pillars.get(p) or {}).get("score", 0.0) or 0.0)
-            weight_pct = LONGEVITY_INDEX_WEIGHTS[p] / total_weight
-            contrib = score * weight_pct
-            contributions[p] = round(contrib, 2)
-            total += contrib
-        return round(total, 2), contributions
-
-    # Legacy: all 6 pillars, missing = 0
-    total = 0.0
-    for pillar, weight in LONGEVITY_INDEX_WEIGHTS.items():
-        score = float((livability_pillars.get(pillar) or {}).get("score", 0.0) or 0.0)
-        contrib = score * weight / 100.0
-        contributions[pillar] = round(contrib, 2)
-        total += contrib
-    return round(total, 2), contributions
 
 
 def _inject_white_collar_into_economic_security(
@@ -1088,67 +1102,13 @@ def _apply_allocation_to_cached_response(
 
     _set_pillar_status(livability_pillars, {})  # Ensure status/quality_tier on cached pillars
     response["total_score"] = round(total_score, 2)
-    longevity_index, longevity_contributions = _compute_longevity_index(
+    longevity_index, longevity_contributions = compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
     )
     response["longevity_index"] = longevity_index
     response["longevity_index_contributions"] = longevity_contributions
-
-    # Compute Status Signal on cache hit when missing (so cached places still show it)
-    if response.get("status_signal") is None:
-        coords = response.get("coordinates") or {}
-        lat = coords.get("lat")
-        lon = coords.get("lon")
-        loc_info = response.get("location_info") or {}
-        state = loc_info.get("state")
-        city = loc_info.get("city")
-        pillars = response.get("livability_pillars") or {}
-        housing_details = pillars.get("housing_value")
-        social_fabric_details = pillars.get("social_fabric")
-        economic_security_details = pillars.get("economic_security")
-        amenities_details = pillars.get("neighborhood_amenities")
-        if (
-            lat is not None and lon is not None
-            and housing_details and social_fabric_details
-            and economic_security_details and amenities_details
-        ):
-            try:
-                from data_sources import census_api as _ca
-                census_tract = _ca.get_census_tract(lat, lon)
-                status_signal_result = _compute_status_signal_for_response(
-                    housing_details,
-                    social_fabric_details,
-                    economic_security_details,
-                    amenities_details,
-                    census_tract,
-                    state,
-                    city=city,
-                    coordinates=coords,
-                )
-                if status_signal_result is not None:
-                    score, breakdown = status_signal_result
-                    if score is not None:
-                        response["status_signal"] = max(0.0, min(100.0, float(score)))
-                    response["status_signal_breakdown"] = breakdown
-                # Happiness Index (composite from existing pillar data)
-                if response.get("happiness_index") is None:
-                    public_transit_details = pillars.get("public_transit_access")
-                    natural_beauty_details = pillars.get("natural_beauty")
-                    happiness_result = _compute_happiness_index_for_response(
-                        housing_details,
-                        public_transit_details,
-                        economic_security_details,
-                        natural_beauty_details,
-                        state,
-                        social_fabric_details=pillars.get("social_fabric"),
-                    )
-                    if happiness_result is not None:
-                        hi_score, hi_breakdown = happiness_result
-                        if hi_score is not None:
-                            response["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
-                        response["happiness_index_breakdown"] = hi_breakdown
-            except Exception:
-                pass
+    backfill_status_happiness_if_missing(response)
+    attach_indices_version(response)
 
     if isinstance(response.get("metadata"), dict):
         response["metadata"]["cache_hit"] = True
@@ -1168,6 +1128,7 @@ def _compute_single_score_internal(
     request: Optional[Request] = None,
     premium_code: Optional[str] = None,
     on_pillar_complete: Optional[Callable[[str, float], None]] = None,
+    on_partial_longevity: Optional[Callable[[float], None]] = None,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
     built_character_preference: Optional[str] = None,
@@ -1637,6 +1598,29 @@ def _compute_single_score_internal(
             })
         )
 
+    token_allocation, allocation_type, priority_levels = _derive_token_allocation_for_scoring(
+        priorities_dict, tokens, only_pillars, use_school_scoring
+    )
+
+    _partial_scores_for_longevity: Dict[str, float] = {}
+
+    def _pillar_done_notify(pname: str, sc: float) -> None:
+        _partial_scores_for_longevity[pname] = sc
+        if on_partial_longevity:
+            try:
+                mini_lp = {k: {"score": v} for k, v in _partial_scores_for_longevity.items()}
+                li, _ = compute_longevity_index(
+                    mini_lp, token_allocation=token_allocation, only_pillars=only_pillars
+                )
+                on_partial_longevity(float(li))
+            except Exception as e:
+                logger.debug(f"on_partial_longevity skipped: {e}")
+        if on_pillar_complete:
+            try:
+                on_pillar_complete(pname, sc)
+            except Exception as e:
+                logger.warning(f"on_pillar_complete callback failed: {e}")
+
     # Execute pillars (parallel or sequential; sequential reduces API burst / rate-limit risk)
     pillar_results = {}
     exceptions = {}
@@ -1648,11 +1632,7 @@ def _compute_single_score_internal(
             if HOMEFIT_PILLARS_BUDGET_SECONDS and time.time() >= pillars_deadline:
                 exceptions[name] = RuntimeError("Pillar time budget exceeded")
                 pillar_results[name] = None
-                if on_pillar_complete:
-                    try:
-                        on_pillar_complete(name, 0.0)
-                    except Exception as e:
-                        logger.warning(f"on_pillar_complete callback failed: {e}")
+                _pillar_done_notify(name, 0.0)
                 continue
             name, result, error = _execute_pillar(name, func, **kwargs)
             if error:
@@ -1669,11 +1649,7 @@ def _compute_single_score_internal(
                     _score = float(result[0] if result[0] is not None else 0.0)
                 else:
                     _score = 0.0
-            if on_pillar_complete:
-                try:
-                    on_pillar_complete(name, _score)
-                except Exception as e:
-                    logger.warning(f"on_pillar_complete callback failed: {e}")
+            _pillar_done_notify(name, _score)
     else:
         with ThreadPoolExecutor(max_workers=8) as executor:
             future_to_pillar = {
@@ -1700,11 +1676,7 @@ def _compute_single_score_internal(
                             _score = float(result[0] if result[0] is not None else 0.0)
                         else:
                             _score = 0.0
-                    if on_pillar_complete:
-                        try:
-                            on_pillar_complete(pillar_name, _score)
-                        except Exception as e:
-                            logger.warning(f"on_pillar_complete callback failed: {e}")
+                    _pillar_done_notify(pillar_name, _score)
             except FuturesTimeoutError:
                 # Mark unfinished pillars as timed out (graceful degradation).
                 pass
@@ -1718,11 +1690,7 @@ def _compute_single_score_internal(
                         pass
                     exceptions[pillar_name] = RuntimeError("Pillar time budget exceeded")
                     pillar_results[pillar_name] = None
-                    if on_pillar_complete:
-                        try:
-                            on_pillar_complete(pillar_name, 0.0)
-                        except Exception as e:
-                            logger.warning(f"on_pillar_complete callback failed: {e}")
+                    _pillar_done_notify(pillar_name, 0.0)
 
     _log_place_timing("pillars_sequential" if PILLARS_SEQUENTIAL else "pillars_parallel", t_pillars)
     # Handle school scoring separately
@@ -1876,78 +1844,6 @@ def _compute_single_score_internal(
         logger.warning(f"{len(exceptions)} pillar(s) failed:")
         for pillar_name, error in exceptions.items():
             logger.warning(f"  - {pillar_name}: {error}")
-
-    # Calculate weighted total using token allocation
-    if priorities_dict:
-        token_allocation = parse_priority_allocation(priorities_dict)
-        allocation_type = "priority_based"
-        # Store original priority levels for response (normalize to proper case: None/Low/Medium/High)
-        priority_levels = {}
-        primary_pillars = [
-            "active_outdoors",
-            "built_beauty",
-            "natural_beauty",
-            "neighborhood_amenities",
-            "air_travel_access",
-            "public_transit_access",
-            "healthcare_access",
-            "economic_security",
-            "quality_education",
-            "housing_value",
-            "climate_risk",
-            "social_fabric",
-        ]
-        for pillar in primary_pillars:
-            original_priority = priorities_dict.get(pillar, "none")
-            if original_priority:
-                priority_str = original_priority.strip().lower()
-                # Normalize to proper case
-                if priority_str == "none":
-                    priority_levels[pillar] = "None"
-                elif priority_str == "low":
-                    priority_levels[pillar] = "Low"
-                elif priority_str == "medium":
-                    priority_levels[pillar] = "Medium"
-                elif priority_str == "high":
-                    priority_levels[pillar] = "High"
-                else:
-                    priority_levels[pillar] = "None"  # Default for invalid values
-            else:
-                priority_levels[pillar] = "None"
-    else:
-        token_allocation = parse_token_allocation(tokens)
-        allocation_type = "token_based" if tokens else "default_equal"
-        priority_levels = None  # No priority levels when using tokens
-    
-    if only_pillars:
-        for pillar_name in list(token_allocation.keys()):
-            if pillar_name not in only_pillars:
-                token_allocation[pillar_name] = 0.0
-        remaining = sum(token_allocation.values())
-        if remaining > 0:
-            scale = 100.0 / remaining
-            token_allocation = {k: v * scale for k, v in token_allocation.items()}
-            rounded = {pillar: int(tokens) for pillar, tokens in token_allocation.items()}
-            total_rounded = sum(rounded.values())
-            remainder = 100 - total_rounded
-            if remainder > 0:
-                fractional_parts = [(pillar, tokens - int(tokens)) for pillar, tokens in token_allocation.items() if tokens > 0]
-                if fractional_parts:
-                    fractional_parts.sort(key=lambda x: x[1], reverse=True)
-                    for i in range(remainder):
-                        pillar = fractional_parts[i][0]
-                        rounded[pillar] = rounded.get(pillar, 0) + 1
-            token_allocation = {pillar: float(rounded.get(pillar, 0)) for pillar in token_allocation.keys()}
-        else:
-            equal = 100.0 / len(only_pillars)
-            token_allocation = {pillar_name: equal if pillar_name in only_pillars else 0.0 
-                             for pillar_name in token_allocation.keys()}
-
-    # If schools are disabled for this request, force 0% Schools weight.
-    token_allocation = _apply_schools_disabled_weight_override(
-        token_allocation,
-        use_school_scoring=use_school_scoring,
-    )
 
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100)
@@ -2143,7 +2039,7 @@ def _compute_single_score_internal(
     _set_pillar_status(livability_pillars, exceptions)
 
     # Build response
-    longevity_index, longevity_contributions = _compute_longevity_index(
+    longevity_index, longevity_contributions = compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
     )
     location_info = {"city": city, "state": state, "zip": zip_code}
@@ -2253,6 +2149,7 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.debug(f"Location cache write skipped/failed: {e}")
 
+    attach_indices_version(response)
     return response
 
 
@@ -2597,6 +2494,21 @@ def create_score_job(
         _SCORE_JOBS[job_id] = job
     _score_job_sync_to_redis(job_id, job)
 
+    def _sync_job_snap() -> None:
+        try:
+            with _SCORE_JOBS_LOCK:
+                if job_id in _SCORE_JOBS:
+                    _score_job_sync_to_redis(job_id, dict(_SCORE_JOBS[job_id]))
+        except Exception:
+            pass
+
+    def _on_partial_longevity(li: float) -> None:
+        with _SCORE_JOBS_LOCK:
+            if job_id in _SCORE_JOBS:
+                _SCORE_JOBS[job_id]["partial_longevity_index"] = round(li, 2)
+                _SCORE_JOBS[job_id]["updated_at"] = time.time()
+        _sync_job_snap()
+
     def _on_pillar_complete(pillar_name: str, score: float) -> None:
         with _SCORE_JOBS_LOCK:
             if job_id in _SCORE_JOBS:
@@ -2605,6 +2517,7 @@ def create_score_job(
                     job["partial"] = {}
                 job["partial"][pillar_name] = {"score": round(score, 2)}
                 job["updated_at"] = time.time()
+        _sync_job_snap()
 
     def _run_job():
         snap = None
@@ -2627,6 +2540,7 @@ def create_score_job(
                 request=None,
                 premium_code=premium_code,
                 on_pillar_complete=_on_pillar_complete,
+                on_partial_longevity=_on_partial_longevity,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 built_character_preference=built_character_preference,
@@ -2683,6 +2597,9 @@ def get_score_job(job_id: str):
     partial = job.get("partial")
     if partial:
         response["partial"] = partial
+    pli = job.get("partial_longevity_index")
+    if pli is not None:
+        response["partial_longevity_index"] = pli
     return response
 
 
@@ -3565,7 +3482,7 @@ async def _stream_score_with_progress(
         _set_pillar_status(livability_pillars, exceptions)
 
         # Build final response
-        longevity_index, longevity_contributions = _compute_longevity_index(
+        longevity_index, longevity_contributions = compute_longevity_index(
             livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
         )
         location_info = {"city": city, "state": state, "zip": zip_code}
@@ -3674,7 +3591,8 @@ async def _stream_score_with_progress(
                 _cache_ttl[cache_key] = time.time()
             except Exception as e:
                 logger.warning(f"Stream request cache write failed: {e}")
-        
+
+        attach_indices_version(final_response)
         yield f"event: done\n"
         _log_place_timing("total", t0_stream)
         yield f"data: {json.dumps({'status': 'done', 'response': final_response})}\n\n"
@@ -4527,7 +4445,7 @@ async def stream_score(
         _set_pillar_status(livability_pillars, exceptions)
 
         # Build response with enhanced metadata
-        longevity_index, longevity_contributions = _compute_longevity_index(
+        longevity_index, longevity_contributions = compute_longevity_index(
             livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
         )
         location_info = {"city": city, "state": state, "zip": zip_code}
@@ -5522,92 +5440,7 @@ def recompute_composites(body: RecomputeCompositesRequest):
     livability_pillars (no pillar re-run). Use when formula or baselines change
     or to refresh indices for a saved place.
     """
-    pillars = body.livability_pillars or {}
-    location_info = body.location_info or {}
-    coordinates = body.coordinates or {}
-    state = (location_info.get("state") or "").strip() or None
-    lat = coordinates.get("lat")
-    lon = coordinates.get("lon")
-    if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
-        lat, lon = float(lat), float(lon)
-    else:
-        lat, lon = None, None
-
-    out: Dict[str, Any] = {
-        "longevity_index": None,
-        "longevity_index_contributions": None,
-        "status_signal": None,
-        "status_signal_breakdown": None,
-        "happiness_index": None,
-        "happiness_index_breakdown": None,
-    }
-
-    # Longevity: from pillar scores only
-    try:
-        li, contrib = _compute_longevity_index(
-            pillars,
-            token_allocation=body.token_allocation,
-            only_pillars=None,
-        )
-        if li is not None:
-            out["longevity_index"] = round(li, 2)
-            out["longevity_index_contributions"] = contrib
-    except Exception:
-        pass
-
-    # Status Signal: needs housing, social_fabric, economic_security, amenities + tract + state
-    census_tract = None
-    if lat is not None and lon is not None:
-        try:
-            from data_sources import census_api as _ca
-            census_tract = _ca.get_census_tract(lat, lon)
-        except Exception:
-            pass
-    housing_details = pillars.get("housing_value")
-    social_fabric_details = pillars.get("social_fabric")
-    economic_security_details = pillars.get("economic_security")
-    amenities_details = pillars.get("neighborhood_amenities")
-    if housing_details and social_fabric_details and economic_security_details:
-        try:
-            _city_rc = (location_info.get("city") or "").strip() or None
-            result = _compute_status_signal_for_response(
-                housing_details,
-                social_fabric_details,
-                economic_security_details,
-                amenities_details or {},
-                census_tract,
-                state,
-                city=_city_rc,
-                coordinates=coordinates if lat is not None and lon is not None else None,
-            )
-            if result is not None:
-                score, breakdown = result
-                if score is not None:
-                    out["status_signal"] = max(0.0, min(100.0, float(score)))
-                out["status_signal_breakdown"] = breakdown
-        except Exception:
-            pass
-
-    # Happiness Index: housing, transit, economic, natural_beauty + state
-    public_transit_details = pillars.get("public_transit_access")
-    natural_beauty_details = pillars.get("natural_beauty")
-    try:
-        happiness_result = _compute_happiness_index_for_response(
-            housing_details,
-            public_transit_details,
-            economic_security_details,
-            natural_beauty_details,
-            state,
-        )
-        if happiness_result is not None:
-            hi_score, hi_breakdown = happiness_result
-            if hi_score is not None:
-                out["happiness_index"] = max(0.0, min(100.0, float(hi_score)))
-            out["happiness_index_breakdown"] = hi_breakdown
-    except Exception:
-        pass
-
-    return out
+    return recompute_composites_from_payload(body.dict())
 
 
 @app.get("/geocode", dependencies=[Depends(require_proxy_auth)])

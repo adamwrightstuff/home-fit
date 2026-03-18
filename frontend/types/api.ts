@@ -182,4 +182,6 @@ export interface RecomputeResponse {
   status_signal_breakdown: Record<string, unknown> | null;
   happiness_index: number | null;
   happiness_index_breakdown: Record<string, unknown> | null;
+  /** Backend composite index spec versions (longevity / status_signal / happiness). */
+  indices_version?: Record<string, string>;
 }

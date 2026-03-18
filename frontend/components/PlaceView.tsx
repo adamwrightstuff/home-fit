@@ -140,7 +140,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [placeSummary, setPlaceSummary] = useState<string | null>(() => initialPayload?.place_summary ?? null)
   /** Backend longevity index when set (from initial payload, full run, or recompute); else we use client-computed. */
   const [longevityIndexState, setLongevityIndexState] = useState<number | null>(() => initialPayload?.longevity_index ?? null)
-  const longevityIndex = useMemo(() => longevityIndexState ?? computeLongevityIndex(pillarScores), [longevityIndexState, pillarScores])
+  const longevityIndex = useMemo(() => {
+    if (longevityIndexState != null && Number.isFinite(longevityIndexState)) return longevityIndexState
+    const fromPayload = initialPayload?.longevity_index
+    if (typeof fromPayload === 'number' && Number.isFinite(fromPayload)) return fromPayload
+    return computeLongevityIndex(pillarScores)
+  }, [longevityIndexState, initialPayload?.longevity_index, pillarScores])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [scoreProgress, setScoreProgress] = useState<Record<string, { score: number }>>({})
@@ -245,10 +250,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             built_character_preference: options.built_character_preference ?? undefined,
             built_density_preference: options.built_density_preference ?? undefined,
           },
-          (partial) => {
-            setScoreProgress((prev) => ({ ...prev, ...partial }))
-            setProgress(Math.min(98, 5 + 90))
-          }
+        (partial, meta) => {
+          setScoreProgress((prev) => ({ ...prev, ...partial }))
+          if (typeof meta?.partialLongevityIndex === 'number') setLongevityIndexState(meta.partialLongevityIndex)
+          setProgress(Math.min(98, 5 + 90))
+        }
         )
         const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean; quality_tier?: string }; status?: string }>) || {}
         const data = pillars[pillarKey]
@@ -589,8 +595,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           built_character_preference: searchOptions.built_character_preference ?? undefined,
           built_density_preference: searchOptions.built_density_preference ?? undefined,
         },
-        (partial) => {
+        (partial, meta) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
+          if (typeof meta?.partialLongevityIndex === 'number') setLongevityIndexState(meta.partialLongevityIndex)
           const completed = Object.keys(partial).length
           const total = toRun.length
           const pct = total > 0 ? Math.min(98, 5 + (completed / total) * 90) : 5

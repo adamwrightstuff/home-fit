@@ -176,27 +176,28 @@ export default function SavedDetailPage() {
           saved_search_options: searchOptions,
         } as any,
       }
-      // Recompute Longevity Index from updated pillar scores so it reflects any new longevity pillars.
-      try {
-        const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
-        const pillars = merged.livability_pillars as unknown as Record<
-          string,
-          { score?: number; status?: string }
-        >
-        for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
-          const pillar = pillars[key]
-          if (!pillar || typeof pillar.score !== 'number') continue
-          longevityPillarScores[key] = {
-            score: pillar.score,
-            failed: pillar.status === 'failed',
+      if (typeof (response as { longevity_index?: number }).longevity_index === 'number') {
+        merged.longevity_index = (response as { longevity_index: number }).longevity_index
+      } else {
+        try {
+          const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
+          const pillars = merged.livability_pillars as unknown as Record<
+            string,
+            { score?: number; status?: string }
+          >
+          for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
+            const pillar = pillars[key]
+            if (!pillar || typeof pillar.score !== 'number') continue
+            longevityPillarScores[key] = {
+              score: pillar.score,
+              failed: pillar.status === 'failed',
+            }
           }
+          const longevityIndex = computeLongevityIndex(longevityPillarScores)
+          if (longevityIndex != null) merged.longevity_index = longevityIndex
+        } catch {
+          /* keep existing */
         }
-        const longevityIndex = computeLongevityIndex(longevityPillarScores)
-        if (longevityIndex != null) {
-          merged.longevity_index = longevityIndex
-        }
-      } catch {
-        // If anything goes wrong recomputing longevity, fall back to existing value.
       }
       if (typeof (response as { happiness_index?: number }).happiness_index === 'number') {
         merged.happiness_index = (response as { happiness_index: number }).happiness_index
@@ -271,18 +272,22 @@ export default function SavedDetailPage() {
         ...mergedBase,
         metadata: { ...(mergedBase.metadata ?? {}), saved_search_options: searchOptions } as any,
       }
-      try {
-        const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
-        const pillars = merged.livability_pillars as unknown as Record<string, { score?: number; status?: string }>
-        for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
-          const pillar = pillars[key]
-          if (!pillar || typeof pillar.score !== 'number') continue
-          longevityPillarScores[key] = { score: pillar.score, failed: pillar.status === 'failed' }
+      if (typeof (response as { longevity_index?: number }).longevity_index === 'number') {
+        merged.longevity_index = (response as { longevity_index: number }).longevity_index
+      } else {
+        try {
+          const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
+          const pillars = merged.livability_pillars as unknown as Record<string, { score?: number; status?: string }>
+          for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
+            const pillar = pillars[key]
+            if (!pillar || typeof pillar.score !== 'number') continue
+            longevityPillarScores[key] = { score: pillar.score, failed: pillar.status === 'failed' }
+          }
+          const longevityIndex = computeLongevityIndex(longevityPillarScores)
+          if (longevityIndex != null) merged.longevity_index = longevityIndex
+        } catch {
+          /* ignore */
         }
-        const longevityIndex = computeLongevityIndex(longevityPillarScores)
-        if (longevityIndex != null) merged.longevity_index = longevityIndex
-      } catch {
-        /* ignore */
       }
       await updateSavedScore(row.id, { scorePayload: merged, priorities })
       setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
