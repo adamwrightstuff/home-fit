@@ -9,7 +9,7 @@ import StatusSignalInfo from './StatusSignalInfo'
 import HappinessInfo from './HappinessInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
-import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { GeocodeResult } from '@/types/api'
@@ -141,10 +141,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Backend longevity index when set (from initial payload, full run, or recompute); else we use client-computed. */
   const [longevityIndexState, setLongevityIndexState] = useState<number | null>(() => initialPayload?.longevity_index ?? null)
   const longevityIndex = useMemo(() => {
+    const fromPillars = computeLongevityIndex(pillarScores)
+    if (fromPillars != null) return fromPillars
     if (longevityIndexState != null && Number.isFinite(longevityIndexState)) return longevityIndexState
     const fromPayload = initialPayload?.longevity_index
     if (typeof fromPayload === 'number' && Number.isFinite(fromPayload)) return fromPayload
-    return computeLongevityIndex(pillarScores)
+    return null
   }, [longevityIndexState, initialPayload?.longevity_index, pillarScores])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -252,7 +254,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           },
         (partial, meta) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
-          if (typeof meta?.partialLongevityIndex === 'number') setLongevityIndexState(meta.partialLongevityIndex)
+          if (
+            typeof meta?.partialLongevityIndex === 'number' &&
+            allLongevityPillarsInOnlyKeys([pillarKey])
+          ) {
+            setLongevityIndexState(meta.partialLongevityIndex)
+          }
           setProgress(Math.min(98, 5 + 90))
         }
         )
@@ -597,7 +604,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         },
         (partial, meta) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
-          if (typeof meta?.partialLongevityIndex === 'number') setLongevityIndexState(meta.partialLongevityIndex)
+          if (
+            typeof meta?.partialLongevityIndex === 'number' &&
+            allLongevityPillarsInOnlyKeys(toRun)
+          ) {
+            setLongevityIndexState(meta.partialLongevityIndex)
+          }
           const completed = Object.keys(partial).length
           const total = toRun.length
           const pct = total > 0 ? Math.min(98, 5 + (completed / total) * 90) : 5
@@ -631,8 +643,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       }
       const summary = (resp as { place_summary?: string }).place_summary
       setPlaceSummary(summary ?? null)
-      if (typeof (resp as { longevity_index?: number }).longevity_index === 'number') {
+      if (
+        typeof (resp as { longevity_index?: number }).longevity_index === 'number' &&
+        allLongevityPillarsInOnlyKeys(toRun)
+      ) {
         setLongevityIndexState((resp as { longevity_index: number }).longevity_index)
+      } else if (!allLongevityPillarsInOnlyKeys(toRun)) {
+        setLongevityIndexState(null)
       }
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)

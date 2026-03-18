@@ -15,6 +15,7 @@ import { getGeocode, getScoreWithProgress } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
 import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
+import { longevityIndexFromLivabilityPillars } from '@/lib/pillars'
 import { useRouter } from 'next/navigation'
 
 export default function Home() {
@@ -243,13 +244,18 @@ export default function Home() {
       },
       () => {}
     )
+    const livability_pillars = {
+      ...score_data.livability_pillars,
+      [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
+    } as ScoreResponse['livability_pillars']
+    const li = longevityIndexFromLivabilityPillars(
+      livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+    )
     const merged: ScoreResponse = {
       ...score_data,
-      livability_pillars: {
-        ...score_data.livability_pillars,
-        [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
-      } as ScoreResponse['livability_pillars'],
+      livability_pillars,
       place_summary: response.place_summary ?? score_data.place_summary,
+      ...(li != null ? { longevity_index: li } : {}),
     }
     set_score_data(merged)
     set_configure_state({ payload: merged, priorities: options.priorities })

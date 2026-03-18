@@ -35,9 +35,11 @@ Total: 100%. All other pillars (e.g. built beauty, air travel, transit, healthca
   - `longevity_index`: number (0–100)
   - `longevity_index_contributions`: `Record<pillar_name, contribution>`
 
-**Partial pillars / same logic as total score:** When `token_allocation` is provided (normal for all score responses), only longevity pillars that **have a score** (already run) **and are selected** (non-zero weight in the current allocation) are used. The fixed Longevity weights are **renormalized** over that subset so the index stays 0–100. You do not need to run all 6 pillars to see a Longevity Index. When you change priorities (weights), both total score and Longevity Index are recomputed from the same cached pillar scores—no rerun required.
+**Full score (no `only=`):** When `token_allocation` is provided, eligible longevity pillars (non-zero weight in the request or full run) are used; weights renormalize over that subset.
 
-- **Frontend:** `ScoreDisplay` shows a “Longevity Index” panel when `longevity_index` is present; types in `frontend/types/api.ts` extend `ScoreResponse` with optional `longevity_index` and `longevity_index_contributions`.
+**Partial `only=` requests:** `longevity_index` and `longevity_index_contributions` are **omitted (null)** unless **all six** longevity pillars were included in that request (`should_emit_longevity_index` in `pillars/composite_indices.py`). Otherwise a single pillar (e.g. schools at 100) would incorrectly dominate the index. The client recomputes longevity from merged pillar scores using `computeLongevityIndex` / `longevityIndexFromLivabilityPillars`.
+
+- **Frontend:** Prefers longevity computed from current `livability_pillars` over stale `longevity_index` on the payload. Saved-score merges recompute from merged pillars. `ScoreDisplay` shows the index when the derived value is present.
 
 ---
 

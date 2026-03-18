@@ -9,7 +9,7 @@ import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { ScoreResponse } from '@/types/api'
 import type { PillarKey } from '@/lib/pillars'
-import { PILLAR_ORDER } from '@/lib/pillars'
+import { PILLAR_ORDER, longevityIndexFromLivabilityPillars } from '@/lib/pillars'
 import { getScoreSinglePillar } from '@/lib/api'
 import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
 
@@ -263,17 +263,20 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         built_character_preference: normalized.built_character_preference ?? undefined,
         built_density_preference: normalized.built_density_preference ?? undefined,
       })
+      const livability_pillars = {
+        ...finalResponse.livability_pillars,
+        [pillarKey]: (resp.livability_pillars as any)[pillarKey],
+      } as any
+      const li = longevityIndexFromLivabilityPillars(livability_pillars)
       const merged: ScoreResponse = {
         ...finalResponse,
-        livability_pillars: {
-          ...finalResponse.livability_pillars,
-          [pillarKey]: (resp.livability_pillars as any)[pillarKey],
-        } as any,
+        livability_pillars,
         place_summary: resp.place_summary ?? finalResponse.place_summary,
         total_score: resp.total_score ?? finalResponse.total_score,
         overall_confidence: resp.overall_confidence ?? finalResponse.overall_confidence,
         data_quality_summary: resp.data_quality_summary ?? finalResponse.data_quality_summary,
         token_allocation: resp.token_allocation ?? finalResponse.token_allocation,
+        ...(li != null ? { longevity_index: li } : {}),
       }
       setFinalResponse(merged)
       if (cacheKey) {

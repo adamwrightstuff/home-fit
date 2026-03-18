@@ -50,6 +50,7 @@ from pillars.status_signal import compute_status_signal, compute_status_signal_w
 from pillars.happiness_index import compute_happiness_index_with_breakdown
 from pillars.composite_indices import (
     compute_longevity_index,
+    should_emit_longevity_index,
     attach_indices_version,
     backfill_status_happiness_if_missing,
     recompute_composites_from_payload,
@@ -1606,7 +1607,7 @@ def _compute_single_score_internal(
 
     def _pillar_done_notify(pname: str, sc: float) -> None:
         _partial_scores_for_longevity[pname] = sc
-        if on_partial_longevity:
+        if on_partial_longevity and should_emit_longevity_index(only_pillars):
             try:
                 mini_lp = {k: {"score": v} for k, v in _partial_scores_for_longevity.items()}
                 li, _ = compute_longevity_index(
@@ -2042,6 +2043,9 @@ def _compute_single_score_internal(
     longevity_index, longevity_contributions = compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
     )
+    if not should_emit_longevity_index(only_pillars):
+        longevity_index = None
+        longevity_contributions = {}
     location_info = {"city": city, "state": state, "zip": zip_code}
     response = {
         "input": location,
@@ -3485,6 +3489,9 @@ async def _stream_score_with_progress(
         longevity_index, longevity_contributions = compute_longevity_index(
             livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
         )
+        if not should_emit_longevity_index(only_pillars):
+            longevity_index = None
+            longevity_contributions = {}
         location_info = {"city": city, "state": state, "zip": zip_code}
         final_response = {
             "input": location,
@@ -4448,6 +4455,9 @@ async def stream_score(
         longevity_index, longevity_contributions = compute_longevity_index(
             livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
         )
+        if not should_emit_longevity_index(only_pillars):
+            longevity_index = None
+            longevity_contributions = {}
         location_info = {"city": city, "state": state, "zip": zip_code}
         response = {
         "input": location,

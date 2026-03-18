@@ -81,6 +81,21 @@ def compute_longevity_index(
     return round(total, 2), contributions
 
 
+LONGEVITY_INDEX_PILLAR_KEYS = frozenset(LONGEVITY_INDEX_WEIGHTS.keys())
+
+
+def should_emit_longevity_index(only_pillars: Optional[Set[str]]) -> bool:
+    """
+    Full-score responses always include longevity_index.
+
+    Partial ``only=`` runs omit it unless all six longevity pillars were requested,
+    so a single pillar (e.g. schools at 100) cannot dominate the index.
+    """
+    if only_pillars is None:
+        return True
+    return LONGEVITY_INDEX_PILLAR_KEYS.issubset(only_pillars)
+
+
 def attach_indices_version(response: Dict[str, Any]) -> None:
     """Merge indices_version into response metadata (idempotent)."""
     md = response.get("metadata")

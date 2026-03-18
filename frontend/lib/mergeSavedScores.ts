@@ -112,9 +112,7 @@ export function mergeSavedScorePayload(
   if (Object.keys(scores).length === 0) {
     const total = typeof incomingPayload.total_score === 'number' ? incomingPayload.total_score : 0
     const merged: Record<string, unknown> = { ...incomingPayload, livability_pillars: mergedPillars, total_score: total }
-    if (typeof (incomingPayload as { longevity_index?: number }).longevity_index === 'number') {
-      merged.longevity_index = (incomingPayload as { longevity_index: number }).longevity_index
-    } else {
+    {
       const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
       const longevity_index = computeLongevityIndex(longevityScores)
       if (longevity_index != null) merged.longevity_index = longevity_index
@@ -149,9 +147,7 @@ export function mergeSavedScorePayload(
     livability_pillars: mergedPillars,
     total_score,
   }
-  if (typeof (incomingPayload as { longevity_index?: number }).longevity_index === 'number') {
-    mergedPayload.longevity_index = (incomingPayload as { longevity_index: number }).longevity_index
-  } else {
+  {
     const longevityScores = longevityScoresFromMergedPillars(mergedPillars)
     const longevity_index = computeLongevityIndex(longevityScores)
     if (longevity_index != null) {

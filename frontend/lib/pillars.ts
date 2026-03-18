@@ -72,6 +72,28 @@ export function computeLongevityIndex(
   return Math.round(total * 100) / 100
 }
 
+/** API `only=` list includes every longevity pillar → server returns a meaningful longevity_index. */
+export function allLongevityPillarsInOnlyKeys(onlyKeys: string[]): boolean {
+  const set = new Set(onlyKeys)
+  return (Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]).every((k) => set.has(k))
+}
+
+/** Longevity index from merged livability_pillars (saved/API shape). */
+export function longevityIndexFromLivabilityPillars(
+  pillars: Record<string, { score?: number; status?: string; error?: string } | undefined>
+): number | null {
+  const pillarScores: Record<string, { score?: number; failed?: boolean }> = {}
+  for (const k of Object.keys(LONGEVITY_INDEX_WEIGHTS) as PillarKey[]) {
+    const p = pillars[k]
+    if (!p || typeof p.score !== 'number' || !Number.isFinite(p.score)) continue
+    pillarScores[k] = {
+      score: p.score,
+      failed: Boolean(p.error) || p.status === 'failed',
+    }
+  }
+  return computeLongevityIndex(pillarScores)
+}
+
 /** Copy for Longevity Score UX: tooltip, short subtitle, full modal, and key distinction. */
 export const LONGEVITY_COPY = {
   /** Full version for tooltip/modal. */

@@ -18,7 +18,7 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
-import { computeLongevityIndex, LONGEVITY_INDEX_WEIGHTS, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
+import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -96,7 +96,12 @@ export default function SavedDetailPage() {
   }, [rawPayload])
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
-    return reweightScoreResponseFromPriorities(rawPayload, priorities)
+    const rew = reweightScoreResponseFromPriorities(rawPayload, priorities)
+    const li = longevityIndexFromLivabilityPillars(
+      rew.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+    )
+    if (li != null) return { ...rew, longevity_index: li }
+    return rew
   }, [rawPayload, priorities])
 
   const handleScoreAgain = useCallback(async () => {
@@ -176,28 +181,11 @@ export default function SavedDetailPage() {
           saved_search_options: searchOptions,
         } as any,
       }
-      if (typeof (response as { longevity_index?: number }).longevity_index === 'number') {
-        merged.longevity_index = (response as { longevity_index: number }).longevity_index
-      } else {
-        try {
-          const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
-          const pillars = merged.livability_pillars as unknown as Record<
-            string,
-            { score?: number; status?: string }
-          >
-          for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
-            const pillar = pillars[key]
-            if (!pillar || typeof pillar.score !== 'number') continue
-            longevityPillarScores[key] = {
-              score: pillar.score,
-              failed: pillar.status === 'failed',
-            }
-          }
-          const longevityIndex = computeLongevityIndex(longevityPillarScores)
-          if (longevityIndex != null) merged.longevity_index = longevityIndex
-        } catch {
-          /* keep existing */
-        }
+      {
+        const li = longevityIndexFromLivabilityPillars(
+          merged.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+        )
+        if (li != null) merged.longevity_index = li
       }
       if (typeof (response as { happiness_index?: number }).happiness_index === 'number') {
         merged.happiness_index = (response as { happiness_index: number }).happiness_index
@@ -272,22 +260,11 @@ export default function SavedDetailPage() {
         ...mergedBase,
         metadata: { ...(mergedBase.metadata ?? {}), saved_search_options: searchOptions } as any,
       }
-      if (typeof (response as { longevity_index?: number }).longevity_index === 'number') {
-        merged.longevity_index = (response as { longevity_index: number }).longevity_index
-      } else {
-        try {
-          const longevityPillarScores: Record<string, { score?: number; failed?: boolean }> = {}
-          const pillars = merged.livability_pillars as unknown as Record<string, { score?: number; status?: string }>
-          for (const key of Object.keys(LONGEVITY_INDEX_WEIGHTS)) {
-            const pillar = pillars[key]
-            if (!pillar || typeof pillar.score !== 'number') continue
-            longevityPillarScores[key] = { score: pillar.score, failed: pillar.status === 'failed' }
-          }
-          const longevityIndex = computeLongevityIndex(longevityPillarScores)
-          if (longevityIndex != null) merged.longevity_index = longevityIndex
-        } catch {
-          /* ignore */
-        }
+      {
+        const li = longevityIndexFromLivabilityPillars(
+          merged.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+        )
+        if (li != null) merged.longevity_index = li
       }
       await updateSavedScore(row.id, { scorePayload: merged, priorities })
       setRow((prev) => (prev ? { ...prev, score_payload: merged, updated_at: new Date().toISOString() } : null))
