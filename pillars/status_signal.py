@@ -6,12 +6,16 @@ Uses per-division and per-CBSA min-max baselines from data/status_signal_baselin
 For each component we try baseline keys in order: CBSA (e.g. nyc_metro) when in a metro cluster, then Census division, then "all". If a key has no data for that component, we fall back to the next (so metro-only baselines still get division/all for education/occupation).
 
 Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5%.
+Luxury presence: dedicated OSM Overpass query (offices, recreation, arts, specialist healthcare, luxury retail);
+healthcare bucket omitted and weight redistributed when fewer than 3 matching POIs. Falls back to name-based
+brand matching when coordinates or OSM query are unavailable.
 Wealth gap (mean vs median) is used as a quality-control label: super_zip vs unequal vs typical.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
@@ -109,6 +113,118 @@ def _get_baseline(
         if isinstance(m, dict) and "min" in m and "max" in m:
             return float(m["min"]), float(m["max"])
     return None, None
+
+
+# Luxury OSM sub-weights (sum to 1). If specialist_healthcare count < 3, HC is excluded and 15% redistributed.
+_LUX_W_WEALTH = 0.35
+_LUX_W_PRIVATE = 0.25
+_LUX_W_ARTS = 0.20
+_LUX_W_HC = 0.15
+_LUX_W_RETAIL = 0.05
+
+_LUX_METRICS = {
+    "wealth_offices": "wealth_offices_count",
+    "private_recreation": "private_recreation_count",
+    "arts_culture": "arts_culture_count",
+    "specialist_healthcare": "specialist_healthcare_count",
+    "luxury_retail": "luxury_retail_count",
+}
+
+
+def _luxury_count_to_score(
+    count: int,
+    baselines: Dict[str, Any],
+    keys_to_try: List[str],
+    metric: str,
+) -> float:
+    mn, mx = _get_baseline(baselines, keys_to_try, "luxury", metric)
+    if mn is None or mx is None:
+        return min(100.0, float(max(0, count)) * 6.0)
+    return _normalize_min_max(float(max(0, count)), mn, mx)
+
+
+def compute_luxury_presence_osm(
+    lat: float,
+    lon: float,
+    keys_to_try: List[str],
+    baselines: Dict[str, Any],
+    radius_m: int = 1500,
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    Luxury presence 0–100 from dedicated OSM tag buckets. Falls back to zeros if query fails.
+    Healthcare bucket omitted (and weight redistributed) when specialist_healthcare count < 3.
+    """
+    try:
+        from data_sources.status_signal_luxury_osm import query_status_signal_luxury_osm
+    except Exception:
+        return 0.0, {"source": "osm", "error": "import_failed"}
+
+    raw = query_status_signal_luxury_osm(lat, lon, radius_m=radius_m)
+    detail: Dict[str, Any] = {"source": "osm", "radius_m": radius_m}
+    if not raw or not raw.get("counts"):
+        detail["error"] = "no_osm_result"
+        return 0.0, detail
+
+    c = raw["counts"]
+    detail["counts"] = dict(c)
+    hc_n = int(c.get("specialist_healthcare") or 0)
+    hc_active = hc_n >= 3
+
+    s_wealth = _luxury_count_to_score(
+        int(c.get("wealth_offices") or 0), baselines, keys_to_try, _LUX_METRICS["wealth_offices"]
+    )
+    s_priv = _luxury_count_to_score(
+        int(c.get("private_recreation") or 0), baselines, keys_to_try, _LUX_METRICS["private_recreation"]
+    )
+    s_arts = _luxury_count_to_score(
+        int(c.get("arts_culture") or 0), baselines, keys_to_try, _LUX_METRICS["arts_culture"]
+    )
+    s_hc = _luxury_count_to_score(hc_n, baselines, keys_to_try, _LUX_METRICS["specialist_healthcare"])
+    s_ret = _luxury_count_to_score(
+        int(c.get("luxury_retail") or 0), baselines, keys_to_try, _LUX_METRICS["luxury_retail"]
+    )
+
+    detail["bucket_scores"] = {
+        "wealth_offices": round(s_wealth, 1),
+        "private_recreation": round(s_priv, 1),
+        "arts_culture": round(s_arts, 1),
+        "specialist_healthcare": round(s_hc, 1) if hc_active else None,
+        "luxury_retail": round(s_ret, 1),
+    }
+
+    if hc_active:
+        w = (_LUX_W_WEALTH, _LUX_W_PRIVATE, _LUX_W_ARTS, _LUX_W_HC, _LUX_W_RETAIL)
+        score = (
+            w[0] * s_wealth + w[1] * s_priv + w[2] * s_arts + w[3] * s_hc + w[4] * s_ret
+        )
+        detail["weights"] = {
+            "wealth_offices": _LUX_W_WEALTH,
+            "private_recreation": _LUX_W_PRIVATE,
+            "arts_culture": _LUX_W_ARTS,
+            "specialist_healthcare": _LUX_W_HC,
+            "luxury_retail": _LUX_W_RETAIL,
+        }
+        detail["healthcare_included"] = True
+    else:
+        base_sum = _LUX_W_WEALTH + _LUX_W_PRIVATE + _LUX_W_ARTS + _LUX_W_RETAIL
+        extra = _LUX_W_HC
+        w_w = _LUX_W_WEALTH + extra * (_LUX_W_WEALTH / base_sum)
+        w_p = _LUX_W_PRIVATE + extra * (_LUX_W_PRIVATE / base_sum)
+        w_a = _LUX_W_ARTS + extra * (_LUX_W_ARTS / base_sum)
+        w_r = _LUX_W_RETAIL + extra * (_LUX_W_RETAIL / base_sum)
+        score = w_w * s_wealth + w_p * s_priv + w_a * s_arts + w_r * s_ret
+        detail["weights"] = {
+            "wealth_offices": round(w_w, 4),
+            "private_recreation": round(w_p, 4),
+            "arts_culture": round(w_a, 4),
+            "specialist_healthcare": 0.0,
+            "luxury_retail": round(w_r, 4),
+        }
+        detail["healthcare_included"] = False
+        detail["healthcare_excluded_reason"] = "count_lt_3"
+
+    detail["luxury_presence"] = round(max(0.0, min(100.0, score)), 1)
+    return float(detail["luxury_presence"]), detail
 
 
 def compute_wealth(
@@ -398,6 +514,9 @@ def compute_status_signal_with_breakdown(
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     city: Optional[str] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    luxury_radius_m: int = 1500,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100 and wealth_character (super_zip | unequal | typical).
@@ -411,6 +530,7 @@ def compute_status_signal_with_breakdown(
         "education": None,
         "occupation": None,
         "luxury_presence": None,
+        "luxury_presence_detail": None,
         "wealth_character": "typical",
     }
     if not housing_details or not social_fabric_details or not economic_security_details:
@@ -438,7 +558,28 @@ def compute_status_signal_with_breakdown(
     occupation = compute_occupation(
         economic_security_details, social_fabric_details, tract, keys_to_try, baselines
     )
-    luxury = compute_brand(business_list or [], keys_to_try, baselines)
+    luxury_detail: Optional[Dict[str, Any]] = None
+    if (
+        lat is not None
+        and lon is not None
+        and isinstance(lat, (int, float))
+        and isinstance(lon, (int, float))
+        and math.isfinite(float(lat))
+        and math.isfinite(float(lon))
+    ):
+        luxury, luxury_detail = compute_luxury_presence_osm(
+            float(lat), float(lon), keys_to_try, baselines, radius_m=luxury_radius_m
+        )
+        if luxury_detail.get("error") in ("no_osm_result", "import_failed"):
+            luxury = compute_brand(business_list or [], keys_to_try, baselines)
+            luxury_detail = {
+                "source": "brand_fallback",
+                "reason": luxury_detail.get("error") or "osm_unavailable",
+            }
+    else:
+        luxury = compute_brand(business_list or [], keys_to_try, baselines)
+        luxury_detail = {"source": "brand_fallback", "reason": "no_coordinates"}
+
     wealth_character = _wealth_character(housing_details)
 
     breakdown["wealth"] = wealth
@@ -446,6 +587,7 @@ def compute_status_signal_with_breakdown(
     breakdown["education"] = education
     breakdown["occupation"] = occupation
     breakdown["luxury_presence"] = luxury
+    breakdown["luxury_presence_detail"] = luxury_detail
     breakdown["wealth_character"] = wealth_character
 
     if wealth is None and education is None and occupation is None:

@@ -44,6 +44,28 @@
         "min": 0.0
       }
     },
+    "luxury": {
+      "wealth_offices_count": {
+        "min": 0.0,
+        "max": 45.0
+      },
+      "private_recreation_count": {
+        "min": 0.0,
+        "max": 60.0
+      },
+      "arts_culture_count": {
+        "min": 0.0,
+        "max": 50.0
+      },
+      "specialist_healthcare_count": {
+        "min": 0.0,
+        "max": 30.0
+      },
+      "luxury_retail_count": {
+        "min": 0.0,
+        "max": 40.0
+      }
+    },
     "education": {
       "bach_pct": {
         "max": 5184.0,

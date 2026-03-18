@@ -837,6 +837,7 @@ def _compute_status_signal_for_response(
     census_tract: Optional[Dict[str, Any]],
     state: Optional[str],
     city: Optional[str] = None,
+    coordinates: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
     """
     Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
@@ -846,6 +847,10 @@ def _compute_status_signal_for_response(
     if not state and not census_tract:
         return None
     business_list = (amenities_details.get("breakdown") or {}).get("business_list") or amenities_details.get("business_list") or []
+    lat = lon = None
+    if isinstance(coordinates, dict):
+        lat = coordinates.get("lat")
+        lon = coordinates.get("lon")
     return compute_status_signal_with_breakdown(
         housing_details,
         social_fabric_details,
@@ -854,6 +859,8 @@ def _compute_status_signal_for_response(
         census_tract,
         state,
         city=city,
+        lat=lat if isinstance(lat, (int, float)) else None,
+        lon=lon if isinstance(lon, (int, float)) else None,
     )
 
 
@@ -1116,6 +1123,7 @@ def _apply_allocation_to_cached_response(
                     census_tract,
                     state,
                     city=city,
+                    coordinates=coords,
                 )
                 if status_signal_result is not None:
                     score, breakdown = status_signal_result
@@ -2163,7 +2171,14 @@ def _compute_single_score_internal(
         }
     }
     status_signal_result = _compute_status_signal_for_response(
-        housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
+        housing_details,
+        social_fabric_details,
+        economic_security_details,
+        amenities_details,
+        census_tract,
+        state,
+        city=city,
+        coordinates={"lat": lat, "lon": lon},
     )
     if status_signal_result is not None:
         score, breakdown = status_signal_result
@@ -3575,7 +3590,14 @@ async def _stream_score_with_progress(
             }
         }
         status_signal_result = _compute_status_signal_for_response(
-            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
+            housing_details,
+            social_fabric_details,
+            economic_security_details,
+            amenities_details,
+            census_tract,
+            state,
+            city=city,
+            coordinates={"lat": lat, "lon": lon},
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result
@@ -4554,7 +4576,14 @@ async def stream_score(
         }
         }
         status_signal_result = _compute_status_signal_for_response(
-            housing_details, social_fabric_details, economic_security_details, amenities_details, census_tract, state, city=city
+            housing_details,
+            social_fabric_details,
+            economic_security_details,
+            amenities_details,
+            census_tract,
+            state,
+            city=city,
+            coordinates={"lat": lat, "lon": lon},
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result
@@ -5540,6 +5569,7 @@ def recompute_composites(body: RecomputeCompositesRequest):
     amenities_details = pillars.get("neighborhood_amenities")
     if housing_details and social_fabric_details and economic_security_details:
         try:
+            _city_rc = (location_info.get("city") or "").strip() or None
             result = _compute_status_signal_for_response(
                 housing_details,
                 social_fabric_details,
@@ -5547,6 +5577,8 @@ def recompute_composites(body: RecomputeCompositesRequest):
                 amenities_details or {},
                 census_tract,
                 state,
+                city=_city_rc,
+                coordinates=coordinates if lat is not None and lon is not None else None,
             )
             if result is not None:
                 score, breakdown = result
