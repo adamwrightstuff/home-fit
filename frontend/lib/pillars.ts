@@ -76,13 +76,13 @@ export function computeLongevityIndex(
 export const LONGEVITY_COPY = {
   /** Full version for tooltip/modal. */
   full:
-    "The Longevity Score measures how well a place supports a long, healthy life — not just whether it fits your preferences today. It's built on six factors that research links to lifespan and wellbeing: social connectedness, opportunities for natural movement, walkable daily life, restorative natural environments, climate stability, and cognitive engagement. The weights come from Blue Zone research — the places in the world where people live longest share these traits in common. A high Longevity Score means the place itself is working in your favor over time.",
+    "The Longevity Score measures how well a place supports a long, healthy life — not whether it matches your priorities today. It's a fixed blend of six pillars (same weights for everyone): Social Fabric, Neighborhood Amenities (walkable daily life), Active Outdoors, Natural Beauty, Climate Risk, and Schools / Quality Education. Those weights follow Blue Zone–style research on where people live longest. A high score means the place is structurally working in your favor for health over time — independent of how you weighted pillars for your HomeFit Score.",
   /** Short version for subtitle or card label. */
   short:
-    'How well this place supports a long, healthy life — based on Blue Zone research.',
+    'Six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) — same formula for everyone.',
   /** One-line tooltip next to the score. */
   tooltip:
-    'Measures long-term livability across social fabric, movement, nature, and climate — independent of your personal priorities.',
+    'Social fabric, daily amenities, active outdoors, natural beauty, climate risk, and schools — fixed Blue Zone–style blend; ignores your HomeFit pillar weights.',
   /** Key distinction to communicate. */
   distinction:
     'HomeFit = right for you. Longevity = right for your health over time.',
@@ -107,22 +107,22 @@ export const HOMEFIT_COPY = {
 /** Copy for Status Signal UX: tooltip and modal. */
 export const STATUS_SIGNAL_COPY = {
   tooltip:
-    'Measures wealth concentration, education level, occupation mix, and presence of taste brands (e.g. luxury gyms, design perfumeries).',
+    'Wealth, housing cost vs peers, education mix (graduate-heavy plus bachelor and self-employment), occupation profile, and upscale local venues mapped from OpenStreetMap (with name fallback when needed).',
   full:
-    'Status Signal combines four ingredients into a 0–100 score: wealth (household income and inequality), education (bachelor’s and graduate attainment, self-employment), occupation (finance/arts/creative jobs and white-collar share), and local brands (luxury gyms, design perfumeries, organic grocers, boutique fitness). It only appears when we have data for all four. You can refresh it by running just those four pillars.',
+    'Status Signal is a 0–100 composite after scoring: household wealth (income vs local baselines), how expensive housing is for the area, education mix (emphasis on graduate degrees, plus bachelor’s and self-employment), occupation mix (e.g. finance, creative, white-collar share), and “luxury presence” from mapped POI types near you (offices, recreation, arts, retail, etc.) — with a fallback to name-based matching if map data isn’t available. It needs Housing, Social Fabric, Economic Security, and Neighborhood Amenities; refresh by running just those four pillars.',
 } as const
 
 /** Copy for Happiness Index UX: tooltip and modal. */
 export const HAPPINESS_INDEX_COPY = {
   /** One-line tooltip next to the score. */
   tooltip:
-    'Measures daily friction and material wellbeing — commute stress, housing affordability, economic security, income equality, and access to nature.',
+    'Commute ease (35%), social fabric (30%), housing value for space (20%), natural beauty (15%) — weights rebalance if a piece is missing.',
   /** Full version for modal. */
   full:
-    'Happiness Index measures daily friction and material wellbeing — commute stress, housing affordability, economic security, income equality, and access to nature. Lower friction, lower cost burden, and more green and blue space all point to happier daily life.',
+    'Happiness Index blends four ingredients already in your score: easier commutes (public transit pillar), stronger social fabric (neighbors, civic life), better housing value for space (price-to-space), and more natural beauty (green and blue space). Default weights are 35% / 30% / 20% / 15%; if we’re missing data for one piece, the others are scaled so the index still sums to a full 0–100.',
   /** Short version for subtitle or card label. */
   short:
-    'Daily friction and material wellbeing — commute, affordability, jobs, equality, and nature.',
+    'Commute, social fabric, housing space-for-price, and nature — fixed weights when all four are available.',
 } as const
 
 /** Comma-separated pillar names required to compute Status Signal (for only= param). */

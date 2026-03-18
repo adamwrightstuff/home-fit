@@ -118,15 +118,15 @@ export interface ScoreResponse {
   /** Short factual summary (2–4 sentences) from pillar data; template-based, no LLM. */
   place_summary?: string;
   total_score: number;
-  /** Longevity Index: fixed weighted score over 6 pillars (social fabric, active outdoors, amenities, natural beauty, climate risk, education). Separate from total_score. */
+  /** Longevity Index: fixed blend of social_fabric, neighborhood_amenities, active_outdoors, natural_beauty, climate_risk, quality_education. Separate from total_score. */
   longevity_index?: number;
-  /** Per-pillar contribution to longevity_index (same pillars as longevity_index). */
+  /** Per-pillar contribution to longevity_index (same six pillars). */
   longevity_index_contributions?: Record<string, number>;
-  /** Status Signal: post-pillars derived score (wealth, education, occupation, brands). Only present when all four pillars have data. */
+  /** Status Signal: wealth, home cost, education mix, occupation, luxury POI presence (OSM + fallback). Needs four pillars. */
   status_signal?: number;
-  /** Detailed component breakdown for Status Signal (wealth, education, occupation, brands, etc.). */
+  /** Detailed component breakdown for Status Signal. */
   status_signal_breakdown?: Record<string, unknown>;
-  /** Happiness Index: composite from commute, housing affordability, unemployment, equality, green space. Not a pillar. */
+  /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;
   token_allocation: Record<string, number>;

@@ -234,7 +234,7 @@ function priorityBadgeStyle(level: PriorityLevel): React.CSSProperties {
 }
 
 const LONGEVITY_NOTE =
-  'Longevity score is calculated separately — it measures how well a place supports a long, healthy life based on Blue Zone research, independent of your priorities.'
+  'Longevity is calculated separately — six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) with fixed weights, independent of your HomeFit priorities.'
 
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const [game_state, set_game_state] = useState<'playing' | 'results'>('playing')

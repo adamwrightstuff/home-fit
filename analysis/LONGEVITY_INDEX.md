@@ -7,7 +7,7 @@
 
 ## Overview
 
-The **Longevity Index** is a fixed weighted score over six pillars, designed to signal “living longer, healthier” without requiring users to know the Blue Zones brand. It is **independent of user priorities** and appears alongside the main HomeFit total score in API responses and the UI.
+The **Longevity Index** is a fixed weighted score over six pillars (Social Fabric, Neighborhood Amenities, Active Outdoors, Natural Beauty, Climate Risk, Quality Education), designed to signal “living longer, healthier.” It is **independent of HomeFit pillar weights** and appears alongside the main score. **User-facing tooltips/modal:** `LONGEVITY_COPY` in `frontend/lib/pillars.ts`.
 
 - **Total score** = weighted average of all 12 pillars using the user’s priority allocation (tokens/priorities).
 - **Longevity Index** = fixed weights over 6 pillars only; same 0–100 scale.
@@ -31,7 +31,7 @@ Total: 100%. All other pillars (e.g. built beauty, air travel, transit, healthca
 
 ## Implementation
 
-- **Backend:** `main.py` defines `LONGEVITY_INDEX_WEIGHTS` and `_compute_longevity_index(livability_pillars, token_allocation=None)`. The index is computed after `livability_pillars` is built and added to every score response as:
+- **Backend:** `pillars/composite_indices.py` defines `LONGEVITY_INDEX_WEIGHTS` and `compute_longevity_index(...)`. The index is added to score responses as:
   - `longevity_index`: number (0–100)
   - `longevity_index_contributions`: `Record<pillar_name, contribution>`
 
