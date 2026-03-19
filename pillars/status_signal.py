@@ -832,6 +832,14 @@ def compute_status_signal_with_breakdown(
         and wealth_gap < 0.25
     ):
         archetype = "Patrician"
+    elif (
+        median_income is not None
+        and float(median_income) > 200_000
+        and wealth_gap is not None
+        and wealth_gap < 0.25
+    ):
+        # Fallback when no CBSA median: absolute threshold (wealthy + uniform -> Patrician)
+        archetype = "Patrician"
     else:
         archetype = _get_archetype(
             education, wealth, home_cost, luxury_detail, luxury,
