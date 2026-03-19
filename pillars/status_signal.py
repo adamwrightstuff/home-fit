@@ -134,7 +134,7 @@ def _get_baseline(
     return None, None
 
 
-# Status Signature: archetype classifier (HNW field calibration). Patrician first.
+# Status Signature: archetype classifier. Density/vibe fix: Patrician/Poseur from raw stats first.
 def _get_archetype(
     education: Optional[float],
     wealth: Optional[float],
@@ -143,17 +143,37 @@ def _get_archetype(
     luxury_score: float,
     median_income: Optional[float] = None,
     wealth_gap: Optional[float] = None,
+    grad_pct: Optional[float] = None,
+    white_collar_mgmt: Optional[float] = None,
+    self_employed_pct: Optional[float] = None,
 ) -> str:
     """
-    Classify into Patrician, Parvenu, Poseur, Plebeian, or Typical using strict HNW thresholds.
-    Patrician first so legacy (Bronxville) beats high-velocity (Tribeca) where both apply.
+    Classify into Patrician, Parvenu, Poseur, Plebeian, or Typical.
+    Classification flip: grad_pct + white_collar -> Patrician (Bronxville); self_employed + home_value -> Poseur (Carroll Gardens).
     """
     counts = (luxury_detail or {}).get("counts") or {}
     luxury_retail = int(counts.get("luxury_retail") or 0)
     wealth_val = wealth if wealth is not None else 0.0
     edu_val = education if education is not None else 0.0
 
-    # 1. Patrician: median > 200k, low gap (super zip), high education
+    # 1. Patrician (Bronxville fix): raw grad_pct > 80% and white_collar_mgmt > 70%
+    if (
+        grad_pct is not None
+        and float(grad_pct) > 80.0
+        and white_collar_mgmt is not None
+        and float(white_collar_mgmt) > 70.0
+    ):
+        return "Patrician"
+
+    # 2. Poseur (Carroll Gardens normalizer): self_employed > 25% and home_value_score > 90
+    if (
+        self_employed_pct is not None
+        and float(self_employed_pct) > 25.0
+        and home_cost > 90
+    ):
+        return "Poseur"
+
+    # 3. Patrician (legacy): median > 200k, low gap, high education
     if (
         median_income is not None
         and median_income > 200_000
@@ -164,17 +184,17 @@ def _get_archetype(
     ):
         return "Patrician"
 
-    # 2. Parvenu: high wealth gap OR (high wealth score + luxury retail)
+    # 4. Parvenu: high wealth gap OR (high wealth score + luxury retail)
     if wealth_gap is not None and wealth_gap > 0.50:
         return "Parvenu"
     if wealth_val > 85 and luxury_retail > 3:
         return "Parvenu"
 
-    # 3. Poseur: high home cost, lower wealth
+    # 5. Poseur: high home cost, lower wealth
     if home_cost > 80 and wealth_val < 65:
         return "Poseur"
 
-    # 4. Plebeian: low across wealth, education, home cost
+    # 6. Plebeian: low across wealth, education, home cost
     if wealth_val < 40 and edu_val < 40 and home_cost < 40:
         return "Plebeian"
 
@@ -184,11 +204,14 @@ def _get_archetype(
 def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float, float]:
     """Weights (wealth, home_cost, education, occupation, luxury) for archetype. Sum = 1."""
     if archetype == "Patrician":
-        return (0.20, 0.25, 0.50, 0.03, 0.02)
+        # Patrician lens: W_EDUCATION=0.50, W_OCCUPATION=0.30 (Bronxville fix)
+        return (0.10, 0.08, 0.50, 0.30, 0.02)
     if archetype == "Parvenu":
-        return (0.45, 0.15, 0.10, 0.10, 0.20)
+        # Parvenu lens: W_INCOME_VELOCITY=0.50 (Tribeca fix)
+        return (0.50, 0.15, 0.10, 0.10, 0.15)
     if archetype == "Poseur":
-        return (0.05, 0.50, 0.15, 0.05, 0.25)
+        # Poseur lens: W_WEALTH=0.40 (Carroll Gardens normalizer; income-to-home penalty applied separately)
+        return (0.40, 0.15, 0.15, 0.05, 0.25)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION, W_LUXURY)
 
 
@@ -383,17 +406,18 @@ def compute_wealth(
         mean_income = median_income
     wealth_gap = (float(mean_income) - float(median_income)) / float(median_income)
 
+    # Elite uniformity (Patrician/Bronxville): median > 200k and low gap -> Asset Stability 95 (no baselines needed)
+    if float(median_income) > 200_000 and wealth_gap < 0.30:
+        return 95.0
+
     min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
     min_gap, max_gap = _get_baseline(baselines, keys_to_try, "wealth", "wealth_gap_ratio")
     if min_mean is None or max_mean is None:
         return None
     n_mean = _normalize_min_max(float(mean_income), min_mean, max_mean)
-    if float(median_income) > 200_000 and wealth_gap < 0.25:
-        n_gap = 95.0
-    else:
-        n_gap = 50.0
-        if min_gap is not None and max_gap is not None:
-            n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
+    n_gap = 50.0
+    if min_gap is not None and max_gap is not None:
+        n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
     return 0.6 * n_mean + 0.4 * n_gap
 
 
@@ -800,10 +824,25 @@ def compute_status_signal_with_breakdown(
         if mean is not None and isinstance(mean, (int, float)):
             wealth_gap = (float(mean) - float(med)) / float(med)
 
+    # Raw stats for classification flip (grad_pct + white_collar -> Patrician; self_employed + home -> Poseur)
+    edu_attainment = social_fabric_details.get("education_attainment") or {}
+    grad_pct_raw = edu_attainment.get("grad_pct")
+    if grad_pct_raw is not None:
+        grad_pct_raw = float(grad_pct_raw)
+    self_employed_pct_raw = social_fabric_details.get("self_employed_pct")
+    if self_employed_pct_raw is not None:
+        self_employed_pct_raw = float(self_employed_pct_raw)
+    white_collar_mgmt: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
+    if white_collar_mgmt is None and tract:
+        white_collar_mgmt = _fetch_white_collar_pct_tract(tract)
+    if white_collar_mgmt is not None:
+        white_collar_mgmt = float(white_collar_mgmt)
+
     # Archetype determined BEFORE occupation so compute_occupation can apply archetype-specific weights
     archetype = _get_archetype(
         education, wealth, home_cost, luxury_detail, luxury,
         median_income=median_income, wealth_gap=wealth_gap,
+        grad_pct=grad_pct_raw, white_collar_mgmt=white_collar_mgmt, self_employed_pct=self_employed_pct_raw,
     )
     occupation = compute_occupation(
         economic_security_details, social_fabric_details, tract, keys_to_try, baselines,
@@ -858,4 +897,9 @@ def compute_status_signal_with_breakdown(
         return None, breakdown
     raw = score / total_w
     final = round(max(0.0, min(100.0, raw)), 1)
+    # Poseur lens: penalize weak income-to-home-value ratio (high debt/high vibe -> cap ~78)
+    if archetype == "Poseur" and median_income is not None and median_home is not None and isinstance(median_home, (int, float)) and float(median_home) > 0:
+        income_to_home = float(median_income) / float(median_home)
+        if income_to_home < 0.12:
+            final = min(final, 78.0)
     return final, breakdown
