@@ -720,6 +720,7 @@
     }
   },
   "nyc_metro": {
+    "cbsa_median_income": 85000,
     "brand": {},
     "education": {},
     "home_cost": {

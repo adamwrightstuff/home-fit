@@ -1,15 +1,14 @@
 """
-Status Signal: post-pillars derived score (status + desirability).
+Status Signal: Universal Logic Engine (status + desirability).
 
-Status = wealth + education + occupation. Desirability = home cost + luxury presence.
-Uses per-division and per-CBSA min-max baselines from data/status_signal_baselines.json.
-For each component we try baseline keys in order: CBSA (e.g. nyc_metro) when in a metro cluster, then Census division, then "all". If a key has no data for that component, we fall back to the next (so metro-only baselines still get division/all for education/occupation).
+Data-driven principles (no location-specific tuning):
+- Credential-First Education: 80% graduate/professional, 20% bachelors (no self-employed).
+- Authority-First Occupation: S2401 Management/Business/Science/Arts concentration, CBSA-normalized.
+- Multi-Modal Wealth: Elite Uniformity (median > 2x CBSA median, low gap) or Elite Outlier (median near CBSA, high gap).
+- CBSA Mapping: Baselines selected by tract CBSA code only (Palo Alto vs San Jose, Bronxville vs NYC).
 
-Weights: wealth 35%, home_cost 25%, education 20%, occupation 10%, luxury_presence 5%.
-Luxury presence: dedicated OSM Overpass query (offices, recreation, arts, specialist healthcare, luxury retail);
-healthcare bucket omitted and weight redistributed when fewer than 3 matching POIs. Falls back to name-based
-brand matching when coordinates or OSM query are unavailable.
-Wealth gap (mean vs median) is used as a quality-control label: super_zip vs unequal vs typical.
+Baselines from data/status_signal_baselines.json; keys_to_try = CBSA key first (from cbsa_to_baseline), then division, then "all".
+Luxury: OSM Overpass query; fallback to brand matching when unavailable.
 """
 
 from __future__ import annotations
@@ -75,29 +74,6 @@ def _normalize_min_max(value: float, min_val: float, max_val: float) -> float:
     return max(0.0, min(100.0, x * 100.0))
 
 
-# Fallback when (city, state) is in a known metro but tract has no CBSA (e.g. older cache).
-def _get_cbsa_baseline_key_city(city: Optional[str], state: Optional[str]) -> Optional[str]:
-    """Return baseline key when (city, state) is in a known metro cluster; else None."""
-    if not city or not state:
-        return None
-    key = f"{city}, {state}".strip()
-    nyc_cluster = {
-        "New York, NY", "Brooklyn, NY", "Queens, NY", "Bronx, NY", "Scarsdale, NY",
-        "The Hamptons, NY", "Greenwich, CT", "Westport, CT", "Princeton, NJ", "Ithaca, NY",
-        "New York, New York", "City of New York, New York", "Brooklyn, New York",
-        "Queens, New York", "Bronx, New York", "Scarsdale, New York", "Village of Scarsdale, New York",
-        "The Hamptons, New York", "Greenwich, Connecticut", "Westport, Connecticut",
-        "Princeton, New Jersey", "Ithaca, New York",
-    }
-    if key in nyc_cluster:
-        return "nyc_metro"
-    if key in {"Philadelphia, PA"}:
-        return "philly_metro"
-    if key in {"Washington, DC", "Bethesda, MD", "Arlington, VA", "Fairfax, VA"}:
-        return "dc_metro"
-    return None
-
-
 def _get_baseline_key_from_cbsa(
     tract: Optional[Dict[str, Any]],
     baselines: Dict[str, Any],
@@ -106,8 +82,8 @@ def _get_baseline_key_from_cbsa(
     division: str,
 ) -> Optional[str]:
     """
-    Resolve the preferred baseline key using CBSA from tract first (geo-targeted), then city fallback.
-    Returns the baseline key to use first (e.g. nyc_metro), or None to use division/national.
+    CBSA mapping: select baselines using the tract's CBSA code only (universal logic, no location-name list).
+    Ensures Palo Alto vs San Jose and Bronxville vs NYC use the same regional baseline.
     """
     cbsa_to_baseline = (baselines.get("cbsa_to_baseline") or {}) if isinstance(baselines.get("cbsa_to_baseline"), dict) else {}
     cbsa_code = (tract or {}).get("cbsa_code")
@@ -115,7 +91,7 @@ def _get_baseline_key_from_cbsa(
         key = cbsa_to_baseline.get(str(cbsa_code).strip())
         if key and key in baselines and key != "cbsa_to_baseline":
             return key
-    return _get_cbsa_baseline_key_city(city, state_abbrev)
+    return None
 
 
 def _get_baseline(
@@ -391,12 +367,24 @@ def compute_luxury_presence_osm(
     return float(detail["luxury_presence"]), detail
 
 
+def _get_cbsa_median_income(baselines: Dict[str, Any], keys_to_try: List[str]) -> Optional[float]:
+    """CBSA median household income for multi-modal wealth (from first baseline key)."""
+    for key in (keys_to_try or []):
+        if key in ("cbsa_to_baseline",):
+            continue
+        data = baselines.get(key) or {}
+        med = data.get("cbsa_median_income")
+        if med is not None and isinstance(med, (int, float)) and med > 0:
+            return float(med)
+    return None
+
+
 def compute_wealth(
     housing_details: Dict[str, Any],
     keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
-    """Wealth Concentration: 60% mean income normalized + 40% wealth gap normalized. Super zips (median>200k, gap<0.25) get n_gap=95."""
+    """Multi-Modal Wealth. Elite Uniformity: median > 2x CBSA median and low gap -> 95. Elite Outlier: median near CBSA but high mean (high gap) -> gap-weighted score. Else: 60% mean + 40% gap, CBSA-normalized."""
     summary = housing_details.get("summary") or housing_details
     mean_income = summary.get("mean_household_income")
     median_income = summary.get("median_household_income")
@@ -404,20 +392,28 @@ def compute_wealth(
         return None
     if mean_income is None or not isinstance(mean_income, (int, float)):
         mean_income = median_income
-    wealth_gap = (float(mean_income) - float(median_income)) / float(median_income)
+    median_f = float(median_income)
+    mean_f = float(mean_income)
+    wealth_gap = (mean_f - median_f) / median_f if median_f else 0.0
 
-    # Elite uniformity (Patrician/Bronxville): median > 200k and low gap -> Asset Stability 95 (no baselines needed)
-    if float(median_income) > 200_000 and wealth_gap < 0.30:
-        return 95.0
+    cbsa_median = _get_cbsa_median_income(baselines, keys_to_try)
+    if cbsa_median is not None and cbsa_median > 0:
+        if median_f > 2.0 * cbsa_median and wealth_gap < 0.25:
+            return 95.0  # Elite Uniformity: status multiplier
 
     min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
     min_gap, max_gap = _get_baseline(baselines, keys_to_try, "wealth", "wealth_gap_ratio")
     if min_mean is None or max_mean is None:
         return None
-    n_mean = _normalize_min_max(float(mean_income), min_mean, max_mean)
+    n_mean = _normalize_min_max(mean_f, min_mean, max_mean)
     n_gap = 50.0
     if min_gap is not None and max_gap is not None:
         n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
+
+    if cbsa_median is not None and cbsa_median > 0:
+        if 0.8 * cbsa_median <= median_f <= 1.2 * cbsa_median and wealth_gap >= 0.50:
+            return round(max(0.0, min(100.0, 0.3 * n_mean + 0.7 * n_gap)), 1)  # Elite Outlier
+
     return 0.6 * n_mean + 0.4 * n_gap
 
 
@@ -471,15 +467,13 @@ def compute_education(
     keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
-    """Education Density: 65% grad_pct + 15% bach_pct + 20% self_employed_pct (all normalized). Uses 0-100 scale."""
+    """Credential-First Education: 80% graduate/professional attainment, 20% bachelors. No self-employed (avoids urban bias). 0-100 scale, CBSA-normalized."""
     edu = social_fabric_details.get("education_attainment") or {}
     grad_pct = edu.get("grad_pct")
     bach_pct = edu.get("bachelor_pct")
-    self_employed_pct = social_fabric_details.get("self_employed_pct")
-    if grad_pct is None and bach_pct is None and self_employed_pct is None:
+    if grad_pct is None and bach_pct is None:
         return None
 
-    # Clamp to 0-100 so legacy/wrong-scale data does not break normalization
     if grad_pct is not None:
         grad_pct = max(0.0, min(100.0, float(grad_pct)))
     if bach_pct is not None:
@@ -487,7 +481,6 @@ def compute_education(
 
     min_grad, max_grad = _get_baseline(baselines, keys_to_try, "education", "grad_pct")
     min_bach, max_bach = _get_baseline(baselines, keys_to_try, "education", "bach_pct")
-    min_se, max_se = _get_baseline(baselines, keys_to_try, "education", "self_employed_pct")
 
     n_grad = 50.0
     if grad_pct is not None and min_grad is not None and max_grad is not None:
@@ -495,10 +488,7 @@ def compute_education(
     n_bach = 50.0
     if bach_pct is not None and min_bach is not None and max_bach is not None:
         n_bach = _normalize_min_max(bach_pct, min_bach, max_bach)
-    n_se = 50.0
-    if self_employed_pct is not None and min_se is not None and max_se is not None:
-        n_se = _normalize_min_max(float(self_employed_pct), min_se, max_se)
-    return 0.65 * n_grad + 0.15 * n_bach + 0.20 * n_se
+    return 0.80 * n_grad + 0.20 * n_bach
 
 
 # S2401 (Occupation by Industry): 001=total, 004=management, 005=business/financial, 007=computer, 008=arch/eng, 012=legal, 013=education, 017=health practitioners
@@ -573,12 +563,8 @@ def compute_occupation(
     archetype: Optional[str] = None,
 ) -> Optional[float]:
     """
-    Occupation Mix. When archetype is set, use archetype-specific weights (archetype must be
-    determined before calling so the correct weights apply).
-    Default/Typical/Plebeian: 50% (finance+arts) + 30% white_collar + 20% self_employed.
-    Patrician: 80% Management/Legal/Healthcare (S2401) + 20% Finance; self-employed weight 0.
-    Parvenu: 50% Finance + 30% Self-Employed + 20% Management.
-    Poseur: 60% Arts/Entertainment/Media + 40% Self-Employed.
+    Occupation. Authority-First default: S2401 Management/Business/Science/Arts (white_collar_pct) normalized against CBSA.
+    When archetype is set: Patrician 80% Mgmt/Legal/Health + 20% Finance; Parvenu 50% Finance + 30% Self-Employed + 20% Mgmt; Poseur 60% Arts + 40% Self-Employed.
     """
     industry = economic_security_details.get("industry_shares_pct") or {}
     fr = industry.get("finance_realestate")
@@ -643,13 +629,10 @@ def compute_occupation(
         n_se = _n(float(self_employed_pct) if self_employed_pct is not None else None, min_se, max_se)
         return 0.60 * n_arts + 0.40 * n_se
 
-    # Typical / Plebeian: 50% (finance+arts) + 30% white_collar + 20% self_employed
-    if finance_arts_pct is None and white_collar_pct is None and self_employed_pct is None:
+    # Universal default: Authority-First Occupation = S2401 Management/Business/Science/Arts (white_collar) normalized against CBSA
+    if white_collar_pct is None:
         return None
-    n_fa = _n(finance_arts_pct, min_fa, max_fa)
-    n_wc = _n(white_collar_pct, min_wc, max_wc)
-    n_se = _n(float(self_employed_pct) if self_employed_pct is not None else None, min_se, max_se)
-    return 0.5 * n_fa + 0.3 * n_wc + 0.2 * n_se
+    return _n(white_collar_pct, min_wc, max_wc)
 
 
 def _brand_matches_for_business_list(business_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
