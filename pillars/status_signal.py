@@ -149,21 +149,21 @@ def _get_archetype(
     ):
         return "Poseur"
 
-    # 3. Patrician (legacy): median > 200k, low gap, high education
+    # 3. Patrician (legacy): median > 200k, low gap, education > 60 (normalization can be harsh; 60 = strong)
     if (
         median_income is not None
         and median_income > 200_000
         and wealth_gap is not None
         and wealth_gap < 0.30
         and education is not None
-        and education > 80
+        and education > 60
     ):
         return "Patrician"
 
-    # 4. Parvenu: high wealth gap OR (high wealth score + luxury retail)
+    # 4. Parvenu: requires high wealth gap (wealthy+uniform cannot be Parvenu)
     if wealth_gap is not None and wealth_gap > 0.50:
         return "Parvenu"
-    if wealth_val > 85 and luxury_retail > 3:
+    if wealth_gap is not None and wealth_gap > 0.40 and wealth_val > 85 and luxury_retail > 3:
         return "Parvenu"
 
     # 5. Poseur: high home cost, lower wealth
@@ -821,12 +821,23 @@ def compute_status_signal_with_breakdown(
     if white_collar_mgmt is not None:
         white_collar_mgmt = float(white_collar_mgmt)
 
-    # Archetype determined BEFORE occupation so compute_occupation can apply archetype-specific weights
-    archetype = _get_archetype(
-        education, wealth, home_cost, luxury_detail, luxury,
-        median_income=median_income, wealth_gap=wealth_gap,
-        grad_pct=grad_pct_raw, white_collar_mgmt=white_collar_mgmt, self_employed_pct=self_employed_pct_raw,
-    )
+    # Wealth-based Patrician trigger (priority): Elite Uniformity at regional scale
+    cbsa_median = _get_cbsa_median_income(baselines, keys_to_try)
+    if (
+        cbsa_median is not None
+        and cbsa_median > 0
+        and median_income is not None
+        and float(median_income) > 2.0 * cbsa_median
+        and wealth_gap is not None
+        and wealth_gap < 0.25
+    ):
+        archetype = "Patrician"
+    else:
+        archetype = _get_archetype(
+            education, wealth, home_cost, luxury_detail, luxury,
+            median_income=median_income, wealth_gap=wealth_gap,
+            grad_pct=grad_pct_raw, white_collar_mgmt=white_collar_mgmt, self_employed_pct=self_employed_pct_raw,
+        )
     occupation = compute_occupation(
         economic_security_details, social_fabric_details, tract, keys_to_try, baselines,
         archetype=archetype,
