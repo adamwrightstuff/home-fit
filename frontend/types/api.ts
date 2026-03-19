@@ -5,6 +5,22 @@ export interface Coordinates {
   lon: number;
 }
 
+/** Top driver item for Status Signal tooltip. */
+export interface StatusSignalTopDriver {
+  label: string;
+  score: number;
+}
+
+/** Status Signal breakdown (archetype, label, insight, top drivers, radius note). */
+export interface StatusSignalBreakdown {
+  archetype?: string;
+  status_label?: string;
+  status_insight?: string;
+  top_drivers?: StatusSignalTopDriver[];
+  analysis_radius_note?: string | null;
+  [key: string]: unknown;
+}
+
 export interface LocationInfo {
   city: string;
   state: string;
@@ -124,8 +140,8 @@ export interface ScoreResponse {
   longevity_index_contributions?: Record<string, number>;
   /** Status Signal: wealth, home cost, education mix, occupation, luxury POI presence (OSM + fallback). Needs four pillars. */
   status_signal?: number;
-  /** Detailed component breakdown for Status Signal. */
-  status_signal_breakdown?: Record<string, unknown>;
+  /** Detailed component breakdown for Status Signal (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
+  status_signal_breakdown?: StatusSignalBreakdown;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;
@@ -179,7 +195,7 @@ export interface RecomputeResponse {
   longevity_index: number | null;
   longevity_index_contributions: Record<string, number> | null;
   status_signal: number | null;
-  status_signal_breakdown: Record<string, unknown> | null;
+  status_signal_breakdown: StatusSignalBreakdown | null;
   happiness_index: number | null;
   happiness_index_breakdown: Record<string, unknown> | null;
   /** Backend composite index spec versions (longevity / status_signal / happiness). */

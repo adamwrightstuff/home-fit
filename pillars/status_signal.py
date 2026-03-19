@@ -115,45 +115,49 @@ def _get_baseline(
     return None, None
 
 
-# Status Signature: archetype classifier (Patrician first so legacy beats retail e.g. Upper East Side)
+# Status Signature: archetype classifier (HNW field calibration). Patrician first.
 def _get_archetype(
     education: Optional[float],
     wealth: Optional[float],
     home_cost: float,
-    wealth_character: str,
     luxury_detail: Optional[Dict[str, Any]],
     luxury_score: float,
+    median_income: Optional[float] = None,
+    wealth_gap: Optional[float] = None,
 ) -> str:
     """
-    Classify into Patrician (Aspen/Bronxville), Parvenu (Tribeca/Star Island), Poseur (West Hollywood/Carroll Gardens), or Typical.
-    Patrician is checked first so neighborhoods with both high education and high luxury retail (e.g. Upper East Side) get legacy status.
+    Classify into Patrician, Parvenu, Poseur, Plebeian, or Typical using strict HNW thresholds.
+    Patrician first so legacy (Bronxville) beats high-velocity (Tribeca) where both apply.
     """
     counts = (luxury_detail or {}).get("counts") or {}
-    private_recreation = int(counts.get("private_recreation") or 0)
     luxury_retail = int(counts.get("luxury_retail") or 0)
-    specialist_healthcare = int(counts.get("specialist_healthcare") or 0)
+    wealth_val = wealth if wealth is not None else 0.0
+    edu_val = education if education is not None else 0.0
 
-    # 1. Patrician first: super_zip + high education + legacy recreation (golf/tennis/yacht)
+    # 1. Patrician: median > 200k, low gap (super zip), high education
     if (
-        wealth_character == "super_zip"
+        median_income is not None
+        and median_income > 200_000
+        and wealth_gap is not None
+        and wealth_gap < 0.30
         and education is not None
         and education > 80
-        and private_recreation > 0
     ):
         return "Patrician"
 
-    # 2. Parvenu: unequal + high luxury retail + high med-spas
-    if (
-        wealth_character == "unequal"
-        and luxury_retail > 3
-        and specialist_healthcare >= 3
-    ):
+    # 2. Parvenu: high wealth gap OR (high wealth score + luxury retail)
+    if wealth_gap is not None and wealth_gap > 0.50:
+        return "Parvenu"
+    if wealth_val > 85 and luxury_retail > 3:
         return "Parvenu"
 
-    # 3. Poseur: high home cost, stretched wealth, high luxury presence (arts/galleries/boutiques)
-    wealth_val = wealth if wealth is not None else 0.0
-    if home_cost > 80 and wealth_val < 65 and luxury_score > 60:
+    # 3. Poseur: high home cost, lower wealth
+    if home_cost > 80 and wealth_val < 65:
         return "Poseur"
+
+    # 4. Plebeian: low across wealth, education, home cost
+    if wealth_val < 40 and edu_val < 40 and home_cost < 40:
+        return "Plebeian"
 
     return "Typical"
 
@@ -161,12 +165,11 @@ def _get_archetype(
 def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float, float]:
     """Weights (wealth, home_cost, education, occupation, luxury) for archetype. Sum = 1."""
     if archetype == "Patrician":
-        # Bronxville/Old Greenwich: JDs/MDs over Rolex stores
-        return (0.177, 0.30, 0.45, 0.053, 0.02)
+        return (0.20, 0.25, 0.50, 0.03, 0.02)
     if archetype == "Parvenu":
-        # Tribeca/Star Island: financial horsepower + high-end services
-        return (0.45, 0.182, 0.145, 0.073, 0.15)
-    # Poseur, Typical: default
+        return (0.45, 0.15, 0.10, 0.10, 0.20)
+    if archetype == "Poseur":
+        return (0.05, 0.50, 0.15, 0.05, 0.25)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION, W_LUXURY)
 
 
@@ -176,8 +179,62 @@ def _get_status_label(archetype: str) -> str:
         "Patrician": "Legacy Establishment",
         "Parvenu": "High-Velocity Wealth",
         "Poseur": "Lifestyle Premium",
+        "Plebeian": "Traditional Community",
         "Typical": "Typical",
     }.get(archetype, "Typical")
+
+
+def _get_status_insight(archetype: str) -> str:
+    """One-sentence tooltip 'why' for the UI."""
+    return {
+        "Patrician": "High-floor exclusivity driven by educational pedigree and stable assets.",
+        "Parvenu": "Elite status driven by extreme income outliers and luxury consumption.",
+        "Poseur": "Aspirational status driven by brand-name zip code and cultural amenities.",
+        "Plebeian": "Functional profile with no dominant elite signatures.",
+        "Typical": "Standard socio-economic profile with no dominant elite signatures.",
+    }.get(archetype, "Standard socio-economic profile with no dominant elite signatures.")
+
+
+_DRIVER_LABELS: Dict[str, str] = {
+    "wealth": "Asset Stability",
+    "home_cost": "Home Value",
+    "education": "Education",
+    "occupation": "Occupation Mix",
+    "luxury_presence": "Luxury Presence",
+}
+
+_DRIVER_LABELS_PARVENU: Dict[str, str] = {
+    "wealth": "Income Velocity",
+    "luxury_presence": "Luxury Retail",
+}
+
+
+def _build_top_drivers(
+    wealth: Optional[float],
+    home_cost: float,
+    education: Optional[float],
+    occupation: Optional[float],
+    luxury: float,
+    archetype: str,
+) -> List[Dict[str, Any]]:
+    """Top 3 components by score for tooltip; labels vary by archetype."""
+    labels = dict(_DRIVER_LABELS)
+    if archetype == "Parvenu":
+        labels.update(_DRIVER_LABELS_PARVENU)
+    items: List[Tuple[str, float]] = []
+    if wealth is not None:
+        items.append(("wealth", round(wealth, 1)))
+    items.append(("home_cost", round(home_cost, 1)))
+    if education is not None:
+        items.append(("education", round(education, 1)))
+    if occupation is not None:
+        items.append(("occupation", round(occupation, 1)))
+    items.append(("luxury_presence", round(luxury, 1)))
+    items.sort(key=lambda x: -x[1])
+    out: List[Dict[str, Any]] = []
+    for key, score in items[:3]:
+        out.append({"label": labels.get(key, key), "score": score})
+    return out
 
 
 # Luxury OSM sub-weights (sum to 1). If specialist_healthcare count < 3, HC is excluded and 15% redistributed.
@@ -297,7 +354,7 @@ def compute_wealth(
     keys_to_try: List[str],
     baselines: Dict[str, Any],
 ) -> Optional[float]:
-    """Wealth Concentration: 60% mean income normalized + 40% wealth gap normalized."""
+    """Wealth Concentration: 60% mean income normalized + 40% wealth gap normalized. Super zips (median>200k, gap<0.25) get n_gap=95."""
     summary = housing_details.get("summary") or housing_details
     mean_income = summary.get("mean_household_income")
     median_income = summary.get("median_household_income")
@@ -312,9 +369,12 @@ def compute_wealth(
     if min_mean is None or max_mean is None:
         return None
     n_mean = _normalize_min_max(float(mean_income), min_mean, max_mean)
-    n_gap = 50.0
-    if min_gap is not None and max_gap is not None:
-        n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
+    if float(median_income) > 200_000 and wealth_gap < 0.25:
+        n_gap = 95.0
+    else:
+        n_gap = 50.0
+        if min_gap is not None and max_gap is not None:
+            n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
     return 0.6 * n_mean + 0.4 * n_gap
 
 
@@ -601,6 +661,9 @@ def compute_status_signal_with_breakdown(
         "wealth_character": "typical",
         "archetype": "Typical",
         "status_label": "Typical",
+        "status_insight": "",
+        "top_drivers": [],
+        "analysis_radius_note": None,
     }
     if not housing_details or not social_fabric_details or not economic_security_details:
         return None, breakdown
@@ -650,13 +713,32 @@ def compute_status_signal_with_breakdown(
         luxury_detail = {"source": "brand_fallback", "reason": "no_coordinates"}
 
     wealth_character = _wealth_character(housing_details)
+    median_income: Optional[float] = None
+    wealth_gap: Optional[float] = None
+    med = summary.get("median_household_income")
+    mean = summary.get("mean_household_income")
+    if med is not None and isinstance(med, (int, float)) and med > 0:
+        median_income = float(med)
+        if mean is not None and isinstance(mean, (int, float)):
+            wealth_gap = (float(mean) - float(med)) / float(med)
 
     # Status Signature: archetype (Patrician first) + dynamic weights + UI label
     archetype = _get_archetype(
-        education, wealth, home_cost, wealth_character, luxury_detail, luxury
+        education, wealth, home_cost, luxury_detail, luxury,
+        median_income=median_income, wealth_gap=wealth_gap,
     )
+    # Patrician: re-run luxury at 4km to capture estates/country clubs
+    analysis_radius_note: Optional[str] = None
+    if archetype == "Patrician" and lat is not None and lon is not None and isinstance(lat, (int, float)) and isinstance(lon, (int, float)) and math.isfinite(float(lat)) and math.isfinite(float(lon)):
+        luxury, luxury_detail = compute_luxury_presence_osm(
+            float(lat), float(lon), keys_to_try, baselines, radius_m=4000
+        )
+        analysis_radius_note = "Analyzed within a 4km estate radius."
+
     w_wealth, w_home_cost, w_education, w_occupation, w_luxury = _get_archetype_weights(archetype)
     status_label = _get_status_label(archetype)
+    status_insight = _get_status_insight(archetype)
+    top_drivers = _build_top_drivers(wealth, home_cost, education, occupation, luxury, archetype)
 
     breakdown["wealth"] = wealth
     breakdown["home_cost"] = home_cost
@@ -667,6 +749,9 @@ def compute_status_signal_with_breakdown(
     breakdown["wealth_character"] = wealth_character
     breakdown["archetype"] = archetype
     breakdown["status_label"] = status_label
+    breakdown["status_insight"] = status_insight
+    breakdown["top_drivers"] = top_drivers
+    breakdown["analysis_radius_note"] = analysis_radius_note
 
     if wealth is None and education is None and occupation is None:
         return None, breakdown

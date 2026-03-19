@@ -12,7 +12,7 @@ import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
 import { totalFromPartialPillarScores, getPillarWeightsAndContributions, getPillarWeightsFromPriorities } from '@/lib/reweight'
 import { getScoreWithProgress, recomputeComposites } from '@/lib/api'
-import type { GeocodeResult } from '@/types/api'
+import type { GeocodeResult, StatusSignalBreakdown } from '@/types/api'
 import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
@@ -159,6 +159,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [exportModalOpen, setExportModalOpen] = useState(false)
   /** Status Signal (post-pillars); set from initialPayload or after running the four pillars. */
   const [statusSignal, setStatusSignal] = useState<number | null>(() => initialPayload?.status_signal ?? null)
+  const [statusSignalBreakdown, setStatusSignalBreakdown] = useState<StatusSignalBreakdown | null>(() => initialPayload?.status_signal_breakdown ?? null)
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
   /** Happiness Index (composite); set from initialPayload or after scoring. */
   const [happinessIndex, setHappinessIndex] = useState<number | null>(() => initialPayload?.happiness_index ?? null)
@@ -357,6 +358,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
+      const bd = (resp as { status_signal_breakdown?: StatusSignalBreakdown }).status_signal_breakdown
+      if (bd != null) setStatusSignalBreakdown(bd)
       if (typeof (resp as { happiness_index?: number }).happiness_index === 'number') {
         setHappinessIndex((resp as { happiness_index: number }).happiness_index)
       }
@@ -393,6 +396,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       })
       if (resp.longevity_index != null) setLongevityIndexState(resp.longevity_index)
       if (resp.status_signal != null) setStatusSignal(resp.status_signal)
+      if (resp.status_signal_breakdown != null) setStatusSignalBreakdown(resp.status_signal_breakdown)
       if (resp.happiness_index != null) setHappinessIndex(resp.happiness_index)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to refresh indices.')
@@ -654,6 +658,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       if (typeof (resp as { status_signal?: number }).status_signal === 'number') {
         setStatusSignal((resp as { status_signal: number }).status_signal)
       }
+      const bd = (resp as { status_signal_breakdown?: StatusSignalBreakdown }).status_signal_breakdown
+      if (bd != null) setStatusSignalBreakdown(bd)
       if (typeof (resp as { happiness_index?: number }).happiness_index === 'number') {
         setHappinessIndex((resp as { happiness_index: number }).happiness_index)
       }
@@ -792,7 +798,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             <span style={{ fontWeight: 600, color: statusSignal != null ? 'var(--hf-text-secondary)' : 'var(--hf-text-secondary)' }}>
               {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
             </span>
-            <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} />
+            <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} breakdown={statusSignalBreakdown} />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Happiness Index</span>
