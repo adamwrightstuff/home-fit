@@ -115,6 +115,71 @@ def _get_baseline(
     return None, None
 
 
+# Status Signature: archetype classifier (Patrician first so legacy beats retail e.g. Upper East Side)
+def _get_archetype(
+    education: Optional[float],
+    wealth: Optional[float],
+    home_cost: float,
+    wealth_character: str,
+    luxury_detail: Optional[Dict[str, Any]],
+    luxury_score: float,
+) -> str:
+    """
+    Classify into Patrician (Aspen/Bronxville), Parvenu (Tribeca/Star Island), Poseur (West Hollywood/Carroll Gardens), or Typical.
+    Patrician is checked first so neighborhoods with both high education and high luxury retail (e.g. Upper East Side) get legacy status.
+    """
+    counts = (luxury_detail or {}).get("counts") or {}
+    private_recreation = int(counts.get("private_recreation") or 0)
+    luxury_retail = int(counts.get("luxury_retail") or 0)
+    specialist_healthcare = int(counts.get("specialist_healthcare") or 0)
+
+    # 1. Patrician first: super_zip + high education + legacy recreation (golf/tennis/yacht)
+    if (
+        wealth_character == "super_zip"
+        and education is not None
+        and education > 80
+        and private_recreation > 0
+    ):
+        return "Patrician"
+
+    # 2. Parvenu: unequal + high luxury retail + high med-spas
+    if (
+        wealth_character == "unequal"
+        and luxury_retail > 3
+        and specialist_healthcare >= 3
+    ):
+        return "Parvenu"
+
+    # 3. Poseur: high home cost, stretched wealth, high luxury presence (arts/galleries/boutiques)
+    wealth_val = wealth if wealth is not None else 0.0
+    if home_cost > 80 and wealth_val < 65 and luxury_score > 60:
+        return "Poseur"
+
+    return "Typical"
+
+
+def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float, float]:
+    """Weights (wealth, home_cost, education, occupation, luxury) for archetype. Sum = 1."""
+    if archetype == "Patrician":
+        # Bronxville/Old Greenwich: JDs/MDs over Rolex stores
+        return (0.177, 0.30, 0.45, 0.053, 0.02)
+    if archetype == "Parvenu":
+        # Tribeca/Star Island: financial horsepower + high-end services
+        return (0.45, 0.182, 0.145, 0.073, 0.15)
+    # Poseur, Typical: default
+    return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION, W_LUXURY)
+
+
+def _get_status_label(archetype: str) -> str:
+    """UI badge label for archetype."""
+    return {
+        "Patrician": "Legacy Establishment",
+        "Parvenu": "High-Velocity Wealth",
+        "Poseur": "Lifestyle Premium",
+        "Typical": "Typical",
+    }.get(archetype, "Typical")
+
+
 # Luxury OSM sub-weights (sum to 1). If specialist_healthcare count < 3, HC is excluded and 15% redistributed.
 _LUX_W_WEALTH = 0.35
 _LUX_W_PRIVATE = 0.25
@@ -519,8 +584,10 @@ def compute_status_signal_with_breakdown(
     luxury_radius_m: int = 1500,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
-    Returns (score, breakdown) with components 0-100 and wealth_character (super_zip | unequal | typical).
-    Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character.
+    Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
+    Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character,
+    archetype (Patrician|Parvenu|Poseur|Typical), status_label (UI badge e.g. Legacy Establishment).
+    Weights vary by archetype (Patrician: education/home_cost; Parvenu: wealth/luxury). Patrician checked before Parvenu.
     When city is provided, uses CBSA baseline (e.g. nyc_metro) if the location is in a known cluster and
     that key exists in baselines; otherwise uses Census division, then "all".
     """
@@ -532,6 +599,8 @@ def compute_status_signal_with_breakdown(
         "luxury_presence": None,
         "luxury_presence_detail": None,
         "wealth_character": "typical",
+        "archetype": "Typical",
+        "status_label": "Typical",
     }
     if not housing_details or not social_fabric_details or not economic_security_details:
         return None, breakdown
@@ -582,6 +651,13 @@ def compute_status_signal_with_breakdown(
 
     wealth_character = _wealth_character(housing_details)
 
+    # Status Signature: archetype (Patrician first) + dynamic weights + UI label
+    archetype = _get_archetype(
+        education, wealth, home_cost, wealth_character, luxury_detail, luxury
+    )
+    w_wealth, w_home_cost, w_education, w_occupation, w_luxury = _get_archetype_weights(archetype)
+    status_label = _get_status_label(archetype)
+
     breakdown["wealth"] = wealth
     breakdown["home_cost"] = home_cost
     breakdown["education"] = education
@@ -589,6 +665,8 @@ def compute_status_signal_with_breakdown(
     breakdown["luxury_presence"] = luxury
     breakdown["luxury_presence_detail"] = luxury_detail
     breakdown["wealth_character"] = wealth_character
+    breakdown["archetype"] = archetype
+    breakdown["status_label"] = status_label
 
     if wealth is None and education is None and occupation is None:
         return None, breakdown
@@ -596,18 +674,18 @@ def compute_status_signal_with_breakdown(
     total_w = 0.0
     score = 0.0
     if wealth is not None:
-        total_w += W_WEALTH
-        score += W_WEALTH * wealth
-    total_w += W_HOME_COST
-    score += W_HOME_COST * home_cost
+        total_w += w_wealth
+        score += w_wealth * wealth
+    total_w += w_home_cost
+    score += w_home_cost * home_cost
     if education is not None:
-        total_w += W_EDUCATION
-        score += W_EDUCATION * education
+        total_w += w_education
+        score += w_education * education
     if occupation is not None:
-        total_w += W_OCCUPATION
-        score += W_OCCUPATION * occupation
-    total_w += W_LUXURY
-    score += W_LUXURY * luxury
+        total_w += w_occupation
+        score += w_occupation * occupation
+    total_w += w_luxury
+    score += w_luxury * luxury
 
     if total_w <= 0:
         return None, breakdown
