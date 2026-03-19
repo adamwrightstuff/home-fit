@@ -1,4 +1,9 @@
 {
+  "cbsa_to_baseline": {
+    "35620": "nyc_metro",
+    "31080": "la_metro",
+    "33100": "miami_metro"
+  },
   ",_california": {
     "brand": {},
     "education": {},

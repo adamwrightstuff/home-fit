@@ -75,10 +75,9 @@ def _normalize_min_max(value: float, min_val: float, max_val: float) -> float:
     return max(0.0, min(100.0, x * 100.0))
 
 
-def _get_cbsa_baseline_key(city: Optional[str], state: Optional[str]) -> Optional[str]:
-    """Return CBSA baseline key (e.g. nyc_metro) when (city, state) is in a known metro cluster; else None.
-    Must match the same clusters as scripts/build_status_signal_baselines_from_results.get_cbsa_key.
-    """
+# Fallback when (city, state) is in a known metro but tract has no CBSA (e.g. older cache).
+def _get_cbsa_baseline_key_city(city: Optional[str], state: Optional[str]) -> Optional[str]:
+    """Return baseline key when (city, state) is in a known metro cluster; else None."""
     if not city or not state:
         return None
     key = f"{city}, {state}".strip()
@@ -97,6 +96,26 @@ def _get_cbsa_baseline_key(city: Optional[str], state: Optional[str]) -> Optiona
     if key in {"Washington, DC", "Bethesda, MD", "Arlington, VA", "Fairfax, VA"}:
         return "dc_metro"
     return None
+
+
+def _get_baseline_key_from_cbsa(
+    tract: Optional[Dict[str, Any]],
+    baselines: Dict[str, Any],
+    city: Optional[str],
+    state_abbrev: Optional[str],
+    division: str,
+) -> Optional[str]:
+    """
+    Resolve the preferred baseline key using CBSA from tract first (geo-targeted), then city fallback.
+    Returns the baseline key to use first (e.g. nyc_metro), or None to use division/national.
+    """
+    cbsa_to_baseline = (baselines.get("cbsa_to_baseline") or {}) if isinstance(baselines.get("cbsa_to_baseline"), dict) else {}
+    cbsa_code = (tract or {}).get("cbsa_code")
+    if cbsa_code is not None and cbsa_to_baseline:
+        key = cbsa_to_baseline.get(str(cbsa_code).strip())
+        if key and key in baselines and key != "cbsa_to_baseline":
+            return key
+    return _get_cbsa_baseline_key_city(city, state_abbrev)
 
 
 def _get_baseline(
@@ -708,8 +727,8 @@ def compute_status_signal_with_breakdown(
     Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character,
     archetype (Patrician|Parvenu|Poseur|Typical), status_label (UI badge e.g. Legacy Establishment).
     Weights vary by archetype (Patrician: education/home_cost; Parvenu: wealth/luxury). Patrician checked before Parvenu.
-    When city is provided, uses CBSA baseline (e.g. nyc_metro) if the location is in a known cluster and
-    that key exists in baselines; otherwise uses Census division, then "all".
+    Baselines: tract CBSA (from get_census_tract) is mapped via cbsa_to_baseline in baselines JSON (e.g. 35620->nyc_metro);
+    if no CBSA match, falls back to division then "all" (national).
     """
     breakdown: Dict[str, Any] = {
         "wealth": None,
@@ -733,10 +752,12 @@ def compute_status_signal_with_breakdown(
     if not baselines:
         keys_to_try = [division, "all"]
     else:
-        # Try CBSA first when in a metro cluster, then division, then "all"
-        cbsa_key = _get_cbsa_baseline_key(city, state_abbrev)
-        baseline_key = cbsa_key if (cbsa_key and baselines.get(cbsa_key)) else division
-        keys_to_try = [baseline_key]
+        # Geo-targeted: tract CBSA (from get_census_tract) -> baseline key via cbsa_to_baseline; else city fallback; else national
+        cbsa_baseline_key = _get_baseline_key_from_cbsa(tract, baselines, city, state_abbrev, division)
+        if cbsa_baseline_key and baselines.get(cbsa_baseline_key):
+            keys_to_try = [cbsa_baseline_key]
+        else:
+            keys_to_try = []
         if division not in keys_to_try:
             keys_to_try.append(division)
         if "all" not in keys_to_try:
