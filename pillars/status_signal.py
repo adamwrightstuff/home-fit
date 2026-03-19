@@ -458,8 +458,17 @@ def compute_education(
     return 0.65 * n_grad + 0.15 * n_bach + 0.20 * n_se
 
 
-def _fetch_white_collar_pct_tract(tract: Dict[str, Any]) -> Optional[float]:
-    """Fetch S2401 at tract level for white collar % (management + professional + related)."""
+# S2401 (Occupation by Industry): 001=total, 004=management, 005=business/financial, 007=computer, 008=arch/eng, 012=legal, 013=education, 017=health practitioners
+_S2401_VARS = [
+    "S2401_C01_001E", "S2401_C01_004E", "S2401_C01_005E", "S2401_C01_007E", "S2401_C01_008E",
+    "S2401_C01_012E", "S2401_C01_013E", "S2401_C01_017E",
+]
+# Indices 1,5,7 = management, legal, health (for Patrician 80% weight)
+_S2401_MGMT_LEGAL_HEALTH_INDICES = (1, 5, 7)
+
+
+def _fetch_s2401_occupation_shares(tract: Optional[Dict[str, Any]]) -> Optional[Dict[str, float]]:
+    """Fetch S2401 at tract level. Returns white_collar_pct and management_legal_healthcare_pct (Management+Legal+Healthcare)."""
     from data_sources.census_api import CENSUS_API_KEY, CENSUS_BASE_URL, _make_request_with_retry
     if not tract or not CENSUS_API_KEY:
         return None
@@ -468,13 +477,9 @@ def _fetch_white_collar_pct_tract(tract: Dict[str, Any]) -> Optional[float]:
     tract_fips = tract.get("tract_fips")
     if not all([state_fips, county_fips, tract_fips]):
         return None
-    vars_list = [
-        "S2401_C01_001E", "S2401_C01_004E", "S2401_C01_005E", "S2401_C01_007E", "S2401_C01_008E",
-        "S2401_C01_012E", "S2401_C01_013E", "S2401_C01_017E",
-    ]
     url = f"{CENSUS_BASE_URL}/2022/acs/acs5/subject"
     params = {
-        "get": ",".join(vars_list),
+        "get": ",".join(_S2401_VARS),
         "for": f"tract:{tract_fips}",
         "in": f"state:{state_fips} county:{county_fips}",
         "key": CENSUS_API_KEY,
@@ -496,11 +501,24 @@ def _fetch_white_collar_pct_tract(tract: Dict[str, Any]) -> Optional[float]:
             return None
         white = sum(
             float(row[i]) if i < len(row) and row[i] not in err else 0
-            for i in range(1, len(vars_list))
+            for i in range(1, len(_S2401_VARS))
         )
-        return 100.0 * white / t
+        mgmt_legal_health = sum(
+            float(row[i]) if i < len(row) and row[i] not in err else 0
+            for i in _S2401_MGMT_LEGAL_HEALTH_INDICES
+        )
+        return {
+            "white_collar_pct": 100.0 * white / t,
+            "management_legal_healthcare_pct": 100.0 * mgmt_legal_health / t,
+        }
     except Exception:
         return None
+
+
+def _fetch_white_collar_pct_tract(tract: Optional[Dict[str, Any]]) -> Optional[float]:
+    """Fetch S2401 at tract level for white collar % (management + professional + related)."""
+    out = _fetch_s2401_occupation_shares(tract)
+    return out.get("white_collar_pct") if out else None
 
 
 def compute_occupation(
@@ -509,11 +527,20 @@ def compute_occupation(
     tract: Optional[Dict[str, Any]],
     keys_to_try: List[str],
     baselines: Dict[str, Any],
+    archetype: Optional[str] = None,
 ) -> Optional[float]:
-    """Occupation Mix: 50% (finance+arts) + 30% white_collar + 20% self_employed (normalized)."""
+    """
+    Occupation Mix. When archetype is set, use archetype-specific weights (archetype must be
+    determined before calling so the correct weights apply).
+    Default/Typical/Plebeian: 50% (finance+arts) + 30% white_collar + 20% self_employed.
+    Patrician: 80% Management/Legal/Healthcare (S2401) + 20% Finance; self-employed weight 0.
+    Parvenu: 50% Finance + 30% Self-Employed + 20% Management.
+    Poseur: 60% Arts/Entertainment/Media + 40% Self-Employed.
+    """
     industry = economic_security_details.get("industry_shares_pct") or {}
     fr = industry.get("finance_realestate")
     lh = industry.get("leisure_hospitality")
+    finance_pct = float(fr) if fr is not None and isinstance(fr, (int, float)) else None
     finance_arts_pct = None
     if fr is not None and lh is not None:
         try:
@@ -528,24 +555,57 @@ def compute_occupation(
     white_collar_pct = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
     if white_collar_pct is None and tract:
         white_collar_pct = _fetch_white_collar_pct_tract(tract)
-    self_employed_pct = social_fabric_details.get("self_employed_pct")
+    management_legal_healthcare_pct: Optional[float] = None
+    if archetype == "Patrician" and tract:
+        s2401 = _fetch_s2401_occupation_shares(tract)
+        management_legal_healthcare_pct = (s2401 or {}).get("management_legal_healthcare_pct")
 
-    if finance_arts_pct is None and white_collar_pct is None and self_employed_pct is None:
-        return None
+    self_employed_pct = social_fabric_details.get("self_employed_pct")
+    arts_pct = float(lh) if lh is not None and isinstance(lh, (int, float)) else None
 
     min_fa, max_fa = _get_baseline(baselines, keys_to_try, "occupation", "finance_arts_pct")
     min_wc, max_wc = _get_baseline(baselines, keys_to_try, "occupation", "white_collar_pct")
     min_se, max_se = _get_baseline(baselines, keys_to_try, "occupation", "self_employed_pct")
+    min_mlh, max_mlh = _get_baseline(baselines, keys_to_try, "occupation", "management_legal_healthcare_pct")
+    if min_mlh is None:
+        min_mlh, max_mlh = min_wc, max_wc
 
-    n_fa = 50.0
-    if finance_arts_pct is not None and min_fa is not None and max_fa is not None:
-        n_fa = _normalize_min_max(finance_arts_pct, min_fa, max_fa)
-    n_wc = 50.0
-    if white_collar_pct is not None and min_wc is not None and max_wc is not None:
-        n_wc = _normalize_min_max(white_collar_pct, min_wc, max_wc)
-    n_se = 50.0
-    if self_employed_pct is not None and min_se is not None and max_se is not None:
-        n_se = _normalize_min_max(float(self_employed_pct), min_se, max_se)
+    def _n(val: Optional[float], mn: Optional[float], mx: Optional[float], default: float = 50.0) -> float:
+        if val is None or mn is None or mx is None:
+            return default
+        return _normalize_min_max(val, mn, mx)
+
+    # Patrician: 80% Management/Legal/Healthcare (S2401), 20% Finance, 0% self-employed
+    if archetype == "Patrician":
+        if management_legal_healthcare_pct is None and finance_pct is None:
+            return None
+        n_mlh = _n(management_legal_healthcare_pct, min_mlh, max_mlh)
+        n_fin = _n(finance_pct, min_fa, max_fa) if finance_pct is not None else 50.0
+        return 0.8 * n_mlh + 0.2 * n_fin
+
+    # Parvenu: 50% Finance, 30% Self-Employed, 20% Management (white_collar)
+    if archetype == "Parvenu":
+        if finance_pct is None and white_collar_pct is None and self_employed_pct is None:
+            return None
+        n_fin = _n(finance_pct, min_fa, max_fa)
+        n_se = _n(float(self_employed_pct) if self_employed_pct is not None else None, min_se, max_se)
+        n_wc = _n(white_collar_pct, min_wc, max_wc)
+        return 0.50 * n_fin + 0.30 * n_se + 0.20 * n_wc
+
+    # Poseur: 60% Arts/Entertainment/Media, 40% Self-Employed
+    if archetype == "Poseur":
+        if arts_pct is None and self_employed_pct is None:
+            return None
+        n_arts = _n(arts_pct, min_fa, max_fa)
+        n_se = _n(float(self_employed_pct) if self_employed_pct is not None else None, min_se, max_se)
+        return 0.60 * n_arts + 0.40 * n_se
+
+    # Typical / Plebeian: 50% (finance+arts) + 30% white_collar + 20% self_employed
+    if finance_arts_pct is None and white_collar_pct is None and self_employed_pct is None:
+        return None
+    n_fa = _n(finance_arts_pct, min_fa, max_fa)
+    n_wc = _n(white_collar_pct, min_wc, max_wc)
+    n_se = _n(float(self_employed_pct) if self_employed_pct is not None else None, min_se, max_se)
     return 0.5 * n_fa + 0.3 * n_wc + 0.2 * n_se
 
 
@@ -687,9 +747,6 @@ def compute_status_signal_with_breakdown(
     median_home = summary.get("median_home_value")
     home_cost = compute_home_cost(median_home, keys_to_try, baselines)
     education = compute_education(social_fabric_details, keys_to_try, baselines)
-    occupation = compute_occupation(
-        economic_security_details, social_fabric_details, tract, keys_to_try, baselines
-    )
     luxury_detail: Optional[Dict[str, Any]] = None
     if (
         lat is not None
@@ -722,10 +779,14 @@ def compute_status_signal_with_breakdown(
         if mean is not None and isinstance(mean, (int, float)):
             wealth_gap = (float(mean) - float(med)) / float(med)
 
-    # Status Signature: archetype (Patrician first) + dynamic weights + UI label
+    # Archetype determined BEFORE occupation so compute_occupation can apply archetype-specific weights
     archetype = _get_archetype(
         education, wealth, home_cost, luxury_detail, luxury,
         median_income=median_income, wealth_gap=wealth_gap,
+    )
+    occupation = compute_occupation(
+        economic_security_details, social_fabric_details, tract, keys_to_try, baselines,
+        archetype=archetype,
     )
     # Patrician: re-run luxury at 4km to capture estates/country clubs
     analysis_radius_note: Optional[str] = None
