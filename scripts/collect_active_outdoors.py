@@ -3,11 +3,19 @@
 Active Outdoors pillar collector.
 
 Reads locations from data/active_outdoors_locations.csv, calls the HomeFit API
-with only=active_outdoors and diagnostics=true for each location, and writes:
-  - analysis/active_outdoors_scores_YYYYMMDD.jsonl (full response per line, for Ridge/analysis)
+with only=active_outdoors and writes:
+  - analysis/active_outdoors_scores_YYYYMMDD.jsonl (full response per line)
   - analysis/active_outdoors_summary_YYYYMMDD.csv (location, score, components, category, expected_score_range)
 
-Uses same env and rate-limiting pattern as scripts/collector.py.
+Uses POST /score/jobs + polling GET /score/jobs/{id} so long-running pillar work does not hit
+Railway/proxy synchronous HTTP timeouts (502). Override with HOMEFIT_AO_USE_SYNC=1 to use GET /score
+(local or debugging).
+
+Default API: https://home-fit-production.up.railway.app (override with HOMEFIT_BASE_URL).
+
+If production requires auth: set HOMEFIT_PROXY_SECRET (X-HomeFit-Proxy-Secret) and/or HOMEFIT_API_KEY (Bearer).
+
+Uses same rate-limiting pattern between locations as before.
 """
 
 import csv
@@ -33,8 +41,15 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 ANALYSIS_DIR = Path(__file__).parent.parent / "analysis"
 LOCATIONS_CSV = DATA_DIR / "active_outdoors_locations.csv"
 
-HOMEFIT_BASE_URL = os.getenv("HOMEFIT_BASE_URL", "").strip()
+HOMEFIT_BASE_URL = (
+    os.getenv("HOMEFIT_BASE_URL", "https://home-fit-production.up.railway.app")
+    or "https://home-fit-production.up.railway.app"
+).strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
+HOMEFIT_PROXY_SECRET = os.getenv("HOMEFIT_PROXY_SECRET", "").strip()
+
+# Sync GET /score is prone to 502 on Railway when the request exceeds edge timeout.
+USE_SYNC_SCORE = os.getenv("HOMEFIT_AO_USE_SYNC", "").strip().lower() in ("1", "true", "yes")
 
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0
 ADAPTIVE_DELAY_FACTOR = 0.1
@@ -43,23 +58,38 @@ MAX_RETRIES = 3
 RETRY_BACKOFF_FACTOR = 2.0
 REQUEST_TIMEOUT_SECONDS = 300
 
+JOB_POST_TIMEOUT_SECONDS = 120.0
+JOB_POLL_INTERVAL_SECONDS = float(os.getenv("HOMEFIT_JOB_POLL_INTERVAL_SECONDS", "2.0"))
+JOB_MAX_WAIT_SECONDS = float(os.getenv("HOMEFIT_JOB_MAX_WAIT_SECONDS", "900"))
 
-def call_active_outdoors_api(location: str) -> Optional[Dict]:
-    """Call /score with only=active_outdoors and diagnostics=true."""
+
+def _auth_headers() -> Dict[str, str]:
+    headers: Dict[str, str] = {}
+    if HOMEFIT_API_KEY:
+        headers["Authorization"] = f"Bearer {HOMEFIT_API_KEY}"
+    if HOMEFIT_PROXY_SECRET:
+        headers["X-HomeFit-Proxy-Secret"] = HOMEFIT_PROXY_SECRET
+    return headers
+
+
+def _score_params(location: str) -> Dict[str, str]:
+    return {
+        "location": location,
+        "only": "active_outdoors",
+        "enable_schools": "false",
+    }
+
+
+def call_active_outdoors_api_sync(location: str) -> Optional[Dict]:
+    """Synchronous GET /score (may 502 on Railway for slow requests)."""
     base_url = HOMEFIT_BASE_URL.rstrip("/")
     url = f"{base_url}/score"
     if not base_url:
         logger.error("HOMEFIT_BASE_URL is empty")
         return None
-    params = {
-        "location": location,
-        "only": "active_outdoors",
-        "diagnostics": "true",
-        "enable_schools": "false",
-    }
-    headers = {}
-    if HOMEFIT_API_KEY:
-        headers["Authorization"] = f"Bearer {HOMEFIT_API_KEY}"
+    params = dict(_score_params(location))
+    params["diagnostics"] = "true"
+    headers = _auth_headers()
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -88,6 +118,94 @@ def call_active_outdoors_api(location: str) -> Optional[Dict]:
 
     logger.error(f"Failed for '{location}' after {MAX_RETRIES} attempts")
     return None
+
+
+def call_active_outdoors_api_async(location: str) -> Optional[Dict]:
+    """Create job (POST) then poll until done; returns full score payload (same shape as GET /score)."""
+    base_url = HOMEFIT_BASE_URL.rstrip("/")
+    if not base_url:
+        logger.error("HOMEFIT_BASE_URL is empty")
+        return None
+    create_url = f"{base_url}/score/jobs"
+    poll_url_tpl = f"{base_url}/score/jobs/{{job_id}}"
+    headers = _auth_headers()
+    params = _score_params(location)
+
+    try:
+        r = requests.post(
+            create_url,
+            params=params,
+            headers=headers,
+            timeout=JOB_POST_TIMEOUT_SECONDS,
+        )
+    except requests.exceptions.RequestException as e:
+        logger.error(f"POST /score/jobs failed for '{location}': {e}")
+        return None
+
+    if r.status_code != 200:
+        logger.error(
+            f"POST /score/jobs returned {r.status_code} for '{location}': {r.text[:500]}"
+        )
+        return None
+
+    try:
+        body = r.json()
+    except json.JSONDecodeError:
+        logger.error(f"POST /score/jobs invalid JSON for '{location}'")
+        return None
+
+    job_id = body.get("job_id")
+    if not job_id:
+        logger.error(f"No job_id in response for '{location}': {body!r}")
+        return None
+
+    logger.info(f"  job_id={job_id} (polling…)")
+    deadline = time.time() + JOB_MAX_WAIT_SECONDS
+    while time.time() < deadline:
+        try:
+            pr = requests.get(
+                poll_url_tpl.format(job_id=job_id),
+                headers=headers,
+                timeout=60.0,
+            )
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Poll error for job {job_id}: {e}")
+            time.sleep(JOB_POLL_INTERVAL_SECONDS)
+            continue
+
+        if pr.status_code != 200:
+            logger.warning(f"GET /score/jobs/{job_id} -> {pr.status_code}: {pr.text[:200]}")
+            time.sleep(JOB_POLL_INTERVAL_SECONDS)
+            continue
+
+        try:
+            job = pr.json()
+        except json.JSONDecodeError:
+            time.sleep(JOB_POLL_INTERVAL_SECONDS)
+            continue
+
+        status = str(job.get("status") or "")
+        if status == "done":
+            result = job.get("result")
+            if isinstance(result, dict):
+                return result
+            logger.error(f"Job {job_id} done but result missing or not a dict")
+            return None
+        if status == "error":
+            logger.error(f"Job {job_id} error: {job.get('detail', job)}")
+            return None
+
+        time.sleep(JOB_POLL_INTERVAL_SECONDS)
+
+    logger.error(f"Job {job_id} timed out after {JOB_MAX_WAIT_SECONDS:.0f}s")
+    return None
+
+
+def call_active_outdoors_api(location: str) -> Optional[Dict]:
+    if USE_SYNC_SCORE:
+        logger.info("  mode=sync GET /score (HOMEFIT_AO_USE_SYNC)")
+        return call_active_outdoors_api_sync(location)
+    return call_active_outdoors_api_async(location)
 
 
 def load_locations() -> List[Dict[str, str]]:
@@ -131,8 +249,8 @@ def extract_ao_summary(response: Dict) -> Dict:
 
 def main() -> None:
     if not HOMEFIT_BASE_URL:
-        logger.error("HOMEFIT_BASE_URL environment variable is not set.")
-        logger.error("Set it in GitHub Actions secrets or in your shell.")
+        logger.error("HOMEFIT_BASE_URL is empty.")
+        logger.error("Set HOMEFIT_BASE_URL or rely on the default Railway production URL.")
         sys.exit(1)
 
     locations = load_locations()
@@ -150,6 +268,9 @@ def main() -> None:
     logger.info("=" * 80)
     logger.info(f"Locations: {len(locations)}")
     logger.info(f"API base: {HOMEFIT_BASE_URL}")
+    logger.info(
+        f"Mode: {'sync GET /score' if USE_SYNC_SCORE else 'async POST /score/jobs + poll'}"
+    )
     logger.info(f"JSONL: {jsonl_path}")
     logger.info(f"Summary CSV: {summary_path}")
     logger.info("=" * 80)
