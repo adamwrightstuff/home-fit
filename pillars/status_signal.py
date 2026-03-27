@@ -697,6 +697,20 @@ W_OCCUPATION = 0.10 / 0.95
 W_LUXURY = 0.05 / 0.95
 
 
+def _merge_social_and_diversity_for_signal(
+    social_fabric_details: Optional[Dict[str, Any]],
+    diversity_details: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Diversity pillar wins on education_attainment and self_employed_pct for Status Signal."""
+    merged: Dict[str, Any] = dict(social_fabric_details or {})
+    div = diversity_details or {}
+    if div.get("education_attainment") is not None:
+        merged["education_attainment"] = div["education_attainment"]
+    if div.get("self_employed_pct") is not None:
+        merged["self_employed_pct"] = div["self_employed_pct"]
+    return merged
+
+
 def compute_status_signal(
     housing_details: Optional[Dict[str, Any]],
     social_fabric_details: Optional[Dict[str, Any]],
@@ -704,6 +718,7 @@ def compute_status_signal(
     business_list: Optional[List[Dict[str, Any]]],
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
+    diversity_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """
     Compute Status Signal (0-100): wealth + home_cost + education + occupation + luxury_presence.
@@ -711,8 +726,13 @@ def compute_status_signal(
     Returns None if required data is missing.
     """
     result, _ = compute_status_signal_with_breakdown(
-        housing_details, social_fabric_details, economic_security_details,
-        business_list, tract, state_abbrev,
+        housing_details,
+        social_fabric_details,
+        economic_security_details,
+        business_list,
+        tract,
+        state_abbrev,
+        diversity_details=diversity_details,
     )
     return result
 
@@ -728,6 +748,7 @@ def compute_status_signal_with_breakdown(
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     luxury_radius_m: int = 1500,
+    diversity_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
@@ -751,8 +772,9 @@ def compute_status_signal_with_breakdown(
         "top_drivers": [],
         "analysis_radius_note": None,
     }
-    if not housing_details or not social_fabric_details or not economic_security_details:
+    if not housing_details or not economic_security_details:
         return None, breakdown
+    merged_sf = _merge_social_and_diversity_for_signal(social_fabric_details, diversity_details)
     from data_sources.us_census_divisions import get_division
     division = get_division(state_abbrev) if state_abbrev else "all"
     baselines = _load_baselines()
@@ -774,7 +796,7 @@ def compute_status_signal_with_breakdown(
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
     home_cost = compute_home_cost(median_home, keys_to_try, baselines)
-    education = compute_education(social_fabric_details, keys_to_try, baselines)
+    education = compute_education(merged_sf, keys_to_try, baselines)
     luxury_detail: Optional[Dict[str, Any]] = None
     if (
         lat is not None
@@ -808,11 +830,11 @@ def compute_status_signal_with_breakdown(
             wealth_gap = (float(mean) - float(med)) / float(med)
 
     # Raw stats for classification flip (grad_pct + white_collar -> Patrician; self_employed + home -> Poseur)
-    edu_attainment = social_fabric_details.get("education_attainment") or {}
+    edu_attainment = merged_sf.get("education_attainment") or {}
     grad_pct_raw = edu_attainment.get("grad_pct")
     if grad_pct_raw is not None:
         grad_pct_raw = float(grad_pct_raw)
-    self_employed_pct_raw = social_fabric_details.get("self_employed_pct")
+    self_employed_pct_raw = merged_sf.get("self_employed_pct")
     if self_employed_pct_raw is not None:
         self_employed_pct_raw = float(self_employed_pct_raw)
     white_collar_mgmt: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
@@ -847,7 +869,7 @@ def compute_status_signal_with_breakdown(
             grad_pct=grad_pct_raw, white_collar_mgmt=white_collar_mgmt, self_employed_pct=self_employed_pct_raw,
         )
     occupation = compute_occupation(
-        economic_security_details, social_fabric_details, tract, keys_to_try, baselines,
+        economic_security_details, merged_sf, tract, keys_to_try, baselines,
         archetype=archetype,
     )
     # Patrician: re-run luxury at 4km to capture estates/country clubs

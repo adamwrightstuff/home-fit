@@ -42,6 +42,7 @@ def _point_at_bearing(lat: float, lon: float, bearing_deg: float, distance_m: fl
 org_count_by_tract: Dict[str, int] = {}
 neighbors_by_tract: Dict[str, List[str]] = {}
 engagement_stats_by_division: Dict[str, Dict[str, float]] = {}
+engagement_stats_by_area_type: Dict[str, Dict[str, float]] = {}
 
 
 def _load_json_if_exists(path: str) -> Optional[dict]:
@@ -71,6 +72,10 @@ _ENGAGEMENT_STATS_PATH = os.getenv(
     "IRS_BMF_ENGAGEMENT_STATS_PATH",
     os.path.join(_DEFAULT_DATA_DIR, "irs_bmf_engagement_stats.json"),
 )
+_ENGAGEMENT_STATS_AREA_PATH = os.getenv(
+    "IRS_BMF_ENGAGEMENT_STATS_BY_AREA_TYPE_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "irs_bmf_engagement_stats_by_area_type.json"),
+)
 
 _tract_counts_data = _load_json_if_exists(_TRACT_COUNTS_PATH) or {}
 if isinstance(_tract_counts_data, dict):
@@ -96,6 +101,18 @@ if isinstance(_engagement_stats_data, dict):
             "Loaded IRS BMF engagement stats for %d regions", len(engagement_stats_by_division)
         )
 
+_area_stats_data = _load_json_if_exists(_ENGAGEMENT_STATS_AREA_PATH) or {}
+if isinstance(_area_stats_data, dict):
+    engagement_stats_by_area_type = {
+        str(k): {"mean": float(v.get("mean", 0.0)), "std": float(v.get("std", 0.0))}
+        for k, v in _area_stats_data.items()
+        if isinstance(v, dict)
+    }
+    if engagement_stats_by_area_type:
+        logger.info(
+            "Loaded IRS BMF engagement stats for %d area types", len(engagement_stats_by_area_type)
+        )
+
 
 def get_civic_orgs_per_1k(
     lat: float,
@@ -103,6 +120,7 @@ def get_civic_orgs_per_1k(
     tract: Optional[Dict] = None,
     population: Optional[int] = None,
     division_code: Optional[str] = None,
+    area_type: Optional[str] = None,
 ) -> Optional[Tuple[float, Optional[Dict[str, float]]]]:
     """
     Return (orgs_per_1k, stats) for the tract containing (lat, lon), with a simple
@@ -228,9 +246,13 @@ def get_civic_orgs_per_1k(
         division_code = get_division(state_abbrev) if state_abbrev else None
 
     stats = None
-    if division_code and engagement_stats_by_division:
+    at = (area_type or "").lower().replace(" ", "_") if area_type else None
+    if at and engagement_stats_by_area_type:
+        stats = engagement_stats_by_area_type.get(at) or engagement_stats_by_area_type.get("default")
+        if stats is None:
+            stats = engagement_stats_by_area_type.get("all")
+    if stats is None and division_code and engagement_stats_by_division:
         stats = engagement_stats_by_division.get(division_code)
-        # Fallback to national baseline when division has no stats (e.g. partial BMF build).
         if stats is None:
             stats = engagement_stats_by_division.get("all")
 

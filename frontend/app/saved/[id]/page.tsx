@@ -218,9 +218,9 @@ export default function SavedDetailPage() {
     const lon = typeof coords?.lon === 'number' && Number.isFinite(coords.lon) ? coords.lon : undefined
     setStatusSignalRefreshLoading(true)
     try {
-      const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      const statusPillarKeys = STATUS_SIGNAL_ONLY_PILLARS.split(',')
       const prioritiesForFour: Record<string, string> = {}
-      fourPillarKeys.forEach((k) => {
+      statusPillarKeys.forEach((k) => {
         prioritiesForFour[k] = (priorities && (priorities as unknown as Record<string, string>)[k]) ?? 'Medium'
       })
       const response = await getScoreWithProgress(
@@ -245,9 +245,9 @@ export default function SavedDetailPage() {
         () => {}
       )
       const current = rawPayload as ScoreResponse
-      const fourKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      const statusKeys = STATUS_SIGNAL_ONLY_PILLARS.split(',')
       const incoming = response.livability_pillars as unknown as Record<string, unknown>
-      const mergedPillars = { ...(current.livability_pillars ?? {}), ...Object.fromEntries(fourKeys.map((k) => [k, incoming[k]]).filter(([, v]) => v != null)) }
+      const mergedPillars = { ...(current.livability_pillars ?? {}), ...Object.fromEntries(statusKeys.map((k) => [k, incoming[k]]).filter(([, v]) => v != null)) }
       const mergedBase: ScoreResponse = {
         ...current,
         livability_pillars: mergedPillars as ScoreResponse['livability_pillars'],

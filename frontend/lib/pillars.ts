@@ -11,6 +11,7 @@ export type PillarKey =
   | 'housing_value'
   | 'climate_risk'
   | 'social_fabric'
+  | 'diversity'
 
 /** Display order for pillars on HomeFit pillar screen and related UIs. */
 export const PILLAR_ORDER: PillarKey[] = [
@@ -20,6 +21,7 @@ export const PILLAR_ORDER: PillarKey[] = [
   'climate_risk',
   'active_outdoors',
   'natural_beauty',
+  'diversity',
   'social_fabric',
   'built_beauty',
   'healthcare_access',
@@ -149,7 +151,7 @@ export const HAPPINESS_INDEX_COPY = {
 
 /** Comma-separated pillar names required to compute Status Signal (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
-  'housing_value,social_fabric,economic_security,neighborhood_amenities'
+  'housing_value,social_fabric,economic_security,neighborhood_amenities,diversity'
 
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
@@ -226,6 +228,12 @@ export const PILLAR_META: Record<
     name: 'Social Fabric',
     description:
       'Neighbors, civic spaces, and local rootedness that support belonging—not just shops but libraries, community centers, and long-term residents.',
+  },
+  diversity: {
+    icon: '🌐',
+    name: 'Diversity',
+    description:
+      'Race, income, and age mix in the neighborhood—entropy-based measure of how varied the community is.',
   },
 }
 
@@ -314,6 +322,8 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Exposure to flooding, extreme heat, and poor air quality can affect safety, insurance costs, and health over time. Lower risk supports long-term livability and peace of mind.',
   social_fabric:
     'A strong social fabric means people know their neighbors, share civic spaces, and have places to gather that are not tied to spending money. Stable residency and civic third places—like libraries, community centers, and town halls—are linked to higher trust, informal support, and long-term wellbeing.',
+  diversity:
+    'Neighborhood diversity in race, income, and age reflects exposure to different life experiences and can support vibrant daily life. This score uses Census distributions (not architectural variety).',
 }
 
 export function getScoreBadgeClass(score: number): string {

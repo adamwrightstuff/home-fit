@@ -233,6 +233,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         housing_value: 'None',
         climate_risk: 'None',
         social_fabric: 'None',
+        diversity: 'None',
       }
       selectedPillars.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
@@ -303,10 +304,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     }
     setStatusSignalRefreshLoading(true)
     try {
-      // Explicit priorities for the four Status Signal pillars so backend has valid allocation
-      const fourPillarKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      // Priorities for all pillars requested by STATUS_SIGNAL_ONLY_PILLARS (includes diversity for education inputs)
+      const statusPillarKeys = STATUS_SIGNAL_ONLY_PILLARS.split(',')
       const prioritiesForRequest: Record<string, string> = {}
-      fourPillarKeys.forEach((k) => {
+      statusPillarKeys.forEach((k) => {
         prioritiesForRequest[k] = selectedPriorities[k] ?? 'Medium'
       })
       const resp = await getScoreWithProgress(
@@ -331,10 +332,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         () => {}
       )
       const pillars = (resp.livability_pillars as unknown as Record<string, { score?: number; error?: string; confidence?: number; data_quality?: { fallback_used?: boolean; quality_tier?: string }; status?: string }>) || {}
-      const fourKeys = ['housing_value', 'social_fabric', 'economic_security', 'neighborhood_amenities'] as const
+      const statusKeys = STATUS_SIGNAL_ONLY_PILLARS.split(',')
       setPillarScores((prev) => {
         const next = { ...prev }
-        for (const key of fourKeys) {
+        for (const key of statusKeys) {
           const data = pillars[key]
           if (data == null) continue
           const failed = Boolean(data.error) || (data.data_quality?.fallback_used === true && (data.confidence ?? 100) === 0)
@@ -350,7 +351,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setFullPillarData((prev) => {
         const next = { ...prev }
         const full = resp.livability_pillars as unknown as Record<string, unknown>
-        for (const key of fourKeys) {
+        for (const key of statusKeys) {
           if (full[key] && typeof full[key] === 'object') next[key] = { ...(full[key] as Record<string, unknown>) }
         }
         return next
@@ -587,6 +588,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         housing_value: 'None',
         climate_risk: 'None',
         social_fabric: 'None',
+        diversity: 'None',
       }
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'

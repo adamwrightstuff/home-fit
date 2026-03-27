@@ -186,6 +186,15 @@ def _civic_quantiles_for_area(
     return q
 
 
+def civic_band_area_type_for_radius(radius_m: int) -> str:
+    """Map search radius to band table (density tiers), independent of morphological area_type."""
+    if radius_m <= 600:
+        return "urban_core"
+    if radius_m <= 1200:
+        return "suburban"
+    return "rural"
+
+
 def score_civic_gathering_from_bands(
     count: int,
     area_type: Optional[str],

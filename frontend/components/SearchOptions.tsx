@@ -19,6 +19,7 @@ interface PillarPriorities {
   housing_value: PriorityLevel
   climate_risk: PriorityLevel
   social_fabric: PriorityLevel
+  diversity: PriorityLevel
 }
 
 interface SearchOptions {
@@ -59,6 +60,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   housing_value: 'Medium',
   climate_risk: 'Medium',
   social_fabric: 'Medium',
+  diversity: 'Medium',
 }
 
 export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [

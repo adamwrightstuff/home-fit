@@ -193,9 +193,10 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'climate_risk:Heat exposure': 'How often this area runs hotter than is comfortable.',
   'climate_risk:Air quality': 'How often the air is clean versus polluted.',
   'climate_risk:Climate trend': 'How much climate risks here are expected to change over time.',
-  'social_fabric:Residential stability': 'Share of people who stayed in the same home or county over the past year.',
-  'social_fabric:Civic & third places': 'Libraries, community centers, and other non-commercial gathering places within about an 800m walk.',
-  'social_fabric:Community strength': 'Civic engagement and voter participation compared with similar regions.',
+  'social_fabric:Residential stability': 'Blend of tract and place (CDP/incorporated) same-house rates.',
+  'social_fabric:Civic & third places': 'Libraries, community centers, and other non-commercial gathering places within a density-based search radius.',
+  'social_fabric:Community strength': 'Civic org density (IRS BMF) and voter turnout, compared by area type.',
+  'diversity:Diversity score': 'Race, income, and age mix (entropy) from Census tract distributions.',
 }
 
 export default function PillarCard({

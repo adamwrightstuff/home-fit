@@ -239,12 +239,20 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
   },
   social_fabric: {
-    topLine: 'Community stability and civic places to connect.',
+    topLine: 'Residential stability, civic gathering places, and civic engagement.',
     metrics: [
-      { label: 'Residential stability', path: 'summary.same_house_pct', format: 'percent', max: 100 },
-      { label: 'Civic & third places', path: 'summary.civic_node_count_800m', format: 'count', suffix: ' civic places nearby' },
-      { label: 'Community strength', path: 'summary.voter_registration_rate', format: 'percent', max: 1 },
+      { label: 'Residential stability (tract + place)', path: 'summary.stability_blend_pct', format: 'percent', max: 100 },
+      { label: 'Civic places (search radius)', path: 'summary.civic_node_count', format: 'count', suffix: ' places' },
+      { label: 'Civic search radius (m)', path: 'summary.civic_search_radius_m', format: 'text' },
+      { label: 'Voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
     ],
     degradedMessage: 'Limited data: some community data were unavailable.',
+  },
+  diversity: {
+    topLine: 'Race, income, and age mix (entropy) in the tract.',
+    metrics: [
+      { label: 'Diversity score', path: 'summary.diversity_entropy_score', format: 'percent', max: 100 },
+    ],
+    degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },
 }

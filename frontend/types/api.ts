@@ -88,6 +88,8 @@ export interface LivabilityPillars {
   climate_risk?: LivabilityPillar;
   /** Social Fabric (Phase 2B); may be absent in older deployments. */
   social_fabric?: LivabilityPillar;
+  /** Demographic diversity (entropy); may be absent in older deployments. */
+  diversity?: LivabilityPillar;
 }
 
 export interface OverallConfidence {

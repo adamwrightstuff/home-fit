@@ -377,9 +377,13 @@ export function getSocialFabricNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const stabilityPct = getPillarValue(pillar, 'summary.same_house_pct')
-  const civicCount = getPillarValue(pillar, 'summary.civic_node_count_800m') ?? 0
-  const voterRate = getPillarValue(pillar, 'summary.voter_registration_rate')
+  const stabilityPct =
+    getPillarValue(pillar, 'summary.stability_blend_pct') ?? getPillarValue(pillar, 'summary.same_house_pct')
+  const civicCount =
+    getPillarValue(pillar, 'summary.civic_node_count') ?? getPillarValue(pillar, 'summary.civic_node_count_800m') ?? 0
+  const voterRate =
+    getPillarValue(pillar, 'summary.voter_turnout_rate') ??
+    getPillarValue(pillar, 'summary.voter_registration_rate')
 
   let stabilityPhrase = 'a mix of long-term and newer residents'
   if (typeof stabilityPct === 'number') {
@@ -394,15 +398,28 @@ export function getSocialFabricNarrative(
   }
 
   let civicPhrase =
-    'even though we don’t detect formal civic places like libraries or community centers within a short walk.'
+    'even though we don’t detect formal civic places like libraries or community centers nearby.'
   if (typeof civicCount === 'number' && civicCount > 0) {
-    civicPhrase = 'with civic places like libraries or community centers within walking distance.'
+    civicPhrase = 'with civic places like libraries or community centers in the search area.'
   }
 
   const locationSentence = `In ${placeLabel}, there are ${stabilityPhrase} and ${engagementPhrase}, ${civicPhrase}`
   const genericSentence =
     'Stable neighbors, civic gathering spots, and engaged residents help build informal support, trust, and a stronger sense of belonging over time.'
 
+  return `${locationSentence} ${genericSentence}`
+}
+
+export function getDiversityNarrative(placeLabel: string, pillar: Record<string, unknown>): string {
+  const score = getPillarValue(pillar, 'summary.diversity_entropy_score')
+  let mixPhrase = 'a moderate mix of households'
+  if (typeof score === 'number') {
+    if (score >= 70) mixPhrase = 'a wide mix of households across race, income, and age'
+    else if (score <= 35) mixPhrase = 'a more uniform community profile'
+  }
+  const locationSentence = `${placeLabel} shows ${mixPhrase} in Census tract-level distributions.`
+  const genericSentence =
+    'Exposure to varied neighbors and life stages is one lens on everyday community texture—distinct from architecture or building style.'
   return `${locationSentence} ${genericSentence}`
 }
 
@@ -436,6 +453,8 @@ export function getPillarNarrative(
       return getClimateRiskNarrative(placeLabel, pillar)
     case 'social_fabric':
       return getSocialFabricNarrative(placeLabel, pillar)
+    case 'diversity':
+      return getDiversityNarrative(placeLabel, pillar)
     default:
       return null
   }

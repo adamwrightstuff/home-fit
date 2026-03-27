@@ -1717,28 +1717,22 @@ class DataQualityManager:
     
     def _assess_social_fabric_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """
-        Assess social_fabric completeness from its four sub-components.
-        Combined_data has: stability_score, civic_score, diversity_score, engagement_score,
-        mobility, civic_nodes_count, orgs_per_1k. Stability and Civic are always computed;
-        Diversity and Engagement are optional (Census diversity tables, voter reg / IRS BMF).
+        Assess social_fabric completeness: Stability, Civic (OSM), Engagement (BMF / turnout).
+        Diversity is scored in the standalone diversity pillar.
         """
         if not data:
             return 0.0, 'very_poor'
 
         mobility = data.get("mobility")
-        diversity_score = data.get("diversity_score")
         engagement_score = data.get("engagement_score")
 
-        # Four components: Stability (Census B07003), Civic (OSM), Diversity (Census), Engagement (voter/BMF).
         has_stability = mobility is not None
-        has_civic = True  # OSM civic count always returned (may be 0)
-        has_diversity = diversity_score is not None
+        has_civic = True
         has_engagement = engagement_score is not None
 
-        components_available = sum([has_stability, has_civic, has_diversity, has_engagement])
-        completeness = components_available / 4.0
+        components_available = sum([has_stability, has_civic, has_engagement])
+        completeness = components_available / 3.0
 
-        # Floor: if we have at least the two required components (Stability + Civic), don't drop below fair.
         if has_stability and has_civic and completeness < 0.55:
             completeness = max(completeness, 0.55)
 

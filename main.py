@@ -46,6 +46,7 @@ from pillars.housing_value import get_housing_value_score
 from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
+from pillars.diversity import get_diversity_score
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from pillars.happiness_index import compute_happiness_index_with_breakdown
 from pillars.composite_indices import (
@@ -328,6 +329,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "housing_value",
         "climate_risk",
         "social_fabric",
+        "diversity",
     ]
 
     # Priority to weight mapping
@@ -573,6 +575,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "housing_value",
         "climate_risk",
         "social_fabric",
+        "diversity",
     ]
     alias_pillars = {"neighborhood_beauty"}
     pillar_names = primary_pillars
@@ -719,6 +722,7 @@ def _derive_token_allocation_for_scoring(
             "housing_value",
             "climate_risk",
             "social_fabric",
+            "diversity",
         ]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
@@ -853,6 +857,7 @@ def _compute_status_signal_for_response(
     state: Optional[str],
     city: Optional[str] = None,
     coordinates: Optional[Dict[str, Any]] = None,
+    diversity_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
     """
     Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
@@ -876,6 +881,7 @@ def _compute_status_signal_for_response(
         city=city,
         lat=lat if isinstance(lat, (int, float)) else None,
         lon=lon if isinstance(lon, (int, float)) else None,
+        diversity_details=diversity_details,
     )
 
 
@@ -906,7 +912,7 @@ def _compute_happiness_index_for_response(
 
 app = FastAPI(
     title="HomeFit API",
-    description="Purpose-driven livability scoring API with 10 pillars",
+    description="Purpose-driven livability scoring API with 13 pillars",
     version=API_VERSION
 )
 
@@ -1050,7 +1056,8 @@ def _apply_allocation_to_cached_response(
         primary_pillars = [
             "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
-            "economic_security", "quality_education", "housing_value"
+            "economic_security", "quality_education", "housing_value",
+            "climate_risk", "social_fabric", "diversity",
         ]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
@@ -1590,6 +1597,12 @@ def _compute_single_score_internal(
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
+    if _include_pillar('diversity'):
+        pillar_tasks.append(
+            ('diversity', get_diversity_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+            })
+        )
 
     if use_school_scoring and _include_pillar('quality_education'):
         pillar_tasks.append(
@@ -1742,6 +1755,7 @@ def _compute_single_score_internal(
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    diversity_score, diversity_details = pillar_results.get('diversity') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
     _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
@@ -1859,6 +1873,7 @@ def _compute_single_score_internal(
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
+        + (diversity_score * token_allocation["diversity"] / 100)
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -2031,8 +2046,19 @@ def _compute_single_score_internal(
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
             "area_classification": social_fabric_details.get("area_classification", {}),
-            "education_attainment": social_fabric_details.get("education_attainment"),
-            "self_employed_pct": social_fabric_details.get("self_employed_pct"),
+        },
+        "diversity": {
+            "score": diversity_score,
+            "weight": token_allocation["diversity"],
+            "importance_level": priority_levels.get("diversity") if priority_levels else None,
+            "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+            "breakdown": diversity_details.get("breakdown", {}),
+            "summary": diversity_details.get("summary", {}),
+            "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": diversity_details.get("data_quality", {}),
+            "area_classification": diversity_details.get("area_classification", {}),
+            "education_attainment": diversity_details.get("education_attainment"),
+            "self_employed_pct": diversity_details.get("self_employed_pct"),
         },
     }
 
@@ -2065,8 +2091,8 @@ def _compute_single_score_internal(
         "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
         "metadata": {
             "version": API_VERSION,
-            "architecture": "12 Purpose-Driven Pillars",
-            "note": "Total score = weighted average of 12 pillars. Equal token distribution by default.",
+            "architecture": "13 Purpose-Driven Pillars",
+            "note": "Total score = weighted average of 13 pillars. Equal token distribution by default.",
             "test_mode": test_mode_enabled
         }
     }
@@ -2079,6 +2105,7 @@ def _compute_single_score_internal(
         state,
         city=city,
         coordinates={"lat": lat, "lon": lon},
+        diversity_details=diversity_details,
     )
     if status_signal_result is not None:
         score, breakdown = status_signal_result
@@ -2994,6 +3021,16 @@ async def _stream_score_with_progress(
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
             })
         )
+        pillar_tasks.append(
+            ('social_fabric', get_social_fabric_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+            })
+        )
+        pillar_tasks.append(
+            ('diversity', get_diversity_score, {
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+            })
+        )
         if use_school_scoring:
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
@@ -3128,6 +3165,7 @@ async def _stream_score_with_progress(
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        diversity_score, diversity_details = pillar_results.get('diversity') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
         _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
@@ -3270,6 +3308,7 @@ async def _stream_score_with_progress(
                 "housing_value",
                 "climate_risk",
                 "social_fabric",
+                "diversity",
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -3312,6 +3351,7 @@ async def _stream_score_with_progress(
             + (housing_score * token_allocation["housing_value"] / 100)
             + (climate_risk_score * token_allocation["climate_risk"] / 100)
             + (social_fabric_score * token_allocation["social_fabric"] / 100)
+            + (diversity_score * token_allocation["diversity"] / 100)
         )
         
         # Build livability_pillars dict (reuse helper functions)
@@ -3479,6 +3519,19 @@ async def _stream_score_with_progress(
                 "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": social_fabric_details.get("data_quality", {}),
                 "area_classification": social_fabric_details.get("area_classification", {})
+            },
+            "diversity": {
+                "score": diversity_score,
+                "weight": token_allocation["diversity"],
+                "importance_level": priority_levels.get("diversity") if priority_levels else None,
+                "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+                "breakdown": diversity_details.get("breakdown", {}),
+                "summary": diversity_details.get("summary", {}),
+                "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": diversity_details.get("data_quality", {}),
+                "area_classification": diversity_details.get("area_classification", {}),
+                "education_attainment": diversity_details.get("education_attainment"),
+                "self_employed_pct": diversity_details.get("self_employed_pct"),
             }
         }
 
@@ -3508,8 +3561,8 @@ async def _stream_score_with_progress(
             "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
             "metadata": {
                 "version": API_VERSION,
-                "architecture": "12 Purpose-Driven Pillars",
-                "note": "Total score = weighted average of 12 pillars. Equal token distribution by default.",
+                "architecture": "13 Purpose-Driven Pillars",
+                "note": "Total score = weighted average of 13 pillars. Equal token distribution by default.",
                 "test_mode": test_mode
             }
         }
@@ -3522,6 +3575,7 @@ async def _stream_score_with_progress(
             state,
             city=city,
             coordinates={"lat": lat, "lon": lon},
+            diversity_details=diversity_details,
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result
@@ -4008,6 +4062,18 @@ async def stream_score(
                     'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
                 })
             )
+        if _include_pillar('social_fabric'):
+            pillar_tasks.append(
+                ('social_fabric', get_social_fabric_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                })
+            )
+        if _include_pillar('diversity'):
+            pillar_tasks.append(
+                ('diversity', get_diversity_score, {
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                })
+            )
 
         # Add school scoring if enabled (check per-request parameter)
         if use_school_scoring and _include_pillar('quality_education'):
@@ -4093,6 +4159,7 @@ async def stream_score(
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        diversity_score, diversity_details = pillar_results.get('diversity') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
 
         _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
@@ -4200,7 +4267,8 @@ async def stream_score(
             primary_pillars = [
                 "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
                 "air_travel_access", "public_transit_access", "healthcare_access",
-                "economic_security", "quality_education", "housing_value", "climate_risk"
+                "economic_security", "quality_education", "housing_value", "climate_risk",
+                "social_fabric", "diversity",
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -4271,7 +4339,8 @@ async def stream_score(
         (school_avg * token_allocation["quality_education"] / 100) +
         (housing_score * token_allocation["housing_value"] / 100) +
         (climate_risk_score * token_allocation["climate_risk"] / 100) +
-        (social_fabric_score * token_allocation["social_fabric"] / 100)
+        (social_fabric_score * token_allocation["social_fabric"] / 100) +
+        (diversity_score * token_allocation["diversity"] / 100)
         )
 
         logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -4445,6 +4514,18 @@ async def stream_score(
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
             "area_classification": social_fabric_details.get("area_classification", {})
+        },
+        "diversity": {
+            "score": diversity_score,
+            "weight": token_allocation["diversity"],
+            "contribution": round(diversity_score * token_allocation["diversity"] / 100, 2),
+            "breakdown": diversity_details.get("breakdown", {}),
+            "summary": diversity_details.get("summary", {}),
+            "confidence": diversity_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": diversity_details.get("data_quality", {}),
+            "area_classification": diversity_details.get("area_classification", {}),
+            "education_attainment": diversity_details.get("education_attainment"),
+            "self_employed_pct": diversity_details.get("self_employed_pct"),
         }
         }
 
@@ -4512,6 +4593,7 @@ async def stream_score(
             state,
             city=city,
             coordinates={"lat": lat, "lon": lon},
+            diversity_details=diversity_details,
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result

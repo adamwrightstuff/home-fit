@@ -123,16 +123,20 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
     pillars = response.get("livability_pillars") or {}
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
+    diversity_details = pillars.get("diversity")
+    if not isinstance(diversity_details, dict):
+        diversity_details = None
     econ = pillars.get("economic_security")
     amenities = pillars.get("neighborhood_amenities")
     if (
         lat is None
         or lon is None
         or not housing
-        or not social
         or not econ
         or not amenities
     ):
+        return
+    if not social and not diversity_details:
         return
 
     try:
@@ -157,6 +161,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 city=city,
                 lat=lat_f,
                 lon=lon_f,
+                diversity_details=diversity_details,
             )
             if result is not None:
                 score, breakdown = result
@@ -232,11 +237,14 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
 
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
+    diversity_details = pillars.get("diversity")
+    if not isinstance(diversity_details, dict):
+        diversity_details = None
     econ = pillars.get("economic_security")
     amenities = pillars.get("neighborhood_amenities") or {}
     _city = (location_info.get("city") or "").strip() or None
 
-    if housing and social and econ:
+    if housing and econ and (social or diversity_details):
         try:
             business_list = (amenities.get("breakdown") or {}).get("business_list") or amenities.get("business_list") or []
             result = compute_status_signal_with_breakdown(
@@ -249,6 +257,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
                 city=_city,
                 lat=lat,
                 lon=lon,
+                diversity_details=diversity_details,
             )
             if result is not None:
                 score, breakdown = result

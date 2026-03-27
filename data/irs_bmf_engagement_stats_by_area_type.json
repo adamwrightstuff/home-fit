@@ -1,0 +1,9 @@
+{
+  "urban_core": { "mean": 6.5, "std": 38.0 },
+  "urban_residential": { "mean": 6.2, "std": 36.0 },
+  "suburban": { "mean": 5.5, "std": 32.0 },
+  "exurban": { "mean": 4.5, "std": 25.0 },
+  "rural": { "mean": 3.8, "std": 18.0 },
+  "default": { "mean": 5.5, "std": 35.0 },
+  "all": { "mean": 5.48, "std": 43.47 }
+}

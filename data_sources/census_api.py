@@ -710,6 +710,74 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
+    """
+    State FIPS and Census place FIPS for Incorporated Place or CDP containing the point.
+    """
+    try:
+        params = {
+            "x": lon,
+            "y": lat,
+            "benchmark": "Public_AR_Current",
+            "vintage": "Current_Current",
+            "format": "json",
+        }
+        response = _make_request_with_retry(GEOCODER_URL, params, timeout=10)
+        if response is None:
+            return None
+        data = response.json()
+        geographies = (data.get("result") or {}).get("geographies") or {}
+        for key in ("Incorporated Places", "Census Designated Places"):
+            layer = geographies.get(key)
+            if layer and len(layer) > 0:
+                g = layer[0]
+                st = g.get("STATE")
+                pl = g.get("PLACE")
+                if st and pl:
+                    return {"state_fips": str(st).zfill(2), "place_fips": str(pl).zfill(5)}
+        return None
+    except Exception as e:
+        print(f"   ⚠️  Place lookup failed: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_place_same_house_pct(state_fips: str, place_fips: str) -> Optional[float]:
+    """ACS B07003 same-house rate (0–100) for a Census place."""
+    if not CENSUS_API_KEY or not state_fips or not place_fips:
+        return None
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        pf = str(int(place_fips))  # Census place code without leading zeros
+        params = {
+            "get": "B07003_001E,B07003_004E,NAME",
+            "for": f"place:{pf}",
+            "in": f"state:{str(state_fips).zfill(2)}",
+            "key": CENSUS_API_KEY,
+        }
+        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+        if response is None:
+            return None
+        data = response.json()
+        if len(data) < 2:
+            return None
+        row = data[1]
+        total_1yr = int(row[0]) if row[0] else 0
+        same_house = int(row[1]) if row[1] else 0
+        if total_1yr <= 0:
+            return None
+        same_house = max(0, min(same_house, total_1yr))
+        return (same_house / total_1yr) * 100.0
+    except Exception as e:
+        print(f"   ⚠️  Place mobility lookup failed: {e}")
+        return None
+
+
 def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
     Get race, income, age distributions, and education attainment for Social Fabric / Status Signal.
