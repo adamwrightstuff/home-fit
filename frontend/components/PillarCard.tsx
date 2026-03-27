@@ -660,6 +660,23 @@ export default function PillarCard({
                   })
                   .filter((row): row is { label: string; value: string } => row !== null)
 
+                const sourceIssueRows: unknown[] =
+                  pillar_key !== 'social_fabric'
+                    ? []
+                    : (() => {
+                        const top = pillarObj.source_errors
+                        if (Array.isArray(top) && top.length > 0) return top
+                        const dq = pillarObj.data_quality
+                        if (
+                          dq &&
+                          typeof dq === 'object' &&
+                          Array.isArray((dq as Record<string, unknown>).source_errors)
+                        ) {
+                          return (dq as Record<string, unknown>).source_errors as unknown[]
+                        }
+                        return []
+                      })()
+
                 return (
                   <>
                     <p style={{ margin: 0, marginBottom: '0.75rem', color: 'var(--hf-text-primary)', lineHeight: 1.45 }}>
@@ -732,6 +749,52 @@ export default function PillarCard({
                     ) : (
                       <div>No additional details available.</div>
                     )}
+                    {sourceIssueRows.length > 0 ? (
+                      <div
+                        role="region"
+                        aria-label="Data source issues"
+                        style={{
+                          marginTop: '0.85rem',
+                          paddingTop: '0.75rem',
+                          borderTop: '1px solid var(--hf-border)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 650,
+                            color: 'var(--hf-text-primary)',
+                            marginBottom: '0.35rem',
+                          }}
+                        >
+                          Source issues
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'grid', gap: '0.35rem' }}>
+                          {sourceIssueRows.map((item, i) => {
+                            const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {}
+                            const src = String(row.source ?? '')
+                            const key = String(row.key ?? '')
+                            const code = String(row.code ?? '')
+                            const msg = String(row.message ?? '')
+                            return (
+                              <li
+                                key={i}
+                                style={{
+                                  fontSize: '0.82rem',
+                                  color: 'var(--hf-text-secondary)',
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                <span style={{ color: 'var(--hf-text-primary)' }}>{src || '—'}</span>
+                                {key ? ` · ${key}` : ''}
+                                {code ? ` (${code})` : ''}
+                                {msg ? `: ${msg}` : ''}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </div>
+                    ) : null}
                   </>
                 )
               }

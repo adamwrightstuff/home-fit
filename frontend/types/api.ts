@@ -72,7 +72,7 @@ export interface LivabilityPillar {
   status?: 'success' | 'fallback' | 'failed';
   /** Social Fabric: per-source load status (Census stability, civic OSM, engagement proxies). */
   source_status?: Record<string, 'ok' | 'empty' | 'error'>;
-  /** Social Fabric: structured errors when a source failed (e.g. Overpass). */
+  /** Social Fabric: structured errors when a source failed; also surfaced under Show details. */
   source_errors?: Array<{ source: string; key: string; code: string; message: string }>;
 }
 
