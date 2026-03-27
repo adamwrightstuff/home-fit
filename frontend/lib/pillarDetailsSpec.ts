@@ -242,6 +242,18 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     topLine: 'Residential stability, civic gathering places, and civic engagement.',
     metrics: [
       {
+        label: 'Stability (tract mobility, ACS)',
+        path: 'source_status.stability_mobility_acs',
+        format: 'qualitative',
+        valueLabels: { ok: 'Loaded', error: 'Unavailable' },
+      },
+      {
+        label: 'Stability (place blend)',
+        path: 'source_status.stability_place',
+        format: 'qualitative',
+        valueLabels: { ok: 'Available', empty: 'Not used' },
+      },
+      {
         label: 'Civic places (OpenStreetMap)',
         path: 'source_status.civic_osm',
         format: 'qualitative',
@@ -269,7 +281,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       { label: 'Voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
     ],
     degradedMessage:
-      'Limited data: OpenStreetMap civic gathering data failed or timed out, or other community sources were unavailable.',
+      'Limited data: Census mobility, OpenStreetMap civic places, or other community sources failed or were unavailable.',
   },
   diversity: {
     topLine: 'Race, income, and age mix (entropy) in the tract.',

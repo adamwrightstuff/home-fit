@@ -193,6 +193,8 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'climate_risk:Heat exposure': 'How often this area runs hotter than is comfortable.',
   'climate_risk:Air quality': 'How often the air is clean versus polluted.',
   'climate_risk:Climate trend': 'How much climate risks here are expected to change over time.',
+  'social_fabric:Stability (tract mobility, ACS)': 'Whether residential stability could be loaded from Census ACS (B07003) for this tract.',
+  'social_fabric:Stability (place blend)': 'Whether an incorporated place / CDP same-house rate was available to blend with tract stability.',
   'social_fabric:Civic places (OpenStreetMap)': 'Whether civic gathering places could be loaded from OpenStreetMap (libraries, community centers, etc.).',
   'social_fabric:Engagement (IRS orgs)': 'Whether IRS exempt-organization density could be compared for this tract or region.',
   'social_fabric:Engagement (turnout)': 'Whether modeled voter turnout could be applied for this tract.',

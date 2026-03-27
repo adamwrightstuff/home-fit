@@ -1722,6 +1722,9 @@ class DataQualityManager:
 
         Civic OSM counts as complete when Overpass returned successfully (source_status ok or empty).
         A successful empty result (zero civic POIs) does not reduce completeness; Overpass errors do.
+
+        Stability (ACS B07003) counts as complete when mobility loaded successfully (source_status
+        stability_mobility_acs == ok when present; otherwise mobility dict present).
         """
         if not data:
             return 0.0, 'very_poor'
@@ -1729,7 +1732,11 @@ class DataQualityManager:
         mobility = data.get("mobility")
         engagement_score = data.get("engagement_score")
 
-        has_stability = mobility is not None
+        sm_acs = (data.get("source_status") or {}).get("stability_mobility_acs")
+        if sm_acs is None:
+            has_stability = mobility is not None
+        else:
+            has_stability = sm_acs == "ok"
         civic_osm = (data.get("source_status") or {}).get("civic_osm")
         if civic_osm is None:
             has_civic = True

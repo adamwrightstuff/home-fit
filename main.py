@@ -5044,6 +5044,7 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
     - Some OSM helpers set `data_warning: 'stale_cache_used'` and/or `rate_limited: True`.
     - Many failures manifest as error strings containing '429'.
     - Social Fabric sets `source_status.civic_osm == 'error'` when Overpass civic data failed.
+    - Social Fabric sets `source_status.stability_mobility_acs == 'error'` when tract geocode or ACS B07003 failed.
     """
     stale_cache_used = False
     rate_limited = False
@@ -5058,8 +5059,11 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
 
         if isinstance(x, dict):
             ss = x.get("source_status")
-            if isinstance(ss, dict) and ss.get("civic_osm") == "error":
-                warnings.add("civic_osm_unavailable")
+            if isinstance(ss, dict):
+                if ss.get("civic_osm") == "error":
+                    warnings.add("civic_osm_unavailable")
+                if ss.get("stability_mobility_acs") == "error":
+                    warnings.add("stability_acs_unavailable")
             if x.get("_stale_cache") is True:
                 stale_cache_used = True
             dw = x.get("data_warning")

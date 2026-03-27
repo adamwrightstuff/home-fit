@@ -246,6 +246,32 @@ def get_social_fabric_score(
 
     source_status: Dict[str, str] = {}
     source_errors: list = []
+
+    if mobility is not None:
+        source_status["stability_mobility_acs"] = "ok"
+    else:
+        source_status["stability_mobility_acs"] = "error"
+        if tract is None:
+            source_errors.append(
+                {
+                    "source": "census",
+                    "key": "tract_geocode",
+                    "code": "no_tract",
+                    "message": "Could not resolve Census tract for coordinates",
+                }
+            )
+        else:
+            source_errors.append(
+                {
+                    "source": "census",
+                    "key": "b07003_mobility",
+                    "code": "acs_unavailable",
+                    "message": "ACS B07003 mobility data unavailable for this tract",
+                }
+            )
+
+    source_status["stability_place"] = "ok" if place_same_house_pct is not None else "empty"
+
     cs = civic.get("source_status")
     if cs == "error":
         source_status["civic_osm"] = "error"
@@ -322,7 +348,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v5_stability_place_civic_radius_engagement_turnout",
+        "version": "v6_stability_census_source_status",
     }
 
     logger.info(

@@ -19,6 +19,15 @@ class TestCollectDegradedSignals(unittest.TestCase):
         sig = main._collect_degraded_signals({"source_status": {"civic_osm": "empty"}})
         self.assertFalse(sig["degraded"])
 
+    def test_stability_mobility_acs_error_is_degraded(self):
+        sig = main._collect_degraded_signals({"source_status": {"stability_mobility_acs": "error"}})
+        self.assertTrue(sig["degraded"])
+        self.assertIn("stability_acs_unavailable", sig["warnings"])
+
+    def test_stability_mobility_acs_ok_not_degraded(self):
+        sig = main._collect_degraded_signals({"source_status": {"stability_mobility_acs": "ok"}})
+        self.assertFalse(sig["degraded"])
+
 
 if __name__ == "__main__":
     unittest.main()
