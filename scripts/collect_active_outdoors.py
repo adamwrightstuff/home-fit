@@ -9,9 +9,6 @@ with only=active_outdoors and diagnostics=true for each location, and writes:
 
 Default API: https://home-fit-production.up.railway.app (override with HOMEFIT_BASE_URL for local).
 
-If production requires auth, set HOMEFIT_PROXY_SECRET (sent as X-HomeFit-Proxy-Secret), and/or HOMEFIT_API_KEY
-(Bearer token), matching scripts/collect_status_signal.py.
-
 Uses same env and rate-limiting pattern as scripts/collector.py.
 """
 
@@ -43,7 +40,6 @@ HOMEFIT_BASE_URL = (
     or "https://home-fit-production.up.railway.app"
 ).strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
-HOMEFIT_PROXY_SECRET = os.getenv("HOMEFIT_PROXY_SECRET", "").strip()
 
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0
 ADAPTIVE_DELAY_FACTOR = 0.1
@@ -69,8 +65,6 @@ def call_active_outdoors_api(location: str) -> Optional[Dict]:
     headers = {}
     if HOMEFIT_API_KEY:
         headers["Authorization"] = f"Bearer {HOMEFIT_API_KEY}"
-    if HOMEFIT_PROXY_SECRET:
-        headers["X-HomeFit-Proxy-Secret"] = HOMEFIT_PROXY_SECRET
 
     for attempt in range(MAX_RETRIES):
         try:
