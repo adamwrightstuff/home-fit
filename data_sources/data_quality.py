@@ -1719,6 +1719,9 @@ class DataQualityManager:
         """
         Assess social_fabric completeness: Stability, Civic (OSM), Engagement (BMF / turnout).
         Diversity is scored in the standalone diversity pillar.
+
+        Civic OSM counts as complete when Overpass returned successfully (source_status ok or empty).
+        A successful empty result (zero civic POIs) does not reduce completeness; Overpass errors do.
         """
         if not data:
             return 0.0, 'very_poor'
@@ -1727,7 +1730,11 @@ class DataQualityManager:
         engagement_score = data.get("engagement_score")
 
         has_stability = mobility is not None
-        has_civic = True
+        civic_osm = (data.get("source_status") or {}).get("civic_osm")
+        if civic_osm is None:
+            has_civic = True
+        else:
+            has_civic = civic_osm in ("ok", "empty")
         has_engagement = engagement_score is not None
 
         components_available = sum([has_stability, has_civic, has_engagement])
@@ -1899,8 +1906,8 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
     if not isinstance(quality_tier, str) or quality_tier not in valid_tiers:
         logger.warning(f"Invalid quality_tier '{quality_tier}' (type: {type(quality_tier)}), defaulting to 'fair'")
         quality_tier = 'fair'
-    
-    return {
+
+    out = {
         'completeness': completeness,
         'quality_tier': quality_tier,
         'needs_fallback': False,  # Always False - no fallback scoring
@@ -1910,3 +1917,10 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
         'expected_minimums': expected_minimums,
         'data_sources': data_sources
     }
+    ss = data.get("source_status") if data else None
+    se = data.get("source_errors") if data else None
+    if isinstance(ss, dict) and ss:
+        out["source_status"] = ss
+    if isinstance(se, list) and se:
+        out["source_errors"] = se
+    return out

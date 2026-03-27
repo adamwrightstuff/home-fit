@@ -159,6 +159,17 @@ def get_social_fabric_score(
         bmf_result = f_b.result()
         turnout_result = f_t.result()
 
+    if civic is None:
+        civic = {
+            "nodes": [],
+            "source_status": "error",
+            "error": {
+                "source": "overpass",
+                "code": "unavailable",
+                "message": "Civic OSM query failed or timed out",
+            },
+        }
+
     same_house_pct = mobility.get("same_house_pct") if mobility else None
     rooted_pct_adjusted = None
     stability_pct: Optional[float] = None
@@ -186,7 +197,7 @@ def get_social_fabric_score(
             else:
                 stability_score = _score_stability_from_pct(stability_pct)
 
-    nodes = (civic or {}).get("nodes", []) if civic else []
+    nodes = civic.get("nodes") or []
     civic_count = len(nodes)
     civic_band_key = social_fabric_bands.civic_band_area_type_for_radius(civic_radius_m)
 
@@ -233,6 +244,36 @@ def get_social_fabric_score(
     raw = 1.2 * stability_score + 1.2 * civic_score + 1.0 * e
     score = max(0.0, min(100.0, round(raw / 3.4, 1)))
 
+    source_status: Dict[str, str] = {}
+    source_errors: list = []
+    cs = civic.get("source_status")
+    if cs == "error":
+        source_status["civic_osm"] = "error"
+        err = civic.get("error") or {}
+        source_errors.append(
+            {
+                "source": err.get("source", "overpass"),
+                "key": "civic_nodes",
+                "code": err.get("code", "error"),
+                "message": err.get("message", ""),
+            }
+        )
+    elif cs == "empty":
+        source_status["civic_osm"] = "empty"
+    elif cs == "ok":
+        source_status["civic_osm"] = "ok"
+    else:
+        source_status["civic_osm"] = "ok" if civic_count else "empty"
+
+    if bmf_result is not None:
+        _op1k, _eng_stats = bmf_result
+        source_status["engagement_bmf"] = (
+            "ok" if (_eng_stats and _op1k is not None) else "empty"
+        )
+    else:
+        source_status["engagement_bmf"] = "empty"
+    source_status["engagement_turnout"] = "ok" if turnout_result is not None else "empty"
+
     combined_data = {
         "stability_score": stability_score,
         "civic_score": civic_score,
@@ -242,6 +283,8 @@ def get_social_fabric_score(
         "civic_nodes_count": civic_count,
         "civic_search_radius_m": civic_radius_m,
         "orgs_per_1k": orgs_per_1k,
+        "source_status": source_status,
+        "source_errors": source_errors,
     }
 
     quality_metrics = data_quality.assess_pillar_data_quality(
@@ -276,6 +319,8 @@ def get_social_fabric_score(
         "breakdown": breakdown,
         "summary": summary,
         "data_quality": quality_metrics,
+        "source_status": source_status,
+        "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
         "version": "v5_stability_place_civic_radius_engagement_turnout",
     }

@@ -1178,7 +1178,7 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
-def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[Dict]:
+def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
     """
     Query OSM for civic, non-commercial third places (Social Fabric civic gathering).
 
@@ -1192,20 +1192,10 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
     Excludes parks/playgrounds/dog_parks (scored in active_outdoors) and all
     commercial businesses (scored in neighborhood_amenities).
 
-    Returns:
-        {
-            "nodes": [
-                {
-                    "name": str,
-                    "lat": float,
-                    "lon": float,
-                    "distance_m": float,
-                    "type": str,  # library, community_centre, place_of_worship, townhall, community_garden
-                    "osm_id": int
-                },
-                ...
-            ]
-        } or None on failure.
+    Always returns a dict:
+      - source_status: "ok" (nodes found), "empty" (success, zero matches), or "error" (Overpass failed)
+      - nodes: list of civic POIs (empty if error or none found)
+      - error: present when source_status == "error"
     """
     query = f"""
     [out:json][timeout:40];
@@ -1233,6 +1223,13 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
     out skel qt;
     """
 
+    def _civic_error(code: str, message: str) -> Dict:
+        return {
+            "nodes": [],
+            "source_status": "error",
+            "error": {"source": "overpass", "code": code, "message": message},
+        }
+
     try:
         def _do_request():
             return requests.post(
@@ -1246,11 +1243,19 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
         if resp is None or resp.status_code != 200:
             if resp and resp.status_code == 429:
                 logger.warning("OSM civic nodes query rate limited (429)")
-            return None
+            if resp is None:
+                return _civic_error(
+                    "request_failed",
+                    "Overpass request failed (timeout or no response after retries)",
+                )
+            return _civic_error(
+                f"http_{resp.status_code}",
+                f"Overpass returned HTTP {resp.status_code}",
+            )
 
         data = _safe_overpass_json(resp, context="civic nodes query")
         if data is None:
-            return None
+            return _civic_error("parse_error", "Overpass response was not valid JSON or was empty")
         elements = data.get("elements", [])
 
         nodes = []
@@ -1319,11 +1324,18 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Optional[D
                 radius_m,
             )
 
-        return {"nodes": nodes}
+        return {
+            "nodes": nodes,
+            "source_status": "ok" if nodes else "empty",
+        }
 
     except Exception as e:
         logger.error(f"OSM civic nodes query error: {e}", exc_info=True)
-        return None
+        return {
+            "nodes": [],
+            "source_status": "error",
+            "error": {"source": "overpass", "code": "exception", "message": str(e)[:200]},
+        }
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
