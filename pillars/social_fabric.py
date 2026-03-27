@@ -11,6 +11,12 @@ When some sub-indices are unavailable (e.g. no BMF data), the pillar
 renormalizes over the available components so the combined score remains
 in [0, 100]. When both voter registration and BMF are available,
 Engagement = 0.60 × voter_reg_score + 0.40 × bmf_score.
+
+Stability and civic gathering use national/regional band calibration from
+``data/social_fabric_bands.json`` when present (substantive metrics mapped
+with documented quantile anchors; regional medians nudge rootedness only).
+Fallback: stability uses division z-scores or a fixed curve; civic uses
+threshold buckets.
 """
 
 from typing import Dict, Tuple, Optional, Iterable
@@ -21,7 +27,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
+from data_sources import social_fabric_bands
 from data_sources import voter_registration
+from data_sources.us_census_divisions import get_division
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -204,6 +212,14 @@ def get_social_fabric_score(
     # Fetch Census tract once to reuse across mobility, diversity, and BMF.
     tract = census_api.get_census_tract(lat, lon)
 
+    # Area type early: civic band calibration is area-type-aware.
+    if density is None:
+        density = census_api.get_population_density(lat, lon) or 0.0
+    if area_type is None:
+        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
+
+    bands = social_fabric_bands.load_bands()
+
     # Fetch mobility, diversity, civic (800m), BMF, and voter registration in parallel.
     def _get_mobility():
         return census_api.get_mobility_data(lat, lon, tract=tract)
@@ -232,29 +248,38 @@ def get_social_fabric_score(
         bmf_result = f_bmf.result()
         voter_reg_result = f_voter_reg.result()
 
-    # Stability: B07003 — use rooted_pct (same house + same county) so local moves don't count as churn.
-    # Use regional z-score when baselines exist; else fixed curve.
+    # Stability: B07003 — rooted_pct (same house + moved within same county).
+    # Prefer band file (national anchors + regional median nudge); else z-score vs division; else fixed curve.
+    division_code = None
+    if tract:
+        state_fips = tract.get("state_fips")
+        state_abbrev = _STATE_FIPS_TO_ABBREV.get(state_fips) if state_fips else None
+        if state_abbrev:
+            division_code = get_division(state_abbrev)
+
+    rooted_pct_adjusted = None
     if mobility is not None:
         same_house_pct = mobility.get("same_house_pct")
-        rooted_pct = mobility.get("rooted_pct")  # same house + moved within same county
+        rooted_pct = mobility.get("rooted_pct")
         stability_pct = rooted_pct if rooted_pct is not None else same_house_pct
         if stability_pct is not None:
-            from data_sources.us_census_divisions import get_division
-            division_code = None
-            if tract:
-                state_fips = tract.get("state_fips")
-                state_abbrev = _STATE_FIPS_TO_ABBREV.get(state_fips) if state_fips else None
-                if state_abbrev:
-                    division_code = get_division(state_abbrev)
-            baseline = None
-            if division_code and _stability_baselines:
-                baseline = _stability_baselines.get(division_code) or _stability_baselines.get("all")
-            if baseline:
-                stability_score = _score_stability_from_z(
-                    stability_pct, baseline["mean"], baseline["std"]
+            if bands:
+                rooted_pct_adjusted = social_fabric_bands.adjust_rooted_pct_for_regional_bands(
+                    float(stability_pct), division_code, bands
+                )
+                stability_score = social_fabric_bands.score_stability_from_bands(
+                    float(stability_pct), division_code, bands
                 )
             else:
-                stability_score = _score_stability_from_pct(stability_pct)
+                baseline = None
+                if division_code and _stability_baselines:
+                    baseline = _stability_baselines.get(division_code) or _stability_baselines.get("all")
+                if baseline:
+                    stability_score = _score_stability_from_z(
+                        stability_pct, baseline["mean"], baseline["std"]
+                    )
+                else:
+                    stability_score = _score_stability_from_pct(stability_pct)
         else:
             stability_score = 0.0
     else:
@@ -303,11 +328,26 @@ def get_social_fabric_score(
             civic_count = len(nodes_expanded)
             civic_radius_m = 1500
             civic_score_type = "proximity"  # ~1 mi / short drive
-            civic_score = _score_civic_proximity_from_count(civic_count)
+            if bands:
+                civic_score = social_fabric_bands.score_civic_gathering_from_bands(
+                    civic_count, area_type, bands, proximity=True
+                )
+            else:
+                civic_score = _score_civic_proximity_from_count(civic_count)
         else:
-            civic_score = _score_civic_gathering_from_count(0)
+            if bands:
+                civic_score = social_fabric_bands.score_civic_gathering_from_bands(
+                    0, area_type, bands, proximity=False
+                )
+            else:
+                civic_score = _score_civic_gathering_from_count(0)
     else:
-        civic_score = _score_civic_gathering_from_count(civic_count)
+        if bands:
+            civic_score = social_fabric_bands.score_civic_gathering_from_bands(
+                civic_count, area_type, bands, proximity=False
+            )
+        else:
+            civic_score = _score_civic_gathering_from_count(civic_count)
 
     # Engagement: voter registration (optional) and/or IRS BMF civic org density (optional).
     # When both available: 0.60 × voter_reg + 0.40 × BMF; else use whichever is present.
@@ -366,12 +406,6 @@ def get_social_fabric_score(
 
     score = max(0.0, min(100.0, round(score, 1)))
 
-    # Area type for data_quality / context
-    if density is None:
-        density = census_api.get_population_density(lat, lon) or 0.0
-    if area_type is None:
-        area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
-
     combined_data = {
         "stability_score": stability_score,
         "civic_score": civic_score,
@@ -405,6 +439,8 @@ def get_social_fabric_score(
         "engagement_available": engagement_score is not None,
         "orgs_per_1k": orgs_per_1k,
         "voter_registration_rate": round(voter_reg_rate, 3) if voter_reg_rate is not None else None,
+        "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,
+        "social_fabric_bands": bool(bands),
     }
 
     details = {
@@ -412,7 +448,7 @@ def get_social_fabric_score(
         "summary": summary,
         "data_quality": quality_metrics,
         "area_classification": {"area_type": area_type},
-        "version": "v3_stability_diversity_civic_engagement_voter_bmf",
+        "version": "v4_band_calibrated_stability_civic",
     }
     # Pass through for Status Signal (post-pillars derived score)
     if diversity_data:

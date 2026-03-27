@@ -658,10 +658,11 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         # B07003_001E: Total population 1 year and over
-        # B07003_002E: Same house 1 year ago
-        # B07003_003E: Moved from elsewhere in same county
+        # B07003_002E/003E are Male/Female totals — do not use for mobility.
+        # B07003_004E: Same house 1 year ago (total)
+        # B07003_007E: Moved within same county (total)
         params = {
-            "get": "B07003_001E,B07003_002E,B07003_003E,NAME",
+            "get": "B07003_001E,B07003_004E,B07003_007E,NAME",
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
