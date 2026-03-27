@@ -193,9 +193,13 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'climate_risk:Heat exposure': 'How often this area runs hotter than is comfortable.',
   'climate_risk:Air quality': 'How often the air is clean versus polluted.',
   'climate_risk:Climate trend': 'How much climate risks here are expected to change over time.',
-  'social_fabric:Residential stability': 'Blend of tract and place (CDP/incorporated) same-house rates.',
-  'social_fabric:Civic & third places': 'Libraries, community centers, and other non-commercial gathering places within a density-based search radius.',
-  'social_fabric:Community strength': 'Civic org density (IRS BMF) and voter turnout, compared by area type.',
+  'social_fabric:Civic places (OpenStreetMap)': 'Whether civic gathering places could be loaded from OpenStreetMap (libraries, community centers, etc.).',
+  'social_fabric:Engagement (IRS orgs)': 'Whether IRS exempt-organization density could be compared for this tract or region.',
+  'social_fabric:Engagement (turnout)': 'Whether modeled voter turnout could be applied for this tract.',
+  'social_fabric:Residential stability (tract + place)': 'Blend of tract and place (CDP/incorporated) same-house rates.',
+  'social_fabric:Civic places (search radius)': 'Count of non-commercial civic places within the density-based search radius.',
+  'social_fabric:Civic search radius (m)': 'Search distance used for civic places based on tract density.',
+  'social_fabric:Voter turnout (tract)': 'Estimated voter participation used for the engagement blend when available.',
   'diversity:Diversity score': 'Race, income, and age mix (entropy) from Census tract distributions.',
 }
 

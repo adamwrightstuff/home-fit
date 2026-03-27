@@ -2046,6 +2046,8 @@ def _compute_single_score_internal(
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
             "area_classification": social_fabric_details.get("area_classification", {}),
+            "source_status": social_fabric_details.get("source_status") or {},
+            "source_errors": social_fabric_details.get("source_errors") or [],
         },
         "diversity": {
             "score": diversity_score,
@@ -3518,7 +3520,9 @@ async def _stream_score_with_progress(
                 "summary": social_fabric_details.get("summary", {}),
                 "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
                 "data_quality": social_fabric_details.get("data_quality", {}),
-                "area_classification": social_fabric_details.get("area_classification", {})
+                "area_classification": social_fabric_details.get("area_classification", {}),
+                "source_status": social_fabric_details.get("source_status") or {},
+                "source_errors": social_fabric_details.get("source_errors") or [],
             },
             "diversity": {
                 "score": diversity_score,
@@ -4513,7 +4517,9 @@ async def stream_score(
             "summary": social_fabric_details.get("summary", {}),
             "confidence": social_fabric_details.get("data_quality", {}).get("confidence", 0),
             "data_quality": social_fabric_details.get("data_quality", {}),
-            "area_classification": social_fabric_details.get("area_classification", {})
+            "area_classification": social_fabric_details.get("area_classification", {}),
+            "source_status": social_fabric_details.get("source_status") or {},
+            "source_errors": social_fabric_details.get("source_errors") or [],
         },
         "diversity": {
             "score": diversity_score,
@@ -5037,6 +5043,7 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
     - `data_sources/cache.py` sets `_stale_cache: True` when returning stale cached results.
     - Some OSM helpers set `data_warning: 'stale_cache_used'` and/or `rate_limited: True`.
     - Many failures manifest as error strings containing '429'.
+    - Social Fabric sets `source_status.civic_osm == 'error'` when Overpass civic data failed.
     """
     stale_cache_used = False
     rate_limited = False
@@ -5050,6 +5057,9 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
         nodes += 1
 
         if isinstance(x, dict):
+            ss = x.get("source_status")
+            if isinstance(ss, dict) and ss.get("civic_osm") == "error":
+                warnings.add("civic_osm_unavailable")
             if x.get("_stale_cache") is True:
                 stale_cache_used = True
             dw = x.get("data_warning")

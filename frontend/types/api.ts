@@ -70,6 +70,10 @@ export interface LivabilityPillar {
   error?: string;
   /** Source of truth for UI state: 'success' | 'fallback' | 'failed'. */
   status?: 'success' | 'fallback' | 'failed';
+  /** Social Fabric: per-source load status (civic OSM, engagement proxies). */
+  source_status?: Record<string, 'ok' | 'empty' | 'error'>;
+  /** Social Fabric: structured errors when a source failed (e.g. Overpass). */
+  source_errors?: Array<{ source: string; key: string; code: string; message: string }>;
 }
 
 export interface LivabilityPillars {

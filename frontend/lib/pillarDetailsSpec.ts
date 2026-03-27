@@ -241,12 +241,35 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   social_fabric: {
     topLine: 'Residential stability, civic gathering places, and civic engagement.',
     metrics: [
+      {
+        label: 'Civic places (OpenStreetMap)',
+        path: 'source_status.civic_osm',
+        format: 'qualitative',
+        valueLabels: {
+          ok: 'Loaded',
+          empty: 'No matches (area scanned)',
+          error: 'Unavailable',
+        },
+      },
+      {
+        label: 'Engagement (IRS orgs)',
+        path: 'source_status.engagement_bmf',
+        format: 'qualitative',
+        valueLabels: { ok: 'Available', empty: 'Not available' },
+      },
+      {
+        label: 'Engagement (turnout)',
+        path: 'source_status.engagement_turnout',
+        format: 'qualitative',
+        valueLabels: { ok: 'Available', empty: 'Not available' },
+      },
       { label: 'Residential stability (tract + place)', path: 'summary.stability_blend_pct', format: 'percent', max: 100 },
       { label: 'Civic places (search radius)', path: 'summary.civic_node_count', format: 'count', suffix: ' places' },
       { label: 'Civic search radius (m)', path: 'summary.civic_search_radius_m', format: 'text' },
       { label: 'Voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
     ],
-    degradedMessage: 'Limited data: some community data were unavailable.',
+    degradedMessage:
+      'Limited data: OpenStreetMap civic gathering data failed or timed out, or other community sources were unavailable.',
   },
   diversity: {
     topLine: 'Race, income, and age mix (entropy) in the tract.',
