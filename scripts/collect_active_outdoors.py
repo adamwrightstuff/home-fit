@@ -4,8 +4,10 @@ Active Outdoors pillar collector.
 
 Reads locations from data/active_outdoors_locations.csv, calls the HomeFit API
 with only=active_outdoors and diagnostics=true for each location, and writes:
-  - analysis/active_outdoors_scores_YYYYMMDD.jsonl (full response per line, for Ridge/analysis)
+  - analysis/active_outdoors_scores_YYYYMMDD.jsonl (full response per line)
   - analysis/active_outdoors_summary_YYYYMMDD.csv (location, score, components, category, expected_score_range)
+
+Default API: https://home-fit-production.up.railway.app (override with HOMEFIT_BASE_URL for local).
 
 Uses same env and rate-limiting pattern as scripts/collector.py.
 """
@@ -33,7 +35,10 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 ANALYSIS_DIR = Path(__file__).parent.parent / "analysis"
 LOCATIONS_CSV = DATA_DIR / "active_outdoors_locations.csv"
 
-HOMEFIT_BASE_URL = os.getenv("HOMEFIT_BASE_URL", "").strip()
+HOMEFIT_BASE_URL = (
+    os.getenv("HOMEFIT_BASE_URL", "https://home-fit-production.up.railway.app")
+    or "https://home-fit-production.up.railway.app"
+).strip()
 HOMEFIT_API_KEY = os.getenv("HOMEFIT_API_KEY", None)
 
 MIN_DELAY_AFTER_RESPONSE_SECONDS = 5.0
@@ -131,8 +136,8 @@ def extract_ao_summary(response: Dict) -> Dict:
 
 def main() -> None:
     if not HOMEFIT_BASE_URL:
-        logger.error("HOMEFIT_BASE_URL environment variable is not set.")
-        logger.error("Set it in GitHub Actions secrets or in your shell.")
+        logger.error("HOMEFIT_BASE_URL is empty.")
+        logger.error("Set it in GitHub Actions secrets or export HOMEFIT_BASE_URL for a different API.")
         sys.exit(1)
 
     locations = load_locations()
