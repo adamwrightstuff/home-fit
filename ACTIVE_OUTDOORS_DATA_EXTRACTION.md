@@ -8,7 +8,7 @@ Your existing columns **have NOT changed** - they all still map to the same loca
 |------------|------------------|-------|
 | **Effective Area Type** | `location.area_classification.area_type` | Or use `pillars.active_outdoors.area_classification.area_type` |
 | **Lat / Lon** | `location.lat` / `location.lon` | From geocoding result |
-| **Total Score** | `pillars.active_outdoors.score` | Calibrated score (0-100) |
+| **Total Score** | `pillars.active_outdoors.score` | Sum of three components (0-100) |
 | **Daily Urban Outdoors** | `pillars.active_outdoors.breakdown.daily_urban_outdoors` | Component score (0-30) |
 | **Wild Adventure Backbone** | `pillars.active_outdoors.breakdown.wild_adventure` | Component score (0-50) |
 | **Waterfront Lifestyle** | `pillars.active_outdoors.breakdown.waterfront_lifestyle` | Component score (0-20) |
@@ -33,7 +33,7 @@ With the recent changes, you can also extract:
 | **Parks 2km** | `pillars.active_outdoors.diagnostics.parks_2km` | Park count within 2km (if diagnostics=true) |
 | **Playgrounds 2km** | `pillars.active_outdoors.diagnostics.playgrounds_2km` | Playground count within 2km (if diagnostics=true) |
 | **Hiking Trails Total** | `pillars.active_outdoors.diagnostics.hiking_trails_total` | Total trail count (if diagnostics=true) |
-| **Raw Total Score** | `pillars.active_outdoors.raw_total_v2` | Uncalibrated raw score before linear mapping |
+| **Component sum** | (same as Total Score) | `daily_urban_outdoors` + `wild_adventure` + `waterfront_lifestyle` |
 
 ## Example JSON Response Structure
 

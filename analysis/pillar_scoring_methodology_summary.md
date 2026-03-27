@@ -62,12 +62,12 @@
 - **Calibration**: None (scaling factor only)
 - **Status**: Pure data-backed (no regression)
 
-### 8. active_outdoors ✅ (Just Migrated + Calibrated)
+### 8. active_outdoors ✅
 - **Data Source**: OSM (parks, trails, swimming, camping), GEE (tree canopy)
-- **Scoring**: Direct weighted component sum → linear calibration
-- **Regression**: **Linear regression** used to determine calibration parameters (`CAL_A`, `CAL_B`)
-- **Calibration**: `calibrated_score = CAL_A * raw_score + CAL_B`
-- **Status**: Data-backed with regression-informed calibration
+- **Scoring**: Sum of three capped components (30 + 50 + 20 points), clamped to 0–100
+- **Regression**: None for final score
+- **Calibration**: None
+- **Status**: Pure data-backed component sum
 
 ## Key Distinctions
 
@@ -77,7 +77,7 @@
 - **Output**: Calibration parameters (not scores)
 - **Scoring**: Still uses direct data measurements
 - **Transparency**: Parameters are explicit and documented
-- **Used in**: `neighborhood_amenities`, `active_outdoors`
+- **Used in**: `neighborhood_amenities` (where applicable)
 
 ### Ridge Regression (Unacceptable - Removed)
 - **Purpose**: Predict scores directly from features
@@ -113,7 +113,7 @@
 | neighborhood_amenities | OSM | Count-based + calibration | Linear (calibration) | ✅ Data-backed + calibration |
 | built_beauty | OSM + GEE | Component-based | None | ✅ Pure data-backed |
 | natural_beauty | GEE + OSM + Census | Component sum | None (ridge removed) | ✅ Pure data-backed |
-| active_outdoors | OSM + GEE | Component sum + calibration | Linear (calibration) | ✅ Data-backed + calibration |
+| active_outdoors | OSM + GEE | Component sum | None | ✅ Pure data-backed |
 
 ## Design Compliance
 

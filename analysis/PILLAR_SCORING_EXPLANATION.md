@@ -13,7 +13,7 @@ All pillars follow **pure data-backed scoring** principles:
 - ✅ **Objective metrics** - Based on measurable data (OSM, Census, GEE, Transitland)
 - ✅ **Transparent** - All scoring logic is explicit and documented
 
-**Legacy References:** The **active_outdoors** pillar uses a ridge regression global model as its primary scoring method (see Addendum). Some other pillars previously retained ridge coefficients as "advisory only" for reference; those are not used for scoring. Natural beauty and neighborhood amenities use pure data-backed component sums.
+**Active Outdoors:** Final score is the **direct sum** of three capped components (30 + 50 + 20 points), same transparency pattern as Natural Beauty V8.
 
 ---
 
@@ -154,9 +154,9 @@ daily_score = Daily Urban Outdoors (0-30)
 wild_score = Wild Adventure Backbone (0-50)
 water_score = Waterfront Lifestyle (0-20)
 
-raw_total = (0.30 * daily_score) + (0.50 * wild_score) + (0.20 * water_score)
-final_score = raw_total  # No calibration
+final_score = clamp(daily_score + wild_score + water_score, 0, 100)
 ```
+Point budgets are 30% / 50% / 20% of the 100-point scale (no extra multipliers).
 
 ### Components
 
@@ -186,9 +186,8 @@ final_score = raw_total  # No calibration
 - **Effective Area Type:** Mountain towns use exurban expectations
 
 ### Calibration/Tuning
-- ❌ **No calibration** - `calibrated_total = raw_total`
-- ✅ **Data-backed** - Component weights: 30% daily, 50% wild, 20% water; final score from ridge regression global model (intercept + normalized features)
-- 📊 **Ridge regression:** **Primary scoring method** (global model; see DESIGN_PRINCIPLES.md Addendum)
+- ❌ **No calibration** - Total is the sum of components (no ridge regression).
+- ✅ **Data-backed** - Component point budgets: 30 / 50 / 20; `final_score` is their sum, clamped to 0–100.
 
 ### Data Sources
 - OSM API (parks, trails, water, camping)
@@ -747,7 +746,7 @@ score = min(100, total_raw)
 
 1. **No Calibration:** All pillars removed `CAL_A`/`CAL_B` transforms
 2. **No Tuning:** No location-specific adjustments or target-score-based tuning
-3. **Ridge Regression:** Used as **primary scoring** for active_outdoors only; removed from neighborhood_amenities; natural_beauty has no ridge (weighted component sum only)
+3. **Ridge Regression:** Not used for pillar scoring (removed from active_outdoors; was never used for natural_beauty)
 4. **Data-Backed:** All scoring based on objective metrics and research-backed thresholds
 5. **Context-Aware:** Area-type-specific expectations and weights (not calibration)
 6. **Fallback Scoring:** Conservative minimums for API failures (not calibration)
@@ -788,7 +787,7 @@ score = min(100, total_raw)
 
 ## Notes
 
-- **Ridge Regression:** active_outdoors uses a ridge global model for scoring; natural_beauty uses a weighted component sum (no ridge). Legacy advisory ridge references were removed from neighborhood_amenities.
+- **Active Outdoors:** Weighted component sum (daily + wild + water); same transparency as natural_beauty V8.
 - **Expected Values:** Research-backed area-type-specific expectations (not target scores)
 - **Fallback Scoring:** Handles API failures, not calibration
 - **Context Adjustments:** Area-type-specific weights/expectations (not location-specific tuning)

@@ -74,16 +74,20 @@ def test_direct_scoring():
                 print("\n   ✅ Calibration parameters are present")
                 print(f"   cal_a={cal_a}, cal_b={cal_b}")
             
-            # Check raw_total_v2 vs score
-            raw_total = breakdown.get('raw_total_v2')
+            # Total score = sum of three components
+            bd = breakdown.get('breakdown') or {}
+            d = float(bd.get('daily_urban_outdoors') or 0)
+            w = float(bd.get('wild_adventure') or 0)
+            wa = float(bd.get('waterfront_lifestyle') or 0)
+            summed = d + w + wa
             final_score = breakdown.get('score')
-            if raw_total is not None and final_score is not None:
-                print(f"\n   Raw total: {raw_total}")
+            if final_score is not None:
+                print(f"\n   Component sum (daily+wild+water): {summed:.1f}")
                 print(f"   Final score: {final_score}")
-                if abs(raw_total - final_score) < 0.01:
-                    print("   ✅ Raw total matches final score (calibration = identity)")
+                if abs(summed - float(final_score)) < 0.15:
+                    print("   ✅ Final score matches component sum")
                 else:
-                    print(f"   ⚠️  Raw total differs from final score (difference: {abs(raw_total - final_score)})")
+                    print(f"   ⚠️  Mismatch vs component sum (diff: {abs(summed - float(final_score)):.2f})")
         else:
             print(f"   ⚠️  Breakdown is not a dict: {type(breakdown)}")
             
