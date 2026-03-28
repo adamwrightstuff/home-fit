@@ -22,7 +22,7 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 
 INDEX_VERSION_LONGEVITY = "2"
 INDEX_VERSION_STATUS = "2"
-INDEX_VERSION_HAPPINESS = "2"
+INDEX_VERSION_HAPPINESS = "3"
 
 INDICES_VERSION_METADATA = {
     "longevity": INDEX_VERSION_LONGEVITY,
@@ -176,6 +176,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 pillars.get("natural_beauty"),
                 state,
                 social_fabric_details=social,
+                built_beauty_details=pillars.get("built_beauty"),
             )
             if hi is not None:
                 hi_score, hi_breakdown = hi
@@ -275,6 +276,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             pillars.get("natural_beauty"),
             state,
             social_fabric_details=social,
+            built_beauty_details=pillars.get("built_beauty"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result

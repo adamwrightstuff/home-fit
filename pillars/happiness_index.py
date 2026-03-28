@@ -6,8 +6,9 @@ Components (all 0–100, renormalized when missing):
 - S (Social Fabric): Social Fabric pillar score (rootedness, civic spaces, long-term neighbors).
 - H (Home Space-to-Price): Home Price to Space pillar score (enough space without crushing debt).
 - G (Green): full Natural Beauty pillar score (canopy, parks, water, scenery).
+- B (Built): full Built Beauty pillar score (architecture and streetscape).
 
-Base weights: C 0.35, S 0.30, H 0.20, G 0.15 (renormalized over available components).
+Base weights: C 0.35, S 0.30, H 0.15, G 0.15, B 0.05 (renormalized over available components).
 """
 
 from __future__ import annotations
@@ -19,8 +20,9 @@ from typing import Any, Dict, Optional, Tuple
 # Weights (must sum to 1.0 before renormalization over available components)
 W_COMMUTE = 0.35
 W_SOCIAL = 0.30
-W_HOME = 0.20
+W_HOME = 0.15
 W_GREEN = 0.15
+W_BUILT = 0.05
 
 _BASELINES_CACHE: Optional[Dict[str, Any]] = None
 
@@ -105,6 +107,16 @@ def _component_green(natural_beauty_details: Optional[Dict[str, Any]]) -> Option
     return None
 
 
+def _component_built(built_beauty_details: Optional[Dict[str, Any]]) -> Optional[float]:
+    """B: 0–100 = full Built Beauty pillar score."""
+    if not built_beauty_details:
+        return None
+    score = built_beauty_details.get("score")
+    if isinstance(score, (int, float)):
+        return max(0.0, min(100.0, float(score)))
+    return None
+
+
 def compute_happiness_index_with_breakdown(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
@@ -112,11 +124,12 @@ def compute_happiness_index_with_breakdown(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
+    built_beauty_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Compute Happiness Index (0–100) and component breakdown.
 
-    Returns (score, breakdown) with breakdown keys: commute, social, home_space, green,
+    Returns (score, breakdown) with breakdown keys: commute, social, home_space, green, built,
     and component_weights used (after renormalization for missing components).
     """
     from data_sources.us_census_divisions import get_division
@@ -127,6 +140,7 @@ def compute_happiness_index_with_breakdown(
         "social": None,
         "home_space": None,
         "green": None,
+        "built": None,
         "component_weights": {},
     }
 
@@ -135,11 +149,13 @@ def compute_happiness_index_with_breakdown(
     S = _component_social(social_fabric_details)
     H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
+    B = _component_built(built_beauty_details)
 
     breakdown["commute"] = round(C, 1) if C is not None else None
     breakdown["social"] = round(S, 1) if S is not None else None
     breakdown["home_space"] = round(H, 1) if H is not None else None
     breakdown["green"] = round(G, 1) if G is not None else None
+    breakdown["built"] = round(B, 1) if B is not None else None
 
     weights = []
     components = []
@@ -155,6 +171,9 @@ def compute_happiness_index_with_breakdown(
     if G is not None:
         weights.append(W_GREEN)
         components.append((G, "green"))
+    if B is not None:
+        weights.append(W_BUILT)
+        components.append((B, "built"))
 
     if not components:
         return None, breakdown
@@ -173,6 +192,7 @@ def compute_happiness_index(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
+    built_beauty_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """Convenience: return only the score."""
     result, _ = compute_happiness_index_with_breakdown(
@@ -182,5 +202,6 @@ def compute_happiness_index(
         natural_beauty_details,
         state_abbrev,
         social_fabric_details=social_fabric_details,
+        built_beauty_details=built_beauty_details,
     )
     return result

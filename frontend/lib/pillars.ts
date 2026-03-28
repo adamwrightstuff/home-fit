@@ -140,13 +140,13 @@ export const STATUS_SIGNAL_COPY = {
 export const HAPPINESS_INDEX_COPY = {
   /** One-line tooltip next to the score. */
   tooltip:
-    'Commute ease (35%), social fabric (30%), housing value for space (20%), natural beauty (15%) — weights rebalance if a piece is missing.',
+    'Commute ease (35%), social fabric (30%), housing value for space (15%), natural beauty (15%), built beauty (5%) — weights rebalance if a piece is missing.',
   /** Full version for modal. */
   full:
-    'Happiness Index blends four ingredients already in your score: easier commutes (public transit pillar), stronger social fabric (neighbors, civic life), better housing value for space (price-to-space), and more natural beauty (green and blue space). Default weights are 35% / 30% / 20% / 15%; if we’re missing data for one piece, the others are scaled so the index still sums to a full 0–100.',
+    'Happiness Index blends five ingredients already in your score: easier commutes (public transit pillar), stronger social fabric (neighbors, civic life), better housing value for space (price-to-space), more natural beauty (green and blue space), and built beauty (architecture and streetscape). Default weights are 35% / 30% / 15% / 15% / 5%; if we’re missing data for one piece, the others are scaled so the index still sums to a full 0–100.',
   /** Short version for subtitle or card label. */
   short:
-    'Commute, social fabric, housing space-for-price, and nature — fixed weights when all four are available.',
+    'Commute, social fabric, housing space-for-price, nature, and built beauty — fixed weights when all five are available.',
 } as const
 
 /** Comma-separated pillar names required to compute Status Signal (for only= param). */
