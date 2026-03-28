@@ -67,8 +67,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                 fallback_score = 15.0
             
             print(f"   📊 Applying fallback score {fallback_score:.1f} for {area_type or 'unknown'} area (OSM API unavailable)")
-            return fallback_score, _empty_breakdown_with_fallback(fallback_score, area_type or "unknown")
-        return 0, _empty_breakdown()
+            return fallback_score, _empty_breakdown_with_fallback(
+                fallback_score, area_type or "unknown", lat, lon
+            )
+        return 0, _empty_breakdown(lat, lon, area_type)
     
     tier1_all = business_data["tier1_daily"]
     tier2_all = business_data["tier2_social"]
@@ -118,11 +120,13 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
                 fallback_score = 15.0
             
             print(f"   📊 Applying fallback score {fallback_score:.1f} for {fallback_reason} (OSM data gap)")
-            return fallback_score, _empty_breakdown_with_fallback(fallback_score, area_type or "unknown")
+            return fallback_score, _empty_breakdown_with_fallback(
+                fallback_score, area_type or "unknown", lat, lon
+            )
         else:
             # Rural/exurban/low density: genuinely may have no amenities, return 0
             print("⚠️  No indie businesses found")
-            return 0, _empty_breakdown()
+            return 0, _empty_breakdown(lat, lon, area_type)
     
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
@@ -544,8 +548,16 @@ def _build_summary(tier1: List, tier2: List, tier3: List, tier4: List, all_busin
     }
 
 
-def _empty_breakdown() -> Dict:
+def _empty_breakdown(lat: float, lon: float, area_type: Optional[str]) -> Dict:
     """Return empty breakdown when no data."""
+    at = area_type or "suburban"
+    dq = data_quality.assess_pillar_data_quality(
+        "neighborhood_amenities",
+        {"all_businesses": []},
+        lat,
+        lon,
+        at,
+    )
     return {
         "score": 0,
         "breakdown": {
@@ -568,12 +580,22 @@ def _empty_breakdown() -> Dict:
                 "home_walkability": 0,
                 "location_quality": 0
             }
-        }
+        },
+        "data_quality": dq,
     }
 
 
-def _empty_breakdown_with_fallback(fallback_score: float, area_type: str) -> Dict:
+def _empty_breakdown_with_fallback(fallback_score: float, area_type: str, lat: float, lon: float) -> Dict:
     """Return breakdown with fallback score for OSM data gaps."""
+    at = area_type or "suburban"
+    dq = data_quality.assess_pillar_data_quality(
+        "neighborhood_amenities",
+        {"all_businesses": [], "fallback_applied": True},
+        lat,
+        lon,
+        at,
+        fallback_used=True,
+    )
     return {
         "score": round(fallback_score, 1),
         "breakdown": {
@@ -598,6 +620,7 @@ def _empty_breakdown_with_fallback(fallback_score: float, area_type: str) -> Dic
             },
             "fallback_applied": True,
             "fallback_reason": f"OSM data gap - no businesses found for {area_type} area"
-        }
+        },
+        "data_quality": dq,
     }
 

@@ -3312,8 +3312,25 @@ def _calculate_natural_beauty_v8(
         "expectation_effect": None,
     }
 
+    tree_analysis_for_dq: Dict = {}
+    if gee_canopy is not None:
+        tree_analysis_for_dq["gee_canopy_pct"] = float(gee_canopy)
+    if census_canopy is not None:
+        tree_analysis_for_dq["canopy_pct"] = float(census_canopy)
+    tree_analysis_for_dq["natural_context"] = {"landcover": landcover, "component_scores": {"landcover": context_score}}
+    tree_analysis_for_dq["data_availability"] = {"v8": True}
+    tree_analysis_for_dq["multi_radius_canopy"] = {"neighborhood_1000m": gee_canopy}
+
     quality_metrics = assess_pillar_data_quality(
-        "natural_beauty", {"v8_components": True}, lat, lon, area_type or "suburban"
+        "natural_beauty",
+        {
+            "tree_analysis": tree_analysis_for_dq,
+            "enhancers": {},
+            "scenic_metadata": {},
+        },
+        lat,
+        lon,
+        area_type or "suburban",
     )
 
     return {

@@ -55,6 +55,7 @@ def get_diversity_score(
 
     diversity_data = census_api.get_diversity_data(lat, lon, tract=tract)
     diversity_score = None
+    components_present: list[str] = []
     if diversity_data:
         race_counts = diversity_data.get("race_counts") or {}
         income_counts = diversity_data.get("income_counts") or {}
@@ -64,15 +65,18 @@ def get_diversity_score(
             n_race = sum(1 for v in race_counts.values() if v > 0)
             if n_race >= 2:
                 components.append(_normalized_entropy(race_counts.values(), n_race))
+                components_present.append("race")
         if income_counts:
             n_inc = sum(1 for v in income_counts.values() if v > 0)
             if n_inc >= 2:
                 components.append(_normalized_entropy(income_counts.values(), n_inc))
+                components_present.append("income")
         youth = age_counts_dict.get("youth", 0)
         prime = age_counts_dict.get("prime", 0)
         seniors = age_counts_dict.get("seniors", 0)
         if youth + prime + seniors > 0:
             components.append(_normalized_entropy([youth, prime, seniors], 3))
+            components_present.append("age")
         if components:
             diversity_score = sum(components) / len(components)
 
@@ -88,7 +92,10 @@ def get_diversity_score(
         },
         "data_quality": data_quality.assess_pillar_data_quality(
             "diversity",
-            {"score": score, "diversity_score": diversity_score},
+            {
+                "diversity_data_loaded": bool(diversity_data),
+                "components_present": components_present,
+            },
             lat,
             lon,
             area_type,

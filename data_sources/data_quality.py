@@ -1374,7 +1374,7 @@ class DataQualityManager:
             return 0.0, 'very_poor'
         
         # Calculate completeness based on pillar type
-        if pillar_name == 'active_outdoors':
+        if pillar_name in ('active_outdoors', 'active_outdoors_v2'):
             return self._assess_outdoors_completeness(data, expected_minimums)
         elif pillar_name == 'healthcare_access':
             return self._assess_healthcare_completeness(data, expected_minimums)
@@ -1398,6 +1398,8 @@ class DataQualityManager:
             return self._assess_climate_risk_completeness(data, expected_minimums)
         elif pillar_name == 'social_fabric':
             return self._assess_social_fabric_completeness(data, expected_minimums)
+        elif pillar_name == 'diversity':
+            return self._assess_diversity_completeness(data, expected_minimums)
         else:
             return self._assess_generic_completeness(data, expected_minimums)
 
@@ -1477,6 +1479,9 @@ class DataQualityManager:
     
     def _assess_business_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Assess business/amenity data completeness."""
+        if data.get("fallback_applied"):
+            # Imputed score when OSM returned no POIs — weak vs a real sample
+            return 0.25, 'poor'
         # Try 'businesses' first, then 'all_businesses'
         businesses = data.get('businesses', []) or data.get('all_businesses', [])
         if not businesses:
@@ -1751,7 +1756,21 @@ class DataQualityManager:
             completeness = max(completeness, 0.55)
 
         return completeness, self._get_quality_tier(completeness)
-    
+
+    def _assess_diversity_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+        """
+        Census tract diversity: completeness = share of race / income / age
+        entropy components computed (target 3).
+        """
+        if not data or not data.get("diversity_data_loaded"):
+            return 0.0, 'very_poor'
+        present = data.get("components_present") or []
+        target = max(1, int(expected.get("diversity_components", 3)))
+        completeness = min(1.0, len(present) / float(target))
+        if len(present) >= 2:
+            completeness = max(completeness, 0.55)
+        return completeness, self._get_quality_tier(completeness)
+
     def _assess_generic_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Generic completeness assessment."""
         if not data:
@@ -1796,7 +1815,8 @@ class DataQualityManager:
                 'major_airports': 1,
                 'regional_airports': 2,
                 'business_count': 50,
-                'business_types': 12
+                'business_types': 12,
+                'diversity_components': 3,
             }
         elif area_type == 'suburban' or (density and density > 2500):
             return {
@@ -1809,7 +1829,8 @@ class DataQualityManager:
                 'major_airports': 1,
                 'regional_airports': 1,
                 'business_count': 25,
-                'business_types': 8
+                'business_types': 8,
+                'diversity_components': 3,
             }
         elif area_type == 'exurban' or (density and density > 1000):
             return {
@@ -1822,7 +1843,8 @@ class DataQualityManager:
                 'major_airports': 0,
                 'regional_airports': 1,
                 'business_count': 15,
-                'business_types': 6
+                'business_types': 6,
+                'diversity_components': 3,
             }
         else:  # rural
             return {
@@ -1835,7 +1857,8 @@ class DataQualityManager:
                 'major_airports': 0,
                 'regional_airports': 0,
                 'business_count': 5,
-                'business_types': 3
+                'business_types': 3,
+                'diversity_components': 3,
             }
     
     def create_confidence_score(self, data_completeness: float, 
@@ -1878,17 +1901,25 @@ class DataQualityManager:
 data_quality_manager = DataQualityManager()
 
 
-def assess_pillar_data_quality(pillar_name: str, data: Dict, 
-                              lat: float, lon: float, area_type: str) -> Dict:
+def assess_pillar_data_quality(
+    pillar_name: str,
+    data: Dict,
+    lat: float,
+    lon: float,
+    area_type: str,
+    *,
+    fallback_used: bool = False,
+) -> Dict:
     """
     Assess data quality for a pillar and return quality metrics.
-    
+
     Args:
         pillar_name: Name of the pillar
         data: Data dictionary to assess
         lat, lon: Coordinates
         area_type: Area classification
-    
+        fallback_used: When True, apply extra confidence discount (imputed / weak evidence)
+
     Returns:
         Dictionary with quality metrics
     """
@@ -1897,15 +1928,14 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
         pillar_name, data, expected_minimums
     )
     
-    # Never use fallback - always calculate from real data
-    # Fallback scoring removed - scores must be based on actual data
-    
     # Create confidence score
     data_sources = ['osm'] if data else []
     if pillar_name == 'social_fabric' and data:
         data_sources = ['census', 'osm'] if data.get('mobility') is not None else ['osm']
+    elif pillar_name == 'diversity' and data:
+        data_sources = ['census']
     confidence = data_quality_manager.create_confidence_score(
-        completeness, data_sources, False  # needs_fallback always False
+        completeness, data_sources, fallback_used
     )
     
     # Validation: Ensure quality_tier is always a string
@@ -1917,9 +1947,9 @@ def assess_pillar_data_quality(pillar_name: str, data: Dict,
     out = {
         'completeness': completeness,
         'quality_tier': quality_tier,
-        'needs_fallback': False,  # Always False - no fallback scoring
-        'fallback_score': None,  # Always None - no fallback scoring
-        'fallback_metadata': {'fallback_used': False},
+        'needs_fallback': False,
+        'fallback_score': None,
+        'fallback_metadata': {'fallback_used': fallback_used},
         'confidence': confidence,
         'expected_minimums': expected_minimums,
         'data_sources': data_sources
