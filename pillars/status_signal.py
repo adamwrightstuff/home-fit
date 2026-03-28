@@ -202,6 +202,22 @@ def _get_status_label(archetype: str) -> str:
     }.get(archetype, "Typical")
 
 
+def _signal_strength_band(score: float) -> Tuple[str, str]:
+    """
+    Map composite Status Signal (0-100) to a strength tier (clarity of the archetype-weighted blend).
+
+    Bands: faint [0,25), moderate [25,50), strong [50,75), dominant [75,100].
+    """
+    s = float(score)
+    if s < 25.0:
+        return "faint", "Faint signal"
+    if s < 50.0:
+        return "moderate", "Moderate signal"
+    if s < 75.0:
+        return "strong", "Strong signal"
+    return "dominant", "Dominant signal"
+
+
 def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
@@ -754,6 +770,7 @@ def compute_status_signal_with_breakdown(
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
     Breakdown: wealth, home_cost, education, occupation, luxury_presence, wealth_character,
     archetype (Patrician|Parvenu|Poseur|Typical), status_label (UI badge e.g. Legacy Establishment).
+    signal_strength / signal_strength_label: tier from composite (faint|moderate|strong|dominant).
     Weights vary by archetype (Patrician: education/home_cost; Parvenu: wealth/luxury). Patrician checked before Parvenu.
     Baselines: tract CBSA (from get_census_tract) is mapped via cbsa_to_baseline in baselines JSON (e.g. 35620->nyc_metro);
     if no CBSA match, falls back to division then "all" (national).
@@ -771,6 +788,9 @@ def compute_status_signal_with_breakdown(
         "status_insight": "",
         "top_drivers": [],
         "analysis_radius_note": None,
+        "signal_strength": None,
+        "signal_strength_label": None,
+        "composite_score": None,
     }
     if not housing_details or not economic_security_details:
         return None, breakdown
@@ -926,4 +946,8 @@ def compute_status_signal_with_breakdown(
         income_to_home = float(median_income) / float(median_home)
         if income_to_home < 0.12:
             final = min(final, 78.0)
+    ss_key, ss_label = _signal_strength_band(final)
+    breakdown["composite_score"] = final
+    breakdown["signal_strength"] = ss_key
+    breakdown["signal_strength_label"] = ss_label
     return final, breakdown

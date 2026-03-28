@@ -18,6 +18,12 @@ export interface StatusSignalBreakdown {
   status_insight?: string;
   top_drivers?: StatusSignalTopDriver[];
   analysis_radius_note?: string | null;
+  /** Tier from composite score: faint | moderate | strong | dominant (bands 0-25, 25-50, 50-75, 75-100). */
+  signal_strength?: 'faint' | 'moderate' | 'strong' | 'dominant';
+  /** Human-readable strength, e.g. "Moderate signal". */
+  signal_strength_label?: string;
+  /** Same as top-level status_signal when present (for saved payloads). */
+  composite_score?: number;
   [key: string]: unknown;
 }
 

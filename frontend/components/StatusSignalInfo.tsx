@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 import type { StatusSignalBreakdown } from '@/types/api'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
@@ -18,35 +19,53 @@ export interface StatusSignalInfoProps {
   refreshing?: boolean
   /** When provided, show Status Signature badge and tooltip content (archetype, insight, top drivers, radius note). */
   breakdown?: StatusSignalBreakdown | null
+  /** Top-level composite 0-100; used to derive strength label when breakdown omits signal_strength_label (older saves). */
+  compositeScore?: number | null
 }
 
 /** "?" button + optional Status Signature badge + modal for Status Signal. Use next to the Status Signal label or score. */
-export default function StatusSignalInfo({ onRefresh, refreshing = false, breakdown }: StatusSignalInfoProps) {
+export default function StatusSignalInfo({
+  onRefresh,
+  refreshing = false,
+  breakdown,
+  compositeScore = null,
+}: StatusSignalInfoProps) {
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
   const label = breakdown?.status_label ?? 'Typical'
   const archetype = breakdown?.archetype ?? 'Typical'
   const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE.Typical
+  const strengthLabel =
+    breakdown?.signal_strength_label ??
+    (typeof compositeScore === 'number' && Number.isFinite(compositeScore)
+      ? signalStrengthFromCompositeScore(compositeScore).label
+      : null)
 
   return (
     <>
       {breakdown?.status_label && (
-        <span
-          className="hf-status-signature-badge"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '0.2rem 0.5rem',
-            marginLeft: 6,
-            borderRadius: 6,
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            background: badgeStyle.bg,
-            color: badgeStyle.text,
-          }}
-          title={breakdown?.status_insight ?? undefined}
-        >
-          {label}
+        <span style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem', marginLeft: 6 }}>
+          <span
+            className="hf-status-signature-badge"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0.2rem 0.5rem',
+              borderRadius: 6,
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              background: badgeStyle.bg,
+              color: badgeStyle.text,
+            }}
+            title={breakdown?.status_insight ?? undefined}
+          >
+            {label}
+          </span>
+          {strengthLabel ? (
+            <span className="hf-muted" style={{ fontSize: '0.7rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
+              · {strengthLabel}
+            </span>
+          ) : null}
         </span>
       )}
       <button
@@ -112,6 +131,7 @@ export default function StatusSignalInfo({ onRefresh, refreshing = false, breakd
               {breakdown?.archetype && (
                 <span style={{ marginLeft: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
                   — {breakdown.status_label}
+                  {strengthLabel ? ` · ${strengthLabel}` : ''}
                 </span>
               )}
             </h2>

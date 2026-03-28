@@ -501,6 +501,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       total_score: totalScore,
       longevity_index: longevityIndex ?? undefined,
       status_signal: statusSignal ?? undefined,
+      status_signal_breakdown: statusSignalBreakdown ?? undefined,
       happiness_index: happinessIndex ?? undefined,
       token_allocation: tokenAllocation as Record<string, number>,
       allocation_type: 'priority_based',
@@ -508,7 +509,20 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       data_quality_summary: { data_sources_used: [], area_classification: {}, total_pillars: Object.keys(pillarScores).length, data_completeness: 'partial' },
       metadata: { version: '', architecture: '', note: '', test_mode: false },
     }
-  }, [place, pillarScores, totalScore, longevityIndex, statusSignal, happinessIndex, placeSummary, selectedPriorities, pillarWeightsAndContributions, prioritiesForScoredOnly, fullPillarData])
+  }, [
+    place,
+    pillarScores,
+    totalScore,
+    longevityIndex,
+    statusSignal,
+    statusSignalBreakdown,
+    happinessIndex,
+    placeSummary,
+    selectedPriorities,
+    pillarWeightsAndContributions,
+    prioritiesForScoredOnly,
+    fullPillarData,
+  ])
 
   /** Priorities object for save (all pillars, selected use current importance). */
   const savePriorities = useMemo((): PillarPriorities => {
@@ -800,7 +814,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             <span style={{ fontWeight: 600, color: statusSignal != null ? 'var(--hf-text-secondary)' : 'var(--hf-text-secondary)' }}>
               {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
             </span>
-            <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} breakdown={statusSignalBreakdown} />
+            <StatusSignalInfo
+              onRefresh={handleRefreshStatusSignal}
+              refreshing={statusSignalRefreshLoading}
+              breakdown={statusSignalBreakdown}
+              compositeScore={statusSignal}
+            />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Happiness Index</span>

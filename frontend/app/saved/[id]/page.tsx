@@ -563,7 +563,12 @@ export default function SavedDetailPage() {
                 <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
                   {typeof displayData.status_signal === 'number' ? Math.max(0, Math.min(100, displayData.status_signal)).toFixed(1) : '—'}
                 </span>
-                <StatusSignalInfo onRefresh={handleRefreshStatusSignal} refreshing={statusSignalRefreshLoading} breakdown={displayData.status_signal_breakdown ?? null} />
+                <StatusSignalInfo
+                  onRefresh={handleRefreshStatusSignal}
+                  refreshing={statusSignalRefreshLoading}
+                  breakdown={displayData.status_signal_breakdown ?? null}
+                  compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
+                />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="hf-muted">Happiness Index</span>
