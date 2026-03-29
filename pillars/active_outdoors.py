@@ -4,8 +4,8 @@ Scores access to outdoor activities and recreation
 """
 
 import math
+import time
 from typing import Dict, Tuple, Optional, List
-from concurrent.futures import ThreadPoolExecutor
 
 from data_sources import osm_api
 from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
@@ -19,6 +19,51 @@ from logging_config import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)
+
+# A2: stagger sequential Overpass calls to reduce 429/timeouts vs parallel bursts.
+_OVERPASS_STAGGER_S = 1.0
+
+
+def _active_outdoors_confidence_notes(
+    dq: Dict,
+    parks: List[Dict],
+    playgrounds: List[Dict],
+    hiking: List[Dict],
+    swimming: List[Dict],
+    camping: List[Dict],
+) -> List[str]:
+    """
+    C2: short hints when confidence is low. Completeness (B1) unchanged elsewhere.
+    """
+    conf = int(dq.get("confidence") or 0)
+    tier = dq.get("quality_tier") or ""
+    if conf >= 70 and tier in ("excellent", "good"):
+        return []
+
+    em = dq.get("expected_minimums") or {}
+    loc_need = max(1, int(em.get("local_facilities", 5)))
+    reg_need = max(1, int(em.get("regional_facilities", 3)))
+    local_n = len(parks) + len(playgrounds)
+    regional_n = len(hiking) + len(swimming) + len(camping)
+
+    notes: List[str] = []
+    if local_n < loc_need * 0.5:
+        notes.append(
+            "Local park and playground coverage in OpenStreetMap is below what we expect "
+            "for this area—confidence in the “daily outdoors” part of the score is limited."
+        )
+    if regional_n < reg_need * 0.5:
+        notes.append(
+            "Trails, water access, and camping signals in OSM are sparse versus expectations—"
+            "confidence in the “regional outdoors” part is limited."
+        )
+    if not notes and conf < 70:
+        notes.append(
+            "Overall OSM coverage for this pillar is partial; the score reflects what we found, "
+            "but treat confidence as moderate."
+        )
+    return notes[:3]
+
 
 # ============================================================================
 # Active Outdoors v2 – data-centric outdoor lifestyle model
@@ -87,17 +132,16 @@ def get_active_outdoors_score_v2(
         }
     )
 
-    # 2) Data collection - PARALLELIZE all API calls for performance
-    # PERFORMANCE OPTIMIZATION: Following Public Transit pattern
-    # All 4 API calls are independent and can run in parallel
-    # This reduces total time from ~20-40s to ~5-10s (slowest call)
+    # 2) Data collection — A2: sequential Overpass with stagger (GEE canopy last, no Overpass)
     logger.info(
-        f"📍 [AO v2] Fetching data in parallel (parks, trails, water, canopy)...",
+        f"📍 [AO v2] Fetching data sequentially (Overpass stagger {_OVERPASS_STAGGER_S}s): "
+        f"parks → trails → regional → canopy...",
         extra={
             "pillar_name": "active_outdoors_v2",
             "lat": lat,
             "lon": lon,
-            "query_type": "parallel_data_fetch",
+            "query_type": "sequential_overpass_stagger",
+            "stagger_s": _OVERPASS_STAGGER_S,
             "local_radius_m": local_radius,
             "trail_radius_m": trail_radius,
             "regional_radius_m": regional_radius
@@ -172,18 +216,13 @@ def get_active_outdoors_score_v2(
         except Exception:
             return 0.0
     
-    # Execute all API calls in parallel
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        future_parks = executor.submit(_fetch_parks)
-        future_trails = executor.submit(_fetch_trails)
-        future_regional = executor.submit(_fetch_regional)
-        future_canopy = executor.submit(_fetch_canopy)
-        
-        # Wait for all to complete
-        local = future_parks.result()
-        nature_trail = future_trails.result()
-        nature_regional = future_regional.result()
-        canopy_pct_5km = future_canopy.result()
+    local = _fetch_parks()
+    time.sleep(_OVERPASS_STAGGER_S)
+    nature_trail = _fetch_trails()
+    time.sleep(_OVERPASS_STAGGER_S)
+    nature_regional = _fetch_regional()
+    time.sleep(_OVERPASS_STAGGER_S)
+    canopy_pct_5km = _fetch_canopy()
     
     # Extract data from results
     parks: List[Dict] = local.get("parks", []) or []
@@ -273,6 +312,10 @@ def get_active_outdoors_score_v2(
     dq = assess_pillar_data_quality(
         "active_outdoors_v2", combined_data, lat, lon, area_type
     )
+    conf_notes = _active_outdoors_confidence_notes(
+        dq, parks, playgrounds, hiking_trails, swimming, camping
+    )
+    dq = {**dq, "confidence_notes": conf_notes}
 
     if scoring_area_type != area_type:
         logger.info(
@@ -328,9 +371,11 @@ def get_active_outdoors_score_v2(
             parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km
         ),
         "data_quality": dq,
+        "confidence_notes": conf_notes,
         "area_classification": area_metadata,
         "debug": {
             "parks_query": (local.get("_debug_parks") if isinstance(local, dict) else None),
+            "overpass_stagger_s": _OVERPASS_STAGGER_S,
         },
         "version": "active_outdoors_v2_component_sum",
         "scoring_method": "weighted_component_sum",
