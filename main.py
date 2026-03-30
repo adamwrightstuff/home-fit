@@ -452,12 +452,24 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
                 summary["built_context_tags"] = ", ".join(
                     str(t).replace("_", " ").strip().title() for t in tags if t is not None
                 )
-        if arch_analysis.get("median_year_built"):
-            summary["median_year_built"] = int(arch_analysis.get("median_year_built", 0))
-        if arch_analysis.get("pre_1940_pct") is not None:
-            summary["pre_1940_pct"] = round(arch_analysis.get("pre_1940_pct", 0), 1)
-        # For "Did you know" facts: total heritage structures (OSM historic + NRHP)
         historic_ctx = arch_analysis.get("historic_context") or {}
+        median_yb = arch_analysis.get("median_year_built")
+        if median_yb is None and isinstance(historic_ctx, dict):
+            median_yb = historic_ctx.get("median_year_built")
+        if median_yb is not None:
+            try:
+                summary["median_year_built"] = int(median_yb)
+            except (TypeError, ValueError):
+                pass
+        pre_1940 = arch_analysis.get("pre_1940_pct")
+        if pre_1940 is None and isinstance(historic_ctx, dict):
+            pre_1940 = historic_ctx.get("pre_1940_pct")
+        if pre_1940 is not None:
+            try:
+                summary["pre_1940_pct"] = round(float(pre_1940), 1)
+            except (TypeError, ValueError):
+                pass
+        # For "Did you know" facts: total heritage structures (OSM historic + NRHP)
         if isinstance(historic_ctx, dict):
             landmarks = historic_ctx.get("landmarks") or 0
             nrhp = historic_ctx.get("nrhp_count") or 0
