@@ -411,6 +411,22 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     return {pillar: float(rounded_tokens.get(pillar, 0)) for pillar in primary_pillars}
 
 
+_BUILT_EFFECTIVE_AREA_LABELS: Dict[str, str] = {
+    "historic_urban": "Historic urban fabric",
+    "urban_core": "Urban core",
+    "urban_residential": "Urban residential",
+    "suburban": "Suburban",
+    "exurban": "Exurban",
+    "rural": "Rural",
+}
+
+
+def _humanize_built_effective_area_type(eat: Optional[str]) -> Optional[str]:
+    if not eat or not isinstance(eat, str):
+        return None
+    return _BUILT_EFFECTIVE_AREA_LABELS.get(eat.lower(), eat.replace("_", " ").title())
+
+
 def _extract_built_beauty_summary(built_details: Dict) -> Dict:
     """Extract summary data from Built Beauty details for display in UI."""
     summary = {}
@@ -425,6 +441,17 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
         summary["footprint_variation"] = round(metrics.get("footprint_variation", arch_analysis.get("footprint_variation", 0)) or 0, 2)
         summary["built_coverage_ratio"] = round(metrics.get("built_coverage_ratio", arch_analysis.get("built_coverage_ratio", 0)) or 0, 3)
         summary["diversity_score"] = round(metrics.get("diversity_score", arch_analysis.get("diversity_score", 0)) or 0, 2)
+        classification = arch_analysis.get("classification") or {}
+        if isinstance(classification, dict):
+            eat = classification.get("effective_area_type")
+            label = _humanize_built_effective_area_type(eat if isinstance(eat, str) else None)
+            if label:
+                summary["built_form_label"] = label
+            tags = classification.get("contextual_tags")
+            if isinstance(tags, list) and tags:
+                summary["built_context_tags"] = ", ".join(
+                    str(t).replace("_", " ").strip().title() for t in tags if t is not None
+                )
         if arch_analysis.get("median_year_built"):
             summary["median_year_built"] = int(arch_analysis.get("median_year_built", 0))
         if arch_analysis.get("pre_1940_pct") is not None:
@@ -1883,7 +1910,11 @@ def _compute_single_score_internal(
 
     # Build livability_pillars dict (include business_list in neighborhood_amenities for status-signal breakdown / inspect scripts)
     _na_breakdown = amenities_details.get("breakdown", {})
-    _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
+    _na_breakdown_with_business = {
+        **_na_breakdown,
+        "business_list": amenities_details.get("business_list") or [],
+        "diagnostics": amenities_details.get("diagnostics") or {},
+    }
     livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,
@@ -3361,7 +3392,11 @@ async def _stream_score_with_progress(
         
         # Build livability_pillars dict (reuse helper functions)
         _na_breakdown = amenities_details.get("breakdown", {})
-        _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
+        _na_breakdown_with_business = {
+            **_na_breakdown,
+            "business_list": amenities_details.get("business_list") or [],
+            "diagnostics": amenities_details.get("diagnostics") or {},
+        }
         livability_pillars = {
             "active_outdoors": {
                 "score": active_outdoors_score,
@@ -4372,7 +4407,11 @@ async def stream_score(
 
         # Build livability_pillars dict first (include business_list for status-signal / inspect scripts)
         _na_breakdown = amenities_details.get("breakdown", {})
-        _na_breakdown_with_business = {**_na_breakdown, "business_list": amenities_details.get("business_list") or []}
+        _na_breakdown_with_business = {
+            **_na_breakdown,
+            "business_list": amenities_details.get("business_list") or [],
+            "diagnostics": amenities_details.get("diagnostics") or {},
+        }
         livability_pillars = {
         "active_outdoors": {
             "score": active_outdoors_score,

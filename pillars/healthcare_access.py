@@ -1014,4 +1014,23 @@ def _build_summary(nearest_hospital: Optional[Dict], urgent_care: List,
             "distance_km": closest["distance_km"]
         }
 
+    # Flat fields for UI (avoid nested objects in detail rows)
+    if nearest_hospital and isinstance(nearest_hospital, dict):
+        nk = nearest_hospital.get("distance_km")
+        if nk is not None:
+            try:
+                summary["nearest_hospital_km"] = round(float(nk), 2)
+            except (TypeError, ValueError):
+                pass
+        nm = nearest_hospital.get("name")
+        if nm:
+            summary["nearest_hospital_name"] = str(nm)
+    if summary.get("nearest_pharmacy") and isinstance(summary["nearest_pharmacy"], dict):
+        pk = summary["nearest_pharmacy"].get("distance_km")
+        if pk is not None:
+            try:
+                summary["nearest_pharmacy_km"] = round(float(pk), 2)
+            except (TypeError, ValueError):
+                pass
+
     return summary

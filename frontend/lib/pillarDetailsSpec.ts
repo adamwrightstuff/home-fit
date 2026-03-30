@@ -96,6 +96,7 @@ export function getPillarValue(pillar: Record<string, unknown>, path: string): n
 export function getPillarString(pillar: Record<string, unknown>, path: string): string | undefined {
   const v = get(pillar, path)
   if (v == null) return undefined
+  if (Array.isArray(v)) return v.map((x) => String(x)).join(', ')
   return String(v)
 }
 
@@ -134,62 +135,71 @@ const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
 
 export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   natural_beauty: {
-    topLine: 'Natural scenery based on trees, water, and surrounding landscape.',
+    topLine: 'Trees, water, and terrain—three ingredients that shape how “natural” this place feels.',
     metrics: [
-      { label: 'Tree score', path: 'summary.tree_score', format: 'percent', max: 100 },
       { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
-      { label: 'Local canopy', path: 'summary.local_canopy_pct', format: 'percent', max: 100 },
-      { label: 'Extended canopy', path: 'summary.extended_canopy_pct', format: 'percent', max: 100 },
+      { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },
+      { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'text' },
     ],
     degradedMessage: 'Limited data: some natural data sources were unavailable.',
   },
   active_outdoors: {
-    topLine: 'Access to parks, trails, and water for an active lifestyle.',
+    topLine: 'Everyday parks, trails, and water access the score is built from.',
     metrics: [
-      { label: 'Daily urban outdoors', path: 'breakdown.daily_urban_outdoors', format: 'percent', max: 30 },
-      { label: 'Wild adventure', path: 'breakdown.wild_adventure', format: 'percent', max: 50 },
-      { label: 'Waterfront lifestyle', path: 'breakdown.waterfront_lifestyle', format: 'percent', max: 20 },
+      { label: 'Parks (nearby)', path: 'summary.local_parks.count', format: 'count', suffix: ' parks' },
+      { label: 'Trail segments within 5 km', path: 'summary.trails.count_within_5km', format: 'count', suffix: ' segments' },
+      { label: 'Nearest water access', path: 'summary.water.nearest_km', format: 'distance' },
     ],
     degradedMessage: 'Limited data: some outdoor data sources were unavailable.',
   },
   neighborhood_amenities: {
-    topLine: 'Walkable access to daily needs, social spots, and services.',
+    topLine: 'How many places are walkable, how far they typically are, and how many you get within about 10 minutes.',
     metrics: [
-      { label: 'Home walkability', path: 'breakdown.home_walkability.score', format: 'percent', max: 60 },
-      { label: 'Daily needs nearby', path: 'breakdown.home_walkability.businesses_within_1km', format: 'count', suffix: ' businesses within ~10–15 min' },
-      { label: 'Town center & vibrancy', path: 'breakdown.location_quality', format: 'percent', max: 40 },
-      { label: 'Local vs chains', format: 'static', textKey: 'local_vs_chains' },
+      {
+        label: 'Businesses within ~1 km',
+        path: 'breakdown.home_walkability.businesses_within_1km',
+        format: 'count',
+        suffix: ' places',
+      },
+      {
+        label: 'Typical distance to businesses',
+        path: 'breakdown.diagnostics.median_distance_m',
+        format: 'qualitative',
+        bands: AMENITIES_DISTANCE_BANDS,
+      },
+      {
+        label: 'Places within ~10 min walk',
+        path: 'summary.within_10min_walk',
+        format: 'count',
+        suffix: ' places',
+      },
     ],
     degradedMessage: 'Limited data: OSM coverage is sparse here; this score may undercount amenities.',
   },
   built_beauty: {
-    topLine: 'Street and building design, diversity, and human scale.',
+    topLine: 'What kind of built environment this is—form, tags from the map, and typical building age.',
     metrics: [
-      { label: 'Architecture diversity', path: 'details.architectural_analysis.metrics.diversity_score', format: 'percent', max: 100 },
-      { label: 'Street character', path: 'summary.diversity_score', format: 'percent', max: 100 },
+      { label: 'Built form', path: 'summary.built_form_label', format: 'text' },
+      { label: 'Streetscape tags', path: 'summary.built_context_tags', format: 'text' },
+      { label: 'Median year built', path: 'summary.median_year_built', format: 'text' },
     ],
     degradedMessage: 'Limited data: some built environment data were unavailable.',
   },
   healthcare_access: {
-    topLine: 'Access to hospitals, urgent care, clinics, and pharmacies.',
+    topLine: 'Hospital reach, and how many everyday care points are nearby.',
     metrics: [
-      { label: 'Hospital access', path: 'breakdown.breakdown.hospital_access', format: 'percent', max: 35 },
-      { label: 'Primary care', path: 'breakdown.breakdown.primary_care', format: 'percent', max: 25 },
-      { label: 'Specialized care', path: 'breakdown.breakdown.specialized_care', format: 'percent', max: 15 },
-      { label: 'Emergency services', path: 'breakdown.breakdown.emergency_services', format: 'percent', max: 10 },
-      { label: 'Pharmacies', path: 'breakdown.breakdown.pharmacies', format: 'percent', max: 15 },
-      { label: 'Facilities', path: 'summary.hospital_count', format: 'count', suffix: ' hospitals' },
+      { label: 'Hospitals in search', path: 'summary.hospital_count', format: 'count', suffix: ' hospitals' },
+      { label: 'Nearest hospital', path: 'summary.nearest_hospital_km', format: 'distance' },
+      { label: 'Pharmacies nearby', path: 'summary.pharmacy_count', format: 'count', suffix: ' pharmacies' },
     ],
     degradedMessage: 'Limited data: some healthcare data sources were unavailable.',
   },
   public_transit_access: {
-    topLine: 'Access to rail and key transit within walking distance.',
+    topLine: 'Distance to rail, how connected that line is, and typical commute time for this tract.',
     metrics: [
-      { label: 'Heavy rail', path: 'breakdown.breakdown.heavy_rail', format: 'percent', max: 100 },
-      { label: 'Light rail', path: 'breakdown.breakdown.light_rail', format: 'percent', max: 100 },
-      { label: 'Bus', path: 'breakdown.breakdown.bus', format: 'percent', max: 100 },
-      { label: 'Nearest heavy rail', path: 'summary.nearest_heavy_rail_distance_km', format: 'distance' },
-      { label: 'Connectivity', path: 'summary.heavy_rail_connectivity_tier', format: 'text' },
+      { label: 'Walk to nearest heavy rail', path: 'summary.nearest_heavy_rail_distance_km', format: 'distance' },
+      { label: 'Heavy rail connectivity', path: 'summary.heavy_rail_connectivity_tier', format: 'text' },
+      { label: 'Typical commute (tract)', path: 'summary.mean_commute_minutes', format: 'text' },
     ],
     degradedMessage: 'Limited data: some transit data sources were unavailable.',
   },
@@ -203,92 +213,62 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: airport data unavailable.',
   },
   economic_security: {
-    topLine: 'Local job market strength for your focus (or general economic health).',
+    topLine: 'Labor market stress, typical pay, and where we compared this place.',
     metrics: [
-      { label: 'Job market fit', path: 'breakdown.base_score', format: 'percent', max: 100 },
-      { label: 'Area', path: 'summary.division', format: 'text' },
+      { label: 'Unemployment rate', path: 'summary.unemployment_rate_pct', format: 'percent', max: 100 },
+      { label: 'Median earnings (area)', path: 'summary.median_earnings', format: 'text' },
+      { label: 'Comparison area', path: 'summary.geo_name', format: 'text' },
     ],
     degradedMessage: 'Limited data: some economic data were unavailable.',
   },
   quality_education: {
-    topLine: 'Quality and availability of nearby schools (when enabled).',
+    topLine: 'Rated school quality and how many schools contribute.',
     metrics: [
-      { label: 'Schools rated', path: 'summary.total_schools_rated', format: 'count', suffix: ' schools' },
-      { label: 'Excellent schools', path: 'summary.excellent_schools_count', format: 'count', suffix: ' excellent' },
+      { label: 'Average school rating', path: 'summary.base_avg_rating', format: 'text' },
+      { label: 'Schools with ratings', path: 'summary.total_schools_rated', format: 'count', suffix: ' schools' },
+      { label: 'Top-tier schools nearby', path: 'summary.excellent_schools_count', format: 'count', suffix: ' schools' },
     ],
     degradedMessage: 'Limited data: school data unavailable or scoring disabled.',
   },
   housing_value: {
-    topLine: 'How far your money goes on housing here.',
+    topLine: 'Typical home price, local income, and how stretched price is versus income.',
     metrics: [
-      { label: 'Local affordability', path: 'breakdown.breakdown.local_affordability', format: 'percent', max: 50 },
-      { label: 'Space', path: 'breakdown.breakdown.space', format: 'percent', max: 30 },
-      { label: 'Value efficiency', path: 'breakdown.breakdown.value_efficiency', format: 'percent', max: 20 },
-      { label: 'Median home value', path: 'summary.median_home_value', format: 'text' },
+      { label: 'Median home value (tract)', path: 'summary.median_home_value', format: 'text' },
+      { label: 'Median household income', path: 'summary.median_household_income', format: 'text' },
+      { label: 'Price-to-income ratio', path: 'summary.price_to_income_ratio', format: 'text' },
     ],
     degradedMessage: 'Limited data: some housing or income data were unavailable.',
   },
   climate_risk: {
-    topLine: 'Exposure to flooding, heat, and air quality.',
+    topLine: 'Flood class, extra summer heat vs the region, and air pollution proxy (not another 0–100 score).',
     metrics: [
-      { label: 'Flood risk', path: 'summary.flood_risk_tier', format: 'qualitative', valueLabels: { floodway: 'High', sfha: 'High', x_500yr: 'Moderate', d: 'Moderate', minimal: 'Low' } },
-      { label: 'Heat exposure', path: 'breakdown.lst_score', format: 'percent', max: 100 },
-      { label: 'Air quality', path: 'breakdown.aqi_score', format: 'percent', max: 100 },
-      { label: 'Climate trend', path: 'breakdown.climate_trend_score_0_100', format: 'percent', max: 100 },
+      {
+        label: 'Flood zone (FEMA)',
+        path: 'summary.flood_risk_tier',
+        format: 'qualitative',
+        valueLabels: { floodway: 'High', sfha: 'High', x_500yr: 'Moderate', d: 'Moderate', minimal: 'Low' },
+      },
+      { label: 'Extra heat vs region (°C)', path: 'summary.heat_excess_deg_c', format: 'text' },
+      { label: 'PM2.5 proxy (µg/m³)', path: 'summary.pm25_proxy_ugm3', format: 'text' },
     ],
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
   },
   social_fabric: {
-    topLine: 'Residential stability, civic gathering places, and civic engagement.',
+    topLine: 'Stability from Census movers data, civic places from OpenStreetMap, and engagement inputs.',
     metrics: [
-      {
-        label: 'Stability (tract mobility, ACS)',
-        path: 'source_status.stability_mobility_acs',
-        format: 'qualitative',
-        valueLabels: { ok: 'Loaded', error: 'Unavailable' },
-      },
-      {
-        label: 'Stability (place blend)',
-        path: 'source_status.stability_place',
-        format: 'qualitative',
-        valueLabels: { ok: 'Available', empty: 'Not used' },
-      },
-      {
-        label: 'Civic places (OpenStreetMap)',
-        path: 'source_status.civic_osm',
-        format: 'qualitative',
-        valueLabels: {
-          ok: 'Loaded',
-          empty: 'No matches (area scanned)',
-          error: 'Unavailable',
-        },
-      },
-      {
-        label: 'Engagement (IRS orgs)',
-        path: 'source_status.engagement_bmf',
-        format: 'qualitative',
-        valueLabels: { ok: 'Available', empty: 'Not available' },
-      },
-      {
-        label: 'Engagement (turnout)',
-        path: 'source_status.engagement_turnout',
-        format: 'qualitative',
-        valueLabels: { ok: 'Available', empty: 'Not available' },
-      },
-      { label: 'Residential stability (tract + place)', path: 'summary.stability_blend_pct', format: 'percent', max: 100 },
-      { label: 'Civic places (search radius)', path: 'summary.civic_node_count', format: 'count', suffix: ' places' },
-      { label: 'Civic search radius (m)', path: 'summary.civic_search_radius_m', format: 'text' },
-      { label: 'Voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
+      { label: 'Same-house blend (tract + place)', path: 'summary.stability_blend_pct', format: 'percent', max: 100 },
+      { label: 'Civic places (non-commercial)', path: 'summary.civic_node_count', format: 'count', suffix: ' places' },
+      { label: 'Modeled voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
     ],
     degradedMessage:
       'Limited data: Census mobility, OpenStreetMap civic places, or other community sources failed or were unavailable.',
   },
   diversity: {
-    topLine: 'Race, income, and age mix (entropy) in the tract. The pillar score is the average of the components shown.',
+    topLine: 'Which Census mix dimensions we could score, self-employment, and race/ethnic spread (entropy).',
     metrics: [
-      { label: 'Race & ethnicity mix', path: 'breakdown.race_entropy', format: 'percent', max: 100 },
-      { label: 'Household income mix', path: 'breakdown.income_entropy', format: 'percent', max: 100 },
-      { label: 'Age mix', path: 'breakdown.age_entropy', format: 'percent', max: 100 },
+      { label: 'Mix dimensions scored', path: 'summary.components_included', format: 'text' },
+      { label: 'Self-employed (tract %)', path: 'self_employed_pct', format: 'percent', max: 100 },
+      { label: 'Race & ethnicity spread', path: 'breakdown.race_entropy', format: 'percent', max: 100 },
     ],
     degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },
