@@ -284,9 +284,11 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       'Limited data: Census mobility, OpenStreetMap civic places, or other community sources failed or were unavailable.',
   },
   diversity: {
-    topLine: 'Race, income, and age mix (entropy) in the tract.',
+    topLine: 'Race, income, and age mix (entropy) in the tract. The pillar score is the average of the components shown.',
     metrics: [
-      { label: 'Diversity score', path: 'summary.diversity_entropy_score', format: 'percent', max: 100 },
+      { label: 'Race & ethnicity mix', path: 'breakdown.race_entropy', format: 'percent', max: 100 },
+      { label: 'Household income mix', path: 'breakdown.income_entropy', format: 'percent', max: 100 },
+      { label: 'Age mix', path: 'breakdown.age_entropy', format: 'percent', max: 100 },
     ],
     degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },

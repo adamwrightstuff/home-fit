@@ -202,7 +202,9 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'social_fabric:Civic places (search radius)': 'Count of non-commercial civic places within the density-based search radius.',
   'social_fabric:Civic search radius (m)': 'Search distance used for civic places based on tract density.',
   'social_fabric:Voter turnout (tract)': 'Estimated voter participation used for the engagement blend when available.',
-  'diversity:Diversity score': 'Race, income, and age mix (entropy) from Census tract distributions.',
+  'diversity:Race & ethnicity mix': 'How evenly population is spread across Census race categories in this tract (entropy, 0–100).',
+  'diversity:Household income mix': 'How evenly households are spread across income brackets (entropy, 0–100).',
+  'diversity:Age mix': 'Balance across youth, working-age, and senior age groups (entropy, 0–100).',
 }
 
 export default function PillarCard({
