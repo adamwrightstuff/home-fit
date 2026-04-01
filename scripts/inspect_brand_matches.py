@@ -7,9 +7,9 @@ business_list (in livability_pillars.neighborhood_amenities.breakdown.business_l
 Re-fetch and save the response after the app includes business_list if missing.
 
 Usage (from project root):
-  PYTHONPATH=. python3 scripts/inspect_brand_matches.py tribeca_status_signal.json
-  PYTHONPATH=. python3 scripts/inspect_brand_matches.py tribeca_status_signal.json carroll_gardens_status_signal.json
-  PYTHONPATH=. python3 scripts/inspect_brand_matches.py tribeca_status_signal.json -o brand_matches.json
+  PYTHONPATH=. python3 scripts/inspect_brand_matches.py score_a.json
+  PYTHONPATH=. python3 scripts/inspect_brand_matches.py score_a.json score_b.json
+  PYTHONPATH=. python3 scripts/inspect_brand_matches.py score_a.json -o brand_matches.json
 """
 import json
 import os

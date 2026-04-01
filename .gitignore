@@ -56,3 +56,16 @@ frontend/*.tsbuildinfo
 /twenty_moore_*.json
 /carroll_gardens_*.json
 /status_signal_tribeca.json
+
+# Generated logs, deploy bundles, redundant OpenAPI stub, local QA report
+/full_test_results.txt
+/test_results_summary.txt
+/test_output.txt
+/homefit-report.md
+/frontend-deploy.tar.gz
+/openapi_minimal.json
+
+# One-off analysis exports (regenerate from scripts; do not commit)
+/analysis/carroll_gardens_*.json
+/analysis/active_outdoors_scores_*.jsonl
+/analysis/active_outdoors_summary_*.csv

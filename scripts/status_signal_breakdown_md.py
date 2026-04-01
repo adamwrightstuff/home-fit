@@ -4,7 +4,7 @@ Build status signal breakdown (wealth, education, occupation, brand) from saved 
 and write a markdown report. Uses compute_status_signal_with_breakdown + brand matches.
 
 Usage (from project root):
-  PYTHONPATH=. python3 scripts/status_signal_breakdown_md.py tribeca_status_signal.json carroll_gardens_status_signal.json -o analysis/status_signal_breakdown.md
+  PYTHONPATH=. python3 scripts/status_signal_breakdown_md.py score_a.json score_b.json -o analysis/status_signal_breakdown.md
 """
 import json
 import os

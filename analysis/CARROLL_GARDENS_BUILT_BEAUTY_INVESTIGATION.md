@@ -121,10 +121,10 @@ If you observe **contemporary + walkable** > **historic + walkable**, that contr
 python3 scripts/investigate_built_beauty_preferences.py
 
 # JSON only (e.g. to save or diff)
-python3 scripts/investigate_built_beauty_preferences.py --json > carroll_gardens_built_beauty.json
+python3 scripts/investigate_built_beauty_preferences.py --json > /tmp/built_beauty_sample.json
 
 # Save JSON to a file directly
-python3 scripts/investigate_built_beauty_preferences.py --save analysis/carroll_gardens_built_beauty.json
+python3 scripts/investigate_built_beauty_preferences.py --save /tmp/built_beauty_sample.json
 ```
 
 The script prints for each permutation:
