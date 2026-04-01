@@ -2,9 +2,9 @@
 """
 Inspect which businesses matched each status-signal brand category per location.
 
-Reads saved score JSON (from save_score_json.py). Requires the JSON to include
+Reads saved score JSON (e.g. from ``GET /score`` saved to a file). Requires the JSON to include
 business_list (in livability_pillars.neighborhood_amenities.breakdown.business_list).
-Re-run save_score_json after the app includes business_list in the response.
+Re-fetch and save the response after the app includes business_list if missing.
 
 Usage (from project root):
   PYTHONPATH=. python3 scripts/inspect_brand_matches.py tribeca_status_signal.json
@@ -41,7 +41,7 @@ def inspect(path: str) -> dict:
             "path": path,
             "input": data.get("input", path),
             "status_signal": data.get("status_signal"),
-            "error": "No business_list in this file. Re-run save_score_json.py after the app includes business_list in the response.",
+            "error": "No business_list in this file. Re-save a full /score response that includes business_list.",
             "brand_score": None,
             "brand_matches": [],
         }

@@ -41,9 +41,7 @@ These are **not** the short list in [docs/ADMIN_TOOLS.md](../docs/ADMIN_TOOLS.md
 | Script | Purpose |
 |--------|---------|
 | `collect_status_signal.py` | Batch status-signal collection |
-| `save_score_json.py` | Save API score JSON for offline inspection |
 | `score_status_signal.py` | CLI score status signal for a location |
-| `score_tribeca_status_happiness.py` | Tribeca-focused sample run |
 | `status_signal_breakdown_md.py` | Markdown breakdown from saved JSON |
 | `inspect_brand_matches.py` | Compare `business_list` / brand matches across JSON files |
 
