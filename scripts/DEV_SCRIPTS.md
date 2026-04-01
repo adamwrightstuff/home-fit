@@ -25,7 +25,7 @@ These are **not** the short list in [docs/ADMIN_TOOLS.md](../docs/ADMIN_TOOLS.md
 |--------|--------|
 | `collector.py` | `.github/workflows/collector.yml` |
 | `collect_active_outdoors.py` | `.github/workflows/active-outdoors-collect.yml` |
-| `build_nrhp_db.py` | `railway.json`, [DEPLOY_INSTRUCTIONS.md](../DEPLOY_INSTRUCTIONS.md) |
+| `build_nrhp_db.py` | `railway.json`, [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) |
 | `build_status_signal_baselines.py` | Root `package.json` script `build-status-baselines` |
 
 ## Baseline builders from `data/results.csv`

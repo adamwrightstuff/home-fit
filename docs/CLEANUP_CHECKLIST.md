@@ -19,7 +19,7 @@ Labels: **DEAD** (removed), **STALE** (fix in code/docs), **DOC** (documentation
 
 ## Bloat removal (2026)
 
-Removed from tracking: location snapshot JSON, test log dumps, `frontend-deploy.tar.gz`, `homefit-report.md`, redundant `openapi_minimal.json`, `DEPLOY_NOW.md` (superseded by `DEPLOY_INSTRUCTIONS.md` / `README`), Heroku `runtime.txt`. Expanded `.gitignore` for logs, QA report, deploy tarball, `openapi_minimal.json`, and analysis export patterns.
+Removed from tracking: location snapshot JSON, test log dumps, `frontend-deploy.tar.gz`, `homefit-report.md`, redundant `openapi_minimal.json`, `DEPLOY_NOW.md` (superseded by `docs/DEPLOYMENT.md` / `README`), Heroku `runtime.txt`. Expanded `.gitignore` for logs, QA report, deploy tarball, `openapi_minimal.json`, and analysis export patterns.
 
 ### Remaining (optional)
 

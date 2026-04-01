@@ -59,8 +59,10 @@ frontend/*.tsbuildinfo
 
 # Generated logs, deploy bundles, redundant OpenAPI stub, local QA report
 /full_test_results.txt
+/test_results.txt
 /test_results_summary.txt
 /test_output.txt
+.gitignore.save
 /homefit-report.md
 /frontend-deploy.tar.gz
 /openapi_minimal.json

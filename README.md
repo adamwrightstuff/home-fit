@@ -2,13 +2,13 @@
 
 **Personalized livability scoring API**
 
-HomeFit evaluates locations across 9 purpose-driven pillars to provide comprehensive livability scores based on objective, research-backed data.
+HomeFit evaluates locations across **13** token-weighted pillars (plus optional composite indices) to provide comprehensive livability scores based on objective, research-backed data.
 
 ---
 
 ## Overview
 
-HomeFit is a data-driven livability scoring system that measures what matters most for quality of life. The system evaluates any location across 9 pillars—from outdoor recreation and natural beauty to transit access and housing value—using objective metrics from authoritative data sources.
+HomeFit is a data-driven livability scoring system that measures what matters most for quality of life. The system evaluates any location across **13 pillars**—from outdoor recreation and built environment to transit, schools, economic security, climate risk, social fabric, and demographic diversity—using objective metrics from authoritative data sources.
 
 ### Core Philosophy
 
@@ -22,14 +22,17 @@ HomeFit follows strict design principles to ensure consistent, reliable scoring:
 
 ### How Scoring Works
 
-The overall livability score (0–100) is a **weighted average** of 9 pillar scores:
+The overall livability score (0–100) is a **weighted average** of the 13 primary pillar scores:
 
 ```
 total_score = Σ(pillar_score × pillar_weight / 100)
 ```
 
-**Default weighting**: Equal distribution (~11.11 tokens per pillar, totaling 100)
-**Customizable**: Users can prioritize pillars via `priorities` parameter (High/Medium/Low/None) or explicit `tokens` parameter
+**Default weighting**: Equal distribution (~7.69 tokens per pillar, totaling 100)
+
+**Customizable**: Users can prioritize pillars via `priorities` parameter (High/Medium/Low/None) or explicit `tokens` parameter.
+
+**Composite indices** (reported in API responses but **not** part of the 13-pillar token mix): e.g. **status_signal** and **happiness_index**, computed from tract-level and contextual signals alongside pillar outputs.
 
 Each pillar score is independently calculated using:
 1. **Data collection** from authoritative sources (OSM, Census, GEE, Transitland, etc.)
@@ -49,7 +52,7 @@ Each pillar score is independently calculated using:
 
 ---
 
-## The 9 Pillars
+## The 13 pillars
 
 ### 1. Active Outdoors
 Measures access to outdoor recreation and adventure opportunities. Evaluates local parks and playgrounds for daily outdoor activities, regional trails and camping for wilderness adventures, and waterfront access for water-based recreation. Considers both immediate neighborhood access (parks within 1-2km) and regional opportunities (trails within 15-50km depending on area type).
@@ -95,6 +98,18 @@ Assesses school quality and educational opportunities. Core K-12 scoring based o
 Measures housing affordability, space, and value efficiency. Evaluates price-to-income ratio (local affordability), median rooms (space per household), and rooms per $100k (value efficiency). Metro-adjusted thresholds prevent double-penalization in high-cost markets while still rewarding value.
 
 **Components**: Affordability (0-50 points) - price-to-income ratio; Space (0-30 points) - median rooms; Value Efficiency (0-20 points) - rooms per $100k
+
+### 10. Economic Security
+Evaluates local economic resilience and opportunity relative to job-category preferences (e.g. remote-friendly vs. place-based work). Uses commute-adjusted and tract-level signals where available.
+
+### 11. Climate & Flood Risk
+Scores exposure to climate-related hazards (e.g. flood risk layers) in context of area type so users can compare locations on physical risk.
+
+### 12. Social Fabric
+Captures community and social-environment signals (e.g. stability, civic context) at a neighborhood-appropriate scale.
+
+### 13. Diversity
+Measures demographic diversity (e.g. entropy-based mix) to reflect variety of backgrounds in the area, with context-aware expectations.
 
 ---
 
@@ -156,7 +171,7 @@ GET /score?location="City, State"&enable_schools=true
   "livability_pillars": {
     "active_outdoors": {
       "score": 82.5,
-      "weight": 11.11,
+      "weight": 7.69,
       "contribution": 9.17,
       "breakdown": {...},
       "summary": {...}
@@ -187,7 +202,7 @@ For detailed API documentation, see [openapi.json](./openapi.json)
 - **Framework**: Next.js
 - **Configuration**: Root directory `frontend`, auto-deploys on git push
 
-See [DEPLOY_INSTRUCTIONS.md](./DEPLOY_INSTRUCTIONS.md) and [frontend/DEPLOYMENT.md](./frontend/DEPLOYMENT.md) for detailed deployment instructions.
+See **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** for full deployment instructions (backend and frontend).
 
 ---
 
@@ -196,6 +211,7 @@ See [DEPLOY_INSTRUCTIONS.md](./DEPLOY_INSTRUCTIONS.md) and [frontend/DEPLOYMENT.
 - **[Design Principles](./DESIGN_PRINCIPLES.md)** - Core principles guiding scoring methodology
 - **[Pillar Scoring Explanation](./analysis/PILLAR_SCORING_EXPLANATION.md)** - Detailed scoring logic for each pillar
 - **[Pillar Scoring Methodology Summary](./analysis/pillar_scoring_methodology_summary.md)** - High-level methodology overview
+- **[Natural Beauty Scoring](./analysis/NATURAL_BEAUTY_SCORING.md)** - Conceptual overview and algorithm reference for the Natural Beauty pillar
 
 ---
 

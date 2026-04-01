@@ -75,7 +75,7 @@ frontend/
 
 - ✅ Location search with address/ZIP input
 - ✅ Total livability score display
-- ✅ 9 pillar score cards with expandable details
+- ✅ Pillar score cards (13 weighted pillars) with expandable details
 - ✅ Loading states and error handling
 - ✅ Responsive design with Tailwind CSS
 - ✅ TypeScript for type safety

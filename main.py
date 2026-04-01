@@ -604,7 +604,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     Parse token allocation string or return default equal distribution.
     
     Format: "active_outdoors:5,built_beauty:4,natural_beauty:4,air_travel:3,..."
-    Default: Equal distribution across all 10 pillars (totals 100).
+    Default: Equal distribution across all 13 primary pillars (totals 100).
     
     Note: This function now uses 100 tokens total (migrated from 20 tokens).
     For priority-based allocation, use parse_priority_allocation() instead.
@@ -2255,16 +2255,11 @@ def get_livability_score(request: Request,
     """
     Calculate livability score for a given address.
 
-    Returns scores across 9 purpose-driven pillars:
-    - Active Outdoors: Can I be active outside regularly?
-    - Built Beauty: Are the buildings cohesive, historic, and well-crafted?
-    - Natural Beauty: Is the landscape/tree canopy beautiful and calming?
-    - Neighborhood Amenities: Can I walk to great local spots?
-    - Air Travel Access: How easily can I fly somewhere?
-    - Public Transit Access: Can I get around without a car?
-    - Healthcare Access: Can I get medical care when needed?
-    - Quality Education: Can I raise kids with good schools?
-    - Housing Value: Can I afford a spacious home here?
+    Returns scores across 13 token-weighted pillars (default equal weights) plus optional composite indices:
+    - Active Outdoors, Built Beauty, Natural Beauty, Neighborhood Amenities
+    - Air Travel Access, Public Transit Access, Healthcare Access, Economic Security
+    - Quality Education, Housing Value, Climate Risk, Social Fabric, Diversity
+    - Composite (not token-weighted): status_signal, happiness_index — derived from census/tract and pillar context; see response fields.
 
     Parameters:
         location: Address or ZIP code
