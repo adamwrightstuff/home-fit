@@ -96,6 +96,10 @@ PYTHONPATH=. python3 scripts/build_economic_baselines.py \
   --sleep 0.12
 ```
 
+### More scripts (diagnostics, baselines from results, tests)
+
+One-off and research scripts are catalogued in **[scripts/DEV_SCRIPTS.md](../scripts/DEV_SCRIPTS.md)** (see also **[scripts/README.md](../scripts/README.md)**). Promote any script you rely on regularly into this doc.
+
 ---
 
 ## 3. Using a proxy secret (if set on Railway)

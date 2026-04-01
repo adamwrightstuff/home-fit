@@ -12,15 +12,12 @@ Labels: **DEAD** (removed), **STALE** (fix in code/docs), **DOC** (documentation
 - [x] **STALE** — `data_sources/regional_baselines.py`: removed broken pointers to missing `research_expected_values.py`.
 - [x] **DOC** — `TESTING_ACTIVE_OUTDOORS.md`, `analysis/archive/EXPECTED_VALUES_RESEARCH.md`, `analysis/PILLAR_SCORING_EXPLANATION.md`, `analysis/pillar_design_principles_audit.md` aligned with removal of `neighborhood_beauty` module and missing scripts.
 
-## Remaining (optional)
+## Triage (2026)
 
-### ORPHAN scripts
+- [x] **ORPHAN scripts** — Catalogued in [scripts/DEV_SCRIPTS.md](../scripts/DEV_SCRIPTS.md); entry point [scripts/README.md](../scripts/README.md). [docs/ADMIN_TOOLS.md](ADMIN_TOOLS.md) links to the catalog.
+- [x] **CLUTTER** — Root-level captures and local npm artifacts ignored via [.gitignore](../.gitignore) (`*.webm`, `homefit-*.png`, scratch JSON, `/node_modules/`, etc.).
 
-Batch baseline builders, debug helpers, and `scripts/test_*.py` files are not listed in `docs/ADMIN_TOOLS.md`. Triage: document, move under `scripts/dev/`, or delete if obsolete.
-
-### CLUTTER
-
-Untracked screenshots, `.webm`, one-off JSON, or local `test_results.txt` — use `.gitignore` and avoid committing.
+### Remaining (optional)
 
 ### Env
 

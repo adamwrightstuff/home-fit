@@ -43,3 +43,16 @@ frontend/out/
 frontend/.vercel
 frontend/.env*.local
 frontend/*.tsbuildinfo
+
+# Root: local Playwright / npm (do not commit)
+/node_modules/
+/package-lock.json
+
+# Root: screen captures, recordings, and scratch JSON from local runs
+/*.webm
+/homefit-*.png
+/*_debug_run.json
+/tribeca_*.json
+/twenty_moore_*.json
+/carroll_gardens_*.json
+/status_signal_tribeca.json
