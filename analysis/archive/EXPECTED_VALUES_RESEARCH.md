@@ -1,5 +1,7 @@
 # Expected Values Research Methodology
 
+> **Archive note:** The standalone script `scripts/research_expected_values.py` described below was never added to this repository. Expected values are maintained in code (`data_sources/regional_baselines.py`, pillar modules, and baselines under `data/`). This document remains as methodology context.
+
 ## Overview
 
 This document tracks research-backed expected values for all HomeFit pillars. Expected values are based on real-world data from OSM, Census, and external research sources, not arbitrary targets.
@@ -207,44 +209,36 @@ This document tracks research-backed expected values for all HomeFit pillars. Ex
 
 ## Next Steps
 
-1. ✅ Create research data collection script
-2. ⏳ Run script on test locations
-3. ⏳ Calculate medians and percentiles
+1. ⏳ Maintain baselines in `data/` and `data_sources/regional_baselines.py`
+2. ⏳ Run pillar-specific collectors or analysis scripts as needed
+3. ⏳ Calculate medians and percentiles when calibrating
 4. ⏳ Cross-reference with external research sources
 5. ⏳ Update expected values in code
 6. ⏳ Document all sources and methodology
 
-## Running the Research Script
+## Running the Research Script (planned; script not in repo)
 
-The research data collection script is located at `scripts/research_expected_values.py`.
+The following was the intended interface for a batch research script. Implementations today use pillar-specific collectors, `data_sources/regional_baselines.py`, and manual analysis under `analysis/`.
 
-### Basic Usage
+### Intended basic usage (historical)
 
 ```bash
-# Run on all area types with all sample locations
-python scripts/research_expected_values.py
-
-# Limit sample size per area type (for faster testing)
-python scripts/research_expected_values.py --sample-size 5
-
-# Process specific area types only
-python scripts/research_expected_values.py --area-types urban_core suburban
-
-# Specify custom output directory
-python scripts/research_expected_values.py --output-dir analysis/my_research
+# (Hypothetical — script not shipped)
+# python scripts/research_expected_values.py
+# python scripts/research_expected_values.py --sample-size 5
+# python scripts/research_expected_values.py --area-types urban_core suburban
+# python scripts/research_expected_values.py --output-dir analysis/my_research
 ```
 
-### Output Files
+### Intended output files
 
-The script generates three output files in the specified output directory:
+1. **`expected_values_statistics.json`**: Medians, percentiles, min, max by area type
+2. **`expected_values_raw_data.json`**: Raw data per location
+3. **`expected_values_summary.csv`**: Summary table
 
-1. **`expected_values_statistics.json`**: Calculated medians, percentiles (25th, 75th), min, max for each metric by area type
-2. **`expected_values_raw_data.json`**: Complete raw data for each sampled location
-3. **`expected_values_summary.csv`**: Summary table in CSV format for easy analysis
+### Sample locations (if/when collected)
 
-### Sample Locations
-
-The script uses predefined sample locations from test cases:
+Sample locations would be drawn from test cases, e.g.:
 - **urban_core**: 20 locations (Park Slope, West Village, Downtown Boulder, etc.)
 - **suburban**: 26 locations (Bend, Park City, Bar Harbor, etc.)
 - **exurban**: 2 locations

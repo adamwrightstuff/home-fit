@@ -629,7 +629,7 @@ class RegionalBaselineManager:
             'urban_core': {
                 'active_outdoors': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=10 successful urban_core locations
                     # - Typical urban-core locations have ~8–9 parks within 1km and ~3 ha of parkland
                     # - Median parks within 1km: 8 (from research)
@@ -652,7 +652,7 @@ class RegionalBaselineManager:
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=19 successful urban_core locations
                     # - Research data: hospitals_20km median=15, p25=5, p75=47
                     # - Research data: pharmacies_8km median=21, p25=8, p75=50
@@ -675,7 +675,7 @@ class RegionalBaselineManager:
                 },
                 'neighborhood_amenities': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=19 successful urban_core locations
                     # - Research data: businesses_1km median=170, p25=70, p75=406
                     # - Research data: business_types median=14, p25=12, p75=15
@@ -699,7 +699,7 @@ class RegionalBaselineManager:
             'suburban': {
                 'active_outdoors': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=13 successful suburban locations
                     # - Typical suburban locations have ~8 parks within 1km and ~6 ha of parkland
                     # - Median parks within 1km: 8 (from research)
@@ -722,7 +722,7 @@ class RegionalBaselineManager:
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=13 successful suburban locations
                     # - Research data: hospitals_20km median=3, p25=1, p75=5.5
                     # - Research data: pharmacies_8km median=2, p25=0, p75=6.5
@@ -742,7 +742,7 @@ class RegionalBaselineManager:
                 },
                 'neighborhood_amenities': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=13 successful suburban locations
                     # - Research data: businesses_1km median=65, p25=20, p75=117.5
                     # - Research data: business_types median=12, p25=6.5, p75=12
@@ -763,7 +763,7 @@ class RegionalBaselineManager:
             'exurban': {
                 'active_outdoors': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: Limited (exurban/rural data collection in progress)
                     # - Exurban areas have fewer but larger parks (regional parks)
                     # - Conservative estimates based on area type characteristics
@@ -783,7 +783,7 @@ class RegionalBaselineManager:
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=11 successful exurban locations
                     # - Research data: hospitals_20km median=1, p25=1, p75=3
                     # - Research data: pharmacies_8km median=1, p25=0, p75=5
@@ -801,7 +801,7 @@ class RegionalBaselineManager:
                 },
                 'neighborhood_amenities': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=11 successful exurban locations
                     # - Research data: businesses_1km median=40, p25=12, p75=50
                     # - Research data: business_types median=9, p25=6, p75=12
@@ -822,7 +822,7 @@ class RegionalBaselineManager:
             'rural': {
                 'active_outdoors': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: Limited (rural data collection in progress)
                     # - Rural areas have very few local parks but large natural parks
                     # - Conservative estimates based on area type characteristics
@@ -842,7 +842,7 @@ class RegionalBaselineManager:
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=10 successful rural locations
                     # - Research data: hospitals_20km median=1, p25=0, p75=3.5
                     # - Research data: pharmacies_8km median=1, p25=0, p75=4.25
@@ -860,7 +860,7 @@ class RegionalBaselineManager:
                 },
                 'neighborhood_amenities': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=10 successful rural locations
                     # - Research data: businesses_1km median=15.5, p25=4, p75=48
                     # - Research data: business_types median=6, p25=3.25, p75=12
@@ -883,7 +883,7 @@ class RegionalBaselineManager:
                 # but may have fewer routes than true urban cores. Use slightly lower expectations.
                 'active_outdoors': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=10 successful urban_residential locations (shared with urban_core)
                     # - Urban residential areas similar to urban_core for active_outdoors
                     # - Uses same expected values as urban_core
@@ -902,7 +902,7 @@ class RegionalBaselineManager:
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
-                    # - Research script: scripts/research_expected_values.py
+                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
                     # - Sample size: n=19 successful urban_core locations (urban_residential uses same data)
                     # - Research data: hospitals_20km median=15, p25=5, p75=47
                     # - Research data: pharmacies_8km median=21, p25=8, p75=50
@@ -928,7 +928,7 @@ class RegionalBaselineManager:
                     # - Bus routes: median=35.0, p25=15.5, p75=57.5 (range: 3-96)
                     # 
                     # Research data collected: 2024-11-24
-                    # Source: scripts/research_expected_values.py --area-types urban_residential --pillars transit
+                    # Source: transit expectations / urban_residential calibration
                     'expected_heavy_rail_routes': 1,   # Research-backed: median=1.0 (commuter rail may exist)
                     'expected_light_rail_routes': 0,   # Research-backed: median=0.0 (very rare)
                     'expected_bus_routes': 35          # Research-backed: median=35.0 (good coverage)

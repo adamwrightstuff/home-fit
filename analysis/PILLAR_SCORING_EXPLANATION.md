@@ -514,39 +514,12 @@ airport_score = base_score(airport_type) * exp(-decay_rate * (distance - optimal
 
 ---
 
-## 9. Neighborhood Beauty (`pillars/neighborhood_beauty.py`)
+## 9. Neighborhood Beauty (legacy name only)
 
-### Scoring Method
-**Composition of Built Beauty + Natural Beauty** (no calibration)
+The combined module `pillars/neighborhood_beauty.py` has been **removed**. Scoring uses **`built_beauty`** and **`natural_beauty`** directly.
 
-### Formula
-```
-built_score = get_built_beauty_score(...)
-natural_score = get_natural_beauty_score(...)
-
-base_score = (tree_component * tree_weight) + (arch_component * arch_weight)
-normalized_base = normalize_beauty_score(base_score, area_type)
-beauty_bonus = min(cap, built_bonus + natural_bonus)
-
-total_score = normalized_base + beauty_bonus
-```
-
-### Components
-- **Built Beauty:** Architectural diversity + built enhancers
-- **Natural Beauty:** Tree score + scenic bonus
-- **Weights:** Area-type-specific (default: 50/50)
-
-### Guardrail Check
-- **Purpose:** Detects scores outside expected ranges (debugging)
-- **Not Calibration:** Does not modify scores, only alerts
-- **Acceptable:** Per design principles (transparent metadata)
-
-### Calibration/Tuning
-- ❌ **No calibration** - Composes two pure data-backed pillars
-- ✅ **No tuning** - Uses default weights or user-provided weights
-
-### Data Sources
-- Composes `built_beauty` and `natural_beauty` pillars
+- **API / tokens:** `neighborhood_beauty` may still appear as a **token alias** that splits weight between built and natural (see `main.py`).
+- **No separate pillar:** There is no third beauty score path in production.
 
 ---
 
@@ -736,7 +709,6 @@ score = min(100, total_raw)
 | **Price-to-Space (housing_value)** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **built_beauty** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **air_travel_access** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
-| **neighborhood_beauty** | ❌ None | ❌ None | ❌ None | ✅ Composes other pillars |
 | **economic_security** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **quality_education** | ❌ None | ❌ None | ❌ None | ✅ Data-backed + bonuses |
 | **social_fabric** | ❌ None | ❌ None | ❌ None | ✅ Data-backed, renormalize when optional missing |

@@ -14,7 +14,8 @@
 - ✅ air_travel_access.py - No calibration
 - ✅ housing_value.py - No calibration
 - ✅ schools.py - No calibration
-- ✅ neighborhood_beauty.py - Only has guardrail checks, not calibration
+
+**Note:** The legacy `neighborhood_beauty` combined module was removed; beauty is scored via `built_beauty` and `natural_beauty` only. The name may still appear as a token alias in `main.py`.
 
 ## Fixes Applied
 
@@ -38,10 +39,6 @@ RATIO_SCORING_PARAMS = {
 **Fix Applied**: Removed calibration comments, using data-backed thresholds
 
 **Status**: Breakpoints based on objective transit quality thresholds, not target scores.
-
-### ✅ neighborhood_beauty.py - CLEAN
-
-**Note**: Has `_check_calibration_guardrails()` function - this is a **guardrail check**, not calibration. It checks if scores are outside expected ranges and alerts, but doesn't modify scores. This is acceptable per design principles (transparent metadata, debugging).
 
 ## Design Principles Compliance
 

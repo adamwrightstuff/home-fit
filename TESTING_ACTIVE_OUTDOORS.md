@@ -2,18 +2,7 @@
 
 ## Quick Test via API
 
-### Using the Test Script
-
-```bash
-# Test with default location (Central Park, NYC)
-python3 test_active_outdoors_api.py
-
-# Test with custom location
-python3 test_active_outdoors_api.py "Miami Beach FL"
-
-# Test with custom API URL (if running on different port/host)
-python3 test_active_outdoors_api.py "Boulder CO" "http://localhost:8000"
-```
+Use **cURL** or **Python requests** below. (There is no `test_active_outdoors_api.py` in this repo; for batch scoring with details, see `scripts/collect_active_outdoors.py` in GitHub Actions workflow `active-outdoors-collect.yml`.)
 
 ### Using cURL
 

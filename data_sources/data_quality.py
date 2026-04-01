@@ -1191,7 +1191,7 @@ def get_form_context(
     """
     Get form context for beauty pillars (architectural classification).
     
-    This is computed once and shared by built_beauty, natural_beauty, and neighborhood_beauty.
+    This is computed once and shared by built_beauty and natural_beauty.
     Returns None if beauty pillars are not requested (no architectural features needed).
     
     Args:
@@ -1276,7 +1276,7 @@ def get_baseline_context(
         # Default: use area_type if it's in allowed set
         return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
     
-    elif pillar_name in ('built_beauty', 'natural_beauty', 'neighborhood_beauty'):
+    elif pillar_name in ('built_beauty', 'natural_beauty'):
         # Beauty pillars use form_context directly (if available) or area_type
         # But form_context values like 'historic_urban' are not in ALLOWED_BASELINE_CONTEXTS
         # So we need to map them back to base types for expectation lookups
@@ -1382,8 +1382,6 @@ class DataQualityManager:
             return self._assess_airport_completeness(data, expected_minimums)
         elif pillar_name == 'neighborhood_amenities':
             return self._assess_business_completeness(data, expected_minimums)
-        elif pillar_name == 'neighborhood_beauty':
-            return self._assess_beauty_completeness(data, expected_minimums)
         elif pillar_name == 'economic_security':
             return self._assess_economic_security_completeness(data, expected_minimums)
         elif pillar_name == 'housing_value':
@@ -1494,111 +1492,6 @@ class DataQualityManager:
         variety_score = min(1.0, unique_types / max(1, expected.get('business_types', 8)))
         
         completeness = (density_score * 0.6) + (variety_score * 0.4)
-        return completeness, self._get_quality_tier(completeness)
-    
-    def _assess_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
-        """Assess neighborhood beauty data completeness."""
-        # Check for both traditional and enhanced data sources
-        charm_data = data.get('charm_data', {})
-        year_built_data = data.get('year_built_data', {})
-        tree_data = data.get('tree_score', 0)
-        
-        # Check for enhanced tree data sources (OSM enhanced trees)
-        enhanced_tree_data = data.get('enhanced_tree_data', {})
-        satellite_canopy = data.get('satellite_canopy')
-        
-        # Tree data available - check multiple sources
-        tree_score = 0.0
-        if tree_data > 0:
-            tree_score = min(1.0, tree_data / 50.0)
-        elif enhanced_tree_data:
-            # OSM tree data available
-            tree_rows = len(enhanced_tree_data.get('tree_rows', []))
-            street_trees = len(enhanced_tree_data.get('street_trees', []))
-            individual_trees = len(enhanced_tree_data.get('individual_trees', []))
-            tree_areas = len(enhanced_tree_data.get('tree_areas', []))
-            total_trees = tree_rows + street_trees + individual_trees + tree_areas
-            if total_trees > 20:
-                tree_score = 0.9  # Excellent OSM data
-            elif total_trees > 10:
-                tree_score = 0.8  # Good OSM data
-            elif total_trees > 5:
-                tree_score = 0.6  # Fair OSM data
-            elif total_trees > 0:
-                tree_score = 0.4  # Limited OSM data
-        elif satellite_canopy is not None and satellite_canopy > 0:
-            tree_score = 0.6  # Satellite canopy data available
-        
-        # Historic landmarks
-        historic_count = len(charm_data.get('historic', [])) if charm_data else 0
-        artwork_count = len(charm_data.get('artwork', [])) if charm_data else 0
-        
-        # Check for architectural diversity data
-        arch_diversity = data.get('architectural_diversity', {})
-        if (not arch_diversity) and data.get('architectural_details'):
-            arch_details = data.get('architectural_details') or {}
-            arch_score_0_50 = arch_details.get('score')
-            if isinstance(arch_score_0_50, (int, float)):
-                arch_diversity = {
-                    "diversity_score": max(0.0, min(100.0, arch_score_0_50 * 2.0)),
-                    "phase2_confidence": arch_details.get('phase2_confidence'),
-                    "phase3_confidence": arch_details.get('phase3_confidence'),
-                    "coverage_cap_applied": arch_details.get('coverage_cap_applied', False)
-                }
-        coverage_cap_applied = False
-        if arch_diversity:
-            coverage_cap_applied = bool(arch_diversity.get('coverage_cap_applied'))
-        if arch_diversity and arch_diversity.get('diversity_score', 0) > 70:
-            landmark_score = 0.9  # Excellent architectural data
-        elif arch_diversity and arch_diversity.get('diversity_score', 0) > 50:
-            landmark_score = 0.7  # Good architectural data
-        else:
-            # Fall back to historic landmark count
-            total_landmarks = historic_count + artwork_count
-            if total_landmarks >= 15:
-                landmark_score = 1.0
-            elif total_landmarks >= 10:
-                landmark_score = 0.8
-            elif total_landmarks >= 5:
-                landmark_score = 0.6
-            elif total_landmarks >= 2:
-                landmark_score = 0.4
-            else:
-                landmark_score = 0.1
-
-        # Boost completeness if Phase 2/3 confidence is strong (independent of coverage)
-        phase_conf_values = []
-        if arch_diversity:
-            for conf_bucket in ("phase2_confidence", "phase3_confidence"):
-                conf_dict = arch_diversity.get(conf_bucket) or {}
-                if isinstance(conf_dict, dict):
-                    phase_conf_values.extend(
-                        v for v in conf_dict.values() if isinstance(v, (int, float))
-                    )
-        if phase_conf_values:
-            avg_conf = sum(phase_conf_values) / len(phase_conf_values)
-            # Normalize (values already 0-1) and ensure meaningful boost
-            landmark_score = max(landmark_score, min(1.0, 0.5 + avg_conf * 0.5))
-
-        if coverage_cap_applied:
-            landmark_score = max(0.3, landmark_score - 0.1)
-        
-        # Year built data
-        year_built_score = 1.0 if year_built_data else 0.0
-        
-        # Check for visual analysis data (satellite/street view)
-        visual_analysis = data.get('visual_analysis', {})
-        has_satellite = bool(visual_analysis.get('satellite_analysis'))
-        has_street = bool(visual_analysis.get('street_analysis'))
-        visual_bonus = 0.15 if (has_satellite and has_street) else 0.08 if (has_satellite or has_street) else 0
-        
-        # Rebalance weights so trees + year built provide a stronger completeness signal
-        # New weights: trees 0.45, landmarks 0.25, year_built 0.2, visual bonus up to ~0.15
-        completeness = (tree_score * 0.45) + (landmark_score * 0.25) + (year_built_score * 0.2) + visual_bonus
-
-        # Floor completeness when both trees and year built are present (good objective coverage)
-        if tree_score >= 0.5 and year_built_score >= 1.0:
-            completeness = max(completeness, 0.5)
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_housing_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:

@@ -249,9 +249,17 @@ def _compute_scoring_hash() -> str:
         "pillars/housing_value.py",
         "pillars/schools.py",
         "pillars/beauty_common.py",
+        "pillars/economic_security.py",
+        "pillars/climate_risk.py",
+        "pillars/social_fabric.py",
+        "pillars/diversity.py",
         "pillars/status_signal.py",
+        "pillars/happiness_index.py",
+        "pillars/composite_indices.py",
         # Data source logic that materially affects scoring outputs / reliability
         "data_sources/osm_api.py",
+        "data_sources/census_api.py",
+        "data_sources/geocoding.py",
         "data_sources/cache.py",
         "data_sources/retry_config.py",
         # Expected values and baselines
@@ -5796,7 +5804,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         )
         
         # Calculate beauty score using context-aware scoring
-        # Note: Tree coverage is handled by neighborhood_beauty pillar; architectural diversity uses historic context for scoring adjustments
+        # Note: Tree coverage is handled by natural_beauty; architectural diversity uses historic context for scoring adjustments
         from data_sources.arch_diversity import (
             score_architectural_diversity_as_beauty,
             _score_band,

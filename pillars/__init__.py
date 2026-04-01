@@ -4,7 +4,6 @@ Scoring logic for HomeFit livability metrics
 """
 
 from . import active_outdoors
-from . import neighborhood_beauty
 from . import built_beauty
 from . import natural_beauty
 from . import neighborhood_amenities
@@ -16,10 +15,13 @@ from . import housing_value
 from . import economic_security
 from . import climate_risk
 from . import social_fabric
+from . import diversity
+from . import status_signal
+from . import happiness_index
+from . import composite_indices
 
 __all__ = [
     "active_outdoors",
-    "neighborhood_beauty",
     "built_beauty",
     "natural_beauty",
     "neighborhood_amenities",
@@ -31,4 +33,8 @@ __all__ = [
     "housing_value",
     "climate_risk",
     "social_fabric",
+    "diversity",
+    "status_signal",
+    "happiness_index",
+    "composite_indices",
 ]

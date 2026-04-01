@@ -193,7 +193,7 @@ def get_profile_for_pillar(pillar_name: str, query_type: str) -> RetryConfig:
     This allows pillar-specific overrides if needed.
     
     Args:
-        pillar_name: Name of the pillar (e.g., "active_outdoors", "neighborhood_beauty")
+        pillar_name: Name of the pillar (e.g., "active_outdoors", "built_beauty")
         query_type: Type of query within the pillar
     
     Returns:

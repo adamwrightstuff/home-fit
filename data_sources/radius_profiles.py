@@ -93,7 +93,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
         # rural or unknown
         return {"fac_radius_m": 20000, "pharm_radius_m": 8000}
 
-    if p in {"built_beauty", "natural_beauty", "neighborhood_beauty"}:
+    if p in {"built_beauty", "natural_beauty"}:
         # Tree radius adjustments:
         # - urban_historic and urban_residential: 800m (tighter for dense urban areas)
         # - urban_core: 1000m
