@@ -74,6 +74,8 @@ export interface LivabilityPillar {
   area_classification?: AreaClassification;
   /** Set when pillar execution failed; client should show low confidence and "Rerun" prompt. */
   error?: string;
+  /** Server-side exception message when pillar failed (e.g. time budget exceeded). */
+  error_detail?: string;
   /** Source of truth for UI state: 'success' | 'fallback' | 'failed'. */
   status?: 'success' | 'fallback' | 'failed';
   /** Social Fabric: per-source load status (Census stability, civic OSM, engagement proxies). */

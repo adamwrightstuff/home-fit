@@ -103,12 +103,14 @@ def _profile_seconds(name: str, *, launch: float, normal: float, relaxed: float)
         return float(os.getenv(name, str(relaxed)))
     return float(os.getenv(name, str(normal)))
 
-# How long (seconds) we wait for the pillar stage before returning fallback/limited-data pillars.
+# How long (seconds) we wait for each *next* pillar completion in parallel mode (as_completed).
+# If too low, slow pillars (GEE, OSM) can exceed the gap between completions and the pool
+# marks remaining pillars as RuntimeError("Pillar time budget exceeded"). See parallel pillar loop.
 HOMEFIT_PILLARS_BUDGET_SECONDS = _profile_seconds(
     "HOMEFIT_PILLARS_BUDGET_SECONDS",
-    launch=22.0,
-    normal=45.0,
-    relaxed=90.0,
+    launch=60.0,
+    normal=180.0,
+    relaxed=300.0,
 )
 
 # Batch: hard cap (server-side), do NOT trust client-provided values
@@ -852,6 +854,11 @@ def _apply_pillar_failure_overrides(
         dq.setdefault("quality_tier", "very_poor")
         entry["data_quality"] = dq
         entry["error"] = exc.__class__.__name__ if exc else "PillarExecutionFailed"
+        if exc:
+            try:
+                entry["error_detail"] = str(exc)[:500]
+            except Exception:
+                entry["error_detail"] = repr(exc)[:500]
 
 
 def _set_pillar_status(
