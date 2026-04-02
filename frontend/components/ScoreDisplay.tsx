@@ -254,7 +254,7 @@ export default function ScoreDisplay({
           alignItems: 'center',
           gap: '0.75rem',
           padding: '1rem 1.25rem',
-          marginBottom: hideSummaryCard ? 0 : '0.5rem',
+          marginBottom: '0.5rem',
           background: 'var(--hf-bg-subtle)',
           borderRadius: 12,
           border: '1px solid var(--hf-border)',
@@ -297,9 +297,6 @@ export default function ScoreDisplay({
 
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
-      {/* Results / saved-detail hide the main summary card but still need Save */}
-      {hideSummaryCard && saveRow ? <div className="hf-card">{saveRow}</div> : null}
-
       {!hideSummaryCard && (
       <div className="hf-card">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}

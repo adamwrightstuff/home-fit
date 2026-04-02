@@ -157,11 +157,13 @@ function persistCache(cacheKey: string | null, payload: ScoreResponse) {
 
 export default function ResultsClient({ initialSearchParams }: { initialSearchParams: RawSearchParams }) {
   const router = useRouter()
-  const { user, isConfigured: isAuthConfigured } = useAuth()
+  const { user, isConfigured: isAuthConfigured, openAuthModal } = useAuth()
   const normalized = useMemo(() => normalizeSearchParams(initialSearchParams), [initialSearchParams])
 
   const [finalResponse, setFinalResponse] = useState<ScoreResponse | null>(null)
   const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
+  const [saveBusy, setSaveBusy] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
   const [partial, setPartial] = useState<Record<string, { score: number }>>({})
   const [error, setError] = useState<string | null>(null)
   const [showCachedNote, setShowCachedNote] = useState(false)
@@ -231,6 +233,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     setError(null)
     setPartial({})
     setSavedScoreId(null)
+    setSaveErr(null)
     setShowCachedNote(false)
     setCatalogSnapshot(false)
     setRunActive(false)
@@ -301,6 +304,18 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     },
     [searchOptions]
   )
+
+  const runSaveFromResultsHeader = useCallback(async () => {
+    if (!displayData || !searchOptions) return
+    setSaveErr(null)
+    setSaveBusy(true)
+    try {
+      const r = await handleSavePlace(displayData, searchOptions.priorities)
+      if (r.error) setSaveErr(r.error)
+    } finally {
+      setSaveBusy(false)
+    }
+  }, [displayData, searchOptions, handleSavePlace])
 
   const handleSearchOptionsChange = useCallback(
     (next: SearchOptions) => {
@@ -685,6 +700,42 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                     Showing cached results
                   </span>
                 )}
+                {finalResponse && searchOptions ? (
+                  user ? (
+                    savedScoreId ? (
+                      <span className="hf-muted" style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        ✓ Saved
+                        <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
+                          My places →
+                        </Link>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={runSaveFromResultsHeader}
+                        className="hf-btn-primary"
+                        style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+                        disabled={saveBusy}
+                      >
+                        {saveBusy ? 'Saving…' : 'Save this place'}
+                      </button>
+                    )
+                  ) : isAuthConfigured ? (
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('signin')}
+                      className="hf-btn-primary"
+                      style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+                    >
+                      Sign in to save
+                    </button>
+                  ) : null
+                ) : null}
+                {saveErr ? (
+                  <span className="hf-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>
+                    {saveErr}
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   onClick={handleRefresh}
@@ -866,10 +917,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               pillarLoadingKeys={!finalResponse ? pillarLoadingKeys : undefined}
               hideSummaryCard={Boolean(showSavedStyle)}
               placeSummary={displayData?.place_summary ?? null}
-              isSignedIn={!!user}
-              isAuthConfigured={isAuthConfigured}
-              savedScoreId={savedScoreId}
-              onSave={finalResponse && searchOptions ? handleSavePlace : undefined}
             />
           ) : null}
         </div>

@@ -106,6 +106,17 @@ function applySchoolsDisabledOverride(tokenAllocation: Record<string, number | u
   return out
 }
 
+/**
+ * Pillar participates in weighted HomeFit total. Execution failures (`status === 'failed'`, "?" in UI)
+ * are excluded so priority weight is renormalized across pillars that actually scored — avoids "dead"
+ * weight on failed rows and a headline total that feels inconsistent with visible pillar scores.
+ */
+function isPillarEligibleForHomeFitBlend(pillar: { score?: unknown; status?: string } | null | undefined): boolean {
+  if (!pillar || typeof pillar.score !== 'number' || !Number.isFinite(pillar.score)) return false
+  if (pillar.status === 'failed') return false
+  return true
+}
+
 export function reweightScoreResponseFromPriorities(
   data: ScoreResponse,
   priorities: Record<string, PriorityLevel> | PillarPriorities
@@ -155,17 +166,23 @@ export function reweightScoreResponseFromPriorities(
         })()
       : null
 
+  const allocation = fallbackAllocation ?? tokenAllocation
+  const eligibleKeys = Object.keys(nextPillars).filter((k) => isPillarEligibleForHomeFitBlend(nextPillars[k]))
+  let allocSum = 0
+  for (const k of eligibleKeys) {
+    allocSum += Number(allocation[k] ?? 0)
+  }
+
   const processedKeys = new Set<string>()
   for (const k of Object.keys(nextPillars)) {
     const pillar = nextPillars[k]
-    if (!pillar || typeof pillar.score !== 'number') continue
+    if (!pillar || !isPillarEligibleForHomeFitBlend(pillar)) continue
     processedKeys.add(k)
 
-    // Use a single allocation for all pillars so weights always sum to 100.
-    const allocation = fallbackAllocation ?? tokenAllocation
-    const weight = Number(allocation[k] ?? 0)
+    const baseW = Number(allocation[k] ?? 0)
+    const weight = allocSum > 0 ? Math.round(((baseW / allocSum) * 100) * 10) / 10 : 0
     const score = Number(pillar.score ?? 0)
-    const contributionRaw = (score * weight) / 100
+    const contributionRaw = allocSum > 0 ? (score * baseW) / allocSum : 0
     const contribution = Math.round(contributionRaw * 100) / 100
     totalFromRoundedContributions += contribution
 
@@ -181,8 +198,7 @@ export function reweightScoreResponseFromPriorities(
     }
   }
 
-  // Pillars without a numeric score (failed / pending) must not keep stale API weight & contribution,
-  // or the sum of card contributions won't match total_score.
+  // Missing numeric score, execution failures, or stale API rows: no weight/contribution in the blend.
   for (const k of Object.keys(nextPillars)) {
     if (processedKeys.has(k)) continue
     const pillar = nextPillars[k]
