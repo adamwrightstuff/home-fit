@@ -11,15 +11,16 @@ import CatalogBottomSheet, {
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { buildCatalogFeatureCollection } from '@/lib/catalogMapGeo'
+import { CATALOG_INDEX_COLORS } from '@/lib/catalogIndexColors'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 
-const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
-  { id: 'homefit', label: 'HomeFit' },
-  { id: 'longevity', label: 'Longevity' },
-  { id: 'happiness', label: 'Happiness' },
-  { id: 'status', label: 'Status' },
+const INDEXES: { id: CatalogMapIndexMode; label: string; color: string }[] = [
+  { id: 'homefit', label: 'HomeFit', color: CATALOG_INDEX_COLORS.homefit },
+  { id: 'longevity', label: 'Longevity', color: CATALOG_INDEX_COLORS.longevity },
+  { id: 'happiness', label: 'Happiness', color: CATALOG_INDEX_COLORS.happiness },
+  { id: 'status', label: 'Status', color: CATALOG_INDEX_COLORS.status },
 ]
 
 export default function CatalogMapClient() {
@@ -110,10 +111,21 @@ export default function CatalogMapClient() {
             <button
               key={x.id}
               type="button"
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                indexMode === x.id ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-              }`}
-              style={indexMode === x.id ? { background: 'var(--hf-primary-gradient)' } : undefined}
+              className="rounded-full px-3 py-1.5 text-xs font-bold"
+              style={
+                indexMode === x.id
+                  ? {
+                      background: `${x.color}22`,
+                      color: x.color,
+                      border: `2px solid ${x.color}`,
+                      boxShadow: `0 0 0 1px ${x.color}33`,
+                    }
+                  : {
+                      background: 'var(--hf-hover-bg)',
+                      color: 'var(--hf-text-secondary)',
+                      border: '2px solid transparent',
+                    }
+              }
               onClick={() => setIndexMode(x.id)}
             >
               {x.label}
@@ -141,6 +153,7 @@ export default function CatalogMapClient() {
       <CatalogBottomSheet
         place={selectedPlace}
         indexMode={indexMode}
+        onIndexModeChange={setIndexMode}
         priorities={priorities}
         snap={snap}
         onSnapChange={setSnap}

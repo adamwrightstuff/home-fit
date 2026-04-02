@@ -111,6 +111,84 @@ export function topPillarCallouts(
   return ranked.slice(0, limit).map((r) => PILLAR_META[r.k as PillarKey].name)
 }
 
+/** All four index values for catalog peek UI (scores colored per index ramp). */
+export function getAllCatalogIndexDisplay(
+  place: CatalogMapPlace,
+  priorities: PillarPriorities
+): {
+  homefit: number | null
+  longevity: number | null
+  happiness: number | null
+  statusSignal: number | null
+  archetype: string | null
+  archetypeBadge: string | null
+} {
+  const rw = reweightScoreResponseFromPriorities(place.score, priorities)
+  const s = place.score
+  const br = s.status_signal_breakdown
+  const archetype = br?.archetype ?? null
+  const archetypeBadge =
+    archetype && br?.status_label
+      ? `${archetype} · ${br.status_label}`
+      : archetype || (typeof br?.status_label === 'string' ? br.status_label : null)
+  return {
+    homefit: typeof rw.total_score === 'number' && Number.isFinite(rw.total_score) ? rw.total_score : null,
+    longevity: typeof s.longevity_index === 'number' ? s.longevity_index : null,
+    happiness: typeof s.happiness_index === 'number' ? s.happiness_index : null,
+    statusSignal: typeof s.status_signal === 'number' ? s.status_signal : null,
+    archetype,
+    archetypeBadge,
+  }
+}
+
+export type CatalogStandoutChip = {
+  pillarKey: PillarKey
+  name: string
+  score: number
+  tier: 'top' | 'bottom'
+}
+
+/** Top 2 + weakest 1 pillar chips (green vs coral tint in UI). */
+export function getStandoutPillarChips(
+  place: CatalogMapPlace,
+  mode: CatalogMapIndexMode,
+  priorities: PillarPriorities
+): CatalogStandoutChip[] {
+  const rw =
+    mode === 'homefit'
+      ? reweightScoreResponseFromPriorities(place.score, priorities)
+      : place.score
+  const pillars = rw.livability_pillars as unknown as Record<
+    string,
+    { score?: number; contribution?: number } | undefined
+  >
+  const ranked = PILLAR_ORDER.map((k) => {
+    const pl = pillars[k]
+    const score = typeof pl?.score === 'number' ? pl.score : NaN
+    const contribution = typeof pl?.contribution === 'number' ? Math.abs(pl.contribution) : 0
+    return { k: k as PillarKey, score, contribution }
+  })
+    .filter((x) => Number.isFinite(x.score))
+    .sort((a, b) => {
+      if (mode === 'homefit') return b.contribution - a.contribution
+      return b.score - a.score
+    })
+  if (ranked.length === 0) return []
+  const out: CatalogStandoutChip[] = []
+  const topSlots = Math.min(2, ranked.length)
+  for (let i = 0; i < topSlots; i++) {
+    const r = ranked[i]!
+    out.push({ pillarKey: r.k, name: PILLAR_META[r.k].name, score: r.score, tier: 'top' })
+  }
+  if (ranked.length >= 3) {
+    const last = ranked[ranked.length - 1]!
+    if (!out.some((c) => c.pillarKey === last.k)) {
+      out.push({ pillarKey: last.k, name: PILLAR_META[last.k].name, score: last.score, tier: 'bottom' })
+    }
+  }
+  return out
+}
+
 export function displayIndexValue(
   place: CatalogMapPlace,
   mode: CatalogMapIndexMode,
