@@ -154,9 +154,11 @@ export function reweightScoreResponseFromPriorities(
         })()
       : null
 
+  const processedKeys = new Set<string>()
   for (const k of Object.keys(nextPillars)) {
     const pillar = nextPillars[k]
     if (!pillar || typeof pillar.score !== 'number') continue
+    processedKeys.add(k)
 
     // Use a single allocation for all pillars so weights always sum to 100.
     const allocation = fallbackAllocation ?? tokenAllocation
@@ -174,6 +176,19 @@ export function reweightScoreResponseFromPriorities(
       weight,
       contribution: Math.round(contribution * 100) / 100,
       importance_level: importanceLevel,
+    }
+  }
+
+  // Pillars without a numeric score (failed / pending) must not keep stale API weight & contribution,
+  // or the sum of card contributions won't match total_score.
+  for (const k of Object.keys(nextPillars)) {
+    if (processedKeys.has(k)) continue
+    const pillar = nextPillars[k]
+    if (!pillar) continue
+    nextPillars[k] = {
+      ...pillar,
+      weight: 0,
+      contribution: 0,
     }
   }
 

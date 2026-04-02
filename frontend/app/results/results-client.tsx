@@ -7,7 +7,7 @@ import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ScoreDisplay, { type RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
-import type { ScoreResponse } from '@/types/api'
+import type { Metadata, ScoreResponse } from '@/types/api'
 import type { PillarKey } from '@/lib/pillars'
 import {
   PILLAR_ORDER,
@@ -24,6 +24,8 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
+import { useAuth } from '@/contexts/AuthContext'
+import { saveScore } from '@/lib/savedScores'
 
 type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -155,9 +157,11 @@ function persistCache(cacheKey: string | null, payload: ScoreResponse) {
 
 export default function ResultsClient({ initialSearchParams }: { initialSearchParams: RawSearchParams }) {
   const router = useRouter()
+  const { user, isConfigured: isAuthConfigured } = useAuth()
   const normalized = useMemo(() => normalizeSearchParams(initialSearchParams), [initialSearchParams])
 
   const [finalResponse, setFinalResponse] = useState<ScoreResponse | null>(null)
+  const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
   const [partial, setPartial] = useState<Record<string, { score: number }>>({})
   const [error, setError] = useState<string | null>(null)
   const [showCachedNote, setShowCachedNote] = useState(false)
@@ -226,6 +230,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     if (!normalized || !cacheKey) return
     setError(null)
     setPartial({})
+    setSavedScoreId(null)
     setShowCachedNote(false)
     setCatalogSnapshot(false)
     setRunActive(false)
@@ -275,6 +280,27 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     setGateVisible(true)
     setTimeout(() => setGateVisible(false), 1200)
   }
+
+  const handleSavePlace = useCallback(
+    async (payload: ScoreResponse, priorities: PillarPriorities) => {
+      if (!searchOptions) return { error: 'Missing search options' }
+      try {
+        const payloadWithConfig: ScoreResponse = {
+          ...payload,
+          metadata: {
+            ...(payload.metadata ?? {}),
+            saved_search_options: searchOptions,
+          } as Metadata,
+        }
+        const { id } = await saveScore(payloadWithConfig, priorities)
+        setSavedScoreId(id)
+        return { id }
+      } catch (e) {
+        return { error: e instanceof Error ? e.message : 'Failed to save' }
+      }
+    },
+    [searchOptions]
+  )
 
   const handleSearchOptionsChange = useCallback(
     (next: SearchOptions) => {
@@ -840,6 +866,10 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               pillarLoadingKeys={!finalResponse ? pillarLoadingKeys : undefined}
               hideSummaryCard={Boolean(showSavedStyle)}
               placeSummary={displayData?.place_summary ?? null}
+              isSignedIn={!!user}
+              isAuthConfigured={isAuthConfigured}
+              savedScoreId={savedScoreId}
+              onSave={finalResponse && searchOptions ? handleSavePlace : undefined}
             />
           ) : null}
         </div>

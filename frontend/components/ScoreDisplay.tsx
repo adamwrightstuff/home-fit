@@ -245,59 +245,65 @@ export default function ScoreDisplay({
     }
   }
 
+  const saveRow =
+    onSave && priorities && !isLoading ? (
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '1rem 1.25rem',
+          marginBottom: hideSummaryCard ? 0 : '0.5rem',
+          background: 'var(--hf-bg-subtle)',
+          borderRadius: 12,
+          border: '1px solid var(--hf-border)',
+        }}
+      >
+        {isSignedIn ? (
+          savedScoreId ? (
+            <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '1rem' }}>
+              ✓ Saved to My places
+              <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
+                View saved places →
+              </Link>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="hf-btn-primary"
+              style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600, minHeight: 44 }}
+            >
+              {saving ? 'Saving…' : 'Save this place'}
+            </button>
+          )
+        ) : isAuthConfigured ? (
+          <button
+            type="button"
+            onClick={() => openAuthModal('signin')}
+            className="hf-btn-primary"
+            style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600 }}
+          >
+            Sign in to save this place
+          </button>
+        ) : null}
+        {saveError && (
+          <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
+        )}
+      </div>
+    ) : null
+
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+      {/* Results / saved-detail hide the main summary card but still need Save */}
+      {hideSummaryCard && saveRow ? <div className="hf-card">{saveRow}</div> : null}
+
       {!hideSummaryCard && (
       <div className="hf-card">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
-        {onSave && priorities && (
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '1rem 1.25rem',
-              marginBottom: '0.5rem',
-              background: 'var(--hf-bg-subtle)',
-              borderRadius: 12,
-              border: '1px solid var(--hf-border)',
-            }}
-          >
-            {isSignedIn ? (
-              savedScoreId ? (
-                <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '1rem' }}>
-                  ✓ Saved to My places
-                  <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
-                    View saved places →
-                  </Link>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="hf-btn-primary"
-                  style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600, minHeight: 44 }}
-                >
-                  {saving ? 'Saving…' : 'Save this place'}
-                </button>
-              )
-            ) : isAuthConfigured ? (
-              <button
-                type="button"
-                onClick={() => openAuthModal('signin')}
-                className="hf-btn-primary"
-                style={{ padding: '0.85rem 1.5rem', borderRadius: 12, fontSize: '1rem', fontWeight: 600 }}
-              >
-                Sign in to save this place
-              </button>
-            ) : null}
-            {saveError && (
-              <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
-            )}
-          </div>
-        )}
+        {saveRow}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
           <div style={{ minWidth: 0, flex: '1 1 260px' }}>
