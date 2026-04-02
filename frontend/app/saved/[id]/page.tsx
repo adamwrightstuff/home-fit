@@ -181,24 +181,25 @@ export default function SavedDetailPage() {
           saved_search_options: searchOptions,
         } as any,
       }
-      {
-        const li = longevityIndexFromLivabilityPillars(
-          merged.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
-        )
-        if (li != null) merged.longevity_index = li
-      }
       if (typeof (response as { happiness_index?: number }).happiness_index === 'number') {
         merged.happiness_index = (response as { happiness_index: number }).happiness_index
       }
       if ((response as { happiness_index_breakdown?: Record<string, unknown> }).happiness_index_breakdown != null) {
         merged.happiness_index_breakdown = (response as { happiness_index_breakdown: Record<string, unknown> }).happiness_index_breakdown
       }
-      await updateSavedScore(row.id, { scorePayload: merged, priorities: options.priorities })
+      let toSave = reweightScoreResponseFromPriorities(merged, options.priorities)
+      {
+        const li = longevityIndexFromLivabilityPillars(
+          toSave.livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+        )
+        if (li != null) toSave = { ...toSave, longevity_index: li }
+      }
+      await updateSavedScore(row.id, { scorePayload: toSave, priorities: options.priorities })
       setRow((prev) =>
         prev
           ? {
               ...prev,
-              score_payload: merged,
+              score_payload: toSave,
               priorities: options.priorities,
               updated_at: new Date().toISOString(),
             }
