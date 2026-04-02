@@ -780,7 +780,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 style={{
                   fontSize: '2.25rem',
                   fontWeight: 800,
-                  color: displayData!.total_score != null ? 'var(--hf-homefit-green)' : 'var(--hf-text-secondary)',
+                  color: displayData!.total_score != null ? 'var(--c-purple-600)' : 'var(--hf-text-secondary)',
                   lineHeight: 1.1,
                 }}
               >
@@ -792,7 +792,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   alignItems: 'center',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: 'var(--hf-text-primary)',
+                  color: 'var(--hf-text-secondary)',
                   marginTop: '0.25rem',
                 }}
               >
@@ -822,7 +822,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                       fontWeight: 600,
                       color:
                         typeof displayData!.longevity_index === 'number'
-                          ? 'var(--hf-longevity-purple)'
+                          ? 'var(--c-teal-600)'
                           : 'var(--hf-text-secondary)',
                     }}
                   >
@@ -832,7 +832,13 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   <span className="hf-muted">Status Signal</span>
-                  <span style={{ fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color:
+                        typeof displayData!.status_signal === 'number' ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)',
+                    }}
+                  >
                     {typeof displayData!.status_signal === 'number'
                       ? Math.max(0, Math.min(100, displayData!.status_signal)).toFixed(1)
                       : '—'}
@@ -851,7 +857,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                       fontWeight: 600,
                       color:
                         typeof displayData!.happiness_index === 'number'
-                          ? 'var(--hf-happiness-teal)'
+                          ? 'var(--c-blue-600)'
                           : 'var(--hf-text-secondary)',
                     }}
                   >

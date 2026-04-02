@@ -27,10 +27,35 @@
 
   --hf-danger: #dc3545;
 
-  /* Score summary colors */
-  --hf-homefit-green: #2d6a4f;
-  --hf-longevity-purple: #764ba2;
-  --hf-happiness-teal: #0d9488;
+  /* Index color ramps (fixed bindings — see lib/indexColorSystem.ts) */
+  --c-purple-50: #eeedfe;
+  --c-purple-200: #afa9ec;
+  --c-purple-400: #7f77dd;
+  --c-purple-600: #534ab7;
+  --c-purple-800: #3c3489;
+
+  --c-teal-50: #e1f5ee;
+  --c-teal-200: #5dcaa5;
+  --c-teal-400: #1d9e75;
+  --c-teal-600: #0f6e56;
+  --c-teal-800: #085041;
+
+  --c-blue-50: #e6f1fb;
+  --c-blue-200: #85b7eb;
+  --c-blue-400: #378add;
+  --c-blue-600: #185fa5;
+  --c-blue-800: #0c447c;
+
+  --c-coral-50: #faece7;
+  --c-coral-200: #f0997b;
+  --c-coral-400: #d85a30;
+  --c-coral-600: #993c1d;
+  --c-coral-800: #712b13;
+
+  /* Legacy aliases — map to index ramps (HomeFit=purple, Longevity=teal, Happiness=blue) */
+  --hf-homefit-green: var(--c-purple-600);
+  --hf-longevity-purple: var(--c-teal-600);
+  --hf-happiness-teal: var(--c-blue-600);
 }
 
 body {
@@ -853,9 +878,9 @@ body {
 .hf-auth-success {
   margin: 0 0 1rem;
   padding: 0.75rem;
-  background: rgba(45, 106, 79, 0.12);
+  background: rgba(83, 74, 183, 0.1);
   border-radius: 10px;
-  color: var(--hf-homefit-green);
+  color: var(--c-purple-800);
   font-size: 0.9rem;
 }
 

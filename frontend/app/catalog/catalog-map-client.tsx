@@ -11,16 +11,17 @@ import CatalogBottomSheet, {
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { buildCatalogFeatureCollection } from '@/lib/catalogMapGeo'
-import { CATALOG_INDEX_COLORS } from '@/lib/catalogIndexColors'
+import { catalogRampKey } from '@/lib/catalogIndexColors'
+import { catalogTabActiveStyle } from '@/lib/indexColorSystem'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 
-const INDEXES: { id: CatalogMapIndexMode; label: string; color: string }[] = [
-  { id: 'homefit', label: 'HomeFit', color: CATALOG_INDEX_COLORS.homefit },
-  { id: 'longevity', label: 'Longevity', color: CATALOG_INDEX_COLORS.longevity },
-  { id: 'happiness', label: 'Happiness', color: CATALOG_INDEX_COLORS.happiness },
-  { id: 'status', label: 'Status', color: CATALOG_INDEX_COLORS.status },
+const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
+  { id: 'homefit', label: 'HomeFit' },
+  { id: 'longevity', label: 'Longevity' },
+  { id: 'happiness', label: 'Happiness' },
+  { id: 'status', label: 'Status' },
 ]
 
 export default function CatalogMapClient() {
@@ -76,6 +77,10 @@ export default function CatalogMapClient() {
     setLayoutVersion((v) => v + 1)
   }, [snap])
 
+  useEffect(() => {
+    if (indexMode !== 'homefit') setWeightOpen(false)
+  }, [indexMode])
+
   const handleFullBreakdown = useCallback(
     (place: CatalogMapPlace) => {
       const prioritiesJson = JSON.stringify(priorities)
@@ -107,40 +112,42 @@ export default function CatalogMapClient() {
           <span className="w-14" aria-hidden />
         </div>
         <div className="flex flex-wrap gap-1">
-          {INDEXES.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              className="rounded-full px-3 py-1.5 text-xs font-bold"
-              style={
-                indexMode === x.id
-                  ? {
-                      background: `${x.color}22`,
-                      color: x.color,
-                      border: `2px solid ${x.color}`,
-                      boxShadow: `0 0 0 1px ${x.color}33`,
-                    }
-                  : {
-                      background: 'var(--hf-hover-bg)',
-                      color: 'var(--hf-text-secondary)',
-                      border: '2px solid transparent',
-                    }
-              }
-              onClick={() => setIndexMode(x.id)}
-            >
-              {x.label}
-            </button>
-          ))}
+          {INDEXES.map((x) => {
+            const active = indexMode === x.id
+            const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+            return (
+              <button
+                key={x.id}
+                type="button"
+                className="rounded-full px-3 py-1.5 text-xs font-bold"
+                style={
+                  active
+                    ? { ...activeStyle, border: 'none' }
+                    : {
+                        background: 'var(--hf-hover-bg)',
+                        color: 'var(--hf-text-secondary)',
+                        border: '0.5px solid var(--hf-border)',
+                      }
+                }
+                onClick={() => setIndexMode(x.id)}
+              >
+                {x.label}
+              </button>
+            )
+          })}
         </div>
-        {indexMode === 'homefit' && (
-          <button
-            type="button"
-            className="self-start rounded-lg border border-[var(--hf-border-strong)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
-            onClick={() => setWeightOpen(true)}
-          >
-            Adjust weights
-          </button>
-        )}
+        <button
+          type="button"
+          title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
+          className="self-start rounded-lg border border-[var(--hf-border-strong)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
+          style={{
+            opacity: indexMode !== 'homefit' ? 0.4 : 1,
+            pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto',
+          }}
+          onClick={() => setWeightOpen(true)}
+        >
+          Adjust weights
+        </button>
       </header>
 
       <CatalogMapView
@@ -148,6 +155,7 @@ export default function CatalogMapClient() {
         selectedKey={selectedKey}
         onSelectKey={onSelectKey}
         layoutVersion={layoutVersion}
+        indexMode={indexMode}
       />
 
       <CatalogBottomSheet

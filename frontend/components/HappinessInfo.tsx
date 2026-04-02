@@ -64,7 +64,7 @@ export default function HappinessInfo() {
                 margin: 0,
                 fontSize: '1.2rem',
                 fontWeight: 700,
-                color: 'var(--hf-happiness-teal, #0d9488)',
+                color: 'var(--c-blue-600)',
               }}
             >
               Happiness Index

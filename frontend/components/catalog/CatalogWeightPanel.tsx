@@ -1,6 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
+import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
 
@@ -115,8 +116,8 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
         <div className="border-t border-[var(--hf-border)] px-4 py-3">
           <button
             type="button"
-            className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
-            style={{ background: 'var(--hf-primary-gradient)' }}
+            className="w-full rounded-xl py-2.5 text-sm font-bold"
+            style={fullBreakdownCtaStyle('purple')}
             onClick={onClose}
           >
             Done

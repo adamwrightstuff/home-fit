@@ -64,7 +64,7 @@ export default function HomeFitInfo() {
                 margin: 0,
                 fontSize: '1.2rem',
                 fontWeight: 700,
-                color: 'var(--hf-homefit-green, #4A9E6B)',
+                color: 'var(--c-purple-600)',
               }}
             >
               HomeFit Score

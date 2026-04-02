@@ -13,11 +13,24 @@ export default function TotalScore({ score, confidence, loading }: TotalScorePro
   const isLoading = Boolean(loading)
   return (
     <div className="hf-panel">
-      <div className="hf-score-hero">
-        <div className="hf-score-hero__value" aria-busy={isLoading}>
+      <div>
+        <div
+          className="tabular-nums"
+          style={{
+            fontSize: '3.25rem',
+            fontWeight: 800,
+            letterSpacing: '-1px',
+            lineHeight: 1,
+            color: isLoading ? 'var(--hf-text-secondary)' : 'var(--c-purple-600)',
+          }}
+          aria-busy={isLoading}
+        >
           {isLoading ? '—' : score.toFixed(1)}
         </div>
-        <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <div
+          className="hf-muted"
+          style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontSize: '0.95rem', fontWeight: 600 }}
+        >
           Overall HomeFit Score (0–100)
           <HomeFitInfo />
         </div>
@@ -38,13 +51,20 @@ export default function TotalScore({ score, confidence, loading }: TotalScorePro
       >
         <div>
           <div className="hf-label">Confidence</div>
-          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)' }}>
+          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-secondary)' }}>
             {isLoading ? '—' : `${confidence.average_confidence.toFixed(1)}%`}
           </div>
         </div>
         <div>
           <div className="hf-label">Data quality</div>
-          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)', textTransform: 'capitalize' }}>
+          <div
+            style={{
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              color: 'var(--hf-text-secondary)',
+              textTransform: 'capitalize',
+            }}
+          >
             {isLoading ? '—' : confidence.overall_quality}
           </div>
         </div>

@@ -178,12 +178,12 @@ export default function ExportScoresModal({
         </div>
 
         {success === 'download' && (
-          <p style={{ fontSize: '0.9rem', color: 'var(--hf-homefit-green)', marginBottom: '0.75rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--c-purple-600)', marginBottom: '0.75rem' }}>
             CSV downloaded.
           </p>
         )}
         {success === 'copy' && (
-          <p style={{ fontSize: '0.9rem', color: 'var(--hf-homefit-green)', marginBottom: '0.75rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--c-purple-600)', marginBottom: '0.75rem' }}>
             Scores copied to your clipboard.
           </p>
         )}

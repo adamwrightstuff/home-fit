@@ -3,26 +3,15 @@ import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { getScoreBandColor } from '@/lib/pillars'
+import { catalogModeToRamp, scoreBandFill } from '@/lib/indexColorSystem'
 
-/** Distinct colors for Status Signal archetypes (map layer). */
-const ARCHETYPE_COLORS: Record<string, string> = {
-  Patrician: '#5c4d7d',
-  Parvenu: '#0f766e',
-  Poseur: '#a855f7',
-  Plebeian: '#78716c',
-  Typical: '#94a3b8',
-}
-
-export function archetypeBubbleColor(archetype: string | undefined | null): string {
-  if (!archetype) return '#94a3b8'
-  return ARCHETYPE_COLORS[archetype] ?? '#64748b'
-}
-
-/** 0–100 score → band color (same palette as score badges). */
-export function numericScoreColor(score: number | null | undefined): string {
+/** 0–100 score → bubble fill from active index ramp (no green / no archetype mix). */
+export function numericScoreColorForMode(
+  score: number | null | undefined,
+  mode: CatalogMapIndexMode
+): string {
   if (score == null || !Number.isFinite(score)) return '#94a3b8'
-  return getScoreBandColor(score)
+  return scoreBandFill(catalogModeToRamp(mode), score)
 }
 
 function displayScoreForMode(
@@ -56,12 +45,7 @@ export function buildCatalogFeatureCollection(
   const features = places.map((p) => {
     const { v, archetype } = displayScoreForMode(p, mode, priorities)
     const key = catalogRowKey(p.catalog)
-    let color: string
-    if (mode === 'status') {
-      color = archetypeBubbleColor(archetype)
-    } else {
-      color = numericScoreColor(v)
-    }
+    const color = numericScoreColorForMode(v, mode)
     return {
       type: 'Feature' as const,
       id: key,

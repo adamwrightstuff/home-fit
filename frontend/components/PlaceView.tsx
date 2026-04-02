@@ -765,7 +765,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           style={{
             fontSize: '2.25rem',
             fontWeight: 800,
-            color: totalScore != null ? 'var(--hf-homefit-green)' : 'var(--hf-text-secondary)',
+            color: totalScore != null ? 'var(--c-purple-600)' : 'var(--hf-text-secondary)',
             lineHeight: 1.1,
           }}
         >
@@ -777,7 +777,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             alignItems: 'center',
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: 'var(--hf-text-primary)',
+            color: 'var(--hf-text-secondary)',
             marginTop: '0.25rem',
           }}
         >
@@ -804,14 +804,19 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Longevity Index</span>
-            <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--hf-longevity-purple)' : 'var(--hf-text-secondary)' }}>
+            <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
               {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
             </span>
             <LongevityInfo />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Status Signal</span>
-            <span style={{ fontWeight: 600, color: statusSignal != null ? 'var(--hf-text-secondary)' : 'var(--hf-text-secondary)' }}>
+            <span
+              style={{
+                fontWeight: 600,
+                color: statusSignal != null ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)',
+              }}
+            >
               {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
             </span>
             <StatusSignalInfo
@@ -823,7 +828,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="hf-muted">Happiness Index</span>
-            <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--hf-happiness-teal)' : 'var(--hf-text-secondary)' }}>
+            <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
               {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
             </span>
             <HappinessInfo />
@@ -1511,7 +1516,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        background: isComplete ? 'var(--hf-homefit-green, #4A9E6B)' : 'var(--hf-primary-1)',
+                        background: isComplete ? 'var(--c-purple-600)' : 'var(--hf-primary-1)',
                         flexShrink: 0,
                       }}
                       aria-hidden

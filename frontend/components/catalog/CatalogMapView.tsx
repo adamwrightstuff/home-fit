@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
+import { catalogModeToRamp, mapBubbleStroke } from '@/lib/indexColorSystem'
 
 type GeoJsonData = ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
 
@@ -12,6 +14,8 @@ interface CatalogMapViewProps {
   onSelectKey: (key: string | null) => void
   /** Bumps map.resize when the bottom sheet snaps. */
   layoutVersion: number
+  /** Active index — bubble stroke uses this ramp (ramp-600 @ 60%). */
+  indexMode: CatalogMapIndexMode
 }
 
 const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
@@ -24,6 +28,7 @@ export default function CatalogMapView({
   selectedKey,
   onSelectKey,
   layoutVersion,
+  indexMode,
 }: CatalogMapViewProps) {
   const container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<MapLibreMap | null>(null)
@@ -120,8 +125,8 @@ export default function CatalogMapView({
               'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 4, 12, 11, 14, 16],
               'circle-color': ['get', 'color'],
               'circle-opacity': 0.92,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': mapBubbleStroke(catalogModeToRamp(indexMode)),
             },
           })
           map.on('click', 'catalog-bubbles', (e) => {
@@ -138,6 +143,12 @@ export default function CatalogMapView({
         } else {
           const src = map.getSource('catalog') as GeoJSONSource
           src.setData(data as Parameters<GeoJSONSource['setData']>[0])
+        }
+
+        const stroke = mapBubbleStroke(catalogModeToRamp(indexMode))
+        if (map.getLayer('catalog-bubbles')) {
+          map.setPaintProperty('catalog-bubbles', 'circle-stroke-color', stroke)
+          map.setPaintProperty('catalog-bubbles', 'circle-stroke-width', 1.5)
         }
 
         if (!fitted_ref.current && data.features.length > 0) {
@@ -168,7 +179,7 @@ export default function CatalogMapView({
       }
     }
     sync()
-  }, [data, map_loaded])
+  }, [data, map_loaded, indexMode])
 
   useEffect(() => {
     if (!map_ref.current || !map_loaded) return

@@ -38,6 +38,15 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'quality_education',
 ])
 
+/** Pillars that feed the Happiness Index (tag dot on pillar cards). */
+export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
+  'public_transit_access',
+  'social_fabric',
+  'housing_value',
+  'natural_beauty',
+  'built_beauty',
+])
+
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
 export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
   social_fabric: 40,
@@ -155,6 +164,10 @@ export const STATUS_SIGNAL_ONLY_PILLARS =
 
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
+}
+
+export function isHappinessPillar(key: PillarKey): boolean {
+  return HAPPINESS_PILLAR_KEYS.has(key)
 }
 
 export const PILLAR_META: Record<

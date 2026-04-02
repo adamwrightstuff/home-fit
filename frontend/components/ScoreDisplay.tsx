@@ -358,9 +358,11 @@ export default function ScoreDisplay({
           <TotalScore score={total_score} confidence={overall_confidence} loading={isLoading} />
           {longevity_index != null && (
             <div className="hf-panel">
-              <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
-                <div className="hf-score-hero__value">{longevity_index.toFixed(1)}</div>
-                <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ padding: '0.5rem 0' }}>
+                <div className="tabular-nums" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--c-teal-600)' }}>
+                  {longevity_index.toFixed(1)}
+                </div>
+                <div className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
                   Longevity Index (0–100)
                   <LongevityInfo />
                 </div>
@@ -372,9 +374,11 @@ export default function ScoreDisplay({
           )}
           {happiness_index != null && (
             <div className="hf-panel">
-              <div className="hf-score-hero" style={{ padding: '0.5rem 0' }}>
-                <div className="hf-score-hero__value" style={{ color: 'var(--hf-happiness-teal)' }}>{happiness_index.toFixed(1)}</div>
-                <div className="hf-score-hero__label" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ padding: '0.5rem 0' }}>
+                <div className="tabular-nums" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--c-blue-600)' }}>
+                  {happiness_index.toFixed(1)}
+                </div>
+                <div className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
                   Happiness Index (0–100)
                   <HappinessInfo />
                 </div>

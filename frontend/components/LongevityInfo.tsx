@@ -64,7 +64,7 @@ export default function LongevityInfo() {
                 margin: 0,
                 fontSize: '1.2rem',
                 fontWeight: 700,
-                color: 'var(--hf-longevity-purple, #764ba2)',
+                color: 'var(--c-teal-600)',
               }}
             >
               Longevity Score

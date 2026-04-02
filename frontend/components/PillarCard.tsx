@@ -5,14 +5,14 @@ import { LivabilityPillar } from '@/types/api'
 import {
   PILLAR_META,
   getScoreBandLabel,
-  getScoreBandColor,
-  getScoreBandBackground,
   getPillarFailureType,
   PILLAR_LONG_DESCRIPTIONS,
   isLongevityPillar,
+  isHappinessPillar,
   LONGEVITY_COPY,
   type PillarKey,
 } from '@/lib/pillars'
+import { RAMP_HEX, homefitPillarBarFill, scoreNumeralOnLight } from '@/lib/indexColorSystem'
 import {
   PILLAR_DETAILS_SPEC,
   getPillarValue,
@@ -271,19 +271,37 @@ export default function PillarCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
               {isLongevityPillar(pillar_key) && (
                 <span
-                  className="hf-muted"
+                  className="inline-flex items-center gap-1.5"
                   title={pillarNarrative ?? LONGEVITY_COPY.tooltip}
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
                     padding: '0.2rem 0.45rem',
                     borderRadius: 6,
-                    background: 'rgba(45, 106, 79, 0.12)',
-                    color: 'var(--hf-homefit-green)',
-                    border: '1px solid rgba(45, 106, 79, 0.3)',
+                    background: 'var(--hf-hover-bg)',
+                    color: 'var(--hf-text-secondary)',
+                    border: '1px solid var(--hf-border)',
                   }}
                 >
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: RAMP_HEX.teal[400] }} aria-hidden />
                   Longevity
+                </span>
+              )}
+              {isHappinessPillar(pillar_key) && (
+                <span
+                  className="inline-flex items-center gap-1.5"
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: 6,
+                    background: 'var(--hf-hover-bg)',
+                    color: 'var(--hf-text-secondary)',
+                    border: '1px solid var(--hf-border)',
+                  }}
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: RAMP_HEX.blue[400] }} aria-hidden />
+                  Happiness
                 </span>
               )}
               {isIncomplete && (
@@ -405,7 +423,11 @@ export default function PillarCard({
               fontWeight: 800,
               fontSize: '1.75rem',
               lineHeight: 1.2,
-              color: isLoading ? 'var(--hf-text-secondary)' : isFailed ? 'var(--hf-text-secondary)' : getScoreBandColor(pillar.score),
+              color: isLoading
+                ? 'var(--hf-text-secondary)'
+                : isFailed
+                  ? 'var(--hf-text-secondary)'
+                  : scoreNumeralOnLight('purple', pillar.score),
               ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
             }}
           >
@@ -417,7 +439,7 @@ export default function PillarCard({
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 marginTop: '0.2rem',
-                color: getScoreBandColor(pillar.score),
+                color: 'var(--hf-text-secondary)',
                 ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
               }}
             >
@@ -476,7 +498,7 @@ export default function PillarCard({
                 height: '100%',
                 width: `${Math.min(100, (pillar.weight ?? 0))}%`,
                 borderRadius: 999,
-                background: 'var(--hf-homefit-green)',
+                background: homefitPillarBarFill(pillar.score),
                 transition: 'width 0.25s ease',
               }}
             />

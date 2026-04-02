@@ -7,15 +7,16 @@ import {
   getAllCatalogIndexDisplay,
   getStandoutPillarChips,
 } from '@/lib/catalogMapGeo'
-import { CATALOG_INDEX_COLORS } from '@/lib/catalogIndexColors'
+import { catalogRampKey } from '@/lib/catalogIndexColors'
+import { RAMP_HEX, fullBreakdownCtaStyle, indexNumeral600 } from '@/lib/indexColorSystem'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
-const INDEX_TABS: { id: CatalogMapIndexMode; label: string; color: string }[] = [
-  { id: 'homefit', label: 'HomeFit', color: CATALOG_INDEX_COLORS.homefit },
-  { id: 'longevity', label: 'Longevity', color: CATALOG_INDEX_COLORS.longevity },
-  { id: 'happiness', label: 'Happiness', color: CATALOG_INDEX_COLORS.happiness },
-  { id: 'status', label: 'Status', color: CATALOG_INDEX_COLORS.status },
+const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
+  { id: 'homefit', label: 'HomeFit' },
+  { id: 'longevity', label: 'Longevity' },
+  { id: 'happiness', label: 'Happiness' },
+  { id: 'status', label: 'Status' },
 ]
 
 function fmt(v: number | null): string {
@@ -66,6 +67,8 @@ export default function CatalogBottomSheet({
     }
   }
 
+  const breakdownBtn = fullBreakdownCtaStyle(catalogRampKey(indexMode))
+
   return (
     <div
       className="fixed left-0 right-0 z-20 flex flex-col rounded-t-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] shadow-[var(--hf-card-shadow)]"
@@ -76,7 +79,6 @@ export default function CatalogBottomSheet({
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
       }}
     >
-      {/* Gestural handle only */}
       <button
         type="button"
         className="flex w-full shrink-0 items-center justify-center border-b border-[var(--hf-border)] py-2.5 text-[var(--hf-text-secondary)]"
@@ -95,7 +97,6 @@ export default function CatalogBottomSheet({
           <p className="py-2 text-center text-sm text-[var(--hf-text-secondary)]">Tap a bubble to see scores.</p>
         ) : (
           <>
-            {/* Title row + Clear */}
             <div className="mb-3 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-lg font-extrabold leading-tight text-[var(--hf-text-primary)]">
@@ -114,34 +115,29 @@ export default function CatalogBottomSheet({
               </button>
             </div>
 
-            {/* Four indices — full signal at peek; active tab bordered */}
             <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {INDEX_TABS.map((tab) => {
                 const active = indexMode === tab.id
                 const v = scoreForTab(tab.id)
+                const ramp = catalogRampKey(tab.id)
+                const borderColor = indexNumeral600(ramp)
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => onIndexModeChange(tab.id)}
-                    className="rounded-xl px-2 py-2 text-left transition-[box-shadow,border-color] sm:px-2.5"
+                    className="rounded-xl bg-[var(--hf-card-bg)] px-2 py-2 text-left transition-[box-shadow,border-color] sm:px-2.5"
                     style={{
-                      borderWidth: 2,
-                      borderStyle: 'solid',
-                      borderColor: active ? tab.color : 'transparent',
-                      background: active ? `${tab.color}14` : 'rgba(0,0,0,0.04)',
-                      boxShadow: active ? `0 0 0 1px ${tab.color}40` : 'none',
+                      border: active ? `0.5px solid ${borderColor}` : '0.5px solid var(--hf-border)',
+                      boxShadow: active ? `0 0 0 1px ${borderColor}33` : 'none',
                     }}
                   >
-                    <div
-                      className="text-[0.65rem] font-bold uppercase tracking-wide opacity-90"
-                      style={{ color: tab.color }}
-                    >
+                    <div className="text-[0.65rem] font-bold uppercase tracking-wide text-[var(--hf-text-secondary)]">
                       {tab.label}
                     </div>
                     <div
                       className="mt-0.5 text-xl font-extrabold tabular-nums leading-none"
-                      style={{ color: tab.color }}
+                      style={{ color: indexNumeral600(ramp) }}
                     >
                       {fmt(v)}
                     </div>
@@ -150,28 +146,42 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            {/* Archetype — always visible when we have any label */}
             {allIdx?.archetypeBadge ? (
               <div
-                className="mb-3 rounded-full px-3 py-1.5 text-center text-xs font-semibold"
+                className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
                 style={{
-                  background: `${CATALOG_INDEX_COLORS.status}18`,
-                  color: CATALOG_INDEX_COLORS.status,
-                  border: `1px solid ${CATALOG_INDEX_COLORS.status}55`,
+                  background: RAMP_HEX.coral[50],
+                  border: `1px solid ${RAMP_HEX.coral[200]}`,
+                  color: RAMP_HEX.coral[800],
                 }}
               >
-                {allIdx.archetypeBadge}
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: RAMP_HEX.coral[400] }}
+                  aria-hidden
+                />
+                <span>{allIdx.archetypeBadge}</span>
+                {allIdx.archetype && place.score.status_signal_breakdown?.signal_strength_label ? (
+                  <span style={{ color: RAMP_HEX.coral[600], fontWeight: 700 }}>
+                    {place.score.status_signal_breakdown.signal_strength_label}
+                  </span>
+                ) : null}
               </div>
             ) : allIdx?.archetype ? (
               <div
-                className="mb-3 rounded-full px-3 py-1.5 text-center text-xs font-semibold"
+                className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
                 style={{
-                  background: `${CATALOG_INDEX_COLORS.status}18`,
-                  color: CATALOG_INDEX_COLORS.status,
-                  border: `1px solid ${CATALOG_INDEX_COLORS.status}55`,
+                  background: RAMP_HEX.coral[50],
+                  border: `1px solid ${RAMP_HEX.coral[200]}`,
+                  color: RAMP_HEX.coral[800],
                 }}
               >
-                {allIdx.archetype}
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: RAMP_HEX.coral[400] }}
+                  aria-hidden
+                />
+                <span>{allIdx.archetype}</span>
               </div>
             ) : (
               <div
@@ -185,26 +195,22 @@ export default function CatalogBottomSheet({
               </div>
             )}
 
-            {/* Standout chips */}
             {chips.length > 0 && (
               <div className="mb-1 flex flex-wrap gap-2">
                 {chips.map((c) => {
                   const isTop = c.tier === 'top'
-                  const base = isTop ? CATALOG_INDEX_COLORS.longevity : CATALOG_INDEX_COLORS.status
+                  const dotColor = isTop ? RAMP_HEX.teal[400] : RAMP_HEX.coral[400]
                   return (
                     <span
                       key={`${c.pillarKey}-${c.tier}`}
-                      className="inline-flex max-w-full items-baseline gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                      className="inline-flex max-w-full items-baseline gap-1.5 rounded-lg bg-[var(--hf-hover-bg)] px-2.5 py-1.5 text-xs font-semibold text-[var(--hf-text-secondary)]"
                       style={{
-                        background: isTop ? `${base}1f` : `${base}24`,
-                        border: `1px solid ${isTop ? `${base}55` : `${base}66`}`,
-                        color: 'var(--hf-text-primary)',
+                        border: '1px solid var(--hf-border)',
                       }}
                     >
-                      <span className="truncate" style={{ color: base }}>
-                        {c.name}
-                      </span>
-                      <span className="tabular-nums font-extrabold" style={{ color: base }}>
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: dotColor }} aria-hidden />
+                      <span className="truncate">{c.name}</span>
+                      <span className="tabular-nums font-extrabold text-[var(--hf-text-secondary)]">
                         {c.score.toFixed(0)}
                       </span>
                     </span>
@@ -215,8 +221,8 @@ export default function CatalogBottomSheet({
 
             <button
               type="button"
-              className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-bold text-white"
-              style={{ background: 'var(--hf-primary-gradient)' }}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-bold"
+              style={{ background: breakdownBtn.background, color: breakdownBtn.color }}
               onClick={() => onFullBreakdown(place)}
             >
               Full breakdown
