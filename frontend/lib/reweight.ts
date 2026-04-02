@@ -116,7 +116,8 @@ export function reweightScoreResponseFromPriorities(
     : tokenAllocationInt
 
   const nextPillars: any = { ...data.livability_pillars }
-  let total = 0
+  /** Sum of per-pillar rounded contributions so headline total matches card rows (avoids 49.1 vs 50.1-style drift). */
+  let totalFromRoundedContributions = 0
 
   // If any pillar with a score gets weight 0 from tokenAllocation, we need a fallback so we don't show 0%.
   // Build fallback by merging user priorities with payload importance_level only for pillars that would be 0,
@@ -164,8 +165,9 @@ export function reweightScoreResponseFromPriorities(
     const allocation = fallbackAllocation ?? tokenAllocation
     const weight = Number(allocation[k] ?? 0)
     const score = Number(pillar.score ?? 0)
-    const contribution = (score * weight) / 100
-    total += contribution
+    const contributionRaw = (score * weight) / 100
+    const contribution = Math.round(contributionRaw * 100) / 100
+    totalFromRoundedContributions += contribution
 
     // Normalize priority label casing to backend style.
     const p = String((priorities as any)?.[k] ?? pillar.importance_level ?? 'None')
@@ -174,7 +176,7 @@ export function reweightScoreResponseFromPriorities(
     nextPillars[k] = {
       ...pillar,
       weight,
-      contribution: Math.round(contribution * 100) / 100,
+      contribution,
       importance_level: importanceLevel,
     }
   }
@@ -192,7 +194,7 @@ export function reweightScoreResponseFromPriorities(
     }
   }
 
-  const nextTotal = Math.round(total * 100) / 100
+  const nextTotal = Math.round(totalFromRoundedContributions * 100) / 100
   const finalTokenAllocation = fallbackAllocation ?? tokenAllocation
 
   return {
