@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
 import CatalogBottomSheet, {
   findPlaceByKey,
@@ -11,6 +12,8 @@ import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { buildCatalogFeatureCollection } from '@/lib/catalogMapGeo'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
+import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
+import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 
 const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
@@ -20,6 +23,7 @@ const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
 ]
 
 export default function CatalogMapClient() {
+  const router = useRouter()
   const [places, setPlaces] = useState<CatalogMapPlace[]>([])
   const [loadMessage, setLoadMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,6 +74,26 @@ export default function CatalogMapClient() {
   useEffect(() => {
     setLayoutVersion((v) => v + 1)
   }, [snap])
+
+  const handleFullBreakdown = useCallback(
+    (place: CatalogMapPlace) => {
+      const prioritiesJson = JSON.stringify(priorities)
+      const routeParams = {
+        location: place.catalog.search_query,
+        prioritiesJson,
+        job_categories: null as string | null,
+        include_chains: false,
+        enable_schools: false,
+        natural_beauty_preference: null as string | null,
+        built_character_preference: null as string | null,
+        built_density_preference: null as string | null,
+      }
+      const cacheKey = buildResultsCacheKey(routeParams)
+      writeCatalogResultsHydrate({ v: 1, cacheKey, score: place.score })
+      router.push(buildResultsUrl(routeParams))
+    },
+    [priorities, router]
+  )
 
   return (
     <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
@@ -124,6 +148,7 @@ export default function CatalogMapClient() {
           setSelectedKey(null)
           setSnap('peek')
         }}
+        onFullBreakdown={handleFullBreakdown}
       />
 
       <CatalogWeightPanel

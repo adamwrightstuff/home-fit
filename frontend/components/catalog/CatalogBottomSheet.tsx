@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { ChevronUp } from 'lucide-react'
 import { catalogRowKey, type CatalogMapIndexMode, type CatalogMapPlace } from '@/lib/catalogMapTypes'
 import type { PillarPriorities } from '@/components/SearchOptions'
@@ -15,6 +14,8 @@ interface CatalogBottomSheetProps {
   snap: CatalogSheetSnap
   onSnapChange: (s: CatalogSheetSnap) => void
   onClose: () => void
+  /** Opens full breakdown using catalog snapshot (no live score until user refreshes). */
+  onFullBreakdown: (place: CatalogMapPlace) => void
 }
 
 export default function CatalogBottomSheet({
@@ -24,16 +25,13 @@ export default function CatalogBottomSheet({
   snap,
   onSnapChange,
   onClose,
+  onFullBreakdown,
 }: CatalogBottomSheetProps) {
   const peek_h = 96
   const expanded_vh = 42
 
   const idx = place ? displayIndexValue(place, indexMode, priorities) : null
   const callouts = place ? topPillarCallouts(place, indexMode, priorities, 2) : []
-
-  const resultsHref = place
-    ? `/results?location=${encodeURIComponent(place.catalog.search_query)}`
-    : '#'
 
   return (
     <div
@@ -120,13 +118,14 @@ export default function CatalogBottomSheet({
               </div>
             )}
 
-            <Link
-              href={resultsHref}
+            <button
+              type="button"
               className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-bold text-white"
               style={{ background: 'var(--hf-primary-gradient)' }}
+              onClick={() => place && onFullBreakdown(place)}
             >
               Full breakdown
-            </Link>
+            </button>
           </div>
         )}
       </div>

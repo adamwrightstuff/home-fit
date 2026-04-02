@@ -12,6 +12,7 @@ import type { PillarKey } from '@/lib/pillars'
 import { PILLAR_ORDER, longevityIndexFromLivabilityPillars } from '@/lib/pillars'
 import { getScoreSinglePillar } from '@/lib/api'
 import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
+import { readAndConsumeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 
 type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -146,6 +147,8 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
   const [runActive, setRunActive] = useState(false)
   const [gateVisible, setGateVisible] = useState(true)
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
+  /** True when payload came from catalog map handoff (sessionStorage), not a prior results cache. */
+  const [catalogSnapshot, setCatalogSnapshot] = useState(false)
   const runKeyRef = useRef(0)
 
   const searchOptions: SearchOptions | null = useMemo(() => {
@@ -191,14 +194,33 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     return () => clearTimeout(id)
   }, [])
 
-  // Cache-first: load from sessionStorage; only auto-run when no cache exists
+  // Catalog handoff → hydrate without live score; then session cache; else auto-run.
   useEffect(() => {
     if (!normalized || !cacheKey) return
     setError(null)
     setPartial({})
     setShowCachedNote(false)
+    setCatalogSnapshot(false)
     setRunActive(false)
     setRefreshing(false)
+
+    let hydrated: ScoreResponse | null = null
+    try {
+      hydrated = readAndConsumeCatalogResultsHydrate(cacheKey)
+    } catch {
+      hydrated = null
+    }
+    if (hydrated) {
+      setFinalResponse(hydrated)
+      setShowCachedNote(true)
+      setCatalogSnapshot(true)
+      try {
+        window.sessionStorage?.setItem(cacheKey, JSON.stringify({ ts: Date.now(), payload: hydrated } satisfies CacheEntry))
+      } catch {
+        // ignore
+      }
+      return
+    }
 
     let cached: CacheEntry | null = null
     try {
@@ -225,6 +247,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
     setError(null)
     setFinalResponse(null)
     setPartial({})
+    setCatalogSnapshot(false)
     setRefreshing(true)
     setRunActive(true)
     runKeyRef.current += 1
@@ -321,7 +344,12 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             ← New search
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {showCachedNote && (
+            {catalogSnapshot && (
+              <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                NYC metro catalog snapshot — refresh to recompute live
+              </span>
+            )}
+            {showCachedNote && !catalogSnapshot && (
               <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
                 Showing cached results
               </span>
@@ -359,6 +387,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               on_complete={(resp) => {
                 setRefreshing(false)
                 setRunActive(false)
+                setCatalogSnapshot(false)
                 setFinalResponse(resp)
                 setPartial({})
                 if (cacheKey) {
