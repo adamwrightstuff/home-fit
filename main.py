@@ -17,6 +17,11 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+try:
+    from catalog_contribution import schedule_catalog_contribution
+except ImportError:
+    schedule_catalog_contribution = None  # type: ignore
+
 
 def _log_place_timing(phase: str, start: float) -> None:
     """Log elapsed time for place-sourcing diagnostics. Grep logs for [TIMING]."""
@@ -2375,7 +2380,12 @@ def get_livability_score(request: Request,
             built_character_preference=built_character_preference,
             built_density_preference=built_density_preference,
         )
-        
+        if schedule_catalog_contribution:
+            try:
+                schedule_catalog_contribution(response)
+            except Exception as e:
+                logger.debug(f"catalog_contribution schedule: {e}")
+
         # Extract lat/lon for telemetry and caching
         lat = response.get("coordinates", {}).get("lat", 0)
         lon = response.get("coordinates", {}).get("lon", 0)
@@ -2637,6 +2647,11 @@ def create_score_job(
                 lat_override=lat_override,
                 lon_override=lon_override,
             )
+            if schedule_catalog_contribution:
+                try:
+                    schedule_catalog_contribution(result)
+                except Exception as e:
+                    logger.debug(f"catalog_contribution schedule (job): {e}")
             done_snap = None
             with _SCORE_JOBS_LOCK:
                 if job_id in _SCORE_JOBS:
@@ -2776,6 +2791,11 @@ async def _stream_score_with_progress(
                         yield f"event: complete\n"
                         yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed, 'total': total_pillars})}\n\n"
                         await asyncio.sleep(0)
+                    if schedule_catalog_contribution:
+                        try:
+                            schedule_catalog_contribution(cached_response)
+                        except Exception as e:
+                            logger.debug(f"catalog_contribution schedule (stream): {e}")
                     yield f"event: done\n"
                     yield f"data: {json.dumps({'status': 'done', 'response': cached_response})}\n\n"
                     _log_place_timing("total", t0_stream)
@@ -2862,6 +2882,11 @@ async def _stream_score_with_progress(
                         yield f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'score': round(score, 2), 'completed': completed, 'total': total_pillars})}\n\n"
                         await asyncio.sleep(0)
 
+                    if schedule_catalog_contribution:
+                        try:
+                            schedule_catalog_contribution(response)
+                        except Exception as e:
+                            logger.debug(f"catalog_contribution schedule (stream): {e}")
                     yield f"event: done\n"
                     yield f"data: {json.dumps({'status': 'done', 'response': response})}\n\n"
                     _log_place_timing("total", t0_stream)
@@ -3719,6 +3744,11 @@ async def _stream_score_with_progress(
                 logger.warning(f"Stream request cache write failed: {e}")
 
         attach_indices_version(final_response)
+        if schedule_catalog_contribution:
+            try:
+                schedule_catalog_contribution(final_response)
+            except Exception as e:
+                logger.debug(f"catalog_contribution schedule (stream): {e}")
         yield f"event: done\n"
         _log_place_timing("total", t0_stream)
         yield f"data: {json.dumps({'status': 'done', 'response': final_response})}\n\n"
@@ -4826,7 +4856,12 @@ def _generate_batch_results(batch_request: BatchLocationRequest):
                         test_mode=False,
                         request=None  # No request object for batch processing
                     )
-                    
+                    if schedule_catalog_contribution:
+                        try:
+                            schedule_catalog_contribution(result)
+                        except Exception as e:
+                            logger.debug(f"catalog_contribution schedule (batch): {e}")
+
                     location_time = time.time() - location_start_time
                     location_success = True
                     

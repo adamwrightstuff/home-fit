@@ -204,6 +204,19 @@ For detailed API documentation, see [openapi.json](./openapi.json)
 
 See **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** for full deployment instructions (backend and frontend).
 
+### Optional: automatic NYC metro catalog aggregates (Supabase)
+
+When enabled, successful scores for locations that match a row in `data/nyc_metro_place_catalog.csv` (by `search_query` or nearest centroid within ~5 km) update rolling pillar aggregates in Postgres via Supabase.
+
+1. Run the SQL in `frontend/supabase/migrations/002_catalog_contributions.sql` in the Supabase SQL editor (creates `catalog_pillar_aggregates` and `merge_catalog_contribution`).
+2. On the **Railway** API host, set:
+   - `HOMEFIT_CATALOG_CONTRIBUTIONS_ENABLED=1`
+   - `SUPABASE_URL` = your project URL (same as the frontend)
+   - `SUPABASE_SERVICE_ROLE_KEY` = service role key (server only; never expose to the browser)
+   - Optional: `HOMEFIT_CATALOG_CSV` = absolute path to the catalog CSV if not at repo `data/nyc_metro_place_catalog.csv`
+
+Writes are **non-blocking** (background thread). Request cache hits skip recording. The map still uses merged JSONL until you add a read path that consumes these aggregates.
+
 ---
 
 ## Technical Documentation
