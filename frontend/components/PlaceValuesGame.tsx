@@ -1,11 +1,17 @@
 'use client'
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
-import { ArrowLeft, ChevronLeft, RefreshCcw, Search } from 'lucide-react'
+import Link from 'next/link'
+import { ChevronLeft, Loader2, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import AppHeader from './AppHeader'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import {
+  fetchAgentRecommendations,
+  quizAnswersToAgentContext,
+  type AgentRecommendResponse,
+} from '@/lib/agentRecommend'
 
 const TOTAL_QUESTIONS = 7
 
@@ -276,14 +282,21 @@ const LONGEVITY_NOTE =
   'Longevity is calculated separately — six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) with fixed weights, independent of your HomeFit priorities.'
 
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
-  const [game_state, set_game_state] = useState<'playing' | 'results'>('playing')
+  const [game_state, set_game_state] = useState<'playing' | 'results' | 'recommendations'>('playing')
   const [current_step, set_current_step] = useState(0)
   const [answers, set_answers] = useState<QuizAnswers>(getInitialAnswers)
+  const [agent_loading, set_agent_loading] = useState(false)
+  const [agent_error, set_agent_error] = useState<string | null>(null)
+  const [agent_response, set_agent_response] = useState<AgentRecommendResponse | null>(null)
+  const recommendationsHeadingRef = useRef<HTMLHeadingElement>(null)
 
   const start_game = useCallback(() => {
     set_game_state('playing')
     set_current_step(0)
     set_answers(getInitialAnswers())
+    set_agent_loading(false)
+    set_agent_error(null)
+    set_agent_response(null)
   }, [])
 
   const question = QUESTIONS[current_step]
@@ -357,6 +370,11 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       go_prev()
       return
     }
+    if (game_state === 'recommendations') {
+      set_game_state('results')
+      set_agent_error(null)
+      return
+    }
     if (game_state === 'results') {
       start_game()
       return
@@ -372,6 +390,22 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
         .sort((a, b) => b.weight - a.weight),
     [weights]
   )
+
+  const load_recommendations = useCallback(async () => {
+    set_agent_error(null)
+    set_agent_loading(true)
+    set_agent_response(null)
+    try {
+      const ctx = quizAnswersToAgentContext(answers)
+      const data = await fetchAgentRecommendations(priorities, ctx)
+      set_agent_response(data)
+      set_game_state('recommendations')
+    } catch (e) {
+      set_agent_error(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      set_agent_loading(false)
+    }
+  }, [answers, priorities])
 
   // Auto-apply quiz results when user reaches the results screen (once per results view).
   const appliedRef = useRef(false)
@@ -390,6 +424,126 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
       appliedRef.current = true
     }
   }, [game_state, priorities, naturalBeautyPreference, answers.job_categories, onApplyPriorities])
+
+  useEffect(() => {
+    if (game_state === 'recommendations' && agent_response) {
+      queueMicrotask(() => recommendationsHeadingRef.current?.focus())
+    }
+  }, [game_state, agent_response])
+
+  // --- Recommendations (agent API)
+  if (game_state === 'recommendations' && agent_response) {
+    const recs = agent_response.recommendations
+    return (
+      <main className="hf-page">
+        <AppHeader />
+        <div className="hf-container">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.5rem' }}>
+            <button onClick={handle_back} className="hf-btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ChevronLeft size={18} />
+              Back
+            </button>
+            <span />
+          </div>
+          <section className="hf-card" aria-labelledby="agent-rec-heading">
+            <h2
+              ref={recommendationsHeadingRef}
+              id="agent-rec-heading"
+              tabIndex={-1}
+              className="hf-section-title"
+              style={{ marginBottom: '0.5rem', outline: 'none' }}
+            >
+              Top picks for you
+            </h2>
+            <p className="hf-muted" style={{ marginBottom: '0.35rem' }}>
+              From our pre-scored NYC metro catalog — same pillars you just set.
+            </p>
+            <p className="hf-muted" style={{ marginBottom: '1.25rem', fontSize: '0.9rem' }}>
+              &quot;Status signature&quot; labels describe neighborhood character (not statistical percentiles).
+            </p>
+            {typeof agent_response.meta?.processing_ms === 'number' && (
+              <p className="hf-muted" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+                Ready in {agent_response.meta.processing_ms} ms
+              </p>
+            )}
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {recs.length === 0 && (
+              <p className="hf-muted" role="status">
+                No recommendations returned. Try again in a moment.
+              </p>
+            )}
+            {recs.map((rec) => (
+                <li key={rec.neighborhood} className="hf-panel" style={{ padding: '1.15rem 1.25rem' }}>
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)', marginBottom: '0.35rem' }}>
+                    {rec.neighborhood}
+                  </div>
+                  <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+                    {rec.archetype}
+                    {rec.percentile_band ? ` · ${rec.percentile_band}` : ''}
+                  </div>
+                  <div
+                    style={{ marginBottom: '0.75rem' }}
+                    aria-label={`Match score ${rec.match_score} out of 100`}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <span className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Match
+                      </span>
+                      <span style={{ fontWeight: 800 }}>{rec.match_score}</span>
+                    </div>
+                    <div style={{ height: 8, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${Math.min(100, Math.max(0, rec.match_score))}%`,
+                          background: 'var(--hf-primary-gradient)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {rec.top_drivers?.length > 0 && (
+                    <div style={{ marginBottom: '0.65rem', fontSize: '0.9rem' }}>
+                      <span className="hf-muted">Top drivers: </span>
+                      {rec.top_drivers.map((k) => PILLAR_META[k as PillarKey]?.name ?? k).join(' · ')}
+                    </div>
+                  )}
+                  <p style={{ margin: '0 0 1rem', color: 'var(--hf-text-secondary)', lineHeight: 1.5 }}>{rec.explanation}</p>
+                  <Link
+                    href={rec.results_url}
+                    className="hf-btn-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', textDecoration: 'none' }}
+                  >
+                    View full score
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="hf-btn-primary"
+                style={{
+                  width: '100%',
+                  marginTop: '1.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  background: 'transparent',
+                  color: 'var(--hf-primary-1)',
+                  border: '2px solid var(--hf-primary-1)',
+                  boxShadow: 'none',
+                }}
+              >
+                <Search size={18} /> Search a place
+              </button>
+            )}
+          </section>
+        </div>
+      </main>
+    )
+  }
 
   // --- Playing (one question at a time)
   if (game_state === 'playing' && question) {
@@ -500,8 +654,9 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     )
   }
 
-  // --- Results
-  return (
+  // --- Results (weights)
+  if (game_state === 'results') {
+    return (
     <main className="hf-page">
       <AppHeader />
       <div className="hf-container">
@@ -570,11 +725,59 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             })}
           </div>
 
+          {agent_error && (
+            <div
+              className="hf-panel"
+              role="alert"
+              style={{
+                marginBottom: '1rem',
+                padding: '0.85rem 1rem',
+                border: '1px solid rgba(220, 53, 69, 0.35)',
+                background: 'rgba(220, 53, 69, 0.06)',
+              }}
+            >
+              <p style={{ margin: '0 0 0.5rem', color: 'var(--hf-text-primary)' }}>{agent_error}</p>
+              <button type="button" className="hf-btn-link" onClick={load_recommendations} style={{ fontWeight: 700 }}>
+                Retry
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={load_recommendations}
+            disabled={agent_loading}
+            className="hf-btn-primary"
+            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
+          >
+            {agent_loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" aria-hidden />
+                Finding neighborhoods…
+              </>
+            ) : (
+              <>See neighborhood picks for you</>
+            )}
+          </button>
+
           {onBack && (
             <button
+              type="button"
               onClick={onBack}
+              disabled={agent_loading}
               className="hf-btn-primary"
-              style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
+              style={{
+                width: '100%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                background: 'transparent',
+                color: 'var(--hf-primary-1)',
+                border: '2px solid var(--hf-primary-1)',
+                boxShadow: 'none',
+              }}
             >
               <Search size={18} /> Search a place →
             </button>
@@ -587,5 +790,8 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
         </div>
       </div>
     </main>
-  )
+    )
+  }
+
+  return null
 }

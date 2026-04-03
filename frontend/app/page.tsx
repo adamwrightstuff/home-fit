@@ -121,6 +121,14 @@ export default function Home() {
             <LocationSearch onSearch={handle_search} disabled={loading} />
           </div>
 
+          {!loading && (
+            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+              <button type="button" className="hf-btn-link" onClick={() => set_show_game(true)}>
+                Not sure where to start? Take the quiz
+              </button>
+            </div>
+          )}
+
           {loading && (
             <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
