@@ -277,13 +277,6 @@ const PRIORITY_BAR_PCT: Record<PriorityLevel, number> = {
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
-function priorityBadgeStyle(level: PriorityLevel): React.CSSProperties {
-  if (level === 'High') return { background: 'var(--hf-primary-gradient)', color: '#fff' }
-  if (level === 'Medium') return { background: 'rgba(102,126,234,0.14)', color: 'var(--hf-text-primary)' }
-  if (level === 'Low') return { background: 'rgba(108,117,125,0.12)', color: 'var(--hf-text-primary)' }
-  return { background: '#f1f3f5', color: 'var(--hf-text-secondary)' }
-}
-
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const router = useRouter()
   const [game_state, set_game_state] = useState<'playing' | 'results' | 'recommendations'>('playing')
@@ -293,6 +286,8 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   const [agent_error, set_agent_error] = useState<string | null>(null)
   const [agent_response, set_agent_response] = useState<AgentRecommendResponse | null>(null)
   const [edited_priorities, set_edited_priorities] = useState<PillarPriorities | null>(null)
+  /** Quiz-importance row order; fixed while on this screen so rows do not jump when editing. */
+  const [frozen_pillar_order, setFrozenPillarOrder] = useState<PillarKey[] | null>(null)
   const recommendationsHeadingRef = useRef<HTMLHeadingElement>(null)
 
   const start_game = useCallback(() => {
@@ -303,6 +298,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     set_agent_error(null)
     set_agent_response(null)
     set_edited_priorities(null)
+    setFrozenPillarOrder(null)
   }, [])
 
   const question = QUESTIONS[current_step]
@@ -391,26 +387,26 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   const priorities = useMemo(() => weightsToPriorities(weights), [weights])
   const effective_priorities = edited_priorities ?? priorities
 
-  const ranked_priority_rows = useMemo(
-    () =>
-      [...PILLAR_ORDER]
-        .map((pillar) => {
-          const level = effective_priorities[pillar]
-          return {
-            pillar,
-            level,
-            bar_pct: PRIORITY_BAR_PCT[level],
-          }
-        })
-        .sort((a, b) => b.bar_pct - a.bar_pct || a.pillar.localeCompare(b.pillar)),
-    [effective_priorities]
-  )
-
   useEffect(() => {
     if (game_state === 'playing') {
       set_edited_priorities(null)
+      setFrozenPillarOrder(null)
     }
   }, [game_state])
+
+  useEffect(() => {
+    if (game_state !== 'results') return
+    setFrozenPillarOrder((prev) => {
+      if (prev !== null) return prev
+      return [...PILLAR_ORDER]
+        .map((pillar) => ({
+          pillar,
+          bar_pct: PRIORITY_BAR_PCT[priorities[pillar]],
+        }))
+        .sort((a, b) => b.bar_pct - a.bar_pct || a.pillar.localeCompare(b.pillar))
+        .map((x) => x.pillar)
+    })
+  }, [game_state, priorities])
 
   useEffect(() => {
     if (game_state === 'results') {
@@ -708,15 +704,17 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             Your priority weights
           </h2>
           <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
-            Ranked by importance (highest first). Bars show strength for your current level (None / Low / Medium / High). Change any pillar with the dropdown, then get neighborhood picks or search a place.
+            Order follows your quiz ranking (most important at the top) and stays fixed while you edit — rows won’t jump. Bars update when you change a level. Then get neighborhood picks or search a place.
           </p>
 
           <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            Ranked by importance
+            Fine-tune each pillar
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            {ranked_priority_rows.map(({ pillar, level, bar_pct }) => {
+            {(frozen_pillar_order ?? PILLAR_ORDER).map((pillar) => {
               const meta = PILLAR_META[pillar]
+              const level = effective_priorities[pillar]
+              const bar_pct = PRIORITY_BAR_PCT[level]
               return (
                 <div key={pillar} className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
                   <div
@@ -735,39 +733,26 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                       </span>
                       <span style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span
-                        style={{
-                          ...priorityBadgeStyle(level),
-                          padding: '0.35rem 0.6rem',
-                          borderRadius: 999,
-                          fontWeight: 800,
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        {level}
-                      </span>
-                      <select
-                        value={level}
-                        onChange={(e) => set_pillar_priority(pillar, e.target.value as PriorityLevel)}
-                        aria-label={`${meta.name} priority`}
-                        style={{
-                          padding: '0.45rem 0.75rem',
-                          borderRadius: 8,
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          fontWeight: 700,
-                          background: 'var(--hf-card-bg, #fff)',
-                          color: 'var(--hf-text-primary)',
-                          minWidth: '120px',
-                        }}
-                      >
-                        {PRIORITY_LEVELS.map((lv) => (
-                          <option key={lv} value={lv}>
-                            {lv}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <select
+                      value={level}
+                      onChange={(e) => set_pillar_priority(pillar, e.target.value as PriorityLevel)}
+                      aria-label={`${meta.name} priority`}
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: 8,
+                        border: '1px solid rgba(0,0,0,0.12)',
+                        fontWeight: 700,
+                        background: 'var(--hf-card-bg, #fff)',
+                        color: 'var(--hf-text-primary)',
+                        minWidth: '120px',
+                      }}
+                    >
+                      {PRIORITY_LEVELS.map((lv) => (
+                        <option key={lv} value={lv}>
+                          {lv}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
                     <div
