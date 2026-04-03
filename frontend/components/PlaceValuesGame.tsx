@@ -783,7 +783,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             </button>
           )}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button onClick={start_game} className="hf-btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button type="button" onClick={start_game} disabled={agent_loading} className="hf-btn-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
               <RefreshCcw size={16} /> ← Retake
             </button>
           </div>
