@@ -7,7 +7,7 @@ import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import AppHeader from './AppHeader'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 
-const TOTAL_QUESTIONS = 6
+const TOTAL_QUESTIONS = 7
 
 const QUESTIONS = [
   {
@@ -54,6 +54,18 @@ const QUESTIONS = [
     ],
   },
   {
+    id: 'community_vibe',
+    type: 'single' as const,
+    prompt: 'What community character matters most to you?',
+    options: [
+      { value: 'diverse', text: 'A diverse mix of cultures, ages, and backgrounds' },
+      { value: 'architectural', text: 'Architecturally rich, with character and history' },
+      { value: 'tight_knit', text: 'Tight-knit — neighbors know each other' },
+      { value: 'eclectic', text: 'Lively and eclectic — always something happening' },
+      { value: 'quiet_settled', text: 'Quiet, settled, and consistent' },
+    ],
+  },
+  {
     id: 'natural_scenery',
     type: 'multi' as const,
     prompt: 'What kind of natural scenery matters most to you?',
@@ -82,6 +94,7 @@ type QuizAnswers = {
   horizon: string | null
   natural_scenery: string[]
   job_categories: string[]
+  community_vibe: string | null
 }
 
 function getInitialAnswers(): QuizAnswers {
@@ -92,6 +105,7 @@ function getInitialAnswers(): QuizAnswers {
     horizon: null,
     natural_scenery: [],
     job_categories: [],
+    community_vibe: null,
   }
 }
 
@@ -176,6 +190,26 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   } else if (h === 'short_term') {
     set('housing_value', Math.max(get('housing_value'), 70))
     set('climate_risk', Math.min(get('climate_risk'), 40))
+  }
+
+  // community_vibe → diversity (primary) + built_beauty + social_fabric
+  const cv = answers.community_vibe
+  if (cv === 'diverse') {
+    set('diversity', 85)
+    set('social_fabric', Math.max(get('social_fabric'), 70))
+  } else if (cv === 'architectural') {
+    set('built_beauty', 85)
+    set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 65))
+    set('diversity', 40)
+  } else if (cv === 'tight_knit') {
+    set('social_fabric', Math.max(get('social_fabric'), 85))
+    set('diversity', 30)
+  } else if (cv === 'eclectic') {
+    set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 80))
+    set('diversity', 65)
+  } else if (cv === 'quiet_settled') {
+    set('social_fabric', Math.max(get('social_fabric'), 60))
+    set('diversity', 25)
   }
 
   // natural_scenery: if user picked 1–2 scenery types (not "no strong preference"), boost Natural Beauty importance
