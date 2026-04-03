@@ -137,6 +137,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('quality_education', 90)
     set('social_fabric', 80)
     set('neighborhood_amenities', 70)
+    set('housing_value', Math.max(get('housing_value'), 65))
   } else if (ls === 'family_older') {
     set('quality_education', 85)
     set('social_fabric', 75)
@@ -182,6 +183,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   if (h === 'long_term') {
     set('climate_risk', Math.max(get('climate_risk'), 70))
     set('social_fabric', Math.max(get('social_fabric'), 70))
+    set('housing_value', Math.max(get('housing_value'), 65))
   } else if (h === 'forever') {
     set('climate_risk', Math.max(get('climate_risk'), 70))
     set('social_fabric', Math.max(get('social_fabric'), 70))
