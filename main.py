@@ -14,6 +14,7 @@ import threading
 import hashlib
 import uuid
 from logging_config import get_logger
+from agent_recommend import router as agent_recommend_router
 
 logger = get_logger(__name__)
 
@@ -991,6 +992,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(agent_recommend_router, dependencies=[Depends(require_proxy_auth)])
 
 
 @app.get("/")

@@ -204,6 +204,18 @@ For detailed API documentation, see [openapi.json](./openapi.json)
 
 See **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** for full deployment instructions (backend and frontend).
 
+### Agent recommendations (Claude)
+
+The backend exposes `POST /agent/recommend` (proxied from the Next.js app as `POST /api/agent/recommend`). It loads the pre-scored metro JSONL, preranks candidates, calls Anthropic for short explanations, and returns `results_url` links that match [`frontend/lib/resultsShare.ts`](frontend/lib/resultsShare.ts).
+
+**Railway (API) environment variables:**
+
+- **`ANTHROPIC_API_KEY`** — required for agent recommendations (server only; never expose to the browser).
+- **`HOMEFIT_AGENT_CATALOG_JSONL`** (optional) — absolute or repo-relative path to merged catalog JSONL. Default: `data/nyc_metro_place_catalog_scores_merged.jsonl`.
+- **`HOMEFIT_ANTHROPIC_MODEL`** (optional) — model id. Default: `claude-haiku-4-5-20251001`.
+
+The browser calls the **Vercel** same-origin route; only Railway needs `ANTHROPIC_API_KEY`. Use the same `RAILWAY_API_BASE_URL` and `HOMEFIT_PROXY_SECRET` as the score proxy.
+
 ### Optional: automatic NYC metro catalog aggregates (Supabase)
 
 When enabled, successful scores for locations that match a row in `data/nyc_metro_place_catalog.csv` (by `search_query` or nearest centroid within ~5 km) update rolling pillar aggregates in Postgres via Supabase.
