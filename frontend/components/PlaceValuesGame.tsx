@@ -138,9 +138,11 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('social_fabric', 80)
     set('neighborhood_amenities', 70)
     set('housing_value', Math.max(get('housing_value'), 65))
+    set('healthcare_access', Math.max(get('healthcare_access'), 60))
   } else if (ls === 'family_older') {
     set('quality_education', 85)
     set('social_fabric', 75)
+    set('housing_value', Math.max(get('housing_value'), 65))
   } else if (ls === 'empty_nester') {
     set('healthcare_access', 80)
     set('climate_risk', 70)
