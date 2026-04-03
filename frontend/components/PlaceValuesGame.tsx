@@ -267,10 +267,22 @@ interface PlaceValuesGameProps {
   onBack?: () => void
 }
 
-const LONGEVITY_NOTE =
-  'Longevity is calculated separately — six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) with fixed weights, independent of your HomeFit priorities.'
+/** Matches backend prerank weights — bar width for each chosen level. */
+const PRIORITY_BAR_PCT: Record<PriorityLevel, number> = {
+  None: 0,
+  Low: 33,
+  Medium: 66,
+  High: 100,
+}
 
 const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+
+function priorityBadgeStyle(level: PriorityLevel): React.CSSProperties {
+  if (level === 'High') return { background: 'var(--hf-primary-gradient)', color: '#fff' }
+  if (level === 'Medium') return { background: 'rgba(102,126,234,0.14)', color: 'var(--hf-text-primary)' }
+  if (level === 'Low') return { background: 'rgba(108,117,125,0.12)', color: 'var(--hf-text-primary)' }
+  return { background: '#f1f3f5', color: 'var(--hf-text-secondary)' }
+}
 
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
   const router = useRouter()
@@ -378,6 +390,21 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
   const weights = useMemo(() => inferWeights(answers), [answers])
   const priorities = useMemo(() => weightsToPriorities(weights), [weights])
   const effective_priorities = edited_priorities ?? priorities
+
+  const ranked_priority_rows = useMemo(
+    () =>
+      [...PILLAR_ORDER]
+        .map((pillar) => {
+          const level = effective_priorities[pillar]
+          return {
+            pillar,
+            level,
+            bar_pct: PRIORITY_BAR_PCT[level],
+          }
+        })
+        .sort((a, b) => b.bar_pct - a.bar_pct || a.pillar.localeCompare(b.pillar)),
+    [effective_priorities]
+  )
 
   useEffect(() => {
     if (game_state === 'playing') {
@@ -681,61 +708,80 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             Your priority weights
           </h2>
           <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
-            Your quiz suggested importance levels for all {PILLAR_ORDER.length} pillars. Adjust None / Low / Medium / High below, then get neighborhood picks or search a place — same pattern as the rest of HomeFit.
+            Ranked by importance (highest first). Bars show strength for your current level (None / Low / Medium / High). Change any pillar with the dropdown, then get neighborhood picks or search a place.
           </p>
 
-          <div className="hf-panel" style={{ background: 'rgba(102,126,234,0.06)', border: '1px solid rgba(102,126,234,0.18)', marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-            <p className="hf-muted" style={{ margin: 0, fontSize: '0.95rem' }}>
-              {LONGEVITY_NOTE}
-            </p>
-          </div>
-
           <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            Adjust your priorities
+            Ranked by importance
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
-            {PILLAR_ORDER.map((pillar) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+            {ranked_priority_rows.map(({ pillar, level, bar_pct }) => {
               const meta = PILLAR_META[pillar]
-              const level = effective_priorities[pillar]
               return (
-                <div
-                  key={pillar}
-                  className="hf-panel"
-                  style={{
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', minWidth: 0 }}>
-                    <span style={{ fontSize: '1.35rem' }} aria-hidden>
-                      {meta.icon}
-                    </span>
-                    <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
-                  </div>
-                  <select
-                    value={level}
-                    onChange={(e) => set_pillar_priority(pillar, e.target.value as PriorityLevel)}
-                    aria-label={`${meta.name} priority`}
+                <div key={pillar} className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
+                  <div
                     style={{
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: 8,
-                      border: '1px solid rgba(0,0,0,0.12)',
-                      fontWeight: 700,
-                      background: 'var(--hf-card-bg, #fff)',
-                      color: 'var(--hf-text-primary)',
-                      minWidth: '120px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      marginBottom: '0.75rem',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    {PRIORITY_LEVELS.map((lv) => (
-                      <option key={lv} value={lv}>
-                        {lv}
-                      </option>
-                    ))}
-                  </select>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', minWidth: 0 }}>
+                      <span style={{ fontSize: '1.5rem' }} aria-hidden>
+                        {meta.icon}
+                      </span>
+                      <span style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          ...priorityBadgeStyle(level),
+                          padding: '0.35rem 0.6rem',
+                          borderRadius: 999,
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        {level}
+                      </span>
+                      <select
+                        value={level}
+                        onChange={(e) => set_pillar_priority(pillar, e.target.value as PriorityLevel)}
+                        aria-label={`${meta.name} priority`}
+                        style={{
+                          padding: '0.45rem 0.75rem',
+                          borderRadius: 8,
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          fontWeight: 700,
+                          background: 'var(--hf-card-bg, #fff)',
+                          color: 'var(--hf-text-primary)',
+                          minWidth: '120px',
+                        }}
+                      >
+                        {PRIORITY_LEVELS.map((lv) => (
+                          <option key={lv} value={lv}>
+                            {lv}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${bar_pct}%`,
+                        background: 'var(--hf-primary-gradient)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
+                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                    Strength {bar_pct}
+                  </div>
                 </div>
               )
             })}
