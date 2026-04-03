@@ -92,7 +92,8 @@ def _normalize_catalog_row(line_obj: Dict[str, Any]) -> Optional[Dict[str, Any]]
         "archetype": archetype,
         "status_label": status_label,
         "pillar_scores": pillar_scores,
-        "raw_livability_pillars": liv,
+        # Full score payload for client hydration (matches catalog map → /results handoff).
+        "score_full": score if isinstance(score, dict) else {},
     }
 
 
@@ -228,12 +229,18 @@ def get_recommendations(
     if not isinstance(results, list):
         raise HTTPException(status_code=500, detail="Model JSON must be an array")
 
+    by_neighborhood: Dict[str, Dict[str, Any]] = {n["neighborhood"]: n for n in catalog}
+
     for r in results:
         if not isinstance(r, dict):
             continue
         name = r.get("neighborhood")
         if isinstance(name, str) and name:
             r["results_url"] = build_results_url(name, priorities)
+            row = by_neighborhood.get(name)
+            sf = row.get("score_full") if row else None
+            if isinstance(sf, dict) and sf:
+                r["score"] = sf
 
     return results  # type: ignore[return-value]
 

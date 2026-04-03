@@ -1,4 +1,7 @@
 import type { PillarPriorities } from '@/components/SearchOptions'
+import { buildResultsCacheKey, type ResultsRouteParams } from '@/lib/resultsShare'
+import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
+import type { ScoreResponse } from '@/types/api'
 
 /** One row from POST /api/agent/recommend (matches FastAPI agent_recommend). */
 export interface AgentRecommendation {
@@ -10,6 +13,35 @@ export interface AgentRecommendation {
   top_drivers: string[]
   explanation: string
   results_url: string
+  /** Full score payload for sessionStorage hydrate (same pattern as NYC catalog map). */
+  score?: ScoreResponse
+}
+
+/**
+ * Before navigating to /results from an agent card, stash the score so the results
+ * page hydrates immediately (matches catalog map writeCatalogResultsHydrate).
+ */
+export function hydrateRecommendationResultsNavigation(rec: AgentRecommendation): void {
+  if (!rec.score || typeof window === 'undefined') return
+  try {
+    const url = new URL(rec.results_url, window.location.origin)
+    const location = url.searchParams.get('location') ?? rec.neighborhood
+    const prioritiesJson = url.searchParams.get('priorities') ?? ''
+    const routeParams: ResultsRouteParams = {
+      location,
+      prioritiesJson,
+      job_categories: null,
+      include_chains: false,
+      enable_schools: false,
+      natural_beauty_preference: null,
+      built_character_preference: null,
+      built_density_preference: null,
+    }
+    const cacheKey = buildResultsCacheKey(routeParams)
+    writeCatalogResultsHydrate({ v: 1, cacheKey, score: rec.score })
+  } catch {
+    // non-fatal; /results will run a live score
+  }
 }
 
 export interface AgentRecommendMeta {

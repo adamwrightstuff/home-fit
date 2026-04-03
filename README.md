@@ -216,6 +216,8 @@ The backend exposes `POST /agent/recommend` (proxied from the Next.js app as `PO
 
 The browser calls the **Vercel** same-origin route; only Railway needs `ANTHROPIC_API_KEY`. Use the same `RAILWAY_API_BASE_URL` and `HOMEFIT_PROXY_SECRET` as the score proxy.
 
+Each recommendation may include a full `score` payload (from the merged catalog JSONL) so the frontend can hydrate `/results` like the NYC catalog map (“View full score” without waiting for a fresh run).
+
 ### Optional: automatic NYC metro catalog aggregates (Supabase)
 
 When enabled, successful scores for locations that match a row in `data/nyc_metro_place_catalog.csv` (by `search_query` or nearest centroid within ~5 km) update rolling pillar aggregates in Postgres via Supabase.

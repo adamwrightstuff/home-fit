@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ChevronLeft, Loader2, RefreshCcw, Search } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
@@ -9,6 +10,7 @@ import AppHeader from './AppHeader'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import {
   fetchAgentRecommendations,
+  hydrateRecommendationResultsNavigation,
   quizAnswersToAgentContext,
   type AgentRecommendResponse,
 } from '@/lib/agentRecommend'
@@ -260,34 +262,25 @@ function weightsToPriorities(weights: PillarWeights): PillarPriorities {
   return p
 }
 
-function weightToBand(weight: number): PriorityLevel {
-  if (weight >= 80) return 'High'
-  if (weight >= 55) return 'Medium'
-  return 'Low'
-}
-
 interface PlaceValuesGameProps {
   onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => void
   onBack?: () => void
 }
 
-function priorityBadgeStyle(level: PriorityLevel): React.CSSProperties {
-  if (level === 'High') return { background: 'var(--hf-primary-gradient)', color: '#fff' }
-  if (level === 'Medium') return { background: 'rgba(102,126,234,0.14)', color: 'var(--hf-text-primary)' }
-  if (level === 'Low') return { background: 'rgba(108,117,125,0.12)', color: 'var(--hf-text-primary)' }
-  return { background: '#f1f3f5', color: 'var(--hf-text-secondary)' }
-}
-
 const LONGEVITY_NOTE =
   'Longevity is calculated separately — six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) with fixed weights, independent of your HomeFit priorities.'
 
+const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+
 export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValuesGameProps) {
+  const router = useRouter()
   const [game_state, set_game_state] = useState<'playing' | 'results' | 'recommendations'>('playing')
   const [current_step, set_current_step] = useState(0)
   const [answers, set_answers] = useState<QuizAnswers>(getInitialAnswers)
   const [agent_loading, set_agent_loading] = useState(false)
   const [agent_error, set_agent_error] = useState<string | null>(null)
   const [agent_response, set_agent_response] = useState<AgentRecommendResponse | null>(null)
+  const [edited_priorities, set_edited_priorities] = useState<PillarPriorities | null>(null)
   const recommendationsHeadingRef = useRef<HTMLHeadingElement>(null)
 
   const start_game = useCallback(() => {
@@ -297,6 +290,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     set_agent_loading(false)
     set_agent_error(null)
     set_agent_response(null)
+    set_edited_priorities(null)
   }, [])
 
   const question = QUESTIONS[current_step]
@@ -383,12 +377,28 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   const weights = useMemo(() => inferWeights(answers), [answers])
   const priorities = useMemo(() => weightsToPriorities(weights), [weights])
-  const ranked_pillars = useMemo(
-    () =>
-      [...PILLAR_ORDER]
-        .map((pillar) => ({ pillar, weight: weights[pillar] }))
-        .sort((a, b) => b.weight - a.weight),
-    [weights]
+  const effective_priorities = edited_priorities ?? priorities
+
+  useEffect(() => {
+    if (game_state === 'playing') {
+      set_edited_priorities(null)
+    }
+  }, [game_state])
+
+  useEffect(() => {
+    if (game_state === 'results') {
+      set_edited_priorities((prev) => (prev !== null ? prev : { ...priorities }))
+    }
+  }, [game_state, priorities])
+
+  const set_pillar_priority = useCallback(
+    (pillar: PillarKey, level: PriorityLevel) => {
+      set_edited_priorities((prev) => {
+        const base: PillarPriorities = { ...(prev ?? priorities) }
+        return { ...base, [pillar]: level }
+      })
+    },
+    [priorities]
   )
 
   const load_recommendations = useCallback(async () => {
@@ -397,7 +407,8 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     set_agent_response(null)
     try {
       const ctx = quizAnswersToAgentContext(answers)
-      const data = await fetchAgentRecommendations(priorities, ctx)
+      const p = edited_priorities ?? priorities
+      const data = await fetchAgentRecommendations(p, ctx)
       set_agent_response(data)
       set_game_state('recommendations')
     } catch (e) {
@@ -405,25 +416,18 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
     } finally {
       set_agent_loading(false)
     }
-  }, [answers, priorities])
+  }, [answers, edited_priorities, priorities])
 
-  // Auto-apply quiz results when user reaches the results screen (once per results view).
-  const appliedRef = useRef(false)
   const naturalBeautyPreference = useMemo(() => {
     const sel = answers.natural_scenery.filter((v) => v !== 'no_preference')
     if (sel.length === 0) return undefined
     return sel.length <= 2 ? sel : sel.slice(0, 2)
   }, [answers.natural_scenery])
+
   useEffect(() => {
-    if (game_state !== 'results') {
-      appliedRef.current = false
-      return
-    }
-    if (!appliedRef.current && onApplyPriorities) {
-      onApplyPriorities(priorities, naturalBeautyPreference, answers.job_categories)
-      appliedRef.current = true
-    }
-  }, [game_state, priorities, naturalBeautyPreference, answers.job_categories, onApplyPriorities])
+    if (game_state !== 'results') return
+    onApplyPriorities?.(effective_priorities, naturalBeautyPreference, answers.job_categories)
+  }, [game_state, effective_priorities, naturalBeautyPreference, answers.job_categories, onApplyPriorities])
 
   useEffect(() => {
     if (game_state === 'recommendations' && agent_response) {
@@ -511,6 +515,11 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                   <Link
                     href={rec.results_url}
                     className="hf-btn-primary"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      hydrateRecommendationResultsNavigation(rec)
+                      router.push(rec.results_url)
+                    }}
                     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', textDecoration: 'none' }}
                   >
                     View full score
@@ -672,7 +681,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             Your priority weights
           </h2>
           <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
-            All {PILLAR_ORDER.length} pillars ranked by importance. Use these to personalize your HomeFit score.
+            Your quiz suggested importance levels for all {PILLAR_ORDER.length} pillars. Adjust None / Low / Medium / High below, then get neighborhood picks or search a place — same pattern as the rest of HomeFit.
           </p>
 
           <div className="hf-panel" style={{ background: 'rgba(102,126,234,0.06)', border: '1px solid rgba(102,126,234,0.18)', marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
@@ -682,44 +691,51 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
           </div>
 
           <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            Ranked by weight
+            Adjust your priorities
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            {ranked_pillars.map(({ pillar, weight }) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+            {PILLAR_ORDER.map((pillar) => {
               const meta = PILLAR_META[pillar]
-              const band = weightToBand(weight)
+              const level = effective_priorities[pillar]
               return (
-                <div key={pillar} className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '1.5rem' }}>{meta.icon}</span>
-                      <span style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
-                    </div>
-                    <span
-                      style={{
-                        ...priorityBadgeStyle(band),
-                        padding: '0.35rem 0.6rem',
-                        borderRadius: 999,
-                        fontWeight: 800,
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      {band}
+                <div
+                  key={pillar}
+                  className="hf-panel"
+                  style={{
+                    padding: '0.75rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', minWidth: 0 }}>
+                    <span style={{ fontSize: '1.35rem' }} aria-hidden>
+                      {meta.icon}
                     </span>
+                    <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                   </div>
-                  <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${weight}%`,
-                        background: 'var(--hf-primary-gradient)',
-                        transition: 'width 0.3s ease',
-                      }}
-                    />
-                  </div>
-                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
-                    {weight}
-                  </div>
+                  <select
+                    value={level}
+                    onChange={(e) => set_pillar_priority(pillar, e.target.value as PriorityLevel)}
+                    aria-label={`${meta.name} priority`}
+                    style={{
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: 8,
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      fontWeight: 700,
+                      background: 'var(--hf-card-bg, #fff)',
+                      color: 'var(--hf-text-primary)',
+                      minWidth: '120px',
+                    }}
+                  >
+                    {PRIORITY_LEVELS.map((lv) => (
+                      <option key={lv} value={lv}>
+                        {lv}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )
             })}
