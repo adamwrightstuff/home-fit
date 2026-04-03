@@ -19,6 +19,8 @@
 
   --hf-text-primary: #2c3e50;
   --hf-text-secondary: #6c757d;
+  --hf-text-tertiary: #94a3b8;
+  --color-text-tertiary: var(--hf-text-tertiary);
 
   --hf-hover-bg: #e9ecef;
 
@@ -550,6 +552,8 @@ body {
 
 .hf-score-badge--green { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); }
 .hf-score-badge--blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+/* HomeFit headline score (purple); same fill as --blue, distinct class for semantics */
+.hf-score-badge--homefit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .hf-score-badge--yellow { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
 .hf-score-badge--red { background: linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%); }
 

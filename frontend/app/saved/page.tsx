@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -9,6 +9,51 @@ import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
+import type { ScoreResponse } from '@/types/api'
+
+type SortMode = 'score_desc' | 'score_asc' | 'recent'
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'score_desc', label: 'Score ↓' },
+  { value: 'score_asc', label: 'Score ↑' },
+  { value: 'recent', label: 'Recently viewed' },
+]
+
+/** Same headline total as the card badge (priority reweight when row is present). */
+function homeFitTotalFromRow(row: SavedScoreRow): number {
+  const p = row.score_payload
+  if (!p || typeof p !== 'object' || p === null) return 0
+  try {
+    const priorities = prioritiesFromRow(row)
+    const reweighted = reweightScoreResponseFromPriorities(p as ScoreResponse, priorities)
+    return reweighted.total_score
+  } catch {
+    return Number((p as Record<string, unknown>).total_score ?? 0)
+  }
+}
+
+/** Longevity / Happiness / Status Signal from saved payload; 0 and invalid values are treated as missing (—). */
+function indexTripletFromPayload(score_payload: unknown): {
+  longevity: number | null
+  happiness: number | null
+  statusSignal: number | null
+} {
+  const p = score_payload as Record<string, unknown> | null | undefined
+  if (!p || typeof p !== 'object') {
+    return { longevity: null, happiness: null, statusSignal: null }
+  }
+  const parse = (raw: unknown): number | null => {
+    if (raw === null || raw === undefined) return null
+    const n = typeof raw === 'number' ? raw : Number(raw)
+    if (!Number.isFinite(n) || n === 0) return null
+    return n
+  }
+  return {
+    longevity: parse(p.longevity_index),
+    happiness: parse(p.happiness_index),
+    statusSignal: parse(p.status_signal),
+  }
+}
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -32,13 +77,13 @@ function summaryFromPayload(score_payload: unknown, row?: SavedScoreRow | null):
 
   // Use same reweight as detail page so list and detail show the same score
   if (row && p && typeof p === 'object' && p !== null) {
+    total = homeFitTotalFromRow(row)
     try {
       const priorities = prioritiesFromRow(row)
-      const reweighted = reweightScoreResponseFromPriorities(score_payload as import('@/types/api').ScoreResponse, priorities)
-      total = reweighted.total_score
+      const reweighted = reweightScoreResponseFromPriorities(score_payload as ScoreResponse, priorities)
       pillarsForRank = (reweighted.livability_pillars as unknown as Record<string, { score?: number }>) ?? pillars
     } catch {
-      // keep raw total and pillars
+      // keep raw pillars for ranking
     }
   }
 
@@ -73,6 +118,37 @@ function placeDisplayName(row: SavedScoreRow): string {
   return fallback || 'Unknown location'
 }
 
+function SavedPlaceIndexRow({ score_payload }: { score_payload: unknown }) {
+  const { longevity, happiness, statusSignal } = indexTripletFromPayload(score_payload)
+  const items = [
+    { label: 'L' as const, value: longevity, numeralColor: 'var(--c-teal-600)' },
+    { label: 'H' as const, value: happiness, numeralColor: 'var(--c-blue-600)' },
+    { label: 'S' as const, value: statusSignal, numeralColor: 'var(--c-coral-600)' },
+  ]
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'baseline',
+        gap: '0.65rem',
+        marginTop: '0.35rem',
+      }}
+    >
+      {items.map(({ label, value, numeralColor }) => (
+        <span key={label} style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-tertiary)' }}>{label}</span>
+          {value != null ? (
+            <span style={{ color: numeralColor }}> {Math.round(value)}</span>
+          ) : (
+            <span style={{ color: 'var(--color-text-tertiary)' }}> —</span>
+          )}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const [list, setList] = useState<SavedScoreRow[]>([])
@@ -80,7 +156,20 @@ export default function SavedPage() {
   const [error, setError] = useState<string | null>(null)
   const [compareMode, setCompareMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [sortMode, setSortMode] = useState<SortMode>('score_desc')
   const router = useRouter()
+
+  const sortedList = useMemo(() => {
+    const copy = [...list]
+    if (sortMode === 'recent') {
+      copy.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    } else if (sortMode === 'score_desc') {
+      copy.sort((a, b) => homeFitTotalFromRow(b) - homeFitTotalFromRow(a))
+    } else {
+      copy.sort((a, b) => homeFitTotalFromRow(a) - homeFitTotalFromRow(b))
+    }
+    return copy
+  }, [list, sortMode])
 
   useEffect(() => {
     if (!user) {
@@ -167,61 +256,99 @@ export default function SavedPage() {
         )}
 
         {!loading && !error && list.length > 0 && (
-          <div className="hf-grid-2" style={{ gap: '1rem' }}>
-            {list.map((row) => {
-              const { total, top2, bottom1 } = summaryFromPayload(row.score_payload, row)
-              const hasScore = row.score_payload != null
-              const selected = selectedIds.includes(row.id)
-              return (
-                <div
-                  key={row.id}
-                  className="hf-card-sm"
-                  style={{
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    position: 'relative',
-                    borderWidth: compareMode && selected ? 2 : undefined,
-                    borderColor: compareMode && selected ? 'var(--hf-primary-1)' : undefined,
-                    cursor: compareMode ? (hasScore ? 'pointer' : 'default') : 'pointer',
-                  }}
-                  onClick={() => {
-                    if (compareMode) {
-                      toggleSelected(row.id, hasScore)
-                    } else {
-                      router.push(`/saved/${row.id}`)
-                    }
-                  }}
-                >
-                  {compareMode && (
-                    <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        disabled={!hasScore}
-                        onChange={() => toggleSelected(row.id, hasScore)}
-                        aria-label={hasScore ? 'Select place for compare' : 'Run a score first to compare'}
-                      />
+          <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+              <div
+                role="group"
+                aria-label="Sort saved places"
+                style={{
+                  display: 'inline-flex',
+                  borderRadius: 10,
+                  border: '1px solid var(--hf-border)',
+                  overflow: 'hidden',
+                  background: 'var(--hf-bg-subtle)',
+                }}
+              >
+                {SORT_OPTIONS.map((opt, i) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setSortMode(opt.value)}
+                    aria-pressed={sortMode === opt.value}
+                    style={{
+                      border: 'none',
+                      borderRight: i < SORT_OPTIONS.length - 1 ? '1px solid var(--hf-border)' : undefined,
+                      padding: '0.45rem 0.7rem',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: sortMode === opt.value ? 'var(--hf-card-bg)' : 'transparent',
+                      color: sortMode === opt.value ? 'var(--hf-text-primary)' : 'var(--hf-text-secondary)',
+                      boxShadow: sortMode === opt.value ? 'inset 0 0 0 1px var(--hf-border)' : undefined,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="hf-grid-2" style={{ gap: '1rem' }}>
+              {sortedList.map((row) => {
+                const { total, top2, bottom1 } = summaryFromPayload(row.score_payload, row)
+                const hasScore = row.score_payload != null
+                const selected = selectedIds.includes(row.id)
+                return (
+                  <div
+                    key={row.id}
+                    className="hf-card-sm"
+                    style={{
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      position: 'relative',
+                      borderWidth: compareMode && selected ? 2 : undefined,
+                      borderColor: compareMode && selected ? 'var(--hf-primary-1)' : undefined,
+                      cursor: compareMode ? (hasScore ? 'pointer' : 'default') : 'pointer',
+                    }}
+                    onClick={() => {
+                      if (compareMode) {
+                        toggleSelected(row.id, hasScore)
+                      } else {
+                        router.push(`/saved/${row.id}`)
+                      }
+                    }}
+                  >
+                    {compareMode && (
+                      <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          disabled={!hasScore}
+                          onChange={() => toggleSelected(row.id, hasScore)}
+                          aria-label={hasScore ? 'Select place for compare' : 'Run a score first to compare'}
+                        />
+                      </div>
+                    )}
+                    <div style={{ fontWeight: 700, fontSize: '1.15rem', paddingRight: compareMode ? '1.5rem' : 0 }}>
+                      {placeDisplayName(row)}
                     </div>
-                  )}
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem', paddingRight: compareMode ? '1.5rem' : 0 }}>
-                    {placeDisplayName(row)}
-                  </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="hf-score-badge hf-score-badge--blue">{total.toFixed(1)}</span>
-                    <span className="hf-muted" style={{ fontSize: '0.9rem' }}>{formatDate(row.updated_at)}</span>
-                  </div>
-                  <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                    Strongest: {top2}. Weakest: {bottom1}.
-                  </div>
-                  {!hasScore && (
-                    <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
-                      Run a score first to compare this place.
+                    <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className="hf-score-badge hf-score-badge--homefit">{total.toFixed(1)}</span>
+                      <span className="hf-muted" style={{ fontSize: '0.9rem' }}>{formatDate(row.updated_at)}</span>
                     </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                    <SavedPlaceIndexRow score_payload={row.score_payload} />
+                    <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                      Strongest: {top2}. Weakest: {bottom1}.
+                    </div>
+                    {!hasScore && (
+                      <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                        Run a score first to compare this place.
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
 
