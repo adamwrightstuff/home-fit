@@ -8,7 +8,14 @@ import {
   getStandoutPillarChips,
 } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
-import { RAMP_HEX, fullBreakdownCtaStyle, indexNumeral600 } from '@/lib/indexColorSystem'
+import {
+  RAMP_HEX,
+  STATUS_ARCHETYPE_RAMP,
+  fullBreakdownCtaStyle,
+  indexNumeral600,
+  normalizeStatusArchetypeKey,
+  statusArchetypeNumeral600,
+} from '@/lib/indexColorSystem'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -49,6 +56,9 @@ export default function CatalogBottomSheet({
   const peek_max_px = 380
 
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
+  const statusArchetypeRamp = allIdx
+    ? STATUS_ARCHETYPE_RAMP[normalizeStatusArchetypeKey(allIdx.archetype)]
+    : STATUS_ARCHETYPE_RAMP.typical
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
@@ -120,7 +130,11 @@ export default function CatalogBottomSheet({
                 const active = indexMode === tab.id
                 const v = scoreForTab(tab.id)
                 const ramp = catalogRampKey(tab.id)
-                const borderColor = indexNumeral600(ramp)
+                const accent600 =
+                  tab.id === 'status'
+                    ? statusArchetypeNumeral600(allIdx?.archetype ?? null)
+                    : indexNumeral600(ramp)
+                const borderColor = accent600
                 return (
                   <button
                     key={tab.id}
@@ -137,7 +151,7 @@ export default function CatalogBottomSheet({
                     </div>
                     <div
                       className="mt-0.5 text-xl font-extrabold tabular-nums leading-none"
-                      style={{ color: indexNumeral600(ramp) }}
+                      style={{ color: accent600 }}
                     >
                       {fmt(v)}
                     </div>
@@ -150,19 +164,19 @@ export default function CatalogBottomSheet({
               <div
                 className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
                 style={{
-                  background: RAMP_HEX.coral[50],
-                  border: `1px solid ${RAMP_HEX.coral[200]}`,
-                  color: RAMP_HEX.coral[800],
+                  background: statusArchetypeRamp[50],
+                  border: `1px solid ${statusArchetypeRamp[200]}`,
+                  color: statusArchetypeRamp[800],
                 }}
               >
                 <span
                   className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: RAMP_HEX.coral[400] }}
+                  style={{ background: statusArchetypeRamp[400] }}
                   aria-hidden
                 />
                 <span>{allIdx.archetypeBadge}</span>
                 {allIdx.archetype && place.score.status_signal_breakdown?.signal_strength_label ? (
-                  <span style={{ color: RAMP_HEX.coral[600], fontWeight: 700 }}>
+                  <span style={{ color: statusArchetypeRamp[600], fontWeight: 700 }}>
                     {place.score.status_signal_breakdown.signal_strength_label}
                   </span>
                 ) : null}
@@ -171,14 +185,14 @@ export default function CatalogBottomSheet({
               <div
                 className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
                 style={{
-                  background: RAMP_HEX.coral[50],
-                  border: `1px solid ${RAMP_HEX.coral[200]}`,
-                  color: RAMP_HEX.coral[800],
+                  background: statusArchetypeRamp[50],
+                  border: `1px solid ${statusArchetypeRamp[200]}`,
+                  color: statusArchetypeRamp[800],
                 }}
               >
                 <span
                   className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: RAMP_HEX.coral[400] }}
+                  style={{ background: statusArchetypeRamp[400] }}
                   aria-hidden
                 />
                 <span>{allIdx.archetype}</span>

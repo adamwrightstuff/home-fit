@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
-import { catalogModeToRamp, mapBubbleStroke } from '@/lib/indexColorSystem'
 
 type GeoJsonData = ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
 
@@ -126,7 +125,7 @@ export default function CatalogMapView({
               'circle-color': ['get', 'color'],
               'circle-opacity': 0.92,
               'circle-stroke-width': 1.5,
-              'circle-stroke-color': mapBubbleStroke(catalogModeToRamp(indexMode)),
+              'circle-stroke-color': ['get', 'strokeColor'],
             },
           })
           map.on('click', 'catalog-bubbles', (e) => {
@@ -145,9 +144,7 @@ export default function CatalogMapView({
           src.setData(data as Parameters<GeoJSONSource['setData']>[0])
         }
 
-        const stroke = mapBubbleStroke(catalogModeToRamp(indexMode))
         if (map.getLayer('catalog-bubbles')) {
-          map.setPaintProperty('catalog-bubbles', 'circle-stroke-color', stroke)
           map.setPaintProperty('catalog-bubbles', 'circle-stroke-width', 1.5)
         }
 

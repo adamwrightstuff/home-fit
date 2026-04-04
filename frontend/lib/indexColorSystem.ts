@@ -7,6 +7,59 @@ import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
+/** Status Signal: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
+export type StatusArchetypeRampKey = 'patrician' | 'parvenu' | 'poseur' | 'plebeian' | 'typical'
+
+export const STATUS_ARCHETYPE_RAMP: Record<
+  StatusArchetypeRampKey,
+  { 50: string; 200: string; 400: string; 600: string; 800: string }
+> = {
+  patrician: {
+    50: '#f1f5f9',
+    200: '#94a3b8',
+    400: '#475569',
+    600: '#334155',
+    800: '#1e293b',
+  },
+  parvenu: {
+    50: '#fffbeb',
+    200: '#fcd34d',
+    400: '#d97706',
+    600: '#b45309',
+    800: '#78350f',
+  },
+  poseur: {
+    50: '#f0fdfa',
+    200: '#5eead4',
+    400: '#0d9488',
+    600: '#0f766e',
+    800: '#115e59',
+  },
+  plebeian: {
+    50: '#f8fafc',
+    200: '#cbd5e1',
+    400: '#64748b',
+    600: '#475569',
+    800: '#334155',
+  },
+  typical: {
+    50: '#FAECE7',
+    200: '#F0997B',
+    400: '#D85A30',
+    600: '#993C1D',
+    800: '#712B13',
+  },
+}
+
+export function normalizeStatusArchetypeKey(archetype: string | null | undefined): StatusArchetypeRampKey {
+  const a = (archetype ?? '').trim()
+  if (a === 'Patrician') return 'patrician'
+  if (a === 'Parvenu') return 'parvenu'
+  if (a === 'Poseur') return 'poseur'
+  if (a === 'Plebeian') return 'plebeian'
+  return 'typical'
+}
+
 export const RAMP_HEX: Record<IndexRampKey, { 50: string; 200: string; 400: string; 600: string; 800: string }> = {
   purple: {
     50: '#EEEDFE',
@@ -69,6 +122,28 @@ export function scoreBandFill(ramp: IndexRampKey, score: number): string {
   if (s < 50) return r[50]
   if (s < 75) return r[200]
   return r[400]
+}
+
+/** Status Signal: score band within the archetype hue ramp (same thresholds as scoreBandFill). */
+export function scoreBandFillStatusArchetype(archetype: string | null | undefined, score: number): string {
+  const key = normalizeStatusArchetypeKey(archetype)
+  const r = STATUS_ARCHETYPE_RAMP[key]
+  const s = Math.max(0, Math.min(100, score))
+  if (s < 50) return r[50]
+  if (s < 75) return r[200]
+  return r[400]
+}
+
+/** Map bubble stroke for Status mode (ramp-600 @ 60%), per archetype. */
+export function mapBubbleStrokeStatusArchetype(archetype: string | null | undefined): string {
+  const key = normalizeStatusArchetypeKey(archetype)
+  return hexToRgba(STATUS_ARCHETYPE_RAMP[key][600], 0.6)
+}
+
+/** Numeric color for Status tab / labels when archetype is known. */
+export function statusArchetypeNumeral600(archetype: string | null | undefined): string {
+  const key = normalizeStatusArchetypeKey(archetype)
+  return STATUS_ARCHETYPE_RAMP[key][600]
 }
 
 /** Text on colored fill (badges, high band on dark fill). */

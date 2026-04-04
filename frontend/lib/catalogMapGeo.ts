@@ -3,15 +3,39 @@ import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { catalogModeToRamp, scoreBandFill } from '@/lib/indexColorSystem'
+import {
+  catalogModeToRamp,
+  mapBubbleStroke,
+  mapBubbleStrokeStatusArchetype,
+  scoreBandFill,
+  scoreBandFillStatusArchetype,
+} from '@/lib/indexColorSystem'
 
-/** 0–100 score → bubble fill from active index ramp (no green / no archetype mix). */
+/** 0–100 score → bubble fill from active index ramp; Status uses archetype hue + score band. */
 export function numericScoreColorForMode(
   score: number | null | undefined,
-  mode: CatalogMapIndexMode
+  mode: CatalogMapIndexMode,
+  statusArchetype?: string | null
 ): string {
   if (score == null || !Number.isFinite(score)) return '#94a3b8'
+  if (mode === 'status') {
+    return scoreBandFillStatusArchetype(statusArchetype ?? null, score)
+  }
   return scoreBandFill(catalogModeToRamp(mode), score)
+}
+
+function catalogBubbleStrokeForFeature(
+  mode: CatalogMapIndexMode,
+  score: number | null,
+  statusArchetype: string | null
+): string {
+  if (score == null || !Number.isFinite(score)) {
+    return 'rgba(100, 116, 139, 0.55)'
+  }
+  if (mode === 'status') {
+    return mapBubbleStrokeStatusArchetype(statusArchetype)
+  }
+  return mapBubbleStroke(catalogModeToRamp(mode))
 }
 
 function displayScoreForMode(
@@ -45,7 +69,8 @@ export function buildCatalogFeatureCollection(
   const features = places.map((p) => {
     const { v, archetype } = displayScoreForMode(p, mode, priorities)
     const key = catalogRowKey(p.catalog)
-    const color = numericScoreColorForMode(v, mode)
+    const color = numericScoreColorForMode(v, mode, mode === 'status' ? archetype : undefined)
+    const strokeColor = catalogBubbleStrokeForFeature(mode, v, archetype)
     return {
       type: 'Feature' as const,
       id: key,
@@ -58,6 +83,7 @@ export function buildCatalogFeatureCollection(
         name: p.catalog.name,
         v: v ?? 0,
         color,
+        strokeColor,
         archetype: archetype ?? '',
         hasValue: v != null && Number.isFinite(v),
       },
