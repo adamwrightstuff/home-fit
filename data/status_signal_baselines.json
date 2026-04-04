@@ -171,11 +171,9 @@
     }
   },
   "cbsa_to_baseline": {
-    "brand": {},
-    "education": {},
-    "home_cost": {},
-    "occupation": {},
-    "wealth": {}
+    "35620": "nyc_metro",
+    "31080": "la_metro",
+    "33100": "miami_metro"
   },
   "charlotte,_north_carolina": {
     "brand": {},
@@ -635,6 +633,7 @@
     }
   },
   "nyc_metro": {
+    "cbsa_median_income": 85000,
     "brand": {},
     "education": {},
     "home_cost": {
@@ -654,6 +653,22 @@
         "min": 0.0
       }
     }
+  },
+  "la_metro": {
+    "cbsa_median_income": 80000,
+    "brand": {},
+    "education": {},
+    "home_cost": {},
+    "occupation": {},
+    "wealth": {}
+  },
+  "miami_metro": {
+    "cbsa_median_income": 78000,
+    "brand": {},
+    "education": {},
+    "home_cost": {},
+    "occupation": {},
+    "wealth": {}
   },
   "pacific": {
     "brand": {
