@@ -14,10 +14,10 @@ export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
   { 50: string; 200: string; 400: string; 600: string; 800: string }
 > = {
-  // Indigo/navy — distinct from Plebeian (stone gray) and Typical (coral). Older Patrician used slate = same hex as Plebeian at several bands.
+  // Indigo — faint band must not be near-white (score <50 maps here); otherwise Patrician vs Plebeian read identical on small map dots.
   patrician: {
-    50: '#eef2ff',
-    200: '#a5b4fc',
+    50: '#c7d2fe',
+    200: '#818cf8',
     400: '#6366f1',
     600: '#4338ca',
     800: '#312e81',
@@ -36,10 +36,10 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#0f766e',
     800: '#115e59',
   },
-  // Stone/neutral gray-brown — reads “plain” vs Patrician’s blue-violet.
+  // Warm stone — faint band is visibly taupe vs Patrician’s blue-lavender at the same score tier.
   plebeian: {
-    50: '#fafaf9',
-    200: '#d6d3d1',
+    50: '#d4cfc9',
+    200: '#a8a29e',
     400: '#78716c',
     600: '#57534e',
     800: '#44403c',
@@ -136,10 +136,10 @@ export function scoreBandFillStatusArchetype(archetype: string | null | undefine
   return r[400]
 }
 
-/** Map bubble stroke for Status mode (ramp-600 @ 60%), per archetype. */
+/** Map bubble stroke for Status mode (ramp-600 @ high alpha so hue reads on 1–2px strokes). */
 export function mapBubbleStrokeStatusArchetype(archetype: string | null | undefined): string {
   const key = normalizeStatusArchetypeKey(archetype)
-  return hexToRgba(STATUS_ARCHETYPE_RAMP[key][600], 0.6)
+  return hexToRgba(STATUS_ARCHETYPE_RAMP[key][600], 0.88)
 }
 
 /** Numeric color for Status tab / labels when archetype is known. */
