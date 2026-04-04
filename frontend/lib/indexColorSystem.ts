@@ -14,12 +14,13 @@ export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
   { 50: string; 200: string; 400: string; 600: string; 800: string }
 > = {
+  // Indigo/navy — distinct from Plebeian (stone gray) and Typical (coral). Older Patrician used slate = same hex as Plebeian at several bands.
   patrician: {
-    50: '#f1f5f9',
-    200: '#94a3b8',
-    400: '#475569',
-    600: '#334155',
-    800: '#1e293b',
+    50: '#eef2ff',
+    200: '#a5b4fc',
+    400: '#6366f1',
+    600: '#4338ca',
+    800: '#312e81',
   },
   parvenu: {
     50: '#fffbeb',
@@ -35,12 +36,13 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#0f766e',
     800: '#115e59',
   },
+  // Stone/neutral gray-brown — reads “plain” vs Patrician’s blue-violet.
   plebeian: {
-    50: '#f8fafc',
-    200: '#cbd5e1',
-    400: '#64748b',
-    600: '#475569',
-    800: '#334155',
+    50: '#fafaf9',
+    200: '#d6d3d1',
+    400: '#78716c',
+    600: '#57534e',
+    800: '#44403c',
   },
   typical: {
     50: '#FAECE7',
