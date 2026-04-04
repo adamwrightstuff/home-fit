@@ -1,9 +1,4 @@
 {
-  "cbsa_to_baseline": {
-    "35620": "nyc_metro",
-    "31080": "la_metro",
-    "33100": "miami_metro"
-  },
   ",_california": {
     "brand": {},
     "education": {},
@@ -35,49 +30,22 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 195208.0,
-        "min": 67961.0
-      }
-    }
+    "wealth": {}
   },
   "all": {
     "brand": {
       "brand_raw_score": {
-        "max": 52.0,
+        "max": 50.0,
         "min": 0.0
-      }
-    },
-    "luxury": {
-      "wealth_offices_count": {
-        "min": 0.0,
-        "max": 45.0
-      },
-      "private_recreation_count": {
-        "min": 0.0,
-        "max": 60.0
-      },
-      "arts_culture_count": {
-        "min": 0.0,
-        "max": 50.0
-      },
-      "specialist_healthcare_count": {
-        "min": 0.0,
-        "max": 30.0
-      },
-      "luxury_retail_count": {
-        "min": 0.0,
-        "max": 40.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 3.89
+        "max": 95.13,
+        "min": 3.33
       },
       "grad_pct": {
-        "max": 406.0,
+        "max": 67.1,
         "min": 0.0
       },
       "self_employed_pct": {
@@ -122,12 +90,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 161855.0,
-        "min": 46157.0
-      }
-    }
+    "wealth": {}
   },
   "austin,_texas": {
     "brand": {},
@@ -139,12 +102,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 101936.0,
-        "min": 51091.0
-      }
-    }
+    "wealth": {}
   },
   "baltimore,_maryland": {
     "brand": {},
@@ -177,12 +135,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 63789.0,
-        "min": 19500.0
-      }
-    }
+    "wealth": {}
   },
   "boston,_massachusetts": {
     "brand": {},
@@ -194,12 +147,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 143846.0,
-        "min": 24728.0
-      }
-    }
+    "wealth": {}
   },
   "burlington,_vermont": {
     "brand": {},
@@ -221,6 +169,13 @@
         "min": 0.0
       }
     }
+  },
+  "cbsa_to_baseline": {
+    "brand": {},
+    "education": {},
+    "home_cost": {},
+    "occupation": {},
+    "wealth": {}
   },
   "charlotte,_north_carolina": {
     "brand": {},
@@ -253,12 +208,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 162143.0,
-        "min": 73508.0
-      }
-    }
+    "wealth": {}
   },
   "cincinnati,_ohio": {
     "brand": {},
@@ -291,12 +241,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 155804.0,
-        "min": 31250.0
-      }
-    }
+    "wealth": {}
   },
   "cleveland,_ohio": {
     "brand": {},
@@ -329,12 +274,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 118500.0,
-        "min": 73348.0
-      }
-    }
+    "wealth": {}
   },
   "dallas,_texas": {
     "brand": {},
@@ -346,12 +286,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 93808.0,
-        "min": 53512.0
-      }
-    }
+    "wealth": {}
   },
   "denver,_colorado": {
     "brand": {},
@@ -363,12 +298,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 89298.0,
-        "min": 77303.0
-      }
-    }
+    "wealth": {}
   },
   "detroit,_michigan": {
     "brand": {},
@@ -380,12 +310,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 88281.0,
-        "min": 50179.0
-      }
-    }
+    "wealth": {}
   },
   "east_north_central": {
     "brand": {
@@ -396,12 +321,12 @@
     },
     "education": {
       "bach_pct": {
-        "max": 4198.0,
+        "max": 91.99,
         "min": 5.69
       },
       "grad_pct": {
-        "max": 108.0,
-        "min": 0.0
+        "max": 59.43,
+        "min": 1.08
       },
       "self_employed_pct": {
         "max": 115.82,
@@ -439,12 +364,12 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 2895.0,
-        "min": 636.0
+        "max": 80.47,
+        "min": 20.81
       },
       "grad_pct": {
-        "max": 45.0,
-        "min": 0.0
+        "max": 45.44,
+        "min": 8.99
       },
       "self_employed_pct": {
         "max": 101.04,
@@ -509,27 +434,22 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 87125.0,
-        "min": 68450.0
-      }
-    }
+    "wealth": {}
   },
   "middle_atlantic": {
     "brand": {
       "brand_raw_score": {
-        "max": 9.0,
+        "max": 50.0,
         "min": 0.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 3206.0,
-        "min": 6.82
+        "max": 87.01,
+        "min": 3.33
       },
       "grad_pct": {
-        "max": 85.0,
+        "max": 61.68,
         "min": 0.0
       },
       "self_employed_pct": {
@@ -588,18 +508,18 @@
   "mountain": {
     "brand": {
       "brand_raw_score": {
-        "max": 9.0,
+        "max": 50.0,
         "min": 0.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 1388.0,
+        "max": 80.46,
         "min": 4.3
       },
       "grad_pct": {
-        "max": 36.66,
-        "min": 0.0
+        "max": 51.54,
+        "min": 0.49
       },
       "self_employed_pct": {
         "max": 123.55,
@@ -643,28 +563,23 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 104216.0,
-        "min": 23056.0
-      }
-    }
+    "wealth": {}
   },
   "new_england": {
     "brand": {
       "brand_raw_score": {
-        "max": 9.0,
+        "max": 50.0,
         "min": 0.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 2522.0,
+        "max": 93.14,
         "min": 9.53
       },
       "grad_pct": {
-        "max": 62.38,
-        "min": 0.0
+        "max": 67.1,
+        "min": 4.0
       },
       "self_employed_pct": {
         "max": 148.11,
@@ -720,7 +635,6 @@
     }
   },
   "nyc_metro": {
-    "cbsa_median_income": 85000,
     "brand": {},
     "education": {},
     "home_cost": {
@@ -744,17 +658,17 @@
   "pacific": {
     "brand": {
       "brand_raw_score": {
-        "max": 52.0,
+        "max": 50.0,
         "min": 0.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 3340.0,
+        "max": 89.38,
         "min": 3.89
       },
       "grad_pct": {
-        "max": 263.0,
+        "max": 59.55,
         "min": 0.28
       },
       "self_employed_pct": {
@@ -841,12 +755,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 168279.0,
-        "min": 64888.0
-      }
-    }
+    "wealth": {}
   },
   "salt_lake_city,_utah": {
     "brand": {},
@@ -858,12 +767,7 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 76605.0,
-        "min": 58333.0
-      }
-    }
+    "wealth": {}
   },
   "san_diego,_california": {
     "brand": {},
@@ -917,28 +821,23 @@
       }
     },
     "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 160313.0,
-        "min": 74367.0
-      }
-    }
+    "wealth": {}
   },
   "south_atlantic": {
     "brand": {
       "brand_raw_score": {
-        "max": 39.0,
+        "max": 50.0,
         "min": 0.0
       }
     },
     "education": {
       "bach_pct": {
-        "max": 4962.0,
-        "min": 29.43
+        "max": 95.13,
+        "min": 19.98
       },
       "grad_pct": {
-        "max": 172.0,
-        "min": 0.0
+        "max": 66.73,
+        "min": 5.31
       },
       "self_employed_pct": {
         "max": 113.51,
@@ -997,12 +896,12 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 3887.0,
-        "min": 66.19
+        "max": 82.57,
+        "min": 18.43
       },
       "grad_pct": {
-        "max": 80.0,
-        "min": 36.62
+        "max": 42.84,
+        "min": 8.64
       },
       "self_employed_pct": {
         "max": 92.85,
@@ -1040,12 +939,12 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 897.0
+        "max": 77.99,
+        "min": 4.91
       },
       "grad_pct": {
-        "max": 406.0,
-        "min": 0.0
+        "max": 39.28,
+        "min": 1.0
       },
       "self_employed_pct": {
         "max": 104.09,
