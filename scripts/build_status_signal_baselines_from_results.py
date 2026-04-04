@@ -93,6 +93,42 @@ def get_division(state_abbrev: Optional[str]) -> str:
     return _gd(state_abbrev)
 
 
+def paired_wealth_minmax(
+    mean_list: Optional[List[float]],
+    gap_list: Optional[List[float]],
+    min_samples: int,
+) -> Dict[str, Dict[str, float]]:
+    """
+    Status Signal resolves min/max per metric from the same baseline key; income and gap
+    must share one distributional context. Emit both or neither (no split sourcing).
+    """
+    out: Dict[str, Dict[str, float]] = {}
+    if not mean_list or len(mean_list) < min_samples:
+        return out
+    if not gap_list or len(gap_list) < min_samples:
+        return out
+    mn_g, mx_g = min(gap_list), max(gap_list)
+    if mn_g == 0.0 and mx_g == 0.0:
+        return out
+    out["mean_hh_income"] = {"min": min(mean_list), "max": max(mean_list)}
+    out["wealth_gap_ratio"] = {"min": mn_g, "max": mx_g}
+    return out
+
+
+def enforce_paired_wealth(wealth: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """If only one of mean_hh_income / wealth_gap_ratio is present, drop both orphans."""
+    if not wealth:
+        return {}
+    w = dict(wealth)
+    has_i = "mean_hh_income" in w and isinstance(w.get("mean_hh_income"), dict)
+    has_g = "wealth_gap_ratio" in w and isinstance(w.get("wealth_gap_ratio"), dict)
+    if has_i and not has_g:
+        w.pop("mean_hh_income", None)
+    if has_g and not has_i:
+        w.pop("wealth_gap_ratio", None)
+    return w
+
+
 def extract_metrics_from_response(
     raw: Dict[str, Any],
     recompute_education: bool = False,
@@ -250,11 +286,6 @@ def main() -> None:
 
     print(f"Read {seen} rows from {args.input}, extracted metrics from {used} responses.")
 
-    metric_keys = [
-        "mean_hh_income", "wealth_gap_ratio",
-        "grad_pct", "bach_pct", "self_employed_pct",
-        "finance_arts_pct", "white_collar_pct",
-    ]
     result: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
 
     for div, by_metric in division_values.items():
@@ -262,14 +293,11 @@ def main() -> None:
             continue
         if sum(len(v) for v in by_metric.values()) < args.min_samples:
             continue
-        wealth = {}
-        for m in ["mean_hh_income", "wealth_gap_ratio"]:
-            v = by_metric.get(m)
-            if v and len(v) >= args.min_samples:
-                mn, mx = min(v), max(v)
-                if m == "wealth_gap_ratio" and mn == 0 and mx == 0:
-                    continue  # no variation; let merge keep existing baseline
-                wealth[m] = {"min": mn, "max": mx}
+        wealth = paired_wealth_minmax(
+            by_metric.get("mean_hh_income"),
+            by_metric.get("wealth_gap_ratio"),
+            args.min_samples,
+        )
         education = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             v = by_metric.get(m)
@@ -296,15 +324,11 @@ def main() -> None:
     for cbsa_key, by_metric in cbsa_values.items():
         if sum(len(v) for v in by_metric.values()) < args.min_samples:
             continue
-        wealth = {}
-        v_income = by_metric.get("mean_hh_income")
-        v_gap = by_metric.get("wealth_gap_ratio")
-        if v_income and len(v_income) >= args.min_samples:
-            wealth["mean_hh_income"] = {"min": min(v_income), "max": max(v_income)}
-        if v_gap and len(v_gap) >= args.min_samples:
-            mn, mx = min(v_gap), max(v_gap)
-            if not (mn == 0 and mx == 0):
-                wealth["wealth_gap_ratio"] = {"min": mn, "max": mx}
+        wealth = paired_wealth_minmax(
+            by_metric.get("mean_hh_income"),
+            by_metric.get("wealth_gap_ratio"),
+            args.min_samples,
+        )
         home_cost = {}
         v_home = by_metric.get("median_home_value")
         if v_home and len(v_home) >= args.min_samples:
@@ -322,14 +346,11 @@ def main() -> None:
 
     # Pool "all" from all divisions (including values that were in unknown-state rows)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
-        wealth_all = {}
-        for m in ["mean_hh_income", "wealth_gap_ratio"]:
-            v = all_vals.get(m)
-            if v and len(v) >= args.min_samples:
-                mn, mx = min(v), max(v)
-                if m == "wealth_gap_ratio" and mn == 0 and mx == 0:
-                    continue
-                wealth_all[m] = {"min": mn, "max": mx}
+        wealth_all = paired_wealth_minmax(
+            all_vals.get("mean_hh_income"),
+            all_vals.get("wealth_gap_ratio"),
+            args.min_samples,
+        )
         education_all = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             v = all_vals.get(m)
@@ -375,6 +396,11 @@ def main() -> None:
                     result[div][comp] = result_comp
         except Exception as e:
             print(f"Note: could not merge with existing file: {e}")
+
+    # Merge can reintroduce orphan mean_hh_income or wealth_gap_ratio from older JSON.
+    for _key, comps in result.items():
+        if isinstance(comps, dict) and "wealth" in comps:
+            comps["wealth"] = enforce_paired_wealth(comps.get("wealth"))
 
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
