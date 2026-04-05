@@ -918,6 +918,7 @@ def _compute_status_signal_for_response(
     city: Optional[str] = None,
     coordinates: Optional[Dict[str, Any]] = None,
     diversity_details: Optional[Dict[str, Any]] = None,
+    area_type: Optional[str] = None,
 ) -> Optional[tuple]:
     """
     Compute Status Signal (0-100) and breakdown (wealth, home_cost, education, occupation, luxury_presence, wealth_character).
@@ -942,6 +943,7 @@ def _compute_status_signal_for_response(
         lat=lat if isinstance(lat, (int, float)) else None,
         lon=lon if isinstance(lon, (int, float)) else None,
         diversity_details=diversity_details,
+        area_type=area_type,
     )
 
 
@@ -2176,6 +2178,7 @@ def _compute_single_score_internal(
         city=city,
         coordinates={"lat": lat, "lon": lon},
         diversity_details=diversity_details,
+        area_type=area_type,
     )
     if status_signal_result is not None:
         score, breakdown = status_signal_result
@@ -3668,6 +3671,7 @@ async def _stream_score_with_progress(
             city=city,
             coordinates={"lat": lat, "lon": lon},
             diversity_details=diversity_details,
+            area_type=area_type,
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result
@@ -4698,6 +4702,7 @@ async def stream_score(
             city=city,
             coordinates={"lat": lat, "lon": lon},
             diversity_details=diversity_details,
+            area_type=area_type,
         )
         if status_signal_result is not None:
             score, breakdown = status_signal_result

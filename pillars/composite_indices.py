@@ -21,7 +21,7 @@ LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
 }
 
 INDEX_VERSION_LONGEVITY = "2"
-INDEX_VERSION_STATUS = "2"
+INDEX_VERSION_STATUS = "3"
 INDEX_VERSION_HAPPINESS = "3"
 
 INDICES_VERSION_METADATA = {
@@ -29,6 +29,15 @@ INDICES_VERSION_METADATA = {
     "status_signal": INDEX_VERSION_STATUS,
     "happiness": INDEX_VERSION_HAPPINESS,
 }
+
+
+def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
+    """Morphological area_type from stored API score (data_quality_summary), if present."""
+    dq = payload.get("data_quality_summary") or {}
+    at = dq.get("area_type")
+    if isinstance(at, str) and at.strip():
+        return at.strip()
+    return None
 
 
 def compute_longevity_index(
@@ -139,6 +148,8 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
     if not social and not diversity_details:
         return
 
+    area_type_bt = _area_type_from_payload(response)
+
     try:
         from data_sources import census_api as _ca
 
@@ -162,6 +173,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 lat=lat_f,
                 lon=lon_f,
                 diversity_details=diversity_details,
+                area_type=area_type_bt,
             )
             if result is not None:
                 score, breakdown = result
@@ -244,6 +256,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     econ = pillars.get("economic_security")
     amenities = pillars.get("neighborhood_amenities") or {}
     _city = (location_info.get("city") or "").strip() or None
+    area_type_pl = _area_type_from_payload(payload)
 
     if housing and econ and (social or diversity_details):
         try:
@@ -259,6 +272,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
                 lat=lat,
                 lon=lon,
                 diversity_details=diversity_details,
+                area_type=area_type_pl,
             )
             if result is not None:
                 score, breakdown = result
