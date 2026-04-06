@@ -35,6 +35,10 @@ def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
     """Morphological area_type from stored API score (data_quality_summary), if present."""
     dq = payload.get("data_quality_summary") or {}
     at = dq.get("area_type")
+    if not (isinstance(at, str) and at.strip()):
+        ac = dq.get("area_classification")
+        if isinstance(ac, dict):
+            at = ac.get("area_type")
     if isinstance(at, str) and at.strip():
         return at.strip()
     return None
