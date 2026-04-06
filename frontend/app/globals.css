@@ -25,6 +25,7 @@
   --hf-hover-bg: #e9ecef;
 
   --hf-border: #e1e8ed;
+  --color-border-primary: var(--hf-border);
   --hf-border-strong: rgba(102, 126, 234, 0.35);
 
   --hf-danger: #dc3545;

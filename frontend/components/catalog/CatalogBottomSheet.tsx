@@ -1,6 +1,5 @@
 'use client'
 
-import { ChevronUp } from 'lucide-react'
 import { catalogRowKey, type CatalogMapIndexMode, type CatalogMapPlace } from '@/lib/catalogMapTypes'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import {
@@ -8,14 +7,7 @@ import {
   getStandoutPillarChips,
 } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
-import {
-  RAMP_HEX,
-  STATUS_ARCHETYPE_RAMP,
-  fullBreakdownCtaStyle,
-  indexNumeral600,
-  normalizeStatusArchetypeKey,
-  statusArchetypeNumeral600,
-} from '@/lib/indexColorSystem'
+import { RAMP_HEX, fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -25,6 +17,14 @@ const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'happiness', label: 'Happiness' },
   { id: 'status', label: 'Status' },
 ]
+
+/** Fixed ramp-600 / ramp-400 for catalog peek strip (per design spec). */
+const INDEX_PEEK_COLORS: Record<CatalogMapIndexMode, { c400: string; c600: string }> = {
+  homefit: { c400: RAMP_HEX.purple[400], c600: RAMP_HEX.purple[600] },
+  longevity: { c400: RAMP_HEX.teal[400], c600: RAMP_HEX.teal[600] },
+  happiness: { c400: RAMP_HEX.blue[400], c600: RAMP_HEX.blue[600] },
+  status: { c400: RAMP_HEX.coral[400], c600: RAMP_HEX.coral[600] },
+}
 
 function fmt(v: number | null): string {
   if (v == null || !Number.isFinite(v)) return '—'
@@ -53,12 +53,8 @@ export default function CatalogBottomSheet({
   onFullBreakdown,
 }: CatalogBottomSheetProps) {
   const expanded_vh = 58
-  const peek_max_px = 380
 
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
-  const statusArchetypeRamp = allIdx
-    ? STATUS_ARCHETYPE_RAMP[normalizeStatusArchetypeKey(allIdx.archetype)]
-    : STATUS_ARCHETYPE_RAMP.typical
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
@@ -84,30 +80,43 @@ export default function CatalogBottomSheet({
       className="fixed left-0 right-0 z-20 flex flex-col rounded-t-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] shadow-[var(--hf-card-shadow)]"
       style={{
         bottom: 0,
-        maxHeight: snap === 'expanded' ? `${expanded_vh}vh` : peek_max_px,
+        maxHeight: snap === 'expanded' ? `${expanded_vh}vh` : undefined,
         transition: 'max-height 0.28s ease',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
       }}
     >
       <button
         type="button"
-        className="flex w-full shrink-0 items-center justify-center border-b border-[var(--hf-border)] py-2.5 text-[var(--hf-text-secondary)]"
+        className="flex w-full shrink-0 flex-col border-b border-[var(--hf-border)]"
         onClick={() => onSnapChange(snap === 'peek' ? 'expanded' : 'peek')}
         aria-expanded={snap === 'expanded'}
         aria-label={snap === 'peek' ? 'Expand details' : 'Collapse details'}
       >
-        <ChevronUp
-          className="h-5 w-5 shrink-0 transition-transform opacity-70"
-          style={{ transform: snap === 'expanded' ? 'rotate(180deg)' : 'none' }}
-        />
+        <div
+          className="mx-auto"
+          style={{
+            width: 36,
+            paddingTop: 12,
+            marginBottom: 12,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              background: 'var(--color-border-primary)',
+            }}
+          />
+        </div>
       </button>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-2 sm:px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 pt-0 sm:px-4">
         {!place ? (
           <p className="py-2 text-center text-sm text-[var(--hf-text-secondary)]">Tap a bubble to see scores.</p>
         ) : (
           <>
-            <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="mb-2 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-lg font-extrabold leading-tight text-[var(--hf-text-primary)]">
                   {place.catalog.name}
@@ -125,36 +134,39 @@ export default function CatalogBottomSheet({
               </button>
             </div>
 
-            <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mb-2 grid grid-cols-4 gap-0 py-2">
               {INDEX_TABS.map((tab) => {
                 const active = indexMode === tab.id
                 const v = scoreForTab(tab.id)
-                const ramp = catalogRampKey(tab.id)
-                const accent600 =
-                  tab.id === 'status'
-                    ? statusArchetypeNumeral600(allIdx?.archetype ?? null)
-                    : indexNumeral600(ramp)
-                const borderColor = accent600
+                const { c400, c600 } = INDEX_PEEK_COLORS[tab.id]
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => onIndexModeChange(tab.id)}
-                    className="rounded-xl bg-[var(--hf-card-bg)] px-2 py-2 text-left transition-[box-shadow,border-color] sm:px-2.5"
-                    style={{
-                      border: active ? `0.5px solid ${borderColor}` : '0.5px solid var(--hf-border)',
-                      boxShadow: active ? `0 0 0 1px ${borderColor}33` : 'none',
-                    }}
+                    className="flex flex-col items-center text-center"
                   >
-                    <div className="text-[0.65rem] font-bold uppercase tracking-wide text-[var(--hf-text-secondary)]">
+                    <div
+                      className="font-normal uppercase"
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: '0.05em',
+                        color: 'var(--color-text-tertiary)',
+                      }}
+                    >
                       {tab.label}
                     </div>
-                    <div
-                      className="mt-0.5 text-xl font-extrabold tabular-nums leading-none"
-                      style={{ color: accent600 }}
+                    <span
+                      className="mt-0.5 inline-block tabular-nums leading-none"
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 500,
+                        color: active ? c400 : c600,
+                        borderBottom: active ? `2px solid ${c400}` : '2px solid transparent',
+                      }}
                     >
                       {fmt(v)}
-                    </div>
+                    </span>
                   </button>
                 )
               })}
@@ -162,51 +174,40 @@ export default function CatalogBottomSheet({
 
             {allIdx?.archetypeBadge ? (
               <div
-                className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
+                className="mb-2 inline-flex max-w-full self-start items-center rounded-[20px] text-xs font-medium leading-tight"
                 style={{
-                  background: statusArchetypeRamp[50],
-                  border: `1px solid ${statusArchetypeRamp[200]}`,
-                  color: statusArchetypeRamp[800],
+                  gap: 6,
+                  background: '#FAECE7',
+                  padding: '4px 10px 4px 6px',
+                  color: '#712B13',
                 }}
               >
-                <span
-                  className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: statusArchetypeRamp[400] }}
-                  aria-hidden
-                />
-                <span>{allIdx.archetypeBadge}</span>
-                {allIdx.archetype && place.score.status_signal_breakdown?.signal_strength_label ? (
-                  <span style={{ color: statusArchetypeRamp[600], fontWeight: 700 }}>
-                    {place.score.status_signal_breakdown.signal_strength_label}
-                  </span>
-                ) : null}
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#D85A30' }} aria-hidden />
+                <span className="min-w-0">
+                  {allIdx.archetypeBadge}
+                  {place.score.status_signal_breakdown?.signal_strength_label ? (
+                    <span style={{ color: '#993C1D' }}>
+                      {'  '}
+                      {place.score.status_signal_breakdown.signal_strength_label}
+                    </span>
+                  ) : null}
+                </span>
               </div>
             ) : allIdx?.archetype ? (
               <div
-                className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-xs font-semibold"
+                className="mb-2 inline-flex max-w-full self-start items-center rounded-[20px] text-xs font-medium leading-tight"
                 style={{
-                  background: statusArchetypeRamp[50],
-                  border: `1px solid ${statusArchetypeRamp[200]}`,
-                  color: statusArchetypeRamp[800],
+                  gap: 6,
+                  background: '#FAECE7',
+                  padding: '4px 10px 4px 6px',
+                  color: '#712B13',
                 }}
               >
-                <span
-                  className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: statusArchetypeRamp[400] }}
-                  aria-hidden
-                />
-                <span>{allIdx.archetype}</span>
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#D85A30' }} aria-hidden />
+                <span className="min-w-0">{allIdx.archetype}</span>
               </div>
             ) : (
-              <div
-                className="mb-3 rounded-full px-3 py-1.5 text-center text-xs font-medium text-[var(--hf-text-secondary)]"
-                style={{
-                  background: 'rgba(0,0,0,0.05)',
-                  border: '1px solid var(--hf-border)',
-                }}
-              >
-                No archetype in snapshot
-              </div>
+              <p className="mb-2 text-xs text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
             )}
 
             {chips.length > 0 && (
