@@ -148,6 +148,12 @@ export function statusArchetypeNumeral600(archetype: string | null | undefined):
   return STATUS_ARCHETYPE_RAMP[key][600]
 }
 
+/** Active / underline emphasis for Status tab (ramp-400, archetype-specific). */
+export function statusArchetypeNumeral400(archetype: string | null | undefined): string {
+  const key = normalizeStatusArchetypeKey(archetype)
+  return STATUS_ARCHETYPE_RAMP[key][400]
+}
+
 /** Text on colored fill (badges, high band on dark fill). */
 export function scoreBandTextOnFill(ramp: IndexRampKey, score: number): string {
   const s = Math.max(0, Math.min(100, score))

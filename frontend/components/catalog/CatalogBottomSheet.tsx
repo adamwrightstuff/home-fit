@@ -7,7 +7,13 @@ import {
   getStandoutPillarChips,
 } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
-import { RAMP_HEX, fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
+import {
+  STATUS_ARCHETYPE_RAMP,
+  fullBreakdownCtaStyle,
+  normalizeStatusArchetypeKey,
+  statusArchetypeNumeral400,
+  statusArchetypeNumeral600,
+} from '@/lib/indexColorSystem'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -18,12 +24,14 @@ const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'status', label: 'Status' },
 ]
 
-/** Fixed ramp-600 / ramp-400 for catalog peek strip (per design spec). */
-const INDEX_PEEK_COLORS: Record<CatalogMapIndexMode, { c400: string; c600: string }> = {
-  homefit: { c400: RAMP_HEX.purple[400], c600: RAMP_HEX.purple[600] },
-  longevity: { c400: RAMP_HEX.teal[400], c600: RAMP_HEX.teal[600] },
-  happiness: { c400: RAMP_HEX.blue[400], c600: RAMP_HEX.blue[600] },
-  status: { c400: RAMP_HEX.coral[400], c600: RAMP_HEX.coral[600] },
+/** CSS token pairs for peek score strip (non–Status Signal indices). */
+const PEEK_RAMP_CSS: Record<
+  Exclude<CatalogMapIndexMode, 'status'>,
+  { c400: string; c600: string }
+> = {
+  homefit: { c400: 'var(--c-purple-400)', c600: 'var(--c-purple-600)' },
+  longevity: { c400: 'var(--c-teal-400)', c600: 'var(--c-teal-600)' },
+  happiness: { c400: 'var(--c-blue-400)', c600: 'var(--c-blue-600)' },
 }
 
 function fmt(v: number | null): string {
@@ -56,6 +64,7 @@ export default function CatalogBottomSheet({
 
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
+  const archetypeRamp = STATUS_ARCHETYPE_RAMP[normalizeStatusArchetypeKey(allIdx?.archetype)]
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
     if (!allIdx) return null
@@ -75,96 +84,142 @@ export default function CatalogBottomSheet({
 
   const breakdownBtn = fullBreakdownCtaStyle(catalogRampKey(indexMode))
 
+  const scoreNumeralStyle = (tabId: CatalogMapIndexMode, active: boolean) => {
+    if (tabId === 'status') {
+      const c600 = statusArchetypeNumeral600(allIdx?.archetype ?? null)
+      const c400 = statusArchetypeNumeral400(allIdx?.archetype ?? null)
+      const color = active ? c400 : c600
+      return {
+        fontSize: '1.1rem',
+        fontWeight: 600 as const,
+        lineHeight: 1,
+        color,
+        textDecorationLine: active ? ('underline' as const) : ('none' as const),
+        textDecorationThickness: active ? 2 : undefined,
+        textDecorationColor: active ? c400 : undefined,
+        textUnderlineOffset: active ? 2 : undefined,
+      }
+    }
+    const { c400, c600 } = PEEK_RAMP_CSS[tabId]
+    const color = active ? c400 : c600
+    return {
+      fontSize: '1.1rem',
+      fontWeight: 600 as const,
+      lineHeight: 1,
+      color,
+      textDecorationLine: active ? ('underline' as const) : ('none' as const),
+      textDecorationThickness: active ? 2 : undefined,
+      textDecorationColor: active ? c400 : undefined,
+      textUnderlineOffset: active ? 2 : undefined,
+    }
+  }
+
   return (
     <div
-      className="fixed left-0 right-0 z-20 flex flex-col rounded-t-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] shadow-[var(--hf-card-shadow)]"
+      className="fixed left-0 right-0 z-20 flex flex-col rounded-t-2xl shadow-[var(--hf-card-shadow)]"
       style={{
         bottom: 0,
         maxHeight: snap === 'expanded' ? `${expanded_vh}vh` : undefined,
         transition: 'max-height 0.28s ease',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+        padding: `0 16px max(12px, env(safe-area-inset-bottom)) 16px`,
+        background: 'var(--hf-card-bg)',
+        borderTop: '1px solid var(--hf-border)',
       }}
     >
       <button
         type="button"
-        className="flex w-full shrink-0 flex-col border-b border-[var(--hf-border)]"
+        className="flex w-full shrink-0 flex-col"
         onClick={() => onSnapChange(snap === 'peek' ? 'expanded' : 'peek')}
         aria-expanded={snap === 'expanded'}
         aria-label={snap === 'peek' ? 'Expand details' : 'Collapse details'}
       >
         <div
-          className="mx-auto"
           style={{
             width: 36,
-            paddingTop: 12,
-            marginBottom: 12,
+            height: 4,
+            borderRadius: 2,
+            background: 'var(--color-border-primary)',
+            margin: '8px auto 10px',
           }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              background: 'var(--color-border-primary)',
-            }}
-          />
-        </div>
+        />
       </button>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 pt-0 sm:px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {!place ? (
-          <p className="py-2 text-center text-sm text-[var(--hf-text-secondary)]">Tap a bubble to see scores.</p>
+          <p className="py-2 text-center text-[0.8rem] text-[var(--hf-text-secondary)]">Tap a bubble to see scores.</p>
         ) : (
           <>
-            <div className="mb-2 flex items-start justify-between gap-3">
+            <div
+              className="flex items-start justify-between gap-3"
+              style={{ marginBottom: 8 }}
+            >
               <div className="min-w-0">
-                <div className="text-lg font-extrabold leading-tight text-[var(--hf-text-primary)]">
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: 'var(--hf-text-primary)',
+                    lineHeight: 1.2,
+                    margin: 0,
+                  }}
+                >
                   {place.catalog.name}
                 </div>
-                <div className="mt-0.5 text-sm text-[var(--hf-text-secondary)]">
+                <div
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--hf-text-secondary)',
+                    margin: 0,
+                  }}
+                >
                   {place.catalog.county_borough}, {place.catalog.state_abbr}
                 </div>
               </div>
               <button
                 type="button"
-                className="shrink-0 rounded-lg border border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
+                className="shrink-0 rounded-lg border border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-3 py-1.5 font-bold text-[var(--hf-text-primary)]"
+                style={{ fontSize: '0.8rem' }}
                 onClick={onClose}
               >
                 Clear
               </button>
             </div>
 
-            <div className="mb-2 grid grid-cols-4 gap-0 py-2">
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                marginBottom: 8,
+              }}
+            >
               {INDEX_TABS.map((tab) => {
                 const active = indexMode === tab.id
                 const v = scoreForTab(tab.id)
-                const { c400, c600 } = INDEX_PEEK_COLORS[tab.id]
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => onIndexModeChange(tab.id)}
-                    className="flex flex-col items-center text-center"
+                    style={{
+                      textAlign: 'center',
+                      padding: '4px 0',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     <div
-                      className="font-normal uppercase"
                       style={{
-                        fontSize: 10,
-                        letterSpacing: '0.05em',
-                        color: 'var(--color-text-tertiary)',
+                        fontSize: '0.65rem',
+                        letterSpacing: '0.06em',
+                        color: 'var(--hf-text-tertiary)',
+                        marginBottom: 2,
+                        textTransform: 'uppercase',
                       }}
                     >
                       {tab.label}
                     </div>
-                    <span
-                      className="mt-0.5 inline-block tabular-nums leading-none"
-                      style={{
-                        fontSize: 22,
-                        fontWeight: 500,
-                        color: active ? c400 : c600,
-                        borderBottom: active ? `2px solid ${c400}` : '2px solid transparent',
-                      }}
-                    >
+                    <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>
                       {fmt(v)}
                     </span>
                   </button>
@@ -174,19 +229,38 @@ export default function CatalogBottomSheet({
 
             {allIdx?.archetypeBadge ? (
               <div
-                className="mb-2 inline-flex max-w-full self-start items-center rounded-[20px] text-xs font-medium leading-tight"
+                className="max-w-full self-start"
                 style={{
-                  gap: 6,
-                  background: '#FAECE7',
-                  padding: '4px 10px 4px 6px',
-                  color: '#712B13',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  borderRadius: 20,
+                  padding: '3px 8px 3px 6px',
+                  marginBottom: 8,
+                  background: archetypeRamp[50],
                 }}
               >
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#D85A30' }} aria-hidden />
-                <span className="min-w-0">
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: archetypeRamp[400],
+                  }}
+                  aria-hidden
+                />
+                <span
+                  className="min-w-0"
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    color: archetypeRamp[800],
+                  }}
+                >
                   {allIdx.archetypeBadge}
                   {place.score.status_signal_breakdown?.signal_strength_label ? (
-                    <span style={{ color: '#993C1D' }}>
+                    <span style={{ color: archetypeRamp[600] }}>
                       {'  '}
                       {place.score.status_signal_breakdown.signal_strength_label}
                     </span>
@@ -195,39 +269,76 @@ export default function CatalogBottomSheet({
               </div>
             ) : allIdx?.archetype ? (
               <div
-                className="mb-2 inline-flex max-w-full self-start items-center rounded-[20px] text-xs font-medium leading-tight"
+                className="max-w-full self-start"
                 style={{
-                  gap: 6,
-                  background: '#FAECE7',
-                  padding: '4px 10px 4px 6px',
-                  color: '#712B13',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  borderRadius: 20,
+                  padding: '3px 8px 3px 6px',
+                  marginBottom: 8,
+                  background: archetypeRamp[50],
                 }}
               >
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: '#D85A30' }} aria-hidden />
-                <span className="min-w-0">{allIdx.archetype}</span>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: archetypeRamp[400],
+                  }}
+                  aria-hidden
+                />
+                <span
+                  className="min-w-0"
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    color: archetypeRamp[800],
+                  }}
+                >
+                  {allIdx.archetype}
+                </span>
               </div>
             ) : (
-              <p className="mb-2 text-xs text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
+              <p className="mb-2 text-[0.7rem] text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
             )}
 
             {chips.length > 0 && (
-              <div className="mb-1 flex flex-wrap gap-2">
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 5,
+                  marginBottom: 10,
+                }}
+              >
                 {chips.map((c) => {
                   const isTop = c.tier === 'top'
-                  const dotColor = isTop ? RAMP_HEX.teal[400] : RAMP_HEX.coral[400]
                   return (
                     <span
                       key={`${c.pillarKey}-${c.tier}`}
-                      className="inline-flex max-w-full items-baseline gap-1.5 rounded-lg bg-[var(--hf-hover-bg)] px-2.5 py-1.5 text-xs font-semibold text-[var(--hf-text-secondary)]"
+                      className="inline-flex max-w-full min-w-0 items-baseline gap-1"
                       style={{
-                        border: '1px solid var(--hf-border)',
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: 20,
+                        ...(isTop
+                          ? {
+                              background: 'var(--c-teal-50)',
+                              border: '0.5px solid var(--c-teal-200)',
+                              color: 'var(--c-teal-800)',
+                            }
+                          : {
+                              background: 'var(--c-coral-50)',
+                              border: '0.5px solid var(--c-coral-200)',
+                              color: 'var(--c-coral-800)',
+                            }),
                       }}
                     >
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: dotColor }} aria-hidden />
                       <span className="truncate">{c.name}</span>
-                      <span className="tabular-nums font-extrabold text-[var(--hf-text-secondary)]">
-                        {c.score.toFixed(0)}
-                      </span>
+                      <span className="shrink-0 tabular-nums font-semibold">{c.score.toFixed(0)}</span>
                     </span>
                   )
                 })}
@@ -236,8 +347,13 @@ export default function CatalogBottomSheet({
 
             <button
               type="button"
-              className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-bold"
-              style={{ background: breakdownBtn.background, color: breakdownBtn.color }}
+              className="inline-flex w-full items-center justify-center rounded-xl text-center font-bold"
+              style={{
+                padding: '10px 16px',
+                fontSize: '0.85rem',
+                background: breakdownBtn.background,
+                color: breakdownBtn.color,
+              }}
               onClick={() => onFullBreakdown(place)}
             >
               Full breakdown
