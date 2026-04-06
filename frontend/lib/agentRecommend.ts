@@ -1,5 +1,5 @@
 import type { PillarPriorities } from '@/components/SearchOptions'
-import { buildResultsCacheKey, type ResultsRouteParams } from '@/lib/resultsShare'
+import { buildResultsCacheKey, canonicalizePrioritiesJsonFromSearchParam, type ResultsRouteParams } from '@/lib/resultsShare'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import type { ScoreResponse } from '@/types/api'
 
@@ -26,7 +26,7 @@ export function hydrateRecommendationResultsNavigation(rec: AgentRecommendation)
   try {
     const url = new URL(rec.results_url, window.location.origin)
     const location = url.searchParams.get('location') ?? rec.neighborhood
-    const prioritiesJson = url.searchParams.get('priorities') ?? ''
+    const prioritiesJson = canonicalizePrioritiesJsonFromSearchParam(url.searchParams.get('priorities'))
     const routeParams: ResultsRouteParams = {
       location,
       prioritiesJson,

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import SmartLoadingScreen from '@/components/SmartLoadingScreen'
 import ScoreDisplay, { type RunPillarScoreOptions } from '@/components/ScoreDisplay'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
-import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { Metadata, ScoreResponse } from '@/types/api'
 import type { PillarKey } from '@/lib/pillars'
 import {
@@ -17,7 +16,12 @@ import {
 } from '@/lib/pillars'
 import { getScoreSinglePillar, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
+import {
+  buildResultsCacheKey,
+  buildResultsUrl,
+  canonicalizePrioritiesJsonFromSearchParam,
+  type ResultsRouteParams,
+} from '@/lib/resultsShare'
 import { readAndConsumeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
@@ -54,16 +58,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
   if (!location) return null
 
   const prioritiesRaw = firstParam(sp.priorities)
-  let prioritiesJson = ''
-  try {
-    if (prioritiesRaw) {
-      const obj = JSON.parse(prioritiesRaw)
-      prioritiesJson = JSON.stringify(obj)
-    }
-  } catch {
-    // ignore; fall back to default priorities
-  }
-  if (!prioritiesJson) prioritiesJson = JSON.stringify(DEFAULT_PRIORITIES)
+  const prioritiesJson = canonicalizePrioritiesJsonFromSearchParam(prioritiesRaw)
 
   const job_categories = firstParam(sp.job_categories)
 

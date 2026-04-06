@@ -1,3 +1,5 @@
+import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
+
 export type ResultsRouteParams = {
   location: string
   prioritiesJson: string
@@ -7,6 +9,27 @@ export type ResultsRouteParams = {
   natural_beauty_preference?: string | null
   built_character_preference?: string | null
   built_density_preference?: string | null
+}
+
+/**
+ * Parse `priorities` query JSON and re-stringify (compact JS form).
+ * Must match `/results` normalization so sessionStorage keys agree across
+ * Python-built URLs (spaces in JSON) and client-built URLs.
+ */
+export function canonicalizePrioritiesJsonFromSearchParam(
+  prioritiesRaw: string | null | undefined
+): string {
+  let prioritiesJson = ''
+  try {
+    if (prioritiesRaw) {
+      const obj = JSON.parse(prioritiesRaw)
+      prioritiesJson = JSON.stringify(obj)
+    }
+  } catch {
+    // fall back below
+  }
+  if (!prioritiesJson) return JSON.stringify(DEFAULT_PRIORITIES)
+  return prioritiesJson
 }
 
 function stableHash(input: string): string {
