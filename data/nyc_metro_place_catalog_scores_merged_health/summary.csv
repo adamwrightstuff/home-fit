@@ -1,5 +1,2 @@
 issue_type,count
-pillar_error,80
-whole_row_failed,2
-whole_row_failed:rerun_failed_catalog_pillars: 502 Server Error:  for url: https://home-fit-produ,1
-whole_row_failed:rerun_failed_catalog_pillars: HTTPSConnectionPool(host='home-fit-production.up.r,1
+pillar_error,7

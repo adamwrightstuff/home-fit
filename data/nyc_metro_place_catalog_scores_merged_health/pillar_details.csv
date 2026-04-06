@@ -1,81 +1,8 @@
 place_key,label,name,county_borough,state_abbr,pillar,issue,score,pillar_error,confidence,fallback_used,reason
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,neighborhood_amenities,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,built_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,neighborhood_amenities,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,built_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,neighborhood_amenities,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Port Washington|Nassau|NY,"Port Washington, Nassau, NY",Port Washington,Nassau,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Port Washington|Nassau|NY,"Port Washington, Nassau, NY",Port Washington,Nassau,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed

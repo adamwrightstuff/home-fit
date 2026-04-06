@@ -1,12 +1,12 @@
 place_key,label,name,county_borough,state_abbr,row_success,row_error,pillar_issue_count,pillars_flagged
 Ardsley|Westchester|NY,"Ardsley, Westchester, NY",Ardsley,Westchester,NY,True,,0,
-Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,True,,11,neighborhood_amenities:pillar_error; economic_security:pillar_error; climate_risk:pillar_error; natural_beauty:pillar_error; diversity:pillar_error; social_fabric:pillar_error; built_beauty:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Astoria|Queens|NY,"Astoria, Queens, NY",Astoria,Queens,NY,True,,0,
 Battery Park City|Manhattan|NY,"Battery Park City, Manhattan, NY",Battery Park City,Manhattan,NY,True,,0,
 Bay Ridge|Brooklyn|NY,"Bay Ridge, Brooklyn, NY",Bay Ridge,Brooklyn,NY,True,,0,
 Bayside|Queens|NY,"Bayside, Queens, NY",Bayside,Queens,NY,True,,0,
 Bed-Stuy|Brooklyn|NY,"Bed-Stuy, Brooklyn, NY",Bed-Stuy,Brooklyn,NY,True,,0,
 Bedford|Westchester|NY,"Bedford, Westchester, NY",Bedford,Westchester,NY,True,,0,
-Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,False,rerun_failed_catalog_pillars: 502 Server Error:  for url: https://home-fit-production.up.railway.app/score?location=Bellmore%2C+NY&enable_schools=false&only=economic_security%2Cclimate_risk%2Cdiversity%2Csocial_fabric%2Chousing_value,,
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,True,,2,diversity:pillar_error; social_fabric:pillar_error
 Belmont|Bronx|NY,"Belmont, Bronx, NY",Belmont,Bronx,NY,True,,0,
 Bensonhurst|Brooklyn|NY,"Bensonhurst, Brooklyn, NY",Bensonhurst,Brooklyn,NY,True,,0,
 Bloomfield|Essex|NJ,"Bloomfield, Essex, NJ",Bloomfield,Essex,NJ,True,,0,
@@ -111,17 +111,17 @@ Millburn|Essex|NJ,"Millburn, Essex, NJ",Millburn,Essex,NJ,True,,0,
 Mineola|Nassau|NY,"Mineola, Nassau, NY",Mineola,Nassau,NY,True,,0,
 Montclair|Essex|NJ,"Montclair, Essex, NJ",Montclair,Essex,NJ,True,,0,
 Morningside Heights|Manhattan|NY,"Morningside Heights, Manhattan, NY",Morningside Heights,Manhattan,NY,True,,0,
-Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,True,,11,neighborhood_amenities:pillar_error; economic_security:pillar_error; climate_risk:pillar_error; natural_beauty:pillar_error; diversity:pillar_error; social_fabric:pillar_error; built_beauty:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Morris Park|Bronx|NY,"Morris Park, Bronx, NY",Morris Park,Bronx,NY,True,,0,
 Morristown|Morris|NJ,"Morristown, Morris, NJ",Morristown,Morris,NJ,True,,0,
-Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,True,,9,neighborhood_amenities:pillar_error; economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Mott Haven|Bronx|NY,"Mott Haven, Bronx, NY",Mott Haven,Bronx,NY,True,,0,
 Mount Kisco|Westchester|NY,"Mount Kisco, Westchester, NY",Mount Kisco,Westchester,NY,True,,0,
 Mount Vernon|Westchester|NY,"Mount Vernon, Westchester, NY",Mount Vernon,Westchester,NY,True,,0,
-Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,True,,8,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,True,,0,
 New Canaan|Fairfield|CT,"New Canaan, Fairfield, CT",New Canaan,Fairfield,CT,True,,0,
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,True,,5,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; housing_value:pillar_error
+New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,True,,0,
 New Hyde Park|Nassau|NY,"New Hyde Park, Nassau, NY",New Hyde Park,Nassau,NY,True,,0,
 New Rochelle|Westchester|NY,"New Rochelle, Westchester, NY",New Rochelle,Westchester,NY,True,,0,
-NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,True,,8,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,True,,0,
 Nolita|Manhattan|NY,"Nolita, Manhattan, NY",Nolita,Manhattan,NY,True,,0,
 Norwalk|Fairfield|CT,"Norwalk, Fairfield, CT",Norwalk,Fairfield,CT,True,,0,
 Oceanside|Nassau|NY,"Oceanside, Nassau, NY",Oceanside,Nassau,NY,True,,0,
@@ -131,21 +131,21 @@ Ozone Park|Queens|NY,"Ozone Park, Queens, NY",Ozone Park,Queens,NY,True,,0,
 Park Slope|Brooklyn|NY,"Park Slope, Brooklyn, NY",Park Slope,Brooklyn,NY,True,,0,
 Peekskill|Westchester|NY,"Peekskill, Westchester, NY",Peekskill,Westchester,NY,True,,0,
 Pelham Bay|Bronx|NY,"Pelham Bay, Bronx, NY",Pelham Bay,Bronx,NY,True,,0,
-Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,True,,5,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; housing_value:pillar_error
+Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,True,,0,
 Pelham|Westchester|NY,"Pelham, Westchester, NY",Pelham,Westchester,NY,True,,0,
 Pleasantville|Westchester|NY,"Pleasantville, Westchester, NY",Pleasantville,Westchester,NY,True,,0,
 Port Chester|Westchester|NY,"Port Chester, Westchester, NY",Port Chester,Westchester,NY,True,,0,
-Port Washington|Nassau|NY,"Port Washington, Nassau, NY",Port Washington,Nassau,NY,True,,2,diversity:pillar_error; social_fabric:pillar_error
+Port Washington|Nassau|NY,"Port Washington, Nassau, NY",Port Washington,Nassau,NY,True,,0,
 Prospect Heights|Brooklyn|NY,"Prospect Heights, Brooklyn, NY",Prospect Heights,Brooklyn,NY,True,,0,
 Red Hook|Brooklyn|NY,"Red Hook, Brooklyn, NY",Red Hook,Brooklyn,NY,True,,0,
 Rego Park|Queens|NY,"Rego Park, Queens, NY",Rego Park,Queens,NY,True,,0,
 Richmond Hill|Queens|NY,"Richmond Hill, Queens, NY",Richmond Hill,Queens,NY,True,,0,
-Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,False,"rerun_failed_catalog_pillars: HTTPSConnectionPool(host='home-fit-production.up.railway.app', port=443): Read timed out. (read timeout=900)",,
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,True,,5,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; housing_value:pillar_error
 Ridgewood|Queens|NY,"Ridgewood, Queens, NY",Ridgewood,Queens,NY,True,,0,
-Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,True,,8,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,True,,0,
 Riverside|Fairfield|CT,"Riverside, Fairfield, CT",Riverside,Fairfield,CT,True,,0,
-Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,True,,5,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; housing_value:pillar_error
-Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,True,,8,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; healthcare_access:pillar_error; public_transit_access:pillar_error; air_travel_access:pillar_error; housing_value:pillar_error
+Rockaway Beach|Queens|NY,"Rockaway Beach, Queens, NY",Rockaway Beach,Queens,NY,True,,0,
+Rockville Centre|Nassau|NY,"Rockville Centre, Nassau, NY",Rockville Centre,Nassau,NY,True,,0,
 Roslyn|Nassau|NY,"Roslyn, Nassau, NY",Roslyn,Nassau,NY,True,,0,
 Rye|Westchester|NY,"Rye, Westchester, NY",Rye,Westchester,NY,True,,0,
 Scarsdale|Westchester|NY,"Scarsdale, Westchester, NY",Scarsdale,Westchester,NY,True,,0,
