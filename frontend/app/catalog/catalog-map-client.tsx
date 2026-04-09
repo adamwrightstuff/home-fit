@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
@@ -40,8 +40,11 @@ export default function CatalogMapClient({ metro }: { metro: CatalogMapClientMet
 
   const catalogTitle = metro === 'nyc' ? 'NYC metro catalog' : 'LA metro catalog'
 
+  /** Monotonic id so Strict Mode / fast metro switches never leave loading stuck or clear it for a stale fetch. */
+  const catalogFetchIdRef = useRef(0)
+
   useEffect(() => {
-    let cancelled = false
+    const fetchId = ++catalogFetchIdRef.current
     setLoading(true)
     setLoadMessage(null)
     setPlaces([])
@@ -56,7 +59,7 @@ export default function CatalogMapClient({ metro }: { metro: CatalogMapClientMet
           detail?: string
           error?: string
         }
-        if (cancelled) return
+        if (fetchId !== catalogFetchIdRef.current) return
         if (!r.ok) {
           setPlaces([])
           setLoadMessage(j.error ?? `Catalog request failed (${r.status}).`)
@@ -66,14 +69,15 @@ export default function CatalogMapClient({ metro }: { metro: CatalogMapClientMet
         if (j.detail && (!j.places || j.places.length === 0)) setLoadMessage(j.detail)
         else if (j.source === 'missing') setLoadMessage(j.detail ?? 'Catalog data not found on server.')
       } catch (e) {
-        if (!cancelled) setLoadMessage(e instanceof Error ? e.message : 'Failed to load catalog.')
+        if (fetchId === catalogFetchIdRef.current) {
+          setLoadMessage(e instanceof Error ? e.message : 'Failed to load catalog.')
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (fetchId === catalogFetchIdRef.current) {
+          setLoading(false)
+        }
       }
     })()
-    return () => {
-      cancelled = true
-    }
   }, [metro])
 
   const geojson = useMemo(
