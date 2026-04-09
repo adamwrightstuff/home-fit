@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 
@@ -38,49 +38,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
   const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
 
-  /** Avoid stuck "Loading…" in AuthBar if getSession hangs, rejects, or Strict Mode replays the effect. */
-  const authInitIdRef = useRef(0)
-
   useEffect(() => {
     if (!client) {
       setLoading(false)
       return
     }
-    const initId = ++authInitIdRef.current
-    const safetyMs = 12_000
-    const safetyTimer = window.setTimeout(() => {
-      if (initId === authInitIdRef.current) {
-        setLoading(false)
-      }
-    }, safetyMs)
 
-    client.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (initId !== authInitIdRef.current) return
-        setSession(session)
-        setUser(session?.user ?? null)
-      })
-      .catch(() => {
-        if (initId !== authInitIdRef.current) return
-        setSession(null)
-        setUser(null)
-      })
-      .finally(() => {
-        window.clearTimeout(safetyTimer)
-        if (initId === authInitIdRef.current) {
-          setLoading(false)
-        }
-      })
+    let cancelled = false
 
+    // Subscribe first: Supabase emits INITIAL_SESSION / token events so we can clear loading even if getSession stalls.
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
+      setLoading(false)
     })
+
+    client.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled) return
+        setSession(session)
+        setUser(session?.user ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSession(null)
+          setUser(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    const safety = window.setTimeout(() => {
+      if (!cancelled) setLoading(false)
+    }, 8000)
+
     return () => {
-      window.clearTimeout(safetyTimer)
+      cancelled = true
+      window.clearTimeout(safety)
       subscription.unsubscribe()
     }
   }, [client])
