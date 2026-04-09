@@ -17,6 +17,8 @@ import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 
+export type CatalogMapClientMetro = 'nyc' | 'la'
+
 const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
   { id: 'longevity', label: 'Longevity' },
@@ -24,7 +26,7 @@ const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'status', label: 'Status' },
 ]
 
-export default function CatalogMapClient() {
+export default function CatalogMapClient({ metro }: { metro: CatalogMapClientMetro }) {
   const router = useRouter()
   const [places, setPlaces] = useState<CatalogMapPlace[]>([])
   const [loadMessage, setLoadMessage] = useState<string | null>(null)
@@ -36,17 +38,30 @@ export default function CatalogMapClient() {
   const [weightOpen, setWeightOpen] = useState(false)
   const [layoutVersion, setLayoutVersion] = useState(0)
 
+  const catalogTitle = metro === 'nyc' ? 'NYC metro catalog' : 'LA metro catalog'
+
   useEffect(() => {
     let cancelled = false
+    setLoading(true)
+    setLoadMessage(null)
+    setPlaces([])
+    setSelectedKey(null)
+    setSnap('peek')
     ;(async () => {
       try {
-        const r = await fetch('/api/catalog-map')
+        const r = await fetch(`/api/catalog-map?metro=${metro}`)
         const j = (await r.json()) as {
           places?: CatalogMapPlace[]
           source?: string
           detail?: string
+          error?: string
         }
         if (cancelled) return
+        if (!r.ok) {
+          setPlaces([])
+          setLoadMessage(j.error ?? `Catalog request failed (${r.status}).`)
+          return
+        }
         setPlaces(Array.isArray(j.places) ? j.places : [])
         if (j.detail && (!j.places || j.places.length === 0)) setLoadMessage(j.detail)
         else if (j.source === 'missing') setLoadMessage(j.detail ?? 'Catalog data not found on server.')
@@ -59,7 +74,7 @@ export default function CatalogMapClient() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [metro])
 
   const geojson = useMemo(
     () => buildCatalogFeatureCollection(places, indexMode, priorities),
@@ -108,8 +123,14 @@ export default function CatalogMapClient() {
           <Link href="/" className="text-sm font-semibold" style={{ color: 'var(--hf-primary-1)' }}>
             ← Home
           </Link>
-          <span className="text-sm font-bold text-[var(--hf-text-primary)]">NYC metro catalog</span>
-          <span className="w-14" aria-hidden />
+          <span className="text-center text-sm font-bold text-[var(--hf-text-primary)]">{catalogTitle}</span>
+          <Link
+            href={metro === 'nyc' ? '/catalog/la' : '/catalog'}
+            className="shrink-0 text-right text-xs font-semibold"
+            style={{ color: 'var(--hf-primary-1)' }}
+          >
+            {metro === 'nyc' ? 'LA →' : '← NYC'}
+          </Link>
         </div>
         <div className="flex flex-wrap gap-1">
           {INDEXES.map((x) => {
@@ -151,11 +172,13 @@ export default function CatalogMapClient() {
       </header>
 
       <CatalogMapView
+        key={metro}
         data={geojson}
         selectedKey={selectedKey}
         onSelectKey={onSelectKey}
         layoutVersion={layoutVersion}
         indexMode={indexMode}
+        region={metro}
       />
 
       <CatalogBottomSheet

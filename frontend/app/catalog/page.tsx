@@ -6,5 +6,5 @@ export const metadata = {
 }
 
 export default function CatalogMapPage() {
-  return <CatalogMapClient />
+  return <CatalogMapClient metro="nyc" />
 }

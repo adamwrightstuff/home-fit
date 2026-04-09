@@ -15,11 +15,19 @@ interface CatalogMapViewProps {
   layoutVersion: number
   /** Active index — bubble stroke uses this ramp (ramp-600 @ 60%). */
   indexMode: CatalogMapIndexMode
+  /** Initial map bounds before GeoJSON fit; should match catalog metro. */
+  region?: 'nyc' | 'la'
 }
 
 const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-74.35, 40.45],
   [-73.65, 41.05],
+]
+
+/** Southwest / northeast corners covering LA metro core + OC / Long Beach. */
+const LA_METRO_BOUNDS: [[number, number], [number, number]] = [
+  [-118.75, 33.55],
+  [-117.55, 34.45],
 ]
 
 export default function CatalogMapView({
@@ -28,6 +36,7 @@ export default function CatalogMapView({
   onSelectKey,
   layoutVersion,
   indexMode,
+  region = 'nyc',
 }: CatalogMapViewProps) {
   const container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<MapLibreMap | null>(null)
@@ -68,10 +77,11 @@ export default function CatalogMapView({
           ],
         }
 
+        const initialBounds = region === 'la' ? LA_METRO_BOUNDS : NYC_METRO_BOUNDS
         const map = new maplibregl.Map({
           container: container_ref.current,
           style,
-          bounds: NYC_METRO_BOUNDS,
+          bounds: initialBounds,
           fitBoundsOptions: { padding: 24, maxZoom: 11 },
         })
 
@@ -103,7 +113,7 @@ export default function CatalogMapView({
         set_map_loaded(false)
       }
     }
-  }, [])
+  }, [region])
 
   useEffect(() => {
     if (!map_ref.current || !map_loaded) return
