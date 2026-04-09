@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 
@@ -38,23 +38,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
   const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
 
+  /** Avoid stuck "Loading…" in AuthBar if getSession hangs, rejects, or Strict Mode replays the effect. */
+  const authInitIdRef = useRef(0)
+
   useEffect(() => {
     if (!client) {
       setLoading(false)
       return
     }
-    client.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    const initId = ++authInitIdRef.current
+    const safetyMs = 12_000
+    const safetyTimer = window.setTimeout(() => {
+      if (initId === authInitIdRef.current) {
+        setLoading(false)
+      }
+    }, safetyMs)
+
+    client.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (initId !== authInitIdRef.current) return
+        setSession(session)
+        setUser(session?.user ?? null)
+      })
+      .catch(() => {
+        if (initId !== authInitIdRef.current) return
+        setSession(null)
+        setUser(null)
+      })
+      .finally(() => {
+        window.clearTimeout(safetyTimer)
+        if (initId === authInitIdRef.current) {
+          setLoading(false)
+        }
+      })
+
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      window.clearTimeout(safetyTimer)
+      subscription.unsubscribe()
+    }
   }, [client])
 
   const signIn = useCallback(
