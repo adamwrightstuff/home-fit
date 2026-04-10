@@ -1793,6 +1793,16 @@ class DataQualityManager:
 # Global instance
 data_quality_manager = DataQualityManager()
 
+# OSM geometry/heuristic warnings that are common in real places (single-story suburbs,
+# incomplete building footprints in dense areas). They should not flip the global
+# "degraded" UI flag — see main._collect_degraded_signals.
+INFORMATIONAL_DATA_WARNINGS = frozenset(
+    {
+        "suspiciously_low_height_diversity",
+        "low_building_coverage",
+    }
+)
+
 
 def assess_pillar_data_quality(
     pillar_name: str,
@@ -1853,4 +1863,20 @@ def assess_pillar_data_quality(
         out["source_status"] = ss
     if isinstance(se, list) and se:
         out["source_errors"] = se
+
+    # Built beauty: align headline confidence with architectural data_warning so we
+    # do not show ~90% confidence alongside a hard OSM/API failure string.
+    if pillar_name == "built_beauty" and data:
+        arch = data.get("architectural_analysis") or {}
+        dw = arch.get("data_warning")
+        if isinstance(dw, str) and dw:
+            conf = int(out["confidence"])
+            if dw in INFORMATIONAL_DATA_WARNINGS:
+                out["confidence"] = max(0, min(100, int(round(conf * 0.97))))
+            else:
+                out["confidence"] = max(0, min(100, int(round(conf * 0.88))))
+            out["confidence_notes"] = (out.get("confidence_notes") or []) + [
+                f"built_beauty_data_warning:{dw}"
+            ]
+
     return out

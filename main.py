@@ -64,6 +64,7 @@ from pillars.composite_indices import (
 )
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
+from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS
 
 ##########################
 # CONFIGURATION FLAGS
@@ -5154,6 +5155,10 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
     - Many failures manifest as error strings containing '429'.
     - Social Fabric sets `source_status.civic_osm == 'error'` when Overpass civic data failed.
     - Social Fabric sets `source_status.stability_mobility_acs == 'error'` when tract geocode or ACS B07003 failed.
+
+    Built-beauty-only: `data_warning` values in INFORMATIONAL_DATA_WARNINGS (e.g. low height
+    diversity in suburban tracts, low OSM footprint coverage) still appear in `warnings` but
+    do not set `degraded` — only "hard" warnings (api_error, timeout, etc.) do.
     """
     stale_cache_used = False
     rate_limited = False
@@ -5203,7 +5208,10 @@ def _collect_degraded_signals(obj, max_nodes: int = 4000) -> dict:
     # We exclude warning strings that are already captured as reasons above.
     warning_exclusions = {"stale_cache_used", "upstream_rate_limited"}
     meaningful_warnings = {w for w in warnings if isinstance(w, str) and w and w not in warning_exclusions}
-    if meaningful_warnings:
+    # Heuristic OSM warnings (single-story suburbs, sparse footprint tagging) are
+    # informational — do not mark the whole pillar "degraded" for UX.
+    hard_warnings = meaningful_warnings - INFORMATIONAL_DATA_WARNINGS
+    if hard_warnings:
         reasons.append("data_warning")
 
     degraded = bool(reasons)
