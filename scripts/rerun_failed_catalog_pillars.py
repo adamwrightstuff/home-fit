@@ -151,6 +151,8 @@ def get_score(
     location: str,
     only: Optional[List[str]],
     timeout: int,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> Dict[str, Any]:
     params: Dict[str, Any] = {
         "location": location,
@@ -158,6 +160,9 @@ def get_score(
     }
     if only:
         params["only"] = ",".join(only)
+    if lat is not None and lon is not None:
+        params["lat"] = str(lat)
+        params["lon"] = str(lon)
     url = f"{base_url.rstrip('/')}/score"
     r = session.get(url, params=params, timeout=timeout)
     r.raise_for_status()

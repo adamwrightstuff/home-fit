@@ -2270,7 +2270,9 @@ def get_livability_score(request: Request,
                          test_mode: Optional[bool] = False,
                          natural_beauty_preference: Optional[str] = None,
                          built_character_preference: Optional[str] = None,
-                         built_density_preference: Optional[str] = None):
+                         built_density_preference: Optional[str] = None,
+                         lat: Optional[str] = None,
+                         lon: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -2293,6 +2295,8 @@ def get_livability_score(request: Request,
         include_chains: Include chain/franchise businesses in amenities score (default: True)
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
                        Set to False to disable school scoring and preserve API quota
+        lat, lon: Optional pinned coordinates (WGS84). When both are valid, geocoding is skipped and
+                  these are used for scoring (catalog batch rescoring). Request-level response cache is bypassed.
 
     Returns:
         JSON with pillar scores, token allocation, and weighted total
@@ -2322,9 +2326,22 @@ def get_livability_score(request: Request,
                     natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
             except (json.JSONDecodeError, TypeError):
                 pass
+
+        lat_override: Optional[float] = None
+        lon_override: Optional[float] = None
+        if lat is not None and lon is not None:
+            try:
+                lat_f = float(lat)
+                lon_f = float(lon)
+                if -90 <= lat_f <= 90 and -180 <= lon_f <= 180:
+                    lat_override = lat_f
+                    lon_override = lon_f
+            except (TypeError, ValueError):
+                pass
         
         # REQUEST-LEVEL CACHING: Check cache first (skip if test_mode)
-        if not test_mode_enabled:
+        # Skip when coordinates are pinned — cache key does not include lat/lon overrides.
+        if not test_mode_enabled and lat_override is None and lon_override is None:
             from data_sources.cache import _redis_client, _cache, _cache_ttl
             
             cache_key = _generate_request_cache_key(
@@ -2386,6 +2403,8 @@ def get_livability_score(request: Request,
             natural_beauty_preference=natural_beauty_preference_parsed,
             built_character_preference=built_character_preference,
             built_density_preference=built_density_preference,
+            lat_override=lat_override,
+            lon_override=lon_override,
         )
         if schedule_catalog_contribution:
             try:
@@ -2405,7 +2424,7 @@ def get_livability_score(request: Request,
             logger.warning(f"Failed to record telemetry: {e}")
 
         # REQUEST-LEVEL CACHING: Store response in cache (skip if test_mode)
-        if not test_mode_enabled:
+        if not test_mode_enabled and lat_override is None and lon_override is None:
             try:
                 from data_sources.cache import _redis_client, _cache, _cache_ttl
                 

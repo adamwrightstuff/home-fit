@@ -20,6 +20,17 @@ Then refresh composites (longevity / status / happiness) from the merged file:
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
     --output data/nyc_metro_place_catalog_scores_merged.jsonl
 
+Re-score only rows where a pillar's confidence is below a threshold (e.g. built_beauty < 92),
+with catalog centroids pinned (same coordinates as CSV):
+
+  PYTHONPATH=. python3 scripts/rescore_catalog_pillar.py \\
+    --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
+    --in-place \\
+    --pillars built_beauty \\
+    --confidence-filter-pillar built_beauty \\
+    --confidence-filter-lt 92 \\
+    --use-catalog-coordinates
+
 HOMEFIT_API_BASE and HOMEFIT_PROXY_SECRET are respected.
 """
 from __future__ import annotations
@@ -32,7 +43,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
@@ -58,6 +69,40 @@ load_last_per_place = _rerun.load_last_per_place
 proxy_headers = _rerun.proxy_headers
 recompute_totals = _rerun.recompute_totals
 PILLAR_ORDER: List[str] = list(_rerun.PILLAR_ORDER)
+
+
+def pillar_confidence(obj: Dict[str, Any], pillar_name: str) -> Optional[float]:
+    """Return pillar headline confidence, or data_quality.confidence, or None."""
+    score = obj.get("score")
+    if not isinstance(score, dict):
+        return None
+    lp = score.get("livability_pillars")
+    if not isinstance(lp, dict):
+        return None
+    p = lp.get(pillar_name)
+    if not isinstance(p, dict):
+        return None
+    c = p.get("confidence")
+    if c is None:
+        dq = p.get("data_quality")
+        if isinstance(dq, dict):
+            c = dq.get("confidence")
+    try:
+        return float(c) if c is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def catalog_lat_lon(cat: Dict[str, Any]) -> Tuple[Optional[float], Optional[float]]:
+    """Parse catalog lat/lon (strings or floats)."""
+    try:
+        lat = cat.get("lat")
+        lon = cat.get("lon")
+        if lat is None or lon is None:
+            return None, None
+        return float(lat), float(lon)
+    except (TypeError, ValueError):
+        return None, None
 
 
 def parse_pillars(raw: str) -> List[str]:
@@ -144,6 +189,24 @@ def main() -> int:
         action="store_true",
         help="List places that would be scored and exit.",
     )
+    ap.add_argument(
+        "--confidence-filter-lt",
+        type=float,
+        default=None,
+        metavar="N",
+        help="If set, only rescore rows where PILLAR confidence is missing or < N (0-100).",
+    )
+    ap.add_argument(
+        "--confidence-filter-pillar",
+        type=str,
+        default=None,
+        help="Pillar key for --confidence-filter-lt (default: first --pillars key).",
+    )
+    ap.add_argument(
+        "--use-catalog-coordinates",
+        action="store_true",
+        help="Pass catalog lat/lon to GET /score so scoring uses the same centroid as the catalog CSV.",
+    )
     args = ap.parse_args()
 
     try:
@@ -151,6 +214,19 @@ def main() -> int:
     except ValueError as e:
         print(e, file=sys.stderr)
         return 1
+
+    cf_pillar: Optional[str] = args.confidence_filter_pillar
+    if args.confidence_filter_lt is not None:
+        if not (0.0 <= args.confidence_filter_lt <= 100.0):
+            print("--confidence-filter-lt must be between 0 and 100.", file=sys.stderr)
+            return 1
+        cf_pillar = cf_pillar or pillars[0]
+        if cf_pillar not in pillars:
+            print(
+                f"--confidence-filter-pillar {cf_pillar!r} must be one of --pillars: {pillars}",
+                file=sys.stderr,
+            )
+            return 1
 
     inp = args.input
     if not inp.is_file():
@@ -175,8 +251,6 @@ def main() -> int:
     session.headers.update(proxy_headers())
 
     keys_sorted = sorted(last.keys())
-    if args.max_places > 0:
-        keys_sorted = keys_sorted[: args.max_places]
 
     to_run: List[str] = []
     for key in keys_sorted:
@@ -188,11 +262,24 @@ def main() -> int:
             continue
         if not (cat.get("search_query") or "").strip():
             continue
+        if args.confidence_filter_lt is not None and cf_pillar is not None:
+            conf = pillar_confidence(obj, cf_pillar)
+            if conf is not None and conf >= args.confidence_filter_lt:
+                continue
         to_run.append(key)
 
+    if args.max_places > 0:
+        to_run = to_run[: args.max_places]
+
     print(f"Places in JSONL (last wins): {len(last)}")
-    print(f"Successful rows with search_query to rescore: {len(to_run)}")
+    print(f"Rows selected to rescore: {len(to_run)}")
     print(f"Pillars: {', '.join(pillars)}")
+    if args.confidence_filter_lt is not None and cf_pillar is not None:
+        print(
+            f"Confidence filter: {cf_pillar} < {args.confidence_filter_lt} (or missing)"
+        )
+    if args.use_catalog_coordinates:
+        print("Using catalog lat/lon when present on each row.")
 
     if args.dry_run:
         for k in to_run[:30]:
@@ -211,12 +298,18 @@ def main() -> int:
         label = cat.get("name", key)
         print(f"[{i + 1}/{len(to_run)}] {label} …", flush=True)
         try:
+            plat: Optional[float] = None
+            plon: Optional[float] = None
+            if args.use_catalog_coordinates:
+                plat, plon = catalog_lat_lon(cat)
             new_score = get_score(
                 session,
                 args.base_url,
                 location=location,
                 only=pillars,
                 timeout=args.timeout,
+                lat=plat,
+                lon=plon,
             )
             merged = merge_pillar_response(obj, new_score, pillars)
             out_merged[key] = merged
