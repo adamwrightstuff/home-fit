@@ -672,6 +672,37 @@ def _patrician_shortcut_guards(
     return True
 
 
+# Post-classifier Patrician gate (all Patrician archetype_rule paths must pass to keep Patrician).
+PATRICIAN_GATE_MIN_EDUCATION = 65.0
+PATRICIAN_GATE_MIN_OCCUPATION_NEUTRAL = 35.0
+PATRICIAN_GATE_MIN_WEALTH = 60.0
+
+
+def _patrician_post_gate_passes(
+    education: Optional[float],
+    occupation_neutral: Optional[float],
+    wealth: Optional[float],
+) -> Tuple[bool, List[str]]:
+    """
+    Returns (passes, failure_codes). All Patrician classifications require non-null education/occupation
+    wealth components meeting floors (same numeric inputs as pass-1 classification; no recompute).
+    """
+    failures: List[str] = []
+    if education is None:
+        failures.append("patrician_gate_education_null")
+    elif float(education) < PATRICIAN_GATE_MIN_EDUCATION:
+        failures.append("patrician_gate_education_low")
+    if occupation_neutral is None:
+        failures.append("patrician_gate_occupation_null")
+    elif float(occupation_neutral) < PATRICIAN_GATE_MIN_OCCUPATION_NEUTRAL:
+        failures.append("patrician_gate_occupation_low")
+    if wealth is None:
+        failures.append("patrician_gate_wealth_null")
+    elif float(wealth) < PATRICIAN_GATE_MIN_WEALTH:
+        failures.append("patrician_gate_wealth_low")
+    return (len(failures) == 0, failures)
+
+
 def _composite_score_from_weights(
     w_wealth: float,
     w_home: float,
@@ -721,10 +752,12 @@ def _classify_archetype(
     occupation_neutral: Optional[float],
     provisional: Optional[float],
     cbsa_median: Optional[float],
+    allow_patrician: bool = True,
 ) -> Tuple[str, str]:
     """
     Single ordered chain: Patrician → Poseur → Parvenu → Plebeian → Typical.
     Returns (archetype, archetype_rule) for regression/debug.
+    When allow_patrician is False, all Patrician branches are skipped (post-gate re-run).
     """
     counts = (luxury_detail or {}).get("counts") or {}
     luxury_retail = int(counts.get("luxury_retail") or 0)
@@ -732,56 +765,57 @@ def _classify_archetype(
     edu_val = education if education is not None else 0.0
 
     # --- Patrician ---
-    if (
-        grad_pct_raw is not None
-        and float(grad_pct_raw) > 80.0
-        and white_collar_mgmt is not None
-        and float(white_collar_mgmt) > 70.0
-    ):
-        return "Patrician", "patrician_grad_white_collar"
+    if allow_patrician:
+        if (
+            grad_pct_raw is not None
+            and float(grad_pct_raw) > 80.0
+            and white_collar_mgmt is not None
+            and float(white_collar_mgmt) > 70.0
+        ):
+            return "Patrician", "patrician_grad_white_collar"
 
-    if (
-        cbsa_median is not None
-        and cbsa_median > 0
-        and median_income is not None
-        and float(median_income) > 2.0 * cbsa_median
-        and wealth_gap is not None
-        and float(wealth_gap) < 0.25
-        and _patrician_shortcut_guards(education, occupation_neutral)
-    ):
-        return "Patrician", "shortcut_cbsa_2x"
+        if (
+            cbsa_median is not None
+            and cbsa_median > 0
+            and median_income is not None
+            and float(median_income) > 2.0 * cbsa_median
+            and wealth_gap is not None
+            and float(wealth_gap) < 0.25
+            and _patrician_shortcut_guards(education, occupation_neutral)
+        ):
+            return "Patrician", "shortcut_cbsa_2x"
 
-    if (
-        median_income is not None
-        and float(median_income) > 200_000
-        and wealth_gap is not None
-        and float(wealth_gap) < 0.25
-        and _patrician_shortcut_guards(education, occupation_neutral)
-    ):
-        return "Patrician", "shortcut_200k_uniform"
+        if (
+            median_income is not None
+            and float(median_income) > 200_000
+            and wealth_gap is not None
+            and float(wealth_gap) < 0.25
+            and _patrician_shortcut_guards(education, occupation_neutral)
+        ):
+            return "Patrician", "shortcut_200k_uniform"
 
-    if (
-        median_income is not None
-        and float(median_income) > 200_000
-        and wealth_gap is not None
-        and float(wealth_gap) < 0.30
-        and education is not None
-        and float(education) > 60.0
-        and _patrician_shortcut_guards(education, occupation_neutral)
-    ):
-        return "Patrician", "patrician_median_high_education"
+        if (
+            median_income is not None
+            and float(median_income) > 200_000
+            and wealth_gap is not None
+            and float(wealth_gap) < 0.30
+            and education is not None
+            and float(education) > 60.0
+            and _patrician_shortcut_guards(education, occupation_neutral)
+        ):
+            return "Patrician", "patrician_median_high_education"
 
-    if (
-        _area_is_suburb_like(area_type)
-        and occupation_neutral is not None
-        and float(occupation_neutral) >= 80.0
-        and luxury_pass1 <= 35.0
-        and education is not None
-        and float(education) >= 38.0
-        and provisional is not None
-        and float(provisional) >= 45.0
-    ):
-        return "Patrician", "patrician_old_money_suburb"
+        if (
+            _area_is_suburb_like(area_type)
+            and occupation_neutral is not None
+            and float(occupation_neutral) >= 80.0
+            and luxury_pass1 <= 35.0
+            and education is not None
+            and float(education) >= 38.0
+            and provisional is not None
+            and float(provisional) >= 45.0
+        ):
+            return "Patrician", "patrician_old_money_suburb"
 
     # --- Poseur ---
     if (
@@ -879,8 +913,10 @@ def compute_status_signal_with_breakdown(
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
     Pass 1: pillar inputs at standard luxury radius; neutral occupation for classifier_inputs.
-    Pass 2: ordered archetype chain (Patrician→Poseur→Parvenu→Plebeian→Typical); archetype_rule on each branch.
-    Pass 3: Patrician only — luxury OSM re-run at 4 km for published luxury_presence (classifier_inputs.luxury stays pass 1).
+    Archetype pass 1: ordered chain (Patrician→…→Typical). If Patrician fails the post-classifier gate,
+    archetype pass 2 runs with allow_patrician=False (frozen inputs; no occupation/luxury recompute).
+    Luxury pass: final archetype Patrician only — OSM re-run at 4 km for published luxury_presence
+    (classifier_inputs.luxury stays pass 1).
     Final composite uses archetype weights and occupation computed with the final archetype.
     Baselines: tract CBSA mapped via cbsa_to_baseline; else division then \"all\".
     """
@@ -903,6 +939,10 @@ def compute_status_signal_with_breakdown(
         "signal_strength": None,
         "signal_strength_label": None,
         "composite_score": None,
+        "downgrade_reason": None,
+        "original_archetype": None,
+        "original_archetype_rule": None,
+        "rerun_inputs": None,
     }
     if not housing_details or not economic_security_details:
         return None, breakdown
@@ -998,7 +1038,7 @@ def compute_status_signal_with_breakdown(
     )
 
     cbsa_median = _get_cbsa_median_income(baselines, keys_to_try)
-    archetype, archetype_rule = _classify_archetype(
+    archetype_pass1, archetype_rule_pass1 = _classify_archetype(
         area_type=area_type,
         education=education,
         wealth=wealth,
@@ -1013,7 +1053,42 @@ def compute_status_signal_with_breakdown(
         occupation_neutral=occupation_neutral,
         provisional=provisional,
         cbsa_median=cbsa_median,
+        allow_patrician=True,
     )
+
+    archetype = archetype_pass1
+    archetype_rule = archetype_rule_pass1
+    if archetype_pass1 == "Patrician":
+        gate_ok, gate_failures = _patrician_post_gate_passes(education, occupation_neutral, wealth)
+        if not gate_ok:
+            archetype, archetype_rule = _classify_archetype(
+                area_type=area_type,
+                education=education,
+                wealth=wealth,
+                home_cost=home_cost,
+                luxury_pass1=luxury_pass1,
+                luxury_detail=luxury_detail_pass1,
+                median_income=median_income,
+                wealth_gap=wealth_gap,
+                grad_pct_raw=grad_pct_raw,
+                white_collar_mgmt=white_collar_mgmt,
+                self_employed_pct_raw=self_employed_pct_raw,
+                occupation_neutral=occupation_neutral,
+                provisional=provisional,
+                cbsa_median=cbsa_median,
+                allow_patrician=False,
+            )
+            breakdown["downgrade_reason"] = list(gate_failures)
+            breakdown["original_archetype"] = "Patrician"
+            breakdown["original_archetype_rule"] = archetype_rule_pass1
+            breakdown["rerun_inputs"] = {
+                "education": education,
+                "home_cost": home_cost,
+                "wealth_character": wealth_character,
+                "occupation": occupation_neutral,
+                "luxury": luxury_pass1,
+                "wealth": wealth,
+            }
 
     luxury_for_score = luxury_pass1
     luxury_detail_for_breakdown = luxury_detail_pass1
@@ -1063,6 +1138,7 @@ def compute_status_signal_with_breakdown(
         "wealth_character": wealth_character,
         "occupation": occupation_neutral,
         "luxury": luxury_pass1,
+        "wealth": wealth,
     }
     breakdown["provisional_composite_score"] = (
         round(provisional, 1) if provisional is not None else None
