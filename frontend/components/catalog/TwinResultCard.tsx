@@ -1,38 +1,72 @@
 'use client'
 
-import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import type { PillarPriorities } from '@/components/SearchOptions'
-import { topPillarDiffsByMagnitude, type TwinMatchResult } from '@/lib/twinSimilarity'
+import { pillarDiffs, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { inferCatalogMetro } from '@/lib/catalogMapTypes'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import MetroDot from '@/components/catalog/MetroDot'
 import SignalStrengthDots from '@/components/catalog/SignalStrengthDots'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
+import TwinDiffRows from '@/components/catalog/TwinDiffRows'
 
 interface TwinResultCardProps {
   query: CatalogMapPlace
   result: TwinMatchResult
   priorities: PillarPriorities
   selectedPillars: PillarKey[]
+  selected?: boolean
+  /** When false, hide pillar diff rows (e.g. full detail shown elsewhere). */
+  showPillarDiffs?: boolean
+  onSelect?: () => void
 }
 
-export default function TwinResultCard({ query, result, priorities, selectedPillars }: TwinResultCardProps) {
+export default function TwinResultCard({
+  query,
+  result,
+  priorities,
+  selectedPillars,
+  selected,
+  showPillarDiffs = true,
+  onSelect,
+}: TwinResultCardProps) {
   const place = result.place as CatalogMapPlaceWithMetro
   const metro = inferCatalogMetro(place)
   const rw = reweightScoreResponseFromPriorities(place.score, priorities)
   const hf = typeof rw.total_score === 'number' && Number.isFinite(rw.total_score) ? rw.total_score : null
   const br = place.score.status_signal_breakdown
   const archetype = br?.archetype ?? null
-  const diffs = topPillarDiffsByMagnitude(query, place, selectedPillars)
+
+  const matchingSet = new Set(selectedPillars)
+  const matchingDiffs = pillarDiffs(query, place, selectedPillars).sort(
+    (a, b) => Math.abs(b.diff) - Math.abs(a.diff)
+  )
+  const excludedPillars = PILLAR_ORDER.filter((k) => !matchingSet.has(k))
+  const excludedDiffs = excludedPillars.length ? pillarDiffs(query, place, excludedPillars) : []
 
   const typeLabel = (place.catalog.type || '').trim()
   const typePretty = typeLabel ? typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1).toLowerCase() : ''
 
   return (
     <div
-      className="relative rounded-2xl border border-[var(--hf-border)] bg-[var(--hf-card-bg)] p-3 shadow-[var(--hf-card-shadow-sm)]"
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={onSelect}
+      onKeyDown={
+        onSelect
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelect()
+              }
+            }
+          : undefined
+      }
+      className={`relative rounded-2xl border bg-[var(--hf-card-bg)] p-3 shadow-[var(--hf-card-shadow-sm)] ${
+        selected ? 'border-[var(--hf-primary-1)] ring-2 ring-[var(--hf-primary-1)]/25' : 'border-[var(--hf-border)]'
+      } ${onSelect ? 'cursor-pointer transition hover:bg-[var(--hf-hover-bg)]' : ''}`}
       style={{ position: 'relative' }}
     >
       <div
@@ -65,33 +99,22 @@ export default function TwinResultCard({ query, result, priorities, selectedPill
         </div>
       </div>
 
-      <div className="mt-3 space-y-1.5 border-t border-[var(--hf-border)] pt-2">
-        {diffs.map((d) => {
-          const abs = Math.abs(d.diff)
-          const barColor =
-            d.diff > 5 ? '#1D9E75' : d.diff < -5 ? '#E76B5C' : 'rgba(100,100,100,0.35)'
-          return (
-            <div key={d.key} className="flex items-center gap-2 text-[0.7rem]">
-              <span className="min-w-0 flex-1 truncate text-[var(--hf-text-primary)]">
-                {PILLAR_META[d.key].name}
-              </span>
-              <span className="w-10 shrink-0 tabular-nums text-right text-[var(--hf-text-secondary)]">
-                {d.diff > 0 ? '+' : ''}
-                {d.diff.toFixed(0)}
-              </span>
-              <div className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, abs)}%`,
-                    background: barColor,
-                  }}
-                />
+      {showPillarDiffs && (
+        <div className="mt-3 border-t border-[var(--hf-border)] pt-2">
+          <div className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
+            Used in matching
+          </div>
+          <TwinDiffRows rows={matchingDiffs} />
+          {excludedDiffs.length > 0 && (
+            <div className="mt-3 border-t border-dashed border-[var(--hf-border)] pt-2">
+              <div className="mb-1.5 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
+                Not used in matching
               </div>
+              <TwinDiffRows rows={excludedDiffs} variant="muted" />
             </div>
-          )
-        })}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

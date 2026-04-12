@@ -9,7 +9,7 @@ import CatalogBottomSheet, { findPlaceByKey, type CatalogSheetSnap } from '@/com
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
 import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
-import CatalogTwinDetailSheet from '@/components/catalog/CatalogTwinDetailSheet'
+import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import CatalogListView from '@/components/catalog/CatalogListView'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import {
@@ -212,7 +212,7 @@ export default function CatalogPageClient({
   const twinPillarList = useMemo(() => PILLAR_ORDER.filter((k) => twinPillars.has(k)), [twinPillars])
 
   const twinRanked: TwinMatchResult[] = useMemo(() => {
-    if (catalogMode !== 'twin' || !queryPlace || twinPillarList.length < 2) return []
+    if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     return rankTwinMatches(
       queryPlace,
       twinCandidatePlaces,
@@ -220,12 +220,13 @@ export default function CatalogPageClient({
       (pl) => catalogRowKey(pl.catalog),
       12
     )
-  }, [catalogMode, queryPlace, twinCandidatePlaces, twinPillarList])
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
-    if (catalogMode !== 'twin' || twinQueryKey) return filteredPlaces
-    return places
-  }, [catalogMode, twinQueryKey, filteredPlaces, places])
+    if (catalogMode !== 'twin') return filteredPlaces
+    if (!twinQueryKey) return []
+    return filteredPlaces
+  }, [catalogMode, twinQueryKey, filteredPlaces])
 
   const explorerGeo = useMemo(
     () => buildCatalogFeatureCollection(mapPlacesNoTwinQuery, indexMode, priorities),
@@ -612,18 +613,31 @@ export default function CatalogPageClient({
       </header>
 
       {viewMode === 'map' && (
-        <CatalogMapView
-          key={`${mapRegion}-${catalogMode}`}
-          data={mapData}
-          selectedKey={selectedKey}
-          onSelectKey={onSelectKey}
-          layoutVersion={layoutVersion}
-          indexMode={indexMode}
-          region={mapRegion}
-          mapVariant={catalogMode === 'twin' && twinQueryKey ? 'twin' : 'explorer'}
-          twinLineGeoJson={catalogMode === 'twin' && twinQueryKey && twinLineGeoJson ? twinLineGeoJson : null}
-          fitKey={fitKey}
-        />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <CatalogMapView
+            key={`${mapRegion}-${catalogMode}`}
+            data={mapData}
+            selectedKey={selectedKey}
+            onSelectKey={onSelectKey}
+            layoutVersion={layoutVersion}
+            indexMode={indexMode}
+            region={mapRegion}
+            mapVariant={catalogMode === 'twin' && twinQueryKey ? 'twin' : 'explorer'}
+            twinLineGeoJson={catalogMode === 'twin' && twinQueryKey && twinLineGeoJson ? twinLineGeoJson : null}
+            fitKey={fitKey}
+          />
+          {catalogMode === 'twin' && twinQueryKey && queryPlace && selectedTwinMatch && (
+            <div className="max-h-[min(50vh,28rem)] shrink-0 overflow-y-auto border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-3 py-3">
+              <TwinCandidateDetailContent
+                query={queryPlace}
+                twin={selectedTwinMatch.place}
+                matchPct={selectedTwinMatch.matchPct}
+                matchingPillars={twinPillarList}
+                priorities={priorities}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
@@ -639,11 +653,18 @@ export default function CatalogPageClient({
           twinRanked={twinRanked}
           priorities={priorities}
           selectedPillars={twinPillarList}
+          selectedTwinKey={
+            selectedKey && twinQueryKey && selectedKey !== twinQueryKey ? selectedKey : null
+          }
+          onSelectTwinResult={(key) => {
+            if (key === null && twinQueryKey) setSelectedKey(twinQueryKey)
+            else setSelectedKey(key)
+          }}
           onSelectQuery={onTwinSelectFromSearch}
         />
       )}
 
-      {catalogMode === 'explorer' && (
+      {catalogMode === 'explorer' && viewMode === 'map' && (
         <CatalogBottomSheet
           place={selectedPlace}
           indexMode={indexMode}
@@ -656,37 +677,18 @@ export default function CatalogPageClient({
         />
       )}
 
-      {catalogMode === 'twin' && selectedPlace && twinQueryKey && selectedKey === twinQueryKey && queryPlace && (
+      {catalogMode === 'twin' && twinQueryKey && queryPlace && (
         <CatalogBottomSheet
-          place={selectedPlace}
+          place={queryPlace}
           indexMode={indexMode}
           onIndexModeChange={setIndexMode}
           priorities={priorities}
           snap={snap}
           onSnapChange={setSnap}
-          onClose={clearSelection}
+          onClose={clearTwinQuery}
           onFullBreakdown={handleFullBreakdown}
         />
       )}
-
-      {catalogMode === 'twin' &&
-        queryPlace &&
-        twinQueryKey &&
-        selectedKey &&
-        selectedKey !== twinQueryKey &&
-        selectedTwinMatch &&
-        selectedPlace && (
-          <CatalogTwinDetailSheet
-            query={queryPlace}
-            twin={selectedTwinMatch.place}
-            matchPct={selectedTwinMatch.matchPct}
-            pillars={twinPillarList}
-            priorities={priorities}
-            snap={snap}
-            onSnapChange={setSnap}
-            onClose={clearSelection}
-          />
-        )}
 
       <CatalogWeightPanel
         open={weightOpen && indexMode === 'homefit'}

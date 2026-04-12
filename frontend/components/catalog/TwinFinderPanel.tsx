@@ -7,6 +7,7 @@ import type { PillarPriorities } from '@/components/SearchOptions'
 import type { PillarKey } from '@/lib/pillars'
 import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import TwinResultCard from '@/components/catalog/TwinResultCard'
+import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import MetroDot from '@/components/catalog/MetroDot'
 
 interface TwinFinderPanelProps {
@@ -17,6 +18,8 @@ interface TwinFinderPanelProps {
   twinRanked: TwinMatchResult[]
   priorities: PillarPriorities
   selectedPillars: PillarKey[]
+  selectedTwinKey: string | null
+  onSelectTwinResult: (key: string | null) => void
   onSelectQuery: (key: string) => void
 }
 
@@ -28,6 +31,8 @@ export default function TwinFinderPanel({
   twinRanked,
   priorities,
   selectedPillars,
+  selectedTwinKey,
+  onSelectTwinResult,
   onSelectQuery,
 }: TwinFinderPanelProps) {
   const q = twinSearchText.trim().toLowerCase()
@@ -89,8 +94,21 @@ export default function TwinFinderPanel({
 
   if (!queryPlace) return null
 
+  const selectedMatch = selectedTwinKey ? twinRanked.find((r) => r.key === selectedTwinKey) : null
+
   return (
     <div className="min-h-0 flex-1 overflow-auto px-2 pb-28">
+      {selectedMatch && (
+        <div className="mx-auto mb-4 max-w-lg sm:max-w-2xl">
+          <TwinCandidateDetailContent
+            query={queryPlace}
+            twin={selectedMatch.place}
+            matchPct={selectedMatch.matchPct}
+            matchingPillars={selectedPillars}
+            priorities={priorities}
+          />
+        </div>
+      )}
       <div className="mx-auto grid max-w-lg gap-3 sm:max-w-none sm:grid-cols-2">
         {twinRanked.map((r) => (
           <TwinResultCard
@@ -99,6 +117,9 @@ export default function TwinFinderPanel({
             result={r}
             priorities={priorities}
             selectedPillars={selectedPillars}
+            selected={selectedTwinKey === r.key}
+            showPillarDiffs={selectedTwinKey !== r.key}
+            onSelect={() => onSelectTwinResult(selectedTwinKey === r.key ? null : r.key)}
           />
         ))}
       </div>
