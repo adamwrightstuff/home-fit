@@ -1,22 +1,39 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
+import type { ExpressionSpecification, Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 
-type GeoJsonData = ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
+type CatalogMapGeoJson =
+  | ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
+  | ReturnType<typeof import('@/lib/catalogMapGeo').buildTwinMatchFeatureCollection>
+
+export type CatalogMapRegion = 'nyc' | 'la' | 'both'
 
 interface CatalogMapViewProps {
-  data: GeoJsonData
+  data: CatalogMapGeoJson
   selectedKey: string | null
   onSelectKey: (key: string | null) => void
   /** Bumps map.resize when the bottom sheet snaps. */
   layoutVersion: number
   /** Active index — bubble stroke uses this ramp (ramp-600 @ 60%). */
   indexMode: CatalogMapIndexMode
-  /** Initial map bounds before GeoJSON fit; should match catalog metro. */
-  region?: 'nyc' | 'la'
+  /** Initial map bounds; `both` fits NYC+LA. */
+  region: CatalogMapRegion
+  /** Explorer = index-colored bubbles; twin = match % labels + top highlight. */
+  mapVariant: 'explorer' | 'twin'
+  /** When set, draw a line (e.g. query → top twin). */
+  twinLineGeoJson?: {
+    type: 'FeatureCollection'
+    features: Array<{
+      type: 'Feature'
+      properties?: Record<string, unknown>
+      geometry: { type: 'LineString'; coordinates: [number, number][] }
+    }>
+  } | null
+  /** Change when the visible dataset changes to re-run fitBounds. */
+  fitKey?: string
 }
 
 const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
@@ -24,10 +41,14 @@ const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-73.65, 41.05],
 ]
 
-/** Southwest / northeast corners covering LA metro core + OC / Long Beach. */
 const LA_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-118.75, 33.55],
   [-117.55, 34.45],
+]
+
+const BOTH_METRO_BOUNDS: [[number, number], [number, number]] = [
+  [-118.8, 33.5],
+  [-73.6, 41.1],
 ]
 
 export default function CatalogMapView({
@@ -37,6 +58,9 @@ export default function CatalogMapView({
   layoutVersion,
   indexMode,
   region = 'nyc',
+  mapVariant,
+  twinLineGeoJson,
+  fitKey = 'default',
 }: CatalogMapViewProps) {
   const container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<MapLibreMap | null>(null)
@@ -44,7 +68,7 @@ export default function CatalogMapView({
   on_select_ref.current = onSelectKey
   const [map_loaded, set_map_loaded] = useState(false)
   const [error, set_error] = useState<string | null>(null)
-  const fitted_ref = useRef(false)
+  const fitted_ref = useRef<string | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined' || !container_ref.current) return
@@ -77,12 +101,13 @@ export default function CatalogMapView({
           ],
         }
 
-        const initialBounds = region === 'la' ? LA_METRO_BOUNDS : NYC_METRO_BOUNDS
+        const initialBounds =
+          region === 'la' ? LA_METRO_BOUNDS : region === 'both' ? BOTH_METRO_BOUNDS : NYC_METRO_BOUNDS
         const map = new maplibregl.Map({
           container: container_ref.current,
           style,
           bounds: initialBounds,
-          fitBoundsOptions: { padding: 24, maxZoom: 11 },
+          fitBoundsOptions: { padding: 24, maxZoom: mapVariant === 'twin' ? 11 : 11 },
         })
 
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
@@ -113,6 +138,7 @@ export default function CatalogMapView({
         set_map_loaded(false)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- remount base map only when region changes
   }, [region])
 
   useEffect(() => {
@@ -126,15 +152,43 @@ export default function CatalogMapView({
       try {
         if (!map.getSource('catalog')) {
           map.addSource('catalog', { type: 'geojson', data })
+          const explorerRadius: ExpressionSpecification = [
+            '+',
+            ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 11],
+            ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10],
+          ]
+          const twinRadius: ExpressionSpecification = [
+            'case',
+            ['==', ['coalesce', ['get', 'isTop'], 0], 1],
+            [
+              '+',
+              ['interpolate', ['linear'], ['zoom'], 9, 5, 14, 14],
+              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12],
+            ],
+            [
+              '+',
+              ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 10],
+              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8],
+            ],
+          ]
+          const opacityExpr: ExpressionSpecification = [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['get', 'norm'], 0],
+            0,
+            0.38,
+            100,
+            0.94,
+          ]
           map.addLayer({
             id: 'catalog-bubbles',
             type: 'circle',
             source: 'catalog',
             paint: {
-              'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 4, 12, 11, 14, 16],
+              'circle-radius': mapVariant === 'twin' ? twinRadius : explorerRadius,
               'circle-color': ['get', 'color'],
-              'circle-opacity': 0.92,
-              'circle-stroke-width': 1.5,
+              'circle-opacity': opacityExpr,
+              'circle-stroke-width': mapVariant === 'twin' ? ['case', ['==', ['coalesce', ['get', 'isTop'], 0], 1], 3, 1.5] : 1.5,
               'circle-stroke-color': ['get', 'strokeColor'],
             },
           })
@@ -149,17 +203,127 @@ export default function CatalogMapView({
           map.on('mouseleave', 'catalog-bubbles', () => {
             map.getCanvas().style.cursor = ''
           })
+
+          if (mapVariant === 'twin') {
+            map.addLayer({
+              id: 'catalog-match-labels',
+              type: 'symbol',
+              source: 'catalog',
+              layout: {
+                'text-field': ['get', 'label'],
+                'text-size': 10,
+                'text-offset': [0, 1.35],
+                'text-anchor': 'top',
+                'text-allow-overlap': false,
+                'text-ignore-placement': false,
+              },
+              paint: {
+                'text-color': '#1a1a2e',
+                'text-halo-color': '#ffffff',
+                'text-halo-width': 1.5,
+              },
+              minzoom: 8,
+            })
+          }
         } else {
           const src = map.getSource('catalog') as GeoJSONSource
           src.setData(data as Parameters<GeoJSONSource['setData']>[0])
         }
 
         if (map.getLayer('catalog-bubbles')) {
-          map.setPaintProperty('catalog-bubbles', 'circle-stroke-width', 1.5)
+          const explorerRadius: ExpressionSpecification = [
+            '+',
+            ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 11],
+            ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10],
+          ]
+          const twinRadius: ExpressionSpecification = [
+            'case',
+            ['==', ['coalesce', ['get', 'isTop'], 0], 1],
+            [
+              '+',
+              ['interpolate', ['linear'], ['zoom'], 9, 5, 14, 14],
+              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12],
+            ],
+            [
+              '+',
+              ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 10],
+              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8],
+            ],
+          ]
+          const opacityExpr: ExpressionSpecification = [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['get', 'norm'], 0],
+            0,
+            0.38,
+            100,
+            0.94,
+          ]
+          map.setPaintProperty(
+            'catalog-bubbles',
+            'circle-radius',
+            mapVariant === 'twin' ? twinRadius : explorerRadius
+          )
+          map.setPaintProperty('catalog-bubbles', 'circle-opacity', opacityExpr)
+          map.setPaintProperty(
+            'catalog-bubbles',
+            'circle-stroke-width',
+            mapVariant === 'twin' ? ['case', ['==', ['coalesce', ['get', 'isTop'], 0], 1], 3, 1.5] : 1.5
+          )
         }
 
-        if (!fitted_ref.current && data.features.length > 0) {
-          fitted_ref.current = true
+        const hasTwinLabels = map.getLayer('catalog-match-labels')
+        if (mapVariant === 'twin' && !hasTwinLabels && map.getSource('catalog')) {
+          map.addLayer({
+            id: 'catalog-match-labels',
+            type: 'symbol',
+            source: 'catalog',
+            layout: {
+              'text-field': ['get', 'label'],
+              'text-size': 10,
+              'text-offset': [0, 1.35],
+              'text-anchor': 'top',
+            },
+            paint: {
+              'text-color': '#1a1a2e',
+              'text-halo-color': '#ffffff',
+              'text-halo-width': 1.5,
+            },
+            minzoom: 8,
+          })
+        }
+        if (mapVariant !== 'twin' && hasTwinLabels) {
+          map.removeLayer('catalog-match-labels')
+        }
+
+        if (twinLineGeoJson && twinLineGeoJson.features.length > 0) {
+          if (!map.getSource('twin-line')) {
+            map.addSource('twin-line', {
+              type: 'geojson',
+              data: twinLineGeoJson as Parameters<GeoJSONSource['setData']>[0],
+            })
+            map.addLayer({
+              id: 'twin-line-layer',
+              type: 'line',
+              source: 'twin-line',
+              paint: {
+                'line-color': '#6B5CE7',
+                'line-width': 2,
+                'line-dasharray': [1.2, 1.2],
+              },
+            })
+          } else {
+            ;(map.getSource('twin-line') as GeoJSONSource).setData(
+              twinLineGeoJson as Parameters<GeoJSONSource['setData']>[0]
+            )
+          }
+        } else if (map.getLayer('twin-line-layer')) {
+          map.removeLayer('twin-line-layer')
+          if (map.getSource('twin-line')) map.removeSource('twin-line')
+        }
+
+        if (fitted_ref.current !== fitKey && data.features.length > 0) {
+          fitted_ref.current = fitKey
           const coords = data.features.map((f) => (f.geometry as { coordinates: [number, number] }).coordinates)
           let minLon = Infinity
           let minLat = Infinity
@@ -177,7 +341,7 @@ export default function CatalogMapView({
                 [minLon, minLat],
                 [maxLon, maxLat],
               ],
-              { padding: 48, maxZoom: 12, duration: 0 }
+              { padding: 52, maxZoom: mapVariant === 'twin' ? 12 : 12, duration: 0 }
             )
           }
         }
@@ -186,7 +350,7 @@ export default function CatalogMapView({
       }
     }
     sync()
-  }, [data, map_loaded, indexMode])
+  }, [data, map_loaded, indexMode, mapVariant, twinLineGeoJson, fitKey])
 
   useEffect(() => {
     if (!map_ref.current || !map_loaded) return

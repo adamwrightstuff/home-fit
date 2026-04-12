@@ -1,10 +1,21 @@
-import CatalogMapClient from '../catalog-map-client'
+import { Suspense } from 'react'
+import CatalogPageClient from '../catalog-page-client'
 
 export const metadata = {
-  title: 'LA metro catalog map · HomeFit',
-  description: 'Explore neighborhood scores across the LA metro catalog.',
+  title: 'LA metro catalog · HomeFit',
+  description: 'Explore LA metro neighborhood scores and twins.',
 }
 
-export default function LaCatalogMapPage() {
-  return <CatalogMapClient metro="la" />
+export default function LaCatalogPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50dvh] items-center justify-center text-sm text-[var(--hf-text-secondary)]">
+          Loading catalog…
+        </div>
+      }
+    >
+      <CatalogPageClient initialMetroFilter="la" />
+    </Suspense>
+  )
 }

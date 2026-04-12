@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import type { CatalogMapApiResponse, CatalogMapPlace } from '@/lib/catalogMapTypes'
+import type { CatalogMapApiResponse, CatalogMapPlace, CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import type { ScoreResponse } from '@/types/api'
 
 export const dynamic = 'force-dynamic'
@@ -43,12 +43,51 @@ function missingDetail(metro: CatalogMapMetro): string {
   return `Catalog file not found for ${metro.toUpperCase()}. Add repo data/${names} (or copy into frontend/data).`
 }
 
+function loadMetroFile(metro: CatalogMapMetro): CatalogMapPlaceWithMetro[] {
+  const filePath = findMergedJsonl(metro)
+  if (!filePath) return []
+  const rawFile = fs.readFileSync(filePath, 'utf8')
+  const places: CatalogMapPlaceWithMetro[] = []
+  for (const line of rawFile.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    try {
+      const row = JSON.parse(trimmed) as {
+        success?: boolean
+        catalog?: CatalogMapPlace['catalog']
+        score?: ScoreResponse
+      }
+      if (!row.success || !row.catalog || !row.score) continue
+      places.push({
+        catalog: row.catalog,
+        score: row.score,
+        metro,
+      })
+    } catch {
+      // skip bad lines
+    }
+  }
+  return places
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const raw = (searchParams.get('metro') ?? 'nyc').toLowerCase()
+
+  if (raw === 'all') {
+    const nyc = loadMetroFile('nyc')
+    const la = loadMetroFile('la')
+    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la]
+    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null].filter(Boolean).join('+') || 'missing'
+    return NextResponse.json({
+      places,
+      source: sources === 'missing' ? 'missing' : `all:${sources}`,
+    } satisfies CatalogMapApiResponse & { detail?: string })
+  }
+
   if (raw !== 'nyc' && raw !== 'la') {
     return NextResponse.json(
-      { error: 'Invalid metro. Use metro=nyc or metro=la.' },
+      { error: 'Invalid metro. Use metro=nyc, metro=la, or metro=all.' },
       { status: 400 }
     )
   }
@@ -63,26 +102,7 @@ export async function GET(request: Request) {
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  const rawFile = fs.readFileSync(filePath, 'utf8')
-  const places: CatalogMapPlace[] = []
-  for (const line of rawFile.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    try {
-      const row = JSON.parse(trimmed) as {
-        success?: boolean
-        catalog?: CatalogMapPlace['catalog']
-        score?: ScoreResponse
-      }
-      if (!row.success || !row.catalog || !row.score) continue
-      places.push({
-        catalog: row.catalog,
-        score: row.score,
-      })
-    } catch {
-      // skip bad lines
-    }
-  }
+  const places = loadMetroFile(metro).map(({ metro: _m, ...rest }) => rest as CatalogMapPlace)
 
   const body: CatalogMapApiResponse = {
     places,

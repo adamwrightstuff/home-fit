@@ -20,11 +20,20 @@ export interface CatalogMapPlace {
   score: ScoreResponse
 }
 
+/** After `metro=all`, each place is tagged with its source metro. */
+export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' }
+
 export interface CatalogMapApiResponse {
-  places: CatalogMapPlace[]
+  places: CatalogMapPlace[] | CatalogMapPlaceWithMetro[]
   source: string
 }
 
 export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 'state_abbr'>): string {
   return `${c.name}|${c.county_borough}|${c.state_abbr}`
+}
+
+/** Single-metro API responses omit `metro`; infer from state when missing. */
+export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' }): 'nyc' | 'la' {
+  if (p.metro === 'nyc' || p.metro === 'la') return p.metro
+  return p.catalog.state_abbr === 'CA' ? 'la' : 'nyc'
 }

@@ -1,25 +1,20 @@
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import {
-  catalogModeToRamp,
-  mapBubbleStroke,
-  mapBubbleStrokeStatusArchetype,
-  scoreBandFill,
-  scoreBandFillStatusArchetype,
-} from '@/lib/indexColorSystem'
+import { catalogModeToRamp, mapBubbleStroke, scoreBandFill } from '@/lib/indexColorSystem'
 
-/** 0–100 score → bubble fill from active index ramp; Status uses archetype hue + score band. */
+/** 0–100 score → bubble fill from active index ramp; Status uses coral index ramp (map tabs). */
 export function numericScoreColorForMode(
   score: number | null | undefined,
   mode: CatalogMapIndexMode,
-  statusArchetype?: string | null
+  _statusArchetype?: string | null
 ): string {
   if (score == null || !Number.isFinite(score)) return '#94a3b8'
   if (mode === 'status') {
-    return scoreBandFillStatusArchetype(statusArchetype ?? null, score)
+    return scoreBandFill(catalogModeToRamp('status'), score)
   }
   return scoreBandFill(catalogModeToRamp(mode), score)
 }
@@ -33,7 +28,7 @@ function catalogBubbleStrokeForFeature(
     return 'rgba(100, 116, 139, 0.55)'
   }
   if (mode === 'status') {
-    return mapBubbleStrokeStatusArchetype(statusArchetype)
+    return mapBubbleStroke(catalogModeToRamp('status'))
   }
   return mapBubbleStroke(catalogModeToRamp(mode))
 }
@@ -69,7 +64,7 @@ export function buildCatalogFeatureCollection(
   const features = places.map((p) => {
     const { v, archetype } = displayScoreForMode(p, mode, priorities)
     const key = catalogRowKey(p.catalog)
-    const color = numericScoreColorForMode(v, mode, mode === 'status' ? archetype : undefined)
+    const color = numericScoreColorForMode(v, mode)
     const strokeColor = catalogBubbleStrokeForFeature(mode, v, archetype)
     return {
       type: 'Feature' as const,
@@ -82,6 +77,8 @@ export function buildCatalogFeatureCollection(
         key,
         name: p.catalog.name,
         v: v ?? 0,
+        /** 0–100 for map circle-radius / opacity interpolation */
+        norm: v != null && Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0,
         color,
         strokeColor,
         archetype: archetype ?? '',
@@ -222,5 +219,34 @@ export function displayIndexValue(
   return {
     label: labels[mode],
     value: v != null && Number.isFinite(v) ? v.toFixed(1) : '—',
+  }
+}
+
+/** Twin mode: bubbles colored by match % on coral ramp; top twin gets purple stroke. */
+export function buildTwinMatchFeatureCollection(matches: TwinMatchResult[], topKey: string | null) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: matches.map((m) => {
+      const top = topKey != null && m.key === topKey
+      const color = scoreBandFill('coral', m.matchPct)
+      return {
+        type: 'Feature' as const,
+        id: m.key,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [m.place.catalog.lon, m.place.catalog.lat] as [number, number],
+        },
+        properties: {
+          key: m.key,
+          name: m.place.catalog.name,
+          matchPct: m.matchPct,
+          norm: m.matchPct,
+          color,
+          strokeColor: top ? '#6B5CE7' : 'rgba(30,30,30,0.22)',
+          isTop: top ? 1 : 0,
+          label: `${m.matchPct}%`,
+        },
+      }
+    }),
   }
 }
