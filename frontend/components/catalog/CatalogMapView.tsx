@@ -51,6 +51,37 @@ const BOTH_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-73.6, 41.1],
 ]
 
+/** MapLibre: `zoom` may only index a *top-level* `interpolate`/`step` — not nested under `+`. */
+const EXPLORER_CIRCLE_RADIUS: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  9,
+  ['+', 3, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10]],
+  14,
+  ['+', 11, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10]],
+]
+
+const TWIN_CIRCLE_RADIUS: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  9,
+  [
+    'case',
+    ['==', ['coalesce', ['get', 'isTop'], 0], 1],
+    ['+', 5, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12]],
+    ['+', 3, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8]],
+  ],
+  14,
+  [
+    'case',
+    ['==', ['coalesce', ['get', 'isTop'], 0], 1],
+    ['+', 14, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12]],
+    ['+', 10, ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8]],
+  ],
+]
+
 export default function CatalogMapView({
   data,
   selectedKey,
@@ -152,25 +183,6 @@ export default function CatalogMapView({
       try {
         if (!map.getSource('catalog')) {
           map.addSource('catalog', { type: 'geojson', data })
-          const explorerRadius: ExpressionSpecification = [
-            '+',
-            ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 11],
-            ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10],
-          ]
-          const twinRadius: ExpressionSpecification = [
-            'case',
-            ['==', ['coalesce', ['get', 'isTop'], 0], 1],
-            [
-              '+',
-              ['interpolate', ['linear'], ['zoom'], 9, 5, 14, 14],
-              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12],
-            ],
-            [
-              '+',
-              ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 10],
-              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8],
-            ],
-          ]
           const opacityExpr: ExpressionSpecification = [
             'interpolate',
             ['linear'],
@@ -185,7 +197,7 @@ export default function CatalogMapView({
             type: 'circle',
             source: 'catalog',
             paint: {
-              'circle-radius': mapVariant === 'twin' ? twinRadius : explorerRadius,
+              'circle-radius': mapVariant === 'twin' ? TWIN_CIRCLE_RADIUS : EXPLORER_CIRCLE_RADIUS,
               'circle-color': ['get', 'color'],
               'circle-opacity': opacityExpr,
               'circle-stroke-width': mapVariant === 'twin' ? ['case', ['==', ['coalesce', ['get', 'isTop'], 0], 1], 3, 1.5] : 1.5,
@@ -231,25 +243,6 @@ export default function CatalogMapView({
         }
 
         if (map.getLayer('catalog-bubbles')) {
-          const explorerRadius: ExpressionSpecification = [
-            '+',
-            ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 11],
-            ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 10],
-          ]
-          const twinRadius: ExpressionSpecification = [
-            'case',
-            ['==', ['coalesce', ['get', 'isTop'], 0], 1],
-            [
-              '+',
-              ['interpolate', ['linear'], ['zoom'], 9, 5, 14, 14],
-              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 12],
-            ],
-            [
-              '+',
-              ['interpolate', ['linear'], ['zoom'], 9, 3, 14, 10],
-              ['*', ['/', ['coalesce', ['get', 'norm'], 0], 100], 8],
-            ],
-          ]
           const opacityExpr: ExpressionSpecification = [
             'interpolate',
             ['linear'],
@@ -262,7 +255,7 @@ export default function CatalogMapView({
           map.setPaintProperty(
             'catalog-bubbles',
             'circle-radius',
-            mapVariant === 'twin' ? twinRadius : explorerRadius
+            mapVariant === 'twin' ? TWIN_CIRCLE_RADIUS : EXPLORER_CIRCLE_RADIUS
           )
           map.setPaintProperty('catalog-bubbles', 'circle-opacity', opacityExpr)
           map.setPaintProperty(
