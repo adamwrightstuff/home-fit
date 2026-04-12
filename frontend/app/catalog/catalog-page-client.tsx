@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react'
+import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
 import CatalogBottomSheet, { findPlaceByKey, type CatalogSheetSnap } from '@/components/catalog/CatalogBottomSheet'
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
+import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
 import CatalogTwinDetailSheet from '@/components/catalog/CatalogTwinDetailSheet'
 import CatalogListView from '@/components/catalog/CatalogListView'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
@@ -28,7 +29,7 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
-import { DEFAULT_TWIN_PILLARS, rankTwinMatches, type TwinMatchResult } from '@/lib/twinSimilarity'
+import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 
 const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
@@ -88,8 +89,9 @@ export default function CatalogPageClient({
   const [twinPillarOpen, setTwinPillarOpen] = useState(false)
   const [layoutVersion, setLayoutVersion] = useState(0)
   const [twinQueryKey, setTwinQueryKey] = useState<string | null>(null)
+  const [twinSearchText, setTwinSearchText] = useState('')
   const [twinCrossMetro, setTwinCrossMetro] = useState(true)
-  const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => new Set(DEFAULT_TWIN_PILLARS))
+  const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
   const [filterType, setFilterType] = useState<'all' | 'neighborhood' | 'suburb'>('all')
@@ -137,10 +139,21 @@ export default function CatalogPageClient({
     if (key) {
       setCatalogMode('twin')
       setTwinQueryKey(key)
-      setViewMode('map')
+      setTwinSearchText('')
+      setViewMode('list')
     }
-    if (mode === 'twin') setCatalogMode('twin')
+    if (mode === 'twin') {
+      setCatalogMode('twin')
+      setViewMode('list')
+    }
   }, [searchParams])
+
+  useEffect(() => {
+    if (twinQueryKey) {
+      setSelectedKey(twinQueryKey)
+      setSnap('peek')
+    }
+  }, [twinQueryKey])
 
   const archetypes = useMemo(() => {
     const s = new Set<string>()
@@ -184,19 +197,40 @@ export default function CatalogPageClient({
 
   const queryPlace = twinQueryKey ? findPlaceByKey(places, twinQueryKey) : null
 
-  const twinRanked: TwinMatchResult[] = useMemo(() => {
-    if (catalogMode !== 'twin' || !queryPlace) return []
+  const twinCandidatePlaces = useMemo(() => {
+    if (catalogMode !== 'twin' || !queryPlace || !twinQueryKey) return []
     const qm = inferCatalogMetro(queryPlace)
-    const pillars = PILLAR_ORDER.filter((k) => twinPillars.has(k))
-    const cands = filteredPlaces.filter((p) => {
+    return places.filter((p) => {
       const id = catalogRowKey(p.catalog)
       if (id === twinQueryKey) return false
       const m = inferCatalogMetro(p)
       if (twinCrossMetro) return m !== qm
       return m === qm
     })
-    return rankTwinMatches(queryPlace, cands, pillars, (pl) => catalogRowKey(pl.catalog))
-  }, [catalogMode, queryPlace, filteredPlaces, twinQueryKey, twinCrossMetro, twinPillars])
+  }, [catalogMode, queryPlace, places, twinQueryKey, twinCrossMetro])
+
+  const twinPillarList = useMemo(() => PILLAR_ORDER.filter((k) => twinPillars.has(k)), [twinPillars])
+
+  const twinRanked: TwinMatchResult[] = useMemo(() => {
+    if (catalogMode !== 'twin' || !queryPlace || twinPillarList.length < 2) return []
+    return rankTwinMatches(
+      queryPlace,
+      twinCandidatePlaces,
+      twinPillarList,
+      (pl) => catalogRowKey(pl.catalog),
+      12
+    )
+  }, [catalogMode, queryPlace, twinCandidatePlaces, twinPillarList])
+
+  const mapPlacesNoTwinQuery = useMemo(() => {
+    if (catalogMode !== 'twin' || twinQueryKey) return filteredPlaces
+    return places
+  }, [catalogMode, twinQueryKey, filteredPlaces, places])
+
+  const explorerGeo = useMemo(
+    () => buildCatalogFeatureCollection(mapPlacesNoTwinQuery, indexMode, priorities),
+    [mapPlacesNoTwinQuery, indexMode, priorities]
+  )
 
   const twinGeo = useMemo(() => {
     if (catalogMode !== 'twin' || !queryPlace) {
@@ -205,11 +239,6 @@ export default function CatalogPageClient({
     const topKey = twinRanked[0]?.key ?? null
     return buildTwinMatchFeatureCollection(twinRanked, topKey)
   }, [catalogMode, queryPlace, twinRanked, indexMode, priorities])
-
-  const explorerGeo = useMemo(
-    () => buildCatalogFeatureCollection(filteredPlaces, indexMode, priorities),
-    [filteredPlaces, indexMode, priorities]
-  )
 
   const mapData = catalogMode === 'twin' && twinQueryKey ? twinGeo : explorerGeo
 
@@ -245,27 +274,29 @@ export default function CatalogPageClient({
     }
   }, [catalogMode, queryPlace, twinRanked])
 
-  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${filteredPlaces.length}-${mapData.features.length}`
+  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}-${mapData.features.length}`
 
   const selectedPlace = useMemo(() => findPlaceByKey(places, selectedKey), [places, selectedKey])
 
   const selectedTwinMatch = useMemo(() => {
-    if (!selectedKey || !twinRanked.length) return null
+    if (!selectedKey || !twinQueryKey || selectedKey === twinQueryKey) return null
     return twinRanked.find((r) => r.key === selectedKey) ?? null
-  }, [selectedKey, twinRanked])
+  }, [selectedKey, twinQueryKey, twinRanked])
+
+  const twinControlsLocked = catalogMode === 'twin' && !twinQueryKey
 
   const onSelectKey = useCallback(
     (key: string | null) => {
       setSelectedKey(key)
       if (key) setSnap('peek')
       if (!key) return
-      if (catalogMode === 'twin') {
-        if (!twinQueryKey) {
-          setTwinQueryKey(key)
-        }
+      if (catalogMode === 'twin' && !twinQueryKey) {
+        setTwinQueryKey(key)
+        setTwinSearchText('')
+        router.replace(`/catalog?mode=twin&key=${encodeURIComponent(key)}`, { scroll: false })
       }
     },
-    [catalogMode, twinQueryKey]
+    [catalogMode, twinQueryKey, router]
   )
 
   useEffect(() => {
@@ -301,20 +332,40 @@ export default function CatalogPageClient({
     setSnap('peek')
   }, [])
 
-  const onTwinRow = useCallback((key: string) => {
-    setCatalogMode('twin')
-    setTwinQueryKey(key)
-    setViewMode('map')
-    setSelectedKey(key)
-    setSnap('peek')
-    router.replace(`/catalog?mode=twin&key=${encodeURIComponent(key)}`, { scroll: false })
+  const clearTwinQuery = useCallback(() => {
+    setTwinQueryKey(null)
+    setTwinSearchText('')
+    setSelectedKey(null)
+    router.replace('/catalog', { scroll: false })
   }, [router])
 
-  const twinPillarList = useMemo(() => PILLAR_ORDER.filter((k) => twinPillars.has(k)), [twinPillars])
+  const onTwinRow = useCallback(
+    (key: string) => {
+      setCatalogMode('twin')
+      setTwinQueryKey(key)
+      setTwinSearchText('')
+      setViewMode('list')
+      setSelectedKey(key)
+      setSnap('peek')
+      router.replace(`/catalog?mode=twin&key=${encodeURIComponent(key)}`, { scroll: false })
+    },
+    [router]
+  )
+
+  const onTwinSelectFromSearch = useCallback(
+    (key: string) => {
+      setTwinQueryKey(key)
+      setTwinSearchText('')
+      setSelectedKey(key)
+      setSnap('peek')
+      router.replace(`/catalog?mode=twin&key=${encodeURIComponent(key)}`, { scroll: false })
+    },
+    [router]
+  )
 
   return (
     <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
-      <header className="z-30 flex max-h-[50vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 py-2 backdrop-blur">
+      <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="text-sm font-semibold" style={{ color: 'var(--hf-primary-1)' }}>
             ← Home
@@ -350,6 +401,7 @@ export default function CatalogPageClient({
             onClick={() => {
               setCatalogMode('explorer')
               setTwinQueryKey(null)
+              setTwinSearchText('')
               router.replace('/catalog', { scroll: false })
             }}
           >
@@ -361,177 +413,202 @@ export default function CatalogPageClient({
               catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
             }`}
             style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
-            onClick={() => setCatalogMode('twin')}
+            onClick={() => {
+              setCatalogMode('twin')
+              setViewMode('list')
+            }}
           >
             Twin finder
           </button>
         </div>
 
         {catalogMode === 'twin' && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[0.65rem] font-semibold uppercase text-[var(--hf-text-tertiary)]">Mode</span>
-            <button
-              type="button"
-              className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold ${twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
-              onClick={() => setTwinCrossMetro(true)}
-            >
-              Cross-metro
-            </button>
-            <button
-              type="button"
-              className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
-              onClick={() => setTwinCrossMetro(false)}
-            >
-              Same metro
-            </button>
-            {twinQueryKey && (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[0.65rem] font-semibold uppercase text-[var(--hf-text-tertiary)]">Mode</span>
               <button
                 type="button"
-                className="text-[0.7rem] font-semibold text-[var(--hf-primary-1)]"
-                onClick={() => {
-                  setTwinQueryKey(null)
-                  setSelectedKey(null)
-                  router.replace('/catalog', { scroll: false })
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:cursor-not-allowed disabled:opacity-40 ${
+                  twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'
+                }`}
+                onClick={() => setTwinCrossMetro(true)}
+              >
+                Cross-metro
+              </button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:cursor-not-allowed disabled:opacity-40 ${
+                  !twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'
+                }`}
+                onClick={() => setTwinCrossMetro(false)}
+              >
+                Same metro
+              </button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className="ml-auto flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-[0.7rem] font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Pillars ({twinPillarList.length})
+              </button>
+            </div>
+
+            <div className="relative flex items-center gap-1">
+              <input
+                type="search"
+                placeholder="Search a neighborhood to find its twin…"
+                value={twinQueryKey && queryPlace ? queryPlace.catalog.name : twinSearchText}
+                onChange={(e) => {
+                  if (twinQueryKey) return
+                  setTwinSearchText(e.target.value)
                 }}
-              >
-                Clear query
-              </button>
-            )}
-            <button
-              type="button"
-              className="ml-auto flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-[0.7rem] font-bold"
-              onClick={() => setTwinPillarOpen(true)}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Pillars ({twinPillarList.length})
-            </button>
-          </div>
-        )}
-
-        <input
-          type="search"
-          placeholder="Search name, county…"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-sm"
-        />
-
-        <div className="flex flex-wrap gap-1">
-          {(['all', 'nyc', 'la'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold ${
-                filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-              }`}
-              style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
-              onClick={() => setFilterMetro(m)}
-            >
-              {m === 'all' ? 'All metros' : m.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          <span className="self-center text-[0.65rem] text-[var(--hf-text-tertiary)]">Type</span>
-          {(['all', 'neighborhood', 'suburb'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${
-                filterType === t ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : 'bg-[var(--hf-bg-subtle)]'
-              }`}
-              onClick={() => setFilterType(t)}
-            >
-              {t === 'all' ? 'All' : t === 'neighborhood' ? 'Neighborhood' : 'Suburb'}
-            </button>
-          ))}
-        </div>
-
-        {archetypes.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === 'all' ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
-              onClick={() => setFilterArchetype('all')}
-            >
-              All archetypes
-            </button>
-            {archetypes.map((a) => (
-              <button
-                key={a}
-                type="button"
-                className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === a ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
-                onClick={() => setFilterArchetype(a)}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">Sort</span>
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="rounded border border-[var(--hf-border)] px-1 py-0.5 text-[0.7rem]"
-          >
-            <option value="homefit">HomeFit</option>
-            <option value="longevity">Longevity</option>
-            <option value="happiness">Happiness</option>
-            <option value="status">Status</option>
-            <option value="name">A–Z</option>
-          </select>
-          <button
-            type="button"
-            className="text-[0.7rem] font-semibold"
-            onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-          >
-            {sortDir === 'desc' ? 'Desc' : 'Asc'}
-          </button>
-        </div>
-
-        {(catalogMode === 'explorer' || (catalogMode === 'twin' && !twinQueryKey)) && (
-          <div className="flex flex-wrap gap-1">
-            {INDEXES.map((x) => {
-              const active = indexMode === x.id
-              const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
-              return (
+                readOnly={!!twinQueryKey}
+                className="w-full rounded-lg border border-[var(--hf-border)] py-1.5 pl-2 pr-9 text-sm"
+              />
+              {twinQueryKey && (
                 <button
-                  key={x.id}
                   type="button"
-                  className="rounded-full px-3 py-1.5 text-xs font-bold"
-                  style={
-                    active
-                      ? { ...activeStyle, border: 'none' }
-                      : {
-                          background: 'var(--hf-hover-bg)',
-                          color: 'var(--hf-text-secondary)',
-                          border: '0.5px solid var(--hf-border)',
-                        }
-                  }
-                  onClick={() => setIndexMode(x.id)}
+                  className="absolute right-1 rounded p-1 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
+                  onClick={clearTwinQuery}
+                  aria-label="Clear neighborhood"
                 >
-                  {x.label}
+                  <X className="h-4 w-4" />
                 </button>
-              )
-            })}
-          </div>
+              )}
+            </div>
+          </>
         )}
 
-        <button
-          type="button"
-          title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
-          className="self-start rounded-lg border border-[var(--hf-border-strong)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
-          style={{
-            opacity: indexMode !== 'homefit' ? 0.4 : 1,
-            pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto',
-          }}
-          onClick={() => setWeightOpen(true)}
-        >
-          Adjust weights
-        </button>
+        {catalogMode === 'explorer' && (
+          <>
+            <input
+              type="search"
+              placeholder="Search name, county…"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-sm"
+            />
+
+            <div className="flex flex-wrap gap-1">
+              {(['all', 'nyc', 'la'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold ${
+                    filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                  }`}
+                  style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
+                  onClick={() => setFilterMetro(m)}
+                >
+                  {m === 'all' ? 'All metros' : m.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+              <span className="self-center text-[0.65rem] text-[var(--hf-text-tertiary)]">Type</span>
+              {(['all', 'neighborhood', 'suburb'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${
+                    filterType === t ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : 'bg-[var(--hf-bg-subtle)]'
+                  }`}
+                  onClick={() => setFilterType(t)}
+                >
+                  {t === 'all' ? 'All' : t === 'neighborhood' ? 'Neighborhood' : 'Suburb'}
+                </button>
+              ))}
+            </div>
+
+            {archetypes.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === 'all' ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
+                  onClick={() => setFilterArchetype('all')}
+                >
+                  All archetypes
+                </button>
+                {archetypes.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === a ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
+                    onClick={() => setFilterArchetype(a)}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">Sort</span>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="rounded border border-[var(--hf-border)] px-1 py-0.5 text-[0.7rem]"
+              >
+                <option value="homefit">HomeFit</option>
+                <option value="longevity">Longevity</option>
+                <option value="happiness">Happiness</option>
+                <option value="status">Status</option>
+                <option value="name">A–Z</option>
+              </select>
+              <button
+                type="button"
+                className="text-[0.7rem] font-semibold"
+                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              >
+                {sortDir === 'desc' ? 'Desc' : 'Asc'}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+              {INDEXES.map((x) => {
+                const active = indexMode === x.id
+                const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+                return (
+                  <button
+                    key={x.id}
+                    type="button"
+                    className="rounded-full px-3 py-1.5 text-xs font-bold"
+                    style={
+                      active
+                        ? { ...activeStyle, border: 'none' }
+                        : {
+                            background: 'var(--hf-hover-bg)',
+                            color: 'var(--hf-text-secondary)',
+                            border: '0.5px solid var(--hf-border)',
+                          }
+                    }
+                    onClick={() => setIndexMode(x.id)}
+                  >
+                    {x.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
+              className="self-start rounded-lg border border-[var(--hf-border-strong)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
+              style={{
+                opacity: indexMode !== 'homefit' ? 0.4 : 1,
+                pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto',
+              }}
+              onClick={() => setWeightOpen(true)}
+            >
+              Adjust weights
+            </button>
+          </>
+        )}
       </header>
 
       {viewMode === 'map' && (
@@ -549,8 +626,21 @@ export default function CatalogPageClient({
         />
       )}
 
-      {viewMode === 'list' && (
+      {viewMode === 'list' && catalogMode === 'explorer' && (
         <CatalogListView places={filteredPlaces} priorities={priorities} onTwinRow={onTwinRow} />
+      )}
+
+      {viewMode === 'list' && catalogMode === 'twin' && (
+        <TwinFinderPanel
+          places={places}
+          twinSearchText={twinSearchText}
+          twinQueryKey={twinQueryKey}
+          queryPlace={queryPlace}
+          twinRanked={twinRanked}
+          priorities={priorities}
+          selectedPillars={twinPillarList}
+          onSelectQuery={onTwinSelectFromSearch}
+        />
       )}
 
       {catalogMode === 'explorer' && (
@@ -566,7 +656,7 @@ export default function CatalogPageClient({
         />
       )}
 
-      {catalogMode === 'twin' && selectedPlace && twinQueryKey && selectedKey === twinQueryKey && (
+      {catalogMode === 'twin' && selectedPlace && twinQueryKey && selectedKey === twinQueryKey && queryPlace && (
         <CatalogBottomSheet
           place={selectedPlace}
           indexMode={indexMode}
@@ -580,12 +670,12 @@ export default function CatalogPageClient({
       )}
 
       {catalogMode === 'twin' &&
-        selectedPlace &&
+        queryPlace &&
         twinQueryKey &&
         selectedKey &&
         selectedKey !== twinQueryKey &&
-        queryPlace &&
-        selectedTwinMatch && (
+        selectedTwinMatch &&
+        selectedPlace && (
           <CatalogTwinDetailSheet
             query={queryPlace}
             twin={selectedTwinMatch.place}
@@ -610,6 +700,7 @@ export default function CatalogPageClient({
         onClose={() => setTwinPillarOpen(false)}
         selected={twinPillars}
         onChange={setTwinPillars}
+        disabled={twinControlsLocked}
       />
 
       {loading && (
