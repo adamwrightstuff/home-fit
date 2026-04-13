@@ -948,6 +948,21 @@ def _compute_status_signal_for_response(
     )
 
 
+def _need_arch_diversity_for_area_type(only_pillars: Optional[set[str]]) -> bool:
+    """
+    Full scores (and catalog JSONL) pass built_coverage into area_type detection.
+    Status Signal refresh uses only=...neighborhood_amenities... without built_beauty; we still
+    need arch diversity so area_type matches a full run and Status Signal aligns with catalog.
+    """
+    if only_pillars is None:
+        return True
+    if "built_beauty" in only_pillars:
+        return True
+    if "neighborhood_amenities" in only_pillars:
+        return True
+    return False
+
+
 def _compute_happiness_index_for_response(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
@@ -1415,9 +1430,6 @@ def _compute_single_score_internal(
                     return 0
 
             def _fetch_built_coverage():
-                if only_pillars is not None and "built_beauty" not in only_pillars:
-                    logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
-                    return None
                 try:
                     arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
                     return arch_diversity
@@ -1439,7 +1451,7 @@ def _compute_single_score_internal(
                 future_business_count = executor.submit(_fetch_business_count)
                 future_metro_distance = executor.submit(_fetch_metro_distance)
 
-                need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+                need_built_coverage = _need_arch_diversity_for_area_type(only_pillars)
                 if need_built_coverage:
                     future_built_coverage = executor.submit(_fetch_built_coverage)
                 else:
@@ -2951,7 +2963,7 @@ async def _stream_score_with_progress(
                         pass
 
                 arch_diversity_data = None
-                if only_pillars is None or "built_beauty" in only_pillars:
+                if _need_arch_diversity_for_area_type(only_pillars):
                     try:
                         arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
                     except Exception:
@@ -3945,17 +3957,9 @@ async def stream_score(
                     return 0
             
             def _fetch_built_coverage():
-                # Only fetch full arch_diversity if built_beauty pillar is requested
-                # Note: built_coverage_ratio is used for area_type detection, but it's just one factor
-                # and area_type detection can work without it (other factors: density, business_count, metro_distance)
-                if only_pillars is not None and "built_beauty" not in only_pillars:
-                    # Skip expensive arch_diversity computation - area_type will work without built_coverage
-                    logger.debug("Skipping arch_diversity computation (built_beauty not requested)")
-                    return None
                 try:
-                    # Return full arch_diversity dict to reuse in built_beauty pillar
                     arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-                    return arch_diversity  # Return full dict, not just built_coverage_ratio
+                    return arch_diversity
                 except Exception as e:
                     logger.warning(f"Built coverage query failed (non-fatal): {e}")
                     return None
@@ -3976,7 +3980,7 @@ async def stream_score(
                 future_metro_distance = executor.submit(_fetch_metro_distance)
                 
                 # Conditionally submit built_coverage task
-                need_built_coverage = only_pillars is None or "built_beauty" in only_pillars
+                need_built_coverage = _need_arch_diversity_for_area_type(only_pillars)
                 if need_built_coverage:
                     future_built_coverage = executor.submit(_fetch_built_coverage)
                 else:
