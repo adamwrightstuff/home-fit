@@ -513,6 +513,20 @@ export default function ScoreDisplay({
                 }
                 builtCharacterPreference={key === 'built_beauty' ? searchOptions?.built_character_preference ?? null : undefined}
                 builtDensityPreference={key === 'built_beauty' ? searchOptions?.built_density_preference ?? null : undefined}
+                onBuiltCharacterPreferenceChange={
+                  key === 'built_beauty' && onSearchOptionsChange && searchOptions
+                    ? (value) => {
+                        onSearchOptionsChange({ ...searchOptions, built_character_preference: value as SearchOptions['built_character_preference'] })
+                      }
+                    : undefined
+                }
+                onBuiltDensityPreferenceChange={
+                  key === 'built_beauty' && onSearchOptionsChange && searchOptions
+                    ? (value) => {
+                        onSearchOptionsChange({ ...searchOptions, built_density_preference: value as SearchOptions['built_density_preference'] })
+                      }
+                    : undefined
+                }
               />
             )
           })}

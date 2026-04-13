@@ -51,6 +51,10 @@ interface PillarCardProps {
   builtCharacterPreference?: string | null
   /** Built Beauty only: density preference applied when scoring. */
   builtDensityPreference?: string | null
+  /** Built Beauty only: update character preference (shown with chips; use with Rescore). */
+  onBuiltCharacterPreferenceChange?: (value: string | null) => void
+  /** Built Beauty only: update density preference (shown with chips; use with Rescore). */
+  onBuiltDensityPreferenceChange?: (value: string | null) => void
   /** Current importance for this pillar (for inline weight editing on Results). */
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
@@ -64,6 +68,21 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'ocean', label: 'Ocean' },
   { value: 'lakes_rivers', label: 'Lakes & rivers' },
   { value: 'canopy', label: 'Greenery' },
+]
+
+/** Built Beauty — mirrors ScoreDisplay / PlaceView so Rescore uses the same query params. */
+const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
+  { value: 'historic', label: 'Historic' },
+  { value: 'contemporary', label: 'Contemporary' },
+  { value: 'no_preference', label: 'No preference' },
+]
+const BUILT_DENSITY_CHIPS: Array<{
+  value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'
+  label: string
+}> = [
+  { value: 'spread_out_residential', label: 'Spread out' },
+  { value: 'walkable_residential', label: 'Walkable' },
+  { value: 'dense_urban_living', label: 'Downtown' },
 ]
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -211,6 +230,8 @@ export default function PillarCard({
   onNaturalBeautyPreferenceChange,
   builtCharacterPreference,
   builtDensityPreference,
+  onBuiltCharacterPreferenceChange,
+  onBuiltDensityPreferenceChange,
 }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
@@ -626,6 +647,91 @@ export default function PillarCard({
                   ) : (
                     displayPreference ? <>{' '}{displayPreference.join(', ')}</> : null
                   )}
+                </div>
+              )
+            })()}
+            {pillar_key === 'built_beauty' && (() => {
+              const char = builtCharacterPreference ?? null
+              const dens = builtDensityPreference ?? null
+              const canChar = Boolean(onBuiltCharacterPreferenceChange)
+              const canDens = Boolean(onBuiltDensityPreferenceChange)
+              const charLabel = char ? BUILT_CHARACTER_CHIPS.find((c) => c.value === char)?.label : null
+              const densLabel = dens ? BUILT_DENSITY_CHIPS.find((d) => d.value === dens)?.label : null
+              if (!canChar && !canDens && !char && !dens) return null
+              return (
+                <div style={{ marginBottom: canChar || canDens ? '0.85rem' : '0.5rem' }}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Character:</span>
+                    {canChar ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                        {BUILT_CHARACTER_CHIPS.map(({ value, label }) => {
+                          const selected = char === value
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onBuiltCharacterPreferenceChange!(selected ? null : value)
+                              }}
+                              disabled={rescoring}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: 8,
+                                fontSize: '0.85rem',
+                                fontWeight: selected ? 600 : 400,
+                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                color: selected ? 'white' : 'var(--hf-text-secondary)',
+                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                cursor: rescoring ? 'not-allowed' : 'pointer',
+                                opacity: rescoring ? 0.7 : 1,
+                              }}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : charLabel ? (
+                      <span style={{ marginLeft: '0.35rem' }}>{charLabel}</span>
+                    ) : null}
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Density:</span>
+                    {canDens ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                        {BUILT_DENSITY_CHIPS.map(({ value, label }) => {
+                          const selected = dens === value
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onBuiltDensityPreferenceChange!(selected ? null : value)
+                              }}
+                              disabled={rescoring}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: 8,
+                                fontSize: '0.85rem',
+                                fontWeight: selected ? 600 : 400,
+                                background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                color: selected ? 'white' : 'var(--hf-text-secondary)',
+                                border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                cursor: rescoring ? 'not-allowed' : 'pointer',
+                                opacity: rescoring ? 0.7 : 1,
+                              }}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : densLabel ? (
+                      <span style={{ marginLeft: '0.35rem' }}>{densLabel}</span>
+                    ) : null}
+                  </div>
                 </div>
               )
             })()}
