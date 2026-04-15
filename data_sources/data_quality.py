@@ -1774,6 +1774,7 @@ class DataQualityManager:
         # Adjust for data source quality
         source_quality = {
             'osm': 0.9,
+            'google_places': 0.85,
             'census': 0.95,
             'static': 0.8,
             'fallback': 0.5
@@ -1833,7 +1834,9 @@ def assess_pillar_data_quality(
     
     # Create confidence score
     data_sources = ['osm'] if data else []
-    if pillar_name == 'social_fabric' and data:
+    if pillar_name == 'neighborhood_amenities' and data and data.get('places_augmented'):
+        data_sources = ['osm', 'google_places']
+    elif pillar_name == 'social_fabric' and data:
         data_sources = ['census', 'osm'] if data.get('mobility') is not None else ['osm']
     elif pillar_name == 'diversity' and data:
         data_sources = ['census']

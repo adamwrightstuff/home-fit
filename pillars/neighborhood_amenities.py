@@ -9,6 +9,8 @@ New Approach (2025):
 
 from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
+from data_sources.data_quality import data_quality_manager
+from data_sources.places_fallback_client import maybe_augment_business_data_with_places
 import math
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
@@ -39,7 +41,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains)
     
     # Ensure area_type is detected early (needed for fallback scoring when OSM data unavailable)
-    from data_sources import census_api, data_quality
+    from data_sources import census_api
     # Use pre-computed density if provided, otherwise fetch it
     if density is None:
         density = census_api.get_population_density(lat, lon)
@@ -128,6 +130,27 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             print("⚠️  No indie businesses found")
             return 0, _empty_breakdown(lat, lon, area_type)
     
+    # Google Places (New) fallback when OSM amenity sample is thin (completeness below threshold)
+    expected_minimums_pre = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
+    osm_completeness_pre, _ = data_quality_manager.assess_data_completeness(
+        "neighborhood_amenities",
+        {"all_businesses": all_businesses},
+        expected_minimums_pre,
+    )
+    business_data, places_fallback_meta = maybe_augment_business_data_with_places(
+        business_data, lat, lon, float(query_radius), include_chains, float(osm_completeness_pre)
+    )
+    if places_fallback_meta.get("used"):
+        tier1_all = business_data["tier1_daily"]
+        tier2_all = business_data["tier2_social"]
+        tier3_all = business_data["tier3_culture"]
+        tier4_all = business_data["tier4_services"]
+        all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
+        print(
+            f"   🌐 Places fallback: merged {places_fallback_meta.get('mapped_added', 0)} places "
+            f"(OSM completeness was {osm_completeness_pre:.2f})"
+        )
+    
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     walkable_distance = int(profile.get('walkable_distance_m', 1000))
@@ -173,6 +196,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     density = census_api.get_population_density(lat, lon) or 0.0
     if area_type is None:  # Only detect if not already set
         area_type = data_quality.detect_area_type(lat, lon, density)
+    combined_data["places_augmented"] = bool(places_fallback_meta.get("used"))
     quality_metrics = data_quality.assess_pillar_data_quality('neighborhood_amenities', combined_data, lat, lon, area_type)
     
     # Build response with enhanced breakdown
@@ -191,8 +215,10 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             "location_quality": round(location_score, 1)
         },
         "summary": _build_summary(tier1_all, tier2_all, tier3_all, tier4_all, all_businesses, home_score, location_score),
+        "data_source": "blended" if places_fallback_meta.get("used") else "osm",
+        "places_fallback": places_fallback_meta,
         "data_quality": quality_metrics,
-        "version": "neighborhood_amenities_v2_calibrated",
+        "version": "neighborhood_amenities_v2_places_fallback",
         "raw_total": round(raw_total, 1),
         "calibration": {"a": None, "b": None, "note": "Calibration removed - using pure data-backed scoring per design principles"},
         "diagnostics": {
@@ -207,7 +233,17 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             "tier4_count": len(tier4_all),
         },
         # For Status Signal (included in API response so clients can recompute/breakdown)
-        "business_list": [{"name": b.get("name"), "type": b.get("type"), "shop": b.get("shop"), "leisure": b.get("leisure"), "amenity": b.get("amenity")} for b in all_businesses],
+        "business_list": [
+            {
+                "name": b.get("name"),
+                "type": b.get("type"),
+                "shop": b.get("shop"),
+                "leisure": b.get("leisure"),
+                "amenity": b.get("amenity"),
+                "source": b.get("source"),
+            }
+            for b in all_businesses
+        ],
     }
     
     # Log results
