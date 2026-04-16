@@ -19,7 +19,6 @@ GOOGLE_TYPE_TO_TIER: Dict[str, Tuple[str, str]] = {
     # tier2_social
     "restaurant": ("tier2_social", "restaurant"),
     "meal_takeaway": ("tier2_social", "restaurant"),
-    "food": ("tier2_social", "restaurant"),
     "bar": ("tier2_social", "bar"),
     "night_club": ("tier2_social", "bar"),
     "liquor_store": ("tier2_social", "bar"),
@@ -48,7 +47,6 @@ _TYPE_MATCH_ORDER: List[str] = [
     "bakery",
     "restaurant",
     "meal_takeaway",
-    "food",
     "bar",
     "night_club",
     "liquor_store",
@@ -70,7 +68,7 @@ _TYPE_MATCH_ORDER: List[str] = [
 # Use only types that exist in GOOGLE_TYPE_TO_TIER so responses map into scoring tiers.
 TIER_PLACE_TYPES: Dict[str, List[str]] = {
     "tier1": ["cafe", "bakery", "grocery_store", "supermarket", "convenience_store"],
-    "tier2": ["restaurant", "bar", "food", "meal_takeaway", "night_club", "liquor_store"],
+    "tier2": ["restaurant", "bar", "meal_takeaway", "night_club", "liquor_store"],
     "tier3": ["book_store", "museum", "art_gallery", "movie_theater", "library"],
     "tier4": ["gym", "hair_care", "beauty_salon", "clothing_store", "florist", "spa", "hardware_store"],
 }
@@ -102,7 +100,7 @@ def included_type_batches_for_nearby_search() -> List[List[str]]:
     """
     return [
         ["supermarket", "grocery_store", "cafe", "bakery", "convenience_store"],
-        ["restaurant", "meal_takeaway", "food", "bar", "night_club", "liquor_store"],
+        ["restaurant", "meal_takeaway", "bar", "night_club", "liquor_store"],
         ["book_store", "museum", "art_gallery", "movie_theater", "library"],
         ["gym", "clothing_store", "hair_care", "beauty_salon", "florist", "hardware_store"],
         ["spa"],
