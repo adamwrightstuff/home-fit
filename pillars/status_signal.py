@@ -8,8 +8,8 @@ Data-driven principles (no location-specific tuning):
 - CBSA Mapping: Baselines selected by tract CBSA code only (Palo Alto vs San Jose, Bronxville vs NYC).
 
 Baselines from data/status_signal_baselines.json; keys_to_try = CBSA key first (from cbsa_to_baseline), then division, then "all".
-Luxury: deduped OSM+Places ``business_list`` from neighborhood amenities (same radius as scoring centroid);
-fallback to dedicated OSM luxury Overpass when stored rows lack coordinates; else brand name fallback.
+Luxury: dedicated OSM luxury Overpass (wealth offices, etc.) merged with deduped OSM+Places ``business_list``
+(per-bucket max); brand fallback when both are empty and Overpass fails; no coordinates → brand fallback.
 """
 
 from __future__ import annotations
@@ -220,6 +220,14 @@ _LUX_METRICS = {
     "luxury_retail": "luxury_retail_count",
 }
 
+_LUXURY_COUNT_KEYS = (
+    "wealth_offices",
+    "private_recreation",
+    "arts_culture",
+    "specialist_healthcare",
+    "luxury_retail",
+)
+
 
 def _luxury_count_to_score(
     count: int,
@@ -233,29 +241,15 @@ def _luxury_count_to_score(
     return _normalize_min_max(float(max(0, count)), mn, mx)
 
 
-def compute_luxury_presence_osm(
-    lat: float,
-    lon: float,
+def _luxury_score_detail_from_counts(
+    counts: Dict[str, int],
     keys_to_try: List[str],
     baselines: Dict[str, Any],
-    radius_m: int = 1500,
+    detail_head: Dict[str, Any],
 ) -> Tuple[float, Dict[str, Any]]:
-    """
-    Luxury presence 0–100 from dedicated OSM tag buckets. Falls back to zeros if query fails.
-    Healthcare bucket omitted (and weight redistributed) when specialist_healthcare count < 3.
-    """
-    try:
-        from data_sources.status_signal_luxury_osm import query_status_signal_luxury_osm
-    except Exception:
-        return 0.0, {"source": "osm", "error": "import_failed"}
-
-    raw = query_status_signal_luxury_osm(lat, lon, radius_m=radius_m)
-    detail: Dict[str, Any] = {"source": "osm", "radius_m": radius_m}
-    if not raw or not raw.get("counts"):
-        detail["error"] = "no_osm_result"
-        return 0.0, detail
-
-    c = raw["counts"]
+    """Shared 0–100 luxury score from per-bucket integer counts (healthcare < 3 redistributes weights)."""
+    detail = dict(detail_head)
+    c = {k: int((counts or {}).get(k) or 0) for k in _LUXURY_COUNT_KEYS}
     detail["counts"] = dict(c)
     hc_n = int(c.get("specialist_healthcare") or 0)
     hc_active = hc_n >= 3
@@ -284,9 +278,7 @@ def compute_luxury_presence_osm(
 
     if hc_active:
         w = (_LUX_W_WEALTH, _LUX_W_PRIVATE, _LUX_W_ARTS, _LUX_W_HC, _LUX_W_RETAIL)
-        score = (
-            w[0] * s_wealth + w[1] * s_priv + w[2] * s_arts + w[3] * s_hc + w[4] * s_ret
-        )
+        score = w[0] * s_wealth + w[1] * s_priv + w[2] * s_arts + w[3] * s_hc + w[4] * s_ret
         detail["weights"] = {
             "wealth_offices": _LUX_W_WEALTH,
             "private_recreation": _LUX_W_PRIVATE,
@@ -315,6 +307,91 @@ def compute_luxury_presence_osm(
 
     detail["luxury_presence"] = round(max(0.0, min(100.0, score)), 1)
     return float(detail["luxury_presence"]), detail
+
+
+def compute_luxury_presence_osm(
+    lat: float,
+    lon: float,
+    keys_to_try: List[str],
+    baselines: Dict[str, Any],
+    radius_m: int = 1500,
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    Luxury presence 0–100 from dedicated OSM tag buckets. Falls back to zeros if query fails.
+    Healthcare bucket omitted (and weight redistributed) when specialist_healthcare count < 3.
+    """
+    try:
+        from data_sources.status_signal_luxury_osm import query_status_signal_luxury_osm
+    except Exception:
+        return 0.0, {"source": "osm", "error": "import_failed", "radius_m": int(radius_m)}
+
+    raw = query_status_signal_luxury_osm(lat, lon, radius_m=radius_m)
+    detail_head: Dict[str, Any] = {"source": "osm", "radius_m": int(radius_m)}
+    if not raw or not raw.get("counts"):
+        detail_head["error"] = "no_osm_result"
+        return 0.0, detail_head
+
+    rc = raw["counts"]
+    c = {k: int(rc.get(k) or 0) for k in _LUXURY_COUNT_KEYS}
+    return _luxury_score_detail_from_counts(c, keys_to_try, baselines, detail_head)
+
+
+def compute_luxury_presence_osm_with_merged_supplement(
+    lat: float,
+    lon: float,
+    business_list: Optional[List[Dict[str, Any]]],
+    keys_to_try: List[str],
+    baselines: Dict[str, Any],
+    radius_m: int = 1500,
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    Luxury 0–100: always use dedicated OSM luxury Overpass (lawyers / wealth offices, etc.),
+    then per-bucket max with merged OSM+Places amenities ``business_list`` so Places-only signal is kept.
+    If both are empty and OSM failed, fall back to brand name matching on ``business_list``.
+    """
+    _osm_score, osm_detail = compute_luxury_presence_osm(lat, lon, keys_to_try, baselines, radius_m=radius_m)
+    osm_err = osm_detail.get("error")
+    raw_osm = osm_detail.get("counts") if isinstance(osm_detail.get("counts"), dict) else {}
+    counts_osm = {k: int(raw_osm.get(k) or 0) for k in _LUXURY_COUNT_KEYS}
+
+    merged_detail: Optional[Dict[str, Any]] = None
+    counts_m = {k: 0 for k in _LUXURY_COUNT_KEYS}
+    if merged_business_list_has_coordinates(business_list or []):
+        _, merged_detail = compute_luxury_presence_from_business_list(
+            lat, lon, business_list, keys_to_try, baselines, radius_m=radius_m
+        )
+        if isinstance(merged_detail.get("counts"), dict):
+            mc = merged_detail["counts"]
+            counts_m = {k: int(mc.get(k) or 0) for k in _LUXURY_COUNT_KEYS}
+
+    combined = {k: max(counts_osm[k], counts_m[k]) for k in _LUXURY_COUNT_KEYS}
+    total_c = sum(combined.values())
+
+    if total_c == 0 and osm_err in ("no_osm_result", "import_failed"):
+        brand = compute_brand(business_list or [], keys_to_try, baselines)
+        return brand, {
+            "source": "brand_fallback",
+            "reason": osm_err or "osm_unavailable",
+            "radius_m": int(radius_m),
+            "counts": dict(combined),
+            "counts_dedicated_osm_luxury": dict(counts_osm),
+            "counts_merged_business_list": dict(counts_m),
+        }
+
+    head: Dict[str, Any] = {
+        "source": "osm_with_merged_amenities_supplement",
+        "radius_m": int(radius_m),
+        "counts_dedicated_osm_luxury": dict(counts_osm),
+        "counts_merged_business_list": dict(counts_m),
+    }
+    if osm_err:
+        head["osm_error"] = osm_err
+    if merged_detail:
+        if "rows_in_radius" in merged_detail:
+            head["merged_rows_in_radius"] = merged_detail["rows_in_radius"]
+        if merged_detail.get("error"):
+            head["merged_error"] = merged_detail["error"]
+    return _luxury_score_detail_from_counts(combined, keys_to_try, baselines, head)
 
 
 def _luxury_tags_from_business_row(b: Dict[str, Any]) -> Dict[str, str]:
@@ -422,64 +499,7 @@ def compute_luxury_presence_from_business_list(
                 counts[bucket] += 1
 
     detail["rows_in_radius"] = rows_in_radius
-    detail["counts"] = dict(counts)
-
-    hc_n = int(counts.get("specialist_healthcare") or 0)
-    hc_active = hc_n >= 3
-
-    s_wealth = _luxury_count_to_score(
-        int(counts.get("wealth_offices") or 0), baselines, keys_to_try, _LUX_METRICS["wealth_offices"]
-    )
-    s_priv = _luxury_count_to_score(
-        int(counts.get("private_recreation") or 0), baselines, keys_to_try, _LUX_METRICS["private_recreation"]
-    )
-    s_arts = _luxury_count_to_score(
-        int(counts.get("arts_culture") or 0), baselines, keys_to_try, _LUX_METRICS["arts_culture"]
-    )
-    s_hc = _luxury_count_to_score(hc_n, baselines, keys_to_try, _LUX_METRICS["specialist_healthcare"])
-    s_ret = _luxury_count_to_score(
-        int(counts.get("luxury_retail") or 0), baselines, keys_to_try, _LUX_METRICS["luxury_retail"]
-    )
-
-    detail["bucket_scores"] = {
-        "wealth_offices": round(s_wealth, 1),
-        "private_recreation": round(s_priv, 1),
-        "arts_culture": round(s_arts, 1),
-        "specialist_healthcare": round(s_hc, 1) if hc_active else None,
-        "luxury_retail": round(s_ret, 1),
-    }
-
-    if hc_active:
-        w = (_LUX_W_WEALTH, _LUX_W_PRIVATE, _LUX_W_ARTS, _LUX_W_HC, _LUX_W_RETAIL)
-        score = w[0] * s_wealth + w[1] * s_priv + w[2] * s_arts + w[3] * s_hc + w[4] * s_ret
-        detail["weights"] = {
-            "wealth_offices": _LUX_W_WEALTH,
-            "private_recreation": _LUX_W_PRIVATE,
-            "arts_culture": _LUX_W_ARTS,
-            "specialist_healthcare": _LUX_W_HC,
-            "luxury_retail": _LUX_W_RETAIL,
-        }
-        detail["healthcare_included"] = True
-    else:
-        base_sum = _LUX_W_WEALTH + _LUX_W_PRIVATE + _LUX_W_ARTS + _LUX_W_RETAIL
-        extra = _LUX_W_HC
-        w_w = _LUX_W_WEALTH + extra * (_LUX_W_WEALTH / base_sum)
-        w_p = _LUX_W_PRIVATE + extra * (_LUX_W_PRIVATE / base_sum)
-        w_a = _LUX_W_ARTS + extra * (_LUX_W_ARTS / base_sum)
-        w_r = _LUX_W_RETAIL + extra * (_LUX_W_RETAIL / base_sum)
-        score = w_w * s_wealth + w_p * s_priv + w_a * s_arts + w_r * s_ret
-        detail["weights"] = {
-            "wealth_offices": round(w_w, 4),
-            "private_recreation": round(w_p, 4),
-            "arts_culture": round(w_a, 4),
-            "specialist_healthcare": 0.0,
-            "luxury_retail": round(w_r, 4),
-        }
-        detail["healthcare_included"] = False
-        detail["healthcare_excluded_reason"] = "count_lt_3"
-
-    detail["luxury_presence"] = round(max(0.0, min(100.0, score)), 1)
-    return float(detail["luxury_presence"]), detail
+    return _luxury_score_detail_from_counts(counts, keys_to_try, baselines, detail)
 
 
 def _get_cbsa_median_income(baselines: Dict[str, Any], keys_to_try: List[str]) -> Optional[float]:
@@ -1081,8 +1101,7 @@ def compute_status_signal_with_breakdown(
     Pass 1: pillar inputs at standard luxury radius; neutral occupation for classifier_inputs.
     Archetype pass 1: ordered chain (Patrician→…→Typical). If Patrician fails the post-classifier gate,
     archetype pass 2 runs with allow_patrician=False (frozen inputs; no occupation/luxury recompute).
-    Luxury pass: final archetype Patrician only — merged ``business_list`` at 4 km for published luxury_presence
-    when rows include coordinates; else legacy OSM luxury query (classifier_inputs.luxury stays pass 1).
+    Luxury pass: final archetype Patrician only — same OSM+merged supplement at 4 km (classifier_inputs.luxury stays pass 1).
     Final composite uses archetype weights and occupation computed with the final archetype.
     Baselines: tract CBSA mapped via cbsa_to_baseline; else division then \"all\".
     """
@@ -1137,7 +1156,6 @@ def compute_status_signal_with_breakdown(
     education = compute_education(merged_sf, keys_to_try, baselines)
     luxury_detail: Optional[Dict[str, Any]] = None
     blist = business_list or []
-    merged_coords = merged_business_list_has_coordinates(blist)
     if (
         lat is not None
         and lon is not None
@@ -1146,20 +1164,9 @@ def compute_status_signal_with_breakdown(
         and math.isfinite(float(lat))
         and math.isfinite(float(lon))
     ):
-        if merged_coords:
-            luxury, luxury_detail = compute_luxury_presence_from_business_list(
-                float(lat), float(lon), blist, keys_to_try, baselines, radius_m=luxury_radius_m
-            )
-        else:
-            luxury, luxury_detail = compute_luxury_presence_osm(
-                float(lat), float(lon), keys_to_try, baselines, radius_m=luxury_radius_m
-            )
-            if luxury_detail.get("error") in ("no_osm_result", "import_failed"):
-                luxury = compute_brand(blist, keys_to_try, baselines)
-                luxury_detail = {
-                    "source": "brand_fallback",
-                    "reason": luxury_detail.get("error") or "osm_unavailable",
-                }
+        luxury, luxury_detail = compute_luxury_presence_osm_with_merged_supplement(
+            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=luxury_radius_m
+        )
     else:
         luxury = compute_brand(blist, keys_to_try, baselines)
         luxury_detail = {"source": "brand_fallback", "reason": "no_coordinates"}
@@ -1275,14 +1282,9 @@ def compute_status_signal_with_breakdown(
         and math.isfinite(float(lat))
         and math.isfinite(float(lon))
     ):
-        if merged_coords:
-            luxury_for_score, luxury_detail_for_breakdown = compute_luxury_presence_from_business_list(
-                float(lat), float(lon), blist, keys_to_try, baselines, radius_m=4000
-            )
-        else:
-            luxury_for_score, luxury_detail_for_breakdown = compute_luxury_presence_osm(
-                float(lat), float(lon), keys_to_try, baselines, radius_m=4000
-            )
+        luxury_for_score, luxury_detail_for_breakdown = compute_luxury_presence_osm_with_merged_supplement(
+            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=4000
+        )
         analysis_radius_note = "Analyzed within a 4km estate radius."
 
     occupation = compute_occupation(

@@ -5,8 +5,8 @@ without re-running pillars (uses current data/status_signal_baselines.json, etc.
 
 Input lines match batch_score_place_catalog / merged JSONL: { catalog, success, score?, ... }.
 
-Status Signal luxury uses neighborhood_amenities ``business_list`` when rows include lat/lon
-(new scores); legacy rows without coordinates still use the dedicated luxury Overpass query.
+Status Signal luxury runs the dedicated OSM luxury Overpass and merges per-bucket counts with
+amenities ``business_list`` when rows include lat/lon (max per bucket).
 
   cd /path/to/home-fit
   PYTHONPATH=. python3 scripts/recompute_catalog_composites.py
