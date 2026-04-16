@@ -138,7 +138,14 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         expected_minimums_pre,
     )
     business_data, places_fallback_meta = maybe_augment_business_data_with_places(
-        business_data, lat, lon, float(query_radius), include_chains, float(osm_completeness_pre)
+        business_data,
+        lat,
+        lon,
+        float(query_radius),
+        include_chains,
+        float(osm_completeness_pre),
+        area_type=area_type,
+        density=density,
     )
     if places_fallback_meta.get("used"):
         tier1_all = business_data["tier1_daily"]

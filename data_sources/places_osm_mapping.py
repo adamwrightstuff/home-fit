@@ -15,9 +15,11 @@ GOOGLE_TYPE_TO_TIER: Dict[str, Tuple[str, str]] = {
     "bakery": ("tier1_daily", "bakery"),
     "supermarket": ("tier1_daily", "grocery"),
     "grocery_store": ("tier1_daily", "grocery"),
+    "convenience_store": ("tier1_daily", "grocery"),
     # tier2_social
     "restaurant": ("tier2_social", "restaurant"),
     "meal_takeaway": ("tier2_social", "restaurant"),
+    "food": ("tier2_social", "restaurant"),
     "bar": ("tier2_social", "bar"),
     "night_club": ("tier2_social", "bar"),
     "liquor_store": ("tier2_social", "bar"),
@@ -31,18 +33,22 @@ GOOGLE_TYPE_TO_TIER: Dict[str, Tuple[str, str]] = {
     "gym": ("tier4_services", "fitness"),
     "clothing_store": ("tier4_services", "boutique"),
     "hair_care": ("tier4_services", "salon"),
+    "beauty_salon": ("tier4_services", "salon"),
     "florist": ("tier4_services", "garden"),
     "spa": ("tier4_services", "salon"),
+    "hardware_store": ("tier4_services", "boutique"),
 }
 
 # When multiple Google types apply, prefer more specific amenity types first.
 _TYPE_MATCH_ORDER: List[str] = [
     "supermarket",
     "grocery_store",
+    "convenience_store",
     "cafe",
     "bakery",
     "restaurant",
     "meal_takeaway",
+    "food",
     "bar",
     "night_club",
     "liquor_store",
@@ -53,10 +59,21 @@ _TYPE_MATCH_ORDER: List[str] = [
     "library",
     "gym",
     "clothing_store",
+    "hardware_store",
     "hair_care",
+    "beauty_salon",
     "florist",
     "spa",
 ]
+
+# Per-tier filters for Places policy (urban stop-early; suburban tier3+4 follow-up).
+# Use only types that exist in GOOGLE_TYPE_TO_TIER so responses map into scoring tiers.
+TIER_PLACE_TYPES: Dict[str, List[str]] = {
+    "tier1": ["cafe", "bakery", "grocery_store", "supermarket", "convenience_store"],
+    "tier2": ["restaurant", "bar", "food", "meal_takeaway", "night_club", "liquor_store"],
+    "tier3": ["book_store", "museum", "art_gallery", "movie_theater", "library"],
+    "tier4": ["gym", "hair_care", "beauty_salon", "clothing_store", "florist", "spa", "hardware_store"],
+}
 
 
 def resolve_tier_and_type_from_google_types(types: Optional[List[str]]) -> Optional[Tuple[str, str]]:
@@ -79,15 +96,25 @@ def included_types_for_nearby_search() -> List[str]:
 
 def included_type_batches_for_nearby_search() -> List[List[str]]:
     """
-    Disjoint type groups for multiple searchNearby calls (default five).
+    Disjoint type groups (legacy batch layout tests). All mapped types once across five batches.
 
     Each batch uses OR semantics within the request; Google caps maxResultCount at 20 per request.
-    All keys in GOOGLE_TYPE_TO_TIER appear exactly once across batches.
     """
     return [
-        ["supermarket", "grocery_store", "cafe", "bakery"],
-        ["restaurant", "meal_takeaway", "bar", "night_club", "liquor_store"],
+        ["supermarket", "grocery_store", "cafe", "bakery", "convenience_store"],
+        ["restaurant", "meal_takeaway", "food", "bar", "night_club", "liquor_store"],
         ["book_store", "museum", "art_gallery", "movie_theater", "library"],
-        ["gym", "clothing_store", "hair_care", "florist"],
+        ["gym", "clothing_store", "hair_care", "beauty_salon", "florist", "hardware_store"],
         ["spa"],
     ]
+
+
+def tier3_and_tier4_place_types() -> List[str]:
+    """Types for suburban second call (tier3 ∪ tier4), stable order, deduped."""
+    seen: set = set()
+    out: List[str] = []
+    for t in TIER_PLACE_TYPES["tier3"] + TIER_PLACE_TYPES["tier4"]:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out
