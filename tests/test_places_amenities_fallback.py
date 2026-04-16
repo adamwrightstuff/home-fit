@@ -4,11 +4,19 @@ import os
 import unittest
 from unittest.mock import patch
 
-from data_sources.places_osm_mapping import resolve_tier_and_type_from_google_types
+from data_sources.places_osm_mapping import included_type_batches_for_nearby_search, resolve_tier_and_type_from_google_types
 from data_sources.places_fallback_client import maybe_augment_business_data_with_places, place_json_to_business
 
 
 class TestPlacesOsmMapping(unittest.TestCase):
+    def test_five_disjoint_batches_cover_all_types(self):
+        batches = included_type_batches_for_nearby_search()
+        self.assertEqual(len(batches), 5)
+        all_types = []
+        for b in batches:
+            all_types.extend(b)
+        self.assertEqual(len(all_types), len(set(all_types)))
+
     def test_resolves_cafe(self):
         self.assertEqual(
             resolve_tier_and_type_from_google_types(["restaurant", "cafe", "food"]),
@@ -36,7 +44,7 @@ class TestPlacesMerge(unittest.TestCase):
         self.assertFalse(meta["triggered"])
 
     @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
-    @patch("data_sources.places_fallback_client._fetch_places_nearby_raw")
+    @patch("data_sources.places_fallback_client._fetch_places_nearby_batched_merged")
     def test_merges_when_low_completeness(self, mock_fetch):
         mock_fetch.return_value = {
             "places": [
@@ -47,7 +55,9 @@ class TestPlacesMerge(unittest.TestCase):
                     "location": {"latitude": 40.7001, "longitude": -74.0001},
                     "types": ["cafe", "establishment"],
                 }
-            ]
+            ],
+            "http_calls_ok": 5,
+            "http_calls_attempted": 5,
         }
         osm = {
             "tier1_daily": [],

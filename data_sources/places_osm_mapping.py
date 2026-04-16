@@ -73,5 +73,21 @@ def resolve_tier_and_type_from_google_types(types: Optional[List[str]]) -> Optio
 
 
 def included_types_for_nearby_search() -> List[str]:
-    """Types sent in a single searchNearby request (OR semantics, max 20 results total)."""
+    """All mapped Google types (union of `included_type_batches_for_nearby_search()`)."""
     return list(dict.fromkeys(GOOGLE_TYPE_TO_TIER.keys()))
+
+
+def included_type_batches_for_nearby_search() -> List[List[str]]:
+    """
+    Disjoint type groups for multiple searchNearby calls (default five).
+
+    Each batch uses OR semantics within the request; Google caps maxResultCount at 20 per request.
+    All keys in GOOGLE_TYPE_TO_TIER appear exactly once across batches.
+    """
+    return [
+        ["supermarket", "grocery_store", "cafe", "bakery"],
+        ["restaurant", "meal_takeaway", "bar", "night_club", "liquor_store"],
+        ["book_store", "museum", "art_gallery", "movie_theater", "library"],
+        ["gym", "clothing_store", "hair_care", "florist"],
+        ["spa"],
+    ]
