@@ -179,8 +179,8 @@ _MERGED_TO_API_TIER = {
 
 
 def _max_places_calls(policy: str) -> int:
-    """Billable searchNearby calls per location (broad + gap follow-ups)."""
-    defaults = {"rural_exurban": 2, "suburban": 3, "urban_core": 4}
+    """Billable searchNearby calls per location (broad + gap follow-ups). Default 5 for all area buckets."""
+    defaults = {"rural_exurban": 5, "suburban": 5, "urban_core": 5}
     env_keys = {
         "rural_exurban": "HOMEFIT_PLACES_MAX_CALLS_RURAL",
         "suburban": "HOMEFIT_PLACES_MAX_CALLS_SUBURBAN",
@@ -191,10 +191,10 @@ def _max_places_calls(policy: str) -> int:
         raw = (os.getenv(ek) or "").strip()
         if raw:
             try:
-                return max(1, min(10, int(raw)))
+                return max(1, min(20, int(raw)))
             except ValueError:
                 pass
-    return defaults.get(policy, 3)
+    return defaults.get(policy, 5)
 
 
 def _tier_count_goals(expected_business_count: int) -> Dict[str, float]:

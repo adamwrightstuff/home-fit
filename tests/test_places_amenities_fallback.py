@@ -12,6 +12,22 @@ from data_sources.places_fallback_client import maybe_augment_business_data_with
 
 
 class TestPlacesOsmMapping(unittest.TestCase):
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_MAX_CALLS_RURAL": "",
+            "HOMEFIT_PLACES_MAX_CALLS_SUBURBAN": "",
+            "HOMEFIT_PLACES_MAX_CALLS_URBAN": "",
+        },
+        clear=False,
+    )
+    def test_max_places_defaults_to_five_without_env(self):
+        from data_sources.places_fallback_client import _max_places_calls
+
+        self.assertEqual(_max_places_calls("rural_exurban"), 5)
+        self.assertEqual(_max_places_calls("suburban"), 5)
+        self.assertEqual(_max_places_calls("urban_core"), 5)
+
     def test_five_disjoint_batches_cover_all_types(self):
         batches = included_type_batches_for_nearby_search()
         self.assertEqual(len(batches), 5)
@@ -55,10 +71,18 @@ class TestPlacesMerge(unittest.TestCase):
         self.assertEqual(meta["reason"], "completeness_above_threshold")
         self.assertFalse(meta["triggered"])
 
-    @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "test",
+            "HOMEFIT_PLACES_MAX_CALLS_RURAL": "2",
+        },
+        clear=False,
+    )
     @patch("data_sources.places_fallback_client._single_search_nearby")
     def test_merges_when_low_completeness_rural_broad_then_gap(self, mock_nearby):
-        """Rural cap 2: broad search, then one gap-tier follow-up when deficits remain."""
+        """Rural: broad search, then one gap-tier follow-up when deficits remain (cap forced to 2 for test)."""
         p2 = {
             "id": "r1",
             "displayName": {"text": "Roadside Diner", "languageCode": "en"},
@@ -83,10 +107,18 @@ class TestPlacesMerge(unittest.TestCase):
         self.assertEqual(merged["tier2_social"][0]["type"], "restaurant")
         self.assertEqual(merged["tier1_daily"][0]["source"], "google_places")
 
-    @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "test",
+            "HOMEFIT_PLACES_MAX_CALLS_SUBURBAN": "3",
+        },
+        clear=False,
+    )
     @patch("data_sources.places_fallback_client._single_search_nearby")
     def test_suburban_gap_followups_after_broad(self, mock_nearby):
-        """Suburban cap 3: broad then up to two gap-tier calls ordered by deficit."""
+        """Suburban: broad then two gap-tier calls (cap forced to 3 for test)."""
         mock_nearby.side_effect = [
             [MOCK_CAFE],
             [
@@ -119,10 +151,18 @@ class TestPlacesMerge(unittest.TestCase):
         self.assertTrue(meta["places_suburban_second_call"])
         self.assertGreater(len(meta.get("places_gap_queue") or []), 0)
 
-    @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "test",
+            "HOMEFIT_PLACES_MAX_CALLS_URBAN": "4",
+        },
+        clear=False,
+    )
     @patch("data_sources.places_fallback_client._single_search_nearby")
     def test_urban_core_broad_then_gap_tiers_up_to_cap(self, mock_nearby):
-        """Urban cap 4: broad (union types) then three gap follow-ups (tier2, tier4, tier1 by deficit)."""
+        """Urban: broad then three gap follow-ups (cap forced to 4 for test mocks)."""
         p1 = dict(MOCK_CAFE)
         p2 = {
             "id": "r1",
