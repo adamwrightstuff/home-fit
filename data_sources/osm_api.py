@@ -2520,8 +2520,12 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
 
         amenity = tags.get("amenity", "")
         shop = tags.get("shop", "")
-        tourism = tags.get("tourism", "")
         leisure = tags.get("leisure", "")
+
+        tourism = (tags.get("tourism") or "").strip()
+        office = (tags.get("office") or "").strip()
+        sport = (tags.get("sport") or "").strip()
+        healthcare = (tags.get("healthcare") or "").strip()
 
         business = {
             "name": name,
@@ -2533,6 +2537,10 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             "shop": shop if shop else None,
             "leisure": leisure if leisure else None,
             "amenity": amenity if amenity else None,
+            "tourism": tourism or None,
+            "office": office or None,
+            "sport": sport or None,
+            "healthcare": healthcare or None,
         }
 
         if amenity == "cafe":

@@ -239,14 +239,21 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             "tier3_count": len(tier3_all),
             "tier4_count": len(tier4_all),
         },
-        # For Status Signal (included in API response so clients can recompute/breakdown)
+        # For Status Signal (deduped OSM+Places; lat/lon/distance_m for merged-list luxury radius)
         "business_list": [
             {
                 "name": b.get("name"),
+                "lat": b.get("lat"),
+                "lon": b.get("lon"),
+                "distance_m": b.get("distance_m"),
                 "type": b.get("type"),
                 "shop": b.get("shop"),
                 "leisure": b.get("leisure"),
                 "amenity": b.get("amenity"),
+                "tourism": b.get("tourism"),
+                "office": b.get("office"),
+                "sport": b.get("sport"),
+                "healthcare": b.get("healthcare"),
                 "source": b.get("source"),
             }
             for b in all_businesses

@@ -1,6 +1,9 @@
 """
-Dedicated Overpass query for Status Signal luxury_presence (OSM tag–based).
-Separate from neighborhood_amenities business_list. Cached by (lat, lon, radius).
+Overpass query for Status Signal luxury_presence when stored amenities rows lack coordinates.
+
+Primary luxury path uses merged OSM+Places ``business_list`` (see ``pillars.status_signal``).
+``classify_luxury_osm_tags`` maps OSM-style tag dicts to bucket keys for both paths.
+Cached by (lat, lon, radius).
 """
 
 from __future__ import annotations
@@ -31,8 +34,8 @@ _LUXURY_SHOPS = frozenset(
 )
 
 
-def _classify_element(tags: Dict[str, str]) -> Set[str]:
-    """Return bucket keys this element contributes to (at most one increment per bucket)."""
+def classify_luxury_osm_tags(tags: Dict[str, str]) -> Set[str]:
+    """Return luxury bucket keys for OSM-style tag dict (one increment per bucket per POI)."""
     if not tags:
         return set()
     out: Set[str] = set()
@@ -89,7 +92,7 @@ def _aggregate_counts(elements: List[Dict[str, Any]]) -> Dict[str, int]:
         if not isinstance(tags, dict):
             continue
         tag_str = {k: str(v) for k, v in tags.items() if v is not None}
-        for bucket in _classify_element(tag_str):
+        for bucket in classify_luxury_osm_tags(tag_str):
             counts[bucket] += 1
     return counts
 

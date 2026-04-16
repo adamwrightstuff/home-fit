@@ -5,21 +5,25 @@ without re-running pillars (uses current data/status_signal_baselines.json, etc.
 
 Input lines match batch_score_place_catalog / merged JSONL: { catalog, success, score?, ... }.
 
+Status Signal luxury uses neighborhood_amenities ``business_list`` when rows include lat/lon
+(new scores); legacy rows without coordinates still use the dedicated luxury Overpass query.
+
   cd /path/to/home-fit
   PYTHONPATH=. python3 scripts/recompute_catalog_composites.py
+  PYTHONPATH=. python3 scripts/recompute_catalog_composites.py --in-place \\
+    --input data/nyc_metro_place_catalog_scores_merged.jsonl
   PYTHONPATH=. python3 scripts/recompute_catalog_composites.py \\
     --only-search-query "Ardsley, NY" \\
     --only-search-query "Floral Park, NY" \\
     --only-search-query "Merrick, NY" \\
     --output data/catalog_three_recomputed.jsonl
-
-Note: compute_status_signal_with_breakdown may still call Overpass for luxury OSM when lat/lon are present.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -60,7 +64,17 @@ def main() -> int:
         description="Recompute composite indices from catalog JSONL score payloads (no pillar re-run)."
     )
     ap.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="Source JSONL")
-    ap.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Output JSONL")
+    ap.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output JSONL (default: ...merged.composites_recomputed.jsonl). Incompatible with --in-place.",
+    )
+    ap.add_argument(
+        "--in-place",
+        action="store_true",
+        help="Write back to --input after a timestamped .bak copy (same path as input)",
+    )
     ap.add_argument(
         "--max-rows",
         type=int,
@@ -80,6 +94,18 @@ def main() -> int:
         help="Recompute in memory but do not write output file",
     )
     args = ap.parse_args()
+
+    if args.in_place and args.output is not None:
+        print("Use either --in-place or --output, not both.", file=sys.stderr)
+        return 1
+
+    out_path: Path
+    if args.in_place:
+        out_path = args.input
+    elif args.output is not None:
+        out_path = args.output
+    else:
+        out_path = DEFAULT_OUTPUT
 
     if not args.input.is_file():
         print(f"Input not found: {args.input}", file=sys.stderr)
@@ -166,13 +192,18 @@ def main() -> int:
         )
         return 0
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", encoding="utf-8") as out:
+    if args.in_place:
+        bak = args.input.parent / f"{args.input.name}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
+        bak.write_text(args.input.read_text(encoding="utf-8"), encoding="utf-8")
+        print(f"Backup: {bak}")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("w", encoding="utf-8") as out:
         for line in lines_out:
             out.write(line + "\n")
 
     print(
-        f"Wrote {args.output} — recomputed {processed} scores, "
+        f"Wrote {out_path} — recomputed {processed} scores, "
         f"skipped {skipped} non-success/missing score, errors {errors}"
     )
     return 0 if errors == 0 else 1
