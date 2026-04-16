@@ -1344,7 +1344,8 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
 def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True) -> Optional[Dict]:
     """
     Query OSM for local businesses within walking distance.
-    By default includes chain establishments.
+    By default includes chain establishments. Radius is chosen by callers (e.g. pillar radius profile);
+    there is no second widening pass here—avoid redundant large Overpass queries when amending call sites.
 
     Args:
         include_chains: If True, include chain/franchise businesses

@@ -1476,7 +1476,10 @@ class DataQualityManager:
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_business_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
-        """Assess business/amenity data completeness."""
+        """
+        Assess amenity sample coverage vs area expectations (aggregate count + type variety).
+        Not ground-truth “every business,” and not per walkability-tier minimums—see get_expected_minimums.
+        """
         if data.get("fallback_applied"):
             # Imputed score when OSM returned no POIs — weak vs a real sample
             return 0.25, 'poor'
@@ -1774,7 +1777,7 @@ class DataQualityManager:
         # Adjust for data source quality
         source_quality = {
             'osm': 0.9,
-            'google_places': 0.85,
+            'google_places': 0.9,
             'census': 0.95,
             'static': 0.8,
             'fallback': 0.5

@@ -57,8 +57,15 @@ class TestPlacesMerge(unittest.TestCase):
 
     @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
     @patch("data_sources.places_fallback_client._single_search_nearby")
-    def test_merges_when_low_completeness_rural_one_call(self, mock_nearby):
-        mock_nearby.return_value = [MOCK_CAFE]
+    def test_merges_when_low_completeness_rural_broad_then_gap(self, mock_nearby):
+        """Rural cap 2: broad search, then one gap-tier follow-up when deficits remain."""
+        p2 = {
+            "id": "r1",
+            "displayName": {"text": "Roadside Diner", "languageCode": "en"},
+            "location": {"latitude": 40.7005, "longitude": -74.0005},
+            "types": ["restaurant"],
+        }
+        mock_nearby.side_effect = [[MOCK_CAFE], [p2]]
         osm = {
             "tier1_daily": [],
             "tier2_social": [],
@@ -70,25 +77,32 @@ class TestPlacesMerge(unittest.TestCase):
         )
         self.assertTrue(meta["triggered"])
         self.assertTrue(meta["used"])
-        self.assertEqual(meta["places_calls_made"], 1)
-        self.assertEqual(meta["places_stop_reason"], "cap_reached")
+        self.assertEqual(meta["places_calls_made"], 2)
+        self.assertEqual(mock_nearby.call_count, 2)
         self.assertEqual(len(merged["tier1_daily"]), 1)
-        self.assertEqual(merged["tier1_daily"][0]["type"], "cafe")
+        self.assertEqual(merged["tier2_social"][0]["type"], "restaurant")
         self.assertEqual(merged["tier1_daily"][0]["source"], "google_places")
-        mock_nearby.assert_called_once()
 
     @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
     @patch("data_sources.places_fallback_client._single_search_nearby")
-    def test_suburban_second_call_when_still_below_threshold(self, mock_nearby):
-        """After broad call, completeness still low → tier3+4 second call."""
+    def test_suburban_gap_followups_after_broad(self, mock_nearby):
+        """Suburban cap 3: broad then up to two gap-tier calls ordered by deficit."""
         mock_nearby.side_effect = [
             [MOCK_CAFE],
             [
                 {
-                    "id": "m1",
-                    "displayName": {"text": "Tiny Museum", "languageCode": "en"},
+                    "id": "r1",
+                    "displayName": {"text": "Tiny Rest", "languageCode": "en"},
                     "location": {"latitude": 40.7002, "longitude": -74.0002},
-                    "types": ["museum"],
+                    "types": ["restaurant"],
+                }
+            ],
+            [
+                {
+                    "id": "g1",
+                    "displayName": {"text": "Gym", "languageCode": "en"},
+                    "location": {"latitude": 40.7003, "longitude": -74.0003},
+                    "types": ["gym"],
                 }
             ],
         ]
@@ -101,12 +115,14 @@ class TestPlacesMerge(unittest.TestCase):
         merged, meta = maybe_augment_business_data_with_places(
             osm, 40.7, -74.0, 1500.0, True, 0.15, area_type="suburban", density=3000.0
         )
-        self.assertEqual(mock_nearby.call_count, 2)
+        self.assertEqual(mock_nearby.call_count, 3)
         self.assertTrue(meta["places_suburban_second_call"])
+        self.assertGreater(len(meta.get("places_gap_queue") or []), 0)
 
     @patch.dict(os.environ, {"HOMEFIT_PLACES_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "test"}, clear=False)
     @patch("data_sources.places_fallback_client._single_search_nearby")
-    def test_urban_core_runs_four_tier_calls_when_below_threshold(self, mock_nearby):
+    def test_urban_core_broad_then_gap_tiers_up_to_cap(self, mock_nearby):
+        """Urban cap 4: broad (union types) then three gap follow-ups (tier2, tier4, tier1 by deficit)."""
         p1 = dict(MOCK_CAFE)
         p2 = {
             "id": "r1",
@@ -115,16 +131,16 @@ class TestPlacesMerge(unittest.TestCase):
             "types": ["restaurant"],
         }
         p3 = {
-            "id": "m1",
-            "displayName": {"text": "Mus", "languageCode": "en"},
-            "location": {"latitude": 40.72, "longitude": -74.02},
-            "types": ["museum"],
-        }
-        p4 = {
             "id": "g1",
             "displayName": {"text": "Gym", "languageCode": "en"},
             "location": {"latitude": 40.73, "longitude": -74.03},
             "types": ["gym"],
+        }
+        p4 = {
+            "id": "bk",
+            "displayName": {"text": "Bakery", "languageCode": "en"},
+            "location": {"latitude": 40.705, "longitude": -74.005},
+            "types": ["bakery"],
         }
         mock_nearby.side_effect = [[p1], [p2], [p3], [p4]]
         osm = {
