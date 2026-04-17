@@ -39,7 +39,16 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     query_radius = int(profile.get('query_radius_m', 1500))
     print(f"   🔧 Radius profile (amenities): area_type={area_type}, scope={location_scope}, query_radius={query_radius}m")
     business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains)
-    
+    osm_query_failed = business_data is None
+    if business_data is None:
+        # Normalize so Google Places can still run (thin/empty OSM → searchNearby before imputed fallback).
+        business_data = {
+            "tier1_daily": [],
+            "tier2_social": [],
+            "tier3_culture": [],
+            "tier4_services": [],
+        }
+
     # Ensure area_type is detected early (needed for fallback scoring when OSM data unavailable)
     from data_sources import census_api
     # Use pre-computed density if provided, otherwise fetch it
@@ -47,90 +56,14 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         density = census_api.get_population_density(lat, lon)
     if area_type is None:
         area_type = data_quality.detect_area_type(lat, lon, density)
-    
-    if business_data is None:
-        print("⚠️  OSM business data unavailable")
-        # Apply fallback for urban/high-density areas (OSM API failure, not truly no amenities)
-        if area_type in ("urban_core", "urban_residential", "suburban") or (density and density > 1500):
-            fallback_scores = {
-                "urban_core": 25.0,
-                "urban_residential": 20.0,
-                "suburban": 15.0,
-            }
-            if area_type in fallback_scores:
-                fallback_score = fallback_scores[area_type]
-            elif density and density > 5000:
-                fallback_score = 25.0
-            elif density and density > 2000:
-                fallback_score = 20.0
-            elif density and density > 1500:
-                fallback_score = 18.0
-            else:
-                fallback_score = 15.0
-            
-            print(f"   📊 Applying fallback score {fallback_score:.1f} for {area_type or 'unknown'} area (OSM API unavailable)")
-            return fallback_score, _empty_breakdown_with_fallback(
-                fallback_score, area_type or "unknown", lat, lon
-            )
-        return 0, _empty_breakdown(lat, lon, area_type)
-    
+
     tier1_all = business_data["tier1_daily"]
     tier2_all = business_data["tier2_social"]
     tier3_all = business_data["tier3_culture"]
     tier4_all = business_data["tier4_services"]
     all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
-    
-    # Fallback for OSM data gaps: If no businesses found but location is urban/suburban,
-    # apply a conservative minimum score to account for potential OSM data incompleteness
-    if not all_businesses:
-        print("⚠️  No indie businesses found in OSM data")
-        # Apply fallback score for urban/suburban areas (likely OSM data gap, not truly no amenities)
-        # Also check density as a proxy if area_type is not detected
-        should_apply_fallback = False
-        fallback_reason = ""
-        
-        # Apply fallback if:
-        # 1. Urban/suburban area types (should have amenities)
-        # 2. High density areas (even if classified as exurban/rural, high density suggests amenities exist)
-        # 3. Unknown area type but high density
-        if area_type in ("urban_core", "urban_residential", "suburban"):
-            should_apply_fallback = True
-            fallback_reason = f"{area_type} area"
-        elif density and density > 1500:  # Moderate-high density suggests urban amenities regardless of classification
-            should_apply_fallback = True
-            fallback_reason = f"moderate-high density ({density:.0f} people/km², area_type={area_type})"
-        elif area_type is None and density and density > 1000:  # Moderate density, unknown type
-            should_apply_fallback = True
-            fallback_reason = f"moderate density ({density:.0f} people/km²)"
-        
-        if should_apply_fallback:
-            # Conservative fallback: assume some basic amenities exist but OSM data is incomplete
-            # Use area-type-specific minimums based on expected amenity levels
-            if area_type == "urban_core":
-                fallback_score = 25.0
-            elif area_type == "urban_residential":
-                fallback_score = 20.0
-            elif area_type == "suburban":
-                fallback_score = 15.0
-            elif density and density > 5000:  # Very high density
-                fallback_score = 25.0
-            elif density and density > 2000:  # High density
-                fallback_score = 20.0
-            elif density and density > 1500:  # Moderate-high density
-                fallback_score = 18.0
-            else:  # Moderate density (1000-1500)
-                fallback_score = 15.0
-            
-            print(f"   📊 Applying fallback score {fallback_score:.1f} for {fallback_reason} (OSM data gap)")
-            return fallback_score, _empty_breakdown_with_fallback(
-                fallback_score, area_type or "unknown", lat, lon
-            )
-        else:
-            # Rural/exurban/low density: genuinely may have no amenities, return 0
-            print("⚠️  No indie businesses found")
-            return 0, _empty_breakdown(lat, lon, area_type)
-    
-    # Google Places (New) fallback when OSM amenity sample is thin (completeness below threshold)
+
+    # Google Places (New): thin OSM *or* empty OSM / failed OSM query — try before imputed fallback.
     expected_minimums_pre = data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
     osm_completeness_pre, _ = data_quality_manager.assess_data_completeness(
         "neighborhood_amenities",
@@ -147,17 +80,61 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
         area_type=area_type,
         density=density,
     )
+    tier1_all = business_data["tier1_daily"]
+    tier2_all = business_data["tier2_social"]
+    tier3_all = business_data["tier3_culture"]
+    tier4_all = business_data["tier4_services"]
+    all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
     if places_fallback_meta.get("used"):
-        tier1_all = business_data["tier1_daily"]
-        tier2_all = business_data["tier2_social"]
-        tier3_all = business_data["tier3_culture"]
-        tier4_all = business_data["tier4_services"]
-        all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
         print(
             f"   🌐 Places fallback: merged {places_fallback_meta.get('mapped_added', 0)} places "
             f"(OSM completeness was {osm_completeness_pre:.2f})"
         )
-    
+
+    # Still empty after Places (or Places disabled / no API key): density-area imputed score vs 0
+    if not all_businesses:
+        if osm_query_failed:
+            print("⚠️  OSM business data unavailable")
+        else:
+            print("⚠️  No indie businesses found in OSM data")
+        # Apply fallback score for urban/suburban areas (likely OSM gap — include after Places exhausted)
+        should_apply_fallback = False
+        fallback_reason = ""
+
+        if area_type in ("urban_core", "urban_residential", "suburban"):
+            should_apply_fallback = True
+            fallback_reason = f"{area_type} area"
+        elif density and density > 1500:
+            should_apply_fallback = True
+            fallback_reason = f"moderate-high density ({density:.0f} people/km², area_type={area_type})"
+        elif area_type is None and density and density > 1000:
+            should_apply_fallback = True
+            fallback_reason = f"moderate density ({density:.0f} people/km²)"
+
+        if should_apply_fallback:
+            if area_type == "urban_core":
+                fallback_score = 25.0
+            elif area_type == "urban_residential":
+                fallback_score = 20.0
+            elif area_type == "suburban":
+                fallback_score = 15.0
+            elif density and density > 5000:
+                fallback_score = 25.0
+            elif density and density > 2000:
+                fallback_score = 20.0
+            elif density and density > 1500:
+                fallback_score = 18.0
+            else:
+                fallback_score = 15.0
+
+            extra = " (OSM API unavailable)" if osm_query_failed else " (OSM data gap)"
+            print(f"   📊 Applying fallback score {fallback_score:.1f} for {fallback_reason}{extra}")
+            return fallback_score, _empty_breakdown_with_fallback(
+                fallback_score, area_type or "unknown", lat, lon
+            )
+        print("⚠️  No indie businesses found")
+        return 0, _empty_breakdown(lat, lon, area_type)
+
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     walkable_distance = int(profile.get('walkable_distance_m', 1000))

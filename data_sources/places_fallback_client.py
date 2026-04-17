@@ -1,5 +1,6 @@
 """
-Google Places API (New) — nearby search fallback for neighborhood_amenities when OSM completeness is low.
+Google Places API (New) — nearby search fallback for neighborhood_amenities when OSM completeness is low
+or OSM returns an empty tier sample (Places-on-empty — called from neighborhood_amenities before imputation).
 
 Flow: (1) one broad searchNearby (all mapped types); (2) gap-targeted follow-ups by tier deficit vs
 expected business mix, up to a per-area cap; (3) stop on max calls, API error, gap queue exhausted,
@@ -389,9 +390,21 @@ def maybe_augment_business_data_with_places(
         meta["reason"] = "already_augmented"
         return base, meta
 
-    if osm_completeness >= thr:
+    # High *variety* can push completeness over the threshold even when total POI count is
+    # still far below area expectations — in that case we still want Places (see catalog
+    # rescoring vs live /score at the same lat/lon).
+    total_biz = sum(len(base.get(k) or []) for k in _MERGED_TIER_KEYS)
+    expected = data_quality_manager.get_expected_minimums(center_lat, center_lon, area_type or "suburban")
+    business_floor = int(expected.get("business_count") or 20)
+    min_count_to_skip_places = max(12, int(round(business_floor * 0.45)))
+    count_too_thin = total_biz < min_count_to_skip_places
+
+    if osm_completeness >= thr and not count_too_thin:
         meta["reason"] = "completeness_above_threshold"
         return base, meta
+    if osm_completeness >= thr and count_too_thin:
+        meta["reason"] = "completeness_high_but_count_thin_try_places"
+        meta["triggered"] = True
 
     if not places_amenities_fallback_enabled():
         meta["reason"] = "disabled_or_no_api_key"
