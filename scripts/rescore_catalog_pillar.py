@@ -31,6 +31,18 @@ with catalog centroids pinned (same coordinates as CSV):
     --confidence-filter-lt 92 \\
     --use-catalog-coordinates
 
+Re-score only rows where data_quality.completeness is below a threshold (0.0–1.0), e.g. neighborhood_amenities:
+
+  PYTHONPATH=. python3 scripts/rescore_catalog_pillar.py \\
+    --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
+    --in-place --no-backup \\
+    --pillars neighborhood_amenities \\
+    --completeness-filter-pillar neighborhood_amenities \\
+    --completeness-filter-lt 0.8 \\
+    --use-catalog-coordinates
+
+If both confidence and completeness filters are set, a row is rescored unless BOTH pass.
+
 HOMEFIT_API_BASE and HOMEFIT_PROXY_SECRET are respected.
 """
 from __future__ import annotations
@@ -94,6 +106,27 @@ def pillar_confidence(obj: Dict[str, Any], pillar_name: str) -> Optional[float]:
         dq = p.get("data_quality")
         if isinstance(dq, dict):
             c = dq.get("confidence")
+    try:
+        return float(c) if c is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def pillar_completeness(obj: Dict[str, Any], pillar_name: str) -> Optional[float]:
+    """Return data_quality.completeness for a pillar (0.0–1.0), or None."""
+    score = obj.get("score")
+    if not isinstance(score, dict):
+        return None
+    lp = score.get("livability_pillars")
+    if not isinstance(lp, dict):
+        return None
+    p = lp.get(pillar_name)
+    if not isinstance(p, dict):
+        return None
+    dq = p.get("data_quality")
+    if not isinstance(dq, dict):
+        return None
+    c = dq.get("completeness")
     try:
         return float(c) if c is not None else None
     except (TypeError, ValueError):
@@ -215,6 +248,19 @@ def main() -> int:
         help="Pillar key for --confidence-filter-lt (default: first --pillars key).",
     )
     ap.add_argument(
+        "--completeness-filter-lt",
+        type=float,
+        default=None,
+        metavar="X",
+        help="If set, only rescore rows where PILLAR data_quality.completeness is missing or < X (0.0–1.0).",
+    )
+    ap.add_argument(
+        "--completeness-filter-pillar",
+        type=str,
+        default=None,
+        help="Pillar key for --completeness-filter-lt (default: first --pillars key).",
+    )
+    ap.add_argument(
         "--use-catalog-coordinates",
         action="store_true",
         help="Pass catalog lat/lon to GET /score so scoring uses the same centroid as the catalog CSV.",
@@ -236,6 +282,19 @@ def main() -> int:
         if cf_pillar not in pillars:
             print(
                 f"--confidence-filter-pillar {cf_pillar!r} must be one of --pillars: {pillars}",
+                file=sys.stderr,
+            )
+            return 1
+
+    comp_pillar: Optional[str] = args.completeness_filter_pillar
+    if args.completeness_filter_lt is not None:
+        if not (0.0 <= args.completeness_filter_lt <= 1.0):
+            print("--completeness-filter-lt must be between 0 and 1.", file=sys.stderr)
+            return 1
+        comp_pillar = comp_pillar or pillars[0]
+        if comp_pillar not in pillars:
+            print(
+                f"--completeness-filter-pillar {comp_pillar!r} must be one of --pillars: {pillars}",
                 file=sys.stderr,
             )
             return 1
@@ -279,7 +338,16 @@ def main() -> int:
             continue
         if args.confidence_filter_lt is not None and cf_pillar is not None:
             conf = pillar_confidence(obj, cf_pillar)
-            if conf is not None and conf >= args.confidence_filter_lt:
+            conf_ok = conf is not None and conf >= args.confidence_filter_lt
+        else:
+            conf_ok = True
+        if args.completeness_filter_lt is not None and comp_pillar is not None:
+            comp = pillar_completeness(obj, comp_pillar)
+            comp_ok = comp is not None and comp >= args.completeness_filter_lt
+        else:
+            comp_ok = True
+        if conf_ok and comp_ok:
+            if args.confidence_filter_lt is not None or args.completeness_filter_lt is not None:
                 continue
         to_run.append(key)
 
@@ -292,6 +360,10 @@ def main() -> int:
     if args.confidence_filter_lt is not None and cf_pillar is not None:
         print(
             f"Confidence filter: {cf_pillar} < {args.confidence_filter_lt} (or missing)"
+        )
+    if args.completeness_filter_lt is not None and comp_pillar is not None:
+        print(
+            f"Completeness filter: {comp_pillar} data_quality.completeness < {args.completeness_filter_lt} (or missing)"
         )
     if args.use_catalog_coordinates:
         print("Using catalog lat/lon when present on each row.")
