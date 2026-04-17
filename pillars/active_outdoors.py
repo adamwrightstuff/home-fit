@@ -15,6 +15,7 @@ from data_sources.regional_baselines import (
     get_contextual_expectations,
 )
 from data_sources.radius_profiles import get_radius_profile
+from data_sources.places_active_outdoors_client import maybe_augment_active_outdoors_with_places
 from logging_config import get_logger
 
 # Initialize logger
@@ -278,6 +279,17 @@ def get_active_outdoors_score_v2(
     swimming: List[Dict] = nature_regional.get("swimming", []) or []
     camping: List[Dict] = nature_regional.get("camping", []) or []
 
+    places_ao_meta = maybe_augment_active_outdoors_with_places(
+        lat,
+        lon,
+        local_radius_m=local_radius,
+        regional_radius_m=regional_radius,
+        parks=parks,
+        playgrounds=playgrounds,
+        swimming=swimming,
+        camping=camping,
+    )
+
     # Detect special contexts (mountain town, desert) from objective signals.
     # IMPORTANT: Use RAW trail count for detection (before filtering)
     # This ensures mountain town detection works correctly for cities like Denver
@@ -376,6 +388,7 @@ def get_active_outdoors_score_v2(
         "debug": {
             "parks_query": (local.get("_debug_parks") if isinstance(local, dict) else None),
             "overpass_stagger_s": _OVERPASS_STAGGER_S,
+            "places_ao": places_ao_meta,
         },
         "version": "active_outdoors_v2_component_sum",
         "scoring_method": "weighted_component_sum",
