@@ -11,7 +11,7 @@ Typical use after changing pillar code (e.g. natural_beauty):
   # API must be running with new code (e.g. uvicorn main:app)
   PYTHONPATH=. python3 scripts/rescore_catalog_pillar.py \\
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
-    --in-place \\
+    --in-place --no-backup \\
     --pillars natural_beauty
 
 Then refresh composites (longevity / status / happiness) from the merged file:
@@ -50,6 +50,13 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(REPO_ROOT / ".env")
+except Exception:
+    pass
 
 
 def _load_rerun_module():
@@ -166,6 +173,11 @@ def main() -> int:
         help="Write back to --input after a timestamped .bak copy (same path as input).",
     )
     ap.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="With --in-place, write the output without creating a timestamped .bak copy.",
+    )
+    ap.add_argument(
         "--pillars",
         type=str,
         default="natural_beauty",
@@ -235,6 +247,9 @@ def main() -> int:
 
     if args.in_place and args.output is not None:
         print("Use either --in-place or --output, not both.", file=sys.stderr)
+        return 1
+    if args.no_backup and not args.in_place:
+        print("--no-backup only applies with --in-place.", file=sys.stderr)
         return 1
     if not args.dry_run and not args.in_place and args.output is None:
         print("Specify --output PATH or --in-place (not required for --dry-run).", file=sys.stderr)
@@ -330,7 +345,7 @@ def main() -> int:
         else:
             out_lines.append(json.dumps(last[key], ensure_ascii=False))
 
-    if args.in_place:
+    if args.in_place and not args.no_backup:
         bak = inp.parent / f"{inp.name}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
         bak.write_text(inp.read_text(encoding="utf-8"), encoding="utf-8")
         print(f"Backup: {bak}")

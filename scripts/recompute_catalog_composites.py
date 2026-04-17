@@ -93,10 +93,18 @@ def main() -> int:
         action="store_true",
         help="Recompute in memory but do not write output file",
     )
+    ap.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="With --in-place, write the output without creating a timestamped .bak copy.",
+    )
     args = ap.parse_args()
 
     if args.in_place and args.output is not None:
         print("Use either --in-place or --output, not both.", file=sys.stderr)
+        return 1
+    if args.no_backup and not args.in_place:
+        print("--no-backup only applies with --in-place.", file=sys.stderr)
         return 1
 
     out_path: Path
@@ -192,7 +200,7 @@ def main() -> int:
         )
         return 0
 
-    if args.in_place:
+    if args.in_place and not args.no_backup:
         bak = args.input.parent / f"{args.input.name}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
         bak.write_text(args.input.read_text(encoding="utf-8"), encoding="utf-8")
         print(f"Backup: {bak}")

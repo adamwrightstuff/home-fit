@@ -9,15 +9,10 @@ export const runtime = 'nodejs'
 
 export type CatalogMapMetro = 'nyc' | 'la'
 
+/** Single canonical file per metro (composites live inside each row’s `score`). */
 const METRO_FILES: Record<CatalogMapMetro, readonly string[]> = {
-  nyc: [
-    'nyc_metro_place_catalog_scores_merged.with_composites.jsonl',
-    'nyc_metro_place_catalog_scores_merged.jsonl',
-  ],
-  la: [
-    'la_metro_place_catalog_scores_merged.with_composites.jsonl',
-    'la_metro_place_catalog_scores_merged.jsonl',
-  ],
+  nyc: ['nyc_metro_place_catalog_scores_merged.jsonl'],
+  la: ['la_metro_place_catalog_scores_merged.jsonl'],
 }
 
 function dataRoots(): string[] {

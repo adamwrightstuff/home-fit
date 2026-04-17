@@ -71,3 +71,9 @@ frontend/*.tsbuildinfo
 /analysis/carroll_gardens_*.json
 /analysis/active_outdoors_scores_*.jsonl
 /analysis/active_outdoors_summary_*.csv
+
+# Catalog tooling noise (use git for canonical merged JSONLs only)
+data/**/*.jsonl.bak*
+data/**/*.jsonl.bak
+data/**/*.temp.jsonl
+data/**/*recomputed.tmp.jsonl
