@@ -4,7 +4,7 @@ Water proximity scoring for Natural Beauty using Natural Earth 10m data.
 Uses coastline, major lakes, and major rivers for distance-based proximity.
 Visibility component from GEE water landcover. No OSM water queries.
 
-Data: Download once via scripts/download_natural_earth_water.py into
+Data: Download once via scripts/baselines/download_natural_earth_water.py into
 data_sources/static/ or set HOMEFIT_NE_DATA_DIR.
 """
 
@@ -52,7 +52,10 @@ def _load_ne_data() -> bool:
     rivers_path = os.path.join(base, "ne_10m_rivers_lake_centerlines.shp")
 
     if not os.path.isfile(coast_path):
-        logger.warning("Natural Earth coastline not found at %s; run scripts/download_natural_earth_water.py", coast_path)
+        logger.warning(
+            "Natural Earth coastline not found at %s; run scripts/baselines/download_natural_earth_water.py",
+            coast_path,
+        )
         _NE_LOADED = True
         return False
 

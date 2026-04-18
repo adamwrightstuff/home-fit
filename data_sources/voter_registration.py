@@ -2,7 +2,7 @@
 Voter registration helpers for Social Fabric Engagement sub-score.
 
 Uses (in order):
-1. Preprocessed tract-level JSON from scripts/build_voter_registration_baselines.py
+1. Preprocessed tract-level JSON from scripts/baselines/build_voter_registration_baselines.py
    (tract GEOID → registration rate 0–1, division → {mean, std}).
 2. Fallback: state-level registration rates from data/state_registration_rates.json
    (state FIPS → rate 0–1). Division stats are computed from state rates at load time.

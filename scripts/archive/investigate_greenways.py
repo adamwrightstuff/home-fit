@@ -5,7 +5,7 @@ Diagnostic script to check how Hudson Greenway/East River Walkway are captured
 import sys
 from pathlib import Path
 
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from data_sources import osm_api

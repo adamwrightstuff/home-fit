@@ -47,7 +47,7 @@ For SFI v1, only B07003 is required. Diversity can be implemented once B02001/B1
 #### 2.2 IRS BMF (Engagement, implemented via offline build script)
 
 - Source: IRS Exempt Organizations Business Master File (EO BMF), supplied as one or more CSVs.  
-- Filter (offline ETL in `scripts/build_irs_engagement_baselines.py`):
+- Filter (offline ETL in `scripts/baselines/build_irs_engagement_baselines.py`):
   - NTEE codes starting with `A`, `O`, `P`, `S` (Arts/Culture, Youth Development, Human Services, Community Improvement).  
   - Status codes `01`–`03` only (rough proxy for currently exempt; can be refined later).  
   - US 2-letter state and 5-digit ZIP present.  
@@ -68,7 +68,7 @@ At runtime, `data_sources.irs_bmf` loads these files (or skips Engagement gracef
 #### 2.2a Voter registration (Engagement, optional)
 
 - Source: Tract-level registration rates from state/county or other providers; supplied as a CSV (e.g. `data/voter_registration_raw.csv`).
-- Build script: `scripts/build_voter_registration_baselines.py` reads a CSV with columns either `geoid, registration_rate` (rate 0–1) or `geoid, registered, cvap`, computes per-division mean/std for z-score normalization, and writes:
+- Build script: `scripts/baselines/build_voter_registration_baselines.py` reads a CSV with columns either `geoid, registration_rate` (rate 0–1) or `geoid, registered, cvap`, computes per-division mean/std for z-score normalization, and writes:
   - `data/voter_registration_tract_rates.json` – `{geoid: registration_rate}` (0–1).
   - `data/voter_registration_engagement_stats.json` – `{division_code: {"mean", "std", "n"}}`.
 - At runtime, `data_sources.voter_registration` loads these files (or skips voter-reg Engagement when absent). When both voter registration and BMF are available, Engagement = **0.60 × voter_reg_score + 0.40 × bmf_score**.
@@ -99,7 +99,7 @@ Implement as a new function (e.g. `query_civic_nodes(lat, lon, radius_m=800)`).
 #### 3.1 Stability (0–100)
 
 - Input: **rooted** ratio \(x = (\text{same\_house\_1yr} + \text{same\_county\_1yr}) / \text{total\_1yr}\) from B07003. A neighbor moving two blocks (same county) preserves fabric.
-- **Regional normalization (preferred):** When `data/stability_baselines.json` is present (built by `scripts/build_stability_baselines.py`), stability is scored as a z-score vs the tract’s Census Division (or "all"): higher rooted % than region average → higher score.
+- **Regional normalization (preferred):** When `data/stability_baselines.json` is present (built by `scripts/baselines/build_stability_baselines.py`), stability is scored as a z-score vs the tract’s Census Division (or "all"): higher rooted % than region average → higher score.
 - **Fixed curve (fallback when no baselines):** x in percentage points 0–100:
 
 If \(x \le 85\):

@@ -2,7 +2,7 @@
 BLS (Bureau of Labor Statistics) data for economic pillar.
 
 - QCEW: employment level and YoY growth by area (CSV API).
-- OEWS: 25th/75th percentile wages by metro (from pre-built JSON; see scripts/build_oews_metro_wages.py).
+- OEWS: 25th/75th percentile wages by metro (from pre-built JSON; see scripts/baselines/build_oews_metro_wages.py).
 """
 
 from __future__ import annotations

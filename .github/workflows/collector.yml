@@ -37,7 +37,7 @@ jobs:
           HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL || 'https://home-fit-production.up.railway.app' }}
           HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
         run: |
-          python scripts/collector.py
+          python scripts/collectors/collector.py
       
       - name: Check for changes
         id: check-changes

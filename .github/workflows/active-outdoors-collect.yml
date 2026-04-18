@@ -32,7 +32,7 @@ jobs:
         env:
           HOMEFIT_BASE_URL: ${{ secrets.HOMEFIT_BASE_URL || 'https://home-fit-production.up.railway.app' }}
           HOMEFIT_API_KEY: ${{ secrets.HOMEFIT_API_KEY }}
-        run: python scripts/collect_active_outdoors.py
+        run: python scripts/collectors/collect_active_outdoors.py
 
       - name: Upload Active Outdoors artifacts
         uses: actions/upload-artifact@v4

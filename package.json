@@ -6,6 +6,6 @@
     "playwright": "^1.50.0"
   },
   "scripts": {
-    "build-status-baselines": "PYTHONPATH=. python3 scripts/build_status_signal_baselines.py --input data/locations.csv --output data/status_signal_baselines.json --limit 200 --min-samples 3"
+    "build-status-baselines": "PYTHONPATH=. python3 scripts/baselines/build_status_signal_baselines.py --input data/locations.csv --output data/status_signal_baselines.json --limit 200 --min-samples 3"
   }
 }

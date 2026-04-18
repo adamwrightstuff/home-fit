@@ -86,7 +86,7 @@ So we have **no** metric for “growing vs declining industries” (e.g. employm
 | Mobility (M) | **QCEW** YoY employment growth % (floor 40 when anchored_balance > 75), **net establishment entry per 1k** (BDS), **OEWS P75** wage. Trajectory and upside. |
 | Ecosystem (E) | Industry diversity (1−HHI from ACS), establishments per 1k. Networking and activity. |
 | Resilience (R) | Industry diversity (60%), **anchored balance** (40%). Market stability. |
-| Wage percentiles | **OEWS 25th and 75th** annual wages (BLS). P25 in density, P75 in mobility. Build: `scripts/build_oews_metro_wages.py` → `data/oews_metro_wage_distribution.json`. |
+| Wage percentiles | **OEWS 25th and 75th** annual wages (BLS). P25 in density, P75 in mobility. Build: `scripts/baselines/build_oews_metro_wages.py` → `data/oews_metro_wage_distribution.json`. |
 | Job growth rate | Can add; best via BLS QCEW; ACS year-over-year comparison is an option. |
 | Additional wage distribution | Can add; ACS has income/earnings distribution tables (e.g. B19081, B20002). |
 | Underemployment | Can add only as an ACS-based proxy; true U-6 at area level is not standard in ACS. |

@@ -161,7 +161,7 @@ Before making **ANY** scoring change, ask:
 - **Rank-order correlation with human ratings** (Spearman ≥ 0.7)
   - Validates that scores align with human perception
   - Most data-backed validation approach
-  - Run: `python scripts/validate_natural_beauty_scoring.py`
+  - Run: `python scripts/debug/validate_natural_beauty_scoring.py`
 
 **SECONDARY (Verify research data used):**
 - Research-backed expected values

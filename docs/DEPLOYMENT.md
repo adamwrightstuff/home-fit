@@ -25,7 +25,7 @@ The repo has a **root `Dockerfile`**. Railway should build from it automatically
 
 ### NRHP dataset (Built Beauty historic register)
 
-- `scripts/build_nrhp_db.py` builds `data_cache/nrhp.sqlite`.
+- `scripts/baselines/build_nrhp_db.py` builds `data_cache/nrhp.sqlite`.
 - `railway.json` can run the NRHP build during deploy; see that file for the exact build command.
 - Override path with env **`NRHP_DB_PATH`** if needed.
 

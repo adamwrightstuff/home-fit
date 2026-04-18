@@ -2,7 +2,7 @@
 
 ## Quick Test via API
 
-Use **cURL** or **Python requests** below. (There is no `test_active_outdoors_api.py` in this repo; for batch scoring with details, see `scripts/collect_active_outdoors.py` in GitHub Actions workflow `active-outdoors-collect.yml`.)
+Use **cURL** or **Python requests** below. (There is no `test_active_outdoors_api.py` in this repo; for batch scoring with details, see `scripts/collectors/collect_active_outdoors.py` in GitHub Actions workflow `active-outdoors-collect.yml`.)
 
 ### Using cURL
 
