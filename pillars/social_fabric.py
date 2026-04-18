@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
+from data_sources.places_social_fabric_client import maybe_augment_civic_nodes_with_places
 from data_sources import social_fabric_bands
 from data_sources import voter_turnout
 from data_sources.us_census_divisions import get_division
@@ -170,6 +171,10 @@ def get_social_fabric_score(
             },
         }
 
+    civic, places_civic_meta = maybe_augment_civic_nodes_with_places(
+        civic, lat, lon, civic_radius_m
+    )
+
     same_house_pct = mobility.get("same_house_pct") if mobility else None
     rooted_pct_adjusted = None
     stability_pct: Optional[float] = None
@@ -272,21 +277,32 @@ def get_social_fabric_score(
 
     source_status["stability_place"] = "ok" if place_same_house_pct is not None else "empty"
 
-    cs = civic.get("source_status")
-    if cs == "error":
+    # OSM outcome: after Places augment, `source_status` is effective (ok/empty) but
+    # `osm_source_status` preserves Overpass result when Places ran.
+    osm_cs = civic.get("osm_source_status") or civic.get("source_status")
+    pm = civic.get("places_civic_fallback") or {}
+    places_recovered = bool(pm.get("used") and pm.get("http_ok"))
+
+    if pm.get("used") and pm.get("http_ok"):
+        source_status["civic_places"] = "ok" if civic_count else "empty"
+    else:
+        source_status["civic_places"] = "not_used"
+
+    if osm_cs == "error":
         source_status["civic_osm"] = "error"
-        err = civic.get("error") or {}
-        source_errors.append(
-            {
-                "source": err.get("source", "overpass"),
-                "key": "civic_nodes",
-                "code": err.get("code", "error"),
-                "message": err.get("message", ""),
-            }
-        )
-    elif cs == "empty":
+        if not places_recovered:
+            err = civic.get("error") or {}
+            source_errors.append(
+                {
+                    "source": err.get("source", "overpass"),
+                    "key": "civic_nodes",
+                    "code": err.get("code", "error"),
+                    "message": err.get("message", ""),
+                }
+            )
+    elif osm_cs == "empty":
         source_status["civic_osm"] = "empty"
-    elif cs == "ok":
+    elif osm_cs == "ok":
         source_status["civic_osm"] = "ok"
     else:
         source_status["civic_osm"] = "ok" if civic_count else "empty"
@@ -311,6 +327,7 @@ def get_social_fabric_score(
         "orgs_per_1k": orgs_per_1k,
         "source_status": source_status,
         "source_errors": source_errors,
+        "places_civic_augmented": places_recovered,
     }
 
     quality_metrics = data_quality.assess_pillar_data_quality(
@@ -339,6 +356,7 @@ def get_social_fabric_score(
         "voter_turnout_rate": round(turnout_rate, 4) if turnout_rate is not None else None,
         "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,
         "social_fabric_bands": bool(bands),
+        "civic_places_fallback_used": places_recovered,
     }
 
     details = {
@@ -348,7 +366,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v6_stability_census_source_status",
+        "version": "v7_places_civic_fallback",
     }
 
     logger.info(

@@ -254,14 +254,15 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: some climate/flood data were unavailable.',
   },
   social_fabric: {
-    topLine: 'Stability from Census movers data, civic places from OpenStreetMap, and engagement inputs.',
+    topLine:
+      'Stability from Census movers data, civic places from OpenStreetMap (or Google Places when OSM is unavailable), and engagement inputs.',
     metrics: [
       { label: 'Same-house blend (tract + place)', path: 'summary.stability_blend_pct', format: 'percent', max: 100 },
       { label: 'Civic places (non-commercial)', path: 'summary.civic_node_count', format: 'count', suffix: ' places' },
       { label: 'Modeled voter turnout (tract)', path: 'summary.voter_turnout_rate', format: 'percent', max: 1 },
     ],
     degradedMessage:
-      'Limited data: Census mobility, OpenStreetMap civic places, or other community sources failed or were unavailable.',
+      'Limited data: Census mobility, civic places (OpenStreetMap / Places), or other community sources failed or were unavailable.',
   },
   diversity: {
     topLine: 'Which Census mix dimensions we could score, self-employment, and race/ethnic spread (entropy).',

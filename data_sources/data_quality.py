@@ -1623,6 +1623,7 @@ class DataQualityManager:
 
         Civic OSM counts as complete when Overpass returned successfully (source_status ok or empty).
         A successful empty result (zero civic POIs) does not reduce completeness; Overpass errors do.
+        When `civic_places` is ok or empty (Google Places fallback after OSM error), civic is also complete.
 
         Stability (ACS B07003) counts as complete when mobility loaded successfully (source_status
         stability_mobility_acs == ok when present; otherwise mobility dict present).
@@ -1638,11 +1639,16 @@ class DataQualityManager:
             has_stability = mobility is not None
         else:
             has_stability = sm_acs == "ok"
-        civic_osm = (data.get("source_status") or {}).get("civic_osm")
-        if civic_osm is None:
-            has_civic = True
+        ss = data.get("source_status") or {}
+        civic_osm = ss.get("civic_osm")
+        civic_places = ss.get("civic_places")
+        if civic_places is None:
+            if civic_osm is None:
+                has_civic = True
+            else:
+                has_civic = civic_osm in ("ok", "empty")
         else:
-            has_civic = civic_osm in ("ok", "empty")
+            has_civic = (civic_osm in ("ok", "empty")) or (civic_places in ("ok", "empty"))
         has_engagement = engagement_score is not None
 
         components_available = sum([has_stability, has_civic, has_engagement])
@@ -1840,7 +1846,14 @@ def assess_pillar_data_quality(
     if pillar_name == 'neighborhood_amenities' and data and data.get('places_augmented'):
         data_sources = ['osm', 'google_places']
     elif pillar_name == 'social_fabric' and data:
-        data_sources = ['census', 'osm'] if data.get('mobility') is not None else ['osm']
+        if data.get('places_civic_augmented'):
+            data_sources = (
+                ['census', 'osm', 'google_places']
+                if data.get('mobility') is not None
+                else ['osm', 'google_places']
+            )
+        else:
+            data_sources = ['census', 'osm'] if data.get('mobility') is not None else ['osm']
     elif pillar_name == 'diversity' and data:
         data_sources = ['census']
     confidence = data_quality_manager.create_confidence_score(

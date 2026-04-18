@@ -206,7 +206,8 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'climate_risk:Extra heat vs region (°C)': 'How much hotter this place runs than the regional baseline (satellite land-surface temperature).',
   'climate_risk:PM2.5 proxy (µg/m³)': 'Fine particulate pollution proxy used for air risk (micrograms per cubic meter).',
   'social_fabric:Same-house blend (tract + place)': 'Blend of tract and place “same house as last year” shares from Census.',
-  'social_fabric:Civic places (non-commercial)': 'Libraries, community centers, worship, town halls, etc., from OpenStreetMap.',
+  'social_fabric:Civic places (non-commercial)':
+    'Libraries, community centers, worship, town halls, etc., from OpenStreetMap, or Google Places when OSM is unavailable.',
   'social_fabric:Modeled voter turnout (tract)': 'Estimated participation rate used for engagement (0–100% shown).',
   'diversity:Mix dimensions scored': 'Which Census mix dimensions (race, income, age) had data for this tract.',
   'diversity:Self-employed (tract %)': 'Share of workers who are self-employed in this tract (Census).',
