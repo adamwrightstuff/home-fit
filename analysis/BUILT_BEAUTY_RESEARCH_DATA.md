@@ -227,7 +227,7 @@ Built Coverage:     median=0.034 (p25=0.002, p75=0.059, min=0.000, max=0.089)
 
 - **Raw Data**: `analysis/research_data/built_beauty_raw_data.json`
 - **Statistics**: `analysis/research_data/built_beauty_statistics.json`
-- **Collection Script**: `scripts/collect_built_beauty_research_data.py`
+- **Collection Script**: `scripts/debug/collect_built_beauty_research_data.py`
 
 ---
 

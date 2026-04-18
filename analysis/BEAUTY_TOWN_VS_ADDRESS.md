@@ -46,10 +46,10 @@ With the current geocoding pipeline (Census + Nominatim), **“2 Springdale Dr L
 
 ## Script
 
-`scripts/compare_beauty_larchmont.py` compares beauty scores for “Larchmont NY” vs a Larchmont address that geocodes (e.g. “1 Palmer Avenue Larchmont NY”), printing coordinates, `location_scope`, `area_type`, radii, and built/natural scores. Run from project root:
+`scripts/debug/compare_beauty_larchmont.py` compares beauty scores for “Larchmont NY” vs a Larchmont address that geocodes (e.g. “1 Palmer Avenue Larchmont NY”), printing coordinates, `location_scope`, `area_type`, radii, and built/natural scores. Run from project root:
 
 ```bash
-PYTHONPATH=. python3 scripts/compare_beauty_larchmont.py
+PYTHONPATH=. python3 scripts/debug/compare_beauty_larchmont.py
 ```
 
 (Requires GEE and OSM APIs; may take a few minutes.)

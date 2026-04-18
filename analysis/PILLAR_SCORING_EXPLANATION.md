@@ -38,7 +38,7 @@ final_score = 0.40 × topography_viewshed + 0.30 × water + 0.20 × greenery + 0
 
 #### Water (30% weight)
 - **Data sources:** Natural Earth 10m (proximity) + GEE landcover (visibility)
-- **Proximity (50% of water score):** Distance to coastline, major lakes (scalerank ≤ 2), major rivers (scalerank ≤ 4). Linear decay: coast 50 km, lakes 30 km, rivers 20 km. Weights: 60% coast, 30% lake, 10% river. Implemented in `data_sources/water_proximity_ne.py`. Requires one-time download: `python scripts/download_natural_earth_water.py`
+- **Proximity (50% of water score):** Distance to coastline, major lakes (scalerank ≤ 2), major rivers (scalerank ≤ 4). Linear decay: coast 50 km, lakes 30 km, rivers 20 km. Weights: 60% coast, 30% lake, 10% river. Implemented in `data_sources/water_proximity_ne.py`. Requires one-time download: `python scripts/baselines/download_natural_earth_water.py`
 - **Visibility (50% of water score):** GEE `get_landcover_context_gee` water_pct (micro-scale water visibility)
 - **OSM water queries:** Not used (removed for reliability)
 
@@ -644,7 +644,7 @@ score = weighted_sum(values) / sum(weights)   # 0–100
 - Census API (B07003 mobility, B02001/B19001/B01001 diversity)
 - OSM API (civic nodes)
 - IRS BMF (engagement; optional, when `data/` and build outputs available)
-- Voter registration (engagement; optional, preprocessed via `scripts/build_voter_registration_baselines.py`)
+- Voter registration (engagement; optional, preprocessed via `scripts/baselines/build_voter_registration_baselines.py`)
 - Stability baselines (e.g. `data/stability_baselines.json`) for regional stability z-score
 
 ---

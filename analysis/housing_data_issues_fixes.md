@@ -63,7 +63,7 @@
 
 ## Testing
 
-Test script created: `scripts/investigate_housing_issues.py`
+Test script created: `scripts/debug/investigate_housing_issues.py`
 
 **Test Results:**
 - Ann Arbor: Warning correctly displayed for low income

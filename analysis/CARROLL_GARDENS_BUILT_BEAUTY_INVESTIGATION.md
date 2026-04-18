@@ -2,7 +2,7 @@
 
 **Purpose:** Confirm what data comes back for Carroll Gardens built beauty and how the score is calculated for each preference permutation (historic/contemporary × spread_out/walkable).
 
-**Script:** `scripts/investigate_built_beauty_preferences.py` — run with no args for Carroll Gardens, or `--lat/--lon/--name` or `--location "..."`. Use `--json` for machine-readable output; use `--save path.json` to write that JSON to a file. First run can take 2+ minutes (OSM/Census APIs).
+**Script:** `scripts/debug/investigate_built_beauty_preferences.py` — run with no args for Carroll Gardens, or `--lat/--lon/--name` or `--location "..."`. Use `--json` for machine-readable output; use `--save path.json` to write that JSON to a file. First run can take 2+ minutes (OSM/Census APIs).
 
 ---
 
@@ -118,13 +118,13 @@ If you observe **contemporary + walkable** > **historic + walkable**, that contr
 
 ```bash
 # Full run (2+ min with APIs)
-python3 scripts/investigate_built_beauty_preferences.py
+python3 scripts/debug/investigate_built_beauty_preferences.py
 
 # JSON only (e.g. to save or diff)
-python3 scripts/investigate_built_beauty_preferences.py --json > /tmp/built_beauty_sample.json
+python3 scripts/debug/investigate_built_beauty_preferences.py --json > /tmp/built_beauty_sample.json
 
 # Save JSON to a file directly
-python3 scripts/investigate_built_beauty_preferences.py --save /tmp/built_beauty_sample.json
+python3 scripts/debug/investigate_built_beauty_preferences.py --save /tmp/built_beauty_sample.json
 ```
 
 The script prints for each permutation:
