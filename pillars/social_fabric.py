@@ -6,7 +6,8 @@ Composite (fixed denominator): (1.2×Stability + 1.2×Civic + 1.0×Engagement) /
 Diversity is a separate pillar (pillars/diversity.py).
 
 Stability blend: 0.7×tract same-house (B07003 tract) + 0.3×place same-house (Incorporated Place/CDP B07003).
-Civic search radius follows tract population density: ~600 m / 1200 m / 3000 m; zero POIs → civic score 0.
+Civic search radius follows tract population density: ~600 m / 1200 m / 3000 m.
+Places API augments thin OSM (like neighborhood_amenities); imputed civic floor for dense areas if still empty.
 """
 
 from __future__ import annotations
@@ -104,6 +105,36 @@ def _civic_radius_m_from_tract_density(density_sqmi: Optional[float]) -> int:
     return 3000
 
 
+def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float]) -> Optional[float]:
+    """
+    Conservative civic_gathering score when OSM+Places yield zero nodes (NA-style urban/suburban floors).
+    Density is people per sq mi (same as get_population_density).
+    """
+    d = float(density) if density is not None else 0.0
+    should_apply = False
+    if area_type in ("urban_core", "urban_residential", "suburban"):
+        should_apply = True
+    elif d > 1500:
+        should_apply = True
+    elif area_type is None and d > 1000:
+        should_apply = True
+    if not should_apply:
+        return None
+    if area_type == "urban_core":
+        return 25.0
+    if area_type == "urban_residential":
+        return 20.0
+    if area_type == "suburban":
+        return 15.0
+    if d > 5000:
+        return 25.0
+    if d > 2000:
+        return 20.0
+    if d > 1500:
+        return 18.0
+    return 15.0
+
+
 def get_social_fabric_score(
     lat: float,
     lon: float,
@@ -171,9 +202,30 @@ def get_social_fabric_score(
             },
         }
 
+    expected_m = data_quality.data_quality_manager.get_expected_minimums(lat, lon, area_type or "suburban")
+    civic_min = max(1, int(expected_m.get("civic_nodes_min") or 3))
+    osm_cs_pre = civic.get("source_status")
+    n_pre = len([x for x in (civic.get("nodes") or []) if isinstance(x, dict)])
+    if osm_cs_pre == "error":
+        civic_compl = 0.0
+    else:
+        civic_compl = min(1.0, float(n_pre) / float(civic_min))
+
     civic, places_civic_meta = maybe_augment_civic_nodes_with_places(
-        civic, lat, lon, civic_radius_m
+        civic,
+        lat,
+        lon,
+        civic_radius_m,
+        osm_completeness=civic_compl,
+        civic_min_expected=civic_min,
     )
+    if places_civic_meta.get("used") and places_civic_meta.get("http_ok"):
+        logger.info(
+            "Social Fabric Places civic augment: trigger=%s nodes_added=%s completeness_before=%s",
+            places_civic_meta.get("trigger"),
+            places_civic_meta.get("nodes_added"),
+            places_civic_meta.get("osm_completeness_before"),
+        )
 
     same_house_pct = mobility.get("same_house_pct") if mobility else None
     rooted_pct_adjusted = None
@@ -206,8 +258,14 @@ def get_social_fabric_score(
     civic_count = len(nodes)
     civic_band_key = social_fabric_bands.civic_band_area_type_for_radius(civic_radius_m)
 
+    civic_imputed_floor_applied = False
     if civic_count <= 0:
-        civic_score = 0.0
+        floor = _civic_imputed_floor_score(area_type, density)
+        if floor is not None:
+            civic_score = floor
+            civic_imputed_floor_applied = True
+        else:
+            civic_score = 0.0
     elif bands:
         civic_score = social_fabric_bands.score_civic_gathering_from_bands(
             civic_count, civic_band_key, bands, proximity=False
@@ -328,10 +386,17 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "places_civic_augmented": places_recovered,
+        "civic_imputed_floor_applied": civic_imputed_floor_applied,
+        "area_classification": {"area_type": area_type},
     }
 
     quality_metrics = data_quality.assess_pillar_data_quality(
-        "social_fabric", combined_data, lat, lon, area_type
+        "social_fabric",
+        combined_data,
+        lat,
+        lon,
+        area_type,
+        fallback_used=bool(places_recovered or civic_imputed_floor_applied),
     )
 
     rooted_pct = mobility.get("rooted_pct") if mobility else None
@@ -357,6 +422,7 @@ def get_social_fabric_score(
         "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,
         "social_fabric_bands": bool(bands),
         "civic_places_fallback_used": places_recovered,
+        "civic_imputed_floor_applied": civic_imputed_floor_applied,
     }
 
     details = {
@@ -366,7 +432,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v7_places_civic_fallback",
+        "version": "v8_places_civic_na_parity",
     }
 
     logger.info(

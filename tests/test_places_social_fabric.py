@@ -8,6 +8,7 @@ from data_sources.data_quality import data_quality_manager
 from data_sources.places_social_fabric_client import (
     _classify_civic_node_type,
     maybe_augment_civic_nodes_with_places,
+    places_sf_completeness_threshold,
     places_social_fabric_fallback_enabled,
 )
 
@@ -42,11 +43,42 @@ class TestSfPlacesAugment(unittest.TestCase):
         ):
             self.assertFalse(places_social_fabric_fallback_enabled())
 
-    def test_skips_when_osm_ok(self):
-        civic = {"nodes": [{"type": "library"}], "source_status": "ok"}
-        out, meta = maybe_augment_civic_nodes_with_places(civic, 40.0, -74.0, 800)
-        self.assertEqual(meta["reason"], "osm_not_error")
+    def test_sf_threshold_default(self):
+        self.assertGreater(places_sf_completeness_threshold(), 0.0)
+
+    def test_skips_when_osm_ok_and_completeness_high(self):
+        civic = {"nodes": [{"type": "library"}] * 6, "source_status": "ok"}
+        out, meta = maybe_augment_civic_nodes_with_places(
+            civic, 40.0, -74.0, 800, osm_completeness=1.0, civic_min_expected=6
+        )
+        self.assertEqual(meta["reason"], "completeness_above_threshold")
         self.assertIs(out, civic)
+
+    @patch("data_sources.places_social_fabric_client._search_nearby_civic")
+    @patch.dict(os.environ, {"HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "k"})
+    def test_merges_on_low_completeness(self, mock_search):
+        mock_search.return_value = [
+            {
+                "id": "pl1",
+                "displayName": {"text": "Branch Library"},
+                "location": {"latitude": 40.001, "longitude": -74.001},
+                "types": ["library"],
+            }
+        ]
+        civic = {
+            "nodes": [],
+            "source_status": "empty",
+        }
+        out, meta = maybe_augment_civic_nodes_with_places(
+            civic, 40.0, -74.0, 800, osm_completeness=0.0, civic_min_expected=6
+        )
+        self.assertTrue(meta.get("http_ok"))
+        self.assertIn(
+            meta.get("trigger"),
+            ("low_osm_completeness", "low_completeness_and_thin_count"),
+        )
+        self.assertEqual(len(out["nodes"]), 1)
+        self.assertEqual(out["nodes"][0]["source"], "google_places")
 
     @patch("data_sources.places_social_fabric_client._search_nearby_civic")
     @patch.dict(os.environ, {"HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "k"})
@@ -88,3 +120,22 @@ class TestSfCompletenessWithPlaces(unittest.TestCase):
         }
         c, tier = data_quality_manager._assess_social_fabric_completeness(data, {})
         self.assertGreaterEqual(c, 0.99)
+
+    def test_civic_incomplete_when_urban_empty_without_places(self):
+        data = {
+            "mobility": {"x": 1},
+            "engagement_score": 50.0,
+            "civic_nodes_count": 0,
+            "places_civic_augmented": False,
+            "civic_imputed_floor_applied": False,
+            "source_status": {
+                "stability_mobility_acs": "ok",
+                "civic_osm": "empty",
+                "civic_places": "not_used",
+                "engagement_bmf": "ok",
+                "engagement_turnout": "ok",
+            },
+        }
+        expected = {"civic_nodes_min": 6}
+        c, tier = data_quality_manager._assess_social_fabric_completeness(data, expected)
+        self.assertLess(c, 0.99)

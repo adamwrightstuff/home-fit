@@ -1618,15 +1618,10 @@ class DataQualityManager:
     
     def _assess_social_fabric_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """
-        Assess social_fabric completeness: Stability, Civic (OSM), Engagement (BMF / turnout).
-        Diversity is scored in the standalone diversity pillar.
+        Assess social_fabric completeness: Stability, Civic (OSM / Places / imputed), Engagement.
 
-        Civic OSM counts as complete when Overpass returned successfully (source_status ok or empty).
-        A successful empty result (zero civic POIs) does not reduce completeness; Overpass errors do.
-        When `civic_places` is ok or empty (Google Places fallback after OSM error), civic is also complete.
-
-        Stability (ACS B07003) counts as complete when mobility loaded successfully (source_status
-        stability_mobility_acs == ok when present; otherwise mobility dict present).
+        Civic: Overpass error needs Places or imputed floor. For ok/empty OSM, zero nodes in areas
+        with civic_nodes_min > 1 is incomplete unless Places ran or imputed floor applied.
         """
         if not data:
             return 0.0, 'very_poor'
@@ -1642,13 +1637,25 @@ class DataQualityManager:
         ss = data.get("source_status") or {}
         civic_osm = ss.get("civic_osm")
         civic_places = ss.get("civic_places")
-        if civic_places is None:
-            if civic_osm is None:
+        civic_nodes = int(data.get("civic_nodes_count") or 0)
+        civic_min = max(1, int(expected.get("civic_nodes_min") or 1))
+        places_augmented = bool(data.get("places_civic_augmented"))
+        imputed = bool(data.get("civic_imputed_floor_applied"))
+
+        if civic_osm == "error":
+            has_civic = civic_places in ("ok", "empty") or places_augmented or imputed
+        elif civic_osm in ("ok", "empty", None):
+            if civic_nodes > 0:
+                has_civic = True
+            elif civic_places in ("ok", "empty") or places_augmented or imputed:
+                has_civic = True
+            elif civic_min <= 1:
                 has_civic = True
             else:
-                has_civic = civic_osm in ("ok", "empty")
+                has_civic = False
         else:
-            has_civic = (civic_osm in ("ok", "empty")) or (civic_places in ("ok", "empty"))
+            has_civic = civic_places in ("ok", "empty") or places_augmented
+
         has_engagement = engagement_score is not None
 
         components_available = sum([has_stability, has_civic, has_engagement])
@@ -1719,6 +1726,7 @@ class DataQualityManager:
                 'business_count': 50,
                 'business_types': 12,
                 'diversity_components': 3,
+                'civic_nodes_min': 6,
             }
         elif area_type == 'suburban' or (density and density > 2500):
             return {
@@ -1733,6 +1741,7 @@ class DataQualityManager:
                 'business_count': 25,
                 'business_types': 8,
                 'diversity_components': 3,
+                'civic_nodes_min': 3,
             }
         elif area_type == 'exurban' or (density and density > 1000):
             return {
@@ -1747,6 +1756,7 @@ class DataQualityManager:
                 'business_count': 15,
                 'business_types': 6,
                 'diversity_components': 3,
+                'civic_nodes_min': 2,
             }
         else:  # rural
             return {
@@ -1761,6 +1771,7 @@ class DataQualityManager:
                 'business_count': 5,
                 'business_types': 3,
                 'diversity_components': 3,
+                'civic_nodes_min': 1,
             }
     
     def create_confidence_score(self, data_completeness: float, 
