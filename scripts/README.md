@@ -15,8 +15,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | **`baselines/`** | Build or refresh `data/*.json` normalization files (economic, status signal, stability, IRS, voter, OEWS, NRHP DB, Natural Earth download). |
 | **`collectors/`** | Long-running API batch jobs: `locations.csv` → `results.csv`, status-signal-only runs, active-outdoors batch, simple score list. |
 | **`debug/`** | One-off analysis, pillar validation CLIs, comparisons, markdown reports (not for production cron). |
-| **`manual/`** | Ad-hoc `test_*.py` smoke scripts (not pytest); API/OSM spot checks. |
-| **`archive/`** | Old diagnostics kept for reference. |
+| **`manual/`** | Ad-hoc `test_*.py` smoke scripts (not pytest); API/pillar spot checks. |
 
 `paths.py` — small helper used by convention (some scripts use `Path(__file__).resolve().parents[2]` for repo root).
 
@@ -41,8 +40,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 
 | Script | Does |
 |--------|------|
-| `catalog_rescore_pillar_completeness_threshold.sh` | NYC+LA: rescore one pillar below completeness **T**, recompute composites, commit+push, print stragglers. |
-| `catalog_rescore_na_completeness_threshold.sh` | Wrapper → same (default pillar: neighborhood_amenities). |
+| `catalog_rescore_pillar_completeness_threshold.sh` | NYC+LA: rescore one pillar below completeness **T**, recompute composites, commit+push, print stragglers. Set `PILLAR` (default `neighborhood_amenities`). |
 | `refresh_merged_catalog_from_prod.sh` | Prod API → merged JSONLs + composites. |
 | `refresh_nyc_catalog_amenities_prod.sh` | NYC merged: refresh neighborhood_amenities + composites. |
 | `calibrate_economic_baselines.sh` | Runs `baselines/build_economic_baselines.py`. |
@@ -74,7 +72,6 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | `score_locations.py` | Simple: print `location,total_score`. |
 | `collect_status_signal.py` | Status-signal pillars only → `results.csv`. |
 | `collect_active_outdoors.py` | Active outdoors batch → JSONL + summary. |
-| `batch_request.py` | Loop `/score` (legacy helper). |
 
 ### `debug/`
 
@@ -97,13 +94,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 
 ### `manual/` (`test_*.py`)
 
-Ad-hoc tests: API health, healthcare, natural beauty, built beauty, OSM Coconut Grove probes, rule-based scoring, social fabric, etc. Open each file’s docstring for usage.
-
-### `archive/`
-
-| Script | Does |
-|--------|------|
-| `investigate_greenways.py` | Old Hudson / East River greenway OSM diagnostic. |
+Ad-hoc tests: API health, healthcare, natural beauty, built beauty, rule-based scoring, social fabric, etc. Open each file’s docstring for usage.
 
 ---
 

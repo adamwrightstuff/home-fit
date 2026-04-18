@@ -10,6 +10,8 @@ Run from repo root:
 PYTHONPATH=. python3 scripts/<subfolder>/<name>.py
 ```
 
+For looping `/score` over many places from a list, use **`collectors/collector.py`** or the catalog batch scripts, not ad-hoc one-off scripts.
+
 Update references in analysis docs when you cite a script path (e.g. `scripts/debug/compare_status_signal.py` instead of `scripts/compare_status_signal.py`).
 
 ## Cross-references (docs that mention specific scripts)
