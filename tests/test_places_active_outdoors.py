@@ -73,12 +73,31 @@ class TestAoPlacesGate(unittest.TestCase):
     def test_enabled_with_key(self):
         self.assertTrue(places_ao_fallback_enabled())
 
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_FALLBACK_ENABLED": "1",
+            "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "",
+            "GOOGLE_PLACES_API_KEY": "x",
+        },
+    )
+    def test_enabled_with_master_flag_only(self):
+        self.assertTrue(places_ao_fallback_enabled())
+
     def test_disabled_without_flag(self):
         with patch.dict(os.environ, {"GOOGLE_PLACES_API_KEY": "x"}, clear=False):
             if "HOMEFIT_PLACES_AO_FALLBACK_ENABLED" in os.environ:
                 del os.environ["HOMEFIT_PLACES_AO_FALLBACK_ENABLED"]
         # May still be set from other tests — patch fully
-        with patch.dict(os.environ, {"GOOGLE_PLACES_API_KEY": "x", "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": ""}, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "GOOGLE_PLACES_API_KEY": "x",
+                "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "",
+                "HOMEFIT_PLACES_FALLBACK_ENABLED": "",
+            },
+            clear=True,
+        ):
             self.assertFalse(places_ao_fallback_enabled())
 
     @patch.dict(os.environ, {"HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "x"})

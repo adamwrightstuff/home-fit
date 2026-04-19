@@ -60,8 +60,12 @@ MOCK_CAFE = {
 
 class TestPlacesMerge(unittest.TestCase):
     def test_skips_when_completeness_high(self):
+        # Need enough OSM POIs that count is not "thin" vs expected minimum, or the client
+        # tries Places first and then hits disabled_or_no_api_key when fallback flag is off.
+        # NYC-ish coords can imply high business_count floor — need enough POIs not to be "thin".
+        filler = [{"name": f"p{i}", "lat": 40.7, "lon": -74.0, "distance_m": 100} for i in range(60)]
         osm = {
-            "tier1_daily": [],
+            "tier1_daily": filler,
             "tier2_social": [],
             "tier3_culture": [],
             "tier4_services": [],

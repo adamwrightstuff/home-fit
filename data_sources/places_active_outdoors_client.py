@@ -17,6 +17,7 @@ import requests
 
 from logging_config import get_logger
 
+from data_sources.places_env import google_places_api_key, places_ao_fallback_enabled as env_places_ao_fallback_enabled
 from data_sources.utils import haversine_distance
 
 logger = get_logger(__name__)
@@ -62,14 +63,11 @@ def _classify_regional(types: List[str]) -> Optional[Tuple[str, str]]:
 
 
 def _api_key() -> Optional[str]:
-    return (os.getenv("GOOGLE_PLACES_API_KEY") or os.getenv("HOMEFIT_GOOGLE_PLACES_API_KEY") or "").strip() or None
+    return google_places_api_key()
 
 
 def places_ao_fallback_enabled() -> bool:
-    if not _api_key():
-        return False
-    raw = (os.getenv("HOMEFIT_PLACES_AO_FALLBACK_ENABLED") or "").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+    return env_places_ao_fallback_enabled()
 
 
 def _int_env(name: str, default: int) -> int:

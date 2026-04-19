@@ -1620,7 +1620,7 @@ class DataQualityManager:
         """
         Assess social_fabric completeness: Stability, Civic (OSM / Places / imputed), Engagement.
 
-        Civic: Overpass error needs Places or imputed floor. For ok/empty OSM, zero nodes in areas
+        Civic: Overpass error needs Places or (optional) imputed floor. For ok/empty OSM, zero nodes in areas
         with civic_nodes_min > 1 is incomplete unless Places ran or imputed floor applied.
         """
         if not data:
@@ -1630,10 +1630,11 @@ class DataQualityManager:
         engagement_score = data.get("engagement_score")
 
         sm_acs = (data.get("source_status") or {}).get("stability_mobility_acs")
+        stability_computed = bool(data.get("stability_computed"))
         if sm_acs is None:
-            has_stability = mobility is not None
+            has_stability = mobility is not None or stability_computed
         else:
-            has_stability = sm_acs == "ok"
+            has_stability = (sm_acs == "ok") or stability_computed
         ss = data.get("source_status") or {}
         civic_osm = ss.get("civic_osm")
         civic_places = ss.get("civic_places")

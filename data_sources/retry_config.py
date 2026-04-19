@@ -123,6 +123,7 @@ QUERY_TYPE_PROFILES: Dict[str, RetryProfile] = {
     "facade_rhythm": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
     "nature_features": RetryProfile.CRITICAL,  # Changed from NON_CRITICAL
     "water_features": RetryProfile.CRITICAL,  # Water proximity is critical for natural beauty + outdoors
+    "civic_nodes": RetryProfile.CRITICAL,  # Social Fabric civic OSM — match other scoring-critical queries
 }
 
 

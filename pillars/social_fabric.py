@@ -5,9 +5,11 @@ and engagement (IRS BMF + voter turnout), z-scored vs area type where applicable
 Composite (fixed denominator): (1.2×Stability + 1.2×Civic + 1.0×Engagement) / 3.4.
 Diversity is a separate pillar (pillars/diversity.py).
 
-Stability blend: 0.7×tract same-house (B07003 tract) + 0.3×place same-house (Incorporated Place/CDP B07003).
+Stability blend: 0.7×tract same-house + 0.3×place same-house (place is B07003). Tract same-house uses ACS 5-year
+B07003 blended with B07013 (0.6×B07013 + 0.4×B07003) when B07013 is available in census_api.get_mobility_data.
+If tract mobility is missing but place same-house exists, stability uses place-only (honest geography).
 Civic search radius follows tract population density: ~600 m / 1200 m / 3000 m.
-Places API augments thin OSM (like neighborhood_amenities); imputed civic floor for dense areas if still empty.
+Places augments thin/failed OSM. Imputed civic floor only when HOMEFIT_SF_CIVIC_IMPUTATION_ENABLED is on (default off).
 """
 
 from __future__ import annotations
@@ -135,6 +137,15 @@ def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float
     return 15.0
 
 
+def _sf_civic_imputation_enabled() -> bool:
+    return (os.getenv("HOMEFIT_SF_CIVIC_IMPUTATION_ENABLED") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def get_social_fabric_score(
     lat: float,
     lon: float,
@@ -206,6 +217,7 @@ def get_social_fabric_score(
     civic_min = max(1, int(expected_m.get("civic_nodes_min") or 3))
     osm_cs_pre = civic.get("source_status")
     n_pre = len([x for x in (civic.get("nodes") or []) if isinstance(x, dict)])
+    n_osm_pre_places = n_pre
     if osm_cs_pre == "error":
         civic_compl = 0.0
     else:
@@ -219,6 +231,7 @@ def get_social_fabric_score(
         osm_completeness=civic_compl,
         civic_min_expected=civic_min,
     )
+    places_recovered = bool(places_civic_meta.get("used") and places_civic_meta.get("http_ok"))
     if places_civic_meta.get("used") and places_civic_meta.get("http_ok"):
         logger.info(
             "Social Fabric Places civic augment: trigger=%s nodes_added=%s completeness_before=%s",
@@ -228,13 +241,23 @@ def get_social_fabric_score(
         )
 
     same_house_pct = mobility.get("same_house_pct") if mobility else None
+    same_house_pct_b07003 = mobility.get("same_house_pct_b07003") if mobility else None
+    same_house_pct_b07013 = mobility.get("same_house_pct_b07013") if mobility else None
     rooted_pct_adjusted = None
     stability_pct: Optional[float] = None
-    if same_house_pct is not None:
+    stability_tract_input: Optional[str] = None
+    tract_same = same_house_pct
+    if tract_same is not None:
+        stability_tract_input = "tract"
         if place_same_house_pct is not None:
-            stability_pct = 0.7 * float(same_house_pct) + 0.3 * float(place_same_house_pct)
+            stability_pct = 0.7 * float(tract_same) + 0.3 * float(place_same_house_pct)
         else:
-            stability_pct = float(same_house_pct)
+            stability_pct = float(tract_same)
+    elif place_same_house_pct is not None:
+        stability_tract_input = "place_only"
+        stability_pct = float(place_same_house_pct)
+    else:
+        stability_tract_input = "none"
 
     stability_score = 0.0
     if stability_pct is not None:
@@ -260,10 +283,13 @@ def get_social_fabric_score(
 
     civic_imputed_floor_applied = False
     if civic_count <= 0:
-        floor = _civic_imputed_floor_score(area_type, density)
-        if floor is not None:
-            civic_score = floor
-            civic_imputed_floor_applied = True
+        if _sf_civic_imputation_enabled():
+            floor = _civic_imputed_floor_score(area_type, density)
+            if floor is not None:
+                civic_score = floor
+                civic_imputed_floor_applied = True
+            else:
+                civic_score = 0.0
         else:
             civic_score = 0.0
     elif bands:
@@ -339,7 +365,15 @@ def get_social_fabric_score(
     # `osm_source_status` preserves Overpass result when Places ran.
     osm_cs = civic.get("osm_source_status") or civic.get("source_status")
     pm = civic.get("places_civic_fallback") or {}
-    places_recovered = bool(pm.get("used") and pm.get("http_ok"))
+
+    civic_data_mode: str = "none"
+    if civic_count > 0:
+        if places_recovered and n_osm_pre_places == 0:
+            civic_data_mode = "places_only"
+        elif places_recovered and n_osm_pre_places > 0:
+            civic_data_mode = "merged"
+        else:
+            civic_data_mode = "osm_only"
 
     if pm.get("used") and pm.get("http_ok"):
         source_status["civic_places"] = "ok" if civic_count else "empty"
@@ -380,6 +414,7 @@ def get_social_fabric_score(
         "engagement_score": engagement_score,
         "score": score,
         "mobility": mobility,
+        "stability_computed": stability_pct is not None,
         "civic_nodes_count": civic_count,
         "civic_search_radius_m": civic_radius_m,
         "orgs_per_1k": orgs_per_1k,
@@ -409,10 +444,14 @@ def get_social_fabric_score(
 
     summary = {
         "same_house_pct": round(same_house_pct, 1) if same_house_pct is not None else None,
+        "same_house_pct_b07003": round(same_house_pct_b07003, 2) if same_house_pct_b07003 is not None else None,
+        "same_house_pct_b07013": round(same_house_pct_b07013, 2) if same_house_pct_b07013 is not None else None,
         "place_same_house_pct": round(place_same_house_pct, 1) if place_same_house_pct is not None else None,
         "stability_blend_pct": round(stability_pct, 1) if stability_pct is not None else None,
+        "stability_tract_input": stability_tract_input,
         "rooted_pct": round(rooted_pct, 1) if rooted_pct is not None else None,
         "civic_node_count": civic_count,
+        "civic_data_mode": civic_data_mode,
         "civic_search_radius_m": civic_radius_m,
         "civic_band_tier": civic_band_key,
         "tract_population_density_sqmi": round(density, 1) if density else None,
@@ -432,7 +471,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v8_places_civic_na_parity",
+        "version": "v9_sf_places_master_b07013_place_stability",
     }
 
     logger.info(

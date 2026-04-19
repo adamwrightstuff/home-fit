@@ -18,6 +18,7 @@ import requests
 from logging_config import get_logger
 
 from data_sources.data_quality import data_quality_manager
+from data_sources.places_env import google_places_api_key, places_na_fallback_enabled
 
 from .places_osm_mapping import (
     TIER_PLACE_TYPES,
@@ -64,14 +65,11 @@ _CHAIN_NAME_SUBSTRINGS = frozenset(
 
 
 def _api_key() -> Optional[str]:
-    return (os.getenv("GOOGLE_PLACES_API_KEY") or os.getenv("HOMEFIT_GOOGLE_PLACES_API_KEY") or "").strip() or None
+    return google_places_api_key()
 
 
 def places_amenities_fallback_enabled() -> bool:
-    if not _api_key():
-        return False
-    raw = (os.getenv("HOMEFIT_PLACES_FALLBACK_ENABLED") or "").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+    return places_na_fallback_enabled()
 
 
 def places_completeness_threshold() -> float:

@@ -629,24 +629,37 @@ def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) ->
         return None
 
 
+def _acs_mobility_int(val) -> int:
+    """Parse ACS estimate; missing / suppressed sentinels → 0."""
+    if val in (None, "", "-666666666", "-555555555", "-333333333"):
+        return 0
+    try:
+        v = int(float(val))
+        return v if v > 0 else 0
+    except (TypeError, ValueError):
+        return 0
+
+
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=15)
 def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
-    Get residential mobility data from ACS B07003.
+    Get residential mobility data from ACS 5-year: B07003 plus B07013 tenure cross-tab.
 
     Returns:
         {
-            "same_house_pct": float,   # same house 1 yr ago (percent 0-100)
-            "rooted_pct": float,       # same house + moved within same county (percent 0-100)
+            "same_house_pct": float,   # tract same-house % for stability (B07003 + B07013 blend)
+            "same_house_pct_b07003": float,
+            "same_house_pct_b07013": Optional[float],  # None if B07013 unavailable
+            "rooted_pct": float,       # same house + moved within same county (B07003 only)
             "same_house_count": int,
             "same_county_count": int,
             "total_population_1yr": int,
         }
 
-    For Social Fabric stability we use rooted_pct: a neighbor moving two blocks
-    (same county) preserves fabric; only long-distance moves count as churn.
+    Tract same-house input blends B07013 (same-house owner+renter / household universe) with
+    B07003 same-house at 0.6/0.4 when B07013 is available; rooted_pct stays B07003-based.
     """
     if tract is None:
         tract = get_census_tract(lat, lon)
@@ -654,15 +667,15 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         return None
 
     try:
-        print("🏡 Fetching mobility data (B07003) from Census ACS...")
+        print("🏡 Fetching mobility data (B07003 + B07013) from Census ACS 5-year...")
 
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         # B07003_001E: Total population 1 year and over
-        # B07003_002E/003E are Male/Female totals — do not use for mobility.
         # B07003_004E: Same house 1 year ago (total)
         # B07003_007E: Moved within same county (total)
+        # B07013: mobility by tenure; 005+006 = same house 1 yr ago (owner + renter HH)
         params = {
-            "get": "B07003_001E,B07003_004E,B07003_007E,NAME",
+            "get": "B07003_001E,B07003_004E,B07003_007E,B07013_001E,B07013_005E,B07013_006E,NAME",
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
@@ -680,9 +693,12 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 
         row = data[1]
         try:
-            total_1yr = int(row[0]) if row[0] else 0
-            same_house = int(row[1]) if row[1] else 0
-            same_county = int(row[2]) if row[2] else 0
+            total_1yr = _acs_mobility_int(row[0])
+            same_house = _acs_mobility_int(row[1])
+            same_county = _acs_mobility_int(row[2])
+            b13_total = _acs_mobility_int(row[3]) if len(row) > 3 else 0
+            b13_same_own = _acs_mobility_int(row[4]) if len(row) > 4 else 0
+            b13_same_rent = _acs_mobility_int(row[5]) if len(row) > 5 else 0
         except (ValueError, TypeError):
             return None
 
@@ -695,10 +711,23 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
         rooted = same_house + same_county
         rooted = min(rooted, total_1yr)
 
-        same_house_pct = (same_house / total_1yr) * 100.0
+        same_house_pct_b07003 = (same_house / total_1yr) * 100.0
         rooted_pct = (rooted / total_1yr) * 100.0
+
+        same_house_pct_b07013: Optional[float] = None
+        if b13_total > 0:
+            sh13 = min(b13_same_own + b13_same_rent, b13_total)
+            same_house_pct_b07013 = (sh13 / b13_total) * 100.0
+
+        if same_house_pct_b07013 is not None:
+            same_house_pct = 0.6 * float(same_house_pct_b07013) + 0.4 * float(same_house_pct_b07003)
+        else:
+            same_house_pct = same_house_pct_b07003
+
         return {
             "same_house_pct": same_house_pct,
+            "same_house_pct_b07003": same_house_pct_b07003,
+            "same_house_pct_b07013": same_house_pct_b07013,
             "rooted_pct": rooted_pct,
             "same_house_count": same_house,
             "same_county_count": same_county,

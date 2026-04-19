@@ -35,10 +35,25 @@ class TestSfPlacesAugment(unittest.TestCase):
     def test_enabled_with_key(self):
         self.assertTrue(places_social_fabric_fallback_enabled())
 
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_FALLBACK_ENABLED": "1",
+            "HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "",
+            "GOOGLE_PLACES_API_KEY": "x",
+        },
+    )
+    def test_enabled_with_master_flag_only(self):
+        self.assertTrue(places_social_fabric_fallback_enabled())
+
     def test_disabled_without_flag(self):
         with patch.dict(
             os.environ,
-            {"GOOGLE_PLACES_API_KEY": "x", "HOMEFIT_PLACES_SF_FALLBACK_ENABLED": ""},
+            {
+                "GOOGLE_PLACES_API_KEY": "x",
+                "HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "",
+                "HOMEFIT_PLACES_FALLBACK_ENABLED": "",
+            },
             clear=True,
         ):
             self.assertFalse(places_social_fabric_fallback_enabled())
@@ -139,3 +154,22 @@ class TestSfCompletenessWithPlaces(unittest.TestCase):
         expected = {"civic_nodes_min": 6}
         c, tier = data_quality_manager._assess_social_fabric_completeness(data, expected)
         self.assertLess(c, 0.99)
+
+    def test_stability_complete_when_place_only_computed(self):
+        """Tract ACS missing but pillar computed stability from place — counts as stability leg."""
+        data = {
+            "mobility": None,
+            "stability_computed": True,
+            "engagement_score": 50.0,
+            "civic_nodes_count": 3,
+            "source_status": {
+                "stability_mobility_acs": "error",
+                "stability_place": "ok",
+                "civic_osm": "ok",
+                "civic_places": "not_used",
+                "engagement_bmf": "ok",
+                "engagement_turnout": "ok",
+            },
+        }
+        c, tier = data_quality_manager._assess_social_fabric_completeness(data, {})
+        self.assertGreaterEqual(c, 0.66)

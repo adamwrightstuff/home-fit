@@ -7,6 +7,9 @@ townhall, community_garden); dedupes by Places id and near-duplicate lat/lon.
 Triggers (aligned with neighborhood_amenities Places policy):
 - Overpass returns source_status error; or
 - OSM succeeded but civic completeness / count vs expected minimum is low (thin OSM).
+
+Enablement: `data_sources.places_env.places_sf_fallback_enabled()` — true when a Places key exists and
+either `HOMEFIT_PLACES_FALLBACK_ENABLED` (master) or `HOMEFIT_PLACES_SF_FALLBACK_ENABLED` is on.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ import requests
 
 from logging_config import get_logger
 
+from data_sources.places_env import google_places_api_key, places_sf_fallback_enabled
 from data_sources.utils import haversine_distance
 
 logger = get_logger(__name__)
@@ -43,14 +47,12 @@ _WORSHIP_TYPES = frozenset(
 
 
 def _api_key() -> Optional[str]:
-    return (os.getenv("GOOGLE_PLACES_API_KEY") or os.getenv("HOMEFIT_GOOGLE_PLACES_API_KEY") or "").strip() or None
+    return google_places_api_key()
 
 
 def places_social_fabric_fallback_enabled() -> bool:
-    if not _api_key():
-        return False
-    raw = (os.getenv("HOMEFIT_PLACES_SF_FALLBACK_ENABLED") or "").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+    """True when a Places key exists and master or SF-specific fallback flag is on."""
+    return places_sf_fallback_enabled()
 
 
 def places_sf_completeness_threshold() -> float:
