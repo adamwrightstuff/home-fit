@@ -2,16 +2,14 @@
 """
 Build IRS BMF-based engagement baselines for the Social Fabric pillar.
 
-This script reads raw IRS Exempt Organizations BMF CSVs, filters to
-qualifying civic orgs (NTEE A/O/P/S, roughly active), assigns them to
+This script reads raw IRS Exempt Organizations BMF CSVs, filters orgs, assigns them to
 2020 Census tracts via ZIP→lat/lon→tract lookup, and writes:
 
-- data/irs_bmf_tract_counts.json
-    {geoid: count_of_qualifying_orgs_in_tract}
+- data/irs_bmf_tract_counts.json — **refined** civic-facing NTEE only (N, P, S, W)
+- data/irs_bmf_tract_counts_legacy.json — legacy filter (A, O, P, S) for fallback scoring
 
-- data/irs_bmf_engagement_stats.json
-    {division_code: {"mean": float, "std": float, "n": int}}
-    where orgs_per_1k is computed per-tract using ACS population.
+- data/irs_bmf_engagement_stats.json — mean/std from refined orgs_per_1k by division
+- data/irs_bmf_engagement_stats_legacy.json — mean/std from legacy orgs_per_1k
 
 Neighbors/halo are optional and not produced here; the runtime helper
 will gracefully fall back to tract-only counts.
@@ -60,29 +58,36 @@ def _clean_zip(raw: str) -> Optional[str]:
     return digits[:5]
 
 
-def _is_qualifying_org(row: Dict[str, str]) -> bool:
-    """
-    Rough filter for "civic" orgs:
-    - NTEE major group in {A, O, P, S}
-    - STATUS in {01, 02, 03} when present (unconditional/conditional)
-    - Has 2-letter state and 5-digit ZIP
-    """
+def _row_base_ok(row: Dict[str, str]) -> bool:
     state = (row.get("STATE") or "").strip().upper()
     if not state or len(state) != 2:
         return False
-
     zip5 = _clean_zip(row.get("ZIP") or "")
     if not zip5:
         return False
-
-    ntee = (row.get("NTEE_CD") or "").strip().upper()
-    if not ntee or ntee[0] not in {"A", "O", "P", "S"}:
-        return False
-
     status = (row.get("STATUS") or "").strip()
     if status and status not in {"01", "02", "03"}:
         return False
+    return True
 
+
+def _is_qualifying_org_refined(row: Dict[str, str]) -> bool:
+    """Civic-facing NTEE: community (S), recreation (N), human services (P), public benefit (W)."""
+    if not _row_base_ok(row):
+        return False
+    ntee = (row.get("NTEE_CD") or "").strip().upper()
+    if not ntee or ntee[0] not in {"N", "P", "S", "W"}:
+        return False
+    return True
+
+
+def _is_qualifying_org_legacy(row: Dict[str, str]) -> bool:
+    """Legacy filter: NTEE A/O/P/S (arts + open space + human services + community)."""
+    if not _row_base_ok(row):
+        return False
+    ntee = (row.get("NTEE_CD") or "").strip().upper()
+    if not ntee or ntee[0] not in {"A", "O", "P", "S"}:
+        return False
     return True
 
 
@@ -112,81 +117,11 @@ def _iter_bmf_rows(bmf_dir: str) -> Iterable[Dict[str, str]]:
                 yield row
 
 
-def build_engagement_baselines(
-    bmf_dir: str,
-    output_tract_counts: str,
-    output_engagement_stats: str,
-    *,
-    max_rows: int = 0,
-    sleep_per_new_zip: float = 0.0,
+def _write_engagement_stats(
+    org_count_by_tract: Dict[str, int],
+    tract_meta: Dict[str, Dict],
+    output_path: str,
 ) -> None:
-    """
-    Main pipeline:
-    1) Stream BMF rows, filter qualifying orgs.
-    2) For each (state, zip5) combo, geocode once to a tract.
-    3) Count qualifying orgs per tract GEOID.
-    4) For each tract, fetch ACS population and compute orgs_per_1k.
-    5) Aggregate orgs_per_1k by Census Division and compute mean/std.
-    6) Write JSON files expected by `data_sources.irs_bmf`.
-    """
-    if not os.path.isdir(bmf_dir):
-        raise SystemExit(f"BMF dir not found: {bmf_dir}")
-
-    zip_to_tract: Dict[Tuple[str, str], Optional[Dict]] = {}
-    org_count_by_tract: Dict[str, int] = defaultdict(int)
-    tract_meta: Dict[str, Dict] = {}
-
-    total_rows = 0
-    kept_rows = 0
-
-    for row in _iter_bmf_rows(bmf_dir):
-        total_rows += 1
-        if max_rows and total_rows > max_rows:
-            break
-
-        if not _is_qualifying_org(row):
-            continue
-
-        state = (row.get("STATE") or "").strip().upper()
-        zip5 = _clean_zip(row.get("ZIP") or "")
-        if not state or not zip5:
-            continue
-
-        key = (state, zip5)
-        if key not in zip_to_tract:
-            tract = _lookup_tract_for_zip(zip5, sleep=sleep_per_new_zip)
-            zip_to_tract[key] = tract
-        tract = zip_to_tract.get(key)
-        if not tract:
-            continue
-
-        geoid = tract.get("geoid")
-        if not geoid:
-            continue
-
-        org_count_by_tract[geoid] += 1
-        if geoid not in tract_meta:
-            tract_meta[geoid] = {
-                "state_abbrev": state,
-                "tract": tract,
-            }
-
-        kept_rows += 1
-        if kept_rows and kept_rows % 5000 == 0:
-            print(f"Processed {total_rows} rows, kept {kept_rows}, unique tracts={len(org_count_by_tract)}")
-
-    print(
-        f"Finished pass over BMF rows: total={total_rows}, "
-        f"kept={kept_rows}, unique_zips={len(zip_to_tract)}, unique_tracts={len(org_count_by_tract)}"
-    )
-
-    # Write tract counts JSON
-    os.makedirs(os.path.dirname(output_tract_counts) or ".", exist_ok=True)
-    with open(output_tract_counts, "w", encoding="utf-8") as f:
-        json.dump(org_count_by_tract, f, indent=2, sort_keys=True)
-    print(f"Wrote tract counts to {output_tract_counts} ({len(org_count_by_tract)} tracts)")
-
-    # Build per-division orgs_per_1k baselines
     division_values: Dict[str, List[float]] = defaultdict(list)
     failed_pop = 0
 
@@ -219,8 +154,6 @@ def build_engagement_baselines(
         mean, std = _mean_std(clean_vals)
         engagement_stats[division] = {"mean": mean, "std": std, "n": len(clean_vals)}
 
-    # National fallback: aggregate orgs_per_1k across all divisions so tracts in
-    # divisions missing from this run (e.g. middle_atlantic) still get a score.
     all_vals: List[float] = []
     for vals in division_values.values():
         all_vals.extend(v for v in vals if isinstance(v, (int, float)) and not math.isnan(v))
@@ -228,10 +161,111 @@ def build_engagement_baselines(
         mean_all, std_all = _mean_std(all_vals)
         engagement_stats["all"] = {"mean": mean_all, "std": std_all, "n": len(all_vals)}
 
-    os.makedirs(os.path.dirname(output_engagement_stats) or ".", exist_ok=True)
-    with open(output_engagement_stats, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(engagement_stats, f, indent=2, sort_keys=True)
-    print(f"Wrote engagement stats to {output_engagement_stats} ({len(engagement_stats)} divisions)")
+    print(f"Wrote engagement stats to {output_path} ({len(engagement_stats)} divisions)")
+
+
+def build_engagement_baselines(
+    bmf_dir: str,
+    output_tract_counts: str,
+    output_engagement_stats: str,
+    *,
+    output_tract_counts_legacy: Optional[str] = None,
+    output_engagement_stats_legacy: Optional[str] = None,
+    max_rows: int = 0,
+    sleep_per_new_zip: float = 0.0,
+) -> None:
+    """
+    Main pipeline:
+    1) Stream BMF rows; count refined (N/P/S/W) and legacy (A/O/P/S) per tract.
+    2) Geocode ZIP once per (state, zip5).
+    3) Write refined + legacy tract JSON and division stats for each.
+    """
+    if not os.path.isdir(bmf_dir):
+        raise SystemExit(f"BMF dir not found: {bmf_dir}")
+
+    base_dir = os.path.dirname(output_tract_counts) or "."
+    if output_tract_counts_legacy is None:
+        output_tract_counts_legacy = os.path.join(base_dir, "irs_bmf_tract_counts_legacy.json")
+    if output_engagement_stats_legacy is None:
+        output_engagement_stats_legacy = os.path.join(
+            os.path.dirname(output_engagement_stats) or ".",
+            "irs_bmf_engagement_stats_legacy.json",
+        )
+
+    zip_to_tract: Dict[Tuple[str, str], Optional[Dict]] = {}
+    org_refined: Dict[str, int] = defaultdict(int)
+    org_legacy: Dict[str, int] = defaultdict(int)
+    tract_meta: Dict[str, Dict] = {}
+
+    total_rows = 0
+    kept_refined = 0
+    kept_legacy = 0
+
+    for row in _iter_bmf_rows(bmf_dir):
+        total_rows += 1
+        if max_rows and total_rows > max_rows:
+            break
+
+        is_r = _is_qualifying_org_refined(row)
+        is_l = _is_qualifying_org_legacy(row)
+        if not is_r and not is_l:
+            continue
+
+        state = (row.get("STATE") or "").strip().upper()
+        zip5 = _clean_zip(row.get("ZIP") or "")
+        if not state or not zip5:
+            continue
+
+        key = (state, zip5)
+        if key not in zip_to_tract:
+            tract = _lookup_tract_for_zip(zip5, sleep=sleep_per_new_zip)
+            zip_to_tract[key] = tract
+        tract = zip_to_tract.get(key)
+        if not tract:
+            continue
+
+        geoid = tract.get("geoid")
+        if not geoid:
+            continue
+
+        if is_r:
+            org_refined[geoid] += 1
+            kept_refined += 1
+        if is_l:
+            org_legacy[geoid] += 1
+            kept_legacy += 1
+
+        if geoid not in tract_meta:
+            tract_meta[geoid] = {
+                "state_abbrev": state,
+                "tract": tract,
+            }
+
+        if (kept_refined + kept_legacy) and (kept_refined + kept_legacy) % 5000 == 0:
+            print(
+                f"Processed {total_rows} rows, refined={kept_refined}, legacy={kept_legacy}, "
+                f"unique_tracts={len(tract_meta)}"
+            )
+
+    print(
+        f"Finished pass over BMF rows: total={total_rows}, refined_hits={kept_refined}, "
+        f"legacy_hits={kept_legacy}, unique_zips={len(zip_to_tract)}, unique_tracts={len(tract_meta)}"
+    )
+
+    os.makedirs(os.path.dirname(output_tract_counts) or ".", exist_ok=True)
+    with open(output_tract_counts, "w", encoding="utf-8") as f:
+        json.dump(dict(org_refined), f, indent=2, sort_keys=True)
+    print(f"Wrote refined tract counts to {output_tract_counts} ({len(org_refined)} tracts)")
+
+    with open(output_tract_counts_legacy, "w", encoding="utf-8") as f:
+        json.dump(dict(org_legacy), f, indent=2, sort_keys=True)
+    print(f"Wrote legacy tract counts to {output_tract_counts_legacy} ({len(org_legacy)} tracts)")
+
+    _write_engagement_stats(org_refined, tract_meta, output_engagement_stats)
+    _write_engagement_stats(org_legacy, tract_meta, output_engagement_stats_legacy)
 
 
 def main() -> None:
@@ -249,7 +283,17 @@ def main() -> None:
     ap.add_argument(
         "--output-engagement-stats",
         default="data/irs_bmf_engagement_stats.json",
-        help="Output JSON for division→{mean,std,n} baseline stats",
+        help="Output JSON for division→{mean,std,n} (refined N/P/S/W)",
+    )
+    ap.add_argument(
+        "--output-tract-counts-legacy",
+        default="data/irs_bmf_tract_counts_legacy.json",
+        help="Legacy A/O/P/S tract counts",
+    )
+    ap.add_argument(
+        "--output-engagement-stats-legacy",
+        default="data/irs_bmf_engagement_stats_legacy.json",
+        help="Division stats from legacy orgs_per_1k",
     )
     ap.add_argument(
         "--max-rows",
@@ -269,6 +313,8 @@ def main() -> None:
         bmf_dir=args.bmf_dir,
         output_tract_counts=args.output_tract_counts,
         output_engagement_stats=args.output_engagement_stats,
+        output_tract_counts_legacy=args.output_tract_counts_legacy,
+        output_engagement_stats_legacy=args.output_engagement_stats_legacy,
         max_rows=args.max_rows,
         sleep_per_new_zip=args.sleep,
     )

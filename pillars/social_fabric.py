@@ -2,7 +2,8 @@
 Social Fabric pillar: stability (tract + place mobility), civic gathering (OSM),
 and engagement (IRS BMF + voter turnout), z-scored vs area type where applicable.
 
-Composite (fixed denominator): (1.2×Stability + 1.2×Civic + 1.0×Engagement) / 3.4.
+Composite: (1.2×Stability + 1.2×Civic + 1.2×Engagement) / 3.6 (participation module).
+Rootedness input: 0.6×B25038 long-tenure housing % + 0.4×B07003 same-house 1yr; then 70/30 tract/place.
 Diversity is a separate pillar (pillars/diversity.py).
 
 Stability blend: 0.7×tract same-house + 0.3×place same-house (place is B07003). Tract same-house uses ACS 5-year
@@ -17,13 +18,13 @@ from __future__ import annotations
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
+from data_sources import community_participation
 from data_sources.places_social_fabric_client import maybe_augment_civic_nodes_with_places
 from data_sources import social_fabric_bands
-from data_sources import voter_turnout
 from data_sources.us_census_divisions import get_division
 from logging_config import get_logger
 
@@ -137,6 +138,18 @@ def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float
     return 15.0
 
 
+def _civic_node_type_weight(node_type: Optional[str]) -> float:
+    """Weighted effective civic nodes: library/community/townhall > worship > garden."""
+    t = (node_type or "").lower().strip()
+    if t in ("library", "community_centre", "townhall"):
+        return 1.5
+    if t == "place_of_worship":
+        return 1.0
+    if t in ("community_garden", "botanical_garden"):
+        return 0.5
+    return 1.0
+
+
 def _sf_civic_imputation_enabled() -> bool:
     return (os.getenv("HOMEFIT_SF_CIVIC_IMPUTATION_ENABLED") or "").strip().lower() in (
         "1",
@@ -175,32 +188,36 @@ def get_social_fabric_score(
     def _get_place_same_house():
         info = census_api.get_place_fips_for_coordinates(lat, lon)
         if not info:
-            return None, None
-        pct = census_api.get_place_same_house_pct(info["state_fips"], info["place_fips"])
-        return info, pct
+            return None, None, None
+        sf, pf = info["state_fips"], info["place_fips"]
+        pct = census_api.get_place_same_house_pct(sf, pf)
+        long_pct = census_api.get_place_long_tenure_housing_pct(sf, pf)
+        return info, pct, long_pct
+
+    def _get_tract_long_tenure():
+        if not tract:
+            return None
+        return census_api.get_tract_long_tenure_housing_pct(tract)
 
     def _get_civic():
         return osm_api.query_civic_nodes(lat, lon, radius_m=civic_radius_m)
 
-    def _get_bmf():
+    def _get_bmf_auto():
         return irs_bmf.get_civic_orgs_per_1k(
-            lat, lon, tract=tract, division_code=division_code, area_type=area_type
+            lat, lon, tract=tract, division_code=division_code, area_type=area_type, counts_mode="auto"
         )
-
-    def _get_turnout():
-        return voter_turnout.get_voter_turnout_score(tract=tract, area_type=area_type)
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         f_m = executor.submit(_get_mobility)
         f_p = executor.submit(_get_place_same_house)
+        f_lt = executor.submit(_get_tract_long_tenure)
         f_c = executor.submit(_get_civic)
-        f_b = executor.submit(_get_bmf)
-        f_t = executor.submit(_get_turnout)
+        f_b = executor.submit(_get_bmf_auto)
         mobility = f_m.result()
-        place_info, place_same_house_pct = f_p.result()
+        place_info, place_same_house_pct, place_long_tenure_pct = f_p.result()
+        tract_long_tenure_pct = f_lt.result()
         civic = f_c.result()
         bmf_result = f_b.result()
-        turnout_result = f_t.result()
 
     if civic is None:
         civic = {
@@ -230,6 +247,7 @@ def get_social_fabric_score(
         civic_radius_m,
         osm_completeness=civic_compl,
         civic_min_expected=civic_min,
+        area_type=area_type,
     )
     places_recovered = bool(places_civic_meta.get("used") and places_civic_meta.get("http_ok"))
     if places_civic_meta.get("used") and places_civic_meta.get("http_ok"):
@@ -246,16 +264,29 @@ def get_social_fabric_score(
     rooted_pct_adjusted = None
     stability_pct: Optional[float] = None
     stability_tract_input: Optional[str] = None
-    tract_same = same_house_pct
-    if tract_same is not None:
-        stability_tract_input = "tract"
-        if place_same_house_pct is not None:
-            stability_pct = 0.7 * float(tract_same) + 0.3 * float(place_same_house_pct)
+
+    tract_rooted: Optional[float] = None
+    if tract_long_tenure_pct is not None and same_house_pct_b07003 is not None:
+        tract_rooted = 0.6 * float(tract_long_tenure_pct) + 0.4 * float(same_house_pct_b07003)
+    elif same_house_pct is not None:
+        tract_rooted = float(same_house_pct)
+
+    place_rooted: Optional[float] = None
+    if place_same_house_pct is not None:
+        if place_long_tenure_pct is not None:
+            place_rooted = 0.6 * float(place_long_tenure_pct) + 0.4 * float(place_same_house_pct)
         else:
-            stability_pct = float(tract_same)
-    elif place_same_house_pct is not None:
+            place_rooted = float(place_same_house_pct)
+
+    if tract_rooted is not None:
+        stability_tract_input = "tract"
+        if place_rooted is not None:
+            stability_pct = 0.7 * tract_rooted + 0.3 * place_rooted
+        else:
+            stability_pct = tract_rooted
+    elif place_rooted is not None:
         stability_tract_input = "place_only"
-        stability_pct = float(place_same_house_pct)
+        stability_pct = place_rooted
     else:
         stability_tract_input = "none"
 
@@ -279,6 +310,7 @@ def get_social_fabric_score(
 
     nodes = civic.get("nodes") or []
     civic_count = len(nodes)
+    civic_effective = sum(_civic_node_type_weight(n.get("type") if isinstance(n, dict) else None) for n in nodes)
     civic_band_key = social_fabric_bands.civic_band_area_type_for_radius(civic_radius_m)
 
     civic_imputed_floor_applied = False
@@ -294,44 +326,32 @@ def get_social_fabric_score(
             civic_score = 0.0
     elif bands:
         civic_score = social_fabric_bands.score_civic_gathering_from_bands(
-            civic_count, civic_band_key, bands, proximity=False
+            civic_effective, civic_band_key, bands, proximity=False
         )
     else:
-        if civic_count <= 2:
+        if civic_effective <= 2:
             civic_score = 40.0
-        elif civic_count <= 5:
+        elif civic_effective <= 5:
             civic_score = 70.0
         else:
             civic_score = 100.0
 
-    bmf_score = None
     orgs_per_1k = None
-    turnout_score = None
-    turnout_rate = None
-
     if bmf_result is not None:
-        orgs_per_1k, engagement_stats = bmf_result
-        if engagement_stats and orgs_per_1k is not None:
-            mean = engagement_stats.get("mean", 0.0)
-            std = engagement_stats.get("std", 0.0)
-            bmf_score = _score_engagement_from_rate(orgs_per_1k, mean, std)
+        orgs_per_1k, _eng_stats = bmf_result
+        if orgs_per_1k is None:
+            orgs_per_1k = None
 
-    if turnout_result is not None:
-        turnout_score, _stats_t, turnout_rate = turnout_result
+    participation_diag: Dict[str, Any] = {}
+    engagement_score, participation_diag = community_participation.compute_participation_score(
+        lat, lon, tract, area_type, division_code
+    )
 
-    engagement_score: Optional[float] = None
-    if bmf_score is not None and turnout_score is not None:
-        engagement_score = 0.60 * bmf_score + 0.40 * turnout_score
-    elif bmf_score is not None:
-        engagement_score = bmf_score
-    elif turnout_score is not None:
-        engagement_score = turnout_score
-    else:
-        engagement_score = None
+    turnout_rate = participation_diag.get("turnout_rate")
 
     e = float(engagement_score) if engagement_score is not None else 0.0
-    raw = 1.2 * stability_score + 1.2 * civic_score + 1.0 * e
-    score = max(0.0, min(100.0, round(raw / 3.4, 1)))
+    raw = 1.2 * stability_score + 1.2 * civic_score + 1.2 * e
+    score = max(0.0, min(100.0, round(raw / 3.6, 1)))
 
     source_status: Dict[str, str] = {}
     source_errors: list = []
@@ -406,16 +426,25 @@ def get_social_fabric_score(
         )
     else:
         source_status["engagement_bmf"] = "empty"
-    source_status["engagement_turnout"] = "ok" if turnout_result is not None else "empty"
+    source_status["engagement_turnout"] = (
+        "ok" if participation_diag.get("turnout_z") is not None else "empty"
+    )
+    source_status["engagement_volunteering"] = (
+        "ok" if participation_diag.get("volunteering_z") is not None else "empty"
+    )
+    source_status["participation_mix"] = str(participation_diag.get("mix") or "")
 
     combined_data = {
         "stability_score": stability_score,
         "civic_score": civic_score,
         "engagement_score": engagement_score,
+        "participation_diag": participation_diag,
+        "participation_median_fallback": bool(participation_diag.get("median_fallback")),
         "score": score,
         "mobility": mobility,
         "stability_computed": stability_pct is not None,
         "civic_nodes_count": civic_count,
+        "civic_effective_weighted": civic_effective,
         "civic_search_radius_m": civic_radius_m,
         "orgs_per_1k": orgs_per_1k,
         "source_status": source_status,
@@ -451,11 +480,15 @@ def get_social_fabric_score(
         "stability_tract_input": stability_tract_input,
         "rooted_pct": round(rooted_pct, 1) if rooted_pct is not None else None,
         "civic_node_count": civic_count,
+        "civic_effective_weighted": round(civic_effective, 2),
         "civic_data_mode": civic_data_mode,
         "civic_search_radius_m": civic_radius_m,
         "civic_band_tier": civic_band_key,
         "tract_population_density_sqmi": round(density, 1) if density else None,
         "engagement_available": engagement_score is not None,
+        "participation_mix": participation_diag.get("mix"),
+        "volunteering_resolution": participation_diag.get("volunteering_resolution"),
+        "turnout_source": participation_diag.get("turnout_source"),
         "orgs_per_1k": orgs_per_1k,
         "voter_turnout_rate": round(turnout_rate, 4) if turnout_rate is not None else None,
         "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,
@@ -471,7 +504,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v9_sf_places_master_b07013_place_stability",
+        "version": "v10_sf_participation_b25038_weighted_civic",
     }
 
     logger.info(

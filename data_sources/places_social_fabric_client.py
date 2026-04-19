@@ -239,12 +239,13 @@ def maybe_augment_civic_nodes_with_places(
     *,
     osm_completeness: float = 1.0,
     civic_min_expected: int = 3,
+    area_type: Optional[str] = None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Optionally fill or augment civic nodes from Google Places searchNearby.
 
-    Triggers: Overpass error; or low OSM completeness vs expected civic count; or count thin
-    (mirrors neighborhood_amenities Places policy).
+    Triggers: Overpass error; low OSM completeness / thin count; or **co-primary** urban_core/suburban
+    (Places merged whenever API enabled — OSM tag coverage is inconsistent in populated areas).
 
     Returns (civic_dict_for_scoring, metadata).
     """
@@ -259,6 +260,7 @@ def maybe_augment_civic_nodes_with_places(
         "osm_completeness_before": round(osm_completeness, 4),
         "completeness_threshold": places_sf_completeness_threshold(),
         "civic_min_expected": int(civic_min_expected),
+        "co_primary_urban_suburban": False,
     }
 
     osm_cs = civic.get("source_status")
@@ -271,10 +273,17 @@ def maybe_augment_civic_nodes_with_places(
     min_count_thin = max(2, int(round(min_floor * 0.45)))
     count_too_thin = n_osm < min_count_thin
 
+    at_norm = (area_type or "").lower().replace(" ", "_")
+    co_primary = at_norm in ("urban_core", "suburban")
+
     should_try_places = False
     trigger: Optional[str] = None
 
-    if osm_cs == "error":
+    if co_primary and places_social_fabric_fallback_enabled() and _api_key():
+        should_try_places = True
+        trigger = "co_primary_urban_suburban"
+        meta["co_primary_urban_suburban"] = True
+    elif osm_cs == "error":
         should_try_places = True
         trigger = "osm_overpass_error"
     elif osm_cs in ("ok", "empty"):

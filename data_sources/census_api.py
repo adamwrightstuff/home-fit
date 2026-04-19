@@ -6,7 +6,7 @@ Pure API wrapper for Census Bureau data sources
 import os
 import requests
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from dotenv import load_dotenv
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout, check_api_credentials
@@ -804,6 +804,104 @@ def get_place_same_house_pct(state_fips: str, place_fips: str) -> Optional[float
         return (same_house / total_1yr) * 100.0
     except Exception as e:
         print(f"   ⚠️  Place mobility lookup failed: {e}")
+        return None
+
+
+def _b25038_long_tenure_counts(row: list) -> Tuple[int, int]:
+    """
+    From ACS B25038 row (ordered estimates), return (long_tenure_hu, total_occupied).
+    Long tenure = moved in 2010 or earlier buckets (owner 005-008, renter 012-015),
+    excluding recent movers (2021+, 2018-2020). Matches 2022 ACS 5-year labels.
+    """
+    def cell(i: int) -> int:
+        if i >= len(row):
+            return 0
+        return _acs_mobility_int(row[i])
+
+    # row order must match get= below: 0=NAME, 1=001 ... or 0=001 if no NAME
+    # Callers pass row without header; indices 0..14 for B25038_001E..015E
+    total = cell(0)
+    if total <= 0:
+        return 0, 0
+    # 001=total, 002 owner total, 003-004 recent owner, 005-008 long owner,
+    # 009 renter total, 010-011 recent renter, 012-015 long renter
+    long_o = cell(4) + cell(5) + cell(6) + cell(7)
+    long_r = cell(11) + cell(12) + cell(13) + cell(14)
+    long_hu = long_o + long_r
+    return long_hu, total
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_tract_long_tenure_housing_pct(tract: Dict) -> Optional[float]:
+    """
+    % of occupied housing units where householder moved in 2010 or earlier (B25038),
+    as a 5+ year rootedness anchor (housing universe, 0-100).
+    """
+    if not CENSUS_API_KEY or not tract:
+        return None
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        params = {
+            "get": (
+                "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
+                "B25038_007E,B25038_008E,B25038_009E,B25038_010E,B25038_011E,B25038_012E,"
+                "B25038_013E,B25038_014E,B25038_015E"
+            ),
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+        if response is None:
+            return None
+        data = response.json()
+        if len(data) < 2:
+            return None
+        row = data[1]
+        long_hu, total = _b25038_long_tenure_counts(row)
+        if total <= 0:
+            return None
+        return 100.0 * float(long_hu) / float(total)
+    except Exception as e:
+        print(f"   ⚠️  B25038 tract tenure lookup failed: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=15)
+def get_place_long_tenure_housing_pct(state_fips: str, place_fips: str) -> Optional[float]:
+    """B25038 long-tenure % for a Census place (same definition as tract)."""
+    if not CENSUS_API_KEY or not state_fips or not place_fips:
+        return None
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        pf = str(int(place_fips))
+        params = {
+            "get": (
+                "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
+                "B25038_007E,B25038_008E,B25038_009E,B25038_010E,B25038_011E,B25038_012E,"
+                "B25038_013E,B25038_014E,B25038_015E"
+            ),
+            "for": f"place:{pf}",
+            "in": f"state:{str(state_fips).zfill(2)}",
+            "key": CENSUS_API_KEY,
+        }
+        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+        if response is None:
+            return None
+        data = response.json()
+        if len(data) < 2:
+            return None
+        row = data[1]
+        long_hu, total = _b25038_long_tenure_counts(row)
+        if total <= 0:
+            return None
+        return 100.0 * float(long_hu) / float(total)
+    except Exception as e:
+        print(f"   ⚠️  B25038 place tenure lookup failed: {e}")
         return None
 
 

@@ -64,10 +64,33 @@ class TestSfPlacesAugment(unittest.TestCase):
     def test_skips_when_osm_ok_and_completeness_high(self):
         civic = {"nodes": [{"type": "library"}] * 6, "source_status": "ok"}
         out, meta = maybe_augment_civic_nodes_with_places(
-            civic, 40.0, -74.0, 800, osm_completeness=1.0, civic_min_expected=6
+            civic,
+            40.0,
+            -74.0,
+            800,
+            osm_completeness=1.0,
+            civic_min_expected=6,
+            area_type="rural",
         )
         self.assertEqual(meta["reason"], "completeness_above_threshold")
         self.assertIs(out, civic)
+
+    @patch("data_sources.places_social_fabric_client._search_nearby_civic")
+    @patch.dict(os.environ, {"HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "k"})
+    def test_co_primary_urban_core_runs_places_even_when_osm_strong(self, mock_search):
+        mock_search.return_value = []
+        civic = {"nodes": [{"type": "library"}] * 6, "source_status": "ok"}
+        out, meta = maybe_augment_civic_nodes_with_places(
+            civic,
+            40.0,
+            -74.0,
+            800,
+            osm_completeness=1.0,
+            civic_min_expected=6,
+            area_type="urban_core",
+        )
+        self.assertEqual(meta.get("trigger"), "co_primary_urban_suburban")
+        self.assertTrue(meta.get("http_ok"))
 
     @patch("data_sources.places_social_fabric_client._search_nearby_civic")
     @patch.dict(os.environ, {"HOMEFIT_PLACES_SF_FALLBACK_ENABLED": "1", "GOOGLE_PLACES_API_KEY": "k"})

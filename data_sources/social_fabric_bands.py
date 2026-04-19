@@ -196,7 +196,7 @@ def civic_band_area_type_for_radius(radius_m: int) -> str:
 
 
 def score_civic_gathering_from_bands(
-    count: int,
+    count: float,
     area_type: Optional[str],
     bands: Mapping[str, Any],
     proximity: bool,

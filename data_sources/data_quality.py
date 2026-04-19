@@ -1665,6 +1665,11 @@ class DataQualityManager:
         if has_stability and has_civic and completeness < 0.55:
             completeness = max(completeness, 0.55)
 
+        if data.get("participation_median_fallback") or (
+            (data.get("participation_diag") or {}).get("median_fallback")
+        ):
+            completeness = min(completeness, 0.45)
+
         return completeness, self._get_quality_tier(completeness)
 
     def _assess_diversity_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
