@@ -39,6 +39,14 @@ const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
 ]
 
 type SortKey = 'homefit' | 'longevity' | 'happiness' | 'status' | 'name'
+
+const SORT_PILLS: { key: SortKey; label: string }[] = [
+  { key: 'homefit', label: 'HomeFit' },
+  { key: 'longevity', label: 'Longevity' },
+  { key: 'happiness', label: 'Happiness' },
+  { key: 'status', label: 'Status' },
+  { key: 'name', label: 'A–Z' },
+]
 type CatalogMode = 'explorer' | 'twin'
 
 function sortPlaces(
@@ -548,26 +556,38 @@ export default function CatalogPageClient({
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">Sort</span>
-              <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="rounded border border-[var(--hf-border)] px-1 py-0.5 text-[0.7rem]"
+              <div
+                role="group"
+                aria-label="Sort catalog by"
+                className="flex flex-wrap items-center gap-1"
               >
-                <option value="homefit">HomeFit</option>
-                <option value="longevity">Longevity</option>
-                <option value="happiness">Happiness</option>
-                <option value="status">Status</option>
-                <option value="name">A–Z</option>
-              </select>
-              <button
-                type="button"
-                className="text-[0.7rem] font-semibold"
-                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-              >
-                {sortDir === 'desc' ? 'Desc' : 'Asc'}
-              </button>
+                {SORT_PILLS.map(({ key, label }) => {
+                  const active = sortKey === key
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={active}
+                      className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold ${
+                        active ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                      }`}
+                      style={active ? { background: 'var(--hf-primary-1)' } : {}}
+                      onClick={() => setSortKey(key)}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  className="ml-0.5 text-[0.7rem] font-semibold text-[var(--hf-primary-1)]"
+                  onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                >
+                  {sortDir === 'desc' ? 'Desc' : 'Asc'}
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-1">
