@@ -11,7 +11,7 @@ import { getScore, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import type { PillarKey } from '@/lib/pillars'
 import type { RunPillarScoreOptions } from '@/components/ScoreDisplay'
-import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES, PREMIUM_CODE_KEY } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
 import InteractiveMap from '@/components/InteractiveMap'
 import HomeFitInfo from '@/components/HomeFitInfo'
@@ -51,6 +51,18 @@ export default function SavedDetailPage() {
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
   const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
+  const [premiumCodeInput, setPremiumCodeInput] = useState('')
+  const [savedPremiumCode, setSavedPremiumCode] = useState('')
+
+  useEffect(() => {
+    try {
+      const v = typeof window !== 'undefined' ? window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? '' : ''
+      setSavedPremiumCode(v)
+      setPremiumCodeInput(v)
+    } catch {
+      setSavedPremiumCode('')
+    }
+  }, [])
 
   useEffect(() => {
     if (!id || !user) {
@@ -64,10 +76,17 @@ export default function SavedDetailPage() {
         setPriorities(rowPriorities)
         const payload = r.score_payload as ScoreResponse | undefined
         const saved = (payload?.metadata as any)?.saved_search_options
+        let storedPremium = ''
+        try {
+          storedPremium = typeof window !== 'undefined' ? window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? '' : ''
+        } catch {
+          storedPremium = ''
+        }
         const initialSearchOptions: SearchOptions = {
           priorities: rowPriorities,
           include_chains: Boolean(saved?.include_chains),
-          enable_schools: Boolean(saved?.enable_schools),
+          // Match SearchOptions: do not show "schools on" without a code in this browser.
+          enable_schools: Boolean(saved?.enable_schools) && Boolean(storedPremium),
           job_categories: Array.isArray(saved?.job_categories) ? saved.job_categories : [],
           natural_beauty_preference: Array.isArray(saved?.natural_beauty_preference)
             ? saved.natural_beauty_preference
@@ -85,15 +104,6 @@ export default function SavedDetailPage() {
   }, [id, user])
 
   const rawPayload = row?.score_payload as ScoreResponse | undefined
-  const hadSchoolScoring = useMemo(() => {
-    if (!rawPayload) return false
-    const qe = rawPayload.livability_pillars?.quality_education
-    if (!qe || typeof qe !== 'object') return false
-    const dq = qe.data_quality as { fallback_reason?: string } | undefined
-    const reason = dq?.fallback_reason ?? (dq as { reason?: string } | undefined)?.reason
-    // When school scoring is disabled, backend sets fallback_reason/reason to "School scoring disabled".
-    return typeof reason === 'string' ? reason.toLowerCase().includes('school scoring disabled') === false : true
-  }, [rawPayload])
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
     const rew = reweightScoreResponseFromPriorities(rawPayload, priorities)
@@ -116,10 +126,21 @@ export default function SavedDetailPage() {
     setScoreAgainError(null)
     setScoreAgainLoading(true)
     try {
+      const coords = rawPayload?.coordinates ?? row.coordinates
+      const lat = typeof coords?.lat === 'number' && Number.isFinite(coords.lat) ? coords.lat : undefined
+      const lon = typeof coords?.lon === 'number' && Number.isFinite(coords.lon) ? coords.lon : undefined
       const newResponse = await getScore({
         location: row.input,
         priorities: JSON.stringify(priorities),
         job_categories: jobCategories.length > 0 ? jobCategories.join(',') : undefined,
+        include_chains: searchOptions?.include_chains ?? true,
+        enable_schools: searchOptions?.enable_schools ?? false,
+        natural_beauty_preference: searchOptions?.natural_beauty_preference?.length
+          ? JSON.stringify(searchOptions.natural_beauty_preference)
+          : undefined,
+        built_character_preference: searchOptions?.built_character_preference ?? undefined,
+        built_density_preference: searchOptions?.built_density_preference ?? undefined,
+        ...(lat != null && lon != null ? { lat, lon } : {}),
       })
       const payloadWithConfig: ScoreResponse = {
         ...newResponse,
@@ -145,7 +166,7 @@ export default function SavedDetailPage() {
     } finally {
       setScoreAgainLoading(false)
     }
-  }, [row, priorities, jobCategories, searchOptions])
+  }, [row, priorities, jobCategories, searchOptions, rawPayload])
 
   const handleRunPillarScore = useCallback(
     async (pillarKey: PillarKey, options: RunPillarScoreOptions) => {
@@ -325,26 +346,33 @@ export default function SavedDetailPage() {
           built_character_preference: searchOptions?.built_character_preference ?? undefined,
           built_density_preference: searchOptions?.built_density_preference ?? undefined,
           include_chains: searchOptions?.include_chains ?? false,
-          // Request school scoring on rescore when the original saved payload had it enabled.
-          enable_schools: hadSchoolScoring,
+          enable_schools: searchOptions?.enable_schools ?? false,
         })
       } finally {
         setRescoringPillarKey(null)
       }
     },
-    [row, priorities, jobCategories, handleRunPillarScore, hadSchoolScoring, searchOptions]
+    [row, priorities, jobCategories, handleRunPillarScore, searchOptions]
   )
 
   const handleSave = useCallback(async () => {
     if (!row || !priorities) return
     setSavingPreferences(true)
     try {
-      await updateSavedScore(row.id, { priorities })
-      setRow((prev) => (prev ? { ...prev, priorities } : null))
+      const payload = row.score_payload as ScoreResponse
+      const mergedPayload: ScoreResponse = {
+        ...payload,
+        metadata: {
+          ...(payload.metadata ?? {}),
+          saved_search_options: searchOptions ?? undefined,
+        } as ScoreResponse['metadata'],
+      }
+      await updateSavedScore(row.id, { priorities, scorePayload: mergedPayload })
+      setRow((prev) => (prev ? { ...prev, priorities, score_payload: mergedPayload } : null))
     } finally {
       setSavingPreferences(false)
     }
-  }, [row, priorities])
+  }, [row, priorities, searchOptions])
 
   if (!authLoading && !user) {
     router.replace('/saved')
@@ -502,6 +530,95 @@ export default function SavedDetailPage() {
               completed_pillars={Object.keys(displayData.livability_pillars ?? {})}
             />
           </div>
+
+          {searchOptions && (
+            <div
+              style={{
+                marginBottom: '1.5rem',
+                padding: '1rem 1.25rem',
+                background: 'var(--hf-bg-subtle)',
+                borderRadius: 12,
+                border: '1px solid var(--hf-border)',
+              }}
+            >
+              <div className="hf-label" style={{ marginBottom: '0.35rem' }}>
+                School scoring (Premium)
+              </div>
+              <p className="hf-muted" style={{ fontSize: '0.88rem', marginBottom: '0.75rem', lineHeight: 1.45 }}>
+                Save your Premium code in this browser (same as on the home search). Turn on Include school scoring, click{' '}
+                <strong>Save</strong> below to store preferences on this place, then expand the Schools pillar and use{' '}
+                <strong>Rescore this pillar</strong>, or use <strong>Refresh data</strong> for a full rerun.
+              </p>
+              <label className="hf-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>
+                Premium code
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+                <input
+                  type="text"
+                  value={premiumCodeInput}
+                  onChange={(e) => setPremiumCodeInput(e.target.value)}
+                  placeholder="Enter code"
+                  className="hf-input"
+                  autoComplete="off"
+                  style={{ flex: 1, minWidth: 160 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = premiumCodeInput.trim()
+                    setSavedPremiumCode(v)
+                    try {
+                      if (v) window.sessionStorage?.setItem(PREMIUM_CODE_KEY, v)
+                      else window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
+                    } catch {
+                      /* ignore */
+                    }
+                    if (!v) {
+                      setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
+                    }
+                  }}
+                  className="hf-premium-btn"
+                >
+                  Save code
+                </button>
+                {savedPremiumCode ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPremiumCodeInput('')
+                      setSavedPremiumCode('')
+                      try {
+                        window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
+                      } catch {
+                        /* ignore */
+                      }
+                      setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
+                    }}
+                    className="hf-premium-btn hf-premium-btn--outline"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: savedPremiumCode ? 'pointer' : 'not-allowed' }}>
+                <input
+                  type="checkbox"
+                  checked={searchOptions.enable_schools}
+                  disabled={!savedPremiumCode}
+                  onChange={(e) => {
+                    if (!savedPremiumCode) return
+                    setSearchOptions({ ...searchOptions, enable_schools: e.target.checked })
+                  }}
+                />
+                <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
+              </label>
+              {!savedPremiumCode ? (
+                <p className="hf-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                  Save a Premium code above to enable school scoring for this session.
+                </p>
+              ) : null}
+            </div>
+          )}
 
           {/* HomeFit on top, Longevity & Status Signal below (same layout as PlaceView) */}
           <div

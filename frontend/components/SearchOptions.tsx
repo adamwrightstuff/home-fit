@@ -75,7 +75,8 @@ export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; descripti
 
 // Session storage key
 const STORAGE_KEY = 'homefit_search_options'
-const PREMIUM_CODE_KEY = 'homefit_premium_code'
+/** Session key for premium school scoring code (shared with saved-place detail and API client). */
+export const PREMIUM_CODE_KEY = 'homefit_premium_code'
 
 function SearchOptionsComponent({ options, onChange, disabled, expanded: externalExpanded, onExpandedChange, skipSessionRestore = false }: SearchOptionsProps) {
   const [internalExpanded, setInternalExpanded] = useState(false)
