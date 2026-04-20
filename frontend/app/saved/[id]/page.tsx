@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ScoreResponse } from '@/types/api'
@@ -389,6 +389,110 @@ export default function SavedDetailPage() {
     }
   }, [row, removeLoading, router])
 
+  const schoolsPremiumSection: ReactNode = useMemo(() => {
+    if (!searchOptions) return null
+    const premiumCodeSynced =
+      savedPremiumCode !== '' && premiumCodeInput.trim() === savedPremiumCode
+    return (
+      <div>
+        <div className="hf-label" style={{ marginBottom: '0.35rem' }}>
+          School scoring (Premium)
+        </div>
+        <p className="hf-muted" style={{ fontSize: '0.88rem', marginBottom: '0.75rem', lineHeight: 1.45 }}>
+          Code is saved in this browser (same as home search). Turn on Include school scoring, then use the page{' '}
+          <strong>Save</strong> button to store preferences on this place. Use <strong>Rescore this pillar</strong> below or{' '}
+          <strong>Refresh data</strong> for a full rerun.
+        </p>
+        <label className="hf-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>
+          Premium code
+        </label>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+          <input
+            type="text"
+            value={premiumCodeInput}
+            onChange={(e) => setPremiumCodeInput(e.target.value)}
+            placeholder="Enter code"
+            className="hf-input"
+            autoComplete="off"
+            style={{ flex: 1, minWidth: 160 }}
+          />
+          {premiumCodeSynced ? (
+            <span
+              className="hf-premium-btn"
+              style={{ opacity: 0.9, cursor: 'default', pointerEvents: 'none' }}
+              aria-live="polite"
+            >
+              Saved
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const v = premiumCodeInput.trim()
+                setSavedPremiumCode(v)
+                try {
+                  if (v) window.sessionStorage?.setItem(PREMIUM_CODE_KEY, v)
+                  else window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
+                } catch {
+                  /* ignore */
+                }
+                if (!v) {
+                  setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
+                }
+              }}
+              className="hf-premium-btn"
+            >
+              Save code
+            </button>
+          )}
+          {savedPremiumCode ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPremiumCodeInput('')
+                setSavedPremiumCode('')
+                try {
+                  window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
+                } catch {
+                  /* ignore */
+                }
+                setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
+              }}
+              className="hf-premium-btn hf-premium-btn--outline"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem',
+            cursor: savedPremiumCode ? 'pointer' : 'not-allowed',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={searchOptions.enable_schools}
+            disabled={!savedPremiumCode}
+            onChange={(e) => {
+              if (!savedPremiumCode) return
+              setSearchOptions({ ...searchOptions, enable_schools: e.target.checked })
+            }}
+          />
+          <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
+        </label>
+        {!savedPremiumCode ? (
+          <p className="hf-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem', marginBottom: 0 }}>
+            Save a Premium code above to enable school scoring for this session.
+          </p>
+        ) : null}
+      </div>
+    )
+  }, [searchOptions, premiumCodeInput, savedPremiumCode])
+
   if (!authLoading && !user) {
     router.replace('/saved')
     return null
@@ -555,95 +659,6 @@ export default function SavedDetailPage() {
             />
           </div>
 
-          {searchOptions && (
-            <div
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1rem 1.25rem',
-                background: 'var(--hf-bg-subtle)',
-                borderRadius: 12,
-                border: '1px solid var(--hf-border)',
-              }}
-            >
-              <div className="hf-label" style={{ marginBottom: '0.35rem' }}>
-                School scoring (Premium)
-              </div>
-              <p className="hf-muted" style={{ fontSize: '0.88rem', marginBottom: '0.75rem', lineHeight: 1.45 }}>
-                Save your Premium code in this browser (same as on the home search). Turn on Include school scoring, click{' '}
-                <strong>Save</strong> below to store preferences on this place, then expand the Schools pillar and use{' '}
-                <strong>Rescore this pillar</strong>, or use <strong>Refresh data</strong> for a full rerun.
-              </p>
-              <label className="hf-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>
-                Premium code
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
-                <input
-                  type="text"
-                  value={premiumCodeInput}
-                  onChange={(e) => setPremiumCodeInput(e.target.value)}
-                  placeholder="Enter code"
-                  className="hf-input"
-                  autoComplete="off"
-                  style={{ flex: 1, minWidth: 160 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const v = premiumCodeInput.trim()
-                    setSavedPremiumCode(v)
-                    try {
-                      if (v) window.sessionStorage?.setItem(PREMIUM_CODE_KEY, v)
-                      else window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
-                    } catch {
-                      /* ignore */
-                    }
-                    if (!v) {
-                      setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
-                    }
-                  }}
-                  className="hf-premium-btn"
-                >
-                  Save code
-                </button>
-                {savedPremiumCode ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPremiumCodeInput('')
-                      setSavedPremiumCode('')
-                      try {
-                        window.sessionStorage?.removeItem(PREMIUM_CODE_KEY)
-                      } catch {
-                        /* ignore */
-                      }
-                      setSearchOptions((prev) => (prev ? { ...prev, enable_schools: false } : null))
-                    }}
-                    className="hf-premium-btn hf-premium-btn--outline"
-                  >
-                    Clear
-                  </button>
-                ) : null}
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: savedPremiumCode ? 'pointer' : 'not-allowed' }}>
-                <input
-                  type="checkbox"
-                  checked={searchOptions.enable_schools}
-                  disabled={!savedPremiumCode}
-                  onChange={(e) => {
-                    if (!savedPremiumCode) return
-                    setSearchOptions({ ...searchOptions, enable_schools: e.target.checked })
-                  }}
-                />
-                <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
-              </label>
-              {!savedPremiumCode ? (
-                <p className="hf-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem', marginBottom: 0 }}>
-                  Save a Premium code above to enable school scoring for this session.
-                </p>
-              ) : null}
-            </div>
-          )}
-
           {/* HomeFit on top, Longevity & Status Signal below (same layout as PlaceView) */}
           <div
             style={{
@@ -753,6 +768,7 @@ export default function SavedDetailPage() {
           onRunPillarScore={handleRunPillarScore}
           onRescorePillar={handleRescorePillar}
           rescoringPillarKey={rescoringPillarKey}
+          schoolsPremiumSection={schoolsPremiumSection}
         />
       </div>
     </main>

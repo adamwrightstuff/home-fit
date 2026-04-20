@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { LivabilityPillar } from '@/types/api'
 import {
   PILLAR_META,
@@ -55,6 +55,8 @@ interface PillarCardProps {
   onBuiltCharacterPreferenceChange?: (value: string | null) => void
   /** Built Beauty only: update density preference (shown with chips; use with Rescore). */
   onBuiltDensityPreferenceChange?: (value: string | null) => void
+  /** Schools only: premium code + include school scoring (saved place detail). Top of expanded Details. */
+  schoolsPremiumSection?: ReactNode
   /** Current importance for this pillar (for inline weight editing on Results). */
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
@@ -233,6 +235,7 @@ export default function PillarCard({
   builtDensityPreference,
   onBuiltCharacterPreferenceChange,
   onBuiltDensityPreferenceChange,
+  schoolsPremiumSection,
 }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
@@ -586,6 +589,16 @@ export default function PillarCard({
           <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
             Details
           </div>
+
+          {pillar_key === 'quality_education' && schoolsPremiumSection ? (
+            <div
+              style={{ marginBottom: '1rem' }}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {schoolsPremiumSection}
+            </div>
+          ) : null}
 
           <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
             {pillar_key === 'natural_beauty' && (() => {

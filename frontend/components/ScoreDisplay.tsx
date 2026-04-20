@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
@@ -86,6 +86,8 @@ interface ScoreDisplayProps {
   rescoringPillarKey?: PillarKey | null
   /** When true, omit the summary card (location, Copy scores, score grid, Summary); show only pillar cards. Used when parent provides its own header (e.g. saved place detail). */
   hideSummaryCard?: boolean
+  /** When set, Schools pillar expanded Details shows this block (e.g. premium code on saved place). */
+  schoolsPremiumSection?: ReactNode
 }
 
 // Use shared pillar order from lib/pillars
@@ -115,6 +117,7 @@ export default function ScoreDisplay({
   onRescorePillar,
   rescoringPillarKey,
   hideSummaryCard = false,
+  schoolsPremiumSection,
 }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
@@ -527,6 +530,7 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
+                schoolsPremiumSection={key === 'quality_education' ? schoolsPremiumSection : undefined}
               />
             )
           })}
