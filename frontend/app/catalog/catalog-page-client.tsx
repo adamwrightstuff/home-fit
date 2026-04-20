@@ -38,20 +38,11 @@ const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'status', label: 'Status' },
 ]
 
-type SortKey = 'homefit' | 'longevity' | 'happiness' | 'status' | 'name'
-
-const SORT_PILLS: { key: SortKey; label: string }[] = [
-  { key: 'homefit', label: 'HomeFit' },
-  { key: 'longevity', label: 'Longevity' },
-  { key: 'happiness', label: 'Happiness' },
-  { key: 'status', label: 'Status' },
-  { key: 'name', label: 'A–Z' },
-]
 type CatalogMode = 'explorer' | 'twin'
 
 function sortPlaces(
   places: CatalogMapPlace[],
-  sortKey: SortKey,
+  sortKey: CatalogMapIndexMode | 'name',
   dir: 'asc' | 'desc',
   priorities: PillarPriorities
 ): CatalogMapPlace[] {
@@ -104,8 +95,14 @@ export default function CatalogPageClient({
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
   const [filterType, setFilterType] = useState<'all' | 'neighborhood' | 'suburb'>('all')
   const [filterArchetype, setFilterArchetype] = useState<string>('all')
-  const [sortKey, setSortKey] = useState<SortKey>('homefit')
+  /** When true, list sorts by name; map coloring still follows `indexMode`. */
+  const [sortByName, setSortByName] = useState(false)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
+    setIndexMode(mode)
+    setSortByName(false)
+  }, [])
 
   useEffect(() => {
     const ac = new AbortController()
@@ -191,6 +188,7 @@ export default function CatalogPageClient({
       const st = (p.catalog.state_abbr || '').toLowerCase()
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
+    const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
     return sortPlaces(list, sortKey, sortDir, priorities)
   }, [
     places,
@@ -198,7 +196,8 @@ export default function CatalogPageClient({
     filterMetro,
     filterType,
     filterArchetype,
-    sortKey,
+    indexMode,
+    sortByName,
     sortDir,
     priorities,
   ])
@@ -556,64 +555,54 @@ export default function CatalogPageClient({
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)]">Sort</span>
-              <div
-                role="group"
-                aria-label="Sort catalog by"
-                className="flex flex-wrap items-center gap-1"
-              >
-                {SORT_PILLS.map(({ key, label }) => {
-                  const active = sortKey === key
+            <div
+              role="group"
+              aria-label="Map index and list sort"
+              className="flex flex-wrap items-center gap-2"
+            >
+              <div className="flex flex-wrap gap-1">
+                {INDEXES.map((x) => {
+                  const active = indexMode === x.id && !sortByName
+                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
                   return (
                     <button
-                      key={key}
+                      key={x.id}
                       type="button"
                       aria-pressed={active}
-                      className={`rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold ${
-                        active ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                      }`}
-                      style={active ? { background: 'var(--hf-primary-1)' } : {}}
-                      onClick={() => setSortKey(key)}
+                      className="rounded-full px-3 py-1.5 text-xs font-bold"
+                      style={
+                        active
+                          ? { ...activeStyle, border: 'none' }
+                          : {
+                              background: 'var(--hf-hover-bg)',
+                              color: 'var(--hf-text-secondary)',
+                              border: '0.5px solid var(--hf-border)',
+                            }
+                      }
+                      onClick={() => setIndexModeAndListSort(x.id)}
                     >
-                      {label}
+                      {x.label}
                     </button>
                   )
                 })}
-                <button
-                  type="button"
-                  className="ml-0.5 text-[0.7rem] font-semibold text-[var(--hf-primary-1)]"
-                  onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-                >
-                  {sortDir === 'desc' ? 'Desc' : 'Asc'}
-                </button>
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1">
-              {INDEXES.map((x) => {
-                const active = indexMode === x.id
-                const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
-                return (
-                  <button
-                    key={x.id}
-                    type="button"
-                    className="rounded-full px-3 py-1.5 text-xs font-bold"
-                    style={
-                      active
-                        ? { ...activeStyle, border: 'none' }
-                        : {
-                            background: 'var(--hf-hover-bg)',
-                            color: 'var(--hf-text-secondary)',
-                            border: '0.5px solid var(--hf-border)',
-                          }
-                    }
-                    onClick={() => setIndexMode(x.id)}
-                  >
-                    {x.label}
-                  </button>
-                )
-              })}
+              <button
+                type="button"
+                aria-pressed={sortByName}
+                className={`text-[0.7rem] font-semibold ${
+                  sortByName ? 'text-[var(--hf-primary-1)] underline' : 'text-[var(--hf-text-secondary)]'
+                }`}
+                onClick={() => setSortByName(true)}
+              >
+                A–Z
+              </button>
+              <button
+                type="button"
+                className="text-[0.7rem] font-semibold text-[var(--hf-primary-1)]"
+                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              >
+                {sortDir === 'desc' ? 'Desc' : 'Asc'}
+              </button>
             </div>
 
             <button
@@ -688,7 +677,7 @@ export default function CatalogPageClient({
         <CatalogBottomSheet
           place={selectedPlace}
           indexMode={indexMode}
-          onIndexModeChange={setIndexMode}
+          onIndexModeChange={setIndexModeAndListSort}
           priorities={priorities}
           snap={snap}
           onSnapChange={setSnap}
@@ -701,7 +690,7 @@ export default function CatalogPageClient({
         <CatalogBottomSheet
           place={queryPlace}
           indexMode={indexMode}
-          onIndexModeChange={setIndexMode}
+          onIndexModeChange={setIndexModeAndListSort}
           priorities={priorities}
           snap={snap}
           onSnapChange={setSnap}
