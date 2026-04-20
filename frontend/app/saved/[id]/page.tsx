@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ScoreResponse } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
+import { deleteSavedScore, getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getScore, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
@@ -50,6 +50,7 @@ export default function SavedDetailPage() {
   const [recomputeLoading, setRecomputeLoading] = useState(false)
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
+  const [removeLoading, setRemoveLoading] = useState(false)
   const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
   const [premiumCodeInput, setPremiumCodeInput] = useState('')
   const [savedPremiumCode, setSavedPremiumCode] = useState('')
@@ -374,6 +375,20 @@ export default function SavedDetailPage() {
     }
   }, [row, priorities, searchOptions])
 
+  const handleRemoveSaved = useCallback(async () => {
+    if (!row || removeLoading) return
+    if (!window.confirm('Remove this place from your saved list? This cannot be undone.')) return
+    setRemoveLoading(true)
+    try {
+      await deleteSavedScore(row.id)
+      router.push('/saved')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not remove place.')
+    } finally {
+      setRemoveLoading(false)
+    }
+  }, [row, removeLoading, router])
+
   if (!authLoading && !user) {
     router.replace('/saved')
     return null
@@ -504,6 +519,15 @@ export default function SavedDetailPage() {
                 style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
               >
                 {savingPreferences ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveSaved}
+                disabled={removeLoading}
+                className="hf-btn-link"
+                style={{ fontSize: '0.95rem', padding: '0.5rem 0.75rem', color: 'var(--hf-danger)' }}
+              >
+                {removeLoading ? 'Removing…' : 'Remove from saved'}
               </button>
               {scoreAgainError && (
                 <span className="hf-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>

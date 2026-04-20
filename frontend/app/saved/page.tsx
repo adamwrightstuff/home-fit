@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { listSavedScores, type SavedScoreRow } from '@/lib/savedScores'
+import { deleteSavedScore, listSavedScores, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
@@ -157,7 +157,27 @@ export default function SavedPage() {
   const [compareMode, setCompareMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortMode, setSortMode] = useState<SortMode>('score_desc')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const router = useRouter()
+
+  const handleRemovePlace = async (e: React.MouseEvent, rowId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (deletingId) return
+    if (!window.confirm('Remove this place from your saved list?')) return
+    setDeletingId(rowId)
+    setDeleteError(null)
+    try {
+      await deleteSavedScore(rowId)
+      setList((prev) => prev.filter((r) => r.id !== rowId))
+      setSelectedIds((prev) => prev.filter((x) => x !== rowId))
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Could not remove place.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const sortedList = useMemo(() => {
     const copy = [...list]
@@ -245,6 +265,11 @@ export default function SavedPage() {
 
         {loading && <p className="hf-muted">Loading…</p>}
         {error && <p className="hf-auth-error" role="alert">{error}</p>}
+        {deleteError && (
+          <p className="hf-auth-error" role="alert" style={{ marginBottom: '0.75rem' }}>
+            {deleteError}
+          </p>
+        )}
 
         {!loading && !error && list.length === 0 && (
           <div className="hf-card">
@@ -344,6 +369,24 @@ export default function SavedPage() {
                         Run a score first to compare this place.
                       </div>
                     )}
+                    <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--hf-border)' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => handleRemovePlace(e, row.id)}
+                        disabled={deletingId === row.id}
+                        className="hf-btn-link"
+                        aria-label={`Remove ${placeDisplayName(row)} from saved places`}
+                        style={{
+                          fontSize: '0.85rem',
+                          color: 'var(--hf-danger)',
+                          padding: 0,
+                          cursor: deletingId === row.id ? 'wait' : 'pointer',
+                          opacity: deletingId === row.id ? 0.6 : 1,
+                        }}
+                      >
+                        {deletingId === row.id ? 'Removing…' : 'Remove from saved'}
+                      </button>
+                    </div>
                   </div>
                 )
               })}
