@@ -640,6 +640,78 @@ def _acs_mobility_int(val) -> int:
         return 0
 
 
+def _mobility_from_tract_row(
+    row: list,
+    *,
+    include_b07013: bool,
+) -> Optional[Dict]:
+    """Parse ACS tract row for B07003 (+ optional B07013 blend). Returns dict or None."""
+    try:
+        total_1yr = _acs_mobility_int(row[0])
+        same_house = _acs_mobility_int(row[1])
+        same_county = _acs_mobility_int(row[2])
+        if include_b07013 and len(row) > 5:
+            b13_total = _acs_mobility_int(row[3])
+            b13_same_own = _acs_mobility_int(row[4])
+            b13_same_rent = _acs_mobility_int(row[5])
+        else:
+            b13_total = b13_same_own = b13_same_rent = 0
+    except (ValueError, TypeError):
+        return None
+
+    if total_1yr <= 0:
+        return None
+
+    same_house = max(0, min(same_house, total_1yr))
+    same_county = max(0, min(same_county, total_1yr))
+    rooted = min(same_house + same_county, total_1yr)
+
+    same_house_pct_b07003 = (same_house / total_1yr) * 100.0
+    rooted_pct = (rooted / total_1yr) * 100.0
+
+    same_house_pct_b07013: Optional[float] = None
+    if include_b07013 and b13_total > 0:
+        sh13 = min(b13_same_own + b13_same_rent, b13_total)
+        same_house_pct_b07013 = (sh13 / b13_total) * 100.0
+
+    if same_house_pct_b07013 is not None:
+        same_house_pct = 0.6 * float(same_house_pct_b07013) + 0.4 * float(same_house_pct_b07003)
+    else:
+        same_house_pct = same_house_pct_b07003
+
+    return {
+        "same_house_pct": same_house_pct,
+        "same_house_pct_b07003": same_house_pct_b07003,
+        "same_house_pct_b07013": same_house_pct_b07013,
+        "rooted_pct": rooted_pct,
+        "same_house_count": same_house,
+        "same_county_count": same_county,
+        "total_population_1yr": total_1yr,
+    }
+
+
+def _fetch_mobility_tract_acs(tract: Dict, *, include_b07013: bool) -> Optional[Dict]:
+    """Single ACS GET for tract mobility; include_b07013=False uses B07003 only (fallback path)."""
+    url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+    if include_b07013:
+        get = "B07003_001E,B07003_004E,B07003_007E,B07013_001E,B07013_005E,B07013_006E,NAME"
+    else:
+        get = "B07003_001E,B07003_004E,B07003_007E,NAME"
+    params = {
+        "get": get,
+        "for": f"tract:{tract['tract_fips']}",
+        "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+        "key": CENSUS_API_KEY,
+    }
+    response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
+    if response is None:
+        return None
+    data = response.json()
+    if len(data) < 2:
+        return None
+    return _mobility_from_tract_row(data[1], include_b07013=include_b07013)
+
+
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=15)
@@ -660,6 +732,9 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 
     Tract same-house input blends B07013 (same-house owner+renter / household universe) with
     B07003 same-house at 0.6/0.4 when B07013 is available; rooted_pct stays B07003-based.
+
+    If the combined B07003+B07013 request fails, retries with B07003-only for the same tract
+    (some tracts return incomplete B07013 rows in the API).
     """
     if tract is None:
         tract = get_census_tract(lat, lon)
@@ -668,74 +743,24 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 
     try:
         print("🏡 Fetching mobility data (B07003 + B07013) from Census ACS 5-year...")
-
-        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
-        # B07003_001E: Total population 1 year and over
-        # B07003_004E: Same house 1 year ago (total)
-        # B07003_007E: Moved within same county (total)
-        # B07013: mobility by tenure; 005+006 = same house 1 yr ago (owner + renter HH)
-        params = {
-            "get": "B07003_001E,B07003_004E,B07003_007E,B07013_001E,B07013_005E,B07013_006E,NAME",
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
-            "key": CENSUS_API_KEY,
-        }
-
-        response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
-        if response is None:
-            print("   ⚠️  ACS mobility request failed after retries")
-            return None
-
-        data = response.json()
-        if len(data) < 2:
-            print("   ⚠️  No mobility data returned")
-            return None
-
-        row = data[1]
-        try:
-            total_1yr = _acs_mobility_int(row[0])
-            same_house = _acs_mobility_int(row[1])
-            same_county = _acs_mobility_int(row[2])
-            b13_total = _acs_mobility_int(row[3]) if len(row) > 3 else 0
-            b13_same_own = _acs_mobility_int(row[4]) if len(row) > 4 else 0
-            b13_same_rent = _acs_mobility_int(row[5]) if len(row) > 5 else 0
-        except (ValueError, TypeError):
-            return None
-
-        if total_1yr <= 0:
-            print("   ⚠️  Mobility data invalid or missing")
-            return None
-
-        same_house = max(0, min(same_house, total_1yr))
-        same_county = max(0, min(same_county, total_1yr))
-        rooted = same_house + same_county
-        rooted = min(rooted, total_1yr)
-
-        same_house_pct_b07003 = (same_house / total_1yr) * 100.0
-        rooted_pct = (rooted / total_1yr) * 100.0
-
-        same_house_pct_b07013: Optional[float] = None
-        if b13_total > 0:
-            sh13 = min(b13_same_own + b13_same_rent, b13_total)
-            same_house_pct_b07013 = (sh13 / b13_total) * 100.0
-
-        if same_house_pct_b07013 is not None:
-            same_house_pct = 0.6 * float(same_house_pct_b07013) + 0.4 * float(same_house_pct_b07003)
-        else:
-            same_house_pct = same_house_pct_b07003
-
-        return {
-            "same_house_pct": same_house_pct,
-            "same_house_pct_b07003": same_house_pct_b07003,
-            "same_house_pct_b07013": same_house_pct_b07013,
-            "rooted_pct": rooted_pct,
-            "same_house_count": same_house,
-            "same_county_count": same_county,
-            "total_population_1yr": total_1yr,
-        }
-
+        out = _fetch_mobility_tract_acs(tract, include_b07013=True)
+        if out is not None:
+            return out
+        print("   ⚠️  ACS mobility (B07003+B07013) unavailable; retrying B07003-only for tract...")
+        out = _fetch_mobility_tract_acs(tract, include_b07013=False)
+        if out is not None:
+            return out
+        print("   ⚠️  Mobility data invalid or missing after B07003-only retry")
+        return None
     except Exception as e:
         print(f"   ⚠️  Mobility data lookup failed: {e}")
+        try:
+            out = _fetch_mobility_tract_acs(tract, include_b07013=False)
+            if out is not None:
+                print("   ✅ B07003-only tract mobility recovered after exception")
+                return out
+        except Exception:
+            pass
         return None
 
 
@@ -744,7 +769,8 @@ def get_mobility_data(lat: float, lon: float, tract: Optional[Dict] = None) -> O
 @handle_api_timeout(timeout_seconds=15)
 def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str, str]]:
     """
-    State FIPS and Census place FIPS for Incorporated Place or CDP containing the point.
+    State FIPS and Census place FIPS for an Incorporated Place, CDP, or Consolidated City
+    containing the point.
     """
     try:
         params = {
@@ -759,7 +785,13 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
             return None
         data = response.json()
         geographies = (data.get("result") or {}).get("geographies") or {}
-        for key in ("Incorporated Places", "Census Designated Places"):
+        # Order: smaller / more specific place types first where applicable; include
+        # Consolidated Cities for areas that are not in Incorporated Places / CDP alone.
+        for key in (
+            "Incorporated Places",
+            "Census Designated Places",
+            "Consolidated Cities",
+        ):
             layer = geographies.get(key)
             if layer and len(layer) > 0:
                 g = layer[0]
@@ -796,8 +828,8 @@ def get_place_same_house_pct(state_fips: str, place_fips: str) -> Optional[float
         if len(data) < 2:
             return None
         row = data[1]
-        total_1yr = int(row[0]) if row[0] else 0
-        same_house = int(row[1]) if row[1] else 0
+        total_1yr = _acs_mobility_int(row[0])
+        same_house = _acs_mobility_int(row[1])
         if total_1yr <= 0:
             return None
         same_house = max(0, min(same_house, total_1yr))
