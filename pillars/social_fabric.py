@@ -454,13 +454,15 @@ def get_social_fabric_score(
         "area_classification": {"area_type": area_type},
     }
 
+    # Match neighborhood_amenities: Google Places civic supplement uses places_civic_augmented +
+    # data_sources only — not fallback_used (no ×0.8 penalty). fallback_used is for civic imputed floor only.
     quality_metrics = data_quality.assess_pillar_data_quality(
         "social_fabric",
         combined_data,
         lat,
         lon,
         area_type,
-        fallback_used=bool(places_recovered or civic_imputed_floor_applied),
+        fallback_used=bool(civic_imputed_floor_applied),
     )
 
     rooted_pct = mobility.get("rooted_pct") if mobility else None
