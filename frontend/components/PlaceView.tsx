@@ -42,6 +42,13 @@ const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_r
   { value: 'dense_urban_living', label: 'Downtown living' },
 ]
 
+const DIVERSITY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'race', label: 'Race & ethnicity' },
+  { value: 'income', label: 'Income' },
+  { value: 'age', label: 'Age' },
+]
+
 type Importance = 'Low' | 'Medium' | 'High'
 
 /** Prefer neighborhood-style label: strip trailing zip so we show "Gowanus, Brooklyn" not "New York, NY 11217". */
@@ -253,6 +260,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 : undefined,
             built_character_preference: options.built_character_preference ?? undefined,
             built_density_preference: options.built_density_preference ?? undefined,
+            diversity_preference:
+              options.diversity_preference?.length
+                ? JSON.stringify(options.diversity_preference)
+                : undefined,
           },
         (partial, meta) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
@@ -327,6 +338,9 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             : {}),
           ...(searchOptions.built_density_preference
             ? { built_density_preference: searchOptions.built_density_preference }
+            : {}),
+          ...(searchOptions.diversity_preference?.length
+            ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
             : {}),
         },
         () => {}
@@ -416,12 +430,16 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       const builtChanged =
         prev.built_character_preference !== newOptions.built_character_preference ||
         prev.built_density_preference !== newOptions.built_density_preference
+      const diversityChanged = JSON.stringify(prev.diversity_preference ?? null) !== JSON.stringify(newOptions.diversity_preference ?? null)
 
       if (naturalChanged && pillarScores.natural_beauty && selectedPillars.has('natural_beauty')) {
         runSinglePillar('natural_beauty', newOptions)
       }
       if (builtChanged && pillarScores.built_beauty && selectedPillars.has('built_beauty')) {
         runSinglePillar('built_beauty', newOptions)
+      }
+      if (diversityChanged && pillarScores.diversity && selectedPillars.has('diversity')) {
+        runSinglePillar('diversity', newOptions)
       }
     },
     [onSearchOptionsChange, searchOptions, pillarScores, selectedPillars, runSinglePillar]
@@ -621,6 +639,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               undefined,
           built_character_preference: searchOptions.built_character_preference ?? undefined,
           built_density_preference: searchOptions.built_density_preference ?? undefined,
+          diversity_preference:
+            searchOptions.diversity_preference?.length
+              ? JSON.stringify(searchOptions.diversity_preference)
+              : undefined,
         },
         (partial, meta) => {
           setScoreProgress((prev) => ({ ...prev, ...partial }))
@@ -1197,6 +1219,58 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
                               cursor: atMax ? 'not-allowed' : 'pointer',
                               opacity: atMax ? 0.7 : 1,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {key === 'diversity' && onSearchOptionsChange && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Mix focus:</span>
+                      {DIVERSITY_PREFERENCE_CHIPS.map(({ value, label }) => {
+                        const pref = searchOptions.diversity_preference ?? []
+                        const isAny = value === null
+                        const hasAny = !pref.length
+                        const chipSelected = isAny ? hasAny : pref.includes(value as string)
+                        const handleClick = () => {
+                          if (isAny) {
+                            handleSearchOptionsChange({ ...searchOptions, diversity_preference: null })
+                            return
+                          }
+                          const current = [...pref]
+                          if (current.includes(value as string)) {
+                            const next = current.filter((v) => v !== value)
+                            handleSearchOptionsChange({
+                              ...searchOptions,
+                              diversity_preference: next.length ? next : null,
+                            })
+                          } else {
+                            handleSearchOptionsChange({
+                              ...searchOptions,
+                              diversity_preference: [...current, value as string],
+                            })
+                          }
+                        }
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleClick()
+                            }}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: chipSelected ? 600 : 400,
+                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: 'pointer',
                             }}
                           >
                             {label}

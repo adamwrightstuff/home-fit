@@ -41,6 +41,7 @@ type Normalized = Required<Pick<ResultsRouteParams, 'location' | 'prioritiesJson
     natural_beauty_preference: string | null
     built_character_preference: string | null
     built_density_preference: string | null
+    diversity_preference: string | null
   }
 
 type CacheEntry = { ts: number; payload: ScoreResponse }
@@ -77,6 +78,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
   const natural_beauty_preference = firstParam(sp.natural_beauty_preference)
   const built_character_preference = firstParam(sp.built_character_preference)
   const built_density_preference = firstParam(sp.built_density_preference)
+  const diversity_preference = firstParam(sp.diversity_preference)
 
   return {
     location,
@@ -87,6 +89,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
     natural_beauty_preference: natural_beauty_preference && natural_beauty_preference.trim() ? natural_beauty_preference : null,
     built_character_preference: built_character_preference && built_character_preference.trim() ? built_character_preference : null,
     built_density_preference: built_density_preference && built_density_preference.trim() ? built_density_preference : null,
+    diversity_preference: diversity_preference && diversity_preference.trim() ? diversity_preference : null,
   }
 }
 
@@ -189,6 +192,15 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
       })(),
       built_character_preference: normalized.built_character_preference as any,
       built_density_preference: normalized.built_density_preference as any,
+      diversity_preference: (() => {
+        if (!normalized.diversity_preference) return null
+        try {
+          const raw = JSON.parse(normalized.diversity_preference)
+          return Array.isArray(raw) ? raw : null
+        } catch {
+          return null
+        }
+      })(),
     }
   }, [normalized])
 
@@ -324,6 +336,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         natural_beauty_preference: next.natural_beauty_preference?.length ? JSON.stringify(next.natural_beauty_preference) : null,
         built_character_preference: next.built_character_preference ?? null,
         built_density_preference: next.built_density_preference ?? null,
+        diversity_preference: next.diversity_preference?.length ? JSON.stringify(next.diversity_preference) : null,
       }
       router.replace(buildResultsUrl(updated))
     },
@@ -345,6 +358,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           natural_beauty_preference: normalized.natural_beauty_preference ?? undefined,
           built_character_preference: normalized.built_character_preference ?? undefined,
           built_density_preference: normalized.built_density_preference ?? undefined,
+          diversity_preference: normalized.diversity_preference ?? undefined,
         })
         const livability_pillars = {
           ...finalResponse.livability_pillars,
@@ -396,6 +410,10 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             : undefined,
           built_character_preference: options.built_character_preference ?? undefined,
           built_density_preference: options.built_density_preference ?? undefined,
+          diversity_preference:
+            options.diversity_preference && options.diversity_preference.length > 0
+              ? JSON.stringify(options.diversity_preference)
+              : undefined,
           include_chains: options.include_chains ?? true,
           enable_schools: options.enable_schools ?? false,
         },
@@ -439,6 +457,10 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             : normalized.natural_beauty_preference,
         built_character_preference: options.built_character_preference ?? normalized.built_character_preference,
         built_density_preference: options.built_density_preference ?? normalized.built_density_preference,
+        diversity_preference:
+          options.diversity_preference && options.diversity_preference.length > 0
+            ? JSON.stringify(options.diversity_preference)
+            : normalized.diversity_preference,
       }
       persistCache(buildResultsCacheKey(updated), next)
       router.replace(buildResultsUrl(updated))
@@ -473,6 +495,9 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             ? { built_character_preference: searchOptions.built_character_preference }
             : {}),
           ...(searchOptions.built_density_preference ? { built_density_preference: searchOptions.built_density_preference } : {}),
+          ...(searchOptions.diversity_preference?.length
+            ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
+            : {}),
           include_chains: searchOptions.include_chains ?? true,
           enable_schools: searchOptions.enable_schools ?? false,
         },
@@ -615,6 +640,10 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               job_categories={normalized.job_categories ?? undefined}
               include_chains={normalized.include_chains}
               enable_schools={normalized.enable_schools}
+              natural_beauty_preference={normalized.natural_beauty_preference ?? undefined}
+              built_character_preference={normalized.built_character_preference ?? undefined}
+              built_density_preference={normalized.built_density_preference ?? undefined}
+              diversity_preference={normalized.diversity_preference ?? undefined}
               on_complete={(resp) => {
                 setRefreshing(false)
                 setRunActive(false)

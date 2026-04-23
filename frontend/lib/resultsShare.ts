@@ -9,6 +9,7 @@ export type ResultsRouteParams = {
   natural_beauty_preference?: string | null
   built_character_preference?: string | null
   built_density_preference?: string | null
+  diversity_preference?: string | null
 }
 
 /**
@@ -49,6 +50,7 @@ export function buildResultsCacheKey(p: ResultsRouteParams): string {
     `natural_beauty_preference=${p.natural_beauty_preference ?? ''}`,
     `built_character_preference=${p.built_character_preference ?? ''}`,
     `built_density_preference=${p.built_density_preference ?? ''}`,
+    `diversity_preference=${p.diversity_preference ?? ''}`,
   ].join('&')
   return `homefit_results_cache:${stableHash(keyParts)}`
 }
@@ -63,6 +65,7 @@ export function buildResultsUrl(p: ResultsRouteParams): string {
   if (p.natural_beauty_preference) usp.set('natural_beauty_preference', p.natural_beauty_preference)
   if (p.built_character_preference) usp.set('built_character_preference', p.built_character_preference)
   if (p.built_density_preference) usp.set('built_density_preference', p.built_density_preference)
+  if (p.diversity_preference) usp.set('diversity_preference', p.diversity_preference)
   return `/results?${usp.toString()}`
 }
 

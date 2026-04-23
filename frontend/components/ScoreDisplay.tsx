@@ -18,6 +18,7 @@ export interface RunPillarScoreOptions {
   natural_beauty_preference?: string[] | null
   built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
+  diversity_preference?: string[] | null
   include_chains?: boolean
   enable_schools?: boolean
 }
@@ -48,6 +49,12 @@ const ADD_BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkab
   { value: 'spread_out_residential', label: 'Spread out' },
   { value: 'walkable_residential', label: 'Walkable' },
   { value: 'dense_urban_living', label: 'Downtown' },
+]
+const ADD_DIVERSITY_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'race', label: 'Race & ethnicity' },
+  { value: 'income', label: 'Income' },
+  { value: 'age', label: 'Age' },
 ]
 
 interface ScoreDisplayProps {
@@ -135,6 +142,7 @@ export default function ScoreDisplay({
   const [addPillarNaturalBeauty, setAddPillarNaturalBeauty] = useState<string[] | null>(null)
   const [addPillarBuiltCharacter, setAddPillarBuiltCharacter] = useState<'historic' | 'contemporary' | 'no_preference' | null>(null)
   const [addPillarBuiltDensity, setAddPillarBuiltDensity] = useState<'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null>(null)
+  const [addPillarDiversity, setAddPillarDiversity] = useState<string[] | null>(null)
   const [runPillarLoading, setRunPillarLoading] = useState(false)
   const [runPillarError, setRunPillarError] = useState<string | null>(null)
 
@@ -217,6 +225,8 @@ export default function ScoreDisplay({
       setAddPillarNaturalBeauty(nb && nb.length > 0 ? [...nb] : null)
       setAddPillarBuiltCharacter(searchOptions?.built_character_preference ?? null)
       setAddPillarBuiltDensity(searchOptions?.built_density_preference ?? null)
+      const div = searchOptions?.diversity_preference
+      setAddPillarDiversity(div && div.length > 0 ? [...div] : null)
       setRunPillarError(null)
     } else if (onPrioritiesChange && priorities) {
       const next = { ...priorities } as PillarPriorities
@@ -238,6 +248,7 @@ export default function ScoreDisplay({
         natural_beauty_preference: addPillarNaturalBeauty && addPillarNaturalBeauty.length > 0 ? addPillarNaturalBeauty : null,
         built_character_preference: addPillarBuiltCharacter,
         built_density_preference: addPillarBuiltDensity,
+        diversity_preference: addPillarDiversity && addPillarDiversity.length > 0 ? addPillarDiversity : null,
         include_chains: searchOptions?.include_chains,
         enable_schools: searchOptions?.enable_schools,
       })
@@ -530,6 +541,14 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
+                diversityPreference={key === 'diversity' ? searchOptions?.diversity_preference ?? null : undefined}
+                onDiversityPreferenceChange={
+                  key === 'diversity' && onSearchOptionsChange && searchOptions
+                    ? (preference) => {
+                        onSearchOptionsChange({ ...searchOptions, diversity_preference: preference })
+                      }
+                    : undefined
+                }
                 schoolsPremiumSection={key === 'quality_education' ? schoolsPremiumSection : undefined}
               />
             )
@@ -756,6 +775,49 @@ export default function ScoreDisplay({
                                 ))}
                               </div>
                             </>
+                          )}
+
+                          {key === 'diversity' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Mix focus:</span>
+                              {ADD_DIVERSITY_CHIPS.map(({ value, label }) => {
+                                const pref = addPillarDiversity ?? []
+                                const isAny = value === null
+                                const hasAny = !pref.length
+                                const selected = isAny ? hasAny : pref.includes(value as string)
+                                return (
+                                  <button
+                                    key={label}
+                                    type="button"
+                                    onClick={() => {
+                                      if (isAny) {
+                                        setAddPillarDiversity(null)
+                                        return
+                                      }
+                                      const current = [...pref]
+                                      if (current.includes(value as string)) {
+                                        const next = current.filter((v) => v !== value)
+                                        setAddPillarDiversity(next.length ? next : null)
+                                      } else {
+                                        setAddPillarDiversity([...current, value as string])
+                                      }
+                                    }}
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: 8,
+                                      fontSize: '0.85rem',
+                                      fontWeight: selected ? 600 : 400,
+                                      background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                                      color: selected ? 'white' : 'var(--hf-text-secondary)',
+                                      border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {label}
+                                  </button>
+                                )
+                              })}
+                            </div>
                           )}
 
                           {canRunScore && (

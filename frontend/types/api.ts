@@ -181,6 +181,8 @@ export interface ScoreRequestParams {
   built_character_preference?: string;
   /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living. */
   built_density_preference?: string;
+  /** Diversity: JSON array of race, income, and/or age (e.g. '["race","income"]'). Omitted = average all dimensions with data. */
+  diversity_preference?: string;
   /** When set, backend uses these coordinates instead of geocoding location (ensures refresh uses same point). */
   lat?: number;
   lon?: number;

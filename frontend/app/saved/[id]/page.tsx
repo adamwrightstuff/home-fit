@@ -96,6 +96,7 @@ export default function SavedDetailPage() {
             typeof saved?.built_character_preference === 'string' ? saved.built_character_preference : null,
           built_density_preference:
             typeof saved?.built_density_preference === 'string' ? saved.built_density_preference : null,
+          diversity_preference: Array.isArray(saved?.diversity_preference) ? saved.diversity_preference : null,
         }
         setSearchOptions(initialSearchOptions)
         setJobCategories(initialSearchOptions.job_categories ?? [])
@@ -141,6 +142,9 @@ export default function SavedDetailPage() {
           : undefined,
         built_character_preference: searchOptions?.built_character_preference ?? undefined,
         built_density_preference: searchOptions?.built_density_preference ?? undefined,
+        diversity_preference: searchOptions?.diversity_preference?.length
+          ? JSON.stringify(searchOptions.diversity_preference)
+          : undefined,
         ...(lat != null && lon != null ? { lat, lon } : {}),
       })
       const payloadWithConfig: ScoreResponse = {
@@ -181,6 +185,8 @@ export default function SavedDetailPage() {
           natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
           built_character_preference: options.built_character_preference ?? undefined,
           built_density_preference: options.built_density_preference ?? undefined,
+          diversity_preference:
+            options.diversity_preference?.length ? JSON.stringify(options.diversity_preference) : undefined,
           include_chains: options.include_chains ?? true,
           enable_schools: options.enable_schools ?? false,
         },
@@ -261,6 +267,9 @@ export default function SavedDetailPage() {
             : {}),
           ...(searchOptions?.built_density_preference
             ? { built_density_preference: searchOptions.built_density_preference }
+            : {}),
+          ...(searchOptions?.diversity_preference?.length
+            ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
             : {}),
           include_chains: searchOptions?.include_chains ?? true,
           enable_schools: searchOptions?.enable_schools ?? false,

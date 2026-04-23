@@ -52,7 +52,7 @@ from pillars.housing_value import get_housing_value_score
 from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
-from pillars.diversity import get_diversity_score
+from pillars.diversity import get_diversity_score, parse_diversity_preference
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from pillars.happiness_index import compute_happiness_index_with_breakdown
 from pillars.composite_indices import (
@@ -1051,6 +1051,7 @@ def _generate_request_cache_key(
     only_pillars: Optional[set[str]] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    diversity_preference: Optional[List[str]] = None,
 ) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
@@ -1067,6 +1068,7 @@ def _generate_request_cache_key(
         json.dumps(sorted(only_pillars)) if only_pillars else "only=None",
         (built_character_preference or "").strip() or "char=None",
         (built_density_preference or "").strip() or "dens=None",
+        json.dumps(sorted(diversity_preference)) if diversity_preference else "div_pref=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -1223,6 +1225,7 @@ def _compute_single_score_internal(
     natural_beauty_preference: Optional[List[str]] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    diversity_preference: Optional[List[str]] = None,
     lat_override: Optional[float] = None,
     lon_override: Optional[float] = None,
 ) -> Dict[str, Any]:
@@ -1679,7 +1682,8 @@ def _compute_single_score_internal(
     if _include_pillar('diversity'):
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
+                'diversity_preference': diversity_preference,
             })
         )
 
@@ -2283,6 +2287,7 @@ def get_livability_score(request: Request,
                          natural_beauty_preference: Optional[str] = None,
                          built_character_preference: Optional[str] = None,
                          built_density_preference: Optional[str] = None,
+                         diversity_preference: Optional[str] = None,
                          lat: Optional[str] = None,
                          lon: Optional[str] = None):
     """
@@ -2339,6 +2344,16 @@ def get_livability_score(request: Request,
             except (json.JSONDecodeError, TypeError):
                 pass
 
+        # Parse diversity_preference: JSON array of race, income, age (e.g. '["race","income"]')
+        diversity_preference_parsed: Optional[List[str]] = None
+        if diversity_preference:
+            try:
+                raw = json.loads(diversity_preference) if isinstance(diversity_preference, str) else diversity_preference
+                if isinstance(raw, list):
+                    diversity_preference_parsed = parse_diversity_preference(raw)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         lat_override: Optional[float] = None
         lon_override: Optional[float] = None
         if lat is not None and lon is not None:
@@ -2366,6 +2381,7 @@ def get_livability_score(request: Request,
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
+                diversity_preference=diversity_preference_parsed,
             )
             # Differentiated cache TTL based on data stability
             # Use minimum TTL of requested pillars (conservative approach)
@@ -2415,6 +2431,7 @@ def get_livability_score(request: Request,
             natural_beauty_preference=natural_beauty_preference_parsed,
             built_character_preference=built_character_preference,
             built_density_preference=built_density_preference,
+            diversity_preference=diversity_preference_parsed,
             lat_override=lat_override,
             lon_override=lon_override,
         )
@@ -2450,6 +2467,7 @@ def get_livability_score(request: Request,
                     natural_beauty_preference=natural_beauty_preference_parsed,
                     built_character_preference=built_character_preference,
                     built_density_preference=built_density_preference,
+                    diversity_preference=diversity_preference_parsed,
                 )
                 request_cache_ttl = 300  # 5 minutes for request-level cache
                 
@@ -2561,6 +2579,7 @@ def create_score_job(
     natural_beauty_preference: Optional[str] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    diversity_preference: Optional[str] = None,
     lat: Optional[str] = None,
     lon: Optional[str] = None,
 ):
@@ -2597,6 +2616,15 @@ def create_score_job(
             raw = json.loads(natural_beauty_preference) if isinstance(natural_beauty_preference, str) else natural_beauty_preference
             if isinstance(raw, list) and 1 <= len(raw) <= 2:
                 natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    diversity_preference_parsed: Optional[List[str]] = None
+    if diversity_preference:
+        try:
+            raw = json.loads(diversity_preference) if isinstance(diversity_preference, str) else diversity_preference
+            if isinstance(raw, list):
+                diversity_preference_parsed = parse_diversity_preference(raw)
         except (json.JSONDecodeError, TypeError):
             pass
 
@@ -2682,6 +2710,7 @@ def create_score_job(
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
+                diversity_preference=diversity_preference_parsed,
                 lat_override=lat_override,
                 lon_override=lon_override,
             )
@@ -2758,6 +2787,7 @@ async def _stream_score_with_progress(
     natural_beauty_preference: Optional[List[str]] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    diversity_preference: Optional[List[str]] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
@@ -2790,6 +2820,7 @@ async def _stream_score_with_progress(
                     only_pillars=only_pillars,
                     built_character_preference=built_character_preference,
                     built_density_preference=built_density_preference,
+                    diversity_preference=diversity_preference,
                 )
                 cached_response = None
                 if _redis_client:
@@ -3149,7 +3180,8 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('diversity', get_diversity_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
+                'diversity_preference': diversity_preference,
             })
         )
         if use_school_scoring:
@@ -3767,6 +3799,7 @@ async def _stream_score_with_progress(
                     only_pillars=only_pillars,
                     built_character_preference=built_character_preference,
                     built_density_preference=built_density_preference,
+                    diversity_preference=diversity_preference,
                 )
                 if isinstance(final_response.get("metadata"), dict):
                     final_response["metadata"]["cache_hit"] = False
@@ -3812,6 +3845,7 @@ async def stream_score(
     natural_beauty_preference: Optional[str] = None,
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
+    diversity_preference: Optional[str] = None,
 ):
     """
     Server-Sent Events endpoint for streaming score calculation progress.
@@ -3861,7 +3895,16 @@ async def stream_score(
                     natural_beauty_preference_parsed = [str(x).strip().lower() for x in raw if x]
             except (json.JSONDecodeError, TypeError):
                 pass
-        
+
+        diversity_preference_parsed: Optional[List[str]] = None
+        if diversity_preference:
+            try:
+                raw = json.loads(diversity_preference) if isinstance(diversity_preference, str) else diversity_preference
+                if isinstance(raw, list):
+                    diversity_preference_parsed = parse_diversity_preference(raw)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         return StreamingResponse(
             _stream_score_with_progress(
                 location=location,
@@ -3876,6 +3919,7 @@ async def stream_score(
                 natural_beauty_preference=natural_beauty_preference_parsed,
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
+                diversity_preference=diversity_preference_parsed,
             ),
             media_type="text/event-stream",
             headers={

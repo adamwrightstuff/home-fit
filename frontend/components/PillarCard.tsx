@@ -55,6 +55,10 @@ interface PillarCardProps {
   onBuiltCharacterPreferenceChange?: (value: string | null) => void
   /** Built Beauty only: update density preference (shown with chips; use with Rescore). */
   onBuiltDensityPreferenceChange?: (value: string | null) => void
+  /** Demographic diversity only: which mix dimensions to emphasize. */
+  diversityPreference?: string[] | null
+  /** Demographic diversity only: change dimension weights (use with Rescore). */
+  onDiversityPreferenceChange?: (preference: string[] | null) => void
   /** Schools only: premium code + include school scoring (saved place detail). Top of expanded Details. */
   schoolsPremiumSection?: ReactNode
   /** Current importance for this pillar (for inline weight editing on Results). */
@@ -85,6 +89,14 @@ const BUILT_DENSITY_CHIPS: Array<{
   { value: 'spread_out_residential', label: 'Spread out' },
   { value: 'walkable_residential', label: 'Walkable' },
   { value: 'dense_urban_living', label: 'Downtown' },
+]
+
+/** Demographic mix dimensions for Diversity pillar (headline = mean of selected, or all available if Any). */
+const DIVERSITY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any' },
+  { value: 'race', label: 'Race & ethnicity' },
+  { value: 'income', label: 'Income' },
+  { value: 'age', label: 'Age' },
 ]
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -235,6 +247,8 @@ export default function PillarCard({
   builtDensityPreference,
   onBuiltCharacterPreferenceChange,
   onBuiltDensityPreferenceChange,
+  diversityPreference,
+  onDiversityPreferenceChange,
   schoolsPremiumSection,
 }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
@@ -746,6 +760,69 @@ export default function PillarCard({
                       <span style={{ marginLeft: '0.35rem' }}>{densLabel}</span>
                     ) : null}
                   </div>
+                </div>
+              )
+            })()}
+            {pillar_key === 'diversity' && (() => {
+              const fromProps = diversityPreference && diversityPreference.length > 0 ? diversityPreference : null
+              const fromPillar = Array.isArray((pillar as any)?.summary?.diversity_preference) && (pillar as any).summary.diversity_preference.length > 0
+                ? ((pillar as any).summary.diversity_preference as string[])
+                : null
+              const displayPreference = fromProps ?? fromPillar
+              const pref = displayPreference ?? []
+              const canChange = Boolean(onDiversityPreferenceChange)
+              return (
+                <div style={{ marginBottom: canChange ? '0.85rem' : '0.5rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Mix focus:</span>
+                  {canChange ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                      {DIVERSITY_PREFERENCE_CHIPS.map(({ value, label }) => {
+                        const isAny = value === null
+                        const hasAny = !pref.length
+                        const chipSelected = isAny ? hasAny : pref.includes(value as string)
+                        const handleClick = () => {
+                          if (isAny) {
+                            onDiversityPreferenceChange!(null)
+                            return
+                          }
+                          const current = [...pref]
+                          if (current.includes(value as string)) {
+                            const next = current.filter((v) => v !== value)
+                            onDiversityPreferenceChange!(next.length ? next : null)
+                          } else {
+                            onDiversityPreferenceChange!([...current, value as string])
+                          }
+                        }
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleClick() }}
+                            disabled={rescoring}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: chipSelected ? 600 : 400,
+                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: rescoring ? 'not-allowed' : 'pointer',
+                              opacity: rescoring ? 0.7 : 1,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    displayPreference && displayPreference.length > 0 ? (
+                      <>{' '}{displayPreference.join(', ')}</>
+                    ) : (
+                      <span className="hf-muted"> All available dimensions</span>
+                    )
+                  )}
                 </div>
               )
             })()}

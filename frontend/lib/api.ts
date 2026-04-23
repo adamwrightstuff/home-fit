@@ -126,6 +126,9 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   if (params.built_density_preference) {
     searchParams.append('built_density_preference', params.built_density_preference);
   }
+  if (params.diversity_preference) {
+    searchParams.append('diversity_preference', params.diversity_preference);
+  }
 
   // Premium schools gating: include saved premium code (if any).
   // This is validated server-side; sending it does not guarantee access.
@@ -315,6 +318,7 @@ export async function getScoreWithProgress(
   if (params.natural_beauty_preference) searchParams.append('natural_beauty_preference', params.natural_beauty_preference);
   if (params.built_character_preference) searchParams.append('built_character_preference', params.built_character_preference);
   if (params.built_density_preference) searchParams.append('built_density_preference', params.built_density_preference);
+  if (params.diversity_preference) searchParams.append('diversity_preference', params.diversity_preference);
   if (params.job_categories) searchParams.append('job_categories', params.job_categories);
   if (params.include_chains !== undefined) searchParams.append('include_chains', params.include_chains.toString());
   if (params.enable_schools !== undefined) searchParams.append('enable_schools', params.enable_schools.toString());
@@ -468,6 +472,7 @@ export function streamScore(
   if (params.natural_beauty_preference) searchParams.append('natural_beauty_preference', params.natural_beauty_preference);
   if (params.built_character_preference) searchParams.append('built_character_preference', params.built_character_preference);
   if (params.built_density_preference) searchParams.append('built_density_preference', params.built_density_preference);
+  if (params.diversity_preference) searchParams.append('diversity_preference', params.diversity_preference);
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
       const premiumCode = window.sessionStorage.getItem('homefit_premium_code');

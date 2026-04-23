@@ -22,6 +22,10 @@ interface SmartLoadingScreenProps {
   job_categories?: string
   include_chains?: boolean
   enable_schools?: boolean
+  natural_beauty_preference?: string
+  built_character_preference?: string
+  built_density_preference?: string
+  diversity_preference?: string
 }
 
 const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; description: string }> = PILLAR_ORDER.reduce(
@@ -49,7 +53,11 @@ export default function SmartLoadingScreen({
   only,
   job_categories,
   include_chains,
-  enable_schools
+  enable_schools,
+  natural_beauty_preference,
+  built_character_preference,
+  built_density_preference,
+  diversity_preference,
 }: SmartLoadingScreenProps) {
   const [current_pillar, set_current_pillar] = useState<string | null>(null)
   const [completed_pillars, set_completed_pillars] = useState<Map<string, { score: number; details?: any }>>(new Map())
@@ -81,7 +89,19 @@ export default function SmartLoadingScreen({
     const totalPillars = PILLAR_ORDER.length
 
     getScoreWithProgress(
-      { location, tokens, priorities, only, job_categories, include_chains, enable_schools },
+      {
+        location,
+        tokens,
+        priorities,
+        only,
+        job_categories,
+        include_chains,
+        enable_schools,
+        ...(natural_beauty_preference ? { natural_beauty_preference } : {}),
+        ...(built_character_preference ? { built_character_preference } : {}),
+        ...(built_density_preference ? { built_density_preference } : {}),
+        ...(diversity_preference ? { diversity_preference } : {}),
+      },
       (partial) => {
         if (cancelledRef.current) return
         if (on_partial) on_partial(partial)
@@ -131,7 +151,22 @@ export default function SmartLoadingScreen({
     return () => {
       cancelledRef.current = true
     }
-  }, [location, priorities, tokens, only, job_categories, include_chains, enable_schools, on_complete, on_error, on_partial])
+  }, [
+    location,
+    priorities,
+    tokens,
+    only,
+    job_categories,
+    include_chains,
+    enable_schools,
+    natural_beauty_preference,
+    built_character_preference,
+    built_density_preference,
+    diversity_preference,
+    on_complete,
+    on_error,
+    on_partial,
+  ])
 
   // While we have no pillar results yet, ramp progress from floor to waiting cap so the bar doesn't sit at one value for too long
   useEffect(() => {
