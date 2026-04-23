@@ -12,6 +12,7 @@ from data_sources.places_active_outdoors_client import (
     maybe_augment_active_outdoors_with_places,
     places_ao_fallback_enabled,
 )
+from data_sources.osm_api import OVERPASS_OUTCOME_ERROR, OVERPASS_OUTCOME_EMPTY
 
 
 class TestAoPlacesClassification(unittest.TestCase):
@@ -121,3 +122,97 @@ class TestAoPlacesGate(unittest.TestCase):
         )
         self.assertEqual(meta["reason"], "osm_counts_sufficient")
         self.assertFalse(meta["triggered"])
+
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "x",
+        },
+    )
+    def test_blocks_places_when_overpass_hard_failed(self):
+        """Do not call Places when OSM failed (error/timeout); thin counts are not trusted."""
+        parks: list = []
+        playgrounds: list = []
+        swimming: list = []
+        camping: list = []
+        meta = maybe_augment_active_outdoors_with_places(
+            40.0,
+            -74.0,
+            local_radius_m=800,
+            regional_radius_m=15000,
+            parks=parks,
+            playgrounds=playgrounds,
+            swimming=swimming,
+            camping=camping,
+            local_overpass_outcome=OVERPASS_OUTCOME_ERROR,
+            regional_overpass_outcome="timeout",
+        )
+        self.assertEqual(meta["http_calls"], 0)
+        self.assertEqual(meta["reason"], "blocked_osm_hard_failure")
+        self.assertTrue(meta["local_places_blocked"])
+        self.assertTrue(meta["regional_places_blocked"])
+
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "x",
+            "HOMEFIT_PLACES_AO_ON_OSMDOWN": "1",
+        },
+    )
+    @patch(
+        "data_sources.places_active_outdoors_client._search_nearby",
+        return_value=[],
+    )
+    def test_osm_down_mode_allows_places_despite_hard_fail(self, _mock_nearby):
+        parks: list = []
+        playgrounds: list = []
+        swimming: list = []
+        camping: list = []
+        meta = maybe_augment_active_outdoors_with_places(
+            40.0,
+            -74.0,
+            local_radius_m=800,
+            regional_radius_m=15000,
+            parks=parks,
+            playgrounds=playgrounds,
+            swimming=swimming,
+            camping=camping,
+            local_overpass_outcome=OVERPASS_OUTCOME_ERROR,
+            regional_overpass_outcome="timeout",
+        )
+        self.assertTrue(meta["degraded_osm_substitute"])
+        self.assertGreaterEqual(meta["http_calls"], 1)
+
+    @patch.dict(
+        os.environ,
+        {
+            "HOMEFIT_PLACES_AO_FALLBACK_ENABLED": "1",
+            "GOOGLE_PLACES_API_KEY": "x",
+        },
+    )
+    @patch(
+        "data_sources.places_active_outdoors_client._search_nearby",
+        return_value=[],
+    )
+    def test_overpass_empty_still_triggers_places_when_thin(self, _mock_nearby):
+        """Trustworthy OSM empty still counts as thin signal for Places."""
+        parks: list = []
+        playgrounds: list = []
+        swimming: list = []
+        camping: list = []
+        meta = maybe_augment_active_outdoors_with_places(
+            40.0,
+            -74.0,
+            local_radius_m=800,
+            regional_radius_m=15000,
+            parks=parks,
+            playgrounds=playgrounds,
+            swimming=swimming,
+            camping=camping,
+            local_overpass_outcome=OVERPASS_OUTCOME_EMPTY,
+            regional_overpass_outcome=OVERPASS_OUTCOME_EMPTY,
+        )
+        self.assertFalse(meta.get("degraded_osm_substitute"))
+        self.assertGreaterEqual(meta["http_calls"], 1)

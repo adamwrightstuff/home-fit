@@ -8,6 +8,7 @@ import time
 from typing import Dict, Tuple, Optional, List
 
 from data_sources import osm_api
+from data_sources.osm_api import coerce_green_spaces_response, coerce_nature_features_response
 from data_sources.data_quality import assess_pillar_data_quality, get_baseline_context
 from data_sources.gee_api import get_tree_canopy_gee
 from data_sources.regional_baselines import (
@@ -151,7 +152,9 @@ def get_active_outdoors_score_v2(
     
     def _fetch_parks():
         """Fetch local parks, playgrounds, and recreational facilities."""
-        result = osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+        result = coerce_green_spaces_response(
+            osm_api.query_green_spaces(lat, lon, radius_m=local_radius)
+        )
         # Debug metadata (no PII): helps distinguish live vs stale-cache vs empty results.
         try:
             result = result or {}
@@ -199,13 +202,19 @@ def get_active_outdoors_score_v2(
     
     def _fetch_trails():
         """Fetch hiking trails within trail radius."""
-        return osm_api.query_nature_features(lat, lon, radius_m=trail_radius) or {}
-    
+        return coerce_nature_features_response(
+            osm_api.query_nature_features(lat, lon, radius_m=trail_radius)
+        )
+
     def _fetch_regional():
         """Fetch water features and camping within regional radius."""
         # PERFORMANCE: Regional AO v2 only consumes water + camping from this result.
         # Skip hiking routes/protected-area queries to reduce Overpass payload and latency.
-        return osm_api.query_nature_features(lat, lon, radius_m=regional_radius, include_hiking=False) or {}
+        return coerce_nature_features_response(
+            osm_api.query_nature_features(
+                lat, lon, radius_m=regional_radius, include_hiking=False
+            )
+        )
     
     def _fetch_canopy():
         """Fetch tree canopy percentage."""
@@ -288,6 +297,13 @@ def get_active_outdoors_score_v2(
         playgrounds=playgrounds,
         swimming=swimming,
         camping=camping,
+        local_overpass_outcome=local.get("_overpass_outcome") if isinstance(local, dict) else None,
+        trail_overpass_outcome=nature_trail.get("_overpass_outcome")
+        if isinstance(nature_trail, dict)
+        else None,
+        regional_overpass_outcome=nature_regional.get("_overpass_outcome")
+        if isinstance(nature_regional, dict)
+        else None,
     )
 
     # Detect special contexts (mountain town, desert) from objective signals.
@@ -327,7 +343,20 @@ def get_active_outdoors_score_v2(
     conf_notes = _active_outdoors_confidence_notes(
         dq, parks, playgrounds, hiking_trails, swimming, camping
     )
-    dq = {**dq, "confidence_notes": conf_notes}
+    dq = {
+        **dq,
+        "confidence_notes": conf_notes,
+        "overpass_local_outcome": local.get("_overpass_outcome")
+        if isinstance(local, dict)
+        else None,
+        "overpass_trail_outcome": nature_trail.get("_overpass_outcome")
+        if isinstance(nature_trail, dict)
+        else None,
+        "overpass_regional_outcome": nature_regional.get("_overpass_outcome")
+        if isinstance(nature_regional, dict)
+        else None,
+        "places_ao": places_ao_meta,
+    }
 
     if scoring_area_type != area_type:
         logger.info(
@@ -359,6 +388,9 @@ def get_active_outdoors_score_v2(
     # 4) Final score: transparent component sum (30% + 50% + 20% of total points)
     total_raw = daily_score + wild_score + water_score
     calibrated_total = max(0.0, min(100.0, total_raw))
+    cap = places_ao_meta.get("osm_down_score_cap")
+    if places_ao_meta.get("degraded_osm_substitute") and cap is not None:
+        calibrated_total = min(calibrated_total, float(cap))
 
     logger.info(
         f"🔍 [ACTIVE OUTDOORS V2 FINAL] daily={daily_score:.2f}, wild={wild_score:.2f}, water={water_score:.2f}, "
@@ -379,9 +411,23 @@ def get_active_outdoors_score_v2(
             "wild_adventure": round(wild_score, 1),
             "waterfront_lifestyle": round(water_score, 1),
         },
-        "summary": _build_summary_v2(
-            parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km
-        ),
+        "summary": {
+            **_build_summary_v2(
+                parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km
+            ),
+            "overpass": {
+                "local": local.get("_overpass_outcome")
+                if isinstance(local, dict)
+                else None,
+                "trail": nature_trail.get("_overpass_outcome")
+                if isinstance(nature_trail, dict)
+                else None,
+                "regional": nature_regional.get("_overpass_outcome")
+                if isinstance(nature_regional, dict)
+                else None,
+            },
+            "places_ao": places_ao_meta,
+        },
         "data_quality": dq,
         "confidence_notes": conf_notes,
         "area_classification": area_metadata,

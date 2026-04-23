@@ -5,6 +5,14 @@ Local: parks / playgrounds (and aligned types) near the home point.
 Regional: beaches, campgrounds, RV parks within the regional radius (no marinas).
 
 Uses searchNearby with includedTypes; merges into existing OSM-shaped lists in place.
+
+Policy — OSM vs Places:
+- Normal path: Places runs only when OSM counts are below thresholds (thin signal), the feature
+  flag is on, and a Google API key is present.
+- When Overpass failed for a slice (`overpass_error` / `timeout` on `_overpass_outcome`), Places
+  must not substitute for missing OSM unless explicitly enabled via HOMEFIT_PLACES_AO_ON_OSMDOWN.
+- When that degraded mode is on, callers may cap the pillar score (HOMEFIT_PLACES_AO_OSMDOWN_SCORE_CAP).
+- Trustworthy empty OSM (`overpass_empty` / ok with zero features) still allows thin-signal Places.
 """
 
 from __future__ import annotations
@@ -18,6 +26,7 @@ import requests
 from logging_config import get_logger
 
 from data_sources.places_env import google_places_api_key, places_ao_fallback_enabled as env_places_ao_fallback_enabled
+from data_sources.osm_api import OVERPASS_OUTCOME_ERROR, OVERPASS_OUTCOME_TIMEOUT
 from data_sources.utils import haversine_distance
 
 logger = get_logger(__name__)
@@ -75,6 +84,27 @@ def _int_env(name: str, default: int) -> int:
         return int(os.getenv(name, str(default)))
     except ValueError:
         return default
+
+
+def _env_truthy(name: str) -> bool:
+    v = (os.getenv(name) or "").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
+
+def _overpass_hard_failed(outcome: Optional[str]) -> bool:
+    return outcome in (OVERPASS_OUTCOME_ERROR, OVERPASS_OUTCOME_TIMEOUT)
+
+
+def _places_slice_allowed(
+    need: bool, outcome: Optional[str], *, osm_down_mode: bool
+) -> Tuple[bool, str]:
+    if not need:
+        return False, "not_needed"
+    if not _overpass_hard_failed(outcome):
+        return True, "osm_ok_or_empty"
+    if osm_down_mode:
+        return True, "degraded_osm_substitute"
+    return False, "blocked_osm_hard_failure"
 
 
 def _normalize_place_id(resource_name: Optional[str]) -> Optional[str]:
@@ -321,6 +351,9 @@ def maybe_augment_active_outdoors_with_places(
     playgrounds: List[Dict[str, Any]],
     swimming: List[Dict[str, Any]],
     camping: List[Dict[str, Any]],
+    local_overpass_outcome: Optional[str] = None,
+    trail_overpass_outcome: Optional[str] = None,
+    regional_overpass_outcome: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Optionally merge Google Places POIs into AO lists. Lists are mutated in place.
@@ -335,6 +368,13 @@ def maybe_augment_active_outdoors_with_places(
         "local_added": 0,
         "regional_swim_added": 0,
         "regional_camp_added": 0,
+        "osm_local_outcome": local_overpass_outcome,
+        "osm_trail_outcome": trail_overpass_outcome,
+        "osm_regional_outcome": regional_overpass_outcome,
+        "local_places_blocked": False,
+        "regional_places_blocked": False,
+        "degraded_osm_substitute": False,
+        "osm_down_score_cap": None,
     }
 
     if not places_ao_fallback_enabled():
@@ -365,10 +405,41 @@ def maybe_augment_active_outdoors_with_places(
 
     meta["triggered"] = True
     meta["reason"] = "thin_osm_signal"
+    osm_down_mode = _env_truthy("HOMEFIT_PLACES_AO_ON_OSMDOWN")
+    cap_raw = _int_env("HOMEFIT_PLACES_AO_OSMDOWN_SCORE_CAP", 0)
+    osm_down_cap = cap_raw if cap_raw > 0 else None
+    if osm_down_mode and osm_down_cap is not None:
+        meta["osm_down_score_cap"] = osm_down_cap
+
+    allow_local, local_gate = _places_slice_allowed(
+        need_local, local_overpass_outcome, osm_down_mode=osm_down_mode
+    )
+    allow_regional, regional_gate = _places_slice_allowed(
+        need_regional, regional_overpass_outcome, osm_down_mode=osm_down_mode
+    )
+
+    meta["local_places_blocked"] = bool(need_local and not allow_local)
+    meta["regional_places_blocked"] = bool(need_regional and not allow_regional)
+
+    if local_gate == "degraded_osm_substitute" or regional_gate == "degraded_osm_substitute":
+        meta["degraded_osm_substitute"] = True
+
+    local_blocked = need_local and not allow_local
+    regional_blocked = need_regional and not allow_regional
+    if local_blocked and regional_blocked:
+        meta["reason"] = "blocked_osm_hard_failure"
+        return meta
+    if local_blocked and not need_regional:
+        meta["reason"] = "blocked_osm_hard_failure_local"
+        return meta
+    if regional_blocked and not need_local:
+        meta["reason"] = "blocked_osm_hard_failure_regional"
+        return meta
+
     seen_ids: Set[str] = set()
     calls = 0
 
-    if need_local and calls < max_calls:
+    if need_local and allow_local and calls < max_calls:
         included = [
             "park",
             "playground",
@@ -385,8 +456,8 @@ def maybe_augment_active_outdoors_with_places(
                 raw, lat, lon, parks, playgrounds, near_dup_m, seen_ids
             )
 
-    if need_regional and calls < max_calls:
-        included: List[str] = []
+    if need_regional and allow_regional and calls < max_calls:
+        included = []
         if need_swim:
             included.append("beach")
         if need_camp:

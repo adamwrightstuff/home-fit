@@ -313,6 +313,68 @@ def _retry_overpass(
 
 DEBUG_PARKS = True  # Set False to silence park debugging
 
+# --- Overpass outcome taxonomy (pillars / Places gating; stable string values) ---
+OVERPASS_OUTCOME_OK = "overpass_ok"
+OVERPASS_OUTCOME_EMPTY = "overpass_empty"
+OVERPASS_OUTCOME_ERROR = "overpass_error"
+OVERPASS_OUTCOME_TIMEOUT = "timeout"
+
+
+def _greens_skeleton(outcome: str) -> Dict[str, Any]:
+    """Empty green-spaces dict with explicit Overpass outcome (never cache as success)."""
+    return {
+        "parks": [],
+        "playgrounds": [],
+        "recreational_facilities": [],
+        "_overpass_outcome": outcome,
+        "_cache_skip": True,
+    }
+
+
+def _nature_skeleton(outcome: str) -> Dict[str, Any]:
+    return {
+        "hiking": [],
+        "swimming": [],
+        "camping": [],
+        "_overpass_outcome": outcome,
+        "_cache_skip": True,
+    }
+
+
+def coerce_green_spaces_response(result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Normalize greens response after decorators (`safe_api_call` may return None on timeout)."""
+    if isinstance(result, dict):
+        return result
+    return _greens_skeleton(OVERPASS_OUTCOME_ERROR)
+
+
+def coerce_nature_features_response(result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if isinstance(result, dict):
+        return result
+    return _nature_skeleton(OVERPASS_OUTCOME_ERROR)
+
+
+def _classify_overpass_exception(exc: BaseException) -> str:
+    s = str(exc).lower()
+    if "timeout" in s or "timed out" in s:
+        return OVERPASS_OUTCOME_TIMEOUT
+    return OVERPASS_OUTCOME_ERROR
+
+
+# Serialize concurrent identical Overpass calls (same lat/lon/radius/kind); RLock is re-entrant
+# so nested query_green_spaces from query_nature_features does not deadlock.
+_overpass_key_locks: Dict[str, threading.RLock] = {}
+_overpass_key_locks_master = threading.Lock()
+
+
+def _overpass_rlock_for(key: str) -> threading.RLock:
+    with _overpass_key_locks_master:
+        lk = _overpass_key_locks.get(key)
+        if lk is None:
+            lk = threading.RLock()
+            _overpass_key_locks[key] = lk
+        return lk
+
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
@@ -375,199 +437,206 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     out skel qt;
     """
 
-    try:
-        def _do_request():
-            r = requests.post(
-                get_overpass_url(),
-                data={"data": query},
-                timeout=_overpass_timeout(20),  # Reduced from 40s for faster failure
-                headers={"User-Agent": "HomeFit/1.0"}
-            )
-            # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
-            # If we just return the response, _retry_overpass() will treat it as "success"
-            # and we will never fall back to alternate endpoints.
-            if r.status_code != 200:
-                raise RuntimeError(f"Overpass status={r.status_code}")
-            return r
-
-        # Parks are critical - use CRITICAL profile (retry all attempts)
-        resp = _retry_overpass(_do_request, query_type="parks")
-
-        if resp is None or resp.status_code != 200:
-            # Check for stale cache before returning None
-            # This allows us to use previously successful data when API temporarily fails
-            cache_key = _generate_cache_key("query_green_spaces", lat, lon, radius_m)
-            current_time = time.time()
-            stale_cache_entry = None
-            stale_cache_time = 0
-            
-            # Try Redis first
-            redis_client = _get_redis_client()
-            if redis_client:
-                try:
-                    cached_data = redis_client.get(cache_key)
-                    if cached_data:
-                        data = json.loads(cached_data)
-                        stale_cache_entry = data.get('value')
-                        stale_cache_time = data.get('timestamp', 0)
-                except Exception:
-                    pass
-            
-            # Fall back to in-memory cache
-            if stale_cache_entry is None and cache_key in _cache:
-                stale_cache_entry = _cache.get(cache_key)
-                stale_cache_time = _cache_ttl.get(cache_key, 0)
-            
-            # Use stale cache if it exists and is less than 24 hours old
-            # Only use if it doesn't have an error (has actual data)
-            if stale_cache_entry and isinstance(stale_cache_entry, dict):
-                cache_age_hours = (current_time - stale_cache_time) / 3600
-                has_error = stale_cache_entry.get('error') is not None
-                has_data = (
-                    len(stale_cache_entry.get('parks', [])) > 0 or
-                    len(stale_cache_entry.get('playgrounds', [])) > 0 or
-                    len(stale_cache_entry.get('recreational_facilities', [])) > 0
+    _gs_key = f"query_green_spaces:{lat:.5f}:{lon:.5f}:{int(radius_m)}"
+    with _overpass_rlock_for(_gs_key):
+        try:
+            def _do_request():
+                r = requests.post(
+                    get_overpass_url(),
+                    data={"data": query},
+                    timeout=_overpass_timeout(20),  # Reduced from 40s for faster failure
+                    headers={"User-Agent": "HomeFit/1.0"}
                 )
-                
-                if not has_error and has_data and cache_age_hours < 24:
-                    logger.warning(
-                        f"OSM parks API failed, using stale cache (age: {cache_age_hours:.1f} hours) "
-                        f"for lat={lat}, lon={lon}, radius={radius_m}m"
-                    )
-                    result = stale_cache_entry.copy()
-                    result['_stale_cache'] = True
-                    result['_cache_age_hours'] = round(cache_age_hours, 1)
-                    result['data_warning'] = 'stale_cache_used'
-                    return result
+                # IMPORTANT: Non-200 responses (e.g., 504) must trigger retry/endpoint rotation.
+                # If we just return the response, _retry_overpass() will treat it as "success"
+                # and we will never fall back to alternate endpoints.
+                if r.status_code != 200:
+                    raise RuntimeError(f"Overpass status={r.status_code}")
+                return r
+
+            # Parks are critical - use CRITICAL profile (retry all attempts)
+            resp = _retry_overpass(_do_request, query_type="parks")
+
+            if resp is None or resp.status_code != 200:
+                # Check for stale cache before returning None
+                # This allows us to use previously successful data when API temporarily fails
+                cache_key = _generate_cache_key("query_green_spaces", lat, lon, radius_m)
+                current_time = time.time()
+                stale_cache_entry = None
+                stale_cache_time = 0
             
-            # No usable stale cache - log error and return None
-            if resp and resp.status_code == 429:
-                logger.warning("OSM parks query rate limited (429)")
-            elif resp:
-                logger.warning(f"OSM parks query failed with status {resp.status_code}")
-            else:
-                logger.warning("OSM parks query returned no response")
-            return None
+                # Try Redis first
+                redis_client = _get_redis_client()
+                if redis_client:
+                    try:
+                        cached_data = redis_client.get(cache_key)
+                        if cached_data:
+                            data = json.loads(cached_data)
+                            stale_cache_entry = data.get('value')
+                            stale_cache_time = data.get('timestamp', 0)
+                    except Exception:
+                        pass
+            
+                # Fall back to in-memory cache
+                if stale_cache_entry is None and cache_key in _cache:
+                    stale_cache_entry = _cache.get(cache_key)
+                    stale_cache_time = _cache_ttl.get(cache_key, 0)
+            
+                # Use stale cache if it exists and is less than 24 hours old
+                # Only use if it doesn't have an error (has actual data)
+                if stale_cache_entry and isinstance(stale_cache_entry, dict):
+                    cache_age_hours = (current_time - stale_cache_time) / 3600
+                    has_error = stale_cache_entry.get('error') is not None
+                    has_data = (
+                        len(stale_cache_entry.get('parks', [])) > 0 or
+                        len(stale_cache_entry.get('playgrounds', [])) > 0 or
+                        len(stale_cache_entry.get('recreational_facilities', [])) > 0
+                    )
 
-        data = _safe_overpass_json(resp, context="parks query")
-        if data is None:
-            return None
-        elements = data.get("elements", [])
+                    if not has_error and has_data and cache_age_hours < 24:
+                        logger.warning(
+                            f"OSM parks API failed, using stale cache (age: {cache_age_hours:.1f} hours) "
+                            f"for lat={lat}, lon={lon}, radius={radius_m}m"
+                        )
+                        result = stale_cache_entry.copy()
+                        result['_stale_cache'] = True
+                        result['_cache_age_hours'] = round(cache_age_hours, 1)
+                        result['data_warning'] = 'stale_cache_used'
+                        if "_overpass_outcome" not in result:
+                            result["_overpass_outcome"] = OVERPASS_OUTCOME_OK
+                        return result
+
+                # No usable stale cache - log error and return explicit failure dict
+                if resp and resp.status_code == 429:
+                    logger.warning("OSM parks query rate limited (429)")
+                elif resp:
+                    logger.warning(f"OSM parks query failed with status {resp.status_code}")
+                else:
+                    logger.warning("OSM parks query returned no response")
+                return _greens_skeleton(OVERPASS_OUTCOME_ERROR)
+
+            data = _safe_overpass_json(resp, context="parks query")
+            if data is None:
+                return _greens_skeleton(OVERPASS_OUTCOME_ERROR)
+            elements = data.get("elements", [])
         
-        # DIAGNOSTIC: Log raw park elements before processing
-        raw_park_elements = [
-            e for e in elements 
-            if (e.get("tags", {}).get("leisure") in ["park", "garden", "dog_park", "playground", "recreation_ground"] or
-                e.get("tags", {}).get("landuse") in ["park", "recreation_ground", "village_green"] or
-                e.get("tags", {}).get("highway") in ["cycleway", "footway"])
-        ]
-        if raw_park_elements:
-            logger.info(
-                f"🔍 [PARKS DIAGNOSTIC] Found {len(raw_park_elements)} raw park/greenway elements "
-                f"(types: {set(e.get('type') for e in raw_park_elements)}, "
-                f"total elements: {len(elements)})",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "raw_park_count": len(raw_park_elements),
-                    "raw_park_types": [e.get("type") for e in raw_park_elements],
-                    "total_elements": len(elements),
-                }
-            )
-        elif not elements:
-            logger.warning(
-                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned empty results "
-                f"for lat={lat}, lon={lon}, radius={radius_m}m",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "radius_m": radius_m,
-                }
-            )
+            # DIAGNOSTIC: Log raw park elements before processing
+            raw_park_elements = [
+                e for e in elements 
+                if (e.get("tags", {}).get("leisure") in ["park", "garden", "dog_park", "playground", "recreation_ground"] or
+                    e.get("tags", {}).get("landuse") in ["park", "recreation_ground", "village_green"] or
+                    e.get("tags", {}).get("highway") in ["cycleway", "footway"])
+            ]
+            if raw_park_elements:
+                logger.info(
+                    f"🔍 [PARKS DIAGNOSTIC] Found {len(raw_park_elements)} raw park/greenway elements "
+                    f"(types: {set(e.get('type') for e in raw_park_elements)}, "
+                    f"total elements: {len(elements)})",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "raw_park_count": len(raw_park_elements),
+                        "raw_park_types": [e.get("type") for e in raw_park_elements],
+                        "total_elements": len(elements),
+                    }
+                )
+            elif not elements:
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned empty results "
+                    f"for lat={lat}, lon={lon}, radius={radius_m}m",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "radius_m": radius_m,
+                    }
+                )
 
-        parks, playgrounds, recreational_facilities = _process_green_features(
-            elements, lat, lon)
+            parks, playgrounds, recreational_facilities = _process_green_features(
+                elements, lat, lon)
         
-        # DIAGNOSTIC: Log processed park results
-        if len(parks) != len(raw_park_elements) and len(raw_park_elements) > 0:
-            logger.warning(
-                f"🔍 [PARKS DIAGNOSTIC] Processing filtered parks: "
-                f"{len(raw_park_elements)} raw → {len(parks)} processed "
-                f"(filtered: {len(raw_park_elements) - len(parks)})",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "raw_count": len(raw_park_elements),
-                    "processed_count": len(parks),
-                    "filtered_count": len(raw_park_elements) - len(parks),
-                }
+            # DIAGNOSTIC: Log processed park results
+            if len(parks) != len(raw_park_elements) and len(raw_park_elements) > 0:
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC] Processing filtered parks: "
+                    f"{len(raw_park_elements)} raw → {len(parks)} processed "
+                    f"(filtered: {len(raw_park_elements) - len(parks)})",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "raw_count": len(raw_park_elements),
+                        "processed_count": len(parks),
+                        "filtered_count": len(raw_park_elements) - len(parks),
+                    }
+                )
+            elif len(parks) == 0 and len(elements) > 0:
+                # Log warning if we got elements but no parks (might indicate processing issue)
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned {len(elements)} elements "
+                    f"but 0 parks after processing (raw park elements: {len(raw_park_elements)}, "
+                    f"radius={radius_m}m). This may indicate geometry calculation failures or filtering issues.",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "total_elements": len(elements),
+                        "raw_park_elements": len(raw_park_elements),
+                        "radius_m": radius_m,
+                    }
+                )
+            elif len(parks) == 0 and len(elements) == 0:
+                # Log warning if query returned no elements at all (might be legitimate - no parks in area)
+                # Use WARNING level so it shows up in production logs
+                logger.warning(
+                    f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned 0 elements "
+                    f"for lat={lat}, lon={lon}, radius={radius_m}m. This may be legitimate if no parks exist in the area.",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "radius_m": radius_m,
+                    }
+                )
+            elif len(parks) > 0:
+                logger.info(
+                    f"🔍 [PARKS DIAGNOSTIC] Successfully processed {len(parks)} parks "
+                    f"(playgrounds: {len(playgrounds)}, facilities: {len(recreational_facilities)})",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "park_count": len(parks),
+                        "playground_count": len(playgrounds),
+                        "facility_count": len(recreational_facilities),
+                    }
+                )
+
+            if DEBUG_PARKS:
+                logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds, {len(recreational_facilities)} recreational facilities")
+
+            result = {
+                "parks": parks,
+                "playgrounds": playgrounds,
+                "recreational_facilities": recreational_facilities,  # NEW: tennis courts, baseball fields, dog parks
+                # tree_features removed (not used by any pillar; kept parks/playgrounds only)
+            }
+            result["_overpass_outcome"] = (
+                OVERPASS_OUTCOME_EMPTY if len(elements) == 0 else OVERPASS_OUTCOME_OK
             )
-        elif len(parks) == 0 and len(elements) > 0:
-            # Log warning if we got elements but no parks (might indicate processing issue)
-            logger.warning(
-                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned {len(elements)} elements "
-                f"but 0 parks after processing (raw park elements: {len(raw_park_elements)}, "
-                f"radius={radius_m}m). This may indicate geometry calculation failures or filtering issues.",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "total_elements": len(elements),
-                    "raw_park_elements": len(raw_park_elements),
-                    "radius_m": radius_m,
-                }
-            )
-        elif len(parks) == 0 and len(elements) == 0:
-            # Log warning if query returned no elements at all (might be legitimate - no parks in area)
-            # Use WARNING level so it shows up in production logs
-            logger.warning(
-                f"🔍 [PARKS DIAGNOSTIC] OSM parks query returned 0 elements "
-                f"for lat={lat}, lon={lon}, radius={radius_m}m. This may be legitimate if no parks exist in the area.",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "radius_m": radius_m,
-                }
-            )
-        elif len(parks) > 0:
-            logger.info(
-                f"🔍 [PARKS DIAGNOSTIC] Successfully processed {len(parks)} parks "
-                f"(playgrounds: {len(playgrounds)}, facilities: {len(recreational_facilities)})",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "park_count": len(parks),
-                    "playground_count": len(playgrounds),
-                    "facility_count": len(recreational_facilities),
-                }
-            )
 
-        if DEBUG_PARKS:
-            logger.debug(f"Found {len(parks)} parks, {len(playgrounds)} playgrounds, {len(recreational_facilities)} recreational facilities")
+            # Avoid caching "empty" results: these are frequently caused by transient Overpass failures
+            # or endpoint inconsistencies, and caching them poisons downstream scoring (e.g. Boulder parks=0).
+            if not parks and not playgrounds and not recreational_facilities:
+                result["_cache_skip"] = True
+                result["data_warning"] = "empty_green_spaces_result_not_cached"
 
-        result = {
-            "parks": parks,
-            "playgrounds": playgrounds,
-            "recreational_facilities": recreational_facilities,  # NEW: tennis courts, baseball fields, dog parks
-            # tree_features removed (not used by any pillar; kept parks/playgrounds only)
-        }
+            return result
 
-        # Avoid caching "empty" results: these are frequently caused by transient Overpass failures
-        # or endpoint inconsistencies, and caching them poisons downstream scoring (e.g. Boulder parks=0).
-        if not parks and not playgrounds and not recreational_facilities:
-            result["_cache_skip"] = True
-            result["data_warning"] = "empty_green_spaces_result_not_cached"
-
-        return result
-
-    except Exception as e:
-        logger.error(f"OSM parks query error: {e}", exc_info=True)
-        return None
+        except Exception as e:
+            logger.error(f"OSM parks query error: {e}", exc_info=True)
+            return _greens_skeleton(_classify_overpass_exception(e))
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
@@ -633,97 +702,102 @@ def query_nature_features(
         + "\n    );\n    out body;\n    >;\n    out skel qt;\n    "
     )
 
-    try:
-        def _do_request():
-            r = requests.post(
-                get_overpass_url(),
-                data={"data": query},
-                timeout=_overpass_timeout(25),  # Reduced from 50s for faster failure
-                headers={"User-Agent": "HomeFit/1.0"}
-            )
-            if r.status_code != 200:
-                raise RuntimeError(f"Overpass status={r.status_code}")
-            return r
+    _nf_key = f"query_nature_features:{lat:.5f}:{lon:.5f}:{int(radius_m)}:{1 if include_hiking else 0}"
+    with _overpass_rlock_for(_nf_key):
+        try:
+            def _do_request():
+                r = requests.post(
+                    get_overpass_url(),
+                    data={"data": query},
+                    timeout=_overpass_timeout(25),  # Reduced from 50s for faster failure
+                    headers={"User-Agent": "HomeFit/1.0"}
+                )
+                if r.status_code != 200:
+                    raise RuntimeError(f"Overpass status={r.status_code}")
+                return r
 
-        # Nature features are non-critical (nice to have) - use NON_CRITICAL profile
-        resp = _retry_overpass(_do_request, query_type="nature_features")
-        if resp is None:
-            return None
-        data = _safe_overpass_json(resp, context="nature features query")
-        if data is None:
-            return None
-        elements = data.get("elements", [])
-        
-        # DIAGNOSTIC: Log raw camping elements before processing
-        raw_camping_elements = [
-            e for e in elements 
-            if e.get("tags", {}).get("tourism") == "camp_site"
-        ]
-        if raw_camping_elements:
-            logger.info(
-                f"🔍 [CAMPING DIAGNOSTIC] Found {len(raw_camping_elements)} raw camping elements "
-                f"(types: {set(e.get('type') for e in raw_camping_elements)})",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "raw_camping_count": len(raw_camping_elements),
-                    "raw_camping_types": [e.get("type") for e in raw_camping_elements],
-                }
-            )
+            # Nature features are non-critical (nice to have) - use NON_CRITICAL profile
+            resp = _retry_overpass(_do_request, query_type="nature_features")
+            if resp is None or resp.status_code != 200:
+                return _nature_skeleton(OVERPASS_OUTCOME_ERROR)
+            data = _safe_overpass_json(resp, context="nature features query")
+            if data is None:
+                return _nature_skeleton(OVERPASS_OUTCOME_ERROR)
+            elements = data.get("elements", [])
 
-        hiking, swimming, camping = _process_nature_features(
-            elements, lat, lon)
-        
-        # DIAGNOSTIC: Log processed camping results
-        if len(camping) != len(raw_camping_elements):
-            logger.warning(
-                f"🔍 [CAMPING DIAGNOSTIC] Processing filtered camping: "
-                f"{len(raw_camping_elements)} raw → {len(camping)} processed "
-                f"(filtered: {len(raw_camping_elements) - len(camping)})",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "raw_count": len(raw_camping_elements),
-                    "processed_count": len(camping),
-                    "filtered_count": len(raw_camping_elements) - len(camping),
-                }
-            )
-        elif len(camping) > 0:
-            logger.info(
-                f"🔍 [CAMPING DIAGNOSTIC] Successfully processed {len(camping)} camping sites",
-                extra={
-                    "pillar_name": "active_outdoors",
-                    "lat": lat,
-                    "lon": lon,
-                    "camping_count": len(camping),
-                }
-            )
+            # DIAGNOSTIC: Log raw camping elements before processing
+            raw_camping_elements = [
+                e for e in elements
+                if e.get("tags", {}).get("tourism") == "camp_site"
+            ]
+            if raw_camping_elements:
+                logger.info(
+                    f"🔍 [CAMPING DIAGNOSTIC] Found {len(raw_camping_elements)} raw camping elements "
+                    f"(types: {set(e.get('type') for e in raw_camping_elements)})",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "raw_camping_count": len(raw_camping_elements),
+                        "raw_camping_types": [e.get("type") for e in raw_camping_elements],
+                    }
+                )
 
-        # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park.
-        #
-        # IMPORTANT (performance): this helper calls `query_green_spaces()` (itself an Overpass request)
-        # and then may issue additional Overpass requests per large park to fetch internal paths.
-        # For very large radii (e.g. 50km regional queries used for water/camping), this is
-        # disproportionately expensive and doesn't materially improve the result quality in practice.
-        # Keep it for "trail-scale" queries only.
-        if include_hiking and radius_m <= 20000:
-            try:
-                large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
-                hiking.extend(large_park_trails)
-            except Exception as e:
-                logger.warning(f"Large park trail query failed: {e}")
+            hiking, swimming, camping = _process_nature_features(
+                elements, lat, lon)
 
-        return {
-            "hiking": hiking,
-            "swimming": swimming,
-            "camping": camping
-        }
+            # DIAGNOSTIC: Log processed camping results
+            if len(camping) != len(raw_camping_elements):
+                logger.warning(
+                    f"🔍 [CAMPING DIAGNOSTIC] Processing filtered camping: "
+                    f"{len(raw_camping_elements)} raw → {len(camping)} processed "
+                    f"(filtered: {len(raw_camping_elements) - len(camping)})",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "raw_count": len(raw_camping_elements),
+                        "processed_count": len(camping),
+                        "filtered_count": len(raw_camping_elements) - len(camping),
+                    }
+                )
+            elif len(camping) > 0:
+                logger.info(
+                    f"🔍 [CAMPING DIAGNOSTIC] Successfully processed {len(camping)} camping sites",
+                    extra={
+                        "pillar_name": "active_outdoors",
+                        "lat": lat,
+                        "lon": lon,
+                        "camping_count": len(camping),
+                    }
+                )
 
-    except Exception as e:
-        logger.error(f"OSM nature query error: {e}", exc_info=True)
-        return None
+            # Add trails from large parks (>50 hectares) to avoid missing urban parks like Prospect Park.
+            #
+            # IMPORTANT (performance): this helper calls `query_green_spaces()` (itself an Overpass request)
+            # and then may issue additional Overpass requests per large park to fetch internal paths.
+            # For very large radii (e.g. 50km regional queries used for water/camping), this is
+            # disproportionately expensive and doesn't materially improve the result quality in practice.
+            # Keep it for "trail-scale" queries only.
+            if include_hiking and radius_m <= 20000:
+                try:
+                    large_park_trails = _query_trails_in_large_parks(lat, lon, radius_m)
+                    hiking.extend(large_park_trails)
+                except Exception as e:
+                    logger.warning(f"Large park trail query failed: {e}")
+
+            return {
+                "hiking": hiking,
+                "swimming": swimming,
+                "camping": camping,
+                "_overpass_outcome": (
+                    OVERPASS_OUTCOME_EMPTY if len(elements) == 0 else OVERPASS_OUTCOME_OK
+                ),
+            }
+
+        except Exception as e:
+            logger.error(f"OSM nature query error: {e}", exc_info=True)
+            return _nature_skeleton(_classify_overpass_exception(e))
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])

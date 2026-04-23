@@ -17,6 +17,15 @@ from pillars.beauty_common import NATURAL_ENHANCER_CAP, normalize_beauty_score
 
 logger = get_logger(__name__)
 
+
+def _greenspaces_osm_unavailable(green_spaces: Optional[Dict]) -> bool:
+    """True when Overpass failed (timeout/error), matching the legacy ``None`` query path."""
+    if green_spaces is None or not isinstance(green_spaces, dict):
+        return True
+    o = green_spaces.get("_overpass_outcome")
+    return o in (osm_api.OVERPASS_OUTCOME_ERROR, osm_api.OVERPASS_OUTCOME_TIMEOUT)
+
+
 # Try optional data sources that are only available in specific cities.
 try:
     from data_sources import nyc_api as nyc_api
@@ -947,14 +956,14 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400, area_
         # FALLBACK: If 400m query fails (returns None), try 1000m
         # This ensures we capture parks even when API has temporary issues
         # Design principle: Scalable & General - works reliably across all locations
-        if not green_spaces and radius_m == 400:
+        if _greenspaces_osm_unavailable(green_spaces) and radius_m == 400:
             logger.debug("OSM query for 400m failed, trying 1000m fallback for parks")
             green_spaces = osm_api.query_green_spaces(lat, lon, radius_m=1000)
             fallback_used = True
-            if green_spaces:
+            if not _greenspaces_osm_unavailable(green_spaces):
                 logger.debug("Successfully retrieved parks using 1000m fallback")
         
-        if not green_spaces:
+        if _greenspaces_osm_unavailable(green_spaces):
             return 0.0, {
                 "count": 0, 
                 "total_area_m2": 0, 
@@ -973,7 +982,7 @@ def _score_local_green_spaces(lat: float, lon: float, radius_m: int = 400, area_
         if area_type and area_type.lower() in ['suburban', 'exurban'] and radius_m <= 1000:
             try:
                 extended_green = osm_api.query_green_spaces(lat, lon, radius_m=2000)
-                if extended_green:
+                if not _greenspaces_osm_unavailable(extended_green):
                     extended_parks = extended_green.get('parks', [])
                     # Filter to only large green spaces (golf courses, large parks >50k m²)
                     # These are highly visible even from distance
@@ -1746,7 +1755,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if score == 0.0:
         parks_radius = 800 if location_scope == 'neighborhood' else 500
         tree_data = osm_api.query_green_spaces(lat, lon, radius_m=parks_radius)
-        if tree_data:
+        if not _greenspaces_osm_unavailable(tree_data):
             parks = tree_data.get('parks', [])
             if parks:
                 park_count = len(parks)
@@ -2965,7 +2974,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     from data_sources import osm_api
                     # Try 1000m query directly as last resort
                     fallback_green = osm_api.query_green_spaces(lat, lon, radius_m=1000)
-                    if fallback_green:
+                    if not _greenspaces_osm_unavailable(fallback_green):
                         fallback_parks = fallback_green.get('parks', [])
                         if fallback_parks:
                             # Calculate parks component directly from park count/area
