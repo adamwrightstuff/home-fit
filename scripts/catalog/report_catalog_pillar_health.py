@@ -12,7 +12,7 @@ Writes:
 Usage:
 
   python3 scripts/catalog/report_catalog_pillar_health.py \\
-    --jsonl data/nyc_metro_place_catalog_scores.jsonl
+    --jsonl data/nyc_metro_place_catalog_scores_merged.jsonl
 
   python3 scripts/catalog/report_catalog_pillar_health.py \\
     --jsonl data/chicago_metro_catalog_scores.jsonl \\
@@ -29,7 +29,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores.jsonl"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from data_sources.data_quality import data_quality_indicates_fallback  # noqa: E402
+
+DEFAULT_JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 
 # Match frontend/lib/pillars.ts PILLAR_ORDER for display consistency.
 PILLAR_ORDER: List[str] = [
@@ -94,7 +98,7 @@ def classify_pillar(
         if "disabled" in reason or "school" in reason:
             return None
 
-    fb = dq.get("fallback_used") is True
+    fb = data_quality_indicates_fallback(dq)
     conf = pillar.get("confidence")
     if fb and (conf is None or conf == 0 or conf == 0.0):
         return "low_confidence_fallback"
@@ -259,7 +263,9 @@ def main() -> int:
                     "score": (pillars.get(pname) or {}).get("score") if isinstance(pillars.get(pname), dict) else "",
                     "pillar_error": (pillars.get(pname) or {}).get("error") if isinstance(pillars.get(pname), dict) else "",
                     "confidence": (pillars.get(pname) or {}).get("confidence") if isinstance(pillars.get(pname), dict) else "",
-                    "fallback_used": (pillars.get(pname) or {}).get("data_quality", {}).get("fallback_used")
+                    "fallback_used": data_quality_indicates_fallback(
+                        (pillars.get(pname) or {}).get("data_quality") or {}
+                    )
                     if isinstance(pillars.get(pname), dict)
                     else "",
                     "reason": (pillars.get(pname) or {}).get("data_quality", {}).get("reason")

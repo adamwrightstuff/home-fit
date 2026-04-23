@@ -64,7 +64,7 @@ from pillars.composite_indices import (
 )
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
-from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS
+from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS, data_quality_indicates_fallback
 
 ##########################
 # CONFIGURATION FLAGS
@@ -881,7 +881,7 @@ def _set_pillar_status(
             entry["status"] = "failed"
             dq.setdefault("quality_tier", "very_poor")
             dq.setdefault("fallback_reason", dq.get("reason", "Pillar execution failed"))
-        elif dq.get("fallback_used"):
+        elif data_quality_indicates_fallback(dq):
             entry["status"] = "fallback"
             dq.setdefault("quality_tier", "poor")
             dq.setdefault("fallback_reason", dq.get("reason", "Fallback score used"))
@@ -5144,7 +5144,7 @@ def _calculate_overall_confidence(pillars: dict) -> dict:  # Changed from Dict t
         confidences.append(confidence)
         
         data_quality = pillar_data.get("data_quality", {})
-        if data_quality.get("fallback_used", False):
+        if data_quality_indicates_fallback(data_quality):
             fallback_count += 1
         
         quality_tier = data_quality.get("quality_tier", "unknown")

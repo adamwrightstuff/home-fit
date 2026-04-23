@@ -1831,6 +1831,18 @@ INFORMATIONAL_DATA_WARNINGS = frozenset(
 )
 
 
+def data_quality_indicates_fallback(dq: Any) -> bool:
+    """True if dq indicates fallback (top-level fallback_used or legacy fallback_metadata only)."""
+    if not isinstance(dq, dict):
+        return False
+    if dq.get("fallback_used") is True:
+        return True
+    meta = dq.get("fallback_metadata")
+    if isinstance(meta, dict) and meta.get("fallback_used") is True:
+        return True
+    return False
+
+
 def assess_pillar_data_quality(
     pillar_name: str,
     data: Dict,
@@ -1888,6 +1900,8 @@ def assess_pillar_data_quality(
         'quality_tier': quality_tier,
         'needs_fallback': False,
         'fallback_score': None,
+        # Top-level: matches quality_education and main._set_pillar_status / UI / report scripts.
+        'fallback_used': fallback_used,
         'fallback_metadata': {'fallback_used': fallback_used},
         'confidence': confidence,
         'expected_minimums': expected_minimums,
