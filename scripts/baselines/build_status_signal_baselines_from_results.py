@@ -5,7 +5,10 @@ Build data/status_signal_baselines.json from data/results.csv (collector output)
 Reads scored API responses from results.csv, extracts the same metrics used by
 Status Signal (wealth, education, occupation), aggregates by Census Division,
 and writes min/max per metric so Status Signal normalization matches observed
-ranges from your scored locations.
+ranges from your scored locations. Percent-style metrics (*_pct) are only written
+when min/max are within [0, 100]; otherwise the metric is skipped (logged). The
+output is passed through a sanitizer that coerces bad legacy min/max and fills
+nyc_metro / la_metro education when still missing.
 
 Usage (from project root):
 
@@ -24,6 +27,16 @@ from typing import Any, Dict, List, Optional
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+
+import importlib.util
+
+_spec_pct = importlib.util.spec_from_file_location(
+    "status_signal_baseline_pct",
+    os.path.join(ROOT, "scripts", "baselines", "status_signal_baseline_pct.py"),
+)
+_ssbp = importlib.util.module_from_spec(_spec_pct)
+assert _spec_pct and _spec_pct.loader
+_spec_pct.loader.exec_module(_ssbp)
 
 
 def get_cbsa_key(city: str, state: str) -> str:
@@ -81,6 +94,26 @@ def get_cbsa_key(city: str, state: str) -> str:
     if key in dc_cluster:
         return "dc_metro"
 
+    # Los Angeles — Long Beach — Anaheim CBSA 31080 (core + common city names from location_info)
+    la_cluster = {
+        "Los Angeles, CA",
+        "Long Beach, CA",
+        "Pasadena, CA",
+        "Glendale, CA",
+        "Santa Monica, CA",
+        "Beverly Hills, CA",
+        "Torrance, CA",
+        "Compton, CA",
+        "Irvine, CA",
+        "Anaheim, CA",
+        "Santa Ana, CA",
+        "Huntington Beach, CA",
+        "Los Angeles, California",
+        "Long Beach, California",
+    }
+    if key in la_cluster:
+        return "la_metro"
+
     # Fallback: treat each city, state as its own cbsa-style bucket
     return key.lower().replace(" ", "_")
 
@@ -127,6 +160,23 @@ def enforce_paired_wealth(wealth: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if has_g and not has_i:
         w.pop("wealth_gap_ratio", None)
     return w
+
+
+def _emit_pct_minmax(
+    metric: str,
+    values: Optional[List[float]],
+    min_samples: int,
+    log_label: str,
+) -> Optional[Dict[str, float]]:
+    if not values or len(values) < min_samples:
+        return None
+    mn, mx = min(values), max(values)
+    if not _ssbp.validate_pct_for_build(metric, float(mn), float(mx)):
+        print(
+            f"  [skip] {log_label} {metric}: invalid pct min={mn} max={mx} (leave unwritten; check results scale)"
+        )
+        return None
+    return {"min": float(mn), "max": float(mx)}
 
 
 def extract_metrics_from_response(
@@ -280,8 +330,14 @@ def main() -> None:
                     val_f = float(v)
                     division_values[division][k].append(val_f)
                     all_vals[k].append(val_f)
-                    # For CBSA-level baselines, track only wealth + home_cost metrics.
-                    if k in {"mean_hh_income", "wealth_gap_ratio", "median_home_value"}:
+                    if k in {
+                        "mean_hh_income",
+                        "wealth_gap_ratio",
+                        "median_home_value",
+                        "grad_pct",
+                        "bach_pct",
+                        "self_employed_pct",
+                    }:
                         cbsa_values[cbsa][k].append(val_f)
 
     print(f"Read {seen} rows from {args.input}, extracted metrics from {used} responses.")
@@ -300,14 +356,14 @@ def main() -> None:
         )
         education = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
-            v = by_metric.get(m)
-            if v and len(v) >= args.min_samples:
-                education[m] = {"min": min(v), "max": max(v)}
+            mm = _emit_pct_minmax(m, by_metric.get(m), args.min_samples, f"division={div!r}")
+            if mm is not None:
+                education[m] = mm
         occupation = {}
         for m in ["finance_arts_pct", "white_collar_pct", "self_employed_pct"]:
-            v = by_metric.get(m)
-            if v and len(v) >= args.min_samples:
-                occupation[m] = {"min": min(v), "max": max(v)}
+            mm = _emit_pct_minmax(m, by_metric.get(m), args.min_samples, f"division={div!r}")
+            if mm is not None:
+                occupation[m] = mm
         brand = {}
         v = by_metric.get("brand_raw_score")
         if v and len(v) >= args.min_samples:
@@ -319,8 +375,7 @@ def main() -> None:
         if wealth or education or occupation or brand or home_cost:
             result[div] = {"wealth": wealth, "education": education, "occupation": occupation, "brand": brand, "home_cost": home_cost}
 
-    # Build CBSA-level baselines for wealth + home_cost so metros like NYC have
-    # realistic upper bounds independent of the broader Census division.
+    # Build CBSA-level baselines: wealth, home_cost, and education (same keys as nyc_metro / la_metro)
     for cbsa_key, by_metric in cbsa_values.items():
         if sum(len(v) for v in by_metric.values()) < args.min_samples:
             continue
@@ -333,12 +388,19 @@ def main() -> None:
         v_home = by_metric.get("median_home_value")
         if v_home and len(v_home) >= args.min_samples:
             home_cost["median_home_value"] = {"min": min(v_home), "max": max(v_home)}
-        if wealth or home_cost:
+        education_cbsa = {}
+        for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
+            mm = _emit_pct_minmax(
+                m, by_metric.get(m), args.min_samples, f"cbsa={cbsa_key!r}"
+            )
+            if mm is not None:
+                education_cbsa[m] = mm
+        if wealth or home_cost or education_cbsa:
             existing = result.get(cbsa_key) or {}
-            # Preserve any existing education/occupation/brand entries if present.
+            merged_edu = {**(existing.get("education") or {}), **education_cbsa}
             result[cbsa_key] = {
                 "wealth": wealth,
-                "education": existing.get("education", {}),
+                "education": merged_edu,
                 "occupation": existing.get("occupation", {}),
                 "brand": existing.get("brand", {}),
                 "home_cost": home_cost,
@@ -353,14 +415,14 @@ def main() -> None:
         )
         education_all = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
-            v = all_vals.get(m)
-            if v and len(v) >= args.min_samples:
-                education_all[m] = {"min": min(v), "max": max(v)}
+            mm = _emit_pct_minmax(m, all_vals.get(m), args.min_samples, "all pool")
+            if mm is not None:
+                education_all[m] = mm
         occupation_all = {}
         for m in ["finance_arts_pct", "white_collar_pct", "self_employed_pct"]:
-            v = all_vals.get(m)
-            if v and len(v) >= args.min_samples:
-                occupation_all[m] = {"min": min(v), "max": max(v)}
+            mm = _emit_pct_minmax(m, all_vals.get(m), args.min_samples, "all pool")
+            if mm is not None:
+                occupation_all[m] = mm
         brand_all = {}
         v = all_vals.get("brand_raw_score")
         if v and len(v) >= args.min_samples:
@@ -401,6 +463,8 @@ def main() -> None:
     for _key, comps in result.items():
         if isinstance(comps, dict) and "wealth" in comps:
             comps["wealth"] = enforce_paired_wealth(comps.get("wealth"))
+
+    result = _ssbp.sanitize_full_baselines_file(result, apply_metro_overrides=True)
 
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:

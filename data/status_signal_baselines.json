@@ -41,15 +41,15 @@
     },
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 3.89
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
-        "max": 406.0,
+        "max": 45.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 148.11,
+        "max": 100.0,
         "min": 0.0
       }
     },
@@ -61,7 +61,7 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 148.11,
+        "max": 100.0,
         "min": 0.0
       },
       "white_collar_pct": {
@@ -321,16 +321,16 @@
     },
     "education": {
       "bach_pct": {
-        "max": 4198.0,
-        "min": 5.69
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
-        "max": 108.0,
+        "max": 45.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 115.82,
-        "min": 51.6
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -341,8 +341,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 115.82,
-        "min": 51.6
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 57.84123910939012,
@@ -364,16 +364,16 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 2895.0,
-        "min": 636.0
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
         "max": 45.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 101.04,
-        "min": 38.29
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -384,8 +384,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 101.04,
-        "min": 38.29
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 50.450450450450454,
@@ -426,7 +426,20 @@
   },
   "la_metro": {
     "brand": {},
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 78.0,
+        "min": 3.0
+      },
+      "grad_pct": {
+        "max": 48.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 100.0,
+        "min": 0.0
+      }
+    },
     "home_cost": {},
     "occupation": {},
     "wealth": {}
@@ -459,15 +472,15 @@
     },
     "education": {
       "bach_pct": {
-        "max": 3206.0,
-        "min": 6.82
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
         "max": 85.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 109.05,
+        "max": 100.0,
         "min": 0.0
       }
     },
@@ -479,7 +492,7 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 109.05,
+        "max": 100.0,
         "min": 0.0
       },
       "white_collar_pct": {
@@ -528,16 +541,16 @@
     },
     "education": {
       "bach_pct": {
-        "max": 1388.0,
-        "min": 4.3
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
         "max": 36.66,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 123.55,
-        "min": 29.68
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -548,8 +561,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 123.55,
-        "min": 29.68
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 51.31042516016308,
@@ -588,16 +601,16 @@
     },
     "education": {
       "bach_pct": {
-        "max": 2522.0,
-        "min": 9.53
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
         "max": 62.38,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 148.11,
-        "min": 27.17
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -608,8 +621,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 148.11,
-        "min": 27.17
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 58.07486631016043,
@@ -650,7 +663,20 @@
   },
   "nyc_metro": {
     "brand": {},
-    "education": {},
+    "education": {
+      "bach_pct": {
+        "max": 80.0,
+        "min": 3.0
+      },
+      "grad_pct": {
+        "max": 50.0,
+        "min": 0.0
+      },
+      "self_employed_pct": {
+        "max": 100.0,
+        "min": 0.0
+      }
+    },
     "home_cost": {
       "median_home_value": {
         "max": 2000001.0,
@@ -678,12 +704,12 @@
     },
     "education": {
       "bach_pct": {
-        "max": 3340.0,
-        "min": 3.89
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
-        "max": 263.0,
-        "min": 0.28
+        "max": 45.0,
+        "min": 0.0
       },
       "self_employed_pct": {
         "max": 97.54,
@@ -846,16 +872,16 @@
     },
     "education": {
       "bach_pct": {
-        "max": 4962.0,
-        "min": 29.43
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
-        "max": 172.0,
+        "max": 45.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 113.51,
-        "min": 55.06
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -866,8 +892,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 113.51,
-        "min": 55.06
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 66.66666666666667,
@@ -910,8 +936,8 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 3887.0,
-        "min": 66.19
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
         "max": 80.0,
@@ -953,16 +979,16 @@
     "brand": {},
     "education": {
       "bach_pct": {
-        "max": 5184.0,
-        "min": 897.0
+        "max": 75.0,
+        "min": 3.0
       },
       "grad_pct": {
-        "max": 406.0,
+        "max": 45.0,
         "min": 0.0
       },
       "self_employed_pct": {
-        "max": 104.09,
-        "min": 79.62
+        "max": 100.0,
+        "min": 0.0
       }
     },
     "home_cost": {
@@ -973,8 +999,8 @@
     },
     "occupation": {
       "self_employed_pct": {
-        "max": 104.09,
-        "min": 79.62
+        "max": 100.0,
+        "min": 0.0
       },
       "white_collar_pct": {
         "max": 63.10756972111554,
