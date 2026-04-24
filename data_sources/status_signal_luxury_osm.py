@@ -19,7 +19,7 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # Query version — bump to invalidate caches after tag set changes
-STATUS_SIGNAL_LUXURY_OSM_QUERY_VERSION = "v2"
+STATUS_SIGNAL_LUXURY_OSM_QUERY_VERSION = "v3"
 
 _FINANCIAL_OFFICE = re.compile(
     r"^(financial|financial_advisor|accountant|wealth_management|investment)$", re.I
@@ -32,6 +32,21 @@ _HEALTHCARE_VALUES = frozenset(
 _LUXURY_SHOPS = frozenset(
     {"watches", "wine", "art", "antiques", "bag", "interior_design"}
 )
+# Not public: excludes most parks, public beach courts, municipal pools.
+_PRIVATE_REC_ACCESS = frozenset(
+    {"private", "members", "customers", "permit", "residents"}
+)
+
+
+def _private_recreation_access_allows(tags: Dict[str, str]) -> bool:
+    acc = (tags.get("access") or "").strip().lower()
+    if not acc:
+        return False
+    if acc in ("private", "no"):
+        return True
+    if acc in _PRIVATE_REC_ACCESS:
+        return True
+    return False
 
 
 def classify_luxury_osm_tags(tags: Dict[str, str]) -> Set[str]:
@@ -40,13 +55,14 @@ def classify_luxury_osm_tags(tags: Dict[str, str]) -> Set[str]:
         return set()
     out: Set[str] = set()
     office = (tags.get("office") or "").strip()
-    if office in ("lawyer", "estate_agent") or (office and _FINANCIAL_OFFICE.match(office)):
+    # Intentionally omit estate_agent (dense in cities, weak wealth signal).
+    if office == "lawyer" or (office and _FINANCIAL_OFFICE.match(office)):
         out.add("wealth_offices")
     leisure = (tags.get("leisure") or "").strip()
-    if leisure in ("swimming_pool", "golf_course"):
+    if leisure in ("swimming_pool", "golf_course") and _private_recreation_access_allows(tags):
         out.add("private_recreation")
     sport = (tags.get("sport") or "").strip()
-    if sport and _TENNIS_SPORT.match(sport):
+    if sport and _TENNIS_SPORT.match(sport) and _private_recreation_access_allows(tags):
         out.add("private_recreation")
     tourism = (tags.get("tourism") or "").strip()
     if tourism in ("gallery", "museum"):
@@ -116,8 +132,6 @@ def query_status_signal_luxury_osm(
 (
   node["office"="lawyer"](around:{R},{lat_f},{lon_f});
   way["office"="lawyer"](around:{R},{lat_f},{lon_f});
-  node["office"="estate_agent"](around:{R},{lat_f},{lon_f});
-  way["office"="estate_agent"](around:{R},{lat_f},{lon_f});
   node["office"~"^(financial|financial_advisor|accountant|wealth_management|investment)$"](around:{R},{lat_f},{lon_f});
   way["office"~"^(financial|financial_advisor|accountant|wealth_management|investment)$"](around:{R},{lat_f},{lon_f});
   node["leisure"="swimming_pool"](around:{R},{lat_f},{lon_f});

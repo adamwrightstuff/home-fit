@@ -228,6 +228,9 @@ _LUXURY_COUNT_KEYS = (
     "luxury_retail",
 )
 
+# When baselines lack luxury min/max, map raw counts to 0–100 without early saturation at low counts.
+_LUXURY_COUNT_FALLBACK_SCALE = 50.0
+
 
 def _luxury_count_to_score(
     count: int,
@@ -237,7 +240,10 @@ def _luxury_count_to_score(
 ) -> float:
     mn, mx = _get_baseline(baselines, keys_to_try, "luxury", metric)
     if mn is None or mx is None:
-        return min(100.0, float(max(0, count)) * 6.0)
+        c = float(max(0, count))
+        if c <= 0:
+            return 0.0
+        return min(100.0, 100.0 * (1.0 - math.exp(-c / _LUXURY_COUNT_FALLBACK_SCALE)))
     return _normalize_min_max(float(max(0, count)), mn, mx)
 
 
@@ -397,7 +403,7 @@ def compute_luxury_presence_osm_with_merged_supplement(
 def _luxury_tags_from_business_row(b: Dict[str, Any]) -> Dict[str, str]:
     """Build OSM-style tag keys from a merged amenities business dict."""
     out: Dict[str, str] = {}
-    for k in ("shop", "leisure", "amenity", "tourism", "office", "sport", "healthcare"):
+    for k in ("shop", "leisure", "amenity", "tourism", "office", "sport", "healthcare", "access"):
         v = b.get(k)
         if v is None:
             continue
@@ -846,6 +852,20 @@ def _area_is_suburb_like(area_type: Optional[str]) -> bool:
     return at in ("suburban", "commuter_rail_suburb", "exurban")
 
 
+def _luxury_radius_m_for_area_type(area_type: Optional[str]) -> int:
+    """Tighter radius in dense urban morphologies; ~1500m elsewhere."""
+    at = (area_type or "").lower().strip()
+    if at in ("urban_core", "urban_residential"):
+        return 800
+    return 1500
+
+
+def _patrician_luxury_radius_m(base_radius_m: int) -> int:
+    """Estate-scale recompute for Patrician; scales with base (urban vs suburban), capped at 4 km."""
+    b = max(1, int(base_radius_m))
+    return min(4000, int(b * 2.5))
+
+
 def _patrician_shortcut_guards(
     education: Optional[float],
     occupation_neutral: Optional[float],
@@ -860,23 +880,34 @@ def _patrician_shortcut_guards(
 
 # Post-classifier Patrician gate (all Patrician archetype_rule paths must pass to keep Patrician).
 PATRICIAN_GATE_MIN_EDUCATION = 65.0
+PATRICIAN_GATE_MIN_EDUCATION_OLD_MONEY = 58.0
 PATRICIAN_GATE_MIN_OCCUPATION_NEUTRAL = 35.0
 PATRICIAN_GATE_MIN_WEALTH = 60.0
+PATRICIAN_GATE_MAX_LUXURY = 60.0
 
 
 def _patrician_post_gate_passes(
     education: Optional[float],
     occupation_neutral: Optional[float],
     wealth: Optional[float],
+    luxury_pass1: float,
+    patrician_rule: str,
 ) -> Tuple[bool, List[str]]:
     """
-    Returns (passes, failure_codes). All Patrician classifications require non-null education/occupation
-    wealth components meeting floors (same numeric inputs as pass-1 classification; no recompute).
+    Returns (passes, failure_codes). Education floor is lower for patrician_old_money_suburb;
+    luxury (pass-1) must stay below PATRICIAN_GATE_MAX_LUXURY.
     """
     failures: List[str] = []
+    if float(luxury_pass1) >= PATRICIAN_GATE_MAX_LUXURY:
+        failures.append("patrician_gate_luxury_high")
+    min_edu = (
+        PATRICIAN_GATE_MIN_EDUCATION_OLD_MONEY
+        if patrician_rule == "patrician_old_money_suburb"
+        else PATRICIAN_GATE_MIN_EDUCATION
+    )
     if education is None:
         failures.append("patrician_gate_education_null")
-    elif float(education) < PATRICIAN_GATE_MIN_EDUCATION:
+    elif float(education) < min_edu:
         failures.append("patrician_gate_education_low")
     if occupation_neutral is None:
         failures.append("patrician_gate_occupation_null")
@@ -949,6 +980,20 @@ def _classify_archetype(
     luxury_retail = int(counts.get("luxury_retail") or 0)
     wealth_val = wealth if wealth is not None else 0.0
     edu_val = education if education is not None else 0.0
+    _parvenu_professional_guard = (
+        education is not None
+        and float(education) > 55.0
+        and occupation_neutral is not None
+        and float(occupation_neutral) > 70.0
+        and float(luxury_pass1) < 60.0
+    )
+    _old_money_luxury_ok = float(luxury_pass1) <= 35.0 or (
+        float(luxury_pass1) <= 38.0
+        and occupation_neutral is not None
+        and float(occupation_neutral) >= 87.0
+        and wealth is not None
+        and float(wealth) >= 50.0
+    )
 
     # --- Patrician ---
     if allow_patrician:
@@ -959,17 +1004,6 @@ def _classify_archetype(
             and float(white_collar_mgmt) > 70.0
         ):
             return "Patrician", "patrician_grad_white_collar"
-
-        if (
-            cbsa_median is not None
-            and cbsa_median > 0
-            and median_income is not None
-            and float(median_income) > 2.0 * cbsa_median
-            and wealth_gap is not None
-            and float(wealth_gap) < 0.25
-            and _patrician_shortcut_guards(education, occupation_neutral)
-        ):
-            return "Patrician", "shortcut_cbsa_2x"
 
         if (
             median_income is not None
@@ -995,7 +1029,7 @@ def _classify_archetype(
             _area_is_suburb_like(area_type)
             and occupation_neutral is not None
             and float(occupation_neutral) >= 80.0
-            and luxury_pass1 <= 35.0
+            and _old_money_luxury_ok
             and education is not None
             and float(education) >= 38.0
             and provisional is not None
@@ -1008,6 +1042,8 @@ def _classify_archetype(
         self_employed_pct_raw is not None
         and float(self_employed_pct_raw) > 25.0
         and home_cost > 90
+        and wealth_val < 72.0
+        and not _parvenu_professional_guard
     ):
         return "Poseur", "poseur_self_employed_home"
 
@@ -1016,6 +1052,8 @@ def _classify_archetype(
 
     # --- Parvenu ---
     if wealth_gap is not None and float(wealth_gap) > 0.50:
+        if wealth_val < 40.0 and edu_val < 40.0 and home_cost < 40.0:
+            return "Plebeian", "plebeian_parvenu_high_gap_screen"
         return "Parvenu", "parvenu_high_gap"
 
     if (
@@ -1092,16 +1130,16 @@ def compute_status_signal_with_breakdown(
     city: Optional[str] = None,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
-    luxury_radius_m: int = 1500,
+    luxury_radius_m: Optional[int] = None,
     diversity_details: Optional[Dict[str, Any]] = None,
     area_type: Optional[str] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
-    Pass 1: pillar inputs at standard luxury radius; neutral occupation for classifier_inputs.
+    Pass 1: pillar inputs at area-type-scaled luxury radius (urban ~800m, else ~1500m) when luxury_radius_m is None.
     Archetype pass 1: ordered chain (Patrician→…→Typical). If Patrician fails the post-classifier gate,
     archetype pass 2 runs with allow_patrician=False (frozen inputs; no occupation/luxury recompute).
-    Luxury pass: final archetype Patrician only — same OSM+merged supplement at 4 km (classifier_inputs.luxury stays pass 1).
+    Patrician final: OSM+merged luxury recomputed at a scaled estate radius (cap 4 km); classifier_inputs.luxury stays pass-1.
     Final composite uses archetype weights and occupation computed with the final archetype.
     Baselines: tract CBSA mapped via cbsa_to_baseline; else division then \"all\".
     """
@@ -1149,6 +1187,10 @@ def compute_status_signal_with_breakdown(
         if "all" not in keys_to_try:
             keys_to_try.append("all")
 
+    resolved_luxury_radius = (
+        int(luxury_radius_m) if luxury_radius_m is not None else _luxury_radius_m_for_area_type(area_type)
+    )
+
     wealth = compute_wealth(housing_details, keys_to_try, baselines)
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
@@ -1165,7 +1207,7 @@ def compute_status_signal_with_breakdown(
         and math.isfinite(float(lon))
     ):
         luxury, luxury_detail = compute_luxury_presence_osm_with_merged_supplement(
-            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=luxury_radius_m
+            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=resolved_luxury_radius
         )
     else:
         luxury = compute_brand(blist, keys_to_try, baselines)
@@ -1239,7 +1281,9 @@ def compute_status_signal_with_breakdown(
     archetype = archetype_pass1
     archetype_rule = archetype_rule_pass1
     if archetype_pass1 == "Patrician":
-        gate_ok, gate_failures = _patrician_post_gate_passes(education, occupation_neutral, wealth)
+        gate_ok, gate_failures = _patrician_post_gate_passes(
+            education, occupation_neutral, wealth, luxury_pass1, archetype_rule_pass1
+        )
         if not gate_ok:
             archetype, archetype_rule = _classify_archetype(
                 area_type=area_type,
@@ -1282,10 +1326,11 @@ def compute_status_signal_with_breakdown(
         and math.isfinite(float(lat))
         and math.isfinite(float(lon))
     ):
+        _estate_r = _patrician_luxury_radius_m(resolved_luxury_radius)
         luxury_for_score, luxury_detail_for_breakdown = compute_luxury_presence_osm_with_merged_supplement(
-            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=4000
+            float(lat), float(lon), blist, keys_to_try, baselines, radius_m=_estate_r
         )
-        analysis_radius_note = "Analyzed within a 4km estate radius."
+        analysis_radius_note = f"Analyzed within a {round(_estate_r / 1000.0, 1)}km estate radius."
 
     occupation = compute_occupation(
         economic_security_details,

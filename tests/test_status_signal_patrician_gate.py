@@ -5,31 +5,50 @@ import unittest
 from pillars import status_signal
 
 
+def _pg(edu, occ, w, lux, rule="patrician_grad_white_collar"):
+    return status_signal._patrician_post_gate_passes(edu, occ, w, lux, rule)
+
+
 class TestPatricianPostGate(unittest.TestCase):
     def test_gate_passes_when_all_meet_floor(self):
-        ok, failures = status_signal._patrician_post_gate_passes(70.0, 40.0, 95.0)
+        ok, failures = _pg(70.0, 40.0, 95.0, 10.0)
         self.assertTrue(ok)
         self.assertEqual(failures, [])
 
     def test_gate_fails_on_null_education(self):
-        ok, failures = status_signal._patrician_post_gate_passes(None, 40.0, 95.0)
+        ok, failures = _pg(None, 40.0, 95.0, 10.0)
         self.assertFalse(ok)
         self.assertIn("patrician_gate_education_null", failures)
 
     def test_gate_fails_on_low_education(self):
-        ok, failures = status_signal._patrician_post_gate_passes(50.0, 40.0, 95.0)
+        ok, failures = _pg(50.0, 40.0, 95.0, 10.0)
         self.assertFalse(ok)
         self.assertIn("patrician_gate_education_low", failures)
 
     def test_gate_fails_on_low_occupation(self):
-        ok, failures = status_signal._patrician_post_gate_passes(70.0, 30.0, 95.0)
+        ok, failures = _pg(70.0, 30.0, 95.0, 10.0)
         self.assertFalse(ok)
         self.assertIn("patrician_gate_occupation_low", failures)
 
     def test_gate_fails_on_low_wealth(self):
-        ok, failures = status_signal._patrician_post_gate_passes(70.0, 40.0, 50.0)
+        ok, failures = _pg(70.0, 40.0, 50.0, 10.0)
         self.assertFalse(ok)
         self.assertIn("patrician_gate_wealth_low", failures)
+
+    def test_gate_fails_on_high_luxury(self):
+        ok, failures = _pg(70.0, 40.0, 95.0, 60.0)
+        self.assertFalse(ok)
+        self.assertIn("patrician_gate_luxury_high", failures)
+
+    def test_old_money_allows_lower_education_floor(self):
+        ok, failures = _pg(59.0, 40.0, 95.0, 10.0, "patrician_old_money_suburb")
+        self.assertTrue(ok)
+        self.assertEqual(failures, [])
+
+    def test_non_old_money_still_requires_65_education(self):
+        ok, failures = _pg(59.0, 40.0, 95.0, 10.0, "patrician_grad_white_collar")
+        self.assertFalse(ok)
+        self.assertIn("patrician_gate_education_low", failures)
 
 
 class TestClassifyArchetypeAllowPatrician(unittest.TestCase):
@@ -80,9 +99,10 @@ class TestPatricianDemotionIntegration(unittest.TestCase):
     """Patrician via income shortcut, gate fails on missing education -> demoted."""
 
     def test_demotion_produces_non_patrician_and_breakdown(self):
+        # Patrician via 200k+ uniform shortcut; no education in social -> gate fails (education null).
         housing = {
             "summary": {
-                "median_household_income": 200000,
+                "median_household_income": 201000,
                 "mean_household_income": 210000,
                 "median_home_value": 500000,
             }
@@ -108,7 +128,7 @@ class TestPatricianDemotionIntegration(unittest.TestCase):
         self.assertIsNotNone(dr)
         self.assertIn("patrician_gate_education_null", dr)
         self.assertEqual(bd.get("original_archetype"), "Patrician")
-        self.assertEqual(bd.get("original_archetype_rule"), "shortcut_cbsa_2x")
+        self.assertEqual(bd.get("original_archetype_rule"), "shortcut_200k_uniform")
         self.assertIsInstance(bd.get("rerun_inputs"), dict)
         self.assertIn("wealth", bd.get("rerun_inputs") or {})
         self.assertIn("wealth", bd.get("classifier_inputs") or {})
