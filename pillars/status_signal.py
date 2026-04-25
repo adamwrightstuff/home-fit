@@ -1009,15 +1009,6 @@ def _classify_archetype(
             median_income is not None
             and float(median_income) > 200_000
             and wealth_gap is not None
-            and float(wealth_gap) < 0.25
-            and _patrician_shortcut_guards(education, occupation_neutral)
-        ):
-            return "Patrician", "shortcut_200k_uniform"
-
-        if (
-            median_income is not None
-            and float(median_income) > 200_000
-            and wealth_gap is not None
             and float(wealth_gap) < 0.30
             and education is not None
             and float(education) > 60.0
@@ -1052,7 +1043,7 @@ def _classify_archetype(
 
     # --- Parvenu ---
     if wealth_gap is not None and float(wealth_gap) > 0.50:
-        if wealth_val < 40.0 and edu_val < 40.0 and home_cost < 40.0:
+        if wealth_val < 55.0 and edu_val < 40.0 and home_cost < 40.0:
             return "Plebeian", "plebeian_parvenu_high_gap_screen"
         return "Parvenu", "parvenu_high_gap"
 
