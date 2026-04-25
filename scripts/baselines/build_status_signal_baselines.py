@@ -7,7 +7,9 @@ aggregates by Census Division, and writes min/max for each metric so the
 Status Signal scorer can normalize to 0-100.
 
 Metrics (per division):
-- wealth: mean_hh_income, wealth_gap_ratio
+- wealth: mean_hh_income and wealth_gap_ratio use p5/p95 (not min/max); the pooled
+  "all" key uses fixed mean_hh_income 28k/175k (tract-style floor/ceiling). mean_hh_income
+  max is not written if p95 >= $750k (census anomaly).
 - education: grad_pct, bach_pct, self_employed_pct
 - occupation: finance_arts_pct, white_collar_pct
 
@@ -25,14 +27,94 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+# Pooled "all" key: ~US-tract p5 / p95 so premium suburbs hit W≈100 against national band
+_ALL_MEAN_HH_INCOME_P5 = 28_000.0
+_ALL_MEAN_HH_INCOME_P95 = 175_000.0
+# Do not write baselines with mean_hh_income max at or above this (likely bad data)
+_MEAN_HH_INCOME_MAX_SANE = 750_000.0
 
 from data_sources.census_api import CENSUS_API_KEY, CENSUS_BASE_URL, _make_request_with_retry, get_census_tract
 from data_sources.geocoding import geocode
 from data_sources.us_census_divisions import get_division
+
+
+def _linear_percentile(values: List[float], p: float) -> float:
+    """p in [0, 100], linear interpolation between order statistics."""
+    if not values:
+        raise ValueError("empty values")
+    s = sorted(float(x) for x in values)
+    n = len(s)
+    if n == 1:
+        return float(s[0])
+    if p <= 0:
+        return float(s[0])
+    if p >= 100:
+        return float(s[-1])
+    k = (n - 1) * (p / 100.0)
+    lo = int(math.floor(k))
+    hi = int(math.ceil(k))
+    hi = min(hi, n - 1)
+    w = k - lo
+    return float(s[lo] * (1 - w) + s[hi] * w)
+
+
+def _mean_hh_income_p5_p95(values: List[float], *, log_label: str) -> Optional[Dict[str, float]]:
+    mn = _linear_percentile(values, 5.0)
+    mx = _linear_percentile(values, 95.0)
+    if mn > mx:
+        mn, mx = mx, mn
+    if mx >= _MEAN_HH_INCOME_MAX_SANE:
+        print(
+            f"  [skip] {log_label} mean_hh_income: p95 {mx:,.0f} >= "
+            f"${_MEAN_HH_INCOME_MAX_SANE:,.0f} (census/anomaly; not written)"
+        )
+        return None
+    if mn < 0:
+        return None
+    return {"min": float(mn), "max": float(mx)}
+
+
+def _build_wealth_block(
+    mean_list: Optional[List[float]],
+    gap_list: Optional[List[float]],
+    min_samples: int,
+    *,
+    all_key_income: bool,
+    log_label: str,
+) -> Optional[Dict[str, Dict[str, float]]]:
+    """
+    Paired wealth min/max: emit mean_hh_income + wealth_gap_ratio together, or neither.
+    Division keys: p5/p95 of tract means. "all" key: fixed 28k/175k for mean. Gap: p5/p95 always.
+    """
+    if not gap_list or len(gap_list) < min_samples:
+        return None
+    if not mean_list or len(mean_list) < min_samples:
+        return None
+    g5 = _linear_percentile(gap_list, 5.0)
+    g95 = _linear_percentile(gap_list, 95.0)
+    if g5 == 0.0 and g95 == 0.0:
+        return None
+    if all_key_income:
+        income: Dict[str, float] = {
+            "min": _ALL_MEAN_HH_INCOME_P5,
+            "max": _ALL_MEAN_HH_INCOME_P95,
+        }
+    else:
+        got = _mean_hh_income_p5_p95(mean_list, log_label=log_label)
+        if got is None:
+            return None
+        income = got
+    assert float(income["max"]) < _MEAN_HH_INCOME_MAX_SANE
+    return {
+        "mean_hh_income": income,
+        "wealth_gap_ratio": {"min": float(g5), "max": float(g95)},
+    }
 
 
 # Fallback cities if no CSV or file missing (no setup required)
@@ -272,11 +354,6 @@ def main() -> None:
             print(f"Processed {i + 1}/{len(locations)} ...")
 
     # Build per-division min/max
-    metric_keys = [
-        "mean_hh_income", "wealth_gap_ratio",
-        "grad_pct", "bach_pct", "self_employed_pct",
-        "finance_arts_pct", "white_collar_pct",
-    ]
     result: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
 
     for div, by_metric in division_values.items():
@@ -286,10 +363,15 @@ def main() -> None:
         education: Dict[str, Dict[str, float]] = {}
         occupation: Dict[str, Dict[str, float]] = {}
 
-        for m in ["mean_hh_income", "wealth_gap_ratio"]:
-            v = by_metric.get(m)
-            if v and len(v) >= args.min_samples:
-                wealth[m] = {"min": min(v), "max": max(v)}
+        wblock = _build_wealth_block(
+            by_metric.get("mean_hh_income"),
+            by_metric.get("wealth_gap_ratio"),
+            args.min_samples,
+            all_key_income=False,
+            log_label=f"division={div!r}",
+        )
+        if wblock:
+            wealth = wblock
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             v = by_metric.get(m)
             if v and len(v) >= args.min_samples:
@@ -312,12 +394,14 @@ def main() -> None:
         for k, v in by_metric.items():
             all_vals[k].extend(v)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
-        wealth_all = {}
-        for m in ["mean_hh_income", "wealth_gap_ratio"]:
-            v = all_vals.get(m)
-            if v and len(v) >= args.min_samples:
-                wealth_all[m] = {"min": min(v), "max": max(v)}
-        education_all = {}
+        wealth_all = _build_wealth_block(
+            all_vals.get("mean_hh_income"),
+            all_vals.get("wealth_gap_ratio"),
+            args.min_samples,
+            all_key_income=True,
+            log_label="all pool",
+        ) or {}
+        education_all: Dict[str, Dict[str, float]] = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             v = all_vals.get(m)
             if v and len(v) >= args.min_samples:
