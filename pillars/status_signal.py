@@ -1006,17 +1006,6 @@ def _classify_archetype(
             return "Patrician", "patrician_grad_white_collar"
 
         if (
-            median_income is not None
-            and float(median_income) > 200_000
-            and wealth_gap is not None
-            and float(wealth_gap) < 0.30
-            and education is not None
-            and float(education) > 60.0
-            and _patrician_shortcut_guards(education, occupation_neutral)
-        ):
-            return "Patrician", "patrician_median_high_education"
-
-        if (
             _area_is_suburb_like(area_type)
             and occupation_neutral is not None
             and float(occupation_neutral) >= 80.0
