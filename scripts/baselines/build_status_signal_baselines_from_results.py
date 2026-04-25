@@ -5,7 +5,9 @@ Build data/status_signal_baselines.json from data/results.csv (collector output)
 Reads scored API responses from results.csv, extracts the same metrics used by
 Status Signal (wealth, education, occupation), aggregates by Census Division,
 and writes min/max per metric so Status Signal normalization matches observed
-ranges from your scored locations. Percent-style metrics (*_pct) are only written
+ranges from your scored locations. Wealth uses p5/p95 for mean_hh_income and
+wealth_gap_ratio; the pooled "all" key uses fixed mean_hh_income 28k/175k.
+Percent-style metrics (*_pct) are only written
 when min/max are within [0, 100]; otherwise the metric is skipped (logged). The
 output is passed through a sanitizer that coerces bad legacy min/max and fills
 nyc_metro / la_metro education when still missing.
@@ -37,6 +39,14 @@ _spec_pct = importlib.util.spec_from_file_location(
 _ssbp = importlib.util.module_from_spec(_spec_pct)
 assert _spec_pct and _spec_pct.loader
 _spec_pct.loader.exec_module(_ssbp)
+
+_spec_w = importlib.util.spec_from_file_location(
+    "status_signal_baseline_wealth",
+    os.path.join(ROOT, "scripts", "baselines", "status_signal_baseline_wealth.py"),
+)
+_ssw = importlib.util.module_from_spec(_spec_w)
+assert _spec_w and _spec_w.loader
+_spec_w.loader.exec_module(_ssw)
 
 
 def get_cbsa_key(city: str, state: str) -> str:
@@ -124,28 +134,6 @@ def get_division(state_abbrev: Optional[str]) -> str:
         return "unknown"
     from data_sources.us_census_divisions import get_division as _gd
     return _gd(state_abbrev)
-
-
-def paired_wealth_minmax(
-    mean_list: Optional[List[float]],
-    gap_list: Optional[List[float]],
-    min_samples: int,
-) -> Dict[str, Dict[str, float]]:
-    """
-    Status Signal resolves min/max per metric from the same baseline key; income and gap
-    must share one distributional context. Emit both or neither (no split sourcing).
-    """
-    out: Dict[str, Dict[str, float]] = {}
-    if not mean_list or len(mean_list) < min_samples:
-        return out
-    if not gap_list or len(gap_list) < min_samples:
-        return out
-    mn_g, mx_g = min(gap_list), max(gap_list)
-    if mn_g == 0.0 and mx_g == 0.0:
-        return out
-    out["mean_hh_income"] = {"min": min(mean_list), "max": max(mean_list)}
-    out["wealth_gap_ratio"] = {"min": mn_g, "max": mx_g}
-    return out
 
 
 def enforce_paired_wealth(wealth: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -349,11 +337,13 @@ def main() -> None:
             continue
         if sum(len(v) for v in by_metric.values()) < args.min_samples:
             continue
-        wealth = paired_wealth_minmax(
+        wealth = _ssw.build_paired_wealth_minmax(
             by_metric.get("mean_hh_income"),
             by_metric.get("wealth_gap_ratio"),
             args.min_samples,
-        )
+            all_key_income=False,
+            log_label=f"division={div!r}",
+        ) or {}
         education = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             mm = _emit_pct_minmax(m, by_metric.get(m), args.min_samples, f"division={div!r}")
@@ -379,11 +369,13 @@ def main() -> None:
     for cbsa_key, by_metric in cbsa_values.items():
         if sum(len(v) for v in by_metric.values()) < args.min_samples:
             continue
-        wealth = paired_wealth_minmax(
+        wealth = _ssw.build_paired_wealth_minmax(
             by_metric.get("mean_hh_income"),
             by_metric.get("wealth_gap_ratio"),
             args.min_samples,
-        )
+            all_key_income=False,
+            log_label=f"cbsa={cbsa_key!r}",
+        ) or {}
         home_cost = {}
         v_home = by_metric.get("median_home_value")
         if v_home and len(v_home) >= args.min_samples:
@@ -408,11 +400,13 @@ def main() -> None:
 
     # Pool "all" from all divisions (including values that were in unknown-state rows)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
-        wealth_all = paired_wealth_minmax(
+        wealth_all = _ssw.build_paired_wealth_minmax(
             all_vals.get("mean_hh_income"),
             all_vals.get("wealth_gap_ratio"),
             args.min_samples,
-        )
+            all_key_income=True,
+            log_label="all pool",
+        ) or {}
         education_all = {}
         for m in ["grad_pct", "bach_pct", "self_employed_pct"]:
             mm = _emit_pct_minmax(m, all_vals.get(m), args.min_samples, "all pool")

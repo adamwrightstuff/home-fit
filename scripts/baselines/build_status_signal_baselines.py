@@ -26,95 +26,26 @@ Usage (from project root):
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
-import math
 import os
 import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-# Pooled "all" key: ~US-tract p5 / p95 so premium suburbs hit W≈100 against national band
-_ALL_MEAN_HH_INCOME_P5 = 28_000.0
-_ALL_MEAN_HH_INCOME_P95 = 175_000.0
-# Do not write baselines with mean_hh_income max at or above this (likely bad data)
-_MEAN_HH_INCOME_MAX_SANE = 750_000.0
+_SSI = importlib.util.module_from_spec(
+    importlib.util.spec_from_file_location(
+        "status_signal_baseline_wealth",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "status_signal_baseline_wealth.py"),
+    )
+)
+assert _SSI.__spec__ and _SSI.__spec__.loader
+_SSI.__spec__.loader.exec_module(_SSI)
+build_paired_wealth_minmax = _SSI.build_paired_wealth_minmax
 
 from data_sources.census_api import CENSUS_API_KEY, CENSUS_BASE_URL, _make_request_with_retry, get_census_tract
 from data_sources.geocoding import geocode
 from data_sources.us_census_divisions import get_division
-
-
-def _linear_percentile(values: List[float], p: float) -> float:
-    """p in [0, 100], linear interpolation between order statistics."""
-    if not values:
-        raise ValueError("empty values")
-    s = sorted(float(x) for x in values)
-    n = len(s)
-    if n == 1:
-        return float(s[0])
-    if p <= 0:
-        return float(s[0])
-    if p >= 100:
-        return float(s[-1])
-    k = (n - 1) * (p / 100.0)
-    lo = int(math.floor(k))
-    hi = int(math.ceil(k))
-    hi = min(hi, n - 1)
-    w = k - lo
-    return float(s[lo] * (1 - w) + s[hi] * w)
-
-
-def _mean_hh_income_p5_p95(values: List[float], *, log_label: str) -> Optional[Dict[str, float]]:
-    mn = _linear_percentile(values, 5.0)
-    mx = _linear_percentile(values, 95.0)
-    if mn > mx:
-        mn, mx = mx, mn
-    if mx >= _MEAN_HH_INCOME_MAX_SANE:
-        print(
-            f"  [skip] {log_label} mean_hh_income: p95 {mx:,.0f} >= "
-            f"${_MEAN_HH_INCOME_MAX_SANE:,.0f} (census/anomaly; not written)"
-        )
-        return None
-    if mn < 0:
-        return None
-    return {"min": float(mn), "max": float(mx)}
-
-
-def _build_wealth_block(
-    mean_list: Optional[List[float]],
-    gap_list: Optional[List[float]],
-    min_samples: int,
-    *,
-    all_key_income: bool,
-    log_label: str,
-) -> Optional[Dict[str, Dict[str, float]]]:
-    """
-    Paired wealth min/max: emit mean_hh_income + wealth_gap_ratio together, or neither.
-    Division keys: p5/p95 of tract means. "all" key: fixed 28k/175k for mean. Gap: p5/p95 always.
-    """
-    if not gap_list or len(gap_list) < min_samples:
-        return None
-    if not mean_list or len(mean_list) < min_samples:
-        return None
-    g5 = _linear_percentile(gap_list, 5.0)
-    g95 = _linear_percentile(gap_list, 95.0)
-    if g5 == 0.0 and g95 == 0.0:
-        return None
-    if all_key_income:
-        income: Dict[str, float] = {
-            "min": _ALL_MEAN_HH_INCOME_P5,
-            "max": _ALL_MEAN_HH_INCOME_P95,
-        }
-    else:
-        got = _mean_hh_income_p5_p95(mean_list, log_label=log_label)
-        if got is None:
-            return None
-        income = got
-    assert float(income["max"]) < _MEAN_HH_INCOME_MAX_SANE
-    return {
-        "mean_hh_income": income,
-        "wealth_gap_ratio": {"min": float(g5), "max": float(g95)},
-    }
 
 
 # Fallback cities if no CSV or file missing (no setup required)
@@ -363,7 +294,7 @@ def main() -> None:
         education: Dict[str, Dict[str, float]] = {}
         occupation: Dict[str, Dict[str, float]] = {}
 
-        wblock = _build_wealth_block(
+        wblock = build_paired_wealth_minmax(
             by_metric.get("mean_hh_income"),
             by_metric.get("wealth_gap_ratio"),
             args.min_samples,
@@ -394,7 +325,7 @@ def main() -> None:
         for k, v in by_metric.items():
             all_vals[k].extend(v)
     if all_vals and sum(len(v) for v in all_vals.values()) >= args.min_samples:
-        wealth_all = _build_wealth_block(
+        wealth_all = build_paired_wealth_minmax(
             all_vals.get("mean_hh_income"),
             all_vals.get("wealth_gap_ratio"),
             args.min_samples,
