@@ -60,6 +60,14 @@ ENABLE_NATURAL_BEAUTY_V8 = False
 ENABLE_NATURAL_BEAUTY_PREFERENCE = True
 # When True and Mountains preference is active, blend V8 viewshed into topography: 0.6*V7 + 0.4*viewshed.
 ENABLE_NATURAL_BEAUTY_VIEWSHED_BLEND = True
+# Phase 9: Data-quality guardrails for urban over-scoring and fallback overlap.
+ENABLE_VIEWSHED_QUALITY_GATE = True
+ENABLE_GVI_METHOD_WEIGHTING = True
+ENABLE_COMPOSITE_GVI_STREET_TREE_DEDUP = True
+ENABLE_WEAK_SIGNAL_CONTEXT_DAMPING = True
+ENABLE_LOW_CANOPY_DEVELOPED_GUARDRAIL = True
+ENABLE_NEARBY_WATER_PROBE = True
+ENABLE_SCENIC_RECOVERY_LANES = True
 # Canopy profile: if GEE canopy confidence below this (0-1), fall back to V7 default weights.
 CANOPY_CONFIDENCE_THRESHOLD = 0.5
 
@@ -169,6 +177,22 @@ SCENIC_CAP_TAG_BONUS = {
 MIN_SCENIC_CAP = 45.0
 MAX_SCENIC_CAP = 75.0
 
+# Data-quality weighting for GVI source fidelity.
+GVI_METHOD_MULTIPLIERS = {
+    "semantic_gvi": 1.0,
+    "gee_ndvi_enhanced": 0.8,
+    "gee_ndvi": 0.7,
+    "composite": 0.45,
+    "unknown": 0.35,
+}
+
+WATER_PROBE_OFFSET_RINGS_DEGREES = (
+    ((0.008, 0.0), (-0.008, 0.0), (0.0, 0.01), (0.0, -0.01)),
+    ((0.02, 0.0), (-0.02, 0.0), (0.0, 0.025), (0.0, -0.025)),
+    ((0.04, 0.0), (-0.04, 0.0), (0.0, 0.045), (0.0, -0.045)),
+    ((0.08, 0.0), (-0.08, 0.0), (0.0, 0.09), (0.0, -0.09)),
+)
+
 
 def _ramp01_canopy_uplift(canopy_pct: Optional[float]) -> float:
     """
@@ -190,6 +214,119 @@ def _compute_scenic_cap(area_type: Optional[str], landscape_tags: Optional[List[
     for tag in (landscape_tags or []):
         cap += float(SCENIC_CAP_TAG_BONUS.get(str(tag).lower(), 0.0))
     return max(MIN_SCENIC_CAP, min(MAX_SCENIC_CAP, cap))
+
+
+def _viewshed_quality_multiplier(viewshed_metrics: Optional[Dict]) -> float:
+    """
+    Gate viewshed-driven bonus by data quality so dense urban blocks with weak
+    sightlines do not receive mountain/coastal-style scenic credit.
+    """
+    if not ENABLE_VIEWSHED_QUALITY_GATE:
+        return 1.0
+    quality = str((viewshed_metrics or {}).get("viewshed_quality") or "").lower()
+    if quality == "high":
+        return 1.0
+    if quality == "medium":
+        return 0.5
+    if quality == "low":
+        return 0.1
+    return 0.35
+
+
+def _gvi_method_multiplier(method: Optional[str]) -> float:
+    """Weight GVI bonus by method reliability (composite fallback is lower confidence)."""
+    if not ENABLE_GVI_METHOD_WEIGHTING:
+        return 1.0
+    key = str(method or "unknown").lower()
+    return float(GVI_METHOD_MULTIPLIERS.get(key, GVI_METHOD_MULTIPLIERS["unknown"]))
+
+
+def _compute_context_signal_strength(
+    context_info: Dict,
+    tree_details: Dict,
+) -> float:
+    """
+    Build a 0..1 scenic evidence score from terrain, viewshed, and natural landcover.
+    Used to damp high context bonus only when supporting evidence is weak.
+    """
+    component_scores = context_info.get("component_scores") or {}
+    if not isinstance(component_scores, dict):
+        component_scores = {}
+    topography_raw = float(component_scores.get("topography_raw") or 0.0)
+    landcover_raw = float(component_scores.get("landcover_raw") or 0.0)
+    scenic_viewshed_score = float(component_scores.get("scenic_viewshed_score") or 0.0)
+
+    natural_context = tree_details.get("natural_context") or {}
+    if not isinstance(natural_context, dict):
+        natural_context = {}
+    topography_metrics = natural_context.get("topography_metrics") or {}
+    if not isinstance(topography_metrics, dict):
+        topography_metrics = {}
+    landcover_metrics = natural_context.get("landcover_metrics") or {}
+    if not isinstance(landcover_metrics, dict):
+        landcover_metrics = {}
+    viewshed_metrics = natural_context.get("viewshed_metrics") or {}
+    if not isinstance(viewshed_metrics, dict):
+        viewshed_metrics = {}
+
+    prominence = float(topography_metrics.get("terrain_prominence_m") or 0.0)
+    ruggedness = float(topography_metrics.get("ruggedness_index_m") or 0.0)
+    forest_pct = float(landcover_metrics.get("forest_pct") or 0.0)
+    viewshed_mult = _viewshed_quality_multiplier(viewshed_metrics)
+
+    # Blend direct component strength with raw metrics to reduce false "scenic" positives.
+    terrain_strength = min(1.0, topography_raw / 12.0)
+    landcover_strength = min(1.0, landcover_raw / 6.0)
+    viewshed_strength = min(1.0, scenic_viewshed_score / 65.0) * viewshed_mult
+    prominence_strength = min(1.0, prominence / 220.0)
+    ruggedness_strength = min(1.0, ruggedness / 90.0)
+    forest_strength = min(1.0, forest_pct / 25.0)
+
+    strength = (
+        0.22 * terrain_strength
+        + 0.16 * landcover_strength
+        + 0.22 * viewshed_strength
+        + 0.16 * prominence_strength
+        + 0.12 * ruggedness_strength
+        + 0.12 * forest_strength
+    )
+    return max(0.0, min(1.0, strength))
+
+
+def _choose_best_water_proximity_candidate(primary: Optional[Dict], candidates: List[Dict]) -> Optional[Dict]:
+    """
+    Select a usable water proximity candidate, preferring smaller distance and
+    preferring ocean/coast ties when distances are comparable.
+    """
+    pool: List[Dict] = []
+    if isinstance(primary, dict):
+        pool.append(primary)
+    for c in candidates or []:
+        if isinstance(c, dict):
+            pool.append(c)
+    if not pool:
+        return None
+
+    usable: List[Dict] = []
+    for candidate in pool:
+        nearest_distance_km = candidate.get("nearest_distance_km")
+        nearest_waterbody = candidate.get("nearest_waterbody") or {}
+        if nearest_distance_km is None or not isinstance(nearest_waterbody, dict):
+            continue
+        water_type = str(nearest_waterbody.get("type") or "").lower()
+        coastal_pref = 0 if water_type in ("ocean", "coast", "coastline") else 1
+        usable.append(
+            {
+                "candidate": candidate,
+                "distance": float(nearest_distance_km),
+                "coastal_pref": coastal_pref,
+            }
+        )
+    if not usable:
+        return None
+
+    usable.sort(key=lambda entry: (entry["distance"], entry["coastal_pref"]))
+    return usable[0]["candidate"]
 
 MULTI_RADIUS_CANOPY = {
     "micro_400m": 400,
@@ -1190,12 +1327,14 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         combined = max(0.0, min(1.0, (traditional_weight * traditional_score) + (enhanced_weight * enhanced_score)))
         return TOPOGRAPHY_BONUS_MAX * combined
 
-    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str], 
-                                   lat: Optional[float] = None, lon: Optional[float] = None,
-                                   elevation_m: Optional[float] = None,
-                                   topography_metrics: Optional[Dict] = None,
-                                   water_proximity_data: Optional[Dict] = None,
-                                   park_data: Optional[Dict] = None) -> Tuple[float, float]:
+    def _score_landcover_component(metrics: Dict, context_area_type: Optional[str],
+                                  lat: Optional[float] = None, lon: Optional[float] = None,
+                                  elevation_m: Optional[float] = None,
+                                  topography_metrics: Optional[Dict] = None,
+                                  water_proximity_data: Optional[Dict] = None,
+                                  park_data: Optional[Dict] = None,
+                                  canopy_pct_observed: Optional[float] = None,
+                                  landscape_tags: Optional[List[str]] = None) -> Tuple[float, float]:
         if not metrics:
             return 0.0, 0.0
 
@@ -1222,9 +1361,47 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
         natural_index = (0.6 * forest_factor) + (0.2 * wetland_factor) + (0.1 * shrub_factor) + (0.1 * grass_factor)
 
-        # Developed land reduces the boost, but not below zero
-        developed_penalty = min(0.8, developed_pct / 120.0)
+        # Developed land reduces the boost, but not below zero.
+        # Contradiction handling v2: in leafy suburb contexts, "developed" can include
+        # residential parcels with substantial tree cover. Soften penalty in that case.
+        developed_pct_effective = developed_pct
+        canopy_obs = float(canopy_pct_observed or 0.0)
+        tags_norm = [str(t).lower() for t in (landscape_tags or [])]
+        impervious_raw = metrics.get("impervious_pct")
+        impervious_available = isinstance(impervious_raw, (int, float))
+        park_local_green = 0.0
+        if isinstance(park_data, dict):
+            try:
+                park_local_green = float(park_data.get("local_green_score") or 0.0)
+            except Exception:
+                park_local_green = 0.0
+        leafy_suburb_contradiction = (
+            canopy_obs >= 45.0
+            and not impervious_available
+            and developed_pct >= 85.0
+            and context_area_type in ("suburban", "urban_residential", "exurban")
+            and (
+                forest_pct >= 10.0
+                or "forest" in tags_norm
+                or park_local_green >= 5.0
+            )
+        )
+        if leafy_suburb_contradiction:
+            developed_pct_effective = min(developed_pct, 60.0)
+        elif forest_pct >= 35.0 and developed_pct > 85.0:
+            developed_pct_effective = min(developed_pct, 72.0)
+        developed_penalty = min(0.8, developed_pct_effective / 120.0)
         natural_index = max(0.0, natural_index * (1.0 - developed_penalty))
+        metrics["developed_penalty_adjustment"] = {
+            "applied": leafy_suburb_contradiction or (developed_pct_effective < developed_pct),
+            "leafy_suburb_contradiction": leafy_suburb_contradiction,
+            "developed_pct_raw": round(developed_pct, 2),
+            "developed_pct_effective": round(developed_pct_effective, 2),
+            "canopy_pct_observed": round(canopy_obs, 2),
+            "forest_pct": round(forest_pct, 2),
+            "impervious_available": impervious_available,
+            "context_area_type": context_area_type,
+        }
 
         # Suburban/rural contexts get a small lift
         if context_area_type in ("rural", "exurban"):
@@ -1289,6 +1466,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # NEW: Water proximity bonus (distance to nearest significant waterbody)
         # Proximity to water matters for human perception, even if coverage % is low
         proximity_bonus = 0.0
+        proximity_bonus_pre_confidence = 0.0
+        proximity_source = "none"
+        proximity_confidence = 0.0
         nearest_water_distance_km = None
         water_proximity_type = None
         river_corridor_bonus = 0.0
@@ -1298,6 +1478,21 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             nearest_distance_km = water_proximity_data.get("nearest_distance_km")
             
             if nearest_waterbody and nearest_distance_km is not None:
+                raw_source = str(water_proximity_data.get("source") or "").lower()
+                proximity_count = int(water_proximity_data.get("count") or 0)
+                # Normalize source attribution for synthesized ocean fallbacks:
+                # count=0 + 0km + ocean indicates no OSM geometry confirmation.
+                synthetic_ocean_shape = (
+                    proximity_count == 0
+                    and float(nearest_distance_km) == 0.0
+                    and str(nearest_waterbody.get("type") or "").lower() in ("ocean", "coast", "coastline")
+                )
+                if synthetic_ocean_shape and raw_source in ("", "osm", "none"):
+                    proximity_source = "landcover_fallback"
+                elif raw_source:
+                    proximity_source = raw_source
+                else:
+                    proximity_source = "osm"
                 nearest_water_distance_km = nearest_distance_km
                 water_proximity_type = nearest_waterbody.get("type")
                 # Normalize OSM types: treat streams as rivers for perception scoring.
@@ -1348,6 +1543,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 
                 # Cap proximity bonus (increased from 16.0 to 18.0 for exceptional water features)
                 proximity_bonus = min(18.0, proximity_bonus)
+                proximity_bonus_pre_confidence = proximity_bonus
 
                 # River corridor bonus: reward being *right* on a river/stream even if 3km water% is low.
                 # Guarded by development so dense urban waterfronts don't get over-rewarded.
@@ -1358,6 +1554,18 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     dist_factor = max(0.0, min(1.0, (0.5 - nearest_distance_km) / 0.5))
                     river_corridor_bonus = 6.0 * dev_factor * dist_factor
                     proximity_bonus = min(18.0, proximity_bonus + river_corridor_bonus)
+
+                # Confidence-weight proximity: full for OSM-confirmed geometry, partial for landcover-derived fallback.
+                proximity_confidence = {
+                    "osm": 1.0,
+                    "osm_nearby_probe": 0.9,
+                    "landcover_fallback": 0.3,
+                    "landcover_coastal_inferred": 0.5,
+                    "landcover_relief_inferred": 0.4,
+                    "gee_landcover_micro": 0.3,
+                    "none": 0.0,
+                }.get(proximity_source, 0.3)
+                proximity_bonus *= proximity_confidence
         
         # Calculate water score: base + bonuses (additive, like built beauty)
         # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
@@ -1407,12 +1615,31 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     "park_count_400m": park_count,
                 }
         
+        water_score_pre_source_confidence = water_score
+        if proximity_source not in ("none", "osm"):
+            # For synthesized proximity (landcover fallbacks), down-weight the full water contribution path
+            # so saturation in other water terms cannot bypass source confidence.
+            water_score *= proximity_confidence
+        water_score = min(WATER_BONUS_MAX, max(0.0, water_score))
+
+        if water_proximity_data:
+            metrics["water_source_confidence_adjustment"] = {
+                "source": proximity_source,
+                "confidence": round(proximity_confidence, 2),
+                "water_score_pre_confidence": round(water_score_pre_source_confidence, 2),
+                "water_score_post_confidence": round(water_score, 2),
+                "count": int((water_proximity_data or {}).get("count") or 0),
+            }
+
         # Store proximity metadata in metrics for reporting
         if water_proximity_data:
             metrics["water_proximity"] = {
                 "nearest_distance_km": nearest_water_distance_km,
                 "nearest_type": water_proximity_type,
                 "proximity_bonus": round(proximity_bonus, 2) if proximity_bonus > 0 else None,
+                "proximity_bonus_pre_confidence": round(proximity_bonus_pre_confidence, 2) if proximity_bonus_pre_confidence > 0 else None,
+                "proximity_source": proximity_source,
+                "proximity_confidence": round(proximity_confidence, 2),
                 "river_corridor_bonus": round(river_corridor_bonus, 2) if river_corridor_bonus > 0 else None,
             }
 
@@ -1900,17 +2127,85 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         # #endregion
                         break
     
+    water_probe_attempted = False
+    water_probe_rings_used = 0
+    water_probe_candidate_count = 0
+    water_probe_selected_offset = None
+
     # Normalize: treat "query succeeded but no usable nearest distance" as missing for scoring purposes.
     # This prevents confusing states like "Water Proximity Available: Yes" with nearest_km=None.
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is None:
         water_proximity_data = None
+
+    # NB-local geocode robustness: probe nearby points when the primary OSM query misses water.
+    # This avoids generic neighborhood centroids suppressing coastal signal (e.g., bluff communities).
+    if not water_proximity_data and ENABLE_NEARBY_WATER_PROBE:
+        water_probe_candidates: List[Dict] = []
+        try:
+            probe_gate = False
+            relief_gate = float((topography_metrics or {}).get("relief_range_m") or 0.0)
+            water_gate = float((landcover_metrics or {}).get("water_pct") or 0.0)
+            if relief_gate >= 120.0 or water_gate >= 8.0:
+                probe_gate = True
+
+            if probe_gate:
+                water_probe_attempted = True
+                for ring_idx, ring_offsets in enumerate(WATER_PROBE_OFFSET_RINGS_DEGREES, start=1):
+                    water_probe_rings_used = ring_idx
+                    query_radius_m = 15000 if ring_idx == 1 else (30000 if ring_idx <= 3 else 45000)
+                    for dlat, dlon in ring_offsets:
+                        probe_lat = lat + dlat
+                        probe_lon = lon + dlon
+                        candidate = osm_api.query_water_features(probe_lat, probe_lon, query_radius_m)
+                        if isinstance(candidate, dict) and candidate.get("nearest_distance_km") is not None:
+                            candidate = candidate.copy()
+                            candidate["source"] = "osm_nearby_probe"
+                            candidate["probe_origin"] = {"lat": lat, "lon": lon}
+                            candidate["probe_offset_degrees"] = {"lat": dlat, "lon": dlon}
+                            water_probe_candidates.append(candidate)
+                            water_probe_candidate_count += 1
+                            nearest_waterbody = candidate.get("nearest_waterbody") or {}
+                            nearest_type = str(nearest_waterbody.get("type") or "").lower()
+                            nearest_km = float(candidate.get("nearest_distance_km") or 999.0)
+                            if nearest_type in ("ocean", "coast", "coastline") and nearest_km <= 1.5:
+                                break
+                    else:
+                        continue
+                    break
+
+                water_proximity_data = _choose_best_water_proximity_candidate(None, water_probe_candidates)
+                if water_proximity_data:
+                    water_probe_selected_offset = (water_proximity_data.get("probe_offset_degrees") or None)
+                    logger.debug(
+                        "Water proximity recovered via nearby probe: nearest_distance_km=%.2f source=%s",
+                        float(water_proximity_data.get("nearest_distance_km") or 0.0),
+                        water_proximity_data.get("source"),
+                    )
+        except Exception as probe_error:
+            logger.debug("Nearby water probe failed (non-fatal): %s", probe_error)
 
     # FALLBACK: If no water proximity data but high water coverage, assume coastal/ocean
     # This handles cases where OSM coastline queries fail but landcover shows high water %
     # (e.g., Manhattan Beach, CA - ocean isn't always returned as discrete OSM feature)
     if not water_proximity_data and landcover_metrics:
         water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
-        if water_pct > 30.0:  # High water coverage suggests coastal/ocean
+        wetland_pct = float(landcover_metrics.get("wetland_pct", 0.0) or 0.0)
+        relief_range_m = float((topography_metrics or {}).get("relief_range_m", 0.0) or 0.0)
+        developed_pct = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
+        inferred_coastal_edge = (
+            water_pct > 18.0
+            and (water_pct + wetland_pct) > 20.0
+            and relief_range_m < 120.0
+        )
+        inferred_bluff_coastal = (
+            water_probe_attempted
+            and water_probe_candidate_count == 0
+            and relief_range_m >= 220.0
+            and water_pct >= 2.0
+            and developed_pct < 75.0
+            and area_type_key in ("suburban", "urban_residential", "exurban", "rural")
+        )
+        if water_pct > 25.0 or inferred_coastal_edge:
             water_proximity_data = {
                 "nearest_waterbody": {
                     "type": "ocean",
@@ -1919,9 +2214,29 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 },
                 "nearest_distance_km": 0.0,  # Assume on/near coast
                 "water_features": [],
-                "water_density": water_pct  # Use landcover water % as proxy
+                "water_density": water_pct,  # Use landcover water % as proxy
+                "source": "landcover_coastal_inferred" if inferred_coastal_edge else "landcover_fallback",
+                "count": 0,
             }
             logger.debug(f"Water proximity fallback: High water coverage ({water_pct:.1f}%) suggests ocean proximity")
+        elif inferred_bluff_coastal:
+            water_proximity_data = {
+                "nearest_waterbody": {
+                    "type": "ocean",
+                    "name": "Ocean (relief-inferred coast)",
+                    "area_km2": None,
+                },
+                "nearest_distance_km": 3.0,
+                "water_features": [],
+                "water_density": water_pct,
+                "source": "landcover_relief_inferred",
+                "count": 0,
+            }
+            logger.debug(
+                "Water proximity fallback: relief-inferred coastal context (relief=%.1fm water_pct=%.1f%%)",
+                relief_range_m,
+                water_pct,
+            )
 
     # FALLBACK: If OSM water proximity is unavailable (commonly due to Overpass 429s/timeouts),
     # use a micro-radius GEE landcover read to detect "on/near water" for rivers/creeks.
@@ -1965,7 +2280,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         topography_metrics = None
     if landcover_metrics and not isinstance(landcover_metrics, dict):
         landcover_metrics = None
-    
+
     # PHASE 1: Detect landscape context tags now that we have all data
     try:
         from data_sources.data_quality import get_natural_landscape_tags
@@ -2013,7 +2328,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             elevation_m=elevation_m_for_climate,
             climate_multiplier=climate_multiplier_for_tags,
             canopy_pct=canopy_pct_for_tags,
-            park_data=park_data_for_tags  # Pass park data if available
+            park_data=park_data_for_tags,  # Pass park data if available
         )
         
         logger.debug(f"Detected landscape tags: {landscape_tags} for area_type={area_type_key}")
@@ -2039,6 +2354,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     relief = topography_metrics.get("relief_range_m") if topography_metrics else None
     prominence = topography_metrics.get("terrain_prominence_m") if topography_metrics else None
     developed_pct_for_weights: Optional[float] = None
+    impervious_pct_for_weights: Optional[float] = None
     nearest_water_km_for_weights: Optional[float] = None
     nearest_water_type_for_weights: Optional[str] = None
     if landcover_metrics:
@@ -2046,6 +2362,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             developed_pct_for_weights = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
         except Exception:
             pass
+        try:
+            if landcover_metrics.get("impervious_pct") is not None:
+                impervious_pct_for_weights = float(landcover_metrics.get("impervious_pct"))
+        except Exception:
+            impervious_pct_for_weights = None
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None:
         nearest_water_km_for_weights = float(water_proximity_data.get("nearest_distance_km") or 0.0)
         nearest_waterbody = water_proximity_data.get("nearest_waterbody") or {}
@@ -2260,6 +2581,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             topography_metrics,
             water_proximity_data,
             park_data_for_tags,
+            canopy_pct_observed=primary_canopy_pct,
+            landscape_tags=landscape_tags,
         )
 
         # Preference water-type multiplier (Ocean/Lakes profiles): emphasize or de-emphasize by nearest water type
@@ -2368,13 +2691,24 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     # Fallback to old calculation if scenic_viewshed_score not available
                     viewshed_factor = min(1.0, visible_natural_pct / 30.0)
                     viewshed_bonus = viewshed_factor * 4.0  # Max 4.0 bonus
+                viewshed_bonus_pre_quality_gate = viewshed_bonus
+                viewshed_quality_mult = _viewshed_quality_multiplier(viewshed_metrics)
+                viewshed_bonus *= viewshed_quality_mult
                 context_bonus_total += viewshed_bonus
                 natural_context_components["viewshed"] = round(viewshed_bonus, 2)
+                natural_context_components["viewshed_pre_quality_gate"] = round(viewshed_bonus_pre_quality_gate, 2)
+                natural_context_components["viewshed_quality_mult"] = round(viewshed_quality_mult, 3)
                 natural_context_components["visible_natural_pct"] = round(visible_natural_pct, 2)
                 if viewshed_relief_m is not None:
                     natural_context_components["viewshed_relief_m"] = round(viewshed_relief_m, 2)
                 natural_context_components["scenic_viewshed_score"] = round(scenic_viewshed_score, 2)
                 natural_context_details["viewshed_metrics"] = viewshed_metrics
+                natural_context_details["viewshed_quality_gate"] = {
+                    "quality": (viewshed_metrics or {}).get("viewshed_quality"),
+                    "multiplier": round(viewshed_quality_mult, 3),
+                    "pre_gate_bonus": round(viewshed_bonus_pre_quality_gate, 2),
+                    "post_gate_bonus": round(viewshed_bonus, 2),
+                }
                 
                 # PHASE 3: Mountain backdrop bonus - reward visible high-relief terrain
                 # This bonus recognizes that visible mountain backdrops are a major scenic feature
@@ -2484,6 +2818,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "near_water_reweight_meta": near_water_reweight_meta,
             "water_proximity_type": (water_proximity_data.get("nearest_waterbody", {}) or {}).get("type") if water_proximity_data else None,
             "landcover_developed_pct": developed_pct_for_weights,
+            "landcover_impervious_pct": impervious_pct_for_weights,
             "topography_raw": natural_context_components.get("topography_raw", 0),
             "topography_final": natural_context_components.get("topography", 0),
             "landcover_raw": natural_context_components.get("landcover_raw", 0),
@@ -2493,6 +2828,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "viewshed": natural_context_components.get("viewshed", 0),
             "water_proximity_available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
+            "water_probe_attempted": water_probe_attempted,
+            "water_probe_rings_used": water_probe_rings_used,
+            "water_probe_candidate_count": water_probe_candidate_count,
+            "water_probe_selected_offset": water_probe_selected_offset,
             "relief_m": relief,
             "landcover_available": bool(landcover_metrics),
             "topography_available": bool(topography_metrics)
@@ -2939,6 +3278,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         # Street tree component - visible street-level greenery
         street_component = 0.0
+        independent_street_tree_available = bool(
+            (isinstance(street_tree_points, (int, float)) and street_tree_points > 0)
+            or street_tree_feature_total > 0
+        )
         if street_tree_points:
             street_component += min(40.0, (street_tree_points / 50.0) * 40.0)
         elif street_tree_feature_total > 0:
@@ -2947,6 +3290,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             street_component = min(30.0, (street_tree_feature_total / 20.0) * 30.0)
         if osm_tree_points:
             street_component += min(20.0, (osm_tree_points / 50.0) * 20.0)
+
+        # DOUBLE-COUNT INVARIANT (composite path):
+        # if independent street-tree signal already contributed in tree_score path,
+        # suppress street contribution inside composite GVI construction.
+        if independent_street_tree_available:
+            street_component = 0.0
         
         # Density component - tree density in area
         density_component = 0.0
@@ -3017,6 +3366,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "street_component": round(street_component, 2),
                 "density_component": round(density_component, 2),
                 "local_parks_component": round(local_parks_component, 2),
+                "independent_street_tree_available": independent_street_tree_available,
                 "local_green_score_source": round(local_green_score, 2),
                 "note": "Parks component reused from local_green_score (0-10 scale, scaled 1.5x for GVI). Greenness boost uses actual GEE NDVI data (green_space_ratio) when available to capture visual greenness including lawns/grass."
             },
@@ -3066,8 +3416,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     street_tree_bonus = float(street_tree_bonus) if isinstance(street_tree_bonus, (int, float)) and not math.isnan(street_tree_bonus) else 0.0
     local_green_score = float(local_green_score) if isinstance(local_green_score, (int, float)) and not math.isnan(local_green_score) else 0.0
     
-    # Base tree score is canopy only (no bonuses added)
-    base_tree_score_only = base_tree_score  # This is already capped at 50, canopy only
+    # Base tree score assignment with canopy-anchored street-tree blending.
+    # This wiring intentionally happens here (inside _score_trees) so tree_base_score
+    # itself reflects the blended contribution, not only downstream aggregation.
+    canopy_score_for_blend = float(canopy_points) if isinstance(canopy_points, (int, float)) else float(base_tree_score)
+    blend_ratio = float((details.get("canopy_expectation") or {}).get("ratio") or 0.0)
+    blend_mult = max(0.0, min(1.0, blend_ratio))
+    street_tree_contribution_blended = 0.0
+    if isinstance(street_tree_points, (int, float)):
+        street_tree_contribution_blended = float(street_tree_points) * blend_mult
+    base_tree_score_only = max(0.0, min(50.0, canopy_score_for_blend + street_tree_contribution_blended))
     
     # FIX: Cap expectation penalty so it cannot reduce score below 0
     # Design principle: Penalties should reduce scores, but not eliminate them entirely
@@ -3086,6 +3444,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     
     details["tree_base_score"] = round(base_tree_score_only, 2)
     details["adjusted_tree_score"] = round(adjusted_score, 2)
+    details["street_tree_contribution_blended"] = round(street_tree_contribution_blended, 3)
+    details["street_tree_canopy_blend"] = {
+        "canopy_expectation_ratio": round(blend_ratio, 3),
+        "multiplier": round(blend_mult, 3),
+    }
     details["bonus_breakdown"] = {
         "canopy_expectation_bonus": round(expectation_adjustment, 2),
         "canopy_expectation_penalty": round(-capped_penalty, 2) if capped_penalty else 0.0,
@@ -3453,6 +3816,192 @@ def calculate_natural_beauty(lat: float,
     # Apply component dominance guard if enabled
     component_scores = context_info.get("component_scores", {}) or {}
     context_bonus_raw = _apply_component_dominance_guard(context_bonus_raw, component_scores)
+    context_debug = context_info.get("debug_breakdown", {}) or {}
+    if not isinstance(context_debug, dict):
+        context_debug = {}
+
+    # Damp high context only when evidence is weak (prevents harbor-adjacent hardscape over-scoring).
+    weak_signal_damp_mult = 1.0
+    context_signal_strength = _compute_context_signal_strength(context_info, tree_details)
+    if ENABLE_WEAK_SIGNAL_CONTEXT_DAMPING and context_bonus_raw >= 18.0 and context_signal_strength < 0.35:
+        weak_signal_damp_mult = 0.65 + (0.35 * (context_signal_strength / 0.35))
+        context_bonus_raw *= weak_signal_damp_mult
+
+    # Low-canopy + highly developed guardrail, skipped for arid climates where low canopy is expected.
+    canopy_expectation = tree_details.get("canopy_expectation", {}) or {}
+    if not isinstance(canopy_expectation, dict):
+        canopy_expectation = {}
+    climate_zone = str(canopy_expectation.get("climate_zone") or "").lower()
+    observed_canopy = float(canopy_expectation.get("observed_pct") or 0.0)
+    developed_pct = float(context_debug.get("landcover_developed_pct") or 0.0)
+    impervious_raw = context_debug.get("landcover_impervious_pct")
+    impervious_pct = float(impervious_raw) if isinstance(impervious_raw, (int, float)) else None
+    hardscape_proxy_pct = impervious_pct if impervious_pct is not None else developed_pct
+    local_green_score_guardrail = float(tree_details.get("local_green_score") or 0.0)
+    landscape_tags_for_guardrail = context_info.get("landscape_context_tags") or []
+    if not isinstance(landscape_tags_for_guardrail, list):
+        landscape_tags_for_guardrail = []
+    has_urban_park_tag = any(str(tag).lower() == "urban_park" for tag in landscape_tags_for_guardrail)
+    park_adjacency_relief = local_green_score_guardrail >= 5.5 or has_urban_park_tag
+    low_canopy_guardrail_applied = False
+    if (
+        ENABLE_LOW_CANOPY_DEVELOPED_GUARDRAIL
+        and observed_canopy < 5.0
+        and hardscape_proxy_pct >= 72.0
+        and climate_zone not in ("arid", "semi_arid")
+        and not park_adjacency_relief
+    ):
+        context_bonus_raw *= 0.82
+        low_canopy_guardrail_applied = True
+
+    # Scenic recovery lanes: bounded, archetype-specific uplifts for known
+    # under-scoring patterns (leafy suburbs, coastal terrain, park-adjacent urban).
+    scenic_recovery_leafy = 0.0
+    scenic_recovery_coastal = 0.0
+    scenic_recovery_park = 0.0
+    scenic_recovery_cap_applied = False
+    scenic_recovery_dense_urban_cap_applied = False
+    scenic_recovery_total = 0.0
+    area_type_key_for_recovery = str(context_debug.get("area_type_key") or (area_type or "") or "").lower()
+    water_type_for_recovery = str(context_debug.get("water_proximity_type") or "").lower()
+    water_km_for_recovery = context_debug.get("water_proximity_nearest_km")
+    water_km_val = float(water_km_for_recovery) if isinstance(water_km_for_recovery, (int, float)) else None
+    landscape_tags_lower = [str(tag).lower() for tag in landscape_tags_for_guardrail]
+    water_source_conf = (
+        (context_info.get("landcover_metrics") or {}).get("water_source_confidence_adjustment")
+        if isinstance(context_info.get("landcover_metrics"), dict)
+        else {}
+    )
+    if not isinstance(water_source_conf, dict):
+        water_source_conf = {}
+    water_source = str(water_source_conf.get("source") or "").lower()
+    developed_adj_meta = (
+        (context_info.get("landcover_metrics") or {}).get("developed_penalty_adjustment")
+        if isinstance(context_info.get("landcover_metrics"), dict)
+        else {}
+    )
+    if not isinstance(developed_adj_meta, dict):
+        developed_adj_meta = {}
+    leafy_contradiction = bool(developed_adj_meta.get("leafy_suburb_contradiction"))
+
+    if ENABLE_SCENIC_RECOVERY_LANES:
+        # A) Leafy suburb uplift
+        leafy_gate = (
+            area_type_key_for_recovery in ("suburban", "urban_residential", "exurban")
+            and observed_canopy >= 42.0
+            and developed_pct >= 80.0
+            and (impervious_pct is None or impervious_pct < 55.0)
+            and (local_green_score_guardrail >= 5.0 or "forest" in landscape_tags_lower or "urban_park" in landscape_tags_lower)
+            and leafy_contradiction
+        )
+        if leafy_gate:
+            scenic_recovery_leafy = min(
+                14.0,
+                4.0 + 0.18 * max(0.0, observed_canopy - 42.0) + 0.8 * max(0.0, local_green_score_guardrail),
+            )
+            if developed_pct > 92.0:
+                scenic_recovery_leafy *= 0.9
+
+        # B) Coastal terrain uplift
+        water_source_gate = water_source in ("osm_nearby_probe", "landcover_relief_inferred", "osm")
+        coastal_gate = (
+            (water_type_for_recovery in ("ocean", "coast", "coastline") or water_source_gate)
+            and float(context_debug.get("relief_m") or 0.0) >= 180.0
+            and developed_pct < 78.0
+            and context_signal_strength >= 0.2
+        )
+        if coastal_gate:
+            coastal_proximity_term = 0.0
+            if water_km_val is not None:
+                if water_km_val <= 1.5:
+                    coastal_proximity_term = 4.0
+                elif water_km_val <= 3.5:
+                    coastal_proximity_term = 2.0
+            scenic_recovery_coastal = min(
+                18.0,
+                6.0 + 0.02 * max(0.0, float(context_debug.get("relief_m") or 0.0) - 180.0) + coastal_proximity_term,
+            )
+            if water_source == "landcover_fallback":
+                scenic_recovery_coastal *= 0.5
+
+        # C) Park-adjacent urban uplift
+        street_tree_feature_total = int(tree_details.get("street_tree_feature_total") or 0)
+        park_gate = (
+            area_type_key_for_recovery in ("urban_residential", "historic_urban", "urban_core_lowrise")
+            and observed_canopy < 8.0
+            and local_green_score_guardrail >= 5.5
+            and (street_tree_feature_total >= 1000 or "urban_park" in landscape_tags_lower)
+            and not low_canopy_guardrail_applied
+        )
+        if park_gate:
+            street_tree_term = min(4.0, max(0.0, 0.0008 * street_tree_feature_total))
+            scenic_recovery_park = min(
+                12.0,
+                5.0 + 1.1 * max(0.0, local_green_score_guardrail - 5.5) + street_tree_term,
+            )
+
+        scenic_recovery_total = scenic_recovery_leafy + scenic_recovery_coastal + scenic_recovery_park
+        if scenic_recovery_total > 24.0:
+            scale = 24.0 / scenic_recovery_total
+            scenic_recovery_leafy *= scale
+            scenic_recovery_coastal *= scale
+            scenic_recovery_park *= scale
+            scenic_recovery_total = 24.0
+            scenic_recovery_cap_applied = True
+
+        # Anti-regression cap for dense hardscape urban cores.
+        if (
+            area_type_key_for_recovery in ("urban_core", "historic_urban")
+            and developed_pct >= 85.0
+            and observed_canopy < 5.0
+            and scenic_recovery_total > 4.0
+        ):
+            scale = 4.0 / scenic_recovery_total
+            scenic_recovery_leafy *= scale
+            scenic_recovery_coastal *= scale
+            scenic_recovery_park *= scale
+            scenic_recovery_total = 4.0
+            scenic_recovery_dense_urban_cap_applied = True
+
+    context_bonus_raw += scenic_recovery_total
+
+    tree_details["context_adjustments"] = {
+        "signal_strength": round(context_signal_strength, 3),
+        "weak_signal_damp_mult": round(weak_signal_damp_mult, 3),
+        "weak_signal_damping_applied": bool(weak_signal_damp_mult < 0.999),
+        "low_canopy_guardrail_applied": low_canopy_guardrail_applied,
+        "observed_canopy_pct": round(observed_canopy, 2),
+        "developed_pct": round(developed_pct, 2),
+        "impervious_pct": round(impervious_pct, 2) if impervious_pct is not None else None,
+        "hardscape_proxy_pct": round(hardscape_proxy_pct, 2),
+        "park_adjacency_relief": park_adjacency_relief,
+        "local_green_score": round(local_green_score_guardrail, 2),
+        "scenic_recovery_total": round(scenic_recovery_total, 2),
+        "climate_zone": climate_zone or None,
+    }
+    tree_details["scenic_recovery"] = {
+        "total": round(scenic_recovery_total, 3),
+        "cap_applied": scenic_recovery_cap_applied,
+        "dense_urban_cap_applied": scenic_recovery_dense_urban_cap_applied,
+        "leafy_suburb": {
+            "applied": scenic_recovery_leafy > 0.0,
+            "bonus": round(scenic_recovery_leafy, 3),
+            "leafy_suburb_contradiction": leafy_contradiction,
+        },
+        "coastal_terrain": {
+            "applied": scenic_recovery_coastal > 0.0,
+            "bonus": round(scenic_recovery_coastal, 3),
+            "source": water_source or None,
+            "water_km": round(water_km_val, 3) if isinstance(water_km_val, float) else None,
+            "water_type": water_type_for_recovery or None,
+        },
+        "park_adjacency": {
+            "applied": scenic_recovery_park > 0.0,
+            "bonus": round(scenic_recovery_park, 3),
+            "street_tree_feature_total": int(tree_details.get("street_tree_feature_total") or 0),
+            "local_green_score": round(local_green_score_guardrail, 2),
+        },
+    }
     # Ensure context_bonus_raw is still valid after guard
     if math.isnan(context_bonus_raw) or not isinstance(context_bonus_raw, (int, float)):
         context_bonus_raw = 0.0
@@ -3511,7 +4060,17 @@ def calculate_natural_beauty(lat: float,
         "components": context_info.get("component_scores", {})
     }
 
-    # Compute weighted component score (v2_clean_weights_tanh_cap). Multi-component model with separate weighting (no double-counting).
+    # Compute weighted component score (v2_clean_weights_tanh_cap). Multi-component model with separate weighting.
+    #
+    # DOUBLE-COUNT INVARIANT:
+    # No information source may contribute through more than one component path simultaneously.
+    # Before adding or reweighting a component, verify whether the same underlying fact is already
+    # represented elsewhere in the score and suppress lower-quality proxy paths accordingly.
+    # Examples:
+    # - Independent street-tree signal present in tree_score path -> suppress/dampen composite GVI street proxy.
+    # - Eye-level/semantic GVI available -> down-weight composite fallback behavior.
+    # - Confirmed water proximity signal present -> avoid re-crediting landcover-only water artifacts.
+    #
     # Rationale: Better reflects what someone experiences walking around their neighborhood:
     # 1. Base canopy coverage (with expectation adjustment) - 15%
     # 2. Visible greenery (GVI) - 20%
@@ -3528,8 +4087,12 @@ def calculate_natural_beauty(lat: float,
     if expectation_penalty > 0:
         expectation_penalty = -expectation_penalty  # Convert back to negative
     gvi_bonus = float(bonus_breakdown.get("green_view_bonus", 0) or 0)
-    street_tree_bonus = float(bonus_breakdown.get("street_tree_bonus", 0) or 0)
+    street_tree_bonus_raw = float(bonus_breakdown.get("street_tree_bonus", 0) or 0)
+    street_tree_bonus = street_tree_bonus_raw
     local_green_score = float(tree_details.get("local_green_score", 0) or 0)
+    gvi_method = str((tree_details.get("green_view_details") or {}).get("method") or "unknown").lower()
+    gvi_method_mult = _gvi_method_multiplier(gvi_method)
+    canopy_expectation_ratio = float((tree_details.get("canopy_expectation") or {}).get("ratio") or 0.0)
     
     # Apply expectation adjustment to base score
     capped_penalty = min(abs(expectation_penalty), base_tree_score_only) if expectation_penalty < 0 else 0.0
@@ -3553,8 +4116,26 @@ def calculate_natural_beauty(lat: float,
     
     # Weight each component separately
     tree_weighted = base_with_expectation * tree_weight  # was 0.30 fixed
-    gvi_weighted = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
-    street_tree_weighted = street_tree_bonus * 1.0  # 5 points max (already 0-5 scale)
+    gvi_weighted_raw = (green_view_index / 100.0) * 20.0  # 20 points max (GVI 0-100 scale)
+    gvi_weighted = gvi_weighted_raw * gvi_method_mult
+    # Canopy-anchored blend: street-tree contribution scales with observed-vs-expected canopy ratio.
+    street_tree_canopy_blend_mult = max(0.0, min(1.0, canopy_expectation_ratio))
+
+    # Availability-gated dedup for composite GVI:
+    # only damp when an independent street-tree signal already contributed in tree_score path.
+    independent_street_tree_available = bool(
+        (tree_details.get("street_tree_feature_total") or 0) > 0 and street_tree_bonus > 0.0
+    )
+    street_tree_dedup_mult = 1.0
+    if (
+        ENABLE_COMPOSITE_GVI_STREET_TREE_DEDUP
+        and gvi_method == "composite"
+        and independent_street_tree_available
+    ):
+        street_tree_dedup_mult = 0.5
+
+    street_tree_bonus_effective = street_tree_bonus * street_tree_canopy_blend_mult * street_tree_dedup_mult
+    street_tree_weighted = street_tree_bonus_effective
     local_green_weighted = local_green_score * 1.0  # 10 points max (already 0-10 scale)
     # PHASE 4: Enhanced context weighting - increase scaling for context bonuses
     # Increased from 1.75x to 2.0x to give more weight to scenic context
@@ -3582,6 +4163,26 @@ def calculate_natural_beauty(lat: float,
     # Native points (component sum). Keep in 0-130-ish range for legacy scaling.
     natural_native_v6 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v6)
     natural_native_v7 = max(0.0, tree_weighted + gvi_weighted + street_tree_weighted + local_green_weighted + scenic_weighted_v7)
+
+    tree_details["gvi_method_adjustment"] = {
+        "method": gvi_method,
+        "multiplier": round(gvi_method_mult, 3),
+        "weighted_raw": round(gvi_weighted_raw, 3),
+        "weighted_final": round(gvi_weighted, 3),
+    }
+    tree_details["street_tree_dedup"] = {
+        "applied": bool(street_tree_dedup_mult < 1.0),
+        "multiplier": round(street_tree_dedup_mult, 3),
+        "reason": "composite_gvi_overlap" if street_tree_dedup_mult < 1.0 else "none",
+        "independent_street_tree_available": independent_street_tree_available,
+    }
+    tree_details["street_tree_canopy_blend"] = {
+        "canopy_expectation_ratio": round(canopy_expectation_ratio, 3),
+        "multiplier": round(street_tree_canopy_blend_mult, 3),
+    }
+    if isinstance(tree_details.get("bonus_breakdown"), dict):
+        tree_details["bonus_breakdown"]["street_tree_bonus_raw"] = round(street_tree_bonus_raw, 3)
+        tree_details["bonus_breakdown"]["street_tree_bonus_effective"] = round(street_tree_bonus_effective, 3)
 
     # Scaling factor: keep legacy scaling for now (Phase 7A) to avoid distribution-wide changes.
     natural_score_raw_v6 = min(100.0, natural_native_v6 * (100.0 / 93.75))
