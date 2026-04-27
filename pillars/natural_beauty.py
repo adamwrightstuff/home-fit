@@ -66,8 +66,6 @@ ENABLE_GVI_METHOD_WEIGHTING = True
 ENABLE_COMPOSITE_GVI_STREET_TREE_DEDUP = True
 ENABLE_WEAK_SIGNAL_CONTEXT_DAMPING = True
 ENABLE_LOW_CANOPY_DEVELOPED_GUARDRAIL = True
-ENABLE_NEARBY_WATER_PROBE = True
-ENABLE_SCENIC_RECOVERY_LANES = True
 # Canopy profile: if GEE canopy confidence below this (0-1), fall back to V7 default weights.
 CANOPY_CONFIDENCE_THRESHOLD = 0.5
 
@@ -186,12 +184,6 @@ GVI_METHOD_MULTIPLIERS = {
     "unknown": 0.35,
 }
 
-WATER_PROBE_OFFSET_RINGS_DEGREES = (
-    ((0.008, 0.0), (-0.008, 0.0), (0.0, 0.01), (0.0, -0.01)),
-    ((0.02, 0.0), (-0.02, 0.0), (0.0, 0.025), (0.0, -0.025)),
-    ((0.04, 0.0), (-0.04, 0.0), (0.0, 0.045), (0.0, -0.045)),
-)
-
 
 def _ramp01_canopy_uplift(canopy_pct: Optional[float]) -> float:
     """
@@ -291,41 +283,6 @@ def _compute_context_signal_strength(
     )
     return max(0.0, min(1.0, strength))
 
-
-def _choose_best_water_proximity_candidate(primary: Optional[Dict], candidates: List[Dict]) -> Optional[Dict]:
-    """
-    Select a usable water proximity candidate, preferring smaller distance and
-    preferring ocean/coast ties when distances are comparable.
-    """
-    pool: List[Dict] = []
-    if isinstance(primary, dict):
-        pool.append(primary)
-    for c in candidates or []:
-        if isinstance(c, dict):
-            pool.append(c)
-    if not pool:
-        return None
-
-    usable: List[Dict] = []
-    for candidate in pool:
-        nearest_distance_km = candidate.get("nearest_distance_km")
-        nearest_waterbody = candidate.get("nearest_waterbody") or {}
-        if nearest_distance_km is None or not isinstance(nearest_waterbody, dict):
-            continue
-        water_type = str(nearest_waterbody.get("type") or "").lower()
-        coastal_pref = 0 if water_type in ("ocean", "coast", "coastline") else 1
-        usable.append(
-            {
-                "candidate": candidate,
-                "distance": float(nearest_distance_km),
-                "coastal_pref": coastal_pref,
-            }
-        )
-    if not usable:
-        return None
-
-    usable.sort(key=lambda entry: (entry["distance"], entry["coastal_pref"]))
-    return usable[0]["candidate"]
 
 MULTI_RADIUS_CANOPY = {
     "micro_400m": 400,
@@ -1557,10 +1514,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 # Confidence-weight proximity: full for OSM-confirmed geometry, partial for landcover-derived fallback.
                 proximity_confidence = {
                     "osm": 1.0,
-                    "osm_nearby_probe": 0.9,
                     "landcover_fallback": 0.3,
                     "landcover_coastal_inferred": 0.5,
-                    "landcover_relief_inferred": 0.4,
                     "gee_landcover_micro": 0.3,
                     "none": 0.0,
                 }.get(proximity_source, 0.3)
@@ -2126,77 +2081,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         # #endregion
                         break
     
-    water_probe_attempted = False
-    water_probe_rings_used = 0
-    water_probe_candidate_count = 0
-    water_probe_selected_offset = None
-
     # Normalize: treat "query succeeded but no usable nearest distance" as missing for scoring purposes.
     # This prevents confusing states like "Water Proximity Available: Yes" with nearest_km=None.
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is None:
         water_proximity_data = None
-
-    # NB-local geocode robustness: probe nearby points when the primary OSM query misses water.
-    # This avoids generic neighborhood centroids suppressing coastal signal (e.g., bluff communities).
-    if not water_proximity_data and ENABLE_NEARBY_WATER_PROBE:
-        water_probe_candidates: List[Dict] = []
-        try:
-            probe_gate = False
-            relief_gate = float((topography_metrics or {}).get("relief_range_m") or 0.0)
-            water_gate = float((landcover_metrics or {}).get("water_pct") or 0.0)
-            if relief_gate >= 120.0 or water_gate >= 8.0:
-                probe_gate = True
-
-            if probe_gate:
-                water_probe_attempted = True
-                # Reliability-first budgeting:
-                # - Keep probe fan-out bounded to avoid pillar timeouts.
-                # - Use only near rings by default; allow one extra ring for high-relief/coastal-like cases.
-                max_probe_calls = 6
-                max_probe_rings = 1
-                if relief_gate >= 220.0 or water_gate >= 12.0:
-                    max_probe_rings = 2
-                probe_calls = 0
-                for ring_idx, ring_offsets in enumerate(WATER_PROBE_OFFSET_RINGS_DEGREES, start=1):
-                    if ring_idx > max_probe_rings:
-                        break
-                    water_probe_rings_used = ring_idx
-                    query_radius_m = 15000 if ring_idx == 1 else 22000
-                    for dlat, dlon in ring_offsets:
-                        if probe_calls >= max_probe_calls:
-                            break
-                        probe_lat = lat + dlat
-                        probe_lon = lon + dlon
-                        candidate = osm_api.query_water_features(probe_lat, probe_lon, query_radius_m)
-                        probe_calls += 1
-                        if isinstance(candidate, dict) and candidate.get("nearest_distance_km") is not None:
-                            candidate = candidate.copy()
-                            candidate["source"] = "osm_nearby_probe"
-                            candidate["probe_origin"] = {"lat": lat, "lon": lon}
-                            candidate["probe_offset_degrees"] = {"lat": dlat, "lon": dlon}
-                            water_probe_candidates.append(candidate)
-                            water_probe_candidate_count += 1
-                            nearest_waterbody = candidate.get("nearest_waterbody") or {}
-                            nearest_type = str(nearest_waterbody.get("type") or "").lower()
-                            nearest_km = float(candidate.get("nearest_distance_km") or 999.0)
-                            if nearest_type in ("ocean", "coast", "coastline") and nearest_km <= 1.5:
-                                break
-                    if probe_calls >= max_probe_calls:
-                        break
-                    else:
-                        continue
-                    break
-
-                water_proximity_data = _choose_best_water_proximity_candidate(None, water_probe_candidates)
-                if water_proximity_data:
-                    water_probe_selected_offset = (water_proximity_data.get("probe_offset_degrees") or None)
-                    logger.debug(
-                        "Water proximity recovered via nearby probe: nearest_distance_km=%.2f source=%s",
-                        float(water_proximity_data.get("nearest_distance_km") or 0.0),
-                        water_proximity_data.get("source"),
-                    )
-        except Exception as probe_error:
-            logger.debug("Nearby water probe failed (non-fatal): %s", probe_error)
 
     # FALLBACK: If no water proximity data but high water coverage, assume coastal/ocean
     # This handles cases where OSM coastline queries fail but landcover shows high water %
@@ -2205,19 +2093,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
         wetland_pct = float(landcover_metrics.get("wetland_pct", 0.0) or 0.0)
         relief_range_m = float((topography_metrics or {}).get("relief_range_m", 0.0) or 0.0)
-        developed_pct = float(landcover_metrics.get("developed_pct", 0.0) or 0.0)
         inferred_coastal_edge = (
             water_pct > 18.0
             and (water_pct + wetland_pct) > 20.0
             and relief_range_m < 120.0
-        )
-        inferred_bluff_coastal = (
-            water_probe_attempted
-            and water_probe_candidate_count == 0
-            and relief_range_m >= 220.0
-            and water_pct >= 2.0
-            and developed_pct < 75.0
-            and area_type_key in ("suburban", "urban_residential", "exurban", "rural")
         )
         if water_pct > 25.0 or inferred_coastal_edge:
             water_proximity_data = {
@@ -2233,24 +2112,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "count": 0,
             }
             logger.debug(f"Water proximity fallback: High water coverage ({water_pct:.1f}%) suggests ocean proximity")
-        elif inferred_bluff_coastal:
-            water_proximity_data = {
-                "nearest_waterbody": {
-                    "type": "ocean",
-                    "name": "Ocean (relief-inferred coast)",
-                    "area_km2": None,
-                },
-                "nearest_distance_km": 3.0,
-                "water_features": [],
-                "water_density": water_pct,
-                "source": "landcover_relief_inferred",
-                "count": 0,
-            }
-            logger.debug(
-                "Water proximity fallback: relief-inferred coastal context (relief=%.1fm water_pct=%.1f%%)",
-                relief_range_m,
-                water_pct,
-            )
 
     # FALLBACK: If OSM water proximity is unavailable (commonly due to Overpass 429s/timeouts),
     # use a micro-radius GEE landcover read to detect "on/near water" for rivers/creeks.
@@ -2842,10 +2703,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "viewshed": natural_context_components.get("viewshed", 0),
             "water_proximity_available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "water_proximity_nearest_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
-            "water_probe_attempted": water_probe_attempted,
-            "water_probe_rings_used": water_probe_rings_used,
-            "water_probe_candidate_count": water_probe_candidate_count,
-            "water_probe_selected_offset": water_probe_selected_offset,
             "relief_m": relief,
             "landcover_available": bool(landcover_metrics),
             "topography_available": bool(topography_metrics)
@@ -3868,140 +3725,6 @@ def calculate_natural_beauty(lat: float,
         context_bonus_raw *= 0.82
         low_canopy_guardrail_applied = True
 
-    # Scenic recovery lanes: bounded, archetype-specific uplifts for known
-    # under-scoring patterns (leafy suburbs, coastal terrain, park-adjacent urban).
-    scenic_recovery_leafy = 0.0
-    scenic_recovery_coastal = 0.0
-    scenic_recovery_park = 0.0
-    scenic_recovery_cap_applied = False
-    scenic_recovery_dense_urban_cap_applied = False
-    scenic_recovery_headroom_mult = 1.0
-    scenic_recovery_soft_cap_applied = False
-    scenic_recovery_total = 0.0
-    area_type_key_for_recovery = str(context_debug.get("area_type_key") or (area_type or "") or "").lower()
-    water_type_for_recovery = str(context_debug.get("water_proximity_type") or "").lower()
-    water_km_for_recovery = context_debug.get("water_proximity_nearest_km")
-    water_km_val = float(water_km_for_recovery) if isinstance(water_km_for_recovery, (int, float)) else None
-    landscape_tags_lower = [str(tag).lower() for tag in landscape_tags_for_guardrail]
-    water_source_conf = (
-        (context_info.get("landcover_metrics") or {}).get("water_source_confidence_adjustment")
-        if isinstance(context_info.get("landcover_metrics"), dict)
-        else {}
-    )
-    if not isinstance(water_source_conf, dict):
-        water_source_conf = {}
-    water_source = str(water_source_conf.get("source") or "").lower()
-    developed_adj_meta = (
-        (context_info.get("landcover_metrics") or {}).get("developed_penalty_adjustment")
-        if isinstance(context_info.get("landcover_metrics"), dict)
-        else {}
-    )
-    if not isinstance(developed_adj_meta, dict):
-        developed_adj_meta = {}
-    leafy_contradiction = bool(developed_adj_meta.get("leafy_suburb_contradiction"))
-
-    if ENABLE_SCENIC_RECOVERY_LANES:
-        # A) Leafy suburb uplift
-        leafy_gate = (
-            area_type_key_for_recovery in ("suburban", "urban_residential", "exurban")
-            and observed_canopy >= 42.0
-            and developed_pct >= 80.0
-            and (impervious_pct is None or impervious_pct < 55.0)
-            and (local_green_score_guardrail >= 5.0 or "forest" in landscape_tags_lower or "urban_park" in landscape_tags_lower)
-            and leafy_contradiction
-        )
-        if leafy_gate:
-            scenic_recovery_leafy = min(
-                8.0,
-                4.0 + 0.18 * max(0.0, observed_canopy - 42.0) + 0.8 * max(0.0, local_green_score_guardrail),
-            )
-            if developed_pct > 92.0:
-                scenic_recovery_leafy *= 0.9
-
-        # B) Coastal terrain uplift
-        water_source_gate = water_source in ("osm_nearby_probe", "landcover_relief_inferred", "osm")
-        coastal_gate = (
-            (water_type_for_recovery in ("ocean", "coast", "coastline") or water_source_gate)
-            and float(context_debug.get("relief_m") or 0.0) >= 180.0
-            and developed_pct < 78.0
-            and context_signal_strength >= 0.2
-        )
-        if coastal_gate:
-            coastal_proximity_term = 0.0
-            if water_km_val is not None:
-                if water_km_val <= 1.5:
-                    coastal_proximity_term = 4.0
-                elif water_km_val <= 3.5:
-                    coastal_proximity_term = 2.0
-            scenic_recovery_coastal = min(
-                18.0,
-                6.0 + 0.02 * max(0.0, float(context_debug.get("relief_m") or 0.0) - 180.0) + coastal_proximity_term,
-            )
-            if water_source == "landcover_fallback":
-                scenic_recovery_coastal *= 0.5
-
-        # C) Park-adjacent urban uplift
-        street_tree_feature_total = int(tree_details.get("street_tree_feature_total") or 0)
-        park_gate = (
-            area_type_key_for_recovery in ("urban_residential", "historic_urban", "urban_core_lowrise")
-            and observed_canopy < 8.0
-            and local_green_score_guardrail >= 5.5
-            and (street_tree_feature_total >= 1000 or "urban_park" in landscape_tags_lower)
-            and not low_canopy_guardrail_applied
-        )
-        if park_gate:
-            street_tree_term = min(4.0, max(0.0, 0.0008 * street_tree_feature_total))
-            scenic_recovery_park = min(
-                12.0,
-                5.0 + 1.1 * max(0.0, local_green_score_guardrail - 5.5) + street_tree_term,
-            )
-
-        scenic_recovery_total = scenic_recovery_leafy + scenic_recovery_coastal + scenic_recovery_park
-        # Headroom damping: prevent large one-shot boosts at the top end.
-        # Use current base (before scenic recovery) as the taper reference.
-        pre_recovery_native = (
-            float(tree_details.get("tree_base_score", 0.0) or 0.0)
-            + float(tree_details.get("green_view_index", 0.0) or 0.0) * 0.2
-            + float(tree_details.get("local_green_score", 0.0) or 0.0)
-            + float(context_info.get("total_bonus") or 0.0)
-        )
-        pre_recovery_estimated_score = max(0.0, min(100.0, pre_recovery_native * (100.0 / 93.75)))
-        if pre_recovery_estimated_score >= 70.0:
-            scenic_recovery_headroom_mult = max(0.0, min(1.0, (88.0 - pre_recovery_estimated_score) / 18.0))
-            scenic_recovery_leafy *= scenic_recovery_headroom_mult
-            scenic_recovery_coastal *= scenic_recovery_headroom_mult
-            scenic_recovery_park *= scenic_recovery_headroom_mult
-            scenic_recovery_total = scenic_recovery_leafy + scenic_recovery_coastal + scenic_recovery_park
-        if scenic_recovery_total > 24.0:
-            scale = 24.0 / scenic_recovery_total
-            scenic_recovery_leafy *= scale
-            scenic_recovery_coastal *= scale
-            scenic_recovery_park *= scale
-            scenic_recovery_total = 24.0
-            scenic_recovery_cap_applied = True
-
-        # Anti-regression cap for dense hardscape urban cores.
-        if (
-            area_type_key_for_recovery in ("urban_core", "historic_urban")
-            and developed_pct >= 85.0
-            and observed_canopy < 5.0
-            and scenic_recovery_total > 4.0
-        ):
-            scale = 4.0 / scenic_recovery_total
-            scenic_recovery_leafy *= scale
-            scenic_recovery_coastal *= scale
-            scenic_recovery_park *= scale
-            scenic_recovery_total = 4.0
-            scenic_recovery_dense_urban_cap_applied = True
-
-        # Soft cap for non-coastal leafy-only uplift to avoid saturating to 100.
-        if scenic_recovery_leafy > 0.0 and scenic_recovery_coastal <= 0.0 and scenic_recovery_total > 6.0:
-            scenic_recovery_total = 6.0
-            scenic_recovery_leafy = min(scenic_recovery_leafy, 6.0)
-            scenic_recovery_soft_cap_applied = True
-
-    context_bonus_raw += scenic_recovery_total
-
     tree_details["context_adjustments"] = {
         "signal_strength": round(context_signal_strength, 3),
         "weak_signal_damp_mult": round(weak_signal_damp_mult, 3),
@@ -4013,33 +3736,7 @@ def calculate_natural_beauty(lat: float,
         "hardscape_proxy_pct": round(hardscape_proxy_pct, 2),
         "park_adjacency_relief": park_adjacency_relief,
         "local_green_score": round(local_green_score_guardrail, 2),
-        "scenic_recovery_total": round(scenic_recovery_total, 2),
         "climate_zone": climate_zone or None,
-    }
-    tree_details["scenic_recovery"] = {
-        "total": round(scenic_recovery_total, 3),
-        "cap_applied": scenic_recovery_cap_applied,
-        "dense_urban_cap_applied": scenic_recovery_dense_urban_cap_applied,
-        "headroom_mult": round(scenic_recovery_headroom_mult, 3),
-        "soft_cap_applied": scenic_recovery_soft_cap_applied,
-        "leafy_suburb": {
-            "applied": scenic_recovery_leafy > 0.0,
-            "bonus": round(scenic_recovery_leafy, 3),
-            "leafy_suburb_contradiction": leafy_contradiction,
-        },
-        "coastal_terrain": {
-            "applied": scenic_recovery_coastal > 0.0,
-            "bonus": round(scenic_recovery_coastal, 3),
-            "source": water_source or None,
-            "water_km": round(water_km_val, 3) if isinstance(water_km_val, float) else None,
-            "water_type": water_type_for_recovery or None,
-        },
-        "park_adjacency": {
-            "applied": scenic_recovery_park > 0.0,
-            "bonus": round(scenic_recovery_park, 3),
-            "street_tree_feature_total": int(tree_details.get("street_tree_feature_total") or 0),
-            "local_green_score": round(local_green_score_guardrail, 2),
-        },
     }
     # Ensure context_bonus_raw is still valid after guard
     if math.isnan(context_bonus_raw) or not isinstance(context_bonus_raw, (int, float)):
