@@ -190,7 +190,6 @@ WATER_PROBE_OFFSET_RINGS_DEGREES = (
     ((0.008, 0.0), (-0.008, 0.0), (0.0, 0.01), (0.0, -0.01)),
     ((0.02, 0.0), (-0.02, 0.0), (0.0, 0.025), (0.0, -0.025)),
     ((0.04, 0.0), (-0.04, 0.0), (0.0, 0.045), (0.0, -0.045)),
-    ((0.08, 0.0), (-0.08, 0.0), (0.0, 0.09), (0.0, -0.09)),
 )
 
 
@@ -2150,13 +2149,26 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
 
             if probe_gate:
                 water_probe_attempted = True
+                # Reliability-first budgeting:
+                # - Keep probe fan-out bounded to avoid pillar timeouts.
+                # - Use only near rings by default; allow one extra ring for high-relief/coastal-like cases.
+                max_probe_calls = 6
+                max_probe_rings = 1
+                if relief_gate >= 220.0 or water_gate >= 12.0:
+                    max_probe_rings = 2
+                probe_calls = 0
                 for ring_idx, ring_offsets in enumerate(WATER_PROBE_OFFSET_RINGS_DEGREES, start=1):
+                    if ring_idx > max_probe_rings:
+                        break
                     water_probe_rings_used = ring_idx
-                    query_radius_m = 15000 if ring_idx == 1 else (30000 if ring_idx <= 3 else 45000)
+                    query_radius_m = 15000 if ring_idx == 1 else 22000
                     for dlat, dlon in ring_offsets:
+                        if probe_calls >= max_probe_calls:
+                            break
                         probe_lat = lat + dlat
                         probe_lon = lon + dlon
                         candidate = osm_api.query_water_features(probe_lat, probe_lon, query_radius_m)
+                        probe_calls += 1
                         if isinstance(candidate, dict) and candidate.get("nearest_distance_km") is not None:
                             candidate = candidate.copy()
                             candidate["source"] = "osm_nearby_probe"
@@ -2169,6 +2181,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             nearest_km = float(candidate.get("nearest_distance_km") or 999.0)
                             if nearest_type in ("ocean", "coast", "coastline") and nearest_km <= 1.5:
                                 break
+                    if probe_calls >= max_probe_calls:
+                        break
                     else:
                         continue
                     break
@@ -3861,6 +3875,8 @@ def calculate_natural_beauty(lat: float,
     scenic_recovery_park = 0.0
     scenic_recovery_cap_applied = False
     scenic_recovery_dense_urban_cap_applied = False
+    scenic_recovery_headroom_mult = 1.0
+    scenic_recovery_soft_cap_applied = False
     scenic_recovery_total = 0.0
     area_type_key_for_recovery = str(context_debug.get("area_type_key") or (area_type or "") or "").lower()
     water_type_for_recovery = str(context_debug.get("water_proximity_type") or "").lower()
@@ -3896,7 +3912,7 @@ def calculate_natural_beauty(lat: float,
         )
         if leafy_gate:
             scenic_recovery_leafy = min(
-                14.0,
+                8.0,
                 4.0 + 0.18 * max(0.0, observed_canopy - 42.0) + 0.8 * max(0.0, local_green_score_guardrail),
             )
             if developed_pct > 92.0:
@@ -3941,6 +3957,21 @@ def calculate_natural_beauty(lat: float,
             )
 
         scenic_recovery_total = scenic_recovery_leafy + scenic_recovery_coastal + scenic_recovery_park
+        # Headroom damping: prevent large one-shot boosts at the top end.
+        # Use current base (before scenic recovery) as the taper reference.
+        pre_recovery_native = (
+            float(tree_details.get("tree_base_score", 0.0) or 0.0)
+            + float(tree_details.get("green_view_index", 0.0) or 0.0) * 0.2
+            + float(tree_details.get("local_green_score", 0.0) or 0.0)
+            + float(context_info.get("total_bonus") or 0.0)
+        )
+        pre_recovery_estimated_score = max(0.0, min(100.0, pre_recovery_native * (100.0 / 93.75)))
+        if pre_recovery_estimated_score >= 70.0:
+            scenic_recovery_headroom_mult = max(0.0, min(1.0, (88.0 - pre_recovery_estimated_score) / 18.0))
+            scenic_recovery_leafy *= scenic_recovery_headroom_mult
+            scenic_recovery_coastal *= scenic_recovery_headroom_mult
+            scenic_recovery_park *= scenic_recovery_headroom_mult
+            scenic_recovery_total = scenic_recovery_leafy + scenic_recovery_coastal + scenic_recovery_park
         if scenic_recovery_total > 24.0:
             scale = 24.0 / scenic_recovery_total
             scenic_recovery_leafy *= scale
@@ -3963,6 +3994,12 @@ def calculate_natural_beauty(lat: float,
             scenic_recovery_total = 4.0
             scenic_recovery_dense_urban_cap_applied = True
 
+        # Soft cap for non-coastal leafy-only uplift to avoid saturating to 100.
+        if scenic_recovery_leafy > 0.0 and scenic_recovery_coastal <= 0.0 and scenic_recovery_total > 6.0:
+            scenic_recovery_total = 6.0
+            scenic_recovery_leafy = min(scenic_recovery_leafy, 6.0)
+            scenic_recovery_soft_cap_applied = True
+
     context_bonus_raw += scenic_recovery_total
 
     tree_details["context_adjustments"] = {
@@ -3983,6 +4020,8 @@ def calculate_natural_beauty(lat: float,
         "total": round(scenic_recovery_total, 3),
         "cap_applied": scenic_recovery_cap_applied,
         "dense_urban_cap_applied": scenic_recovery_dense_urban_cap_applied,
+        "headroom_mult": round(scenic_recovery_headroom_mult, 3),
+        "soft_cap_applied": scenic_recovery_soft_cap_applied,
         "leafy_suburb": {
             "applied": scenic_recovery_leafy > 0.0,
             "bonus": round(scenic_recovery_leafy, 3),
