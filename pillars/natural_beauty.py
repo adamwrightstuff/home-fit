@@ -128,6 +128,10 @@ NATURAL_BEAUTY_PREFERENCE_PROFILES = {
 
 # Default water type weights (coast/lake/river) when no preference override
 WATER_TYPE_WEIGHTS_DEFAULT = {"coast": 0.60, "lake": 0.30, "river": 0.10}
+# OSM `natural=bay` (harbors, estuaries) maps to the "coast" preference bucket with this factor vs open ocean.
+BAY_WATER_PREFERENCE_FACTOR = 0.78
+# When landcover infers water with no OSM geometry, apply this extra scale in dense urban (with landcover confidence).
+LANDCOVER_FALLBACK_WATER_URBAN_SCALE = 0.42
 
 # Natural context scoring constants.
 # Updated: Increased topography max to better capture scenic mountain areas
@@ -530,17 +534,20 @@ def _water_type_multiplier(
     t = (nearest_water_type or "").lower()
     if t == "stream":
         t = "river"
-    if t not in ("ocean", "coast", "coastline", "lake", "river"):
-        return 1.0
-    # Map ocean/coast/coastline -> coast
-    if t in ("ocean", "coastline"):
+    bay_factor = 1.0
+    if t == "bay":
         t = "coast"
+        bay_factor = BAY_WATER_PREFERENCE_FACTOR
+    elif t in ("ocean", "coastline"):
+        t = "coast"
+    if t not in ("coast", "lake", "river"):
+        return 1.0
     default = WATER_TYPE_WEIGHTS_DEFAULT
     w = water_type_weights.get(t, default.get(t, 1.0 / 3.0))
     d = default.get(t, 1.0 / 3.0)
     if d <= 0:
         return 1.0
-    return w / d
+    return (w / d) * bay_factor
 
 
 def _get_adaptive_context_weights(
@@ -1436,12 +1443,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             if nearest_waterbody and nearest_distance_km is not None:
                 raw_source = str(water_proximity_data.get("source") or "").lower()
                 proximity_count = int(water_proximity_data.get("count") or 0)
-                # Normalize source attribution for synthesized ocean fallbacks:
-                # count=0 + 0km + ocean indicates no OSM geometry confirmation.
+                # Normalize source attribution for synthesized coastal fallbacks:
+                # count=0 + 0km + ocean/bay indicates no OSM geometry confirmation.
                 synthetic_ocean_shape = (
                     proximity_count == 0
                     and float(nearest_distance_km) == 0.0
-                    and str(nearest_waterbody.get("type") or "").lower() in ("ocean", "coast", "coastline")
+                    and str(nearest_waterbody.get("type") or "").lower() in ("ocean", "coast", "coastline", "bay")
                 )
                 if synthetic_ocean_shape and raw_source in ("", "osm", "none"):
                     proximity_source = "landcover_fallback"
@@ -1455,11 +1462,13 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 if water_proximity_type == "stream":
                     water_proximity_type = "river"
                 
-                # Water type weighting: ocean > large lake > river > small lake
+                # Water type weighting: open ocean > bay/harbor > large lake > river > small lake
                 # Large lakes (>50km²) get higher weight - these are major scenic features
                 type_weight = 1.0
                 if water_proximity_type == "ocean":
                     type_weight = 1.5
+                elif water_proximity_type == "bay":
+                    type_weight = 1.12
                 elif water_proximity_type == "lake":
                     lake_area_km2 = nearest_waterbody.get("area_km2")
                     lake_area_km2 = float(lake_area_km2) if isinstance(lake_area_km2, (int, float)) else 0.0
@@ -1575,6 +1584,19 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             # so saturation in other water terms cannot bypass source confidence.
             water_score *= proximity_confidence
         water_score = min(WATER_BONUS_MAX, max(0.0, water_score))
+        # Dense urban: landcover-inferred water must not match open-coast OSM (fixed scale; see LANDCOVER_FALLBACK_WATER_URBAN_SCALE).
+        if (
+            proximity_source in ("landcover_fallback", "landcover_coastal_inferred")
+            and context_area_type in ("urban_core", "historic_urban", "urban_core_lowrise")
+        ):
+            pre_urban_scale = water_score
+            water_score *= LANDCOVER_FALLBACK_WATER_URBAN_SCALE
+            metrics["landcover_fallback_urban_water_scale"] = {
+                "applied": True,
+                "scale": LANDCOVER_FALLBACK_WATER_URBAN_SCALE,
+                "water_score_before": round(pre_urban_scale, 2),
+                "water_score_after": round(water_score, 2),
+            }
 
         if water_proximity_data:
             metrics["water_source_confidence_adjustment"] = {
@@ -2099,11 +2121,18 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             and relief_range_m < 120.0
         )
         if water_pct > 25.0 or inferred_coastal_edge:
+            # Dense urban: infer harbor/bay-scale water, not open ocean (matches OSM `natural=bay` semantics).
+            _lc_type = "bay" if area_type_key in ("urban_core", "historic_urban", "urban_core_lowrise") else "ocean"
+            _lc_name = (
+                "Coastal water (landcover, dense urban)"
+                if _lc_type == "bay"
+                else "Ocean (landcover)"
+            )
             water_proximity_data = {
                 "nearest_waterbody": {
-                    "type": "ocean",
-                    "name": "Ocean",
-                    "area_km2": None  # Ocean is unbounded
+                    "type": _lc_type,
+                    "name": _lc_name,
+                    "area_km2": None,
                 },
                 "nearest_distance_km": 0.0,  # Assume on/near coast
                 "water_features": [],
@@ -2111,7 +2140,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "source": "landcover_coastal_inferred" if inferred_coastal_edge else "landcover_fallback",
                 "count": 0,
             }
-            logger.debug(f"Water proximity fallback: High water coverage ({water_pct:.1f}%) suggests ocean proximity")
+            logger.debug(
+                "Water proximity fallback: High water coverage (%.1f%%) suggests %s proximity",
+                water_pct,
+                _lc_type,
+            )
 
     # FALLBACK: If OSM water proximity is unavailable (commonly due to Overpass 429s/timeouts),
     # use a micro-radius GEE landcover read to detect "on/near water" for rivers/creeks.
@@ -2294,7 +2327,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         if (
             nearest_water_km_for_weights is not None
             and nearest_water_km_for_weights <= 0.75
-            and nearest_water_type_for_weights in ("river", "lake", "ocean")
+            and nearest_water_type_for_weights in ("river", "lake", "ocean", "bay")
             and area_type_key in ("historic_urban", "urban_residential", "suburban", "urban_core_lowrise")
             and (developed_pct_for_weights is None or developed_pct_for_weights < 85.0)
         ):
@@ -2613,10 +2646,12 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                         water_proximity_type = nearest_waterbody.get("type")
                         if water_proximity_type == "stream":
                             water_proximity_type = "river"
-                        # Water type weighting: ocean > large lake > river > small lake
+                        # Water type weighting: open ocean > bay/harbor > large lake > river > small lake
                         type_weight = 1.0
                         if water_proximity_type == "ocean":
                             type_weight = 1.5
+                        elif water_proximity_type == "bay":
+                            type_weight = 1.12
                         elif water_proximity_type == "lake":
                             lake_area_km2 = nearest_waterbody.get("area_km2")
                             lake_area_km2 = float(lake_area_km2) if isinstance(lake_area_km2, (int, float)) else 0.0

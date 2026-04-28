@@ -533,6 +533,7 @@ def get_natural_landscape_tags(
     
     forest_pct = float(landcover_metrics.get("forest_pct", 0) or 0) if landcover_metrics else 0.0
     water_pct = float(landcover_metrics.get("water_pct", 0) or 0) if landcover_metrics else 0.0
+    wetland_pct = float(landcover_metrics.get("wetland_pct", 0) or 0) if landcover_metrics else 0.0
     
     nearest_water_km = None
     water_proximity_type = None
@@ -547,10 +548,10 @@ def get_natural_landscape_tags(
     canopy_pct_val = float(canopy_pct) if canopy_pct is not None else 0.0
     climate_mult = float(climate_multiplier) if climate_multiplier is not None else 1.0
     
-    # COASTAL: Ocean proximity (<5km) OR very large lakes (>500km² within 10km)
+    # COASTAL: Open water / harbor proximity (<5km), very large lakes, or coastal-edge inference from landcover+relief.
     is_coastal = False
     if nearest_water_km is not None:
-        if water_proximity_type == "ocean" and nearest_water_km < 5.0:
+        if water_proximity_type in ("ocean", "bay") and nearest_water_km < 5.0:
             is_coastal = True
         elif water_proximity_type == "lake" and nearest_water_km < 10.0:
             # Very large lakes (Great Lakes scale) are coastal-like features
@@ -561,7 +562,11 @@ def get_natural_landscape_tags(
             density_indicates_large = water_density > 100.0  # High density within 15km suggests large lake
             if area_available or density_indicates_large:
                 is_coastal = True
-    
+    # Parallel coastal inference independent of proximity object availability.
+    # This catches shoreline edge cells where OSM proximity may fail but landcover is clearly coastal.
+    if not is_coastal:
+        if water_pct > 18.0 and (water_pct + wetland_pct) > 20.0 and relief_m < 120.0:
+            is_coastal = True
     if is_coastal:
         tags.append('coastal')
     
@@ -586,8 +591,8 @@ def get_natural_landscape_tags(
             tags.append('desert')
     
     # PLAINS: Low relief (<100m) AND low forest (<30%) AND low elevation (<500m)
-    # Only tag if NOT mountain and NOT desert (avoid conflicts)
-    if not is_mountain and 'desert' not in tags:
+    # Only tag if NOT mountain, NOT desert, and NOT coastal (avoid conflicting landscape labels).
+    if not is_mountain and 'desert' not in tags and not is_coastal:
         if relief_m < 100.0 and forest_pct < 30.0 and elevation_mean_m < 500.0:
             tags.append('plains')
     

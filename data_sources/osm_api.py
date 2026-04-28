@@ -889,8 +889,11 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                         water_type = tags.get("water")
                     else:
                         water_type = "lake"  # Default for natural=water
-                elif natural in ("bay", "coastline"):
+                elif natural == "coastline":
                     water_type = "ocean"
+                elif natural == "bay":
+                    # Harbor/estuary polygons — do not use open-ocean weights (see natural_beauty scoring)
+                    water_type = "bay"
                 
                 if not water_type:
                     continue
@@ -996,7 +999,7 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
             # Barton Creek Greenbelt where water coverage % is low at 3km but the lived experience is "on water".
             is_significant = (
                 (isinstance(area_km2, (int, float)) and area_km2 > 1.0) or
-                ftype in ("river", "ocean") or
+                ftype in ("river", "ocean", "bay") or
                 (ftype == "stream" and isinstance(distance_km, (int, float)) and distance_km <= 2.0) or
                 (ftype in ("lake", "reservoir", "pond") and isinstance(distance_km, (int, float)) and distance_km <= 1.0)
             )
@@ -1012,7 +1015,8 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         return {
             "water_features": water_features[:20],  # Limit to 20 nearest features
             "nearest_waterbody": nearest_waterbody,
-            "nearest_distance_km": round(nearest_distance_km, 2) if nearest_distance_km else None,
+            # Preserve 0.0 distance (truthy check would incorrectly coerce it to None).
+            "nearest_distance_km": round(nearest_distance_km, 2) if nearest_distance_km is not None else None,
             "water_density": round(water_density, 2),
             "count": len(water_features),
         }
