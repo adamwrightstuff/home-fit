@@ -558,34 +558,17 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
                    .filterBounds(buffer)
                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30)))
         
-        # Calculate NDVI for each season
-        def add_seasonal_ndvi(image):
-            ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
-            date = ee.Date(image.get('system:time_start'))
-            season = date.get('month').subtract(1).divide(3).floor().add(1)
-            # Cast to float so all granules share the same band type (avoids median() inhomogeneity).
-            season_image = ee.Image.constant(season).float().rename('season')
-            return image.addBands(ndvi).addBands(season_image)
-        
-        seasonal_data = sentinel.map(add_seasonal_ndvi)
+        # Build NDVI collection once, then derive seasonal means from explicit month subsets.
+        ndvi_collection = sentinel.map(lambda image: image.normalizedDifference(['B8', 'B4']).rename('NDVI'))
         
         # Check if collection is empty
-        collection_size = seasonal_data.size().getInfo()
+        collection_size = ndvi_collection.size().getInfo()
         if collection_size == 0:
             print(f"   ⚠️  No Sentinel-2 images found for greenness analysis")
             return None
-        
-        # Calculate seasonal NDVI statistics
-        seasonal_stats = seasonal_data.select(['NDVI', 'season']).median().reduceRegion(
-            # Group by the 2nd selected band ('season'); index 0 is NDVI values.
-            reducer=ee.Reducer.mean().group(groupField=1, groupName='season'),
-            geometry=buffer,
-            scale=20,
-            maxPixels=1e9
-        )
-        
+
         # Calculate overall greenness metrics
-        ndvi_mean = seasonal_data.select('NDVI').mean()
+        ndvi_mean = ndvi_collection.mean()
         
         # Check if ndvi_mean has bands before doing comparisons
         # If the collection is empty or has no valid NDVI data, this will fail
@@ -654,14 +637,38 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         except Exception:
             green_ratio_pct = 0.0
         
-        # Calculate seasonal variation
+        # Calculate seasonal variation from per-season NDVI means.
         seasonal_variation = 0.0
         try:
-            seasonal_ndvi = seasonal_stats.getInfo()
-            if seasonal_ndvi and 'groups' in seasonal_ndvi:
-                ndvi_values = [group['mean'] for group in seasonal_ndvi['groups'] if group['mean'] is not None]
-                if len(ndvi_values) > 1:
-                    seasonal_variation = max(ndvi_values) - min(ndvi_values)
+            season_filters = [
+                ("winter", ee.Filter.Or(
+                    ee.Filter.calendarRange(12, 12, "month"),
+                    ee.Filter.calendarRange(1, 2, "month")
+                )),
+                ("spring", ee.Filter.calendarRange(3, 5, "month")),
+                ("summer", ee.Filter.calendarRange(6, 8, "month")),
+                ("fall", ee.Filter.calendarRange(9, 11, "month")),
+            ]
+            season_values = []
+            for _, month_filter in season_filters:
+                season_collection = ndvi_collection.filter(month_filter)
+                season_count = season_collection.size().getInfo()
+                if season_count == 0:
+                    continue
+                season_mean_img = season_collection.mean()
+                season_mean_val = season_mean_img.reduceRegion(
+                    reducer=ee.Reducer.mean(),
+                    geometry=buffer,
+                    scale=20,
+                    maxPixels=1e9,
+                    bestEffort=True
+                ).get("NDVI")
+                if season_mean_val:
+                    season_mean = season_mean_val.getInfo()
+                    if season_mean is not None:
+                        season_values.append(float(season_mean))
+            if len(season_values) > 1:
+                seasonal_variation = max(season_values) - min(season_values)
         except Exception as seasonal_error:
             print(f"   ⚠️  Seasonal variation calculation failed: {seasonal_error}")
             seasonal_variation = 0.0
