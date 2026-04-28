@@ -577,7 +577,8 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         
         # Calculate seasonal NDVI statistics
         seasonal_stats = seasonal_data.select(['NDVI', 'season']).median().reduceRegion(
-            reducer=ee.Reducer.mean().group(0, 'season'),
+            # Group by the 2nd selected band ('season'); index 0 is NDVI values.
+            reducer=ee.Reducer.mean().group(groupField=1, groupName='season'),
             geometry=buffer,
             scale=20,
             maxPixels=1e9
