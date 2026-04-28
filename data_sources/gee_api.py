@@ -497,7 +497,7 @@ def get_semantic_gvi(lat: float, lon: float, radius_m: int = 1000) -> Optional[D
         
         # Combined vegetation mask: NDVI > 0.3 AND VARI > 0 (vegetation-like)
         # This is more selective than NDVI alone, reducing false positives from green objects
-        vegetation_mask = ndvi.gt(0.3).And(vari.gt(0.0))
+        vegetation_mask = ndvi.gt(0.3).And(vari.gt(0.0)).float().rename('vegetation_mask')
         
         # Calculate semantic GVI as percentage of visible pixels that are vegetation
         semantic_gvi_pct = vegetation_mask.reduceRegion(
@@ -506,7 +506,7 @@ def get_semantic_gvi(lat: float, lon: float, radius_m: int = 1000) -> Optional[D
             scale=10,  # 10m resolution for street-level accuracy
             maxPixels=1e9,
             bestEffort=True
-        ).get('NDVI')  # Using NDVI band name from mask
+        ).get('vegetation_mask')
         
         if semantic_gvi_pct:
             semantic_gvi_value = semantic_gvi_pct.getInfo() * 100 if semantic_gvi_pct else 0.0
@@ -563,7 +563,8 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
             ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
             date = ee.Date(image.get('system:time_start'))
             season = date.get('month').subtract(1).divide(3).floor().add(1)
-            season_image = ee.Image.constant(season).rename('season')
+            # Cast to float so all granules share the same band type (avoids median() inhomogeneity).
+            season_image = ee.Image.constant(season).float().rename('season')
             return image.addBands(ndvi).addBands(season_image)
         
         seasonal_data = sentinel.map(add_seasonal_ndvi)
