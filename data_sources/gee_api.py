@@ -559,7 +559,12 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30)))
         
         # Build NDVI collection once, then derive seasonal means from explicit month subsets.
-        ndvi_collection = sentinel.map(lambda image: image.normalizedDifference(['B8', 'B4']).rename('NDVI'))
+        # normalizedDifference() drops scene timestamps; calendarRange needs system:time_start.
+        def _ndvi_with_time(image):
+            ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            return ndvi.copyProperties(image, ['system:time_start', 'system:time_end'])
+
+        ndvi_collection = sentinel.map(_ndvi_with_time)
         
         # Check if collection is empty
         collection_size = ndvi_collection.size().getInfo()
