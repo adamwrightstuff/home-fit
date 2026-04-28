@@ -400,9 +400,9 @@ def get_vegetation_health_metrics(lat: float, lon: float, radius_m: int = 1000) 
         
         # Get recent Sentinel-2 data for vegetation health
         sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                   .filterDate('2023-06-01', '2024-09-30')  # Recent summer/fall data
+                   .filterDate('2022-06-01', '2026-09-30')  # Recent summer/fall data
                    .filterBounds(buffer)
-                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
                    .median())
         
         # Calculate NDVI (NIR - Red) / (NIR + Red)
@@ -482,9 +482,9 @@ def get_semantic_gvi(lat: float, lon: float, radius_m: int = 1000) -> Optional[D
         
         # Get recent high-resolution Sentinel-2 data
         sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                   .filterDate('2023-06-01', '2024-09-30')
+                   .filterDate('2022-06-01', '2026-09-30')
                    .filterBounds(buffer)
-                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
                    .median())
         
         # Enhanced vegetation detection using NDVI + VARI combination
@@ -554,9 +554,9 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         
         # Get multi-year Sentinel-2 data for seasonal analysis
         sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                   .filterDate('2020-01-01', '2024-12-31')
+                   .filterDate('2020-01-01', '2026-12-31')
                    .filterBounds(buffer)
-                   .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 30)))
+                   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30)))
         
         # Calculate NDVI for each season
         def add_seasonal_ndvi(image):
@@ -695,9 +695,9 @@ def get_urban_greenness_gee(lat: float, lon: float, radius_m: int = 1000) -> Opt
         try:
             # Use recent Sentinel-2 image (prefer summer for vegetation visibility)
             recent_sentinel = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                             .filterDate('2023-06-01', '2024-09-30')  # Summer months
+                             .filterDate('2022-06-01', '2026-09-30')  # Summer months
                              .filterBounds(buffer)
-                             .filter(ee.Filter.lt('CLOUD_PERCENTAGE', 20))
+                             .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
                              .median())
             
             street_ndvi = recent_sentinel.normalizedDifference(['B8', 'B4']).rename('NDVI')
