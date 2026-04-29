@@ -849,12 +849,19 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
     
     try:
         def _do_request():
-            return requests.post(
+            resp = requests.post(
                 get_overpass_url(),
                 data={"data": query},
                 timeout=_overpass_timeout(40),
                 headers={"User-Agent": "HomeFit/1.0"}
             )
+            # Trigger endpoint rotation in _retry_overpass for non-200 upstream responses
+            # (e.g. 406 from overpass-api.de observed in production runs).
+            if resp is None or resp.status_code != 200:
+                raise requests.exceptions.RequestException(
+                    f"water_features non-200 from {get_overpass_url()}: status={getattr(resp, 'status_code', 'none')}"
+                )
+            return resp
 
         # Water proximity is critical for perceived natural beauty; use shared retry/throttling.
         resp = _retry_overpass(_do_request, query_type="water_features")
@@ -867,6 +874,10 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         if data is None:
             return None
         elements = data.get("elements", [])
+        nodes_dict = {
+            e.get("id"): e for e in elements
+            if e.get("type") == "node" and e.get("id") is not None
+        }
         
         water_features = []
         point_lat, point_lon = lat, lon
@@ -905,6 +916,13 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                 if elem_type == "way":
                     # Calculate centroid and area from way geometry
                     geometry = elem.get("geometry", [])
+                    if not geometry and elem.get("nodes"):
+                        geometry = [
+                            {"lat": n.get("lat"), "lon": n.get("lon")}
+                            for node_id in elem.get("nodes", [])
+                            for n in [nodes_dict.get(node_id)]
+                            if n and n.get("lat") is not None and n.get("lon") is not None
+                        ]
                     if not geometry:
                         continue
                     
@@ -917,13 +935,23 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                     centroid_lat = sum(lats) / len(lats)
                     centroid_lon = sum(lons) / len(lons)
                     
-                    # Calculate distance using Haversine formula
-                    R = 6371  # Earth radius in km
-                    dlat = math.radians(centroid_lat - point_lat)
-                    dlon = math.radians(centroid_lon - point_lon)
-                    a = math.sin(dlat/2)**2 + math.cos(math.radians(point_lat)) * math.cos(math.radians(centroid_lat)) * math.sin(dlon/2)**2
-                    c = 2 * math.asin(math.sqrt(a))
-                    distance_km = R * c
+                    # Distance to linear water features (coastline/rivers) should use nearest segment/node,
+                    # not centroid, otherwise long ways are incorrectly treated as far away.
+                    if water_type in ("river", "stream", "ocean"):
+                        nearest_m = min(
+                            haversine_distance(point_lat, point_lon, p.get("lat"), p.get("lon"))
+                            for p in geometry
+                            if p.get("lat") is not None and p.get("lon") is not None
+                        )
+                        distance_km = nearest_m / 1000.0
+                    else:
+                        # Areal water bodies (lakes/bays) still use centroid distance.
+                        R = 6371  # Earth radius in km
+                        dlat = math.radians(centroid_lat - point_lat)
+                        dlon = math.radians(centroid_lon - point_lon)
+                        a = math.sin(dlat/2)**2 + math.cos(math.radians(point_lat)) * math.cos(math.radians(centroid_lat)) * math.sin(dlon/2)**2
+                        c = 2 * math.asin(math.sqrt(a))
+                        distance_km = R * c
                     
                     # Estimate area using polygon area (rough approximation)
                     if len(geometry) >= 3:
@@ -979,35 +1007,50 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                 "water_features": [],
                 "nearest_waterbody": None,
                 "nearest_distance_km": None,
-                "water_density": 0.0
+                "water_density": 0.0,
+                "count": 0,
+                "source": "osm_empty",
             }
         
         # Sort by distance
         water_features.sort(key=lambda x: x["distance_km"])
-        
-        # Find nearest significant waterbody (>1km² or major river)
+
+        # Prefer major/coastal water context over tiny ornamental features.
+        def _is_ornamental_water(feature: Dict[str, Any]) -> bool:
+            n = str(feature.get("name") or "").lower()
+            return "fountain" in n
+
+        filtered_features = [f for f in water_features if not _is_ornamental_water(f)]
+        ocean_bay = [f for f in filtered_features if f.get("type") in ("ocean", "bay")]
+        rivers = [f for f in filtered_features if f.get("type") == "river"]
+        streams = [f for f in filtered_features if f.get("type") == "stream"]
+        lakeish = [f for f in filtered_features if f.get("type") in ("lake", "reservoir", "pond")]
+
         nearest_waterbody = None
         nearest_distance_km = None
-        
-        for feature in water_features:
-            # Significant waterbody: >1km² or major river/stream
-            area_km2 = feature.get("area_km2")
-            distance_km = feature.get("distance_km")
-            ftype = feature.get("type")
 
-            # Treat creeks/streams as significant when they're nearby — this is crucial for places like
-            # Barton Creek Greenbelt where water coverage % is low at 3km but the lived experience is "on water".
-            is_significant = (
-                (isinstance(area_km2, (int, float)) and area_km2 > 1.0) or
-                ftype in ("river", "ocean", "bay") or
-                (ftype == "stream" and isinstance(distance_km, (int, float)) and distance_km <= 2.0) or
-                (ftype in ("lake", "reservoir", "pond") and isinstance(distance_km, (int, float)) and distance_km <= 1.0)
-            )
-            
-            if is_significant:
-                nearest_waterbody = feature
-                nearest_distance_km = feature["distance_km"]
-                break
+        # Coastal context wins for true waterfront places when marine water is nearby.
+        if ocean_bay and isinstance(ocean_bay[0].get("distance_km"), (int, float)) and ocean_bay[0]["distance_km"] <= 2.0:
+            nearest_waterbody = ocean_bay[0]
+        # Major river beats tiny nearby still water artifacts in urban cores.
+        elif rivers:
+            nearest_waterbody = rivers[0]
+        # Streams matter when very close.
+        elif streams and isinstance(streams[0].get("distance_km"), (int, float)) and streams[0]["distance_km"] <= 0.5:
+            nearest_waterbody = streams[0]
+        # Lakes/ponds need non-trivial area or close proximity.
+        else:
+            for feature in lakeish:
+                area_km2 = float(feature.get("area_km2") or 0.0)
+                distance_km = float(feature.get("distance_km") or 999.0)
+                if area_km2 >= 0.02 or distance_km <= 0.8:
+                    nearest_waterbody = feature
+                    break
+            if nearest_waterbody is None and filtered_features:
+                nearest_waterbody = filtered_features[0]
+
+        if nearest_waterbody is not None:
+            nearest_distance_km = nearest_waterbody.get("distance_km")
         
         # Calculate water density (total water area within radius)
         water_density = sum(f.get("area_km2", 0) for f in water_features if f.get("area_km2"))
@@ -1019,6 +1062,7 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
             "nearest_distance_km": round(nearest_distance_km, 2) if nearest_distance_km is not None else None,
             "water_density": round(water_density, 2),
             "count": len(water_features),
+            "source": "osm",
         }
     
     except Exception as e:

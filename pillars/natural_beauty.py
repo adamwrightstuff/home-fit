@@ -2505,7 +2505,9 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             natural_context_details["water_proximity"] = {
                 "nearest_distance_km": water_proximity_data.get("nearest_distance_km"),
                 "nearest_waterbody": water_proximity_data.get("nearest_waterbody"),
-                "water_density_km2": water_proximity_data.get("water_density")
+                "water_density_km2": water_proximity_data.get("water_density"),
+                "source": water_proximity_data.get("source", "none"),
+                "count": int(water_proximity_data.get("count", 0) or 0),
             }
             # #region agent log
             try:
@@ -2537,7 +2539,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
             "nearest_distance_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
             "count": water_proximity_data.get("count", 0) if water_proximity_data else 0,
-            "nearest_waterbody": water_proximity_data.get("nearest_waterbody") if water_proximity_data else None
+            "nearest_waterbody": water_proximity_data.get("nearest_waterbody") if water_proximity_data else None,
+            "source": water_proximity_data.get("source", "none") if water_proximity_data else "none",
         }
         # #endregion
         biodiversity_index = (
