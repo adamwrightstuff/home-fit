@@ -1020,7 +1020,15 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
             n = str(feature.get("name") or "").lower()
             return "fountain" in n
 
+        def _is_engineered_water(feature: Dict[str, Any]) -> bool:
+            n = str(feature.get("name") or "").lower()
+            # Engineered/covered conveyance names are usually weak scenic signals.
+            return any(token in n for token in ("tunnel", "culvert", "drain", "stormwater"))
+
         filtered_features = [f for f in water_features if not _is_ornamental_water(f)]
+        scenic_features = [f for f in filtered_features if not _is_engineered_water(f)]
+        if scenic_features:
+            filtered_features = scenic_features
         ocean_bay = [f for f in filtered_features if f.get("type") in ("ocean", "bay")]
         rivers = [f for f in filtered_features if f.get("type") == "river"]
         streams = [f for f in filtered_features if f.get("type") == "stream"]
