@@ -1365,7 +1365,7 @@ def _compute_single_score_internal(
     # Shared pre-pillar cache: reuse census_tract, density, arch_diversity, area_type, tree_canopy, form_context
     # when another request already computed them for this (lat, lon). Only used for full-score requests.
     census_tract = None
-    density = 0.0
+    density = None  # None = unknown; do not conflate with 0.0 (rural) when Census fails
     arch_diversity_data = None
     area_type = "unknown"
     tree_canopy_5km = None
@@ -1382,7 +1382,8 @@ def _compute_single_score_internal(
 
     if isinstance(shared_blob, dict) and shared_blob.get("_schema") == SHARED_PREPILLAR_CACHE_SCHEMA and shared_blob.get("area_type"):
         census_tract = shared_blob.get("census_tract")
-        density = float(shared_blob.get("density") or 0.0)
+        _d_cached = shared_blob.get("density")
+        density = None if _d_cached is None else float(_d_cached)
         arch_diversity_data = shared_blob.get("arch_diversity_data")
         area_type = str(shared_blob.get("area_type", "unknown"))
         tree_canopy_5km = shared_blob.get("tree_canopy_5km")
@@ -1411,10 +1412,10 @@ def _compute_single_score_internal(
 
             def _fetch_density(tract):
                 try:
-                    return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+                    return _ca.get_population_density(lat, lon, tract=tract)
                 except Exception as e:
                     logger.warning(f"Density lookup failed (non-fatal): {e}")
-                    return 0.0
+                    return None
 
             def _fetch_business_count():
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
@@ -1482,7 +1483,7 @@ def _compute_single_score_internal(
         except Exception:
             area_type = "unknown"
             arch_diversity_data = None
-            density = 0.0
+            density = None
 
         def _include_pillar(name: str) -> bool:
             return only_pillars is None or name in only_pillars
@@ -2965,7 +2966,7 @@ async def _stream_score_with_progress(
         
         # Step 3: Pre-compute shared data in parallel
         census_tract = None
-        density = 0.0
+        density = None
         arch_diversity_data = None
         area_type = "unknown"
         
@@ -2978,7 +2979,7 @@ async def _stream_score_with_progress(
                 from data_sources.regional_baselines import RegionalBaselineManager
                 
                 census_tract = _ca.get_census_tract(lat, lon)
-                density = _ca.get_population_density(lat, lon, tract=census_tract) or 0.0
+                density = _ca.get_population_density(lat, lon, tract=census_tract)
                 
                 business_count = 0
                 if only_pillars is None or "neighborhood_amenities" in only_pillars:
@@ -3021,7 +3022,7 @@ async def _stream_score_with_progress(
                 return census_tract, density, arch_diversity_data, area_type
             except Exception as e:
                 logger.warning(f"Shared data preparation failed: {e}")
-                return None, 0.0, None, "unknown"
+                return None, None, None, "unknown"
         
         t_prepare_shared = time.perf_counter()
         census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
@@ -3958,7 +3959,7 @@ async def stream_score(
         # Use multi-factor classification: business density, building coverage, density, keywords
         # OPTIMIZATION: Parallelize independent API calls to reduce latency
         census_tract = None
-        density = 0.0
+        density = None
         try:
             from data_sources import census_api as _ca
             from data_sources import data_quality as _dq
@@ -3979,10 +3980,10 @@ async def stream_score(
             def _fetch_density(tract):
                 try:
                     # Use pre-fetched tract to avoid redundant get_census_tract call
-                    return _ca.get_population_density(lat, lon, tract=tract) or 0.0
+                    return _ca.get_population_density(lat, lon, tract=tract)
                 except Exception as e:
                     logger.warning(f"Density lookup failed (non-fatal): {e}")
-                    return 0.0
+                    return None
             
             def _fetch_business_count():
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
@@ -4058,7 +4059,7 @@ async def stream_score(
         except Exception:
             area_type = "unknown"
             arch_diversity_data = None  # Initialize to avoid NameError if exception occurs
-            density = 0.0  # Initialize to avoid NameError if exception occurs
+            density = None  # Unknown when shared classification fails
 
         # Step 2: Calculate all pillar scores in parallel
         logger.debug("Calculating pillar scores in parallel...")

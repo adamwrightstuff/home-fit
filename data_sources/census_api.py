@@ -17,6 +17,57 @@ load_dotenv()
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 CENSUS_BASE_URL = "https://api.census.gov/data"
 GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
+# ACS 2022 tract boundaries — point-in-polygon fallback when the coordinates geocoder fails.
+TIGERWEB_TRACT_LAYER_URL = (
+    "https://tigerweb.geo.census.gov/arcgis/rest/services/"
+    "TIGERweb/tigerWMS_ACS2022/MapServer/6/query"
+)
+
+
+def _get_census_tract_tigerweb_point(lat: float, lon: float) -> Optional[Dict]:
+    """
+    Resolve tract via TIGERweb spatial query (WGS84 point in tract polygon).
+
+    Used when geocoding.geo.census.gov returns no tract (timeouts, partial JSON, edge vintages).
+    Does not attach CBSA/CSA; callers that need metro can rely on other fallbacks.
+    """
+    try:
+        params = {
+            "geometry": f"{lon},{lat}",
+            "geometryType": "esriGeometryPoint",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "where": "1=1",
+            "outFields": "STATE,COUNTY,TRACT,GEOID,NAME,BASENAME",
+            "returnGeometry": "false",
+            "f": "json",
+        }
+        response = _make_request_with_retry(TIGERWEB_TRACT_LAYER_URL, params, timeout=12)
+        if response is None:
+            return None
+        payload = response.json()
+        feats = payload.get("features") or []
+        if not feats:
+            return None
+        attrs = (feats[0].get("attributes") or {}) if isinstance(feats[0], dict) else {}
+        state = attrs.get("STATE")
+        county = attrs.get("COUNTY")
+        tract_fips = attrs.get("TRACT")
+        geoid = attrs.get("GEOID")
+        if not state or not county or not tract_fips or not geoid:
+            return None
+        return {
+            "state_fips": str(state),
+            "county_fips": str(county),
+            "tract_fips": str(tract_fips),
+            "geoid": str(geoid),
+            "name": str(attrs.get("NAME") or "Unknown"),
+            "basename": str(attrs.get("BASENAME") or ""),
+        }
+    except Exception as e:
+        print(f"TIGERweb tract lookup error: {e}")
+        return None
+
 
 # Check if Census API key is available
 if not CENSUS_API_KEY:
@@ -106,15 +157,15 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
 
         response = _make_request_with_retry(GEOCODER_URL, params, timeout=10)
         if response is None:
-            return None
+            return _get_census_tract_tigerweb_point(lat, lon)
 
         data = response.json()
         if "result" not in data or "geographies" not in data["result"]:
-            return None
+            return _get_census_tract_tigerweb_point(lat, lon)
 
         geographies = data["result"]["geographies"]
         if "Census Tracts" not in geographies or not geographies["Census Tracts"]:
-            return None
+            return _get_census_tract_tigerweb_point(lat, lon)
 
         tract_data = geographies["Census Tracts"][0]
         
@@ -197,7 +248,7 @@ def get_census_tract(lat: float, lon: float) -> Optional[Dict]:
 
     except Exception as e:
         print(f"Census tract lookup error: {e}")
-        return None
+        return _get_census_tract_tigerweb_point(lat, lon)
 
 
 def get_land_area(tract: Dict) -> Optional[float]:
