@@ -6,7 +6,7 @@ Bay Ridge|Brooklyn|NY,"Bay Ridge, Brooklyn, NY",Bay Ridge,Brooklyn,NY,True,,0,
 Bayside|Queens|NY,"Bayside, Queens, NY",Bayside,Queens,NY,True,,0,
 Bed-Stuy|Brooklyn|NY,"Bed-Stuy, Brooklyn, NY",Bed-Stuy,Brooklyn,NY,True,,0,
 Bedford|Westchester|NY,"Bedford, Westchester, NY",Bedford,Westchester,NY,True,,0,
-Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,True,,2,diversity:pillar_error; social_fabric:pillar_error
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,True,,1,diversity:pillar_error
 Belmont|Bronx|NY,"Belmont, Bronx, NY",Belmont,Bronx,NY,True,,0,
 Bensonhurst|Brooklyn|NY,"Bensonhurst, Brooklyn, NY",Bensonhurst,Brooklyn,NY,True,,0,
 Bloomfield|Essex|NJ,"Bloomfield, Essex, NJ",Bloomfield,Essex,NJ,True,,0,
@@ -28,7 +28,7 @@ City Island|Bronx|NY,"City Island, Bronx, NY",City Island,Bronx,NY,True,,0,
 Clinton Hill|Brooklyn|NY,"Clinton Hill, Brooklyn, NY",Clinton Hill,Brooklyn,NY,True,,0,
 Closter|Bergen|NJ,"Closter, Bergen, NJ",Closter,Bergen,NJ,True,,0,
 Cobble Hill|Brooklyn|NY,"Cobble Hill, Brooklyn, NY",Cobble Hill,Brooklyn,NY,True,,0,
-Coney Island|Brooklyn|NY,"Coney Island, Brooklyn, NY",Coney Island,Brooklyn,NY,True,,0,
+Coney Island|Brooklyn|NY,"Coney Island, Brooklyn, NY",Coney Island,Brooklyn,NY,True,,1,natural_beauty:pillar_error
 Cos Cob|Fairfield|CT,"Cos Cob, Fairfield, CT",Cos Cob,Fairfield,CT,True,,0,
 Cranford|Union|NJ,"Cranford, Union, NJ",Cranford,Union,NJ,True,,0,
 Cresskill|Bergen|NJ,"Cresskill, Bergen, NJ",Cresskill,Bergen,NJ,True,,0,
@@ -50,7 +50,6 @@ Fairfield|Fairfield|CT,"Fairfield, Fairfield, CT",Fairfield,Fairfield,CT,True,,0
 Fieldston|Bronx|NY,"Fieldston, Bronx, NY",Fieldston,Bronx,NY,True,,0,
 Financial District|Manhattan|NY,"Financial District, Manhattan, NY",Financial District,Manhattan,NY,True,,0,
 Flatbush|Brooklyn|NY,"Flatbush, Brooklyn, NY",Flatbush,Brooklyn,NY,True,,0,
-Flatiron|Manhattan|NY,"Flatiron, Manhattan, NY",Flatiron,Manhattan,NY,True,,0,
 Flatlands|Brooklyn|NY,"Flatlands, Brooklyn, NY",Flatlands,Brooklyn,NY,True,,0,
 Floral Park|Nassau|NY,"Floral Park, Nassau, NY",Floral Park,Nassau,NY,True,,0,
 Flushing|Queens|NY,"Flushing, Queens, NY",Flushing,Queens,NY,True,,0,
@@ -72,7 +71,7 @@ Greenwich Village|Manhattan|NY,"Greenwich Village, Manhattan, NY",Greenwich Vill
 Greenwich|Fairfield|CT,"Greenwich, Fairfield, CT",Greenwich,Fairfield,CT,True,,0,
 Hamilton Heights|Manhattan|NY,"Hamilton Heights, Manhattan, NY",Hamilton Heights,Manhattan,NY,True,,0,
 Harlem|Manhattan|NY,"Harlem, Manhattan, NY",Harlem,Manhattan,NY,True,,0,
-Harrison|Westchester|NY,"Harrison, Westchester, NY",Harrison,Westchester,NY,True,,0,
+Harrison|Westchester|NY,"Harrison, Westchester, NY",Harrison,Westchester,NY,True,,1,natural_beauty:pillar_error
 Hastings-on-Hudson|Westchester|NY,"Hastings-on-Hudson, Westchester, NY",Hastings-on-Hudson,Westchester,NY,True,,0,
 Hell's Kitchen|Manhattan|NY,"Hell's Kitchen, Manhattan, NY",Hell's Kitchen,Manhattan,NY,True,,0,
 Hempstead|Nassau|NY,"Hempstead, Nassau, NY",Hempstead,Nassau,NY,True,,0,
@@ -90,7 +89,7 @@ Kensington|Brooklyn|NY,"Kensington, Brooklyn, NY",Kensington,Brooklyn,NY,True,,0
 Kew Gardens|Queens|NY,"Kew Gardens, Queens, NY",Kew Gardens,Queens,NY,True,,0,
 Kips Bay|Manhattan|NY,"Kips Bay, Manhattan, NY",Kips Bay,Manhattan,NY,True,,0,
 Larchmont|Westchester|NY,"Larchmont, Westchester, NY",Larchmont,Westchester,NY,True,,0,
-Lawrence|Nassau|NY,"Lawrence, Nassau, NY",Lawrence,Nassau,NY,True,,0,
+Lawrence|Nassau|NY,"Lawrence, Nassau, NY",Lawrence,Nassau,NY,True,,1,natural_beauty:pillar_error
 Leonia|Bergen|NJ,"Leonia, Bergen, NJ",Leonia,Bergen,NJ,True,,0,
 Little Italy|Manhattan|NY,"Little Italy, Manhattan, NY",Little Italy,Manhattan,NY,True,,0,
 Long Beach|Nassau|NY,"Long Beach, Nassau, NY",Long Beach,Nassau,NY,True,,0,
@@ -118,7 +117,7 @@ Mount Kisco|Westchester|NY,"Mount Kisco, Westchester, NY",Mount Kisco,Westcheste
 Mount Vernon|Westchester|NY,"Mount Vernon, Westchester, NY",Mount Vernon,Westchester,NY,True,,0,
 Murray Hill|Manhattan|NY,"Murray Hill, Manhattan, NY",Murray Hill,Manhattan,NY,True,,0,
 New Canaan|Fairfield|CT,"New Canaan, Fairfield, CT",New Canaan,Fairfield,CT,True,,0,
-New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,True,,0,
+New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,True,,1,natural_beauty:pillar_error
 New Hyde Park|Nassau|NY,"New Hyde Park, Nassau, NY",New Hyde Park,Nassau,NY,True,,0,
 New Rochelle|Westchester|NY,"New Rochelle, Westchester, NY",New Rochelle,Westchester,NY,True,,0,
 NoHo|Manhattan|NY,"NoHo, Manhattan, NY",NoHo,Manhattan,NY,True,,0,
@@ -133,14 +132,14 @@ Peekskill|Westchester|NY,"Peekskill, Westchester, NY",Peekskill,Westchester,NY,T
 Pelham Bay|Bronx|NY,"Pelham Bay, Bronx, NY",Pelham Bay,Bronx,NY,True,,0,
 Pelham Manor|Westchester|NY,"Pelham Manor, Westchester, NY",Pelham Manor,Westchester,NY,True,,0,
 Pelham|Westchester|NY,"Pelham, Westchester, NY",Pelham,Westchester,NY,True,,0,
-Pleasantville|Westchester|NY,"Pleasantville, Westchester, NY",Pleasantville,Westchester,NY,True,,0,
+Pleasantville|Westchester|NY,"Pleasantville, Westchester, NY",Pleasantville,Westchester,NY,True,,1,natural_beauty:pillar_error
 Port Chester|Westchester|NY,"Port Chester, Westchester, NY",Port Chester,Westchester,NY,True,,0,
 Port Washington|Nassau|NY,"Port Washington, Nassau, NY",Port Washington,Nassau,NY,True,,0,
 Prospect Heights|Brooklyn|NY,"Prospect Heights, Brooklyn, NY",Prospect Heights,Brooklyn,NY,True,,0,
 Red Hook|Brooklyn|NY,"Red Hook, Brooklyn, NY",Red Hook,Brooklyn,NY,True,,0,
 Rego Park|Queens|NY,"Rego Park, Queens, NY",Rego Park,Queens,NY,True,,0,
 Richmond Hill|Queens|NY,"Richmond Hill, Queens, NY",Richmond Hill,Queens,NY,True,,0,
-Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,True,,5,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; social_fabric:pillar_error; housing_value:pillar_error
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,True,,4,economic_security:pillar_error; climate_risk:pillar_error; diversity:pillar_error; housing_value:pillar_error
 Ridgewood|Queens|NY,"Ridgewood, Queens, NY",Ridgewood,Queens,NY,True,,0,
 Riverdale|Bronx|NY,"Riverdale, Bronx, NY",Riverdale,Bronx,NY,True,,0,
 Riverside|Fairfield|CT,"Riverside, Fairfield, CT",Riverside,Fairfield,CT,True,,0,
@@ -155,7 +154,7 @@ Sleepy Hollow|Westchester|NY,"Sleepy Hollow, Westchester, NY",Sleepy Hollow,West
 SoHo|Manhattan|NY,"SoHo, Manhattan, NY",SoHo,Manhattan,NY,True,,0,
 South Orange|Essex|NJ,"South Orange, Essex, NJ",South Orange,Essex,NJ,True,,0,
 Southport|Fairfield|CT,"Southport, Fairfield, CT",Southport,Fairfield,CT,True,,0,
-St. George|Staten Island|NY,"St. George, Staten Island, NY",St. George,Staten Island,NY,True,,0,
+St. George|Staten Island|NY,"St. George, Staten Island, NY",St. George,Staten Island,NY,True,,1,natural_beauty:pillar_error
 Stamford|Fairfield|CT,"Stamford, Fairfield, CT",Stamford,Fairfield,CT,True,,0,
 Stapleton|Staten Island|NY,"Stapleton, Staten Island, NY",Stapleton,Staten Island,NY,True,,0,
 Summit|Union|NJ,"Summit, Union, NJ",Summit,Union,NJ,True,,0,

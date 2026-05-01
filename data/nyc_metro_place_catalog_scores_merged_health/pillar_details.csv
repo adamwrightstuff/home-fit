@@ -1,8 +1,12 @@
 place_key,label,name,county_borough,state_abbr,pillar,issue,score,pillar_error,confidence,fallback_used,reason
 Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Coney Island|Brooklyn|NY,"Coney Island, Brooklyn, NY",Coney Island,Brooklyn,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Harrison|Westchester|NY,"Harrison, Westchester, NY",Harrison,Westchester,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Lawrence|Nassau|NY,"Lawrence, Nassau, NY",Lawrence,Nassau,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+New Dorp|Staten Island|NY,"New Dorp, Staten Island, NY",New Dorp,Staten Island,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Pleasantville|Westchester|NY,"Pleasantville, Westchester, NY",Pleasantville,Westchester,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
 Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
 Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
 Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
-Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
 Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+St. George|Staten Island|NY,"St. George, Staten Island, NY",St. George,Staten Island,NY,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
