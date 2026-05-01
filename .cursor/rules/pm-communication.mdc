@@ -1,0 +1,14 @@
+# PM communication mode
+
+- User is a Product Manager audience.
+- Keep responses concise and outcome-first.
+- Use plain, direct language and short sentences.
+- Avoid technical deep dives unless explicitly requested.
+- Do not include engineering rationale unless asked.
+- For implementation work, default completion standard is committed + pushed unless user says local-only.
+- For shipped work, always include:
+  1) commit hash
+  2) branch
+  3) push/deploy status
+- If blocked by mode/permissions, state block in one line and ask for the exact unblock action.
+
