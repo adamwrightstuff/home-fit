@@ -3,7 +3,7 @@
 Build IRS BMF-based engagement baselines for the Social Fabric pillar.
 
 This script reads raw IRS Exempt Organizations BMF CSVs, filters orgs, assigns them to
-2020 Census tracts via ZIP→lat/lon→tract lookup, and writes:
+2020 Census tracts via ZIP→tract weighted allocation, and writes:
 
 - data/irs_bmf_tract_counts.json — **refined** civic-facing NTEE only (N, P, S, W)
 - data/irs_bmf_tract_counts_legacy.json — legacy filter (A, O, P, S) for fallback scoring
@@ -91,6 +91,223 @@ def _is_qualifying_org_legacy(row: Dict[str, str]) -> bool:
     return True
 
 
+_STATE_FIPS_TO_ABBREV = {
+    "01": "AL",
+    "02": "AK",
+    "04": "AZ",
+    "05": "AR",
+    "06": "CA",
+    "08": "CO",
+    "09": "CT",
+    "10": "DE",
+    "11": "DC",
+    "12": "FL",
+    "13": "GA",
+    "15": "HI",
+    "16": "ID",
+    "17": "IL",
+    "18": "IN",
+    "19": "IA",
+    "20": "KS",
+    "21": "KY",
+    "22": "LA",
+    "23": "ME",
+    "24": "MD",
+    "25": "MA",
+    "26": "MI",
+    "27": "MN",
+    "28": "MS",
+    "29": "MO",
+    "30": "MT",
+    "31": "NE",
+    "32": "NV",
+    "33": "NH",
+    "34": "NJ",
+    "35": "NM",
+    "36": "NY",
+    "37": "NC",
+    "38": "ND",
+    "39": "OH",
+    "40": "OK",
+    "41": "OR",
+    "42": "PA",
+    "44": "RI",
+    "45": "SC",
+    "46": "SD",
+    "47": "TN",
+    "48": "TX",
+    "49": "UT",
+    "50": "VT",
+    "51": "VA",
+    "53": "WA",
+    "54": "WV",
+    "55": "WI",
+    "56": "WY",
+    "72": "PR",
+}
+
+
+def _find_col(row: Dict[str, str], names: List[str]) -> Optional[str]:
+    key_map = {k.lower(): k for k in row.keys()}
+    for name in names:
+        hit = key_map.get(name.lower())
+        if hit:
+            return hit
+    return None
+
+
+def _safe_float(raw: str) -> Optional[float]:
+    try:
+        if raw is None:
+            return None
+        s = str(raw).strip()
+        if not s:
+            return None
+        return float(s)
+    except Exception:
+        return None
+
+
+def _tract_from_geoid(geoid: str) -> Optional[Dict[str, str]]:
+    g = "".join(ch for ch in str(geoid or "") if ch.isdigit())
+    if len(g) != 11:
+        return None
+    return {
+        "state_fips": g[:2],
+        "county_fips": g[2:5],
+        "tract_fips": g[5:],
+        "geoid": g,
+    }
+
+
+def _load_zip_tract_crosswalk(
+    crosswalk_path: str,
+    *,
+    weight_column_hint: str = "res_ratio",
+) -> Tuple[Dict[Tuple[str, str], List[Tuple[str, float]]], Dict[str, List[Tuple[str, float]]]]:
+    """
+    Load ZIP→tract weighted mappings.
+
+    Supports HUD-style columns (ZIP, GEOID, RES_RATIO/TOT_RATIO) and Census
+    relationship columns (GEOID_ZCTA5_20, GEOID_TRACT_20, AREALAND_PART, AREALAND_ZCTA5_20).
+    Returns:
+      - state+zip keyed map: (state_abbrev, zip5) -> [(tract_geoid, weight), ...]
+      - zip-only keyed map: zip5 -> [(tract_geoid, weight), ...]
+    """
+    by_state_zip: Dict[Tuple[str, str], List[Tuple[str, float]]] = defaultdict(list)
+    by_zip: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
+    rows = 0
+    used_rows = 0
+    with open(crosswalk_path, newline="", encoding="utf-8-sig") as f:
+        sample = f.read(4096)
+        f.seek(0)
+        delimiter = "|" if sample.count("|") > sample.count(",") else ","
+        reader = csv.DictReader(f, delimiter=delimiter)
+        if not reader.fieldnames:
+            raise SystemExit(f"Crosswalk file appears empty: {crosswalk_path}")
+
+        zip_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            "ZIP",
+            "ZIP5",
+            "zip",
+            "geoid_zcta5_20",
+            "zcta5",
+            "zcta",
+        ])
+        tract_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            "TRACT",
+            "GEOID",
+            "geoid_tract_20",
+            "tract",
+            "tract_geoid",
+        ])
+        state_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            "STATE",
+            "state",
+            "state_abbrev",
+        ])
+        weight_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            weight_column_hint,
+            "RES_RATIO",
+            "res_ratio",
+            "TOT_RATIO",
+            "tot_ratio",
+        ])
+        area_part_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            "AREALAND_PART",
+            "arealand_part",
+        ])
+        area_zip_col = _find_col(reader.fieldnames and {c: c for c in reader.fieldnames} or {}, [
+            "AREALAND_ZCTA5_20",
+            "arealand_zcta5_20",
+        ])
+
+        if not zip_col or not tract_col:
+            raise SystemExit(
+                f"Crosswalk missing required ZIP/tract columns: zip_col={zip_col}, tract_col={tract_col}"
+            )
+
+        for row in reader:
+            rows += 1
+            zip5 = _clean_zip(row.get(zip_col) or "")
+            tract = _tract_from_geoid(row.get(tract_col) or "")
+            if not zip5 or not tract:
+                continue
+            weight = _safe_float(row.get(weight_col) if weight_col else None)
+            if (weight is None or weight < 0.0) and area_part_col and area_zip_col:
+                a_part = _safe_float(row.get(area_part_col))
+                a_zip = _safe_float(row.get(area_zip_col))
+                if a_part is not None and a_zip and a_zip > 0:
+                    weight = max(0.0, float(a_part) / float(a_zip))
+            if weight is None or weight <= 0:
+                continue
+
+            geoid = tract["geoid"]
+            used_rows += 1
+            by_zip[zip5].append((geoid, weight))
+
+            if state_col:
+                st = (row.get(state_col) or "").strip().upper()
+                if len(st) == 2:
+                    by_state_zip[(st, zip5)].append((geoid, weight))
+
+    def _normalize(bucket: Dict) -> None:
+        for key, vals in list(bucket.items()):
+            total = sum(w for _, w in vals if w > 0)
+            if total <= 0:
+                del bucket[key]
+                continue
+            bucket[key] = [(g, w / total) for g, w in vals if w > 0]
+
+    _normalize(by_zip)
+    _normalize(by_state_zip)
+
+    print(
+        f"Loaded ZIP→tract crosswalk from {crosswalk_path}: "
+        f"rows={rows}, usable_rows={used_rows}, zip_keys={len(by_zip)}, state_zip_keys={len(by_state_zip)}"
+    )
+    return dict(by_state_zip), dict(by_zip)
+
+
+def _allocate_integer_counts(total: int, weights: List[Tuple[str, float]]) -> Dict[str, int]:
+    """
+    Split an integer count across tracts by normalized weights while preserving the total.
+    Uses largest-remainder apportionment.
+    """
+    if total <= 0 or not weights:
+        return {}
+    norm_total = sum(w for _, w in weights if w > 0)
+    if norm_total <= 0:
+        return {}
+    raw = [(g, (w / norm_total) * float(total)) for g, w in weights if w > 0]
+    floors = {g: int(math.floor(v)) for g, v in raw}
+    remainder = total - sum(floors.values())
+    ranked = sorted(((v - math.floor(v), g) for g, v in raw), reverse=True)
+    for _frac, geoid in ranked[: max(0, remainder)]:
+        floors[geoid] = floors.get(geoid, 0) + 1
+    return {g: c for g, c in floors.items() if c > 0}
+
+
 def _lookup_tract_for_zip(zip5: str, *, sleep: float = 0.0) -> Optional[Dict]:
     """
     Use Census geocoder via `geocode(zip)` to get a representative point,
@@ -174,13 +391,15 @@ def build_engagement_baselines(
     *,
     output_tract_counts_legacy: Optional[str] = None,
     output_engagement_stats_legacy: Optional[str] = None,
+    zip_tract_crosswalk_path: Optional[str] = None,
+    crosswalk_weight_column: str = "res_ratio",
     max_rows: int = 0,
     sleep_per_new_zip: float = 0.0,
 ) -> None:
     """
     Main pipeline:
-    1) Stream BMF rows; count refined (N/P/S/W) and legacy (A/O/P/S) per tract.
-    2) Geocode ZIP once per (state, zip5).
+    1) Stream BMF rows; count refined (N/P/S/W) and legacy (A/O/P/S) per ZIP.
+    2) Allocate ZIP counts to tracts via weighted crosswalk (preferred), with ZIP centroid fallback.
     3) Write refined + legacy tract JSON and division stats for each.
     """
     if not os.path.isdir(bmf_dir):
@@ -196,9 +415,21 @@ def build_engagement_baselines(
         )
 
     zip_to_tract: Dict[Tuple[str, str], Optional[Dict]] = {}
+    zip_refined: Dict[Tuple[str, str], int] = defaultdict(int)
+    zip_legacy: Dict[Tuple[str, str], int] = defaultdict(int)
     org_refined: Dict[str, int] = defaultdict(int)
     org_legacy: Dict[str, int] = defaultdict(int)
     tract_meta: Dict[str, Dict] = {}
+    crosswalk_by_state_zip: Dict[Tuple[str, str], List[Tuple[str, float]]] = {}
+    crosswalk_by_zip: Dict[str, List[Tuple[str, float]]] = {}
+
+    if zip_tract_crosswalk_path:
+        if not os.path.exists(zip_tract_crosswalk_path):
+            raise SystemExit(f"ZIP→tract crosswalk not found: {zip_tract_crosswalk_path}")
+        crosswalk_by_state_zip, crosswalk_by_zip = _load_zip_tract_crosswalk(
+            zip_tract_crosswalk_path,
+            weight_column_hint=crosswalk_weight_column,
+        )
 
     total_rows = 0
     kept_refined = 0
@@ -219,40 +450,63 @@ def build_engagement_baselines(
         if not state or not zip5:
             continue
 
+        if is_r:
+            kept_refined += 1
+            zip_refined[(state, zip5)] += 1
+        if is_l:
+            kept_legacy += 1
+            zip_legacy[(state, zip5)] += 1
+
+        if (kept_refined + kept_legacy) and (kept_refined + kept_legacy) % 5000 == 0:
+            print(
+                f"Processed {total_rows} rows, refined={kept_refined}, legacy={kept_legacy}, "
+                f"unique_zips={len(set(zip_refined) | set(zip_legacy))}"
+            )
+
+    all_zip_keys = sorted(set(zip_refined) | set(zip_legacy))
+    crosswalk_allocated = 0
+    fallback_allocated = 0
+    missing_allocations = 0
+    for state, zip5 in all_zip_keys:
+        weights = crosswalk_by_state_zip.get((state, zip5)) or crosswalk_by_zip.get(zip5)
+        if weights:
+            alloc_r = _allocate_integer_counts(zip_refined.get((state, zip5), 0), weights)
+            alloc_l = _allocate_integer_counts(zip_legacy.get((state, zip5), 0), weights)
+            crosswalk_allocated += 1
+            for geoid, c in alloc_r.items():
+                org_refined[geoid] += c
+            for geoid, c in alloc_l.items():
+                org_legacy[geoid] += c
+            for geoid, _w in weights:
+                if geoid in tract_meta:
+                    continue
+                tract = _tract_from_geoid(geoid)
+                if not tract:
+                    continue
+                state_abbrev = _STATE_FIPS_TO_ABBREV.get(tract["state_fips"], state)
+                tract_meta[geoid] = {"state_abbrev": state_abbrev, "tract": tract}
+            continue
+
         key = (state, zip5)
         if key not in zip_to_tract:
             tract = _lookup_tract_for_zip(zip5, sleep=sleep_per_new_zip)
             zip_to_tract[key] = tract
         tract = zip_to_tract.get(key)
-        if not tract:
+        if not tract or not tract.get("geoid"):
+            missing_allocations += 1
             continue
-
-        geoid = tract.get("geoid")
-        if not geoid:
-            continue
-
-        if is_r:
-            org_refined[geoid] += 1
-            kept_refined += 1
-        if is_l:
-            org_legacy[geoid] += 1
-            kept_legacy += 1
-
+        geoid = str(tract["geoid"])
+        fallback_allocated += 1
+        org_refined[geoid] += int(zip_refined.get((state, zip5), 0))
+        org_legacy[geoid] += int(zip_legacy.get((state, zip5), 0))
         if geoid not in tract_meta:
-            tract_meta[geoid] = {
-                "state_abbrev": state,
-                "tract": tract,
-            }
-
-        if (kept_refined + kept_legacy) and (kept_refined + kept_legacy) % 5000 == 0:
-            print(
-                f"Processed {total_rows} rows, refined={kept_refined}, legacy={kept_legacy}, "
-                f"unique_tracts={len(tract_meta)}"
-            )
+            tract_meta[geoid] = {"state_abbrev": state, "tract": tract}
 
     print(
         f"Finished pass over BMF rows: total={total_rows}, refined_hits={kept_refined}, "
-        f"legacy_hits={kept_legacy}, unique_zips={len(zip_to_tract)}, unique_tracts={len(tract_meta)}"
+        f"legacy_hits={kept_legacy}, unique_zips={len(all_zip_keys)}, unique_tracts={len(tract_meta)}, "
+        f"crosswalk_allocated_zips={crosswalk_allocated}, fallback_allocated_zips={fallback_allocated}, "
+        f"unallocated_zips={missing_allocations}"
     )
 
     os.makedirs(os.path.dirname(output_tract_counts) or ".", exist_ok=True)
@@ -296,6 +550,19 @@ def main() -> None:
         help="Division stats from legacy orgs_per_1k",
     )
     ap.add_argument(
+        "--zip-tract-crosswalk",
+        default="data/crosswalks/tab20_zcta520_tract20_natl.txt",
+        help=(
+            "ZIP→tract crosswalk file (HUD USPS preferred with RES_RATIO/TOT_RATIO; "
+            "Census relationship file also supported). Use '' to disable."
+        ),
+    )
+    ap.add_argument(
+        "--crosswalk-weight-column",
+        default="res_ratio",
+        help="Preferred crosswalk weight column (default: res_ratio)",
+    )
+    ap.add_argument(
         "--max-rows",
         type=int,
         default=0,
@@ -315,6 +582,8 @@ def main() -> None:
         output_engagement_stats=args.output_engagement_stats,
         output_tract_counts_legacy=args.output_tract_counts_legacy,
         output_engagement_stats_legacy=args.output_engagement_stats_legacy,
+        zip_tract_crosswalk_path=(args.zip_tract_crosswalk or "").strip() or None,
+        crosswalk_weight_column=args.crosswalk_weight_column,
         max_rows=args.max_rows,
         sleep_per_new_zip=args.sleep,
     )
