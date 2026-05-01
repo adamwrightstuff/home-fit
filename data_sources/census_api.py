@@ -988,6 +988,88 @@ def get_place_long_tenure_housing_pct(state_fips: str, place_fips: str) -> Optio
         return None
 
 
+def _offset_lat_lon_meters(lat: float, lon: float, bearing_deg: float, distance_m: float) -> Tuple[float, float]:
+    """Return (lat, lon) at bearing (deg from north) and distance in meters."""
+    import math
+
+    r_earth = 6371000.0
+    lat_rad = math.radians(lat)
+    lon_rad = math.radians(lon)
+    br = math.radians(bearing_deg)
+    lat2 = math.asin(
+        math.sin(lat_rad) * math.cos(distance_m / r_earth)
+        + math.cos(lat_rad) * math.sin(distance_m / r_earth) * math.cos(br)
+    )
+    lon2 = lon_rad + math.atan2(
+        math.sin(br) * math.sin(distance_m / r_earth) * math.cos(lat_rad),
+        math.cos(distance_m / r_earth) - math.sin(lat_rad) * math.sin(lat2),
+    )
+    return math.degrees(lat2), math.degrees(lon2)
+
+
+def get_acs_b02001_total_for_tract(tract: Dict) -> Optional[int]:
+    """
+    ACS 2022 B02001_001E (race-universe total) for a tract.
+
+    Used to detect park / non-residential tract pins where full diversity tables are empty.
+    Returns None if the request fails; 0 or negative sentinel counts as non-residential for snapping.
+    """
+    if not CENSUS_API_KEY:
+        return None
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        params = {
+            "get": "B02001_001E,NAME",
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        response = _make_request_with_retry(url, params, timeout=12, max_retries=2)
+        if response is None:
+            return None
+        data = response.json()
+        if len(data) < 2:
+            return None
+        raw = data[1][0]
+        if raw is None or raw == "" or str(raw) == "-666666666":
+            return 0
+        return int(raw)
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
+def snap_lat_lon_for_nonempty_race_acs(
+    lat: float,
+    lon: float,
+    *,
+    step_m: float = 220.0,
+    bearings: Tuple[float, ...] = (0.0, 90.0, 180.0, 270.0, 45.0, 135.0, 225.0, 315.0),
+) -> Tuple[float, float, Optional[Dict]]:
+    """
+    If the tract at (lat, lon) has no ACS race-universe population (B02001 total 0),
+    try short offsets so neighborhood geocodes in parks / label points land in a residential tract.
+
+    Returns (lat_out, lon_out, tract_at_out) where tract_at_out is the tract dict for the chosen point.
+    """
+    tract0 = get_census_tract(lat, lon)
+    if not tract0:
+        return lat, lon, None
+    tot0 = get_acs_b02001_total_for_tract(tract0)
+    if tot0 is not None and tot0 > 0:
+        return lat, lon, tract0
+
+    for br in bearings:
+        lat2, lon2 = _offset_lat_lon_meters(lat, lon, br, step_m)
+        t2 = get_census_tract(lat2, lon2)
+        if not t2 or t2.get("geoid") == tract0.get("geoid"):
+            continue
+        tot = get_acs_b02001_total_for_tract(t2)
+        if tot is not None and tot > 0:
+            return lat2, lon2, t2
+
+    return lat, lon, tract0
+
+
 def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
     Get race, income, age distributions, and education attainment for Social Fabric / Status Signal.

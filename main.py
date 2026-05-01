@@ -56,6 +56,7 @@ from pillars.diversity import get_diversity_score, parse_diversity_preference
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from pillars.happiness_index import compute_happiness_index_with_breakdown
 from pillars.composite_indices import (
+    build_total_score_breakdown,
     compute_longevity_index,
     should_emit_longevity_index,
     attach_indices_version,
@@ -2175,6 +2176,10 @@ def _compute_single_score_internal(
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
+        "longevity_index_breakdown": (
+            dict(longevity_contributions) if isinstance(longevity_contributions, dict) and longevity_contributions else {}
+        ),
+        "total_score_breakdown": build_total_score_breakdown(livability_pillars, token_allocation),
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
@@ -3715,6 +3720,10 @@ async def _stream_score_with_progress(
             "total_score": round(total_score, 2),
             "longevity_index": longevity_index,
             "longevity_index_contributions": longevity_contributions,
+            "longevity_index_breakdown": (
+                dict(longevity_contributions) if isinstance(longevity_contributions, dict) and longevity_contributions else {}
+            ),
+            "total_score_breakdown": build_total_score_breakdown(livability_pillars, token_allocation),
             "token_allocation": token_allocation,
             "allocation_type": allocation_type,
             "overall_confidence": _calculate_overall_confidence(livability_pillars),
@@ -4729,6 +4738,10 @@ async def stream_score(
         "total_score": round(total_score, 2),
         "longevity_index": longevity_index,
         "longevity_index_contributions": longevity_contributions,
+        "longevity_index_breakdown": (
+            dict(longevity_contributions) if isinstance(longevity_contributions, dict) and longevity_contributions else {}
+        ),
+        "total_score_breakdown": build_total_score_breakdown(livability_pillars, token_allocation),
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),

@@ -44,6 +44,30 @@ def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def build_total_score_breakdown(
+    livability_pillars: Dict[str, Any],
+    token_allocation: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """
+    Per-pillar score / weight / contribution for catalog exporters and clients that expect
+    ``total_score_breakdown`` alongside ``total_score``.
+    """
+    breakdown: Dict[str, Any] = {}
+    ta = token_allocation or {}
+    for name, pdata in (livability_pillars or {}).items():
+        if not isinstance(pdata, dict):
+            continue
+        w = pdata.get("weight")
+        if w is None:
+            w = ta.get(name)
+        breakdown[str(name)] = {
+            "score": pdata.get("score"),
+            "weight": w,
+            "contribution": pdata.get("contribution"),
+        }
+    return breakdown
+
+
 def compute_longevity_index(
     livability_pillars: Dict[str, Any],
     token_allocation: Optional[Dict[str, float]] = None,
@@ -225,10 +249,12 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     out: Dict[str, Any] = {
         "longevity_index": None,
         "longevity_index_contributions": None,
+        "longevity_index_breakdown": None,
         "status_signal": None,
         "status_signal_breakdown": None,
         "happiness_index": None,
         "happiness_index_breakdown": None,
+        "total_score_breakdown": None,
         "indices_version": dict(INDICES_VERSION_METADATA),
     }
 
@@ -303,5 +329,16 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             out["happiness_index_breakdown"] = hi_breakdown
     except Exception:
         pass
+
+    lic = out.get("longevity_index_contributions")
+    if isinstance(lic, dict) and lic:
+        out["longevity_index_breakdown"] = dict(lic)
+    else:
+        out["longevity_index_breakdown"] = {}
+
+    try:
+        out["total_score_breakdown"] = build_total_score_breakdown(pillars, token_allocation)
+    except Exception:
+        out["total_score_breakdown"] = {}
 
     return out

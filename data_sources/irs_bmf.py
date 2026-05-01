@@ -94,6 +94,12 @@ if isinstance(_tract_counts_data, dict):
     org_count_by_tract = {str(k): int(v) for k, v in _tract_counts_data.items()}
     if org_count_by_tract:
         logger.info("Loaded IRS BMF refined tract counts for %d tracts", len(org_count_by_tract))
+        if len(org_count_by_tract) < 5000:
+            logger.warning(
+                "IRS BMF refined tract counts file has only %d tracts (sample build). "
+                "Dense metros (e.g. NYC) may show orgs_per_1k≈0 until you rebuild from full IRS BMF CSV.",
+                len(org_count_by_tract),
+            )
 
 _legacy_counts_data = _load_json_if_exists(_TRACT_COUNTS_LEGACY_PATH) or {}
 if isinstance(_legacy_counts_data, dict):

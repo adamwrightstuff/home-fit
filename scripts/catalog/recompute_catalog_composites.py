@@ -37,10 +37,12 @@ DEFAULT_OUTPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.com
 _COMPOSITE_KEYS = (
     "longevity_index",
     "longevity_index_contributions",
+    "longevity_index_breakdown",
     "status_signal",
     "status_signal_breakdown",
     "happiness_index",
     "happiness_index_breakdown",
+    "total_score_breakdown",
 )
 
 

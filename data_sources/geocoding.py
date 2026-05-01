@@ -1863,6 +1863,23 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
         city = address_details.get("city") or address_details.get(
             "town") or address_details.get("village", "")
 
+        # Neighborhood-style queries often land on parks / label centroids with zero ACS
+        # race-universe population; nudge to a nearby residential tract when Census is available.
+        if query_state and _looks_like_neighborhood_query(address):
+            try:
+                from data_sources import census_api as _census_snap
+
+                lat_s, lon_s, _t_snap = _census_snap.snap_lat_lon_for_nonempty_race_acs(lat, lon)
+                if lat_s != lat or lon_s != lon:
+                    lat, lon = lat_s, lon_s
+                    result["lat"] = str(lat)
+                    result["lon"] = str(lon)
+                    print(
+                        f"📍 ACS race-universe snap for neighborhood query: adjusted ({lat_s:.6f}, {lon_s:.6f})"
+                    )
+            except Exception as e:
+                logger.warning("ACS neighborhood snap skipped: %s", e)
+
         _log_timing("total", t0_geocode)
         return lat, lon, zip_code, state, city, result
 
