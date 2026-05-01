@@ -86,7 +86,11 @@ export default function TwinResultCard({
           {typePretty ? ` · ${typePretty}` : ''}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <ArchetypeBadge archetype={archetype} />
+          <ArchetypeBadge
+            archetype={archetype}
+            breakdown={br ?? null}
+            compositeScore={typeof place.score.status_signal === 'number' ? place.score.status_signal : null}
+          />
           <SignalStrengthDots breakdown={br} statusSignalScore={place.score.status_signal} />
         </div>
         <div className="mt-2 flex items-baseline gap-2">

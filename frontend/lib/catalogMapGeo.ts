@@ -4,17 +4,26 @@ import type { PillarPriorities } from '@/components/SearchOptions'
 import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { catalogModeToRamp, mapBubbleStroke, scoreBandFill } from '@/lib/indexColorSystem'
+import {
+  catalogModeToRamp,
+  mapBubbleStroke,
+  mapBubbleStrokeStatusArchetype,
+  scoreBandFill,
+  scoreBandFillStatusArchetype,
+} from '@/lib/indexColorSystem'
+import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 
 /** 0–100 score → bubble fill from active index ramp; Status uses coral index ramp (map tabs). */
 export function numericScoreColorForMode(
   score: number | null | undefined,
   mode: CatalogMapIndexMode,
-  _statusArchetype?: string | null
+  statusArchetype?: string | null
 ): string {
   if (score == null || !Number.isFinite(score)) return '#94a3b8'
   if (mode === 'status') {
-    return scoreBandFill(catalogModeToRamp('status'), score)
+    const isMixed = !statusArchetype || statusArchetype === 'Typical'
+    if (isMixed) return '#C9CED4'
+    return scoreBandFillStatusArchetype(statusArchetype, score)
   }
   return scoreBandFill(catalogModeToRamp(mode), score)
 }
@@ -28,7 +37,9 @@ function catalogBubbleStrokeForFeature(
     return 'rgba(100, 116, 139, 0.55)'
   }
   if (mode === 'status') {
-    return mapBubbleStroke(catalogModeToRamp('status'))
+    const isMixed = !statusArchetype || statusArchetype === 'Typical'
+    if (isMixed) return 'rgba(107, 114, 128, 0.78)'
+    return mapBubbleStrokeStatusArchetype(statusArchetype)
   }
   return mapBubbleStroke(catalogModeToRamp(mode))
 }
@@ -64,7 +75,7 @@ export function buildCatalogFeatureCollection(
   const features = places.map((p) => {
     const { v, archetype } = displayScoreForMode(p, mode, priorities)
     const key = catalogRowKey(p.catalog)
-    const color = numericScoreColorForMode(v, mode)
+    const color = numericScoreColorForMode(v, mode, archetype)
     const strokeColor = catalogBubbleStrokeForFeature(mode, v, archetype)
     return {
       type: 'Feature' as const,
@@ -134,10 +145,10 @@ export function getAllCatalogIndexDisplay(
   const s = place.score
   const br = s.status_signal_breakdown
   const archetype = br?.archetype ?? null
-  const archetypeBadge =
-    archetype && br?.status_label
-      ? `${archetype} · ${br.status_label}`
-      : archetype || (typeof br?.status_label === 'string' ? br.status_label : null)
+  const archetypeBadge = getStatusBadgeModel(
+    br ?? null,
+    typeof s.status_signal === 'number' ? s.status_signal : null
+  ).text
   return {
     homefit: typeof rw.total_score === 'number' && Number.isFinite(rw.total_score) ? rw.total_score : null,
     longevity: typeof s.longevity_index === 'number' ? s.longevity_index : null,
@@ -201,13 +212,16 @@ export function displayIndexValue(
   mode: CatalogMapIndexMode,
   priorities: PillarPriorities
 ): { label: string; value: string; sub?: string } {
-  const { v, archetype } = displayScoreForMode(place, mode, priorities)
+  const { v } = displayScoreForMode(place, mode, priorities)
   if (mode === 'status') {
-    const tier = place.score.status_signal_breakdown?.signal_strength_label
+    const badge = getStatusBadgeModel(
+      place.score.status_signal_breakdown ?? null,
+      typeof place.score.status_signal === 'number' ? place.score.status_signal : null
+    )
     return {
       label: 'Status Signal',
       value: v != null && Number.isFinite(v) ? v.toFixed(1) : '—',
-      sub: archetype ? `${archetype}${tier ? ` · ${tier}` : ''}` : tier ?? undefined,
+      sub: badge.text,
     }
   }
   const labels: Record<CatalogMapIndexMode, string> = {

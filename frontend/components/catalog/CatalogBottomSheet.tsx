@@ -14,6 +14,7 @@ import {
   statusArchetypeNumeral400,
   statusArchetypeNumeral600,
 } from '@/lib/indexColorSystem'
+import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -65,6 +66,12 @@ export default function CatalogBottomSheet({
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
   const archetypeRamp = STATUS_ARCHETYPE_RAMP[normalizeStatusArchetypeKey(allIdx?.archetype)]
+  const statusBadge = place
+    ? getStatusBadgeModel(
+        place.score.status_signal_breakdown ?? null,
+        typeof place.score.status_signal === 'number' ? place.score.status_signal : null
+      )
+    : null
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
     if (!allIdx) return null
@@ -227,7 +234,7 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            {allIdx?.archetypeBadge ? (
+            {statusBadge ? (
               <div
                 className="max-w-full self-start"
                 style={{
@@ -237,7 +244,8 @@ export default function CatalogBottomSheet({
                   borderRadius: 20,
                   padding: '3px 8px 3px 6px',
                   marginBottom: 8,
-                  background: archetypeRamp[50],
+                  background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
+                  border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100, 116, 139, 0.5)',
                 }}
               >
                 <span
@@ -246,7 +254,7 @@ export default function CatalogBottomSheet({
                     height: 7,
                     borderRadius: '50%',
                     flexShrink: 0,
-                    background: archetypeRamp[400],
+                    background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF',
                   }}
                   aria-hidden
                 />
@@ -258,13 +266,7 @@ export default function CatalogBottomSheet({
                     color: archetypeRamp[800],
                   }}
                 >
-                  {allIdx.archetypeBadge}
-                  {place.score.status_signal_breakdown?.signal_strength_label ? (
-                    <span style={{ color: archetypeRamp[600] }}>
-                      {'  '}
-                      {place.score.status_signal_breakdown.signal_strength_label}
-                    </span>
-                  ) : null}
+                  {statusBadge.text}
                 </span>
               </div>
             ) : allIdx?.archetype ? (

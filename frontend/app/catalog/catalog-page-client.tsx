@@ -30,6 +30,7 @@ import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
+import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 
 const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
@@ -166,7 +167,7 @@ export default function CatalogPageClient({
       const a = p.score.status_signal_breakdown?.archetype
       if (a) s.add(a)
     }
-    return Array.from(s).sort()
+    return Array.from(s).sort((a, b) => displayArchetypeLabel(a).localeCompare(displayArchetypeLabel(b)))
   }, [places])
 
   const filteredPlaces = useMemo(() => {
@@ -549,7 +550,7 @@ export default function CatalogPageClient({
                     className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === a ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
                     onClick={() => setFilterArchetype(a)}
                   >
-                    {a}
+                    {displayArchetypeLabel(a)}
                   </button>
                 ))}
               </div>

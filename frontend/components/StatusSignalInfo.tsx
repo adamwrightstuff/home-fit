@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import { STATUS_SIGNAL_COPY } from '@/lib/pillars'
-import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 import type { StatusSignalBreakdown } from '@/types/api'
+import {
+  getStatusBadgeModel,
+  statusTooltipCopy,
+} from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
   Patrician: { bg: 'var(--hf-status-patrician-bg, #1e293b)', text: 'var(--hf-status-patrician-text, #e2e8f0)' },
@@ -32,14 +35,10 @@ export default function StatusSignalInfo({
 }: StatusSignalInfoProps) {
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
-  const label = breakdown?.status_label ?? 'Typical'
   const archetype = breakdown?.archetype ?? 'Typical'
   const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE.Typical
-  const strengthLabel =
-    breakdown?.signal_strength_label ??
-    (typeof compositeScore === 'number' && Number.isFinite(compositeScore)
-      ? signalStrengthFromCompositeScore(compositeScore).label
-      : null)
+  const badgeModel = getStatusBadgeModel(breakdown ?? null, compositeScore)
+  const helpCopy = statusTooltipCopy(breakdown ?? null, compositeScore)
 
   return (
     <>
@@ -54,18 +53,14 @@ export default function StatusSignalInfo({
               borderRadius: 6,
               fontSize: '0.7rem',
               fontWeight: 600,
-              background: badgeStyle.bg,
+              background: badgeModel.variant === 'named' ? badgeStyle.bg : 'transparent',
               color: badgeStyle.text,
+              border: badgeModel.variant === 'named' ? '1px solid transparent' : '1px solid var(--hf-border)',
             }}
-            title={breakdown?.status_insight ?? undefined}
+            title={helpCopy ?? breakdown?.status_insight ?? undefined}
           >
-            {label}
+            {badgeModel.text}
           </span>
-          {strengthLabel ? (
-            <span className="hf-muted" style={{ fontSize: '0.7rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
-              · {strengthLabel}
-            </span>
-          ) : null}
         </span>
       )}
       <button
@@ -130,8 +125,7 @@ export default function StatusSignalInfo({
               Status Signal
               {breakdown?.archetype && (
                 <span style={{ marginLeft: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
-                  — {breakdown.status_label}
-                  {strengthLabel ? ` · ${strengthLabel}` : ''}
+                  — {badgeModel.text}
                 </span>
               )}
             </h2>
@@ -144,7 +138,7 @@ export default function StatusSignalInfo({
                 color: 'var(--hf-text-primary)',
               }}
             >
-              {breakdown?.status_insight ?? STATUS_SIGNAL_COPY.full}
+              {helpCopy ?? breakdown?.status_insight ?? STATUS_SIGNAL_COPY.full}
             </p>
             {breakdown?.top_drivers && breakdown.top_drivers.length > 0 && (
               <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: 'var(--hf-text-secondary)' }}>

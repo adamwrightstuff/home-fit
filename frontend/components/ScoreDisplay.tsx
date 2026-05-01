@@ -8,6 +8,7 @@ import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
 import LongevityInfo from './LongevityInfo'
 import HappinessInfo from './HappinessInfo'
+import StatusArchetypeCompass from './StatusArchetypeCompass'
 import { PILLAR_META, PILLAR_ORDER, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, type PillarKey } from '@/lib/pillars'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -476,6 +477,12 @@ export default function ScoreDisplay({
             </div>
           </div>
         </div>
+        {(data.status_signal_breakdown || typeof data.status_signal === 'number') && (
+          <StatusArchetypeCompass
+            breakdown={data.status_signal_breakdown ?? null}
+            score={typeof data.status_signal === 'number' ? data.status_signal : null}
+          />
+        )}
       </div>
       )}
 

@@ -14,6 +14,7 @@ export interface StatusSignalTopDriver {
 /** Status Signal breakdown (archetype, label, insight, top drivers, radius note). */
 export interface StatusSignalBreakdown {
   archetype?: string;
+  archetype_rule?: string;
   status_label?: string;
   status_insight?: string;
   top_drivers?: StatusSignalTopDriver[];
@@ -24,6 +25,14 @@ export interface StatusSignalBreakdown {
   signal_strength_label?: string;
   /** Same as top-level status_signal when present (for saved payloads). */
   composite_score?: number;
+  classifier_inputs?: {
+    education?: number;
+    home_cost?: number;
+    occupation?: number;
+    luxury?: number;
+    wealth?: number;
+    wealth_character?: string;
+  };
   [key: string]: unknown;
 }
 
