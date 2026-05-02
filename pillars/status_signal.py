@@ -1074,6 +1074,42 @@ def _merge_social_and_diversity_for_signal(
     return merged
 
 
+def _backfill_status_signal_social_inputs(
+    merged_sf: Dict[str, Any],
+    tract: Optional[Dict[str, Any]],
+    lat: Optional[float],
+    lon: Optional[float],
+) -> Dict[str, Any]:
+    """
+    Preserve Social Fabric split while restoring Status Signal classifier inputs.
+    Backfill only missing education_attainment / self_employed_pct from census diversity data.
+    """
+    needs_edu = not isinstance(merged_sf.get("education_attainment"), dict)
+    needs_se = merged_sf.get("self_employed_pct") is None
+    if not (needs_edu or needs_se):
+        return merged_sf
+    if lat is None or lon is None:
+        return merged_sf
+    if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        return merged_sf
+    if not math.isfinite(float(lat)) or not math.isfinite(float(lon)):
+        return merged_sf
+
+    try:
+        from data_sources import census_api as _ca
+
+        fallback = _ca.get_diversity_data(float(lat), float(lon), tract=tract) or {}
+    except Exception:
+        fallback = {}
+
+    out = dict(merged_sf)
+    if needs_edu and isinstance(fallback.get("education_attainment"), dict):
+        out["education_attainment"] = fallback["education_attainment"]
+    if needs_se and fallback.get("self_employed_pct") is not None:
+        out["self_employed_pct"] = fallback["self_employed_pct"]
+    return out
+
+
 def compute_status_signal(
     housing_details: Optional[Dict[str, Any]],
     social_fabric_details: Optional[Dict[str, Any]],
@@ -1150,6 +1186,7 @@ def compute_status_signal_with_breakdown(
     if not housing_details or not economic_security_details:
         return None, breakdown
     merged_sf = _merge_social_and_diversity_for_signal(social_fabric_details, diversity_details)
+    merged_sf = _backfill_status_signal_social_inputs(merged_sf, tract, lat, lon)
     from data_sources.us_census_divisions import get_division
     division = get_division(state_abbrev) if state_abbrev else "all"
     baselines = _load_baselines()
@@ -1344,6 +1381,8 @@ def compute_status_signal_with_breakdown(
         "occupation": occupation_neutral,
         "luxury": luxury_pass1,
         "wealth": wealth,
+        "grad_pct_raw": grad_pct_raw,
+        "self_employed_pct_raw": self_employed_pct_raw,
     }
     breakdown["provisional_composite_score"] = (
         round(provisional, 1) if provisional is not None else None
