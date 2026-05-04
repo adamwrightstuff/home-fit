@@ -1486,8 +1486,8 @@ def _compute_single_score_internal(
             arch_diversity_data = None
             density = None
 
-        def _include_pillar(name: str) -> bool:
-            return only_pillars is None or name in only_pillars
+    def _include_pillar(name: str) -> bool:
+        return only_pillars is None or name in only_pillars
 
         # Pre-compute tree canopy (5km) once for pillars that need it
         tree_canopy_5km = None
