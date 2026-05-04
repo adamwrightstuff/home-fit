@@ -8,58 +8,53 @@ import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
 /** Status Signal: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
-export type StatusArchetypeRampKey = 'patrician' | 'parvenu' | 'poseur' | 'plebeian' | 'typical'
+export type StatusArchetypeRampKey = 'established' | 'affluent' | 'transitional' | 'working_class'
 
 export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
   { 50: string; 200: string; 400: string; 600: string; 800: string }
 > = {
-  // Indigo — faint band must not be near-white (score <50 maps here); otherwise Patrician vs Plebeian read identical on small map dots.
-  patrician: {
+  // Indigo — credential-rich, established prestige.
+  established: {
     50: '#c7d2fe',
     200: '#818cf8',
     400: '#6366f1',
     600: '#4338ca',
     800: '#312e81',
   },
-  parvenu: {
+  // Amber — wealth-forward, ascending profile.
+  affluent: {
     50: '#fffbeb',
     200: '#fcd34d',
     400: '#d97706',
     600: '#b45309',
     800: '#78350f',
   },
-  poseur: {
+  // Teal — cost-premium tension, neighborhood in flux.
+  transitional: {
     50: '#f0fdfa',
     200: '#5eead4',
     400: '#0d9488',
     600: '#0f766e',
     800: '#115e59',
   },
-  // Warm stone — faint band is visibly taupe vs Patrician’s blue-lavender at the same score tier.
-  plebeian: {
+  // Warm stone — working community, modest signal.
+  working_class: {
     50: '#d4cfc9',
     200: '#a8a29e',
     400: '#78716c',
     600: '#57534e',
     800: '#44403c',
   },
-  typical: {
-    50: '#FAECE7',
-    200: '#F0997B',
-    400: '#D85A30',
-    600: '#993C1D',
-    800: '#712B13',
-  },
 }
 
 export function normalizeStatusArchetypeKey(archetype: string | null | undefined): StatusArchetypeRampKey {
   const a = (archetype ?? '').trim()
-  if (a === 'Patrician') return 'patrician'
-  if (a === 'Parvenu') return 'parvenu'
-  if (a === 'Poseur') return 'poseur'
-  if (a === 'Plebeian') return 'plebeian'
-  return 'typical'
+  if (a === 'Established') return 'established'
+  if (a === 'Affluent') return 'affluent'
+  if (a === 'Transitional') return 'transitional'
+  if (a === 'Working Class') return 'working_class'
+  return 'working_class'
 }
 
 export const RAMP_HEX: Record<IndexRampKey, { 50: string; 200: string; 400: string; 600: string; 800: string }> = {

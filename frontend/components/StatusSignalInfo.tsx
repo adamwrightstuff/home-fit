@@ -9,11 +9,10 @@ import {
 } from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
-  Patrician: { bg: 'var(--hf-status-patrician-bg, #1e293b)', text: 'var(--hf-status-patrician-text, #e2e8f0)' },
-  Parvenu: { bg: 'var(--hf-status-parvenu-bg, #b45309)', text: 'var(--hf-status-parvenu-text, #fef3c7)' },
-  Poseur: { bg: 'var(--hf-status-poseur-bg, #0f766e)', text: 'var(--hf-status-poseur-text, #ccfbf1)' },
-  Plebeian: { bg: 'var(--hf-status-plebeian-bg, #64748b)', text: 'var(--hf-status-plebeian-text, #f1f5f9)' },
-  Typical: { bg: 'var(--hf-status-typical-bg, #64748b)', text: 'var(--hf-status-typical-text, #f1f5f9)' },
+  Established: { bg: '#4338ca', text: '#e0e7ff' },
+  Affluent: { bg: '#b45309', text: '#fef3c7' },
+  Transitional: { bg: '#0f766e', text: '#ccfbf1' },
+  'Working Class': { bg: '#57534e', text: '#f5f5f4' },
 }
 
 export interface StatusSignalInfoProps {
@@ -35,8 +34,8 @@ export default function StatusSignalInfo({
 }: StatusSignalInfoProps) {
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
-  const archetype = breakdown?.archetype ?? 'Typical'
-  const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE.Typical
+  const archetype = breakdown?.archetype ?? 'Working Class'
+  const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE['Working Class']
   const badgeModel = getStatusBadgeModel(breakdown ?? null, compositeScore)
   const helpCopy = statusTooltipCopy(breakdown ?? null, compositeScore)
 

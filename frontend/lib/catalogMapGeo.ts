@@ -21,7 +21,7 @@ export function numericScoreColorForMode(
 ): string {
   if (score == null || !Number.isFinite(score)) return '#94a3b8'
   if (mode === 'status') {
-    const isMixed = !statusArchetype || statusArchetype === 'Typical'
+    const isMixed = !statusArchetype || statusArchetype === 'Working Class'
     if (isMixed) return '#C9CED4'
     return scoreBandFillStatusArchetype(statusArchetype, score)
   }
@@ -37,7 +37,7 @@ function catalogBubbleStrokeForFeature(
     return 'rgba(100, 116, 139, 0.55)'
   }
   if (mode === 'status') {
-    const isMixed = !statusArchetype || statusArchetype === 'Typical'
+    const isMixed = !statusArchetype || statusArchetype === 'Working Class'
     if (isMixed) return 'rgba(107, 114, 128, 0.78)'
     return mapBubbleStrokeStatusArchetype(statusArchetype)
   }

@@ -7,11 +7,10 @@ const BADGE: Record<
   ReturnType<typeof normalizeStatusArchetypeKey>,
   { bg: string; fg: string }
 > = {
-  patrician: { bg: '#EEEDFE', fg: '#3C3489' },
-  parvenu: { bg: '#FFF3CD', fg: '#7B5800' },
-  poseur: { bg: '#FAECE7', fg: '#712B13' },
-  plebeian: { bg: '#F1EFE8', fg: '#444441' },
-  typical: { bg: '#E9F1F8', fg: '#1A4A6B' },
+  established: { bg: '#EEEDFE', fg: '#3C3489' },
+  affluent: { bg: '#FFF3CD', fg: '#7B5800' },
+  transitional: { bg: '#F0FDF9', fg: '#134E4A' },
+  working_class: { bg: '#F1EFE8', fg: '#444441' },
 }
 
 export default function ArchetypeBadge({
