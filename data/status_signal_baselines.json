@@ -455,12 +455,26 @@
     },
     "home_cost": {
       "median_home_value": {
-        "max": 938200.0,
-        "min": 483400.0
+        "max": 2000001.0,
+        "min": 442300.0
       }
     },
-    "occupation": {},
-    "wealth": {}
+    "occupation": {
+      "white_collar_pct": {
+        "max": 65.88,
+        "min": 8.27
+      }
+    },
+    "wealth": {
+      "mean_hh_income": {
+        "max": 338620.34,
+        "min": 66461.76
+      },
+      "wealth_gap_ratio": {
+        "max": 0.9201,
+        "min": 0.1294
+      }
+    }
   },
   "los_angeles,_california": {
     "brand": {},
