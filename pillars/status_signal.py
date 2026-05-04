@@ -827,12 +827,10 @@ def _classify_archetype(
     if home_cost > 50 and wealth_val < 55:
         return "Transitional", "transitional_cost_wealth_gap"
 
-    if gap_val >= 0.40 and wealth_val >= 50:
-        return "Affluent", "affluent_gap"
-    if occ_val >= 70 and wealth_val >= 58:
-        return "Affluent", "affluent_occupation"
+    if wealth_val < 55:
+        return "Working Class", "working_class_low_wealth"
 
-    return "Working Class", "working_class_default"
+    return "Affluent", "affluent_residual"
 
 
 def _merge_social_and_diversity_for_signal(

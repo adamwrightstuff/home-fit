@@ -1,0 +1,294 @@
+metro,location,state,area_type,status_signal,archetype,archetype_rule,status_label,wealth,home_cost,education,occupation,wealth_gap,signal_strength,composite_score
+LA,"Agoura Hills, California",,,69.8,Affluent,affluent_residual,Affluent & Ascendant,74.04029382333404,43.842168194499806,63.66833333333334,85.73614819876035,0.3559906216725244,strong,69.8
+LA,"Alhambra, California",,,42.1,Working Class,working_class_low_wealth,Working Community,52.75911012396084,34.294789707622904,27.69111111111111,48.98781193722665,0.534111197733918,moderate,42.1
+LA,"Altadena, California",,,61.6,Affluent,affluent_residual,Affluent & Ascendant,64.85862038978438,56.21334804336834,55.09111111111112,64.67979969557256,0.20430352129260615,strong,61.6
+LA,"Arcadia, California",,,57.6,Affluent,affluent_residual,Affluent & Ascendant,57.36146182752931,57.88540215932403,53.168888888888894,62.201527670514054,0.5333751298968321,strong,57.6
+LA,"Arts District, Los Angeles, California",,,72.3,Affluent,affluent_residual,Affluent & Ascendant,90.87085831333187,46.36287817595566,55.74000000000001,66.47348457693283,0.7827283517573697,strong,72.3
+LA,"Atwater Village, Los Angeles, California",,,56.2,Affluent,affluent_residual,Affluent & Ascendant,71.8814571083229,54.76861246281448,45.69888888888889,32.63225358530643,0.3568125951053414,strong,56.2
+LA,"Bel Air, Los Angeles, California",,,91.7,Affluent,affluent_residual,Affluent & Ascendant,93.53470932137142,100.0,100.0,72.82449947768691,0.8502700989834111,dominant,91.7
+LA,"Belmont Shore, Long Beach, California",,,60.6,Affluent,affluent_residual,Affluent & Ascendant,61.38495354210472,59.97168116201193,59.30444444444444,60.53520009402362,0.3271745067053975,strong,60.6
+LA,"Beverly Hills, California",,,45.0,Working Class,working_class_low_wealth,Working Community,,0.0,73.69166666666668,80.28784595686004,,moderate,45.0
+LA,"Boyle Heights, Los Angeles, California",,,20.5,Working Class,working_class_low_wealth,Working Community,26.289201070693558,28.889660088068254,2.6333333333333337,16.952940958245996,0.25508910745235663,faint,20.5
+LA,"Brentwood, Los Angeles, California",,,98.7,Established,established_credential_wealth,Established Prestige,99.25703404029417,100.0,100.0,96.04412035333087,0.9953592231665428,dominant,98.7
+LA,"Burbank, California",,,41.9,Working Class,working_class_low_wealth,Working Community,45.988315520901544,27.975334423451997,52.42,41.32643951792888,0.8263200127806426,moderate,41.9
+LA,"Calabasas, California",,,85.0,Affluent,affluent_residual,Affluent & Ascendant,86.77446313532135,76.50026444722951,79.04833333333335,93.45697631341842,0.6788645520117597,dominant,85.0
+LA,"Canoga Park, Los Angeles, California",,,20.6,Working Class,working_class_low_wealth,Working Community,20.0467587553891,23.216799749040337,11.877777777777778,29.22867811068242,0.18379832636698543,faint,20.6
+LA,"Cerritos, California",,,63.6,Affluent,affluent_residual,Affluent & Ascendant,67.71335498359184,44.20587785114273,59.33444444444444,73.11088812568102,0.19557155073394902,strong,63.6
+LA,"Chatsworth, Los Angeles, California",,,40.2,Working Class,working_class_low_wealth,Working Community,46.11290130453985,33.885616343899606,29.12,51.06877301999252,0.2597331379972001,moderate,40.2
+LA,"Chinatown, Los Angeles, California",,,37.3,Working Class,working_class_low_wealth,Working Community,36.78826023924001,41.90743488207978,25.20388888888889,47.09367458737736,0.39200014023347673,moderate,37.3
+LA,"Compton, California",,,19.5,Working Class,working_class_low_wealth,Working Community,21.1322386117478,26.333589445549887,7.564444444444446,20.372146556685212,0.1617927118994905,faint,19.5
+LA,"Crenshaw, Los Angeles, California",,,52.1,Transitional,transitional_cost_wealth_gap,In Transition,42.68914237679984,53.96542030439468,64.68277777777779,58.77190681078811,0.21007034247165826,strong,52.1
+LA,"Culver City, California",,,66.6,Affluent,affluent_residual,Affluent & Ascendant,74.66676878809949,67.30144104796875,52.63333333333333,61.78838385176655,0.3718748485252761,strong,66.6
+LA,"Downey, California",,,37.3,Working Class,working_class_low_wealth,Working Community,50.34650472225607,36.911478626248424,18.168888888888887,32.86109305267597,0.3915180897242065,moderate,37.3
+LA,"Downtown Los Angeles, California",,,22.3,Working Class,working_class_low_wealth,Working Community,,0.0,32.90222222222223,44.442800788954635,,faint,22.3
+LA,"Eagle Rock, Los Angeles, California",,,63.1,Affluent,affluent_residual,Affluent & Ascendant,76.88192278646376,50.045438449465316,49.17444444444445,55.5910197674046,0.5687473024162791,strong,63.1
+LA,"East Hollywood, Los Angeles, California",,,33.9,Working Class,working_class_low_wealth,Working Community,33.55168150239678,45.36772814319654,23.400555555555556,29.59278631710682,0.301297780479857,moderate,33.9
+LA,"East Los Angeles, California",,,19.2,Working Class,working_class_low_wealth,Working Community,21.271309490825967,29.662543108434473,4.249444444444444,17.27156357574314,0.07412984994380692,faint,19.2
+LA,"Echo Park, Los Angeles, California",,,35.9,Working Class,working_class_low_wealth,Working Community,28.74424874876983,37.36106417404315,40.38722222222222,43.9653572684299,0.1700532185507076,moderate,35.9
+LA,"El Monte, California",,,26.5,Working Class,working_class_low_wealth,Working Community,38.95993148649932,30.11212865622921,7.844444444444444,16.559340994014363,0.5889889464809841,moderate,26.5
+LA,"El Segundo, California",,,67.0,Affluent,affluent_residual,Affluent & Ascendant,64.59535381632404,81.54168441014123,66.90333333333334,61.50348957149115,0.17118390373027464,strong,67.0
+LA,"El Sereno, Los Angeles, California",,,31.5,Working Class,working_class_low_wealth,Working Community,34.029434506198,30.47583831287214,25.902222222222225,34.65843041794058,0.2680456911535378,moderate,31.5
+LA,"Elysian Valley, Los Angeles, California",,,34.0,Working Class,working_class_low_wealth,Working Community,43.987936989437905,37.926834751043266,17.77388888888889,25.993194584848833,0.3669447969323906,moderate,34.0
+LA,"Encino, Los Angeles, California",,,79.5,Affluent,affluent_residual,Affluent & Ascendant,84.43661442833086,68.97854668693337,79.28055555555557,76.52944515017356,0.7349354455507767,dominant,79.5
+LA,"Franklin Village, Los Angeles, California",,,61.1,Transitional,transitional_cost_wealth_gap,In Transition,53.63483543624433,89.12402044654453,18.25277777777778,39.08201840894149,0.7653689346191945,strong,61.1
+LA,"Frogtown, Los Angeles, California",,,12.5,Working Class,working_class_low_wealth,Working Community,,0.0,17.77388888888889,25.993194584848833,,faint,12.5
+LA,"Gardena, California",,,32.6,Working Class,working_class_low_wealth,Working Community,38.796522846698835,29.298833451791552,20.85055555555556,38.95276183554645,0.307794702613353,moderate,32.6
+LA,"Glassell Park, Los Angeles, California",,,38.2,Working Class,working_class_low_wealth,Working Community,41.976769836769655,45.55463449452693,26.621111111111112,32.66323987017767,0.2950539036760676,moderate,38.2
+LA,"Glendale, California",,,29.8,Working Class,working_class_low_wealth,Working Community,27.27180634104875,45.57484058656265,16.53666666666667,27.34217740273453,0.2286378225600925,moderate,29.8
+LA,"Granada Hills, Los Angeles, California",,,56.3,Affluent,affluent_residual,Affluent & Ascendant,64.22364418436135,39.39682794664177,41.035555555555554,66.65022518681054,0.3552166864603668,strong,56.3
+LA,"Hancock Park, Los Angeles, California",,,84.7,Affluent,affluent_residual,Affluent & Ascendant,90.1436415932578,100.0,70.37611111111111,75.35087290332045,0.7642898250764267,dominant,84.7
+LA,"Hawthorne, California",,,47.4,Affluent,affluent_residual,Affluent & Ascendant,63.58624875500221,37.89652561298969,21.748333333333335,43.9107252361476,0.3939445293030205,moderate,47.4
+LA,"Hermosa Beach, California",,,82.8,Affluent,affluent_residual,Affluent & Ascendant,82.2322610802685,93.82193684484903,73.97333333333333,84.7058399805262,0.563697351546683,dominant,82.8
+LA,"Hidden Hills, California",,,78.4,Affluent,affluent_residual,Affluent & Ascendant,79.09782791792883,100.0,67.88555555555556,71.14074362468367,0.4842240282606815,dominant,78.4
+LA,"Highland Park, Los Angeles, California",,,65.8,Affluent,affluent_residual,Affluent & Ascendant,71.90761025552065,55.33943456282352,83.04888888888891,42.78516295025729,0.3019165859942325,strong,65.8
+LA,"Hollywood Hills, Los Angeles, California",,,78.5,Affluent,affluent_residual,Affluent & Ascendant,87.01235238522924,85.09290508541872,72.32166666666666,60.37356238802519,0.6848962165217413,dominant,78.5
+LA,"Hollywood, Los Angeles, California",,,37.6,Working Class,working_class_low_wealth,Working Community,30.246511262290777,44.03917759184806,34.155,48.40798156015547,0.1883321884532018,moderate,37.6
+LA,"Hyde Park, Los Angeles, California",,,52.1,Transitional,transitional_cost_wealth_gap,In Transition,42.68914237679984,53.96542030439468,64.68277777777779,58.77190681078811,0.21007034247165826,strong,52.1
+LA,"Inglewood, California",,,41.9,Affluent,affluent_residual,Affluent & Ascendant,56.570761200000305,47.1559672883576,26.860555555555557,19.945387556368864,0.8868451554798137,moderate,41.9
+LA,"Koreatown, Los Angeles, California",,,27.5,Working Class,working_class_low_wealth,Working Community,27.738343942162704,33.350154904953065,19.359444444444446,28.041232784682567,0.3204358583931244,moderate,27.5
+LA,"La Canada Flintridge, California",,,86.8,Affluent,affluent_residual,Affluent & Ascendant,89.00681318739196,100.0,86.48222222222223,72.33404425486536,0.7354656240994799,dominant,86.8
+LA,"La Crescenta, California",,,67.7,Affluent,affluent_residual,Affluent & Ascendant,70.60906241905325,63.12888304259293,62.76666666666667,69.45586107604363,0.268992000697643,strong,67.7
+LA,"La Mirada, California",,,38.9,Working Class,working_class_low_wealth,Working Community,50.08990450071052,33.48654602619417,25.06666666666667,40.14045885621228,0.19625395494456888,moderate,38.9
+LA,"Lakewood, California",,,42.9,Working Class,working_class_low_wealth,Working Community,51.606715918392936,32.845002604060106,39.20888888888889,43.88130407727866,0.11153904575451738,moderate,42.9
+LA,"Larchmont Village, Los Angeles, California",,,40.6,Working Class,working_class_low_wealth,Working Community,,0.0,69.1738888888889,69.25889413277305,,moderate,40.6
+LA,"Leimert Park, Los Angeles, California",,,55.2,Affluent,affluent_residual,Affluent & Ascendant,58.58929749940394,51.939759577813916,56.419444444444444,49.042906246296084,0.9303616182679904,strong,55.2
+LA,"Little Tokyo, Los Angeles, California",,,50.7,Affluent,affluent_residual,Affluent & Ascendant,57.10912188115836,30.142437794282788,38.378888888888895,64.02503963352363,2.127873153887083,strong,50.7
+LA,"Long Beach, California",,,34.3,Working Class,working_class_low_wealth,Working Community,31.95228370191079,21.312375574673887,41.223888888888894,51.80511981433842,0.27727066614525725,moderate,34.3
+LA,"Los Feliz, Los Angeles, California",,,74.5,Affluent,affluent_residual,Affluent & Ascendant,76.53075073615103,100.0,69.215,55.85287917823803,0.41913597431243305,strong,74.5
+LA,"Manhattan Beach, California",,,90.0,Established,established_credential_wealth,Established Prestige,86.31678904145822,100.0,94.20444444444445,83.57877809213686,0.6672602588788784,dominant,90.0
+LA,"Mar Vista, Los Angeles, California",,,43.0,Working Class,working_class_low_wealth,Working Community,50.54528269629881,33.32994881291735,38.611111111111114,46.99447044543474,0.46377365028129586,moderate,43.0
+LA,"Marina del Rey, Los Angeles, California",,,63.9,Affluent,affluent_residual,Affluent & Ascendant,71.07429394578746,41.806404421901185,68.855,59.311192561293105,0.2865828355733016,strong,63.9
+LA,"Mid-City, Los Angeles, California",,,29.5,Working Class,working_class_low_wealth,Working Community,31.997641684995322,40.109092690900845,8.485555555555557,34.373195611727716,0.11163421879971928,moderate,29.5
+LA,"Miracle Mile, Los Angeles, California",,,57.1,Working Class,working_class_low_wealth,Working Community,53.21517747960954,49.48471939547414,62.2938888888889,71.50944184491978,0.3089134411360307,strong,57.1
+LA,"Monrovia, California",,,41.7,Working Class,working_class_low_wealth,Working Community,43.06570445756876,32.5520142695422,40.04,55.32373683415349,0.1298046850963133,moderate,41.7
+LA,"Montebello, California",,,24.6,Working Class,working_class_low_wealth,Working Community,33.14692829589826,29.94542839693453,7.001111111111111,18.965765247410815,0.40401146203558197,faint,24.6
+LA,"Monterey Park, California",,,29.4,Working Class,working_class_low_wealth,Working Community,32.890325508960885,35.01715749789983,22.48166666666667,21.394894628000642,0.34280787045882627,moderate,29.4
+LA,"Mount Washington, Los Angeles, California",,,56.5,Affluent,affluent_residual,Affluent & Ascendant,73.37700267472358,52.353984464546144,39.208333333333336,38.73453616100675,0.6333622366139613,strong,56.5
+LA,"North Hollywood, Los Angeles, California",,,23.3,Working Class,working_class_low_wealth,Working Community,23.88881873017145,38.46734771299873,9.367222222222223,15.498502560139116,0.18607945507396995,faint,23.3
+LA,"Pacific Palisades, Los Angeles, California",,,88.8,Affluent,affluent_residual,Affluent & Ascendant,84.15925733155484,100.0,100.0,79.80467984118684,0.612556200377608,dominant,88.8
+LA,"Palms, Los Angeles, California",,,69.0,Affluent,affluent_residual,Affluent & Ascendant,64.31127117768771,58.16323592481515,79.68,76.81036069193962,0.394160092101557,strong,69.0
+LA,"Palos Verdes Estates, California",,,85.9,Affluent,affluent_residual,Affluent & Ascendant,84.90143136348966,100.0,85.70666666666668,77.9907816599917,0.6313739686054062,dominant,85.9
+LA,"Pasadena, California",,,57.5,Affluent,affluent_residual,Affluent & Ascendant,64.17864585056064,43.42289178475865,59.73444444444445,50.93764455388968,1.200582254972469,strong,57.5
+LA,"Pico-Robertson, Los Angeles, California",,,69.1,Affluent,affluent_residual,Affluent & Ascendant,64.07563593151373,81.90539406678417,79.205,60.68464228079612,0.27953683687881703,strong,69.1
+LA,"Playa Vista, Los Angeles, California",,,69.5,Transitional,transitional_cost_wealth_gap,In Transition,54.95457837894412,75.76779361093473,67.25444444444445,98.78156598270768,0.20796475393167768,strong,69.5
+LA,"Playa del Rey, Los Angeles, California",,,81.4,Affluent,affluent_residual,Affluent & Ascendant,87.17702740637347,87.87629426333893,66.80444444444444,77.95032443594742,0.6890715396231456,dominant,81.4
+LA,"Porter Ranch, Los Angeles, California",,,64.9,Affluent,affluent_residual,Affluent & Ascendant,64.82037826380028,44.27154765025881,74.095,71.18942218998589,0.12222033786608458,strong,64.9
+LA,"Rancho Palos Verdes, California",,,74.8,Affluent,affluent_residual,Affluent & Ascendant,80.89879285145686,70.75163126306767,80.43222222222222,58.58334742821815,0.5298873622595438,strong,74.8
+LA,"Redondo Beach, California",,,69.9,Affluent,affluent_residual,Affluent & Ascendant,76.68725888187869,57.668186669940056,62.38444444444444,71.19200172568783,0.4231042268857379,strong,69.9
+LA,"Reseda, Los Angeles, California",,,23.3,Working Class,working_class_low_wealth,Working Community,27.22341251189294,23.86844621719225,22.765555555555554,14.005229872781202,0.22556449123462016,faint,23.3
+LA,"Rolling Hills Estates, California",,,76.5,Affluent,affluent_residual,Affluent & Ascendant,72.1361039714279,80.03633055348021,74.80888888888889,85.15215716486902,0.30771002742769477,dominant,76.5
+LA,"Rosemead, California",,,26.3,Working Class,working_class_low_wealth,Working Community,28.302386926244615,35.00705445188197,19.03666666666667,16.96855492375377,0.16240873908712136,moderate,26.3
+LA,"San Fernando, California",,,25.7,Working Class,working_class_low_wealth,Working Community,36.79356684684009,28.58151718452355,5.267777777777778,22.345255195099323,0.37685063784051454,moderate,25.7
+LA,"San Gabriel, California",,,33.2,Working Class,working_class_low_wealth,Working Community,36.04889611721347,39.69486780416862,15.663333333333336,39.32871106166561,0.26220431810163375,moderate,33.2
+LA,"San Marino, California",,,79.5,Affluent,affluent_residual,Affluent & Ascendant,72.90676203344721,100.0,90.50666666666666,67.71004170197718,0.327250006152303,dominant,79.5
+LA,"San Pedro, Los Angeles, California",,,35.6,Working Class,working_class_low_wealth,Working Community,54.312109436767905,30.81429035447042,9.514444444444445,34.21166846321765,0.7840678215154196,moderate,35.6
+LA,"Santa Monica, California",,,70.1,Affluent,affluent_residual,Affluent & Ascendant,68.52043516164059,57.32468310533284,64.02722222222224,89.29480845241714,0.715217783348892,strong,70.1
+LA,"Sherman Oaks, Los Angeles, California",,,77.6,Affluent,affluent_residual,Affluent & Ascendant,96.26930082943352,63.84114778685199,59.495000000000005,64.13648495471385,0.9196054664069588,dominant,77.6
+LA,"Signal Hill, California",,,37.5,Working Class,working_class_low_wealth,Working Community,44.865309749442616,32.082222629711744,27.909444444444446,41.65639648812726,0.3371565372304865,moderate,37.5
+LA,"Silver Lake, Los Angeles, California",,,59.5,Affluent,affluent_residual,Affluent & Ascendant,66.49051371036495,54.25840863891259,60.997777777777785,46.35267549853855,0.3471029828297248,strong,59.5
+LA,"Studio City, Los Angeles, California",,,80.4,Affluent,affluent_residual,Affluent & Ascendant,99.92364418301223,47.014524644107574,69.96666666666667,71.77680809756282,1.012261074517048,dominant,80.4
+LA,"Sunland-Tujunga, Los Angeles, California",,,43.5,Working Class,working_class_low_wealth,Working Community,49.144573827778274,36.76498445898947,27.56388888888889,62.02705974406927,0.1667032281635916,moderate,43.5
+LA,"Sylmar, Los Angeles, California",,,29.9,Working Class,working_class_low_wealth,Working Community,45.75610011828352,29.94542839693453,6.0183333333333335,24.42529239894359,0.32446215588905886,moderate,29.9
+LA,"Tarzana, Los Angeles, California",,,54.5,Affluent,affluent_residual,Affluent & Ascendant,60.396139278888334,51.98017176188535,40.91833333333334,56.51786637008311,0.5581684281835647,strong,54.5
+LA,"Temple City, California",,,46.1,Working Class,working_class_low_wealth,Working Community,46.909859810214414,44.46350552459814,38.27944444444445,57.37171309043803,0.40397291552977,moderate,46.1
+LA,"Thousand Oaks, California",,,29.4,Working Class,working_class_low_wealth,Working Community,33.24620127196045,22.762162678236674,25.34611111111111,36.67046361612172,0.32686776331303785,moderate,29.4
+LA,"Torrance, California",,,58.4,Affluent,affluent_residual,Affluent & Ascendant,60.424233366408096,48.30771453439355,43.30722222222222,76.73326789977887,0.07373872663044193,strong,58.4
+LA,"Van Nuys, Los Angeles, California",,,33.7,Working Class,working_class_low_wealth,Working Community,35.20934011496818,33.784585883721014,24.50555555555556,42.396156475103844,0.22294555893418275,moderate,33.7
+LA,"Venice, Los Angeles, California",,,77.5,Affluent,affluent_residual,Affluent & Ascendant,73.50355870354096,100.0,79.68,67.39334417156489,0.34238174201709554,dominant,77.5
+LA,"View Park, Los Angeles, California",,,52.1,Transitional,transitional_cost_wealth_gap,In Transition,42.68914237679984,53.96542030439468,64.68277777777779,58.77190681078811,0.21007034247165826,strong,52.1
+LA,"Watts, Los Angeles, California",,,30.7,Working Class,working_class_low_wealth,Working Community,52.88694936175756,25.10606935438,4.937222222222223,22.487759912959383,0.7601380819106877,moderate,30.7
+LA,"West Hollywood, California",,,43.3,Working Class,working_class_low_wealth,Working Community,43.808448991177116,43.19052172634789,45.55222222222223,39.05133871216403,0.2529501364564355,moderate,43.3
+LA,"West Los Angeles, California",,,68.4,Affluent,affluent_residual,Affluent & Ascendant,66.93975616981399,54.020987057492896,74.79111111111112,76.3036963036963,0.3026598963767927,strong,68.4
+LA,"Westwood, Los Angeles, California",,,40.1,Working Class,working_class_low_wealth,Working Community,,0.0,90.17833333333334,39.69119822485207,,moderate,40.1
+LA,"Whittier, California",,,30.4,Working Class,working_class_low_wealth,Working Community,45.21369486460292,28.369353218148508,11.963888888888889,23.534346088693916,0.5722779792748556,moderate,30.4
+LA,"Wilmington, Los Angeles, California",,,20.2,Working Class,working_class_low_wealth,Working Community,31.264632168985543,23.969476677370842,4.327777777777778,9.19299678423766,0.5367117839034908,faint,20.2
+LA,"Windsor Square, Los Angeles, California",,,84.7,Affluent,affluent_residual,Affluent & Ascendant,90.1436415932578,100.0,70.37611111111111,75.35087290332045,0.7642898250764267,dominant,84.7
+LA,"Woodland Hills, Los Angeles, California",,,62.2,Affluent,affluent_residual,Affluent & Ascendant,67.51515495572903,48.34812671846498,57.02333333333334,65.86431860822105,0.2060531173248314,strong,62.2
+NYC,"Ardsley, NY",,,70.8,Affluent,affluent_residual,Affluent & Ascendant,62.96245045750755,39.38167337761499,98.86222222222221,83.97186694884063,0.07511271439985703,strong,70.8
+NYC,"Astoria, Queens, New York",,,56.9,Working Class,working_class_low_wealth,Working Community,53.73219659432281,48.89369120342938,69.32388888888889,61.07435017812376,0.2003196628431705,strong,56.9
+NYC,"Battery Park City, Manhattan, New York",,,86.9,Established,established_credential_wealth,Established Prestige,75.34629603341818,50.72234253266189,100.0,89.30691721385539,0.38910421206625745,dominant,86.9
+NYC,"Bay Ridge, Brooklyn, New York",,,39.2,Working Class,working_class_low_wealth,Working Community,34.75784686731515,44.246290035214166,33.185,48.98279352226721,0.18606858254889536,moderate,39.2
+NYC,"Bayside, Queens, New York",,,58.2,Affluent,affluent_residual,Affluent & Ascendant,68.62400251320327,45.45360403434834,52.797777777777775,49.957393235695115,0.3436728356725872,strong,58.2
+NYC,"Bedford-Stuyvesant, Brooklyn, New York",,,64.3,Affluent,affluent_residual,Affluent & Ascendant,59.01748040198991,79.27355057913186,57.28555555555556,72.15124854159481,0.23270156466841302,strong,64.3
+NYC,"Bedford, NY",,,84.6,Established,established_credential_wealth,Established Prestige,75.39576635083363,53.41985581943028,98.93333333333334,82.15573014450469,0.39035852834144774,dominant,84.6
+NYC,"Bellmore, NY",,,58.3,Affluent,affluent_residual,Affluent & Ascendant,63.267702878865606,34.48674758196223,57.54277777777778,65.72742819140514,0.08285236718872538,strong,58.3
+NYC,"Belmont, Bronx, New York",,,21.4,Working Class,working_class_low_wealth,Working Community,17.402201660474322,32.75407518989938,12.472222222222223,24.03941833123094,0.20158734200132075,faint,21.4
+NYC,"Bensonhurst, Brooklyn, New York",,,37.7,Working Class,working_class_low_wealth,Working Community,31.64814853277654,27.69244913495194,58.76777777777777,40.45724878350197,0.32852681033786657,moderate,37.7
+NYC,"Bloomfield, NJ",,,41.1,Working Class,working_class_low_wealth,Working Community,42.789062321983366,21.105263131307776,45.71611111111112,63.50918936659008,0.30449032702716344,moderate,41.1
+NYC,"Boerum Hill, Brooklyn, New York",,,84.2,Affluent,affluent_residual,Affluent & Ascendant,78.02389451591581,100.0,79.43111111111111,90.81191605525622,0.4569945255004098,dominant,84.2
+NYC,"Borough Park, Brooklyn, New York",,,52.3,Transitional,transitional_cost_wealth_gap,In Transition,26.554809924888787,90.52834384302695,15.585,44.73975723975724,0.16517661485849014,strong,52.3
+NYC,"Brighton Beach, Brooklyn, New York",,,42.1,Working Class,working_class_low_wealth,Working Community,47.9818311525826,37.64900098555214,46.736111111111114,29.944869486948694,0.6320074881959669,moderate,42.1
+NYC,"Bronxville, NY",,,70.4,Affluent,affluent_residual,Affluent & Ascendant,80.8117113770777,40.66981174489202,75.24444444444445,64.52814342520224,0.5276794178539305,strong,70.4
+NYC,"Brooklyn Heights, Brooklyn, New York",,,77.6,Affluent,affluent_residual,Affluent & Ascendant,74.44038348430279,61.44672588061938,99.25333333333333,75.1791051272379,0.3661348657264705,dominant,77.6
+NYC,"Bushwick, Brooklyn, New York",,,48.9,Affluent,affluent_residual,Affluent & Ascendant,61.9566382027793,54.15232665572507,9.673333333333334,54.85393829143829,1.617400435097897,moderate,48.9
+NYC,"Canarsie, Brooklyn, New York",,,29.0,Working Class,working_class_low_wealth,Working Community,34.46423267772188,34.360459506738984,18.66611111111111,21.47320917773276,0.1495823517700332,moderate,29.0
+NYC,"Carnegie Hill, Manhattan, New York",,,100.0,Established,established_credential_wealth,Established Prestige,100.0,100.0,100.0,100.0,1.1040140002467647,dominant,100.0
+NYC,"Carroll Gardens, Brooklyn, New York",,,93.5,Established,established_credential_wealth,Established Prestige,78.13844499108161,100.0,97.01333333333334,96.87316343978131,0.45989894440932066,dominant,93.5
+NYC,"Cedarhurst, NY",,,58.8,Affluent,affluent_residual,Affluent & Ascendant,61.09595180980392,39.679713235141826,62.63277777777778,64.0708824550963,0.3771494430213545,strong,58.8
+NYC,"Chappaqua, NY",,,84.0,Established,established_credential_wealth,Established Prestige,76.7874200619791,43.579488998035465,100.0,80.9240685712717,0.42564380627204274,dominant,84.0
+NYC,"Chatham, NJ",,,81.1,Established,established_credential_wealth,Established Prestige,67.91575378925418,44.45340247858028,86.56,94.69195281383772,0.20070335762916974,dominant,81.1
+NYC,"Chelsea, Manhattan, New York",,,81.1,Affluent,affluent_residual,Affluent & Ascendant,98.52246948126621,33.38551556601558,79.22055555555555,79.75006266387659,0.9767343925670309,dominant,81.1
+NYC,"Chinatown, Manhattan, New York",,,57.8,Affluent,affluent_residual,Affluent & Ascendant,60.80222037882472,42.28629910774949,57.77444444444445,62.63070429321053,0.39074732204371565,strong,57.8
+NYC,"City Island, Bronx, New York",,,52.4,Affluent,affluent_residual,Affluent & Ascendant,60.00555963054971,30.829444923497213,65.95222222222223,37.807559573293844,0.2033542924717384,strong,52.4
+NYC,"Clinton Hill, Brooklyn, New York",,,83.3,Established,established_credential_wealth,Established Prestige,85.92355673511558,44.89793650336608,86.06222222222222,90.64673274384018,0.6572898825492901,dominant,83.3
+NYC,"Closter, NJ",,,59.9,Affluent,affluent_residual,Affluent & Ascendant,70.47049773828758,33.97149223505141,63.49111111111111,52.19521269998759,0.2654787033643885,strong,59.9
+NYC,"Cobble Hill, Brooklyn, New York",,,86.1,Established,established_credential_wealth,Established Prestige,73.19109088906146,59.426116677047546,100.0,85.20867667364482,0.33445914346404043,dominant,86.1
+NYC,"Coney Island, Brooklyn, New York",,,28.5,Working Class,working_class_low_wealth,Working Community,37.19613701754777,31.476039868640193,10.758333333333333,27.093342189306757,0.5169579863505996,moderate,28.5
+NYC,"Cos Cob, CT",,,75.3,Affluent,affluent_residual,Affluent & Ascendant,75.54117851713453,81.66797248536447,81.495,63.978606139623075,0.39404544316898343,dominant,75.3
+NYC,"Cranford, NJ",,,59.6,Affluent,affluent_residual,Affluent & Ascendant,63.90864520300577,27.980385946460927,56.51777777777778,76.9170966272564,0.4351981266614345,strong,59.6
+NYC,"Cresskill, NJ",,,62.7,Affluent,affluent_residual,Affluent & Ascendant,70.9924296671557,38.836108892650586,53.31000000000001,71.29340023767863,0.278712249198003,strong,62.7
+NYC,"Croton-on-Hudson, NY",,,66.1,Affluent,affluent_residual,Affluent & Ascendant,72.83055508437715,33.956337666024616,74.50166666666667,66.86243794716195,0.3253177845395238,strong,66.1
+NYC,"Crown Heights, Brooklyn, New York",,,66.2,Transitional,transitional_cost_wealth_gap,In Transition,49.349628130054526,90.93751720675026,47.19388888888889,54.48094365649582,0.383597107751701,strong,66.2
+NYC,"DUMBO, Brooklyn, New York",,,91.2,Established,established_credential_wealth,Established Prestige,80.24704955317198,98.36325602987672,100.0,84.23431407302374,0.513362458660892,dominant,91.2
+NYC,"Darien, CT",,,87.6,Established,established_credential_wealth,Established Prestige,90.61984983063313,74.22707909321122,81.65333333333334,97.99413926196003,0.7763640500607416,dominant,87.6
+NYC,"Demarest, NJ",,,76.7,Affluent,affluent_residual,Affluent & Ascendant,83.76255478368608,46.38813579100031,86.96888888888888,73.34566651210764,0.6024978363282627,dominant,76.7
+NYC,"Ditmas Park, Brooklyn, New York",,,56.8,Affluent,affluent_residual,Affluent & Ascendant,60.04844431743877,77.1620139613993,47.385555555555555,43.744240255868164,0.26410839364921995,strong,56.8
+NYC,"Dobbs Ferry, NY",,,64.3,Affluent,affluent_residual,Affluent & Ascendant,68.17599923639946,41.73568309977617,86.70222222222225,49.9116052486839,0.20730186188288613,strong,64.3
+NYC,"East Harlem, Manhattan, New York",,,19.6,Working Class,working_class_low_wealth,Working Community,,0.0,34.42333333333333,32.11295096948506,,faint,19.6
+NYC,"East New York, Brooklyn, New York",,,27.3,Working Class,working_class_low_wealth,Working Community,27.0975927667221,31.18305153412228,12.23,40.96305071075713,0.11891072874646959,moderate,27.3
+NYC,"East Village, Manhattan, New York",,,79.2,Affluent,affluent_residual,Affluent & Ascendant,87.25426984010383,48.30266301138462,75.78666666666666,87.7659346110915,0.6910300158736545,dominant,79.2
+NYC,"Eastchester, NY",,,35.6,Working Class,working_class_low_wealth,Working Community,35.66014231839992,32.48634447042611,40.154444444444444,34.83590571509531,0.18380892619207503,moderate,35.6
+NYC,"Edgewater, NJ",,,76.9,Affluent,affluent_residual,Affluent & Ascendant,95.74563783762625,31.839749525283125,69.17555555555556,75.94125283998702,0.9063280295992944,dominant,76.9
+NYC,"Elmhurst, Queens, New York",,,35.1,Working Class,working_class_low_wealth,Working Community,41.0692856350247,40.81125438914206,27.275000000000002,22.246503496503497,0.2779359037747657,moderate,35.1
+NYC,"Englewood, NJ",,,33.0,Working Class,working_class_low_wealth,Working Community,37.23685960070593,21.357839281754252,31.647777777777776,43.63142610527548,0.3396278267949764,moderate,33.0
+NYC,"Fairfield, CT",,,78.9,Established,established_credential_wealth,Established Prestige,87.8337678401414,40.614244991793804,81.99111111111111,81.4208363789097,0.7057231452260126,dominant,78.9
+NYC,"Fieldston, Bronx, New York",,,48.4,Working Class,working_class_low_wealth,Working Community,54.942797603809446,16.180028197601438,72.44277777777778,54.35481886795067,0.25150411120460553,moderate,48.4
+NYC,"Financial District, Manhattan, New York",,,74.1,Affluent,affluent_residual,Affluent & Ascendant,67.7239049370154,68.22586975860287,78.20444444444445,88.5077179999055,0.19583904403039493,strong,74.1
+NYC,"Flatbush, Brooklyn, New York",,,33.8,Working Class,working_class_low_wealth,Working Community,36.28176598952023,34.951487698783744,32.608333333333334,27.686243744053385,0.2457527645308697,moderate,33.8
+NYC,"Flatlands, Brooklyn, New York",,,35.1,Working Class,working_class_low_wealth,Working Community,33.03458780312066,31.516452052711628,31.91777777777778,49.967315293402244,0.13164172112115338,moderate,35.1
+NYC,"Floral Park, NY",,,64.8,Affluent,affluent_residual,Affluent & Ascendant,67.84240309682315,37.84095885989146,72.85611111111112,70.23355784520652,0.19884355619430003,strong,64.8
+NYC,"Flushing, Queens, New York",,,29.7,Working Class,working_class_low_wealth,Working Community,46.29000899490438,23.62597311276363,16.25166666666667,18.665606718471082,0.800960796600127,moderate,29.7
+NYC,"Fordham, Bronx, New York",,,16.8,Working Class,working_class_low_wealth,Working Community,,0.0,26.714444444444446,31.155758304195803,,faint,16.8
+NYC,"Forest Hills, Queens, New York",,,68.0,Affluent,affluent_residual,Affluent & Ascendant,70.15051715250777,26.924617637594643,84.59611111111113,77.42852084624235,0.4121513032678106,strong,68.0
+NYC,"Fort Greene, Brooklyn, New York",,,,Working Class,working_class_low_wealth,Working Community,,0.0,,,,,
+NYC,"Fort Lee, NJ",,,59.6,Working Class,working_class_low_wealth,Working Community,54.256557982729475,29.662543108434473,88.83833333333334,82.19038096919546,0.2071057533288705,strong,59.6
+NYC,"Freeport, NY",,,23.6,Working Class,working_class_low_wealth,Working Community,33.9899377296244,23.63102463577256,13.134444444444444,13.12540265946549,0.1454981029943689,faint,23.6
+NYC,"Garden City, NY",,,84.4,Established,established_credential_wealth,Established Prestige,72.34378911368022,51.576049921170984,100.0,82.43747403039437,0.3129758690000181,dominant,84.4
+NYC,"Glen Ridge, NJ",,,79.9,Established,established_credential_wealth,Established Prestige,71.42133674281763,34.16345010939073,92.72888888888887,83.71625721055277,0.2895871566910984,dominant,79.9
+NYC,"Glen Rock, NJ",,,66.8,Affluent,affluent_residual,Affluent & Ascendant,65.97068731046889,36.1739562669447,77.69055555555556,80.69854189214554,0.1513863395033526,strong,66.8
+NYC,"Glendale, Queens, New York",,,33.0,Working Class,working_class_low_wealth,Working Community,44.647287917831044,36.977148425364504,6.731111111111112,34.285072070786356,0.3520947448104143,moderate,33.0
+NYC,"Gowanus, Brooklyn, New York",,,78.3,Affluent,affluent_residual,Affluent & Ascendant,82.95407783280659,94.58976834220634,73.98833333333334,60.04090435523843,0.5819989624462092,dominant,78.3
+NYC,"Gramercy Park, Manhattan, New York",,,89.7,Established,established_credential_wealth,Established Prestige,75.68260731062121,45.337419005142955,100.0,100.0,0.39763135987053033,dominant,89.7
+NYC,"Great Kills, Staten Island, New York",,,46.5,Working Class,working_class_low_wealth,Working Community,52.54930647048205,31.960986077497434,39.62722222222223,64.9133139587685,0.11943881491327694,moderate,46.5
+NYC,"Great Neck, NY",,,73.6,Affluent,affluent_residual,Affluent & Ascendant,79.76669171871262,44.160414144062365,71.80888888888889,83.72259324953814,0.5011830209464009,strong,73.6
+NYC,"Greenpoint, Brooklyn, New York",,,74.9,Affluent,affluent_residual,Affluent & Ascendant,72.93020551740757,100.0,68.36166666666666,66.90933605140246,0.3278444139712726,strong,74.9
+NYC,"Greenwich Village, Manhattan, New York",,,81.6,Affluent,affluent_residual,Affluent & Ascendant,84.39525006123063,64.39681531783425,76.44444444444446,93.60546931865358,0.6185397787559934,dominant,81.6
+NYC,"Greenwich, CT",,,68.6,Affluent,affluent_residual,Affluent & Ascendant,71.54908088732725,48.5047239317418,79.02222222222224,66.81290602888235,0.5142892845319295,strong,68.6
+NYC,"Hamilton Heights, Manhattan, New York",,,37.9,Working Class,working_class_low_wealth,Working Community,45.59908504050773,31.945831508470647,31.70666666666667,37.7635159316719,0.5193997738025331,moderate,37.9
+NYC,"Harlem, Manhattan, New York",,,77.6,Affluent,affluent_residual,Affluent & Ascendant,87.38528056125847,78.07633962601554,64.59666666666666,68.20425098773904,1.5411151992784282,dominant,77.6
+NYC,"Harrison, NY",,,38.2,Working Class,working_class_low_wealth,Working Community,41.3431601580373,28.85429942700575,38.489444444444445,45.785886617760525,0.0007031461396189816,moderate,38.2
+NYC,"Hastings-on-Hudson, NY",,,75.9,Affluent,affluent_residual,Affluent & Ascendant,90.6729475777428,29.03110273231828,76.10944444444445,77.43970518118243,0.77771033955018,dominant,75.9
+NYC,"Hell's Kitchen, Manhattan, New York",,,73.1,Affluent,affluent_residual,Affluent & Ascendant,88.12656130321783,41.00321226348137,56.27611111111111,80.09826486526367,0.7232045360493066,strong,73.1
+NYC,"Hempstead, NY",,,46.8,Affluent,affluent_residual,Affluent & Ascendant,55.628834256226504,22.873296184433126,50.05222222222222,41.84728409015358,0.12314848193083013,moderate,46.8
+NYC,"Hewlett, NY",,,57.2,Affluent,affluent_residual,Affluent & Ascendant,63.53692884507725,29.096772531434368,62.024444444444455,59.31210831381966,0.18970557906413865,strong,57.2
+NYC,"Hoboken, NJ",,,78.5,Affluent,affluent_residual,Affluent & Ascendant,80.88392449978693,42.725781609526365,78.38222222222223,100.0,0.5295103762918121,dominant,78.5
+NYC,"Howard Beach, Queens, New York",,,32.6,Working Class,working_class_low_wealth,Working Community,,0.0,40.025,75.67308371504176,,moderate,32.6
+NYC,"Hunts Point, Bronx, New York",,,23.0,Working Class,working_class_low_wealth,Working Community,32.63140167809859,19.640321458718198,17.647222222222222,13.382929738122218,0.4225060681846374,faint,23.0
+NYC,"Inwood, Manhattan, New York",,,40.4,Working Class,working_class_low_wealth,Working Community,38.38976527259626,22.206495147254422,51.80777777777778,59.81330491634178,0.2032600706390277,moderate,40.4
+NYC,"Irvington, NY",,,79.9,Affluent,affluent_residual,Affluent & Ascendant,82.75835278296385,44.43824790955349,100.0,79.91196542357964,0.5770363681410526,dominant,79.9
+NYC,"Jackson Heights, Queens, New York",,,36.4,Working Class,working_class_low_wealth,Working Community,49.96254604850251,43.42794330776758,17.167777777777776,18.90226708775096,0.5732180932088666,moderate,36.4
+NYC,"Jamaica, Queens, New York",,,37.6,Working Class,working_class_low_wealth,Working Community,53.49173454882775,44.766596905133916,12.654999999999998,21.85822136664833,0.5306214677434951,moderate,37.6
+NYC,"Jersey City, NJ",,,82.1,Established,established_credential_wealth,Established Prestige,75.48721754097137,43.402685692722926,84.69333333333333,95.93166849615807,0.399934056564449,dominant,82.1
+NYC,"Katonah, NY",,,73.1,Affluent,affluent_residual,Affluent & Ascendant,71.96477501870837,42.83186359271389,97.45777777777778,73.90884305173203,0.30336599437848866,strong,73.1
+NYC,"Kensington, Brooklyn, New York",,,82.3,Affluent,affluent_residual,Affluent & Ascendant,100.0,48.787609220241855,98.34,51.7728391082107,1.202104838766583,dominant,82.3
+NYC,"Kew Gardens, Queens, New York",,,57.5,Affluent,affluent_residual,Affluent & Ascendant,58.15581133932394,18.25620415427149,70.05111111111111,72.74269004170561,0.3464682639134497,strong,57.5
+NYC,"Kips Bay, Manhattan, New York",,,74.6,Affluent,affluent_residual,Affluent & Ascendant,85.00123938180798,37.03776670147166,76.31888888888888,77.61992437045589,0.6339045936005888,strong,74.6
+NYC,"Larchmont, NY",,,81.8,Affluent,affluent_residual,Affluent & Ascendant,81.44032914865784,67.74092354974563,98.45333333333333,76.50523385893885,0.5436179754165434,dominant,81.8
+NYC,"Lawrence, NY",,,81.4,Established,established_credential_wealth,Established Prestige,88.4029102566759,60.29497863458343,80.0,85.48040254738495,0.7201537095170244,dominant,81.4
+NYC,"Leonia, NJ",,,51.5,Affluent,affluent_residual,Affluent & Ascendant,59.19287793279145,27.222657495121496,49.852777777777774,54.05148867752746,0.3244390754555712,strong,51.5
+NYC,"Little Italy, Manhattan, New York",,,57.8,Affluent,affluent_residual,Affluent & Ascendant,60.80222037882472,42.28629910774949,57.77444444444445,62.63070429321053,0.39074732204371565,strong,57.8
+NYC,"Long Beach, NY",,,47.4,Affluent,affluent_residual,Affluent & Ascendant,58.613697334183314,31.678100788997376,29.563333333333333,51.574576739050414,0.17650567864235,moderate,47.4
+NYC,"Long Island City, Queens, New York",,,68.2,Affluent,affluent_residual,Affluent & Ascendant,65.09713504426146,62.24486651603025,73.795,73.90226617436242,0.28129057629491155,strong,68.2
+NYC,"Lower East Side, Manhattan, New York",,,68.3,Affluent,affluent_residual,Affluent & Ascendant,72.54191104160049,43.70072555024977,76.74777777777777,68.84327313780283,0.6212008552737688,strong,68.3
+NYC,"Lynbrook, NY",,,41.3,Working Class,working_class_low_wealth,Working Community,45.06265131374255,24.060404091531577,47.48611111111111,52.7633785790626,0.2519920235277555,moderate,41.3
+NYC,"Madison, NJ",,,68.2,Affluent,affluent_residual,Affluent & Ascendant,75.88314650338356,31.27397894828301,73.95666666666668,72.72957669636637,0.4226951991044896,strong,68.2
+NYC,"Malverne, NY",,,62.8,Affluent,affluent_residual,Affluent & Ascendant,72.06467511904084,28.859350950014672,63.56500000000001,66.67161033124444,0.3058989541063969,strong,62.8
+NYC,"Mamaroneck, NY",,,72.1,Affluent,affluent_residual,Affluent & Ascendant,98.21135019397235,32.30954116511357,48.80500000000001,66.52473197643143,0.9688459858220105,strong,72.1
+NYC,"Manhasset, NY",,,69.6,Affluent,affluent_residual,Affluent & Ascendant,91.57072453117243,48.27235387333104,56.18333333333334,49.82751206013238,0.8004734084571518,strong,69.6
+NYC,"Manhattanville, Manhattan, New York",,,15.0,Working Class,working_class_low_wealth,Working Community,,0.0,20.0,32.9185520361991,,faint,15.0
+NYC,"Maplewood, NJ",,,83.4,Established,established_credential_wealth,Established Prestige,76.36308176807351,44.67061796796425,92.35555555555555,88.94680686960098,0.4148847399057919,dominant,83.4
+NYC,"Maspeth, Queens, New York",,,35.1,Working Class,working_class_low_wealth,Working Community,45.83350764875652,40.74558459002597,10.130555555555556,33.57121998576644,0.4922121384895432,moderate,35.1
+NYC,"Merrick, NY",,,61.9,Affluent,affluent_residual,Affluent & Ascendant,63.04068366742064,38.149101763436164,63.11444444444445,75.69917745279042,0.07709631170792143,strong,61.9
+NYC,"Midtown East, Manhattan, New York",,,72.7,Transitional,transitional_cost_wealth_gap,In Transition,44.39988918317727,100.0,100.0,21.87624875124875,0.24295172065776627,strong,72.7
+NYC,"Midtown, Manhattan, New York",,,37.5,Working Class,working_class_low_wealth,Working Community,36.69036021856161,29.086669485416504,41.91722222222223,47.10646496360782,0.19757575757575757,moderate,37.5
+NYC,"Millburn, NJ",,,86.6,Established,established_credential_wealth,Established Prestige,67.61361619819577,51.752853226483516,100.0,92.84193308630857,0.19304268113443948,dominant,86.6
+NYC,"Mineola, NY",,,47.6,Working Class,working_class_low_wealth,Working Community,50.71056786337334,26.03049806501411,65.41555555555556,51.858136941798364,0.17389311894830312,moderate,47.6
+NYC,"Montclair, NJ",,,64.0,Affluent,affluent_residual,Affluent & Ascendant,73.39446331171689,20.67588367554876,78.91111111111111,60.58964932126696,0.3396156363468201,strong,64.0
+NYC,"Morningside Heights, Manhattan, New York",,,81.4,Affluent,affluent_residual,Affluent & Ascendant,77.75572349945357,77.899536320703,100.0,73.5499741531569,0.4501950690170782,dominant,81.4
+NYC,"Morris Park, Bronx, New York",,,42.2,Working Class,working_class_low_wealth,Working Community,41.08641731747697,29.187699945595096,59.788888888888906,42.82045274313316,0.4810579167478636,moderate,42.2
+NYC,"Morristown, NJ",,,48.8,Working Class,working_class_low_wealth,Working Community,48.28711140253574,25.21215133756752,64.45333333333333,67.78134146555198,0.17152720086669324,moderate,48.8
+NYC,"Mott Haven, Bronx, New York",,,33.0,Transitional,transitional_cost_wealth_gap,In Transition,24.29779471446514,53.00057940968912,8.382777777777779,20.212255041470158,0.4850694153216049,moderate,33.0
+NYC,"Mount Kisco, NY",,,31.7,Working Class,working_class_low_wealth,Working Community,31.197032768576836,8.85026831164462,45.888333333333335,51.40406468531468,0.08748480691220505,moderate,31.7
+NYC,"Mount Vernon, NY",,,32.6,Working Class,working_class_low_wealth,Working Community,48.129106586072986,22.23175276229907,20.607777777777777,29.190526454677396,0.749427943007493,moderate,32.6
+NYC,"Murray Hill, Manhattan, New York",,,85.3,Established,established_credential_wealth,Established Prestige,77.00307163558786,61.5881685248694,88.97777777777777,93.97160988070078,0.43111163612799996,dominant,85.3
+NYC,"New Canaan, CT",,,80.7,Affluent,affluent_residual,Affluent & Ascendant,86.00226783239552,71.01936198254093,81.87222222222222,74.90874646260896,0.6592855966565435,dominant,80.7
+NYC,"New Dorp, Staten Island, New York",,,48.0,Affluent,affluent_residual,Affluent & Ascendant,56.76650314137183,38.93208782982025,41.43555555555555,41.88666005275002,0.2887779880714346,moderate,48.0
+NYC,"New Hyde Park, NY",,,53.7,Affluent,affluent_residual,Affluent & Ascendant,61.33716634042023,34.441283874881854,43.62611111111111,60.90699255814788,0.16527222026489582,strong,53.7
+NYC,"New Rochelle, NY",,,67.7,Affluent,affluent_residual,Affluent & Ascendant,77.62400683382427,24.641329237558477,81.12555555555556,64.11058478078054,0.5369771271669712,strong,67.7
+NYC,"NoHo, Manhattan, New York",,,89.9,Affluent,affluent_residual,Affluent & Ascendant,91.65467063070463,100.0,70.5338888888889,97.74627546366676,0.8026018556631345,dominant,89.9
+NYC,"Nolita, Manhattan, New York",,,78.0,Affluent,affluent_residual,Affluent & Ascendant,89.35223154207428,65.92237526653099,62.50666666666667,77.10438854431787,0.773013357532894,dominant,78.0
+NYC,"Norwalk, CT",,,39.1,Working Class,working_class_low_wealth,Working Community,47.69191977361623,25.040399555263914,33.23111111111111,49.76438820352623,0.17694192415611976,moderate,39.1
+NYC,"Oceanside, NY",,,59.1,Affluent,affluent_residual,Affluent & Ascendant,62.269849617987646,30.046458857113123,66.035,66.83881578947368,0.172334456016621,strong,59.1
+NYC,"Old Greenwich, CT",,,91.3,Established,established_credential_wealth,Established Prestige,81.59800308607925,83.11270806591834,98.80888888888889,90.46223776223775,0.5476157865528684,dominant,91.3
+NYC,"Ossining, NY",,,49.3,Affluent,affluent_residual,Affluent & Ascendant,60.98515617721303,17.013529494074817,40.55777777777778,55.73661066688954,0.2629226680540683,moderate,49.3
+NYC,"Ozone Park, Queens, New York",,,29.6,Working Class,working_class_low_wealth,Working Community,35.8696547477604,33.20871226070304,11.402222222222225,33.120546645783236,0.2040626021502586,moderate,29.6
+NYC,"Park Slope, Brooklyn, New York",,,81.1,Affluent,affluent_residual,Affluent & Ascendant,73.49430020862307,100.0,86.16055555555558,79.1074574280681,0.34214699355648315,dominant,81.1
+NYC,"Peekskill, NY",,,30.9,Working Class,working_class_low_wealth,Working Community,37.262204909134624,17.695485100280308,24.53277777777778,46.01057981883361,0.2566075387277298,moderate,30.9
+NYC,"Pelham Bay, Bronx, New York",,,37.6,Working Class,working_class_low_wealth,Working Community,43.92730708440286,29.288730405773688,36.63666666666666,37.97506288419344,0.24240972963940177,moderate,37.6
+NYC,"Pelham Manor, NY",,,87.9,Established,established_credential_wealth,Established Prestige,77.9794134241346,50.99007325213515,100.0,90.60817231548938,0.4558667106757977,dominant,87.9
+NYC,"Pelham, NY",,,66.6,Affluent,affluent_residual,Affluent & Ascendant,74.14969726904386,37.573228140418195,69.23833333333333,68.98310563093816,0.35876453802651337,strong,66.6
+NYC,"Pleasantville, NY",,,68.3,Affluent,affluent_residual,Affluent & Ascendant,71.94596605256888,34.08262574124786,76.16444444444444,77.92184667184667,0.30288909441946577,strong,68.3
+NYC,"Port Chester, NY",,,26.5,Working Class,working_class_low_wealth,Working Community,31.567013640516556,27.682346088934086,21.400000000000002,19.364809694839927,0.23289022699631728,moderate,26.5
+NYC,"Port Washington, NY",,,67.8,Affluent,affluent_residual,Affluent & Ascendant,75.75756735214398,43.0894912661693,59.63888888888889,76.66370684651315,0.3995319662337634,strong,67.8
+NYC,"Prospect Heights, Brooklyn, New York",,,53.0,Working Class,working_class_low_wealth,Working Community,,0.0,100.0,77.6149444552946,,strong,53.0
+NYC,"Red Hook, Brooklyn, New York",,,58.7,Working Class,working_class_low_wealth,Working Community,,0.0,100.0,100.0,,strong,58.7
+NYC,"Rego Park, Queens, New York",,,53.7,Affluent,affluent_residual,Affluent & Ascendant,59.65203909290608,44.90298802637501,50.53055555555556,50.226420769682825,0.4908980651400304,strong,53.7
+NYC,"Richmond Hill, Queens, New York",,,38.0,Working Class,working_class_low_wealth,Working Community,42.19931272675816,40.96280007940994,32.416111111111114,30.78978891478891,0.22793392784512814,moderate,38.0
+NYC,"Ridgewood, NJ",,,46.1,Working Class,working_class_low_wealth,Working Community,,0.0,75.87555555555556,81.83718597427972,,moderate,46.1
+NYC,"Ridgewood, Queens, New York",,,41.7,Working Class,working_class_low_wealth,Working Community,41.444365055845786,44.14525957503558,39.31277777777778,41.181718440038566,0.22111654319049057,moderate,41.7
+NYC,"Riverdale, Bronx, New York",,,71.8,Affluent,affluent_residual,Affluent & Ascendant,75.24724310133709,40.356617318338394,74.17666666666668,85.15052586670623,0.38659273222732193,strong,71.8
+NYC,"Riverside, CT",,,97.6,Established,established_credential_wealth,Established Prestige,100.0,100.0,100.0,91.87850846652168,1.0827053400647157,dominant,97.6
+NYC,"Rockaway Beach, Queens, New York",,,16.6,Working Class,working_class_low_wealth,Working Community,,0.0,26.887222222222224,30.09495826153623,,faint,16.6
+NYC,"Rockville Centre, NY",,,53.6,Affluent,affluent_residual,Affluent & Ascendant,59.76777362735199,23.600715497718987,55.232777777777784,60.676392572944295,0.3978092714333225,strong,53.6
+NYC,"Roslyn, NY",,,81.6,Affluent,affluent_residual,Affluent & Ascendant,93.96099355196725,53.42490734243921,95.09333333333335,61.59391456001625,0.8610785044319356,dominant,81.6
+NYC,"Rye, NY",,,87.0,Established,established_credential_wealth,Established Prestige,86.28235351813568,75.16666237287211,87.73333333333333,90.30991900290448,0.6663871487068651,dominant,87.0
+NYC,"Scarsdale, NY",,,92.2,Established,established_credential_wealth,Established Prestige,85.48929030596395,65.52835647183447,100.0,95.31401729677592,0.6462790890409471,dominant,92.2
+NYC,"Sheepshead Bay, Brooklyn, New York",,,52.1,Working Class,working_class_low_wealth,Working Community,53.87428469859461,43.60979813608904,54.72055555555556,58.520109364703956,0.4737429949535785,strong,52.1
+NYC,"Short Hills, NJ",,,97.5,Established,established_credential_wealth,Established Prestige,100.0,83.78456062610596,100.0,97.00730913966208,1.1903602130515993,dominant,97.5
+NYC,"Sleepy Hollow, NY",,,16.2,Working Class,working_class_low_wealth,Working Community,,0.0,30.93,23.355005483315058,,faint,16.2
+NYC,"SoHo, Manhattan, New York",,,78.7,Affluent,affluent_residual,Affluent & Ascendant,77.81794013491857,100.0,73.165,70.35514072704154,0.45177256725295917,dominant,78.7
+NYC,"South Orange, NJ",,,90.9,Established,established_credential_wealth,Established Prestige,82.8650470150312,43.20062477236574,100.0,100.0,0.5797415925815412,dominant,90.9
+NYC,"Southport, CT",,,74.5,Affluent,affluent_residual,Affluent & Ascendant,74.32656972575612,37.916731705025406,97.79555555555555,79.19655416080582,0.36324912621348526,strong,74.5
+NYC,"St. George, Staten Island, New York",,,49.2,Working Class,working_class_low_wealth,Working Community,51.854016731638495,32.07717110670282,66.07722222222223,48.47393434210841,0.4727377542351562,moderate,49.2
+NYC,"Stamford, CT",,,50.6,Working Class,working_class_low_wealth,Working Community,51.52571996542008,32.78438432795296,61.19500000000001,63.58022744872576,0.6508571787145917,strong,50.6
+NYC,"Stapleton, Staten Island, New York",,,26.0,Working Class,working_class_low_wealth,Working Community,40.488315740446936,29.49079132613087,5.23888888888889,14.089622306627383,0.7239661980303773,moderate,26.0
+NYC,"Summit, NJ",,,71.6,Affluent,affluent_residual,Affluent & Ascendant,75.68478273009671,41.634652639597576,83.60277777777777,72.77381572754167,0.3976865174720185,strong,71.6
+NYC,"Sunnyside, Queens, New York",,,18.7,Working Class,working_class_low_wealth,Working Community,,0.0,24.40888888888889,41.68487762237763,,faint,18.7
+NYC,"Sunset Park, Brooklyn, New York",,,32.2,Transitional,transitional_cost_wealth_gap,In Transition,29.602371211963288,50.90924888399228,4.388333333333334,8.486847326696005,0.2640492812232808,moderate,32.2
+NYC,"Tarrytown, NY",,,55.4,Affluent,affluent_residual,Affluent & Ascendant,56.98290414654704,30.980990613765098,58.575,66.82517482517483,0.29071936171930907,strong,55.4
+NYC,"Tenafly, NJ",,,88.9,Established,established_credential_wealth,Established Prestige,76.74261705716053,63.67444752755732,100.0,90.68731885984738,0.42450782936594283,dominant,88.9
+NYC,"Tottenville, Staten Island, New York",,,44.1,Working Class,working_class_low_wealth,Working Community,52.13968601473241,32.79448737397082,40.30722222222222,48.9433444297376,0.10798516564414358,moderate,44.1
+NYC,"Tremont, Bronx, New York",,,23.2,Working Class,working_class_low_wealth,Working Community,42.39919896686267,13.659318216145577,11.797222222222222,9.312177386181181,0.9070445284994444,faint,23.2
+NYC,"Tribeca, Manhattan, New York",,,91.6,Established,established_credential_wealth,Established Prestige,95.57463500290513,100.0,93.86666666666666,83.08085751380727,0.9019922652480546,dominant,91.6
+NYC,"Tuckahoe, NY",,,65.1,Affluent,affluent_residual,Affluent & Ascendant,70.34894751664432,39.99290766169546,80.25166666666667,56.88371231417588,0.41106612606528703,strong,65.1
+NYC,"Turtle Bay, Manhattan, New York",,,86.4,Established,established_credential_wealth,Established Prestige,76.1220781386428,44.7817514741607,96.12444444444445,94.17747470345634,0.40877411053108575,dominant,86.4
+NYC,"Upper East Side, Manhattan, New York",,,86.2,Established,established_credential_wealth,Established Prestige,86.5410202864974,41.104242723659965,96.81777777777779,86.95055420890554,0.6729456256756362,dominant,86.2
+NYC,"Upper West Side, Manhattan, New York",,,85.6,Established,established_credential_wealth,Established Prestige,79.5356050380835,50.01007778840282,100.0,82.43352712334844,0.4953238350823073,dominant,85.6
+NYC,"Valley Stream, NY",,,44.8,Affluent,affluent_residual,Affluent & Ascendant,56.10492273117539,28.268322757969916,25.71611111111111,50.8170598419561,0.5107416798908587,moderate,44.8
+NYC,"Washington Heights, Manhattan, New York",,,9.4,Working Class,working_class_low_wealth,Working Community,,0.0,18.129444444444445,13.104754063947311,,faint,9.4
+NYC,"Weehawken, NJ",,,87.5,Established,established_credential_wealth,Established Prestige,71.17520810302081,52.54089081587653,94.9511111111111,100.0,0.2833465830538808,dominant,87.5
+NYC,"West Orange, NJ",,,63.2,Affluent,affluent_residual,Affluent & Ascendant,79.06197671242477,21.660930662290028,59.875555555555565,61.930702086473275,0.5733817845025281,strong,63.2
+NYC,"West Village, Manhattan, New York",,,81.6,Affluent,affluent_residual,Affluent & Ascendant,84.39525006123063,64.39681531783425,76.44444444444446,93.60546931865358,0.6185397787559934,dominant,81.6
+NYC,"Westfield, NJ",,,68.2,Affluent,affluent_residual,Affluent & Ascendant,82.52498673172833,34.50695367399794,58.84722222222223,70.49678960280225,0.5711193890021597,strong,68.2
+NYC,"Weston, CT",,,85.9,Established,established_credential_wealth,Established Prestige,75.46510966471101,43.26629457148183,97.60000000000001,91.481737428953,0.3921167229865638,dominant,85.9
+NYC,"Westport, CT",,,89.4,Established,established_credential_wealth,Established Prestige,89.73182216528998,54.57665458847515,100.0,86.63914962043305,0.7538481736392297,dominant,89.4
+NYC,"Westwood, NJ",,,24.0,Working Class,working_class_low_wealth,Working Community,36.581257725593005,10.956753406368252,16.72222222222222,25.942727213009025,0.3277807397925039,faint,24.0
+NYC,"White Plains, NY",,,55.1,Affluent,affluent_residual,Affluent & Ascendant,59.918341324834756,29.44027609604158,57.98666666666668,60.476474818026226,0.6185417643345538,strong,55.1
+NYC,"Williamsburg, Brooklyn, New York",,,80.3,Established,established_credential_wealth,Established Prestige,68.97709470265407,68.08442711435283,80.99555555555557,90.93194275012455,0.2276135787628464,dominant,80.3
+NYC,"Wilton, CT",,,80.3,Established,established_credential_wealth,Established Prestige,77.67418103119655,36.477047647480475,82.88,93.32570860134469,0.44812756570605194,dominant,80.3
+NYC,"Windsor Terrace, Brooklyn, New York",,,58.4,Affluent,affluent_residual,Affluent & Ascendant,58.180822389910006,44.53422684672315,64.19555555555556,63.67895445621663,0.4015672261150607,strong,58.4
+NYC,"Woodmere, NY",,,67.8,Affluent,affluent_residual,Affluent & Ascendant,73.14512486114761,42.44289632102631,77.20666666666666,65.40815967951646,0.33329367819253214,strong,67.8
+NYC,"Woodside, Queens, New York",,,31.7,Working Class,working_class_low_wealth,Working Community,34.73847580646131,31.243669810229434,22.84777777777778,36.96638727126532,0.24563319230131084,moderate,31.7
+NYC,"Yonkers, NY",,,8.7,Working Class,working_class_low_wealth,Working Community,,0.0,9.321111111111112,21.830709397554315,,faint,8.7
+NYC,"Yorktown Heights, NY",,,64.6,Affluent,affluent_residual,Affluent & Ascendant,77.60584364892703,29.526151987193376,65.18944444444443,61.08789317776356,0.4487080362210617,strong,64.6
+NYC,"Yorkville, Manhattan, New York",,,81.9,Affluent,affluent_residual,Affluent & Ascendant,83.77012289338913,63.82094169481628,93.56444444444445,79.55349982377008,0.6026897251955449,dominant,81.9
