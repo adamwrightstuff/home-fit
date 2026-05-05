@@ -173,6 +173,11 @@ def get_social_fabric_score(
         area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
 
     civic_radius_m = _civic_radius_m_from_tract_density(density)
+    # Commercial/campus zones (Midtown, university areas) have low residential population
+    # density, which would give them the 3,000m exurban/rural radius. Cap at 1,200m for
+    # any location the classifier marks as urban or suburban.
+    if area_type in ("urban_core", "urban_residential", "suburban") and civic_radius_m > 1200:
+        civic_radius_m = 1200
     bands = social_fabric_bands.load_bands()
 
     division_code = None
