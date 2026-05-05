@@ -395,11 +395,13 @@ def build_engagement_baselines(
     crosswalk_weight_column: str = "res_ratio",
     max_rows: int = 0,
     sleep_per_new_zip: float = 0.0,
+    no_geocode_fallback: bool = False,
 ) -> None:
     """
     Main pipeline:
     1) Stream BMF rows; count refined (N/P/S/W) and legacy (A/O/P/S) per ZIP.
-    2) Allocate ZIP counts to tracts via weighted crosswalk (preferred), with ZIP centroid fallback.
+    2) Allocate ZIP counts to tracts via weighted crosswalk (preferred), with ZIP centroid fallback
+       unless no_geocode_fallback=True (skips missing ZIPs rather than hitting geocoder).
     3) Write refined + legacy tract JSON and division stats for each.
     """
     if not os.path.isdir(bmf_dir):
@@ -487,6 +489,9 @@ def build_engagement_baselines(
                 tract_meta[geoid] = {"state_abbrev": state_abbrev, "tract": tract}
             continue
 
+        if no_geocode_fallback:
+            missing_allocations += 1
+            continue
         key = (state, zip5)
         if key not in zip_to_tract:
             tract = _lookup_tract_for_zip(zip5, sleep=sleep_per_new_zip)
@@ -574,6 +579,11 @@ def main() -> None:
         default=0.0,
         help="Sleep seconds before each new ZIP geocode (to be gentle on APIs)",
     )
+    ap.add_argument(
+        "--no-geocode-fallback",
+        action="store_true",
+        help="Skip ZIPs not in crosswalk instead of falling back to geocoder",
+    )
     args = ap.parse_args()
 
     build_engagement_baselines(
@@ -586,6 +596,7 @@ def main() -> None:
         crosswalk_weight_column=args.crosswalk_weight_column,
         max_rows=args.max_rows,
         sleep_per_new_zip=args.sleep,
+        no_geocode_fallback=args.no_geocode_fallback,
     )
 
 
