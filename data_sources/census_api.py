@@ -492,9 +492,10 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         aggregate_income = parse_census_value(data[1][3])
         total_households = parse_census_value(data[1][4])
 
-        if not median_value or not median_income or not median_rooms:
+        if not median_income:
             print("   ⚠️  Incomplete housing data (missing or error-coded values)")
             return None
+        # median_value may legitimately be absent in renter-dominant tracts — don't bail
 
         mean_household_income: Optional[float] = None
         if aggregate_income and total_households and total_households > 0:
@@ -507,13 +508,17 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             print(f"   ⚠️  WARNING: Median income ${int(median_income):,} seems unusually low")
             print(f"      This may indicate student housing or unrepresentative tract data")
 
-        # Validation: Flag suspiciously low home values
-        if median_value < 50000:
+        # Validation: Flag suspiciously low home values (only when data is present)
+        if median_value is not None and median_value < 50000:
             print(f"   ⚠️  WARNING: Median home value ${int(median_value):,} seems unusually low")
 
-        print(f"   ✅ Median home value: ${int(median_value):,}")
+        if median_value is not None:
+            print(f"   ✅ Median home value: ${int(median_value):,}")
+        else:
+            print(f"   ℹ️  Median home value: not available (renter-dominant tract)")
         print(f"   💰 Median household income: ${int(median_income):,}")
-        print(f"   🏡 Median rooms: {median_rooms:.1f}")
+        if median_rooms is not None:
+            print(f"   🏡 Median rooms: {median_rooms:.1f}")
 
         result: Dict[str, Optional[float]] = {
             "median_home_value": median_value,

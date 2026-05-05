@@ -197,13 +197,15 @@ def get_housing_value_score(lat: float, lon: float,
     return round(total_score, 1), breakdown
 
 
-def _score_local_affordability(home_value: float, income: float) -> float:
+def _score_local_affordability(home_value: Optional[float], income: float) -> float:
     """
     Score local affordability (0-50 points).
     Based on price-to-income ratio.
 
     Standard: Housing should be ≤3x annual income
     """
+    if home_value is None:
+        return 0.0
     if income == 0:
         return 0.0
 
@@ -252,7 +254,7 @@ def _score_space(median_rooms: float) -> float:
         return 5.0   # Studio/tiny
 
 
-def _score_value_efficiency(home_value: float, median_rooms: float, metro_name: Optional[str] = None) -> float:
+def _score_value_efficiency(home_value: Optional[float], median_rooms: float, metro_name: Optional[str] = None) -> float:
     """
     Score value efficiency (0-20 points).
     Reframed as "usable space per dollar" rather than cheapness.
@@ -260,7 +262,7 @@ def _score_value_efficiency(home_value: float, median_rooms: float, metro_name: 
 
     Higher rooms per $100k = better value (more usable space per dollar)
     """
-    if median_rooms == 0 or home_value == 0:
+    if home_value is None or median_rooms == 0 or home_value == 0:
         return 0.0
 
     # Calculate rooms per $100k (positive metric: higher = better)
@@ -345,11 +347,11 @@ def _score_value_efficiency(home_value: float, median_rooms: float, metro_name: 
             return 0.0
 
 
-def _build_summary(home_value: float, income: float, rooms: float, *, affordability_denominator: str = "local_median") -> Dict:
+def _build_summary(home_value: Optional[float], income: float, rooms: float, *, affordability_denominator: str = "local_median") -> Dict:
     """Build summary of housing value characteristics."""
-    ratio = home_value / income if income > 0 else 0
-    cost_per_room = home_value / rooms if rooms > 0 else 0
-    rooms_per_100k = (rooms / home_value) * 100000 if home_value > 0 else 0
+    ratio = (home_value / income) if (home_value is not None and income > 0) else 0
+    cost_per_room = (home_value / rooms) if (home_value is not None and rooms > 0) else 0
+    rooms_per_100k = ((rooms / home_value) * 100000) if (home_value is not None and home_value > 0) else 0
 
     # Determine housing type based on rooms
     if rooms >= 7:
@@ -366,7 +368,9 @@ def _build_summary(home_value: float, income: float, rooms: float, *, affordabil
         housing_type = "Studio or tiny apartment"
 
     # Determine affordability description
-    if ratio <= 3:
+    if home_value is None:
+        affordability = "Unknown"
+    elif ratio <= 3:
         affordability = "Affordable"
     elif ratio <= 5:
         affordability = "Moderate"
@@ -374,12 +378,12 @@ def _build_summary(home_value: float, income: float, rooms: float, *, affordabil
         affordability = "Expensive"
 
     out: Dict = {
-        "median_home_value": int(home_value),
+        "median_home_value": int(home_value) if home_value is not None else None,
         "median_household_income": int(income),
         "median_rooms": round(rooms, 1),
         "price_to_income_ratio": round(ratio, 2),
         "cost_per_room": int(cost_per_room),
-        "rooms_per_100k": round(rooms_per_100k, 3),  # New metric: usable space per dollar
+        "rooms_per_100k": round(rooms_per_100k, 3),
         "housing_type": housing_type,
         "affordability_rating": affordability
     }
