@@ -184,11 +184,8 @@
     }
   },
   "cbsa_to_baseline": {
-    "brand": {},
-    "education": {},
-    "home_cost": {},
-    "occupation": {},
-    "wealth": {}
+    "31080": "la_metro",
+    "35620": "nyc_metro"
   },
   "charlotte,_north_carolina": {
     "brand": {},
@@ -438,41 +435,26 @@
     }
   },
   "la_metro": {
-    "brand": {},
     "education": {
       "bach_pct": {
-        "max": 78.0,
-        "min": 3.0
+        "max": 73.1,
+        "min": 6.9
       },
       "grad_pct": {
-        "max": 48.0,
-        "min": 0.0
-      },
-      "self_employed_pct": {
-        "max": 100.0,
-        "min": 0.0
+        "max": 33.6,
+        "min": 1.1
       }
     },
     "home_cost": {
       "median_home_value": {
-        "max": 2000001.0,
-        "min": 442300.0
+        "max": 1765355.0,
+        "min": 437945.0
       }
     },
     "occupation": {
       "white_collar_pct": {
-        "max": 65.88,
-        "min": 8.27
-      }
-    },
-    "wealth": {
-      "mean_hh_income": {
-        "max": 338620.34,
-        "min": 66461.76
-      },
-      "wealth_gap_ratio": {
-        "max": 0.9201,
-        "min": 0.1294
+        "max": 54.7483,
+        "min": 9.6918
       }
     }
   },
@@ -694,36 +676,26 @@
     }
   },
   "nyc_metro": {
-    "brand": {},
     "education": {
       "bach_pct": {
-        "max": 80.0,
-        "min": 3.0
+        "max": 80.4,
+        "min": 11.4
       },
       "grad_pct": {
-        "max": 85.0,
-        "min": 0.0
-      },
-      "self_employed_pct": {
-        "max": 94.79,
-        "min": 0.0
+        "max": 42.2,
+        "min": 2.4
       }
     },
     "home_cost": {
       "median_home_value": {
-        "max": 2000001.0,
-        "min": 302700.0
+        "max": 1354000.0,
+        "min": 267820.0
       }
     },
-    "occupation": {},
-    "wealth": {
-      "mean_hh_income": {
-        "max": 369604.1922392734,
-        "min": 45250.25
-      },
-      "wealth_gap_ratio": {
-        "max": 0.6946851771101743,
-        "min": 0.0
+    "occupation": {
+      "white_collar_pct": {
+        "max": 57.949,
+        "min": 12.1437
       }
     }
   },
