@@ -33,7 +33,7 @@ import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CSV = REPO_ROOT / "data" / "nyc_metro_place_catalog.csv"
-DEFAULT_OUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores.jsonl"
+DEFAULT_OUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 
 
 def catalog_key(row: Dict[str, str]) -> str:
