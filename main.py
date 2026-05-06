@@ -499,6 +499,26 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
     return summary
 
 
+def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_details: Dict,
+                         lat: Optional[float], lon: Optional[float]) -> tuple:
+    """Apply V9 formula to an already-computed natural beauty result. Returns (score, details)."""
+    try:
+        v9_score, v9_breakdown = natural_beauty._apply_v9_formula(
+            natural_calc,
+            natural_calc.get("details") or {},
+            lat=lat,
+            lon=lon,
+        )
+        natural_details["score_v7"] = round(float(natural_score), 2)
+        natural_details["score_v9"] = round(float(v9_score), 2)
+        natural_details["v9_breakdown"] = v9_breakdown
+        natural_details["scoring_formula"] = "v9" if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else "v7"
+        final_score = v9_score if natural_beauty.ENABLE_NATURAL_BEAUTY_V9 else natural_score
+    except Exception:
+        final_score = natural_score
+    return final_score, natural_details
+
+
 def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     """Extract summary data from natural beauty details for display in UI."""
     summary = {}
@@ -1924,6 +1944,9 @@ def _compute_single_score_internal(
         }
 
     pillar_results['built_beauty'] = (built_score, built_details)
+    natural_score, natural_details = _apply_v9_to_natural(
+        natural_calc or {}, natural_score, natural_details, lat, lon
+    )
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
     if school_avg is None:
@@ -3395,8 +3418,11 @@ async def _stream_score_with_progress(
             }
         
         pillar_results['built_beauty'] = (built_score, built_details)
+        natural_score, natural_details = _apply_v9_to_natural(
+            natural_calc or {}, natural_score, natural_details, lat, lon
+        )
         pillar_results['natural_beauty'] = (natural_score, natural_details)
-        
+
         # Handle school scoring
         schools_found = False
         school_breakdown = {
@@ -4412,6 +4438,9 @@ async def stream_score(
             }
 
         pillar_results['built_beauty'] = (built_score, built_details)
+        natural_score, natural_details = _apply_v9_to_natural(
+            natural_calc or {}, natural_score, natural_details, lat, lon
+        )
         pillar_results['natural_beauty'] = (natural_score, natural_details)
 
         # Note: For school_avg, if None (not computed or failed), set to 0 for calculation

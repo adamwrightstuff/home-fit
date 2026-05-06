@@ -56,6 +56,13 @@ ENABLE_NATURAL_BEAUTY_V7_SCENIC_CAP = True
 # Phase 8 (V8): Overhaul formula - 40% topo/viewshed, 30% water (Natural Earth + GEE), 20% greenery (single-radius GEE + Census), 10% context. No uplift.
 ENABLE_NATURAL_BEAUTY_V8 = False
 
+# V9: Research-backed weighted formula.
+# Weights derived from perceived-beauty / wellbeing literature:
+#   35% GVI (eye-level greenery), 25% water proximity (type-specific decay),
+#   20% canopy %, 10% terrain relief, 7% natural landcover, 3% biodiversity.
+# No uplift. Reuses all existing data collection; only the scoring formula changes.
+ENABLE_NATURAL_BEAUTY_V9 = True
+
 # Personalization: weight profiles from "What kind of natural scenery matters most to you?" quiz.
 ENABLE_NATURAL_BEAUTY_PREFERENCE = True
 # When True and Mountains preference is active, blend V8 viewshed into topography: 0.6*V7 + 0.4*viewshed.
@@ -4121,6 +4128,251 @@ def calculate_natural_beauty(lat: float,
     }
 
 
+def _v9_score_gvi(gvi_pct: float) -> float:
+    """GVI → 0-100. Nonlinear: low benefit below 15%, main gains 15-45%, plateau above 45%."""
+    if not gvi_pct or gvi_pct <= 0:
+        return 0.0
+    if gvi_pct <= 5:
+        return gvi_pct * 1.0
+    if gvi_pct <= 15:
+        return 5.0 + (gvi_pct - 5) * 1.5
+    if gvi_pct <= 25:
+        return 20.0 + (gvi_pct - 15) * 3.5
+    if gvi_pct <= 40:
+        return 55.0 + (gvi_pct - 25) * 2.0
+    if gvi_pct <= 50:
+        return 85.0 + (gvi_pct - 40) * 1.0
+    return min(100.0, 95.0 + (gvi_pct - 50) * 0.3)
+
+
+def _v9_score_water(dist_km: Optional[float], water_type: Optional[str]) -> float:
+    """
+    Water proximity → 0-100. Type-specific exponential decay.
+    Ocean/bay max=100; lake max=70; river/stream max=60.
+    Coastal >> freshwater per blue-space wellbeing literature.
+    """
+    if dist_km is None or water_type is None:
+        return 5.0
+    wt = str(water_type).lower()
+    if wt in ("ocean", "bay", "coastline", "coast"):
+        max_score, decay = 100.0, 0.20
+    elif wt in ("lake", "reservoir"):
+        max_score, decay = 70.0, 0.30
+    else:  # river, stream, canal
+        max_score, decay = 60.0, 0.35
+    if dist_km <= 0:
+        return max_score
+    return max(3.0, max_score * math.exp(-decay * dist_km))
+
+
+def _v9_score_canopy(canopy_pct: float) -> float:
+    """Canopy % → 0-100. Diminishing returns above 45%."""
+    if not canopy_pct or canopy_pct <= 0:
+        return 0.0
+    if canopy_pct <= 5:
+        return canopy_pct * 2.0
+    if canopy_pct <= 15:
+        return 10.0 + (canopy_pct - 5) * 2.5
+    if canopy_pct <= 25:
+        return 35.0 + (canopy_pct - 15) * 3.0
+    if canopy_pct <= 40:
+        return 65.0 + (canopy_pct - 25) * 1.5
+    if canopy_pct <= 60:
+        return 87.5 + (canopy_pct - 40) * 0.5
+    return min(100.0, 97.5 + (canopy_pct - 60) * 0.1)
+
+
+def _v9_score_topo(topo_raw: float) -> float:
+    """Terrain relief raw score → 0-100. Flat=0, gentle hills=10-50, mountains=80-100."""
+    if not topo_raw or topo_raw <= 0:
+        return 0.0
+    if topo_raw <= 2:
+        return topo_raw * 7.5
+    if topo_raw <= 5:
+        return 15.0 + (topo_raw - 2) * 11.7
+    if topo_raw <= 10:
+        return 50.0 + (topo_raw - 5) * 6.0
+    return min(100.0, 80.0 + (topo_raw - 10) * 4.0)
+
+
+def _v9_score_landcover(landcover_raw: float) -> float:
+    """Natural landcover raw score → 0-100. Background signal anchoring natural vs developed."""
+    if landcover_raw is None or landcover_raw <= 0:
+        return 0.0
+    if landcover_raw <= 0.5:
+        return landcover_raw * 20.0
+    if landcover_raw <= 2.0:
+        return 10.0 + (landcover_raw - 0.5) * 20.0
+    if landcover_raw <= 5.0:
+        return 40.0 + (landcover_raw - 2.0) * 13.3
+    if landcover_raw <= 10.0:
+        return 80.0 + (landcover_raw - 5.0) * 4.0
+    return 100.0
+
+
+def _v9_score_bio(bio_val: float) -> float:
+    """Biodiversity index → 0-100. Low weight signal; linear normalisation to max ~40."""
+    if not bio_val or bio_val <= 0:
+        return 0.0
+    return min(100.0, bio_val * 2.5)
+
+
+# V9: single research-backed weight profile. GVI and canopy are normalized against
+# regional baselines before scoring so climate-determined vegetation levels don't
+# systematically penalize arid or mediterranean regions. Topo and water stay absolute
+# because dramatic terrain and coastal proximity are universally scarce and valuable.
+_V9_WEIGHTS = {
+    "gvi": 0.22, "water": 0.25, "canopy": 0.18, "topo": 0.25, "landcover": 0.07, "bio": 0.03,
+}
+
+# GVI reference used as the normalization target (national urban median, %).
+_V9_GVI_GLOBAL_REF = 20.0
+# Canopy reference used as the normalization target (national urban median, %).
+_V9_CANOPY_GLOBAL_REF = 24.0
+
+# US regions defined as (name, lat_min, lat_max, lon_min, lon_max).
+# First match wins; ordered from most specific/western to broadest.
+_NB_REGION_BOXES = [
+    ("hawaii",            18.0,  23.5, -162.0, -154.0),
+    ("alaska",            54.0,  72.0, -170.0, -130.0),
+    ("pacific_northwest", 42.0,  49.5, -125.0, -116.5),
+    ("california",        32.0,  42.5, -125.0, -114.0),
+    ("southwest_arid",    31.0,  37.5, -114.5, -103.0),
+    ("mountain_west",     36.0,  49.0, -116.5, -102.0),
+    ("great_plains",      34.0,  49.0, -104.0,  -93.0),
+    ("texas",             25.5,  37.0, -107.0,  -93.0),
+    ("midwest",           36.0,  49.0,  -93.0,  -80.0),
+    ("southeast",         24.5,  37.0,  -92.0,  -75.5),
+    ("mid_atlantic",      37.0,  42.5,  -80.5,  -73.5),
+    ("northeast",         40.0,  47.5,  -80.0,  -66.0),
+]
+
+# Regional median GVI (%) and canopy (%) from Treepedia, NLCD urban canopy inventories,
+# and urban greenery literature. Used to normalize raw values before scoring.
+_NB_REGIONAL_BASELINES: Dict[str, Dict[str, float]] = {
+    "pacific_northwest": {"gvi": 33.0, "canopy": 40.0},
+    "california":        {"gvi": 13.0, "canopy": 19.0},
+    "southwest_arid":    {"gvi":  8.0, "canopy":  9.0},
+    "mountain_west":     {"gvi": 13.0, "canopy": 17.0},
+    "great_plains":      {"gvi": 14.0, "canopy": 15.0},
+    "texas":             {"gvi": 17.0, "canopy": 22.0},
+    "midwest":           {"gvi": 19.0, "canopy": 27.0},
+    "southeast":         {"gvi": 25.0, "canopy": 33.0},
+    "mid_atlantic":      {"gvi": 22.0, "canopy": 29.0},
+    "northeast":         {"gvi": 26.0, "canopy": 32.0},
+    "hawaii":            {"gvi": 32.0, "canopy": 38.0},
+    "alaska":            {"gvi": 25.0, "canopy": 30.0},
+    "international":     {"gvi": 20.0, "canopy": 24.0},  # fallback = global reference
+}
+
+
+def _get_nb_region(lat: Optional[float], lon: Optional[float]) -> str:
+    """Return the US natural-beauty region name for a coordinate, or 'international'."""
+    if lat is None or lon is None:
+        return "international"
+    for name, lat_min, lat_max, lon_min, lon_max in _NB_REGION_BOXES:
+        if lat_min <= lat <= lat_max and lon_min <= lon <= lon_max:
+            return name
+    return "international"
+
+
+def _v9_regional_normalize(raw: float, component: str, region: str) -> float:
+    """
+    Normalize a raw GVI or canopy value against its regional median so that the
+    scoring curve treats 'average for this region' as the global reference level.
+    raw / regional_median * global_reference, capped at 100.
+    """
+    baselines = _NB_REGIONAL_BASELINES.get(region, _NB_REGIONAL_BASELINES["international"])
+    regional_median = baselines.get(component, 1.0)
+    global_ref = _V9_GVI_GLOBAL_REF if component == "gvi" else _V9_CANOPY_GLOBAL_REF
+    if regional_median <= 0:
+        return raw
+    return min(100.0, raw / regional_median * global_ref)
+
+
+def _apply_v9_formula(
+    result: Dict,
+    tree_details: Dict,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+) -> Tuple[float, Dict]:
+    """
+    Apply V9 formula to already-collected natural beauty data.
+    Single weight profile (30/25/20/15/7/3). GVI and canopy are normalized against
+    regional medians so climate-determined vegetation levels score fairly across all US regions.
+    Topo and water remain absolute — dramatic terrain and coastal proximity are
+    universally valuable regardless of region.
+    Returns (score_0_100, v9_breakdown).
+    """
+    nc = (tree_details.get("natural_context") or {})
+    cs = nc.get("component_scores") or {}
+    dbg = nc.get("debug_breakdown") or {}
+
+    region = _get_nb_region(lat, lon)
+    weights = _V9_WEIGHTS
+
+    # GVI: use direct measurement; fall back to canopy proxy if street-view data absent
+    gvi_pct = tree_details.get("green_view_index") or 0.0
+    canopy_pct = tree_details.get("weighted_canopy_pct") or tree_details.get("gee_canopy_pct") or 0.0
+    gvi_source = "measured"
+    if not gvi_pct or gvi_pct < 2.0:
+        gvi_pct = min(50.0, float(canopy_pct) * 0.7)
+        gvi_source = "canopy_proxy"
+
+    # Normalize GVI and canopy against regional medians before applying scoring curves.
+    gvi_normalized = _v9_regional_normalize(float(gvi_pct), "gvi", region)
+    canopy_normalized = _v9_regional_normalize(float(canopy_pct), "canopy", region)
+
+    water_type = dbg.get("water_proximity_type")
+    water_dist_km = dbg.get("water_proximity_nearest_km")
+    topo_raw = cs.get("topography_raw") or 0.0
+    landcover_raw = cs.get("landcover_raw") or 0.0
+    bio_val = nc.get("biodiversity_index") or nc.get("biodiversity_entropy") or 0.0
+
+    gvi_score = _v9_score_gvi(gvi_normalized)
+    water_score = _v9_score_water(water_dist_km, water_type)
+    canopy_score = _v9_score_canopy(canopy_normalized)
+    topo_score = _v9_score_topo(float(topo_raw))
+    landcover_score = _v9_score_landcover(float(landcover_raw))
+    bio_score = _v9_score_bio(float(bio_val))
+
+    # Ordered Weighted Average (OWA): score by ranking component scores from best to worst
+    # and applying fixed positional weights. A place is judged on its strengths — two
+    # exceptional dimensions reach 80+, three reach 90+. Weak components contribute
+    # almost nothing, so a place isn't penalized for lacking features outside its character.
+    _OWA_WEIGHTS = [0.50, 0.30, 0.15, 0.04, 0.01, 0.00]
+    component_scores = sorted(
+        [gvi_score, water_score, canopy_score, topo_score, landcover_score, bio_score],
+        reverse=True
+    )
+    total = round(sum(w * s for w, s in zip(_OWA_WEIGHTS, component_scores)), 2)
+
+    breakdown = {
+        "owa_components": [round(s, 2) for s in component_scores],
+        "gvi_score": round(gvi_score, 2),
+        "water_score": round(water_score, 2),
+        "canopy_score": round(canopy_score, 2),
+        "topo_score": round(topo_score, 2),
+        "landcover_score": round(landcover_score, 2),
+        "bio_score": round(bio_score, 2),
+        "region": region,
+        "weights": weights,
+        "inputs": {
+            "gvi_pct": round(float(gvi_pct), 2),
+            "gvi_normalized": round(gvi_normalized, 2),
+            "gvi_source": gvi_source,
+            "canopy_pct": round(float(canopy_pct), 2),
+            "canopy_normalized": round(canopy_normalized, 2),
+            "water_type": water_type,
+            "water_dist_km": round(float(water_dist_km), 3) if water_dist_km is not None else None,
+            "topo_raw": round(float(topo_raw), 3),
+            "landcover_raw": round(float(landcover_raw), 3),
+            "bio_val": round(float(bio_val), 3),
+        },
+    }
+    return total, breakdown
+
+
 def get_natural_beauty_score(lat: float,
                              lon: float,
                              city: Optional[str] = None,
@@ -4155,6 +4407,17 @@ def get_natural_beauty_score(lat: float,
     uplift_bonus = result.get("uplift_bonus", 0.0)
     tree_details = result["details"]
 
+    # V9: compute alongside V7 when flag enabled; also always stash for comparison
+    v9_score, v9_breakdown = _apply_v9_formula(
+        result,
+        tree_details if isinstance(tree_details, dict) else {},
+        lat=lat,
+        lon=lon,
+    )
+
+    # Which score to surface as the pillar score
+    final_score = v9_score if ENABLE_NATURAL_BEAUTY_V9 else natural_score_norm
+
     details = {
         "tree_score_0_50": round(result["tree_score_0_50"], 2),
         "enhancer_bonus_raw": round(result["natural_bonus_raw"], 2),
@@ -4180,7 +4443,11 @@ def get_natural_beauty_score(lat: float,
         "multi_radius_canopy": tree_details.get("multi_radius_canopy"),
         "gvi_metrics": tree_details.get("gvi_metrics"),
         "expectation_effect": tree_details.get("expectation_effect"),
+        "score_v7": round(natural_score_norm, 2),
+        "score_v9": round(v9_score, 2),
+        "v9_breakdown": v9_breakdown,
+        "scoring_formula": "v9" if ENABLE_NATURAL_BEAUTY_V9 else "v7",
     }
 
-    return natural_score_norm, details
+    return final_score, details
 
