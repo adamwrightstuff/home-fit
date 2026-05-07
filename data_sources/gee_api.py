@@ -1336,6 +1336,8 @@ def get_heat_exposure_lst(
     """
     Landsat 8/9 Collection 2 L2 surface temperature (ST_B10).
     JJA (June–August) composite; heat_excess = local_mean - regional_mean (urban heat island).
+    Water pixels (QA_PIXEL bit 7) are masked per-image before compositing so coastal and
+    riverfront locations are not penalized by cool ocean/river pixels in the regional mean.
     Returns heat_excess_deg_c, local_lst_c, regional_lst_c for climate_risk pillar.
     """
     if not GEE_AVAILABLE:
@@ -1359,21 +1361,26 @@ def get_heat_exposure_lst(
         if not n_images or n_images == 0:
             print("   ⚠️  GEE LST: no Landsat images in date range / bounds")
             return None
-        composite = combined.mean()
 
-        # ST_B10: Kelvin = scale * DN + offset (USGS C02 L2)
-        scale = 0.00341802
-        offset = 149.0
-        lst_k = composite.select('ST_B10').multiply(scale).add(offset)
-        lst_c = lst_k.subtract(273.15)
+        # Convert ST_B10 to Celsius and mask water pixels (QA_PIXEL bit 7) per image
+        # before compositing so ocean/river pixels don't deflate the regional mean.
+        def to_lst_land(image):
+            qa = image.select('QA_PIXEL')
+            land_mask = qa.bitwiseAnd(1 << 7).eq(0)
+            lst_c = (image.select('ST_B10')
+                     .multiply(0.00341802).add(149.0).subtract(273.15))
+            return lst_c.updateMask(land_mask).rename('lst_c')
 
-        local_mean = lst_c.reduceRegion(
+        lst_collection = combined.map(to_lst_land)
+        composite = lst_collection.mean()
+
+        local_mean = composite.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=local_buffer,
             scale=100,
             maxPixels=1e9
         )
-        regional_mean = lst_c.reduceRegion(
+        regional_mean = composite.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=regional_buffer,
             scale=100,
@@ -1383,9 +1390,8 @@ def get_heat_exposure_lst(
         regional_info = regional_mean.getInfo()
         if not local_info or not regional_info:
             return None
-        # Band name is ST_B10; fallback to first value if key differs (e.g. some GEE versions)
-        local_c = local_info.get('ST_B10')
-        regional_c = regional_info.get('ST_B10')
+        local_c = local_info.get('lst_c')
+        regional_c = regional_info.get('lst_c')
         if local_c is None and len(local_info) == 1:
             local_c = next(iter(local_info.values()))
         if regional_c is None and len(regional_info) == 1:

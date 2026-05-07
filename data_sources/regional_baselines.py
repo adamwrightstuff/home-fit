@@ -698,27 +698,22 @@ class RegionalBaselineManager:
             },
             'suburban': {
                 'active_outdoors': {
-                    # RESEARCH-BACKED (OSM sampling):
-                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
-                    # - Sample size: n=13 successful suburban locations
-                    # - Typical suburban locations have ~8 parks within 1km and ~6 ha of parkland
-                    # - Median parks within 1km: 8 (from research)
-                    # - Median park area: 6 ha (from research) - larger community parks
-                    # - Median playgrounds within 1km: 1 (from research)
-                    # - Median trails within 15km: 9 (from research) - more trails than urban
-                    # 
-                    # TODO: Expand research to include percentiles (p25, p75) for better calibration
-                    # TODO: Verify expected values against larger sample (20+ locations)
-                    'expected_parks_within_1km': 8,  # Median from research (n=13)
-                    'expected_parks_within_5km': 12,  # More parks in wider radius (suburban sprawl)
-                    'expected_park_area_hectares': 6,  # Median from research - larger community parks
-                    'expected_playgrounds_within_1km': 1,  # Median from research
-                    'expected_recreational_facilities_within_1km': 2,  # TODO: Research median (suburban typically has fewer facilities than urban)
-                    # Note: Research needed - query OSM for leisure=pitch with sport tags within 1km
-                    # Sample 10+ suburban locations to get median facility count
-                    'expected_water_access_within_15km': 1,  # Conservative estimate
-                    'expected_trails_within_15km': 9,  # Median from research - more trails than urban
-                    'expected_camping_within_15km': 0  # Not expected in suburban areas
+                    # EMPIRICALLY CALIBRATED from NYC+LA catalog (n=180 suburban places).
+                    # Query radius for this area type: local=1500m, trails=15km.
+                    # P25/P50/P75 from catalog OSM data:
+                    #   parks_count:   38 /  64 / 105  (1500m radius)
+                    #   area_ha:       83 / 144 / 260  (1500m radius)
+                    #   playgrounds:    2 /   4 /   7  (1500m radius)
+                    #   trails_15km:   54 / 109 / 169  (15km radius, no filter)
+                    # Targets set at P50 so median place scores ~63% per component, creating real spread.
+                    'expected_parks_within_1km': 64,  # P50 at 1500m radius (n=180)
+                    'expected_parks_within_5km': 90,
+                    'expected_park_area_hectares': 144,  # P50 at 1500m radius (n=180)
+                    'expected_playgrounds_within_1km': 4,  # P50 at 1500m radius (n=180)
+                    'expected_recreational_facilities_within_1km': 4,
+                    'expected_water_access_within_15km': 1,
+                    'expected_trails_within_15km': 109,  # P50 at 15km radius (n=180)
+                    'expected_camping_within_15km': 0
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):
@@ -882,23 +877,22 @@ class RegionalBaselineManager:
                 # Urban residential areas (dense neighborhoods in cities) - typically have good transit
                 # but may have fewer routes than true urban cores. Use slightly lower expectations.
                 'active_outdoors': {
-                    # RESEARCH-BACKED (OSM sampling):
-                    # - Calibration: pillar baselines / empirical tables (no separate repo script)
-                    # - Sample size: n=10 successful urban_residential locations (shared with urban_core)
-                    # - Urban residential areas similar to urban_core for active_outdoors
-                    # - Uses same expected values as urban_core
-                    # 
-                    # TODO: Verify if urban_residential should have different expectations
-                    # TODO: Run separate research pass for urban_residential if needed
-                    'expected_parks_within_1km': 8,  # Same as urban_core (median from research)
-                    'expected_parks_within_5km': 8,  # Same as urban_core
-                    'expected_park_area_hectares': 3,  # Same as urban_core (median from research)
-                    'expected_playgrounds_within_1km': 2,  # Same as urban_core (median from research)
-                    'expected_recreational_facilities_within_1km': 3,  # TODO: Research median (similar to urban_core)
-                    # Note: Research needed - query OSM for leisure=pitch with sport tags within 1km
-                    'expected_water_access_within_15km': 1,  # Conservative estimate
-                    'expected_trails_within_15km': 2,  # Same as urban_core (median from research)
-                    'expected_camping_within_15km': 0  # Not expected in urban_residential
+                    # EMPIRICALLY CALIBRATED from NYC+LA catalog (n=98 urban_residential places).
+                    # Query radius for this area type: local=2000m, trails=15km.
+                    # P25/P50/P75 from catalog OSM data:
+                    #   parks_count:  268 / 383 / 473  (2000m radius)
+                    #   area_ha:      622 / 961 / 1417 (2000m radius, includes large park polygons)
+                    #   playgrounds:   16 /  31 /  57  (2000m radius)
+                    #   trails_15km:   10 /  10 /  10  (post urban-path filter, capped)
+                    # Targets set at P50 so median place scores ~63% per component, creating real spread.
+                    'expected_parks_within_1km': 380,  # P50 at 2000m radius (n=98)
+                    'expected_parks_within_5km': 380,
+                    'expected_park_area_hectares': 960,  # P50 at 2000m radius (n=98)
+                    'expected_playgrounds_within_1km': 30,  # P50 at 2000m radius (n=98)
+                    'expected_recreational_facilities_within_1km': 10,
+                    'expected_water_access_within_15km': 1,
+                    'expected_trails_within_15km': 10,  # P50 post-filter (n=98); also raises filter cap to 30
+                    'expected_camping_within_15km': 0
                 },
                 'healthcare_access': {
                     # RESEARCH-BACKED (OSM sampling):

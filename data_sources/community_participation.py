@@ -1,15 +1,21 @@
 """
 Community participation sub-score for Social Fabric (breakdown.engagement).
 
-Combines: refined IRS BMF (40%), CPS/AmeriCorps-style volunteering proxy by state (40%),
-precinct or tract voter turnout (20%). Missing-data rules per product spec.
+Combines: refined IRS BMF (40%), volunteering proxy (40%), precinct/tract voter turnout (20%).
+
+Volunteering source priority:
+  1. Social Capital Atlas (ZIP-level) — Facebook-derived volunteering_rate_zip
+  2. CPS/AmeriCorps state-level rates — fallback when ZIP not in SCA
+Missing-data rules per product spec.
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import math
 import os
+import statistics
 from typing import Any, Dict, Optional, Tuple
 
 from data_sources import irs_bmf
@@ -29,10 +35,19 @@ _PRECINCT_TURNOUT_PATH = os.getenv(
     "PRECINCT_TURNOUT_BY_TRACT_PATH",
     os.path.join(_DEFAULT_DATA_DIR, "precinct_turnout_by_tract.json"),
 )
+_SCA_ZIP_PATH = os.getenv(
+    "SCA_ZIP_PATH",
+    os.path.join(_DEFAULT_DATA_DIR, "social_capital_zip.csv"),
+)
 
 _state_rates: Dict[str, float] = {}
 _volunteer_national_mean: float = 0.25
 _volunteer_national_std: float = 0.05
+
+# Social Capital Atlas ZIP-level volunteering rates
+_sca_vol_by_zip: Dict[str, float] = {}
+_sca_vol_mean: float = 0.0768
+_sca_vol_std: float = 0.0369
 _precinct_turnout_by_tract: Dict[str, float] = {}
 
 
@@ -67,6 +82,27 @@ if isinstance(_pt, dict):
     if _precinct_turnout_by_tract:
         logger.info("Loaded precinct turnout for %d tracts", len(_precinct_turnout_by_tract))
 
+# Load Social Capital Atlas ZIP-level volunteering rates
+try:
+    if _SCA_ZIP_PATH and os.path.isfile(_SCA_ZIP_PATH):
+        _sca_vals = []
+        with open(_SCA_ZIP_PATH, newline="", encoding="utf-8") as _f:
+            for row in csv.DictReader(_f):
+                z = str(row.get("zip", "")).zfill(5)
+                v = row.get("volunteering_rate_zip", "")
+                if z and v and v != "NA":
+                    _sca_vol_by_zip[z] = float(v)
+                    _sca_vals.append(float(v))
+        if _sca_vals:
+            _sca_vol_mean = statistics.mean(_sca_vals)
+            _sca_vol_std = statistics.stdev(_sca_vals)
+        logger.info(
+            "Loaded SCA volunteering rates for %d ZIPs, mean=%.4f std=%.4f",
+            len(_sca_vol_by_zip), _sca_vol_mean, _sca_vol_std,
+        )
+except Exception as _e:
+    logger.warning("community_participation: failed to load SCA data: %s", _e)
+
 
 def _rate_to_z_score(
     value: float,
@@ -96,22 +132,35 @@ def _bmf_z_from_result(
     return _rate_to_z_score(orgs, mean, std)
 
 
-def get_volunteering_score_for_tract(tract: Optional[Dict]) -> Optional[Tuple[float, str]]:
+def get_volunteering_score(
+    zip_code: Optional[str],
+    tract: Optional[Dict],
+) -> Optional[Tuple[float, str]]:
     """
-    Map state volunteering rate to 0-100 z-score vs national distribution of state rates.
-    Returns (score, resolution) where resolution is 'state'.
+    Returns (score 0-100, resolution) for volunteering engagement.
+
+    Priority:
+      1. Social Capital Atlas ZIP-level volunteering_rate_zip — neighborhood signal
+      2. CPS state-level rate — fallback when ZIP missing from SCA
     """
-    if not tract or not _state_rates:
-        return None
-    sf = tract.get("state_fips")
-    if not sf:
-        return None
-    key = str(sf).zfill(2)
-    rate = _state_rates.get(key)
-    if rate is None:
-        return None
-    z = _rate_to_z_score(rate, _volunteer_national_mean, max(_volunteer_national_std, 1e-6))
-    return z, "state"
+    # 1. SCA ZIP-level (preferred)
+    if zip_code and _sca_vol_by_zip:
+        key = str(zip_code).split("-")[0].zfill(5)
+        rate = _sca_vol_by_zip.get(key)
+        if rate is not None:
+            z = _rate_to_z_score(rate, _sca_vol_mean, max(_sca_vol_std, 1e-6))
+            return z, "sca_zip"
+
+    # 2. CPS state fallback
+    if tract and _state_rates:
+        sf = tract.get("state_fips")
+        if sf:
+            state_rate = _state_rates.get(str(sf).zfill(2))
+            if state_rate is not None:
+                z = _rate_to_z_score(state_rate, _volunteer_national_mean, max(_volunteer_national_std, 1e-6))
+                return z, "cps_state"
+
+    return None
 
 
 def get_precinct_or_voter_turnout(
@@ -140,6 +189,7 @@ def compute_participation_score(
     tract: Optional[Dict],
     area_type: Optional[str],
     division_code: Optional[str],
+    zip_code: Optional[str] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Return (participation 0-100 or None, diagnostics dict for summary/source_status).
@@ -178,7 +228,7 @@ def compute_participation_score(
 
     bmf_slot = z_ref if z_ref is not None else z_leg
 
-    vol = get_volunteering_score_for_tract(tract)
+    vol = get_volunteering_score(zip_code, tract)
     if vol:
         diag["volunteering_z"], diag["volunteering_resolution"] = vol[0], vol[1]
     z_vol = vol[0] if vol else None

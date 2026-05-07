@@ -1698,7 +1698,8 @@ def _compute_single_score_internal(
     if _include_pillar('social_fabric'):
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
+                'zip_code': zip_code,
             })
         )
     if _include_pillar('diversity'):
@@ -3204,7 +3205,8 @@ async def _stream_score_with_progress(
         )
         pillar_tasks.append(
             ('social_fabric', get_social_fabric_score, {
-                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
+                'zip_code': zip_code,
             })
         )
         pillar_tasks.append(
@@ -4271,7 +4273,8 @@ async def stream_score(
         if _include_pillar('social_fabric'):
             pillar_tasks.append(
                 ('social_fabric', get_social_fabric_score, {
-                    'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city
+                    'lat': lat, 'lon': lon, 'area_type': area_type, 'density': density, 'city': city,
+                    'zip_code': zip_code,
                 })
             )
         if _include_pillar('diversity'):

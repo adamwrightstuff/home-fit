@@ -165,6 +165,7 @@ def get_social_fabric_score(
     area_type: Optional[str] = None,
     density: Optional[float] = None,
     city: Optional[str] = None,
+    zip_code: Optional[str] = None,
 ) -> Tuple[float, Dict]:
     tract = census_api.get_census_tract(lat, lon)
     if density is None:
@@ -349,7 +350,7 @@ def get_social_fabric_score(
 
     participation_diag: Dict[str, Any] = {}
     engagement_score, participation_diag = community_participation.compute_participation_score(
-        lat, lon, tract, area_type, division_code
+        lat, lon, tract, area_type, division_code, zip_code=zip_code
     )
 
     turnout_rate = participation_diag.get("turnout_rate")
