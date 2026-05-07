@@ -4148,7 +4148,7 @@ def _v9_score_gvi(gvi_pct: float) -> float:
 def _v9_score_water(dist_km: Optional[float], water_type: Optional[str]) -> float:
     """
     Water proximity → 0-100. Type-specific exponential decay.
-    Ocean/bay max=100; lake max=70; river/stream max=60.
+    Ocean/bay max=100; lake max=70; river/stream max=40.
     Coastal >> freshwater per blue-space wellbeing literature.
     """
     if dist_km is None or water_type is None:
@@ -4159,7 +4159,7 @@ def _v9_score_water(dist_km: Optional[float], water_type: Optional[str]) -> floa
     elif wt in ("lake", "reservoir"):
         max_score, decay = 70.0, 0.30
     else:  # river, stream, canal
-        max_score, decay = 60.0, 0.35
+        max_score, decay = 40.0, 0.35
     if dist_km <= 0:
         return max_score
     return max(3.0, max_score * math.exp(-decay * dist_km))
@@ -4340,7 +4340,7 @@ def _apply_v9_formula(
     # and applying fixed positional weights. A place is judged on its strengths — two
     # exceptional dimensions reach 80+, three reach 90+. Weak components contribute
     # almost nothing, so a place isn't penalized for lacking features outside its character.
-    _OWA_WEIGHTS = [0.50, 0.30, 0.15, 0.04, 0.01, 0.00]
+    _OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.00]
     component_scores = sorted(
         [gvi_score, water_score, canopy_score, topo_score, landcover_score, bio_score],
         reverse=True

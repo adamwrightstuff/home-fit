@@ -895,11 +895,13 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                 if waterway in ("river", "stream"):
                     water_type = waterway
                 elif natural == "water":
-                    # Check for specific waterbody types
-                    if tags.get("water") in ("lake", "reservoir", "pond"):
-                        water_type = tags.get("water")
+                    water_subtype = tags.get("water", "")
+                    if water_subtype in ("lake", "reservoir", "pond"):
+                        water_type = water_subtype
+                    elif water_subtype in ("river", "canal", "stream", "ditch"):
+                        water_type = "river"
                     else:
-                        water_type = "lake"  # Default for natural=water
+                        water_type = "lake"
                 elif natural == "coastline":
                     water_type = "ocean"
                 elif natural == "bay":
@@ -1038,8 +1040,20 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         nearest_distance_km = None
 
         # Coastal context wins for true waterfront places when marine water is nearby.
+        # Exception: if a named river exists at ≤2x the ocean distance, the coastline is the
+        # bank of that river (e.g. East River, Hudson), not an open-ocean shore — use the river.
         if ocean_bay and isinstance(ocean_bay[0].get("distance_km"), (int, float)) and ocean_bay[0]["distance_km"] <= 2.0:
-            nearest_waterbody = ocean_bay[0]
+            ocean_dist = float(ocean_bay[0]["distance_km"])
+            named_rivers_nearby = [
+                r for r in rivers
+                if r.get("name")
+                and isinstance(r.get("distance_km"), (int, float))
+                and float(r["distance_km"]) <= ocean_dist * 2.0
+            ]
+            if named_rivers_nearby:
+                nearest_waterbody = named_rivers_nearby[0]
+            else:
+                nearest_waterbody = ocean_bay[0]
         # Major river beats tiny nearby still water artifacts in urban cores.
         elif rivers:
             nearest_waterbody = rivers[0]
