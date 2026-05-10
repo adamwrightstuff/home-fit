@@ -103,14 +103,21 @@ def get_schools(
         return profile.get("search_radius_miles", 2.0)
 
     def _rated_count(school_list: List[Dict]) -> int:
-        return sum(
-            1 for s in school_list
-            if s.get("rankHistory") and s["rankHistory"][0].get("rankStars")
-        )
+        """Count schools with usable rating data (0-star counts if state percentile is present)."""
+        count = 0
+        for s in school_list:
+            rh = s.get("rankHistory")
+            if not rh:
+                continue
+            stars = rh[0].get("rankStars")
+            pct = rh[0].get("rankStatewidePercentage")
+            if stars is not None and (stars > 0 or pct is not None):
+                count += 1
+        return count
 
     # PRIORITY 1: City + State — respects actual school district boundaries.
-    # Requires at least 3 rated schools; otherwise urban sub-neighborhoods (e.g. Crown Heights)
-    # with sparse city results fall through to coordinate search for better coverage.
+    # Requires at least 1 rated school; urban sub-neighborhoods without a real city match
+    # (e.g. Crown Heights) typically return 0 rated schools and fall through to coordinate search.
     if city:
         print(f"🏙️  Attempting city-based query ({city})...")
         params_city = {**base_params, "city": city}
@@ -118,7 +125,7 @@ def get_schools(
         if not schools:
             params_city_q = {**base_params, "q": city}
             schools = _fetch_schools(params_city_q)
-        if schools and _rated_count(schools) >= 3:
+        if schools and _rated_count(schools) >= 1:
             print(f"✅ City-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
             return schools
         if schools:

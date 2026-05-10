@@ -49,15 +49,16 @@ def get_school_data(
 
     print(f"📦 {len(schools)} schools found")
     
-    # Check if any schools have rating data
+    # Check if any schools have rating data (0-star schools count if they have a state percentile)
     schools_with_ratings = 0
     for school in schools:
         rank_history = school.get("rankHistory", [])
         if rank_history and len(rank_history) > 0:
             rank_stars = rank_history[0].get("rankStars")
-            if rank_stars is not None and rank_stars > 0:
+            state_pct = rank_history[0].get("rankStatewidePercentage")
+            if rank_stars is not None and (rank_stars > 0 or state_pct is not None):
                 schools_with_ratings += 1
-    
+
     if schools_with_ratings == 0:
         print(f"⚠️  Found {len(schools)} schools but none have rating data")
         print("   Sample school data:", school.get("schoolName", "Unknown") if schools else "No schools")
@@ -116,19 +117,19 @@ def get_school_data(
             rank_stars = latest_rank.get("rankStars")
             state_percentile = latest_rank.get("rankStatewidePercentage")
 
-            # Use rankStars as primary (most reliable - derived from test scores and comprehensive data)
-            # rankStars is SchoolDigger's composite rating (0-5 stars)
+            # Use rankStars as primary (0-5 stars → 0-100)
             if rank_stars is not None:
-                rating = float(rank_stars) * 20  # Convert 0-5 stars to 0-100
+                rating = float(rank_stars) * 20
+                # 0-star school: fall back to state percentile so genuinely bad districts
+                # score low rather than being excluded entirely (e.g. Lawrence, NY at 8th pct)
+                if rating == 0 and state_percentile is not None:
+                    rating = float(state_percentile)
             elif state_percentile is not None:
-                # Fallback: use state_percentile directly if stars unavailable
-                # Higher percentile = better performance
-                rating = float(state_percentile)  # Use percentile as score directly
+                rating = float(state_percentile)
 
-        # Exclude schools without valid ratings (includes private schools without rankHistory)
-        # Private schools CAN have ratings in SchoolDigger, but if they don't, exclude them
+        # Exclude schools with no rating data at all
         is_private = school.get("isPrivate", False)
-        if rating is None or rating == 0:
+        if rating is None:
             if is_private:
                 print(f"   ⚠️  Excluding {name} - private school with no quality data")
             else:
