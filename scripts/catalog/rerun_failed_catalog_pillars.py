@@ -161,10 +161,11 @@ def get_score(
     timeout: int,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
+    enable_schools: bool = False,
 ) -> Dict[str, Any]:
     params: Dict[str, Any] = {
         "location": location,
-        "enable_schools": "false",
+        "enable_schools": "true" if enable_schools else "false",
     }
     if only:
         params["only"] = ",".join(only)

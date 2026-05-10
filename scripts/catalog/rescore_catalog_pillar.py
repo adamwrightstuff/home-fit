@@ -397,6 +397,7 @@ def main() -> int:
                 timeout=args.timeout,
                 lat=plat,
                 lon=plon,
+                enable_schools="quality_education" in pillars,
             )
             merged = merge_pillar_response(obj, new_score, pillars)
             out_merged[key] = merged
