@@ -14,6 +14,61 @@ from .radius_profiles import get_radius_profile
 
 SCHOOLDIGGER_BASE = "https://api.schooldigger.com/v2.3"
 
+# NYC Community School Districts (CSD 1-32) → SchoolDigger districtID + centroid.
+# Used to route "New York" city queries to the correct sub-district instead of
+# pooling all 800+ NYC schools together.
+_NYC_CSD_TABLE = {
+    1:  {"districtID": "3600076", "lat": 40.714, "lon": -73.986},  # Lower East Side
+    2:  {"districtID": "3600077", "lat": 40.721, "lon": -73.999},  # Greenwich Village/Chinatown/SoHo
+    3:  {"districtID": "3600078", "lat": 40.783, "lon": -73.977},  # Upper West Side
+    4:  {"districtID": "3600079", "lat": 40.795, "lon": -73.934},  # East Harlem
+    5:  {"districtID": "3600081", "lat": 40.813, "lon": -73.950},  # Harlem
+    6:  {"districtID": "3600083", "lat": 40.843, "lon": -73.935},  # Washington Heights/Inwood
+    7:  {"districtID": "3600084", "lat": 40.812, "lon": -73.920},  # Mott Haven/Melrose (S Bronx)
+    8:  {"districtID": "3600085", "lat": 40.831, "lon": -73.889},  # Hunts Point/Soundview
+    9:  {"districtID": "3600086", "lat": 40.845, "lon": -73.909},  # Morrisania/Tremont
+    10: {"districtID": "3600087", "lat": 40.873, "lon": -73.900},  # Kingsbridge/Riverdale
+    11: {"districtID": "3600088", "lat": 40.859, "lon": -73.861},  # Pelham Pkwy/Morris Park
+    12: {"districtID": "3600090", "lat": 40.840, "lon": -73.899},  # Crotona/Belmont
+    13: {"districtID": "3600091", "lat": 40.692, "lon": -73.973},  # Brooklyn Heights/Fort Greene
+    14: {"districtID": "3600119", "lat": 40.714, "lon": -73.955},  # Williamsburg/Greenpoint
+    15: {"districtID": "3600092", "lat": 40.667, "lon": -73.990},  # Park Slope/Carroll Gardens/Gowanus
+    16: {"districtID": "3600094", "lat": 40.687, "lon": -73.935},  # Brownsville/Bushwick
+    17: {"districtID": "3600095", "lat": 40.656, "lon": -73.945},  # Crown Heights/Flatbush
+    18: {"districtID": "3600096", "lat": 40.640, "lon": -73.912},  # Canarsie/E Flatbush
+    19: {"districtID": "3600120", "lat": 40.664, "lon": -73.880},  # East New York
+    20: {"districtID": "3600151", "lat": 40.624, "lon": -74.010},  # Bay Ridge/Sunset Park/Borough Park
+    21: {"districtID": "3600152", "lat": 40.605, "lon": -73.988},  # Bensonhurst/Sheepshead Bay
+    22: {"districtID": "3600153", "lat": 40.610, "lon": -73.945},  # Marine Park/Flatlands
+    23: {"districtID": "3600121", "lat": 40.669, "lon": -73.920},  # Brownsville/Ocean Hill
+    24: {"districtID": "3600098", "lat": 40.714, "lon": -73.876},  # Middle Village/Maspeth/Ridgewood
+    25: {"districtID": "3600122", "lat": 40.760, "lon": -73.830},  # Flushing/Jackson Heights
+    26: {"districtID": "3600099", "lat": 40.722, "lon": -73.787},  # Bayside/Howard Beach
+    27: {"districtID": "3600123", "lat": 40.690, "lon": -73.820},  # Far Rockaway/Jamaica
+    28: {"districtID": "3600100", "lat": 40.721, "lon": -73.837},  # Forest Hills/Jamaica
+    29: {"districtID": "3600101", "lat": 40.687, "lon": -73.775},  # Springfield Gardens
+    30: {"districtID": "3600102", "lat": 40.761, "lon": -73.926},  # Astoria/LIC/Sunnyside
+    31: {"districtID": "3600103", "lat": 40.590, "lon": -74.150},  # All Staten Island
+    32: {"districtID": "3600097", "lat": 40.701, "lon": -73.924},  # Bushwick
+}
+
+# Rough bounding box for NYC — used to gate the CSD lookup
+_NYC_BOUNDS = {"lat_min": 40.47, "lat_max": 40.93, "lon_min": -74.26, "lon_max": -73.68}
+
+
+def _nyc_csd_for_coords(lat: float, lon: float) -> Optional[Dict]:
+    """Return the CSD entry (districtID + csd_number) whose centroid is nearest to lat/lon."""
+    if not (_NYC_BOUNDS["lat_min"] <= lat <= _NYC_BOUNDS["lat_max"] and
+            _NYC_BOUNDS["lon_min"] <= lon <= _NYC_BOUNDS["lon_max"]):
+        return None
+    best_csd, best_dist = None, float("inf")
+    for csd_num, entry in _NYC_CSD_TABLE.items():
+        d = math.sqrt((lat - entry["lat"]) ** 2 + (lon - entry["lon"]) ** 2)
+        if d < best_dist:
+            best_dist, best_csd = d, {**entry, "csd_number": csd_num}
+    return best_csd
+
+
 # Track API usage for quota management
 _request_count = 0
 _last_request_time = 0
@@ -114,6 +169,21 @@ def get_schools(
             if stars is not None and (stars > 0 or pct is not None):
                 count += 1
         return count
+
+    # PRIORITY 0: NYC community school district lookup.
+    # "New York" city query pools all 800+ NYC schools together, which is useless for
+    # neighborhood scoring. Instead, find the nearest CSD centroid and query by districtID.
+    if (city and city.lower() in ("new york", "new york city")
+            and lat is not None and lon is not None):
+        csd = _nyc_csd_for_coords(lat, lon)
+        if csd:
+            print(f"🗽 NYC detected — using CSD #{csd['csd_number']} (districtID={csd['districtID']})")
+            params_csd = {**base_params, "districtID": csd["districtID"]}
+            schools = _fetch_schools(params_csd)
+            if schools and _rated_count(schools) >= 1:
+                print(f"✅ CSD #{csd['csd_number']} returned {len(schools)} schools ({_rated_count(schools)} rated)")
+                return schools
+            print(f"   CSD #{csd['csd_number']} returned {_rated_count(schools or [])} rated schools — falling through")
 
     # PRIORITY 1: City + State — respects actual school district boundaries.
     # Requires at least 1 rated school; urban sub-neighborhoods without a real city match
