@@ -41,7 +41,7 @@ _NYC_CSD_TABLE = {
     21: {"districtID": "3600152", "lat": 40.605, "lon": -73.988},  # Bensonhurst/Sheepshead Bay
     22: {"districtID": "3600153", "lat": 40.610, "lon": -73.945},  # Marine Park/Flatlands
     23: {"districtID": "3600121", "lat": 40.669, "lon": -73.920},  # Brownsville/Ocean Hill
-    24: {"districtID": "3600098", "lat": 40.714, "lon": -73.876},  # Middle Village/Maspeth/Ridgewood
+    24: {"districtID": "3600098", "lat": 40.714, "lon": -73.898},  # Middle Village/Maspeth/Ridgewood (centroid shifted west to capture Maspeth)
     25: {"districtID": "3600122", "lat": 40.760, "lon": -73.830},  # Flushing/Jackson Heights
     26: {"districtID": "3600099", "lat": 40.722, "lon": -73.787},  # Bayside/Howard Beach
     27: {"districtID": "3600123", "lat": 40.690, "lon": -73.820},  # Far Rockaway/Jamaica
@@ -61,6 +61,10 @@ def _nyc_csd_for_coords(lat: float, lon: float) -> Optional[Dict]:
     if not (_NYC_BOUNDS["lat_min"] <= lat <= _NYC_BOUNDS["lat_max"] and
             _NYC_BOUNDS["lon_min"] <= lon <= _NYC_BOUNDS["lon_max"]):
         return None
+    # Staten Island north shore is geographically closer to Bay Ridge (CSD 20) than to the
+    # geographic center of SI (CSD 31 centroid). Force CSD 31 for any NYC coords west of -74.03.
+    if lon < -74.03:
+        return {**_NYC_CSD_TABLE[31], "csd_number": 31}
     best_csd, best_dist = None, float("inf")
     for csd_num, entry in _NYC_CSD_TABLE.items():
         d = math.sqrt((lat - entry["lat"]) ** 2 + (lon - entry["lon"]) ** 2)
