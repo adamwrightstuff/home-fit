@@ -139,9 +139,11 @@ def get_schools(
         if schools:
             if lat is not None and lon is not None:
                 schools = _filter_schools_by_distance(schools, lat, lon, _radius_miles())
-            if schools:
-                print(f"✅ ZIP-based query returned {len(schools)} schools")
+            if schools and _rated_count(schools) >= 1:
+                print(f"✅ ZIP-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
                 return schools
+            if schools:
+                print(f"   ZIP query only found {_rated_count(schools)} rated schools — trying coordinate fallback")
 
     # PRIORITY 3: Coordinate-based — useful for urban sub-neighborhoods without a city match
     if lat is not None and lon is not None:
