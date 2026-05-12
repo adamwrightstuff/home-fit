@@ -117,10 +117,10 @@ def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
         return (0.45, 0.15, 0.20, 0.20)
     if archetype == "Professional":
         return (0.20, 0.15, 0.35, 0.30)
-    if archetype == "Rising":
+    if archetype == "Up-and-Coming":
         return (0.30, 0.45, 0.15, 0.10)
-    if archetype == "Middle Class":
-        return (0.35, 0.25, 0.20, 0.20)
+    if archetype == "Rooted":
+        return (0.40, 0.20, 0.20, 0.20)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
 
 
@@ -129,11 +129,11 @@ def _get_status_label(archetype: str) -> str:
     return {
         "Established": "Established",
         "Professional": "Professional",
-        "Rising": "Rising",
-        "Middle Class": "Middle Class",
-        "Blue Collar": "Blue Collar",
+        "Up-and-Coming": "Up-and-Coming",
+        "Rooted": "Rooted",
+        "Working Class": "Working Class",
         "Unclassified": "Unclassified",
-    }.get(archetype, "Blue Collar")
+    }.get(archetype, "Working Class")
 
 
 def _signal_strength_band(score: float) -> Tuple[str, str]:
@@ -157,11 +157,11 @@ def _get_status_insight(archetype: str) -> str:
     return {
         "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
         "Professional": "Credential and career driven — high education and white-collar occupation with moderate asset wealth.",
-        "Rising": "Home values run ahead of resident wealth — a neighborhood actively repricing.",
-        "Middle Class": "Stable, broadly comfortable community without dominant elite or working-class signatures.",
-        "Blue Collar": "Working-community profile — modest wealth base with limited professional-class concentration.",
+        "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
+        "Rooted": "Tight-knit, long-tenured community holding ground under housing cost pressure.",
+        "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
         "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
-    }.get(archetype, "Working-community profile — modest wealth base with limited professional-class concentration.")
+    }.get(archetype, "Broadly stable community without dominant elite or credential-class signatures.")
 
 
 _DRIVER_LABELS: Dict[str, str] = {
@@ -185,7 +185,7 @@ def _build_top_drivers(
 ) -> List[Dict[str, Any]]:
     """Top 3 components by score for tooltip; labels vary by archetype."""
     labels = dict(_DRIVER_LABELS)
-    if archetype in ("Established", "Professional"):
+    if archetype in ("Established", "Professional", "Up-and-Coming"):
         labels.update(_DRIVER_LABELS_AFFLUENT)
     items: List[Tuple[str, float]] = []
     if wealth is not None:
@@ -820,8 +820,8 @@ def _classify_archetype(
     stability: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
-    5-archetype chain: Established → Professional → Rising → Blue Collar → Middle Class.
-    stability (0-100) from social_fabric.breakdown.stability gates Established vs. Rising impostor.
+    5-archetype chain: Established → Professional → Up-and-Coming → Rooted → Working Class.
+    stability (0-100) from social_fabric.breakdown.stability.
     Returns (archetype, archetype_rule) for debug.
     """
     edu_val = float(education) if education is not None else 0.0
@@ -833,32 +833,32 @@ def _classify_archetype(
     if home_cost == 0 and wealth_val < 25:
         return "Unclassified", "insufficient_data"
 
-    # Established: ultra-high wealth always qualifies (W≥90 can't be inequality-inflated)
+    # Established: ultra-high wealth always qualifies (can't be inequality-inflated artifact)
     if wealth_val >= 90:
         return "Established", "established_ultra_wealth"
 
-    # Established: capital wealth + community roots (stability gate filters inequality-distorted tracts)
-    if wealth_val >= 80 and stab_val is not None and stab_val >= 45:
-        return "Established", "established_capital_wealth"
-
-    # Established: near-Established suburbs — solid wealth + high generational stability + credential floor
-    # (catches Chappaqua/Bedford-type communities: not ultra-wealthy but deeply rooted)
-    if wealth_val >= 73 and stab_val is not None and stab_val >= 60 and edu_val >= 85:
-        return "Established", "established_stable_community"
-
-    # Professional: credential class — high edu + white-collar occupation, wealth not required
-    if edu_val >= 80 and occ_val >= 80:
+    # Professional: credential class fires before stab-gated Established so that credential-dense
+    # moderate-wealth neighborhoods (West Village, Carroll Gardens) classify correctly.
+    if edu_val >= 78 and occ_val >= 80:
         return "Professional", "professional_credential_class"
 
-    # Rising: home values repricing ahead of resident wealth (gentrifying / recently gentrified)
-    if home_cost > 50 and (wealth_val < 62 or (stab_val is not None and stab_val < 45)):
-        return "Rising", "rising_gentrifying"
+    # Established: very high wealth — less stability required (executive, transient-elite markets)
+    if wealth_val > 85 and stab_val is not None and stab_val > 35:
+        return "Established", "established_high_wealth"
 
-    # Blue Collar: low wealth, not captured by Rising (lower home-cost markets)
-    if wealth_val < 62:
-        return "Blue Collar", "blue_collar_low_wealth"
+    # Established: capital wealth + community roots (W=75-85 range needs stronger stability signal)
+    if wealth_val > 75 and stab_val is not None and stab_val > 45:
+        return "Established", "established_capital_wealth"
 
-    return "Middle Class", "middle_class_comfortable"
+    # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified)
+    if home_cost >= 65 and wealth_val < 85 and (stab_val is None or stab_val < 45):
+        return "Up-and-Coming", "upandcoming_gentrifying"
+
+    # Rooted: tight-knit community holding ground under housing cost pressure
+    if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50:
+        return "Rooted", "rooted_stable_community"
+
+    return "Working Class", "working_class_community"
 
 
 def _merge_social_and_diversity_for_signal(
