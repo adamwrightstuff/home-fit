@@ -114,22 +114,26 @@ def _get_baseline(
 def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
     """Weights (wealth, home_cost, education, occupation) for archetype. Sum = 1."""
     if archetype == "Established":
-        return (0.20, 0.10, 0.40, 0.30)
-    if archetype == "Affluent":
         return (0.45, 0.15, 0.20, 0.20)
-    if archetype == "Transitional":
-        return (0.35, 0.40, 0.15, 0.10)
+    if archetype == "Professional":
+        return (0.20, 0.15, 0.35, 0.30)
+    if archetype == "Rising":
+        return (0.30, 0.45, 0.15, 0.10)
+    if archetype == "Middle Class":
+        return (0.35, 0.25, 0.20, 0.20)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
 
 
 def _get_status_label(archetype: str) -> str:
     """UI badge label for archetype."""
     return {
-        "Established": "Established Prestige",
-        "Affluent": "Affluent & Ascendant",
-        "Transitional": "In Transition",
-        "Working Class": "Working Community",
-    }.get(archetype, "Working Community")
+        "Established": "Established",
+        "Professional": "Professional",
+        "Rising": "Rising",
+        "Middle Class": "Middle Class",
+        "Blue Collar": "Blue Collar",
+        "Unclassified": "Unclassified",
+    }.get(archetype, "Blue Collar")
 
 
 def _signal_strength_band(score: float) -> Tuple[str, str]:
@@ -151,11 +155,13 @@ def _signal_strength_band(score: float) -> Tuple[str, str]:
 def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
-        "Established": "High-floor prestige driven by educational pedigree and professional credentials.",
-        "Affluent": "Wealth concentration with income outliers and upward occupational mobility.",
-        "Transitional": "Home values materially exceed resident wealth — a neighborhood in flux.",
-        "Working Class": "Functional community profile with no dominant elite signatures.",
-    }.get(archetype, "Functional community profile with no dominant elite signatures.")
+        "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
+        "Professional": "Credential and career driven — high education and white-collar occupation with moderate asset wealth.",
+        "Rising": "Home values run ahead of resident wealth — a neighborhood actively repricing.",
+        "Middle Class": "Stable, broadly comfortable community without dominant elite or working-class signatures.",
+        "Blue Collar": "Working-community profile — modest wealth base with limited professional-class concentration.",
+        "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
+    }.get(archetype, "Working-community profile — modest wealth base with limited professional-class concentration.")
 
 
 _DRIVER_LABELS: Dict[str, str] = {
@@ -179,7 +185,7 @@ def _build_top_drivers(
 ) -> List[Dict[str, Any]]:
     """Top 3 components by score for tooltip; labels vary by archetype."""
     labels = dict(_DRIVER_LABELS)
-    if archetype == "Affluent":
+    if archetype in ("Established", "Professional"):
         labels.update(_DRIVER_LABELS_AFFLUENT)
     items: List[Tuple[str, float]] = []
     if wealth is not None:
@@ -811,26 +817,48 @@ def _classify_archetype(
     home_cost: float,
     wealth_gap: Optional[float],
     occupation_neutral: Optional[float],
+    stability: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
-    Ordered chain: Established → Transitional → Affluent → Working Class.
-    Returns (archetype, archetype_rule) for regression/debug.
+    5-archetype chain: Established → Professional → Rising → Blue Collar → Middle Class.
+    stability (0-100) from social_fabric.breakdown.stability gates Established vs. Rising impostor.
+    Returns (archetype, archetype_rule) for debug.
     """
     edu_val = float(education) if education is not None else 0.0
     occ_val = float(occupation_neutral) if occupation_neutral is not None else 0.0
     wealth_val = float(wealth) if wealth is not None else 0.0
-    gap_val = float(wealth_gap) if wealth_gap is not None else 0.0
+    stab_val = float(stability) if stability is not None else None
 
-    if edu_val >= 80 and occ_val >= 80 and wealth_val >= 65:
-        return "Established", "established_credential_wealth"
+    # Non-residential / data-sparse tracts (Red Hook industrial, Downtown LA, etc.)
+    if home_cost == 0 and wealth_val < 25:
+        return "Unclassified", "insufficient_data"
 
-    if home_cost > 50 and wealth_val < 55:
-        return "Transitional", "transitional_cost_wealth_gap"
+    # Established: ultra-high wealth always qualifies (W≥90 can't be inequality-inflated)
+    if wealth_val >= 90:
+        return "Established", "established_ultra_wealth"
 
-    if wealth_val < 55:
-        return "Working Class", "working_class_low_wealth"
+    # Established: capital wealth + community roots (stability gate filters inequality-distorted tracts)
+    if wealth_val >= 80 and stab_val is not None and stab_val >= 45:
+        return "Established", "established_capital_wealth"
 
-    return "Affluent", "affluent_residual"
+    # Established: near-Established suburbs — solid wealth + high generational stability + credential floor
+    # (catches Chappaqua/Bedford-type communities: not ultra-wealthy but deeply rooted)
+    if wealth_val >= 73 and stab_val is not None and stab_val >= 60 and edu_val >= 85:
+        return "Established", "established_stable_community"
+
+    # Professional: credential class — high edu + white-collar occupation, wealth not required
+    if edu_val >= 80 and occ_val >= 80:
+        return "Professional", "professional_credential_class"
+
+    # Rising: home values repricing ahead of resident wealth (gentrifying / recently gentrified)
+    if home_cost > 50 and (wealth_val < 62 or (stab_val is not None and stab_val < 45)):
+        return "Rising", "rising_gentrifying"
+
+    # Blue Collar: low wealth, not captured by Rising (lower home-cost markets)
+    if wealth_val < 62:
+        return "Blue Collar", "blue_collar_low_wealth"
+
+    return "Middle Class", "middle_class_comfortable"
 
 
 def _merge_social_and_diversity_for_signal(
@@ -925,7 +953,7 @@ def compute_status_signal_with_breakdown(
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
-    Archetype chain: Established → Transitional → Affluent → Working Class.
+    Archetype chain: Established → Professional → Rising → Blue Collar → Middle Class.
     Final composite uses archetype weights (no luxury signal).
     Baselines: tract CBSA mapped via cbsa_to_baseline; else division then \"all\".
     """
@@ -937,11 +965,11 @@ def compute_status_signal_with_breakdown(
         "luxury_presence": None,
         "luxury_presence_detail": None,
         "wealth_character": "typical",
-        "archetype": "Working Class",
-        "archetype_rule": "working_class_default",
+        "archetype": "Blue Collar",
+        "archetype_rule": "blue_collar_default",
         "classifier_inputs": {},
         "provisional_composite_score": None,
-        "status_label": "Working Community",
+        "status_label": "Blue Collar",
         "status_insight": "",
         "top_drivers": [],
         "analysis_radius_note": None,
@@ -1004,12 +1032,22 @@ def compute_status_signal_with_breakdown(
         occupation_neutral,
     )
 
+    stability: Optional[float] = None
+    sf_breakdown = (social_fabric_details or {}).get("breakdown") or {}
+    _stab = sf_breakdown.get("stability")
+    if _stab is not None:
+        try:
+            stability = float(_stab)
+        except (TypeError, ValueError):
+            pass
+
     archetype, archetype_rule = _classify_archetype(
         education=education,
         wealth=wealth,
         home_cost=home_cost,
         wealth_gap=wealth_gap,
         occupation_neutral=occupation_neutral,
+        stability=stability,
     )
 
     w_wealth, w_home_cost, w_education, w_occupation = _get_archetype_weights(archetype)
@@ -1031,6 +1069,7 @@ def compute_status_signal_with_breakdown(
         "occupation": occupation_neutral,
         "wealth": wealth,
         "wealth_gap": wealth_gap,
+        "stability": stability,
     }
     breakdown["provisional_composite_score"] = (
         round(provisional, 1) if provisional is not None else None
