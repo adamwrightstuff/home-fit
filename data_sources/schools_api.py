@@ -162,7 +162,7 @@ def get_schools(
         return profile.get("search_radius_miles", 2.0)
 
     def _rated_count(school_list: List[Dict]) -> int:
-        """Count schools with usable rating data (0-star counts if state percentile is present)."""
+        """Count schools with usable rating data. Accepts stars>0, pct-only (no stars), or 0-star+pct."""
         count = 0
         for s in school_list:
             rh = s.get("rankHistory")
@@ -170,7 +170,8 @@ def get_schools(
                 continue
             stars = rh[0].get("rankStars")
             pct = rh[0].get("rankStatewidePercentage")
-            if stars is not None and (stars > 0 or pct is not None):
+            # Count if: has stars (any value including 0) with percentile, OR has percentile without stars
+            if (stars is not None and (stars > 0 or pct is not None)) or (stars is None and pct is not None):
                 count += 1
         return count
 

@@ -1249,6 +1249,7 @@ def _compute_single_score_internal(
     diversity_preference: Optional[List[str]] = None,
     lat_override: Optional[float] = None,
     lon_override: Optional[float] = None,
+    user_household_income: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1695,6 +1696,7 @@ def _compute_single_score_internal(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
                 'use_national_income_for_affordability': _remote_only,
+                'user_household_income': user_household_income,
             })
         )
 
@@ -2327,6 +2329,7 @@ def get_livability_score(request: Request,
                          built_character_preference: Optional[str] = None,
                          built_density_preference: Optional[str] = None,
                          diversity_preference: Optional[str] = None,
+                         household_income: Optional[int] = None,
                          lat: Optional[str] = None,
                          lon: Optional[str] = None):
     """
@@ -2473,6 +2476,7 @@ def get_livability_score(request: Request,
             diversity_preference=diversity_preference_parsed,
             lat_override=lat_override,
             lon_override=lon_override,
+            user_household_income=household_income,
         )
         if schedule_catalog_contribution:
             try:
@@ -3205,6 +3209,7 @@ async def _stream_score_with_progress(
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city,
                 'use_national_income_for_affordability': _remote_only,
+                'user_household_income': user_household_income,
             })
         )
         pillar_tasks.append(
@@ -4270,6 +4275,7 @@ async def stream_score(
                 ('housing_value', get_housing_value_score, {
                     'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
                     'use_national_income_for_affordability': _remote_only,
+                    'user_household_income': user_household_income,
                 })
             )
 

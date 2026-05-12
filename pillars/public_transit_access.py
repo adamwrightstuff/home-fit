@@ -1063,7 +1063,7 @@ def get_public_transit_score(
     hub_bonus = 0.0
     destination_bonus = 0.0
     
-    if effective_area_type == 'commuter_rail_suburb':
+    if is_commuter_rail_suburb:
         weekday_trips = None
         peak_headway = None
         trip_headsigns = []
@@ -1311,7 +1311,7 @@ def get_public_transit_score(
     }
     
     # Add commuter rail suburb bonuses to breakdown if applicable
-    if effective_area_type == 'commuter_rail_suburb':
+    if is_commuter_rail_suburb:
         if frequency_bonus > 0:
             breakdown["breakdown"]["frequency_bonus"] = round(frequency_bonus, 1)
         if commute_bonus_additional > 0:

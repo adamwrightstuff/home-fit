@@ -7,18 +7,21 @@ from typing import Dict, Tuple, Optional
 from data_sources import census_api, data_quality
 
 
-def get_housing_value_score(lat: float, lon: float, 
+def get_housing_value_score(lat: float, lon: float,
                            census_tract: Optional[Dict] = None,
                            density: Optional[float] = None,
                            city: Optional[str] = None,
-                           use_national_income_for_affordability: bool = False) -> Tuple[float, Dict]:
+                           use_national_income_for_affordability: bool = False,
+                           user_household_income: Optional[int] = None) -> Tuple[float, Dict]:
     """
     Calculate housing value score (0-100) based on affordability and space.
 
     Scoring:
-    - Local Affordability (0-50): Home price ÷ local income (or US median when use_national_income_for_affordability)
+    - Local Affordability (0-50): Home price ÷ income denominator
     - Space/Size (0-30): Median rooms per unit
     - Value Efficiency (0-20): Usable space per dollar (rooms per $100k)
+
+    Income denominator priority: user_household_income > us_median (when use_national_income_for_affordability) > local median.
 
     Args:
         census_tract: Pre-computed census tract data (optional, will fetch if None)
@@ -26,6 +29,8 @@ def get_housing_value_score(lat: float, lon: float,
         city: City name for data quality assessment (optional)
         use_national_income_for_affordability: If True, use US median household income for affordability
             (for remote/flexible workers; same home price vs national income).
+        user_household_income: If set, use this as the income denominator for affordability
+            (personalizes the score to the user's actual income).
 
     Returns:
         (total_score, detailed_breakdown)
@@ -126,9 +131,12 @@ def get_housing_value_score(lat: float, lon: float,
     median_rooms = housing_data["median_rooms"]
     median_gross_rent = housing_data.get("median_gross_rent")
 
-    # When remote/flexible only: affordability vs US median income (no extra API call)
+    # Income denominator priority: user_household_income > us_median > local_median
     affordability_denominator = "local_median"
-    if use_national_income_for_affordability:
+    if user_household_income is not None and user_household_income > 0:
+        median_income_for_affordability = float(user_household_income)
+        affordability_denominator = "user_income"
+    elif use_national_income_for_affordability:
         from data_sources.normalization import load_economic_baselines
         baselines = load_economic_baselines()
         national_income = baselines.get("us_median_household_income")
