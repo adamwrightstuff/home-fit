@@ -1324,10 +1324,19 @@ def _compute_single_score_internal(
     if lat_override is not None and lon_override is not None and -90 <= lat_override <= 90 and -180 <= lon_override <= 180:
         lat = float(lat_override)
         lon = float(lon_override)
-        zip_code = ""
-        state = ""
-        city = ""
-        geocode_data = {}
+        # Still geocode the location string to get state/city/zip — needed by pillars like schools
+        # that require state. We use the pinned coordinates, not the geocoded ones.
+        from data_sources.geocoding import geocode_with_full_result as _gcfr
+        t_geocode = time.perf_counter()
+        _geo = _gcfr(location) if location else None
+        _log_place_timing("geocode", t_geocode)
+        if _geo:
+            _, _, zip_code, state, city, geocode_data = _geo
+        else:
+            zip_code = ""
+            state = ""
+            city = ""
+            geocode_data = {}
         logger.info(f"Using provided coordinates: {lat}, {lon}")
     else:
         from data_sources.geocoding import geocode_with_full_result
