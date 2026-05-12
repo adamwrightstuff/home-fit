@@ -192,7 +192,10 @@ def get_schools(
     # PRIORITY 1: City + State — respects actual school district boundaries.
     # Requires at least 1 rated school; urban sub-neighborhoods without a real city match
     # (e.g. Crown Heights) typically return 0 rated schools and fall through to coordinate search.
-    if city:
+    # Skip for "Los Angeles" — LAUSD covers the entire city and returns the same 31 schools for
+    # every neighborhood. ZIP-based routing (PRIORITY 2) gives neighborhood-specific pools.
+    _skip_city_query = city and city.lower() in ("los angeles",)
+    if city and not _skip_city_query:
         print(f"🏙️  Attempting city-based query ({city})...")
         params_city = {**base_params, "city": city}
         schools = _fetch_schools(params_city)
