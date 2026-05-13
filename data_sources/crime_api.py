@@ -329,7 +329,10 @@ def _get_la_rates(lat: float, lon: float, population: int, radius_m: int) -> Opt
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
 def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
-    """Fetch all reporting agencies for a state (cached per state)."""
+    """
+    Fetch all reporting agencies for a state (cached per state).
+    The FBI CDE API returns a dict keyed by county name; we flatten to a list.
+    """
     api_key = _get_fbi_key()
     if not api_key:
         return None
@@ -339,27 +342,68 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
         if resp.status_code != 200:
             logger.warning("FBI CDE agencies returned %d for %s", resp.status_code, state_abbr)
             return None
-        return resp.json()
+        raw = resp.json()
+        # Response is a dict {county: [agency, ...]} — flatten to a single list
+        if isinstance(raw, dict):
+            agencies = []
+            for county_agencies in raw.values():
+                if isinstance(county_agencies, list):
+                    agencies.extend(county_agencies)
+            return agencies if agencies else None
+        if isinstance(raw, list):
+            return raw or None
+        return None
     except Exception as e:
         logger.warning("FBI CDE agency fetch failed: %s", e)
         return None
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_fbi_offenses(ori: str, year_from: int, year_to: int) -> Optional[Dict]:
-    """Fetch summarized offense counts for a specific agency ORI."""
+def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
+    """
+    Fetch the state-level annual crime rate per 100k population for a given year.
+
+    The FBI CDE /summarized/agency/{ori}/{offense_type} endpoint returns rolling
+    monthly rates for the agency's state (not the individual agency).  We take
+    the December value as the full-year rate.  Divide by 100 to convert per-100k
+    to per-1k for consistency with the Socrata path.
+
+    Returns None on any failure.
+    """
     api_key = _get_fbi_key()
     if not api_key:
         return None
     try:
-        url = f"{_FBI_CDE_BASE}/summarized/agency/{ori}/offenses/{year_from}/{year_to}"
-        resp = requests.get(url, params={"API_KEY": api_key}, timeout=_REQUEST_TIMEOUT)
+        url = f"{_FBI_CDE_BASE}/summarized/agency/{ori}/{offense_type}"
+        params = {
+            "API_KEY": api_key,
+            "from": f"01-{year}",
+            "to": f"12-{year}",
+        }
+        resp = requests.get(url, params=params, timeout=_REQUEST_TIMEOUT)
         if resp.status_code != 200:
-            logger.warning("FBI CDE offenses returned %d for %s", resp.status_code, ori)
+            logger.warning("FBI CDE state rate %s %d returned %d", offense_type, year, resp.status_code)
             return None
-        return resp.json()
+        data = resp.json()
+        rates_by_label = data.get("offenses", {}).get("rates", {})
+        # Pick the state-level row (not "United States")
+        for label, month_vals in rates_by_label.items():
+            if "Offenses" in label and "United States" not in label:
+                vals = list(month_vals.values())
+                if vals:
+                    # December value = best available full-year rate
+                    dec_key = f"12-{year}"
+                    return float(month_vals.get(dec_key) or vals[-1])
+        # Fallback: use national rate
+        for label, month_vals in rates_by_label.items():
+            if "United States" in label and "Offenses" in label:
+                vals = list(month_vals.values())
+                if vals:
+                    dec_key = f"12-{year}"
+                    return float(month_vals.get(dec_key) or vals[-1])
+        return None
     except Exception as e:
-        logger.warning("FBI CDE offense fetch failed: %s", e)
+        logger.warning("FBI CDE state rate fetch failed: %s", e)
         return None
 
 
@@ -399,14 +443,28 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
 def _get_fbi_rates(
     lat: float, lon: float, state_abbr: str, population: int
 ) -> Optional[Dict]:
-    """Look up FBI CDE rates for the nearest reporting agency."""
+    """
+    Return state-level FBI crime rates as a proxy for suburban/rural locations.
+
+    The FBI CDE /summarized/agency endpoint returns state-level rates (not
+    individual-agency rates) — this is a known limitation of the public API.
+    State rates are a reasonable proxy: they reflect the crime environment
+    of the broader region and enable meaningful cross-state comparisons.
+
+    Rates are per 100k from the API; we divide by 100 to yield per-1k values
+    consistent with the Socrata path.
+    """
     agencies = _fetch_fbi_agencies(state_abbr)
     if not agencies:
         return None
 
+    # Any ORI from the state works to query state-level rates; use the nearest.
     agency = _find_nearest_agency(agencies, lat, lon)
     if not agency:
         logger.debug("FBI CDE: no agency within 50 km for (%s, %s)", lat, lon)
+        # Fall back to first available ORI in state
+        agency = agencies[0] if agencies else None
+    if not agency:
         return None
 
     ori = agency.get("ori") or agency.get("ORI")
@@ -414,47 +472,39 @@ def _get_fbi_rates(
         return None
 
     current_year = datetime.date.today().year
-    prior_year = current_year - 1
+    # FBI CDE data is usually available up to prior year
+    data_year = current_year - 1
+    prev_year = data_year - 1
 
-    # FBI data lags ~1 year; try current year first, fall back to prior
-    data = _fetch_fbi_offenses(ori, prior_year, prior_year)
-    prev_data = _fetch_fbi_offenses(ori, prior_year - 1, prior_year - 1)
+    violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", data_year)
+    if violent_rate_100k is None:
+        # Try one year older if most recent is unavailable
+        violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", prev_year)
+        prev_year -= 1
 
-    if data is None:
+    if violent_rate_100k is None:
         return None
 
-    def _sum_offenses(raw, keys) -> int:
-        if not raw:
-            return 0
-        total = 0
-        for entry in (raw if isinstance(raw, list) else [raw]):
-            for k in keys:
-                total += int(entry.get(k, 0) or 0)
-        return total
+    property_rate_100k = _fetch_fbi_state_rate(ori, "property-crime", data_year)
+    if property_rate_100k is None:
+        property_rate_100k = _fetch_fbi_state_rate(ori, "property-crime", prev_year)
 
-    violent_count = _sum_offenses(data, _FBI_VIOLENT_KEYS)
-    property_count = _sum_offenses(data, _FBI_PROPERTY_KEYS)
+    # Convert per-100k → per-1k
+    violent_rate = round(violent_rate_100k / 100.0, 3)
+    property_rate = round((property_rate_100k or 0.0) / 100.0, 3)
 
-    if violent_count + property_count == 0:
-        return None
-
-    violent_rate = _per_1k(violent_count, population)
-    property_rate = _per_1k(property_count, population)
-
+    # Trend: compare current year violent to prior year
     trend_pct: Optional[float] = None
-    if prev_data:
-        prev_vc = _sum_offenses(prev_data, _FBI_VIOLENT_KEYS)
-        if prev_vc >= 5:
-            prev_violent = _per_1k(prev_vc, population)
-            if prev_violent > 0:
-                raw_trend = (violent_rate - prev_violent) / prev_violent * 100
-                trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
+    prev_violent_100k = _fetch_fbi_state_rate(ori, "violent-crime", prev_year)
+    if prev_violent_100k and prev_violent_100k > 0:
+        raw_trend = (violent_rate_100k - prev_violent_100k) / prev_violent_100k * 100
+        trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
     return {
         "violent_per_1k": violent_rate,
         "property_per_1k": property_rate,
         "trend_pct": trend_pct,
-        "source": "fbi_cde",
+        "source": "fbi_cde_state",
         "agency_ori": ori,
         "agency_name": agency.get("agencyName") or agency.get("agency_name"),
     }
