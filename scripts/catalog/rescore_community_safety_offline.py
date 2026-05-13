@@ -39,7 +39,11 @@ def _extract_location(row: Dict):
     lat = coords.get("lat")
     lon = coords.get("lon")
     loc_info = score.get("location_info", {})
-    city = loc_info.get("city", "")
+    # Prefer the catalog location name as city hint — it's the clean town/neighborhood
+    # name (e.g. "Scarsdale") rather than the geocoder city which may be empty,
+    # a village prefix ("Village of Scarsdale"), or a major city ("New York").
+    catalog_name = row.get("catalog", {}).get("name", "")
+    city = catalog_name or loc_info.get("city", "")
     state_full = loc_info.get("state", "")
 
     _state_map = {
@@ -88,9 +92,22 @@ def _pop_from_row(row: Dict) -> int:
         "exurban": 5000,
         "rural": 8000,
     }
+    # Minimum credible population density per sq mile by area type.
+    # Guards against anomalously low Census tract density values that would
+    # collapse the population estimate to the 500-person floor and inflate
+    # per-1k crime rates (e.g. Glendale Queens had density=16.52 stored).
+    min_density_map = {
+        "urban_core": 5_000,
+        "urban_residential": 2_000,
+        "suburban": 500,
+        "exurban": 50,
+        "rural": 10,
+    }
     radius_m = radius_map.get(area_type, 1500)
+    min_density = min_density_map.get(area_type, 500)
     sq_mi = math.pi * (radius_m / 1609.34) ** 2
-    return max(500, int((float(density) or 3000) * sq_mi))
+    effective_density = max(float(density) if density else 0, min_density)
+    return max(500, int(effective_density * sq_mi))
 
 
 def rescore_catalog(input_path: str, output_path: str, dry_run: bool = False):

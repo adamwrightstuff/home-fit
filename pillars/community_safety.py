@@ -77,6 +77,15 @@ except Exception as e:
 _CLIP = 2.5
 _TREND_CAP_PTS = 5.0
 
+# Commercial/retail-hub detector: when property crime rate is this many times
+# higher than violent crime AND violent rate is below this threshold, the area's
+# crime profile is dominated by commercial theft (shoplifting, package theft,
+# pickpocketing) rather than community violence.  Dampen property weight so
+# a larceny-heavy commercial corridor doesn't score below a violent neighbourhood.
+_COMMERCIAL_PROPERTY_RATIO = 8.0   # property_per_1k / violent_per_1k threshold
+_COMMERCIAL_VIOLENT_CEILING = 8.0  # only apply dampening when violent_per_1k < this
+_COMMERCIAL_PROPERTY_WEIGHT = 0.15  # reduced from default 0.35
+
 
 def _z_to_slot(z: float) -> float:
     """Clip z to ±2.5 and map to 0–100 (higher is safer, so z is inverted)."""
@@ -116,7 +125,17 @@ def _score_rates(
     v_slot = _z_to_slot(v_z)
     p_slot = _z_to_slot(p_z)
 
-    raw = 0.65 * v_slot + 0.35 * p_slot
+    # Commercial-hub dampening: reduce property weight when the crime profile
+    # is dominated by property crime (retail theft, pickpockets) vs. violence.
+    p_weight = _COMMERCIAL_PROPERTY_WEIGHT if (
+        violent_per_1k < _COMMERCIAL_VIOLENT_CEILING
+        and property_per_1k > 0
+        and violent_per_1k > 0
+        and property_per_1k / violent_per_1k >= _COMMERCIAL_PROPERTY_RATIO
+    ) else 0.35
+    v_weight = 1.0 - p_weight
+
+    raw = v_weight * v_slot + p_weight * p_slot
     return v_slot, p_slot, raw, v_z
 
 

@@ -46,6 +46,10 @@ _LA_DATA_MAX_DATE = "2024-12-31"  # Legacy dataset last update
 # FBI Crime Data Explorer
 _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 
+# NY State UCR per-agency dataset (Socrata, no key required)
+# "Index Crimes by County and Agency: Beginning 1990"
+_NY_STATE_CRIME_DS = "https://data.ny.gov/resource/ca8h-8gjq.json"
+
 # Geographic bounding boxes for open-data routing.
 # If coordinates fall within a box, use that metro's Socrata endpoint instead
 # of the FBI CDE API. This handles sub-neighborhoods (Gowanus, Chinatown, etc.)
@@ -440,8 +444,87 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
     return best if best_dist < 50 else None  # 50 km max
 
 
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_ny_state_agency_crimes(
+    town_keyword: str, county: str, year: int
+) -> Optional[Dict]:
+    """
+    Query the NY State UCR per-agency dataset for a specific town in a county.
+
+    Excludes county-wide entries ("County Total", "County PD", "County Sheriff",
+    "State Police") so we always get a single-municipality figure.
+
+    Returns the row dict with 'violent', 'property', 'months_reported', etc.,
+    or None if not found or data is incomplete (<10 months reported).
+    """
+    try:
+        # Escape any apostrophes in town keyword (e.g. "Sleepy Hollow")
+        safe_kw = town_keyword.replace("'", "''")
+        where = (
+            f"upper(agency) like upper('%{safe_kw}%') "
+            f"AND agency NOT LIKE '%County%' "
+            f"AND agency NOT LIKE '%State Police%' "
+            f"AND agency NOT LIKE '%SUNY%' "
+            f"AND agency != 'County Total'"
+        )
+        params = {
+            "$where": where,
+            "county": county.title(),
+            "year": str(year),
+            "$order": "months_reported DESC, violent DESC",
+            "$limit": 1,
+        }
+        resp = requests.get(_NY_STATE_CRIME_DS, params=params, timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            logger.debug("NY state crime DS returned %d for %s/%s", resp.status_code, town_keyword, county)
+            return None
+        data = resp.json()
+        if not data:
+            return None
+        row = data[0]
+        months = int(row.get("months_reported", 0) or 0)
+        if months < 10:
+            return None  # reject partial-year reports
+        return row
+    except Exception as e:
+        logger.warning("NY state crime fetch failed for '%s'/%s: %s", town_keyword, county, e)
+        return None
+
+
+def _rates_from_ny_state(
+    row: Dict, prev_row: Optional[Dict], population: int
+) -> Dict:
+    """Convert NY state UCR row(s) to the standard rates dict."""
+    violent = int(row.get("violent", 0) or 0)
+    property_ = int(row.get("property", 0) or 0)
+    pop = max(1, population)
+
+    violent_rate = round(violent / pop * 1000, 3)
+    property_rate = round(property_ / pop * 1000, 3)
+
+    trend_pct: Optional[float] = None
+    if prev_row:
+        prev_v = int(prev_row.get("violent", 0) or 0)
+        if prev_v >= 5 and violent_rate > 0:
+            prev_rate = prev_v / pop * 1000
+            if prev_rate > 0:
+                raw_trend = (violent_rate - prev_rate) / prev_rate * 100
+                trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
+
+    return {
+        "violent_per_1k": violent_rate,
+        "property_per_1k": property_rate,
+        "trend_pct": trend_pct,
+        "source": "ny_state_ucr",
+        "agency_name": row.get("agency"),
+        "incidents_current": violent + property_,
+        "data_period": row.get("year"),
+    }
+
+
 def _get_fbi_rates(
-    lat: float, lon: float, state_abbr: str, population: int
+    lat: float, lon: float, state_abbr: str, population: int,
+    city_hint: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Return state-level FBI crime rates as a proxy for suburban/rural locations.
@@ -462,7 +545,6 @@ def _get_fbi_rates(
     agency = _find_nearest_agency(agencies, lat, lon)
     if not agency:
         logger.debug("FBI CDE: no agency within 50 km for (%s, %s)", lat, lon)
-        # Fall back to first available ORI in state
         agency = agencies[0] if agencies else None
     if not agency:
         return None
@@ -472,13 +554,31 @@ def _get_fbi_rates(
         return None
 
     current_year = datetime.date.today().year
-    # FBI CDE data is usually available up to prior year
     data_year = current_year - 1
     prev_year = data_year - 1
 
+    # -----------------------------------------------------------------------
+    # Tier 2: NY State UCR per-agency data (more granular than FBI CDE state)
+    # -----------------------------------------------------------------------
+    if state_abbr.upper() == "NY" and city_hint:
+        county = (agency.get("counties") or "").title()
+        if county:
+            ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year)
+            if ny_row is None:
+                ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year - 1)
+            if ny_row is not None:
+                prev_ny_row = _fetch_ny_state_agency_crimes(city_hint, county, int(ny_row["year"]) - 1)
+                return _rates_from_ny_state(ny_row, prev_ny_row, population)
+            logger.debug(
+                "NY state UCR: no per-agency row for '%s' in %s; falling back to CDE state rate",
+                city_hint, county,
+            )
+
+    # -----------------------------------------------------------------------
+    # Tier 3: FBI CDE state-level aggregate rate (fallback for all states)
+    # -----------------------------------------------------------------------
     violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", data_year)
     if violent_rate_100k is None:
-        # Try one year older if most recent is unavailable
         violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", prev_year)
         prev_year -= 1
 
@@ -569,9 +669,9 @@ def get_crime_rates(
         if result:
             return result
 
-    # FBI CDE fallback (suburbs, other metros)
+    # FBI CDE / State UCR (suburbs and other metros)
     if state_abbr and _get_fbi_key():
-        result = _get_fbi_rates(lat, lon, state_abbr, population)
+        result = _get_fbi_rates(lat, lon, state_abbr, population, city_hint=city)
         if result:
             return result
 
