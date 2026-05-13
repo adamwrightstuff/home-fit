@@ -7,6 +7,7 @@ import os
 import time
 import requests
 import math
+from collections import Counter
 from typing import List, Optional, Dict
 from .cache import cached, CACHE_TTL
 from .utils import haversine_distance
@@ -144,6 +145,13 @@ def get_schools(
         state = state.upper()
     if city:
         city = city.strip()
+        # Strip legal municipality prefixes — geocoders return "Village of Bronxville"
+        # but SchoolDigger expects "Bronxville"; mismatches fall through to ZIP fallback
+        # which bleeds across district boundaries.
+        for prefix in ("village of ", "town of ", "city of ", "borough of ", "township of "):
+            if city.lower().startswith(prefix):
+                city = city[len(prefix):].strip()
+                break
 
     # CRITICAL: 'st' (state) parameter is REQUIRED for SchoolDigger API
     if not state:
@@ -204,6 +212,7 @@ def get_schools(
             params_city_q = {**base_params, "q": city}
             schools = _fetch_schools(params_city_q)
         if schools and _rated_count(schools) >= 1:
+            schools = _filter_by_district(schools)
             print(f"✅ City-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
             return schools
         if schools:
@@ -217,6 +226,8 @@ def get_schools(
         if schools:
             if lat is not None and lon is not None:
                 schools = _filter_schools_by_distance(schools, lat, lon, _radius_miles())
+            if schools:
+                schools = _filter_by_district(schools)
             if schools and _rated_count(schools) >= 1:
                 print(f"✅ ZIP-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
                 return schools
@@ -230,6 +241,8 @@ def get_schools(
         schools = _fetch_schools_by_coordinates(lat, lon, radius, base_params)
         if schools:
             schools = _filter_schools_by_distance(schools, lat, lon, radius)
+            if schools:
+                schools = _filter_by_district(schools)
             if schools:
                 print(f"✅ Coordinate-based query returned {len(schools)} schools")
                 return schools
@@ -366,6 +379,56 @@ def _filter_schools_by_distance(
 
     if len(filtered) < len(schools):
         print(f"   📏 Distance filtering: {len(schools)} -> {len(filtered)} schools")
+
+    return filtered
+
+
+def _filter_by_district(
+    schools: List[Dict],
+    target_district_ids: Optional[List[str]] = None
+) -> List[Dict]:
+    """
+    Filter schools to a single school district to prevent cross-district contamination.
+
+    ZIP and coordinate queries can return schools from multiple neighboring districts.
+    If target_district_ids is provided (from a coordinate-based district lookup), pin to
+    those districts. Otherwise fall back to the modal (most common) districtID among
+    schools that have one — after distance filtering, the local district dominates.
+    Private schools (no district field) are always kept.
+    """
+    if not schools:
+        return schools
+
+    if target_district_ids:
+        target_ids = set(str(d) for d in target_district_ids)
+        filtered = [
+            s for s in schools
+            if not s.get("district")
+            or str(s.get("district", {}).get("districtID", "")) in target_ids
+        ]
+    else:
+        district_ids = [
+            s["district"]["districtID"]
+            for s in schools
+            if s.get("district") and s["district"].get("districtID")
+        ]
+        if not district_ids:
+            return schools
+        modal_id, _ = Counter(district_ids).most_common(1)[0]
+        filtered = [
+            s for s in schools
+            if not s.get("district")
+            or s.get("district", {}).get("districtID") == modal_id
+        ]
+
+    removed = len(schools) - len(filtered)
+    if removed > 0:
+        kept_names = {
+            s.get("district", {}).get("districtName", "?")
+            for s in filtered if s.get("district")
+        }
+        print(f"   🏫 District filter: {len(schools)} → {len(filtered)} schools "
+              f"(kept: {', '.join(kept_names)}; removed {removed} cross-district)")
 
     return filtered
 
