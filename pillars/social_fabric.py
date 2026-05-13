@@ -512,6 +512,7 @@ def get_social_fabric_score(
         "participation_mix": participation_diag.get("mix"),
         "volunteering_resolution": participation_diag.get("volunteering_resolution"),
         "turnout_source": participation_diag.get("turnout_source"),
+        "turnout_in_engagement_blend": participation_diag.get("turnout_in_engagement_blend"),
         "orgs_per_1k": orgs_per_1k,
         "voter_turnout_rate": round(turnout_rate, 4) if turnout_rate is not None else None,
         "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,

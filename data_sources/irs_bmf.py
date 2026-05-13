@@ -247,30 +247,39 @@ def _pick_engagement_stats(
     area_stats = engagement_stats_by_area_type
 
     at = (area_type or "").lower().replace(" ", "_") if area_type else None
-    area_entry = None
+    stats = None
     if at and area_stats:
-        area_entry = area_stats.get(at) or area_stats.get("default")
-        if area_entry is None:
-            area_entry = area_stats.get("all")
+        stats = area_stats.get(at) or area_stats.get("default")
+        if stats is None:
+            stats = area_stats.get("all")
+    if stats is None and division_code and div_stats:
+        stats = div_stats.get(division_code)
+        if stats is None:
+            stats = div_stats.get("all")
+    return stats
 
-    div_entry = None
-    if division_code and div_stats:
-        div_entry = div_stats.get(division_code)
 
-    if area_entry and div_entry:
-        # Hybrid: use the regional (division) mean as the baseline so northeast places
-        # aren't penalized against a national mean they structurally can't reach, but
-        # keep the area_type std for z-score discrimination between places.
-        return {"mean": div_entry["mean"], "std": area_entry["std"]}
-
-    if area_entry:
-        return area_entry
-    if div_entry:
-        return div_entry
-    # Last resort: national all
-    if div_stats:
-        return div_stats.get("all")
-    return None
+def engagement_100_from_orgs_area_type(
+    orgs_per_1k: float,
+    area_type: Optional[str],
+    *,
+    use_legacy: bool,
+    clip_z: float = 2.5,
+) -> Optional[float]:
+    """
+    Offline/catalog: map orgs/1k to the same 0–100 engagement slot score using **area-type**
+    baselines only (division fallback only when area-type stats are missing).
+    """
+    stats = _pick_engagement_stats(None, area_type, use_legacy=use_legacy)
+    if not stats:
+        return None
+    mean = float(stats.get("mean", 0.0) or 0.0)
+    std = float(stats.get("std", 0.0) or 0.0)
+    if std <= 0:
+        return None
+    z = (float(orgs_per_1k) - mean) / std
+    z = max(-clip_z, min(clip_z, z))
+    return max(0.0, min(100.0, ((z + clip_z) / (2 * clip_z)) * 100.0))
 
 
 def get_civic_orgs_per_1k(

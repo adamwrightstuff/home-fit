@@ -83,6 +83,32 @@ def _z_to_score(z: float, clip_z: float = 2.5) -> float:
     return max(0.0, min(100.0, ((z + clip_z) / (2 * clip_z)) * 100.0))
 
 
+def turnout_score_from_known_rate(
+    rate: float,
+    area_type: Optional[str] = None,
+    clip_z: float = 2.5,
+) -> Optional[Tuple[float, Optional[Dict[str, float]]]]:
+    """
+    Map a known turnout/registration rate (0–1) to the same 0–100 score used in engagement,
+    using area-type mean/std baselines. For offline catalog patching when the rate is
+    already stored (no tract lookup).
+    """
+    at = (area_type or "default").lower().replace(" ", "_")
+    stats = None
+    if stats_by_area_type:
+        stats = (
+            stats_by_area_type.get(at)
+            or stats_by_area_type.get("default")
+            or stats_by_area_type.get("all")
+        )
+    if not stats or stats.get("std", 0) <= 0:
+        return None
+    mean = float(stats["mean"])
+    std = float(stats["std"])
+    z = (float(rate) - mean) / std
+    return (_z_to_score(z, clip_z), stats)
+
+
 def get_voter_turnout_score(
     tract: Optional[Dict],
     area_type: Optional[str] = None,
@@ -104,14 +130,8 @@ def get_voter_turnout_score(
     if rate is None:
         return None
 
-    at = (area_type or "default").lower().replace(" ", "_")
-    stats = None
-    if stats_by_area_type:
-        stats = stats_by_area_type.get(at) or stats_by_area_type.get("default") or stats_by_area_type.get("all")
-    if not stats or stats.get("std", 0) <= 0:
+    scored = turnout_score_from_known_rate(float(rate), area_type, clip_z)
+    if scored is None:
         return None
-
-    mean = stats["mean"]
-    std = stats["std"]
-    z = (float(rate) - mean) / std
-    return (_z_to_score(z, clip_z), stats, rate)
+    sc, stats = scored
+    return (sc, stats, rate)

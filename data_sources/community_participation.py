@@ -1,7 +1,10 @@
 """
 Community participation sub-score for Social Fabric (breakdown.engagement).
 
-Combines: refined IRS BMF (40%), volunteering proxy (40%), precinct/tract voter turnout (20%).
+Combines: refined IRS BMF (40%), volunteering proxy (40%), local voter turnout (20%).
+
+Local turnout = precinct file or tract-level rates only; state-level registration fallback
+is recorded in diagnostics but excluded from the blend (no within-metro signal).
 
 Volunteering source priority:
   1. Social Capital Atlas (ZIP-level) — Facebook-derived volunteering_rate_zip
@@ -171,7 +174,7 @@ def get_precinct_or_voter_turnout(
 ) -> Tuple[Optional[Tuple[float, Any, Optional[float]]], str]:
     """
     Returns (score_0_100, stats, rate) like voter_turnout, or None; and source_tag.
-    source_tag: 'precinct' or 'tract_turnout'.
+    source_tag: ``precinct``, ``tract_turnout`` (tract-level rate), ``state_turnout``, or ``none``.
     """
     if tract and _precinct_turnout_by_tract:
         geoid = tract.get("geoid")
@@ -181,7 +184,7 @@ def get_precinct_or_voter_turnout(
             return (sc, {"mean": 0.45, "std": 0.12}, rate), "precinct"
     res = voter_turnout.get_voter_turnout_score(tract=tract, area_type=area_type)
     if res is None:
-        return res, "tract_turnout"
+        return None, "none"
     # Detect whether tract-level data was available or state fallback was used.
     # State-level rates (voter registration by state) have no within-metro signal;
     # every place in the state gets the same value, so including it in the blend
@@ -211,6 +214,7 @@ def compute_participation_score(
         "mix": None,
         "volunteering_resolution": None,
         "turnout_source": None,
+        "turnout_in_engagement_blend": False,
     }
 
     r_ref = irs_bmf.get_civic_orgs_per_1k(
@@ -255,6 +259,7 @@ def compute_participation_score(
             z_turn = turnout_res[0]
     diag["turnout_z"] = z_turn
     diag["turnout_rate"] = turn_rate
+    diag["turnout_in_engagement_blend"] = z_turn is not None
 
     score: Optional[float]
     if bmf_slot is not None and z_vol is not None and z_turn is not None:
