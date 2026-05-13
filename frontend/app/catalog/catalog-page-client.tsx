@@ -111,6 +111,18 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return null
   })
+  const [incomeInputValue, setIncomeInputValue] = useState<string>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return typeof parsed.household_income === 'number' && parsed.household_income > 0
+          ? String(parsed.household_income)
+          : ''
+      }
+    } catch { /* ignore */ }
+    return ''
+  })
 
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
@@ -580,15 +592,16 @@ export default function CatalogPageClient({
               <div className="relative flex items-center">
                 <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
                 <input
-                  type="number"
-                  min={0}
-                  step={10000}
+                  type="text"
+                  inputMode="numeric"
                   placeholder="annual household"
-                  value={householdIncome ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value === '' ? null : parseInt(e.target.value, 10)
-                    const next = Number.isFinite(v) && (v as number) > 0 ? (v as number) : null
-                    setHouseholdIncome(next)
+                  value={incomeInputValue}
+                  onChange={(e) => setIncomeInputValue(e.target.value)}
+                  onBlur={(e) => {
+                    const v = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10)
+                    const next = Number.isFinite(v) && (v as number) >= 10000 ? (v as number) : null
+                    if (next !== householdIncome) setHouseholdIncome(next)
+                    setIncomeInputValue(next ? String(next) : '')
                     try {
                       const stored = sessionStorage.getItem('homefit_search_options')
                       const opts = stored ? JSON.parse(stored) : {}
@@ -603,6 +616,7 @@ export default function CatalogPageClient({
                     className="absolute right-1.5 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
                     onClick={() => {
                       setHouseholdIncome(null)
+                      setIncomeInputValue('')
                       try {
                         const stored = sessionStorage.getItem('homefit_search_options')
                         const opts = stored ? JSON.parse(stored) : {}

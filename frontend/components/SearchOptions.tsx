@@ -543,15 +543,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ color: 'var(--hf-text-secondary)', fontWeight: 600 }}>$</span>
                 <input
-                  type="number"
-                  min={0}
-                  step={10000}
-                  placeholder="e.g. 200000"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="e.g. 200,000"
                   disabled={disabled}
                   value={options.household_income ?? ''}
                   onChange={(e) => {
                     const raw = e.target.value
-                    const parsed = raw === '' ? null : parseInt(raw, 10)
+                    const parsed = raw === '' ? null : parseInt(raw.replace(/,/g, ''), 10)
                     onChange({ ...options, household_income: Number.isFinite(parsed) && (parsed as number) > 0 ? parsed : null })
                   }}
                   style={{
