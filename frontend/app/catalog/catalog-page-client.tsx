@@ -27,7 +27,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -99,6 +99,18 @@ export default function CatalogPageClient({
   /** When true, list sorts by name; map coloring still follows `indexMode`. */
   const [sortByName, setSortByName] = useState(false)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [householdIncome, setHouseholdIncome] = useState<number | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return typeof parsed.household_income === 'number' && parsed.household_income > 0
+          ? parsed.household_income
+          : null
+      }
+    } catch { /* ignore */ }
+    return null
+  })
 
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
@@ -170,9 +182,16 @@ export default function CatalogPageClient({
     return Array.from(s).sort((a, b) => displayArchetypeLabel(a).localeCompare(displayArchetypeLabel(b)))
   }, [places])
 
+  const adjustedPlaces = useMemo(() =>
+    householdIncome
+      ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
+      : places,
+    [places, householdIncome]
+  )
+
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
-    let list = places.filter((p) => {
+    let list = adjustedPlaces.filter((p) => {
       if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) return false
       if (filterType !== 'all') {
         const ty = (p.catalog.type || '').toLowerCase()
@@ -192,7 +211,7 @@ export default function CatalogPageClient({
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
     return sortPlaces(list, sortKey, sortDir, priorities)
   }, [
-    places,
+    adjustedPlaces,
     filterText,
     filterMetro,
     filterType,
@@ -203,19 +222,19 @@ export default function CatalogPageClient({
     priorities,
   ])
 
-  const queryPlace = twinQueryKey ? findPlaceByKey(places, twinQueryKey) : null
+  const queryPlace = twinQueryKey ? findPlaceByKey(adjustedPlaces, twinQueryKey) : null
 
   const twinCandidatePlaces = useMemo(() => {
     if (catalogMode !== 'twin' || !queryPlace || !twinQueryKey) return []
     const qm = inferCatalogMetro(queryPlace)
-    return places.filter((p) => {
+    return adjustedPlaces.filter((p) => {
       const id = catalogRowKey(p.catalog)
       if (id === twinQueryKey) return false
       const m = inferCatalogMetro(p)
       if (twinCrossMetro) return m !== qm
       return m === qm
     })
-  }, [catalogMode, queryPlace, places, twinQueryKey, twinCrossMetro])
+  }, [catalogMode, queryPlace, adjustedPlaces, twinQueryKey, twinCrossMetro])
 
   const twinPillarList = useMemo(() => PILLAR_ORDER.filter((k) => twinPillars.has(k)), [twinPillars])
 

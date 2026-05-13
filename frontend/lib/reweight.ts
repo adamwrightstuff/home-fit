@@ -256,6 +256,54 @@ export function totalFromPartialPillarScores(
   return Math.round((weightedSum / weightSum) * 100) / 100
 }
 
+/** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
+function scoreLocalAffordability(homeValue: number, income: number): number {
+  if (!homeValue || !income) return 0
+  const ratio = homeValue / income
+  if (ratio <= 2.0) return 50
+  if (ratio <= 2.5) return 45
+  if (ratio <= 3.0) return 40
+  if (ratio <= 3.5) return 35
+  if (ratio <= 4.0) return 30
+  if (ratio <= 4.5) return 25
+  if (ratio <= 5.0) return 20
+  if (ratio <= 6.0) return 15
+  if (ratio <= 7.0) return 10
+  return 5
+}
+
+/**
+ * Recompute housing_value score using a user-supplied income instead of the local median.
+ * Only local_affordability (0–50 pts) changes; space and value_efficiency are income-independent.
+ * Returns original data unchanged when userIncome is null/zero or median_home_value is missing.
+ */
+export function applyUserIncomeToScore(
+  data: ScoreResponse,
+  userIncome: number | null | undefined
+): ScoreResponse {
+  if (!userIncome || userIncome <= 0) return data
+  const hv = (data.livability_pillars as any)?.housing_value
+  if (!hv) return data
+  const medianHomeValue = Number(hv.summary?.median_home_value ?? 0)
+  if (medianHomeValue <= 0) return data
+  const bk = hv.breakdown ?? {}
+  const space = Number(bk.space ?? 0)
+  const valueEfficiency = Number(bk.value_efficiency ?? 0)
+  const newAffordability = scoreLocalAffordability(medianHomeValue, userIncome)
+  const newTotal = Math.min(100, Math.max(0, newAffordability + space + valueEfficiency))
+  return {
+    ...data,
+    livability_pillars: {
+      ...data.livability_pillars,
+      housing_value: {
+        ...hv,
+        score: newTotal,
+        breakdown: { ...bk, local_affordability: newAffordability },
+      },
+    } as ScoreResponse['livability_pillars'],
+  }
+}
+
 /** Expose token allocation for UI: weight % per pillar from current priorities (no API). */
 export function getPillarWeightsFromPriorities(
   priorities: Partial<Record<string, string>> | PillarPriorities | null | undefined
