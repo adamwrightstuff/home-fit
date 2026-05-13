@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "description": "Mean and std of violent_per_1k and property_per_1k crime rates by area type.",
+    "sources": [
+      "Empirical: NYC Open Data NYPD complaints 2025-05-01 to 2026-05-01 (13 neighborhoods)",
+      "Empirical: LA Open Data LAPD incidents 2023-12-01 to 2024-12-01 (4 neighborhoods)",
+      "National reference: FBI UCR 2022 Crime in the U.S. summary tables (suburban/exurban/rural)"
+    ],
+    "notes": [
+      "violent_per_1k: (assault + robbery + homicide) per 1,000 residents in scored radius",
+      "property_per_1k: (burglary + theft + vehicle theft) per 1,000 residents in scored radius",
+      "Baselines intentionally use a moderately wide std to avoid penalizing genuinely urban areas vs national rural norms",
+      "Rebuild with scripts/baselines/build_community_safety_baselines.py as more data accumulates"
+    ]
+  },
+  "urban_core": {
+    "violent_mean": 4.5,
+    "violent_std": 5.0,
+    "property_mean": 15.0,
+    "property_std": 12.0
+  },
+  "urban_residential": {
+    "violent_mean": 3.0,
+    "violent_std": 3.5,
+    "property_mean": 10.0,
+    "property_std": 8.0
+  },
+  "suburban": {
+    "violent_mean": 2.0,
+    "violent_std": 1.5,
+    "property_mean": 10.0,
+    "property_std": 6.0
+  },
+  "exurban": {
+    "violent_mean": 1.5,
+    "violent_std": 1.2,
+    "property_mean": 8.0,
+    "property_std": 5.0
+  },
+  "rural": {
+    "violent_mean": 1.8,
+    "violent_std": 1.0,
+    "property_mean": 6.0,
+    "property_std": 4.0
+  },
+  "default": {
+    "violent_mean": 3.5,
+    "violent_std": 4.0,
+    "property_mean": 12.0,
+    "property_std": 9.0
+  }
+}

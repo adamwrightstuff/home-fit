@@ -45,6 +45,7 @@ PILLAR_ORDER: List[str] = [
     "public_transit_access",
     "air_travel_access",
     "housing_value",
+    "community_safety",
 ]
 
 

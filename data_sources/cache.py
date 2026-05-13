@@ -99,6 +99,7 @@ CACHE_TTL = {
     'healthcare': 2 * 3600,            # 2 hours for healthcare data (moderate stability)
     'bls_data': 7 * 24 * 3600,         # 7 days for BLS QCEW/OEWS (updates annually)
     'places_nearby': 2 * 3600,         # 2 hours — Google Places nearby (quota/cost aware)
+    'crime_data': 30 * 24 * 3600,      # 30 days for crime statistics (updates annually/quarterly)
 }
 
 
