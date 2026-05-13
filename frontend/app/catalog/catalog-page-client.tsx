@@ -575,6 +575,47 @@ export default function CatalogPageClient({
               </div>
             )}
 
+            <div className="flex items-center gap-1.5">
+              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)] shrink-0">My income</span>
+              <div className="relative flex items-center">
+                <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={10000}
+                  placeholder="annual household"
+                  value={householdIncome ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value === '' ? null : parseInt(e.target.value, 10)
+                    const next = Number.isFinite(v) && (v as number) > 0 ? (v as number) : null
+                    setHouseholdIncome(next)
+                    try {
+                      const stored = sessionStorage.getItem('homefit_search_options')
+                      const opts = stored ? JSON.parse(stored) : {}
+                      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
+                    } catch { /* ignore */ }
+                  }}
+                  className="w-36 rounded-lg border border-[var(--hf-border)] py-1 pl-5 pr-2 text-xs"
+                />
+                {householdIncome && (
+                  <button
+                    type="button"
+                    className="absolute right-1.5 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
+                    onClick={() => {
+                      setHouseholdIncome(null)
+                      try {
+                        const stored = sessionStorage.getItem('homefit_search_options')
+                        const opts = stored ? JSON.parse(stored) : {}
+                        sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
+                      } catch { /* ignore */ }
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div
               role="group"
               aria-label="Map index and list sort"
