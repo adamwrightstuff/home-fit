@@ -833,8 +833,10 @@ def _classify_archetype(
     if home_cost == 0 and wealth_val < 25:
         return "Unclassified", "insufficient_data"
 
-    # Established: ultra-high wealth always qualifies (can't be inequality-inflated artifact)
-    if wealth_val >= 90:
+    # Established: ultra-high wealth qualifies only when housing costs confirm a prestige enclave.
+    # home_cost >= 50 screens out inequality-inflated tracts (a few wealthy households in an
+    # otherwise moderate neighborhood) and transient/rental areas with no real estate premium.
+    if wealth_val >= 90 and home_cost >= 50:
         return "Established", "established_ultra_wealth"
 
     # Professional: credential class fires before stab-gated Established so that credential-dense
