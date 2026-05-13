@@ -180,7 +180,16 @@ def get_precinct_or_voter_turnout(
             sc = _rate_to_z_score(rate, 0.45, 0.12)
             return (sc, {"mean": 0.45, "std": 0.12}, rate), "precinct"
     res = voter_turnout.get_voter_turnout_score(tract=tract, area_type=area_type)
-    return res, "tract_turnout"
+    if res is None:
+        return res, "tract_turnout"
+    # Detect whether tract-level data was available or state fallback was used.
+    # State-level rates (voter registration by state) have no within-metro signal;
+    # every place in the state gets the same value, so including it in the blend
+    # creates a flat state-level bias with no discrimination power.
+    geoid = tract.get("geoid") if tract else None
+    has_tract_data = bool(geoid and voter_turnout.rate_by_tract.get(geoid) is not None)
+    source_tag = "tract_turnout" if has_tract_data else "state_turnout"
+    return res, source_tag
 
 
 def compute_participation_score(
@@ -238,7 +247,12 @@ def compute_participation_score(
     z_turn: Optional[float] = None
     turn_rate: Optional[float] = None
     if turnout_res is not None:
-        z_turn, _st, turn_rate = turnout_res[0], turnout_res[1], turnout_res[2]
+        turn_rate = turnout_res[2]
+        if tsrc != "state_turnout":
+            # Only include turnout in the blend when it has local signal (tract or precinct).
+            # State-level registration rates are uniform within each state and add no
+            # within-metro discrimination — including them just creates a flat state bias.
+            z_turn = turnout_res[0]
     diag["turnout_z"] = z_turn
     diag["turnout_rate"] = turn_rate
 

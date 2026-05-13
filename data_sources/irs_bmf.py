@@ -247,16 +247,30 @@ def _pick_engagement_stats(
     area_stats = engagement_stats_by_area_type
 
     at = (area_type or "").lower().replace(" ", "_") if area_type else None
-    stats = None
+    area_entry = None
     if at and area_stats:
-        stats = area_stats.get(at) or area_stats.get("default")
-        if stats is None:
-            stats = area_stats.get("all")
-    if stats is None and division_code and div_stats:
-        stats = div_stats.get(division_code)
-        if stats is None:
-            stats = div_stats.get("all")
-    return stats
+        area_entry = area_stats.get(at) or area_stats.get("default")
+        if area_entry is None:
+            area_entry = area_stats.get("all")
+
+    div_entry = None
+    if division_code and div_stats:
+        div_entry = div_stats.get(division_code)
+
+    if area_entry and div_entry:
+        # Hybrid: use the regional (division) mean as the baseline so northeast places
+        # aren't penalized against a national mean they structurally can't reach, but
+        # keep the area_type std for z-score discrimination between places.
+        return {"mean": div_entry["mean"], "std": area_entry["std"]}
+
+    if area_entry:
+        return area_entry
+    if div_entry:
+        return div_entry
+    # Last resort: national all
+    if div_stats:
+        return div_stats.get("all")
+    return None
 
 
 def get_civic_orgs_per_1k(
