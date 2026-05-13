@@ -46,6 +46,7 @@ export default function Home() {
       built_character_preference: ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference) ? parsed.built_character_preference : null,
       built_density_preference: ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference) ? parsed.built_density_preference : null,
       diversity_preference: Array.isArray(parsed.diversity_preference) ? parsed.diversity_preference : null,
+      household_income: typeof parsed.household_income === 'number' && parsed.household_income > 0 ? parsed.household_income : null,
     }
       }
     } catch (e) {
@@ -60,6 +61,7 @@ export default function Home() {
       built_character_preference: null,
       built_density_preference: null,
       diversity_preference: null,
+      household_income: null,
     }
   })
 
@@ -203,6 +205,7 @@ export default function Home() {
                 diversity_preference: search_options.diversity_preference?.length
                   ? JSON.stringify(search_options.diversity_preference)
                   : null,
+                household_income: search_options.household_income ?? null,
               }
               try {
                 const cacheKey = buildResultsCacheKey(params)

@@ -187,32 +187,35 @@ def _calculate_intensity_score(
     density_score = _continuous_density_score(density)
     coverage_score = _continuous_coverage_score(coverage)
     business_score = _continuous_business_score(business_count)
-    
+
+    # Treat missing coverage/business as unknown (not zero) — redistribute their weight
+    # to density so batch scoring without OSM coverage data doesn't misclassify dense
+    # urban neighborhoods (e.g. Los Feliz, Silver Lake) as suburban.
+    have_coverage = coverage is not None
+    have_business = business_count is not None
+
     # Adjust weights based on density level
     # High density (>7k) = more weight to density (handles low-coverage urban neighborhoods)
     # Moderate density = balanced weights
     # Low density = more weight to coverage/business (handles sparse areas)
     if density and density > 7000:
-        # High density: density 60%, coverage 25%, business 15%
-        intensity = (
-            density_score * 0.60 +
-            coverage_score * 0.25 +
-            business_score * 0.15
-        )
+        # High density: density 60%, coverage 25%, business 15% — but redistribute missing
+        w_d = 0.60 + (0 if have_coverage else 0.25) + (0 if have_business else 0.15)
+        w_c = 0.25 if have_coverage else 0
+        w_b = 0.15 if have_business else 0
+        intensity = density_score * w_d + coverage_score * w_c + business_score * w_b
     elif density and density > 3000:
         # Moderate density: balanced weights
-        intensity = (
-            density_score * 0.50 +
-            coverage_score * 0.30 +
-            business_score * 0.20
-        )
+        w_d = 0.50 + (0 if have_coverage else 0.30) + (0 if have_business else 0.20)
+        w_c = 0.30 if have_coverage else 0
+        w_b = 0.20 if have_business else 0
+        intensity = density_score * w_d + coverage_score * w_c + business_score * w_b
     else:
         # Low density: coverage and business more important
-        intensity = (
-            density_score * 0.40 +
-            coverage_score * 0.40 +
-            business_score * 0.20
-        )
+        w_d = 0.40 + (0 if have_coverage else 0.40) + (0 if have_business else 0.20)
+        w_c = 0.40 if have_coverage else 0
+        w_b = 0.20 if have_business else 0
+        intensity = density_score * w_d + coverage_score * w_c + business_score * w_b
     
     return min(1.0, max(0.0, intensity))
 

@@ -35,6 +35,8 @@ interface SearchOptions {
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   /** Diversity: which mix dimensions to emphasize in the headline (race, income, age). null = average all available. */
   diversity_preference?: string[] | null
+  /** Household income for personalized housing affordability scoring. null = use local median. */
+  household_income?: number | null
 }
 
 interface SearchOptionsProps {
@@ -522,6 +524,54 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     </label>
                   )
                 })}
+              </div>
+            </div>
+          </div>
+          )}
+
+          {options.priorities.housing_value !== 'None' && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Your Household Income (optional)
+              </h4>
+            </div>
+            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Enter your annual household income to personalize the Housing Value score. Instead of local median income, affordability will be calculated relative to what you can actually afford.
+            </p>
+            <div className="hf-panel" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ color: 'var(--hf-text-secondary)', fontWeight: 600 }}>$</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={10000}
+                  placeholder="e.g. 200000"
+                  disabled={disabled}
+                  value={options.household_income ?? ''}
+                  onChange={(e) => {
+                    const raw = e.target.value
+                    const parsed = raw === '' ? null : parseInt(raw, 10)
+                    onChange({ ...options, household_income: Number.isFinite(parsed) && (parsed as number) > 0 ? parsed : null })
+                  }}
+                  style={{
+                    flex: 1,
+                    background: 'var(--hf-bg-secondary)',
+                    border: '1px solid var(--hf-border)',
+                    borderRadius: '6px',
+                    padding: '0.5rem 0.75rem',
+                    color: 'var(--hf-text-primary)',
+                    fontSize: '1rem',
+                  }}
+                />
+                {options.household_income && (
+                  <button
+                    onClick={() => onChange({ ...options, household_income: null })}
+                    style={{ color: 'var(--hf-text-muted)', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           </div>

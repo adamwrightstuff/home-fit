@@ -192,6 +192,8 @@ export interface ScoreRequestParams {
   built_density_preference?: string;
   /** Diversity: JSON array of race, income, and/or age (e.g. '["race","income"]'). Omitted = average all dimensions with data. */
   diversity_preference?: string;
+  /** Household income for personalized housing affordability. Omitted = local median income. */
+  household_income?: number;
   /** When set, backend uses these coordinates instead of geocoding location (ensures refresh uses same point). */
   lat?: number;
   lon?: number;
