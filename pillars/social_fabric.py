@@ -108,6 +108,21 @@ def _civic_radius_m_from_tract_density(density_sqmi: Optional[float]) -> int:
     return 3000
 
 
+def _civic_band_key(area_type: Optional[str], radius_m: int) -> str:
+    """Civic scoring band: area_type is primary, radius-derived tier is fallback for exurban/rural.
+
+    Density alone produces wrong bands for geographically small suburbs (e.g. a 0.5 sq-mi village
+    with 12k/sqmi gets 600m radius → urban_core expectations, but only 6 civic nodes).
+    The morphological area_type already blends density with coverage and business signals.
+    """
+    if area_type in ("urban_core", "urban_residential"):
+        return area_type
+    if area_type == "suburban":
+        return "suburban"
+    # exurban / rural / unknown: radius-derived tier is correct (3000m → rural, 1200m → suburban)
+    return social_fabric_bands.civic_band_area_type_for_radius(radius_m)
+
+
 def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float]) -> Optional[float]:
     """
     Conservative civic_gathering score when OSM+Places yield zero nodes (NA-style urban/suburban floors).
@@ -317,7 +332,7 @@ def get_social_fabric_score(
     nodes = civic.get("nodes") or []
     civic_count = len(nodes)
     civic_effective = sum(_civic_node_type_weight(n.get("type") if isinstance(n, dict) else None) for n in nodes)
-    civic_band_key = social_fabric_bands.civic_band_area_type_for_radius(civic_radius_m)
+    civic_band_key = _civic_band_key(area_type, civic_radius_m)
 
     civic_imputed_floor_applied = False
     if civic_count <= 0:
