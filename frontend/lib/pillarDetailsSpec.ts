@@ -274,11 +274,19 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },
   community_safety: {
-    topLine: 'Local crime rates from hyper-local police data, normalized by area type.',
+    topLine:
+      'Reported incidents in the search radius from local open data (e.g. NYPD), converted to per‑1k rates using estimated residents in that radius, then graded vs area‑type baselines.',
     metrics: [
-      { label: 'Overall crime score', path: 'summary.overall_crime_score', format: 'percent', max: 100 },
-      { label: 'Violent crime score', path: 'summary.violent_crime_score', format: 'percent', max: 100 },
-      { label: 'Property crime score', path: 'summary.property_crime_score', format: 'percent', max: 100 },
+      { label: 'Violent crime (per 1k)', path: 'breakdown.violent_per_1k', format: 'text' },
+      { label: 'Property crime (per 1k)', path: 'breakdown.property_per_1k', format: 'text' },
+      { label: 'Violent slot (0–100)', path: 'breakdown.violent_slot', format: 'text' },
+      { label: 'Property slot (0–100)', path: 'breakdown.property_slot', format: 'text' },
+      { label: 'Blend before trend', path: 'breakdown.raw_score', format: 'text' },
+      { label: 'YoY violent trend (%)', path: 'breakdown.trend_pct', format: 'text' },
+      { label: 'Trend points applied', path: 'breakdown.trend_delta', format: 'text' },
+      { label: 'Incidents in window', path: 'breakdown.incidents_current', format: 'count' },
+      { label: 'Source', path: 'breakdown.source', format: 'text' },
+      { label: 'Precision', path: 'breakdown.precision_level', format: 'text' },
     ],
     degradedMessage: 'Limited data: local police crime data were unavailable for this area.',
   },

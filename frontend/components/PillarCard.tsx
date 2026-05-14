@@ -226,6 +226,12 @@ const METRIC_EXPLAINERS: Record<string, string> = {
   'diversity:Mix dimensions scored': 'Which Census mix dimensions (race, income, age) had data for this tract.',
   'diversity:Self-employed (tract %)': 'Share of workers who are self-employed in this tract (Census).',
   'diversity:Race & ethnicity spread': 'Normalized entropy across race groups—higher means a more even mix.',
+  'community_safety:Violent crime (per 1k)': 'Violent complaints in the radius (assault, robbery, homicide categories) per 1,000 estimated residents—after any commuter-denominator adjustment.',
+  'community_safety:Property crime (per 1k)': 'Property complaints in the radius (burglary, theft, vehicle theft) per 1,000 estimated residents.',
+  'community_safety:Violent slot (0–100)': 'How this violent rate compares to the national area-type baseline (higher is safer).',
+  'community_safety:Property slot (0–100)': 'How this property rate compares to the national area-type baseline (higher is safer).',
+  'community_safety:Blend before trend': 'Weighted mix of violent and property slots (65% / 35%) before the year-over-year trend adjustment.',
+  'community_safety:Incidents in window': 'Total complaints returned for the scored period and radius (includes rows not counted as violent or property).',
 }
 
 export default function PillarCard({
