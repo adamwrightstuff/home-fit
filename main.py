@@ -1406,6 +1406,9 @@ def _compute_single_score_internal(
     tree_canopy_5km = None
     form_context = None
 
+    def _include_pillar(name: str) -> bool:
+        return only_pillars is None or name in only_pillars
+
     shared_blob = None
     if not test_mode_enabled and only_pillars is None:
         try:
@@ -1519,9 +1522,6 @@ def _compute_single_score_internal(
             area_type = "unknown"
             arch_diversity_data = None
             density = None
-
-    def _include_pillar(name: str) -> bool:
-        return only_pillars is None or name in only_pillars
 
         # Pre-compute tree canopy (5km) once for pillars that need it
         tree_canopy_5km = None
