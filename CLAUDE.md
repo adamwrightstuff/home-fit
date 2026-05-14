@@ -62,4 +62,4 @@ Scripts in `scripts/catalog/` handle batch scoring of place catalogs to JSONL, r
 
 ## Commit Behavior
 
-At the end of any session where you made changes: stage only files relevant to the current work (not `.venv`, `analysis/*.jsonl`, or other local artifacts), commit with a clear message, and push to `origin main`.
+Do **not** commit or push when the user says something is personal / local-only / “just for me” or they do not want it on GitHub. Otherwise, at the end of a session: stage only files relevant to the current work (not `.venv`, `analysis/*.jsonl`, exploratory `analysis/*.md` unless asked, or other local artifacts), commit with a clear message, and push to `origin main`.
