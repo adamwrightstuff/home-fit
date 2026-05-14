@@ -363,16 +363,19 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
-def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
+def _fetch_fbi_rate(
+    ori: str, offense_type: str, year: int, agency_name: Optional[str] = None
+) -> Optional[float]:
     """
-    Fetch the state-level annual crime rate per 100k population for a given year.
+    Fetch an annual crime rate per 100k from the FBI CDE summarized/agency endpoint.
 
-    The FBI CDE /summarized/agency/{ori}/{offense_type} endpoint returns rolling
-    monthly rates for the agency's state (not the individual agency).  We take
-    the December value as the full-year rate.  Divide by 100 to convert per-100k
-    to per-1k for consistency with the Socrata path.
+    For NIBRS-reporting agencies: if ``agency_name`` is provided and a matching
+    agency-specific key exists in the response, that per-agency rate is returned
+    (Tier 2 granularity).  Otherwise, the state-level rate is returned as a
+    fallback (Tier 3).
 
-    Returns None on any failure.
+    We take the December value of the rolling monthly series as the full-year
+    figure, consistent with how we have always used this endpoint.
     """
     api_key = _get_fbi_key()
     if not api_key:
@@ -386,29 +389,61 @@ def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[fl
         }
         resp = requests.get(url, params=params, timeout=_REQUEST_TIMEOUT)
         if resp.status_code != 200:
-            logger.warning("FBI CDE state rate %s %d returned %d", offense_type, year, resp.status_code)
+            logger.warning("FBI CDE rate %s %d returned %d", offense_type, year, resp.status_code)
             return None
         data = resp.json()
         rates_by_label = data.get("offenses", {}).get("rates", {})
-        # Pick the state-level row (not "United States")
-        for label, month_vals in rates_by_label.items():
+
+        def _extract(label: str) -> Optional[float]:
+            month_vals = rates_by_label.get(label, {})
+            if not month_vals:
+                return None
+            dec_key = f"12-{year}"
+            vals = list(month_vals.values())
+            return float(month_vals.get(dec_key) or vals[-1])
+
+        # Tier 2: prefer agency-specific key when the caller supplies the expected
+        # agency name (only reliable for NIBRS-reporting agencies whose name appears
+        # explicitly in the response).
+        if agency_name:
+            # Normalise: "Beverly Hills Police Department" → look for that substring
+            # in the Offenses key e.g. "Beverly Hills Police Department Offenses"
+            ag_key = next(
+                (k for k in rates_by_label
+                 if "Offenses" in k
+                 and "United States" not in k
+                 and "California" not in k   # skip state aggregate
+                 and agency_name.lower() in k.lower()),
+                None,
+            )
+            if ag_key:
+                val = _extract(ag_key)
+                if val is not None:
+                    logger.debug("FBI CDE agency rate for '%s' %s %d: %.2f", agency_name, offense_type, year, val)
+                    return val
+
+        # Tier 3: state-level aggregate
+        for label in rates_by_label:
             if "Offenses" in label and "United States" not in label:
-                vals = list(month_vals.values())
-                if vals:
-                    # December value = best available full-year rate
-                    dec_key = f"12-{year}"
-                    return float(month_vals.get(dec_key) or vals[-1])
-        # Fallback: use national rate
-        for label, month_vals in rates_by_label.items():
+                val = _extract(label)
+                if val is not None:
+                    return val
+
+        # Last-resort: national rate
+        for label in rates_by_label:
             if "United States" in label and "Offenses" in label:
-                vals = list(month_vals.values())
-                if vals:
-                    dec_key = f"12-{year}"
-                    return float(month_vals.get(dec_key) or vals[-1])
+                val = _extract(label)
+                if val is not None:
+                    return val
         return None
     except Exception as e:
-        logger.warning("FBI CDE state rate fetch failed: %s", e)
+        logger.warning("FBI CDE rate fetch failed: %s", e)
         return None
+
+
+# Keep the old name as an alias so existing callers don't break
+def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
+    return _fetch_fbi_rate(ori, offense_type, year)
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -575,19 +610,40 @@ def _get_fbi_rates(
             )
 
     # -----------------------------------------------------------------------
-    # Tier 3: FBI CDE state-level aggregate rate (fallback for all states)
+    # Tier 2/3: FBI CDE.  For NIBRS-reporting agencies, pass the agency name
+    # so _fetch_fbi_rate can extract per-agency rates rather than the state
+    # aggregate.  For non-NIBRS agencies, agency_name_hint stays None and the
+    # function falls through to the state-level rate.
     # -----------------------------------------------------------------------
-    violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", data_year)
+    is_nibrs = bool(agency.get("is_nibrs"))
+    agency_display_name = agency.get("agencyName") or agency.get("agency_name") or ""
+
+    # Guard: only use per-agency NIBRS data when we're confident the right agency
+    # was matched.  _find_nearest_agency picks by distance, so for a non-NIBRS
+    # city it may return a nearby campus PD or adjacent municipality.  Verify
+    # the city_hint (e.g. "Beverly Hills") actually appears in the agency name.
+    nibrs_city_match = (
+        is_nibrs
+        and city_hint
+        and any(
+            word.lower() in agency_display_name.lower()
+            for word in (city_hint or "").split()
+            if len(word) > 3  # skip short words like "San", "Los", "Del"
+        )
+    )
+    agency_name_hint = agency_display_name if nibrs_city_match else None
+
+    violent_rate_100k = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
     if violent_rate_100k is None:
-        violent_rate_100k = _fetch_fbi_state_rate(ori, "violent-crime", prev_year)
+        violent_rate_100k = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
         prev_year -= 1
 
     if violent_rate_100k is None:
         return None
 
-    property_rate_100k = _fetch_fbi_state_rate(ori, "property-crime", data_year)
+    property_rate_100k = _fetch_fbi_rate(ori, "property-crime", data_year, agency_name_hint)
     if property_rate_100k is None:
-        property_rate_100k = _fetch_fbi_state_rate(ori, "property-crime", prev_year)
+        property_rate_100k = _fetch_fbi_rate(ori, "property-crime", prev_year, agency_name_hint)
 
     # Convert per-100k → per-1k
     violent_rate = round(violent_rate_100k / 100.0, 3)
@@ -595,18 +651,19 @@ def _get_fbi_rates(
 
     # Trend: compare current year violent to prior year
     trend_pct: Optional[float] = None
-    prev_violent_100k = _fetch_fbi_state_rate(ori, "violent-crime", prev_year)
+    prev_violent_100k = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
     if prev_violent_100k and prev_violent_100k > 0:
         raw_trend = (violent_rate_100k - prev_violent_100k) / prev_violent_100k * 100
         trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
+    source = "fbi_nibrs_agency" if nibrs_city_match else "fbi_cde_state"
     return {
         "violent_per_1k": violent_rate,
         "property_per_1k": property_rate,
         "trend_pct": trend_pct,
-        "source": "fbi_cde_state",
+        "source": source,
         "agency_ori": ori,
-        "agency_name": agency.get("agencyName") or agency.get("agency_name"),
+        "agency_name": agency_display_name,
     }
 
 
