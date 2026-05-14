@@ -601,8 +601,26 @@ def _get_fbi_rates(
             ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year)
             if ny_row is None:
                 ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year - 1)
+
+            # Hamlets and unincorporated communities in New York are policed by TOWN
+            # police departments, which appear in the state dataset under the town name
+            # ("New Castle Town PD"), not the hamlet name ("Chappaqua").
+            # Retry using the town name when the FBI agency is a TOWN PD.
+            # Do NOT apply this to Village or City PDs — those have fixed boundaries
+            # and don't cover adjacent unincorporated areas.
+            if ny_row is None:
+                agency_name_raw = agency.get("agency_name") or ""
+                if " Town " in agency_name_raw and " Village " not in agency_name_raw:
+                    town_kw = agency_name_raw.split(" Town ")[0].strip()
+                    if town_kw and town_kw.lower() != city_hint.lower():
+                        ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year)
+                        if ny_row is None:
+                            ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year - 1)
+
             if ny_row is not None:
-                prev_ny_row = _fetch_ny_state_agency_crimes(city_hint, county, int(ny_row["year"]) - 1)
+                prev_ny_row = _fetch_ny_state_agency_crimes(
+                    ny_row.get("agency", city_hint)[:20], county, int(ny_row["year"]) - 1
+                )
                 return _rates_from_ny_state(ny_row, prev_ny_row, population)
             logger.debug(
                 "NY state UCR: no per-agency row for '%s' in %s; falling back to CDE state rate",
