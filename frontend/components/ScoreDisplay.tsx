@@ -173,8 +173,9 @@ export default function ScoreDisplay({
       '',
       'Pillar Scores:',
       ...available_pillars.map((key) => {
-        const score = Number((livability_pillars as any)?.[key]?.score ?? 0)
-        return `  ${PILLAR_META[key].name}: ${score.toFixed(1)}/100`
+        const raw = (livability_pillars as any)?.[key]?.score
+        const score = typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+        return `  ${PILLAR_META[key].name}: ${score != null ? `${score.toFixed(1)}/100` : '—'}`
       }),
     ]
     
@@ -188,11 +189,16 @@ export default function ScoreDisplay({
   }
 
   const pillar_ranked = available_pillars
-    .map((key) => ({ key, score: Number((livability_pillars as any)?.[key]?.score ?? 0) }))
+    .map((key) => {
+      const raw = (livability_pillars as any)?.[key]?.score
+      const score = typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+      return { key, score }
+    })
+    .filter((x): x is { key: PillarKey; score: number } => x.score != null)
     .sort((a, b) => b.score - a.score)
 
   const top2 = pillar_ranked.slice(0, 2)
-  const bottom1 = pillar_ranked[pillar_ranked.length - 1]
+  const bottom1 = pillar_ranked.length ? pillar_ranked[pillar_ranked.length - 1] : undefined
   const tier = overallTier(total_score)
 
   /** Prefer original search input; fall back to city, state zip for display. */
@@ -432,11 +438,13 @@ export default function ScoreDisplay({
 
                 <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
                   Strongest pillars:{' '}
-                  {top2.length >= 2
-                    ? top2
-                        .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
-                        .join(' and ')
-                    : top2.map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`).join(' and ')}
+                  {top2.length === 0
+                    ? '—'
+                    : top2.length >= 2
+                      ? top2
+                          .map((p) => `${PILLAR_META[p.key].icon} ${PILLAR_META[p.key].name} (${p.score.toFixed(0)})`)
+                          .join(' and ')
+                      : `${PILLAR_META[top2[0].key].icon} ${PILLAR_META[top2[0].key].name} (${top2[0].score.toFixed(0)})`}
                   . Biggest opportunity:{' '}
                   {bottom1
                     ? `${PILLAR_META[bottom1.key].icon} ${PILLAR_META[bottom1.key].name} (${bottom1.score.toFixed(0)})`

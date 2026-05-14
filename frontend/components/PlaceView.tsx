@@ -241,6 +241,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         climate_risk: 'None',
         social_fabric: 'None',
         diversity: 'None',
+        community_safety: 'None',
       }
       selectedPillars.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'
@@ -621,6 +622,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         climate_risk: 'None',
         social_fabric: 'None',
         diversity: 'None',
+        community_safety: 'None',
       }
       selected.forEach((k) => {
         prioritiesForRequest[k as keyof PillarPriorities] = selectedPriorities[k] ?? 'Medium'

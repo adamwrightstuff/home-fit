@@ -273,6 +273,9 @@ export default function PillarCard({
     (pillar.data_quality as { fallback_used?: boolean; reason?: string } | undefined)?.fallback_used === true &&
     String((pillar.data_quality as { reason?: string } | undefined)?.reason ?? '').toLowerCase().includes('disabled')
 
+  const numericScore =
+    typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
+
   // Built Beauty: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
   const builtMetrics = pillar_key === 'built_beauty' ? pillar.details?.architectural_analysis?.metrics : null
@@ -466,11 +469,24 @@ export default function PillarCard({
                 ? 'var(--hf-text-secondary)'
                 : isFailed
                   ? 'var(--hf-text-secondary)'
-                  : scoreNumeralOnLight('purple', pillar.score),
+                  : numericScore == null
+                    ? 'var(--hf-text-secondary)'
+                    : scoreNumeralOnLight('purple', numericScore),
               ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
             }}
           >
-            {isLoading ? '—' : isFailed ? '?' : <>{isFallback && !isSchoolsNotScored && <span style={{ opacity: 0.9 }}>~</span>}{pillar.score.toFixed(0)}</>}
+            {isLoading
+              ? '—'
+              : isFailed
+                ? '?'
+                : numericScore == null
+                  ? '—'
+                  : (
+                      <>
+                        {isFallback && !isSchoolsNotScored && <span style={{ opacity: 0.9 }}>~</span>}
+                        {numericScore.toFixed(0)}
+                      </>
+                    )}
           </span>
           {!isFailed && !isLoading && (
             <span
@@ -482,7 +498,7 @@ export default function PillarCard({
                 ...(isNone ? { color: 'var(--hf-text-secondary)', opacity: 0.85 } : {}),
               }}
             >
-              {getScoreBandLabel(pillar.score)}
+              {numericScore != null ? getScoreBandLabel(numericScore) : '—'}
             </span>
           )}
           {isLoading && (
@@ -537,7 +553,8 @@ export default function PillarCard({
                 height: '100%',
                 width: `${Math.min(100, (pillar.weight ?? 0))}%`,
                 borderRadius: 999,
-                background: homefitPillarBarFill(pillar.score),
+                background:
+                  numericScore != null ? homefitPillarBarFill(numericScore) : 'rgba(0, 0, 0, 0.08)',
                 transition: 'width 0.25s ease',
               }}
             />
@@ -564,13 +581,17 @@ export default function PillarCard({
         <div>
           <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Contribution</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
-            {pillar.contribution.toFixed(1)}
+            {typeof pillar.contribution === 'number' && Number.isFinite(pillar.contribution)
+              ? pillar.contribution.toFixed(1)
+              : '—'}
           </div>
         </div>
         <div>
           <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Confidence</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
-            {pillar.confidence.toFixed(0)}%
+            {typeof pillar.confidence === 'number' && Number.isFinite(pillar.confidence)
+              ? `${pillar.confidence.toFixed(0)}%`
+              : '—'}
           </div>
         </div>
       </div>

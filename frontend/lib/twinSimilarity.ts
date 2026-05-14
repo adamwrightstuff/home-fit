@@ -9,7 +9,7 @@ export type TwinMatchResult = {
   comparedPillars: PillarKey[]
 }
 
-/** Unchecked by default in Twin Finder (5 of 13). */
+/** Unchecked by default in Twin Finder (5 of 14). */
 export const TWIN_PILLAR_DEFAULT_UNCHECKED: PillarKey[] = [
   'public_transit_access',
   'climate_risk',
