@@ -11,3 +11,7 @@ earthengine-api
 geopandas>=0.14.0
 pyproj>=3.6.0
 shapely>=2.0
+
+# Community safety: H3 cell + optional LODES-derived commuter Parquet lookup
+h3>=4.2.0
+pyarrow>=14.0.1

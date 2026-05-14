@@ -28,7 +28,9 @@ ENV/
 *.sqlite3.env
 
 # Data: raw BMF CSVs (large, external); regenerate with script
-data/irs_bmf_raw/
+# LODES build cache + generated H3 commuter parquet (build with scripts/baselines/build_lodes_h8_commuter.py)
+data/cache/lodes/
+data/lodes_h8_commuter*.parquet
 
 # Data: raw voter registration CSV (optional input for build script)
 data/voter_registration_raw.csv

@@ -62,6 +62,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | `fetch_voter_registration_data.py` | Download CVAP/EAVS → voter JSONs. |
 | `build_oews_metro_wages.py` | BLS OEWS XLSX → wage JSON. |
 | `build_nrhp_db.py` | NPS → SQLite NRHP index (deploy). |
+| `build_lodes_h8_commuter.py` | LODES WAC/RAC JT00 + block centroids → H3‑8 commuter skew Parquet (optional denominators). |
 | `download_natural_earth_water.py` | Download Natural Earth layers for water scoring. |
 
 ### `collectors/`

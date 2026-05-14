@@ -2220,7 +2220,7 @@ def _compute_single_score_internal(
             "contribution": round((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100, 2),
             "breakdown": community_safety_details,
             "summary": {},
-            "confidence": 80 if community_safety_details.get("data_available") else 0,
+            "confidence": int(community_safety_details.get("confidence", 80 if community_safety_details.get("data_available") else 0)),
             "data_quality": {
                 "degraded": community_safety_score is None,
                 "data_available": community_safety_details.get("data_available", False),
@@ -3797,7 +3797,7 @@ async def _stream_score_with_progress(
                 "contribution": round((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100, 2),
                 "breakdown": community_safety_details,
                 "summary": {},
-                "confidence": 80 if community_safety_details.get("data_available") else 0,
+                "confidence": int(community_safety_details.get("confidence", 80 if community_safety_details.get("data_available") else 0)),
                 "data_quality": {
                     "degraded": community_safety_score is None,
                     "data_available": community_safety_details.get("data_available", False),
@@ -4853,7 +4853,7 @@ async def stream_score(
             "contribution": round((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100, 2),
             "breakdown": community_safety_details,
             "summary": {},
-            "confidence": 80 if community_safety_details.get("data_available") else 0,
+            "confidence": int(community_safety_details.get("confidence", 80 if community_safety_details.get("data_available") else 0)),
             "data_quality": {
                 "degraded": community_safety_score is None,
                 "data_available": community_safety_details.get("data_available", False),

@@ -20,6 +20,7 @@ Data sources
 - NYC metro:  NYPD Complaint Data via NYC Open Data (Socrata)
 - LA metro:   LAPD Crime Data via LA Open Data (Socrata, legacy through 2024)
 - All others: FBI Crime Data Explorer API (requires FBI_CRIME_API_KEY env var)
+- Optional: Census LODES+H3 commuter context (Parquet) to adjust commercial-heavy denominators
 - Degraded:   score=None when no data available; does not contribute to total.
 
 Baselines
@@ -37,6 +38,7 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 from data_sources.crime_api import get_crime_rates
+from data_sources.lodes_h8_commuter_context import compute_commuter_denominator_boost
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -91,6 +93,12 @@ _PRECISION_MAP = {
     "fbi_cde_state":    "DEGRADED",
 }
 
+_CONFIDENCE_BASE: Dict[str, int] = {
+    "HYPER_LOCAL": 93,
+    "PRECINCT_PROXY": 69,
+    "AGENCY_VERIFIED": 82,
+}
+
 # Commercial/retail-hub detector: when property crime rate is this many times
 # higher than violent crime AND violent rate is below this threshold, the area's
 # crime profile is dominated by commercial theft (shoplifting, package theft,
@@ -99,6 +107,21 @@ _PRECISION_MAP = {
 _COMMERCIAL_PROPERTY_RATIO = 8.0   # property_per_1k / violent_per_1k threshold
 _COMMERCIAL_VIOLENT_CEILING = 8.0  # only apply dampening when violent_per_1k < this
 _COMMERCIAL_PROPERTY_WEIGHT = 0.15  # reduced from default 0.35
+
+
+def _confidence_and_dqi(precision_level: str, commuter_meta: Dict[str, Any]) -> Tuple[int, float]:
+    base = float(_CONFIDENCE_BASE.get(precision_level, 45))
+    if precision_level == "DEGRADED":
+        return 0, 0.0
+    adj = 0.0
+    if commuter_meta.get("commuter_denominator_boost"):
+        adj -= 3.0
+    if "extreme_workplace_jobs_ratio" in commuter_meta.get("flags", []):
+        adj -= 6.0
+    conf_f = max(22.0, min(97.0, base + adj))
+    conf_i = int(round(conf_f))
+    dqi = round(conf_i / 100.0, 3)
+    return conf_i, dqi
 
 
 def _z_to_slot(z: float) -> float:
@@ -217,11 +240,15 @@ def get_community_safety_score(
             "status": "DEGRADED",
             "data_available": False,
             "area_type_baseline": bl,
+            "confidence": 0,
+            "data_quality_index": 0.0,
         }
         return None, details
 
     source = rates.get("source", "unknown")
-    precision_level = _PRECISION_MAP.get(source, "DEGRADED")
+    precision_level = _PRECISION_MAP.get(source)
+    if precision_level is None:
+        precision_level = "AGENCY_VERIFIED"
 
     # Zero-tolerance: state-aggregate data produces misleading scores for
     # individual locations.  Return null so the pillar is excluded from the
@@ -238,20 +265,35 @@ def get_community_safety_score(
             "data_available": True,
             "area_type_baseline": bl,
             "agency_name": rates.get("agency_name"),
+            "confidence": 0,
+            "data_quality_index": 0.0,
         }
         return None, details
 
-    violent_per_1k = rates["violent_per_1k"]
-    property_per_1k = rates["property_per_1k"]
+    violent_raw = float(rates["violent_per_1k"])
+    property_raw = float(rates["property_per_1k"])
+    commuter_mult, commuter_meta = compute_commuter_denominator_boost(
+        lat, lon,
+        violent_per_1k=violent_raw,
+        property_per_1k=property_raw,
+    )
+
+    violent_per_1k = violent_raw / commuter_mult
+    property_per_1k = property_raw / commuter_mult
     trend_pct = rates.get("trend_pct")
 
     v_slot, p_slot, raw_score, v_z = _score_rates(violent_per_1k, property_per_1k, area_type)
     td = _trend_delta(trend_pct)
     final_score = round(max(0.0, min(100.0, raw_score + td)), 1)
 
+    conf_i, dqi = _confidence_and_dqi(precision_level, commuter_meta)
+
     details = {
+        # Rates below match the denominator used after optional LODES commuter boost.
         "violent_per_1k": round(violent_per_1k, 3),
         "property_per_1k": round(property_per_1k, 3),
+        "violent_per_1k_residential_radius": round(violent_raw, 3),
+        "property_per_1k_residential_radius": round(property_raw, 3),
         "trend_pct": trend_pct,
         "trend_delta": td,
         "violent_slot": round(v_slot, 1),
@@ -265,5 +307,10 @@ def get_community_safety_score(
         "incidents_current": rates.get("incidents_current"),
         "data_period": rates.get("data_period"),
         "agency_name": rates.get("agency_name"),
+        "confidence": conf_i,
+        "data_quality_index": dqi,
+        "commuter_context": commuter_meta,
     }
+    if commuter_meta.get("commuter_denominator_boost"):
+        details["effective_pop_denominator_multiplier"] = commuter_meta.get("effective_pop_multiplier")
     return final_score, details
