@@ -21,6 +21,7 @@ Caching: 30 days (same as school_data) — crime statistics change slowly and AP
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import time
 from typing import Dict, Optional, Tuple
@@ -49,6 +50,61 @@ _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 # NY State UCR per-agency dataset (Socrata, no key required)
 # "Index Crimes by County and Agency: Beginning 1990"
 _NY_STATE_CRIME_DS = "https://data.ny.gov/resource/ca8h-8gjq.json"
+
+# ---------------------------------------------------------------------------
+# LASD (LA County Sheriff) station-level crime data
+# Pre-aggregated from lasd.org annual Part I & II Crimes CSV.
+# Cities that contract LASD don't have their own ORI in the FBI database.
+# ---------------------------------------------------------------------------
+# Approximate total residential population served by each LASD patrol station.
+# These are the combined Census populations of all cities + unincorporated
+# communities within each station's primary service area.  Used as the
+# denominator for per-1k rate calculations so that rolling-hills-sized cities
+# aren't scored against crime from an entire multi-city patrol zone.
+_LASD_STATION_POPULATIONS: Dict[str, int] = {
+    "ALTADENA":          44_000,   # Altadena unincorporated
+    "CERRITOS":          52_000,   # City of Cerritos
+    "COMPTON":          107_000,   # Compton + adjacent unincorporated
+    "CRESCENTA VALLEY":  40_000,   # La Cañada, La Crescenta, Montrose
+    "LOMITA":            75_000,   # Lomita + RPV + Rolling Hills + RHE
+    "MALIBU/LOST HILLS": 75_000,   # Malibu + Agoura Hills + Calabasas + unincorporated
+    "MARINA DEL REY":     9_000,   # Marina del Rey unincorporated
+    "NORWALK":          165_000,   # Norwalk + La Mirada + unincorporated
+    "TEMPLE":           110_000,   # Temple City + Rosemead + unincorporated SGV
+    "WEST HOLLYWOOD":    36_000,   # City of West Hollywood
+}
+
+_LASD_CITY_TO_STATION: Dict[str, str] = {
+    # City name (lowercase) → LASD UNIT_NAME (as it appears in the CSV)
+    "altadena":             "ALTADENA",
+    "cerritos":             "CERRITOS",
+    "compton":              "COMPTON",
+    "la canada flintridge": "CRESCENTA VALLEY",
+    "la cañada flintridge": "CRESCENTA VALLEY",
+    "la crescenta":         "CRESCENTA VALLEY",
+    "la mirada":            "NORWALK",
+    "rolling hills estates":"LOMITA",
+    "rancho palos verdes":  "LOMITA",
+    "agoura hills":         "MALIBU/LOST HILLS",
+    "malibu":               "MALIBU/LOST HILLS",
+    "temple city":          "TEMPLE",
+    "rosemead":             "TEMPLE",
+    "west hollywood":       "WEST HOLLYWOOD",
+    "marina del rey":       "MARINA DEL REY",
+}
+
+def _load_lasd_station_crimes() -> Dict:
+    """Load pre-aggregated LASD station crime counts from data/lasd_station_crimes.json."""
+    try:
+        import os
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+        path = os.path.join(data_dir, "lasd_station_crimes.json")
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_LASD_STATION_DATA: Dict = {}  # populated lazily on first use
 
 # Geographic bounding boxes for open-data routing.
 # If coordinates fall within a box, use that metro's Socrata endpoint instead
@@ -446,6 +502,54 @@ def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[fl
     return _fetch_fbi_rate(ori, offense_type, year)
 
 
+# Keywords that identify transit, campus, and other special-purpose police
+# agencies that should NOT be selected as the nearest agency for a municipality.
+# These agencies have widespread or misregistered coordinates in the FBI database
+# and serve specific infrastructure, not the surrounding residential community.
+_SPECIAL_PURPOSE_AGENCY_SKIP = frozenset({
+    "metropolitan transportation authority",
+    "metropolitan transportation",
+    "transit authority",
+    "port authority",
+    "railroad",
+    "railway",
+    "amtrak",
+    "metro-north",
+    "metro north",
+    "new jersey transit",
+    "mta police",
+    "airport",
+    "harbor",
+    "university police",
+    "college police",
+    "campus police",
+    "stevens institute",
+    "housing authority",
+})
+
+
+def _is_special_purpose_agency(agency_name: str) -> bool:
+    name_lower = agency_name.lower()
+    return any(kw in name_lower for kw in _SPECIAL_PURPOSE_AGENCY_SKIP)
+
+
+# Known unincorporated communities / suburbs that are served by the police
+# department of a parent municipality rather than their own PD.
+# Key: city hint (lowercase), Value: parent city name for agency name matching.
+# This handles nibrs_city_match failures when the FBI geo coords are wrong
+# or when the location is a hamlet within a larger municipality.
+_SUBURB_TO_PARENT_CITY: Dict[str, str] = {
+    # CT neighborhoods within Greenwich
+    "cos cob":        "Greenwich",
+    "old greenwich":  "Greenwich",
+    "riverside":      "Greenwich",   # CT — not NJ Riverside
+    # CT neighborhoods within Fairfield  
+    "southport":      "Fairfield",
+    # NJ communities served by township PD rather than own PD
+    "short hills":    "Millburn",
+}
+
+
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     import math
     R = 6371.0
@@ -458,6 +562,9 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dict]:
     """
     Find the closest law-enforcement agency to the given point.
+    Skips transit, campus, and other special-purpose agencies that have
+    misregistered coordinates in the FBI database or don't serve the
+    residential community.
     Prefers city/municipal police over county sheriff when both are close.
     """
     best = None
@@ -466,6 +573,9 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
         ag_lat = ag.get("latitude") or ag.get("lat")
         ag_lon = ag.get("longitude") or ag.get("lng") or ag.get("lon")
         if ag_lat is None or ag_lon is None:
+            continue
+        agency_display = (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+        if _is_special_purpose_agency(agency_display):
             continue
         try:
             dist = _haversine_km(lat, lon, float(ag_lat), float(ag_lon))
@@ -477,6 +587,25 @@ def _find_nearest_agency(agencies: list, lat: float, lon: float) -> Optional[Dic
             best_dist = dist
             best = ag
     return best if best_dist < 50 else None  # 50 km max
+
+
+def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]:
+    """
+    Scan all agencies for a NIBRS-reporting PD whose name contains all words
+    from city_hint (len > 3).  Used as a fallback when _find_nearest_agency
+    selects the wrong agency due to bad lat/lon data in the FBI database.
+    """
+    if not city_hint or not agencies:
+        return None
+    words = [w.lower() for w in city_hint.split() if len(w) > 3]
+    if not words:
+        return None
+    for ag in agencies:
+        name = (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+        if all(w in name for w in words) and not _is_special_purpose_agency(name):
+            if ag.get("is_nibrs"):
+                return ag
+    return None
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
@@ -557,6 +686,87 @@ def _rates_from_ny_state(
     }
 
 
+def _get_lasd_rates(station: str, population: int) -> Optional[Dict]:
+    """
+    Return per-1k crime rates using pre-aggregated LASD station data.
+
+    Uses 2024 as the current year and 2023 for trend calculation.
+
+    Crime counts are divided by the *station* service-area population (not the
+    individual city population) so that small contract cities like Rolling Hills
+    Estates (8k residents, LOMITA station covers 75k total) get the correct
+    patrol-area rate rather than an absurdly inflated per-city figure.
+    """
+    global _LASD_STATION_DATA
+    if not _LASD_STATION_DATA:
+        _LASD_STATION_DATA = _load_lasd_station_crimes()
+    if not _LASD_STATION_DATA:
+        return None
+
+    cur = (_LASD_STATION_DATA.get("2024") or {}).get(station)
+    prev = (_LASD_STATION_DATA.get("2023") or {}).get(station)
+    if not cur:
+        return None
+
+    pop = max(1, _LASD_STATION_POPULATIONS.get(station, population))
+    violent_rate = round(cur["violent"] / pop * 1000, 3)
+    property_rate = round(cur["property"] / pop * 1000, 3)
+
+    trend_pct: Optional[float] = None
+    if prev and prev.get("violent", 0) >= 5 and violent_rate > 0:
+        prev_rate = prev["violent"] / pop * 1000
+        if prev_rate > 0:
+            raw_trend = (violent_rate - prev_rate) / prev_rate * 100
+            trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
+
+    return {
+        "violent_per_1k": violent_rate,
+        "property_per_1k": property_rate,
+        "trend_pct": trend_pct,
+        "source": "lasd_station",
+        "agency_name": f"LASD {station.title()} Station",
+        "incidents_current": cur["violent"] + cur["property"],
+    }
+
+
+# Known jurisdiction populations for large county-level agencies in the NY UCR dataset.
+# These agencies serve wide areas; the local-radius population estimate is too small
+# to produce accurate per-1k rates.  Values are approximate 2024 census estimates
+# for the unincorporated/contract portion of each county served by the county PD.
+_NY_COUNTY_PD_POPULATIONS: Dict[str, int] = {
+    "Nassau County PD": 1_100_000,  # Nassau County unincorporated (county minus own-PD municipalities)
+}
+
+
+@cached(ttl_seconds=CACHE_TTL["crime_data"])
+def _fetch_ny_state_nassau_pd(year: int) -> Optional[Dict]:
+    """
+    Fetch Nassau County PD crime row for unincorporated Nassau communities.
+    Bypasses the standard _fetch_ny_state_agency_crimes filter that excludes
+    county-level agencies, since Nassau County PD is the correct serving
+    agency for dozens of unincorporated hamlets (Bellmore, Hewlett, etc.).
+    """
+    try:
+        params = {
+            "$where": "upper(agency) = 'NASSAU COUNTY PD'",
+            "county": "Nassau",
+            "year": str(year),
+            "$limit": 1,
+        }
+        resp = requests.get(_NY_STATE_CRIME_DS, params=params, timeout=_REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if not data:
+            return None
+        row = data[0]
+        # Accept partial-year reports for county-level PD (months_reported may be absent)
+        return row
+    except Exception as e:
+        logger.warning("Nassau County PD fetch failed for year %d: %s", year, e)
+        return None
+
+
 def _get_fbi_rates(
     lat: float, lon: float, state_abbr: str, population: int,
     city_hint: Optional[str] = None,
@@ -617,6 +827,24 @@ def _get_fbi_rates(
                         if ny_row is None:
                             ny_row = _fetch_ny_state_agency_crimes(town_kw, county, data_year - 1)
 
+            # Tier 3 Nassau fallback: unincorporated Nassau communities are served
+            # by Nassau County PD (not a dedicated city PD).  Use the county-wide
+            # agency when the direct city lookup fails.  Use the known jurisdiction
+            # population rather than the local-radius estimate so that the large
+            # raw crime counts are divided by the correct denominator.
+            if ny_row is None and county.lower() == "nassau":
+                nassau_row = _fetch_ny_state_nassau_pd(data_year)
+                if nassau_row is None:
+                    nassau_row = _fetch_ny_state_nassau_pd(data_year - 1)
+                if nassau_row is not None:
+                    prev_nassau = _fetch_ny_state_nassau_pd(int(nassau_row["year"]) - 1)
+                    nassau_pop = _NY_COUNTY_PD_POPULATIONS.get("Nassau County PD", population)
+                    logger.debug(
+                        "NY state UCR: Nassau County PD fallback for '%s' (pop=%d)",
+                        city_hint, nassau_pop,
+                    )
+                    return _rates_from_ny_state(nassau_row, prev_nassau, nassau_pop)
+
             if ny_row is not None:
                 prev_ny_row = _fetch_ny_state_agency_crimes(
                     ny_row.get("agency", city_hint)[:20], county, int(ny_row["year"]) - 1
@@ -638,8 +866,8 @@ def _get_fbi_rates(
 
     # Guard: only use per-agency NIBRS data when we're confident the right agency
     # was matched.  _find_nearest_agency picks by distance, so for a non-NIBRS
-    # city it may return a nearby campus PD or adjacent municipality.  Verify
-    # the city_hint (e.g. "Beverly Hills") actually appears in the agency name.
+    # city it may return a nearby adjacent municipality.  Verify the city_hint
+    # (e.g. "Beverly Hills") actually appears in the agency name.
     nibrs_city_match = (
         is_nibrs
         and city_hint
@@ -649,6 +877,41 @@ def _get_fbi_rates(
             if len(word) > 3  # skip short words like "San", "Los", "Del"
         )
     )
+
+    # Tier 2b: unincorporated suburb → parent municipality matching.
+    # e.g. "Short Hills" → "Millburn", "Cos Cob" → "Greenwich"
+    if not nibrs_city_match and city_hint:
+        parent_city = _SUBURB_TO_PARENT_CITY.get(city_hint.lower())
+        if parent_city:
+            parent_match = is_nibrs and any(
+                word.lower() in agency_display_name.lower()
+                for word in parent_city.split()
+                if len(word) > 3
+            )
+            if parent_match:
+                nibrs_city_match = True
+                logger.debug(
+                    "FBI CDE: suburb '%s' matched via parent city '%s' → %s",
+                    city_hint, parent_city, agency_display_name,
+                )
+
+    # Tier 2b fallback: the nearest agency may have bad lat/lon in the FBI
+    # database, causing _find_nearest_agency to pick the wrong PD.  Try a
+    # direct name-based search as a second opinion.
+    if not nibrs_city_match and city_hint and agencies:
+        name_match_agency = _find_nibrs_agency_by_name(agencies, city_hint)
+        if name_match_agency and name_match_agency.get("ori") != ori:
+            ori = name_match_agency.get("ori") or name_match_agency.get("ORI")
+            agency_display_name = (
+                name_match_agency.get("agencyName") or name_match_agency.get("agency_name") or ""
+            )
+            is_nibrs = True
+            nibrs_city_match = True
+            logger.debug(
+                "FBI CDE: name-based fallback for '%s' → %s (ORI %s)",
+                city_hint, agency_display_name, ori,
+            )
+
     agency_name_hint = agency_display_name if nibrs_city_match else None
 
     violent_rate_100k = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
@@ -743,6 +1006,14 @@ def get_crime_rates(
         result = _get_la_rates(lat, lon, population, radius_m)
         if result:
             return result
+
+    # LASD station data: CA cities that contract with LA County Sheriff
+    if city:
+        lasd_station = _LASD_CITY_TO_STATION.get(city.lower())
+        if lasd_station:
+            result = _get_lasd_rates(lasd_station, population)
+            if result:
+                return result
 
     # FBI CDE / State UCR (suburbs and other metros)
     if state_abbr and _get_fbi_key():

@@ -77,6 +77,20 @@ except Exception as e:
 _CLIP = 2.5
 _TREND_CAP_PTS = 5.0
 
+# Precision level indicates how granular/reliable the underlying data source is.
+# HYPER_LOCAL   — actual incidents within the scored radius (Socrata)
+# PRECINCT_PROXY — station/patrol-area average (LASD, Nassau County PD)
+# AGENCY_VERIFIED — per-agency annual report (NY UCR, FBI NIBRS)
+# DEGRADED      — state-level aggregate; score is suppressed (null)
+_PRECISION_MAP = {
+    "nyc_open_data":    "HYPER_LOCAL",
+    "la_open_data":     "HYPER_LOCAL",
+    "lasd_station":     "PRECINCT_PROXY",
+    "ny_state_ucr":     "AGENCY_VERIFIED",
+    "fbi_nibrs_agency": "AGENCY_VERIFIED",
+    "fbi_cde_state":    "DEGRADED",
+}
+
 # Commercial/retail-hub detector: when property crime rate is this many times
 # higher than violent crime AND violent rate is below this threshold, the area's
 # crime profile is dominated by commercial theft (shoplifting, package theft,
@@ -199,8 +213,31 @@ def get_community_safety_score(
             "trend_pct": None,
             "trend_delta": 0.0,
             "source": "none",
+            "precision_level": "DEGRADED",
+            "status": "DEGRADED",
             "data_available": False,
             "area_type_baseline": bl,
+        }
+        return None, details
+
+    source = rates.get("source", "unknown")
+    precision_level = _PRECISION_MAP.get(source, "DEGRADED")
+
+    # Zero-tolerance: state-aggregate data produces misleading scores for
+    # individual locations.  Return null so the pillar is excluded from the
+    # composite rather than injecting a meaningless state-average score.
+    if source == "fbi_cde_state":
+        details = {
+            "violent_per_1k": round(rates["violent_per_1k"], 3),
+            "property_per_1k": round(rates["property_per_1k"], 3),
+            "trend_pct": rates.get("trend_pct"),
+            "trend_delta": 0.0,
+            "source": source,
+            "precision_level": precision_level,
+            "status": "DEGRADED",
+            "data_available": True,
+            "area_type_baseline": bl,
+            "agency_name": rates.get("agency_name"),
         }
         return None, details
 
@@ -220,7 +257,9 @@ def get_community_safety_score(
         "violent_slot": round(v_slot, 1),
         "property_slot": round(p_slot, 1),
         "raw_score": round(raw_score, 1),
-        "source": rates.get("source", "unknown"),
+        "source": source,
+        "precision_level": precision_level,
+        "status": "VERIFIED",
         "data_available": True,
         "area_type_baseline": bl,
         "incidents_current": rates.get("incidents_current"),

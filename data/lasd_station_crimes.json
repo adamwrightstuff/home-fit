@@ -1,0 +1,473 @@
+{
+  "2024": {
+    "NORWALK": {
+      "violent": 500,
+      "property": 3369,
+      "total_part1": 3883
+    },
+    "LAKEWOOD": {
+      "violent": 1056,
+      "property": 5706,
+      "total_part1": 6792
+    },
+    "LANCASTER": {
+      "violent": 1232,
+      "property": 3840,
+      "total_part1": 5139
+    },
+    "CARSON": {
+      "violent": 444,
+      "property": 3558,
+      "total_part1": 4023
+    },
+    "PALMDALE": {
+      "violent": 862,
+      "property": 3625,
+      "total_part1": 4542
+    },
+    "SANTA CLARITA VALLEY": {
+      "violent": 348,
+      "property": 3346,
+      "total_part1": 3720
+    },
+    "EAST LOS ANGELES": {
+      "violent": 988,
+      "property": 4230,
+      "total_part1": 5251
+    },
+    "CENTURY": {
+      "violent": 1485,
+      "property": 4930,
+      "total_part1": 6490
+    },
+    "WALNUT": {
+      "violent": 157,
+      "property": 2905,
+      "total_part1": 3068
+    },
+    "MALIBU/LOST HILLS": {
+      "violent": 142,
+      "property": 1185,
+      "total_part1": 1339
+    },
+    "INDUSTRY": {
+      "violent": 499,
+      "property": 3302,
+      "total_part1": 3821
+    },
+    "COMPTON": {
+      "violent": 1081,
+      "property": 3479,
+      "total_part1": 4647
+    },
+    "TEMPLE": {
+      "violent": 464,
+      "property": 3172,
+      "total_part1": 3654
+    },
+    "SAN DIMAS": {
+      "violent": 176,
+      "property": 1176,
+      "total_part1": 1357
+    },
+    "MARINA DEL REY": {
+      "violent": 127,
+      "property": 1063,
+      "total_part1": 1200
+    },
+    "WEST HOLLYWOOD": {
+      "violent": 275,
+      "property": 2072,
+      "total_part1": 2352
+    },
+    "CERRITOS": {
+      "violent": 142,
+      "property": 2448,
+      "total_part1": 2590
+    },
+    "SOUTH LOS ANGELES": {
+      "violent": 902,
+      "property": 1857,
+      "total_part1": 2782
+    },
+    "TTCF": {
+      "violent": 86,
+      "property": 4,
+      "total_part1": 90
+    },
+    "PICO RIVERA": {
+      "violent": 306,
+      "property": 1610,
+      "total_part1": 1932
+    },
+    "TRANSIT SERV BUR": {
+      "violent": 241,
+      "property": 190,
+      "total_part1": 433
+    },
+    "METROLINK BUREAU": {
+      "violent": 11,
+      "property": 14,
+      "total_part1": 25
+    },
+    "PDC - SOUTH": {
+      "violent": 31,
+      "property": 0,
+      "total_part1": 31
+    },
+    "MEN'S CENTRAL JAIL": {
+      "violent": 339,
+      "property": 12,
+      "total_part1": 358
+    },
+    "ALTADENA": {
+      "violent": 87,
+      "property": 444,
+      "total_part1": 534
+    },
+    "COUNTY SERVICES BUR": {
+      "violent": 20,
+      "property": 131,
+      "total_part1": 154
+    },
+    "LOMITA": {
+      "violent": 101,
+      "property": 880,
+      "total_part1": 989
+    },
+    "CRESCENTA VALLEY": {
+      "violent": 30,
+      "property": 542,
+      "total_part1": 582
+    },
+    "PARKS BUREAU": {
+      "violent": 13,
+      "property": 62,
+      "total_part1": 76
+    },
+    "NORTH COUNTY CORRECTIONAL FAC.": {
+      "violent": 82,
+      "property": 1,
+      "total_part1": 84
+    },
+    "FRAUD & CYBER CRIMES BUREAU": {
+      "violent": 0,
+      "property": 36,
+      "total_part1": 36
+    },
+    "COURT SERVICES TRANSPORTATION BUREAU": {
+      "violent": 3,
+      "property": 0,
+      "total_part1": 3
+    },
+    "AVALON": {
+      "violent": 14,
+      "property": 32,
+      "total_part1": 46
+    },
+    "INMATE RECEPTION CENTR": {
+      "violent": 55,
+      "property": 3,
+      "total_part1": 58
+    },
+    "EAST": {
+      "violent": 6,
+      "property": 2,
+      "total_part1": 8
+    },
+    "PDC - NORTH": {
+      "violent": 43,
+      "property": 1,
+      "total_part1": 46
+    },
+    "COMMUNITY COLLEGE BUREAU": {
+      "violent": 7,
+      "property": 111,
+      "total_part1": 119
+    },
+    "ADMIN": {
+      "violent": 21,
+      "property": 2,
+      "total_part1": 23
+    },
+    "LCMC": {
+      "violent": 5,
+      "property": 1,
+      "total_part1": 6
+    },
+    "WEST": {
+      "violent": 6,
+      "property": 0,
+      "total_part1": 6
+    },
+    "CRDF": {
+      "violent": 43,
+      "property": 3,
+      "total_part1": 46
+    },
+    "NARCOTICS BUREAU": {
+      "violent": 1,
+      "property": 6,
+      "total_part1": 7
+    },
+    "MAJOR CRIMES BUREAU": {
+      "violent": 0,
+      "property": 16,
+      "total_part1": 16
+    },
+    "HUMAN TRAFFICKING TASK FORCE": {
+      "violent": 1,
+      "property": 1,
+      "total_part1": 2
+    },
+    "TRAP": {
+      "violent": 0,
+      "property": 3,
+      "total_part1": 3
+    }
+  },
+  "2023": {
+    "PALMDALE": {
+      "violent": 775,
+      "property": 3182,
+      "total_part1": 3998
+    },
+    "SOUTH LOS ANGELES": {
+      "violent": 872,
+      "property": 1980,
+      "total_part1": 2871
+    },
+    "WALNUT": {
+      "violent": 227,
+      "property": 3082,
+      "total_part1": 3313
+    },
+    "SANTA CLARITA VALLEY": {
+      "violent": 353,
+      "property": 3392,
+      "total_part1": 3778
+    },
+    "LOMITA": {
+      "violent": 134,
+      "property": 874,
+      "total_part1": 1012
+    },
+    "INDUSTRY": {
+      "violent": 503,
+      "property": 3612,
+      "total_part1": 4134
+    },
+    "CRDF": {
+      "violent": 39,
+      "property": 2,
+      "total_part1": 41
+    },
+    "CERRITOS": {
+      "violent": 123,
+      "property": 2234,
+      "total_part1": 2361
+    },
+    "LAKEWOOD": {
+      "violent": 1051,
+      "property": 5398,
+      "total_part1": 6472
+    },
+    "TEMPLE": {
+      "violent": 518,
+      "property": 3489,
+      "total_part1": 4020
+    },
+    "CENTURY": {
+      "violent": 1545,
+      "property": 4600,
+      "total_part1": 6211
+    },
+    "LANCASTER": {
+      "violent": 1237,
+      "property": 3458,
+      "total_part1": 4741
+    },
+    "CARSON": {
+      "violent": 389,
+      "property": 3412,
+      "total_part1": 3825
+    },
+    "PICO RIVERA": {
+      "violent": 323,
+      "property": 1972,
+      "total_part1": 2313
+    },
+    "MALIBU/LOST HILLS": {
+      "violent": 165,
+      "property": 1426,
+      "total_part1": 1597
+    },
+    "WEST HOLLYWOOD": {
+      "violent": 270,
+      "property": 2321,
+      "total_part1": 2605
+    },
+    "MARINA DEL REY": {
+      "violent": 117,
+      "property": 985,
+      "total_part1": 1103
+    },
+    "EAST LOS ANGELES": {
+      "violent": 919,
+      "property": 4408,
+      "total_part1": 5379
+    },
+    "NORWALK": {
+      "violent": 564,
+      "property": 3650,
+      "total_part1": 4234
+    },
+    "ALTADENA": {
+      "violent": 104,
+      "property": 470,
+      "total_part1": 577
+    },
+    "COMPTON": {
+      "violent": 1123,
+      "property": 3736,
+      "total_part1": 4960
+    },
+    "CRESCENTA VALLEY": {
+      "violent": 52,
+      "property": 717,
+      "total_part1": 775
+    },
+    "NORTH COUNTY CORRECTIONAL FAC.": {
+      "violent": 98,
+      "property": 1,
+      "total_part1": 100
+    },
+    "SAN DIMAS": {
+      "violent": 196,
+      "property": 1252,
+      "total_part1": 1449
+    },
+    "TRANSIT SERV BUR": {
+      "violent": 240,
+      "property": 158,
+      "total_part1": 399
+    },
+    "FRAUD & CYBER CRIMES BUREAU": {
+      "violent": 0,
+      "property": 39,
+      "total_part1": 39
+    },
+    "COUNTY SERVICES BUR": {
+      "violent": 15,
+      "property": 133,
+      "total_part1": 150
+    },
+    "SPECIAL VICTIMS BUREAU": {
+      "violent": 4,
+      "property": 0,
+      "total_part1": 4
+    },
+    "AVALON": {
+      "violent": 15,
+      "property": 34,
+      "total_part1": 49
+    },
+    "TTCF": {
+      "violent": 108,
+      "property": 4,
+      "total_part1": 112
+    },
+    "INMATE RECEPTION CENTR": {
+      "violent": 37,
+      "property": 1,
+      "total_part1": 39
+    },
+    "COMMUNITY COLLEGE BUREAU": {
+      "violent": 13,
+      "property": 147,
+      "total_part1": 161
+    },
+    "PARKS BUREAU": {
+      "violent": 13,
+      "property": 63,
+      "total_part1": 76
+    },
+    "MEN'S CENTRAL JAIL": {
+      "violent": 373,
+      "property": 16,
+      "total_part1": 402
+    },
+    "PDC - SOUTH": {
+      "violent": 28,
+      "property": 2,
+      "total_part1": 30
+    },
+    "HUMAN TRAFFICKING TASK FORCE": {
+      "violent": 1,
+      "property": 8,
+      "total_part1": 9
+    },
+    "ADMIN": {
+      "violent": 11,
+      "property": 1,
+      "total_part1": 12
+    },
+    "MAJOR CRIMES BUREAU": {
+      "violent": 0,
+      "property": 18,
+      "total_part1": 18
+    },
+    "PDC - NORTH": {
+      "violent": 32,
+      "property": 0,
+      "total_part1": 32
+    },
+    "LCMC": {
+      "violent": 11,
+      "property": 0,
+      "total_part1": 11
+    },
+    "METROLINK BUREAU": {
+      "violent": 9,
+      "property": 16,
+      "total_part1": 25
+    },
+    "TRAP": {
+      "violent": 0,
+      "property": 12,
+      "total_part1": 12
+    },
+    "NARCOTICS BUREAU": {
+      "violent": 1,
+      "property": 1,
+      "total_part1": 2
+    },
+    "WEST": {
+      "violent": 9,
+      "property": 3,
+      "total_part1": 12
+    },
+    "LOS ANGELES COUNTY SHERIFF DEPT": {
+      "violent": 2,
+      "property": 0,
+      "total_part1": 2
+    },
+    "CUSTODY OPERATIONS": {
+      "violent": 0,
+      "property": 1,
+      "total_part1": 1
+    },
+    "COURT SERVICES TRANSPORTATION BUREAU": {
+      "violent": 5,
+      "property": 1,
+      "total_part1": 6
+    },
+    "EAST": {
+      "violent": 2,
+      "property": 0,
+      "total_part1": 2
+    }
+  },
+  "_source": "lasd.org Part I & II Crimes",
+  "_updated": "2026-05"
+}
