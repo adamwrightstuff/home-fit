@@ -121,6 +121,8 @@ def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
         return (0.30, 0.45, 0.15, 0.10)
     if archetype == "Rooted":
         return (0.40, 0.20, 0.20, 0.20)
+    if archetype == "Middle Class":
+        return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
 
 
@@ -131,6 +133,7 @@ def _get_status_label(archetype: str) -> str:
         "Professional": "Professional",
         "Up-and-Coming": "Up-and-Coming",
         "Rooted": "Rooted",
+        "Middle Class": "Middle Class",
         "Working Class": "Working Class",
         "Unclassified": "Unclassified",
     }.get(archetype, "Working Class")
@@ -159,6 +162,7 @@ def _get_status_insight(archetype: str) -> str:
         "Professional": "Credential and career driven — high education and white-collar occupation with moderate asset wealth.",
         "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
         "Rooted": "Tight-knit, long-tenured community holding ground under housing cost pressure.",
+        "Middle Class": "Solid footing on income and housing — comfortable without a single dominant status story.",
         "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
         "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
     }.get(archetype, "Broadly stable community without dominant elite or credential-class signatures.")
@@ -820,7 +824,7 @@ def _classify_archetype(
     stability: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
-    5-archetype chain: Established → Professional → Up-and-Coming → Rooted → Working Class.
+    Chain: Established → Professional → Up-and-Coming → Rooted → Middle Class → Working Class.
     stability (0-100) from social_fabric.breakdown.stability.
     Returns (archetype, archetype_rule) for debug.
     """
@@ -859,6 +863,14 @@ def _classify_archetype(
     # Rooted: tight-knit community holding ground under housing cost pressure
     if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50:
         return "Rooted", "rooted_stable_community"
+
+    # Middle Class: comfortable baseline on wealth + housing (no stronger signature matched)
+    if (
+        wealth_val >= 35
+        and home_cost >= 30
+        and (wealth_val + home_cost) / 2.0 >= 42
+    ):
+        return "Middle Class", "middle_class_baseline"
 
     return "Working Class", "working_class_community"
 
@@ -955,7 +967,7 @@ def compute_status_signal_with_breakdown(
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
-    Archetype chain: Established → Professional → Rising → Blue Collar → Middle Class.
+    Archetype chain matches _classify_archetype (Established → Professional → Up-and-Coming → Rooted → Middle Class → Working Class).
     Final composite uses archetype weights (no luxury signal).
     Baselines: tract CBSA mapped via cbsa_to_baseline; else division then \"all\".
     """

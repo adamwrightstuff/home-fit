@@ -9,6 +9,7 @@ const BADGE: Record<
 > = {
   established: { bg: '#EEEDFE', fg: '#3C3489' },
   affluent: { bg: '#FFF3CD', fg: '#7B5800' },
+  middle_class: { bg: '#E2E8F0', fg: '#334155' },
   transitional: { bg: '#F0FDF9', fg: '#134E4A' },
   working_class: { bg: '#F1EFE8', fg: '#444441' },
 }

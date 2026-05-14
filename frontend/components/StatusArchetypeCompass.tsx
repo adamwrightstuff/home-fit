@@ -1,11 +1,7 @@
 'use client'
 
 import type { StatusSignalBreakdown } from '@/types/api'
-import {
-  archetypeOneLiner,
-  getStatusBadgeModel,
-  type NonTypicalArchetype,
-} from '@/lib/statusSignalArchetype'
+import { archetypeOneLiner, getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v))
@@ -15,6 +11,10 @@ function dotColor(archetype: string | null): string {
   if (archetype === 'Established') return '#6366F1'
   if (archetype === 'Affluent') return '#D97706'
   if (archetype === 'Transitional') return '#0F766E'
+  if (archetype === 'Middle Class') return '#64748B'
+  if (archetype === 'Professional') return '#6366F1'
+  if (archetype === 'Up-and-Coming') return '#0F766E'
+  if (archetype === 'Rooted') return '#78716C'
   if (archetype === 'Working Class') return '#78716C'
   return '#6B7280'
 }
@@ -48,7 +48,7 @@ export default function StatusArchetypeCompass({
   const yPct = 50 + point.y * 36
   const oneLiner =
     archetype
-      ? archetypeOneLiner(archetype as NonTypicalArchetype)
+      ? archetypeOneLiner(archetype)
       : badge.leanArchetype
         ? archetypeOneLiner(badge.leanArchetype)
         : 'This place combines characteristics from multiple status profiles without a dominant pattern.'

@@ -64,6 +64,15 @@ const ARCHETYPE_ONE_LINERS: Record<NonTypicalArchetype, string> = {
   'Working Class': 'Modest status signal. Working-community character with cost that matches the economic profile.',
 }
 
+/** API archetypes from pillars/status_signal (not in lean centroid model). */
+const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
+  Professional: 'Credential and career driven — high education and white-collar mix.',
+  'Up-and-Coming': 'Housing market runs hot relative to typical resident wealth — a neighborhood in active transition.',
+  Rooted: 'Long-tenured community under housing cost pressure — stability without elite wealth scores.',
+  'Middle Class': 'Solid footing on income and housing — comfortable without one dominant status story.',
+  Unclassified: 'Residential signal too thin to classify — treat as low confidence.',
+}
+
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
   if (typeof value === 'string' && value.trim()) {
@@ -223,18 +232,22 @@ export function statusTooltipCopy(
   const badge = getStatusBadgeModel(breakdown, compositeScore)
   const archetype = breakdown?.archetype ?? null
   if (archetype) {
-    const text = ARCHETYPE_ONE_LINERS[archetype as NonTypicalArchetype]
+    const text = archetypeOneLiner(archetype)
     return text ? `${archetype} places have ${text.toLowerCase()}` : null
   }
   if (badge.variant === 'leans' && badge.leanArchetype) {
-    const oneLiner = ARCHETYPE_ONE_LINERS[badge.leanArchetype]
+    const oneLiner = archetypeOneLiner(badge.leanArchetype)
     return `This place leans closest to ${badge.leanArchetype} — ${oneLiner}`
   }
   return 'This place combines characteristics from multiple status profiles without a dominant pattern.'
 }
 
-export function archetypeOneLiner(archetype: NonTypicalArchetype): string {
-  return ARCHETYPE_ONE_LINERS[archetype]
+export function archetypeOneLiner(archetype: string | null | undefined): string {
+  const a = (archetype ?? '').trim()
+  if (!a) return 'This place combines characteristics from multiple status profiles without a dominant pattern.'
+  const legacy = ARCHETYPE_ONE_LINERS[a as NonTypicalArchetype]
+  if (legacy) return legacy
+  return API_ARCHETYPE_ONE_LINERS[a] ?? 'A distinct status profile for this area.'
 }
 
 export function getLeanThresholdPct(): number {

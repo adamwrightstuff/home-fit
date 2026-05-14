@@ -8,7 +8,12 @@ import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
 /** Status Signal: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
-export type StatusArchetypeRampKey = 'established' | 'affluent' | 'transitional' | 'working_class'
+export type StatusArchetypeRampKey =
+  | 'established'
+  | 'affluent'
+  | 'middle_class'
+  | 'transitional'
+  | 'working_class'
 
 export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
@@ -29,6 +34,14 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     400: '#d97706',
     600: '#b45309',
     800: '#78350f',
+  },
+  // Slate — balanced comfortable baseline.
+  middle_class: {
+    50: '#e2e8f0',
+    200: '#94a3b8',
+    400: '#64748b',
+    600: '#475569',
+    800: '#334155',
   },
   // Teal — cost-premium tension, neighborhood in flux.
   transitional: {
@@ -52,8 +65,10 @@ export function normalizeStatusArchetypeKey(archetype: string | null | undefined
   const a = (archetype ?? '').trim()
   if (a === 'Established') return 'established'
   if (a === 'Affluent') return 'affluent'
-  if (a === 'Transitional') return 'transitional'
-  if (a === 'Working Class') return 'working_class'
+  if (a === 'Professional') return 'established'
+  if (a === 'Middle Class') return 'middle_class'
+  if (a === 'Transitional' || a === 'Up-and-Coming') return 'transitional'
+  if (a === 'Working Class' || a === 'Rooted') return 'working_class'
   return 'working_class'
 }
 
