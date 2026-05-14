@@ -9,29 +9,6 @@
 
 ---
 
-## Census tract boundary — logic by pillar
-
-“Census tract boundary” means the **TIGER/ACS census tract polygon** that contains the scored pin (for Tribeca catalog coordinates, **`36061003300`**). Most pillars **do not** use that polygon as their analysis window.
-
-| Pillar | Uses tract polygon as the scoring window? | Tract-related logic (what the code actually does) |
-|--------|---------------------------------------------|-----------------------------------------------------|
-| **diversity** | **Yes — primary** | All mix/entropy inputs are **ACS variables for the containing tract** of the pin (`get_census_tract` → tract GEOID). The tract is the geographic unit of record. |
-| **housing_value** | **Yes — primary** | Affordability and housing stock signals come from **`get_housing_data(..., tract=…)`** on that same containing tract. |
-| **economic_security** | **No** | Tract is only used to **look up CBSA (and county) codes** (`get_economic_geography` from `economic_security_data.py`). Labor-market tables are fetched for **CBSA** (metro), not clipped to the tract polygon. |
-| **social_fabric** | **Partial** | **Stability / mobility** side uses **tract-level Census** tied to the pin’s tract. **Civic / participation** queries use a **geodesic disk** from the pin (radius rules from density + `area_type`), not the tract outline. |
-| **community_safety** | **Partial (denominator only)** | Crime rates are for the **agency/jurisdiction covering the pin**, not “tract crime.” For per-capita scaling, population may be estimated by **intersecting many tract polygons with the same geodesic crime disk** (areal weighting in `estimate_community_safety_disk_population` when enabled), so tract boundaries matter as **intersection pieces**, not as “score = this one tract.” |
-| **neighborhood_amenities** | **No** | **No tract geometry.** OSM amenity pulls use **`get_radius_profile`** meter radii from the pin only. |
-| **active_outdoors** | **No** | **No tract geometry.** Local / trail / regional Overpass + GEE windows are **disks from the pin** per profile. |
-| **public_transit_access** | **No** | **No tract geometry.** Transit network search uses **`routes_radius_m`** from the pin. |
-| **healthcare_access** | **No** | **No tract geometry.** OSM + fallbacks use **facility / pharmacy radii** from the pin via `get_radius_profile`. |
-| **built_beauty** | **No** | **No tract geometry** for the architectural OSM/GEE window; Census **year-built** helpers are point→tract lookups for **attributes**, not “clip OSM to tract.” |
-| **natural_beauty** | **No** | **No tract geometry** for canopy/green/water context; radii from profile + GEE from the pin. |
-| **air_travel_access** | **No** | **No tract geometry.** Airport discovery uses a **large km radius** from the pin. |
-| **quality_education** | **No** | **No tract geometry.** School discovery uses a **mile-radius** disk from the pin. |
-| **climate_risk** | **No** | **No tract polygon** in the pillar path; hazards are evaluated from **lat/lon** against hazard datasets (not “inside tract outline”). |
-
----
-
 ## 1) Is tract `36061003300` captured with **expected** per-pillar boundaries?
 
 **Central routing (current code):** `main.py` computes one shared `area_type` via `detect_area_type(...)` plus `detect_location_scope` → for Tribeca this is **`neighborhood` scope** (verified by geocoding `Tribeca, Manhattan, New York`) and, with live Census/OSM inputs at the catalog pin, **`urban_core`** (recomputed locally: density ≈ 43,867/sq mi, metro distance to principal city ≈ 5.1 km).
