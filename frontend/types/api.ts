@@ -111,6 +111,8 @@ export interface LivabilityPillars {
   social_fabric?: LivabilityPillar;
   /** Demographic diversity (entropy); may be absent in older deployments. */
   diversity?: LivabilityPillar;
+  /** Community Safety (crime-based); may be absent in older deployments. */
+  community_safety?: LivabilityPillar;
 }
 
 export interface OverallConfidence {

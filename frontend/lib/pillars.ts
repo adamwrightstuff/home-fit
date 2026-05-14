@@ -12,6 +12,7 @@ export type PillarKey =
   | 'climate_risk'
   | 'social_fabric'
   | 'diversity'
+  | 'community_safety'
 
 /** Display order for pillars on HomeFit pillar screen and related UIs. */
 export const PILLAR_ORDER: PillarKey[] = [
@@ -28,6 +29,7 @@ export const PILLAR_ORDER: PillarKey[] = [
   'public_transit_access',
   'air_travel_access',
   'housing_value',
+  'community_safety',
 ]
 export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
   'social_fabric',
@@ -248,6 +250,12 @@ export const PILLAR_META: Record<
     description:
       'Race, income, and age mix in the neighborhood—entropy-based measure of how varied the community is.',
   },
+  community_safety: {
+    icon: '🛡️',
+    name: 'Community Safety',
+    description:
+      'Local crime rates and safety conditions — how secure the area feels day-to-day based on reported incidents.',
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -337,6 +345,8 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'A strong social fabric means people know their neighbors, share civic spaces, and have places to gather that are not tied to spending money. Stable residency and civic third places—like libraries, community centers, and town halls—are linked to higher trust, informal support, and long-term wellbeing.',
   diversity:
     'Neighborhood diversity in race, income, and age reflects exposure to different life experiences and can support vibrant daily life. This score uses Census distributions (not architectural variety).',
+  community_safety:
+    'Feeling safe at home and in your neighborhood affects daily wellbeing, children\'s freedom to play outside, and long-term quality of life. This score is based on reported local crime rates relative to comparable areas.',
 }
 
 export function getScoreBadgeClass(score: number): string {
