@@ -273,4 +273,13 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     ],
     degradedMessage: 'Limited data: Census diversity tables were unavailable.',
   },
+  community_safety: {
+    topLine: 'Local crime rates from hyper-local police data, normalized by area type.',
+    metrics: [
+      { label: 'Overall crime score', path: 'summary.overall_crime_score', format: 'percent', max: 100 },
+      { label: 'Violent crime score', path: 'summary.violent_crime_score', format: 'percent', max: 100 },
+      { label: 'Property crime score', path: 'summary.property_crime_score', format: 'percent', max: 100 },
+    ],
+    degradedMessage: 'Limited data: local police crime data were unavailable for this area.',
+  },
 }

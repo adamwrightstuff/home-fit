@@ -410,6 +410,40 @@ export function getSocialFabricNarrative(
   return `${locationSentence} ${genericSentence}`
 }
 
+export function getCommunitySafetyNarrative(
+  placeLabel: string,
+  pillar: Record<string, unknown>
+): string {
+  const overall = getPillarValue(pillar, 'summary.overall_crime_score')
+  const violent = getPillarValue(pillar, 'summary.violent_crime_score')
+  const property = getPillarValue(pillar, 'summary.property_crime_score')
+
+  let safetyPhrase = 'typical crime levels for the area'
+  if (typeof overall === 'number') {
+    if (overall >= 70) safetyPhrase = 'lower crime rates relative to comparable areas'
+    else if (overall <= 30) safetyPhrase = 'higher crime rates relative to comparable areas'
+  }
+
+  let violentPhrase = ''
+  if (typeof violent === 'number') {
+    if (violent >= 70) violentPhrase = ', with notably low violent crime'
+    else if (violent <= 30) violentPhrase = ', with elevated violent crime compared to similar areas'
+  }
+
+  let propertyPhrase = '.'
+  if (typeof property === 'number') {
+    if (property >= 70) propertyPhrase = ' and low property crime.'
+    else if (property <= 30) propertyPhrase = ' and higher property crime than similar areas.'
+    else propertyPhrase = '.'
+  }
+
+  const locationSentence = `${placeLabel} has ${safetyPhrase}${violentPhrase}${propertyPhrase}`
+  const genericSentence =
+    'Lower local crime rates are associated with stronger sense of community, higher property values, and day-to-day peace of mind for residents.'
+
+  return `${locationSentence} ${genericSentence}`
+}
+
 export function getDiversityNarrative(placeLabel: string, pillar: Record<string, unknown>): string {
   const score = getPillarValue(pillar, 'summary.diversity_entropy_score')
   let mixPhrase = 'a moderate mix of households'
@@ -455,6 +489,8 @@ export function getPillarNarrative(
       return getSocialFabricNarrative(placeLabel, pillar)
     case 'diversity':
       return getDiversityNarrative(placeLabel, pillar)
+    case 'community_safety':
+      return getCommunitySafetyNarrative(placeLabel, pillar)
     default:
       return null
   }
