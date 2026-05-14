@@ -668,7 +668,7 @@ export default function SavedDetailPage() {
             />
           </div>
 
-          {/* HomeFit on top, Longevity & Status Signal below (same layout as PlaceView) */}
+          {/* HomeFit on top, Longevity & Archetype below (same layout as PlaceView) */}
           <div
             style={{
               display: 'flex',
@@ -725,7 +725,7 @@ export default function SavedDetailPage() {
                 <LongevityInfo />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="hf-muted">Status Signal</span>
+                <span className="hf-muted">Archetype</span>
                 <span
                   style={{
                     fontWeight: 600,

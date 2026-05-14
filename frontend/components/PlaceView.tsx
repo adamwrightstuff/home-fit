@@ -164,7 +164,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   /** Number of pillar names revealed in the scoring overlay (0..N over ~5s). */
   const [overlayRevealedCount, setOverlayRevealedCount] = useState(0)
   const [exportModalOpen, setExportModalOpen] = useState(false)
-  /** Status Signal (post-pillars); set from initialPayload or after running the four pillars. */
+  /** Archetype index (post-pillars); set from initialPayload or after running the four pillars. */
   const [statusSignal, setStatusSignal] = useState<number | null>(() => initialPayload?.status_signal ?? null)
   const [statusSignalBreakdown, setStatusSignalBreakdown] = useState<StatusSignalBreakdown | null>(() => initialPayload?.status_signal_breakdown ?? null)
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
@@ -380,7 +380,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         setHappinessIndex((resp as { happiness_index: number }).happiness_index)
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to refresh Status Signal.'
+      const msg = e instanceof Error ? e.message : 'Failed to refresh archetype index.'
       onError(msg)
       throw new Error(msg)
     } finally {
@@ -775,7 +775,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         />
       </div>
 
-      {/* Score Summary — HomeFit Score on top, Longevity & Status Signal below in smaller font */}
+      {/* Score Summary — HomeFit Score on top, Longevity & Archetype below in smaller font */}
       <div
         style={{
           display: 'flex',
@@ -812,7 +812,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           {HOMEFIT_COPY.subtitle}
         </div>
 
-        {/* Longevity Index, Status Signal & Happiness Index — below, smaller font */}
+        {/* Longevity Index, Archetype & Happiness Index — below, smaller font */}
         <div
           style={{
             display: 'flex',
@@ -834,7 +834,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             <LongevityInfo />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="hf-muted">Status Signal</span>
+            <span className="hf-muted">Archetype</span>
             <span
               style={{
                 fontWeight: 600,

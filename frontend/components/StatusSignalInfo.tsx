@@ -17,16 +17,16 @@ const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
 }
 
 export interface StatusSignalInfoProps {
-  /** When provided, show "Refresh Status Signal" in the modal and call it on click. */
+  /** When provided, show refresh in the modal and call it on click. */
   onRefresh?: () => void | Promise<void>
   refreshing?: boolean
-  /** When provided, show Status Signature badge and tooltip content (archetype, insight, top drivers, radius note). */
+  /** When provided, show archetype badge and tooltip content (archetype, insight, top drivers, radius note). */
   breakdown?: StatusSignalBreakdown | null
   /** Top-level composite 0-100; used to derive strength label when breakdown omits signal_strength_label (older saves). */
   compositeScore?: number | null
 }
 
-/** "?" button + optional Status Signature badge + modal for Status Signal. Use next to the Status Signal label or score. */
+/** "?" button + optional archetype badge + modal for the archetype index. Use next to the Archetype label or score. */
 export default function StatusSignalInfo({
   onRefresh,
   refreshing = false,
@@ -71,7 +71,7 @@ export default function StatusSignalInfo({
           setShowModal(true)
         }}
         title={STATUS_SIGNAL_COPY.tooltip}
-        aria-label="What is Status Signal?"
+        aria-label="What is Archetype?"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -98,8 +98,8 @@ export default function StatusSignalInfo({
           className="hf-modal-backdrop"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="status-signal-modal-title"
-          aria-describedby="status-signal-modal-desc"
+          aria-labelledby="archetype-index-modal-title"
+          aria-describedby="archetype-index-modal-desc"
           onClick={() => { setRefreshError(null); setShowModal(false) }}
         >
           <div
@@ -114,7 +114,7 @@ export default function StatusSignalInfo({
             onClick={(e) => e.stopPropagation()}
           >
             <h2
-              id="status-signal-modal-title"
+              id="archetype-index-modal-title"
               style={{
                 margin: 0,
                 fontSize: '1.2rem',
@@ -122,7 +122,7 @@ export default function StatusSignalInfo({
                 color: 'var(--hf-text-primary)',
               }}
             >
-              Status Signal
+              Archetype
               {breakdown?.archetype && (
                 <span style={{ marginLeft: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--hf-text-secondary)' }}>
                   — {badgeModel.text}
@@ -130,7 +130,7 @@ export default function StatusSignalInfo({
               )}
             </h2>
             <p
-              id="status-signal-modal-desc"
+              id="archetype-index-modal-desc"
               style={{
                 margin: '0.75rem 0 0',
                 fontSize: '0.95rem',
@@ -182,7 +182,7 @@ export default function StatusSignalInfo({
                     className="hf-btn-primary"
                     style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem' }}
                   >
-                    {refreshing ? 'Refreshing…' : 'Refresh Status Signal'}
+                    {refreshing ? 'Refreshing…' : 'Refresh archetype'}
                   </button>
                 </div>
               </div>

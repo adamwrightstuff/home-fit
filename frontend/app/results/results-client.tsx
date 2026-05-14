@@ -855,7 +855,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   <LongevityInfo />
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="hf-muted">Status Signal</span>
+                  <span className="hf-muted">Archetype</span>
                   <span
                     style={{
                       fontWeight: 600,

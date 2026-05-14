@@ -36,7 +36,7 @@ export default function SignalStrengthDots({
   }
 
   return (
-    <span className="inline-flex gap-0.5" aria-label={`Signal strength ${n} of 4`}>
+    <span className="inline-flex gap-0.5" aria-label={`Archetype strength ${n} of 4`}>
       {[0, 1, 2, 3].map((i) => (
         <span
           key={i}

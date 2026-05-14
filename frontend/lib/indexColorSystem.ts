@@ -1,13 +1,13 @@
 /**
  * HomeFit index → color ramp bindings (fixed).
- * HomeFit = purple, Longevity = teal, Happiness = blue, Status Signal = coral.
+ * HomeFit = purple, Longevity = teal, Happiness = blue, Archetype index map = coral.
  */
 
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
-/** Status Signal: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
+/** Status index map: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
 export type StatusArchetypeRampKey =
   | 'established'
   | 'affluent'
@@ -136,7 +136,7 @@ export function scoreBandFill(ramp: IndexRampKey, score: number): string {
   return r[400]
 }
 
-/** Status Signal: score band within the archetype hue ramp (same thresholds as scoreBandFill). */
+/** Status index map: score band within the archetype hue ramp (same thresholds as scoreBandFill). */
 export function scoreBandFillStatusArchetype(archetype: string | null | undefined, score: number): string {
   const key = normalizeStatusArchetypeKey(archetype)
   const r = STATUS_ARCHETYPE_RAMP[key]
@@ -152,13 +152,13 @@ export function mapBubbleStrokeStatusArchetype(archetype: string | null | undefi
   return hexToRgba(STATUS_ARCHETYPE_RAMP[key][600], 0.88)
 }
 
-/** Numeric color for Status tab / labels when archetype is known. */
+/** Numeric color for Archetype map tab / labels when archetype is known. */
 export function statusArchetypeNumeral600(archetype: string | null | undefined): string {
   const key = normalizeStatusArchetypeKey(archetype)
   return STATUS_ARCHETYPE_RAMP[key][600]
 }
 
-/** Active / underline emphasis for Status tab (ramp-400, archetype-specific). */
+/** Active / underline emphasis for Archetype map tab (ramp-400, archetype-specific). */
 export function statusArchetypeNumeral400(archetype: string | null | undefined): string {
   const key = normalizeStatusArchetypeKey(archetype)
   return STATUS_ARCHETYPE_RAMP[key][400]

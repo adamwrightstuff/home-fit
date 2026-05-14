@@ -5,13 +5,13 @@ export interface Coordinates {
   lon: number;
 }
 
-/** Top driver item for Status Signal tooltip. */
+/** Top driver item for archetype index tooltip. */
 export interface StatusSignalTopDriver {
   label: string;
   score: number;
 }
 
-/** Status Signal breakdown (archetype, label, insight, top drivers, radius note). */
+/** Archetype index breakdown (archetype, label, insight, top drivers, radius note). API field: status_signal_breakdown. */
 export interface StatusSignalBreakdown {
   archetype?: string;
   archetype_rule?: string;
@@ -163,9 +163,9 @@ export interface ScoreResponse {
   longevity_index?: number;
   /** Per-pillar contribution to longevity_index (same six pillars). */
   longevity_index_contributions?: Record<string, number>;
-  /** Status Signal: wealth, home cost, education mix, occupation, luxury POI presence (OSM + fallback). Needs four pillars. */
+  /** Archetype index (0–100): wealth, home cost, education mix, occupation, luxury POI presence (OSM + fallback). Needs four pillars. API: status_signal. */
   status_signal?: number;
-  /** Detailed component breakdown for Status Signal (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
+  /** Detailed breakdown for archetype index (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
   status_signal_breakdown?: StatusSignalBreakdown;
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;

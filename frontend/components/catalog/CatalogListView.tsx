@@ -13,6 +13,8 @@ import {
 import { catalogRampKey } from '@/lib/catalogIndexColors'
 import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
 import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
+import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
+import SignalStrengthDots from '@/components/catalog/SignalStrengthDots'
 
 function MetroDot({ metro }: { metro: 'nyc' | 'la' }) {
   const c = metro === 'nyc' ? '#6B5CE7' : '#E76B5C'
@@ -82,7 +84,7 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
             <th className="py-2 px-1 font-semibold">HF</th>
             <th className="py-2 px-1 font-semibold">Lon</th>
             <th className="py-2 px-1 font-semibold">Hap</th>
-            <th className="py-2 px-1 font-semibold">Stat</th>
+            <th className="py-2 px-1 font-semibold">Archetype</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>
@@ -129,7 +131,21 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
                   <td className="py-2 px-1">{bar(hf, 'homefit')}</td>
                   <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
                   <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
-                  <td className="py-2 px-1">{bar(idx.statusSignal, 'status')}</td>
+                  <td className="py-2 px-1 align-top">
+                    <div className="flex min-w-0 max-w-[12rem] flex-col gap-1">
+                      <ArchetypeBadge
+                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
+                        breakdown={p.score.status_signal_breakdown ?? null}
+                        compositeScore={
+                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
+                        }
+                      />
+                      <SignalStrengthDots
+                        breakdown={p.score.status_signal_breakdown ?? null}
+                        statusSignalScore={p.score.status_signal}
+                      />
+                    </div>
+                  </td>
                   <td className="py-2 pl-1">
                     <button
                       type="button"

@@ -13,7 +13,7 @@ import {
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 
-/** 0–100 score → bubble fill from active index ramp; Status uses coral index ramp (map tabs). */
+/** 0–100 score → bubble fill from active index ramp; Archetype map mode uses coral index ramp + archetype hue. */
 export function numericScoreColorForMode(
   score: number | null | undefined,
   mode: CatalogMapIndexMode,
@@ -219,7 +219,7 @@ export function displayIndexValue(
       typeof place.score.status_signal === 'number' ? place.score.status_signal : null
     )
     return {
-      label: 'Status Signal',
+      label: 'Archetype',
       value: v != null && Number.isFinite(v) ? v.toFixed(1) : '—',
       sub: badge.text,
     }
@@ -228,7 +228,7 @@ export function displayIndexValue(
     homefit: 'HomeFit',
     longevity: 'Longevity',
     happiness: 'Happiness',
-    status: 'Status Signal',
+    status: 'Archetype',
   }
   return {
     label: labels[mode],

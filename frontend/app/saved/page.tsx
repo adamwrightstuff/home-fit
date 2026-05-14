@@ -32,7 +32,7 @@ function homeFitTotalFromRow(row: SavedScoreRow): number {
   }
 }
 
-/** Longevity / Happiness / Status Signal from saved payload; 0 and invalid values are treated as missing (—). */
+/** Longevity / Happiness / archetype index from saved payload; 0 and invalid values are treated as missing (—). */
 function indexTripletFromPayload(score_payload: unknown): {
   longevity: number | null
   happiness: number | null
@@ -123,7 +123,7 @@ function SavedPlaceIndexRow({ score_payload }: { score_payload: unknown }) {
   const items = [
     { label: 'L' as const, value: longevity, numeralColor: 'var(--c-teal-600)' },
     { label: 'H' as const, value: happiness, numeralColor: 'var(--c-blue-600)' },
-    { label: 'S' as const, value: statusSignal, numeralColor: 'var(--c-coral-600)' },
+    { label: 'A' as const, value: statusSignal, numeralColor: 'var(--c-coral-600)' },
   ]
   return (
     <div

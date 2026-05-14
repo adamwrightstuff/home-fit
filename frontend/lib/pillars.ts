@@ -139,12 +139,12 @@ export const HOMEFIT_COPY = {
     'HomeFit = right for you. Longevity = right for your health over time.',
 } as const
 
-/** Copy for Status Signal UX: tooltip and modal. */
+/** Copy for Archetype index UX: tooltip and modal. */
 export const STATUS_SIGNAL_COPY = {
   tooltip:
     'Wealth, housing cost vs peers, education, occupation, and upscale nearby venues (mapped POIs; name fallback if needed) — 0–100 vs local baselines after Housing, Social Fabric, Economic Security, and Amenities; not your HomeFit weights. The badge names a profile type, not a rank above the score.',
   full:
-    'Status Signal is a 0–100 composite after scoring: household wealth (income vs local baselines), how expensive housing is for the area, education mix (emphasis on graduate degrees, plus bachelor’s and self-employment), occupation mix (e.g. finance, creative, white-collar share), and “luxury presence” from mapped POI types near you (offices, recreation, arts, retail, etc.) — with a fallback to name-based matching if map data isn’t available. It needs Housing, Social Fabric, Economic Security, and Neighborhood Amenities; refresh by running just those four pillars.',
+    'Archetype is a 0–100 composite after scoring: household wealth (income vs local baselines), how expensive housing is for the area, education mix (emphasis on graduate degrees, plus bachelor’s and self-employment), occupation mix (e.g. finance, creative, white-collar share), and “luxury presence” from mapped POI types near you (offices, recreation, arts, retail, etc.) — with a fallback to name-based matching if map data isn’t available. It needs Housing, Social Fabric, Economic Security, and Neighborhood Amenities; refresh by running just those four pillars.',
 } as const
 
 /** Copy for Happiness Index UX: tooltip and modal. */
@@ -160,7 +160,7 @@ export const HAPPINESS_INDEX_COPY = {
     'Commute, social fabric, housing space-for-price, nature, and built beauty — fixed weights when all five are available.',
 } as const
 
-/** Comma-separated pillar names required to compute Status Signal (for only= param). */
+/** Comma-separated pillar names required to compute the archetype index (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
   'housing_value,social_fabric,economic_security,neighborhood_amenities,diversity'
 

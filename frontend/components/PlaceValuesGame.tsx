@@ -487,7 +487,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               From our pre-scored NYC metro catalog — same pillars you just set.
             </p>
             <p className="hf-muted" style={{ marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-              &quot;Status signature&quot; labels describe neighborhood character (not statistical percentiles).
+              &quot;Archetype&quot; labels describe neighborhood character (not statistical percentiles).
             </p>
             {typeof agent_response.meta?.processing_ms === 'number' && (
               <p className="hf-muted" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>

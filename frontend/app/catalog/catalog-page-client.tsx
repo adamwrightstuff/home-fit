@@ -36,7 +36,7 @@ const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
   { id: 'longevity', label: 'Longevity' },
   { id: 'happiness', label: 'Happiness' },
-  { id: 'status', label: 'Status' },
+  { id: 'status', label: 'Archetype' },
 ]
 
 type CatalogMode = 'explorer' | 'twin'

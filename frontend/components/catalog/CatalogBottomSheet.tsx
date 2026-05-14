@@ -22,10 +22,10 @@ const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
   { id: 'homefit', label: 'HomeFit' },
   { id: 'longevity', label: 'Longevity' },
   { id: 'happiness', label: 'Happiness' },
-  { id: 'status', label: 'Status' },
+  { id: 'status', label: 'Archetype' },
 ]
 
-/** CSS token pairs for peek score strip (non–Status Signal indices). */
+/** CSS token pairs for peek score strip (non–archetype index columns). */
 const PEEK_RAMP_CSS: Record<
   Exclude<CatalogMapIndexMode, 'status'>,
   { c400: string; c600: string }
