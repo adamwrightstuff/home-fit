@@ -17,16 +17,18 @@ Usage:
 
 import argparse
 import json
-import math
 import os
 import shutil
 import sys
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from pillars.community_safety import get_community_safety_score
+from data_sources import census_api as census_api_mod
+from data_sources.crime_api import community_safety_crime_radius_m
+from data_sources.census_api import estimate_community_safety_disk_population
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -66,13 +68,13 @@ def _extract_location(row: Dict):
     return lat, lon, area_type, city, state, zip_code
 
 
-def _pop_from_row(row: Dict) -> int:
-    """Estimate residential population from catalog density and area_type radius."""
+def _pop_and_denom_meta_from_row(
+    row: Dict, lat: float, lon: float, area_type: str
+) -> Tuple[int, Dict[str, Any]]:
+    """Match production: areal ACS disk + same radius as crime_api; density floor like legacy rescore."""
     score_payload = row.get("score", {})
     pillars = score_payload.get("livability_pillars", {})
 
-    # Population density (people/sqmi) is in active_outdoors.area_classification.density
-    # (also available in air_travel and healthcare area_classification)
     density = (
         pillars.get("active_outdoors", {}).get("area_classification", {}).get("density")
         or pillars.get("air_travel_access", {}).get("area_classification", {}).get("density")
@@ -80,22 +82,9 @@ def _pop_from_row(row: Dict) -> int:
         or 0
     )
     if isinstance(density, dict):
-        density = 0  # safety guard
+        density = 0
 
-    dq = score_payload.get("data_quality_summary", {})
-    area_type = (dq.get("area_classification", {}).get("area_type") or "").lower()
-
-    radius_map = {
-        "urban_core": 800,
-        "urban_residential": 1000,
-        "suburban": 2000,
-        "exurban": 5000,
-        "rural": 8000,
-    }
-    # Minimum credible population density per sq mile by area type.
-    # Guards against anomalously low Census tract density values that would
-    # collapse the population estimate to the 500-person floor and inflate
-    # per-1k crime rates (e.g. Glendale Queens had density=16.52 stored).
+    at = (area_type or "").lower()
     min_density_map = {
         "urban_core": 5_000,
         "urban_residential": 2_000,
@@ -103,11 +92,24 @@ def _pop_from_row(row: Dict) -> int:
         "exurban": 50,
         "rural": 10,
     }
-    radius_m = radius_map.get(area_type, 1500)
-    min_density = min_density_map.get(area_type, 500)
-    sq_mi = math.pi * (radius_m / 1609.34) ** 2
+    min_density = min_density_map.get(at, 500)
     effective_density = max(float(density) if density else 0, min_density)
-    return max(500, int(effective_density * sq_mi))
+
+    tract = None
+    try:
+        tract = census_api_mod.get_census_tract(float(lat), float(lon))
+    except Exception:
+        tract = None
+
+    r_m = community_safety_crime_radius_m(at or None)
+    return estimate_community_safety_disk_population(
+        float(lat),
+        float(lon),
+        r_m,
+        tract=tract,
+        density_people_per_sq_mi=effective_density,
+        area_type=at or None,
+    )
 
 
 def rescore_catalog(input_path: str, output_path: str, dry_run: bool = False):
@@ -140,7 +142,7 @@ def rescore_catalog(input_path: str, output_path: str, dry_run: bool = False):
             errors += 1
             continue
 
-        pop = _pop_from_row(row)
+        pop, pop_meta = _pop_and_denom_meta_from_row(row, float(lat), float(lon), area_type or "")
         try:
             score, details = get_community_safety_score(
                 lat, lon,
@@ -149,6 +151,7 @@ def rescore_catalog(input_path: str, output_path: str, dry_run: bool = False):
                 state=state,
                 zip_code=zip_code,
                 population=pop,
+                population_denominator_meta=pop_meta,
             )
         except Exception as e:
             logger.error("[%d/%d] %s: error %s", idx, total, key, e)

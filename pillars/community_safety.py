@@ -202,6 +202,7 @@ def get_community_safety_score(
     state: Optional[str] = None,
     zip_code: Optional[str] = None,
     population: Optional[int] = None,
+    population_denominator_meta: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Score community safety for a location.
@@ -217,6 +218,7 @@ def get_community_safety_score(
         zip_code:     ZIP code (unused currently, reserved for future data source).
         population:   Estimated residential population for per-1k conversion.
                       Defaults to 10,000 when not supplied.
+        population_denominator_meta: Optional telemetry from main (areal ACS disk estimate).
     """
     pop = population or 10_000
     bl = _get_baselines(area_type)
@@ -313,4 +315,6 @@ def get_community_safety_score(
     }
     if commuter_meta.get("commuter_denominator_boost"):
         details["effective_pop_denominator_multiplier"] = commuter_meta.get("effective_pop_multiplier")
+    if population_denominator_meta:
+        details["population_denominator"] = population_denominator_meta
     return final_score, details

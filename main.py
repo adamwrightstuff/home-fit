@@ -64,6 +64,8 @@ from pillars.composite_indices import (
     backfill_status_happiness_if_missing,
     recompute_composites_from_payload,
 )
+from data_sources.census_api import estimate_community_safety_disk_population
+from data_sources.crime_api import community_safety_crime_radius_m
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS, data_quality_indicates_fallback
@@ -1726,18 +1728,19 @@ def _compute_single_score_internal(
         )
 
     if _include_pillar('community_safety'):
-        # Approximate residential population within the crime search radius.
-        # density is people/sq mi; radius varies by area type (800m–8000m).
-        import math as _math
-        _safety_radius_m = {"urban_core": 800, "urban_residential": 1000, "suburban": 2000,
-                            "exurban": 5000, "rural": 8000}.get((area_type or "").lower(), 1500)
-        _sq_mi = _math.pi * (_safety_radius_m / 1609.34) ** 2
-        _pop_est = max(500, int((density or 3000) * _sq_mi))
+        _r_m = community_safety_crime_radius_m(area_type)
+        _pop_est, _pop_denom_meta = estimate_community_safety_disk_population(
+            lat, lon, _r_m,
+            tract=census_tract,
+            density_people_per_sq_mi=density,
+            area_type=area_type,
+        )
         pillar_tasks.append(
             ('community_safety', get_community_safety_score, {
                 'lat': lat, 'lon': lon, 'area_type': area_type,
                 'city': city, 'state': state, 'zip_code': zip_code,
                 'population': _pop_est,
+                'population_denominator_meta': _pop_denom_meta,
             })
         )
 
@@ -4365,16 +4368,19 @@ async def stream_score(
             )
 
         if _include_pillar('community_safety'):
-            import math as _math
-            _safety_radius_m = {"urban_core": 800, "urban_residential": 1000, "suburban": 2000,
-                                "exurban": 5000, "rural": 8000}.get((area_type or "").lower(), 1500)
-            _sq_mi = _math.pi * (_safety_radius_m / 1609.34) ** 2
-            _pop_est = max(500, int((density or 3000) * _sq_mi))
+            _r_m = community_safety_crime_radius_m(area_type)
+            _pop_est, _pop_denom_meta = estimate_community_safety_disk_population(
+                lat, lon, _r_m,
+                tract=census_tract,
+                density_people_per_sq_mi=density,
+                area_type=area_type,
+            )
             pillar_tasks.append(
                 ('community_safety', get_community_safety_score, {
                     'lat': lat, 'lon': lon, 'area_type': area_type,
                     'city': city, 'state': state, 'zip_code': zip_code,
                     'population': _pop_est,
+                    'population_denominator_meta': _pop_denom_meta,
                 })
             )
 

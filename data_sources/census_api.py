@@ -3,10 +3,12 @@ Census API Client
 Pure API wrapper for Census Bureau data sources
 """
 
+import json
+import math
 import os
 import requests
 import time
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 from .cache import cached, CACHE_TTL
 from .error_handling import with_fallback, safe_api_call, handle_api_timeout, check_api_credentials
@@ -1350,3 +1352,359 @@ def classify_area_by_density(density: float) -> Dict[str, str]:
             "classification": "rural",
             "description": "Rural area"
         }
+
+
+# ---------------------------------------------------------------------------
+# Community safety: population denominator matched to crime query disk
+# ---------------------------------------------------------------------------
+
+def _make_post_request_with_retry(
+    url: str,
+    data: Dict[str, str],
+    timeout: int = 30,
+    max_retries: int = 3,
+):
+    """POST with simple retry/backoff (ArcGIS TIGERweb polygon queries)."""
+    last_exc = None
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(url, data=data, timeout=timeout)
+            if resp.status_code == 429:
+                time.sleep(int(resp.headers.get("Retry-After", 2 ** attempt)))
+                continue
+            if resp.status_code != 200:
+                if resp.status_code >= 500 and attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                return None
+            return resp
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+            continue
+    print(f"⚠️  POST request failed after {max_retries} attempts: {last_exc}")
+    return None
+
+
+def _geodesic_circle_polygon_wgs84(lat: float, lon: float, radius_m: float, n: int = 48):
+    """Closed lon/lat ring (degrees) approximating a geodesic circle."""
+    try:
+        from pyproj import Geod
+    except ImportError:
+        return None
+    geod = Geod(ellps="WGS84")
+    ring: List[List[float]] = []
+    for i in range(n):
+        az = 360.0 * i / n
+        elon, elat, _ = geod.fwd(lon, lat, az, radius_m)
+        ring.append([float(elon), float(elat)])
+    if ring:
+        ring.append(ring[0])
+    return ring
+
+
+def _esri_polygon_to_shapely(geom: Dict) -> Optional[Any]:
+    """Convert Esri JSON geometry dict to a Shapely polygon (WGS84 lon/lat)."""
+    try:
+        from shapely.geometry import Polygon
+    except ImportError:
+        return None
+    rings = geom.get("rings") if isinstance(geom, dict) else None
+    if not rings or not isinstance(rings[0], list):
+        return None
+    shell = rings[0]
+    holes = rings[1:] if len(rings) > 1 else []
+    try:
+        poly = Polygon(shell, holes)
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+        return poly
+    except Exception:
+        return None
+
+
+def _project_geom_to_albers(geom):
+    try:
+        from pyproj import Transformer
+        from shapely.ops import transform as shp_transform
+    except ImportError:
+        return None
+    try:
+        fwd = Transformer.from_crs("EPSG:4326", "EPSG:5070", always_xy=True)
+        return shp_transform(fwd.transform, geom)
+    except Exception:
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL["census_data"])
+def _tigerweb_tracts_intersecting_disk(lat: float, lon: float, radius_m: int) -> Optional[Dict]:
+    """
+    Query TIGERweb ACS2022 tract layer for features intersecting a geodesic disk.
+
+    Returns raw ArcGIS JSON payload (with features) or None.
+    """
+    ring = _geodesic_circle_polygon_wgs84(lat, lon, float(radius_m))
+    if not ring:
+        return None
+    geom_obj = {"rings": [ring], "spatialReference": {"wkid": 4326}}
+    data = {
+        "f": "json",
+        "where": "1=1",
+        "geometryType": "esriGeometryPolygon",
+        "spatialRel": "esriSpatialRelIntersects",
+        "inSR": "4326",
+        "outSR": "4326",
+        "returnGeometry": "true",
+        "outFields": "GEOID,STATE,COUNTY,TRACT,AREALAND,AREAWATER",
+        "geometry": json.dumps(geom_obj),
+        "resultRecordCount": "400",
+    }
+    resp = _make_post_request_with_retry(TIGERWEB_TRACT_LAYER_URL, data, timeout=35)
+    if resp is None:
+        return None
+    try:
+        return resp.json()
+    except Exception:
+        return None
+
+
+def _acs_population_batch(state_fips: str, county_fips: str, tract_fips_list: List[str]) -> Dict[str, int]:
+    """Return GEOID -> population for tracts in one county (batch ACS)."""
+    out: Dict[str, int] = {}
+    if not CENSUS_API_KEY or not tract_fips_list:
+        return out
+    # Census allows comma-separated tract list in `for=tract:...`
+    chunk_size = 35
+    for i in range(0, len(tract_fips_list), chunk_size):
+        chunk = tract_fips_list[i : i + chunk_size]
+        tf = ",".join(chunk)
+        params = {
+            "get": "B01001_001E,NAME",
+            "for": f"tract:{tf}",
+            "in": f"state:{state_fips} county:{county_fips}",
+            "key": CENSUS_API_KEY,
+        }
+        resp = _make_request_with_retry(f"{CENSUS_BASE_URL}/2022/acs/acs5", params, timeout=20)
+        if resp is None:
+            continue
+        try:
+            rows = resp.json()
+        except Exception:
+            continue
+        if not isinstance(rows, list) or len(rows) < 2:
+            continue
+        header = rows[0]
+        try:
+            idx_pop = header.index("B01001_001E")
+            idx_st = header.index("state")
+            idx_co = header.index("county")
+            idx_tr = header.index("tract")
+        except ValueError:
+            continue
+        for row in rows[1:]:
+            if len(row) <= max(idx_pop, idx_st, idx_co, idx_tr):
+                continue
+            pop_raw = row[idx_pop]
+            if pop_raw in (None, "", "-666666666", "-888888888", "-999999999"):
+                continue
+            st = str(row[idx_st]).zfill(2)
+            co = str(row[idx_co]).zfill(3)
+            tr = str(row[idx_tr]).zfill(6)
+            geoid = st + co + tr
+            try:
+                out[geoid] = int(pop_raw)
+            except (TypeError, ValueError):
+                continue
+    return out
+
+
+def estimate_community_safety_disk_population(
+    lat: float,
+    lon: float,
+    radius_m: int,
+    *,
+    tract: Optional[Dict] = None,
+    density_people_per_sq_mi: Optional[float] = None,
+    area_type: Optional[str] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """
+    Residential population estimate for the **same geodesic disk** used by crime queries.
+
+    Primary method: areal weighting — sum over intersecting census tracts of
+    (tract_pop × min(1, area(circle ∩ tract_land) / tract_land_m²)).
+
+    Falls back to the legacy disk formula (density × π r²) when disabled, on error,
+    or when the areal estimate is implausibly tiny vs the legacy anchor.
+
+    Env:
+        HOMEFIT_COMMUNITY_SAFETY_AREAL_DENOM: default ``true``. Set ``false`` to
+        force legacy density×disk only.
+    """
+    meta: Dict[str, Any] = {
+        "population_denominator_radius_m": int(radius_m),
+        "population_denominator_method": None,
+    }
+    dens = float(density_people_per_sq_mi or 0.0)
+    if dens <= 0 and tract:
+        p0 = get_population(tract)
+        la0 = get_land_area(tract) or 2.0
+        if p0 and la0 and la0 > 0:
+            dens = float(p0) / float(la0)
+    if dens <= 0:
+        dens = 3000.0
+    disk_sq_mi = math.pi * (radius_m / 1609.34) ** 2
+    legacy = max(500, int(dens * disk_sq_mi))
+    meta["population_denominator_legacy_estimate"] = legacy
+
+    flag = os.getenv("HOMEFIT_COMMUNITY_SAFETY_AREAL_DENOM", "true").lower().strip()
+    if flag in ("0", "false", "no", "off"):
+        meta["population_denominator_method"] = "density_disk_legacy"
+        return legacy, meta
+
+    try:
+        from shapely.geometry import Polygon
+    except ImportError:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "shapely_unavailable"
+        return legacy, meta
+
+    payload = _tigerweb_tracts_intersecting_disk(lat, lon, int(radius_m))
+    if not payload or payload.get("error"):
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "tigerweb_empty_or_error"
+        return legacy, meta
+
+    feats = payload.get("features") or []
+    if not feats:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "no_intersecting_tracts"
+        return legacy, meta
+
+    if len(feats) > 350:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "too_many_tract_features"
+        return legacy, meta
+
+    ring = _geodesic_circle_polygon_wgs84(lat, lon, float(radius_m), n=48)
+    if not ring:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "circle_build_failed"
+        return legacy, meta
+    circle_ll = Polygon(ring)
+    circle_proj = _project_geom_to_albers(circle_ll)
+    if circle_proj is None or circle_proj.is_empty:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "projection_failed"
+        return legacy, meta
+
+    # Unique GEOIDs with overlap fractions
+    overlap_by_geoid: Dict[str, float] = {}
+    tract_meta_by_geoid: Dict[str, Dict[str, str]] = {}
+
+    for feat in feats:
+        if not isinstance(feat, dict):
+            continue
+        attrs = feat.get("attributes") or {}
+        geom = feat.get("geometry")
+        if not geom:
+            continue
+        geoid = str(attrs.get("GEOID") or "").strip()
+        if not geoid or len(geoid) < 11:
+            continue
+        tract_poly_ll = _esri_polygon_to_shapely(geom)
+        if tract_poly_ll is None or tract_poly_ll.is_empty:
+            continue
+        tract_proj = _project_geom_to_albers(tract_poly_ll)
+        if tract_proj is None or tract_proj.is_empty:
+            continue
+        try:
+            inter = circle_proj.intersection(tract_proj)
+        except Exception:
+            continue
+        if inter.is_empty:
+            continue
+        inter_area = float(inter.area)
+        aland = float(attrs.get("AREALAND") or 0.0)
+        tract_land_m2 = aland if aland > 1000.0 else max(float(tract_proj.area), 1.0)
+        frac = inter_area / tract_land_m2 if tract_land_m2 > 0 else 0.0
+        frac = max(0.0, min(1.0, frac))
+        if frac <= 0:
+            continue
+        overlap_by_geoid[geoid] = overlap_by_geoid.get(geoid, 0.0) + frac
+        if geoid not in tract_meta_by_geoid:
+            tract_meta_by_geoid[geoid] = {
+                "state_fips": str(attrs.get("STATE", "")).zfill(2),
+                "county_fips": str(attrs.get("COUNTY", "")).zfill(3),
+                "tract_fips": str(attrs.get("TRACT", "")).zfill(6),
+            }
+
+    if not overlap_by_geoid:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "zero_overlap"
+        return legacy, meta
+
+    # Batch ACS by county
+    from collections import defaultdict
+
+    by_county: Dict[Tuple[str, str], List[str]] = defaultdict(list)
+    for gid, frac in overlap_by_geoid.items():
+        if frac <= 0:
+            continue
+        tm = tract_meta_by_geoid.get(gid) or {}
+        st = tm.get("state_fips") or gid[:2]
+        co = tm.get("county_fips") or gid[2:5]
+        tr = tm.get("tract_fips") or gid[5:11]
+        if not (st and co and tr):
+            continue
+        by_county[(st, co)].append(tr)
+
+    pop_by_geoid: Dict[str, int] = {}
+    for (st, co), tr_list in by_county.items():
+        uniq = sorted(set(tr_list))
+        batch = _acs_population_batch(st, co, uniq)
+        pop_by_geoid.update(batch)
+
+    weighted = 0.0
+    missing = 0
+    for gid, frac in overlap_by_geoid.items():
+        pop = pop_by_geoid.get(gid)
+        if pop is None:
+            tm = tract_meta_by_geoid.get(gid)
+            if tm:
+                td = {
+                    "state_fips": tm["state_fips"],
+                    "county_fips": tm["county_fips"],
+                    "tract_fips": tm["tract_fips"],
+                    "geoid": gid,
+                    "name": "",
+                    "basename": "",
+                }
+                pop = get_population(td)
+        if pop is None or pop <= 0:
+            missing += 1
+            continue
+        weighted += float(pop) * float(frac)
+
+    if weighted <= 0:
+        meta["population_denominator_method"] = "density_disk_legacy"
+        meta["population_denominator_skip_reason"] = "acs_population_unavailable"
+        meta["population_denominator_missing_tracts"] = missing
+        return legacy, meta
+
+    areal_int = max(1, int(round(weighted)))
+    # Anti-fragment: if areal is tiny vs legacy in urban-ish types, blend up slightly
+    at = (area_type or "").lower()
+    urbanish = "urban" in at or "suburban" in at
+    if urbanish and areal_int < 800 and legacy > areal_int * 3:
+        blended = int(round(max(areal_int, legacy * 0.35)))
+        meta["population_denominator_fragment_blend"] = True
+        meta["population_denominator_areal_raw"] = areal_int
+        areal_int = min(blended, legacy)
+
+    final_pop = max(500, areal_int)
+    meta["population_denominator_method"] = "areal_acs_tracts_in_disk"
+    meta["population_denominator_tracts_overlapping"] = len(overlap_by_geoid)
+    meta["population_denominator_weighted_estimate"] = int(round(weighted))
+    meta["population_denominator_missing_tract_pops"] = missing
+    return final_pop, meta

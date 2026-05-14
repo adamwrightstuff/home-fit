@@ -953,17 +953,27 @@ def _get_fbi_rates(
 # ---------------------------------------------------------------------------
 
 def _radius_for_area_type(area_type: Optional[str]) -> int:
-    """Search radius in meters by area type."""
+    """Search radius in meters by area type (must match main.py community_safety disk)."""
     at = (area_type or "").lower()
-    if "urban_core" in at or "urban" in at:
-        return 800
-    if "suburban" in at:
-        return 2000
-    if "exurban" in at:
-        return 5000
     if "rural" in at:
         return 8000
+    if "exurban" in at:
+        return 5000
+    if "suburban" in at:
+        return 2000
+    # urban_residential contains "urban" — check before generic urban branch
+    if "urban_residential" in at:
+        return 1000
+    if "urban_core" in at:
+        return 800
+    if "urban" in at:
+        return 800
     return 1500
+
+
+def community_safety_crime_radius_m(area_type: Optional[str]) -> int:
+    """Public alias: crime query radius in meters (same footprint as population denominator)."""
+    return _radius_for_area_type(area_type)
 
 
 def get_crime_rates(
@@ -990,7 +1000,7 @@ def get_crime_rates(
         area_type:     Morphological area type (drives search radius).
         population:    Estimated population in the scored area (for per-1k conversion).
     """
-    radius_m = _radius_for_area_type(area_type)
+    radius_m = community_safety_crime_radius_m(area_type)
 
     def _in_bbox(bbox):
         lat_min, lon_min, lat_max, lon_max = bbox
