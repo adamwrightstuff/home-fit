@@ -42,6 +42,7 @@ type Normalized = Required<Pick<ResultsRouteParams, 'location' | 'prioritiesJson
     built_character_preference: string | null
     built_density_preference: string | null
     diversity_preference: string | null
+    household_income: number | null
   }
 
 type CacheEntry = { ts: number; payload: ScoreResponse }
@@ -80,6 +81,13 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
   const built_density_preference = firstParam(sp.built_density_preference)
   const diversity_preference = firstParam(sp.diversity_preference)
 
+  const household_income = (() => {
+    const raw = firstParam(sp.household_income)
+    if (!raw) return null
+    const n = Number(raw)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })()
+
   return {
     location,
     prioritiesJson,
@@ -90,6 +98,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
     built_character_preference: built_character_preference && built_character_preference.trim() ? built_character_preference : null,
     built_density_preference: built_density_preference && built_density_preference.trim() ? built_density_preference : null,
     diversity_preference: diversity_preference && diversity_preference.trim() ? diversity_preference : null,
+    household_income,
   }
 }
 
@@ -201,6 +210,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           return null
         }
       })(),
+      household_income: normalized.household_income,
     }
   }, [normalized])
 
