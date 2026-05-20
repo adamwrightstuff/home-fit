@@ -820,7 +820,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   marginTop: '0.25rem',
                 }}
               >
-                HomeFit Score
+                Trovamo Score
                 <HomeFitInfo />
               </div>
               <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>

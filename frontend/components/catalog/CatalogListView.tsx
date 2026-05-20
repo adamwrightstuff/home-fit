@@ -30,7 +30,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
   return (
     <div className="space-y-1 border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-2 py-3">
       <div className="mb-2 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
-        Pillars (score · weight in HomeFit blend)
+        Pillars (score · weight in Trovamo blend)
       </div>
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {PILLAR_ORDER.map((k) => {
@@ -81,7 +81,7 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
           <tr className="border-b border-[var(--hf-border)]">
             <th className="py-2 pr-2 font-semibold">Place</th>
             <th className="py-2 px-1"> </th>
-            <th className="py-2 px-1 font-semibold">HF</th>
+            <th className="py-2 px-1 font-semibold">Tro</th>
             <th className="py-2 px-1 font-semibold">Lon</th>
             <th className="py-2 px-1 font-semibold">Hap</th>
             <th className="py-2 px-1 font-semibold">Archetype</th>

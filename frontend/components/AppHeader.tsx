@@ -12,7 +12,7 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({
-  title = 'HomeFit',
+  title = 'Trovamo',
   tagline = 'Find the neighborhood where you truly belong',
   heroImageUrl,
   heroImageAlt = 'Neighborhood streetscape',

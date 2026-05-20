@@ -120,7 +120,7 @@ export const LONGEVITY_COPY = {
     'Social fabric, daily amenities, active outdoors, natural beauty, climate risk, and schools — fixed Blue Zone–style blend; ignores your Trovamo pillar weights.',
   /** Key distinction to communicate. */
   distinction:
-    'HomeFit = right for you. Longevity = right for your health over time.',
+    'Trovamo = right for you. Longevity = right for your health over time.',
 } as const
 
 /** Copy for Trovamo Score UX: tooltip, subtitle, full modal, and callout distinction. */

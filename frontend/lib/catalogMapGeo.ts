@@ -225,7 +225,7 @@ export function displayIndexValue(
     }
   }
   const labels: Record<CatalogMapIndexMode, string> = {
-    homefit: 'HomeFit',
+    homefit: 'Trovamo',
     longevity: 'Longevity',
     happiness: 'Happiness',
     status: 'Archetype',

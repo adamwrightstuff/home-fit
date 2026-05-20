@@ -331,7 +331,7 @@ function CompareContent() {
                     {homefitA != null ? homefitA.toFixed(1) : '—'}
                   </div>
                   <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
-                    HomeFit Score
+                    Trovamo Score
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-longevity-purple)' }}>
                     {longevityA != null ? `Longevity ${longevityA.toFixed(1)}` : 'Longevity —'}
@@ -370,7 +370,7 @@ function CompareContent() {
                     {homefitB != null ? homefitB.toFixed(1) : '—'}
                   </div>
                   <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
-                    HomeFit Score
+                    Trovamo Score
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-homefit-green)' }}>
                     {longevityB != null ? `Longevity ${longevityB.toFixed(1)}` : 'Longevity —'}

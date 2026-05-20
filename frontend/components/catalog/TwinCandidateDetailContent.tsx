@@ -81,7 +81,7 @@ export default function TwinCandidateDetailContent({
       </div>
 
       <div className="mb-2 text-xs text-[var(--hf-text-secondary)]">
-        Twin HomeFit {typeof rwTwin.total_score === 'number' ? rwTwin.total_score.toFixed(1) : '—'} · Query HomeFit{' '}
+        Twin Trovamo {typeof rwTwin.total_score === 'number' ? rwTwin.total_score.toFixed(1) : '—'} · Query Trovamo{' '}
         {qIdx.homefit != null ? qIdx.homefit.toFixed(1) : '—'}
       </div>
 

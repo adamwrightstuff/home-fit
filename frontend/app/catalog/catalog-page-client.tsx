@@ -682,7 +682,7 @@ export default function CatalogPageClient({
 
             <button
               type="button"
-              title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
+              title={indexMode !== 'homefit' ? 'Weights apply to Trovamo score only' : undefined}
               className="self-start rounded-lg border border-[var(--hf-border-strong)] px-3 py-1.5 text-xs font-bold text-[var(--hf-text-primary)]"
               style={{
                 opacity: indexMode !== 'homefit' ? 0.4 : 1,

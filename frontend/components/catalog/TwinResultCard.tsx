@@ -95,7 +95,7 @@ export default function TwinResultCard({
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
-            HomeFit
+            Trovamo
           </span>
           <span className="text-lg font-bold tabular-nums" style={{ color: '#6B5CE7' }}>
             {hf != null ? hf.toFixed(1) : '—'}

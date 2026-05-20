@@ -16,7 +16,7 @@ export default function HomeFitInfo() {
           setShowModal(true)
         }}
         title={HOMEFIT_COPY.tooltip}
-        aria-label="What is the HomeFit Score?"
+        aria-label="What is the Trovamo Score?"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -67,7 +67,7 @@ export default function HomeFitInfo() {
                 color: 'var(--c-purple-600)',
               }}
             >
-              HomeFit Score
+              Trovamo Score
             </h2>
             <p
               id="homefit-modal-desc"
