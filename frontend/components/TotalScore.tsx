@@ -31,7 +31,7 @@ export default function TotalScore({ score, confidence, loading }: TotalScorePro
           className="hf-muted"
           style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontSize: '0.95rem', fontWeight: 600 }}
         >
-          Overall HomeFit Score (0–100)
+          Overall Trovamo Score (0–100)
           <HomeFitInfo />
         </div>
       </div>

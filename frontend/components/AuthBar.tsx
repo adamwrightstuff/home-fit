@@ -13,7 +13,7 @@ export default function AuthBar() {
       <header className="hf-auth-bar">
         <div className="hf-auth-bar-inner">
           <Link href="/" className="hf-auth-bar-logo">
-            HomeFit
+            Trovamo
           </Link>
           <nav className="hf-auth-bar-nav" aria-label="Account">
             {!isConfigured ? (

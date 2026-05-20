@@ -166,7 +166,7 @@ export default function ScoreDisplay({
   const copyScores = async () => {
     if (isLoading) return
     const lines = [
-      `HomeFit Livability Score: ${locationDisplayName}`,
+      `Trovamo Livability Score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
       ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
       ...(typeof happiness_index === 'number' ? [`Happiness Index: ${happiness_index.toFixed(1)}/100`] : []),

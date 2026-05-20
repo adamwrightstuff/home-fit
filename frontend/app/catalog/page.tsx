@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import CatalogPageClient from './catalog-page-client'
 
 export const metadata = {
-  title: 'Catalog · HomeFit',
+  title: 'Catalog · Trovamo',
   description: 'Explore neighborhood scores and find metro twins on the map.',
 }
 

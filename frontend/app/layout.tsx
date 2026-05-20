@@ -3,7 +3,7 @@ import './globals.css'
 import ClientLayout from '@/components/ClientLayout'
 
 export const metadata: Metadata = {
-  title: 'HomeFit - Livability Score',
+  title: 'Trovamo - Livability Score',
   description: 'Discover how livable any location is across 9 essential factors',
 }
 

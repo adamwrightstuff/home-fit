@@ -111,24 +111,24 @@ export function longevityIndexFromLivabilityPillars(
 export const LONGEVITY_COPY = {
   /** Full version for tooltip/modal. */
   full:
-    "The Longevity Score measures how well a place supports a long, healthy life — not whether it matches your priorities today. It's a fixed blend of six pillars (same weights for everyone): Social Fabric, Neighborhood Amenities (walkable daily life), Active Outdoors, Natural Beauty, Climate Risk, and Schools / Quality Education. Those weights follow Blue Zone–style research on where people live longest. A high score means the place is structurally working in your favor for health over time — independent of how you weighted pillars for your HomeFit Score.",
+    "The Longevity Score measures how well a place supports a long, healthy life — not whether it matches your priorities today. It's a fixed blend of six pillars (same weights for everyone): Social Fabric, Neighborhood Amenities (walkable daily life), Active Outdoors, Natural Beauty, Climate Risk, and Schools / Quality Education. Those weights follow Blue Zone–style research on where people live longest. A high score means the place is structurally working in your favor for health over time — independent of how you weighted pillars for your Trovamo Score.",
   /** Short version for subtitle or card label. */
   short:
     'Six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) — same formula for everyone.',
   /** One-line tooltip next to the score. */
   tooltip:
-    'Social fabric, daily amenities, active outdoors, natural beauty, climate risk, and schools — fixed Blue Zone–style blend; ignores your HomeFit pillar weights.',
+    'Social fabric, daily amenities, active outdoors, natural beauty, climate risk, and schools — fixed Blue Zone–style blend; ignores your Trovamo pillar weights.',
   /** Key distinction to communicate. */
   distinction:
     'HomeFit = right for you. Longevity = right for your health over time.',
 } as const
 
-/** Copy for HomeFit Score UX: tooltip, subtitle, full modal, and callout distinction. */
+/** Copy for Trovamo Score UX: tooltip, subtitle, full modal, and callout distinction. */
 export const HOMEFIT_COPY = {
   /** Full body for modal. */
   full:
-    "The HomeFit Score measures how well a place matches your priorities — not anyone else's. Before scoring, you tell us what matters to you: how much you care about schools, walkability, natural beauty, transit, and more. The score is weighted accordingly, so two people can look at the same place and get completely different HomeFit scores based on their lives.",
-  /** Subtitle under "HomeFit Score" label. */
+    "The Trovamo Score measures how well a place matches your priorities — not anyone else's. Before scoring, you tell us what matters to you: how much you care about schools, walkability, natural beauty, transit, and more. The score is weighted accordingly, so two people can look at the same place and get completely different Trovamo scores based on their lives.",
+  /** Subtitle under "Trovamo Score" label. */
   subtitle:
     'How well this place meets your lifestyle needs based on your personalized preferences.',
   /** One-line tooltip for ? button. */
@@ -136,13 +136,13 @@ export const HOMEFIT_COPY = {
     'How well this place meets your lifestyle needs based on your personalized preferences.',
   /** Callout in modal. */
   distinction:
-    'HomeFit = right for you. Longevity = right for your health over time.',
+    'Trovamo = right for you. Longevity = right for your health over time.',
 } as const
 
 /** Copy for Archetype index UX: tooltip and modal. */
 export const STATUS_SIGNAL_COPY = {
   tooltip:
-    'Wealth, housing cost vs peers, education, occupation, and upscale nearby venues (mapped POIs; name fallback if needed) — 0–100 vs local baselines after Housing, Social Fabric, Economic Security, and Amenities; not your HomeFit weights. The badge names a profile type, not a rank above the score.',
+    'Wealth, housing cost vs peers, education, occupation, and upscale nearby venues (mapped POIs; name fallback if needed) — 0–100 vs local baselines after Housing, Social Fabric, Economic Security, and Amenities; not your Trovamo weights. The badge names a profile type, not a rank above the score.',
   full:
     'Archetype is a 0–100 composite after scoring: household wealth (income vs local baselines), how expensive housing is for the area, education mix (emphasis on graduate degrees, plus bachelor’s and self-employment), occupation mix (e.g. finance, creative, white-collar share), and “luxury presence” from mapped POI types near you (offices, recreation, arts, retail, etc.) — with a fallback to name-based matching if map data isn’t available. It needs Housing, Social Fabric, Economic Security, and Neighborhood Amenities; refresh by running just those four pillars.',
 } as const

@@ -805,7 +805,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             marginTop: '0.25rem',
           }}
         >
-          HomeFit Score
+          Trovamo Score
           <HomeFitInfo />
         </div>
         <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
@@ -1572,7 +1572,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               id="scoring-overlay-headline"
               style={{ margin: 0, fontSize: '1.35rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}
             >
-              Analyzing HomeFit
+              Analyzing with Trovamo
             </h2>
             <p
               id="scoring-overlay-subtitle"
