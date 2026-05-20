@@ -833,10 +833,6 @@ def _classify_archetype(
     wealth_val = float(wealth) if wealth is not None else 0.0
     stab_val = float(stability) if stability is not None else None
 
-    # Non-residential / data-sparse tracts (Red Hook industrial, Downtown LA, etc.)
-    if home_cost == 0 and wealth_val < 25:
-        return "Unclassified", "insufficient_data"
-
     # Established: ultra-high wealth qualifies only when housing costs confirm a prestige enclave.
     # home_cost >= 50 screens out inequality-inflated tracts (a few wealthy households in an
     # otherwise moderate neighborhood) and transient/rental areas with no real estate premium.
