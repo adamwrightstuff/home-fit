@@ -166,7 +166,7 @@ export default function ScoreDisplay({
   const copyScores = async () => {
     if (isLoading) return
     const lines = [
-      `Trovamo Livability Score: ${locationDisplayName}`,
+      `Trovamo score: ${locationDisplayName}`,
       `Total Score: ${total_score.toFixed(1)}/100`,
       ...(typeof longevity_index === 'number' ? [`Longevity Index: ${longevity_index.toFixed(1)}/100`] : []),
       ...(typeof happiness_index === 'number' ? [`Happiness Index: ${happiness_index.toFixed(1)}/100`] : []),
@@ -283,7 +283,7 @@ export default function ScoreDisplay({
       >
         {isSignedIn ? (
           savedScoreId ? (
-            <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '1rem' }}>
+            <span className="tr-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '1rem' }}>
               ✓ Saved to My places
               <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
                 View saved places →
@@ -311,7 +311,7 @@ export default function ScoreDisplay({
           </button>
         ) : null}
         {saveError && (
-          <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
+          <span className="tr-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{saveError}</span>
         )}
       </div>
     ) : null
@@ -325,22 +325,22 @@ export default function ScoreDisplay({
 
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
           <div style={{ minWidth: 0, flex: '1 1 260px' }}>
-            <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+            <div className="tr-label" style={{ marginBottom: '0.25rem' }}>
               Score summary for
             </div>
             <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
               {locationDisplayName}
             </div>
             {(typeof data.input === 'string' && data.input.trim()) && (
-              <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
+              <div className="tr-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
                 Location: {location_info.city}, {location_info.state} {location_info.zip}
               </div>
             )}
-            <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
+            <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
               Coordinates: {data.coordinates.lat.toFixed(6)}, {data.coordinates.lon.toFixed(6)}
             </div>
             {metadata?.version && (
-              <div className="hf-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
+              <div className="tr-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
                 API version: {metadata.version}
               </div>
             )}
@@ -378,44 +378,44 @@ export default function ScoreDisplay({
         >
           <TotalScore score={total_score} confidence={overall_confidence} loading={isLoading} />
           {longevity_index != null && (
-            <div className="hf-panel">
+            <div className="tr-panel">
               <div style={{ padding: '0.5rem 0' }}>
                 <div className="tabular-nums" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--c-teal-600)' }}>
                   {longevity_index.toFixed(1)}
                 </div>
-                <div className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
+                <div className="tr-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
                   Longevity Index (0–100)
                   <LongevityInfo />
                 </div>
               </div>
-              <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+              <div className="tr-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
                 {LONGEVITY_COPY.short}
               </div>
             </div>
           )}
           {happiness_index != null && (
-            <div className="hf-panel">
+            <div className="tr-panel">
               <div style={{ padding: '0.5rem 0' }}>
                 <div className="tabular-nums" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--c-blue-600)' }}>
                   {happiness_index.toFixed(1)}
                 </div>
-                <div className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
+                <div className="tr-muted" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontWeight: 600 }}>
                   Happiness Index (0–100)
                   <HappinessInfo />
                 </div>
               </div>
-              <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+              <div className="tr-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
                 {HAPPINESS_INDEX_COPY.short}
               </div>
             </div>
           )}
-          <div className="hf-panel">
-            <div className="hf-label" style={{ marginBottom: '0.75rem' }}>
+          <div className="tr-panel">
+            <div className="tr-label" style={{ marginBottom: '0.75rem' }}>
               {placeSummary != null && placeSummary !== '' ? 'Summary' : 'Quick summary'}
             </div>
 
             {isLoading ? (
-              <div className="hf-muted" style={{ fontSize: '1.05rem', lineHeight: 1.45 }}>
+              <div className="tr-muted" style={{ fontSize: '1.05rem', lineHeight: 1.45 }}>
                 Calculating your full results…
               </div>
             ) : placeSummary != null && placeSummary !== '' ? (
@@ -436,7 +436,7 @@ export default function ScoreDisplay({
                   {tier.label} overall fit ({total_score.toFixed(1)}/100).
                 </div>
 
-                <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
+                <div className="tr-muted" style={{ marginTop: '0.6rem', fontSize: '0.98rem' }}>
                   Strongest pillars:{' '}
                   {top2.length === 0
                     ? '—'
@@ -454,10 +454,10 @@ export default function ScoreDisplay({
             )}
 
             <div style={{ marginTop: '1rem' }}>
-              <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
+              <div className="tr-label" style={{ marginBottom: '0.5rem' }}>
                 How to read this
               </div>
-              <ul className="hf-muted" style={{ margin: 0, paddingLeft: '1.1rem', display: 'grid', gap: '0.4rem', fontSize: '0.95rem' }}>
+              <ul className="tr-muted" style={{ margin: 0, paddingLeft: '1.1rem', display: 'grid', gap: '0.4rem', fontSize: '0.95rem' }}>
                 <li>Pillar scores are 0–100; your total is a weighted blend based on priorities.</li>
                 <li>Higher-priority pillars contribute more to the total score.</li>
                 {schoolsDisabled ? <li>Schools scoring is currently disabled (premium-gated), so “Schools” may be 0.</li> : null}
@@ -475,10 +475,10 @@ export default function ScoreDisplay({
             </div>
 
             <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--hf-border)' }}>
-              <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
+              <div className="tr-label" style={{ marginBottom: '0.5rem' }}>
                 Data notes
               </div>
-              <div className="hf-muted" style={{ fontSize: '0.92rem' }}>
+              <div className="tr-muted" style={{ fontSize: '0.92rem' }}>
                 API version: {metadata.version}
                 {metadata.cache_hit ? ' (cached)' : ''}
               </div>
@@ -572,10 +572,10 @@ export default function ScoreDisplay({
 
         {not_included_pillars.length > 0 && (
           <div style={{ marginTop: '2rem' }}>
-            <div className="hf-label" style={{ marginBottom: '0.75rem', color: 'var(--hf-text-secondary)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div className="tr-label" style={{ marginBottom: '0.75rem', color: 'var(--hf-text-secondary)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Not included in your score
             </div>
-            <div className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
+            <div className="tr-panel" style={{ padding: '1rem 1.25rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {not_included_pillars.map((key) => {
                   const pillar = (livability_pillars as any)[key]
@@ -612,7 +612,7 @@ export default function ScoreDisplay({
                           </span>
                           {score != null && (
                             <span
-                              className="hf-muted"
+                              className="tr-muted"
                               style={{
                                 fontSize: '0.85rem',
                                 fontWeight: 700,
@@ -650,7 +650,7 @@ export default function ScoreDisplay({
                       {isExpanded && (
                         <>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Importance:</span>
+                            <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Importance:</span>
                             {(['Low', 'Medium', 'High'] as const).map((level) => (
                               <button
                                 key={level}
@@ -674,7 +674,7 @@ export default function ScoreDisplay({
 
                           {key === 'economic_security' && (
                             <div>
-                              <div className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Job categories (optional)</div>
+                              <div className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Job categories (optional)</div>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                                 {ADD_JOB_CATEGORY_OPTIONS.map((opt) => {
                                   const checked = addPillarJobCategories.includes(opt.key)
@@ -698,7 +698,7 @@ export default function ScoreDisplay({
 
                           {key === 'natural_beauty' && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Scenery (up to 2):</span>
+                              <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Scenery (up to 2):</span>
                               {ADD_NATURAL_BEAUTY_CHIPS.map(({ value, label }) => {
                                 const isAny = value === null
                                 const hasAny = !addPillarNaturalBeauty?.length || (addPillarNaturalBeauty.length === 1 && addPillarNaturalBeauty[0] === 'no_preference')
@@ -746,7 +746,7 @@ export default function ScoreDisplay({
                           {key === 'built_beauty' && (
                             <>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Character:</span>
+                                <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Character:</span>
                                 {ADD_BUILT_CHARACTER_CHIPS.map(({ value, label }) => (
                                   <button
                                     key={value}
@@ -768,7 +768,7 @@ export default function ScoreDisplay({
                                 ))}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Density:</span>
+                                <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Density:</span>
                                 {ADD_BUILT_DENSITY_CHIPS.map(({ value, label }) => (
                                   <button
                                     key={value}
@@ -794,7 +794,7 @@ export default function ScoreDisplay({
 
                           {key === 'diversity' && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Mix focus:</span>
+                              <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Mix focus:</span>
                               {ADD_DIVERSITY_CHIPS.map(({ value, label }) => {
                                 const pref = addPillarDiversity ?? []
                                 const isAny = value === null
@@ -847,7 +847,7 @@ export default function ScoreDisplay({
                                 {runPillarLoading ? 'Running score…' : 'Run Score'}
                               </button>
                               {runPillarError && (
-                                <span className="hf-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{runPillarError}</span>
+                                <span className="tr-muted" style={{ fontSize: '0.9rem', color: 'var(--hf-danger)' }}>{runPillarError}</span>
                               )}
                             </div>
                           )}

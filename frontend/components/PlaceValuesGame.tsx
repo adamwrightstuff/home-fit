@@ -483,29 +483,29 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             >
               Top picks for you
             </h2>
-            <p className="hf-muted" style={{ marginBottom: '0.35rem' }}>
+            <p className="tr-muted" style={{ marginBottom: '0.35rem' }}>
               From our pre-scored NYC metro catalog — same pillars you just set.
             </p>
-            <p className="hf-muted" style={{ marginBottom: '1.25rem', fontSize: '0.9rem' }}>
+            <p className="tr-muted" style={{ marginBottom: '1.25rem', fontSize: '0.9rem' }}>
               &quot;Archetype&quot; labels describe neighborhood character (not statistical percentiles).
             </p>
             {typeof agent_response.meta?.processing_ms === 'number' && (
-              <p className="hf-muted" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <p className="tr-muted" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
                 Ready in {agent_response.meta.processing_ms} ms
               </p>
             )}
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {recs.length === 0 && (
-              <p className="hf-muted" role="status">
+              <p className="tr-muted" role="status">
                 No recommendations returned. Try again in a moment.
               </p>
             )}
             {recs.map((rec) => (
-                <li key={rec.neighborhood} className="hf-panel" style={{ padding: '1.15rem 1.25rem' }}>
+                <li key={rec.neighborhood} className="tr-panel" style={{ padding: '1.15rem 1.25rem' }}>
                   <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-primary)', marginBottom: '0.35rem' }}>
                     {rec.neighborhood}
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
                     {rec.archetype}
                     {rec.percentile_band ? ` · ${rec.percentile_band}` : ''}
                   </div>
@@ -514,7 +514,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                     aria-label={`Match score ${rec.match_score} out of 100`}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                      <span className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      <span className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                         Match
                       </span>
                       <span style={{ fontWeight: 800 }}>{rec.match_score}</span>
@@ -531,7 +531,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                   </div>
                   {rec.top_drivers?.length > 0 && (
                     <div style={{ marginBottom: '0.65rem', fontSize: '0.9rem' }}>
-                      <span className="hf-muted">Top drivers: </span>
+                      <span className="tr-muted">Top drivers: </span>
                       {rec.top_drivers.map((k) => PILLAR_META[k as PillarKey]?.name ?? k).join(' · ')}
                     </div>
                   )}
@@ -601,14 +601,14 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               <ChevronLeft size={18} />
               Back
             </button>
-            <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Question {current_step + 1} of {TOTAL_QUESTIONS}
             </div>
-            <div className="hf-muted" style={{ fontWeight: 800 }}>
+            <div className="tr-muted" style={{ fontWeight: 800 }}>
               {Math.round(progress_pct)}%
             </div>
           </div>
-          <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+          <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
             <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${progress_pct}%`, background: 'var(--hf-primary-gradient)', transition: 'all 0.3s ease' }} />
             </div>
@@ -618,7 +618,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               {question.prompt}
             </div>
             {'hint' in question && question.hint && (
-              <div className="hf-muted" style={{ marginBottom: '1rem', fontSize: '0.95rem' }}>
+              <div className="tr-muted" style={{ marginBottom: '1rem', fontSize: '0.95rem' }}>
                 {question.hint}
               </div>
             )}
@@ -663,7 +663,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                       <div style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>
                         {opt.text}
                         {'description' in opt && opt.description && (
-                          <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem', fontWeight: 400 }}>
+                          <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem', fontWeight: 400 }}>
                             {opt.description}
                           </div>
                         )}
@@ -704,11 +704,11 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
           <h2 className="hf-section-title" style={{ marginBottom: '0.75rem' }}>
             Your priority weights
           </h2>
-          <p className="hf-muted" style={{ marginBottom: '1.5rem' }}>
+          <p className="tr-muted" style={{ marginBottom: '1.5rem' }}>
             Order follows your quiz ranking (most important at the top) and stays fixed while you edit — rows won’t jump. Bars update when you change a level. Then get neighborhood picks or search a place.
           </p>
 
-          <div className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
+          <div className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
             Fine-tune each pillar
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
@@ -717,7 +717,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               const level = effective_priorities[pillar]
               const bar_pct = PRIORITY_BAR_PCT[level]
               return (
-                <div key={pillar} className="hf-panel" style={{ padding: '1rem 1.25rem' }}>
+                <div key={pillar} className="tr-panel" style={{ padding: '1rem 1.25rem' }}>
                   <div
                     style={{
                       display: 'flex',
@@ -765,7 +765,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
                       }}
                     />
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.35rem' }}>
                     Strength {bar_pct}
                   </div>
                 </div>
@@ -775,7 +775,7 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
           {agent_error && (
             <div
-              className="hf-panel"
+              className="tr-panel"
               role="alert"
               style={{
                 marginBottom: '1rem',

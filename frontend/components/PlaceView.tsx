@@ -744,11 +744,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     <div className="hf-card" style={{ marginTop: '1.5rem', paddingBottom: '12rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
         <div>
-          <div className="hf-label" style={{ marginBottom: '0.25rem' }}>Location</div>
+          <div className="tr-label" style={{ marginBottom: '0.25rem' }}>Location</div>
           <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}>
             {locationLabel}
           </div>
-          <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
             Select pillars and set importance, then Run Score.
           </div>
         </div>
@@ -808,7 +808,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           Trovamo Score
           <HomeFitInfo />
         </div>
-        <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
+        <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
           {HOMEFIT_COPY.subtitle}
         </div>
 
@@ -827,14 +827,14 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           data-longevity-index
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="hf-muted">Longevity Index</span>
+            <span className="tr-muted">Longevity Index</span>
             <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
               {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
             </span>
             <LongevityInfo />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="hf-muted">Archetype</span>
+            <span className="tr-muted">Archetype</span>
             <span
               style={{
                 fontWeight: 600,
@@ -851,7 +851,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="hf-muted">Happiness Index</span>
+            <span className="tr-muted">Happiness Index</span>
             <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
               {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
             </span>
@@ -906,13 +906,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       {/* Place summary from pillar data (when present) */}
       {hasResults && placeSummary && (
         <div
-          className="hf-panel"
+          className="tr-panel"
           style={{
             marginBottom: '1.5rem',
             padding: '1rem 1.25rem',
           }}
         >
-          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Summary</div>
+          <div className="tr-label" style={{ marginBottom: '0.5rem' }}>Summary</div>
           <p
             style={{
               margin: 0,
@@ -928,7 +928,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
 
       {/* Quiz CTA: collapsed at top of pillar grid */}
       {onTakeQuiz && (
-        <div className="hf-panel" style={{ marginBottom: '1rem' }}>
+        <div className="tr-panel" style={{ marginBottom: '1rem' }}>
           <button
             type="button"
             onClick={onTakeQuiz}
@@ -954,7 +954,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               tabIndex={0}
               onClick={() => togglePillar(key)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePillar(key) } }}
-              className="hf-panel"
+              className="tr-panel"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -974,7 +974,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
                       {isLongevityPillar(key) && (
                         <span
-                          className="hf-muted"
+                          className="tr-muted"
                           title={LONGEVITY_COPY.tooltip}
                           style={{
                             fontSize: '0.7rem',
@@ -1016,7 +1016,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                             {failed && (
                               <span
                                 title="We weren't able to retrieve data for this pillar."
-                                className="hf-muted"
+                                className="tr-muted"
                                 style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.4rem', borderRadius: 6, background: 'var(--hf-bg-subtle)', border: '1px solid var(--hf-border)' }}
                               >
                                 Data unavailable
@@ -1047,7 +1047,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                                   Rerun
                                 </button>
                                 {rerunFailedPillar === key && (
-                                  <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
+                                  <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
                                     Still unable to retrieve data
                                   </span>
                                 )}
@@ -1057,7 +1057,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         )
                       })()}
                     </div>
-                    <div className="hf-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
+                    <div className="tr-muted" style={{ fontSize: '0.85rem' }}>{meta.description}</div>
                   </div>
                 </div>
                 <div className="hf-pillar-row-right">
@@ -1095,7 +1095,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     const isIncomplete = failureType === 'incomplete'
                     if (isRerunning) {
                       return (
-                        <span className="hf-muted" style={{ fontSize: '0.85rem' }}>
+                        <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
                           Updating…
                         </span>
                       )
@@ -1130,19 +1130,19 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     )
                   })()}
                   {score != null && !score.failed && pillarWeightsAndContributions[key] && (
-                    <div className="hf-muted hf-pillar-weight-line" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    <div className="tr-muted hf-pillar-weight-line" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
                       {pillarWeightsAndContributions[key].weight.toFixed(1)}% · {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
                     </div>
                   )}
                   {score == null && selected && (
-                    <span className="hf-muted" style={{ fontSize: '0.85rem' }}>Selected</span>
+                    <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Selected</span>
                   )}
                 </div>
               </div>
               {selected && (
                 <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Importance:</span>
+                    <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Importance:</span>
                     {(['Low', 'Medium', 'High'] as const).map((level) => (
                       <button
                         key={level}
@@ -1168,8 +1168,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   </div>
                   {key === 'natural_beauty' && onSearchOptionsChange && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
-                      <span className="hf-muted" style={{ fontSize: '0.75rem', marginRight: '0.35rem' }}>(up to 2)</span>
+                      <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
+                      <span className="tr-muted" style={{ fontSize: '0.75rem', marginRight: '0.35rem' }}>(up to 2)</span>
                       {NATURAL_BEAUTY_PREFERENCE_CHIPS.map(({ value, label }) => {
                         const pref = searchOptions.natural_beauty_preference ?? []
                         const isAny = value === null
@@ -1231,7 +1231,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   )}
                   {key === 'diversity' && onSearchOptionsChange && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Mix focus:</span>
+                      <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Mix focus:</span>
                       {DIVERSITY_PREFERENCE_CHIPS.map(({ value, label }) => {
                         const pref = searchOptions.diversity_preference ?? []
                         const isAny = value === null
@@ -1283,8 +1283,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   )}
                   {key === 'economic_security' && onSearchOptionsChange && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <span className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>Economic Opportunity Focus (optional)</span>
-                      <p className="hf-muted" style={{ fontSize: '0.8rem', margin: 0 }}>
+                      <span className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>Economic Opportunity Focus (optional)</span>
+                      <p className="tr-muted" style={{ fontSize: '0.8rem', margin: 0 }}>
                         Select job categories you care about. Scoring may take a bit longer when categories are selected.
                       </p>
                       <div style={{ display: 'grid', gap: '0.5rem' }}>
@@ -1307,7 +1307,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               />
                               <span style={{ flex: 1 }}>
                                 <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)', fontSize: '0.9rem' }}>{opt.label}</span>
-                                <span className="hf-muted" style={{ display: 'block', fontSize: '0.8rem' }}>{opt.description}</span>
+                                <span className="tr-muted" style={{ display: 'block', fontSize: '0.8rem' }}>{opt.description}</span>
                               </span>
                             </label>
                           )
@@ -1318,7 +1318,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   {key === 'built_beauty' && (
                     <>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Character:</span>
+                        <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Character:</span>
                         {BUILT_CHARACTER_CHIPS.map(({ value, label }) => {
                           const selected = searchOptions.built_character_preference === value
                           return (
@@ -1349,7 +1349,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                         })}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Density:</span>
+                        <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Density:</span>
                         {BUILT_DENSITY_CHIPS.map(({ value, label }) => {
                           const selected = searchOptions.built_density_preference === value
                           return (
@@ -1383,7 +1383,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   )}
                   {key === 'quality_education' && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="hf-muted" style={{ fontSize: '0.85rem' }}>Premium code (enables school scoring)</label>
+                      <label className="tr-muted" style={{ fontSize: '0.85rem' }}>Premium code (enables school scoring)</label>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <input
                           type="text"
@@ -1466,7 +1466,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
             {isSignedIn ? (
               savedScoreId ? (
-                <span className="hf-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.95rem' }}>
+                <span className="tr-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.95rem' }}>
                   ✓ Saved
                   <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>My places</Link>
                 </span>
@@ -1492,11 +1492,11 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                 Sign in to save this place
               </button>
             ) : null}
-            {saveError && <span className="hf-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>{saveError}</span>}
+            {saveError && <span className="tr-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>{saveError}</span>}
           </div>
         )}
         {selectedPillars.size > 0 && !loading && (
-          <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
+          <p className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', marginTop: 0 }}>
             {netNewCount === 0 ? (
               <>All {selectedPillars.size} pillar{selectedPillars.size === 1 ? '' : 's'} scored</>
             ) : (
@@ -1557,7 +1557,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           onKeyDown={(e) => e.stopPropagation()}
         >
           <div
-            className="hf-panel"
+            className="tr-panel"
             style={{
               maxWidth: 400,
               width: '100%',
@@ -1576,7 +1576,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
             </h2>
             <p
               id="scoring-overlay-subtitle"
-              className="hf-muted"
+              className="tr-muted"
               style={{ fontSize: '0.95rem', marginTop: '0.35rem', marginBottom: 0 }}
             >
               Scoring {overlayPillarList.length} pillar{overlayPillarList.length === 1 ? '' : 's'}…

@@ -20,7 +20,7 @@ export default function ApiVersion() {
 
   return (
     <span
-      className="hf-muted"
+      className="tr-muted"
       style={{
         fontSize: '0.75rem',
         opacity: 0.85,

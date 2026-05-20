@@ -116,7 +116,7 @@ export default function Home() {
     return (
       <main className="hf-page">
         <AppHeader
-          tagline="Where are you thinking of moving?"
+          tagline="We find your place."
           heroImageUrl="https://images.unsplash.com/photo-1653664346737-485ad147ab18?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           heroImageAlt="Neighborhood street with homes"
         />
@@ -138,7 +138,7 @@ export default function Home() {
               <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
                 Finding location…
               </div>
-              <div className="hf-muted">Geocoding your place and preparing the map. First search may take a moment if the server is waking up.</div>
+              <div className="tr-muted">Geocoding your place and preparing the map. First search may take a moment if the server is waking up.</div>
             </div>
           )}
 

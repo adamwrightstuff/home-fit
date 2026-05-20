@@ -208,7 +208,7 @@ export default function SavedPage() {
         <div className="hf-container">
           <div className="hf-card">
             <h2 className="hf-section-title">My saved places</h2>
-            <p className="hf-muted">Sign in to see and manage your saved scores.</p>
+            <p className="tr-muted">Sign in to see and manage your saved scores.</p>
             <Link href="/" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
               Go home
             </Link>
@@ -242,7 +242,7 @@ export default function SavedPage() {
               ← Back to search
             </Link>
             <h1 className="hf-section-title" style={{ marginBottom: '0.25rem', marginTop: '0.75rem' }}>My saved places</h1>
-            <p className="hf-muted" style={{ marginBottom: 0 }}>
+            <p className="tr-muted" style={{ marginBottom: 0 }}>
               {compareMode
                 ? 'Select two scored places to compare side by side.'
                 : 'Tap a place to view scores and adjust weights, or compare two places.'}
@@ -263,7 +263,7 @@ export default function SavedPage() {
           )}
         </div>
 
-        {loading && <p className="hf-muted">Loading…</p>}
+        {loading && <p className="tr-muted">Loading…</p>}
         {error && <p className="hf-auth-error" role="alert">{error}</p>}
         {deleteError && (
           <p className="hf-auth-error" role="alert" style={{ marginBottom: '0.75rem' }}>
@@ -273,7 +273,7 @@ export default function SavedPage() {
 
         {!loading && !error && list.length === 0 && (
           <div className="hf-card">
-            <p className="hf-muted">No saved places yet. Score a location and click &quot;Save this place&quot; to add it here.</p>
+            <p className="tr-muted">No saved places yet. Score a location and click &quot;Save this place&quot; to add it here.</p>
             <Link href="/" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
               Search a place
             </Link>
@@ -357,15 +357,15 @@ export default function SavedPage() {
                       {placeDisplayName(row)}
                     </div>
                     <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span className="hf-score-badge hf-score-badge--homefit">{total.toFixed(1)}</span>
-                      <span className="hf-muted" style={{ fontSize: '0.9rem' }}>{formatDate(row.updated_at)}</span>
+                      <span className="hf-score-badge tr-score-badge--high">{total.toFixed(1)}</span>
+                      <span className="tr-muted" style={{ fontSize: '0.9rem' }}>{formatDate(row.updated_at)}</span>
                     </div>
                     <SavedPlaceIndexRow score_payload={row.score_payload} />
-                    <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                    <div className="tr-muted" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
                       Strongest: {top2}. Weakest: {bottom1}.
                     </div>
                     {!hasScore && (
-                      <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                      <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
                         Run a score first to compare this place.
                       </div>
                     )}
@@ -413,7 +413,7 @@ export default function SavedPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="hf-muted" style={{ fontSize: '0.9rem' }}>
+            <div className="tr-muted" style={{ fontSize: '0.9rem' }}>
               {selectedIds.length === 0 && 'Select 2 places to compare.'}
               {selectedIds.length === 1 && 'Select 1 more place to compare.'}
               {selectedIds.length === 2 && 'Ready to compare these 2 places.'}

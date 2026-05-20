@@ -22,7 +22,7 @@ export default function AppHeader({
     <header className="hf-header">
       <div className={heroImageUrl ? 'hf-hero-grid' : ''} style={{ position: 'relative' }}>
         <div className={heroImageUrl ? 'hf-hero-text' : ''}>
-          <h1>{title}</h1>
+          <h1 className="tr-display">{title}</h1>
           {tagline ? <p>{tagline}</p> : null}
           {children ? <div style={{ marginTop: '1.5rem' }}>{children}</div> : null}
         </div>

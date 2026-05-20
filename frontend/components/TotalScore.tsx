@@ -12,7 +12,7 @@ interface TotalScoreProps {
 export default function TotalScore({ score, confidence, loading }: TotalScoreProps) {
   const isLoading = Boolean(loading)
   return (
-    <div className="hf-panel">
+    <div className="tr-panel">
       <div>
         <div
           className="tabular-nums"
@@ -28,14 +28,14 @@ export default function TotalScore({ score, confidence, loading }: TotalScorePro
           {isLoading ? '—' : score.toFixed(1)}
         </div>
         <div
-          className="hf-muted"
+          className="tr-muted"
           style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.5rem', fontSize: '0.95rem', fontWeight: 600 }}
         >
           Overall Trovamo Score (0–100)
           <HomeFitInfo />
         </div>
       </div>
-      <div className="hf-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+      <div className="tr-muted" style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
         {HOMEFIT_COPY.subtitle}
       </div>
 
@@ -50,13 +50,13 @@ export default function TotalScore({ score, confidence, loading }: TotalScorePro
         }}
       >
         <div>
-          <div className="hf-label">Confidence</div>
+          <div className="tr-label">Confidence</div>
           <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--hf-text-secondary)' }}>
             {isLoading ? '—' : `${confidence.average_confidence.toFixed(1)}%`}
           </div>
         </div>
         <div>
-          <div className="hf-label">Data quality</div>
+          <div className="tr-label">Data quality</div>
           <div
             style={{
               fontWeight: 800,

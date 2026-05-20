@@ -414,7 +414,7 @@ export default function PillarCard({
               )}
               {isFailed && (
                 <span
-                  className="hf-muted"
+                  className="tr-muted"
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
@@ -457,7 +457,7 @@ export default function PillarCard({
                 </button>
               )}
             </div>
-            <div className="hf-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
+            <div className="tr-muted" style={{ fontSize: '0.95rem', marginTop: '0.5rem', lineHeight: 1.4 }}>
               {meta.description}
             </div>
           </div>
@@ -508,7 +508,7 @@ export default function PillarCard({
             </span>
           )}
           {isLoading && (
-            <span className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+            <span className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
               Computing…
             </span>
           )}
@@ -518,7 +518,7 @@ export default function PillarCard({
       {/* Importance: pill-style Low / Medium / High (and None when editable) */}
       {onImportanceChange != null ? (
         <div style={{ marginTop: '1rem' }}>
-          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Importance</div>
+          <div className="tr-label" style={{ marginBottom: '0.5rem' }}>Importance</div>
           <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.35rem' }}>
             {(['None', 'Low', 'Medium', 'High'] as const).map((level) => (
               <button
@@ -579,13 +579,13 @@ export default function PillarCard({
         }}
       >
         <div>
-          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Weight</div>
+          <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Weight</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {Number(pillar.weight).toFixed(1)}%
           </div>
         </div>
         <div>
-          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Contribution</div>
+          <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Contribution</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {typeof pillar.contribution === 'number' && Number.isFinite(pillar.contribution)
               ? pillar.contribution.toFixed(1)
@@ -593,7 +593,7 @@ export default function PillarCard({
           </div>
         </div>
         <div>
-          <div className="hf-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Confidence</div>
+          <div className="tr-label" style={{ fontSize: '0.8rem', marginBottom: '0.2rem' }}>Confidence</div>
           <div style={{ fontWeight: 800, color: isNone ? 'var(--hf-text-secondary)' : 'var(--hf-text-primary)', fontSize: '1rem', opacity: isNone ? 0.85 : 1 }}>
             {typeof pillar.confidence === 'number' && Number.isFinite(pillar.confidence)
               ? `${pillar.confidence.toFixed(0)}%`
@@ -618,16 +618,16 @@ export default function PillarCard({
       {expanded ? (
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--hf-border)' }}>
           {pillarNarrative && (
-            <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+            <div className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>
               {pillarNarrative}
             </div>
           )}
           {PILLAR_LONG_DESCRIPTIONS[pillar_key] ? (
-            <div className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem', lineHeight: 1.5 }}>
+            <div className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem', lineHeight: 1.5 }}>
               {PILLAR_LONG_DESCRIPTIONS[pillar_key]}
             </div>
           ) : null}
-          <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
+          <div className="tr-label" style={{ marginBottom: '0.5rem' }}>
             Details
           </div>
 
@@ -641,7 +641,7 @@ export default function PillarCard({
             </div>
           ) : null}
 
-          <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+          <div className="tr-muted" style={{ fontSize: '0.95rem' }}>
             {pillar_key === 'natural_beauty' && (() => {
               const fromProps = naturalBeautyPreference && naturalBeautyPreference.length > 0 ? naturalBeautyPreference : null
               const fromPillar = Array.isArray((pillar as any)?.summary?.natural_beauty_preference) && (pillar as any).summary.natural_beauty_preference.length > 0
@@ -697,7 +697,7 @@ export default function PillarCard({
                           </button>
                         )
                       })}
-                      <span className="hf-muted" style={{ fontSize: '0.75rem' }}>(up to 2)</span>
+                      <span className="tr-muted" style={{ fontSize: '0.75rem' }}>(up to 2)</span>
                     </div>
                   ) : (
                     displayPreference ? <>{' '}{displayPreference.join(', ')}</> : null
@@ -847,7 +847,7 @@ export default function PillarCard({
                     displayPreference && displayPreference.length > 0 ? (
                       <>{' '}{displayPreference.join(', ')}</>
                     ) : (
-                      <span className="hf-muted"> All available dimensions</span>
+                      <span className="tr-muted"> All available dimensions</span>
                     )
                   )}
                 </div>

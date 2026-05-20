@@ -243,7 +243,7 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
             source: 'location',
             paint: {
               'circle-radius': 8,
-              'circle-color': '#667eea',
+              'circle-color': '#C96956',
               'circle-stroke-width': 2,
               'circle-stroke-color': '#FFFFFF'
             }
@@ -320,9 +320,9 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
       />
       {is_initializing && (
         <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'rgba(248,249,250,0.85)' }}>
-          <div className="hf-panel" style={{ maxWidth: 320, textAlign: 'center' }}>
+          <div className="tr-panel" style={{ maxWidth: 320, textAlign: 'center' }}>
             <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>Loading map…</div>
-            <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+            <div className="tr-muted" style={{ fontSize: '0.95rem' }}>
               Initializing MapLibre GL
             </div>
           </div>
@@ -338,13 +338,13 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
         </div>
       )}
       {coordinates && map_loaded && (
-        <div className="absolute top-4 left-4 z-10 hf-panel" style={{ padding: '0.85rem 1rem' }}>
+        <div className="absolute top-4 left-4 z-10 tr-panel" style={{ padding: '0.85rem 1rem' }}>
           <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--hf-text-primary)' }}>{location}</div>
-          <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
             {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}
           </div>
           {completed_pillars.length > 0 && (
-            <div className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.35rem', fontWeight: 700 }}>
+            <div className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.35rem', fontWeight: 700 }}>
               {Math.min(completed_pillars.length, TOTAL_PILLARS)}/{TOTAL_PILLARS} pillars complete
             </div>
           )}

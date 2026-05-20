@@ -291,10 +291,10 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
       </button>
 
       {expanded && (
-        <div className="hf-panel" style={{ marginTop: '1rem' }}>
+        <div className="tr-panel" style={{ marginTop: '1rem' }}>
           {/* Scoring Inputs Section */}
           <div>
-            <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+            <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
               Scoring Inputs
             </h4>
             <div className="space-y-4">
@@ -330,7 +330,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(102,126,234,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#667eea]"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(201,105,86,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C96956]"></div>
                 </label>
               </div>
 
@@ -429,7 +429,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                     disabled={disabled}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(102,126,234,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#667eea]"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[rgba(201,105,86,0.25)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C96956]"></div>
                 </label>
               </div>
             </div>
@@ -438,7 +438,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           {/* Pillar Priorities Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Pillar Priorities
               </h4>
               <button
@@ -450,7 +450,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                 Reset to Default
               </button>
             </div>
-            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
               Set priority levels for each pillar. Higher priorities receive more weight in the total score.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -460,7 +460,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                 return (
                   <div
                     key={pillar}
-                    className="hf-panel"
+                    className="tr-panel"
                     style={{
                       padding: '1rem',
                       display: 'flex',
@@ -499,14 +499,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           {options.priorities.economic_security !== 'None' && (
           <div style={{ marginTop: '1.5rem' }}>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Economic Opportunity Focus (optional)
               </h4>
             </div>
-            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
               Select job categories you care about. This will personalize the Economic Opportunity pillar and affect the total score. Scoring may take a bit longer when categories are selected.
             </p>
-            <div className="hf-panel" style={{ padding: '1rem' }}>
+            <div className="tr-panel" style={{ padding: '1rem' }}>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 {JOB_CATEGORY_OPTIONS.map((opt) => {
                   const checked = Array.isArray(options.job_categories) && options.job_categories.includes(opt.key)
@@ -521,7 +521,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                       />
                       <span style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{opt.label}</div>
-                        <div className="hf-muted" style={{ fontSize: '0.9rem' }}>{opt.description}</div>
+                        <div className="tr-muted" style={{ fontSize: '0.9rem' }}>{opt.description}</div>
                       </span>
                     </label>
                   )
@@ -534,14 +534,14 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
           {options.priorities.housing_value !== 'None' && (
           <div style={{ marginTop: '1.5rem' }}>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="hf-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Your Household Income (optional)
               </h4>
             </div>
-            <p className="hf-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
               Enter your annual household income to personalize the Housing Value score. Instead of local median income, affordability will be calculated relative to what you can actually afford.
             </p>
-            <div className="hf-panel" style={{ padding: '1rem' }}>
+            <div className="tr-panel" style={{ padding: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ color: 'var(--hf-text-secondary)', fontWeight: 600 }}>$</span>
                 <input

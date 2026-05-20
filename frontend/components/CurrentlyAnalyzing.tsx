@@ -13,12 +13,12 @@ interface CurrentlyAnalyzingProps {
 
 export default function CurrentlyAnalyzing({ pillar_key, config }: CurrentlyAnalyzingProps) {
   return (
-    <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+    <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ fontSize: '2rem' }}>{config.emoji}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>Analyzing {config.name}</div>
-          <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+          <div className="tr-muted" style={{ fontSize: '0.95rem' }}>
             {config.description}
           </div>
         </div>

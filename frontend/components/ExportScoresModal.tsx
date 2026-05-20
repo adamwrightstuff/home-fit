@@ -88,7 +88,7 @@ export default function ExportScoresModal({
       onClick={handleBackdropClick}
     >
       <div
-        className="hf-panel"
+        className="tr-panel"
         style={{
           maxWidth: 480,
           width: '100%',
@@ -127,11 +127,11 @@ export default function ExportScoresModal({
             ×
           </button>
         </div>
-        <p id="export-scores-desc" className="hf-muted" style={{ fontSize: '0.9rem', margin: '0 0 1rem' }}>
+        <p id="export-scores-desc" className="tr-muted" style={{ fontSize: '0.9rem', margin: '0 0 1rem' }}>
           {locationName}
         </p>
 
-        <p className="hf-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+        <p className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
           One row per place — run this for each location and paste into one spreadsheet to compare.
         </p>
 
@@ -156,7 +156,7 @@ export default function ExportScoresModal({
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
-          <span className="hf-muted" style={{ fontSize: '0.85rem', marginRight: '0.75rem' }}>Format:</span>
+          <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.75rem' }}>Format:</span>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginRight: '1rem', cursor: 'pointer' }}>
             <input
               type="radio"

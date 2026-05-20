@@ -57,7 +57,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="hf-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-      <p className="hf-muted" style={{ fontSize: '1.1rem' }}>{status}</p>
+      <p className="tr-muted" style={{ fontSize: '1.1rem' }}>{status}</p>
     </div>
   )
 }

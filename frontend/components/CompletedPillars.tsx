@@ -19,7 +19,7 @@ interface CompletedPillarsProps {
 export default function CompletedPillars({ completed_pillars, pillar_config }: CompletedPillarsProps) {
   if (completed_pillars.size === 0) {
     return (
-      <div className="hf-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>
+      <div className="tr-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>
         <p>Waiting for pillar results...</p>
       </div>
     )
@@ -35,13 +35,13 @@ export default function CompletedPillars({ completed_pillars, pillar_config }: C
 
   return (
     <div style={{ display: 'grid', gap: '0.75rem', maxHeight: 420, overflowY: 'auto' }}>
-      <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+      <div className="tr-label" style={{ marginBottom: '0.25rem' }}>
         Completed pillars
       </div>
       {pillars_array.map(({ key, score, details, config }) => (
         <div
           key={key}
-          className="hf-panel"
+          className="tr-panel"
           style={{ padding: '1rem' }}
         >
           <div className="flex items-center justify-between">
@@ -49,7 +49,7 @@ export default function CompletedPillars({ completed_pillars, pillar_config }: C
               <span className="text-2xl">{config.emoji}</span>
               <div>
                 <h4 style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>{config.name}</h4>
-                <p className="hf-muted" style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>
+                <p className="tr-muted" style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>
                   {config.description}
                 </p>
               </div>
@@ -58,7 +58,7 @@ export default function CompletedPillars({ completed_pillars, pillar_config }: C
               <div style={{ fontWeight: 900, fontSize: '1.6rem', background: 'var(--hf-primary-gradient)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
                 {score.toFixed(1)}
               </div>
-              <div className="hf-muted" style={{ fontSize: '0.9rem' }}>
+              <div className="tr-muted" style={{ fontSize: '0.9rem' }}>
                 / 100
               </div>
             </div>

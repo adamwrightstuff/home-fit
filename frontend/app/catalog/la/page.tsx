@@ -2,8 +2,8 @@ import { Suspense } from 'react'
 import CatalogPageClient from '../catalog-page-client'
 
 export const metadata = {
-  title: 'LA metro catalog · Trovamo',
-  description: 'Explore LA metro neighborhood scores and twins.',
+  title: 'Explore neighborhoods — Trovamo',
+  description: 'Browse and compare neighborhoods by livability score across 13 pillars.',
 }
 
 export default function LaCatalogPage() {

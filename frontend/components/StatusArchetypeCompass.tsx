@@ -54,8 +54,8 @@ export default function StatusArchetypeCompass({
         : 'This place combines characteristics from multiple status profiles without a dominant pattern.'
 
   return (
-    <div className="hf-panel" style={{ marginTop: '1rem' }}>
-      <div className="hf-label" style={{ marginBottom: '0.5rem' }}>Archetype compass</div>
+    <div className="tr-panel" style={{ marginTop: '1rem' }}>
+      <div className="tr-label" style={{ marginBottom: '0.5rem' }}>Archetype compass</div>
       <div
         style={{
           position: 'relative',
@@ -103,7 +103,7 @@ export default function StatusArchetypeCompass({
           }}
         />
       </div>
-      <div className="hf-muted" style={{ marginTop: '0.6rem', fontSize: '0.9rem' }}>
+      <div className="tr-muted" style={{ marginTop: '0.6rem', fontSize: '0.9rem' }}>
         {typeof score === 'number' ? `Strength: ${score.toFixed(1)} / 100.` : 'Strength unavailable.'} {oneLiner}
       </div>
     </div>

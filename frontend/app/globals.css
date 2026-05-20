@@ -6,64 +6,107 @@
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 :root {
-  /* HomeFit 2026 design system */
-  --hf-primary-1: #667eea;
-  --hf-primary-2: #764ba2;
+  /* === Trovamo Design System 2026 === */
+
+  /* Fonts */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+
+  /* Neutrals */
+  --tr-warm-white:     #FAF7F2;
+  --tr-cream:          #F0EAE3;
+  --tr-stone:          #E2DDD7;
+  --tr-sand:           #D5CFC8;
+  --tr-muted:          #9B948D;
+  --tr-secondary-text: #6B6560;
+  --tr-primary-text:   #1C1917;
+
+  /* Accent — terracotta */
+  --tr-accent-50:      #FAF0EB;
+  --tr-accent-100:     #F5D9CE;
+  --tr-accent-200:     #EAB89F;
+  --tr-accent-400:     #C96956;
+  --tr-accent-600:     #8B6F5E;
+  --tr-accent-800:     #5C3D30;
+
+  /* Score semantic colors */
+  --tr-score-high:     #7B9B7E;
+  --tr-score-mid:      #D4A574;
+  --tr-score-low:      #C96956;
+
+  /* Semantic aliases */
+  --tr-bg-base:        var(--tr-warm-white);
+  --tr-bg-secondary:   var(--tr-cream);
+  --tr-bg-tertiary:    #F8F6F2;
+  --tr-border:         var(--tr-stone);
+  --tr-border-subtle:  var(--tr-sand);
+  --tr-cta-primary:    var(--tr-accent-400);
+  --tr-cta-secondary:  var(--tr-accent-600);
+
+  /* Index color aliases */
+  --tr-homefit-score:    var(--tr-accent-600);
+  --tr-longevity-score:  var(--tr-score-high);
+  --tr-happiness-score:  var(--tr-score-mid);
+
+  /* === HF structural vars (used by existing component classes) === */
+  --hf-primary-1: var(--tr-accent-400);
+  --hf-primary-2: var(--tr-accent-600);
   --hf-primary-gradient: linear-gradient(135deg, var(--hf-primary-1) 0%, var(--hf-primary-2) 100%);
 
-  --hf-bg-gradient: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  --hf-bg-gradient: linear-gradient(to bottom, var(--tr-bg-base) 0%, #ffffff 100%);
 
   --hf-card-bg: #ffffff;
   --hf-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   --hf-card-shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.08);
 
-  --hf-text-primary: #2c3e50;
-  --hf-text-secondary: #6c757d;
-  --hf-text-tertiary: #94a3b8;
+  --hf-text-primary: var(--tr-primary-text);
+  --hf-text-secondary: var(--tr-secondary-text);
+  --hf-text-tertiary: var(--tr-muted);
   --color-text-tertiary: var(--hf-text-tertiary);
 
-  --hf-hover-bg: #e9ecef;
+  --hf-hover-bg: var(--tr-cream);
+  --hf-bg-subtle: var(--tr-bg-secondary);
 
-  --hf-border: #e1e8ed;
+  --hf-border: var(--tr-stone);
   --color-border-primary: var(--hf-border);
-  --hf-border-strong: rgba(102, 126, 234, 0.35);
+  --hf-border-strong: rgba(201, 105, 86, 0.35);
 
   --hf-danger: #dc3545;
 
-  /* Index color ramps (fixed bindings — see lib/indexColorSystem.ts) */
-  --c-purple-50: #eeedfe;
-  --c-purple-200: #afa9ec;
-  --c-purple-400: #7f77dd;
-  --c-purple-600: #534ab7;
-  --c-purple-800: #3c3489;
+  /* Color scale aliases (old scales → new palette for backward compat) */
+  --c-purple-50:  var(--tr-accent-50);
+  --c-purple-200: var(--tr-accent-200);
+  --c-purple-400: var(--tr-accent-400);
+  --c-purple-600: var(--tr-homefit-score);
+  --c-purple-800: var(--tr-accent-800);
 
-  --c-teal-50: #e1f5ee;
-  --c-teal-200: #5dcaa5;
-  --c-teal-400: #1d9e75;
-  --c-teal-600: #0f6e56;
-  --c-teal-800: #085041;
+  --c-teal-50:  #e6f4e8;
+  --c-teal-200: #a8c9aa;
+  --c-teal-400: var(--tr-score-high);
+  --c-teal-600: var(--tr-longevity-score);
+  --c-teal-800: #4a6b4d;
 
-  --c-blue-50: #e6f1fb;
-  --c-blue-200: #85b7eb;
-  --c-blue-400: #378add;
-  --c-blue-600: #185fa5;
-  --c-blue-800: #0c447c;
+  --c-blue-50:  #fdf6ed;
+  --c-blue-200: #e8c99c;
+  --c-blue-400: var(--tr-score-mid);
+  --c-blue-600: var(--tr-happiness-score);
+  --c-blue-800: #8a5a1e;
 
-  --c-coral-50: #faece7;
-  --c-coral-200: #f0997b;
-  --c-coral-400: #d85a30;
-  --c-coral-600: #993c1d;
-  --c-coral-800: #712b13;
+  --c-coral-50:  var(--tr-accent-50);
+  --c-coral-200: var(--tr-accent-200);
+  --c-coral-400: var(--tr-accent-400);
+  --c-coral-600: var(--tr-accent-400);
+  --c-coral-800: var(--tr-accent-800);
 
-  /* Legacy aliases — map to index ramps (HomeFit=purple, Longevity=teal, Happiness=blue) */
-  --hf-homefit-green: var(--c-purple-600);
-  --hf-longevity-purple: var(--c-teal-600);
-  --hf-happiness-teal: var(--c-blue-600);
+  /* Index color aliases (kept for backward compat with inline styles) */
+  --hf-homefit-green:    var(--tr-homefit-score);
+  --hf-longevity-purple: var(--tr-longevity-score);
+  --hf-happiness-teal:   var(--tr-happiness-score);
 }
 
 body {
-  color: var(--hf-text-primary);
-  background: var(--hf-bg-gradient);
+  color: var(--tr-primary-text);
+  background-color: var(--tr-bg-base);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.05rem;
   line-height: 1.6;
@@ -117,9 +160,10 @@ body {
 
 .hf-header h1 {
   font-size: 3.5rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -1px;
   margin: 0;
+  font-family: var(--font-display);
 }
 
 .hf-header p {
@@ -551,12 +595,11 @@ body {
   font-size: 0.95rem;
 }
 
-.hf-score-badge--green { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); }
-.hf-score-badge--blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-/* HomeFit headline score (purple); same fill as --blue, distinct class for semantics */
-.hf-score-badge--homefit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.hf-score-badge--yellow { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-.hf-score-badge--red { background: linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%); }
+.hf-score-badge--green { background: linear-gradient(135deg, #7B9B7E 0%, #5a7d5d 100%); }
+.hf-score-badge--blue { background: linear-gradient(135deg, #8B9B7E 0%, #6a7d5d 100%); }
+.hf-score-badge--homefit { background: linear-gradient(135deg, var(--tr-accent-400) 0%, var(--tr-accent-600) 100%); }
+.hf-score-badge--yellow { background: linear-gradient(135deg, #D4A574 0%, #b8845a 100%); }
+.hf-score-badge--red { background: linear-gradient(135deg, #C96956 0%, #a04838 100%); }
 
 .hf-score-hero {
   background: var(--hf-primary-gradient);
@@ -721,15 +764,16 @@ body {
 }
 
 .hf-auth-bar-logo {
-  font-size: 1.35rem;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--hf-primary-1);
+  color: var(--tr-primary-text);
   text-decoration: none;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.01em;
 }
 
 .hf-auth-bar-logo:hover {
-  color: var(--hf-primary-2);
+  color: var(--tr-accent-600);
 }
 
 .hf-auth-bar-nav {
@@ -934,4 +978,114 @@ body {
 
 .hf-auth-link:hover {
   color: var(--hf-primary-2);
+}
+
+/* ==============================
+   Trovamo component classes
+   ============================== */
+
+.tr-wordmark {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--tr-primary-text);
+  letter-spacing: -0.01em;
+}
+
+.tr-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--tr-primary-text);
+  line-height: 1.05;
+}
+
+.tr-btn-primary {
+  background: var(--tr-cta-primary);
+  color: var(--tr-warm-white);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tr-btn-secondary {
+  background: transparent;
+  color: var(--tr-cta-secondary);
+  border: 0.5px solid var(--tr-cta-secondary);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tr-panel {
+  background: var(--tr-bg-base);
+  border: 0.5px solid var(--tr-border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.tr-panel-secondary {
+  background: var(--tr-bg-secondary);
+  border: 0.5px solid var(--tr-border-subtle);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.tr-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tr-accent-600);
+}
+
+.tr-muted {
+  color: var(--tr-secondary-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tr-tag {
+  font-size: 11px;
+  color: var(--tr-accent-600);
+  background: var(--tr-cream);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.tr-score-badge {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.tr-score-badge--high {
+  background: #EAF3DE;
+  color: #3B6D11;
+}
+
+.tr-score-badge--mid {
+  background: #FDF3E3;
+  color: #8A5A1E;
+}
+
+.tr-score-badge--low {
+  background: #FAF0EB;
+  color: #8B6F5E;
+}
+
+.tr-search-input {
+  background: white;
+  border: 0.5px solid var(--tr-sand);
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-size: 14px;
+  color: var(--tr-primary-text);
+  width: 100%;
+}
+
+.tr-search-input::placeholder {
+  color: var(--tr-muted);
 }

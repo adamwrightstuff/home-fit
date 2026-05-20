@@ -103,7 +103,7 @@ export default function StatusSignalInfo({
           onClick={() => { setRefreshError(null); setShowModal(false) }}
         >
           <div
-            className="hf-panel"
+            className="tr-panel"
             style={{
               maxWidth: 420,
               width: '100%',

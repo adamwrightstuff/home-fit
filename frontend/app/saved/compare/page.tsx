@@ -247,13 +247,13 @@ function CompareContent() {
             <Link href="/saved" className="hf-btn-link" style={{ fontSize: '0.9rem' }}>
               ← My places
             </Link>
-            <span className="hf-muted" style={{ fontSize: '0.85rem' }}>
+            <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
               Comparing
             </span>
             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-homefit-green)', whiteSpace: 'nowrap' }}>
               {placeNameA}
             </span>
-            <span className="hf-muted" style={{ fontSize: '0.85rem' }}>
+            <span className="tr-muted" style={{ fontSize: '0.85rem' }}>
               vs
             </span>
             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--hf-longevity-purple)', whiteSpace: 'nowrap' }}>
@@ -263,7 +263,7 @@ function CompareContent() {
         </nav>
 
         {loading && (
-          <p className="hf-muted" style={{ marginTop: '1.5rem' }}>
+          <p className="tr-muted" style={{ marginTop: '1.5rem' }}>
             Loading comparison…
           </p>
         )}
@@ -324,13 +324,13 @@ function CompareContent() {
                 }}
               >
                 <div style={{ textAlign: 'left', minWidth: 0 }}>
-                  <div className="hf-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
+                  <div className="tr-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
                     {placeNameA.toUpperCase()}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-homefit-green)' }}>
                     {homefitA != null ? homefitA.toFixed(1) : '—'}
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-longevity-purple)' }}>
@@ -339,7 +339,7 @@ function CompareContent() {
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessA != null ? `Happiness ${happinessA.toFixed(1)}` : 'Happiness —'}
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                     Wins {wins.aWins} of {totalPillars} pillars
                   </div>
                 </div>
@@ -363,13 +363,13 @@ function CompareContent() {
                 </div>
 
                 <div style={{ textAlign: 'right', minWidth: 0 }}>
-                  <div className="hf-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
+                  <div className="tr-label" style={{ marginBottom: '0.25rem', fontSize: '0.8rem' }}>
                     {placeNameB.toUpperCase()}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--hf-longevity-purple)' }}>
                     {homefitB != null ? homefitB.toFixed(1) : '—'}
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
                     Trovamo Score
                   </div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.35rem', color: 'var(--hf-homefit-green)' }}>
@@ -378,7 +378,7 @@ function CompareContent() {
                   <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: '0.2rem', color: 'var(--hf-happiness-teal)' }}>
                     {happinessB != null ? `Happiness ${happinessB.toFixed(1)}` : 'Happiness —'}
                   </div>
-                  <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
+                  <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                     Wins {wins.bWins} of {totalPillars} pillars
                   </div>
                 </div>
@@ -396,7 +396,7 @@ function CompareContent() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span className="hf-label" style={{ fontSize: '0.75rem' }}>
+                  <span className="tr-label" style={{ fontSize: '0.75rem' }}>
                     SORT BY
                   </span>
                   <div style={{ display: 'inline-flex', gap: '0.35rem', flexWrap: 'wrap' }}>
@@ -438,7 +438,7 @@ function CompareContent() {
                     </button>
                   </div>
                 </div>
-                <div className="hf-muted" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <div className="tr-muted" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <span
                     style={{
                       width: 8,
@@ -527,7 +527,7 @@ function CompareContent() {
                                   background: 'var(--hf-homefit-green)',
                                 }}
                               />
-                              <span className="hf-muted" style={{ fontSize: '0.8rem' }}>
+                              <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
                                 Longevity
                               </span>
                             </div>
@@ -564,12 +564,12 @@ function CompareContent() {
                             >
                               {getTier(aScore).label}
                             </div>
-                            <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                            <div className="tr-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
                               {p.a.confidence != null ? `${p.a.confidence.toFixed(0)}% confidence` : '—'}
                             </div>
                           </>
                         ) : (
-                          <div className="hf-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
+                          <div className="tr-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
                             —<br />
                             <span style={{ fontSize: '0.75rem' }}>Not scored</span>
                             <br />
@@ -678,12 +678,12 @@ function CompareContent() {
                             >
                               {getTier(bScore).label}
                             </div>
-                            <div className="hf-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                            <div className="tr-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
                               {p.b.confidence != null ? `${p.b.confidence.toFixed(0)}% confidence` : '—'}
                             </div>
                           </>
                         ) : (
-                          <div className="hf-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
+                          <div className="tr-muted" style={{ opacity: 0.5, fontSize: '0.85rem' }}>
                             —<br />
                             <span style={{ fontSize: '0.75rem' }}>Not scored</span>
                             <br />
@@ -715,7 +715,7 @@ function CompareContent() {
                 maxWidth: 700,
               }}
             >
-              <div className="hf-label" style={{ marginBottom: '0.5rem' }}>
+              <div className="tr-label" style={{ marginBottom: '0.5rem' }}>
                 Summary
               </div>
               <p
@@ -763,7 +763,7 @@ export default function ComparePage() {
       fallback={
         <main className="hf-page hf-page-no-hero">
           <div className="hf-container">
-            <p className="hf-muted" style={{ marginTop: '1.5rem' }}>Loading comparison…</p>
+            <p className="tr-muted" style={{ marginTop: '1.5rem' }}>Loading comparison…</p>
           </div>
         </main>
       }

@@ -586,7 +586,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         <div className="hf-container">
           <div className="hf-card">
             <div style={{ fontWeight: 800, fontSize: '1.2rem' }}>Missing required parameter</div>
-            <div className="hf-muted" style={{ marginTop: '0.5rem' }}>
+            <div className="tr-muted" style={{ marginTop: '0.5rem' }}>
               This link is missing a location. Go back and run a new search.
             </div>
             <div style={{ marginTop: '1rem' }}>
@@ -686,21 +686,21 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   border: '1px solid var(--hf-border)',
                 }}
               >
-                <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+                <div className="tr-label" style={{ marginBottom: '0.25rem' }}>
                   Score summary for
                 </div>
                 <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
                   {locationLabel}
                 </div>
-                <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
+                <div className="tr-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
                   Location: {displayData!.location_info?.city}, {displayData!.location_info?.state}{' '}
                   {displayData!.location_info?.zip}
                 </div>
-                <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
+                <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
                   Coordinates: {displayData!.coordinates.lat.toFixed(6)}, {displayData!.coordinates.lon.toFixed(6)}
                 </div>
                 {displayData!.metadata?.version && (
-                  <div className="hf-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
+                  <div className="tr-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
                     API version: {displayData!.metadata.version}
                   </div>
                 )}
@@ -715,19 +715,19 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   ← New search
                 </Link>
                 {catalogSnapshot && (
-                  <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                  <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
                     NYC metro catalog snapshot — refresh to recompute live
                   </span>
                 )}
                 {showCachedNote && !catalogSnapshot && (
-                  <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                  <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
                     Showing cached results
                   </span>
                 )}
                 {finalResponse && searchOptions ? (
                   user ? (
                     savedScoreId ? (
-                      <span className="hf-muted" style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span className="tr-muted" style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                         ✓ Saved
                         <Link href="/saved" className="hf-auth-link" style={{ fontWeight: 600 }}>
                           My places →
@@ -756,7 +756,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   ) : null
                 ) : null}
                 {saveErr ? (
-                  <span className="hf-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>
+                  <span className="tr-muted" style={{ fontSize: '0.85rem', color: 'var(--hf-danger)' }}>
                     {saveErr}
                   </span>
                 ) : null}
@@ -823,7 +823,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 Trovamo Score
                 <HomeFitInfo />
               </div>
-              <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
+              <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
                 {HOMEFIT_COPY.subtitle}
               </div>
 
@@ -840,7 +840,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="hf-muted">Longevity Index</span>
+                  <span className="tr-muted">Longevity Index</span>
                   <span
                     style={{
                       fontWeight: 600,
@@ -855,7 +855,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   <LongevityInfo />
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="hf-muted">Archetype</span>
+                  <span className="tr-muted">Archetype</span>
                   <span
                     style={{
                       fontWeight: 600,
@@ -875,7 +875,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   />
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="hf-muted">Happiness Index</span>
+                  <span className="tr-muted">Happiness Index</span>
                   <span
                     style={{
                       fontWeight: 600,
@@ -911,12 +911,12 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               {catalogSnapshot && (
-                <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
                   NYC metro catalog snapshot — refresh to recompute live
                 </span>
               )}
               {showCachedNote && !catalogSnapshot && (
-                <span className="hf-muted" style={{ fontSize: '0.9rem' }}>
+                <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
                   Showing cached results
                 </span>
               )}

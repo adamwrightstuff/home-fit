@@ -244,7 +244,7 @@ export default function SmartLoadingScreen({
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
                   Initializing…
                 </div>
-                <div className="hf-muted" style={{ marginBottom: '1.5rem' }}>
+                <div className="tr-muted" style={{ marginBottom: '1.5rem' }}>
                   Preparing to analyze {location}
                 </div>
                 <LoadingQuotes is_loading={true} />
@@ -264,7 +264,7 @@ export default function SmartLoadingScreen({
             </div>
             
             {final_score !== null && (
-              <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+              <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
                 <div className="hf-score-hero" style={{ padding: '1rem 1.25rem', borderRadius: 16 }}>
                   <div className="hf-score-hero__value" style={{ fontSize: '2.5rem' }}>
                     {final_score.toFixed(1)}
@@ -275,14 +275,14 @@ export default function SmartLoadingScreen({
             )}
             
             {status === 'analyzing' && completed_pillars.size === 0 && (
-              <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+              <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ fontSize: '2rem' }}>🧭</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 800, color: 'var(--hf-text-primary)', marginBottom: '0.25rem' }}>
                       Preparing data…
                     </div>
-                    <div className="hf-muted" style={{ fontSize: '0.95rem' }}>
+                    <div className="tr-muted" style={{ fontSize: '0.95rem' }}>
                       Geocoding your location and fetching shared datasets used across multiple pillars.
                     </div>
                   </div>

@@ -404,15 +404,15 @@ export default function SavedDetailPage() {
       savedPremiumCode !== '' && premiumCodeInput.trim() === savedPremiumCode
     return (
       <div>
-        <div className="hf-label" style={{ marginBottom: '0.35rem' }}>
+        <div className="tr-label" style={{ marginBottom: '0.35rem' }}>
           School scoring (Premium)
         </div>
-        <p className="hf-muted" style={{ fontSize: '0.88rem', marginBottom: '0.75rem', lineHeight: 1.45 }}>
+        <p className="tr-muted" style={{ fontSize: '0.88rem', marginBottom: '0.75rem', lineHeight: 1.45 }}>
           Code is saved in this browser (same as home search). Turn on Include school scoring, then use the page{' '}
           <strong>Save</strong> button to store preferences on this place. Use <strong>Rescore this pillar</strong> below or{' '}
           <strong>Refresh data</strong> for a full rerun.
         </p>
-        <label className="hf-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>
+        <label className="tr-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem' }}>
           Premium code
         </label>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
@@ -494,7 +494,7 @@ export default function SavedDetailPage() {
           <span style={{ color: 'var(--hf-text-primary)' }}>Include school scoring</span>
         </label>
         {!savedPremiumCode ? (
-          <p className="hf-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem', marginBottom: 0 }}>
+          <p className="tr-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem', marginBottom: 0 }}>
             Save a Premium code above to enable school scoring for this session.
           </p>
         ) : null}
@@ -511,7 +511,7 @@ export default function SavedDetailPage() {
     return (
       <main className="hf-page">
         <div className="hf-container">
-          <p className="hf-muted">Invalid saved place.</p>
+          <p className="tr-muted">Invalid saved place.</p>
           <Link href="/saved" className="hf-btn-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>
             ← My places
           </Link>
@@ -524,7 +524,7 @@ export default function SavedDetailPage() {
     return (
       <main className="hf-page">
         <div className="hf-container">
-          <p className="hf-muted">Loading…</p>
+          <p className="tr-muted">Loading…</p>
         </div>
       </main>
     )
@@ -547,7 +547,7 @@ export default function SavedDetailPage() {
     return (
       <main className="hf-page">
         <div className="hf-container">
-          <p className="hf-muted">Unable to display score.</p>
+          <p className="tr-muted">Unable to display score.</p>
           <Link href="/saved" className="hf-btn-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>
             ← My places
           </Link>
@@ -593,16 +593,16 @@ export default function SavedDetailPage() {
                 border: '1px solid var(--hf-border)',
               }}
             >
-              <div className="hf-label" style={{ marginBottom: '0.25rem' }}>
+              <div className="tr-label" style={{ marginBottom: '0.25rem' }}>
                 Score summary for
               </div>
               <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
                 {locationLabel}
               </div>
-              <div className="hf-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
+              <div className="tr-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
                 Location: {location_info?.city}, {location_info?.state} {location_info?.zip}
               </div>
-              <div className="hf-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
+              <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
                 Coordinates: {coordinates.lat.toFixed(6)}, {coordinates.lon.toFixed(6)}
               </div>
             </div>
@@ -643,7 +643,7 @@ export default function SavedDetailPage() {
                 {removeLoading ? 'Removing…' : 'Remove from saved'}
               </button>
               {scoreAgainError && (
-                <span className="hf-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>
+                <span className="tr-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>
                   {scoreAgainError}
                 </span>
               )}
@@ -701,7 +701,7 @@ export default function SavedDetailPage() {
               Trovamo Score
               <HomeFitInfo />
             </div>
-            <div className="hf-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
+            <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem', textAlign: 'center', maxWidth: 320 }}>
               {HOMEFIT_COPY.subtitle}
             </div>
 
@@ -718,14 +718,14 @@ export default function SavedDetailPage() {
               }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="hf-muted">Longevity Index</span>
+                <span className="tr-muted">Longevity Index</span>
                 <span style={{ fontWeight: 600, color: longevityIndex != null ? 'var(--c-teal-600)' : 'var(--hf-text-secondary)' }}>
                   {longevityIndex != null ? longevityIndex.toFixed(1) : '—'}
                 </span>
                 <LongevityInfo />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="hf-muted">Archetype</span>
+                <span className="tr-muted">Archetype</span>
                 <span
                   style={{
                     fontWeight: 600,
@@ -743,7 +743,7 @@ export default function SavedDetailPage() {
                 />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="hf-muted">Happiness Index</span>
+                <span className="tr-muted">Happiness Index</span>
                 <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
                   {happinessIndex != null ? Math.max(0, Math.min(100, happinessIndex)).toFixed(1) : '—'}
                 </span>

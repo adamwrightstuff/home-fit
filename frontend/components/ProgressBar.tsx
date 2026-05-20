@@ -8,10 +8,10 @@ export default function ProgressBar({ progress }: ProgressBarProps) {
   const clamped_progress = Math.min(100, Math.max(0, progress))
   
   return (
-    <div className="hf-panel" style={{ marginBottom: '1.5rem' }}>
+    <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <span className="hf-label">Progress</span>
-        <span className="hf-label" style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>
+        <span className="tr-label">Progress</span>
+        <span className="tr-label" style={{ fontWeight: 800, color: 'var(--hf-text-primary)' }}>
           {clamped_progress.toFixed(0)}%
         </span>
       </div>
