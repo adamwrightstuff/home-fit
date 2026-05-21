@@ -1319,28 +1319,35 @@ def query_charm_features(lat: float, lon: float, radius_m: int = 500) -> Optiona
         return None
 
 
-@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+_THIRD_PLACE_CHAIN_FILTER = (
+    '["brand"!~"Starbucks|Dunkin|Peet|Coffee Bean|Dutch Bros|Tim Hortons|Panera"]'
+    '["name"!~"^(Starbucks|Dunkin|Dunkin Donuts|Peets Coffee|The Coffee Bean'
+    "|Dutch Bros|Tim Hortons|Panera|Great Clips|Sports Clips|Supercuts|Cost Cutters"
+    ')"]'
+)
+
+
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
 def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
     """
-    Query OSM for civic, non-commercial third places (Social Fabric civic gathering).
+    Query OSM for civic gathering places (Social Fabric civic gathering).
 
-    Includes:
-      - amenity=library
-      - amenity=community_centre
+    Purpose-built civic infrastructure:
+      - amenity=library, community_centre, townhall
       - amenity=place_of_worship
-      - amenity=townhall
       - leisure=community_garden
 
-    Excludes parks/playgrounds/dog_parks (scored in active_outdoors) and all
-    commercial businesses (scored in neighborhood_amenities).
+    Oldenburg third places (non-chain, named only):
+      - amenity=cafe, bar, pub
+      - shop=barber, hairdresser
 
-    Always returns a dict:
-      - source_status: "ok" (nodes found), "empty" (success, zero matches), or "error" (Overpass failed)
-      - nodes: list of civic POIs (empty if error or none found)
-      - error: present when source_status == "error"
+    Excludes parks/playgrounds (active_outdoors), daily amenities (neighborhood_amenities),
+    and chain establishments via brand/name filter.
+
+    Always returns a dict with source_status, nodes, and optional error.
     """
+    cf = _THIRD_PLACE_CHAIN_FILTER
     query = f"""
     [out:json][timeout:40];
     (
@@ -1361,6 +1368,14 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
       // Community gardens
       node["leisure"="community_garden"](around:{radius_m},{lat},{lon});
       way["leisure"="community_garden"](around:{radius_m},{lat},{lon});
+
+      // Third places: non-chain cafes, bars, pubs, barbershops
+      node["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      way["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      node["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      way["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      node["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
+      way["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
     );
     out body center;
     >;
@@ -1433,6 +1448,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
             name = tags.get("name")
             amenity = tags.get("amenity", "")
             leisure = tags.get("leisure", "")
+            shop = tags.get("shop", "")
 
             if amenity == "library":
                 node_type = "library"
@@ -1444,6 +1460,12 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
                 node_type = "townhall"
             elif leisure == "community_garden":
                 node_type = "community_garden"
+            elif amenity == "cafe":
+                node_type = "cafe"
+            elif amenity in ("bar", "pub"):
+                node_type = "bar"
+            elif shop in ("barber", "hairdresser"):
+                node_type = "barber"
             else:
                 # Only keep explicitly whitelisted civic types
                 continue

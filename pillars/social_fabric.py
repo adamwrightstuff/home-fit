@@ -154,13 +154,15 @@ def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float
 
 
 def _civic_node_type_weight(node_type: Optional[str]) -> float:
-    """Weighted effective civic nodes: library/community/townhall > worship > garden."""
+    """Weighted effective civic nodes: library/community/townhall > worship > barber > cafe/bar/garden."""
     t = (node_type or "").lower().strip()
     if t in ("library", "community_centre", "townhall"):
         return 1.5
     if t == "place_of_worship":
         return 1.0
-    if t in ("community_garden", "botanical_garden"):
+    if t == "barber":
+        return 0.75
+    if t in ("cafe", "bar", "community_garden", "botanical_garden"):
         return 0.5
     return 1.0
 
@@ -525,7 +527,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v11_sf_bmf_vol_50_50_no_turnout",
+        "version": "v12_sf_third_places",
     }
 
     logger.info(
