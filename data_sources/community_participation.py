@@ -1,15 +1,14 @@
 """
 Community participation sub-score for Social Fabric (breakdown.engagement).
 
-Combines: refined IRS BMF (40%), volunteering proxy (40%), local voter turnout (20%).
+Combines: refined IRS BMF (50%), volunteering proxy (50%).
 
-Local turnout = precinct file or tract-level rates only; state-level registration fallback
-is recorded in diagnostics but excluded from the blend (no within-metro signal).
+Voter turnout excluded: it's an outcome of social capital, not a driver (Putnam),
+and state-level rates have no within-metro discrimination power.
 
 Volunteering source priority:
   1. Social Capital Atlas (ZIP-level) — Facebook-derived volunteering_rate_zip
   2. CPS/AmeriCorps state-level rates — fallback when ZIP not in SCA
-Missing-data rules per product spec.
 """
 
 from __future__ import annotations
@@ -22,7 +21,6 @@ import statistics
 from typing import Any, Dict, Optional, Tuple
 
 from data_sources import irs_bmf
-from data_sources import voter_turnout
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -33,10 +31,6 @@ _DEFAULT_DATA_DIR = os.path.join(_BASE_DIR, "data")
 _VOLUNTEER_STATE_PATH = os.getenv(
     "CPS_VOLUNTEERING_STATE_RATES_PATH",
     os.path.join(_DEFAULT_DATA_DIR, "cps_volunteering_state_rates.json"),
-)
-_PRECINCT_TURNOUT_PATH = os.getenv(
-    "PRECINCT_TURNOUT_BY_TRACT_PATH",
-    os.path.join(_DEFAULT_DATA_DIR, "precinct_turnout_by_tract.json"),
 )
 _SCA_ZIP_PATH = os.getenv(
     "SCA_ZIP_PATH",
@@ -51,7 +45,6 @@ _volunteer_national_std: float = 0.05
 _sca_vol_by_zip: Dict[str, float] = {}
 _sca_vol_mean: float = 0.0768
 _sca_vol_std: float = 0.0369
-_precinct_turnout_by_tract: Dict[str, float] = {}
 
 
 def _load_json(path: str) -> Optional[dict]:
@@ -78,12 +71,6 @@ if isinstance(_raw_vol, dict):
             _volunteer_national_mean,
             _volunteer_national_std,
         )
-
-_pt = _load_json(_PRECINCT_TURNOUT_PATH) or {}
-if isinstance(_pt, dict):
-    _precinct_turnout_by_tract = {str(k): float(v) for k, v in _pt.items() if isinstance(v, (int, float))}
-    if _precinct_turnout_by_tract:
-        logger.info("Loaded precinct turnout for %d tracts", len(_precinct_turnout_by_tract))
 
 # Load Social Capital Atlas ZIP-level volunteering rates
 try:
@@ -166,35 +153,6 @@ def get_volunteering_score(
     return None
 
 
-def get_precinct_or_voter_turnout(
-    lat: float,
-    lon: float,
-    tract: Optional[Dict],
-    area_type: Optional[str],
-) -> Tuple[Optional[Tuple[float, Any, Optional[float]]], str]:
-    """
-    Returns (score_0_100, stats, rate) like voter_turnout, or None; and source_tag.
-    source_tag: ``precinct``, ``tract_turnout`` (tract-level rate), ``state_turnout``, or ``none``.
-    """
-    if tract and _precinct_turnout_by_tract:
-        geoid = tract.get("geoid")
-        if geoid and str(geoid) in _precinct_turnout_by_tract:
-            rate = float(_precinct_turnout_by_tract[str(geoid)])
-            sc = _rate_to_z_score(rate, 0.45, 0.12)
-            return (sc, {"mean": 0.45, "std": 0.12}, rate), "precinct"
-    res = voter_turnout.get_voter_turnout_score(tract=tract, area_type=area_type)
-    if res is None:
-        return None, "none"
-    # Detect whether tract-level data was available or state fallback was used.
-    # State-level rates (voter registration by state) have no within-metro signal;
-    # every place in the state gets the same value, so including it in the blend
-    # creates a flat state-level bias with no discrimination power.
-    geoid = tract.get("geoid") if tract else None
-    has_tract_data = bool(geoid and voter_turnout.rate_by_tract.get(geoid) is not None)
-    source_tag = "tract_turnout" if has_tract_data else "state_turnout"
-    return res, source_tag
-
-
 def compute_participation_score(
     lat: float,
     lon: float,
@@ -246,49 +204,16 @@ def compute_participation_score(
         diag["volunteering_z"], diag["volunteering_resolution"] = vol[0], vol[1]
     z_vol = vol[0] if vol else None
 
-    turnout_res, tsrc = get_precinct_or_voter_turnout(lat, lon, tract, area_type)
-    diag["turnout_source"] = tsrc
-    z_turn: Optional[float] = None
-    turn_rate: Optional[float] = None
-    if turnout_res is not None:
-        turn_rate = turnout_res[2]
-        if tsrc != "state_turnout":
-            # Only include turnout in the blend when it has local signal (tract or precinct).
-            # State-level registration rates are uniform within each state and add no
-            # within-metro discrimination — including them just creates a flat state bias.
-            z_turn = turnout_res[0]
-    diag["turnout_z"] = z_turn
-    diag["turnout_rate"] = turn_rate
-    diag["turnout_in_engagement_blend"] = z_turn is not None
-
     score: Optional[float]
-    if bmf_slot is not None and z_vol is not None and z_turn is not None:
-        score = 0.40 * bmf_slot + 0.40 * z_vol + 0.20 * z_turn
+    if bmf_slot is not None and z_vol is not None:
+        score = 0.50 * bmf_slot + 0.50 * z_vol
         diag["mix"] = "full"
-    elif z_vol is None and bmf_slot is not None and z_turn is not None:
-        score = 0.60 * bmf_slot + 0.40 * z_turn
-        diag["mix"] = "no_vol_60_40_bmf_turn"
-    elif z_turn is None and bmf_slot is not None and z_vol is not None:
-        score = 0.60 * bmf_slot + 0.40 * z_vol
-        diag["mix"] = "no_turn_60_40_bmf_vol"
-    elif bmf_slot is not None and z_vol is not None:
-        score = 0.60 * bmf_slot + 0.40 * z_vol
-        diag["mix"] = "bmf_vol_only"
-    elif bmf_slot is not None and z_turn is not None:
-        score = 0.60 * bmf_slot + 0.40 * z_turn
-        diag["mix"] = "bmf_turn_only"
-    elif bmf_slot is None and z_vol is not None and z_turn is not None:
-        score = 0.50 * z_vol + 0.50 * z_turn
-        diag["mix"] = "vol_turn_no_bmf"
     elif bmf_slot is not None:
         score = bmf_slot
         diag["mix"] = "bmf_only"
     elif z_vol is not None:
         score = z_vol
         diag["mix"] = "vol_only"
-    elif z_turn is not None:
-        score = z_turn
-        diag["mix"] = "turn_only"
     else:
         score = 50.0
         diag["mix"] = "median_fallback"

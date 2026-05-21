@@ -1,6 +1,6 @@
 """
 Social Fabric pillar: stability (tract + place mobility), civic gathering (OSM),
-and engagement (IRS BMF + voter turnout), z-scored vs area type where applicable.
+and engagement (IRS BMF 50% + volunteering 50%), z-scored vs area type where applicable.
 
 Composite: (1.2×Stability + 1.2×Civic + 1.2×Engagement) / 3.6 (participation module).
 Rootedness input: 0.6×B25038 long-tenure housing % + 0.4×B07003 same-house 1yr; then 70/30 tract/place.
@@ -447,9 +447,6 @@ def get_social_fabric_score(
         )
     else:
         source_status["engagement_bmf"] = "empty"
-    source_status["engagement_turnout"] = (
-        "ok" if participation_diag.get("turnout_z") is not None else "empty"
-    )
     source_status["engagement_volunteering"] = (
         "ok" if participation_diag.get("volunteering_z") is not None else "empty"
     )
@@ -528,7 +525,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v10_sf_participation_b25038_weighted_civic",
+        "version": "v11_sf_bmf_vol_50_50_no_turnout",
     }
 
     logger.info(
