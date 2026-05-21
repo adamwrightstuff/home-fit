@@ -868,6 +868,13 @@ def _classify_archetype(
     ):
         return "Middle Class", "middle_class_baseline"
 
+    # Middle Class side-door: credential + wealth without home_cost gate.
+    # Catches suburbs where the metro baseline floor zeros out real home values
+    # (e.g. NJ suburbs vs NYC baseline, LA suburbs vs LA metro baseline).
+    # edu >= 40 floor blocks low-edu/high-occ combos that shouldn't qualify.
+    if wealth_val >= 35 and edu_val >= 40 and (edu_val + occ_val) / 2.0 >= 50:
+        return "Middle Class", "middle_class_credential_wealth"
+
     return "Working Class", "working_class_community"
 
 
