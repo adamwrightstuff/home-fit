@@ -451,7 +451,7 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
 
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         params = {
-            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,NAME",  # + aggregate income, total HH (for mean), median gross rent
+            "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,NAME",
             "for": f"tract:{tract['tract_fips']}",
             "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
             "key": CENSUS_API_KEY,
@@ -494,6 +494,8 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         aggregate_income = parse_census_value(data[1][3])
         total_households = parse_census_value(data[1][4])
         median_gross_rent = parse_census_value(data[1][5])
+        total_occupied = parse_census_value(data[1][6])
+        renter_occupied = parse_census_value(data[1][7])
 
         if not median_income:
             print("   ⚠️  Incomplete housing data (missing or error-coded values)")
@@ -525,6 +527,10 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         if median_gross_rent is not None:
             print(f"   🏘️  Median gross rent: ${int(median_gross_rent):,}/mo")
 
+        renter_pct: Optional[float] = None
+        if total_occupied and total_occupied > 0 and renter_occupied is not None:
+            renter_pct = renter_occupied / total_occupied
+
         result: Dict[str, Optional[float]] = {
             "median_home_value": median_value,
             "median_household_income": median_income,
@@ -534,6 +540,8 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             result["median_gross_rent"] = median_gross_rent
         if mean_household_income is not None:
             result["mean_household_income"] = mean_household_income
+        if renter_pct is not None:
+            result["renter_pct"] = renter_pct
         return result
 
     except Exception as e:

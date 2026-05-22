@@ -130,6 +130,7 @@ def get_housing_value_score(lat: float, lon: float,
     median_income = housing_data["median_household_income"]
     median_rooms = housing_data["median_rooms"]
     median_gross_rent = housing_data.get("median_gross_rent")
+    renter_pct = housing_data.get("renter_pct")
 
     # Income denominator priority: user_household_income > us_median > local_median
     affordability_denominator = "local_median"
@@ -157,18 +158,33 @@ def get_housing_value_score(lat: float, lon: float,
         except Exception:
             pass
 
-    # Rent-based fallback for renter-dominant tracts where median_home_value is None
-    rent_based = False
-    if median_value is None and median_gross_rent is not None and median_gross_rent > 0:
+    # Affordability blend: weight owner and renter components by the neighborhood's actual
+    # tenure mix. Suburban users are mostly buyers (low renter_pct → owner-dominated score);
+    # urban users are mostly renters (high renter_pct → rent-dominated score). No threshold
+    # judgment needed — the neighborhood's own B25003 tenure split determines the weight.
+    # Value efficiency is an ownership concept only, so it scales by owner share.
+    # Fallback to pure owner or pure rent path when one data source is missing.
+    owner_pct = (1.0 - renter_pct) if renter_pct is not None else None
+    has_rent = median_gross_rent is not None and median_gross_rent > 0
+    has_value = median_value is not None
+
+    if has_value and has_rent and owner_pct is not None:
+        # Blended path
+        owner_afford = _score_local_affordability(median_value, median_income_for_affordability)
+        rent_afford = _score_rent_affordability(median_gross_rent, median_income_for_affordability)
+        affordability_score = owner_pct * owner_afford + renter_pct * rent_afford
+        space_score = _score_space(median_rooms)
+        efficiency_score = _score_value_efficiency(median_value, median_rooms, metro_name) * owner_pct
+        print(f"   ℹ️  Blended affordability ({owner_pct:.0%} owner / {renter_pct:.0%} renter)")
+    elif not has_value and has_rent:
+        # No owner value — rent-only (classic renter-dominant tract)
         affordability_score = _score_rent_affordability(median_gross_rent, median_income_for_affordability)
         space_score = _score_space(median_rooms)
-        efficiency_score = 0.0  # cannot compute without sale price
-        rent_based = True
-        print(f"   ℹ️  Using rent-based affordability (renter-dominant tract, rent=${int(median_gross_rent):,}/mo)")
+        efficiency_score = 0.0
+        print(f"   ℹ️  Rent-only affordability (no owner value reported, rent=${int(median_gross_rent):,}/mo)")
     else:
-        # Score components
-        affordability_score = _score_local_affordability(
-            median_value, median_income_for_affordability)
+        # Owner value only — pure owner path
+        affordability_score = _score_local_affordability(median_value, median_income_for_affordability)
         space_score = _score_space(median_rooms)
         efficiency_score = _score_value_efficiency(median_value, median_rooms, metro_name)
 
@@ -200,7 +216,8 @@ def get_housing_value_score(lat: float, lon: float,
         },
         "summary": _build_summary(median_value, summary_income, median_rooms,
                                    affordability_denominator=affordability_denominator,
-                                   median_gross_rent=median_gross_rent if rent_based else None),
+                                   median_gross_rent=median_gross_rent if has_rent else None,
+                                   renter_pct=renter_pct),
         "data_quality": quality_metrics,
         "area_classification": {}
     }
@@ -391,7 +408,7 @@ def _score_value_efficiency(home_value: Optional[float], median_rooms: float, me
             return 0.0
 
 
-def _build_summary(home_value: Optional[float], income: float, rooms: float, *, affordability_denominator: str = "local_median", median_gross_rent: Optional[float] = None) -> Dict:
+def _build_summary(home_value: Optional[float], income: float, rooms: float, *, affordability_denominator: str = "local_median", median_gross_rent: Optional[float] = None, renter_pct: Optional[float] = None) -> Dict:
     """Build summary of housing value characteristics."""
     ratio = (home_value / income) if (home_value is not None and income > 0) else 0
     cost_per_room = (home_value / rooms) if (home_value is not None and rooms > 0) else 0
@@ -433,6 +450,8 @@ def _build_summary(home_value: Optional[float], income: float, rooms: float, *, 
     }
     if affordability_denominator == "us_median":
         out["affordability_denominator"] = "us_median"
+    if renter_pct is not None:
+        out["renter_pct"] = round(renter_pct, 3)
     if median_gross_rent is not None:
         out["median_gross_rent"] = int(median_gross_rent)
         out["affordability_basis"] = "rent"
