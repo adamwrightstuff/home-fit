@@ -3,7 +3,7 @@ Social Fabric pillar: stability (tract + place mobility), civic gathering (OSM),
 and engagement (IRS BMF 50% + volunteering 50%), z-scored vs area type where applicable.
 
 Composite: (1.2×Stability + 1.2×Civic + 1.2×Engagement) / 3.6 (participation module).
-Rootedness input: 0.6×B25038 long-tenure housing % + 0.4×B07003 same-house 1yr; then 70/30 tract/place.
+Rootedness input: 0.8×B25038 long-tenure housing % + 0.2×B07003 same-house 1yr; then 70/30 tract/place.
 Diversity is a separate pillar (pillars/diversity.py).
 
 Stability blend: 0.7×tract same-house + 0.3×place same-house (place is B07003). Tract same-house uses ACS 5-year
@@ -290,14 +290,16 @@ def get_social_fabric_score(
 
     tract_rooted: Optional[float] = None
     if tract_long_tenure_pct is not None and same_house_pct_b07003 is not None:
-        tract_rooted = 0.6 * float(tract_long_tenure_pct) + 0.4 * float(same_house_pct_b07003)
+        # 80% B25038 long-tenure (10+ yr, unit-based) + 20% B07003 1-yr same-house (person-based).
+        # B25038 is the closer operationalization of the Putnam/Sampson residential stability construct.
+        tract_rooted = 0.8 * float(tract_long_tenure_pct) + 0.2 * float(same_house_pct_b07003)
     elif same_house_pct is not None:
         tract_rooted = float(same_house_pct)
 
     place_rooted: Optional[float] = None
     if place_same_house_pct is not None:
         if place_long_tenure_pct is not None:
-            place_rooted = 0.6 * float(place_long_tenure_pct) + 0.4 * float(place_same_house_pct)
+            place_rooted = 0.8 * float(place_long_tenure_pct) + 0.2 * float(place_same_house_pct)
         else:
             place_rooted = float(place_same_house_pct)
 
@@ -497,7 +499,9 @@ def get_social_fabric_score(
         "same_house_pct": round(same_house_pct, 1) if same_house_pct is not None else None,
         "same_house_pct_b07003": round(same_house_pct_b07003, 2) if same_house_pct_b07003 is not None else None,
         "same_house_pct_b07013": round(same_house_pct_b07013, 2) if same_house_pct_b07013 is not None else None,
+        "tract_long_tenure_pct": round(tract_long_tenure_pct, 2) if tract_long_tenure_pct is not None else None,
         "place_same_house_pct": round(place_same_house_pct, 1) if place_same_house_pct is not None else None,
+        "place_long_tenure_pct": round(place_long_tenure_pct, 2) if place_long_tenure_pct is not None else None,
         "stability_blend_pct": round(stability_pct, 1) if stability_pct is not None else None,
         "stability_tract_input": stability_tract_input,
         "rooted_pct": round(rooted_pct, 1) if rooted_pct is not None else None,
@@ -527,7 +531,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v12_sf_third_places",
+        "version": "v13_sf_b25038_80_20",
     }
 
     logger.info(
