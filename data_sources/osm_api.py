@@ -1348,6 +1348,17 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
     Always returns a dict with source_status, nodes, and optional error.
     """
     cf = _THIRD_PLACE_CHAIN_FILTER
+    # Third places (cafes, bars, barbershops) are only queried at ≤1200m.
+    # At 3000m (exurban/rural) they return too many results and cause timeouts.
+    include_third_places = radius_m <= 1200
+    third_place_queries = f"""
+      // Third places: non-chain cafes, bars, pubs, barbershops
+      node["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      way["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      node["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      way["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
+      node["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
+      way["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});""" if include_third_places else ""
     query = f"""
     [out:json][timeout:40];
     (
@@ -1368,14 +1379,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
       // Community gardens
       node["leisure"="community_garden"](around:{radius_m},{lat},{lon});
       way["leisure"="community_garden"](around:{radius_m},{lat},{lon});
-
-      // Third places: non-chain cafes, bars, pubs, barbershops
-      node["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
-      way["amenity"="cafe"]["name"]{cf}(around:{radius_m},{lat},{lon});
-      node["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
-      way["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
-      node["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
-      way["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
+{third_place_queries}
     );
     out body center;
     >;
