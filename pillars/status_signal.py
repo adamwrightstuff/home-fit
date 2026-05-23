@@ -850,7 +850,7 @@ def _classify_archetype(
         return "Established", "established_high_wealth"
 
     # Established: capital wealth + community roots (W=75-85 range needs stronger stability signal)
-    if wealth_val > 75 and stab_val is not None and stab_val > 45:
+    if wealth_val > 75 and stab_val is not None and stab_val >= 44:
         return "Established", "established_capital_wealth"
 
     # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified).
