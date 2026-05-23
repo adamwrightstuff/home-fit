@@ -130,9 +130,9 @@ def _get_status_label(archetype: str) -> str:
     """UI badge label for archetype."""
     return {
         "Established": "Established",
-        "Professional": "Professional",
+        "Professional": "Upper Middle Class",
         "Up-and-Coming": "Up-and-Coming",
-        "Rooted": "Rooted",
+        "Rooted": "Immigrant Community",
         "Middle Class": "Middle Class",
         "Working Class": "Working Class",
         "Unclassified": "Unclassified",
@@ -159,9 +159,9 @@ def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
         "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
-        "Professional": "Credential and career driven — high education and white-collar occupation with moderate asset wealth.",
+        "Professional": "Credential and career driven — high education and white-collar occupation with strong household income.",
         "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
-        "Rooted": "Tight-knit, long-tenured community holding ground under housing cost pressure.",
+        "Rooted": "Established ethnic enclave with strong community identity, cultural roots, and long-term residents.",
         "Middle Class": "Solid footing on income and housing — comfortable without a single dominant status story.",
         "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
         "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
@@ -822,6 +822,7 @@ def _classify_archetype(
     wealth_gap: Optional[float],
     occupation_neutral: Optional[float],
     stability: Optional[float] = None,
+    diversity_score: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
     Chain: Established → Professional → Up-and-Coming → Rooted → Middle Class → Working Class.
@@ -852,13 +853,22 @@ def _classify_archetype(
     if wealth_val > 75 and stab_val is not None and stab_val > 45:
         return "Established", "established_capital_wealth"
 
-    # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified)
-    if home_cost >= 65 and wealth_val < 85 and (stab_val is None or stab_val < 45):
+    # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified).
+    # Requires home_cost to substantially lead wealth — prevents wealthy-but-transient areas from matching.
+    if home_cost >= 65 and wealth_val < 85 and home_cost >= wealth_val + 15 and (stab_val is None or stab_val < 45):
         return "Up-and-Coming", "upandcoming_gentrifying"
 
-    # Rooted: tight-knit community holding ground under housing cost pressure
-    if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50:
-        return "Rooted", "rooted_stable_community"
+    # Immigrant Community: ethnic enclave — tight community, moderate-to-low wealth, diverse
+    div_val = float(diversity_score) if diversity_score is not None else 0.0
+    if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50 and div_val >= 70:
+        return "Rooted", "immigrant_community_enclave"
+
+    # Established: affluent suburb — high wealth + solid home cost + educated, but missed
+    # the higher gates (wealth just under 85, stability borderline, not pure credential class).
+    # Catches prestige enclaves like Bronxville whose census tract bleeds into adjacent denser
+    # areas, suppressing both wealth and stability below the stricter Established thresholds.
+    if wealth_val > 72 and home_cost >= 45 and edu_val >= 65:
+        return "Established", "established_affluent_suburb"
 
     # Middle Class: comfortable baseline on wealth + housing (no stronger signature matched)
     if (
@@ -872,7 +882,7 @@ def _classify_archetype(
     # Catches suburbs where the metro baseline floor zeros out real home values
     # (e.g. NJ suburbs vs NYC baseline, LA suburbs vs LA metro baseline).
     # edu >= 40 floor blocks low-edu/high-occ combos that shouldn't qualify.
-    if wealth_val >= 35 and edu_val >= 40 and (edu_val + occ_val) / 2.0 >= 50:
+    if wealth_val >= 35 and edu_val >= 40 and (edu_val + occ_val) / 2.0 >= 45:
         return "Middle Class", "middle_class_credential_wealth"
 
     return "Working Class", "working_class_community"
@@ -1058,6 +1068,7 @@ def compute_status_signal_with_breakdown(
         except (TypeError, ValueError):
             pass
 
+    _div_score = (diversity_details or {}).get("score")
     archetype, archetype_rule = _classify_archetype(
         education=education,
         wealth=wealth,
@@ -1065,6 +1076,7 @@ def compute_status_signal_with_breakdown(
         wealth_gap=wealth_gap,
         occupation_neutral=occupation_neutral,
         stability=stability,
+        diversity_score=float(_div_score) if _div_score is not None else None,
     )
 
     w_wealth, w_home_cost, w_education, w_occupation = _get_archetype_weights(archetype)
