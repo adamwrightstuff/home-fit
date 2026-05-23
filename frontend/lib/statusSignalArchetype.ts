@@ -66,10 +66,13 @@ const ARCHETYPE_ONE_LINERS: Record<NonTypicalArchetype, string> = {
 
 /** API archetypes from pillars/status_signal (not in lean centroid model). */
 const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
-  Professional: 'Credential and career driven — high education and white-collar mix.',
+  'Upper Middle Class': 'Credential and career driven — high education and white-collar mix with above-median wealth.',
   'Up-and-Coming': 'Housing market runs hot relative to typical resident wealth — a neighborhood in active transition.',
-  Rooted: 'Long-tenured community under housing cost pressure — stability without elite wealth scores.',
+  'Immigrant Community': 'Established ethnic enclave with strong community identity, cultural roots, and long-term residents.',
   'Middle Class': 'Solid footing on income and housing — comfortable without one dominant status story.',
+  // Legacy labels kept for backward compatibility with older catalog entries
+  Professional: 'Credential and career driven — high education and white-collar mix.',
+  Rooted: 'Long-tenured community under housing cost pressure — stability without elite wealth scores.',
   Unclassified: 'Residential signal too thin to classify — treat as low confidence.',
 }
 

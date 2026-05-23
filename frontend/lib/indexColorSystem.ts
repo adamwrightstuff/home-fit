@@ -64,11 +64,10 @@ export const STATUS_ARCHETYPE_RAMP: Record<
 export function normalizeStatusArchetypeKey(archetype: string | null | undefined): StatusArchetypeRampKey {
   const a = (archetype ?? '').trim()
   if (a === 'Established') return 'established'
-  if (a === 'Affluent') return 'affluent'
-  if (a === 'Professional') return 'established'
+  if (a === 'Affluent' || a === 'Upper Middle Class' || a === 'Professional') return 'affluent'
   if (a === 'Middle Class') return 'middle_class'
   if (a === 'Transitional' || a === 'Up-and-Coming') return 'transitional'
-  if (a === 'Working Class' || a === 'Rooted') return 'working_class'
+  if (a === 'Working Class' || a === 'Immigrant Community' || a === 'Rooted') return 'working_class'
   return 'working_class'
 }
 

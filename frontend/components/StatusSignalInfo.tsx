@@ -138,7 +138,7 @@ export default function StatusSignalInfo({
                 color: 'var(--hf-text-primary)',
               }}
             >
-              {helpCopy ?? breakdown?.status_insight ?? STATUS_SIGNAL_COPY.full}
+              {(breakdown as { llm_summary?: string } | null)?.llm_summary ?? helpCopy ?? breakdown?.status_insight ?? STATUS_SIGNAL_COPY.full}
             </p>
             {breakdown?.top_drivers && breakdown.top_drivers.length > 0 && (
               <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem', color: 'var(--hf-text-secondary)' }}>

@@ -9,12 +9,10 @@ function clamp(v: number, lo: number, hi: number): number {
 
 function dotColor(archetype: string | null): string {
   if (archetype === 'Established') return '#6366F1'
-  if (archetype === 'Affluent') return '#D97706'
-  if (archetype === 'Transitional') return '#0F766E'
+  if (archetype === 'Upper Middle Class' || archetype === 'Affluent' || archetype === 'Professional') return '#D97706'
   if (archetype === 'Middle Class') return '#64748B'
-  if (archetype === 'Professional') return '#6366F1'
-  if (archetype === 'Up-and-Coming') return '#0F766E'
-  if (archetype === 'Rooted') return '#78716C'
+  if (archetype === 'Up-and-Coming' || archetype === 'Transitional') return '#0F766E'
+  if (archetype === 'Immigrant Community' || archetype === 'Rooted') return '#9333EA'
   if (archetype === 'Working Class') return '#78716C'
   return '#6B7280'
 }

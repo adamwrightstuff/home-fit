@@ -186,12 +186,20 @@ export default function CatalogPageClient({
   }, [twinQueryKey])
 
   const archetypes = useMemo(() => {
+    const ORDER = ['Established', 'Upper Middle Class', 'Middle Class', 'Up-and-Coming', 'Immigrant Community', 'Working Class']
     const s = new Set<string>()
     for (const p of places) {
       const a = p.score.status_signal_breakdown?.archetype
       if (a) s.add(a)
     }
-    return Array.from(s).sort((a, b) => displayArchetypeLabel(a).localeCompare(displayArchetypeLabel(b)))
+    return Array.from(s).sort((a, b) => {
+      const ia = ORDER.indexOf(a)
+      const ib = ORDER.indexOf(b)
+      if (ia !== -1 && ib !== -1) return ia - ib
+      if (ia !== -1) return -1
+      if (ib !== -1) return 1
+      return a.localeCompare(b)
+    })
   }, [places])
 
   const adjustedPlaces = useMemo(() =>
