@@ -50,12 +50,19 @@ VALID_ARCHETYPES = {
     "Working Class",
 }
 
-ARCHETYPE_DEFINITIONS = """- Established: legacy wealth, deep-rooted community, high home values, long-tenured residents
+ARCHETYPE_DEFINITIONS = """- Established: legacy wealth, deep-rooted community, high home values, long-tenured residents. ONLY if Wealth ≥ 65 AND Education ≥ 50.
 - Upper Middle Class: professional/credential households, educated, above-median wealth
 - Middle Class: stable working families, moderate wealth, solid housing without elite profile
-- Up-and-Coming: home values rising faster than resident wealth — active gentrification or transition
-- Immigrant Community: ethnic enclave with tight community bonds, diverse, moderate-to-low wealth
-- Working Class: blue-collar character, lower incomes, price-sensitive, modest housing"""
+- Up-and-Coming: home values rising faster than resident wealth — active gentrification or transition. ONLY if Home cost ≥ 20. Do not use if Home cost < 20 (signals bad census data, not gentrification).
+- Immigrant Community: ONLY for places with a clearly identifiable, named ethnic enclave — a Chinatown, Koreatown, Little Dominican Republic, Arab community, South Asian enclave, Hasidic neighborhood, etc. Diverse areas without a dominant enclave identity → Working Class.
+- Working Class: blue-collar character, lower incomes, price-sensitive, modest housing. DEFAULT for economically modest areas that are simply diverse without enclave identity."""
+
+GUARDRAIL_RULES = """
+HARD RULES — these override your general judgment:
+1. Established: requires Wealth ≥ 65 AND Education ≥ 50. High stability or home cost alone does not qualify.
+2. Up-and-Coming: requires Home cost ≥ 20. Home cost < 20 is likely a census data quality issue, not a gentrification signal.
+3. Immigrant Community: requires a named, culturally-identified ethnic enclave. Do not apply to African-American neighborhoods, generic diverse suburbs, or mixed urban areas without a dominant immigrant enclave character. Those are Working Class.
+"""
 
 
 def resolve_place_fips_key(lat: float, lon: float) -> str | None:
@@ -105,12 +112,12 @@ RAW CENSUS DATA:
   Median gross rent:       {rent_str}
   Renter share:            {renter_str}
 
-IMPORTANT: Census tract income is sometimes suppressed by adjacent higher-density areas.
+IMPORTANT: Census tract data is sometimes contaminated by adjacent areas. A very low Home cost score (< 20) for a neighborhood known to have expensive housing is a data quality issue — ignore it and classify based on Wealth + Education instead.
 Use the metro-normalized Wealth score as the primary signal; treat raw income as secondary.
 
 Pick exactly one archetype:
 {ARCHETYPE_DEFINITIONS}
-
+{GUARDRAIL_RULES}
 Write a summary: exactly 2 sentences, present tense.
 Sentence 1: who lives here and what defines the economic character.
 Sentence 2: what makes this place distinctive — community culture, housing type, or notable traits.
@@ -119,11 +126,24 @@ Return ONLY valid JSON (no markdown, no explanation):
 {{"archetype": "...", "summary": "..."}}"""
 
 
-def call_claude(client: anthropic.Anthropic, prompt: str) -> dict | None:
+def check_guardrails(archetype: str, ss: dict) -> str | None:
+    """Returns a violation message if the classification breaks a hard rule, else None."""
+    ci = ss.get("classifier_inputs", {}) or {}
+    wealth    = ss.get("wealth") or 0
+    home_cost = ss.get("home_cost") or 0
+    edu       = ci.get("education") or 0
+    if archetype == "Established" and (wealth < 65 or edu < 50):
+        return f"Established requires W≥65 and edu≥50, got W={wealth:.0f} edu={edu:.0f}"
+    if archetype == "Up-and-Coming" and home_cost < 20:
+        return f"Up-and-Coming requires HC≥20, got HC={home_cost:.0f}"
+    return None
+
+
+def call_claude(client: anthropic.Anthropic, prompt: str, ss: dict) -> dict | None:
     try:
         msg = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=256,
+            max_tokens=512,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = msg.content[0].text.strip()
@@ -138,6 +158,10 @@ def call_claude(client: anthropic.Anthropic, prompt: str) -> dict | None:
             return None
         if not summary:
             print(f"    ⚠️  Empty summary, skipping")
+            return None
+        violation = check_guardrails(archetype, ss)
+        if violation:
+            print(f"    ⚠️  Guardrail violation: {violation}")
             return None
         return {"archetype": archetype, "summary": summary}
     except Exception as e:
@@ -172,6 +196,11 @@ def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
             skip += 1
             continue
 
+        # Never overwrite manual overrides
+        if ss.get("archetype_source") == "manual_override":
+            skip += 1
+            continue
+
         # Skip already-classified entries unless forced
         if not force and ss.get("archetype_source") == "llm":
             skip += 1
@@ -195,7 +224,7 @@ def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
             ok += 1
             continue
 
-        result = call_claude(client, prompt)
+        result = call_claude(client, prompt, ss)
         if result is None:
             err += 1
             continue
