@@ -51,17 +51,18 @@ VALID_ARCHETYPES = {
 }
 
 ARCHETYPE_DEFINITIONS = """- Established: legacy wealth, deep-rooted community, high home values, long-tenured residents. ONLY if Wealth ≥ 65 AND Education ≥ 50.
-- Upper Middle Class: professional/credential households, educated, above-median wealth
-- Middle Class: stable working families, moderate wealth, solid housing without elite profile
+- Upper Middle Class: professional/credential households, educated, above-median wealth. Typically Wealth > 55 AND Education > 50.
+- Middle Class: stable homeowning families, moderate wealth (Wealth 35–65), solid housing without elite credentials. The broad middle — not struggling, not elite.
 - Up-and-Coming: home values rising faster than resident wealth — active gentrification or transition. ONLY if Home cost ≥ 20. Do not use if Home cost < 20 (signals bad census data, not gentrification).
-- Immigrant Community: ONLY for places with a clearly identifiable, named ethnic enclave — a Chinatown, Koreatown, Little Dominican Republic, Arab community, South Asian enclave, Hasidic neighborhood, etc. Diverse areas without a dominant enclave identity → Working Class.
-- Working Class: blue-collar character, lower incomes, price-sensitive, modest housing. DEFAULT for economically modest areas that are simply diverse without enclave identity."""
+- Immigrant Community: ONLY for places with a clearly identifiable, named ethnic enclave — a Chinatown, Koreatown, Little Dominican Republic, Arab community, South Asian enclave, Hasidic neighborhood, etc. Diverse areas without a dominant enclave identity → Working Class or Middle Class.
+- Working Class: genuinely lower-income, price-sensitive, blue-collar character. Typically Wealth < 40 AND Education < 35. A place with Wealth 45–60 is NOT Working Class even if education is modest."""
 
 GUARDRAIL_RULES = """
 HARD RULES — these override your general judgment:
 1. Established: requires Wealth ≥ 65 AND Education ≥ 50. High stability or home cost alone does not qualify.
 2. Up-and-Coming: requires Home cost ≥ 20. Home cost < 20 is likely a census data quality issue, not a gentrification signal.
-3. Immigrant Community: requires a named, culturally-identified ethnic enclave. Do not apply to African-American neighborhoods, generic diverse suburbs, or mixed urban areas without a dominant immigrant enclave character. Those are Working Class.
+3. Immigrant Community: requires a named, culturally-identified ethnic enclave. Do not apply to African-American neighborhoods, generic diverse suburbs, or mixed urban areas without a dominant immigrant enclave character.
+4. Working Class: requires Wealth < 50 AND Education < 40. If Wealth ≥ 50 or Education ≥ 40, use Middle Class or higher.
 """
 
 
@@ -136,37 +137,49 @@ def check_guardrails(archetype: str, ss: dict) -> str | None:
         return f"Established requires W≥65 and edu≥50, got W={wealth:.0f} edu={edu:.0f}"
     if archetype == "Up-and-Coming" and home_cost < 20:
         return f"Up-and-Coming requires HC≥20, got HC={home_cost:.0f}"
+    if archetype == "Working Class" and (wealth >= 50 or edu >= 40):
+        return f"Working Class requires W<50 and edu<40, got W={wealth:.0f} edu={edu:.0f}"
     return None
 
 
-def call_claude(client: anthropic.Anthropic, prompt: str, ss: dict) -> dict | None:
-    try:
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=512,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = msg.content[0].text.strip()
-        # Strip markdown fences if present
-        raw = re.sub(r"^```[a-z]*\n?", "", raw)
-        raw = re.sub(r"\n?```$", "", raw)
-        result = json.loads(raw)
-        archetype = result.get("archetype", "").strip()
-        summary   = result.get("summary", "").strip()
-        if archetype not in VALID_ARCHETYPES:
-            print(f"    ⚠️  Invalid archetype '{archetype}', skipping")
-            return None
-        if not summary:
-            print(f"    ⚠️  Empty summary, skipping")
-            return None
-        violation = check_guardrails(archetype, ss)
-        if violation:
-            print(f"    ⚠️  Guardrail violation: {violation}")
-            return None
-        return {"archetype": archetype, "summary": summary}
-    except Exception as e:
-        print(f"    ⚠️  Claude call failed: {e}")
+def _parse_response(raw: str) -> tuple[str, str] | None:
+    raw = re.sub(r"^```[a-z]*\n?", "", raw.strip())
+    raw = re.sub(r"\n?```$", "", raw)
+    result = json.loads(raw)
+    archetype = result.get("archetype", "").strip()
+    summary   = result.get("summary", "").strip()
+    if archetype not in VALID_ARCHETYPES or not summary:
         return None
+    return archetype, summary
+
+
+def call_claude(client: anthropic.Anthropic, prompt: str, ss: dict) -> dict | None:
+    messages = [{"role": "user", "content": prompt}]
+    for attempt in range(2):
+        try:
+            msg = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=512,
+                messages=messages,
+            )
+            raw = msg.content[0].text.strip()
+            parsed = _parse_response(raw)
+            if not parsed:
+                print(f"    ⚠️  Bad JSON or empty summary (attempt {attempt+1})")
+                continue
+            archetype, summary = parsed
+            violation = check_guardrails(archetype, ss)
+            if violation:
+                print(f"    ⚠️  Guardrail (attempt {attempt+1}): {violation} — retrying")
+                messages = messages + [
+                    {"role": "assistant", "content": raw},
+                    {"role": "user", "content": f"That violates a hard rule: {violation}. Pick a different archetype and rewrite the summary accordingly. Return only JSON."},
+                ]
+                continue
+            return {"archetype": archetype, "summary": summary}
+        except Exception as e:
+            print(f"    ⚠️  Claude call failed (attempt {attempt+1}): {e}")
+    return None
 
 
 def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
