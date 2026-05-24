@@ -73,58 +73,66 @@ def resolve_place_fips_key(lat: float, lon: float) -> str | None:
     return f"{place['state_fips']}/{place['place_fips']}"
 
 
+def _pillar_score(pillars: dict, key: str) -> int | None:
+    v = (pillars.get(key) or {}).get("score")
+    return int(v) if v is not None else None
+
+
+def _fmt(v: int | None) -> str:
+    return f"{v}/100" if v is not None else "n/a"
+
+
 def build_prompt(name: str, place_type: str, metro: str, ss: dict, pillars: dict) -> str:
-    ci = ss.get("classifier_inputs", {})
-    wealth    = ss.get("wealth") or 0
-    home_cost = ss.get("home_cost") or 0
-    education = ss.get("education") or 0
-    occupation = ss.get("occupation") or 0
-    stability = ci.get("stability") or 0
-    diversity_pillar = pillars.get("diversity", {})
-    diversity = diversity_pillar.get("score") or 0
+    ci = ss.get("classifier_inputs", {}) or {}
 
-    hv_summ = pillars.get("housing_value", {}).get("summary", {})
-    income    = hv_summ.get("median_household_income")
-    home_val  = hv_summ.get("median_home_value")
-    rent      = hv_summ.get("median_gross_rent")
-    renter_pct = hv_summ.get("renter_pct")
+    # Pillar scores
+    transit   = _pillar_score(pillars, "public_transit")
+    outdoors  = _pillar_score(pillars, "active_outdoors")
+    amenities = _pillar_score(pillars, "neighborhood_amenities")
+    schools   = _pillar_score(pillars, "education")
+    social    = _pillar_score(pillars, "social_fabric")
+    beauty    = _pillar_score(pillars, "built_beauty")
+    nature    = _pillar_score(pillars, "natural_beauty")
+    health    = _pillar_score(pillars, "healthcare")
+    climate   = _pillar_score(pillars, "climate_risk")
+    econ      = _pillar_score(pillars, "economic_security")
+    diversity = _pillar_score(pillars, "diversity")
+    air       = _pillar_score(pillars, "air_travel")
 
-    income_str   = f"${int(income):,}"    if income   else "not available"
-    home_val_str = f"${int(home_val):,}"  if home_val else "not available"
-    rent_str     = f"${int(rent):,}/mo"   if rent     else "not available"
-    renter_str   = f"{renter_pct:.0%}"    if renter_pct is not None else "not available"
+    hv = (pillars.get("housing_value") or {}).get("summary") or {}
+    renter_pct = hv.get("renter_pct")
+    home_val   = hv.get("median_home_value")
+    rent       = hv.get("median_gross_rent")
+    owner_str  = f"{1 - renter_pct:.0%} owners" if renter_pct is not None else "ownership mix unknown"
+    home_str   = f"~${int(home_val):,} median home" if home_val else ""
+    rent_str   = f"~${int(rent):,}/mo median rent" if rent else ""
+    housing_ctx = ", ".join(x for x in [owner_str, home_str, rent_str] if x)
 
-    return f"""You are classifying a US neighborhood's socioeconomic archetype based on measured data.
+    archetype = ss.get("archetype", "")
 
-LOCATION: {name}, {metro} metro area
+    return f"""Describe what it feels like to live in {name}, {metro} metro area. Write 2–3 sentences as if telling a friend who is considering moving there. Be vivid and honest about both the appeal and the tradeoffs. Do NOT mention any numbers or scores — translate them into human experience.
+
+ARCHETYPE: {archetype}
 PLACE TYPE: {place_type}
 
-METRO-NORMALIZED SCORES (percentile 0–100 within the metro):
-  Wealth:         {wealth:.0f}
-  Home cost:      {home_cost:.0f}
-  Education:      {education:.0f}
-  Occupation mix: {occupation:.0f}
-  Stability:      {stability:.0f}
-  Diversity:      {diversity:.0f}
+SCORED DIMENSIONS (0–100, higher = better):
+  Walkability / transit:    {_fmt(transit)}
+  Parks & active outdoors:  {_fmt(outdoors)}
+  Neighborhood amenities:   {_fmt(amenities)}
+  Schools:                  {_fmt(schools)}
+  Social fabric / community:{_fmt(social)}
+  Built environment beauty: {_fmt(beauty)}
+  Natural surroundings:     {_fmt(nature)}
+  Healthcare access:        {_fmt(health)}
+  Climate risk:             {_fmt(climate)}  (higher = lower risk)
+  Economic opportunity:     {_fmt(econ)}
+  Diversity:                {_fmt(diversity)}
+  Airport access:           {_fmt(air)}
 
-RAW CENSUS DATA:
-  Median household income: {income_str}
-  Median home value:       {home_val_str}
-  Median gross rent:       {rent_str}
-  Renter share:            {renter_str}
+HOUSING CHARACTER: {housing_ctx}
 
-IMPORTANT: Census tract data is sometimes contaminated by adjacent areas. A very low Home cost score (< 20) for a neighborhood known to have expensive housing is a data quality issue — ignore it and classify based on Wealth + Education instead.
-Use the metro-normalized Wealth score as the primary signal; treat raw income as secondary.
-
-Pick exactly one archetype:
-{ARCHETYPE_DEFINITIONS}
-{GUARDRAIL_RULES}
-Write a summary: exactly 2 sentences, present tense.
-Sentence 1: who lives here and what defines the economic character.
-Sentence 2: what makes this place distinctive — community culture, housing type, or notable traits.
-
-Return ONLY valid JSON (no markdown, no explanation):
-{{"archetype": "...", "summary": "..."}}"""
+Return ONLY valid JSON:
+{{"summary": "..."}}"""
 
 
 def check_guardrails(archetype: str, ss: dict) -> str | None:
@@ -142,41 +150,27 @@ def check_guardrails(archetype: str, ss: dict) -> str | None:
     return None
 
 
-def _parse_response(raw: str) -> tuple[str, str] | None:
+def _parse_response(raw: str) -> str | None:
     raw = re.sub(r"^```[a-z]*\n?", "", raw.strip())
     raw = re.sub(r"\n?```$", "", raw)
     result = json.loads(raw)
-    archetype = result.get("archetype", "").strip()
-    summary   = result.get("summary", "").strip()
-    if archetype not in VALID_ARCHETYPES or not summary:
-        return None
-    return archetype, summary
+    return result.get("summary", "").strip() or None
 
 
 def call_claude(client: anthropic.Anthropic, prompt: str, ss: dict) -> dict | None:
-    messages = [{"role": "user", "content": prompt}]
     for attempt in range(2):
         try:
             msg = client.messages.create(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=512,
-                messages=messages,
+                max_tokens=600,
+                messages=[{"role": "user", "content": prompt}],
             )
             raw = msg.content[0].text.strip()
-            parsed = _parse_response(raw)
-            if not parsed:
+            summary = _parse_response(raw)
+            if not summary:
                 print(f"    ⚠️  Bad JSON or empty summary (attempt {attempt+1})")
                 continue
-            archetype, summary = parsed
-            violation = check_guardrails(archetype, ss)
-            if violation:
-                print(f"    ⚠️  Guardrail (attempt {attempt+1}): {violation} — retrying")
-                messages = messages + [
-                    {"role": "assistant", "content": raw},
-                    {"role": "user", "content": f"That violates a hard rule: {violation}. Pick a different archetype and rewrite the summary accordingly. Return only JSON."},
-                ]
-                continue
-            return {"archetype": archetype, "summary": summary}
+            return {"summary": summary}
         except Exception as e:
             print(f"    ⚠️  Claude call failed (attempt {attempt+1}): {e}")
     return None
@@ -214,26 +208,18 @@ def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
             skip += 1
             continue
 
-        # Skip already-classified entries unless forced
-        if not force and ss.get("archetype_source") == "llm":
+        # Skip already-summarised entries unless forced
+        if not force and ss.get("llm_summary"):
             skip += 1
             continue
 
         print(f"[{i+1}/{len(entries)}] {name} …", flush=True)
 
-        # Resolve place FIPS key for fast catalog lookup
         place_fips_key = resolve_place_fips_key(lat, lon)
-
-        # Check if the place FIPS resolves to a large city → record it but note it's a neighborhood
-        if place_fips_key:
-            # We store it regardless; the lookup layer decides whether to use it
-            pass
-
         prompt = build_prompt(name, place_type, metro_label, ss, pillars)
 
         if dry_run:
-            print(f"    [dry-run] would call Claude")
-            print(f"    place_fips_key={place_fips_key}")
+            print(f"    [dry-run] archetype={ss.get('archetype')}")
             ok += 1
             continue
 
@@ -242,23 +228,9 @@ def process_catalog(path: str, metro: str, dry_run: bool, force: bool) -> list:
             err += 1
             continue
 
-        llm_archetype = result["archetype"]
-        llm_summary   = result["summary"]
-        rule_archetype = ss.get("archetype")
-
-        if llm_archetype != rule_archetype:
-            print(f"    rule={rule_archetype} → llm={llm_archetype}")
-        else:
-            print(f"    archetype={llm_archetype} ✓")
-
-        # Update status_signal_breakdown in-place
-        ss["archetype"]        = llm_archetype
-        ss["status_label"]     = llm_archetype
-        ss["llm_summary"]      = llm_summary
-        ss["archetype_source"] = "llm"
-        ss["place_fips_key"]   = place_fips_key
-        if rule_archetype and rule_archetype != llm_archetype:
-            ss["rule_archetype"] = rule_archetype
+        print(f"    archetype={ss.get('archetype')} ✓")
+        ss["llm_summary"]    = result["summary"]
+        ss["place_fips_key"] = place_fips_key
 
         ok += 1
         time.sleep(0.15)  # stay well under Haiku rate limits
