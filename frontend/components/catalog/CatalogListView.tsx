@@ -162,6 +162,17 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={7} className="p-0">
+                      {p.score.status_signal_breakdown?.llm_summary && (
+                        <p style={{
+                          margin: 0,
+                          padding: '0.75rem 1rem 0',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.55,
+                          color: 'var(--hf-text-secondary)',
+                        }}>
+                          {p.score.status_signal_breakdown.llm_summary}
+                        </p>
+                      )}
                       <ExplorerPillarGrid place={p} priorities={priorities} />
                     </td>
                   </tr>

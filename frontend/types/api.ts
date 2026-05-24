@@ -17,6 +17,7 @@ export interface StatusSignalBreakdown {
   archetype_rule?: string;
   status_label?: string;
   status_insight?: string;
+  llm_summary?: string;
   top_drivers?: StatusSignalTopDriver[];
   analysis_radius_note?: string | null;
   /** Tier from composite score: faint | moderate | strong | dominant (bands 0-25, 25-50, 50-75, 75-100). */
