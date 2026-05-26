@@ -1617,8 +1617,15 @@ def _compute_single_score_internal(
             result = func(**kwargs)
             return (name, result, None)
         except Exception as e:
-            logger.error(f"{name} pillar failed: {e}")
-            return (name, None, e)
+            logger.warning(f"{name} pillar failed, retrying in 3s: {e}")
+            time.sleep(3)
+            try:
+                result = func(**kwargs)
+                logger.info(f"{name} pillar succeeded on retry")
+                return (name, result, None)
+            except Exception as e2:
+                logger.error(f"{name} pillar failed after retry: {e2}")
+                return (name, None, e2)
 
     need_built_beauty = _include_pillar('built_beauty')
     need_natural_beauty = _include_pillar('natural_beauty')

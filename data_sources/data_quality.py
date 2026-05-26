@@ -340,6 +340,10 @@ def classify_morphology(
         return "urban_residential"
     elif intensity >= 0.50 and context >= 0.6:
         return "urban_residential"
+    elif intensity >= 0.45 and context >= 0.85:
+        # Low residential density but immediately adjacent to a major urban core (e.g. Arts District LA):
+        # warehouse/industrial morphology reads as low-density but is functionally urban.
+        return "urban_residential"
     
     # suburban: moderate intensity
     # Also catch planned communities (high context, moderate coverage) that might score lower on intensity

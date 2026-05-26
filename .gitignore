@@ -79,3 +79,5 @@ data/**/*.jsonl.bak*
 data/**/*.jsonl.bak
 data/**/*.temp.jsonl
 data/**/*recomputed.tmp.jsonl
+.vercel
+.env*.local
