@@ -70,13 +70,18 @@ export default function Home() {
     return reweightScoreResponseFromPriorities(score_data, configureState?.priorities ?? search_options.priorities)
   }, [score_data, configureState?.priorities, search_options.priorities])
 
-  const handle_search = (location: string) => {
+  const handle_search = (location: string, preGeo?: { lat: number; lon: number; city: string; state: string; zip_code: string; display_name: string }) => {
     set_loading(true)
     set_error(null)
     set_score_data(null)
     set_configure_state(null)
     set_place(null)
     setSavedScoreId(null)
+    if (preGeo) {
+      set_place({ ...preGeo, location })
+      set_loading(false)
+      return
+    }
     getGeocode(location)
       .then((geo) => {
         set_place({ ...geo, location })

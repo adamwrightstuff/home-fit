@@ -34,6 +34,8 @@ interface LocationSuggestion {
   displayName: string
   /** Same string we pass to backend geocode */
   searchQuery: string
+  /** Pre-built geocode result from Photon — skips Railway geocode entirely when set */
+  geo?: { lat: number; lon: number; city: string; state: string; zip_code: string; display_name: string }
 }
 
 const _PLACE_PRIORITY: Record<string, number> = { district: 0, city: 1, street: 2, house: 3, other: 4 }
@@ -86,18 +88,27 @@ function fetchPhotonSuggestions(query: string): Promise<LocationSuggestion[]> {
       const sorted = [...usFeatures].sort((a, b) => _placeRank(a) - _placeRank(b))
 
       return sorted.slice(0, SUGGESTION_LIMIT).map((f) => {
-        const { name, type } = f.properties
+        const { name, type, state, postcode } = f.properties
         const cityOverride =
           type === 'district' && name ? districtCityMap[name.toLowerCase()] : undefined
         const displayName = buildDisplayName(f.properties, cityOverride)
-        return { displayName, searchQuery: displayName }
+        const [lon, lat] = f.geometry.coordinates
+        const city = cityOverride ?? (f.properties.city ?? '')
+        const geo = Number.isFinite(lat) && Number.isFinite(lon) ? {
+          lat, lon,
+          city,
+          state: state ?? '',
+          zip_code: postcode ?? '',
+          display_name: displayName,
+        } : undefined
+        return { displayName, searchQuery: displayName, geo }
       })
     })
     .catch(() => [])
 }
 
 interface LocationSearchProps {
-  onSearch: (location: string) => void
+  onSearch: (location: string, geo?: LocationSuggestion['geo']) => void
   disabled?: boolean
   examples?: string[]
 }
@@ -122,12 +133,12 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
   }, [disabled])
 
   const runSearch = useCallback(
-    (query: string) => {
+    (query: string, geo?: LocationSuggestion['geo']) => {
       if (!query.trim() || disabled) return
       setSubmitted(false)
       setLocation(query.trim())
       setSuggestionsOpen(false)
-      onSearch(query.trim())
+      onSearch(query.trim(), geo)
     },
     [disabled, onSearch]
   )
@@ -181,7 +192,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
     setSuggestionsOpen(false)
     setActiveIndex(-1)
     inputRef.current?.focus()
-    runSearch(s.searchQuery)
+    runSearch(s.searchQuery, s.geo)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
