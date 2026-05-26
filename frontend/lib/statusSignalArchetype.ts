@@ -70,11 +70,11 @@ const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
   'Up-and-Coming': 'Housing market runs hot relative to typical resident wealth — a neighborhood in active transition.',
   'Immigrant Community': 'Established ethnic enclave with strong community identity, cultural roots, and long-term residents.',
   'Middle Class': 'Solid footing on income and housing — comfortable without one dominant status story.',
-  // Legacy labels kept for backward compatibility with older catalog entries
-  Professional: 'Credential and career driven — high education and white-collar mix.',
-  Rooted: 'Long-tenured community under housing cost pressure — stability without elite wealth scores.',
   Unclassified: 'Residential signal too thin to classify — treat as low confidence.',
 }
+
+/** Legacy archetype labels no longer shown — centroid model takes over for these. */
+const RETIRED_ARCHETYPES = new Set(['Professional', 'Rooted'])
 
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -190,7 +190,8 @@ export function getStatusBadgeModel(
   gapPct: number | null
   modelVersion: string
 } {
-  const archetype = breakdown?.archetype ?? null
+  const rawArchetype = breakdown?.archetype ?? null
+  const archetype = rawArchetype && !RETIRED_ARCHETYPES.has(rawArchetype) ? rawArchetype : null
   const strengthLabel = getStatusSignalStrengthLabel(breakdown, compositeScore)
   const topMatch = getTopArchetypeMatch(breakdown)
   const gapPct = topMatch?.gapPct ?? null

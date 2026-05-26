@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Trovamo — We find your place.',
     description: 'Score any neighborhood against what matters most to you.',
-    url: 'https://trovamo.co',
+    url: 'https://www.trovamo.co',
     siteName: 'Trovamo',
     type: 'website',
   },

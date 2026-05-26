@@ -9,10 +9,10 @@ function clamp(v: number, lo: number, hi: number): number {
 
 function dotColor(archetype: string | null): string {
   if (archetype === 'Established') return '#6366F1'
-  if (archetype === 'Upper Middle Class' || archetype === 'Affluent' || archetype === 'Professional') return '#D97706'
+  if (archetype === 'Upper Middle Class' || archetype === 'Affluent') return '#D97706'
   if (archetype === 'Middle Class') return '#64748B'
   if (archetype === 'Up-and-Coming' || archetype === 'Transitional') return '#0F766E'
-  if (archetype === 'Immigrant Community' || archetype === 'Rooted') return '#9333EA'
+  if (archetype === 'Immigrant Community') return '#9333EA'
   if (archetype === 'Working Class') return '#78716C'
   return '#6B7280'
 }
@@ -40,7 +40,8 @@ export default function StatusArchetypeCompass({
 }) {
   if (!breakdown) return null
   const badge = getStatusBadgeModel(breakdown, typeof score === 'number' ? score : null)
-  const archetype = breakdown.archetype ?? null
+  // Use the named archetype only if the badge model considers it active (filters out retired labels).
+  const archetype = badge.variant === 'named' ? (breakdown.archetype ?? null) : null
   const point = compassPoint(breakdown)
   const xPct = 50 + point.x * 36
   const yPct = 50 + point.y * 36
