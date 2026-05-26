@@ -1613,17 +1613,21 @@ def _compute_single_score_internal(
     t_pillars = time.perf_counter()
 
     def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
+        _t0 = time.perf_counter()
         try:
             result = func(**kwargs)
+            logger.info(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s")
             return (name, result, None)
         except Exception as e:
             logger.warning(f"{name} pillar failed, retrying in 3s: {e}")
             time.sleep(3)
             try:
                 result = func(**kwargs)
+                logger.info(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s (retried)")
                 logger.info(f"{name} pillar succeeded on retry")
                 return (name, result, None)
             except Exception as e2:
+                logger.error(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s (failed)")
                 logger.error(f"{name} pillar failed after retry: {e2}")
                 return (name, None, e2)
 
@@ -3294,10 +3298,13 @@ async def _stream_score_with_progress(
 
         # Execute pillars (parallel or sequential) and stream as each completes
         def _execute_pillar(name: str, func, **kwargs):
+            _t0 = time.perf_counter()
             try:
                 result = func(**kwargs)
+                logger.info(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s")
                 return (name, result, None)
             except Exception as e:
+                logger.error(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s (failed)")
                 logger.error(f"{name} pillar failed: {e}", exc_info=True)
                 return (name, None, e)
 
@@ -4192,14 +4199,13 @@ async def stream_score(
 
         # Pillar execution wrapper with error handling
         def _execute_pillar(name: str, func, **kwargs) -> Tuple[str, Optional[Tuple[float, Dict]], Optional[Exception]]:
-            """
-            Execute a pillar function with error handling.
-            Returns: (pillar_name, (score, details) or None, exception or None)
-            """
+            _t0 = time.perf_counter()
             try:
                 result = func(**kwargs)
+                logger.info(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s")
                 return (name, result, None)
             except Exception as e:
+                logger.error(f"[TIMING] pillar_{name} {time.perf_counter() - _t0:.3f}s (failed)")
                 logger.error(f"{name} pillar failed: {e}")
                 return (name, None, e)
 

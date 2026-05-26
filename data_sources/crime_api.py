@@ -1025,11 +1025,6 @@ def get_crime_rates(
             if result:
                 return result
 
-    # FBI CDE / State UCR (suburbs and other metros)
-    if state_abbr and _get_fbi_key():
-        result = _get_fbi_rates(lat, lon, state_abbr, population, city_hint=city)
-        if result:
-            return result
-
-    logger.debug("crime_api: no data for city=%s state=%s", city, state_abbr)
-    return None
+    # Outside mapped Socrata metros; data sources for other cities not yet released.
+    logger.debug("crime_api: outside NYC/LA bbox — coming_soon (city=%s state=%s)", city, state_abbr)
+    return {"coming_soon": True}

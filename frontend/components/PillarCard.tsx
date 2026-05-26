@@ -268,6 +268,7 @@ export default function PillarCard({
   const hasSummary = isRecord(rawSummary) && Object.keys(rawSummary).length > 0
   const hasBreakdown = isRecord(rawBreakdown) && Object.keys(rawBreakdown).length > 0
   const detailsSource = hasSummary ? rawSummary : hasBreakdown ? rawBreakdown : null
+  const isComingSoon = Boolean((pillar.breakdown as any)?.coming_soon)
   const failureType = getPillarFailureType(pillar)
   const showRerun = (failureType === 'fallback' || failureType === 'execution_error') && onRerun
   const isFailed = failureType === 'execution_error'
@@ -412,7 +413,25 @@ export default function PillarCard({
                   </span>
                 </span>
               )}
-              {isFailed && (
+              {isComingSoon && (
+                <span
+                  className="tr-muted"
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.2rem 0.45rem',
+                    borderRadius: 6,
+                    background: 'var(--hf-bg-subtle)',
+                    border: '1px solid var(--hf-border)',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                  title="Community Safety scoring is coming soon for this location."
+                >
+                  Coming Soon
+                </span>
+              )}
+              {!isComingSoon && isFailed && (
                 <span
                   className="tr-muted"
                   style={{

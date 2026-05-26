@@ -247,6 +247,16 @@ def get_community_safety_score(
         }
         return None, details
 
+    if rates.get("coming_soon"):
+        details = {
+            "status": "COMING_SOON",
+            "coming_soon": True,
+            "data_available": False,
+            "confidence": 0,
+            "data_quality_index": 0.0,
+        }
+        return None, details
+
     source = rates.get("source", "unknown")
     precision_level = _PRECISION_MAP.get(source)
     if precision_level is None:
