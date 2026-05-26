@@ -21,6 +21,11 @@ interface PhotonFeature {
     street?: string
     housenumber?: string
     postcode?: string
+    district?: string
+    locality?: string
+    type?: string    // 'house' | 'street' | 'district' | 'city' | 'other'
+    osm_key?: string // 'place' | 'leisure' | 'tourism' | 'amenity' | etc.
+    osm_value?: string
   }
   geometry: { type: string; coordinates: [number, number] }
 }
@@ -31,13 +36,22 @@ interface LocationSuggestion {
   searchQuery: string
 }
 
-function buildDisplayName(props: PhotonFeature['properties']): string {
-  const { name, city, state, country, street, housenumber, postcode } = props
+const _PLACE_PRIORITY: Record<string, number> = { district: 0, city: 1, street: 2, house: 3, other: 4 }
+
+function _placeRank(f: PhotonFeature): number {
+  return _PLACE_PRIORITY[f.properties.type ?? 'other'] ?? 4
+}
+
+function buildDisplayName(props: PhotonFeature['properties'], cityOverride?: string): string {
+  const { name, city: rawCity, state, country, street, housenumber, postcode, type } = props
+  const city = cityOverride ?? rawCity
   const parts: string[] = []
-  if (housenumber && street) parts.push(`${housenumber} ${street}`)
-  else if (street) parts.push(street)
+  // For place-type results (neighbourhood, suburb, city) use name, not street.
+  const isPlace = type === 'district' || type === 'city'
+  if (!isPlace && housenumber && street) parts.push(`${housenumber} ${street}`)
+  else if (!isPlace && street) parts.push(street)
   else if (name) parts.push(name)
-  if (city && city !== name) parts.push(city)
+  if (city && city !== name && !city.toLowerCase().includes('township')) parts.push(city)
   if (state && state !== city) parts.push(state)
   if (postcode && !parts.includes(postcode)) parts.push(postcode)
   if (country && country !== 'United States') parts.push(country)
@@ -53,14 +67,29 @@ function fetchPhotonSuggestions(query: string): Promise<LocationSuggestion[]> {
     .then((res) => (res.ok ? res.json() : Promise.resolve({ features: [] })))
     .then((data: { features?: PhotonFeature[] }) => {
       const features = data.features ?? []
-      const allowed = features
-        .filter((f) => {
-          const code = (f.properties.countrycode ?? '').toLowerCase()
-          return code && ALLOWED_COUNTRY_CODES.has(code)
-        })
-        .slice(0, SUGGESTION_LIMIT)
-      return allowed.map((f) => {
-        const displayName = buildDisplayName(f.properties)
+      const usFeatures = features.filter((f) => {
+        const code = (f.properties.countrycode ?? '').toLowerCase()
+        return code && ALLOWED_COUNTRY_CODES.has(code)
+      })
+
+      // Build district→city map from non-district results so we can fix township city names
+      // e.g. Photon labels Lincoln Park's district result city as "North Chicago Township"
+      // but house/other results in the same batch correctly have city="Chicago".
+      const districtCityMap: Record<string, string> = {}
+      for (const f of usFeatures) {
+        const { district, city, type } = f.properties
+        if (district && city && type !== 'district' && !city.toLowerCase().includes('township')) {
+          districtCityMap[district.toLowerCase()] = city
+        }
+      }
+
+      const sorted = [...usFeatures].sort((a, b) => _placeRank(a) - _placeRank(b))
+
+      return sorted.slice(0, SUGGESTION_LIMIT).map((f) => {
+        const { name, type } = f.properties
+        const cityOverride =
+          type === 'district' && name ? districtCityMap[name.toLowerCase()] : undefined
+        const displayName = buildDisplayName(f.properties, cityOverride)
         return { displayName, searchQuery: displayName }
       })
     })
