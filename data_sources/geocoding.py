@@ -1070,20 +1070,10 @@ def geocode(address: str) -> Optional[Tuple[float, float, str, str, str]]:
                             # This preserves existing behavior for locations like Old San Juan, Downtown Charleston
                             coordinate_source = "nominatim"  # Explicitly keep Nominatim coords
                 
-                # If we didn't find a neighborhood node AND didn't already set coordinates, try city/relation center
-                # (Only for city relations, not neighborhood relations)
+                # Nominatim bbox center is accurate enough for pillar scoring (1-2km difference negligible).
+                # Skip the Overpass relation refinement to avoid 3 sequential 5s calls (up to 15s).
                 if coordinate_source == "nominatim" and not is_neighborhood_query:
-                    relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
-                    if relation_coords:
-                        rel_lat, rel_lon, source = relation_coords
-                        # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
-                        lat = rel_lat
-                        lon = rel_lon
-                        coordinate_source = source
-                        print(f"✅ Using OSM {source} for '{address}': {lat}, {lon}")
-                    else:
-                        # Place node lookup failed or couldn't verify state - use Nominatim coordinates
-                        print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
+                    print(f"📍 Using Nominatim coordinates for '{address}': {lat}, {lon}")
             else:
                 # State mismatch or no state - use Nominatim coordinates directly
                 print(f"📍 Using Nominatim coordinates for '{address}' (state mismatch or no state): {lat}, {lon}")
@@ -1753,23 +1743,10 @@ def geocode_with_full_result(address: str) -> Optional[Tuple[float, float, str, 
                             # This preserves existing behavior for locations like Old San Juan, Downtown Charleston
                             coordinate_source = "nominatim"  # Explicitly keep Nominatim coords
                 
-                # If we didn't find a neighborhood node AND didn't already set coordinates, try city/relation center
-                # (Only for city relations, not neighborhood relations)
+                # Nominatim bbox center is accurate enough for pillar scoring (1-2km difference negligible).
+                # Skip the Overpass relation refinement to avoid 3 sequential 5s calls (up to 15s).
                 if coordinate_source == "nominatim" and not is_neighborhood_query:
-                    relation_coords = _get_relation_center_or_admin_centre(osm_id, city_name, query_state)
-                    if relation_coords:
-                        rel_lat, rel_lon, source = relation_coords
-                        # Use relation coordinates (place=city preferred, then admin_centre/label, then center)
-                        lat = rel_lat
-                        lon = rel_lon
-                        coordinate_source = source
-                        print(f"📍 Using OSM {source} for '{address}': {lat}, {lon}")
-                        # Update result dict with new coordinates for consistency
-                        result["lat"] = str(lat)
-                        result["lon"] = str(lon)
-                    else:
-                        # Place node lookup failed or couldn't verify state - use Nominatim coordinates
-                        print(f"📍 Using Nominatim coordinates for '{address}' (place node couldn't verify state): {lat}, {lon}")
+                    print(f"📍 Using Nominatim coordinates for '{address}': {lat}, {lon}")
             else:
                 # State mismatch or no state - use Nominatim coordinates directly
                 print(f"📍 Using Nominatim coordinates for '{address}' (state mismatch or no state): {lat}, {lon}")

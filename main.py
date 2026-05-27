@@ -1489,9 +1489,10 @@ def _compute_single_score_internal(
                     logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
                     return None
 
-            # Execute independent calls in parallel
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            # Execute all independent calls truly in parallel (density runs with tract=None internally)
+            with ThreadPoolExecutor(max_workers=6) as executor:
                 future_census_tract = executor.submit(_fetch_census_tract)
+                future_density = executor.submit(_fetch_density, None)
                 future_business_count = executor.submit(_fetch_business_count)
                 future_metro_distance = executor.submit(_fetch_metro_distance)
 
@@ -1502,10 +1503,12 @@ def _compute_single_score_internal(
                     future_built_coverage = None
 
                 census_tract = future_census_tract.result()
-                future_density = executor.submit(_fetch_density, census_tract)
-
                 density = future_density.result()
-                business_count = future_business_count.result()
+                try:
+                    business_count = future_business_count.result(timeout=8)
+                except Exception:
+                    logger.warning("business_count timed out in shared compute — defaulting to 0")
+                    business_count = 0
                 metro_distance_km = future_metro_distance.result()
                 try:
                     arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
@@ -1573,8 +1576,16 @@ def _compute_single_score_internal(
                 with ThreadPoolExecutor(max_workers=2) as _fc_pool:
                     _f_charm = _fc_pool.submit(_fetch_charm)
                     _f_year = _fc_pool.submit(_fetch_year_built)
-                    charm_data = _f_charm.result()
-                    year_built_data = _f_year.result()
+                    try:
+                        charm_data = _f_charm.result(timeout=8)
+                    except Exception:
+                        logger.warning("charm_features timed out in form_context — skipping")
+                        charm_data = None
+                    try:
+                        year_built_data = _f_year.result(timeout=8)
+                    except Exception:
+                        logger.warning("year_built timed out in form_context — skipping")
+                        year_built_data = None
 
                 historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
                 median_year_built = year_built_data.get('median_year_built') if year_built_data else None
@@ -4152,29 +4163,26 @@ async def stream_score(
                     logger.warning(f"Metro distance calculation failed (non-fatal): {e}")
                     return None
             
-            # Execute independent calls in parallel (tract first, then density uses it)
-            # OPTIMIZATION: Only submit tasks that are actually needed
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            # Execute all independent calls truly in parallel (density runs with tract=None internally)
+            with ThreadPoolExecutor(max_workers=6) as executor:
                 future_census_tract = executor.submit(_fetch_census_tract)
+                future_density = executor.submit(_fetch_density, None)
                 future_business_count = executor.submit(_fetch_business_count)
                 future_metro_distance = executor.submit(_fetch_metro_distance)
-                
-                # Conditionally submit built_coverage task
+
                 need_built_coverage = _need_arch_diversity_for_area_type(only_pillars)
                 if need_built_coverage:
                     future_built_coverage = executor.submit(_fetch_built_coverage)
                 else:
                     future_built_coverage = None
-                
-                # Get census tract first (needed for density)
+
                 census_tract = future_census_tract.result()
-                
-                # Now fetch density using pre-computed tract (avoids redundant get_census_tract call)
-                future_density = executor.submit(_fetch_density, census_tract)
-                
-                # Wait for remaining results
                 density = future_density.result()
-                business_count = future_business_count.result()
+                try:
+                    business_count = future_business_count.result(timeout=8)
+                except Exception:
+                    logger.warning("business_count timed out in shared compute — defaulting to 0")
+                    business_count = 0
                 metro_distance_km = future_metro_distance.result()
                 try:
                     arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
@@ -4256,12 +4264,35 @@ async def stream_score(
                     footprint_area_cv = None
                     material_profile = None
                 
-                # Get historic data for form_context
                 from data_sources import osm_api
-                charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
+
+                def _fetch_charm_async():
+                    try:
+                        return osm_api.query_charm_features(lat, lon, radius_m=1000)
+                    except Exception:
+                        return None
+
+                def _fetch_year_async():
+                    try:
+                        return census_api.get_year_built_data(lat, lon) if census_api else None
+                    except Exception:
+                        return None
+
+                with ThreadPoolExecutor(max_workers=2) as _fc_pool:
+                    _f_charm = _fc_pool.submit(_fetch_charm_async)
+                    _f_year = _fc_pool.submit(_fetch_year_async)
+                    try:
+                        charm_data = _f_charm.result(timeout=8)
+                    except Exception:
+                        logger.warning("charm_features timed out in form_context — skipping")
+                        charm_data = None
+                    try:
+                        year_built_data = _f_year.result(timeout=8)
+                    except Exception:
+                        logger.warning("year_built timed out in form_context — skipping")
+                        year_built_data = None
+
                 historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
-                
-                year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
                 median_year_built = year_built_data.get('median_year_built') if year_built_data else None
                 pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
                 
