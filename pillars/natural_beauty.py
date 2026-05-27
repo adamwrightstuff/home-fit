@@ -1690,9 +1690,64 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # Use pre-computed 5km canopy if available and radius matches, otherwise fetch
         # Always initialize gee_canopy with safe default
         gee_canopy: Optional[float] = None
+        _prefetched_census: Optional[float] = None
+        _prefetched_gvi: Optional[Dict] = None
+
         if precomputed_tree_canopy_5km is not None and radius_m == 5000:
             gee_canopy = precomputed_tree_canopy_5km
             logger.debug("Using pre-computed tree canopy (5km): %.1f%%", gee_canopy)
+        elif area_type not in ('urban_core',):
+            # Non-urban-core fast path: fire all canopy radii + census + GVI in one batch.
+            # No conditional fallbacks apply here, so we know the full fetch set upfront.
+            _gvi_r_pre = min(1200, radius_m)
+            _primary_label_pre = next((l for l, r in MULTI_RADIUS_CANOPY.items() if r == radius_m), None)
+
+            def _prefetch_rad(lbl: str, rad: int):
+                try:
+                    return lbl, get_tree_canopy_gee(lat, lon, radius_m=rad, area_type=area_type)
+                except Exception as _e:
+                    logger.debug("Prefetch canopy (%s) failed: %s", lbl, _e)
+                    return lbl, None
+
+            def _prefetch_census_fn():
+                try:
+                    return census_api.get_tree_canopy(lat, lon)
+                except Exception as _e:
+                    logger.debug("Prefetch census failed: %s", _e)
+                    return None
+
+            def _prefetch_gvi_fn():
+                if not _gvi_r_pre:
+                    return None
+                try:
+                    return get_urban_greenness_gee(lat, lon, radius_m=_gvi_r_pre)
+                except Exception as _e:
+                    logger.warning("Prefetch GVI failed: %s", _e)
+                    return None
+
+            with ThreadPoolExecutor(max_workers=6) as _pre_pool:
+                _rad_futs = {_pre_pool.submit(_prefetch_rad, lbl, rad): lbl for lbl, rad in MULTI_RADIUS_CANOPY.items()}
+                _f_cen = _pre_pool.submit(_prefetch_census_fn)
+                _f_gvi = _pre_pool.submit(_prefetch_gvi_fn)
+                for _fut in as_completed(_rad_futs):
+                    _lbl, _val = _fut.result()
+                    canopy_multi[_lbl] = _val
+                try:
+                    _prefetched_census = _f_cen.result()
+                except Exception:
+                    _prefetched_census = None
+                try:
+                    _prefetched_gvi = _f_gvi.result()
+                except Exception:
+                    _prefetched_gvi = None
+
+            gee_canopy = canopy_multi.get(_primary_label_pre) if _primary_label_pre else None
+            if gee_canopy is None:
+                gee_canopy = next((v for v in canopy_multi.values() if v is not None), None)
+            if gee_canopy is not None:
+                tree_radius_used = radius_m
+            logger.debug("Non-urban-core parallel prefetch: gee_canopy=%s canopy_multi=%s",
+                         f"{gee_canopy:.1f}%" if gee_canopy is not None else "None", canopy_multi)
         else:
             try:
                 gee_canopy = get_tree_canopy_gee(lat, lon, radius_m=radius_m, area_type=area_type)
@@ -1729,17 +1784,20 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         # This allows very small canopy values to be scored properly
         # Design principle: Objective and data-driven - use actual measured values, not arbitrary thresholds
         if gee_canopy is not None and gee_canopy >= 0.0:
-            # Populate multi-radius canopy data: fetch needed radii in parallel
+            # Fetch any remaining canopy radii not already in canopy_multi (e.g. urban_core path),
+            # plus census + GVI — all in one parallel block.
             radii_to_fetch = [
                 (label, rad) for label, rad in MULTI_RADIUS_CANOPY.items()
-                if (not tree_radius_used or rad != tree_radius_used) and rad != radius_m
+                if canopy_multi.get(label) is None
+                and (not tree_radius_used or rad != tree_radius_used) and rad != radius_m
             ]
-            # Combined parallel block: remaining canopy radii + census + GVI in one shot
             area_desc = area_type if area_type else "area"
-            census_canopy = None
-            gvi_metrics = None
+            census_canopy = _prefetched_census
+            gvi_metrics = _prefetched_gvi
             gvi_radius_used = min(1200, tree_radius_used or radius_m) if (tree_radius_used or radius_m) else 1200
             _gvi_r = gvi_radius_used
+            _need_census = census_canopy is None
+            _need_gvi = gvi_metrics is None
 
             def _fetch_rad(label: str, rad: int):
                 try:
@@ -1764,24 +1822,27 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     logger.warning("GEE greenness analysis error: %s", _ge)
                     return None
 
-            with ThreadPoolExecutor(max_workers=6) as executor:
-                canopy_futures = {
-                    executor.submit(_fetch_rad, label, rad): label
-                    for label, rad in radii_to_fetch
-                }
-                f_census = executor.submit(_get_census_canopy)
-                f_gvi = executor.submit(_get_gvi_metrics)
-                for future in as_completed(canopy_futures):
-                    label, value = future.result()
-                    canopy_multi[label] = value
-                try:
-                    census_canopy = f_census.result()
-                except Exception as _ce2:
-                    logger.debug("Census canopy result error: %s", _ce2)
-                try:
-                    gvi_metrics = f_gvi.result()
-                except Exception as _ge2:
-                    logger.warning("GVI result error: %s", _ge2)
+            if radii_to_fetch or _need_census or _need_gvi:
+                with ThreadPoolExecutor(max_workers=6) as executor:
+                    canopy_futures = {
+                        executor.submit(_fetch_rad, label, rad): label
+                        for label, rad in radii_to_fetch
+                    }
+                    f_census = executor.submit(_get_census_canopy) if _need_census else None
+                    f_gvi = executor.submit(_get_gvi_metrics) if _need_gvi else None
+                    for future in as_completed(canopy_futures):
+                        label, value = future.result()
+                        canopy_multi[label] = value
+                    if f_census is not None:
+                        try:
+                            census_canopy = f_census.result()
+                        except Exception as _ce2:
+                            logger.debug("Census canopy result error: %s", _ce2)
+                    if f_gvi is not None:
+                        try:
+                            gvi_metrics = f_gvi.result()
+                        except Exception as _ge2:
+                            logger.warning("GVI result error: %s", _ge2)
             for label, rad in MULTI_RADIUS_CANOPY.items():
                 if canopy_multi.get(label) is not None:
                     continue
