@@ -2309,7 +2309,7 @@ def _query_trails_in_large_parks(lat: float, lon: float, radius_m: int = 15000) 
             park_radius_estimate = min(1000, max(300, (park_area_sqm / 3.14159) ** 0.5))
             
             paths_query = f"""
-            [out:json][timeout:20];
+            [out:json][timeout:10];
             (
               way["highway"~"^(path|footway|track)$"]["access"!="private"](around:{int(park_radius_estimate)},{park_lat},{park_lon});
             );
@@ -3279,7 +3279,7 @@ def _process_healthcare_elements(elements: List[Dict], lat: float, lon: float, n
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
-@handle_api_timeout(timeout_seconds=100)
+@handle_api_timeout(timeout_seconds=20)
 def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -> Optional[Dict]:
     """
     Query OSM for comprehensive healthcare facilities.
@@ -3308,7 +3308,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     # Build smaller, focused queries for better reliability
     # Query 1: Hospitals and major medical centers
     hospital_query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:10];
     (
       node["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
       way["amenity"~"hospital|medical_centre"]["healthcare"!="urgent_care"](around:{radius_m},{lat},{lon});
@@ -3323,7 +3323,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     
     # Query 2: Urgent care and emergency services
     urgent_query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:10];
     (
       node["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
       way["healthcare"~"urgent_care|emergency"](around:{radius_m},{lat},{lon});
@@ -3339,7 +3339,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     
     # Query 3: Clinics and doctors
     clinic_query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:10];
     (
       node["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
       way["amenity"~"clinic|doctors"](around:{radius_m},{lat},{lon});
@@ -3353,7 +3353,7 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     
     # Query 4: Pharmacies
     pharmacy_query = f"""
-    [out:json][timeout:20];
+    [out:json][timeout:10];
     (
       node["shop"="pharmacy"](around:{radius_m},{lat},{lon});
       way["shop"="pharmacy"](around:{radius_m},{lat},{lon});
@@ -3367,100 +3367,58 @@ def query_healthcare_facilities(lat: float, lon: float, radius_m: int = 10000) -
     out skel qt;
     """
     
-    # Execute queries SEQUENTIALLY (not parallel) to respect rate limits
+    # Execute queries in parallel for speed — each hits an independent Overpass endpoint.
     queries = [
         ("hospitals", hospital_query),
         ("urgent_care", urgent_query),
         ("clinics", clinic_query),
         ("pharmacies", pharmacy_query)
     ]
-    
-    logger.debug(f"Querying healthcare facilities within {radius_m/1000:.0f}km (split into {len(queries)} sequential queries)...")
-    
-    for category, query in queries:
+
+    logger.debug(f"Querying healthcare facilities within {radius_m/1000:.0f}km (parallel)...")
+
+    def _fetch_category(category: str, query: str) -> Optional[Dict]:
+        """Fetch one healthcare category; returns processed category_results or None on failure."""
         try:
             def _do_request():
                 return requests.post(
-                    get_overpass_url(), 
-                    data={"data": query}, 
-                    timeout=_overpass_timeout(30),  # Shorter timeout for simpler queries
+                    get_overpass_url(),
+                    data={"data": query},
+                    timeout=_overpass_timeout(12),
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
-            
-            # Use existing retry logic (respects global throttling)
             resp = _retry_overpass(_do_request, query_type="healthcare")
-            
             if resp is None or resp.status_code != 200:
-                if resp and resp.status_code == 429:
-                    retry_after = resp.headers.get('Retry-After', 'unknown')
-                    logger.warning(f"Healthcare {category} query rate limited (429), Retry-After: {retry_after}s")
-                elif resp and resp.status_code == 504:
-                    logger.warning(f"Healthcare {category} query gateway timeout (504) - Overpass server overloaded")
-                elif resp:
-                    logger.warning(f"Healthcare {category} query failed: HTTP {resp.status_code}")
-                    logger.debug(f"Response preview: {resp.text[:200] if hasattr(resp, 'text') else 'N/A'}")
-                else:
-                    logger.warning(f"Healthcare {category} query failed: No response (timeout or network error)")
-                    logger.debug(f"Query was: {query[:200]}...")  # Log first 200 chars
-                    logger.debug(f"Endpoint: {get_overpass_url()}")
-                
-                results["_query_failed"] = True
-                logger.warning(f"Healthcare {category} query failed, continuing with other categories...")
-                # Small delay before next query to be extra safe
-                time.sleep(0.2)
-                continue
-            
+                logger.warning(f"Healthcare {category} query failed: {resp.status_code if resp else 'no response'}")
+                return None
             data = _safe_overpass_json(resp, context=f"healthcare {category} query")
             if data is None:
-                results["_query_failed"] = True
-                logger.warning(f"Healthcare {category} query returned non-JSON body")
-                time.sleep(0.2)
-                continue
+                return None
             elements = data.get("elements", [])
-            
-            logger.debug(f"Healthcare {category} query returned {len(elements)} elements")
-            if len(elements) == 0:
-                logger.debug(f"Healthcare {category} query returned 0 elements for {lat}, {lon}")
-            
-            # Build nodes/ways dicts for geometry calculation
-            nodes_dict = {}
-            ways_dict = {}
-            for elem in elements:
-                if elem.get("type") == "node":
-                    nodes_dict[elem["id"]] = elem
-                elif elem.get("type") == "way":
-                    ways_dict[elem["id"]] = elem
-                elif elem.get("type") == "relation":
-                    # Extract member ways from relations
-                    members = elem.get("members", [])
-                    for member in members:
-                        if member.get("type") == "way":
-                            way_id = member.get("ref")
-                            if way_id not in ways_dict:
-                                # Search for the way in elements
-                                for e in elements:
-                                    if e.get("type") == "way" and e.get("id") == way_id:
-                                        ways_dict[way_id] = e
-                                        break
-            
-            # Process elements for this category
-            category_results = _process_healthcare_elements(elements, lat, lon, nodes_dict, ways_dict)
-            
-            # Merge results
-            results["hospitals"].extend(category_results["hospitals"])
-            results["urgent_care"].extend(category_results["urgent_care"])
-            results["clinics"].extend(category_results["clinics"])
-            results["pharmacies"].extend(category_results["pharmacies"])
-            results["doctors"].extend(category_results["doctors"])
-            
-            # Small delay between queries to be extra safe (global throttling handles this, but explicit is clearer)
-            time.sleep(0.1)  # 100ms between queries
-            
+            nodes_dict = {e["id"]: e for e in elements if e.get("type") == "node"}
+            ways_dict = {e["id"]: e for e in elements if e.get("type") == "way"}
+            return _process_healthcare_elements(elements, lat, lon, nodes_dict, ways_dict)
         except Exception as e:
-            logger.warning(f"Healthcare {category} query error: {e}", exc_info=True)
-            results["_query_failed"] = True
-            # Small delay before next query
-            time.sleep(0.2)
+            logger.warning(f"Healthcare {category} query error: {e}")
+            return None
+
+    from concurrent.futures import ThreadPoolExecutor as _HCPool
+    with _HCPool(max_workers=4) as _pool:
+        futures = {_pool.submit(_fetch_category, cat, q): cat for cat, q in queries}
+        for fut in futures:
+            cat = futures[fut]
+            try:
+                cat_result = fut.result(timeout=15)
+            except Exception:
+                cat_result = None
+            if cat_result is None:
+                results["_query_failed"] = True
+            else:
+                results["hospitals"].extend(cat_result.get("hospitals", []))
+                results["urgent_care"].extend(cat_result.get("urgent_care", []))
+                results["clinics"].extend(cat_result.get("clinics", []))
+                results["pharmacies"].extend(cat_result.get("pharmacies", []))
+                results["doctors"].extend(cat_result.get("doctors", []))
     
     # Log final results
     total_found = (len(results["hospitals"]) + len(results["urgent_care"]) + 
