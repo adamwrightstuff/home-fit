@@ -1502,14 +1502,26 @@ def _compute_single_score_internal(
                 else:
                     future_built_coverage = None
 
-                census_tract = future_census_tract.result()
-                density = future_density.result()
+                try:
+                    census_tract = future_census_tract.result(timeout=12)
+                except Exception:
+                    logger.warning("census_tract timed out in shared compute — skipping")
+                    census_tract = None
+                try:
+                    density = future_density.result(timeout=15)
+                except Exception:
+                    logger.warning("density timed out in shared compute — skipping")
+                    density = None
                 try:
                     business_count = future_business_count.result(timeout=8)
                 except Exception:
                     logger.warning("business_count timed out in shared compute — defaulting to 0")
                     business_count = 0
-                metro_distance_km = future_metro_distance.result()
+                try:
+                    metro_distance_km = future_metro_distance.result(timeout=8)
+                except Exception:
+                    logger.warning("metro_distance timed out in shared compute — skipping")
+                    metro_distance_km = None
                 try:
                     arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
                 except Exception:
@@ -4176,14 +4188,26 @@ async def stream_score(
                 else:
                     future_built_coverage = None
 
-                census_tract = future_census_tract.result()
-                density = future_density.result()
+                try:
+                    census_tract = future_census_tract.result(timeout=12)
+                except Exception:
+                    logger.warning("census_tract timed out in shared compute — skipping")
+                    census_tract = None
+                try:
+                    density = future_density.result(timeout=15)
+                except Exception:
+                    logger.warning("density timed out in shared compute — skipping")
+                    density = None
                 try:
                     business_count = future_business_count.result(timeout=8)
                 except Exception:
                     logger.warning("business_count timed out in shared compute — defaulting to 0")
                     business_count = 0
-                metro_distance_km = future_metro_distance.result()
+                try:
+                    metro_distance_km = future_metro_distance.result(timeout=8)
+                except Exception:
+                    logger.warning("metro_distance timed out in shared compute — skipping")
+                    metro_distance_km = None
                 try:
                     arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
                 except Exception:
