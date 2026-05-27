@@ -1507,7 +1507,11 @@ def _compute_single_score_internal(
                 density = future_density.result()
                 business_count = future_business_count.result()
                 metro_distance_km = future_metro_distance.result()
-                arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
+                try:
+                    arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
+                except Exception:
+                    logger.warning("arch_diversity timed out in shared compute — skipping")
+                    arch_diversity_data = None
 
             built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
 
@@ -4172,8 +4176,12 @@ async def stream_score(
                 density = future_density.result()
                 business_count = future_business_count.result()
                 metro_distance_km = future_metro_distance.result()
-                arch_diversity_data = future_built_coverage.result() if future_built_coverage else None
-            
+                try:
+                    arch_diversity_data = future_built_coverage.result(timeout=10) if future_built_coverage else None
+                except Exception:
+                    logger.warning("arch_diversity timed out in shared compute — skipping")
+                    arch_diversity_data = None
+
             # Extract built_coverage_ratio for area type detection
             built_coverage = arch_diversity_data.get("built_coverage_ratio") if arch_diversity_data else None
             
