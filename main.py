@@ -302,7 +302,7 @@ def _compute_scoring_hash() -> str:
 # Format: "3.0.0-{hash}" where hash changes when scoring logic changes
 # This ensures request-level caching invalidates old responses automatically
 _BASE_VERSION = "3.0.0"
-_SCORING_HASH = _compute_scoring_hash()
+_SCORING_HASH = os.getenv("HOMEFIT_API_VERSION_OVERRIDE") or _compute_scoring_hash()
 API_VERSION = f"{_BASE_VERSION}-{_SCORING_HASH}"
 
 # Log the auto-generated version on startup
