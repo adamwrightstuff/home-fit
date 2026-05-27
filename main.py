@@ -1525,16 +1525,9 @@ def _compute_single_score_internal(
             arch_diversity_data = None
             density = None
 
-        # Pre-compute tree canopy (5km) once for pillars that need it
+        # Tree canopy (5km) is no longer pre-fetched here — each pillar fetches its own
+        # canopy in its internal parallel batch, so a blocking GEE call here only adds latency.
         tree_canopy_5km = None
-        if _include_pillar('active_outdoors') or _include_pillar('natural_beauty'):
-            try:
-                from data_sources.gee_api import get_tree_canopy_gee
-                tree_canopy_5km = get_tree_canopy_gee(lat, lon, radius_m=5000, area_type=area_type)
-                logger.debug(f"Pre-computed tree canopy (5km): {tree_canopy_5km}%")
-            except Exception as e:
-                logger.warning(f"Tree canopy pre-computation failed (non-fatal): {e}")
-                tree_canopy_5km = None
 
         # Compute form_context once when beauty pillars are requested
         form_context = None
@@ -1561,10 +1554,25 @@ def _compute_single_score_internal(
                     footprint_area_cv = None
                     material_profile = None
 
-                charm_data = osm_api.query_charm_features(lat, lon, radius_m=1000)
-                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
+                def _fetch_charm():
+                    try:
+                        return osm_api.query_charm_features(lat, lon, radius_m=1000)
+                    except Exception:
+                        return None
 
-                year_built_data = census_api.get_year_built_data(lat, lon) if census_api else None
+                def _fetch_year_built():
+                    try:
+                        return census_api.get_year_built_data(lat, lon) if census_api else None
+                    except Exception:
+                        return None
+
+                with ThreadPoolExecutor(max_workers=2) as _fc_pool:
+                    _f_charm = _fc_pool.submit(_fetch_charm)
+                    _f_year = _fc_pool.submit(_fetch_year_built)
+                    charm_data = _f_charm.result()
+                    year_built_data = _f_year.result()
+
+                historic_landmarks = len(charm_data.get('historic', [])) if charm_data else 0
                 median_year_built = year_built_data.get('median_year_built') if year_built_data else None
                 pre_1940_pct = year_built_data.get('pre_1940_pct') if year_built_data else None
 
@@ -3126,18 +3134,8 @@ async def _stream_score_with_progress(
         census_tract, density, arch_diversity_data, area_type = await loop.run_in_executor(None, prepare_shared_data)
         _log_place_timing("shared_data_compute", t_prepare_shared)
 
-        # Pre-compute tree canopy only when pillars that need it are requested
+        # Tree canopy (5km) no longer pre-fetched — each pillar fetches in its own parallel batch.
         tree_canopy_5km = None
-        if _include_pillar("active_outdoors") or _include_pillar("natural_beauty"):
-            try:
-                from data_sources.gee_api import get_tree_canopy_gee
-                t_tree = time.perf_counter()
-                tree_canopy_5km = await loop.run_in_executor(
-                    None, get_tree_canopy_gee, lat, lon, 5000, area_type
-                )
-                _log_place_timing("tree_canopy", t_tree)
-            except Exception:
-                tree_canopy_5km = None
 
         # Compute form_context only when beauty pillars are requested
         form_context = None

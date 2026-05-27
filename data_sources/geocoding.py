@@ -274,7 +274,7 @@ def _find_city_relation_for_element(element_type: str, element_id: int, lat: flo
             get_overpass_url(),
             data={"data": query},
             headers={"User-Agent": "HomeFit/1.0"},
-            timeout=15
+            timeout=5
         )
         
         if response.status_code != 200:
@@ -332,7 +332,7 @@ def _find_place_node(name: str, place_type: str, state: Optional[str] = None) ->
             get_overpass_url(),
             data={"data": query},
             headers={"User-Agent": "HomeFit/1.0"},
-            timeout=15
+            timeout=5
         )
         
         if response.status_code == 200:
@@ -443,7 +443,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
             get_overpass_url(),
             data={"data": query},
             headers={"User-Agent": "HomeFit/1.0"},
-            timeout=15
+            timeout=5
         )
         
         if response.status_code != 200:
@@ -510,7 +510,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                     get_overpass_url(),
                     data={"data": place_query},
                     headers={"User-Agent": "HomeFit/1.0"},
-                    timeout=15
+                    timeout=5
                 )
                 
                 if place_response.status_code == 200:
@@ -556,7 +556,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                         get_overpass_url(),
                         data={"data": radius_query},
                         headers={"User-Agent": "HomeFit/1.0"},
-                        timeout=15
+                        timeout=5
                     )
                     
                     if radius_response.status_code == 200:
@@ -615,7 +615,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                     get_overpass_url(),
                     data={"data": node_query},
                     headers={"User-Agent": "HomeFit/1.0"},
-                    timeout=15
+                    timeout=5
                 )
                 if node_response.status_code == 200:
                     node_data = node_response.json()
@@ -648,7 +648,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                     get_overpass_url(),
                     data={"data": node_query},
                     headers={"User-Agent": "HomeFit/1.0"},
-                    timeout=15
+                    timeout=5
                 )
                 if node_response.status_code == 200:
                     node_data = node_response.json()
@@ -671,7 +671,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
             get_overpass_url(),
             data={"data": center_query},
             headers={"User-Agent": "HomeFit/1.0"},
-            timeout=15
+            timeout=5
         )
         
         if center_response.status_code == 200:
@@ -719,7 +719,7 @@ def _get_relation_center_or_admin_centre(osm_id: int, city_name: Optional[str] =
                                                 get_overpass_url(),
                                                 data={"data": inland_query},
                                                 headers={"User-Agent": "HomeFit/1.0"},
-                                                timeout=15
+                                                timeout=5
                                             )
                                             if inland_response.status_code == 200:
                                                 inland_data = inland_response.json()
