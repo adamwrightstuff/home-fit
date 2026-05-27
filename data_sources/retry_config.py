@@ -45,57 +45,57 @@ class RetryConfig:
 # Retry profiles for different query types
 RETRY_PROFILES: Dict[RetryProfile, RetryConfig] = {
     RetryProfile.CRITICAL: RetryConfig(
-        max_attempts=3,  # Reduced from 6 to 3 for faster failure (caching handles retries)
-        base_wait=1.0,  # Reduced from 2.0
-        fail_fast=True,  # Fail fast on rate limits to avoid 8+ minute waits
-        max_wait=10.0,  # Reduced from 30.0 to prevent excessive delays
-        exponential_backoff=True,
-        retry_on_timeout=True,
+        max_attempts=2,
+        base_wait=1.0,
+        fail_fast=True,
+        max_wait=4.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,  # Timed-out queries won't succeed on retry
         retry_on_429=True,
     ),
     RetryProfile.STANDARD: RetryConfig(
-        max_attempts=3,
+        max_attempts=2,
         base_wait=1.0,
-        fail_fast=False,
-        max_wait=10.0,
-        exponential_backoff=True,
-        retry_on_timeout=True,
+        fail_fast=True,
+        max_wait=4.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,
         retry_on_429=True,
     ),
     RetryProfile.NON_CRITICAL: RetryConfig(
-        max_attempts=2,
-        base_wait=1.0,
-        fail_fast=True,  # Non-critical queries should fail fast to avoid hangs
-        max_wait=10.0,
-        exponential_backoff=True,
-        retry_on_timeout=True,
-        retry_on_429=True,
+        max_attempts=1,
+        base_wait=0.5,
+        fail_fast=True,
+        max_wait=2.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,
+        retry_on_429=False,
     ),
     RetryProfile.CENSUS: RetryConfig(
-        max_attempts=3,
+        max_attempts=2,
         base_wait=1.0,
-        fail_fast=False,
-        max_wait=5.0,
-        exponential_backoff=True,
-        retry_on_timeout=True,
+        fail_fast=True,
+        max_wait=4.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,
         retry_on_429=True,
     ),
     RetryProfile.SCHOOLS: RetryConfig(
-        max_attempts=3,
+        max_attempts=2,
         base_wait=1.0,
-        fail_fast=False,
-        max_wait=5.0,
-        exponential_backoff=True,
-        retry_on_timeout=True,
+        fail_fast=True,
+        max_wait=4.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,
         retry_on_429=True,
     ),
     RetryProfile.HEALTHCARE: RetryConfig(
-        max_attempts=5,  # More attempts than CRITICAL
-        base_wait=2.0,  # Longer base wait
-        fail_fast=False,  # Don't fail fast on rate limits - keep retrying
-        max_wait=20.0,  # Longer max wait for complex queries
-        exponential_backoff=True,
-        retry_on_timeout=True,
+        max_attempts=2,
+        base_wait=1.0,
+        fail_fast=True,
+        max_wait=4.0,
+        exponential_backoff=False,
+        retry_on_timeout=False,  # Parallel queries already cover failures
         retry_on_429=True,
     ),
 }
