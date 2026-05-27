@@ -126,7 +126,7 @@ def _rotate_overpass_endpoint(current_index: int) -> int:
 # Global query throttling to avoid rate limiting
 _last_query_time = 0.0
 _query_lock = threading.Lock()
-_BASE_MIN_QUERY_INTERVAL = 0.5  # Minimum 500ms between queries under normal conditions
+_BASE_MIN_QUERY_INTERVAL = 0.0  # No artificial throttle — back off only on actual 429 responses
 _current_min_query_interval = _BASE_MIN_QUERY_INTERVAL
 
 def _retry_overpass(
