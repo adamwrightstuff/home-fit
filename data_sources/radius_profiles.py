@@ -61,7 +61,7 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
             return {
                 "local_radius_m": 2000,     # Parks: Wider search
                 "trail_radius_m": 15000,     # Trails: Natural trail access
-                "regional_radius_m": 50000  # Water/camping: Wider for rural
+                "regional_radius_m": 25000  # Water/camping: Reduced from 50km to cut Overpass latency
             }
 
     if p == "neighborhood_amenities":
