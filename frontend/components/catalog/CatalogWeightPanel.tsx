@@ -12,7 +12,7 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
   },
   {
     title: 'Community',
-    keys: ['social_fabric', 'diversity', 'quality_education', 'community_safety'],
+    keys: ['social_fabric', 'diversity', 'quality_education', 'community_safety', 'political_lean'],
   },
   {
     title: 'Practicality',
@@ -31,13 +31,19 @@ interface CatalogWeightPanelProps {
   onClose: () => void
   priorities: PillarPriorities
   onChange: (next: PillarPriorities) => void
+  politicalPreference?: 'progressive' | 'conservative' | null
+  onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
     onChange({ ...priorities, [key]: level })
+    // If turning off political_lean, clear the preference
+    if (key === 'political_lean' && level === 'None') {
+      onPoliticalPreferenceChange?.(null)
+    }
   }
 
   return (
@@ -105,6 +111,29 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
+                      {key === 'political_lean' && current !== 'None' && (
+                        <div className="mt-2 flex gap-1">
+                          {(['progressive', 'conservative'] as const).map((pref) => (
+                            <button
+                              key={pref}
+                              type="button"
+                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                                politicalPreference === pref
+                                  ? 'text-white'
+                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                              }`}
+                              style={
+                                politicalPreference === pref
+                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
+                                  : undefined
+                              }
+                              onClick={() => onPoliticalPreferenceChange?.(politicalPreference === pref ? null : pref)}
+                            >
+                              {pref === 'progressive' ? '🔵 Progressive' : '🔴 Conservative'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )
                 })}

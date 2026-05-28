@@ -83,6 +83,7 @@ export default function CatalogPageClient({
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [indexMode, setIndexMode] = useState<CatalogMapIndexMode>('homefit')
   const [priorities, setPriorities] = useState<PillarPriorities>(() => ({ ...DEFAULT_PRIORITIES }))
+  const [politicalPreference, setPoliticalPreference] = useState<'progressive' | 'conservative' | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
   const [weightOpen, setWeightOpen] = useState(false)
@@ -202,12 +203,31 @@ export default function CatalogPageClient({
     })
   }, [places])
 
-  const adjustedPlaces = useMemo(() =>
-    householdIncome
+  const adjustedPlaces = useMemo(() => {
+    const withIncome = householdIncome
       ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
-      : places,
-    [places, householdIncome]
-  )
+      : places
+    if (!politicalPreference) return withIncome
+    return withIncome.map((p) => {
+      const pl = (p.score.livability_pillars as any)?.political_lean
+      if (!pl) return p
+      const lean2024 = pl?.breakdown?.lean_2024
+      if (typeof lean2024 !== 'number') return p
+      const polScore = politicalPreference === 'progressive'
+        ? Math.max(0, Math.min(100, ((lean2024 + 1) / 2) * 100))
+        : Math.max(0, Math.min(100, ((1 - lean2024) / 2) * 100))
+      return {
+        ...p,
+        score: {
+          ...p.score,
+          livability_pillars: {
+            ...p.score.livability_pillars,
+            political_lean: { ...pl, score: polScore },
+          },
+        },
+      }
+    })
+  }, [places, householdIncome, politicalPreference])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -787,6 +807,8 @@ export default function CatalogPageClient({
         onClose={() => setWeightOpen(false)}
         priorities={priorities}
         onChange={setPriorities}
+        politicalPreference={politicalPreference}
+        onPoliticalPreferenceChange={setPoliticalPreference}
       />
 
       <PillarTwinDrawer
