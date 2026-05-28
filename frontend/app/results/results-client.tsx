@@ -607,7 +607,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               This link is missing a location. Go back and run a new search.
             </div>
             <div style={{ marginTop: '1rem' }}>
-              <Link href="/" className="hf-btn-primary" style={{ padding: '0.8rem 1rem', borderRadius: 10 }}>
+              <Link href="/search" className="hf-btn-primary" style={{ padding: '0.8rem 1rem', borderRadius: 10 }}>
                 Back to search
               </Link>
             </div>
@@ -728,7 +728,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 aria-label="Actions"
                 style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}
               >
-                <Link href="/" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
+                <Link href="/search" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
                   ← New search
                 </Link>
                 {catalogSnapshot && (
@@ -923,7 +923,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           </div>
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <Link href="/" className="hf-btn-link">
+            <Link href="/search" className="hf-btn-link">
               ← New search
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

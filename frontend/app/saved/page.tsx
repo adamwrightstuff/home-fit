@@ -209,8 +209,8 @@ export default function SavedPage() {
           <div className="hf-card">
             <h2 className="hf-section-title">My saved places</h2>
             <p className="tr-muted">Sign in to see and manage your saved scores.</p>
-            <Link href="/" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
-              Go home
+            <Link href="/catalog" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+              Explore catalog
             </Link>
           </div>
         </div>
@@ -238,8 +238,8 @@ export default function SavedPage() {
       <div className="hf-container">
         <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
-            <Link href="/" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
-              ← Back to search
+            <Link href="/catalog" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
+              ← Explore
             </Link>
             <h1 className="hf-section-title" style={{ marginBottom: '0.25rem', marginTop: '0.75rem' }}>My saved places</h1>
             <p className="tr-muted" style={{ marginBottom: 0 }}>
@@ -274,7 +274,7 @@ export default function SavedPage() {
         {!loading && !error && list.length === 0 && (
           <div className="hf-card">
             <p className="tr-muted">No saved places yet. Score a location and click &quot;Save this place&quot; to add it here.</p>
-            <Link href="/" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+            <Link href="/search" className="hf-btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
               Search a place
             </Link>
           </div>

@@ -137,6 +137,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   natural_beauty: {
     topLine: 'Trees, water, and terrain—three ingredients that shape how “natural” this place feels.',
     metrics: [
+      { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
       { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
       { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },
       { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'text' },
@@ -179,6 +180,8 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
   built_beauty: {
     topLine: 'What kind of built environment this is—form, tags from the map, and typical building age.',
     metrics: [
+      { label: 'Density feel', path: 'breakdown.bb_best_fit_density', format: 'text' },
+      { label: 'Era character', path: 'breakdown.bb_best_fit_character', format: 'text' },
       { label: 'Built form', path: 'summary.built_form_label', format: 'text' },
       { label: 'Streetscape tags', path: 'summary.built_context_tags', format: 'text' },
       { label: 'Median year built', path: 'summary.median_year_built', format: 'text' },

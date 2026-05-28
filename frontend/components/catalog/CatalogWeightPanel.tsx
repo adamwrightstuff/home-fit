@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
+import { NB_PREFERENCE_LABELS, type NbPreference } from '@/lib/nbPreference'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
@@ -33,16 +34,21 @@ interface CatalogWeightPanelProps {
   onChange: (next: PillarPriorities) => void
   politicalPreference?: 'progressive' | 'conservative' | null
   onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
+  nbPreference?: NbPreference | null
+  onNbPreferenceChange?: (pref: NbPreference | null) => void
+  onTakeQuiz?: () => void
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
     onChange({ ...priorities, [key]: level })
-    // If turning off political_lean, clear the preference
     if (key === 'political_lean' && level === 'None') {
       onPoliticalPreferenceChange?.(null)
+    }
+    if (key === 'natural_beauty' && level === 'None') {
+      onNbPreferenceChange?.(null)
     }
   }
 
@@ -64,6 +70,16 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
             <p className="text-xs text-[var(--hf-text-secondary)]">
               Scores reflect equal weighting — adjust importance to personalize.
             </p>
+            {onTakeQuiz && (
+              <button
+                type="button"
+                onClick={onTakeQuiz}
+                className="mt-1.5 text-xs font-semibold"
+                style={{ color: 'var(--hf-primary-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                Not sure what matters to you? Take the quiz →
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -111,6 +127,29 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
+                      {key === 'natural_beauty' && current !== 'None' && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => (
+                            <button
+                              key={pref}
+                              type="button"
+                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                                nbPreference === pref
+                                  ? 'text-white'
+                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                              }`}
+                              style={
+                                nbPreference === pref
+                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
+                                  : undefined
+                              }
+                              onClick={() => onNbPreferenceChange?.(nbPreference === pref ? null : pref)}
+                            >
+                              {NB_PREFERENCE_LABELS[pref]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {key === 'political_lean' && current !== 'None' && (
                         <div className="mt-2 flex gap-1">
                           {(['progressive', 'conservative'] as const).map((pref) => (

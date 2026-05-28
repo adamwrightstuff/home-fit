@@ -19,7 +19,7 @@ import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
-  { id: 'homefit', label: 'HomeFit' },
+  { id: 'homefit', label: 'Trovamo' },
   { id: 'longevity', label: 'Longevity' },
   { id: 'happiness', label: 'Happiness' },
   { id: 'status', label: 'Archetype' },
@@ -345,6 +345,19 @@ export default function CatalogBottomSheet({
                   )
                 })}
               </div>
+            )}
+
+            {snap === 'expanded' && place.score.place_summary && (
+              <p
+                style={{
+                  margin: '0 0 10px',
+                  fontSize: '0.78rem',
+                  lineHeight: 1.55,
+                  color: 'var(--hf-text-secondary)',
+                }}
+              >
+                {place.score.place_summary}
+              </p>
             )}
 
             <button

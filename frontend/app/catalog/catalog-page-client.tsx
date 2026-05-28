@@ -28,12 +28,14 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
+import { adjustNbScore, type NbPreference } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
+import PlaceValuesGame from '@/components/PlaceValuesGame'
 
 const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
-  { id: 'homefit', label: 'HomeFit' },
+  { id: 'homefit', label: 'Trovamo' },
   { id: 'longevity', label: 'Longevity' },
   { id: 'happiness', label: 'Happiness' },
   { id: 'status', label: 'Archetype' },
@@ -84,9 +86,11 @@ export default function CatalogPageClient({
   const [indexMode, setIndexMode] = useState<CatalogMapIndexMode>('homefit')
   const [priorities, setPriorities] = useState<PillarPriorities>(() => ({ ...DEFAULT_PRIORITIES }))
   const [politicalPreference, setPoliticalPreference] = useState<'progressive' | 'conservative' | null>(null)
+  const [nbPreference, setNbPreference] = useState<NbPreference | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
   const [weightOpen, setWeightOpen] = useState(false)
+  const [showQuiz, setShowQuiz] = useState(false)
   const [twinPillarOpen, setTwinPillarOpen] = useState(false)
   const [layoutVersion, setLayoutVersion] = useState(0)
   const [twinQueryKey, setTwinQueryKey] = useState<string | null>(null)
@@ -207,27 +211,36 @@ export default function CatalogPageClient({
     const withIncome = householdIncome
       ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
       : places
-    if (!politicalPreference) return withIncome
-    return withIncome.map((p) => {
-      const pl = (p.score.livability_pillars as any)?.political_lean
-      if (!pl) return p
-      const lean2024 = pl?.breakdown?.lean_2024
-      if (typeof lean2024 !== 'number') return p
-      const polScore = politicalPreference === 'progressive'
-        ? Math.max(0, Math.min(100, ((lean2024 + 1) / 2) * 100))
-        : Math.max(0, Math.min(100, ((1 - lean2024) / 2) * 100))
-      return {
-        ...p,
-        score: {
-          ...p.score,
-          livability_pillars: {
-            ...p.score.livability_pillars,
-            political_lean: { ...pl, score: polScore },
-          },
-        },
-      }
+
+    // Apply political_lean preference
+    const withPolitical = politicalPreference
+      ? withIncome.map((p) => {
+          const pl = (p.score.livability_pillars as any)?.political_lean
+          const lean2024 = pl?.breakdown?.lean_2024
+          if (typeof lean2024 !== 'number') return p
+          const polScore = politicalPreference === 'progressive'
+            ? Math.max(0, Math.min(100, ((lean2024 + 1) / 2) * 100))
+            : Math.max(0, Math.min(100, ((1 - lean2024) / 2) * 100))
+          return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars, political_lean: { ...pl, score: polScore } } } }
+        })
+      : withIncome
+
+    // Apply natural_beauty preference (falls back gracefully if rescore hasn't run yet)
+    if (!nbPreference) return withPolitical
+    return withPolitical.map((p) => {
+      const nb = (p.score.livability_pillars as any)?.natural_beauty
+      if (!nb) return p
+      const adjusted = adjustNbScore(
+        nb.score,
+        nb.breakdown ?? {},
+        nb.summary?.water_proximity_type,
+        nbPreference,
+        nb.area_classification?.area_type,
+      )
+      if (adjusted === null) return p
+      return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars, natural_beauty: { ...nb, score: adjusted } } } }
     })
-  }, [places, householdIncome, politicalPreference])
+  }, [places, householdIncome, politicalPreference, nbPreference])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -431,14 +444,33 @@ export default function CatalogPageClient({
     [router]
   )
 
+  if (showQuiz) {
+    return (
+      <PlaceValuesGame
+        onApplyPriorities={(quizPriorities, naturalBeautyPreference) => {
+          setPriorities(quizPriorities)
+          if (naturalBeautyPreference?.length) {
+            setNbPreference(naturalBeautyPreference[0] as import('@/lib/nbPreference').NbPreference)
+          }
+          setShowQuiz(false)
+        }}
+        onBack={() => setShowQuiz(false)}
+      />
+    )
+  }
+
   return (
     <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
       <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
-          <Link href="/" className="text-sm font-semibold" style={{ color: 'var(--hf-primary-1)' }}>
-            ← Home
+          <span className="text-center text-sm font-bold text-[var(--hf-text-primary)]">Explore</span>
+          <Link
+            href="/search"
+            className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2.5 py-1 text-xs font-semibold text-[var(--hf-text-secondary)]"
+          >
+            Search any place
+            <span style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '1px 4px', borderRadius: 3, background: 'var(--hf-primary-1)', color: '#fff' }}>Beta</span>
           </Link>
-          <span className="text-center text-sm font-bold text-[var(--hf-text-primary)]">Catalog</span>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -809,6 +841,9 @@ export default function CatalogPageClient({
         onChange={setPriorities}
         politicalPreference={politicalPreference}
         onPoliticalPreferenceChange={setPoliticalPreference}
+        nbPreference={nbPreference}
+        onNbPreferenceChange={setNbPreference}
+        onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
       />
 
       <PillarTwinDrawer

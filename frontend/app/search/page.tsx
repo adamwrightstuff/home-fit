@@ -1,0 +1,354 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { ScoreResponse } from '@/types/api'
+import type { GeocodeResult } from '@/types/api'
+import LocationSearch from '@/components/LocationSearch'
+import SearchOptionsComponent, { DEFAULT_PRIORITIES, type SearchOptions, type PillarPriorities } from '@/components/SearchOptions'
+import ScoreDisplay from '@/components/ScoreDisplay'
+import ErrorMessage from '@/components/ErrorMessage'
+import PlaceValuesGame from '@/components/PlaceValuesGame'
+import PlaceView from '@/components/PlaceView'
+import AppHeader from '@/components/AppHeader'
+import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { getGeocode, getScoreWithProgress } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import { saveScore } from '@/lib/savedScores'
+import { buildResultsCacheKey, buildResultsUrl, type ResultsRouteParams } from '@/lib/resultsShare'
+import { longevityIndexFromLivabilityPillars } from '@/lib/pillars'
+import { useRouter } from 'next/navigation'
+
+export default function SearchPage() {
+  const { user, isConfigured } = useAuth()
+  const router = useRouter()
+  const [score_data, set_score_data] = useState<ScoreResponse | null>(null)
+  const [configureState, set_configure_state] = useState<{ payload: ScoreResponse; priorities: PillarPriorities } | null>(null)
+  const [savedScoreId, setSavedScoreId] = useState<string | null>(null)
+  const [loading, set_loading] = useState(false)
+  const [error, set_error] = useState<string | null>(null)
+  const [place, set_place] = useState<(GeocodeResult & { location: string }) | null>(null)
+  const [show_game, set_show_game] = useState(false)
+  const [justAppliedQuizPriorities, setJustAppliedQuizPriorities] = useState(false)
+  const [search_options, set_search_options] = useState<SearchOptions>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return {
+          priorities: parsed.priorities || { ...DEFAULT_PRIORITIES },
+          include_chains: parsed.include_chains !== undefined ? parsed.include_chains : false,
+          enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
+          job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
+          natural_beauty_preference: Array.isArray(parsed.natural_beauty_preference) ? parsed.natural_beauty_preference : null,
+          built_character_preference: ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference) ? parsed.built_character_preference : null,
+          built_density_preference: ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference) ? parsed.built_density_preference : null,
+          diversity_preference: Array.isArray(parsed.diversity_preference) ? parsed.diversity_preference : null,
+          political_preference: ['progressive', 'conservative'].includes(parsed.political_preference) ? parsed.political_preference : null,
+          household_income: typeof parsed.household_income === 'number' && parsed.household_income > 0 ? parsed.household_income : null,
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {
+      priorities: { ...DEFAULT_PRIORITIES },
+      include_chains: false,
+      enable_schools: false,
+      job_categories: [],
+      natural_beauty_preference: null,
+      built_character_preference: null,
+      built_density_preference: null,
+      diversity_preference: null,
+      political_preference: null,
+      household_income: null,
+    }
+  })
+
+  const display_score_data = useMemo(() => {
+    if (!score_data) return null
+    return reweightScoreResponseFromPriorities(score_data, configureState?.priorities ?? search_options.priorities)
+  }, [score_data, configureState?.priorities, search_options.priorities])
+
+  const handle_search = (location: string, preGeo?: { lat: number; lon: number; city: string; state: string; zip_code: string; display_name: string }) => {
+    set_loading(true)
+    set_error(null)
+    set_score_data(null)
+    set_configure_state(null)
+    set_place(null)
+    setSavedScoreId(null)
+    if (preGeo) {
+      set_place({ ...preGeo, location })
+      set_loading(false)
+      return
+    }
+    getGeocode(location)
+      .then((geo) => {
+        set_place({ ...geo, location })
+        set_loading(false)
+      })
+      .catch((err) => {
+        set_error(err instanceof Error ? err.message : 'Could not find that location.')
+        set_loading(false)
+      })
+  }
+
+  const handle_apply_priorities = (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => {
+    set_search_options(prev => {
+      const updated = {
+        ...prev,
+        priorities,
+        natural_beauty_preference: naturalBeautyPreference?.length ? naturalBeautyPreference : null,
+        ...(job_categories !== undefined ? { job_categories } : {}),
+      }
+      try {
+        sessionStorage.setItem('homefit_search_options', JSON.stringify(updated))
+      } catch (e) {
+        // ignore
+      }
+      return updated
+    })
+    setJustAppliedQuizPriorities(true)
+  }
+
+  if (show_game) {
+    return <PlaceValuesGame onApplyPriorities={handle_apply_priorities} onBack={() => set_show_game(false)} />
+  }
+
+  if (!place && !score_data) {
+    return (
+      <main className="hf-page">
+        <AppHeader tagline="Search any place" />
+        <div className="hf-container">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              marginBottom: '1rem',
+              borderRadius: 8,
+              background: 'rgba(var(--hf-primary-rgb, 99,91,200), 0.07)',
+              border: '1px solid rgba(var(--hf-primary-rgb, 99,91,200), 0.18)',
+              fontSize: '0.82rem',
+              color: 'var(--hf-text-secondary)',
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: '0.7rem',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '2px 6px',
+                borderRadius: 4,
+                background: 'var(--hf-primary-1)',
+                color: '#fff',
+                flexShrink: 0,
+              }}
+            >
+              Beta
+            </span>
+            Live scoring takes 20–40 seconds per location. Results are AI-scored in real time.{' '}
+            <Link href="/catalog" style={{ color: 'var(--hf-primary-1)', fontWeight: 600, textDecoration: 'none' }}>
+              Browse pre-scored places →
+            </Link>
+          </div>
+
+          <div id="search" className="hf-card">
+            <LocationSearch onSearch={handle_search} disabled={loading} />
+          </div>
+
+          {!loading && (
+            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+              <button type="button" className="hf-btn-link" onClick={() => set_show_game(true)}>
+                Not sure where to start? Take the quiz
+              </button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
+                Finding location…
+              </div>
+              <div className="tr-muted">Geocoding your place and preparing the map. First search may take a moment if the server is waking up.</div>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="hf-card" style={{ marginTop: '1.5rem' }}>
+              <ErrorMessage message={error} />
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  const handleSearchOptionsChange = (options: SearchOptions) => {
+    set_search_options(options)
+    try {
+      sessionStorage.setItem('homefit_search_options', JSON.stringify(options))
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (place && !score_data) {
+    return (
+      <main className="hf-page">
+        <div className="hf-container">
+          <PlaceView
+            place={place}
+            searchOptions={search_options}
+            onSearchOptionsChange={handleSearchOptionsChange}
+            onError={(msg) => set_error(msg)}
+            onBack={() => { set_place(null); set_error(null) }}
+            onTakeQuiz={() => set_show_game(true)}
+            justAppliedQuizPriorities={justAppliedQuizPriorities}
+            onAppliedQuizPrioritiesConsumed={() => setJustAppliedQuizPriorities(false)}
+            onSave={async (payload, priorities) => {
+              try {
+                const payloadWithConfig: ScoreResponse = {
+                  ...payload,
+                  metadata: {
+                    ...(payload.metadata ?? {}),
+                    saved_search_options: search_options,
+                  } as any,
+                }
+                const { id } = await saveScore(payloadWithConfig, priorities)
+                setSavedScoreId(id)
+                return { id }
+              } catch (e) {
+                return { error: e instanceof Error ? e.message : 'Failed to save' }
+              }
+            }}
+            onShowResults={(payload, priorities) => {
+              const params: ResultsRouteParams = {
+                location: place.location,
+                prioritiesJson: JSON.stringify(priorities),
+                job_categories: search_options.job_categories?.length ? search_options.job_categories.join(',') : null,
+                include_chains: Boolean(search_options.include_chains),
+                enable_schools: Boolean(search_options.enable_schools),
+                natural_beauty_preference: search_options.natural_beauty_preference?.length ? JSON.stringify(search_options.natural_beauty_preference) : null,
+                built_character_preference: search_options.built_character_preference ?? null,
+                built_density_preference: search_options.built_density_preference ?? null,
+                diversity_preference: search_options.diversity_preference?.length
+                  ? JSON.stringify(search_options.diversity_preference)
+                  : null,
+                political_preference: search_options.political_preference ?? null,
+                household_income: search_options.household_income ?? null,
+              }
+              try {
+                const cacheKey = buildResultsCacheKey(params)
+                sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), payload }))
+              } catch {
+                // ignore cache failures
+              }
+              router.push(buildResultsUrl(params))
+            }}
+            initialPayload={configureState?.payload ?? null}
+            initialPriorities={configureState?.priorities ?? null}
+            isSignedIn={!!user}
+            isAuthConfigured={isConfigured}
+            savedScoreId={savedScoreId}
+          />
+          {place && error && (
+            <div className="hf-card" style={{ marginTop: '1rem' }}>
+              <ErrorMessage message={error} />
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
+
+  const handleSearchAnother = () => {
+    set_place(null)
+    set_score_data(null)
+    set_configure_state(null)
+    set_error(null)
+  }
+
+  const handleRunPillarScore = async (
+    pillarKey: import('@/lib/pillars').PillarKey,
+    options: import('@/components/ScoreDisplay').RunPillarScoreOptions
+  ) => {
+    if (!score_data) return
+    const location = typeof score_data.input === 'string' && score_data.input.trim() ? score_data.input : [score_data.location_info?.city, score_data.location_info?.state, score_data.location_info?.zip].filter(Boolean).join(', ')
+    if (!location) throw new Error('Missing location')
+    const response = await getScoreWithProgress(
+      {
+        location,
+        only: pillarKey,
+        priorities: JSON.stringify(options.priorities),
+        job_categories: options.job_categories?.length ? options.job_categories.join(',') : undefined,
+        natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
+        built_character_preference: options.built_character_preference ?? undefined,
+        built_density_preference: options.built_density_preference ?? undefined,
+        diversity_preference:
+          options.diversity_preference?.length ? JSON.stringify(options.diversity_preference) : undefined,
+        political_preference: options.political_preference ?? undefined,
+        include_chains: options.include_chains ?? true,
+        enable_schools: options.enable_schools ?? false,
+      },
+      () => {}
+    )
+    const livability_pillars = {
+      ...score_data.livability_pillars,
+      [pillarKey]: (response.livability_pillars as unknown as Record<string, unknown>)[pillarKey],
+    } as ScoreResponse['livability_pillars']
+    const li = longevityIndexFromLivabilityPillars(
+      livability_pillars as unknown as Record<string, { score?: number; status?: string; error?: string }>
+    )
+    const merged: ScoreResponse = {
+      ...score_data,
+      livability_pillars,
+      place_summary: response.place_summary ?? score_data.place_summary,
+      ...(li != null ? { longevity_index: li } : {}),
+    }
+    set_score_data(merged)
+    set_configure_state({ payload: merged, priorities: options.priorities })
+  }
+
+  return (
+    <main className="hf-page">
+      <div className="hf-container">
+        {score_data && (
+          <ScoreDisplay
+            data={display_score_data || score_data}
+            onSearchAnother={handleSearchAnother}
+            isSignedIn={!!user}
+            isAuthConfigured={isConfigured}
+            savedScoreId={savedScoreId}
+            priorities={configureState?.priorities ?? search_options.priorities}
+            onReconfigure={() => set_score_data(null)}
+            onPrioritiesChange={(priorities) =>
+              set_configure_state((prev) => (prev ? { ...prev, priorities } : null))
+            }
+            placeSummary={(display_score_data || score_data)?.place_summary ?? null}
+            searchOptions={search_options}
+            onRunPillarScore={handleRunPillarScore}
+            onSave={async (payload, priorities) => {
+              try {
+                const payloadWithConfig: ScoreResponse = {
+                  ...payload,
+                  metadata: {
+                    ...(payload.metadata ?? {}),
+                    saved_search_options: search_options,
+                  } as any,
+                }
+                const { id } = await saveScore(payloadWithConfig, priorities)
+                setSavedScoreId(id)
+                return { id }
+              } catch (e) {
+                return { error: e instanceof Error ? e.message : 'Failed to save' }
+              }
+            }}
+          />
+        )}
+      </div>
+    </main>
+  )
+}
