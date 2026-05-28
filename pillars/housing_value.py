@@ -131,6 +131,7 @@ def get_housing_value_score(lat: float, lon: float,
     median_rooms = housing_data["median_rooms"]
     median_gross_rent = housing_data.get("median_gross_rent")
     renter_pct = housing_data.get("renter_pct")
+    housing_geo_level = housing_data.get("geo_level")
 
     # Income denominator priority: user_household_income > us_median > local_median
     affordability_denominator = "local_median"
@@ -223,6 +224,8 @@ def get_housing_value_score(lat: float, lon: float,
     }
     if housing_data.get("mean_household_income") is not None:
         breakdown["summary"] = {**(breakdown["summary"] or {}), "mean_household_income": housing_data["mean_household_income"]}
+    if housing_geo_level:
+        breakdown["summary"]["geo_level"] = housing_geo_level
 
     # Log results
     print(f"✅ Housing Value Score: {total_score:.0f}/100")
@@ -456,6 +459,11 @@ def _build_summary(home_value: Optional[float], income: float, rooms: float, *, 
         out["median_gross_rent"] = int(median_gross_rent)
         out["affordability_basis"] = "rent"
     return out
+
+
+def _add_geo_level_to_summary(breakdown: Dict, geo_level: Optional[str]) -> None:
+    if geo_level and "summary" in breakdown:
+        breakdown["summary"]["geo_level"] = geo_level
 
 
 def _empty_breakdown() -> Dict:

@@ -422,66 +422,31 @@ def get_tree_canopy(lat: float, lon: float, tract: Optional[Dict] = None) -> Opt
     return get_tree_canopy_usfs(lat, lon, tract)
 
 
-@cached(ttl_seconds=CACHE_TTL['census_data'])
-@safe_api_call("census", required=False)
-@handle_api_timeout(timeout_seconds=20)
-def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
-    """
-    Get housing value metrics from Census ACS 5-Year data.
-    
-    Args:
-        lat: Latitude
-        lon: Longitude
-        tract: Optional pre-fetched tract data (for efficiency)
-    
-    Returns:
-        {
-            "median_home_value": float,
-            "median_household_income": float,
-            "median_rooms": float
-        }
-    """
-    if tract is None:
-        tract = get_census_tract(lat, lon)
-    if not tract:
-        return None
-
+def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
+    """Fetch and parse ACS 5-year housing data for the given Census geography."""
     try:
-        print("🏠 Fetching housing data from Census ACS...")
-
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         params = {
             "get": "B25077_001E,B19013_001E,B25018_001E,B19025_001E,B19001_001E,B25064_001E,B25003_001E,B25003_003E,NAME",
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": for_clause,
+            "in": in_clause,
             "key": CENSUS_API_KEY,
         }
-
-        # Use retry logic for better timeout handling
         response = _make_request_with_retry(url, params, timeout=15, max_retries=3)
         if response is None:
-            print(f"   ⚠️  ACS API request failed after retries")
             return None
-
         data = response.json()
         if len(data) < 2:
-            print("   ⚠️  No housing data returned")
             return None
 
-        # Parse values (handle nulls and error codes)
-        # Census error codes: -666666666 (null), -999999999 (median cannot be calculated),
-        # -888888888 (median falls in lowest interval), -555555555 (median falls in highest interval)
         def parse_census_value(value_str):
-            """Parse Census value, handling error codes."""
             if not value_str:
                 return None
             value_str = str(value_str).strip()
-            # Check for error codes (all negative codes indicate data issues)
             if value_str.startswith("-") or value_str in ["-666666666", "-999999999", "-888888888", "-555555555"]:
                 return None
             try:
                 value = float(value_str)
-                # Additional validation: reject negative values (except error codes already handled)
                 if value < 0:
                     return None
                 return value
@@ -498,29 +463,21 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         renter_occupied = parse_census_value(data[1][7])
 
         if not median_income:
-            print("   ⚠️  Incomplete housing data (missing or error-coded values)")
             return None
-        # median_value may legitimately be absent in renter-dominant tracts — don't bail
 
         mean_household_income: Optional[float] = None
         if aggregate_income and total_households and total_households > 0:
             mean_household_income = aggregate_income / total_households
 
-        # Validation: Flag suspiciously low income values
-        # Income below $30k is suspicious for most areas (could be student housing, etc.)
-        # This is a data quality warning, not a rejection
         if median_income < 30000:
             print(f"   ⚠️  WARNING: Median income ${int(median_income):,} seems unusually low")
-            print(f"      This may indicate student housing or unrepresentative tract data")
-
-        # Validation: Flag suspiciously low home values (only when data is present)
+            print(f"      This may indicate student housing or unrepresentative geography")
         if median_value is not None and median_value < 50000:
             print(f"   ⚠️  WARNING: Median home value ${int(median_value):,} seems unusually low")
-
         if median_value is not None:
             print(f"   ✅ Median home value: ${int(median_value):,}")
         else:
-            print(f"   ℹ️  Median home value: not available (renter-dominant tract)")
+            print(f"   ℹ️  Median home value: not available (renter-dominant geography)")
         print(f"   💰 Median household income: ${int(median_income):,}")
         if median_rooms is not None:
             print(f"   🏡 Median rooms: {median_rooms:.1f}")
@@ -544,9 +501,51 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             result["renter_pct"] = renter_pct
         return result
 
-    except Exception as e:
-        print(f"   ⚠️  Housing data lookup failed: {e}")
+    except Exception:
         return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@safe_api_call("census", required=False)
+@handle_api_timeout(timeout_seconds=20)
+def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+    """
+    Get housing value metrics from Census ACS 5-Year data.
+    Uses place-level data for incorporated municipalities; falls back to Census tract.
+
+    Args:
+        lat: Latitude
+        lon: Longitude
+        tract: Optional pre-fetched tract data (for efficiency)
+
+    Returns:
+        {
+            "median_home_value": float,
+            "median_household_income": float,
+            "median_rooms": float,
+            "geo_level": "place" | "tract"
+        }
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+
+    print("🏠 Fetching housing data from Census ACS...")
+
+    # Use place-level data for incorporated municipalities only.
+    # No tract fallback — tract data may bleed across municipal boundaries.
+    place_geo = get_place_fips_for_coordinates(lat, lon)
+    if not place_geo:
+        return None
+
+    result = _fetch_housing_acs(
+        f"place:{int(place_geo['place_fips'])}",
+        f"state:{place_geo['state_fips']}",
+    )
+    if result:
+        result["geo_level"] = "place"
+    return result
 
 
 @cached(ttl_seconds=CACHE_TTL['census_data'])
@@ -1111,6 +1110,17 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
     if not tract:
         return None
 
+    # Prefer place-level data for incorporated municipalities
+    place_geo = get_place_fips_for_coordinates(lat, lon)
+    if place_geo:
+        geo_for = f"place:{int(place_geo['place_fips'])}"
+        geo_in = f"state:{place_geo['state_fips']}"
+        geo_level = "place"
+    else:
+        geo_for = f"tract:{tract['tract_fips']}"
+        geo_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
+        geo_level = "tract"
+
     try:
         base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
 
@@ -1129,8 +1139,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         ]
         params_race = {
             "get": ",".join(race_vars),
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": geo_for,
+            "in": geo_in,
             "key": CENSUS_API_KEY,
         }
         resp_race = _make_request_with_retry(base_acs5, params_race, timeout=15, max_retries=3)
@@ -1162,8 +1172,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         ]
         params_inc = {
             "get": ",".join(income_vars),
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": geo_for,
+            "in": geo_in,
             "key": CENSUS_API_KEY,
         }
         resp_inc = _make_request_with_retry(base_acs5, params_inc, timeout=15, max_retries=3)
@@ -1205,8 +1215,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         ]
         params_age = {
             "get": ",".join(age_vars),
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": geo_for,
+            "in": geo_in,
             "key": CENSUS_API_KEY,
         }
         resp_age = _make_request_with_retry(base_acs5, params_age, timeout=15, max_retries=3)
@@ -1245,8 +1255,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         edu_vars = ["B15003_001E", "B15003_022E", "B15003_023E", "B15003_024E", "B15003_025E"]
         params_edu = {
             "get": ",".join(edu_vars + ["NAME"]),
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": geo_for,
+            "in": geo_in,
             "key": CENSUS_API_KEY,
         }
         resp_edu = _make_request_with_retry(base_acs5, params_edu, timeout=15, max_retries=3)
@@ -1293,8 +1303,8 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
         try:
             params_se = {
                 "get": "B24080_001E,B24080_003E,B24080_004E",
-                "for": f"tract:{tract['tract_fips']}",
-                "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+                "for": geo_for,
+                "in": geo_in,
                 "key": CENSUS_API_KEY,
             }
             resp_se = _make_request_with_retry(base_acs5, params_se, timeout=15, max_retries=3)
