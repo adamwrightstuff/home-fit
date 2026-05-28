@@ -42,6 +42,7 @@ type Normalized = Required<Pick<ResultsRouteParams, 'location' | 'prioritiesJson
     built_character_preference: string | null
     built_density_preference: string | null
     diversity_preference: string | null
+    political_preference: string | null
     household_income: number | null
   }
 
@@ -80,6 +81,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
   const built_character_preference = firstParam(sp.built_character_preference)
   const built_density_preference = firstParam(sp.built_density_preference)
   const diversity_preference = firstParam(sp.diversity_preference)
+  const political_preference = firstParam(sp.political_preference)
 
   const household_income = (() => {
     const raw = firstParam(sp.household_income)
@@ -98,6 +100,7 @@ function normalizeSearchParams(sp: RawSearchParams): Normalized | null {
     built_character_preference: built_character_preference && built_character_preference.trim() ? built_character_preference : null,
     built_density_preference: built_density_preference && built_density_preference.trim() ? built_density_preference : null,
     diversity_preference: diversity_preference && diversity_preference.trim() ? diversity_preference : null,
+    political_preference: political_preference && ['progressive', 'conservative'].includes(political_preference) ? political_preference : null,
     household_income,
   }
 }
@@ -210,6 +213,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           return null
         }
       })(),
+      political_preference: normalized.political_preference as 'progressive' | 'conservative' | null ?? null,
       household_income: normalized.household_income,
     }
   }, [normalized])
@@ -369,6 +373,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           built_character_preference: normalized.built_character_preference ?? undefined,
           built_density_preference: normalized.built_density_preference ?? undefined,
           diversity_preference: normalized.diversity_preference ?? undefined,
+          political_preference: normalized.political_preference ?? undefined,
         })
         const livability_pillars = {
           ...finalResponse.livability_pillars,
@@ -424,6 +429,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             options.diversity_preference && options.diversity_preference.length > 0
               ? JSON.stringify(options.diversity_preference)
               : undefined,
+          political_preference: options.political_preference ?? normalized.political_preference ?? undefined,
           include_chains: options.include_chains ?? true,
           enable_schools: options.enable_schools ?? false,
         },
@@ -471,6 +477,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           options.diversity_preference && options.diversity_preference.length > 0
             ? JSON.stringify(options.diversity_preference)
             : normalized.diversity_preference,
+        political_preference: options.political_preference ?? normalized.political_preference ?? null,
       }
       persistCache(buildResultsCacheKey(updated), next)
       router.replace(buildResultsUrl(updated))

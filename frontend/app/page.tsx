@@ -46,6 +46,7 @@ export default function Home() {
       built_character_preference: ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference) ? parsed.built_character_preference : null,
       built_density_preference: ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference) ? parsed.built_density_preference : null,
       diversity_preference: Array.isArray(parsed.diversity_preference) ? parsed.diversity_preference : null,
+      political_preference: ['progressive', 'conservative'].includes(parsed.political_preference) ? parsed.political_preference : null,
       household_income: typeof parsed.household_income === 'number' && parsed.household_income > 0 ? parsed.household_income : null,
     }
       }
@@ -61,6 +62,7 @@ export default function Home() {
       built_character_preference: null,
       built_density_preference: null,
       diversity_preference: null,
+      political_preference: null,
       household_income: null,
     }
   })
@@ -210,6 +212,7 @@ export default function Home() {
                 diversity_preference: search_options.diversity_preference?.length
                   ? JSON.stringify(search_options.diversity_preference)
                   : null,
+                political_preference: search_options.political_preference ?? null,
                 household_income: search_options.household_income ?? null,
               }
               try {
@@ -262,6 +265,7 @@ export default function Home() {
         built_density_preference: options.built_density_preference ?? undefined,
         diversity_preference:
           options.diversity_preference?.length ? JSON.stringify(options.diversity_preference) : undefined,
+        political_preference: options.political_preference ?? undefined,
         include_chains: options.include_chains ?? true,
         enable_schools: options.enable_schools ?? false,
       },

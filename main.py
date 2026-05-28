@@ -53,6 +53,7 @@ from pillars.economic_security import get_economic_security_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
 from pillars.diversity import get_diversity_score, parse_diversity_preference
+from pillars.political_lean import get_political_lean_score, parse_political_preference
 from pillars.community_safety import get_community_safety_score
 from pillars.status_signal import compute_status_signal, compute_status_signal_with_breakdown
 from pillars.happiness_index import compute_happiness_index_with_breakdown
@@ -324,16 +325,16 @@ SHARED_PREPILLAR_CACHE_SCHEMA = 1
 def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str, float]:
     """
     Parse priority allocation dictionary and convert to 100-token allocation.
-    
+
     Priority mapping:
     - "None" → weight 0
     - "Low" → weight 1
     - "Medium" → weight 2
     - "High" → weight 3
-    
+
     Args:
         priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "built_beauty": "Medium"})
-    
+
     Returns:
         Dict mapping pillar names to token counts (sums to exactly 100)
     """
@@ -352,6 +353,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "social_fabric",
         "diversity",
         "community_safety",
+        "political_lean",
     ]
 
     # Priority to weight mapping
@@ -658,6 +660,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "social_fabric",
         "diversity",
         "community_safety",
+        "political_lean",
     ]
     alias_pillars = {"neighborhood_beauty"}
     pillar_names = primary_pillars
@@ -806,6 +809,7 @@ def _derive_token_allocation_for_scoring(
             "social_fabric",
             "diversity",
             "community_safety",
+            "political_lean",
         ]
         for pillar in primary_pillars:
             original_priority = priorities_dict.get(pillar, "none")
@@ -1079,6 +1083,7 @@ def _generate_request_cache_key(
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
+    political_preference: Optional[str] = None,
 ) -> str:
     """Generate cache key for request-level caching with API version."""
     import hashlib
@@ -1096,6 +1101,7 @@ def _generate_request_cache_key(
         (built_character_preference or "").strip() or "char=None",
         (built_density_preference or "").strip() or "dens=None",
         json.dumps(sorted(diversity_preference)) if diversity_preference else "div_pref=None",
+        (political_preference or "").strip() or "pol_pref=None",
     ]
     key_str = ":".join(key_parts)
     key_hash = hashlib.md5(key_str.encode()).hexdigest()
@@ -1253,6 +1259,7 @@ def _compute_single_score_internal(
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
+    political_preference: Optional[str] = None,
     lat_override: Optional[float] = None,
     lon_override: Optional[float] = None,
     user_household_income: Optional[int] = None,
@@ -1260,7 +1267,7 @@ def _compute_single_score_internal(
     """
     Internal function to compute score for a single location.
     Extracted from get_livability_score for reuse in batch processing.
-    
+
     This contains the core scoring logic without FastAPI-specific caching.
     """
     # Determine if school scoring should be enabled for this request (gated)
@@ -1798,6 +1805,14 @@ def _compute_single_score_internal(
             })
         )
 
+    if _include_pillar('political_lean'):
+        pillar_tasks.append(
+            ('political_lean', get_political_lean_score, {
+                'lat': lat, 'lon': lon, 'state_abbr': state,
+                'political_preference': political_preference,
+            })
+        )
+
     token_allocation, allocation_type, priority_levels = _derive_token_allocation_for_scoring(
         priorities_dict, tokens, only_pillars, use_school_scoring
     )
@@ -1949,12 +1964,25 @@ def _compute_single_score_internal(
     else:
         community_safety_score, community_safety_details = None, {}
 
+    _raw_political_lean = pillar_results.get('political_lean')
+    if _raw_political_lean and isinstance(_raw_political_lean, tuple):
+        political_lean_score, political_lean_details = _raw_political_lean
+    else:
+        political_lean_score, political_lean_details = None, {}
+    if political_lean_score is None and "political_lean" in token_allocation and token_allocation["political_lean"] > 0:
+        token_allocation = dict(token_allocation)
+        token_allocation["political_lean"] = 0.0
+        _remaining = sum(token_allocation.values())
+        if _remaining > 0:
+            _scale = 100.0 / _remaining
+            token_allocation = {k: v * _scale for k, v in token_allocation.items()}
+
     _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
     # Extract built/natural beauty from parallel results
     built_calc = pillar_results.get('built_beauty')
     natural_calc = pillar_results.get('natural_beauty')
-    
+
     if built_calc:
         built_score = built_calc["score"]
         built_details = built_calc["details"]
@@ -2070,6 +2098,7 @@ def _compute_single_score_internal(
         + (social_fabric_score * token_allocation["social_fabric"] / 100)
         + (diversity_score * token_allocation["diversity"] / 100)
         + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
+        + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
     )
 
     logger.info(f"Final Livability Score: {total_score:.1f}/100")
@@ -2277,6 +2306,17 @@ def _compute_single_score_internal(
             },
             "area_classification": {},
         },
+        "political_lean": {
+            "score": political_lean_score,
+            "weight": token_allocation.get("political_lean", 0.0),
+            "importance_level": priority_levels.get("political_lean") if priority_levels else None,
+            "contribution": round((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100, 2),
+            "breakdown": political_lean_details.get("breakdown", {}),
+            "summary": {},
+            "confidence": political_lean_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": political_lean_details.get("data_quality", {}),
+            "area_classification": {},
+        },
     }
 
     _apply_pillar_failure_overrides(livability_pillars, exceptions)
@@ -2420,6 +2460,7 @@ def get_livability_score(request: Request,
                          built_character_preference: Optional[str] = None,
                          built_density_preference: Optional[str] = None,
                          diversity_preference: Optional[str] = None,
+                         political_preference: Optional[str] = None,
                          household_income: Optional[int] = None,
                          lat: Optional[str] = None,
                          lon: Optional[str] = None):
@@ -2486,6 +2527,8 @@ def get_livability_score(request: Request,
                     diversity_preference_parsed = parse_diversity_preference(raw)
             except (json.JSONDecodeError, TypeError):
                 pass
+
+        political_preference_parsed: Optional[str] = parse_political_preference(political_preference)
 
         lat_override: Optional[float] = None
         lon_override: Optional[float] = None
@@ -2565,6 +2608,7 @@ def get_livability_score(request: Request,
             built_character_preference=built_character_preference,
             built_density_preference=built_density_preference,
             diversity_preference=diversity_preference_parsed,
+            political_preference=political_preference_parsed,
             lat_override=lat_override,
             lon_override=lon_override,
             user_household_income=household_income,
@@ -2714,6 +2758,7 @@ def create_score_job(
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
     diversity_preference: Optional[str] = None,
+    political_preference: Optional[str] = None,
     lat: Optional[str] = None,
     lon: Optional[str] = None,
 ):
@@ -2761,6 +2806,8 @@ def create_score_job(
                 diversity_preference_parsed = parse_diversity_preference(raw)
         except (json.JSONDecodeError, TypeError):
             pass
+
+    political_preference_parsed: Optional[str] = parse_political_preference(political_preference)
 
     premium_code = request.headers.get("X-HomeFit-Premium-Code", "").strip() or None
     test_mode_enabled = bool(test_mode)
@@ -2845,6 +2892,7 @@ def create_score_job(
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
                 diversity_preference=diversity_preference_parsed,
+                political_preference=political_preference_parsed,
                 lat_override=lat_override,
                 lon_override=lon_override,
             )
@@ -2922,6 +2970,7 @@ async def _stream_score_with_progress(
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
     diversity_preference: Optional[List[str]] = None,
+    political_preference: Optional[str] = None,
 ):
     """
     Async generator that streams score calculation with real-time progress.
@@ -2955,6 +3004,7 @@ async def _stream_score_with_progress(
                     built_character_preference=built_character_preference,
                     built_density_preference=built_density_preference,
                     diversity_preference=diversity_preference,
+                    political_preference=political_preference,
                 )
                 cached_response = None
                 if _redis_client:
@@ -3310,6 +3360,12 @@ async def _stream_score_with_progress(
                 'diversity_preference': diversity_preference,
             })
         )
+        pillar_tasks.append(
+            ('political_lean', get_political_lean_score, {
+                'lat': lat, 'lon': lon, 'state_abbr': state,
+                'political_preference': political_preference,
+            })
+        )
         if use_school_scoring:
             pillar_tasks.append(
                 ('quality_education', get_school_data, {
@@ -3454,6 +3510,12 @@ async def _stream_score_with_progress(
             community_safety_score, community_safety_details = _raw_community_safety
         else:
             community_safety_score, community_safety_details = None, {}
+
+        _raw_political_lean = pillar_results.get('political_lean')
+        if _raw_political_lean and isinstance(_raw_political_lean, tuple):
+            political_lean_score, political_lean_details = _raw_political_lean
+        else:
+            political_lean_score, political_lean_details = None, {}
 
         _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
@@ -3601,6 +3663,7 @@ async def _stream_score_with_progress(
                 "social_fabric",
                 "diversity",
                 "community_safety",
+                "political_lean",
             ]
             for pillar in primary_pillars:
                 original_priority = priorities_dict.get(pillar, "none")
@@ -3645,8 +3708,9 @@ async def _stream_score_with_progress(
             + (social_fabric_score * token_allocation["social_fabric"] / 100)
             + (diversity_score * token_allocation["diversity"] / 100)
             + ((community_safety_score or 0.0) * token_allocation.get("community_safety", 0.0) / 100)
+            + ((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100)
         )
-        
+
         # Build livability_pillars dict (reuse helper functions)
         _na_breakdown = amenities_details.get("breakdown", {})
         _na_breakdown_with_business = {
@@ -3847,6 +3911,17 @@ async def _stream_score_with_progress(
                 },
                 "area_classification": {},
             },
+            "political_lean": {
+                "score": political_lean_score,
+                "weight": token_allocation.get("political_lean", 0.0),
+                "importance_level": priority_levels.get("political_lean") if priority_levels else None,
+                "contribution": round((political_lean_score or 0.0) * token_allocation.get("political_lean", 0.0) / 100, 2),
+                "breakdown": political_lean_details.get("breakdown", {}),
+                "summary": {},
+                "confidence": political_lean_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": political_lean_details.get("data_quality", {}),
+                "area_classification": {},
+            },
         }
 
         _apply_pillar_failure_overrides(livability_pillars, exceptions)
@@ -4005,6 +4080,7 @@ async def stream_score(
     built_character_preference: Optional[str] = None,
     built_density_preference: Optional[str] = None,
     diversity_preference: Optional[str] = None,
+    political_preference: Optional[str] = None,
 ):
     """
     Server-Sent Events endpoint for streaming score calculation progress.
@@ -4064,6 +4140,8 @@ async def stream_score(
             except (json.JSONDecodeError, TypeError):
                 pass
 
+        political_preference_parsed: Optional[str] = parse_political_preference(political_preference)
+
         return StreamingResponse(
             _stream_score_with_progress(
                 location=location,
@@ -4079,6 +4157,7 @@ async def stream_score(
                 built_character_preference=built_character_preference,
                 built_density_preference=built_density_preference,
                 diversity_preference=diversity_preference_parsed,
+                political_preference=political_preference_parsed,
             ),
             media_type="text/event-stream",
             headers={

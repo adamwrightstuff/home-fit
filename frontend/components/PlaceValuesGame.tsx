@@ -135,6 +135,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     social_fabric: 50,
     diversity: 50,
     community_safety: 50,
+    political_lean: 0,
   }
 
   const get = (k: PillarKey) => w[k]

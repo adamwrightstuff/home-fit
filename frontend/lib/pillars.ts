@@ -13,6 +13,7 @@ export type PillarKey =
   | 'social_fabric'
   | 'diversity'
   | 'community_safety'
+  | 'political_lean'
 
 /** Display order for pillars on HomeFit pillar screen and related UIs. */
 export const PILLAR_ORDER: PillarKey[] = [
@@ -30,6 +31,7 @@ export const PILLAR_ORDER: PillarKey[] = [
   'air_travel_access',
   'housing_value',
   'community_safety',
+  'political_lean',
 ]
 export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>([
   'social_fabric',
@@ -256,6 +258,12 @@ export const PILLAR_META: Record<
     description:
       'Local crime rates and safety conditions — how secure the area feels day-to-day based on reported incidents.',
   },
+  political_lean: {
+    icon: '🗳️',
+    name: 'Political Vibe',
+    description:
+      'How the area has voted in the last two presidential elections — for those who prefer to live among people with similar political values.',
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -347,6 +355,8 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Neighborhood diversity in race, income, and age reflects exposure to different life experiences and can support vibrant daily life. This score uses Census distributions (not architectural variety).',
   community_safety:
     'Feeling safe at home and in your neighborhood affects daily wellbeing, children\'s freedom to play outside, and long-term quality of life. This score is based on reported local crime rates relative to comparable areas.',
+  political_lean:
+    'Some people feel more at home in a community that shares their political values. This score is based on 2020 and 2024 presidential election results at the precinct level — weighted by your declared preference.',
 }
 
 export function getScoreBadgeClass(score: number): string {

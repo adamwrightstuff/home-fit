@@ -290,4 +290,17 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     ],
     degradedMessage: 'Limited data: local police crime data were unavailable for this area.',
   },
+  political_lean: {
+    topLine: 'Based on 2020 and 2024 presidential election results at the precinct level within ~1 mile of this location.',
+    metrics: [
+      { label: 'Lean 2024 (D-R / total)', path: 'breakdown.lean_2024', format: 'text' },
+      { label: 'Lean 2020', path: 'breakdown.lean_2020', format: 'text' },
+      { label: 'Trend (2020→2024)', path: 'breakdown.trend', format: 'text' },
+      { label: 'Dem % 2024', path: 'breakdown.dem_pct_2024', format: 'percent', max: 100 },
+      { label: 'Rep % 2024', path: 'breakdown.rep_pct_2024', format: 'percent', max: 100 },
+      { label: 'Political label', path: 'breakdown.label', format: 'text' },
+      { label: 'Precincts in radius', path: 'breakdown.precinct_count', format: 'count' },
+    ],
+    degradedMessage: 'No precinct election data available for this location.',
+  },
 }

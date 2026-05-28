@@ -21,6 +21,7 @@ interface PillarPriorities {
   social_fabric: PriorityLevel
   diversity: PriorityLevel
   community_safety: PriorityLevel
+  political_lean: PriorityLevel
 }
 
 interface SearchOptions {
@@ -36,6 +37,8 @@ interface SearchOptions {
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   /** Diversity: which mix dimensions to emphasize in the headline (race, income, age). null = average all available. */
   diversity_preference?: string[] | null
+  /** Political lean preference: progressive | conservative | null = no preference declared. */
+  political_preference?: 'progressive' | 'conservative' | null
   /** Household income for personalized housing affordability scoring. null = use local median. */
   household_income?: number | null
 }
@@ -67,6 +70,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   social_fabric: 'Medium',
   diversity: 'Medium',
   community_safety: 'Medium',
+  political_lean: 'None',
 }
 
 export const JOB_CATEGORY_OPTIONS: Array<{ key: string; label: string; description: string }> = [
@@ -524,6 +528,38 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
                         <div className="tr-muted" style={{ fontSize: '0.9rem' }}>{opt.description}</div>
                       </span>
                     </label>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+          )}
+
+          {options.priorities.political_lean !== 'None' && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Political Preference (required)
+              </h4>
+            </div>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Select which direction you prefer. The score reflects how closely the area matches your values based on presidential election results.
+            </p>
+            <div className="tr-panel" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {(['progressive', 'conservative'] as const).map((pref) => {
+                  const selected = options.political_preference === pref
+                  return (
+                    <button
+                      key={pref}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => onChange({ ...options, political_preference: selected ? null : pref })}
+                      className={`priority-btn ${selected ? 'active' : ''}`}
+                      style={{ flex: 1, padding: '0.6rem', textTransform: 'capitalize' }}
+                    >
+                      {pref}
+                    </button>
                   )
                 })}
               </div>

@@ -97,6 +97,7 @@ export default function SavedDetailPage() {
           built_density_preference:
             typeof saved?.built_density_preference === 'string' ? saved.built_density_preference : null,
           diversity_preference: Array.isArray(saved?.diversity_preference) ? saved.diversity_preference : null,
+          political_preference: ['progressive', 'conservative'].includes(saved?.political_preference) ? saved.political_preference : null,
         }
         setSearchOptions(initialSearchOptions)
         setJobCategories(initialSearchOptions.job_categories ?? [])
@@ -145,6 +146,7 @@ export default function SavedDetailPage() {
         diversity_preference: searchOptions?.diversity_preference?.length
           ? JSON.stringify(searchOptions.diversity_preference)
           : undefined,
+        political_preference: searchOptions?.political_preference ?? undefined,
         ...(lat != null && lon != null ? { lat, lon } : {}),
       })
       const payloadWithConfig: ScoreResponse = {
@@ -187,6 +189,7 @@ export default function SavedDetailPage() {
           built_density_preference: options.built_density_preference ?? undefined,
           diversity_preference:
             options.diversity_preference?.length ? JSON.stringify(options.diversity_preference) : undefined,
+          political_preference: options.political_preference ?? undefined,
           include_chains: options.include_chains ?? true,
           enable_schools: options.enable_schools ?? false,
         },
@@ -270,6 +273,9 @@ export default function SavedDetailPage() {
             : {}),
           ...(searchOptions?.diversity_preference?.length
             ? { diversity_preference: JSON.stringify(searchOptions.diversity_preference) }
+            : {}),
+          ...(searchOptions?.political_preference
+            ? { political_preference: searchOptions.political_preference }
             : {}),
           include_chains: searchOptions?.include_chains ?? true,
           enable_schools: searchOptions?.enable_schools ?? false,

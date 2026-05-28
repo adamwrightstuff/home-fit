@@ -20,6 +20,7 @@ export interface RunPillarScoreOptions {
   built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   diversity_preference?: string[] | null
+  political_preference?: string | null
   include_chains?: boolean
   enable_schools?: boolean
 }

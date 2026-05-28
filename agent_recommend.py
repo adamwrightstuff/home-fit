@@ -32,7 +32,10 @@ PILLAR_KEYS: tuple[str, ...] = (
     "climate_risk",
     "social_fabric",
     "diversity",
+    "political_lean",
 )
+
+VALID_POLITICAL_PREFERENCES = frozenset({"progressive", "conservative"})
 
 VALID_PRIORITY_LEVELS = frozenset({"None", "Low", "Medium", "High"})
 
@@ -77,6 +80,13 @@ def _normalize_catalog_row(line_obj: Dict[str, Any]) -> Optional[Dict[str, Any]]
         return None
     liv = score.get("livability_pillars") or {}
     pillar_scores: Dict[str, float] = {}
+    lean_2024: Optional[float] = None
+    _pl = liv.get("political_lean") or {}
+    if isinstance(_pl, dict):
+        _bd = _pl.get("breakdown") or {}
+        _raw = _bd.get("lean_2024")
+        if isinstance(_raw, (int, float)):
+            lean_2024 = float(_raw)
     for k in PILLAR_KEYS:
         pillar_scores[k] = _pillar_numeric_score(liv.get(k))
     br = score.get("status_signal_breakdown") or {}
@@ -92,6 +102,7 @@ def _normalize_catalog_row(line_obj: Dict[str, Any]) -> Optional[Dict[str, Any]]
         "archetype": archetype,
         "status_label": status_label,
         "pillar_scores": pillar_scores,
+        "lean_2024": lean_2024,
         # Full score payload for client hydration (matches catalog map → /results handoff).
         "score_full": score if isinstance(score, dict) else {},
     }
@@ -119,17 +130,30 @@ def load_catalog_records() -> tuple[Dict[str, Any], ...]:
 
 
 def priorities_to_numeric(priorities: Dict[str, str]) -> Dict[str, int]:
-    return {k: PRIORITY_TO_NUMERIC.get(priorities[k], 0) for k in PILLAR_KEYS}
+    return {k: PRIORITY_TO_NUMERIC.get(priorities.get(k, "None"), 0) for k in PILLAR_KEYS}
+
+
+def _political_lean_score_from_raw(lean_2024: Optional[float], preference: Optional[str]) -> float:
+    if lean_2024 is None or preference not in VALID_POLITICAL_PREFERENCES:
+        return 0.0
+    if preference == "progressive":
+        return max(0.0, min(100.0, (lean_2024 + 1.0) / 2.0 * 100.0))
+    return max(0.0, min(100.0, (1.0 - lean_2024) / 2.0 * 100.0))
 
 
 def prerank_neighborhoods(
-    catalog: tuple[Dict[str, Any], ...], priorities: Dict[str, str], top_n: int = 10
+    catalog: tuple[Dict[str, Any], ...],
+    priorities: Dict[str, str],
+    top_n: int = 10,
+    political_preference: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     numeric = priorities_to_numeric(priorities)
     total_weight = sum(numeric.values()) or 1
     scored: List[Dict[str, Any]] = []
     for n in catalog:
-        ps = n["pillar_scores"]
+        ps = dict(n["pillar_scores"])
+        if numeric.get("political_lean", 0) > 0:
+            ps["political_lean"] = _political_lean_score_from_raw(n.get("lean_2024"), political_preference)
         weighted = sum(numeric.get(pillar, 0) * ps.get(pillar, 0.0) for pillar in PILLAR_KEYS) / total_weight
         payload = {
             "neighborhood": n["neighborhood"],
@@ -194,6 +218,7 @@ def get_recommendations(
     context: Dict[str, Any],
     *,
     model: Optional[str] = None,
+    political_preference: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     try:
         import anthropic
@@ -207,7 +232,7 @@ def get_recommendations(
     model_id = (model or os.getenv("HOMEFIT_ANTHROPIC_MODEL", "") or "").strip() or "claude-haiku-4-5-20251001"
 
     catalog = load_catalog_records()
-    candidates = prerank_neighborhoods(catalog, priorities, top_n=10)
+    candidates = prerank_neighborhoods(catalog, priorities, top_n=10, political_preference=political_preference)
     if not candidates:
         return []
 
@@ -248,14 +273,15 @@ def get_recommendations(
 class RecommendRequest(BaseModel):
     priorities: Dict[str, str]
     context: Dict[str, Any] = Field(default_factory=dict)
+    political_preference: Optional[str] = None
 
     @field_validator("priorities")
     @classmethod
     def validate_priorities(cls, v: Dict[str, str]) -> Dict[str, str]:
         for key in PILLAR_KEYS:
             if key not in v:
-                raise ValueError(f"Missing pillar key: {key}")
-            if v[key] not in VALID_PRIORITY_LEVELS:
+                v[key] = "None"  # default missing keys to None
+            elif v[key] not in VALID_PRIORITY_LEVELS:
                 raise ValueError(f"Invalid priority level for {key}: {v[key]}")
         extra = set(v.keys()) - set(PILLAR_KEYS)
         if extra:
@@ -271,7 +297,10 @@ def recommend_neighborhoods(req: RecommendRequest) -> Dict[str, Any]:
     start = time.perf_counter()
     model = (os.getenv("HOMEFIT_ANTHROPIC_MODEL", "") or "").strip() or "claude-haiku-4-5-20251001"
     try:
-        results = get_recommendations(req.priorities, req.context)
+        pref = req.political_preference
+        if pref and pref.strip().lower() not in VALID_POLITICAL_PREFERENCES:
+            pref = None
+        results = get_recommendations(req.priorities, req.context, political_preference=pref)
     except HTTPException:
         raise
     except Exception as e:
