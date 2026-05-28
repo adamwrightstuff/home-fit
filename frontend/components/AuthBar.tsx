@@ -15,13 +15,9 @@ export default function AuthBar() {
           <Link href="/" className="hf-auth-bar-logo">
             Trovamo
           </Link>
-          <nav className="hf-auth-bar-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} aria-label="Main">
+          <nav className="hf-auth-bar-nav" aria-label="Main">
             <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
               Explore
-            </Link>
-            <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              Search
-              <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '1px 4px', borderRadius: 3, background: 'var(--hf-primary-1)', color: '#fff' }}>Beta</span>
             </Link>
           </nav>
           <nav className="hf-auth-bar-nav" aria-label="Account">

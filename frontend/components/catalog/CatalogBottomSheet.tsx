@@ -15,14 +15,15 @@ import {
   statusArchetypeNumeral600,
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
+import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
-const INDEX_TABS: { id: CatalogMapIndexMode; label: string }[] = [
-  { id: 'homefit', label: 'Trovamo' },
-  { id: 'longevity', label: 'Longevity' },
-  { id: 'happiness', label: 'Happiness' },
-  { id: 'status', label: 'Archetype' },
+const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
+  { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
+  { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
+  { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
+  { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
 /** CSS token pairs for peek score strip (non–archetype index columns). */
@@ -206,6 +207,7 @@ export default function CatalogBottomSheet({
                   <button
                     key={tab.id}
                     type="button"
+                    title={tab.tooltip}
                     onClick={() => onIndexModeChange(tab.id)}
                     style={{
                       textAlign: 'center',

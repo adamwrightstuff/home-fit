@@ -29,16 +29,16 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
 import { adjustNbScore, type NbPreference } from '@/lib/nbPreference'
-import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
-const INDEXES: { id: CatalogMapIndexMode; label: string }[] = [
-  { id: 'homefit', label: 'Trovamo' },
-  { id: 'longevity', label: 'Longevity' },
-  { id: 'happiness', label: 'Happiness' },
-  { id: 'status', label: 'Archetype' },
+const INDEXES: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
+  { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
+  { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
+  { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
+  { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
 type CatalogMode = 'explorer' | 'twin'
@@ -463,7 +463,10 @@ export default function CatalogPageClient({
     <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
       <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-center text-sm font-bold text-[var(--hf-text-primary)]">Explore</span>
+          <div>
+            <span className="text-sm font-bold text-[var(--hf-text-primary)]">Explore</span>
+            <p className="text-[0.65rem] text-[var(--hf-text-secondary)] leading-tight mt-0.5">Find neighborhoods that match how you want to live</p>
+          </div>
           <Link
             href="/search"
             className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2.5 py-1 text-xs font-semibold text-[var(--hf-text-secondary)]"
@@ -704,6 +707,7 @@ export default function CatalogPageClient({
                       key={x.id}
                       type="button"
                       aria-pressed={active}
+                      title={x.tooltip}
                       className="rounded-full px-3 py-1.5 text-xs font-bold"
                       style={
                         active
