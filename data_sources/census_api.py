@@ -533,18 +533,26 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
 
     print("🏠 Fetching housing data from Census ACS...")
 
-    # Use place-level data for incorporated municipalities only.
-    # No tract fallback — tract data may bleed across municipal boundaries.
+    # Prefer place-level data for incorporated municipalities — more representative
+    # than a single tract that may bleed across municipal boundaries.
+    # Fall back to tract only when ACS has no place-level data (e.g. very small villages
+    # where the tract boundary and village boundary are essentially the same thing).
     place_geo = get_place_fips_for_coordinates(lat, lon)
-    if not place_geo:
-        return None
+    if place_geo:
+        result = _fetch_housing_acs(
+            f"place:{int(place_geo['place_fips'])}",
+            f"state:{place_geo['state_fips']}",
+        )
+        if result:
+            result["geo_level"] = "place"
+            return result
 
     result = _fetch_housing_acs(
-        f"place:{int(place_geo['place_fips'])}",
-        f"state:{place_geo['state_fips']}",
+        f"tract:{tract['tract_fips']}",
+        f"state:{tract['state_fips']} county:{tract['county_fips']}",
     )
     if result:
-        result["geo_level"] = "place"
+        result["geo_level"] = "tract"
     return result
 
 
@@ -1110,18 +1118,31 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
     if not tract:
         return None
 
-    # Prefer place-level data for incorporated municipalities
+    # Prefer place-level data for incorporated municipalities — falls back to tract
+    # only when ACS has no place-level data (very small villages where tract ≈ place).
     place_geo = get_place_fips_for_coordinates(lat, lon)
-    if place_geo:
-        geo_for = f"place:{int(place_geo['place_fips'])}"
-        geo_in = f"state:{place_geo['state_fips']}"
-        geo_level = "place"
-    else:
-        geo_for = f"tract:{tract['tract_fips']}"
-        geo_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
-        geo_level = "tract"
+    tract_for = f"tract:{tract['tract_fips']}"
+    tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
+    geo_attempts = []
+    if place_geo:
+        geo_attempts.append(("place", f"place:{int(place_geo['place_fips'])}", f"state:{place_geo['state_fips']}"))
+    geo_attempts.append(("tract", tract_for, tract_in))
+
+    for geo_level, geo_for, geo_in in geo_attempts:
+        result = _fetch_diversity_acs(geo_for, geo_in)
+        if result is not None:
+            result["geo_level"] = geo_level
+            return result
+    return None
+
+
+def _fetch_diversity_acs(geo_for: str, geo_in: str) -> Optional[Dict]:
+    """Run all diversity ACS queries for the given Census geography. Returns None on any failure."""
     try:
+        base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        geo_for = geo_for
+        geo_in = geo_in
         base_acs5 = f"{CENSUS_BASE_URL}/2022/acs/acs5"
 
         # ---- Race: B02001 (total + race categories) ----
@@ -1332,8 +1353,7 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
             "self_employed_pct": self_employed_pct,
         }
 
-    except Exception as e:
-        print(f"   ⚠️  Diversity data lookup failed: {e}")
+    except Exception:
         return None
 
 
