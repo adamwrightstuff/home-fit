@@ -115,11 +115,11 @@ def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
     """Weights (wealth, home_cost, education, occupation) for archetype. Sum = 1."""
     if archetype == "Established":
         return (0.45, 0.15, 0.20, 0.20)
-    if archetype == "Professional":
+    if archetype == "Upper Middle Class":
         return (0.20, 0.15, 0.35, 0.30)
     if archetype == "Up-and-Coming":
         return (0.30, 0.45, 0.15, 0.10)
-    if archetype == "Rooted":
+    if archetype == "Immigrant Community":
         return (0.40, 0.20, 0.20, 0.20)
     if archetype == "Middle Class":
         return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
@@ -130,9 +130,9 @@ def _get_status_label(archetype: str) -> str:
     """UI badge label for archetype."""
     return {
         "Established": "Established",
-        "Professional": "Upper Middle Class",
+        "Upper Middle Class": "Upper Middle Class",
         "Up-and-Coming": "Up-and-Coming",
-        "Rooted": "Immigrant Community",
+        "Immigrant Community": "Immigrant Community",
         "Middle Class": "Middle Class",
         "Working Class": "Working Class",
         "Unclassified": "Unclassified",
@@ -159,9 +159,9 @@ def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
         "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
-        "Professional": "Credential and career driven — high education and white-collar occupation with strong household income.",
+        "Upper Middle Class": "Credential and career driven — high education and white-collar occupation with strong household income.",
         "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
-        "Rooted": "Established ethnic enclave with strong community identity, cultural roots, and long-term residents.",
+        "Immigrant Community": "Established ethnic enclave with strong community identity, cultural roots, and long-term residents.",
         "Middle Class": "Solid footing on income and housing — comfortable without a single dominant status story.",
         "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
         "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
@@ -189,7 +189,7 @@ def _build_top_drivers(
 ) -> List[Dict[str, Any]]:
     """Top 3 components by score for tooltip; labels vary by archetype."""
     labels = dict(_DRIVER_LABELS)
-    if archetype in ("Established", "Professional", "Up-and-Coming"):
+    if archetype in ("Established", "Upper Middle Class", "Up-and-Coming"):
         labels.update(_DRIVER_LABELS_AFFLUENT)
     items: List[Tuple[str, float]] = []
     if wealth is not None:
@@ -825,7 +825,7 @@ def _classify_archetype(
     diversity_score: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
-    Chain: Established → Professional → Up-and-Coming → Rooted → Middle Class → Working Class.
+    Chain: Established → Upper Middle Class → Up-and-Coming → Immigrant Community → Middle Class → Working Class.
     stability (0-100) from social_fabric.breakdown.stability.
     Returns (archetype, archetype_rule) for debug.
     """
@@ -843,7 +843,7 @@ def _classify_archetype(
     # Professional: credential class fires before stab-gated Established so that credential-dense
     # moderate-wealth neighborhoods (West Village, Carroll Gardens) classify correctly.
     if edu_val >= 78 and occ_val >= 80:
-        return "Professional", "professional_credential_class"
+        return "Upper Middle Class", "professional_credential_class"
 
     # Established: very high wealth — less stability required (executive, transient-elite markets)
     if wealth_val > 85 and stab_val is not None and stab_val > 35:
@@ -861,7 +861,7 @@ def _classify_archetype(
     # Immigrant Community: ethnic enclave — tight community, moderate-to-low wealth, diverse
     div_val = float(diversity_score) if diversity_score is not None else 0.0
     if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50 and div_val >= 70:
-        return "Rooted", "immigrant_community_enclave"
+        return "Immigrant Community", "immigrant_community_enclave"
 
     # Established: affluent suburb — high wealth + solid home cost + educated, but missed
     # the higher gates (wealth just under 85, stability borderline, not pure credential class).

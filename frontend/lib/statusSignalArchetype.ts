@@ -74,7 +74,7 @@ const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
 }
 
 /** Legacy archetype labels no longer shown — centroid model takes over for these. */
-const RETIRED_ARCHETYPES = new Set(['Professional', 'Rooted'])
+const RETIRED_ARCHETYPES = new Set<string>([])
 
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
