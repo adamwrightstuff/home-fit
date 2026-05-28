@@ -87,7 +87,7 @@ def get_diversity_score(
     if area_type is None:
         area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
 
-    diversity_data = census_api.get_diversity_data(lat, lon, tract=tract)
+    diversity_data = census_api.get_diversity_data(lat, lon, tract=tract, area_type=area_type)
     diversity_score: Optional[float] = None
     components_present: list[str] = []
     breakdown: Dict = {}

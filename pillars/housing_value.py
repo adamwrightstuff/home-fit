@@ -37,18 +37,15 @@ def get_housing_value_score(lat: float, lon: float,
     """
     print(f"🏠 Analyzing housing value...")
 
+    if density is None:
+        density = census_api.get_population_density(lat, lon) or 0.0
+    area_type = data_quality.detect_area_type(lat, lon, density, city=city)
+
     # Get housing data from Census (pass pre-computed tract if available)
-    housing_data = census_api.get_housing_data(lat, lon, tract=census_tract)
+    housing_data = census_api.get_housing_data(lat, lon, tract=census_tract, area_type=area_type)
 
     if housing_data is None:
         print("⚠️  Housing data unavailable")
-        # Still assess data quality even when data is missing
-        # Use pre-computed density if provided, otherwise fetch
-        if density is None:
-            density = census_api.get_population_density(lat, lon) or 0.0
-        
-        # Detect actual area type for data quality assessment
-        area_type = data_quality.detect_area_type(lat, lon, density, city=city)
         quality_metrics = data_quality.assess_pillar_data_quality('housing_value', {}, lat, lon, area_type)
         
         # FALLBACK SCORING: Apply conservative minimum scores for urban/suburban areas

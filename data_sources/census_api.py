@@ -508,7 +508,7 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
 @cached(ttl_seconds=CACHE_TTL['census_data'])
 @safe_api_call("census", required=False)
 @handle_api_timeout(timeout_seconds=20)
-def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_type: Optional[str] = None) -> Optional[Dict]:
     """
     Get housing value metrics from Census ACS 5-Year data.
     Uses place-level data for incorporated municipalities; falls back to Census tract.
@@ -517,6 +517,7 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         lat: Latitude
         lon: Longitude
         tract: Optional pre-fetched tract data (for efficiency)
+        area_type: Optional area classification; urban_core skips place-level (tract is more granular)
 
     Returns:
         {
@@ -533,11 +534,9 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
 
     print("🏠 Fetching housing data from Census ACS...")
 
-    # Prefer place-level data for incorporated municipalities — more representative
-    # than a single tract that may bleed across municipal boundaries.
-    # Fall back to tract only when ACS has no place-level data (e.g. very small villages
-    # where the tract boundary and village boundary are essentially the same thing).
-    place_geo = get_place_fips_for_coordinates(lat, lon)
+    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
+    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
+    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
     if place_geo:
         result = _fetch_housing_acs(
             f"place:{int(place_geo['place_fips'])}",
@@ -1097,7 +1096,7 @@ def snap_lat_lon_for_nonempty_race_acs(
     return lat, lon, tract0
 
 
-def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
+def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, area_type: Optional[str] = None) -> Optional[Dict]:
     """
     Get race, income, age distributions, and education attainment for Social Fabric / Status Signal.
 
@@ -1118,9 +1117,9 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None) -> 
     if not tract:
         return None
 
-    # Prefer place-level data for incorporated municipalities — falls back to tract
-    # only when ACS has no place-level data (very small villages where tract ≈ place).
-    place_geo = get_place_fips_for_coordinates(lat, lon)
+    # For urban_core (city neighborhoods), tract is more granular than the whole city place.
+    # For suburbs, place-level gives true municipal data free of tract boundary bleed.
+    place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
     tract_for = f"tract:{tract['tract_fips']}"
     tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
