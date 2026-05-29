@@ -118,41 +118,23 @@ export default function SearchPage() {
   if (!place && !score_data) {
     return (
       <main className="hf-page">
-        <AppHeader tagline="Search any place" />
+        <AppHeader tagline="Search any neighborhood, city, or address in the US" />
         <div className="hf-container">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              marginBottom: '1rem',
-              borderRadius: 8,
-              background: 'rgba(var(--hf-primary-rgb, 99,91,200), 0.07)',
-              border: '1px solid rgba(var(--hf-primary-rgb, 99,91,200), 0.18)',
-              fontSize: '0.82rem',
-              color: 'var(--hf-text-secondary)',
-            }}
-          >
-            <span
-              style={{
-                fontWeight: 700,
-                fontSize: '0.7rem',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                padding: '2px 6px',
-                borderRadius: 4,
-                background: 'var(--hf-primary-1)',
-                color: '#fff',
-                flexShrink: 0,
-              }}
-            >
-              Beta
-            </span>
-            Live scoring takes 20–40 seconds per location. Results are AI-scored in real time.{' '}
-            <Link href="/catalog" style={{ color: 'var(--hf-primary-1)', fontWeight: 600, textDecoration: 'none' }}>
-              Browse pre-scored places →
-            </Link>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 11, padding: '2px 7px', borderRadius: 10, fontWeight: 500, flexShrink: 0 }}>
+                Live scoring
+              </span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--hf-text-secondary)' }}>
+                Results usually take 20–40 seconds · scores all 13 pillars in real time
+              </span>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#2C2C2A', color: '#F1EFE8', fontSize: 12, padding: '6px 12px', borderRadius: 'var(--border-radius-md, 8px)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              NYC &amp; LA neighborhoods score faster — they&apos;re in our catalog
+            </div>
           </div>
 
           <div id="search" className="hf-card">

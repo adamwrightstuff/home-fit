@@ -620,11 +620,17 @@ export default function CatalogPageClient({
           <>
             <input
               type="search"
-              placeholder="Search name, county…"
+              placeholder="Filter NYC & LA neighborhoods…"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-sm"
             />
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              Browsing neighborhoods in NYC &amp; LA &nbsp;·&nbsp;{' '}
+              <a href="/search" style={{ color: '#185FA5', textDecoration: 'none', fontWeight: 500 }}>
+                Search anywhere in the US →
+              </a>
+            </p>
 
             <div className="flex flex-wrap items-center gap-1">
               {(['all', 'nyc', 'la'] as const).map((m) => (

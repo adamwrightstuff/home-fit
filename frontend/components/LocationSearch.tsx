@@ -238,7 +238,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             onChange={(e) => setLocation(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
-            placeholder="Enter an address (e.g., 123 Main St, New York, NY)"
+            placeholder="Search any neighborhood, city, or address in the US…"
             className={`hf-input ${isInvalid ? 'hf-input--invalid' : ''}`}
             disabled={disabled}
             autoComplete="off"
