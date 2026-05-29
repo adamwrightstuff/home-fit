@@ -159,8 +159,8 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                             ? 'border-gray-200 text-gray-300'
                             : 'border-gray-200 text-gray-500'
                         }`}
-                        disabled={!compareIds.includes(key) && compareIds.length >= 3}
-                        title={!compareIds.includes(key) && compareIds.length >= 3 ? 'Max 3 neighborhoods' : undefined}
+                        disabled={!compareIds.includes(key) && compareIds.length >= 2}
+                        title={!compareIds.includes(key) && compareIds.length >= 2 ? 'Max 2 neighborhoods' : undefined}
                         onClick={(e) => {
                           e.stopPropagation()
                           onCompareToggle(key)

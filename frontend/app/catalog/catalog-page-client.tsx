@@ -138,7 +138,7 @@ export default function CatalogPageClient({
   const handleCompareToggle = useCallback((key: string) => {
     setCompareIds((prev) => {
       if (prev.includes(key)) return prev.filter((k) => k !== key)
-      if (prev.length >= 3) return prev
+      if (prev.length >= 2) return prev
       return [...prev, key]
     })
   }, [])
