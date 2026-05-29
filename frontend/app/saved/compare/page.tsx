@@ -24,17 +24,12 @@ async function loadRowForId(id: string): Promise<SavedScoreRow> {
   const place = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
   if (!place) throw new Error(`Catalog place not found: ${id}`)
   const name = place.catalog.name + (place.catalog.county_borough ? `, ${place.catalog.county_borough}` : '')
-  const score = JSON.parse(JSON.stringify(place.score)) as typeof place.score
-  const pl = (score.livability_pillars as any)?.political_lean
-  if (pl && pl.score == null && typeof pl.breakdown?.lean_2024 === 'number') {
-    pl.score = Math.max(0, Math.min(100, pl.breakdown.lean_2024 * 50 + 50))
-  }
   return {
     id,
     user_id: '',
     input: name,
     location_info: { city: place.catalog.name, state: place.catalog.state_abbr } as Record<string, unknown>,
-    score_payload: score as unknown as Record<string, unknown>,
+    score_payload: place.score as unknown as Record<string, unknown>,
     priorities: null,
     created_at: '',
     updated_at: '',
@@ -43,7 +38,6 @@ async function loadRowForId(id: string): Promise<SavedScoreRow> {
 
 const CATALOG_COMPARE_PRIORITIES: PillarPriorities = {
   ...DEFAULT_PRIORITIES,
-  political_lean: 'Medium',
   community_safety: 'Medium',
 }
 
