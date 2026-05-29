@@ -646,8 +646,8 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .hf-header { padding: 40px 1.5rem 50px; }
-  .hf-header h1 { font-size: 1.5rem; }
+  .hf-header { padding: 32px 1.5rem 32px; }
+  .hf-header h1 { font-size: 28px; }
   .hf-header p { display: none; }
   .hf-container { padding: 0 1rem 2rem; }
   .hf-grid-2, .hf-grid-3 { grid-template-columns: 1fr; }
