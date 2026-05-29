@@ -375,8 +375,8 @@ body {
 }
 
 .hf-input:focus {
-  border-color: var(--hf-primary-1);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #D1CCC7;
+  box-shadow: 0 0 0 3px rgba(209, 204, 199, 0.3);
 }
 
 .hf-input.hf-input--invalid {
@@ -646,12 +646,16 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .hf-header h1 { font-size: 2.5rem; }
+  .hf-header h1 { font-size: 1.5rem; }
+  .hf-header p { display: none; }
   .hf-container { padding: 0 1rem 2rem; }
   .hf-grid-2, .hf-grid-3 { grid-template-columns: 1fr; }
   .hf-card { padding: 1.75rem; }
   .hf-hero-grid { grid-template-columns: 1fr; text-align: left; }
   .hf-hero-image { height: 300px; max-width: 100%; }
+  .hf-search-input-row { flex-direction: column; }
+  .hf-search-input-row .hf-btn-primary { width: 100%; padding-left: 1.5rem; padding-right: 1.5rem; }
+  .hf-chip-row { flex-direction: row; flex-wrap: wrap; }
 }
 
 /* Score summary block: responsive grid (no sticky) */

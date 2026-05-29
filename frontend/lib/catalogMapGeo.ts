@@ -186,7 +186,7 @@ export function getStandoutPillarChips(
     const contribution = typeof pl?.contribution === 'number' ? Math.abs(pl.contribution) : 0
     return { k: k as PillarKey, score, contribution }
   })
-    .filter((x) => Number.isFinite(x.score))
+    .filter((x) => Number.isFinite(x.score) && x.score > 0)
     .sort((a, b) => {
       if (mode === 'homefit') return b.contribution - a.contribution
       return b.score - a.score
