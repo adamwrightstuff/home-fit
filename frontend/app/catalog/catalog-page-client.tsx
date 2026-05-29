@@ -28,7 +28,8 @@ import {
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
 } from '@/lib/catalogMapTypes'
-import { buildResultsUrl } from '@/lib/resultsShare'
+import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
+import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
 import { adjustNbScore, type NbPreference } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
@@ -437,6 +438,8 @@ export default function CatalogPageClient({
         built_density_preference: null as string | null,
         political_preference: politicalPreference ?? null,
       }
+      const cacheKey = buildResultsCacheKey(routeParams)
+      writeCatalogResultsHydrate({ v: 1, cacheKey, score: place.score })
       router.push(buildResultsUrl(routeParams))
     },
     [priorities, politicalPreference, router]
