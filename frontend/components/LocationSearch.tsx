@@ -317,8 +317,8 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
           </button>
         ))}
         {catalogLink && (
-          <Link href={catalogLink} className="hf-btn-link" style={{ fontSize: '0.8rem', marginTop: 0 }}>
-            browse the catalog
+          <Link href={catalogLink} className="hf-chip--ghost">
+            browse the catalog →
           </Link>
         )}
       </div>

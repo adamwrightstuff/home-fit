@@ -131,22 +131,19 @@ export default function SearchPage() {
             </div>
           </div>
 
-          <div id="search" className="hf-card">
+          <div id="search" className="hf-card" style={{ marginTop: '-24px' }}>
             <LocationSearch
               onSearch={handle_search}
               disabled={loading}
               examples={['West Village, NYC', 'Santa Monica, CA']}
               catalogLink="/catalog"
             />
-          </div>
-
-          {!loading && (
-            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid var(--hf-border)', marginTop: '1rem', paddingTop: '0.75rem', textAlign: 'center' }}>
               <button type="button" className="hf-btn-link" onClick={() => set_show_game(true)}>
                 Not sure where to start? Take the quiz
               </button>
             </div>
-          )}
+          </div>
 
           {loading && (
             <div className="hf-card" style={{ marginTop: '1.5rem', padding: '2rem', textAlign: 'center' }}>

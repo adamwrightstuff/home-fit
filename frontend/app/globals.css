@@ -140,7 +140,7 @@ body {
   overflow: hidden;
   background: var(--hf-primary-gradient);
   color: #ffffff;
-  padding: 3rem 2rem 4rem;
+  padding: 1.75rem 2rem 2.5rem;
   text-align: center;
 }
 
@@ -448,6 +448,26 @@ body {
 }
 
 .hf-chip:hover {
+  background: var(--hf-hover-bg);
+  border-color: var(--hf-primary-1);
+  color: var(--hf-primary-1);
+}
+
+.hf-chip--ghost {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: var(--hf-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--hf-border);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hf-chip--ghost:hover {
   background: var(--hf-hover-bg);
   border-color: var(--hf-primary-1);
   color: var(--hf-primary-1);

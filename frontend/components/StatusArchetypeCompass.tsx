@@ -50,7 +50,7 @@ export default function StatusArchetypeCompass({
       ? archetypeOneLiner(archetype)
       : badge.leanArchetype
         ? archetypeOneLiner(badge.leanArchetype)
-        : 'This place combines characteristics from multiple status profiles without a dominant pattern.'
+        : 'Every neighborhood has a social character. Archetype captures it — classifying places by how wealth and status are expressed, using income, education, occupation, and housing data.'
 
   return (
     <div className="tr-panel" style={{ marginTop: '1rem' }}>

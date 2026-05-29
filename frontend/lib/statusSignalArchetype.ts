@@ -243,12 +243,12 @@ export function statusTooltipCopy(
     const oneLiner = archetypeOneLiner(badge.leanArchetype)
     return `This place leans closest to ${badge.leanArchetype} — ${oneLiner}`
   }
-  return 'This place combines characteristics from multiple status profiles without a dominant pattern.'
+  return 'Every neighborhood has a social character. Archetype captures it — classifying places by how wealth and status are expressed, using income, education, occupation, and housing data.'
 }
 
 export function archetypeOneLiner(archetype: string | null | undefined): string {
   const a = (archetype ?? '').trim()
-  if (!a) return 'This place combines characteristics from multiple status profiles without a dominant pattern.'
+  if (!a) return 'Every neighborhood has a social character. Archetype captures it — classifying places by how wealth and status are expressed, using income, education, occupation, and housing data.'
   const legacy = ARCHETYPE_ONE_LINERS[a as NonTypicalArchetype]
   if (legacy) return legacy
   return API_ARCHETYPE_ONE_LINERS[a] ?? 'A distinct status profile for this area.'

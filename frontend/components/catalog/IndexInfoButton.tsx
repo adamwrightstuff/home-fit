@@ -136,7 +136,7 @@ function PopoverContent({ indexId }: { indexId: IndexId }) {
         <span style={{ fontWeight: 700, fontSize: 13, color: '#d97706' }}>Archetype</span>
       </div>
       <p style={{ fontSize: 12, color: '#4b5563', margin: '0 0 8px', lineHeight: 1.5 }}>
-        Classifies neighborhoods by socioeconomic character.
+        Every neighborhood has a social character. Archetype captures it — classifying places by how wealth and status are expressed, using income, education, occupation, and housing data.
       </p>
       <div style={{ marginBottom: 8 }}>
         {archetypeRows.map(({ label, desc }) => (
