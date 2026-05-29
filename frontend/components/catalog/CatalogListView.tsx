@@ -65,9 +65,11 @@ interface CatalogListViewProps {
   places: CatalogMapPlace[]
   priorities: PillarPriorities
   onTwinRow: (key: string) => void
+  compareIds?: string[]
+  onCompareToggle?: (key: string) => void
 }
 
-export default function CatalogListView({ places, priorities, onTwinRow }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, onTwinRow, compareIds = [], onCompareToggle }: CatalogListViewProps) {
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   const toggleRow = (key: string) => {
@@ -81,9 +83,9 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
           <tr className="border-b border-[var(--hf-border)]">
             <th className="py-2 pr-2 font-semibold">Place</th>
             <th className="py-2 px-1"> </th>
-            <th className="py-2 px-1 font-semibold">Tro</th>
-            <th className="py-2 px-1 font-semibold">Lon</th>
-            <th className="py-2 px-1 font-semibold">Hap</th>
+            <th className="py-2 px-1 font-semibold" title="Trovamo score">Tro</th>
+            <th className="py-2 px-1 font-semibold" title="Longevity index">Lon</th>
+            <th className="py-2 px-1 font-semibold" title="Happiness index">Hap</th>
             <th className="py-2 px-1 font-semibold">Archetype</th>
             <th className="py-2 pl-1"> </th>
           </tr>
@@ -147,6 +149,26 @@ export default function CatalogListView({ places, priorities, onTwinRow }: Catal
                     </div>
                   </td>
                   <td className="py-2 pl-1">
+                    {onCompareToggle && (
+                      <button
+                        type="button"
+                        aria-label={`Add ${p.catalog.name} to comparison`}
+                        aria-pressed={compareIds.includes(key)}
+                        className={`mr-1 rounded border px-1.5 py-0.5 text-[0.65rem] font-bold ${
+                          compareIds.includes(key)
+                            ? 'border-gray-200 text-gray-300'
+                            : 'border-gray-200 text-gray-500'
+                        }`}
+                        disabled={!compareIds.includes(key) && compareIds.length >= 3}
+                        title={!compareIds.includes(key) && compareIds.length >= 3 ? 'Max 3 neighborhoods' : undefined}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onCompareToggle(key)
+                        }}
+                      >
+                        {compareIds.includes(key) ? '✓ Added' : 'Compare'}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="rounded border border-[var(--hf-border)] px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--hf-primary-1)]"

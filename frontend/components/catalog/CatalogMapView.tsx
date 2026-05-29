@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ExpressionSpecification, Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
+import MapLegend from '@/components/catalog/MapLegend'
 
 type CatalogMapGeoJson =
   | ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
@@ -34,6 +35,8 @@ interface CatalogMapViewProps {
   } | null
   /** Change when the visible dataset changes to re-run fitBounds. */
   fitKey?: string
+  /** Called with hover info when the mouse enters/moves over a bubble, null on leave. */
+  onHover?: (info: { key: string; x: number; y: number } | null) => void
 }
 
 const NYC_METRO_BOUNDS: [[number, number], [number, number]] = [
@@ -92,11 +95,14 @@ export default function CatalogMapView({
   mapVariant,
   twinLineGeoJson,
   fitKey = 'default',
+  onHover,
 }: CatalogMapViewProps) {
   const container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<MapLibreMap | null>(null)
   const on_select_ref = useRef(onSelectKey)
   on_select_ref.current = onSelectKey
+  const on_hover_ref = useRef(onHover)
+  on_hover_ref.current = onHover
   const [map_loaded, set_map_loaded] = useState(false)
   const [error, set_error] = useState<string | null>(null)
   const fitted_ref = useRef<string | null>(null)
@@ -209,11 +215,24 @@ export default function CatalogMapView({
             const key = f?.properties?.key
             if (typeof key === 'string') on_select_ref.current(key)
           })
-          map.on('mouseenter', 'catalog-bubbles', () => {
+          map.on('mouseenter', 'catalog-bubbles', (e) => {
             map.getCanvas().style.cursor = 'pointer'
+            const f = e.features?.[0]
+            const key = f?.properties?.key
+            if (typeof key === 'string') {
+              on_hover_ref.current?.({ key, x: e.point.x, y: e.point.y })
+            }
+          })
+          map.on('mousemove', 'catalog-bubbles', (e) => {
+            const f = e.features?.[0]
+            const key = f?.properties?.key
+            if (typeof key === 'string') {
+              on_hover_ref.current?.({ key, x: e.point.x, y: e.point.y })
+            }
           })
           map.on('mouseleave', 'catalog-bubbles', () => {
             map.getCanvas().style.cursor = ''
+            on_hover_ref.current?.(null)
           })
 
           if (mapVariant === 'twin') {
@@ -366,6 +385,7 @@ export default function CatalogMapView({
   return (
     <div className="relative w-full flex-1 min-h-0" style={{ background: '#e5e7eb' }}>
       <div ref={container_ref} className="absolute inset-0 w-full h-full" />
+      <MapLegend show={mapVariant === 'explorer'} />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/90 p-4">
           <p className="text-center text-sm text-red-700">{error}</p>

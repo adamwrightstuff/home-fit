@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
@@ -11,6 +10,10 @@ import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
 import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
 import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
 import CatalogListView from '@/components/catalog/CatalogListView'
+import HeroBand from '@/components/catalog/HeroBand'
+import FilterSheet from '@/components/catalog/FilterSheet'
+import IndexInfoButton from '@/components/catalog/IndexInfoButton'
+import CompareTray from '@/components/catalog/CompareTray'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import {
   buildCatalogFeatureCollection,
@@ -128,6 +131,39 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return ''
   })
+  const [compareIds, setCompareIds] = useState<string[]>([])
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [hoverInfo, setHoverInfo] = useState<{ key: string; x: number; y: number } | null>(null)
+
+  const handleCompareToggle = useCallback((key: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(key)) return prev.filter((k) => k !== key)
+      if (prev.length >= 3) return prev
+      return [...prev, key]
+    })
+  }, [])
+
+  const handleIncomeBlur = useCallback((val: string, current: number | null) => {
+    const v = val === '' ? null : parseInt(val.replace(/,/g, ''), 10)
+    const next = Number.isFinite(v) && (v as number) >= 10000 ? (v as number) : null
+    if (next !== current) setHouseholdIncome(next)
+    setIncomeInputValue(next ? String(next) : '')
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleIncomeClear = useCallback(() => {
+    setHouseholdIncome(null)
+    setIncomeInputValue('')
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      const opts = stored ? JSON.parse(stored) : {}
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
+    } catch { /* ignore */ }
+  }, [])
 
   const setIndexModeAndListSort = useCallback((mode: CatalogMapIndexMode) => {
     setIndexMode(mode)
@@ -461,19 +497,13 @@ export default function CatalogPageClient({
 
   return (
     <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
+      <HeroBand />
       <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <div>
             <span className="text-sm font-bold text-[var(--hf-text-primary)]">Explore</span>
             <p className="text-[0.65rem] text-[var(--hf-text-secondary)] leading-tight mt-0.5">Find neighborhoods that match how you want to live</p>
           </div>
-          <Link
-            href="/search"
-            className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2.5 py-1 text-xs font-semibold text-[var(--hf-text-secondary)]"
-          >
-            Search any place
-            <span style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '1px 4px', borderRadius: 3, background: 'var(--hf-primary-1)', color: '#fff' }}>Beta</span>
-          </Link>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -596,7 +626,7 @@ export default function CatalogPageClient({
               className="w-full rounded-lg border border-[var(--hf-border)] px-2 py-1.5 text-sm"
             />
 
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {(['all', 'nyc', 'la'] as const).map((m) => (
                 <button
                   key={m}
@@ -610,9 +640,19 @@ export default function CatalogPageClient({
                   {m === 'all' ? 'All metros' : m.toUpperCase()}
                 </button>
               ))}
+              {/* Mobile-only Filters chip */}
+              <button
+                type="button"
+                className="md:hidden rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] ml-auto"
+                onClick={() => setFilterSheetOpen(true)}
+              >
+                ⚙ Filters{(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (householdIncome ? 1 : 0) > 0
+                  ? ` ${(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (householdIncome ? 1 : 0)}`
+                  : ''}
+              </button>
             </div>
 
-            <div className="flex flex-wrap gap-1">
+            <div className="hidden md:flex flex-wrap gap-1">
               <span className="self-center text-[0.65rem] text-[var(--hf-text-tertiary)]">Type</span>
               {(['all', 'neighborhood', 'suburb'] as const).map((t) => (
                 <button
@@ -629,7 +669,7 @@ export default function CatalogPageClient({
             </div>
 
             {archetypes.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="hidden md:flex flex-wrap gap-1">
                 <button
                   type="button"
                   className={`rounded-full px-2 py-0.5 text-[0.65rem] ${filterArchetype === 'all' ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-border-strong)]' : ''}`}
@@ -650,7 +690,7 @@ export default function CatalogPageClient({
               </div>
             )}
 
-            <div className="flex items-center gap-1.5">
+            <div className="hidden md:flex items-center gap-1.5">
               <span className="text-[0.65rem] text-[var(--hf-text-tertiary)] shrink-0">My income</span>
               <div className="relative flex items-center">
                 <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
@@ -660,32 +700,14 @@ export default function CatalogPageClient({
                   placeholder="annual household"
                   value={incomeInputValue}
                   onChange={(e) => setIncomeInputValue(e.target.value)}
-                  onBlur={(e) => {
-                    const v = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10)
-                    const next = Number.isFinite(v) && (v as number) >= 10000 ? (v as number) : null
-                    if (next !== householdIncome) setHouseholdIncome(next)
-                    setIncomeInputValue(next ? String(next) : '')
-                    try {
-                      const stored = sessionStorage.getItem('homefit_search_options')
-                      const opts = stored ? JSON.parse(stored) : {}
-                      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: next }))
-                    } catch { /* ignore */ }
-                  }}
+                  onBlur={(e) => handleIncomeBlur(e.target.value, householdIncome)}
                   className="w-36 rounded-lg border border-[var(--hf-border)] py-1 pl-5 pr-2 text-xs"
                 />
                 {householdIncome && (
                   <button
                     type="button"
                     className="absolute right-1.5 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
-                    onClick={() => {
-                      setHouseholdIncome(null)
-                      setIncomeInputValue('')
-                      try {
-                        const stored = sessionStorage.getItem('homefit_search_options')
-                        const opts = stored ? JSON.parse(stored) : {}
-                        sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, household_income: null }))
-                      } catch { /* ignore */ }
-                    }}
+                    onClick={handleIncomeClear}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -703,25 +725,27 @@ export default function CatalogPageClient({
                   const active = indexMode === x.id && !sortByName
                   const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
                   return (
-                    <button
-                      key={x.id}
-                      type="button"
-                      aria-pressed={active}
-                      title={x.tooltip}
-                      className="rounded-full px-3 py-1.5 text-xs font-bold"
-                      style={
-                        active
-                          ? { ...activeStyle, border: 'none' }
-                          : {
-                              background: 'var(--hf-hover-bg)',
-                              color: 'var(--hf-text-secondary)',
-                              border: '0.5px solid var(--hf-border)',
-                            }
-                      }
-                      onClick={() => setIndexModeAndListSort(x.id)}
-                    >
-                      {x.label}
-                    </button>
+                    <div key={x.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        title={x.tooltip}
+                        className="rounded-full px-3 py-1.5 text-xs font-bold"
+                        style={
+                          active
+                            ? { ...activeStyle, border: 'none' }
+                            : {
+                                background: 'var(--hf-hover-bg)',
+                                color: 'var(--hf-text-secondary)',
+                                border: '0.5px solid var(--hf-border)',
+                              }
+                        }
+                        onClick={() => setIndexModeAndListSort(x.id)}
+                      >
+                        {x.label}
+                      </button>
+                      <IndexInfoButton indexId={x.id} />
+                    </div>
                   )
                 })}
               </div>
@@ -761,7 +785,7 @@ export default function CatalogPageClient({
       </header>
 
       {viewMode === 'map' && (
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1 flex-col">
           <CatalogMapView
             key={`${mapRegion}-${catalogMode}`}
             data={mapData}
@@ -773,7 +797,55 @@ export default function CatalogPageClient({
             mapVariant={catalogMode === 'twin' && twinQueryKey ? 'twin' : 'explorer'}
             twinLineGeoJson={catalogMode === 'twin' && twinQueryKey && twinLineGeoJson ? twinLineGeoJson : null}
             fitKey={fitKey}
+            onHover={catalogMode === 'explorer' ? setHoverInfo : undefined}
           />
+          {hoverInfo && catalogMode === 'explorer' && (() => {
+            const hoverPlace = findPlaceByKey(filteredPlaces, hoverInfo.key)
+            if (!hoverPlace) return null
+            const rw = reweightScoreResponseFromPriorities(hoverPlace.score, priorities)
+            const hf = rw.total_score
+            const lon = hoverPlace.score.longevity_index ?? null
+            const hap = hoverPlace.score.happiness_index ?? null
+            const archetype = hoverPlace.score.status_signal_breakdown?.archetype ?? null
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: hoverInfo.x,
+                  top: hoverInfo.y,
+                  transform: 'translate(-50%, calc(-100% - 12px))',
+                  pointerEvents: 'none',
+                  zIndex: 20,
+                  background: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 10,
+                  padding: '8px 12px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  minWidth: 160,
+                  maxWidth: 220,
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#1a1a2e', marginBottom: 2 }}>
+                  {hoverPlace.catalog.name}
+                </div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
+                  {hoverPlace.catalog.county_borough} · {hoverPlace.catalog.state_abbr}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1a1a2e', marginBottom: 2 }}>
+                  Score {Number.isFinite(hf) ? hf.toFixed(0) : '—'}
+                </div>
+                <div style={{ fontSize: 11, color: '#6b7280', display: 'flex', gap: 8, marginBottom: archetype ? 4 : 0 }}>
+                  <span>Lon {lon != null && Number.isFinite(lon) ? lon.toFixed(0) : '—'}</span>
+                  <span>Hap {hap != null && Number.isFinite(hap) ? hap.toFixed(0) : '—'}</span>
+                </div>
+                {archetype && (
+                  <div style={{ fontSize: 11, background: '#f3f4f6', borderRadius: 4, padding: '2px 6px', display: 'inline-block', color: '#374151' }}>
+                    {archetype}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
           {catalogMode === 'twin' && twinQueryKey && queryPlace && selectedTwinMatch && (
             <div className="max-h-[min(50vh,28rem)] shrink-0 overflow-y-auto border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-3 py-3">
               <TwinCandidateDetailContent
@@ -789,7 +861,13 @@ export default function CatalogPageClient({
       )}
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
-        <CatalogListView places={filteredPlaces} priorities={priorities} onTwinRow={onTwinRow} />
+        <CatalogListView
+          places={filteredPlaces}
+          priorities={priorities}
+          onTwinRow={onTwinRow}
+          compareIds={compareIds}
+          onCompareToggle={handleCompareToggle}
+        />
       )}
 
       {viewMode === 'list' && catalogMode === 'twin' && (
@@ -856,6 +934,31 @@ export default function CatalogPageClient({
         selected={twinPillars}
         onChange={setTwinPillars}
         disabled={twinControlsLocked}
+      />
+
+      <CompareTray
+        compareIds={compareIds}
+        places={filteredPlaces}
+        onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
+        onClear={() => setCompareIds([])}
+      />
+
+      <FilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        filterMetro={filterMetro}
+        onFilterMetroChange={setFilterMetro}
+        filterType={filterType}
+        onFilterTypeChange={setFilterType}
+        filterArchetype={filterArchetype}
+        onFilterArchetypeChange={setFilterArchetype}
+        archetypes={archetypes}
+        householdIncome={householdIncome}
+        incomeInputValue={incomeInputValue}
+        onIncomeInputChange={setIncomeInputValue}
+        onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
+        onIncomeClear={handleIncomeClear}
+        resultCount={filteredPlaces.length}
       />
 
       {loading && (
