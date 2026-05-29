@@ -351,6 +351,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         built_character_preference: next.built_character_preference ?? null,
         built_density_preference: next.built_density_preference ?? null,
         diversity_preference: next.diversity_preference?.length ? JSON.stringify(next.diversity_preference) : null,
+        political_preference: next.political_preference ?? normalized.political_preference ?? null,
       }
       router.replace(buildResultsUrl(updated))
     },
@@ -763,14 +764,19 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                       </button>
                     )
                   ) : isAuthConfigured ? (
-                    <button
-                      type="button"
-                      onClick={() => openAuthModal('signin')}
-                      className="hf-btn-primary"
-                      style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
-                    >
-                      Sign in to save
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', alignItems: 'flex-start' }}>
+                      <button
+                        type="button"
+                        onClick={() => openAuthModal('signin')}
+                        className="hf-btn-primary"
+                        style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
+                      >
+                        Sign in to save
+                      </button>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--hf-text-tertiary)' }}>
+                        Save places & personalize pillar weights
+                      </span>
+                    </div>
                   ) : null
                 ) : null}
                 {saveErr ? (
