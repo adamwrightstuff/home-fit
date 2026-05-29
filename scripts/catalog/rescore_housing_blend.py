@@ -22,6 +22,7 @@ import statistics
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from data_sources import census_api
+from data_sources.zillow_home_values import get_home_value, CENSUS_CAP
 from pillars.housing_value import (
     _score_rent_affordability,
     _score_local_affordability,
@@ -68,21 +69,42 @@ def process_catalog(path: str, dry_run: bool) -> list:
             skip += 1
             continue
 
-        try:
-            fresh = census_api.get_housing_data(lat, lon)
-        except Exception as e:
-            print(f"  [{name}] census fetch failed: {e}")
-            err += 1
-            continue
+        # Use stored tenure data when available — re-fetching can land on a different tract
+        # at the boundary and introduce instability. Only fetch fresh for entries that
+        # are missing renter_pct or median_gross_rent from a prior rescore run.
+        stored_renter_pct = old_summary.get("renter_pct")
+        stored_gross_rent = old_summary.get("median_gross_rent")
 
-        if fresh is None:
-            skip += 1
-            continue
+        if stored_renter_pct is not None and stored_gross_rent is not None:
+            renter_pct = stored_renter_pct
+            median_gross_rent = stored_gross_rent
+            fresh_geo_level = old_summary.get("geo_level")
+        else:
+            # Neighborhoods are within large cities — tract is more granular than city place.
+            # Suburbs are their own municipalities — place-level is correct.
+            catalog_type = entry.get("catalog", {}).get("type", "")
+            area_type_hint = "urban_core" if catalog_type == "neighborhood" else None
 
-        renter_pct = fresh.get("renter_pct")
-        median_gross_rent = fresh.get("median_gross_rent")
-        # Use fresh value in case it differs from stored
-        fresh_value = fresh.get("median_home_value") or median_value
+            try:
+                fresh = census_api.get_housing_data(lat, lon, area_type=area_type_hint)
+            except Exception as e:
+                print(f"  [{name}] census fetch failed: {e}")
+                err += 1
+                continue
+
+            if fresh is None:
+                skip += 1
+                continue
+
+            renter_pct = fresh.get("renter_pct")
+            median_gross_rent = fresh.get("median_gross_rent")
+            fresh_geo_level = fresh.get("geo_level")
+
+        # Apply Zillow override on top of the stored home value when Census is capped.
+        zip_code = s.get("location_info", {}).get("zip")
+        fresh_value, _zillow_used = get_home_value(median_value, zip_code)
+        if _zillow_used:
+            print(f"  [{name}] Zillow override: Census capped → ${fresh_value:,} (ZIP {zip_code})")
 
         owner_pct = (1.0 - renter_pct) if renter_pct is not None else None
         has_rent = median_gross_rent is not None and median_gross_rent > 0
@@ -122,6 +144,11 @@ def process_catalog(path: str, dry_run: bool) -> list:
             hv["summary"]["renter_pct"] = round(renter_pct, 3) if renter_pct is not None else None
             if median_gross_rent:
                 hv["summary"]["median_gross_rent"] = int(median_gross_rent)
+            if _zillow_used:
+                hv["summary"]["median_home_value"] = fresh_value
+                hv["summary"]["zillow_value_used"] = True
+            if fresh_geo_level:
+                hv["summary"]["geo_level"] = fresh_geo_level
             # Clear stale inflation flag if present
             hv["summary"].pop("multifamily_inflation_detected", None)
             hv["summary"].pop("affordability_basis", None)

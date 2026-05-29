@@ -5,12 +5,14 @@ Scores housing value based on local affordability, space, and cost efficiency
 
 from typing import Dict, Tuple, Optional
 from data_sources import census_api, data_quality
+from data_sources.zillow_home_values import get_home_value, CENSUS_CAP
 
 
 def get_housing_value_score(lat: float, lon: float,
                            census_tract: Optional[Dict] = None,
                            density: Optional[float] = None,
                            city: Optional[str] = None,
+                           zip_code: Optional[str] = None,
                            use_national_income_for_affordability: bool = False,
                            user_household_income: Optional[int] = None) -> Tuple[float, Dict]:
     """
@@ -124,6 +126,9 @@ def get_housing_value_score(lat: float, lon: float,
         return 0, empty_breakdown
 
     median_value = housing_data["median_home_value"]
+    median_value, _zillow_used = get_home_value(median_value, zip_code)
+    if _zillow_used:
+        print(f"   📊 Zillow ZHVI override: Census capped at ${CENSUS_CAP:,} → Zillow ${median_value:,} (ZIP {zip_code})")
     median_income = housing_data["median_household_income"]
     median_rooms = housing_data["median_rooms"]
     median_gross_rent = housing_data.get("median_gross_rent")

@@ -625,6 +625,24 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     return summary
 
 
+def _natural_beauty_breakdown(natural_details: Dict) -> Dict:
+    """Build the NB breakdown dict, including raw context sub-component scores for client-side preference re-weighting."""
+    cs = (natural_details.get("context_bonus") or {}).get("component_scores") or {}
+    bd: Dict = {
+        "tree_score_0_50": natural_details.get("tree_score_0_50", 0),
+        "enhancer_bonus_raw": natural_details.get("enhancer_bonus_raw", 0),
+    }
+    if cs:
+        bd["nb_topo_raw"] = round(float(cs.get("topography_raw") or 0), 3)
+        bd["nb_topo_base"] = round(float(cs.get("topography_base") or 0), 3)
+        bd["nb_landcover_raw"] = round(float(cs.get("landcover_raw") or 0), 3)
+        bd["nb_landcover"] = round(float(cs.get("landcover") or 0), 3)
+        bd["nb_water_raw"] = round(float(cs.get("water_raw") or 0), 3)
+        bd["nb_water"] = round(float(cs.get("water") or 0), 3)
+        bd["nb_scenic_cap"] = round(float(natural_details.get("scenic_cap_v7") or 70.0), 1)
+    return bd
+
+
 def _natural_beauty_summary_with_preference(
     natural_details: Dict, natural_beauty_preference: Optional[List[str]] = None
 ) -> Dict:
@@ -1754,6 +1772,7 @@ def _compute_single_score_internal(
         pillar_tasks.append(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
+                'zip_code': zip_code,
                 'use_national_income_for_affordability': _remote_only,
                 'user_household_income': user_household_income,
             })
@@ -2143,10 +2162,7 @@ def _compute_single_score_internal(
             "weight": token_allocation["natural_beauty"],
             "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
             "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
-            "breakdown": {
-                "tree_score_0_50": natural_details["tree_score_0_50"],
-                "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
-            },
+            "breakdown": _natural_beauty_breakdown(natural_details),
             "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
             "details": natural_details,
             "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
@@ -3339,6 +3355,7 @@ async def _stream_score_with_progress(
             ('housing_value', get_housing_value_score, {
                 'lat': lat, 'lon': lon, 'census_tract': census_tract,
                 'density': density, 'city': city,
+                'zip_code': zip_code,
                 'use_national_income_for_affordability': _remote_only,
                 'user_household_income': user_household_income,
             })
@@ -3750,10 +3767,7 @@ async def _stream_score_with_progress(
                 "weight": token_allocation["natural_beauty"],
                 "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
                 "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
-                "breakdown": {
-                    "tree_score_0_50": natural_details.get("tree_score_0_50", 0),
-                    "enhancer_bonus_raw": natural_details.get("enhancer_bonus_raw", 0)
-                },
+                "breakdown": _natural_beauty_breakdown(natural_details),
                 "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference_parsed),
                 "details": natural_details,
                 "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
@@ -4495,6 +4509,7 @@ async def stream_score(
             pillar_tasks.append(
                 ('housing_value', get_housing_value_score, {
                     'lat': lat, 'lon': lon, 'census_tract': census_tract, 'density': density, 'city': city,
+                    'zip_code': zip_code,
                     'use_national_income_for_affordability': _remote_only,
                     'user_household_income': user_household_income,
                 })
@@ -4872,10 +4887,7 @@ async def stream_score(
             "weight": token_allocation["natural_beauty"],
             "importance_level": priority_levels.get("natural_beauty") if priority_levels else None,
             "contribution": round(natural_score * token_allocation["natural_beauty"] / 100, 2),
-            "breakdown": {
-                "tree_score_0_50": natural_details["tree_score_0_50"],
-                "enhancer_bonus_raw": natural_details["enhancer_bonus_raw"]
-            },
+            "breakdown": _natural_beauty_breakdown(natural_details),
             "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
             "details": natural_details,
             "confidence": natural_calc.get("data_quality", {}).get("confidence", 0) if natural_calc else (natural_details.get("tree_analysis", {}).get("confidence", 0) if isinstance(natural_details.get("tree_analysis"), dict) else 0),
