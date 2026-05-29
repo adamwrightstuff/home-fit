@@ -14,11 +14,6 @@ interface FilterSheetProps {
   filterArchetype: string
   onFilterArchetypeChange: (v: string) => void
   archetypes: string[]
-  householdIncome: number | null
-  incomeInputValue: string
-  onIncomeInputChange: (v: string) => void
-  onIncomeBlur: () => void
-  onIncomeClear: () => void
   resultCount: number
 }
 
@@ -50,11 +45,6 @@ export default function FilterSheet({
   filterArchetype,
   onFilterArchetypeChange,
   archetypes,
-  householdIncome,
-  incomeInputValue,
-  onIncomeInputChange,
-  onIncomeBlur,
-  onIncomeClear,
   resultCount,
 }: FilterSheetProps) {
   useEffect(() => {
@@ -72,14 +62,12 @@ export default function FilterSheet({
 
   const activeCount =
     (filterType !== 'all' ? 1 : 0) +
-    (filterArchetype !== 'all' ? 1 : 0) +
-    (householdIncome ? 1 : 0)
+    (filterArchetype !== 'all' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
     onFilterTypeChange('all')
     onFilterArchetypeChange('all')
-    onIncomeClear()
   }
 
   function chip(active: boolean, label: string, onClick: () => void) {
@@ -179,36 +167,6 @@ export default function FilterSheet({
             </div>
           )}
 
-          {/* Income */}
-          <div style={{ marginBottom: 80 }}>
-            <div style={LABEL_STYLE}>Income</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                <span style={{ position: 'absolute', left: 8, fontSize: 13, color: '#6b7280' }}>$</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="annual household"
-                  value={incomeInputValue}
-                  onChange={(e) => onIncomeInputChange(e.target.value)}
-                  onBlur={onIncomeBlur}
-                  style={{
-                    width: 160,
-                    borderRadius: 8,
-                    border: '1px solid var(--hf-border)',
-                    padding: '6px 8px 6px 20px',
-                    fontSize: 13,
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              {householdIncome && (
-                <button type="button" onClick={onIncomeClear} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9ca3af' }}>
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Sticky footer */}

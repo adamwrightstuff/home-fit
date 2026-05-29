@@ -37,9 +37,14 @@ interface CatalogWeightPanelProps {
   nbPreference?: NbPreference | null
   onNbPreferenceChange?: (pref: NbPreference | null) => void
   onTakeQuiz?: () => void
+  householdIncome?: number | null
+  incomeInputValue?: string
+  onIncomeInputChange?: (v: string) => void
+  onIncomeBlur?: () => void
+  onIncomeClear?: () => void
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -180,6 +185,45 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
             </details>
           ))}
         </div>
+
+        {onIncomeInputChange && (
+          <div className="border-t border-[var(--hf-border)] px-4 py-3">
+            <div className="mb-2 text-xs font-bold text-[var(--hf-text-primary)]">Personalize scores</div>
+            <div>
+              <div className="mb-1 flex items-center gap-1 text-xs font-medium text-[var(--hf-text-primary)]">
+                Household income
+                <span
+                  className="inline-flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-[var(--hf-border)] text-[0.65rem] font-bold text-[var(--hf-text-secondary)]"
+                  title="Used to calculate housing affordability in the Housing Value score. Has no effect on other pillars. Leave blank to use local median income."
+                >
+                  ?
+                </span>
+              </div>
+              <div className="relative flex items-center">
+                <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="annual household"
+                  value={incomeInputValue}
+                  onChange={(e) => onIncomeInputChange(e.target.value)}
+                  onBlur={onIncomeBlur}
+                  className="w-full rounded-lg border border-[var(--hf-border)] py-1.5 pl-5 pr-8 text-xs"
+                />
+                {householdIncome && onIncomeClear && (
+                  <button
+                    type="button"
+                    className="absolute right-2 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
+                    onClick={onIncomeClear}
+                    aria-label="Clear income"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-[var(--hf-border)] px-4 py-3">
           <button

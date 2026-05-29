@@ -109,21 +109,61 @@ function formatDate(s: string): string {
   }
 }
 
+const STREET_ADDRESS_RE = /^\d+\s+\S/
+
+function isStreetAddress(s: string): boolean {
+  return STREET_ADDRESS_RE.test(s) || s.length > 40
+}
+
+function stateAbbr(state: string): string {
+  const STATE_MAP: Record<string, string> = {
+    Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+    Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+    Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA',
+    Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD',
+    Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO',
+    Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND',
+    Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI',
+    'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT',
+    Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI',
+    Wyoming: 'WY', 'District of Columbia': 'DC',
+  }
+  if (state.length === 2) return state.toUpperCase()
+  return STATE_MAP[state] ?? state
+}
+
+function placeDisplayParts(row: SavedScoreRow): { title: string; subtitle: string | null } {
+  const input = typeof row.input === 'string' ? row.input.trim() : ''
+  const loc = row.location_info as { city?: string; state?: string; zip?: string } | null | undefined
+
+  if (input && isStreetAddress(input)) {
+    const city = loc?.city?.trim()
+    const state = loc?.state?.trim()
+    const abbr = state ? stateAbbr(state) : ''
+    const shortTitle = city && abbr ? `${city}, ${abbr}` : city || abbr || 'Unknown location'
+    return { title: shortTitle, subtitle: input }
+  }
+
+  if (input) return { title: input, subtitle: null }
+
+  const city = loc?.city?.trim() ?? ''
+  const state = loc?.state?.trim() ?? ''
+  const zip = loc?.zip?.trim() ?? ''
+  const fallback = [city, state, zip].filter(Boolean).join(', ')
+  return { title: fallback || 'Unknown location', subtitle: null }
+}
+
 /** Prefer saved search input (e.g. "Carroll Gardens Brooklyn"); fall back to city, state zip. */
 function placeDisplayName(row: SavedScoreRow): string {
-  const input = typeof row.input === 'string' ? row.input.trim() : ''
-  if (input) return input
-  const loc = row.location_info as { city?: string; state?: string; zip?: string }
-  const fallback = [loc.city ?? '', loc.state ?? '', loc.zip ?? ''].filter(Boolean).join(', ')
-  return fallback || 'Unknown location'
+  return placeDisplayParts(row).title
 }
 
 function SavedPlaceIndexRow({ score_payload }: { score_payload: unknown }) {
-  const { longevity, happiness, statusSignal } = indexTripletFromPayload(score_payload)
+  const { longevity, happiness } = indexTripletFromPayload(score_payload)
   const items = [
-    { label: 'L' as const, value: longevity, numeralColor: 'var(--c-teal-600)' },
-    { label: 'H' as const, value: happiness, numeralColor: 'var(--c-blue-600)' },
-    { label: 'A' as const, value: statusSignal, numeralColor: 'var(--c-coral-600)' },
+    { label: 'Lon' as const, value: longevity, numeralColor: 'var(--c-teal-600)' },
+    { label: 'Hap' as const, value: happiness, numeralColor: 'var(--c-blue-600)' },
   ]
   return (
     <div
@@ -330,8 +370,11 @@ export default function SavedPage() {
                       textDecoration: 'none',
                       color: 'inherit',
                       position: 'relative',
-                      borderWidth: compareMode && selected ? 2 : undefined,
-                      borderColor: compareMode && selected ? 'var(--hf-primary-1)' : undefined,
+                      border: compareMode
+                        ? selected
+                          ? '2px solid var(--hf-primary-1)'
+                          : '1px solid var(--hf-border)'
+                        : undefined,
                       cursor: compareMode ? (hasScore ? 'pointer' : 'default') : 'pointer',
                     }}
                     onClick={() => {
@@ -353,9 +396,21 @@ export default function SavedPage() {
                         />
                       </div>
                     )}
-                    <div style={{ fontWeight: 700, fontSize: '1.15rem', paddingRight: compareMode ? '1.5rem' : 0 }}>
-                      {placeDisplayName(row)}
-                    </div>
+                    {(() => {
+                      const { title, subtitle } = placeDisplayParts(row)
+                      return (
+                        <>
+                          <div style={{ fontWeight: 700, fontSize: '1.15rem', paddingRight: compareMode ? '1.5rem' : 0 }}>
+                            {title}
+                          </div>
+                          {subtitle && (
+                            <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.1rem' }}>
+                              {subtitle}
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                     <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span className="hf-score-badge tr-score-badge--high">{total.toFixed(1)}</span>
                       <span className="tr-muted" style={{ fontSize: '0.9rem' }}>{formatDate(row.updated_at)}</span>

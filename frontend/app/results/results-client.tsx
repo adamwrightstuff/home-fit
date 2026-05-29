@@ -710,17 +710,17 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   {locationLabel}
                 </div>
                 <div className="tr-muted" style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>
-                  Location: {displayData!.location_info?.city}, {displayData!.location_info?.state}{' '}
-                  {displayData!.location_info?.zip}
+                  {(() => {
+                    const city = displayData!.location_info?.city
+                    const state = displayData!.location_info?.state
+                    const zip = displayData!.location_info?.zip
+                    const parts = [city, state, zip].filter(Boolean).join(', ')
+                    return parts ? `Location: ${parts}` : null
+                  })()}
                 </div>
                 <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
                   Coordinates: {displayData!.coordinates.lat.toFixed(6)}, {displayData!.coordinates.lon.toFixed(6)}
                 </div>
-                {displayData!.metadata?.version && (
-                  <div className="tr-muted" style={{ marginTop: '0.2rem', fontSize: '0.8rem', opacity: 0.9 }}>
-                    API version: {displayData!.metadata.version}
-                  </div>
-                )}
               </div>
 
               <nav

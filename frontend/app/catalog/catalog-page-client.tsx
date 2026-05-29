@@ -690,31 +690,6 @@ export default function CatalogPageClient({
               </div>
             )}
 
-            <div className="hidden md:flex items-center gap-1.5">
-              <span className="text-[0.65rem] text-[var(--hf-text-tertiary)] shrink-0">My income</span>
-              <div className="relative flex items-center">
-                <span className="absolute left-2 text-xs text-[var(--hf-text-secondary)]">$</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="annual household"
-                  value={incomeInputValue}
-                  onChange={(e) => setIncomeInputValue(e.target.value)}
-                  onBlur={(e) => handleIncomeBlur(e.target.value, householdIncome)}
-                  className="w-36 rounded-lg border border-[var(--hf-border)] py-1 pl-5 pr-2 text-xs"
-                />
-                {householdIncome && (
-                  <button
-                    type="button"
-                    className="absolute right-1.5 text-[var(--hf-text-tertiary)] hover:text-[var(--hf-text-secondary)]"
-                    onClick={handleIncomeClear}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-
             <div
               role="group"
               aria-label="Map index and list sort"
@@ -904,16 +879,53 @@ export default function CatalogPageClient({
       )}
 
       {catalogMode === 'twin' && twinQueryKey && queryPlace && (
-        <CatalogBottomSheet
-          place={queryPlace}
-          indexMode={indexMode}
-          onIndexModeChange={setIndexModeAndListSort}
-          priorities={priorities}
-          snap={snap}
-          onSnapChange={setSnap}
-          onClose={clearTwinQuery}
-          onFullBreakdown={handleFullBreakdown}
-        />
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            height: 44,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            paddingBottom: 'max(0px, env(safe-area-inset-bottom))',
+            background: 'var(--hf-card-bg)',
+            borderTop: '1px solid var(--hf-border)',
+            boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
+          }}
+        >
+          <span style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ color: 'var(--hf-text-tertiary)' }}>Matching to: </span>
+            <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>{queryPlace.catalog.name}</span>
+            {(() => {
+              const rw = reweightScoreResponseFromPriorities(queryPlace.score, priorities)
+              const hf = rw.total_score
+              return Number.isFinite(hf) ? (
+                <span style={{ color: 'var(--hf-text-secondary)' }}> · Trovamo {hf.toFixed(1)}</span>
+              ) : null
+            })()}
+          </span>
+          <button
+            type="button"
+            onClick={clearTwinQuery}
+            style={{
+              marginLeft: 12,
+              flexShrink: 0,
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: 'var(--hf-primary-1)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0 4px',
+            }}
+          >
+            Change
+          </button>
+        </div>
       )}
 
       <CatalogWeightPanel
@@ -926,6 +938,11 @@ export default function CatalogPageClient({
         nbPreference={nbPreference}
         onNbPreferenceChange={setNbPreference}
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
+        householdIncome={householdIncome}
+        incomeInputValue={incomeInputValue}
+        onIncomeInputChange={setIncomeInputValue}
+        onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
+        onIncomeClear={handleIncomeClear}
       />
 
       <PillarTwinDrawer
@@ -953,11 +970,6 @@ export default function CatalogPageClient({
         filterArchetype={filterArchetype}
         onFilterArchetypeChange={setFilterArchetype}
         archetypes={archetypes}
-        householdIncome={householdIncome}
-        incomeInputValue={incomeInputValue}
-        onIncomeInputChange={setIncomeInputValue}
-        onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
-        onIncomeClear={handleIncomeClear}
         resultCount={filteredPlaces.length}
       />
 

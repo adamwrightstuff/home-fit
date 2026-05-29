@@ -58,7 +58,7 @@ const ARCHETYPE_CENTROIDS: Record<NonTypicalArchetype, FeatureVector> = {
 }
 
 const ARCHETYPE_ONE_LINERS: Record<NonTypicalArchetype, string> = {
-  Established: 'Established, credential-rich profile. Status here is grounded in education and professional standing.',
+  Established: 'Credential-rich profile — status here is grounded in education and professional standing.',
   Affluent: 'Wealth-forward profile with income outliers. High occupation mix and rising prosperity.',
   Transitional: 'Home values materially exceed resident wealth — a neighborhood whose cost has run ahead of its income.',
   'Working Class': 'Modest status signal. Working-community character with cost that matches the economic profile.',
@@ -237,7 +237,7 @@ export function statusTooltipCopy(
   const archetype = breakdown?.archetype ?? null
   if (archetype) {
     const text = archetypeOneLiner(archetype)
-    return text ? `${archetype} places have ${text.toLowerCase()}` : null
+    return text ? `${archetype} neighborhoods have a ${text.toLowerCase()}` : null
   }
   if (badge.variant === 'leans' && badge.leanArchetype) {
     const oneLiner = archetypeOneLiner(badge.leanArchetype)

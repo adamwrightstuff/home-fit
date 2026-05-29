@@ -5,10 +5,36 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
+import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
+import { catalogRowKey } from '@/lib/catalogMapTypes'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
-import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, type PillarKey } from '@/lib/pillars'
+import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
+
+function isCatalogKey(id: string): boolean {
+  return id.includes('|')
+}
+
+async function loadRowForId(id: string): Promise<SavedScoreRow> {
+  if (!isCatalogKey(id)) return getSavedScore(id)
+  const res = await fetch('/api/catalog-map?metro=all')
+  if (!res.ok) throw new Error(`Catalog load failed (${res.status})`)
+  const json = (await res.json()) as { places?: CatalogMapPlaceWithMetro[] }
+  const place = (json.places ?? []).find((p) => catalogRowKey(p.catalog) === id)
+  if (!place) throw new Error(`Catalog place not found: ${id}`)
+  const name = place.catalog.name + (place.catalog.county_borough ? `, ${place.catalog.county_borough}` : '')
+  return {
+    id,
+    user_id: '',
+    input: name,
+    location_info: { city: place.catalog.name, state: place.catalog.state_abbr } as Record<string, unknown>,
+    score_payload: place.score as unknown as Record<string, unknown>,
+    priorities: null,
+    created_at: '',
+    updated_at: '',
+  } as unknown as SavedScoreRow
+}
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -24,12 +50,53 @@ function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   return out as unknown as PillarPriorities
 }
 
-function placeDisplayName(row: SavedScoreRow): string {
+const STREET_ADDRESS_RE = /^\d+\s+\S/
+
+function isStreetAddress(s: string): boolean {
+  return STREET_ADDRESS_RE.test(s) || s.length > 40
+}
+
+function stateAbbr(state: string): string {
+  const STATE_MAP: Record<string, string> = {
+    Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+    Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+    Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA',
+    Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD',
+    Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO',
+    Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND',
+    Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI',
+    'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT',
+    Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI',
+    Wyoming: 'WY', 'District of Columbia': 'DC',
+  }
+  if (state.length === 2) return state.toUpperCase()
+  return STATE_MAP[state] ?? state
+}
+
+function placeDisplayParts(row: SavedScoreRow): { title: string; subtitle: string | null } {
   const input = typeof row.input === 'string' ? row.input.trim() : ''
-  if (input) return input
-  const loc = row.location_info as { city?: string; state?: string; zip?: string }
-  const fallback = [loc.city ?? '', loc.state ?? '', loc.zip ?? ''].filter(Boolean).join(', ')
-  return fallback || 'Unknown location'
+  const loc = row.location_info as { city?: string; state?: string; zip?: string } | null | undefined
+
+  if (input && isStreetAddress(input)) {
+    const city = loc?.city?.trim()
+    const state = loc?.state?.trim()
+    const abbr = state ? stateAbbr(state) : ''
+    const shortTitle = city && abbr ? `${city}, ${abbr}` : city || abbr || 'Unknown location'
+    return { title: shortTitle, subtitle: input }
+  }
+
+  if (input) return { title: input, subtitle: null }
+
+  const city = loc?.city?.trim() ?? ''
+  const state = loc?.state?.trim() ?? ''
+  const zip = loc?.zip?.trim() ?? ''
+  const fallback = [city, state, zip].filter(Boolean).join(', ')
+  return { title: fallback || 'Unknown location', subtitle: null }
+}
+
+function placeDisplayName(row: SavedScoreRow): string {
+  return placeDisplayParts(row).title
 }
 
 type ComparePillarSide = {
@@ -42,6 +109,7 @@ type ComparePillarRow = {
   key: PillarKey
   meta: (typeof PILLAR_META)[PillarKey]
   isLongevity: boolean
+  isHappiness: boolean
   a: ComparePillarSide
   b: ComparePillarSide
 }
@@ -74,14 +142,15 @@ function CompareContent() {
       setLoading(false)
       return
     }
-    if (!user) {
+    const needsAuth = !isCatalogKey(idA) || !isCatalogKey(idB)
+    if (needsAuth && !user) {
       setLoading(false)
       return
     }
     let cancelled = false
     setLoading(true)
     setError(null)
-    Promise.all([getSavedScore(idA), getSavedScore(idB)])
+    Promise.all([loadRowForId(idA), loadRowForId(idB)])
       .then(([a, b]) => {
         if (cancelled) return
         setRowA(a)
@@ -140,6 +209,7 @@ function CompareContent() {
         key,
         meta: PILLAR_META[key],
         isLongevity: isLongevityPillar(key),
+        isHappiness: isHappinessPillar(key),
         a: { score: scoreA, confidence: confA, hasScore: scoreA != null },
         b: { score: scoreB, confidence: confB, hasScore: scoreB != null },
       }
@@ -149,12 +219,15 @@ function CompareContent() {
   const wins = useMemo(() => {
     let aWins = 0
     let bWins = 0
+    let ties = 0
     pillars.forEach((p) => {
       if (!p.a.hasScore || !p.b.hasScore) return
-      if (p.a.score! > p.b.score!) aWins += 1
-      else if (p.b.score! > p.a.score!) bWins += 1
+      const diff = Math.abs((p.a.score ?? 0) - (p.b.score ?? 0))
+      if (diff <= 1) ties += 1
+      else if (p.a.score! > p.b.score!) aWins += 1
+      else bWins += 1
     })
-    return { aWins, bWins }
+    return { aWins, bWins, ties }
   }, [pillars])
 
   const sortedPillars: ComparePillarRow[] = useMemo(() => {
@@ -218,9 +291,8 @@ function CompareContent() {
           : 'tie'
       : 'tie'
 
-  const totalPillars = PILLAR_ORDER.length
-
-  if (!authLoading && !user) {
+  const catalogCompare = !!idA && !!idB && isCatalogKey(idA) && isCatalogKey(idB)
+  if (!authLoading && !user && !catalogCompare) {
     router.replace('/saved')
     return null
   }
@@ -340,7 +412,7 @@ function CompareContent() {
                     {happinessA != null ? `Happiness ${happinessA.toFixed(1)}` : 'Happiness —'}
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
-                    Wins {wins.aWins} of {totalPillars} pillars
+                    {wins.aWins} wins · {wins.ties} ties
                   </div>
                 </div>
 
@@ -379,7 +451,7 @@ function CompareContent() {
                     {happinessB != null ? `Happiness ${happinessB.toFixed(1)}` : 'Happiness —'}
                   </div>
                   <div className="tr-muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
-                    Wins {wins.bWins} of {totalPillars} pillars
+                    {wins.ties} ties · {wins.bWins} wins
                   </div>
                 </div>
               </div>
@@ -395,11 +467,11 @@ function CompareContent() {
                   flexWrap: 'wrap',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span className="tr-label" style={{ fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1, overflowX: 'auto' }}>
+                  <span className="tr-label" style={{ fontSize: '0.75rem', flexShrink: 0 }}>
                     SORT BY
                   </span>
-                  <div style={{ display: 'inline-flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
                     <button
                       type="button"
                       onClick={() => setSortBy('diff')}
@@ -408,6 +480,7 @@ function CompareContent() {
                         fontSize: '0.85rem',
                         padding: '0.3rem 0.75rem',
                         borderRadius: 999,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       Biggest difference
@@ -420,6 +493,7 @@ function CompareContent() {
                         fontSize: '0.85rem',
                         padding: '0.3rem 0.75rem',
                         borderRadius: 999,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {placeNameA}
@@ -432,6 +506,7 @@ function CompareContent() {
                         fontSize: '0.85rem',
                         padding: '0.3rem 0.75rem',
                         borderRadius: 999,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {placeNameB}
@@ -529,6 +604,21 @@ function CompareContent() {
                               />
                               <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
                                 Longevity
+                              </span>
+                            </div>
+                          )}
+                          {p.isHappiness && (
+                            <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <span
+                                style={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  background: 'var(--hf-happiness-teal)',
+                                }}
+                              />
+                              <span className="tr-muted" style={{ fontSize: '0.8rem' }}>
+                                Happiness
                               </span>
                             </div>
                           )}

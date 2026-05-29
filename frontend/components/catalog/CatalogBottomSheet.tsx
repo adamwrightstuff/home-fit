@@ -228,9 +228,11 @@ export default function CatalogBottomSheet({
                     >
                       {tab.label}
                     </div>
-                    <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>
-                      {fmt(v)}
-                    </span>
+                    {tab.id !== 'status' && (
+                      <span className="tabular-nums" style={scoreNumeralStyle(tab.id, active)}>
+                        {fmt(v)}
+                      </span>
+                    )}
                   </button>
                 )
               })}

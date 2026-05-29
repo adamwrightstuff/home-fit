@@ -24,6 +24,9 @@ export interface StatusSignalInfoProps {
   breakdown?: StatusSignalBreakdown | null
   /** Top-level composite 0-100; used to derive strength label when breakdown omits signal_strength_label (older saves). */
   compositeScore?: number | null
+  /** Gate the Refresh button to logged-in users viewing their own saved places. */
+  isSignedIn?: boolean
+  savedScoreId?: string | null
 }
 
 /** "?" button + optional archetype badge + modal for the archetype index. Use next to the Archetype label or score. */
@@ -32,7 +35,10 @@ export default function StatusSignalInfo({
   refreshing = false,
   breakdown,
   compositeScore = null,
+  isSignedIn,
+  savedScoreId,
 }: StatusSignalInfoProps) {
+  const showRefresh = onRefresh != null && isSignedIn === true && !!savedScoreId
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
   const archetype = breakdown?.archetype ?? 'Working Class'
@@ -151,7 +157,7 @@ export default function StatusSignalInfo({
                 {breakdown.analysis_radius_note}
               </p>
             )}
-            {onRefresh != null && (
+            {showRefresh && (
               <div style={{ marginTop: '1.25rem' }}>
                 {refreshError && (
                   <p role="alert" style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', color: 'var(--hf-danger, #c00)' }}>
@@ -172,7 +178,7 @@ export default function StatusSignalInfo({
                     onClick={async () => {
                       setRefreshError(null)
                       try {
-                        await onRefresh()
+                        await onRefresh!()
                         setShowModal(false)
                       } catch (err) {
                         setRefreshError(err instanceof Error ? err.message : 'Refresh failed.')
@@ -187,7 +193,7 @@ export default function StatusSignalInfo({
                 </div>
               </div>
             )}
-            {onRefresh == null && (
+            {!showRefresh && (
               <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="button"

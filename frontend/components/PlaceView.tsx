@@ -819,19 +819,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="tr-muted">Archetype</span>
-            <span
-              style={{
-                fontWeight: 600,
-                color: statusSignal != null ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)',
-              }}
-            >
-              {statusSignal != null ? Math.max(0, Math.min(100, statusSignal)).toFixed(1) : '—'}
-            </span>
             <StatusSignalInfo
               onRefresh={handleRefreshStatusSignal}
               refreshing={statusSignalRefreshLoading}
               breakdown={statusSignalBreakdown}
               compositeScore={statusSignal}
+              isSignedIn={isSignedIn}
+              savedScoreId={savedScoreId}
             />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -931,6 +925,41 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           const score = pillarScores[key]
           const importance = selectedPriorities[key] ?? 'Medium'
           const meta = PILLAR_META[key]
+          const isLiveSearchDisabled = key === 'community_safety' || key === 'political_lean'
+          if (isLiveSearchDisabled) {
+            return (
+              <div
+                key={key}
+                className="tr-panel"
+                title="Available for catalog neighborhoods — try searching NYC or LA neighborhoods to see it scored"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  padding: '1rem 1.25rem',
+                  border: '2px solid var(--hf-border)',
+                  borderRadius: 12,
+                  cursor: 'default',
+                  opacity: 0.55,
+                  background: 'var(--hf-bg-subtle)',
+                }}
+              >
+                <div className="hf-pillar-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0, flex: '1 1 0' }}>
+                    <span style={{ fontSize: '1.75rem' }}>{meta.icon}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.45rem', borderRadius: 6, background: 'var(--hf-border)', color: 'var(--hf-text-secondary)' }}>
+                          Coming soon
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          }
           return (
             <div
               key={key}
@@ -1116,6 +1145,13 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   {score != null && !score.failed && pillarWeightsAndContributions[key] && (
                     <div className="tr-muted hf-pillar-weight-line" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
                       {pillarWeightsAndContributions[key].weight.toFixed(1)}% · {pillarWeightsAndContributions[key].contribution.toFixed(1)} to total
+                    </div>
+                  )}
+                  {key === 'housing_value' && score != null && !score.failed && (
+                    <div className="tr-muted" style={{ fontSize: '0.7rem', marginTop: '0.15rem', fontStyle: 'italic' }}>
+                      {(searchOptions as { household_income?: number | null }).household_income
+                        ? 'Scored using your household income'
+                        : 'Scored using local median income'}
                     </div>
                   )}
                   {score == null && selected && (

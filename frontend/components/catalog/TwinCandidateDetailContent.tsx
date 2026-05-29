@@ -81,12 +81,19 @@ export default function TwinCandidateDetailContent({
       </div>
 
       <div className="mb-2 text-xs text-[var(--hf-text-secondary)]">
-        Twin Trovamo {typeof rwTwin.total_score === 'number' ? rwTwin.total_score.toFixed(1) : '—'} · Query Trovamo{' '}
-        {qIdx.homefit != null ? qIdx.homefit.toFixed(1) : '—'}
+        Twin Trovamo {typeof rwTwin.total_score === 'number' ? rwTwin.total_score.toFixed(1) : '—'} ·{' '}
+        {query.catalog.name}: {qIdx.homefit != null ? qIdx.homefit.toFixed(1) : '—'}
       </div>
 
       <div className="flex justify-center py-2">
-        <RadarChart pillars={matchingPillars} queryScores={queryScores} twinScores={twinScores} size={300} />
+        <RadarChart
+          pillars={matchingPillars}
+          queryScores={queryScores}
+          twinScores={twinScores}
+          size={300}
+          queryName={query.catalog.name}
+          twinName={twin.catalog.name}
+        />
       </div>
 
       <div className="mt-3">

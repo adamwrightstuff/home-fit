@@ -9,20 +9,39 @@ const GRID = '#e8e8e8'
 /** Padding around chart so axis labels are not clipped (min ~300×300 drawable). */
 const PAD = 52
 
+const SHORT_LABELS: Record<PillarKey, string> = {
+  active_outdoors: 'Active',
+  neighborhood_amenities: 'Amenities',
+  natural_beauty: 'Nature',
+  built_beauty: 'Beauty',
+  social_fabric: 'Fabric',
+  diversity: 'Diversity',
+  quality_education: 'Schools',
+  community_safety: 'Safety',
+  political_lean: 'Politics',
+  public_transit_access: 'Transit',
+  healthcare_access: 'Health',
+  air_travel_access: 'Air',
+  housing_value: 'Housing',
+  economic_security: 'Economy',
+  climate_risk: 'Climate',
+}
+
 interface RadarChartProps {
   pillars: PillarKey[]
   queryScores: Record<PillarKey, number>
   twinScores: Record<PillarKey, number>
   /** Inner chart diameter; total SVG is larger due to PAD. */
   size?: number
+  queryName?: string
+  twinName?: string
 }
 
 function shortLabel(k: PillarKey): string {
-  const n = PILLAR_META[k].name
-  return n.length <= 11 ? n : `${n.slice(0, 9)}…`
+  return SHORT_LABELS[k] ?? PILLAR_META[k].name
 }
 
-export default function RadarChart({ pillars, queryScores, twinScores, size = 300 }: RadarChartProps) {
+export default function RadarChart({ pillars, queryScores, twinScores, size = 300, queryName, twinName }: RadarChartProps) {
   const n = Math.max(3, pillars.length)
   const cx = PAD + size / 2
   const cy = PAD + size / 2
@@ -47,6 +66,7 @@ export default function RadarChart({ pillars, queryScores, twinScores, size = 30
   const vb = size + PAD * 2
 
   return (
+    <div className="mx-auto" style={{ maxWidth: vb }}>
     <svg
       width="100%"
       height="auto"
@@ -103,5 +123,22 @@ export default function RadarChart({ pillars, queryScores, twinScores, size = 30
         )
       })}
     </svg>
+    {(queryName || twinName) && (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: 6, flexWrap: 'wrap' }}>
+        {twinName && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#444' }}>
+            <span style={{ width: 10, height: 10, background: CORAL, borderRadius: 2, flexShrink: 0 }} />
+            {twinName}
+          </span>
+        )}
+        {queryName && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#444' }}>
+            <span style={{ width: 10, height: 10, background: PURPLE, borderRadius: 2, flexShrink: 0 }} />
+            {queryName}
+          </span>
+        )}
+      </div>
+    )}
+    </div>
   )
 }

@@ -90,22 +90,24 @@ export default function CompareTray({ compareIds, places, onRemove, onClear }: C
         >
           Clear
         </button>
-        <Link
-          href={`/compare?ids=${compareIds.join(',')}`}
-          style={{
-            display: 'inline-block',
-            borderRadius: 999,
-            background: '#1a1a2e',
-            color: '#fff',
-            padding: '8px 16px',
-            fontSize: 13,
-            fontWeight: 700,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Compare now →
-        </Link>
+        {compareIds.length >= 2 && (
+          <Link
+            href={`/saved/compare?a=${encodeURIComponent(compareIds[0])}&b=${encodeURIComponent(compareIds[1])}`}
+            style={{
+              display: 'inline-block',
+              borderRadius: 999,
+              background: '#1a1a2e',
+              color: '#fff',
+              padding: '8px 16px',
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Compare now →
+          </Link>
+        )}
       </div>
     </div>
   )
