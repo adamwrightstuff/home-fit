@@ -436,12 +436,13 @@ export default function CatalogPageClient({
         natural_beauty_preference: null as string | null,
         built_character_preference: null as string | null,
         built_density_preference: null as string | null,
+        political_preference: politicalPreference ?? null,
       }
       const cacheKey = buildResultsCacheKey(routeParams)
       writeCatalogResultsHydrate({ v: 1, cacheKey, score: place.score })
       router.push(buildResultsUrl(routeParams))
     },
-    [priorities, router]
+    [priorities, politicalPreference, router]
   )
 
   const clearSelection = useCallback(() => {
