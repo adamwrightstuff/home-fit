@@ -310,9 +310,7 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             type="button"
             className="hf-chip"
             onClick={() => {
-              setSubmitted(false)
-              setLocation(ex)
-              inputRef.current?.focus()
+              onSearch(ex)
             }}
           >
             {ex.length > 26 ? `${ex.slice(0, 26)}…` : ex}
