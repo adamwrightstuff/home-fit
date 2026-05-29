@@ -309,6 +309,38 @@ API_VERSION = f"{_BASE_VERSION}-{_SCORING_HASH}"
 # Log the auto-generated version on startup
 logger.info(f"API Version: {API_VERSION} (auto-generated from scoring file hash)")
 
+
+def _load_catalog_index() -> Dict[Tuple[float, float], Dict[str, Any]]:
+    """Load pre-scored catalog JSONL files into a (lat, lon) → score dict at startup."""
+    index: Dict[Tuple[float, float], Dict[str, Any]] = {}
+    catalog_files = [
+        os.path.join(os.path.dirname(__file__), "data", "nyc_metro_place_catalog_scores_merged.jsonl"),
+        os.path.join(os.path.dirname(__file__), "data", "la_metro_place_catalog_scores_merged.jsonl"),
+    ]
+    for path in catalog_files:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    entry = json.loads(line)
+                    if not entry.get("success") or not entry.get("score"):
+                        continue
+                    cat = entry["catalog"]
+                    key = (round(float(cat["lat"]), 4), round(float(cat["lon"]), 4))
+                    index[key] = entry["score"]
+        except Exception as e:
+            logger.warning(f"Could not load catalog index from {path}: {e}")
+    logger.info(f"Catalog index loaded: {len(index)} entries")
+    return index
+
+
+_CATALOG_INDEX: Dict[Tuple[float, float], Dict[str, Any]] = _load_catalog_index()
+
+
 # Shared, cross-user location cache (Redis)
 # Stores a compressed response template keyed by geocoded lat/lon + request options.
 # This is NOT keyed by IP or user identity, so it benefits all users.
@@ -1390,6 +1422,28 @@ def _compute_single_score_internal(
     location_scope = detect_location_scope(lat, lon, geocode_data)
     _log_place_timing("detect_location_scope", t_scope)
     logger.info(f"Location scope: {location_scope}")
+
+    # ------------------------------------------------------------------
+    # Catalog fast-path: if this lat/lon matches a pre-scored catalog entry,
+    # skip all pillar scoring and serve the stored result (recomputing weights).
+    # ------------------------------------------------------------------
+    if not test_mode_enabled and only_pillars is None:
+        catalog_key = (round(lat, 4), round(lon, 4))
+        catalog_entry = _CATALOG_INDEX.get(catalog_key)
+        if catalog_entry and catalog_entry.get("livability_pillars"):
+            catalog_entry["input"] = location
+            response = _apply_allocation_to_cached_response(
+                catalog_entry,
+                tokens=tokens,
+                priorities_dict=priorities_dict,
+                use_school_scoring=use_school_scoring,
+                only_pillars=only_pillars,
+            )
+            if isinstance(response.get("metadata"), dict):
+                response["metadata"]["catalog_hit"] = True
+                response["metadata"]["cache_hit"] = False
+            _log_place_timing("total", start_perf)
+            return response
 
     # ------------------------------------------------------------------
     # Shared cross-user cache (Redis): return cached response template if available.

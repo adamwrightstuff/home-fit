@@ -121,7 +121,7 @@ export default function SearchPage() {
         <AppHeader tagline="Search any neighborhood, city, or address in the US" />
         <div className="hf-container">
           <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 11, padding: '2px 7px', borderRadius: 10, fontWeight: 500, flexShrink: 0 }}>
                 Live scoring
               </span>
@@ -129,16 +129,15 @@ export default function SearchPage() {
                 Results usually take 20–40 seconds · scores all 13 pillars in real time
               </span>
             </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#2C2C2A', color: '#F1EFE8', fontSize: 12, padding: '6px 12px', borderRadius: 'var(--border-radius-md, 8px)' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-              </svg>
-              NYC &amp; LA neighborhoods score faster — they&apos;re in our catalog
-            </div>
           </div>
 
           <div id="search" className="hf-card">
-            <LocationSearch onSearch={handle_search} disabled={loading} />
+            <LocationSearch
+              onSearch={handle_search}
+              disabled={loading}
+              examples={['West Village, NYC', 'Santa Monica, CA']}
+              catalogLink="/catalog"
+            />
           </div>
 
           {!loading && (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, FormEvent, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 
 const PHOTON_API = 'https://photon.komoot.io/api'
 const DEBOUNCE_MS = 350
@@ -111,11 +112,12 @@ interface LocationSearchProps {
   onSearch: (location: string, geo?: LocationSuggestion['geo']) => void
   disabled?: boolean
   examples?: string[]
+  catalogLink?: string
 }
 
 const DEFAULT_EXAMPLES = ['New York, NY', '1600 Pennsylvania Avenue NW, Washington, DC']
 
-export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_EXAMPLES }: LocationSearchProps) {
+export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_EXAMPLES, catalogLink }: LocationSearchProps) {
   const [location, setLocation] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([])
@@ -316,6 +318,11 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             {ex.length > 26 ? `${ex.slice(0, 26)}…` : ex}
           </button>
         ))}
+        {catalogLink && (
+          <Link href={catalogLink} className="hf-btn-link" style={{ fontSize: '0.8rem', marginTop: 0 }}>
+            browse the catalog
+          </Link>
+        )}
       </div>
     </form>
   )
