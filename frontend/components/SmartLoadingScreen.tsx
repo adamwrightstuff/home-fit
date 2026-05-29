@@ -26,6 +26,7 @@ interface SmartLoadingScreenProps {
   built_character_preference?: string
   built_density_preference?: string
   diversity_preference?: string
+  political_preference?: string
 }
 
 const PILLAR_CONFIG: Record<PillarKey, { emoji: string; name: string; description: string }> = PILLAR_ORDER.reduce(
@@ -58,6 +59,7 @@ export default function SmartLoadingScreen({
   built_character_preference,
   built_density_preference,
   diversity_preference,
+  political_preference,
 }: SmartLoadingScreenProps) {
   const [current_pillar, set_current_pillar] = useState<string | null>(null)
   const [completed_pillars, set_completed_pillars] = useState<Map<string, { score: number; details?: any }>>(new Map())
@@ -101,6 +103,7 @@ export default function SmartLoadingScreen({
         ...(built_character_preference ? { built_character_preference } : {}),
         ...(built_density_preference ? { built_density_preference } : {}),
         ...(diversity_preference ? { diversity_preference } : {}),
+        ...(political_preference ? { political_preference } : {}),
       },
       (partial) => {
         if (cancelledRef.current) return

@@ -661,6 +661,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               built_character_preference={normalized.built_character_preference ?? undefined}
               built_density_preference={normalized.built_density_preference ?? undefined}
               diversity_preference={normalized.diversity_preference ?? undefined}
+              political_preference={normalized.political_preference ?? undefined}
               on_complete={(resp) => {
                 setRefreshing(false)
                 setRunActive(false)
