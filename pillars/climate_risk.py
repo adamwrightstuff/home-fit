@@ -23,9 +23,12 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# Heat (0-25 pts). Score = max(0, 25 - (heat_excess_deg_c / 5) * 25). 5°C excess = 0 pts.
+# Heat (0-25 pts). Absolute local LST: 30°C = 25 pts, 42°C = 0 pts.
+# If land_pixel_fraction < 0.3 the 500m buffer is mostly water — fall back to neutral.
 HEAT_MAX_PTS = 25.0
-HEAT_EXCESS_FOR_ZERO = 5.0  # degrees C above regional = 0 pts
+HEAT_LST_BEST = 30.0   # °C local LST → full points
+HEAT_LST_WORST = 42.0  # °C local LST → 0 points
+HEAT_MIN_LAND_FRACTION = 0.3
 
 # Air (0-20 pts). Score = max(0, 20 - (pm25_ugm3 / 35) * 20). 35 ug/m3 = 0 pts.
 AIR_MAX_PTS = 20.0
@@ -74,26 +77,24 @@ def get_climate_risk_score(
             no_heat, no_air, GEE_AVAILABLE,
         )
 
-    # Heat exposure (0-30 pts). Inverse: lower heat_excess = higher score.
+    # Heat exposure (0-25 pts). Absolute local LST: 30°C = full, 42°C = 0.
+    # Falls back to neutral (12.5) when data is missing or buffer is mostly water.
     if heat_data is not None:
-        raw_heat = heat_data.get("heat_excess_deg_c")
-        # Use 0 only when key is missing; 0 is valid (no excess = best)
-        heat_excess = 0.0 if raw_heat is None else raw_heat
+        local_lst = heat_data.get("local_lst_c")
+        land_fraction = heat_data.get("land_pixel_fraction", 1.0)
         try:
-            heat_excess = float(heat_excess)
+            local_lst = float(local_lst) if local_lst is not None else None
         except (TypeError, ValueError):
-            heat_excess = None
-        if heat_excess is not None and (heat_excess != heat_excess or abs(heat_excess) > 100):
-            heat_excess = None
-        if heat_excess is not None:
-            heat_pts = max(0.0, HEAT_MAX_PTS - (heat_excess / HEAT_EXCESS_FOR_ZERO) * HEAT_MAX_PTS)
+            local_lst = None
+        if local_lst is not None and land_fraction >= HEAT_MIN_LAND_FRACTION:
+            heat_pts = max(0.0, HEAT_MAX_PTS - ((local_lst - HEAT_LST_BEST) / (HEAT_LST_WORST - HEAT_LST_BEST)) * HEAT_MAX_PTS)
             heat_pts = round(min(HEAT_MAX_PTS, heat_pts), 2)
         else:
-            heat_excess = None
-            heat_pts = 0.0
+            heat_pts = round(HEAT_MAX_PTS * 0.5, 2)  # neutral: missing data or mostly-water buffer
     else:
-        heat_excess = None
-        heat_pts = 0.0
+        local_lst = None
+        land_fraction = None
+        heat_pts = round(HEAT_MAX_PTS * 0.5, 2)
 
     # Air quality (0-20 pts). Inverse: lower pm25_proxy = higher score.
     if air_data is not None:
@@ -184,9 +185,8 @@ def get_climate_risk_score(
         "climate_trend_score_0_100": trend_score_0_100,
     }
     summary = {
-        "heat_excess_deg_c": heat_excess,
         "local_lst_c": heat_data.get("local_lst_c") if heat_data else None,
-        "regional_lst_c": heat_data.get("regional_lst_c") if heat_data else None,
+        "land_pixel_fraction": heat_data.get("land_pixel_fraction") if heat_data else None,
         "pm25_proxy_ugm3": pm25_proxy,
         "aer_ai_mean": air_data.get("aer_ai_mean") if air_data else None,
         "flood_zone_score": flood_score_0_100,
@@ -206,8 +206,11 @@ def get_climate_risk_score(
     }
 
     logger.info(
-        "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) heat_excess=%s pm25=%s flood_tier=%s trend_c_decade=%s",
-        score, heat_pts, air_pts, flood_pts, trend_pts, heat_excess, pm25_proxy, risk_tier, trend_c_per_decade,
+        "Climate Risk Score: %s/100 (heat=%s, air=%s, flood=%s, trend=%s) local_lst=%s land_frac=%s pm25=%s flood_tier=%s trend_c_decade=%s",
+        score, heat_pts, air_pts, flood_pts, trend_pts,
+        heat_data.get("local_lst_c") if heat_data else None,
+        heat_data.get("land_pixel_fraction") if heat_data else None,
+        pm25_proxy, risk_tier, trend_c_per_decade,
     )
     if score == 0 and not no_data:
         logger.warning(

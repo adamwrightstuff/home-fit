@@ -1335,26 +1335,26 @@ def get_heat_exposure_lst(
 ) -> Optional[Dict]:
     """
     Landsat 8/9 Collection 2 L2 surface temperature (ST_B10).
-    JJA (June–August) composite; heat_excess = local_mean - regional_mean (urban heat island).
-    Water pixels (QA_PIXEL bit 7) are masked per-image before compositing so coastal and
-    riverfront locations are not penalized by cool ocean/river pixels in the regional mean.
-    Returns heat_excess_deg_c, local_lst_c, regional_lst_c for climate_risk pillar.
+    JJA (June–August) composite; scores on absolute local LST (land pixels only).
+    Water pixels (QA_PIXEL bit 7) are masked so waterfront locations reflect land heat.
+    land_pixel_fraction: fraction of 500m buffer that is land — low values flag unreliable
+    readings (e.g. barrier islands, peninsulas) and the caller falls back to neutral scoring.
+    regional_radius_m kept in signature for backward compatibility but no longer used.
     """
     if not GEE_AVAILABLE:
         return None
     try:
         point = ee.Geometry.Point([lon, lat])
         local_buffer = point.buffer(local_radius_m)
-        regional_buffer = point.buffer(regional_radius_m)
 
         # Landsat 8 + 9 C02 T1_L2: ST_B10 = surface temp (Kelvin: scale 0.00341802, offset 149.0)
         l8 = (ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
               .filterDate('2022-06-01', '2022-08-31')
-              .filterBounds(regional_buffer)
+              .filterBounds(local_buffer)
               .filter(ee.Filter.lt('CLOUD_COVER', 30)))
         l9 = (ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')
               .filterDate('2022-06-01', '2022-08-31')
-              .filterBounds(regional_buffer)
+              .filterBounds(local_buffer)
               .filter(ee.Filter.lt('CLOUD_COVER', 30)))
         combined = l8.merge(l9)
         n_images = combined.size().getInfo()
@@ -1362,8 +1362,6 @@ def get_heat_exposure_lst(
             print("   ⚠️  GEE LST: no Landsat images in date range / bounds")
             return None
 
-        # Convert ST_B10 to Celsius and mask water pixels (QA_PIXEL bit 7) per image
-        # before compositing so ocean/river pixels don't deflate the regional mean.
         def to_lst_land(image):
             qa = image.select('QA_PIXEL')
             land_mask = qa.bitwiseAnd(1 << 7).eq(0)
@@ -1374,42 +1372,48 @@ def get_heat_exposure_lst(
         lst_collection = combined.map(to_lst_land)
         composite = lst_collection.mean()
 
-        local_mean = composite.reduceRegion(
+        # Land pixel count (masked) vs total pixel count (unmasked) for fraction check
+        land_count_info = composite.reduceRegion(
+            reducer=ee.Reducer.count(),
+            geometry=local_buffer,
+            scale=100,
+            maxPixels=1e9
+        ).getInfo()
+        total_count_info = composite.unmask(-999).reduceRegion(
+            reducer=ee.Reducer.count(),
+            geometry=local_buffer,
+            scale=100,
+            maxPixels=1e9
+        ).getInfo()
+
+        local_info = composite.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=local_buffer,
             scale=100,
             maxPixels=1e9
-        )
-        regional_mean = composite.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=regional_buffer,
-            scale=100,
-            maxPixels=1e9
-        )
-        local_info = local_mean.getInfo()
-        regional_info = regional_mean.getInfo()
-        if not local_info or not regional_info:
+        ).getInfo()
+
+        if not local_info:
             return None
         local_c = local_info.get('lst_c')
-        regional_c = regional_info.get('lst_c')
         if local_c is None and len(local_info) == 1:
             local_c = next(iter(local_info.values()))
-        if regional_c is None and len(regional_info) == 1:
-            regional_c = next(iter(regional_info.values()))
-        if local_c is None or regional_c is None:
+        if local_c is None:
             return None
         try:
             local_f = float(local_c)
-            regional_f = float(regional_c)
         except (TypeError, ValueError):
             return None
-        if not (abs(local_f) < 1e6 and abs(regional_f) < 1e6):
+        if not abs(local_f) < 1e6:
             return None
-        heat_excess = local_f - regional_f
+
+        land_count = (land_count_info or {}).get('lst_c', 0) or 0
+        total_count = (total_count_info or {}).get('lst_c', 1) or 1
+        land_fraction = round(land_count / total_count, 3) if total_count > 0 else 0.0
+
         return {
-            'heat_excess_deg_c': round(heat_excess, 2),
             'local_lst_c': round(local_f, 2),
-            'regional_lst_c': round(regional_f, 2),
+            'land_pixel_fraction': land_fraction,
         }
     except Exception as e:
         print(f"   ⚠️  GEE LST heat exposure error: {e}")
@@ -1497,9 +1501,9 @@ def get_climate_trend_terraclimate(
                .select('tmmx'))
 
         def add_time(img):
-            t = ee.Number(ee.Date(img.get('system:time_start')).subtract(start_ms).divide(one_year_ms))
+            t = ee.Number(img.get('system:time_start')).subtract(start_ms).divide(one_year_ms)
             tmax_c = img.select('tmmx').multiply(0.1)
-            return ee.Image.cat([ee.Image.constant(t).rename('x'), tmax_c.rename('y')])
+            return ee.Image.cat([ee.Image.constant(t).float().rename('x'), tmax_c.rename('y')])
 
         col_xy = col.map(add_time)
         fit = col_xy.reduce(ee.Reducer.linearFit())
