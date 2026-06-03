@@ -538,12 +538,19 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
     # For suburbs, place-level gives true municipal data free of tract boundary bleed.
     place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
     if place_geo:
-        result = _fetch_housing_acs(
-            f"place:{int(place_geo['place_fips'])}",
-            f"state:{place_geo['state_fips']}",
-        )
+        geo_type = place_geo.get("geo_type", "incorporated_place")
+        if geo_type == "county_subdivision":
+            result = _fetch_housing_acs(
+                f"county subdivision:{place_geo['cousub_fips']}",
+                f"state:{place_geo['state_fips']} county:{place_geo['county_fips']}",
+            )
+        else:
+            result = _fetch_housing_acs(
+                f"place:{place_geo['place_fips']}",
+                f"state:{place_geo['state_fips']}",
+            )
         if result:
-            result["geo_level"] = "place"
+            result["geo_level"] = geo_type
             return result
 
     result = _fetch_housing_acs(
@@ -848,7 +855,14 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
     """
     State FIPS and Census place FIPS for an Incorporated Place, CDP, or Consolidated City
     containing the point.
+
+    For New England states (CT, ME, MA, NH, RI, VT) where towns are the primary municipal unit,
+    falls back to county subdivision when no Incorporated Place is found. Returns geo_type:
+    "incorporated_place", "county_subdivision", or "cdp".
     """
+    # New England states where county subdivisions (towns) are the primary municipal unit
+    _NEW_ENGLAND_FIPS = {"09", "23", "25", "33", "44", "50"}
+
     try:
         params = {
             "x": lon,
@@ -862,12 +876,11 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
             return None
         data = response.json()
         geographies = (data.get("result") or {}).get("geographies") or {}
-        # Order: smaller / more specific place types first where applicable; include
-        # Consolidated Cities for areas that are not in Incorporated Places / CDP alone.
-        for key in (
-            "Incorporated Places",
-            "Census Designated Places",
-            "Consolidated Cities",
+
+        # Prefer Incorporated Places and Consolidated Cities over CDPs
+        for key, geo_type in (
+            ("Incorporated Places", "incorporated_place"),
+            ("Consolidated Cities", "incorporated_place"),
         ):
             layer = geographies.get(key)
             if layer and len(layer) > 0:
@@ -875,7 +888,34 @@ def get_place_fips_for_coordinates(lat: float, lon: float) -> Optional[Dict[str,
                 st = g.get("STATE")
                 pl = g.get("PLACE")
                 if st and pl:
-                    return {"state_fips": str(st).zfill(2), "place_fips": str(pl).zfill(5)}
+                    return {"state_fips": str(st).zfill(2), "place_fips": str(pl).zfill(5), "geo_type": geo_type}
+
+        # For New England states, try county subdivision (town) before CDP
+        state_layer = geographies.get("States")
+        state_fips = str((state_layer[0].get("STATE") or "") if state_layer else "").zfill(2)
+        if state_fips in _NEW_ENGLAND_FIPS:
+            cousub_layer = geographies.get("County Subdivisions")
+            county_layer = geographies.get("Counties")
+            if cousub_layer and len(cousub_layer) > 0 and county_layer and len(county_layer) > 0:
+                cousub = cousub_layer[0].get("COUSUB")
+                county = county_layer[0].get("COUNTY")
+                if state_fips and cousub and county:
+                    return {
+                        "state_fips": state_fips,
+                        "county_fips": str(county).zfill(3),
+                        "cousub_fips": str(cousub).zfill(5),
+                        "geo_type": "county_subdivision",
+                    }
+
+        # Fall back to CDP
+        cdp_layer = geographies.get("Census Designated Places")
+        if cdp_layer and len(cdp_layer) > 0:
+            g = cdp_layer[0]
+            st = g.get("STATE")
+            pl = g.get("PLACE")
+            if st and pl:
+                return {"state_fips": str(st).zfill(2), "place_fips": str(pl).zfill(5), "geo_type": "cdp"}
+
         return None
     except Exception as e:
         print(f"   ⚠️  Place lookup failed: {e}")
@@ -891,7 +931,7 @@ def get_place_same_house_pct(state_fips: str, place_fips: str) -> Optional[float
         return None
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
-        pf = str(int(place_fips))  # Census place code without leading zeros
+        pf = str(place_fips).zfill(5)
         params = {
             "get": "B07003_001E,B07003_004E,NAME",
             "for": f"place:{pf}",
@@ -987,7 +1027,7 @@ def get_place_long_tenure_housing_pct(state_fips: str, place_fips: str) -> Optio
         return None
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
-        pf = str(int(place_fips))
+        pf = str(place_fips).zfill(5)
         params = {
             "get": (
                 "B25038_001E,B25038_002E,B25038_003E,B25038_004E,B25038_005E,B25038_006E,"
@@ -1123,16 +1163,34 @@ def get_diversity_data(lat: float, lon: float, tract: Optional[Dict] = None, are
     tract_for = f"tract:{tract['tract_fips']}"
     tract_in = f"state:{tract['state_fips']} county:{tract['county_fips']}"
 
+    # Population ceiling: reject place/county-sub level diversity data from large cities
+    # (e.g. "New York city" PLACE=51000 has 8M residents — meaningless for a neighborhood).
+    # Tract data is always more granular and appropriate when the place population exceeds this.
+    _MAX_PLACE_POP_25_PLUS = 200_000
+
     geo_attempts = []
     if place_geo:
-        geo_attempts.append(("place", f"place:{int(place_geo['place_fips'])}", f"state:{place_geo['state_fips']}"))
+        geo_type = place_geo.get("geo_type", "incorporated_place")
+        if geo_type == "county_subdivision":
+            geo_attempts.append((
+                geo_type,
+                f"county subdivision:{place_geo['cousub_fips']}",
+                f"state:{place_geo['state_fips']} county:{place_geo['county_fips']}",
+            ))
+        else:
+            geo_attempts.append(("place", f"place:{place_geo['place_fips']}", f"state:{place_geo['state_fips']}"))
     geo_attempts.append(("tract", tract_for, tract_in))
 
     for geo_level, geo_for, geo_in in geo_attempts:
         result = _fetch_diversity_acs(geo_for, geo_in)
-        if result is not None:
-            result["geo_level"] = geo_level
-            return result
+        if result is None:
+            continue
+        edu = result.get("education_attainment") or {}
+        pop = edu.get("population_25_plus") or 0
+        if geo_level != "tract" and pop > _MAX_PLACE_POP_25_PLUS:
+            continue
+        result["geo_level"] = geo_level
+        return result
     return None
 
 
