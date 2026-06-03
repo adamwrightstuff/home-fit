@@ -212,7 +212,8 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             levels_entropy=diversity_metrics.get("levels_entropy"),
             building_type_diversity=diversity_metrics.get("building_type_diversity"),
             footprint_area_cv=diversity_metrics.get("footprint_area_cv"),
-            pre_1940_pct=pre_1940_pct
+            pre_1940_pct=pre_1940_pct,
+            nrhp_count=nrhp_count
         )
 
         # When user has a density preference, score using that profile so the result reflects fit.
@@ -306,7 +307,18 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 if "historic" in (contextual_tags or []):
                     coherence_score = max(coherence_score, 92.0)
                 if "rowhouse" in (contextual_tags or []):
-                    coherence_score = max(coherence_score, 95.0)
+                    # Grant full coherence boost only for genuinely pre-war rowhouse fabric.
+                    # Postwar neighborhoods tagged rowhouse by building form alone don't get
+                    # the same historic coherence credit — it inflates generic suburban scores.
+                    _yr = None
+                    try:
+                        _yr = int(median_year_built) if median_year_built else None
+                    except (TypeError, ValueError):
+                        pass
+                    _pre40 = float(pre_1940_pct or 0)
+                    if (_yr is not None and _yr <= 1955) or _pre40 >= 10.0 or nrhp_count >= 7:
+                        coherence_score = max(coherence_score, 95.0)
+                    # else: postwar rowhouse — use natural age_coherence_signal, no artificial floor
 
                 calibrated_beauty_score_0_100 = compute_calibrated_architectural_beauty_score(
                     {

@@ -396,7 +396,8 @@ def get_contextual_tags(
     levels_entropy: Optional[float] = None,
     building_type_diversity: Optional[float] = None,
     footprint_area_cv: Optional[float] = None,
-    pre_1940_pct: Optional[float] = None
+    pre_1940_pct: Optional[float] = None,
+    nrhp_count: int = 0
 ) -> List[str]:
     """
     Determine contextual tags for a location.
@@ -448,7 +449,13 @@ def get_contextual_tags(
             # If pre_1940_pct is None and median_year < 1980, be conservative: don't use landmark count
             # This prevents modern areas (like South Lake Union 1970) from being misclassified
         # If median_year_built >= 1980: Do NOT use landmark count (modern areas)
-    
+
+    # NRHP fallback: high NRHP count + any pre-1940 stock overrides unreliable Census myr.
+    # Handles inner-city neighborhoods where new construction skews Census myr upward
+    # (e.g. Fort Greene: NRHP=14, Census myr=2010 due to condo development).
+    if not is_historic and nrhp_count >= 10 and pre_1940_pct is not None and pre_1940_pct >= 1.0:
+        is_historic = True
+
     if is_historic:
         tags.append('historic')
     
