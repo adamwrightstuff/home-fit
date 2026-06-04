@@ -646,17 +646,20 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .hf-header { padding: 32px 1.5rem 32px; }
-  .hf-header h1 { font-size: 28px; }
+  .hf-header { padding: 24px 1.25rem 24px; }
+  .hf-header h1 { font-size: 24px; }
   .hf-header p { display: none; }
   .hf-container { padding: 0 1rem 2rem; }
   .hf-grid-2, .hf-grid-3 { grid-template-columns: 1fr; }
-  .hf-card { padding: 1.75rem; }
+  .hf-card { padding: 1.25rem; }
   .hf-hero-grid { grid-template-columns: 1fr; text-align: left; }
   .hf-hero-image { height: 300px; max-width: 100%; }
   .hf-search-input-row { flex-direction: column; }
   .hf-search-input-row .hf-btn-primary { width: 100%; padding-left: 1.5rem; padding-right: 1.5rem; }
   .hf-chip-row { flex-direction: row; flex-wrap: wrap; }
+  .hf-input { padding: 0.875rem 1rem; font-size: 1rem; }
+  .hf-btn-primary { padding: 0.875rem 1.75rem; font-size: 1rem; }
+  .hf-btn-secondary { padding: 0.75rem 1.25rem; font-size: 1rem; }
 }
 
 /* Score summary block: responsive grid (no sticky) */
@@ -709,11 +712,17 @@ body {
 
 /* Tighter layout on narrow phones */
 @media (max-width: 480px) {
-  .hf-card { padding: 1rem; border-radius: 14px; }
-  .hf-card-sm { padding: 1rem; }
+  body { font-size: 0.95rem; }
+  .hf-card { padding: 0.875rem; border-radius: 14px; }
+  .hf-card-sm { padding: 0.875rem; }
   .hf-container { padding: 0 0.75rem 1.5rem; }
-  .hf-section-title { font-size: 1.4rem; }
-  .tr-panel { padding: 12px; }
+  .hf-section-title { font-size: 1.3rem; }
+  .tr-panel { padding: 10px; }
+  .hf-header { padding: 16px 1rem 16px; }
+  .hf-header h1 { font-size: 20px; }
+  .hf-input { padding: 0.75rem 0.875rem; font-size: 0.95rem; }
+  .hf-btn-primary { padding: 0.75rem 1.25rem; font-size: 0.95rem; }
+  .hf-btn-secondary { padding: 0.65rem 1rem; font-size: 0.95rem; }
 }
 
 /* PlaceView pillar row: stack on narrow viewports so score/weight don't overlap description */
