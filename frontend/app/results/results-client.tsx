@@ -600,7 +600,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
 
   if (!normalized) {
     return (
-      <main className="hf-page">
+      <main className="hf-page hf-page-no-hero">
         <div className="hf-container">
           <div className="hf-card">
             <div style={{ fontWeight: 800, fontSize: '1.2rem' }}>Missing required parameter</div>

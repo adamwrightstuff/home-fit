@@ -707,6 +707,15 @@ body {
   }
 }
 
+/* Tighter layout on narrow phones */
+@media (max-width: 480px) {
+  .hf-card { padding: 1rem; border-radius: 14px; }
+  .hf-card-sm { padding: 1rem; }
+  .hf-container { padding: 0 0.75rem 1.5rem; }
+  .hf-section-title { font-size: 1.4rem; }
+  .tr-panel { padding: 12px; }
+}
+
 /* PlaceView pillar row: stack on narrow viewports so score/weight don't overlap description */
 .hf-pillar-row {
   display: flex;

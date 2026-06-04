@@ -244,7 +244,7 @@ export default function SavedPage() {
 
   if (!authLoading && !user) {
     return (
-      <main className="hf-page">
+      <main className="hf-page hf-page-no-hero">
         <div className="hf-container">
           <div className="hf-card">
             <h2 className="hf-section-title">My saved places</h2>
