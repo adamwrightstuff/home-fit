@@ -499,6 +499,8 @@ def _fetch_housing_acs(for_clause: str, in_clause: str) -> Optional[Dict]:
             result["mean_household_income"] = mean_household_income
         if renter_pct is not None:
             result["renter_pct"] = renter_pct
+        if total_occupied is not None:
+            result["total_occupied"] = total_occupied
         return result
 
     except Exception:
@@ -536,6 +538,10 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
 
     # For urban_core (city neighborhoods), tract is more granular than the whole city place.
     # For suburbs, place-level gives true municipal data free of tract boundary bleed.
+    # Housing unit ceiling: reject place-level data from large cities (e.g. City of Los Angeles
+    # has ~1.4M occupied units — using city-wide median for a neighborhood is meaningless).
+    _MAX_PLACE_OCCUPIED_UNITS = 200_000
+
     place_geo = None if area_type == "urban_core" else get_place_fips_for_coordinates(lat, lon)
     if place_geo:
         geo_type = place_geo.get("geo_type", "incorporated_place")
@@ -550,8 +556,10 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
                 f"state:{place_geo['state_fips']}",
             )
         if result:
-            result["geo_level"] = geo_type
-            return result
+            total_occ = result.get("total_occupied") or 0
+            if total_occ <= _MAX_PLACE_OCCUPIED_UNITS:
+                result["geo_level"] = geo_type
+                return result
 
     result = _fetch_housing_acs(
         f"tract:{tract['tract_fips']}",
