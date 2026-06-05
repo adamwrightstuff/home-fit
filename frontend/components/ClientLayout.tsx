@@ -11,6 +11,7 @@ export default function ClientLayout({
 }) {
   return (
     <AuthProvider>
+      <div style={{ overflowX: 'clip', maxWidth: '100%', isolation: 'isolate' }}>
       <AuthBar />
       {children}
       <footer
@@ -24,6 +25,7 @@ export default function ClientLayout({
       >
         <ApiVersion />
       </footer>
+      </div>
     </AuthProvider>
   )
 }

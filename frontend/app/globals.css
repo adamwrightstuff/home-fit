@@ -104,9 +104,9 @@
   --hf-happiness-teal:   var(--tr-happiness-score);
 }
 
-html {
-  overflow-x: hidden;
-  max-width: 100vw;
+html, body {
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
@@ -115,8 +115,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.05rem;
   line-height: 1.6;
-  overflow-x: hidden;
-  max-width: 100vw;
 }
 
 .hf-viewport {
@@ -670,57 +668,6 @@ body {
   .hf-btn-secondary { padding: 0.75rem 1.25rem; font-size: 1rem; }
   .hf-auth-bar-inner { padding: 0.5rem 1rem; gap: 0.5rem; }
   .hf-auth-bar-btn { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
-  /* Hide auth buttons on mobile — shown via hamburger menu instead */
-  .hf-auth-bar-account-desktop { display: none; }
-  .hf-auth-bar-menu-toggle { display: flex; }
-  .hf-auth-bar-mobile-menu { display: block; }
-}
-
-.hf-auth-bar-account-desktop {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* Mobile menu toggle button */
-.hf-auth-bar-menu-toggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--hf-border);
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  color: var(--hf-text-primary);
-}
-
-/* Mobile dropdown menu */
-.hf-auth-bar-mobile-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  left: 0;
-  background: var(--hf-card-bg);
-  border-bottom: 1px solid var(--hf-border);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  z-index: 49;
-  padding: 0.75rem 1rem;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.hf-auth-bar-mobile-menu.open {
-  display: flex;
-}
-
-.hf-auth-bar-mobile-menu a,
-.hf-auth-bar-mobile-menu button {
-  width: 100%;
-  text-align: left;
-  display: block;
 }
 
 /* Score summary block: responsive grid (no sticky) */
@@ -932,6 +879,59 @@ body {
   box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
   background: var(--hf-primary-gradient);
   color: #fff;
+}
+
+/* Desktop account nav — hidden on mobile, overridden below in media query */
+.hf-auth-bar-account-desktop {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Hamburger toggle — hidden on desktop, shown on mobile */
+.hf-auth-bar-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hf-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--hf-text-primary);
+}
+
+/* Mobile dropdown menu */
+.hf-auth-bar-mobile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  background: var(--hf-card-bg);
+  border-bottom: 1px solid var(--hf-border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 49;
+  padding: 0.75rem 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hf-auth-bar-mobile-menu.open {
+  display: flex;
+}
+
+.hf-auth-bar-mobile-menu a,
+.hf-auth-bar-mobile-menu button {
+  width: 100%;
+  text-align: left;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hf-auth-bar-account-desktop { display: none; }
+  .hf-auth-bar-menu-toggle { display: flex; }
 }
 
 /* Auth modal */
