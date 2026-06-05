@@ -2190,6 +2190,31 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     if water_proximity_data and water_proximity_data.get("nearest_distance_km") is None:
         water_proximity_data = None
 
+    # COASTAL OVERRIDE: If OSM returned a small river/channel (area < 0.5 km²) but NLCD shows
+    # >= 20% water coverage, the neighborhood is coastal and the small waterway is a distraction
+    # (e.g. Venice, CA — Ballona Lagoon beats the Pacific Ocean in the OSM query).
+    # Upgrade to ocean classification using the NLCD signal.
+    if water_proximity_data and landcover_metrics:
+        _wb = water_proximity_data.get("nearest_waterbody") or {}
+        _wb_type = str(_wb.get("type") or "").lower()
+        _wb_area = float(_wb.get("area_km2") or 0.0)
+        _lc_water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
+        if _wb_type in ("river", "stream") and _wb_area < 0.5 and _lc_water_pct >= 20.0:
+            _area_key = area_type_key if area_type_key else ""
+            _inferred_type = "bay" if _area_key in ("urban_core", "historic_urban", "urban_core_lowrise") else "ocean"
+            water_proximity_data = {
+                "nearest_waterbody": {
+                    "type": _inferred_type,
+                    "name": f"Coastal water (NLCD override — {_wb.get('name','small waterway')} displaced by {_lc_water_pct:.0f}% water coverage)",
+                    "area_km2": None,
+                },
+                "nearest_distance_km": water_proximity_data.get("nearest_distance_km", 0.0),
+                "water_features": [],
+                "water_density": _lc_water_pct,
+                "source": "landcover_coastal_override",
+                "count": 0,
+            }
+
     # FALLBACK: If no water proximity data but high water coverage, assume coastal/ocean
     # This handles cases where OSM coastline queries fail but landcover shows high water %
     # (e.g., Manhattan Beach, CA - ocean isn't always returned as discrete OSM feature)

@@ -1040,18 +1040,23 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
         nearest_distance_km = None
 
         # Coastal context wins for true waterfront places when marine water is nearby.
-        # Exception: if a named river exists at ≤2x the ocean distance, the coastline is the
-        # bank of that river (e.g. East River, Hudson), not an open-ocean shore — use the river.
-        if ocean_bay and isinstance(ocean_bay[0].get("distance_km"), (int, float)) and ocean_bay[0]["distance_km"] <= 2.0:
+        # Threshold raised from 2.0km to 4.0km: OSM coastline geometry and node placement
+        # can cause measured distances to exceed physical beach distance (e.g. Venice, CA
+        # centroid is ~0.3km from the beach but OSM reports >2km to the nearest coastline node).
+        # Exception: if a MAJOR named river (area >= 0.5 km²) exists at ≤2x the ocean distance,
+        # the coastline is the bank of that river (e.g. East River, Hudson) — use the river.
+        # Small channels and lagoons (e.g. Ballona Lagoon, Venice Canals) do NOT displace ocean.
+        if ocean_bay and isinstance(ocean_bay[0].get("distance_km"), (int, float)) and ocean_bay[0]["distance_km"] <= 4.0:
             ocean_dist = float(ocean_bay[0]["distance_km"])
-            named_rivers_nearby = [
+            major_rivers_nearby = [
                 r for r in rivers
                 if r.get("name")
                 and isinstance(r.get("distance_km"), (int, float))
                 and float(r["distance_km"]) <= ocean_dist * 2.0
+                and float(r.get("area_km2") or 0.0) >= 0.5  # major waterway only (East River, Hudson scale)
             ]
-            if named_rivers_nearby:
-                nearest_waterbody = named_rivers_nearby[0]
+            if major_rivers_nearby:
+                nearest_waterbody = major_rivers_nearby[0]
             else:
                 nearest_waterbody = ocean_bay[0]
         # Major river beats tiny nearby still water artifacts in urban cores.
