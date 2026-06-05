@@ -15,7 +15,7 @@ import {
   type AgentRecommendResponse,
 } from '@/lib/agentRecommend'
 
-const TOTAL_QUESTIONS = 7
+const TOTAL_QUESTIONS = 8
 
 const QUESTIONS = [
   {
@@ -74,6 +74,16 @@ const QUESTIONS = [
     ],
   },
   {
+    id: 'political_vibe',
+    type: 'single' as const,
+    prompt: 'Does community political alignment matter to you?',
+    options: [
+      { value: 'progressive', text: 'Yes — I prefer a progressive-leaning community' },
+      { value: 'conservative', text: 'Yes — I prefer a conservative-leaning community' },
+      { value: 'no_preference', text: "Not a factor for me" },
+    ],
+  },
+  {
     id: 'natural_scenery',
     type: 'multi' as const,
     prompt: 'What kind of natural scenery matters most to you?',
@@ -103,6 +113,7 @@ type QuizAnswers = {
   natural_scenery: string[]
   job_categories: string[]
   community_vibe: string | null
+  political_vibe: string | null
 }
 
 function getInitialAnswers(): QuizAnswers {
@@ -114,6 +125,7 @@ function getInitialAnswers(): QuizAnswers {
     natural_scenery: [],
     job_categories: [],
     community_vibe: null,
+    political_vibe: null,
   }
 }
 
@@ -226,6 +238,12 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('diversity', 25)
   }
 
+  // political_vibe
+  const pv = answers.political_vibe
+  if (pv === 'progressive' || pv === 'conservative') {
+    set('political_lean', 80)
+  }
+
   // natural_scenery: if user picked 1–2 scenery types (not "no strong preference"), boost Natural Beauty importance
   const scenery = answers.natural_scenery.filter((v) => v !== 'no_preference')
   if (scenery.length > 0) {
@@ -265,7 +283,7 @@ function weightsToPriorities(weights: PillarWeights): PillarPriorities {
 }
 
 interface PlaceValuesGameProps {
-  onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[]) => void
+  onApplyPriorities?: (priorities: PillarPriorities, naturalBeautyPreference?: string[], job_categories?: string[], politicalVibe?: string | null) => void
   onBack?: () => void
 }
 
@@ -451,8 +469,8 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
 
   useEffect(() => {
     if (game_state !== 'results') return
-    onApplyPriorities?.(effective_priorities, naturalBeautyPreference, answers.job_categories)
-  }, [game_state, effective_priorities, naturalBeautyPreference, answers.job_categories, onApplyPriorities])
+    onApplyPriorities?.(effective_priorities, naturalBeautyPreference, answers.job_categories, answers.political_vibe)
+  }, [game_state, effective_priorities, naturalBeautyPreference, answers.job_categories, answers.political_vibe, onApplyPriorities])
 
   useEffect(() => {
     if (game_state === 'recommendations' && agent_response) {

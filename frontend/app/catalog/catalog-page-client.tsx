@@ -14,7 +14,7 @@ import HeroBand from '@/components/catalog/HeroBand'
 import FilterSheet from '@/components/catalog/FilterSheet'
 import IndexInfoButton from '@/components/catalog/IndexInfoButton'
 import CompareTray from '@/components/catalog/CompareTray'
-import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
+import { DEFAULT_PRIORITIES, type PillarPriorities, type PriorityLevel } from '@/components/SearchOptions'
 import {
   buildCatalogFeatureCollection,
   buildTwinMatchFeatureCollection,
@@ -87,8 +87,33 @@ export default function CatalogPageClient({
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('explorer')
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [indexMode, setIndexMode] = useState<CatalogMapIndexMode>('homefit')
-  const [priorities, setPriorities] = useState<PillarPriorities>(() => ({ ...DEFAULT_PRIORITIES }))
-  const [politicalPreference, setPoliticalPreference] = useState<'progressive' | 'conservative' | null>(null)
+  const [priorities, setPriorities] = useState<PillarPriorities>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        const merged = { ...DEFAULT_PRIORITIES }
+        const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+        for (const k of PILLAR_ORDER) {
+          if (valid.includes(parsed[k])) merged[k] = parsed[k]
+        }
+        return merged
+      }
+    } catch { /* ignore */ }
+    return { ...DEFAULT_PRIORITIES }
+  })
+  const [politicalPreference, setPoliticalPreference] = useState<'progressive' | 'conservative' | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('homefit_search_options')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.political_preference === 'progressive' || parsed.political_preference === 'conservative') {
+          return parsed.political_preference
+        }
+      }
+    } catch { /* ignore */ }
+    return null
+  })
   const [nbPreference, setNbPreference] = useState<NbPreference | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
@@ -484,10 +509,15 @@ export default function CatalogPageClient({
   if (showQuiz) {
     return (
       <PlaceValuesGame
-        onApplyPriorities={(quizPriorities, naturalBeautyPreference) => {
+        onApplyPriorities={(quizPriorities, naturalBeautyPreference, _jobCats, politicalVibe) => {
           setPriorities(quizPriorities)
           if (naturalBeautyPreference?.length) {
             setNbPreference(naturalBeautyPreference[0] as import('@/lib/nbPreference').NbPreference)
+          }
+          if (politicalVibe === 'progressive' || politicalVibe === 'conservative') {
+            setPoliticalPreference(politicalVibe)
+          } else {
+            setPoliticalPreference(null)
           }
           setShowQuiz(false)
         }}
