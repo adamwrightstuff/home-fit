@@ -133,6 +133,14 @@ body {
   min-height: 0;
 }
 
+/* Prevent body scroll on catalog page — footer below catalog root would otherwise create scrollable whitespace */
+body:has(.hf-catalog-root) {
+  overflow: hidden;
+}
+body:has(.hf-catalog-root) .hf-api-version-footer {
+  display: none;
+}
+
 .hf-safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }

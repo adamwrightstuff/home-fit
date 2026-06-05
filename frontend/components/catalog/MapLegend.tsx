@@ -12,7 +12,7 @@ export default function MapLegend({ show }: MapLegendProps) {
       aria-label="Map score legend"
       style={{
         position: 'absolute',
-        bottom: 16,
+        top: 16,
         left: 16,
         zIndex: 10,
         background: '#fff',

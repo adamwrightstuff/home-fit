@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
 import CatalogBottomSheet, { findPlaceByKey, type CatalogSheetSnap } from '@/components/catalog/CatalogBottomSheet'
+import CatalogDetailPanel from '@/components/catalog/CatalogDetailPanel'
 import CatalogWeightPanel from '@/components/catalog/CatalogWeightPanel'
 import PillarTwinDrawer from '@/components/catalog/PillarTwinDrawer'
 import TwinFinderPanel from '@/components/catalog/TwinFinderPanel'
@@ -529,7 +530,169 @@ export default function CatalogPageClient({
   return (
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
       <HeroBand />
-      <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 pt-2 pb-0 backdrop-blur">
+      <header className="z-30 shrink-0 border-b border-[var(--hf-border)] bg-white/95 backdrop-blur">
+        {/* ── Desktop single-row toolbar ── */}
+        <div className="hidden md:flex md:items-center md:gap-2 md:px-4 md:py-2 md:flex-wrap">
+          {/* Mode tabs */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'explorer' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'explorer' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              onClick={() => { setCatalogMode('explorer'); setTwinQueryKey(null); setTwinSearchText(''); router.replace('/catalog', { scroll: false }) }}
+            >Explorer</button>
+            <button
+              type="button"
+              className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+              style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+              onClick={() => { setCatalogMode('twin'); setViewMode('list') }}
+            >Twin finder</button>
+          </div>
+
+          <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
+
+          {/* Search / Twin input */}
+          {catalogMode === 'explorer' ? (
+            <input
+              type="search"
+              placeholder="Filter neighborhoods…"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="w-44 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-xs shrink-0"
+            />
+          ) : (
+            <div className="relative flex items-center shrink-0">
+              <input
+                type="search"
+                placeholder="Search a neighborhood to find its twin…"
+                value={twinQueryKey && queryPlace ? queryPlace.catalog.name : twinSearchText}
+                onChange={(e) => { if (twinQueryKey) return; setTwinSearchText(e.target.value) }}
+                readOnly={!!twinQueryKey}
+                className="w-56 rounded-lg border border-[var(--hf-border)] py-1 pl-2 pr-7 text-xs"
+              />
+              {twinQueryKey && (
+                <button type="button" className="absolute right-1 rounded p-0.5 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]" onClick={clearTwinQuery} aria-label="Clear neighborhood">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {catalogMode === 'explorer' && (
+            <>
+              <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
+              {/* Metro */}
+              <div className="flex items-center gap-1 shrink-0">
+                {(['all', 'nyc', 'la'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                    style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
+                    onClick={() => setFilterMetro(m)}
+                  >{m === 'all' ? 'All metros' : m.toUpperCase()}</button>
+                ))}
+              </div>
+
+              <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
+              {/* Index tabs */}
+              <div className="flex items-center gap-1 shrink-0">
+                {INDEXES.map((x) => {
+                  const active = indexMode === x.id && !sortByName
+                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+                  return (
+                    <div key={x.id} className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        title={x.tooltip}
+                        className="rounded-full px-2.5 py-1 text-xs font-bold"
+                        style={active ? { ...activeStyle, border: 'none' } : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                        onClick={() => setIndexModeAndListSort(x.id)}
+                      >{x.label}</button>
+                      <IndexInfoButton indexId={x.id} />
+                    </div>
+                  )
+                })}
+                <button
+                  type="button"
+                  aria-pressed={sortByName}
+                  className={`text-[0.65rem] font-semibold ${sortByName ? 'text-[var(--hf-primary-1)] underline' : 'text-[var(--hf-text-secondary)]'}`}
+                  onClick={() => setSortByName(true)}
+                >A–Z</button>
+                <button
+                  type="button"
+                  className="text-[0.65rem] font-semibold text-[var(--hf-primary-1)]"
+                  onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                >{sortDir === 'desc' ? 'Desc' : 'Asc'}</button>
+              </div>
+            </>
+          )}
+
+          {catalogMode === 'twin' && (
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinCrossMetro(true)}
+              >Cross-metro</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinCrossMetro(false)}
+              >Same metro</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-bold disabled:opacity-40"
+                onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+                Pillars ({twinPillarList.length})
+              </button>
+            </div>
+          )}
+
+          {/* Right-side controls */}
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
+            {catalogMode === 'explorer' && (
+              <>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2.5 py-1 text-xs font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
+                  onClick={() => setFilterSheetOpen(true)}
+                >
+                  <span>⚙</span>
+                  Filters
+                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) > 0 && (
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
+                      {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0)}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  title={indexMode !== 'homefit' ? 'Weights apply to Trovamo score only' : undefined}
+                  className="rounded-lg border border-[var(--hf-border-strong)] px-2.5 py-1 text-xs font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
+                  style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
+                  onClick={() => setWeightOpen(true)}
+                >Adjust weights</button>
+              </>
+            )}
+            <div className="h-4 w-px bg-[var(--hf-border)]" />
+            <button type="button" className={`rounded-lg p-1.5 ${viewMode === 'map' ? 'bg-[var(--hf-hover-bg)]' : ''}`} onClick={() => setViewMode('map')} title="Map">
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button type="button" className={`rounded-lg p-1.5 ${viewMode === 'list' ? 'bg-[var(--hf-hover-bg)]' : ''}`} onClick={() => setViewMode('list')} title="List">
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Mobile stacked layout ── */}
+        <div className="md:hidden flex flex-col gap-1.5 max-h-[55vh] overflow-y-auto px-3 pt-2 pb-0">
         <div className="flex items-center justify-between gap-2">
           <div>
             <span className="text-sm font-bold text-[var(--hf-text-primary)]">Explore</span>
@@ -794,6 +957,7 @@ export default function CatalogPageClient({
             </button>
           </>
         )}
+        </div>{/* end mobile layout */}
       </header>
 
       {viewMode === 'map' && (
@@ -869,6 +1033,19 @@ export default function CatalogPageClient({
               />
             </div>
           )}
+          {/* Desktop detail panel — slides in from right on selection */}
+          {catalogMode === 'explorer' && (
+            <div className="hidden md:block">
+              <CatalogDetailPanel
+                place={selectedPlace}
+                indexMode={indexMode}
+                onIndexModeChange={setIndexModeAndListSort}
+                priorities={priorities}
+                onClose={clearSelection}
+                onFullBreakdown={handleFullBreakdown}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -903,6 +1080,7 @@ export default function CatalogPageClient({
       )}
 
       {catalogMode === 'explorer' && viewMode === 'map' && (
+        <div className="md:hidden">
         <CatalogBottomSheet
           place={selectedPlace}
           indexMode={indexMode}
@@ -913,6 +1091,7 @@ export default function CatalogPageClient({
           onClose={clearSelection}
           onFullBreakdown={handleFullBreakdown}
         />
+        </div>
       )}
 
       {catalogMode === 'twin' && twinQueryKey && queryPlace && (
