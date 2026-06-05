@@ -820,10 +820,10 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             {agent_loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" aria-hidden />
-                Finding neighborhoods…
+                Matching neighborhoods with AI…
               </>
             ) : (
-              <>See neighborhood picks for you</>
+              <>Find my neighborhoods</>
             )}
           </button>
 
