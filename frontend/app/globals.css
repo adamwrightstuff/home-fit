@@ -130,6 +130,7 @@ body {
 /* Catalog page: height must subtract sticky AuthBar so page doesn't overflow */
 .hf-catalog-root {
   height: calc(100dvh - var(--authbar-h, 52px));
+  min-height: 0;
 }
 
 .hf-safe-bottom {
@@ -654,6 +655,13 @@ body {
   font-weight: 600;
 }
 
+.hf-api-version-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  min-height: 28px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   /* No dead scroll space below the search card on mobile */
@@ -838,7 +846,6 @@ body {
 }
 
 .hf-auth-bar-nav {
-  display: flex;
   align-items: center;
   gap: 0.75rem;
 }
@@ -942,13 +949,6 @@ body {
 @media (max-width: 768px) {
   .hf-auth-bar-account-desktop { display: none; }
   .hf-auth-bar-menu-toggle { display: flex; }
-}
-
-.hf-api-version-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.5rem 1rem;
-  min-height: 28px;
 }
 
 /* Auth modal */
