@@ -15,12 +15,7 @@ export default function ClientLayout({
       <AuthBar />
       {children}
       <footer
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '0.5rem 1rem',
-          minHeight: 28,
-        }}
+        className="hf-api-version-footer"
         aria-label="API version"
       >
         <ApiVersion />

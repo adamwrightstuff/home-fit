@@ -651,6 +651,11 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+  /* No dead scroll space below the search card on mobile */
+  .hf-page { min-height: unset; }
+  /* Hide API version string from users on mobile */
+  .hf-api-version-footer { display: none; }
+
   .hf-header { padding: 24px 1.25rem 24px; }
   .hf-header h1 { font-size: 24px; }
   .hf-header p { display: none; }
@@ -932,6 +937,13 @@ body {
 @media (max-width: 768px) {
   .hf-auth-bar-account-desktop { display: none; }
   .hf-auth-bar-menu-toggle { display: flex; }
+}
+
+.hf-api-version-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  min-height: 28px;
 }
 
 /* Auth modal */

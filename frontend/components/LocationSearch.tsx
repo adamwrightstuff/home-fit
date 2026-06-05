@@ -239,11 +239,17 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             onKeyDown={handleKeyDown}
-            onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
-            placeholder="Search any neighborhood, city, or address in the US…"
+            onFocus={() => {
+              if (suggestions.length > 0) setSuggestionsOpen(true)
+              if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                setTimeout(() => inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350)
+              }
+            }}
+            placeholder="Neighborhood, city, or address…"
             className={`hf-input ${isInvalid ? 'hf-input--invalid' : ''}`}
             disabled={disabled}
             autoComplete="off"
+            inputMode="search"
             aria-label="Search for a place"
             aria-autocomplete="list"
             aria-haspopup="listbox"
