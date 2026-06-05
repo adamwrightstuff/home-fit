@@ -840,14 +840,16 @@ def _classify_archetype(
     if wealth_val >= 90 and home_cost >= 50:
         return "Established", "established_ultra_wealth"
 
-    # Professional: credential class fires before stab-gated Established so that credential-dense
-    # moderate-wealth neighborhoods (West Village, Carroll Gardens) classify correctly.
-    if edu_val >= 78 and occ_val >= 80:
-        return "Upper Middle Class", "professional_credential_class"
-
-    # Established: very high wealth — less stability required (executive, transient-elite markets)
+    # Established: very high wealth — less stability required (executive, transient-elite markets).
+    # Fires before professional_credential_class so high-wealth prestige enclaves (Manhattan Beach,
+    # Carnegie Hill, Rye, La Cañada) aren't short-circuited into Upper Middle Class on credentials alone.
     if wealth_val > 85 and stab_val is not None and stab_val > 35:
         return "Established", "established_high_wealth"
+
+    # Professional: credential class for credential-dense moderate-wealth neighborhoods
+    # (West Village, Carroll Gardens, Brentwood, Pacific Palisades).
+    if edu_val >= 78 and occ_val >= 80:
+        return "Upper Middle Class", "professional_credential_class"
 
     # Established: capital wealth + community roots. W>77 threshold (raised from >75) prevents
     # borderline gentrifying neighborhoods (Eagle Rock W=75, Windsor Terrace W=76) from qualifying.
