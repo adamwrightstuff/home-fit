@@ -849,8 +849,9 @@ def _classify_archetype(
     if wealth_val > 85 and stab_val is not None and stab_val > 35:
         return "Established", "established_high_wealth"
 
-    # Established: capital wealth + community roots (W=75-85 range needs stronger stability signal)
-    if wealth_val > 75 and stab_val is not None and stab_val >= 44:
+    # Established: capital wealth + community roots. W>77 threshold (raised from >75) prevents
+    # borderline gentrifying neighborhoods (Eagle Rock W=75, Windsor Terrace W=76) from qualifying.
+    if wealth_val > 77 and stab_val is not None and stab_val >= 44:
         return "Established", "established_capital_wealth"
 
     # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified).
@@ -863,12 +864,17 @@ def _classify_archetype(
     if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50 and div_val >= 70:
         return "Immigrant Community", "immigrant_community_enclave"
 
-    # Established: affluent suburb — high wealth + solid home cost + educated, but missed
-    # the higher gates (wealth just under 85, stability borderline, not pure credential class).
-    # Catches prestige enclaves like Bronxville whose census tract bleeds into adjacent denser
-    # areas, suppressing both wealth and stability below the stricter Established thresholds.
-    if wealth_val > 72 and home_cost >= 45 and edu_val >= 65:
+    # Established: affluent suburb — dual path:
+    # Primary (credential+occupation): high wealth + educated + white-collar workforce.
+    #   Occ>=75 floor prevents credential-class gentrifying areas (Culver City, Highland Park) from
+    #   qualifying on education alone.
+    # Rooted (high-cost stable suburb): high home cost + highly educated + deep community roots.
+    #   Catches retirement-heavy prestige enclaves like Rancho Palos Verdes where occupation is
+    #   suppressed by retirees but wealth, home values, and stability are all clearly Established.
+    if wealth_val > 72 and home_cost >= 45 and edu_val >= 65 and occ_val >= 75:
         return "Established", "established_affluent_suburb"
+    if wealth_val > 72 and home_cost >= 60 and edu_val >= 70 and stab_val is not None and stab_val >= 55:
+        return "Established", "established_affluent_suburb_rooted"
 
     # Middle Class: comfortable baseline on wealth + housing (no stronger signature matched)
     if (

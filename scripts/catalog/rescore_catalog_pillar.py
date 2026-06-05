@@ -265,6 +265,12 @@ def main() -> int:
         action="store_true",
         help="Pass catalog lat/lon to GET /score so scoring uses the same centroid as the catalog CSV.",
     )
+    ap.add_argument(
+        "--names",
+        type=str,
+        default=None,
+        help="Comma-separated list of catalog names to rescore (exact match). Skips all others.",
+    )
     args = ap.parse_args()
 
     try:
@@ -324,6 +330,10 @@ def main() -> int:
     session = requests.Session()
     session.headers.update(proxy_headers())
 
+    names_filter: Optional[set] = None
+    if args.names:
+        names_filter = {n.strip() for n in args.names.split(",") if n.strip()}
+
     keys_sorted = sorted(last.keys())
 
     to_run: List[str] = []
@@ -335,6 +345,8 @@ def main() -> int:
         if not isinstance(cat, dict):
             continue
         if not (cat.get("search_query") or "").strip():
+            continue
+        if names_filter is not None and cat.get("name") not in names_filter:
             continue
         if args.confidence_filter_lt is not None and cf_pillar is not None:
             conf = pillar_confidence(obj, cf_pillar)
