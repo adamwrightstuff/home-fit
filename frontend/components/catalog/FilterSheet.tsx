@@ -93,34 +93,20 @@ export default function FilterSheet({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 69,
-          background: 'rgba(0,0,0,0.4)',
-        }}
+        className="fixed inset-0 z-[69] bg-black/40"
       />
-      {/* Sheet */}
+      {/* Mobile: bottom sheet — Desktop: centered modal */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="filter-sheet-title"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 70,
-          maxHeight: '85vh',
-          overflowY: 'auto',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          background: '#fff',
-          borderTop: '1px solid #e5e7eb',
-        }}
+        className="fixed z-[70] max-h-[85vh] overflow-y-auto bg-white
+          bottom-0 left-0 right-0 rounded-t-2xl border-t border-gray-200
+          md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
+          md:w-[480px] md:rounded-2xl md:border md:border-gray-200 md:shadow-xl"
       >
-        {/* Handle bar */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
+        {/* Handle bar — mobile only */}
+        <div className="flex justify-center pt-2.5 md:hidden">
           <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
         </div>
 
