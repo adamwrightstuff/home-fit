@@ -117,7 +117,8 @@ export default function SearchPage() {
 
   if (!place && !score_data) {
     return (
-      <main className="hf-page hf-page-no-hero">
+      <main className="hf-page">
+        <AppHeader tagline="Search any neighborhood in the US" />
         <div className="hf-container">
           <div id="search" className="hf-card">
             <LocationSearch
