@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthModal from '@/components/AuthModal'
@@ -8,6 +8,17 @@ import AuthModal from '@/components/AuthModal'
 export default function AuthBar() {
   const { user, loading, isConfigured, signOut, openAuthModal, closeAuthModal, authModalOpen, authModalMode } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const headerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const update = () => document.documentElement.style.setProperty('--authbar-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
@@ -60,7 +71,7 @@ export default function AuthBar() {
 
   return (
     <>
-      <header className="hf-auth-bar" style={{ position: 'relative' }}>
+      <header ref={headerRef} className="hf-auth-bar" style={{ position: 'relative' }}>
         <div className="hf-auth-bar-inner">
           <Link href="/" className="hf-auth-bar-logo">
             Trovamo
@@ -97,15 +108,15 @@ export default function AuthBar() {
             </Link>
           </nav>
 
-          {/* Desktop account nav */}
-          <nav className="hf-auth-bar-account-desktop" aria-label="Account">
+          {/* Desktop account nav — hidden on mobile */}
+          <nav className="hf-auth-bar-account-desktop hidden md:flex" aria-label="Account">
             {accountNav}
           </nav>
 
-          {/* Mobile hamburger */}
+          {/* Mobile hamburger — hidden on desktop */}
           <button
             type="button"
-            className="hf-auth-bar-menu-toggle"
+            className="hf-auth-bar-menu-toggle flex md:hidden"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(v => !v)}

@@ -296,7 +296,6 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
           type="submit"
           disabled={disabled || !location.trim()}
           className="hf-btn-primary"
-          style={{ paddingLeft: '2.25rem', paddingRight: '2.25rem' }}
         >
           {disabled ? 'Searching...' : 'Search'}
         </button>

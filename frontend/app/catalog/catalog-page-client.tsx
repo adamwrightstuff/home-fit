@@ -527,7 +527,7 @@ export default function CatalogPageClient({
   }
 
   return (
-    <div className="hf-viewport flex min-h-0 flex-col" style={{ height: '100dvh' }}>
+    <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
       <HeroBand />
       <header className="z-30 flex max-h-[55vh] shrink-0 flex-col gap-1.5 overflow-y-auto border-b border-[var(--hf-border)] bg-white/95 px-3 pt-2 pb-0 backdrop-blur">
         <div className="flex items-center justify-between gap-2">

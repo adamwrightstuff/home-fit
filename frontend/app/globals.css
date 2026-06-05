@@ -127,6 +127,11 @@ body {
   min-height: 100dvh;
 }
 
+/* Catalog page: height must subtract sticky AuthBar so page doesn't overflow */
+.hf-catalog-root {
+  height: calc(100dvh - var(--authbar-h, 52px));
+}
+
 .hf-safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
