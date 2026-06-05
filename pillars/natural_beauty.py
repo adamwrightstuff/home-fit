@@ -4398,6 +4398,25 @@ def _apply_v9_formula(
         gvi_pct = min(50.0, float(canopy_pct) * 0.7)
         gvi_source = "canopy_proxy"
 
+    # Street-tree GVI boost: satellite-derived GVI systematically undercounts narrow urban
+    # street trees, which are bare in winter but fully leafed in summer. GVI is supposed to
+    # capture eye-level greenery — street trees ARE that signal in brownstone/urban neighborhoods.
+    # When confirmed census data shows high street-tree density, apply a log-scaled upward
+    # correction before normalizing. Prefer NYC tree census (certified count); fall back to
+    # validated street_tree_feature_total with a higher threshold.
+    _nyc_st = int(tree_details.get("nyc_street_trees") or 0)
+    _other_st = int(tree_details.get("street_tree_feature_total") or 0)
+    if _nyc_st >= 500:
+        _st_boost_count, _st_boost_src = _nyc_st, "nyc_census"
+    elif _other_st >= 2000:
+        _st_boost_count, _st_boost_src = _other_st, "street_tree_feature"
+    else:
+        _st_boost_count, _st_boost_src = 0, None
+    if _st_boost_count > 0:
+        _st_boost = min(20.0, math.log1p(_st_boost_count / 500.0) * 8.0)
+        gvi_pct = min(50.0, float(gvi_pct) + _st_boost)
+        gvi_source = f"{gvi_source}+st_boost_{_st_boost_src}({_st_boost_count},+{_st_boost:.1f}pct)"
+
     # Normalize GVI and canopy against regional medians before applying scoring curves.
     gvi_normalized = _v9_regional_normalize(float(gvi_pct), "gvi", region)
     canopy_normalized = _v9_regional_normalize(float(canopy_pct), "canopy", region)
