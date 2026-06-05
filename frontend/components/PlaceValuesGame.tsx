@@ -727,6 +727,41 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             Order follows your quiz ranking (most important at the top) and stays fixed while you edit — rows won’t jump. Bars update when you change a level. Then get neighborhood picks or search a place.
           </p>
 
+          {agent_error && (
+            <div
+              className="tr-panel"
+              role="alert"
+              style={{
+                marginBottom: '1rem',
+                padding: '0.85rem 1rem',
+                border: '1px solid rgba(220, 53, 69, 0.35)',
+                background: 'rgba(220, 53, 69, 0.06)',
+              }}
+            >
+              <p style={{ margin: '0 0 0.5rem', color: 'var(--hf-text-primary)' }}>{agent_error}</p>
+              <button type="button" className="hf-btn-link" onClick={load_recommendations} style={{ fontWeight: 700 }}>
+                Retry
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={load_recommendations}
+            disabled={agent_loading}
+            className="hf-btn-primary"
+            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}
+          >
+            {agent_loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" aria-hidden />
+                Matching neighborhoods with AI…
+              </>
+            ) : (
+              <>Find my neighborhoods</>
+            )}
+          </button>
+
           <div className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
             Fine-tune each pillar
           </div>
@@ -791,41 +826,6 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               )
             })}
           </div>
-
-          {agent_error && (
-            <div
-              className="tr-panel"
-              role="alert"
-              style={{
-                marginBottom: '1rem',
-                padding: '0.85rem 1rem',
-                border: '1px solid rgba(220, 53, 69, 0.35)',
-                background: 'rgba(220, 53, 69, 0.06)',
-              }}
-            >
-              <p style={{ margin: '0 0 0.5rem', color: 'var(--hf-text-primary)' }}>{agent_error}</p>
-              <button type="button" className="hf-btn-link" onClick={load_recommendations} style={{ fontWeight: 700 }}>
-                Retry
-              </button>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={load_recommendations}
-            disabled={agent_loading}
-            className="hf-btn-primary"
-            style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
-          >
-            {agent_loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" aria-hidden />
-                Matching neighborhoods with AI…
-              </>
-            ) : (
-              <>Find my neighborhoods</>
-            )}
-          </button>
 
           {onBack && (
             <button
