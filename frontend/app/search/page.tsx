@@ -117,28 +117,24 @@ export default function SearchPage() {
 
   if (!place && !score_data) {
     return (
-      <main className="hf-page">
-        <AppHeader tagline="Search any neighborhood, city, or address in the US" />
+      <main className="hf-page hf-page-no-hero">
         <div className="hf-container">
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 11, padding: '2px 7px', borderRadius: 10, fontWeight: 500, flexShrink: 0 }}>
-                Live scoring
-              </span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--hf-text-secondary)' }}>
-                Results usually take 20–40 seconds · scores all 13 pillars in real time
-              </span>
-            </div>
-          </div>
-
-          <div id="search" className="hf-card" style={{ marginTop: '-24px' }}>
+          <div id="search" className="hf-card">
             <LocationSearch
               onSearch={handle_search}
               disabled={loading}
               examples={['West Village, NYC', 'Santa Monica, CA']}
               catalogLink="/catalog"
             />
-            <div style={{ borderTop: '1px solid var(--hf-border)', marginTop: '1rem', paddingTop: '0.75rem', textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+              <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 11, padding: '2px 7px', borderRadius: 10, fontWeight: 500, flexShrink: 0 }}>
+                Live scoring
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)' }}>
+                20–40 sec · all 13 pillars in real time
+              </span>
+            </div>
+            <div style={{ borderTop: '1px solid var(--hf-border)', marginTop: '0.75rem', paddingTop: '0.75rem', textAlign: 'center' }}>
               <button type="button" className="hf-btn-link" onClick={() => set_show_game(true)}>
                 Not sure where to start? Take the quiz
               </button>

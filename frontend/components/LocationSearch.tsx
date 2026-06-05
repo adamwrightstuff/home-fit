@@ -231,8 +231,8 @@ export default function LocationSearch({ onSearch, disabled, examples = DEFAULT_
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div ref={containerRef} className="hf-search-input-row" style={{ position: 'relative', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: '1 1 280px' }}>
+      <div ref={containerRef} className="hf-search-input-row" style={{ position: 'relative', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0 }}>
           <input
             ref={inputRef}
             type="text"
