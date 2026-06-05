@@ -658,8 +658,8 @@ export default function CatalogPageClient({
             />
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
               Browsing neighborhoods in NYC &amp; LA &nbsp;·&nbsp;{' '}
-              <a href="/search" style={{ color: '#185FA5', textDecoration: 'none', fontWeight: 500 }}>
-                Search anywhere in the US →
+              <a href="/quiz" style={{ color: '#185FA5', textDecoration: 'none', fontWeight: 500 }}>
+                Not sure where to start? Take the quiz →
               </a>
             </p>
 
