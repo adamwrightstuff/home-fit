@@ -73,6 +73,13 @@ ENABLE_GVI_METHOD_WEIGHTING = True
 ENABLE_COMPOSITE_GVI_STREET_TREE_DEDUP = True
 ENABLE_WEAK_SIGNAL_CONTEXT_DAMPING = True
 ENABLE_LOW_CANOPY_DEVELOPED_GUARDRAIL = True
+# Floor for confirmed street-tree census data: satellite misses narrow urban tree pits, so when
+# a real census count (>=2000 trees) is corroborated by park access, don't let the
+# canopy_expectation_ratio crush street-tree contribution to near zero.
+ENABLE_STREET_TREE_FLOOR = True
+STREET_TREE_FLOOR_MIN_COUNT = 2000   # census trees within radius
+STREET_TREE_FLOOR_MIN_GREEN = 4.0    # local_green_score threshold (0-10)
+STREET_TREE_FLOOR_MULT = 0.20        # minimum blend multiplier when conditions met
 # Canopy profile: if GEE canopy confidence below this (0-1), fall back to V7 default weights.
 CANOPY_CONFIDENCE_THRESHOLD = 0.5
 
@@ -3969,6 +3976,10 @@ def calculate_natural_beauty(lat: float,
     gvi_weighted = gvi_weighted_raw * gvi_method_mult
     # Canopy-anchored blend: street-tree contribution scales with observed-vs-expected canopy ratio.
     street_tree_canopy_blend_mult = max(0.0, min(1.0, canopy_expectation_ratio))
+    if ENABLE_STREET_TREE_FLOOR:
+        _st_count = int(tree_details.get("nyc_street_trees") or tree_details.get("street_tree_feature_total") or 0)
+        if _st_count >= STREET_TREE_FLOOR_MIN_COUNT and local_green_score >= STREET_TREE_FLOOR_MIN_GREEN:
+            street_tree_canopy_blend_mult = max(street_tree_canopy_blend_mult, STREET_TREE_FLOOR_MULT)
 
     # Availability-gated dedup for composite GVI:
     # only damp when an independent street-tree signal already contributed in tree_score path.
