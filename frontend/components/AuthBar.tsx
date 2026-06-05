@@ -7,11 +7,60 @@ import AuthModal from '@/components/AuthModal'
 
 export default function AuthBar() {
   const { user, loading, isConfigured, signOut, openAuthModal, closeAuthModal, authModalOpen, authModalMode } = useAuth()
-  const [signupTooltipVisible, setSignupTooltipVisible] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const closeMobileMenu = () => setMobileMenuOpen(false)
+
+  const accountNav = !isConfigured ? (
+    <button
+      type="button"
+      className="hf-auth-bar-btn"
+      onClick={() => { openAuthModal('signin'); closeMobileMenu() }}
+      title="Sign in (configure Supabase env to enable)"
+      style={{ color: '#1a1a2e' }}
+    >
+      Sign in
+    </button>
+  ) : loading ? (
+    <span className="hf-auth-bar-muted" style={{ color: '#5a5a6e' }}>…</span>
+  ) : user ? (
+    <>
+      <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+        My places
+      </Link>
+      <button
+        type="button"
+        className="hf-auth-bar-btn"
+        onClick={() => { signOut(); closeMobileMenu() }}
+        style={{ color: '#1a1a2e' }}
+      >
+        Sign out
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        type="button"
+        className="hf-auth-bar-btn"
+        onClick={() => { openAuthModal('signin'); closeMobileMenu() }}
+        style={{ color: '#1a1a2e' }}
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        className="hf-auth-bar-btn hf-auth-bar-btn-primary"
+        onClick={() => { openAuthModal('signup'); closeMobileMenu() }}
+        style={{ color: '#fff' }}
+      >
+        Sign up
+      </button>
+    </>
+  )
 
   return (
     <>
-      <header className="hf-auth-bar">
+      <header className="hf-auth-bar" style={{ position: 'relative' }}>
         <div className="hf-auth-bar-inner">
           <Link href="/" className="hf-auth-bar-logo">
             Trovamo
@@ -48,94 +97,49 @@ export default function AuthBar() {
             </Link>
           </nav>
 
-          <nav className="hf-auth-bar-nav" aria-label="Account">
-            {!isConfigured ? (
-              <button
-                type="button"
-                className="hf-auth-bar-btn"
-                onClick={() => openAuthModal('signin')}
-                title="Sign in (configure Supabase env to enable)"
-                style={{ color: '#1a1a2e' }}
-              >
-                Sign in
-              </button>
-            ) : loading ? (
-              <span className="hf-auth-bar-muted" style={{ color: '#5a5a6e' }}>…</span>
-            ) : user ? (
-              <>
-                <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
-                  My places
-                </Link>
-                <span className="hf-auth-bar-email hidden md:block" title={user.email ?? undefined} style={{ color: '#5a5a6e' }}>
-                  {user.email}
-                </span>
-                <button
-                  type="button"
-                  className="hf-auth-bar-btn"
-                  onClick={() => signOut()}
-                  style={{ color: '#1a1a2e' }}
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="hf-auth-bar-btn"
-                  onClick={() => openAuthModal('signin')}
-                  style={{ color: '#1a1a2e' }}
-                >
-                  Sign in
-                </button>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  {signupTooltipVisible && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 'calc(100% + 8px)',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#1a1a2e',
-                        color: '#fff',
-                        fontSize: 11,
-                        borderRadius: 6,
-                        padding: '5px 9px',
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                        zIndex: 100,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                      }}
-                    >
-                      Save neighborhoods · Adjust weights · Get score alerts
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '100%',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          borderLeft: '5px solid transparent',
-                          borderRight: '5px solid transparent',
-                          borderTop: '5px solid #1a1a2e',
-                        }}
-                      />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    className="hf-auth-bar-btn hf-auth-bar-btn-primary"
-                    onClick={() => openAuthModal('signup')}
-                    onMouseEnter={() => setSignupTooltipVisible(true)}
-                    onMouseLeave={() => setSignupTooltipVisible(false)}
-                    style={{ color: '#fff' }}
-                  >
-                    Sign up
-                  </button>
-                </div>
-              </>
-            )}
+          {/* Desktop account nav */}
+          <nav className="hf-auth-bar-account-desktop" aria-label="Account">
+            {accountNav}
           </nav>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="hf-auth-bar-menu-toggle"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(v => !v)}
+          >
+            {mobileMenuOpen ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Mobile dropdown */}
+        <nav className={`hf-auth-bar-mobile-menu${mobileMenuOpen ? ' open' : ''}`} aria-label="Mobile menu">
+          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+            Explore
+          </Link>
+          <Link
+            href="/search"
+            className="hf-auth-bar-btn"
+            style={{ textDecoration: 'none', color: '#185FA5' }}
+            onClick={closeMobileMenu}
+          >
+            Search anywhere
+          </Link>
+          {accountNav}
+        </nav>
       </header>
       <AuthModal
         isOpen={authModalOpen}

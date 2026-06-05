@@ -143,8 +143,9 @@ export default function CatalogMapView({
         const map = new maplibregl.Map({
           container: container_ref.current,
           style,
-          bounds: initialBounds,
-          fitBoundsOptions: { padding: 24, maxZoom: mapVariant === 'twin' ? 11 : 11 },
+          ...(region === 'both'
+            ? { center: [-96.2, 37.3] as [number, number], zoom: 3.2 }
+            : { bounds: initialBounds, fitBoundsOptions: { padding: 40, maxZoom: 11 } }),
         })
 
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
