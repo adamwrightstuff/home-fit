@@ -32,6 +32,7 @@ PILLAR_KEYS: tuple[str, ...] = (
     "climate_risk",
     "social_fabric",
     "diversity",
+    "community_safety",
     "political_lean",
 )
 
