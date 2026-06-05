@@ -16,7 +16,9 @@ export default function AuthBar() {
           <Link href="/" className="hf-auth-bar-logo">
             Trovamo
           </Link>
-          <nav className="hf-auth-bar-nav hf-auth-bar-nav-main" aria-label="Main">
+
+          {/* Middle nav — hidden on mobile, visible md+ */}
+          <nav className="hf-auth-bar-nav hidden md:flex" aria-label="Main">
             <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
               Explore
             </Link>
@@ -45,6 +47,7 @@ export default function AuthBar() {
               Search anywhere
             </Link>
           </nav>
+
           <nav className="hf-auth-bar-nav" aria-label="Account">
             {!isConfigured ? (
               <button
@@ -57,13 +60,13 @@ export default function AuthBar() {
                 Sign in
               </button>
             ) : loading ? (
-              <span className="hf-auth-bar-muted" style={{ color: '#5a5a6e' }}>Loading…</span>
+              <span className="hf-auth-bar-muted" style={{ color: '#5a5a6e' }}>…</span>
             ) : user ? (
               <>
                 <Link href="/saved" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
                   My places
                 </Link>
-                <span className="hf-auth-bar-email" title={user.email ?? undefined} style={{ color: '#5a5a6e' }}>
+                <span className="hf-auth-bar-email hidden md:block" title={user.email ?? undefined} style={{ color: '#5a5a6e' }}>
                   {user.email}
                 </span>
                 <button
