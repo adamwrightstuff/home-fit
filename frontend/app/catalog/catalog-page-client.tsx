@@ -32,7 +32,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
-import { adjustNbScore, type NbPreference } from '@/lib/nbPreference'
+import { type NbPreference } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -287,21 +287,10 @@ export default function CatalogPageClient({
         })
       : withIncome
 
-    // Apply natural_beauty preference (falls back gracefully if rescore hasn't run yet)
-    if (!nbPreference) return withPolitical
-    return withPolitical.map((p) => {
-      const nb = (p.score.livability_pillars as any)?.natural_beauty
-      if (!nb) return p
-      const adjusted = adjustNbScore(
-        nb.score,
-        nb.breakdown ?? {},
-        nb.summary?.water_proximity_type,
-        nbPreference,
-        nb.area_classification?.area_type,
-      )
-      if (adjusted === null) return p
-      return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars, natural_beauty: { ...nb, score: adjusted } } } }
-    })
+    // Natural beauty preference no longer modifies the score — the objective V9 score
+    // reflects what a place has (OWA on its strongest features). Preference is used for
+    // discovery/sorting only, not score adjustment.
+    return withPolitical
   }, [places, householdIncome, politicalPreference, nbPreference])
 
   const filteredPlaces = useMemo(() => {
