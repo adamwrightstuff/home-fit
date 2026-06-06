@@ -4442,6 +4442,18 @@ def _apply_v9_formula(
         gvi_pct = min(50.0, float(gvi_pct) + _st_boost)
         gvi_source = f"{gvi_source}+st_boost_{_st_boost_src}({_st_boost_count},+{_st_boost:.1f}pct)"
 
+    # Visible-green-fraction floor: semantic GVI (NDVI/canopy-based) systematically undercounts
+    # vegetation that is visually prominent but has low biomass — palm trees, coastal scrub, dry-
+    # climate plantings. visible_green_fraction is a direct pixel-level measurement of eye-level
+    # green and is a better lower bound than NDVI in these contexts.
+    # Applied at 0.85x to account for measurement scale differences. Only fires when vgf
+    # substantially exceeds the current gvi_pct (> 2x), so it doesn't override well-measured GVI.
+    _vgf = float((tree_details.get("gvi_metrics") or {}).get("visible_green_fraction") or 0.0)
+    _vgf_floor = _vgf * 0.85
+    if _vgf_floor > float(gvi_pct) * 2.0 and _vgf_floor > 5.0:
+        gvi_pct = min(50.0, _vgf_floor)
+        gvi_source = f"{gvi_source}+vgf_floor({_vgf:.1f}pct)"
+
     # Normalize GVI and canopy against regional medians before applying scoring curves.
     gvi_normalized = _v9_regional_normalize(float(gvi_pct), "gvi", region)
     canopy_normalized = _v9_regional_normalize(float(canopy_pct), "canopy", region)
