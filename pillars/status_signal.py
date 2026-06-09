@@ -119,8 +119,6 @@ def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
         return (0.20, 0.15, 0.35, 0.30)
     if archetype == "Up-and-Coming":
         return (0.30, 0.45, 0.15, 0.10)
-    if archetype == "Immigrant Community":
-        return (0.40, 0.20, 0.20, 0.20)
     if archetype == "Middle Class":
         return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
@@ -132,7 +130,6 @@ def _get_status_label(archetype: str) -> str:
         "Established": "Established",
         "Upper Middle Class": "Upper Middle Class",
         "Up-and-Coming": "Up-and-Coming",
-        "Immigrant Community": "Immigrant Community",
         "Middle Class": "Middle Class",
         "Working Class": "Working Class",
         "Unclassified": "Unclassified",
@@ -161,7 +158,6 @@ def _get_status_insight(archetype: str) -> str:
         "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
         "Upper Middle Class": "Credential and career driven — high education and white-collar occupation with strong household income.",
         "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
-        "Immigrant Community": "Established ethnic enclave with strong community identity, cultural roots, and long-term residents.",
         "Middle Class": "Solid footing on income and housing — comfortable without a single dominant status story.",
         "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
         "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
@@ -899,9 +895,8 @@ def _classify_archetype(
         ≥41  → Working Class  (z ≥ −0.55)
         <41  → Struggling
 
-    Up-and-Coming and Immigrant Community are character overlays detected on top of the
-    SES band when home values have outpaced resident wealth (gentrification signal) or
-    when the neighbourhood shows high diversity + community stability at moderate wealth.
+    Up-and-Coming is a character overlay detected on top of the SES band when home
+    values have outpaced resident wealth (gentrification signal).
 
     Returns (archetype, archetype_rule) for debug.
     """
@@ -929,10 +924,6 @@ def _classify_archetype(
     # "up and coming," they're just expensive.
     if ses in ("Middle Class", "Modest") and home_cost >= 65 and home_cost >= wealth_val + 15 and (stab_val is None or stab_val < 45):
         return "Up-and-Coming", "upandcoming_gentrifying"
-
-    # Immigrant Community: tight ethnic enclave at moderate-to-low wealth with high diversity.
-    if ses in ("Middle Class", "Modest", "Working Class") and div_val >= 70 and stab_val is not None and stab_val >= 55:
-        return "Immigrant Community", "immigrant_community_enclave"
 
     return ses, ses_rule
 

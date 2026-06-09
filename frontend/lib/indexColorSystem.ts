@@ -85,7 +85,9 @@ export function normalizeStatusArchetypeKey(archetype: string | null | undefined
   if (a === 'Well-Off') return 'well_off'
   if (a === 'Middle Class') return 'middle_class'
   if (a === 'Modest') return 'modest'
-  if (a === 'Working Class' || a === 'Immigrant Community') return 'working_class'
+  if (a === 'Working Class') return 'working_class'
+  // Legacy fallback for old catalog data
+  if (a === 'Immigrant Community') return 'working_class'
   if (a === 'Struggling') return 'struggling'
   if (a === 'Up-and-Coming' || a === 'Transitional') return 'transitional'
   // Legacy fallbacks

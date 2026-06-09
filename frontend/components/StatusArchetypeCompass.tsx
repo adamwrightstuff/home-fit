@@ -15,7 +15,7 @@ function dotColor(archetype: string | null): string {
   if (archetype === 'Working Class') return '#78716C'
   if (archetype === 'Struggling') return '#44403C'
   if (archetype === 'Up-and-Coming' || archetype === 'Transitional') return '#0F766E'
-  if (archetype === 'Immigrant Community') return '#9333EA'
+  if (archetype === 'Immigrant Community') return '#78716C' // legacy fallback
   return '#6B7280'
 }
 

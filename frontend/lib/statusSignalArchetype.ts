@@ -4,8 +4,8 @@ import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 // SES bands (DFG-style composite)
 export type SESBand = 'Wealthy' | 'Well-Off' | 'Middle Class' | 'Modest' | 'Working Class' | 'Struggling'
 
-// Character overlays — applied on top of SES band when gentrification or enclave signals fire
-export type CharacterOverlay = 'Up-and-Coming' | 'Immigrant Community'
+// Character overlays — applied on top of SES band when gentrification signal fires
+export type CharacterOverlay = 'Up-and-Coming'
 
 export type NonTypicalArchetype = SESBand | CharacterOverlay
 
@@ -86,10 +86,9 @@ const ARCHETYPE_ONE_LINERS: Record<SESBand, string> = {
   Struggling: 'Low income, low education attainment, and limited economic opportunity.',
 }
 
-/** Character overlays — shown when gentrification or enclave signals override the SES band. */
+/** Character overlays — shown when gentrification signal overrides the SES band. */
 const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
   'Up-and-Coming': 'Housing market runs hot relative to resident wealth — a neighborhood in active transition.',
-  'Immigrant Community': 'Established ethnic enclave with strong community identity, cultural roots, and long-term residents.',
 }
 
 /** Legacy / fallback one-liners for any remaining old API archetype strings. */

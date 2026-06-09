@@ -16,7 +16,6 @@ const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
   'Working Class':    { bg: '#57534e', text: '#f5f5f4' },
   Struggling:         { bg: '#292524', text: '#e7e5e4' },
   'Up-and-Coming':    { bg: '#0f766e', text: '#ccfbf1' },
-  'Immigrant Community': { bg: '#7c3aed', text: '#ede9fe' },
 }
 
 export interface StatusSignalInfoProps {
