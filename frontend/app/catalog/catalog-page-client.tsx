@@ -125,6 +125,7 @@ export default function CatalogPageClient({
   const [twinQueryKey, setTwinQueryKey] = useState<string | null>(null)
   const [twinSearchText, setTwinSearchText] = useState('')
   const [twinCrossMetro, setTwinCrossMetro] = useState(true)
+  const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
@@ -349,9 +350,10 @@ export default function CatalogPageClient({
       twinCandidatePlaces,
       twinPillarList,
       (pl) => catalogRowKey(pl.catalog),
-      12
+      12,
+      twinSameBand
     )
-  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList])
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return filteredPlaces
@@ -635,6 +637,12 @@ export default function CatalogPageClient({
               <button
                 type="button"
                 disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinSameBand((v) => !v)}
+              >Same class</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
                 className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-bold disabled:opacity-40"
                 onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
               >
@@ -753,6 +761,12 @@ export default function CatalogPageClient({
                 className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinCrossMetro(false)}
               >Same metro</button>
+              <button
+                type="button"
+                disabled={twinControlsLocked}
+                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                onClick={() => setTwinSameBand((v) => !v)}
+              >Same class</button>
               <button
                 type="button"
                 disabled={twinControlsLocked}

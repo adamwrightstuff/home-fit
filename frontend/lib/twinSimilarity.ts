@@ -58,16 +58,26 @@ export function matchPctFromDistance(distance: number): number {
   return Math.max(0, Math.round((1 - distance / 100) * 100))
 }
 
+/** Extract SES band from a place's status_signal breakdown. */
+export function placeSesBand(place: CatalogMapPlace): string | null {
+  const archetype = (place.score as { status_signal_breakdown?: { archetype?: string } })
+    ?.status_signal_breakdown?.archetype
+  return archetype ?? null
+}
+
 export function rankTwinMatches(
   query: CatalogMapPlace,
   candidates: CatalogMapPlace[],
   pillarKeys: PillarKey[],
   keyFn: (p: CatalogMapPlace) => string,
-  limit = 12
+  limit = 12,
+  sameBandOnly = false
 ): TwinMatchResult[] {
   if (pillarKeys.length < 2) return []
+  const queryBand = sameBandOnly ? placeSesBand(query) : null
   const out: TwinMatchResult[] = []
   for (const place of candidates) {
+    if (sameBandOnly && queryBand && placeSesBand(place) !== queryBand) continue
     const { distance, compared } = twinDistance(query, place, pillarKeys)
     out.push({
       key: keyFn(place),
