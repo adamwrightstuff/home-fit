@@ -254,7 +254,14 @@ export default function CatalogPageClient({
   }, [twinQueryKey])
 
   const archetypes = useMemo(() => {
-    const ORDER = ['Established', 'Upper Middle Class', 'Middle Class', 'Up-and-Coming', 'Immigrant Community', 'Working Class']
+    const ORDER = [
+      // New DFG bands
+      'Wealthy', 'Well-Off', 'Middle Class', 'Modest', 'Working Class', 'Struggling',
+      // Character overlays
+      'Up-and-Coming', 'Immigrant Community',
+      // Legacy names (pre-DFG rescore) — kept so filters still work on old catalog data
+      'Established', 'Upper Middle Class', 'Elite', 'Transitional',
+    ]
     const s = new Set<string>()
     for (const p of places) {
       const a = p.score.status_signal_breakdown?.archetype

@@ -191,8 +191,17 @@ export function getTopArchetypeMatch(
   }
 }
 
+const LEGACY_ARCHETYPE_DISPLAY: Record<string, string> = {
+  'Established':        'Wealthy',
+  'Affluent':           'Well-Off',
+  'Upper Middle Class': 'Well-Off',
+  'Elite':              'Wealthy',
+  'Transitional':       'Up-and-Coming',
+}
+
 export function displayArchetypeLabel(archetype: string | null | undefined): string {
-  return archetype || 'Unknown'
+  if (!archetype) return 'Unknown'
+  return LEGACY_ARCHETYPE_DISPLAY[archetype] ?? archetype
 }
 
 export function getStatusBadgeModel(

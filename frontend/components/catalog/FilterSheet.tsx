@@ -140,12 +140,12 @@ export default function FilterSheet({
             </div>
           </div>
 
-          {/* Archetype */}
+          {/* Class */}
           {archetypes.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={LABEL_STYLE}>Archetype</div>
+              <div style={LABEL_STYLE}>Class</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(filterArchetype === 'all', 'All archetypes', () => onFilterArchetypeChange('all'))}
+                {chip(filterArchetype === 'all', 'All classes', () => onFilterArchetypeChange('all'))}
                 {archetypes.map((a) =>
                   chip(filterArchetype === a, displayArchetypeLabel(a), () => onFilterArchetypeChange(a))
                 )}
