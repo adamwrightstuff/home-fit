@@ -521,42 +521,105 @@ def _get_cbsa_median_income(baselines: Dict[str, Any], keys_to_try: List[str]) -
     return None
 
 
+def _dfg_z(value: float, mean: float, std: float, cap: float = 3.0) -> float:
+    """Z-score normalized against metro tract population, capped at ±cap to prevent outlier dominance."""
+    if std <= 0:
+        return 0.0
+    return max(-cap, min(cap, (value - mean) / std))
+
+
+def _get_dfg_params(baselines: Dict[str, Any], keys_to_try: List[str]) -> Optional[Dict[str, Any]]:
+    """Return DFG z-score parameters from the first matching baseline key that has them.
+
+    Priority: cbsa-specific key (e.g. nyc_metro, la_metro) → division → "all" (national fallback).
+
+    Current coverage:
+      nyc_metro — full tract distribution (8,226 NYC + 2,116 NJ + 860 CT tracts)
+      la_metro  — full tract distribution (2,342 LA County + 602 OC tracts)
+      all       — Option A national approximation (ACS 2022 national tract averages)
+
+    TODO (Option B): compute per-metro DFG params for each CBSA in status_signal_baselines.json
+    (boston, chicago, austin, denver, etc.) by running the full tract pull script against each
+    metro's county FIPS codes. Stores mean/std under each metro's "dfg" key, same structure as
+    nyc_metro and la_metro. Improves z-score precision for all non-NYC/LA live scores.
+    """
+    for key in (keys_to_try or []):
+        data = baselines.get(key) or {}
+        dfg = data.get("dfg")
+        if dfg and isinstance(dfg, dict) and "mean_income" in dfg:
+            return dfg
+    return None
+
+
 def compute_wealth(
     housing_details: Dict[str, Any],
     keys_to_try: List[str],
     baselines: Dict[str, Any],
+    white_collar_pct: Optional[float] = None,
 ) -> Optional[float]:
-    """Multi-Modal Wealth. Elite Uniformity: median > 2x CBSA median and low gap -> 95. Elite Outlier: median near CBSA but high mean (high gap) -> gap-weighted score. Else: 60% mean + 40% gap, CBSA-normalized."""
+    """
+    DFG-style SES composite score (0-100 scale).
+
+    Replaces the old mean+gap formula which penalised uniformly affluent suburbs
+    (e.g. Ardsley, Chatham, Glen Rock) because their low wealth-gap capped their score.
+
+    Formula: 0.35×z(mean_income) + 0.25×z(bach_pct) + 0.25×z(occ_pct) + 0.15×z(home_val)
+    All z-scores normalised against the full metro tract distribution (nyc_metro / la_metro)
+    and capped at ±3.0 to prevent gentrification-driven home-value spikes from dominating.
+
+    Returns a 0-100 score mapped from the z-composite:
+      raw composite typically ranges −2.0 → +3.0 across the full tract population.
+      We map [−3, +3] → [0, 100] linearly so downstream code retains the 0-100 expectation.
+    """
     summary = housing_details.get("summary") or housing_details
+
     mean_income = summary.get("mean_household_income")
-    median_income = summary.get("median_household_income")
-    if median_income is None or not isinstance(median_income, (int, float)) or median_income <= 0:
+    if mean_income is None or not isinstance(mean_income, (int, float)) or mean_income <= 0:
+        # Fall back to median if mean unavailable
+        mean_income = summary.get("median_household_income")
+    if mean_income is None or not isinstance(mean_income, (int, float)) or mean_income <= 0:
         return None
-    if mean_income is None or not isinstance(mean_income, (int, float)):
-        mean_income = median_income
-    median_f = float(median_income)
-    mean_f = float(mean_income)
-    wealth_gap = (mean_f - median_f) / median_f if median_f else 0.0
 
-    cbsa_median = _get_cbsa_median_income(baselines, keys_to_try)
-    if cbsa_median is not None and cbsa_median > 0:
-        if median_f > 2.0 * cbsa_median and wealth_gap < 0.25:
-            return 95.0  # Elite Uniformity: status multiplier
+    median_home = summary.get("median_home_value")
+    bach_pct = (summary.get("education_attainment") or {}).get("bachelor_pct")
+    # bach_pct may also live one level up (merged from social_fabric)
+    if bach_pct is None:
+        bach_pct = summary.get("bachelor_pct")
 
-    min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
-    min_gap, max_gap = _get_baseline(baselines, keys_to_try, "wealth", "wealth_gap_ratio")
-    if min_mean is None or max_mean is None:
-        return None
-    n_mean = _normalize_min_max(mean_f, min_mean, max_mean)
-    n_gap = 50.0
-    if min_gap is not None and max_gap is not None:
-        n_gap = _normalize_min_max(wealth_gap, min_gap, max_gap)
+    dfg = _get_dfg_params(baselines, keys_to_try)
+    if dfg is None:
+        # No DFG params — fall back to income-only normalised score
+        min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
+        if min_mean is None or max_mean is None:
+            return None
+        return _normalize_min_max(float(mean_income), min_mean, max_mean)
 
-    if cbsa_median is not None and cbsa_median > 0:
-        if 0.8 * cbsa_median <= median_f <= 1.2 * cbsa_median and wealth_gap >= 0.50:
-            return round(max(0.0, min(100.0, 0.3 * n_mean + 0.7 * n_gap)), 1)  # Elite Outlier
+    p_inc = dfg["mean_income"]
+    p_edu = dfg.get("edu_pct", {})
+    p_occ = dfg.get("occ_pct", {})
+    p_hv  = dfg.get("home_val", {})
 
-    return 0.6 * n_mean + 0.4 * n_gap
+    z_inc = _dfg_z(float(mean_income), p_inc["mean"], p_inc["std"])
+
+    # Education: use bach_pct when available
+    z_edu = 0.0
+    if bach_pct is not None and p_edu.get("std", 0) > 0:
+        z_edu = _dfg_z(float(bach_pct), p_edu["mean"], p_edu["std"])
+
+    # Occupation: white_collar_pct passed in from compute_occupation
+    z_occ = 0.0
+    if white_collar_pct is not None and isinstance(white_collar_pct, (int, float)) and p_occ.get("std", 0) > 0:
+        z_occ = _dfg_z(float(white_collar_pct), p_occ["mean"], p_occ["std"])
+
+    # Home value
+    z_hv = 0.0
+    if median_home is not None and isinstance(median_home, (int, float)) and median_home > 0 and p_hv.get("std", 0) > 0:
+        z_hv = _dfg_z(float(median_home), p_hv["mean"], p_hv["std"])
+
+    composite = 0.35 * z_inc + 0.25 * z_edu + 0.25 * z_occ + 0.15 * z_hv
+
+    # Map [−3, +3] → [0, 100]
+    return max(0.0, min(100.0, (composite + 3.0) / 6.0 * 100.0))
 
 
 # Home cost: fallback when no division baselines ($1M threshold, linear 0->100 from $1M to $3M)
@@ -825,75 +888,53 @@ def _classify_archetype(
     diversity_score: Optional[float] = None,
 ) -> Tuple[str, str]:
     """
-    Chain: Established → Upper Middle Class → Up-and-Coming → Immigrant Community → Middle Class → Working Class.
-    stability (0-100) from social_fabric.breakdown.stability.
+    DFG-style SES band classifier.
+
+    `wealth` is now the DFG composite mapped to 0-100, where:
+      [−3,+3] z-composite → [0,100]:
+        ≥75  → Wealthy        (z ≥ +1.5)
+        ≥63  → Well-Off       (z ≥ +0.8)
+        ≥55  → Middle Class   (z ≥ +0.3)
+        ≥48  → Modest         (z ≥ −0.15)
+        ≥41  → Working Class  (z ≥ −0.55)
+        <41  → Struggling
+
+    Up-and-Coming and Immigrant Community are character overlays detected on top of the
+    SES band when home values have outpaced resident wealth (gentrification signal) or
+    when the neighbourhood shows high diversity + community stability at moderate wealth.
+
     Returns (archetype, archetype_rule) for debug.
     """
-    edu_val = float(education) if education is not None else 0.0
-    occ_val = float(occupation_neutral) if occupation_neutral is not None else 0.0
     wealth_val = float(wealth) if wealth is not None else 0.0
-    stab_val = float(stability) if stability is not None else None
+    stab_val   = float(stability) if stability is not None else None
+    div_val    = float(diversity_score) if diversity_score is not None else 0.0
 
-    # Established: ultra-high wealth qualifies only when housing costs confirm a prestige enclave.
-    # home_cost >= 50 screens out inequality-inflated tracts (a few wealthy households in an
-    # otherwise moderate neighborhood) and transient/rental areas with no real estate premium.
-    if wealth_val >= 90 and home_cost >= 50:
-        return "Established", "established_ultra_wealth"
+    # ── SES band ──────────────────────────────────────────────────────────────
+    if wealth_val >= 75:
+        ses, ses_rule = "Wealthy", "dfg_wealthy"
+    elif wealth_val >= 63:
+        ses, ses_rule = "Well-Off", "dfg_well_off"
+    elif wealth_val >= 55:
+        ses, ses_rule = "Middle Class", "dfg_middle_class"
+    elif wealth_val >= 48:
+        ses, ses_rule = "Modest", "dfg_modest"
+    elif wealth_val >= 41:
+        ses, ses_rule = "Working Class", "dfg_working_class"
+    else:
+        ses, ses_rule = "Struggling", "dfg_struggling"
 
-    # Established: very high wealth — less stability required (executive, transient-elite markets).
-    # Fires before professional_credential_class so high-wealth prestige enclaves (Manhattan Beach,
-    # Carnegie Hill, Rye, La Cañada) aren't short-circuited into Upper Middle Class on credentials alone.
-    if wealth_val > 85 and stab_val is not None and stab_val > 35:
-        return "Established", "established_high_wealth"
-
-    # Professional: credential class for credential-dense moderate-wealth neighborhoods
-    # (West Village, Carroll Gardens, Brentwood, Pacific Palisades).
-    if edu_val >= 78 and occ_val >= 80:
-        return "Upper Middle Class", "professional_credential_class"
-
-    # Established: capital wealth + community roots. W>77 threshold (raised from >75) prevents
-    # borderline gentrifying neighborhoods (Eagle Rock W=75, Windsor Terrace W=76) from qualifying.
-    if wealth_val > 77 and stab_val is not None and stab_val >= 44:
-        return "Established", "established_capital_wealth"
-
-    # Up-and-Coming: home values repricing ahead of resident wealth (gentrifying / recently gentrified).
-    # Requires home_cost to substantially lead wealth — prevents wealthy-but-transient areas from matching.
-    if home_cost >= 65 and wealth_val < 85 and home_cost >= wealth_val + 15 and (stab_val is None or stab_val < 45):
+    # ── Character overlays (applied on top of SES band) ───────────────────────
+    # Up-and-Coming: home values repricing well ahead of resident wealth.
+    # Only fires for Middle Class / Modest SES — genuinely wealthy areas aren't
+    # "up and coming," they're just expensive.
+    if ses in ("Middle Class", "Modest") and home_cost >= 65 and home_cost >= wealth_val + 15 and (stab_val is None or stab_val < 45):
         return "Up-and-Coming", "upandcoming_gentrifying"
 
-    # Immigrant Community: ethnic enclave — tight community, moderate-to-low wealth, diverse
-    div_val = float(diversity_score) if diversity_score is not None else 0.0
-    if stab_val is not None and stab_val >= 55 and wealth_val < 65 and home_cost > 50 and div_val >= 70:
+    # Immigrant Community: tight ethnic enclave at moderate-to-low wealth with high diversity.
+    if ses in ("Middle Class", "Modest", "Working Class") and div_val >= 70 and stab_val is not None and stab_val >= 55:
         return "Immigrant Community", "immigrant_community_enclave"
 
-    # Established: affluent suburb — dual path:
-    # Primary (credential+occupation): high wealth + educated + white-collar workforce.
-    #   Occ>=75 floor prevents credential-class gentrifying areas (Culver City, Highland Park) from
-    #   qualifying on education alone.
-    # Rooted (high-cost stable suburb): high home cost + highly educated + deep community roots.
-    #   Catches retirement-heavy prestige enclaves like Rancho Palos Verdes where occupation is
-    #   suppressed by retirees but wealth, home values, and stability are all clearly Established.
-    if wealth_val > 72 and home_cost >= 45 and edu_val >= 65 and occ_val >= 75:
-        return "Established", "established_affluent_suburb"
-    if wealth_val > 72 and home_cost >= 60 and edu_val >= 70 and stab_val is not None and stab_val >= 55:
-        return "Established", "established_affluent_suburb_rooted"
-
-    # Middle Class: comfortable baseline on wealth + housing (no stronger signature matched)
-    if (
-        wealth_val >= 35
-        and home_cost >= 30
-        and (wealth_val + home_cost) / 2.0 >= 42
-    ):
-        return "Middle Class", "middle_class_baseline"
-
-    # Middle Class side-door: credential + wealth without home_cost gate.
-    # Catches suburbs where the metro baseline floor zeros out real home values
-    # (e.g. NJ suburbs vs NYC baseline, LA suburbs vs LA metro baseline).
-    # edu >= 40 floor blocks low-edu/high-occ combos that shouldn't qualify.
-    if wealth_val >= 35 and edu_val >= 40 and (edu_val + occ_val) / 2.0 >= 45:
-        return "Middle Class", "middle_class_credential_wealth"
-
-    return "Working Class", "working_class_community"
+    return ses, ses_rule
 
 
 def _merge_social_and_diversity_for_signal(
@@ -1036,7 +1077,6 @@ def compute_status_signal_with_breakdown(
         if "all" not in keys_to_try:
             keys_to_try.append("all")
 
-    wealth = compute_wealth(housing_details, keys_to_try, baselines)
     summary = housing_details.get("summary") or housing_details
     median_home = summary.get("median_home_value")
     home_cost = compute_home_cost(median_home, keys_to_try, baselines)
@@ -1050,6 +1090,7 @@ def compute_status_signal_with_breakdown(
         if mean is not None and isinstance(mean, (int, float)):
             wealth_gap = (float(mean) - float(med)) / float(med)
 
+    # Occupation computed first so white_collar_pct feeds into the DFG composite
     occupation_neutral = compute_occupation(
         economic_security_details,
         merged_sf,
@@ -1057,6 +1098,9 @@ def compute_status_signal_with_breakdown(
         keys_to_try,
         baselines,
     )
+    _wc_pct: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
+
+    wealth = compute_wealth(housing_details, keys_to_try, baselines, white_collar_pct=_wc_pct)
 
     pw, ph, pe, po = PROVISIONAL_COMPOSITE_WEIGHTS
     provisional = _composite_score_from_weights(

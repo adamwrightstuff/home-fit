@@ -7,35 +7,37 @@ import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
 
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
-/** Status index map: hue encodes archetype; score maps to 50 / 200 / 400 bands (same as other indices). */
+/** Status index map: hue encodes SES band; score maps to 50 / 200 / 400 bands. */
 export type StatusArchetypeRampKey =
-  | 'established'
-  | 'affluent'
+  | 'wealthy'
+  | 'well_off'
   | 'middle_class'
-  | 'transitional'
+  | 'modest'
   | 'working_class'
+  | 'struggling'
+  | 'transitional'  // Up-and-Coming overlay
 
 export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
   { 50: string; 200: string; 400: string; 600: string; 800: string }
 > = {
-  // Indigo — credential-rich, established prestige.
-  established: {
+  // Indigo — genuinely wealthy, high income + education.
+  wealthy: {
     50: '#c7d2fe',
     200: '#818cf8',
     400: '#6366f1',
     600: '#4338ca',
     800: '#312e81',
   },
-  // Amber — wealth-forward, ascending profile.
-  affluent: {
+  // Amber — solidly upper-middle class, professional.
+  well_off: {
     50: '#fffbeb',
     200: '#fcd34d',
     400: '#d97706',
     600: '#b45309',
     800: '#78350f',
   },
-  // Slate — balanced comfortable baseline.
+  // Slate — balanced middle class baseline.
   middle_class: {
     50: '#e2e8f0',
     200: '#94a3b8',
@@ -43,15 +45,15 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#475569',
     800: '#334155',
   },
-  // Teal — cost-premium tension, neighborhood in flux.
-  transitional: {
-    50: '#f0fdfa',
-    200: '#5eead4',
-    400: '#0d9488',
-    600: '#0f766e',
-    800: '#115e59',
+  // Warm tan — modest working-middle profile.
+  modest: {
+    50: '#fef3c7',
+    200: '#d4b483',
+    400: '#a07850',
+    600: '#7a5c38',
+    800: '#5a4228',
   },
-  // Warm stone — working community, modest signal.
+  // Warm stone — working-class community.
   working_class: {
     50: '#d4cfc9',
     200: '#a8a29e',
@@ -59,15 +61,36 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#57534e',
     800: '#44403c',
   },
+  // Deep gray — low income, limited opportunity.
+  struggling: {
+    50: '#e7e5e4',
+    200: '#a8a29e',
+    400: '#57534e',
+    600: '#44403c',
+    800: '#292524',
+  },
+  // Teal — Up-and-Coming overlay (cost ahead of wealth).
+  transitional: {
+    50: '#f0fdfa',
+    200: '#5eead4',
+    400: '#0d9488',
+    600: '#0f766e',
+    800: '#115e59',
+  },
 }
 
 export function normalizeStatusArchetypeKey(archetype: string | null | undefined): StatusArchetypeRampKey {
   const a = (archetype ?? '').trim()
-  if (a === 'Established') return 'established'
-  if (a === 'Affluent' || a === 'Upper Middle Class' || a === 'Professional') return 'affluent'
+  if (a === 'Wealthy') return 'wealthy'
+  if (a === 'Well-Off') return 'well_off'
   if (a === 'Middle Class') return 'middle_class'
-  if (a === 'Transitional' || a === 'Up-and-Coming') return 'transitional'
-  if (a === 'Working Class' || a === 'Immigrant Community' || a === 'Rooted') return 'working_class'
+  if (a === 'Modest') return 'modest'
+  if (a === 'Working Class' || a === 'Immigrant Community') return 'working_class'
+  if (a === 'Struggling') return 'struggling'
+  if (a === 'Up-and-Coming' || a === 'Transitional') return 'transitional'
+  // Legacy fallbacks
+  if (a === 'Established') return 'wealthy'
+  if (a === 'Affluent' || a === 'Upper Middle Class') return 'well_off'
   return 'working_class'
 }
 

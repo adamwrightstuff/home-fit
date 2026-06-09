@@ -8,12 +8,14 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 function dotColor(archetype: string | null): string {
-  if (archetype === 'Established') return '#6366F1'
-  if (archetype === 'Upper Middle Class' || archetype === 'Affluent') return '#D97706'
+  if (archetype === 'Wealthy') return '#6366F1'
+  if (archetype === 'Well-Off') return '#D97706'
   if (archetype === 'Middle Class') return '#64748B'
+  if (archetype === 'Modest') return '#A07850'
+  if (archetype === 'Working Class') return '#78716C'
+  if (archetype === 'Struggling') return '#44403C'
   if (archetype === 'Up-and-Coming' || archetype === 'Transitional') return '#0F766E'
   if (archetype === 'Immigrant Community') return '#9333EA'
-  if (archetype === 'Working Class') return '#78716C'
   return '#6B7280'
 }
 
@@ -81,9 +83,9 @@ export default function StatusArchetypeCompass({
         <div style={{ position: 'absolute', left: '50%', top: 18, bottom: 18, width: 1, background: 'var(--hf-border)' }} />
         <div style={{ position: 'absolute', top: '50%', left: 18, right: 18, height: 1, background: 'var(--hf-border)' }} />
 
-        <div style={{ position: 'absolute', left: 16, top: 16, fontSize: '0.7rem', fontWeight: 600, color: '#0F766E' }}>Transitional</div>
-        <div style={{ position: 'absolute', right: 16, top: 16, fontSize: '0.7rem', fontWeight: 600, color: '#0F766E', textAlign: 'right' }}>Transitional+</div>
-        <div style={{ position: 'absolute', right: 16, bottom: 16, fontSize: '0.7rem', fontWeight: 600, color: '#4338CA' }}>Established</div>
+        <div style={{ position: 'absolute', left: 16, top: 16, fontSize: '0.7rem', fontWeight: 600, color: '#0F766E' }}>Up-and-Coming</div>
+        <div style={{ position: 'absolute', right: 16, top: 16, fontSize: '0.7rem', fontWeight: 600, color: '#D97706', textAlign: 'right' }}>Well-Off</div>
+        <div style={{ position: 'absolute', right: 16, bottom: 16, fontSize: '0.7rem', fontWeight: 600, color: '#4338CA' }}>Wealthy</div>
         <div style={{ position: 'absolute', left: 16, bottom: 16, fontSize: '0.7rem', fontWeight: 600, color: '#78716C' }}>Working Class</div>
 
         <div

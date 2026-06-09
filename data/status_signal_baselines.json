@@ -91,6 +91,25 @@
         "max": 1.0141970706649788,
         "min": 0.0
       }
+    },
+    "dfg": {
+      "mean_income": {
+        "mean": 90000,
+        "std": 55000
+      },
+      "home_val": {
+        "mean": 280000,
+        "std": 190000
+      },
+      "edu_pct": {
+        "mean": 32.0,
+        "std": 18.0
+      },
+      "occ_pct": {
+        "mean": 15.0,
+        "std": 9.0
+      },
+      "_note": "Option A national fallback \u2014 ACS 2022 national tract approximation. Replace with per-metro stats (Option B) per metro as coverage expands."
     }
   },
   "atlanta,_georgia": {
@@ -456,6 +475,24 @@
         "max": 54.7483,
         "min": 9.6918
       }
+    },
+    "dfg": {
+      "mean_income": {
+        "mean": 122999,
+        "std": 59864
+      },
+      "home_val": {
+        "mean": 828599,
+        "std": 378305
+      },
+      "edu_pct": {
+        "mean": 35.9,
+        "std": 21.4
+      },
+      "occ_pct": {
+        "mean": 18.0,
+        "std": 8.6
+      }
     }
   },
   "los_angeles,_california": {
@@ -696,6 +733,24 @@
       "white_collar_pct": {
         "max": 57.949,
         "min": 12.1437
+      }
+    },
+    "dfg": {
+      "mean_income": {
+        "mean": 122940,
+        "std": 66215
+      },
+      "home_val": {
+        "mean": 490629,
+        "std": 357830
+      },
+      "edu_pct": {
+        "mean": 38.4,
+        "std": 20.1
+      },
+      "occ_pct": {
+        "mean": 18.6,
+        "std": 10.0
       }
     }
   },

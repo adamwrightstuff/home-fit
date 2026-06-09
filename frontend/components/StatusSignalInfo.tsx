@@ -9,11 +9,14 @@ import {
 } from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
-  Established: { bg: '#4338ca', text: '#e0e7ff' },
-  Affluent: { bg: '#b45309', text: '#fef3c7' },
-  Transitional: { bg: '#0f766e', text: '#ccfbf1' },
-  'Middle Class': { bg: '#475569', text: '#f1f5f9' },
-  'Working Class': { bg: '#57534e', text: '#f5f5f4' },
+  Wealthy:            { bg: '#4338ca', text: '#e0e7ff' },
+  'Well-Off':         { bg: '#b45309', text: '#fef3c7' },
+  'Middle Class':     { bg: '#475569', text: '#f1f5f9' },
+  Modest:             { bg: '#7a5c38', text: '#fef3c7' },
+  'Working Class':    { bg: '#57534e', text: '#f5f5f4' },
+  Struggling:         { bg: '#292524', text: '#e7e5e4' },
+  'Up-and-Coming':    { bg: '#0f766e', text: '#ccfbf1' },
+  'Immigrant Community': { bg: '#7c3aed', text: '#ede9fe' },
 }
 
 export interface StatusSignalInfoProps {

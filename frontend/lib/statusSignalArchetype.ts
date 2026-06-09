@@ -1,9 +1,15 @@
 import type { StatusSignalBreakdown } from '@/types/api'
 import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 
-export type NonTypicalArchetype = 'Established' | 'Affluent' | 'Transitional' | 'Working Class'
+// SES bands (DFG-style composite)
+export type SESBand = 'Wealthy' | 'Well-Off' | 'Middle Class' | 'Modest' | 'Working Class' | 'Struggling'
 
-type ArchetypeVector = Record<NonTypicalArchetype, number>
+// Character overlays — applied on top of SES band when gentrification or enclave signals fire
+export type CharacterOverlay = 'Up-and-Coming' | 'Immigrant Community'
+
+export type NonTypicalArchetype = SESBand | CharacterOverlay
+
+type ArchetypeVector = Record<SESBand, number>
 
 export type StatusBadgeVariant = 'named' | 'leans' | 'mixed'
 
@@ -12,10 +18,10 @@ type FeatureKey = (typeof FEATURE_KEYS)[number]
 
 type FeatureVector = Record<FeatureKey, number>
 
-const LEAN_MODEL_VERSION = 'catalog-v2-2026-05-04'
+const LEAN_MODEL_VERSION = 'dfg-v1-2026-06'
 const LEAN_GAP_THRESHOLD_PCT = 15
 
-// Frozen constants (derived from LA + NYC catalog outputs, 2026-05-04).
+// Feature means/stds derived from NYC + LA metro catalog (DFG wealth score, 0-100 mapped)
 const FEATURE_MEAN: FeatureVector = {
   education: 57.5562,
   home_cost: 48.0897,
@@ -30,46 +36,65 @@ const FEATURE_STD: FeatureVector = {
   wealth: 20.0920,
 }
 
-const ARCHETYPE_CENTROIDS: Record<NonTypicalArchetype, FeatureVector> = {
-  Established: {
-    education: 94.6040,
-    home_cost: 62.0734,
-    occupation: 90.5709,
-    wealth: 81.3959,
+// Centroids for SES bands — wealth score is DFG composite mapped to 0-100
+// Wealthy ≥75, Well-Off ≥63, Middle Class ≥55, Modest ≥48, Working Class ≥41, Struggling <41
+const ARCHETYPE_CENTROIDS: Record<SESBand, FeatureVector> = {
+  Wealthy: {
+    education: 92.0,
+    home_cost: 72.0,
+    occupation: 88.0,
+    wealth: 85.0,
   },
-  Affluent: {
-    education: 67.9290,
-    home_cost: 54.5464,
-    occupation: 69.4505,
-    wealth: 75.0207,
+  'Well-Off': {
+    education: 76.0,
+    home_cost: 60.0,
+    occupation: 74.0,
+    wealth: 72.0,
   },
-  Transitional: {
-    education: 45.5106,
-    home_cost: 71.2164,
-    occupation: 46.3975,
-    wealth: 41.0861,
+  'Middle Class': {
+    education: 58.0,
+    home_cost: 50.0,
+    occupation: 58.0,
+    wealth: 59.0,
+  },
+  Modest: {
+    education: 44.0,
+    home_cost: 40.0,
+    occupation: 44.0,
+    wealth: 50.0,
   },
   'Working Class': {
-    education: 39.0243,
-    home_cost: 36.8615,
-    occupation: 43.5893,
-    wealth: 47.7213,
+    education: 32.0,
+    home_cost: 32.0,
+    occupation: 32.0,
+    wealth: 44.0,
+  },
+  Struggling: {
+    education: 16.0,
+    home_cost: 18.0,
+    occupation: 18.0,
+    wealth: 32.0,
   },
 }
 
-const ARCHETYPE_ONE_LINERS: Record<NonTypicalArchetype, string> = {
-  Established: 'Credential-rich profile — status here is grounded in education and professional standing.',
-  Affluent: 'Wealth-forward profile with income outliers. High occupation mix and rising prosperity.',
-  Transitional: 'Home values materially exceed resident wealth — a neighborhood whose cost has run ahead of its income.',
-  'Working Class': 'Modest status signal. Working-community character with cost that matches the economic profile.',
+const ARCHETYPE_ONE_LINERS: Record<SESBand, string> = {
+  Wealthy: 'High income, high education, and high home values — a genuinely affluent area by any measure.',
+  'Well-Off': 'Solidly upper-middle class — professional workforce, strong education, and above-average incomes.',
+  'Middle Class': 'Comfortable footing — median income, educated workforce, and housing that matches.',
+  Modest: 'Working-middle profile — incomes and education slightly below the metro average.',
+  'Working Class': 'Lower-income community with a working-class character and modest education attainment.',
+  Struggling: 'Low income, low education attainment, and limited economic opportunity.',
 }
 
-/** API archetypes from pillars/status_signal (not in lean centroid model). */
-const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
-  'Upper Middle Class': 'Credential and career driven — high education and white-collar mix with above-median wealth.',
-  'Up-and-Coming': 'Housing market runs hot relative to typical resident wealth — a neighborhood in active transition.',
+/** Character overlays — shown when gentrification or enclave signals override the SES band. */
+const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
+  'Up-and-Coming': 'Housing market runs hot relative to resident wealth — a neighborhood in active transition.',
   'Immigrant Community': 'Established ethnic enclave with strong community identity, cultural roots, and long-term residents.',
-  'Middle Class': 'Solid footing on income and housing — comfortable without one dominant status story.',
+}
+
+/** Legacy / fallback one-liners for any remaining old API archetype strings. */
+const API_ARCHETYPE_ONE_LINERS: Record<string, string> = {
+  ...OVERLAY_ONE_LINERS,
   Unclassified: 'Residential signal too thin to classify — treat as low confidence.',
 }
 
@@ -135,27 +160,18 @@ export function computeArchetypeMatchPercentages(
   if (!vec) return null
 
   const epsilon = 1e-9
-  const weights: ArchetypeVector = {
-    Established: 0,
-    Affluent: 0,
-    Transitional: 0,
-    'Working Class': 0,
-  }
-
-  for (const archetype of Object.keys(ARCHETYPE_CENTROIDS) as NonTypicalArchetype[]) {
-    const d = euclideanDistance(vec, ARCHETYPE_CENTROIDS[archetype])
-    weights[archetype] = 1 / (d + epsilon)
+  const weights = {} as ArchetypeVector
+  for (const band of Object.keys(ARCHETYPE_CENTROIDS) as SESBand[]) {
+    const d = euclideanDistance(vec, ARCHETYPE_CENTROIDS[band])
+    weights[band] = 1 / (d + epsilon)
   }
 
   const total = Object.values(weights).reduce((acc, w) => acc + w, 0)
   if (!Number.isFinite(total) || total <= 0) return null
 
-  return {
-    Established: (100 * weights.Established) / total,
-    Affluent: (100 * weights.Affluent) / total,
-    Transitional: (100 * weights.Transitional) / total,
-    'Working Class': (100 * weights['Working Class']) / total,
-  }
+  return Object.fromEntries(
+    (Object.keys(weights) as SESBand[]).map(k => [k, (100 * weights[k]) / total])
+  ) as ArchetypeVector
 }
 
 export function getTopArchetypeMatch(
@@ -248,9 +264,9 @@ export function statusTooltipCopy(
 
 export function archetypeOneLiner(archetype: string | null | undefined): string {
   const a = (archetype ?? '').trim()
-  if (!a) return 'Every neighborhood has a social character. Archetype captures it — classifying places by how wealth and status are expressed, using income, education, occupation, and housing data.'
-  const legacy = ARCHETYPE_ONE_LINERS[a as NonTypicalArchetype]
-  if (legacy) return legacy
+  if (!a) return 'Every neighborhood has a social character. Status Signal classifies places by how wealth and status are expressed — using income, education, occupation, and housing data.'
+  const ses = ARCHETYPE_ONE_LINERS[a as SESBand]
+  if (ses) return ses
   return API_ARCHETYPE_ONE_LINERS[a] ?? 'A distinct status profile for this area.'
 }
 
