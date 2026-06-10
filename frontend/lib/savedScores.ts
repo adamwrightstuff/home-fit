@@ -7,6 +7,7 @@ export interface SavedScoreRow {
   location_info: { city: string; state: string; zip: string }
   score_payload: unknown
   priorities: unknown
+  is_public?: boolean
   created_at: string
   updated_at: string
 }
@@ -44,6 +45,18 @@ export async function updateSavedScore(
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(updates),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || res.statusText)
+  return data
+}
+
+export async function setSavedScorePublic(id: string, isPublic: boolean): Promise<{ id: string; is_public: boolean }> {
+  const res = await fetch(`/api/me/saved-scores/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ is_public: isPublic }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || res.statusText)

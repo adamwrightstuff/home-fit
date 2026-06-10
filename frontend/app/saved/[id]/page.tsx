@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ScoreResponse } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { deleteSavedScore, getSavedScore, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
+import { deleteSavedScore, getSavedScore, setSavedScorePublic, updateSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { getScore, getScoreWithProgress, recomputeComposites } from '@/lib/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
@@ -51,6 +51,8 @@ export default function SavedDetailPage() {
   const [rescoringPillarKey, setRescoringPillarKey] = useState<PillarKey | null>(null)
   const [savingPreferences, setSavingPreferences] = useState(false)
   const [removeLoading, setRemoveLoading] = useState(false)
+  const [shareLoading, setShareLoading] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [searchOptions, setSearchOptions] = useState<SearchOptions | null>(null)
   const [premiumCodeInput, setPremiumCodeInput] = useState('')
   const [savedPremiumCode, setSavedPremiumCode] = useState('')
@@ -82,6 +84,9 @@ export default function SavedDetailPage() {
           storedPremium = typeof window !== 'undefined' ? window.sessionStorage?.getItem(PREMIUM_CODE_KEY) ?? '' : ''
         } catch {
           storedPremium = ''
+        }
+        if (r.is_public) {
+          setShareUrl(`${window.location.origin}/p/${r.id}`)
         }
         const initialSearchOptions: SearchOptions = {
           priorities: rowPriorities,
@@ -404,6 +409,37 @@ export default function SavedDetailPage() {
     }
   }, [row, removeLoading, router])
 
+  const handleShare = useCallback(async () => {
+    if (!row || shareLoading) return
+    setShareLoading(true)
+    try {
+      await setSavedScorePublic(row.id, true)
+      const url = `${window.location.origin}/p/${row.id}`
+      setShareUrl(url)
+      setRow((prev) => prev ? { ...prev, is_public: true } : null)
+      try { await navigator.clipboard.writeText(url) } catch { /* ignore */ }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not enable sharing.')
+    } finally {
+      setShareLoading(false)
+    }
+  }, [row, shareLoading])
+
+  const handleUnshare = useCallback(async () => {
+    if (!row || shareLoading) return
+    if (!window.confirm('Remove public link? Anyone with the link will no longer be able to view this score.')) return
+    setShareLoading(true)
+    try {
+      await setSavedScorePublic(row.id, false)
+      setShareUrl(null)
+      setRow((prev) => prev ? { ...prev, is_public: false } : null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not disable sharing.')
+    } finally {
+      setShareLoading(false)
+    }
+  }, [row, shareLoading])
+
   const schoolsPremiumSection: ReactNode = useMemo(() => {
     if (!searchOptions) return null
     const premiumCodeSynced =
@@ -652,6 +688,45 @@ export default function SavedDetailPage() {
                 <span className="tr-muted" style={{ color: 'var(--hf-danger)', fontSize: '0.9rem' }}>
                   {scoreAgainError}
                 </span>
+              )}
+              {/* Share link */}
+              {shareUrl ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    readOnly
+                    value={shareUrl}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                    className="hf-input"
+                    style={{ fontSize: '0.8rem', flex: '1 1 200px', minWidth: 0 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ } }}
+                    className="hf-btn-link"
+                    style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem' }}
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUnshare}
+                    disabled={shareLoading}
+                    className="hf-btn-link"
+                    style={{ fontSize: '0.85rem', padding: '0.4rem 0.6rem', color: 'var(--hf-text-secondary)' }}
+                  >
+                    Unshare
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  disabled={shareLoading}
+                  className="hf-btn-link"
+                  style={{ fontSize: '0.95rem', padding: '0.5rem 0.75rem' }}
+                >
+                  {shareLoading ? 'Enabling…' : '🔗 Share'}
+                </button>
               )}
             </nav>
           </div>

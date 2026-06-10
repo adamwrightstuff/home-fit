@@ -17,7 +17,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('saved_scores')
-    .select('id, input, coordinates, location_info, score_payload, priorities, created_at, updated_at')
+    .select('id, input, coordinates, location_info, score_payload, priorities, is_public, created_at, updated_at')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
@@ -71,6 +71,45 @@ export async function PUT(
     .eq('id', id)
     .eq('user_id', user.id)
     .select('id, input, updated_at')
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  return NextResponse.json(data)
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = await createClient()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 })
+  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  let body: { is_public?: boolean }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  if (typeof body.is_public !== 'boolean') {
+    return NextResponse.json({ error: 'is_public must be a boolean' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
+    .from('saved_scores')
+    .update({ is_public: body.is_public })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('id, is_public')
     .single()
 
   if (error) {

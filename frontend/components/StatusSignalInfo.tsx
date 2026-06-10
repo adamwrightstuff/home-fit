@@ -6,6 +6,8 @@ import type { StatusSignalBreakdown } from '@/types/api'
 import {
   getStatusBadgeModel,
   statusTooltipCopy,
+  trajectoryOneLiner,
+  trajectoryExplainer,
 } from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
@@ -85,6 +87,7 @@ export default function StatusSignalInfo({
           </span>
           {trajStyle && trajectory && (
             <span
+              title={trajectoryOneLiner(trajectory)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -94,6 +97,7 @@ export default function StatusSignalInfo({
                 fontWeight: 600,
                 background: trajStyle.bg,
                 color: trajStyle.text,
+                cursor: 'help',
               }}
             >
               {trajectory}
@@ -189,6 +193,35 @@ export default function StatusSignalInfo({
                 {breakdown.analysis_radius_note}
               </p>
             )}
+
+            {/* Trajectory explainer */}
+            {trajectory && (() => {
+              const exp = trajectoryExplainer(trajectory)
+              if (!exp) return null
+              const ts = TRAJECTORY_BADGE_STYLE[trajectory]
+              return (
+                <div
+                  style={{
+                    marginTop: '1.25rem',
+                    padding: '0.875rem 1rem',
+                    borderRadius: 10,
+                    background: ts ? ts.bg : 'var(--hf-bg-subtle)',
+                    border: '1px solid var(--hf-border)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: ts ? ts.text : 'var(--hf-text-primary)', marginBottom: '0.4rem' }}>
+                    {exp.headline}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-primary)' }}>
+                    {exp.body}
+                  </p>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: 'var(--hf-text-secondary)', lineHeight: 1.4 }}>
+                    <strong>Signals:</strong> {exp.signals}
+                  </p>
+                </div>
+              )
+            })()}
+
             {showRefresh && (
               <div style={{ marginTop: '1.25rem' }}>
                 {refreshError && (

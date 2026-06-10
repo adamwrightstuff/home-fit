@@ -89,7 +89,42 @@ const TRAJECTORY_ONE_LINERS: Record<TrajectoryBadge, string> = {
   'Up-and-Coming':  'Housing market running ahead of resident wealth — a neighborhood in active transition.',
   'Stable':         'Not in active transition — steady character with no strong momentum signal.',
   'Cooling':        'Prices softening from a recent peak — market correcting, community still intact.',
-  'Declining':      'Losing both residents and value — prices falling alongside low community stability.',
+  'Declining':      'Losing ground — prices falling in a neighborhood that was already below median wealth.',
+}
+
+export interface TrajectoryExplainer {
+  headline: string
+  body: string
+  signals: string
+}
+
+/** Full per-badge explainer shown in the Archetype modal trajectory section. */
+export const TRAJECTORY_EXPLAINERS: Record<TrajectoryBadge, TrajectoryExplainer> = {
+  Arrived: {
+    headline: 'Arrived — established and premium-priced',
+    body: 'This is an Elite or Affluent neighborhood with no meaningful downward price pressure. The wealth signal is high and the market isn\'t in active flux — the premium is locked in. These areas rarely transform quickly; you\'re buying stability and an established identity.',
+    signals: 'High composite wealth · No sustained price decline over 3 years',
+  },
+  'Up-and-Coming': {
+    headline: 'Up-and-Coming — in active transition',
+    body: 'Housing values are running ahead of resident wealth — a classic gentrification signal. Appreciation is measurable (3–10%+ over 3 years) and the area sits in the middle of the wealth band, with a renter-heavy, urban character. These neighborhoods are changing faster than their demographics reflect.',
+    signals: 'Mid-band wealth (48–78) · Renter majority · 3yr appreciation ≥5% or strong 6mo velocity',
+  },
+  Stable: {
+    headline: 'Stable — no strong momentum in either direction',
+    body: 'No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn\'t a negative — many desirable places are simply stable. It means what you see is what you\'ll get.',
+    signals: 'No qualifying appreciation or depreciation signal · Does not meet Up-and-Coming or Arrived criteria',
+  },
+  Cooling: {
+    headline: 'Cooling — a high-wealth market correcting',
+    body: 'This is an Elite or Affluent neighborhood where prices have pulled back more than 3% over 3 years. The community itself is intact — wealth is still high — but the market ran hot and is correcting. Could be a buying opportunity; could be the start of a longer plateau.',
+    signals: 'Elite or Affluent class (wealth ≥63) · 3yr appreciation < −3%',
+  },
+  Declining: {
+    headline: 'Declining — losing ground from a lower base',
+    body: 'Prices are falling in a neighborhood that was already below the median wealth threshold. Unlike Cooling (which is a high-wealth market adjusting), Declining means both the community wealth signal and the housing market are moving in the wrong direction simultaneously.',
+    signals: 'Working Class or Struggling class (wealth <63) · 3yr appreciation < −3%',
+  },
 }
 
 /** Character overlays — legacy field, kept for backwards compat. */
@@ -100,6 +135,11 @@ const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
 export function trajectoryOneLiner(trajectory: string | null | undefined): string {
   const t = (trajectory ?? '').trim() as TrajectoryBadge
   return TRAJECTORY_ONE_LINERS[t] ?? 'Trajectory data unavailable for this area.'
+}
+
+export function trajectoryExplainer(trajectory: string | null | undefined): TrajectoryExplainer | null {
+  const t = (trajectory ?? '').trim() as TrajectoryBadge
+  return TRAJECTORY_EXPLAINERS[t] ?? null
 }
 
 /** Legacy / fallback one-liners for any remaining old API archetype strings. */

@@ -4528,3 +4528,7 @@
 {"location": "chinatown, manhattan, new york", "density": 95474.07438388104, "city": "New York", "business_count": 0, "built_coverage": null, "metro_distance_km": 4.808301373700008, "input": "Chinatown, Manhattan, New York", "predicted_area_type": "urban_core"}
 {"location": "(unknown)", "density": 37504.32692554606, "city": "New York", "business_count": 346, "built_coverage": 0.303, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
 {"location": "(unknown)", "density": 95474.07438388104, "city": "New York", "business_count": null, "built_coverage": 0.0, "metro_distance_km": null, "input": null, "predicted_area_type": "urban_core"}
+{"location": "preston hollow dallas tx", "density": 2813.386442261598, "city": "Dallas", "business_count": 0, "built_coverage": null, "metro_distance_km": 11.562838424959793, "input": "Preston Hollow Dallas TX", "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2813.386442261598, "city": "Dallas", "business_count": null, "built_coverage": 0.196, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
+{"location": "preston hollow dallas tx", "density": 2813.386442261598, "city": "Dallas", "business_count": 0, "built_coverage": 0.196, "metro_distance_km": 11.562838424959793, "input": "Preston Hollow Dallas TX", "predicted_area_type": "suburban"}
+{"location": "(unknown)", "density": 2813.386442261598, "city": "Dallas", "business_count": 0, "built_coverage": 0.196, "metro_distance_km": null, "input": null, "predicted_area_type": "suburban"}
