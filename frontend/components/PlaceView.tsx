@@ -53,7 +53,18 @@ type Importance = 'Low' | 'Medium' | 'High'
 
 /** Prefer neighborhood-style label: strip trailing zip so we show "Gowanus, Brooklyn" not "New York, NY 11217". */
 function formatPlaceLabel(place: GeocodeResult & { location: string }): string {
-  const name = place.display_name || place.location
+  // Prefer the original typed input when the geocoder collapsed it to just "City, State" —
+  // e.g. "Preston Hollow, Dallas, TX" geocodes to display_name "Dallas, Texas" which loses
+  // the neighborhood name. If the typed input is more specific, use it.
+  const typed = place.location?.trim() ?? ''
+  const geocoded = (place.display_name || '').trim()
+  const geocodedIsJustCityState =
+    geocoded &&
+    place.city &&
+    place.state &&
+    geocoded.replace(/,?\s*\d{5}(-\d{4})?$/, '').trim().toLowerCase() ===
+      `${place.city}, ${place.state}`.toLowerCase()
+  const name = geocodedIsJustCityState && typed ? typed : geocoded || typed
   const withoutZip = name.replace(/,?\s*\d{5}(-\d{4})?$/, '').trim()
   if (withoutZip) return withoutZip
   return `${place.city}, ${place.state}`
