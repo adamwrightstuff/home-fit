@@ -165,7 +165,7 @@ export default function FilterSheet({
             <div style={LABEL_STYLE}>Trajectory</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {(['all', 'Arrived', 'Up-and-Coming', 'Stable', 'Cooling', 'Declining'] as TrajectoryOption[]).map((t) =>
-                chip(filterTrajectory === t, t === 'all' ? 'All' : t, () => onFilterTrajectoryChange(t))
+                chip(filterTrajectory === t, t === 'all' ? 'All' : t === 'Up-and-Coming' ? 'Up & Coming' : t, () => onFilterTrajectoryChange(t))
               )}
             </div>
           </div>

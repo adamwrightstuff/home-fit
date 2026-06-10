@@ -1218,3 +1218,10 @@ body:has(.hf-catalog-root) .hf-api-version-footer {
 .tr-search-input::placeholder {
   color: var(--tr-muted);
 }
+
+/* Trajectory chip: hide text label on mobile, show icon only */
+@media (max-width: 640px) {
+  .tr-trajectory-label {
+    display: none;
+  }
+}

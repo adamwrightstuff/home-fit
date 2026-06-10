@@ -15,6 +15,7 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
+import TrajectoryInfo from '@/components/TrajectoryInfo'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -243,6 +244,10 @@ export default function PublicPlacePage() {
                   breakdown={displayData.status_signal_breakdown ?? null}
                   compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
                 />
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="tr-muted">Trajectory</span>
+                <TrajectoryInfo trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null} />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="tr-muted">Happiness</span>

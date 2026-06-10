@@ -98,32 +98,32 @@ export interface TrajectoryExplainer {
   signals: string
 }
 
-/** Full per-badge explainer shown in the Archetype modal trajectory section. */
+/** Full per-badge explainer shown in the Trajectory modal. */
 export const TRAJECTORY_EXPLAINERS: Record<TrajectoryBadge, TrajectoryExplainer> = {
   Arrived: {
-    headline: 'Arrived — established and premium-priced',
-    body: 'This is an Elite or Affluent neighborhood with no meaningful downward price pressure. The wealth signal is high and the market isn\'t in active flux — the premium is locked in. These areas rarely transform quickly; you\'re buying stability and an established identity.',
-    signals: 'High composite wealth · No sustained price decline over 3 years',
+    headline: 'Arrived',
+    body: "This neighborhood's premium is established and holding. Wealth signals are high and the market isn't in active flux — you're buying stability and a known identity. These places rarely transform quickly, which is the point. Expect to pay full price for what you see.",
+    signals: 'Premium locked in, stable',
   },
   'Up-and-Coming': {
-    headline: 'Up-and-Coming — in active transition',
-    body: 'Housing values are running ahead of resident wealth — a classic gentrification signal. Appreciation is measurable (3–10%+ over 3 years) and the area sits in the middle of the wealth band, with a renter-heavy, urban character. These neighborhoods are changing faster than their demographics reflect.',
-    signals: 'Mid-band wealth (48–78) · Renter majority · 3yr appreciation ≥5% or strong 6mo velocity',
+    headline: 'Up-and-coming',
+    body: "Strong appreciation signal over the past three years. The neighborhood is being discovered — wealth and status indicators are climbing and prices are following. You're buying in front of the premium, not after it. Identity may still be in flux, which carries both upside and uncertainty.",
+    signals: 'Prices rising, identity in flux',
   },
   Stable: {
-    headline: 'Stable — no strong momentum in either direction',
-    body: 'No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn\'t a negative — many desirable places are simply stable. It means what you see is what you\'ll get.',
-    signals: 'No qualifying appreciation or depreciation signal · Does not meet Up-and-Coming or Arrived criteria',
+    headline: 'Stable',
+    body: "No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn't a negative — many desirable places are simply stable. What you see is what you'll get.",
+    signals: 'No strong momentum either way',
   },
   Cooling: {
-    headline: 'Cooling — a high-wealth market correcting',
-    body: 'This is an Elite or Affluent neighborhood where prices have pulled back more than 3% over 3 years. The community itself is intact — wealth is still high — but the market ran hot and is correcting. Could be a buying opportunity; could be the start of a longer plateau.',
-    signals: 'Elite or Affluent class (wealth ≥63) · 3yr appreciation < −3%',
+    headline: 'Cooling',
+    body: 'Prices have softened after a prior peak. The neighborhood may be over-supplied, losing a demand driver, or seeing early demographic shift. Not a crisis, but worth tracking recent comps closely before committing. The identity is intact; the market is less certain.',
+    signals: 'Premium softening',
   },
   Declining: {
-    headline: 'Declining — losing ground from a lower base',
-    body: 'Prices are falling in a neighborhood that was already below the median wealth threshold. Unlike Cooling (which is a high-wealth market adjusting), Declining means both the community wealth signal and the housing market are moving in the wrong direction simultaneously.',
-    signals: 'Working Class or Struggling class (wealth <63) · 3yr appreciation < −3%',
+    headline: 'Declining',
+    body: "Consistent price decline over three or more years with no recovery signal. Underlying wealth or stability indicators are also weakening. This doesn't disqualify the neighborhood — but the market is telling a clear story. Approach with eyes open and a longer investment horizon.",
+    signals: 'Sustained downward pressure',
   },
 }
 
@@ -275,12 +275,13 @@ export function getStatusBadgeModel(
   const strengthLabel = getStatusSignalStrengthLabel(breakdown, compositeScore)
   const topMatch = getTopArchetypeMatch(breakdown)
   const gapPct = topMatch?.gapPct ?? null
-  const suffix = strengthLabel ? ` · ${strengthLabel.replace(' signal', '')}` : ''
+  // Strength band (Dominant · Strong · Moderate · Faint) removed from all public-facing text.
+  // strengthLabel is retained on the model for internal/debug use only.
 
   if (archetype) {
     return {
       variant: 'named',
-      text: `${archetype}${suffix}`,
+      text: archetype,
       strengthLabel,
       leanArchetype: null,
       gapPct,
@@ -291,7 +292,7 @@ export function getStatusBadgeModel(
   if (topMatch && topMatch.gapPct >= LEAN_GAP_THRESHOLD_PCT) {
     return {
       variant: 'leans',
-      text: `Leans ${topMatch.top}${suffix}`,
+      text: `Leans ${topMatch.top}`,
       strengthLabel,
       leanArchetype: topMatch.top,
       gapPct: topMatch.gapPct,
@@ -301,7 +302,7 @@ export function getStatusBadgeModel(
 
   return {
     variant: 'mixed',
-    text: `Mixed profile${suffix}`,
+    text: 'Mixed profile',
     strengthLabel,
     leanArchetype: topMatch?.top ?? null,
     gapPct,

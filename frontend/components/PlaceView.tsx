@@ -7,6 +7,7 @@ import LongevityInfo from './LongevityInfo'
 import HomeFitInfo from './HomeFitInfo'
 import StatusSignalInfo from './StatusSignalInfo'
 import HappinessInfo from './HappinessInfo'
+import TrajectoryInfo from './TrajectoryInfo'
 import ExportScoresModal from './ExportScoresModal'
 import { buildExportRow } from '@/lib/exportScores'
 import { PILLAR_META, PILLAR_ORDER, getScoreBadgeClass, getScoreBandLabel, getScoreBandColor, getScoreBandBackground, getPillarFailureType, isLongevityPillar, LONGEVITY_COPY, HOMEFIT_COPY, computeLongevityIndex, allLongevityPillarsInOnlyKeys, STATUS_SIGNAL_ONLY_PILLARS, type PillarKey } from '@/lib/pillars'
@@ -838,6 +839,10 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
               isSignedIn={isSignedIn}
               savedScoreId={savedScoreId}
             />
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span className="tr-muted">Trajectory</span>
+            <TrajectoryInfo trajectory={statusSignalBreakdown?.trajectory ?? null} />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="tr-muted">Happiness Index</span>

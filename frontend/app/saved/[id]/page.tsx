@@ -18,6 +18,7 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
+import TrajectoryInfo from '@/components/TrajectoryInfo'
 import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
@@ -822,6 +823,10 @@ export default function SavedDetailPage() {
                   breakdown={displayData.status_signal_breakdown ?? null}
                   compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
                 />
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="tr-muted">Trajectory</span>
+                <TrajectoryInfo trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null} />
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="tr-muted">Happiness Index</span>

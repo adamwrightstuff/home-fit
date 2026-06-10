@@ -111,15 +111,15 @@ export function longevityIndexFromLivabilityPillars(
 
 /** Copy for Longevity Score UX: tooltip, short subtitle, full modal, and key distinction. */
 export const LONGEVITY_COPY = {
-  /** Full version for tooltip/modal. */
+  /** Full version for modal. */
   full:
-    "The Longevity Score measures how well a place supports a long, healthy life — not whether it matches your priorities today. It's a fixed blend of six pillars (same weights for everyone): Social Fabric, Neighborhood Amenities (walkable daily life), Active Outdoors, Natural Beauty, Climate Risk, and Schools / Quality Education. Those weights follow Blue Zone–style research on where people live longest. A high score means the place is structurally working in your favor for health over time — independent of how you weighted pillars for your Trovamo Score.",
+    "Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.",
   /** Short version for subtitle or card label. */
   short:
     'Six Blue Zone–style pillars (social fabric, amenities, outdoors, nature, climate, schools) — same formula for everyone.',
   /** One-line tooltip next to the score. */
   tooltip:
-    'Social fabric, daily amenities, active outdoors, natural beauty, climate risk, and schools — fixed Blue Zone–style blend; ignores your Trovamo pillar weights.',
+    'Predicts long-term health outcomes based on Blue Zone–style research. Same formula for everyone — ignores your Trovamo weights.',
   /** Key distinction to communicate. */
   distinction:
     'Trovamo = right for you. Longevity = right for your health over time.',
@@ -129,13 +129,13 @@ export const LONGEVITY_COPY = {
 export const HOMEFIT_COPY = {
   /** Full body for modal. */
   full:
-    "The Trovamo Score measures how well a place matches your priorities — not anyone else's. Before scoring, you tell us what matters to you: how much you care about schools, walkability, natural beauty, transit, and more. The score is weighted accordingly, so two people can look at the same place and get completely different Trovamo scores based on their lives.",
+    'A composite of all 15 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Subtitle under "Trovamo Score" label. */
   subtitle:
     'How well this place meets your lifestyle needs based on your personalized preferences.',
   /** One-line tooltip for ? button. */
   tooltip:
-    'How well this place meets your lifestyle needs based on your personalized preferences.',
+    'A composite of all 15 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Callout in modal. */
   distinction:
     'Trovamo = right for you. Longevity = right for your health over time.',
@@ -144,23 +144,49 @@ export const HOMEFIT_COPY = {
 /** Copy for Archetype index UX: tooltip and modal. */
 export const STATUS_SIGNAL_COPY = {
   tooltip:
-    'Wealth, housing cost vs peers, education, occupation, and upscale nearby venues (mapped POIs; name fallback if needed) — 0–100 vs local baselines after Housing, Social Fabric, Economic Security, and Amenities; not your Trovamo weights. The badge names a profile type, not a rank above the score.',
+    'Every neighborhood has a social character — shaped by who lives there, what they earn, and what they do. Archetype captures it using income, education, occupation, and housing data.',
   full:
-    'Archetype is a 0–100 composite after scoring: household wealth (income vs local baselines), how expensive housing is for the area, education mix (emphasis on graduate degrees, plus bachelor’s and self-employment), occupation mix (e.g. finance, creative, white-collar share), and “luxury presence” from mapped POI types near you (offices, recreation, arts, retail, etc.) — with a fallback to name-based matching if map data isn’t available. It needs Housing, Social Fabric, Economic Security, and Neighborhood Amenities; refresh by running just those four pillars.',
+    'Every neighborhood has a social character — shaped by who lives there, what they earn, and what they do. Archetype captures it using income, education, occupation, and housing data.',
 } as const
 
 /** Copy for Happiness Index UX: tooltip and modal. */
 export const HAPPINESS_INDEX_COPY = {
   /** One-line tooltip next to the score. */
   tooltip:
-    'Commute ease (35%), social fabric (30%), housing value for space (15%), natural beauty (15%), built beauty (5%) — weights rebalance if a piece is missing.',
+    'Captures day-to-day livability, weighted toward commute and social connection.',
   /** Full version for modal. */
   full:
-    'Happiness Index blends five ingredients already in your score: easier commutes (public transit pillar), stronger social fabric (neighbors, civic life), better housing value for space (price-to-space), more natural beauty (green and blue space), and built beauty (architecture and streetscape). Default weights are 35% / 30% / 15% / 15% / 5%; if we’re missing data for one piece, the others are scaled so the index still sums to a full 0–100.',
+    'Captures day-to-day livability, weighted toward commute and social connection.',
   /** Short version for subtitle or card label. */
   short:
     'Commute, social fabric, housing space-for-price, nature, and built beauty — fixed weights when all five are available.',
 } as const
+
+/** Copy for Trajectory UX: tooltip and per-state modal copy. */
+export const TRAJECTORY_COPY = {
+  tooltip:
+    'How a neighborhood\'s market has moved over the past three years — based on home values and price momentum.',
+  states: {
+    Arrived:
+      "This neighborhood's premium is established and holding. Wealth signals are high and the market isn't in active flux — you're buying stability and a known identity. These places rarely transform quickly, which is the point. Expect to pay full price for what you see.",
+    'Up-and-Coming':
+      "Strong appreciation signal over the past three years. The neighborhood is being discovered — wealth and status indicators are climbing and prices are following. You're buying in front of the premium, not after it. Identity may still be in flux, which carries both upside and uncertainty.",
+    Stable:
+      "No significant appreciation or depreciation signal. The neighborhood has a consistent character without active transformation. This isn't a negative — many desirable places are simply stable. What you see is what you'll get.",
+    Cooling:
+      'Prices have softened after a prior peak. The neighborhood may be over-supplied, losing a demand driver, or seeing early demographic shift. Not a crisis, but worth tracking recent comps closely before committing. The identity is intact; the market is less certain.',
+    Declining:
+      'Consistent price decline over three or more years with no recovery signal. Underlying wealth or stability indicators are also weakening. This doesn\'t disqualify the neighborhood — but the market is telling a clear story. Approach with eyes open and a longer investment horizon.',
+  } as Record<string, string>,
+  tableRows: [
+    { label: 'Arrived', desc: 'Premium locked in, stable' },
+    { label: 'Up-and-coming', desc: 'Prices rising, identity in flux' },
+    { label: 'Stable', desc: 'No strong momentum either way' },
+    { label: 'Cooling', desc: 'Premium softening' },
+    { label: 'Declining', desc: 'Sustained downward pressure' },
+  ] as { label: string; desc: string }[],
+  source: 'Based on 3-year home value trend data.',
+}
 
 /** Comma-separated pillar names required to compute the archetype index (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
