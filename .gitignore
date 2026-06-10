@@ -81,3 +81,4 @@ data/**/*.temp.jsonl
 data/**/*recomputed.tmp.jsonl
 .vercel
 .env*.local
+data/irs_bmf_raw/
