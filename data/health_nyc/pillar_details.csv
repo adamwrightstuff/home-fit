@@ -1,0 +1,8 @@
+place_key,label,name,county_borough,state_abbr,pillar,issue,score,pillar_error,confidence,fallback_used,reason
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Bellmore|Nassau|NY,"Bellmore, Nassau, NY",Bellmore,Nassau,NY,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Ridgewood|Bergen|NJ,"Ridgewood, Bergen, NJ",Ridgewood,Bergen,NJ,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed

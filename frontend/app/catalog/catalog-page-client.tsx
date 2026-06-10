@@ -131,6 +131,7 @@ export default function CatalogPageClient({
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
   const [filterType, setFilterType] = useState<'all' | 'neighborhood' | 'suburb'>('all')
   const [filterArchetype, setFilterArchetype] = useState<string>('all')
+  const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>('all')
   /** When true, list sorts by name; map coloring still follows `indexMode`. */
   const [sortByName, setSortByName] = useState(false)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -255,12 +256,11 @@ export default function CatalogPageClient({
 
   const archetypes = useMemo(() => {
     const ORDER = [
-      // New DFG bands
-      'Wealthy', 'Well-Off', 'Middle Class', 'Modest', 'Working Class', 'Struggling',
-      // Character overlays
-      'Up-and-Coming', 'Immigrant Community',
-      // Legacy names (pre-DFG rescore) — kept so filters still work on old catalog data
-      'Established', 'Upper Middle Class', 'Elite', 'Transitional',
+      // Current DFG bands
+      'Elite', 'Affluent', 'Middle Class', 'Working Class', 'Struggling',
+      // Legacy band names — kept so filters still work on old catalog data
+      'Wealthy', 'Well-Off', 'Modest', 'Up-and-Coming', 'Immigrant Community',
+      'Established', 'Upper Middle Class', 'Transitional',
     ]
     const s = new Set<string>()
     for (const p of places) {
@@ -314,6 +314,10 @@ export default function CatalogPageClient({
         const ar = p.score.status_signal_breakdown?.archetype
         if (ar !== filterArchetype) return false
       }
+      if (filterTrajectory !== 'all') {
+        const tr = p.score.status_signal_breakdown?.trajectory
+        if (tr !== filterTrajectory) return false
+      }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -328,6 +332,7 @@ export default function CatalogPageClient({
     filterMetro,
     filterType,
     filterArchetype,
+    filterTrajectory,
     indexMode,
     sortByName,
     sortDir,
@@ -670,9 +675,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) > 0 && (
+                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0)}
+                      {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -736,9 +741,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) > 0 && (
+              {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0)}
+                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1077,6 +1082,8 @@ export default function CatalogPageClient({
         filterArchetype={filterArchetype}
         onFilterArchetypeChange={setFilterArchetype}
         archetypes={archetypes}
+        filterTrajectory={filterTrajectory}
+        onFilterTrajectoryChange={setFilterTrajectory}
         resultCount={filteredPlaces.length}
       />
 

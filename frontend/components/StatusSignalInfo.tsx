@@ -9,13 +9,25 @@ import {
 } from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
-  Wealthy:            { bg: '#4338ca', text: '#e0e7ff' },
-  'Well-Off':         { bg: '#b45309', text: '#fef3c7' },
+  // Current bands
+  Elite:              { bg: '#4338ca', text: '#e0e7ff' },
+  Affluent:           { bg: '#b45309', text: '#fef3c7' },
   'Middle Class':     { bg: '#475569', text: '#f1f5f9' },
-  Modest:             { bg: '#7a5c38', text: '#fef3c7' },
   'Working Class':    { bg: '#57534e', text: '#f5f5f4' },
   Struggling:         { bg: '#292524', text: '#e7e5e4' },
+  // Legacy fallbacks
+  Wealthy:            { bg: '#4338ca', text: '#e0e7ff' },
+  'Well-Off':         { bg: '#b45309', text: '#fef3c7' },
+  Modest:             { bg: '#57534e', text: '#f5f5f4' },
   'Up-and-Coming':    { bg: '#0f766e', text: '#ccfbf1' },
+}
+
+const TRAJECTORY_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
+  Arrived:          { bg: '#312e81', text: '#e0e7ff' },
+  'Up-and-Coming':  { bg: '#0f766e', text: '#ccfbf1' },
+  Stable:           { bg: '#334155', text: '#f1f5f9' },
+  Cooling:          { bg: '#0369a1', text: '#e0f2fe' },
+  Declining:        { bg: '#9f1239', text: '#ffe4e6' },
 }
 
 export interface StatusSignalInfoProps {
@@ -44,7 +56,9 @@ export default function StatusSignalInfo({
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
   const archetype = breakdown?.archetype ?? 'Working Class'
+  const trajectory = breakdown?.trajectory ?? null
   const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE['Working Class']
+  const trajStyle = trajectory ? (TRAJECTORY_BADGE_STYLE[trajectory] ?? null) : null
   const badgeModel = getStatusBadgeModel(breakdown ?? null, compositeScore)
   const helpCopy = statusTooltipCopy(breakdown ?? null, compositeScore)
 
@@ -69,6 +83,22 @@ export default function StatusSignalInfo({
           >
             {badgeModel.text}
           </span>
+          {trajStyle && trajectory && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0.2rem 0.5rem',
+                borderRadius: 6,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                background: trajStyle.bg,
+                color: trajStyle.text,
+              }}
+            >
+              {trajectory}
+            </span>
+          )}
         </span>
       )}
       <button

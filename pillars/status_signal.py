@@ -112,27 +112,36 @@ def _get_baseline(
 
 
 def _get_archetype_weights(archetype: str) -> Tuple[float, float, float, float]:
-    """Weights (wealth, home_cost, education, occupation) for archetype. Sum = 1."""
+    """Weights (wealth, home_cost, education, occupation) for SES band. Sum = 1."""
+    # Elite: asset-heavy, home value prominent
+    if archetype == "Elite":
+        return (0.42, 0.20, 0.22, 0.16)
+    # Affluent: credential and career driven
+    if archetype == "Affluent":
+        return (0.35, 0.18, 0.28, 0.19)
+    # Legacy archetypes — kept for backwards compat during transition
     if archetype == "Established":
         return (0.45, 0.15, 0.20, 0.20)
     if archetype == "Upper Middle Class":
         return (0.20, 0.15, 0.35, 0.30)
-    if archetype == "Up-and-Coming":
-        return (0.30, 0.45, 0.15, 0.10)
-    if archetype == "Middle Class":
-        return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
     return (W_WEALTH, W_HOME_COST, W_EDUCATION, W_OCCUPATION)
 
 
 def _get_status_label(archetype: str) -> str:
-    """UI badge label for archetype."""
+    """UI badge label for SES band."""
     return {
-        "Established": "Established",
-        "Upper Middle Class": "Upper Middle Class",
-        "Up-and-Coming": "Up-and-Coming",
-        "Middle Class": "Middle Class",
+        "Elite":         "Elite",
+        "Affluent":      "Affluent",
+        "Middle Class":  "Middle Class",
         "Working Class": "Working Class",
-        "Unclassified": "Unclassified",
+        "Struggling":    "Struggling",
+        # Legacy
+        "Established":       "Elite",
+        "Upper Middle Class": "Affluent",
+        "Wealthy":            "Elite",
+        "Well-Off":           "Affluent",
+        "Modest":             "Working Class",
+        "Unclassified":       "Unclassified",
     }.get(archetype, "Working Class")
 
 
@@ -155,12 +164,15 @@ def _signal_strength_band(score: float) -> Tuple[str, str]:
 def _get_status_insight(archetype: str) -> str:
     """One-sentence tooltip 'why' for the UI."""
     return {
-        "Established": "Legacy capital and long-rooted residents — wealth and community stability aligned.",
-        "Upper Middle Class": "Credential and career driven — high education and white-collar occupation with strong household income.",
-        "Up-and-Coming": "Home values repricing ahead of resident wealth — a neighborhood actively transforming.",
-        "Middle Class": "Solid footing on income and housing — comfortable without a single dominant status story.",
+        "Elite":         "Top-tier income, education, and home values — a genuinely premium address by every measure.",
+        "Affluent":      "Credential and career driven — professional workforce, strong education, above-average incomes.",
+        "Middle Class":  "Solid footing on income and housing — comfortable without a single dominant status story.",
         "Working Class": "Broadly stable community without dominant elite or credential-class signatures.",
-        "Unclassified": "Insufficient residential data to classify — likely non-residential or data gap.",
+        "Struggling":    "Low income, limited education attainment, and constrained economic opportunity.",
+        # Legacy
+        "Established":       "Legacy capital and long-rooted residents — wealth and community stability aligned.",
+        "Upper Middle Class": "Credential and career driven — high education and white-collar occupation.",
+        "Unclassified":       "Insufficient residential data to classify — likely non-residential or data gap.",
     }.get(archetype, "Broadly stable community without dominant elite or credential-class signatures.")
 
 
@@ -890,67 +902,91 @@ def _classify_archetype(
     """
     DFG-style SES band classifier.
 
-    `wealth` is now the DFG composite mapped to 0-100, where:
-      [−3,+3] z-composite → [0,100]:
-        ≥75  → Wealthy        (z ≥ +1.5)
-        ≥63  → Well-Off       (z ≥ +0.8)
-        ≥55  → Middle Class   (z ≥ +0.3)
-        ≥48  → Modest         (z ≥ −0.15)
-        ≥41  → Working Class  (z ≥ −0.55)
-        <41  → Struggling
+    `wealth` is the DFG composite mapped to 0-100:
+      ≥88  → Elite          (top ~15% — genuinely premium addresses)
+      ≥63  → Affluent       (upper-middle professional class)
+      ≥55  → Middle Class
+      ≥41  → Working Class  (absorbs old Modest band 48-54)
+      <41  → Struggling
 
-    Up-and-Coming overlay fires when a neighborhood shows structural price pressure
-    (P/I imbalance) confirmed by real price momentum (Zillow velocity). Falls back
-    to stability-based detection when velocity data is unavailable.
-
-    Returns (archetype, archetype_rule) for debug.
+    Returns (ses_band, rule) for debug. Up-and-Coming is now a trajectory
+    signal, not a class band — see _classify_trajectory().
     """
-    wealth_val  = float(wealth) if wealth is not None else 0.0
-    stab_val    = float(stability) if stability is not None else None
-    renter_val  = float(renter_pct) if renter_pct is not None else None
+    wealth_val = float(wealth) if wealth is not None else 0.0
 
-    # ── SES band ──────────────────────────────────────────────────────────────
-    if wealth_val >= 75:
-        ses, ses_rule = "Wealthy", "dfg_wealthy"
+    if wealth_val >= 88:
+        return "Elite", "dfg_elite"
     elif wealth_val >= 63:
-        ses, ses_rule = "Well-Off", "dfg_well_off"
+        return "Affluent", "dfg_affluent"
     elif wealth_val >= 55:
-        ses, ses_rule = "Middle Class", "dfg_middle_class"
-    elif wealth_val >= 48:
-        ses, ses_rule = "Modest", "dfg_modest"
+        return "Middle Class", "dfg_middle_class"
     elif wealth_val >= 41:
-        ses, ses_rule = "Working Class", "dfg_working_class"
+        return "Working Class", "dfg_working_class"
     else:
-        ses, ses_rule = "Struggling", "dfg_struggling"
+        return "Struggling", "dfg_struggling"
 
-    # ── Up-and-Coming overlay ─────────────────────────────────────────────────
-    # Structural gate: wealth 48–78 (not distressed, not fully established),
-    # renter > 30% (urban neighbourhood, not owner suburb),
-    # area_type = neighborhood (not suburb — suburban appreciation is a different signal).
+
+def _classify_trajectory(
+    *,
+    wealth: Optional[float],
+    home_cost: float,
+    stability: Optional[float] = None,
+    appreciation_3yr: Optional[float] = None,
+    velocity_6mo: Optional[float] = None,
+    renter_pct: Optional[float] = None,
+    area_type: Optional[str] = None,
+) -> Tuple[str, str]:
+    """
+    Lifecycle trajectory badge: Arrived | Up-and-Coming | Stable | Cooling | Declining.
+
+    Declining   — negative price momentum + low stability (<50): losing residents AND value.
+    Cooling     — negative price momentum + stable community (≥50): market softening from top.
+    Up-and-Coming — velocity-confirmed gentrification: wealth 48–78, urban, renter-heavy.
+    Arrived     — Elite/Affluent with no negative signal: locked in, established.
+    Stable      — Middle Class with no momentum signal.
+    (No badge)  — Working Class / Struggling without Up-and-Coming signal; trajectory adds
+                  no information beyond the class band. Returned as "Stable" internally but
+                  filtered out by the frontend for those bands.
+    """
+    wealth_val = float(wealth) if wealth is not None else 0.0
+    stab_val   = float(stability) if stability is not None else None
+    renter_val = float(renter_pct) if renter_pct is not None else None
+
+    # ── Declining / Cooling (negative velocity) ───────────────────────────────
+    # Require >3% 3-year decline to filter noise from minor fluctuations.
+    # Cooling = Elite/Affluent (≥63) softening from a high base — market correction.
+    # Declining = Middle Class and below losing ground — already stretched, getting worse.
+    if appreciation_3yr is not None and appreciation_3yr < -0.03:
+        if wealth_val >= 63:
+            return "Cooling", "cooling_affluent_correction"
+        return "Declining", "declining_lower_band"
+
+    # ── Up-and-Coming ─────────────────────────────────────────────────────────
+    # Structural gate: wealth 48–78, urban neighbourhood, renter-heavy.
     _uac_band   = 48 <= wealth_val <= 78
     _uac_renter = renter_val is None or renter_val > 0.30
     _uac_urban  = area_type is None or area_type == 'neighborhood'
 
     if _uac_band and _uac_renter and _uac_urban:
         if appreciation_3yr is not None or velocity_6mo is not None:
-            # Velocity path: confirmed momentum from Zillow data.
-            # Strong momentum (3yr ≥ 10%): price movement is unambiguous, no pressure gate needed.
-            # Normal momentum (3yr ≥ 5% or 6mo ≥ 2%): require modest cost pressure.
             _strong_momentum = appreciation_3yr is not None and appreciation_3yr >= 0.10
             _normal_momentum = (
                 (appreciation_3yr is not None and appreciation_3yr >= 0.05) or
                 (velocity_6mo is not None and velocity_6mo >= 0.02)
             )
-            _has_pressure = home_cost >= wealth_val - 5  # costs near or above wealth
+            _has_pressure = home_cost >= wealth_val - 5
             if _strong_momentum or (_normal_momentum and _has_pressure):
-                return "Up-and-Coming", "upandcoming_velocity"
+                return "Up-and-Coming", "uac_velocity"
         else:
-            # Fallback: no Zillow data — use stability-based detection.
             if (home_cost >= 65 and home_cost >= wealth_val + 15
                     and stab_val is not None and stab_val < 45):
-                return "Up-and-Coming", "upandcoming_stability_fallback"
+                return "Up-and-Coming", "uac_stability_fallback"
 
-    return ses, ses_rule
+    # ── Arrived ───────────────────────────────────────────────────────────────
+    if wealth_val >= 63:
+        return "Arrived", "arrived_elite" if wealth_val >= 88 else "arrived_affluent"
+
+    return "Stable", "stable_default"
 
 
 def _merge_social_and_diversity_for_signal(
@@ -1058,11 +1094,13 @@ def compute_status_signal_with_breakdown(
         "luxury_presence": None,
         "luxury_presence_detail": None,
         "wealth_character": "typical",
-        "archetype": "Blue Collar",
-        "archetype_rule": "blue_collar_default",
+        "archetype": "Working Class",
+        "archetype_rule": "dfg_working_class_default",
+        "trajectory": "Stable",
+        "trajectory_rule": "stable_default",
         "classifier_inputs": {},
         "provisional_composite_score": None,
-        "status_label": "Blue Collar",
+        "status_label": "Working Class",
         "status_insight": "",
         "top_drivers": [],
         "analysis_radius_note": None,
@@ -1148,6 +1186,10 @@ def compute_status_signal_with_breakdown(
         except Exception:
             pass
 
+    _renter_pct = (housing_details.get("summary") or housing_details).get("renter_pct")
+    _appr3 = _velocity.get("appreciation_3yr")
+    _vel6mo = _velocity.get("velocity_6mo")
+
     archetype, archetype_rule = _classify_archetype(
         education=education,
         wealth=wealth,
@@ -1156,9 +1198,19 @@ def compute_status_signal_with_breakdown(
         occupation_neutral=occupation_neutral,
         stability=stability,
         diversity_score=float(_div_score) if _div_score is not None else None,
-        appreciation_3yr=_velocity.get("appreciation_3yr"),
-        velocity_6mo=_velocity.get("velocity_6mo"),
-        renter_pct=(housing_details.get("summary") or housing_details).get("renter_pct"),
+        appreciation_3yr=_appr3,
+        velocity_6mo=_vel6mo,
+        renter_pct=_renter_pct,
+        area_type=area_type,
+    )
+
+    trajectory, trajectory_rule = _classify_trajectory(
+        wealth=wealth,
+        home_cost=home_cost,
+        stability=stability,
+        appreciation_3yr=_appr3,
+        velocity_6mo=_vel6mo,
+        renter_pct=_renter_pct,
         area_type=area_type,
     )
 
@@ -1174,6 +1226,8 @@ def compute_status_signal_with_breakdown(
     breakdown["wealth_character"] = wealth_character
     breakdown["archetype"] = archetype
     breakdown["archetype_rule"] = archetype_rule
+    breakdown["trajectory"] = trajectory
+    breakdown["trajectory_rule"] = trajectory_rule
     breakdown["classifier_inputs"] = {
         "education": education,
         "home_cost": home_cost,
@@ -1182,8 +1236,8 @@ def compute_status_signal_with_breakdown(
         "wealth": wealth,
         "wealth_gap": wealth_gap,
         "stability": stability,
-        "appreciation_3yr": _velocity.get("appreciation_3yr"),
-        "velocity_6mo": _velocity.get("velocity_6mo"),
+        "appreciation_3yr": _appr3,
+        "velocity_6mo": _vel6mo,
     }
     breakdown["provisional_composite_score"] = (
         round(provisional, 1) if provisional is not None else None

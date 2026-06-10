@@ -2,9 +2,13 @@ import type { StatusSignalBreakdown } from '@/types/api'
 import { signalStrengthFromCompositeScore } from '@/lib/statusSignalStrength'
 
 // SES bands (DFG-style composite)
-export type SESBand = 'Wealthy' | 'Well-Off' | 'Middle Class' | 'Modest' | 'Working Class' | 'Struggling'
+// Elite ≥88 · Affluent ≥63 · Middle Class ≥55 · Working Class ≥41 · Struggling <41
+export type SESBand = 'Elite' | 'Affluent' | 'Middle Class' | 'Working Class' | 'Struggling'
 
-// Character overlays — applied on top of SES band when gentrification signal fires
+// Trajectory badges — lifecycle dimension, separate from class band
+export type TrajectoryBadge = 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
+
+// Legacy — kept for backwards compat with old catalog entries
 export type CharacterOverlay = 'Up-and-Coming'
 
 export type NonTypicalArchetype = SESBand | CharacterOverlay
@@ -37,19 +41,19 @@ const FEATURE_STD: FeatureVector = {
 }
 
 // Centroids for SES bands — wealth score is DFG composite mapped to 0-100
-// Wealthy ≥75, Well-Off ≥63, Middle Class ≥55, Modest ≥48, Working Class ≥41, Struggling <41
+// Elite ≥88, Affluent ≥63, Middle Class ≥55, Working Class ≥41, Struggling <41
 const ARCHETYPE_CENTROIDS: Record<SESBand, FeatureVector> = {
-  Wealthy: {
-    education: 92.0,
-    home_cost: 72.0,
-    occupation: 88.0,
-    wealth: 85.0,
+  Elite: {
+    education: 95.0,
+    home_cost: 80.0,
+    occupation: 92.0,
+    wealth: 93.0,
   },
-  'Well-Off': {
-    education: 76.0,
-    home_cost: 60.0,
-    occupation: 74.0,
-    wealth: 72.0,
+  Affluent: {
+    education: 78.0,
+    home_cost: 62.0,
+    occupation: 76.0,
+    wealth: 74.0,
   },
   'Middle Class': {
     education: 58.0,
@@ -57,17 +61,11 @@ const ARCHETYPE_CENTROIDS: Record<SESBand, FeatureVector> = {
     occupation: 58.0,
     wealth: 59.0,
   },
-  Modest: {
-    education: 44.0,
-    home_cost: 40.0,
-    occupation: 44.0,
-    wealth: 50.0,
-  },
   'Working Class': {
-    education: 32.0,
-    home_cost: 32.0,
-    occupation: 32.0,
-    wealth: 44.0,
+    education: 35.0,
+    home_cost: 34.0,
+    occupation: 35.0,
+    wealth: 47.0,
   },
   Struggling: {
     education: 16.0,
@@ -78,17 +76,30 @@ const ARCHETYPE_CENTROIDS: Record<SESBand, FeatureVector> = {
 }
 
 const ARCHETYPE_ONE_LINERS: Record<SESBand, string> = {
-  Wealthy: 'High income, high education, and high home values — a genuinely affluent area by any measure.',
-  'Well-Off': 'Solidly upper-middle class — professional workforce, strong education, and above-average incomes.',
+  Elite: 'Top-tier income, education, and home values — a premium address by every measure.',
+  Affluent: 'Solidly upper-middle class — professional workforce, strong education, and above-average incomes.',
   'Middle Class': 'Comfortable footing — median income, educated workforce, and housing that matches.',
-  Modest: 'Working-middle profile — incomes and education slightly below the metro average.',
   'Working Class': 'Lower-income community with a working-class character and modest education attainment.',
   Struggling: 'Low income, low education attainment, and limited economic opportunity.',
 }
 
-/** Character overlays — shown when gentrification signal overrides the SES band. */
+/** Trajectory badge one-liners — lifecycle dimension separate from class band. */
+const TRAJECTORY_ONE_LINERS: Record<TrajectoryBadge, string> = {
+  'Arrived':        'Established neighborhood — premium locked in, not actively transforming.',
+  'Up-and-Coming':  'Housing market running ahead of resident wealth — a neighborhood in active transition.',
+  'Stable':         'Not in active transition — steady character with no strong momentum signal.',
+  'Cooling':        'Prices softening from a recent peak — market correcting, community still intact.',
+  'Declining':      'Losing both residents and value — prices falling alongside low community stability.',
+}
+
+/** Character overlays — legacy field, kept for backwards compat. */
 const OVERLAY_ONE_LINERS: Record<CharacterOverlay, string> = {
   'Up-and-Coming': 'Housing market runs hot relative to resident wealth — a neighborhood in active transition.',
+}
+
+export function trajectoryOneLiner(trajectory: string | null | undefined): string {
+  const t = (trajectory ?? '').trim() as TrajectoryBadge
+  return TRAJECTORY_ONE_LINERS[t] ?? 'Trajectory data unavailable for this area.'
 }
 
 /** Legacy / fallback one-liners for any remaining old API archetype strings. */
@@ -191,11 +202,16 @@ export function getTopArchetypeMatch(
 }
 
 const LEGACY_ARCHETYPE_DISPLAY: Record<string, string> = {
-  'Established':        'Wealthy',
-  'Affluent':           'Well-Off',
-  'Upper Middle Class': 'Well-Off',
-  'Elite':              'Wealthy',
-  'Transitional':       'Up-and-Coming',
+  // Old band names → new band names
+  'Wealthy':            'Elite',
+  'Well-Off':           'Affluent',
+  'Modest':             'Working Class',
+  // Even older legacy
+  'Established':        'Elite',
+  'Upper Middle Class': 'Affluent',
+  'Transitional':       'Affluent',
+  // Up-and-Coming was a class override — now a trajectory; display underlying band if possible
+  'Up-and-Coming':      'Up-and-Coming',  // keep as-is for legacy catalog entries
 }
 
 export function displayArchetypeLabel(archetype: string | null | undefined): string {

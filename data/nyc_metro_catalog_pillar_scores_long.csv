@@ -1,0 +1,2458 @@
+name,county_borough,state_abbr,pillar,score,status
+Ardsley,Westchester,NY,quality_education,0.0,fallback
+Ardsley,Westchester,NY,neighborhood_amenities,55.0,success
+Ardsley,Westchester,NY,economic_security,74.9,success
+Ardsley,Westchester,NY,climate_risk,82.7,success
+Ardsley,Westchester,NY,active_outdoors,98.0,success
+Ardsley,Westchester,NY,natural_beauty,0.0,failed
+Ardsley,Westchester,NY,diversity,74.3,success
+Ardsley,Westchester,NY,social_fabric,51.3,success
+Ardsley,Westchester,NY,built_beauty,0.0,failed
+Ardsley,Westchester,NY,healthcare_access,60.6,success
+Ardsley,Westchester,NY,public_transit_access,35.0,success
+Ardsley,Westchester,NY,air_travel_access,100,success
+Ardsley,Westchester,NY,housing_value,78.8,success
+Astoria,Queens,NY,quality_education,0.0,fallback
+Astoria,Queens,NY,neighborhood_amenities,86.3,success
+Astoria,Queens,NY,economic_security,71.5,success
+Astoria,Queens,NY,climate_risk,75.0,success
+Astoria,Queens,NY,active_outdoors,0.0,failed
+Astoria,Queens,NY,natural_beauty,0.0,failed
+Astoria,Queens,NY,diversity,73.2,success
+Astoria,Queens,NY,social_fabric,55.9,success
+Astoria,Queens,NY,built_beauty,0.0,failed
+Astoria,Queens,NY,healthcare_access,0.0,failed
+Astoria,Queens,NY,public_transit_access,88.5,success
+Astoria,Queens,NY,air_travel_access,100,success
+Astoria,Queens,NY,housing_value,23.8,success
+Battery Park City,Manhattan,NY,quality_education,0.0,fallback
+Battery Park City,Manhattan,NY,neighborhood_amenities,90.0,success
+Battery Park City,Manhattan,NY,economic_security,71.5,success
+Battery Park City,Manhattan,NY,climate_risk,87.5,success
+Battery Park City,Manhattan,NY,active_outdoors,0.0,failed
+Battery Park City,Manhattan,NY,natural_beauty,0.0,failed
+Battery Park City,Manhattan,NY,diversity,60.7,success
+Battery Park City,Manhattan,NY,social_fabric,46.3,success
+Battery Park City,Manhattan,NY,built_beauty,0.0,failed
+Battery Park City,Manhattan,NY,healthcare_access,0.0,failed
+Battery Park City,Manhattan,NY,public_transit_access,96.8,success
+Battery Park City,Manhattan,NY,air_travel_access,100,success
+Battery Park City,Manhattan,NY,housing_value,44.0,success
+Bay Ridge,Brooklyn,NY,quality_education,0.0,fallback
+Bay Ridge,Brooklyn,NY,neighborhood_amenities,96.0,success
+Bay Ridge,Brooklyn,NY,economic_security,71.5,success
+Bay Ridge,Brooklyn,NY,climate_risk,62.5,success
+Bay Ridge,Brooklyn,NY,active_outdoors,0.0,failed
+Bay Ridge,Brooklyn,NY,natural_beauty,0.0,failed
+Bay Ridge,Brooklyn,NY,diversity,81.4,success
+Bay Ridge,Brooklyn,NY,social_fabric,61.7,success
+Bay Ridge,Brooklyn,NY,built_beauty,0.0,failed
+Bay Ridge,Brooklyn,NY,healthcare_access,0.0,failed
+Bay Ridge,Brooklyn,NY,public_transit_access,84.0,success
+Bay Ridge,Brooklyn,NY,air_travel_access,100,success
+Bay Ridge,Brooklyn,NY,housing_value,30.2,success
+Bayside,Queens,NY,quality_education,0.0,fallback
+Bayside,Queens,NY,neighborhood_amenities,76.1,success
+Bayside,Queens,NY,economic_security,71.5,success
+Bayside,Queens,NY,climate_risk,65.5,success
+Bayside,Queens,NY,active_outdoors,0.0,failed
+Bayside,Queens,NY,natural_beauty,0.0,failed
+Bayside,Queens,NY,diversity,75.9,success
+Bayside,Queens,NY,social_fabric,55.2,success
+Bayside,Queens,NY,built_beauty,0.0,failed
+Bayside,Queens,NY,healthcare_access,0.0,failed
+Bayside,Queens,NY,public_transit_access,61.5,success
+Bayside,Queens,NY,air_travel_access,100,success
+Bayside,Queens,NY,housing_value,42.0,success
+Bed-Stuy,Brooklyn,NY,quality_education,0.0,fallback
+Bed-Stuy,Brooklyn,NY,neighborhood_amenities,96.0,success
+Bed-Stuy,Brooklyn,NY,economic_security,71.5,success
+Bed-Stuy,Brooklyn,NY,climate_risk,87.5,success
+Bed-Stuy,Brooklyn,NY,active_outdoors,0.0,failed
+Bed-Stuy,Brooklyn,NY,natural_beauty,0.0,failed
+Bed-Stuy,Brooklyn,NY,diversity,78.5,success
+Bed-Stuy,Brooklyn,NY,social_fabric,0.0,failed
+Bed-Stuy,Brooklyn,NY,built_beauty,0.0,failed
+Bed-Stuy,Brooklyn,NY,healthcare_access,0.0,failed
+Bed-Stuy,Brooklyn,NY,public_transit_access,93.0,success
+Bed-Stuy,Brooklyn,NY,air_travel_access,100,success
+Bed-Stuy,Brooklyn,NY,housing_value,27.7,success
+Bedford,Westchester,NY,quality_education,0.0,fallback
+Bedford,Westchester,NY,neighborhood_amenities,41.5,success
+Bedford,Westchester,NY,economic_security,55.8,success
+Bedford,Westchester,NY,climate_risk,72.8,success
+Bedford,Westchester,NY,active_outdoors,0.0,failed
+Bedford,Westchester,NY,natural_beauty,0.0,failed
+Bedford,Westchester,NY,diversity,62.1,success
+Bedford,Westchester,NY,social_fabric,63.4,success
+Bedford,Westchester,NY,built_beauty,0.0,failed
+Bedford,Westchester,NY,healthcare_access,0.0,failed
+Bedford,Westchester,NY,public_transit_access,0,success
+Bedford,Westchester,NY,air_travel_access,82.3,success
+Bedford,Westchester,NY,housing_value,74.7,success
+Bellmore,Nassau,NY,quality_education,0.0,fallback
+Bellmore,Nassau,NY,neighborhood_amenities,0.0,failed
+Bellmore,Nassau,NY,economic_security,74.9,success
+Bellmore,Nassau,NY,climate_risk,66.2,success
+Bellmore,Nassau,NY,active_outdoors,0.0,failed
+Bellmore,Nassau,NY,natural_beauty,0.0,failed
+Bellmore,Nassau,NY,diversity,60.2,success
+Bellmore,Nassau,NY,social_fabric,60.8,success
+Bellmore,Nassau,NY,built_beauty,0.0,failed
+Bellmore,Nassau,NY,healthcare_access,0.0,failed
+Bellmore,Nassau,NY,public_transit_access,59.9,success
+Bellmore,Nassau,NY,air_travel_access,100,success
+Bellmore,Nassau,NY,housing_value,75.0,success
+Belmont,Bronx,NY,quality_education,0.0,fallback
+Belmont,Bronx,NY,neighborhood_amenities,86.1,success
+Belmont,Bronx,NY,economic_security,71.5,success
+Belmont,Bronx,NY,climate_risk,71.2,success
+Belmont,Bronx,NY,active_outdoors,0.0,failed
+Belmont,Bronx,NY,natural_beauty,0.0,failed
+Belmont,Bronx,NY,diversity,76.2,success
+Belmont,Bronx,NY,social_fabric,41.5,success
+Belmont,Bronx,NY,built_beauty,0.0,failed
+Belmont,Bronx,NY,healthcare_access,0.0,failed
+Belmont,Bronx,NY,public_transit_access,88.9,success
+Belmont,Bronx,NY,air_travel_access,100,success
+Belmont,Bronx,NY,housing_value,31.4,success
+Bensonhurst,Brooklyn,NY,quality_education,0.0,fallback
+Bensonhurst,Brooklyn,NY,neighborhood_amenities,86.7,success
+Bensonhurst,Brooklyn,NY,economic_security,71.5,success
+Bensonhurst,Brooklyn,NY,climate_risk,62.5,success
+Bensonhurst,Brooklyn,NY,active_outdoors,0.0,failed
+Bensonhurst,Brooklyn,NY,natural_beauty,0.0,failed
+Bensonhurst,Brooklyn,NY,diversity,82.9,success
+Bensonhurst,Brooklyn,NY,social_fabric,56.4,success
+Bensonhurst,Brooklyn,NY,built_beauty,0.0,failed
+Bensonhurst,Brooklyn,NY,healthcare_access,0.0,failed
+Bensonhurst,Brooklyn,NY,public_transit_access,66.0,success
+Bensonhurst,Brooklyn,NY,air_travel_access,100,success
+Bensonhurst,Brooklyn,NY,housing_value,31.8,success
+Bloomfield,Essex,NJ,quality_education,0.0,fallback
+Bloomfield,Essex,NJ,neighborhood_amenities,82.1,success
+Bloomfield,Essex,NJ,economic_security,74.9,success
+Bloomfield,Essex,NJ,climate_risk,81.4,success
+Bloomfield,Essex,NJ,active_outdoors,0.0,failed
+Bloomfield,Essex,NJ,natural_beauty,0.0,failed
+Bloomfield,Essex,NJ,diversity,77.9,success
+Bloomfield,Essex,NJ,social_fabric,38.8,success
+Bloomfield,Essex,NJ,built_beauty,0.0,failed
+Bloomfield,Essex,NJ,healthcare_access,0.0,failed
+Bloomfield,Essex,NJ,public_transit_access,85.5,success
+Bloomfield,Essex,NJ,air_travel_access,100,success
+Bloomfield,Essex,NJ,housing_value,44.1,success
+Boerum Hill,Brooklyn,NY,quality_education,0.0,fallback
+Boerum Hill,Brooklyn,NY,neighborhood_amenities,93.4,success
+Boerum Hill,Brooklyn,NY,economic_security,71.5,success
+Boerum Hill,Brooklyn,NY,climate_risk,71.5,success
+Boerum Hill,Brooklyn,NY,active_outdoors,0.0,failed
+Boerum Hill,Brooklyn,NY,natural_beauty,0.0,failed
+Boerum Hill,Brooklyn,NY,diversity,63.6,success
+Boerum Hill,Brooklyn,NY,social_fabric,54.9,success
+Boerum Hill,Brooklyn,NY,built_beauty,0.0,failed
+Boerum Hill,Brooklyn,NY,healthcare_access,0.0,failed
+Boerum Hill,Brooklyn,NY,public_transit_access,94.7,success
+Boerum Hill,Brooklyn,NY,air_travel_access,100,success
+Boerum Hill,Brooklyn,NY,housing_value,26.3,success
+Borough Park,Brooklyn,NY,quality_education,0.0,fallback
+Borough Park,Brooklyn,NY,neighborhood_amenities,82.2,success
+Borough Park,Brooklyn,NY,economic_security,71.5,success
+Borough Park,Brooklyn,NY,climate_risk,62.5,success
+Borough Park,Brooklyn,NY,active_outdoors,0.0,failed
+Borough Park,Brooklyn,NY,natural_beauty,0.0,failed
+Borough Park,Brooklyn,NY,diversity,73.5,success
+Borough Park,Brooklyn,NY,social_fabric,59.8,success
+Borough Park,Brooklyn,NY,built_beauty,0.0,failed
+Borough Park,Brooklyn,NY,healthcare_access,0.0,failed
+Borough Park,Brooklyn,NY,public_transit_access,90.4,success
+Borough Park,Brooklyn,NY,air_travel_access,100,success
+Borough Park,Brooklyn,NY,housing_value,33.2,success
+Brighton Beach,Brooklyn,NY,quality_education,0.0,fallback
+Brighton Beach,Brooklyn,NY,neighborhood_amenities,25.0,success
+Brighton Beach,Brooklyn,NY,economic_security,71.5,success
+Brighton Beach,Brooklyn,NY,climate_risk,62.5,success
+Brighton Beach,Brooklyn,NY,active_outdoors,0.0,failed
+Brighton Beach,Brooklyn,NY,natural_beauty,0.0,failed
+Brighton Beach,Brooklyn,NY,diversity,85.8,success
+Brighton Beach,Brooklyn,NY,social_fabric,64.9,success
+Brighton Beach,Brooklyn,NY,built_beauty,0.0,failed
+Brighton Beach,Brooklyn,NY,healthcare_access,0.0,failed
+Brighton Beach,Brooklyn,NY,public_transit_access,69.7,success
+Brighton Beach,Brooklyn,NY,air_travel_access,100,success
+Brighton Beach,Brooklyn,NY,housing_value,24.9,success
+Bronxville,Westchester,NY,quality_education,0.0,fallback
+Bronxville,Westchester,NY,neighborhood_amenities,98.0,success
+Bronxville,Westchester,NY,economic_security,74.9,success
+Bronxville,Westchester,NY,climate_risk,87.5,success
+Bronxville,Westchester,NY,active_outdoors,0.0,failed
+Bronxville,Westchester,NY,natural_beauty,0.0,failed
+Bronxville,Westchester,NY,diversity,71.5,success
+Bronxville,Westchester,NY,social_fabric,41.9,success
+Bronxville,Westchester,NY,built_beauty,0.0,failed
+Bronxville,Westchester,NY,healthcare_access,0.0,failed
+Bronxville,Westchester,NY,public_transit_access,69.9,success
+Bronxville,Westchester,NY,air_travel_access,100,success
+Bronxville,Westchester,NY,housing_value,46.4,success
+Brooklyn Heights,Brooklyn,NY,quality_education,0.0,fallback
+Brooklyn Heights,Brooklyn,NY,neighborhood_amenities,91.0,success
+Brooklyn Heights,Brooklyn,NY,economic_security,71.5,success
+Brooklyn Heights,Brooklyn,NY,climate_risk,72.2,success
+Brooklyn Heights,Brooklyn,NY,active_outdoors,0.0,failed
+Brooklyn Heights,Brooklyn,NY,natural_beauty,0.0,failed
+Brooklyn Heights,Brooklyn,NY,diversity,70.9,success
+Brooklyn Heights,Brooklyn,NY,social_fabric,47.5,success
+Brooklyn Heights,Brooklyn,NY,built_beauty,0.0,failed
+Brooklyn Heights,Brooklyn,NY,healthcare_access,0.0,failed
+Brooklyn Heights,Brooklyn,NY,public_transit_access,96.8,success
+Brooklyn Heights,Brooklyn,NY,air_travel_access,100,success
+Brooklyn Heights,Brooklyn,NY,housing_value,23.1,success
+Bushwick,Brooklyn,NY,quality_education,0.0,fallback
+Bushwick,Brooklyn,NY,neighborhood_amenities,90.0,success
+Bushwick,Brooklyn,NY,economic_security,71.5,success
+Bushwick,Brooklyn,NY,climate_risk,87.2,success
+Bushwick,Brooklyn,NY,active_outdoors,0.0,failed
+Bushwick,Brooklyn,NY,natural_beauty,0.0,failed
+Bushwick,Brooklyn,NY,diversity,88.9,success
+Bushwick,Brooklyn,NY,social_fabric,63.5,success
+Bushwick,Brooklyn,NY,built_beauty,0.0,failed
+Bushwick,Brooklyn,NY,healthcare_access,0.0,failed
+Bushwick,Brooklyn,NY,public_transit_access,88.4,success
+Bushwick,Brooklyn,NY,air_travel_access,100,success
+Bushwick,Brooklyn,NY,housing_value,29.6,success
+Canarsie,Brooklyn,NY,quality_education,0.0,fallback
+Canarsie,Brooklyn,NY,neighborhood_amenities,59.0,success
+Canarsie,Brooklyn,NY,economic_security,71.5,success
+Canarsie,Brooklyn,NY,climate_risk,71.5,success
+Canarsie,Brooklyn,NY,active_outdoors,0.0,failed
+Canarsie,Brooklyn,NY,natural_beauty,0.0,failed
+Canarsie,Brooklyn,NY,diversity,80.7,success
+Canarsie,Brooklyn,NY,social_fabric,58.0,success
+Canarsie,Brooklyn,NY,built_beauty,0.0,failed
+Canarsie,Brooklyn,NY,healthcare_access,0.0,failed
+Canarsie,Brooklyn,NY,public_transit_access,68.1,success
+Canarsie,Brooklyn,NY,air_travel_access,100,success
+Canarsie,Brooklyn,NY,housing_value,37.2,success
+Carnegie Hill,Manhattan,NY,quality_education,0.0,fallback
+Carnegie Hill,Manhattan,NY,neighborhood_amenities,91.0,success
+Carnegie Hill,Manhattan,NY,economic_security,71.5,success
+Carnegie Hill,Manhattan,NY,climate_risk,70.8,success
+Carnegie Hill,Manhattan,NY,active_outdoors,0.0,failed
+Carnegie Hill,Manhattan,NY,natural_beauty,61.97653333333333,success
+Carnegie Hill,Manhattan,NY,diversity,63.0,success
+Carnegie Hill,Manhattan,NY,social_fabric,64.5,success
+Carnegie Hill,Manhattan,NY,built_beauty,0.0,failed
+Carnegie Hill,Manhattan,NY,healthcare_access,0.0,failed
+Carnegie Hill,Manhattan,NY,public_transit_access,96.6,success
+Carnegie Hill,Manhattan,NY,air_travel_access,100,success
+Carnegie Hill,Manhattan,NY,housing_value,38.5,success
+Carroll Gardens,Brooklyn,NY,quality_education,0.0,fallback
+Carroll Gardens,Brooklyn,NY,neighborhood_amenities,96.0,success
+Carroll Gardens,Brooklyn,NY,economic_security,71.5,success
+Carroll Gardens,Brooklyn,NY,climate_risk,63.6,success
+Carroll Gardens,Brooklyn,NY,active_outdoors,0.0,failed
+Carroll Gardens,Brooklyn,NY,natural_beauty,0.0,failed
+Carroll Gardens,Brooklyn,NY,diversity,62.6,success
+Carroll Gardens,Brooklyn,NY,social_fabric,56.2,success
+Carroll Gardens,Brooklyn,NY,built_beauty,0.0,failed
+Carroll Gardens,Brooklyn,NY,healthcare_access,0.0,failed
+Carroll Gardens,Brooklyn,NY,public_transit_access,94.1,success
+Carroll Gardens,Brooklyn,NY,air_travel_access,100,success
+Carroll Gardens,Brooklyn,NY,housing_value,26.1,success
+Cedarhurst,Nassau,NY,quality_education,0.0,fallback
+Cedarhurst,Nassau,NY,neighborhood_amenities,98.0,success
+Cedarhurst,Nassau,NY,economic_security,71.5,success
+Cedarhurst,Nassau,NY,climate_risk,62.5,success
+Cedarhurst,Nassau,NY,active_outdoors,0.0,failed
+Cedarhurst,Nassau,NY,natural_beauty,0.0,failed
+Cedarhurst,Nassau,NY,diversity,73.7,success
+Cedarhurst,Nassau,NY,social_fabric,62.0,success
+Cedarhurst,Nassau,NY,built_beauty,0.0,failed
+Cedarhurst,Nassau,NY,healthcare_access,0.0,failed
+Cedarhurst,Nassau,NY,public_transit_access,60.0,success
+Cedarhurst,Nassau,NY,air_travel_access,100,success
+Cedarhurst,Nassau,NY,housing_value,43.2,success
+Chappaqua,Westchester,NY,quality_education,0.0,fallback
+Chappaqua,Westchester,NY,neighborhood_amenities,62.6,success
+Chappaqua,Westchester,NY,economic_security,74.9,success
+Chappaqua,Westchester,NY,climate_risk,78.7,success
+Chappaqua,Westchester,NY,active_outdoors,0.0,failed
+Chappaqua,Westchester,NY,natural_beauty,0.0,failed
+Chappaqua,Westchester,NY,diversity,63.9,success
+Chappaqua,Westchester,NY,social_fabric,81.6,success
+Chappaqua,Westchester,NY,built_beauty,0.0,failed
+Chappaqua,Westchester,NY,healthcare_access,0.0,failed
+Chappaqua,Westchester,NY,public_transit_access,59.5,success
+Chappaqua,Westchester,NY,air_travel_access,94.7,success
+Chappaqua,Westchester,NY,housing_value,73.6,success
+Chatham,Morris,NJ,quality_education,0.0,fallback
+Chatham,Morris,NJ,neighborhood_amenities,74.2,success
+Chatham,Morris,NJ,economic_security,74.9,success
+Chatham,Morris,NJ,climate_risk,62.5,success
+Chatham,Morris,NJ,active_outdoors,80.0,success
+Chatham,Morris,NJ,natural_beauty,0.0,failed
+Chatham,Morris,NJ,diversity,62.7,success
+Chatham,Morris,NJ,social_fabric,44.0,success
+Chatham,Morris,NJ,built_beauty,57.5,success
+Chatham,Morris,NJ,healthcare_access,57.6,success
+Chatham,Morris,NJ,public_transit_access,60.0,success
+Chatham,Morris,NJ,air_travel_access,100,success
+Chatham,Morris,NJ,housing_value,73.4,success
+Chelsea,Manhattan,NY,quality_education,0.0,fallback
+Chelsea,Manhattan,NY,neighborhood_amenities,96.0,success
+Chelsea,Manhattan,NY,economic_security,71.5,success
+Chelsea,Manhattan,NY,climate_risk,79.3,success
+Chelsea,Manhattan,NY,active_outdoors,0.0,failed
+Chelsea,Manhattan,NY,natural_beauty,0.0,failed
+Chelsea,Manhattan,NY,diversity,77.3,success
+Chelsea,Manhattan,NY,social_fabric,63.6,success
+Chelsea,Manhattan,NY,built_beauty,0.0,failed
+Chelsea,Manhattan,NY,healthcare_access,0.0,failed
+Chelsea,Manhattan,NY,public_transit_access,96.9,success
+Chelsea,Manhattan,NY,air_travel_access,100,success
+Chelsea,Manhattan,NY,housing_value,25.2,success
+Chinatown,Manhattan,NY,quality_education,0.0,fallback
+Chinatown,Manhattan,NY,neighborhood_amenities,0.0,failed
+Chinatown,Manhattan,NY,economic_security,71.5,success
+Chinatown,Manhattan,NY,climate_risk,65.3,success
+Chinatown,Manhattan,NY,active_outdoors,0.0,failed
+Chinatown,Manhattan,NY,natural_beauty,0.0,failed
+Chinatown,Manhattan,NY,diversity,69.5,success
+Chinatown,Manhattan,NY,social_fabric,0.0,failed
+Chinatown,Manhattan,NY,built_beauty,0.0,failed
+Chinatown,Manhattan,NY,healthcare_access,74.8,success
+Chinatown,Manhattan,NY,public_transit_access,97.2,success
+Chinatown,Manhattan,NY,air_travel_access,100,success
+Chinatown,Manhattan,NY,housing_value,24.7,success
+City Island,Bronx,NY,quality_education,0.0,fallback
+City Island,Bronx,NY,neighborhood_amenities,76.0,success
+City Island,Bronx,NY,economic_security,74.9,success
+City Island,Bronx,NY,climate_risk,62.5,success
+City Island,Bronx,NY,active_outdoors,0.0,failed
+City Island,Bronx,NY,natural_beauty,0.0,failed
+City Island,Bronx,NY,diversity,74.0,success
+City Island,Bronx,NY,social_fabric,55.8,success
+City Island,Bronx,NY,built_beauty,0.0,failed
+City Island,Bronx,NY,healthcare_access,0.0,failed
+City Island,Bronx,NY,public_transit_access,26.0,success
+City Island,Bronx,NY,air_travel_access,100,success
+City Island,Bronx,NY,housing_value,47.5,success
+Clinton Hill,Brooklyn,NY,quality_education,0.0,fallback
+Clinton Hill,Brooklyn,NY,neighborhood_amenities,96.0,success
+Clinton Hill,Brooklyn,NY,economic_security,71.5,success
+Clinton Hill,Brooklyn,NY,climate_risk,84.2,success
+Clinton Hill,Brooklyn,NY,active_outdoors,0.0,failed
+Clinton Hill,Brooklyn,NY,natural_beauty,0.0,failed
+Clinton Hill,Brooklyn,NY,diversity,75.2,success
+Clinton Hill,Brooklyn,NY,social_fabric,65.3,success
+Clinton Hill,Brooklyn,NY,built_beauty,0.0,failed
+Clinton Hill,Brooklyn,NY,healthcare_access,0.0,failed
+Clinton Hill,Brooklyn,NY,public_transit_access,94.5,success
+Clinton Hill,Brooklyn,NY,air_travel_access,100,success
+Clinton Hill,Brooklyn,NY,housing_value,29.9,success
+Closter,Bergen,NJ,quality_education,0.0,fallback
+Closter,Bergen,NJ,neighborhood_amenities,71.8,success
+Closter,Bergen,NJ,economic_security,74.9,success
+Closter,Bergen,NJ,climate_risk,62.5,success
+Closter,Bergen,NJ,active_outdoors,0.0,failed
+Closter,Bergen,NJ,natural_beauty,0.0,failed
+Closter,Bergen,NJ,diversity,74.8,success
+Closter,Bergen,NJ,social_fabric,62.2,success
+Closter,Bergen,NJ,built_beauty,0.0,failed
+Closter,Bergen,NJ,healthcare_access,0.0,failed
+Closter,Bergen,NJ,public_transit_access,29.0,success
+Closter,Bergen,NJ,air_travel_access,100,success
+Closter,Bergen,NJ,housing_value,70.0,success
+Cobble Hill,Brooklyn,NY,quality_education,0.0,fallback
+Cobble Hill,Brooklyn,NY,neighborhood_amenities,96.0,success
+Cobble Hill,Brooklyn,NY,economic_security,71.5,success
+Cobble Hill,Brooklyn,NY,climate_risk,62.5,success
+Cobble Hill,Brooklyn,NY,active_outdoors,0.0,failed
+Cobble Hill,Brooklyn,NY,natural_beauty,0.0,failed
+Cobble Hill,Brooklyn,NY,diversity,67.7,success
+Cobble Hill,Brooklyn,NY,social_fabric,54.8,success
+Cobble Hill,Brooklyn,NY,built_beauty,0.0,failed
+Cobble Hill,Brooklyn,NY,healthcare_access,0.0,failed
+Cobble Hill,Brooklyn,NY,public_transit_access,96.5,success
+Cobble Hill,Brooklyn,NY,air_travel_access,100,success
+Cobble Hill,Brooklyn,NY,housing_value,29.0,success
+Coney Island,Brooklyn,NY,quality_education,0.0,fallback
+Coney Island,Brooklyn,NY,neighborhood_amenities,70.8,success
+Coney Island,Brooklyn,NY,economic_security,71.5,success
+Coney Island,Brooklyn,NY,climate_risk,62.5,success
+Coney Island,Brooklyn,NY,active_outdoors,0.0,failed
+Coney Island,Brooklyn,NY,natural_beauty,0.0,failed
+Coney Island,Brooklyn,NY,diversity,89.7,success
+Coney Island,Brooklyn,NY,social_fabric,56.3,success
+Coney Island,Brooklyn,NY,built_beauty,0.0,failed
+Coney Island,Brooklyn,NY,healthcare_access,90.7,success
+Coney Island,Brooklyn,NY,public_transit_access,90.9,success
+Coney Island,Brooklyn,NY,air_travel_access,100,success
+Coney Island,Brooklyn,NY,housing_value,38.0,success
+Cos Cob,Fairfield,CT,quality_education,0.0,fallback
+Cos Cob,Fairfield,CT,neighborhood_amenities,32.0,success
+Cos Cob,Fairfield,CT,economic_security,46.2,success
+Cos Cob,Fairfield,CT,climate_risk,87.5,success
+Cos Cob,Fairfield,CT,active_outdoors,0.0,failed
+Cos Cob,Fairfield,CT,natural_beauty,0.0,failed
+Cos Cob,Fairfield,CT,diversity,73.2,success
+Cos Cob,Fairfield,CT,social_fabric,31.8,success
+Cos Cob,Fairfield,CT,built_beauty,80.6,success
+Cos Cob,Fairfield,CT,healthcare_access,56.9,success
+Cos Cob,Fairfield,CT,public_transit_access,29.0,success
+Cos Cob,Fairfield,CT,air_travel_access,100,success
+Cos Cob,Fairfield,CT,housing_value,50.4,success
+Cranford,Union,NJ,quality_education,0.0,fallback
+Cranford,Union,NJ,neighborhood_amenities,100.0,success
+Cranford,Union,NJ,economic_security,74.9,success
+Cranford,Union,NJ,climate_risk,79.7,success
+Cranford,Union,NJ,active_outdoors,0.0,failed
+Cranford,Union,NJ,natural_beauty,0.0,failed
+Cranford,Union,NJ,diversity,71.0,success
+Cranford,Union,NJ,social_fabric,66.3,success
+Cranford,Union,NJ,built_beauty,0.0,failed
+Cranford,Union,NJ,healthcare_access,0.0,failed
+Cranford,Union,NJ,public_transit_access,63.4,success
+Cranford,Union,NJ,air_travel_access,100,success
+Cranford,Union,NJ,housing_value,49.2,success
+Cresskill,Bergen,NJ,quality_education,0.0,fallback
+Cresskill,Bergen,NJ,neighborhood_amenities,69.4,success
+Cresskill,Bergen,NJ,economic_security,74.9,success
+Cresskill,Bergen,NJ,climate_risk,67.5,success
+Cresskill,Bergen,NJ,active_outdoors,0.0,failed
+Cresskill,Bergen,NJ,natural_beauty,0.0,failed
+Cresskill,Bergen,NJ,diversity,71.6,success
+Cresskill,Bergen,NJ,social_fabric,62.4,success
+Cresskill,Bergen,NJ,built_beauty,0.0,failed
+Cresskill,Bergen,NJ,healthcare_access,0.0,failed
+Cresskill,Bergen,NJ,public_transit_access,29.0,success
+Cresskill,Bergen,NJ,air_travel_access,100,success
+Cresskill,Bergen,NJ,housing_value,64.2,success
+Croton-on-Hudson,Westchester,NY,quality_education,0.0,fallback
+Croton-on-Hudson,Westchester,NY,neighborhood_amenities,60.7,success
+Croton-on-Hudson,Westchester,NY,economic_security,55.8,success
+Croton-on-Hudson,Westchester,NY,climate_risk,62.5,success
+Croton-on-Hudson,Westchester,NY,active_outdoors,0.0,failed
+Croton-on-Hudson,Westchester,NY,natural_beauty,0.0,failed
+Croton-on-Hudson,Westchester,NY,diversity,69.7,success
+Croton-on-Hudson,Westchester,NY,social_fabric,73.1,success
+Croton-on-Hudson,Westchester,NY,built_beauty,0.0,failed
+Croton-on-Hudson,Westchester,NY,healthcare_access,0.0,failed
+Croton-on-Hudson,Westchester,NY,public_transit_access,60.1,success
+Croton-on-Hudson,Westchester,NY,air_travel_access,85.8,success
+Croton-on-Hudson,Westchester,NY,housing_value,59.6,success
+Crown Heights,Brooklyn,NY,quality_education,0.0,fallback
+Crown Heights,Brooklyn,NY,neighborhood_amenities,89.0,success
+Crown Heights,Brooklyn,NY,economic_security,71.5,success
+Crown Heights,Brooklyn,NY,climate_risk,87.5,success
+Crown Heights,Brooklyn,NY,active_outdoors,0.0,failed
+Crown Heights,Brooklyn,NY,natural_beauty,0.0,failed
+Crown Heights,Brooklyn,NY,diversity,77.2,success
+Crown Heights,Brooklyn,NY,social_fabric,49.7,success
+Crown Heights,Brooklyn,NY,built_beauty,0.0,failed
+Crown Heights,Brooklyn,NY,healthcare_access,0.0,failed
+Crown Heights,Brooklyn,NY,public_transit_access,91.3,success
+Crown Heights,Brooklyn,NY,air_travel_access,100,success
+Crown Heights,Brooklyn,NY,housing_value,39.1,success
+DUMBO,Brooklyn,NY,quality_education,0.0,fallback
+DUMBO,Brooklyn,NY,neighborhood_amenities,98.0,success
+DUMBO,Brooklyn,NY,economic_security,71.5,success
+DUMBO,Brooklyn,NY,climate_risk,80.6,success
+DUMBO,Brooklyn,NY,active_outdoors,0.0,failed
+DUMBO,Brooklyn,NY,natural_beauty,0.0,failed
+DUMBO,Brooklyn,NY,diversity,54.1,success
+DUMBO,Brooklyn,NY,social_fabric,46.7,success
+DUMBO,Brooklyn,NY,built_beauty,0.0,failed
+DUMBO,Brooklyn,NY,healthcare_access,0.0,failed
+DUMBO,Brooklyn,NY,public_transit_access,96.5,success
+DUMBO,Brooklyn,NY,air_travel_access,100,success
+DUMBO,Brooklyn,NY,housing_value,20.2,success
+Darien,Fairfield,CT,quality_education,0.0,fallback
+Darien,Fairfield,CT,neighborhood_amenities,79.8,success
+Darien,Fairfield,CT,economic_security,54.6,success
+Darien,Fairfield,CT,climate_risk,62.5,success
+Darien,Fairfield,CT,active_outdoors,0.0,failed
+Darien,Fairfield,CT,natural_beauty,77.3148,success
+Darien,Fairfield,CT,diversity,61.7,success
+Darien,Fairfield,CT,social_fabric,34.1,success
+Darien,Fairfield,CT,built_beauty,0.0,failed
+Darien,Fairfield,CT,healthcare_access,63.1,success
+Darien,Fairfield,CT,public_transit_access,63.4,success
+Darien,Fairfield,CT,air_travel_access,90.4,success
+Darien,Fairfield,CT,housing_value,63.7,success
+Demarest,Bergen,NJ,quality_education,0.0,fallback
+Demarest,Bergen,NJ,neighborhood_amenities,29.7,success
+Demarest,Bergen,NJ,economic_security,74.9,success
+Demarest,Bergen,NJ,climate_risk,77.6,success
+Demarest,Bergen,NJ,active_outdoors,0.0,failed
+Demarest,Bergen,NJ,natural_beauty,0.0,failed
+Demarest,Bergen,NJ,diversity,67.2,success
+Demarest,Bergen,NJ,social_fabric,82.3,success
+Demarest,Bergen,NJ,built_beauty,0.0,failed
+Demarest,Bergen,NJ,healthcare_access,0.0,failed
+Demarest,Bergen,NJ,public_transit_access,35.0,success
+Demarest,Bergen,NJ,air_travel_access,100,success
+Demarest,Bergen,NJ,housing_value,64.1,success
+Ditmas Park,Brooklyn,NY,quality_education,0.0,fallback
+Ditmas Park,Brooklyn,NY,neighborhood_amenities,96.0,success
+Ditmas Park,Brooklyn,NY,economic_security,71.5,success
+Ditmas Park,Brooklyn,NY,climate_risk,87.5,success
+Ditmas Park,Brooklyn,NY,active_outdoors,0.0,failed
+Ditmas Park,Brooklyn,NY,natural_beauty,0.0,failed
+Ditmas Park,Brooklyn,NY,diversity,81.4,success
+Ditmas Park,Brooklyn,NY,social_fabric,54.0,success
+Ditmas Park,Brooklyn,NY,built_beauty,0.0,failed
+Ditmas Park,Brooklyn,NY,healthcare_access,0.0,failed
+Ditmas Park,Brooklyn,NY,public_transit_access,83.6,success
+Ditmas Park,Brooklyn,NY,air_travel_access,100,success
+Ditmas Park,Brooklyn,NY,housing_value,28.1,success
+Dobbs Ferry,Westchester,NY,quality_education,0.0,fallback
+Dobbs Ferry,Westchester,NY,neighborhood_amenities,64.2,success
+Dobbs Ferry,Westchester,NY,economic_security,74.9,success
+Dobbs Ferry,Westchester,NY,climate_risk,62.5,success
+Dobbs Ferry,Westchester,NY,active_outdoors,0.0,failed
+Dobbs Ferry,Westchester,NY,natural_beauty,0.0,failed
+Dobbs Ferry,Westchester,NY,diversity,74.4,success
+Dobbs Ferry,Westchester,NY,social_fabric,42.3,success
+Dobbs Ferry,Westchester,NY,built_beauty,0.0,failed
+Dobbs Ferry,Westchester,NY,healthcare_access,0.0,failed
+Dobbs Ferry,Westchester,NY,public_transit_access,65.3,success
+Dobbs Ferry,Westchester,NY,air_travel_access,100,success
+Dobbs Ferry,Westchester,NY,housing_value,46.6,success
+East Harlem,Manhattan,NY,quality_education,0.0,fallback
+East Harlem,Manhattan,NY,neighborhood_amenities,96.0,success
+East Harlem,Manhattan,NY,economic_security,71.5,success
+East Harlem,Manhattan,NY,climate_risk,63.7,success
+East Harlem,Manhattan,NY,active_outdoors,0.0,failed
+East Harlem,Manhattan,NY,natural_beauty,0.0,failed
+East Harlem,Manhattan,NY,diversity,82.7,success
+East Harlem,Manhattan,NY,social_fabric,60.4,success
+East Harlem,Manhattan,NY,built_beauty,0.0,failed
+East Harlem,Manhattan,NY,healthcare_access,0.0,failed
+East Harlem,Manhattan,NY,public_transit_access,93.1,success
+East Harlem,Manhattan,NY,air_travel_access,100,success
+East Harlem,Manhattan,NY,housing_value,54.0,success
+East New York,Brooklyn,NY,quality_education,0.0,fallback
+East New York,Brooklyn,NY,neighborhood_amenities,41.7,success
+East New York,Brooklyn,NY,economic_security,71.5,success
+East New York,Brooklyn,NY,climate_risk,72.5,success
+East New York,Brooklyn,NY,active_outdoors,0.0,failed
+East New York,Brooklyn,NY,natural_beauty,0.0,failed
+East New York,Brooklyn,NY,diversity,77.9,success
+East New York,Brooklyn,NY,social_fabric,58.0,success
+East New York,Brooklyn,NY,built_beauty,0.0,failed
+East New York,Brooklyn,NY,healthcare_access,0.0,failed
+East New York,Brooklyn,NY,public_transit_access,92.7,success
+East New York,Brooklyn,NY,air_travel_access,100,success
+East New York,Brooklyn,NY,housing_value,26.1,success
+East Village,Manhattan,NY,quality_education,0.0,fallback
+East Village,Manhattan,NY,neighborhood_amenities,96.0,success
+East Village,Manhattan,NY,economic_security,71.5,success
+East Village,Manhattan,NY,climate_risk,70.8,success
+East Village,Manhattan,NY,active_outdoors,0.0,failed
+East Village,Manhattan,NY,natural_beauty,0.0,failed
+East Village,Manhattan,NY,diversity,59.2,success
+East Village,Manhattan,NY,social_fabric,49.1,success
+East Village,Manhattan,NY,built_beauty,0.0,failed
+East Village,Manhattan,NY,healthcare_access,0.0,failed
+East Village,Manhattan,NY,public_transit_access,97.8,success
+East Village,Manhattan,NY,air_travel_access,100,success
+East Village,Manhattan,NY,housing_value,29.1,success
+Eastchester,Westchester,NY,quality_education,0.0,fallback
+Eastchester,Westchester,NY,neighborhood_amenities,58.1,success
+Eastchester,Westchester,NY,economic_security,71.5,success
+Eastchester,Westchester,NY,climate_risk,62.5,success
+Eastchester,Westchester,NY,active_outdoors,0.0,failed
+Eastchester,Westchester,NY,natural_beauty,0.0,failed
+Eastchester,Westchester,NY,diversity,70.3,success
+Eastchester,Westchester,NY,social_fabric,40.0,success
+Eastchester,Westchester,NY,built_beauty,0.0,failed
+Eastchester,Westchester,NY,healthcare_access,0.0,failed
+Eastchester,Westchester,NY,public_transit_access,61.1,success
+Eastchester,Westchester,NY,air_travel_access,100,success
+Eastchester,Westchester,NY,housing_value,38.0,success
+Edgewater,Bergen,NJ,quality_education,0.0,fallback
+Edgewater,Bergen,NJ,neighborhood_amenities,53.5,success
+Edgewater,Bergen,NJ,economic_security,71.5,success
+Edgewater,Bergen,NJ,climate_risk,86.2,success
+Edgewater,Bergen,NJ,active_outdoors,0.0,failed
+Edgewater,Bergen,NJ,natural_beauty,42.791866666666664,success
+Edgewater,Bergen,NJ,diversity,80.1,success
+Edgewater,Bergen,NJ,social_fabric,42.6,success
+Edgewater,Bergen,NJ,built_beauty,0.0,failed
+Edgewater,Bergen,NJ,healthcare_access,96.1,success
+Edgewater,Bergen,NJ,public_transit_access,24.0,success
+Edgewater,Bergen,NJ,air_travel_access,100,success
+Edgewater,Bergen,NJ,housing_value,47.9,success
+Elmhurst,Queens,NY,quality_education,0.0,fallback
+Elmhurst,Queens,NY,neighborhood_amenities,87.2,success
+Elmhurst,Queens,NY,economic_security,71.5,success
+Elmhurst,Queens,NY,climate_risk,87.5,success
+Elmhurst,Queens,NY,active_outdoors,0.0,failed
+Elmhurst,Queens,NY,natural_beauty,0.0,failed
+Elmhurst,Queens,NY,diversity,77.2,success
+Elmhurst,Queens,NY,social_fabric,60.3,success
+Elmhurst,Queens,NY,built_beauty,0.0,failed
+Elmhurst,Queens,NY,healthcare_access,0.0,failed
+Elmhurst,Queens,NY,public_transit_access,90.1,success
+Elmhurst,Queens,NY,air_travel_access,100,success
+Elmhurst,Queens,NY,housing_value,30.4,success
+Englewood,Bergen,NJ,quality_education,0.0,fallback
+Englewood,Bergen,NJ,neighborhood_amenities,54.5,success
+Englewood,Bergen,NJ,economic_security,74.9,success
+Englewood,Bergen,NJ,climate_risk,65.0,success
+Englewood,Bergen,NJ,active_outdoors,0.0,failed
+Englewood,Bergen,NJ,natural_beauty,0.0,failed
+Englewood,Bergen,NJ,diversity,83.2,success
+Englewood,Bergen,NJ,social_fabric,55.2,success
+Englewood,Bergen,NJ,built_beauty,0.0,failed
+Englewood,Bergen,NJ,healthcare_access,0.0,failed
+Englewood,Bergen,NJ,public_transit_access,39.5,success
+Englewood,Bergen,NJ,air_travel_access,100,success
+Englewood,Bergen,NJ,housing_value,45.0,success
+Fairfield,Fairfield,CT,quality_education,0.0,fallback
+Fairfield,Fairfield,CT,neighborhood_amenities,91.0,success
+Fairfield,Fairfield,CT,economic_security,46.2,success
+Fairfield,Fairfield,CT,climate_risk,62.5,success
+Fairfield,Fairfield,CT,active_outdoors,90.0,success
+Fairfield,Fairfield,CT,natural_beauty,36.678399999999996,success
+Fairfield,Fairfield,CT,diversity,60.6,success
+Fairfield,Fairfield,CT,social_fabric,45.1,success
+Fairfield,Fairfield,CT,built_beauty,0.0,failed
+Fairfield,Fairfield,CT,healthcare_access,86.2,success
+Fairfield,Fairfield,CT,public_transit_access,73.3,success
+Fairfield,Fairfield,CT,air_travel_access,66.4,success
+Fairfield,Fairfield,CT,housing_value,59.3,success
+Fieldston,Bronx,NY,quality_education,0.0,fallback
+Fieldston,Bronx,NY,neighborhood_amenities,61.0,success
+Fieldston,Bronx,NY,economic_security,71.5,success
+Fieldston,Bronx,NY,climate_risk,85.0,success
+Fieldston,Bronx,NY,active_outdoors,0.0,failed
+Fieldston,Bronx,NY,natural_beauty,0.0,failed
+Fieldston,Bronx,NY,diversity,78.9,success
+Fieldston,Bronx,NY,social_fabric,52.1,success
+Fieldston,Bronx,NY,built_beauty,0.0,failed
+Fieldston,Bronx,NY,healthcare_access,0.0,failed
+Fieldston,Bronx,NY,public_transit_access,80.2,success
+Fieldston,Bronx,NY,air_travel_access,100,success
+Fieldston,Bronx,NY,housing_value,65.0,success
+Financial District,Manhattan,NY,quality_education,0.0,fallback
+Financial District,Manhattan,NY,neighborhood_amenities,0.0,failed
+Financial District,Manhattan,NY,economic_security,71.5,success
+Financial District,Manhattan,NY,climate_risk,78.7,success
+Financial District,Manhattan,NY,active_outdoors,0.0,failed
+Financial District,Manhattan,NY,natural_beauty,0.0,failed
+Financial District,Manhattan,NY,diversity,56.7,success
+Financial District,Manhattan,NY,social_fabric,45.8,success
+Financial District,Manhattan,NY,built_beauty,0.0,failed
+Financial District,Manhattan,NY,healthcare_access,0.0,failed
+Financial District,Manhattan,NY,public_transit_access,97.2,success
+Financial District,Manhattan,NY,air_travel_access,100,success
+Financial District,Manhattan,NY,housing_value,20.1,success
+Flatbush,Brooklyn,NY,quality_education,0.0,fallback
+Flatbush,Brooklyn,NY,neighborhood_amenities,95.4,success
+Flatbush,Brooklyn,NY,economic_security,71.5,success
+Flatbush,Brooklyn,NY,climate_risk,87.5,success
+Flatbush,Brooklyn,NY,active_outdoors,0.0,failed
+Flatbush,Brooklyn,NY,natural_beauty,0.0,failed
+Flatbush,Brooklyn,NY,diversity,80.0,success
+Flatbush,Brooklyn,NY,social_fabric,64.4,success
+Flatbush,Brooklyn,NY,built_beauty,0.0,failed
+Flatbush,Brooklyn,NY,healthcare_access,0.0,failed
+Flatbush,Brooklyn,NY,public_transit_access,79.9,success
+Flatbush,Brooklyn,NY,air_travel_access,100,success
+Flatbush,Brooklyn,NY,housing_value,30.8,success
+Flatiron,Manhattan,NY,quality_education,0.0,fallback
+Flatiron,Manhattan,NY,neighborhood_amenities,96.0,success
+Flatiron,Manhattan,NY,economic_security,71.5,success
+Flatiron,Manhattan,NY,climate_risk,76.8,success
+Flatiron,Manhattan,NY,active_outdoors,0.0,failed
+Flatiron,Manhattan,NY,natural_beauty,0.0,failed
+Flatiron,Manhattan,NY,diversity,72.6,success
+Flatiron,Manhattan,NY,social_fabric,54.1,success
+Flatiron,Manhattan,NY,built_beauty,0.0,failed
+Flatiron,Manhattan,NY,healthcare_access,0.0,failed
+Flatiron,Manhattan,NY,public_transit_access,96.8,success
+Flatiron,Manhattan,NY,air_travel_access,100,success
+Flatiron,Manhattan,NY,housing_value,18.8,success
+Flatlands,Brooklyn,NY,quality_education,0.0,fallback
+Flatlands,Brooklyn,NY,neighborhood_amenities,45.5,success
+Flatlands,Brooklyn,NY,economic_security,71.5,success
+Flatlands,Brooklyn,NY,climate_risk,74.5,success
+Flatlands,Brooklyn,NY,active_outdoors,0.0,failed
+Flatlands,Brooklyn,NY,natural_beauty,0.0,failed
+Flatlands,Brooklyn,NY,diversity,80.6,success
+Flatlands,Brooklyn,NY,social_fabric,56.1,success
+Flatlands,Brooklyn,NY,built_beauty,0.0,failed
+Flatlands,Brooklyn,NY,healthcare_access,0.0,failed
+Flatlands,Brooklyn,NY,public_transit_access,30.0,success
+Flatlands,Brooklyn,NY,air_travel_access,100,success
+Flatlands,Brooklyn,NY,housing_value,32.1,success
+Floral Park,Nassau,NY,quality_education,0.0,fallback
+Floral Park,Nassau,NY,neighborhood_amenities,61.3,success
+Floral Park,Nassau,NY,economic_security,71.5,success
+Floral Park,Nassau,NY,climate_risk,85.5,success
+Floral Park,Nassau,NY,active_outdoors,0.0,failed
+Floral Park,Nassau,NY,natural_beauty,0.0,failed
+Floral Park,Nassau,NY,diversity,63.4,success
+Floral Park,Nassau,NY,social_fabric,66.9,success
+Floral Park,Nassau,NY,built_beauty,0.0,failed
+Floral Park,Nassau,NY,healthcare_access,0.0,failed
+Floral Park,Nassau,NY,public_transit_access,87.0,success
+Floral Park,Nassau,NY,air_travel_access,100,success
+Floral Park,Nassau,NY,housing_value,69.2,success
+Flushing,Queens,NY,quality_education,0.0,fallback
+Flushing,Queens,NY,neighborhood_amenities,73.4,success
+Flushing,Queens,NY,economic_security,71.5,success
+Flushing,Queens,NY,climate_risk,74.8,success
+Flushing,Queens,NY,active_outdoors,0.0,failed
+Flushing,Queens,NY,natural_beauty,0.0,failed
+Flushing,Queens,NY,diversity,79.3,success
+Flushing,Queens,NY,social_fabric,55.3,success
+Flushing,Queens,NY,built_beauty,0.0,failed
+Flushing,Queens,NY,healthcare_access,0.0,failed
+Flushing,Queens,NY,public_transit_access,74.4,success
+Flushing,Queens,NY,air_travel_access,100,success
+Flushing,Queens,NY,housing_value,32.7,success
+Fordham,Bronx,NY,quality_education,0.0,fallback
+Fordham,Bronx,NY,neighborhood_amenities,80.9,success
+Fordham,Bronx,NY,economic_security,71.5,success
+Fordham,Bronx,NY,climate_risk,65.5,success
+Fordham,Bronx,NY,active_outdoors,0.0,failed
+Fordham,Bronx,NY,natural_beauty,0.0,failed
+Fordham,Bronx,NY,diversity,66.3,success
+Fordham,Bronx,NY,social_fabric,43.1,success
+Fordham,Bronx,NY,built_beauty,0.0,failed
+Fordham,Bronx,NY,healthcare_access,0.0,failed
+Fordham,Bronx,NY,public_transit_access,89.8,success
+Fordham,Bronx,NY,air_travel_access,100,success
+Fordham,Bronx,NY,housing_value,54.0,success
+Forest Hills,Queens,NY,quality_education,0.0,fallback
+Forest Hills,Queens,NY,neighborhood_amenities,96.0,success
+Forest Hills,Queens,NY,economic_security,71.5,success
+Forest Hills,Queens,NY,climate_risk,87.5,success
+Forest Hills,Queens,NY,active_outdoors,0.0,failed
+Forest Hills,Queens,NY,natural_beauty,0.0,failed
+Forest Hills,Queens,NY,diversity,81.1,success
+Forest Hills,Queens,NY,social_fabric,57.7,success
+Forest Hills,Queens,NY,built_beauty,0.0,failed
+Forest Hills,Queens,NY,healthcare_access,0.0,failed
+Forest Hills,Queens,NY,public_transit_access,90.2,success
+Forest Hills,Queens,NY,air_travel_access,100,success
+Forest Hills,Queens,NY,housing_value,47.0,success
+Fort Greene,Brooklyn,NY,quality_education,0.0,fallback
+Fort Greene,Brooklyn,NY,neighborhood_amenities,97.0,success
+Fort Greene,Brooklyn,NY,economic_security,71.5,success
+Fort Greene,Brooklyn,NY,climate_risk,78.2,success
+Fort Greene,Brooklyn,NY,active_outdoors,0.0,failed
+Fort Greene,Brooklyn,NY,natural_beauty,0.0,failed
+Fort Greene,Brooklyn,NY,diversity,0.0,success
+Fort Greene,Brooklyn,NY,social_fabric,64.7,success
+Fort Greene,Brooklyn,NY,built_beauty,0.0,failed
+Fort Greene,Brooklyn,NY,healthcare_access,0.0,failed
+Fort Greene,Brooklyn,NY,public_transit_access,98.0,success
+Fort Greene,Brooklyn,NY,air_travel_access,100,success
+Fort Greene,Brooklyn,NY,housing_value,65.0,success
+Fort Lee,Bergen,NJ,quality_education,0.0,fallback
+Fort Lee,Bergen,NJ,neighborhood_amenities,98.0,success
+Fort Lee,Bergen,NJ,economic_security,74.9,success
+Fort Lee,Bergen,NJ,climate_risk,62.5,success
+Fort Lee,Bergen,NJ,active_outdoors,0.0,failed
+Fort Lee,Bergen,NJ,natural_beauty,0.0,failed
+Fort Lee,Bergen,NJ,diversity,75.7,success
+Fort Lee,Bergen,NJ,social_fabric,51.4,success
+Fort Lee,Bergen,NJ,built_beauty,0.0,failed
+Fort Lee,Bergen,NJ,healthcare_access,0.0,failed
+Fort Lee,Bergen,NJ,public_transit_access,71.8,success
+Fort Lee,Bergen,NJ,air_travel_access,100,success
+Fort Lee,Bergen,NJ,housing_value,35.9,success
+Freeport,Nassau,NY,quality_education,0.0,fallback
+Freeport,Nassau,NY,neighborhood_amenities,73.0,success
+Freeport,Nassau,NY,economic_security,74.9,success
+Freeport,Nassau,NY,climate_risk,62.5,success
+Freeport,Nassau,NY,active_outdoors,0.0,failed
+Freeport,Nassau,NY,natural_beauty,0.0,failed
+Freeport,Nassau,NY,diversity,89.4,success
+Freeport,Nassau,NY,social_fabric,81.7,success
+Freeport,Nassau,NY,built_beauty,48.8,success
+Freeport,Nassau,NY,healthcare_access,0.0,failed
+Freeport,Nassau,NY,public_transit_access,63.7,success
+Freeport,Nassau,NY,air_travel_access,100,success
+Freeport,Nassau,NY,housing_value,50.0,success
+Garden City,Nassau,NY,quality_education,0.0,fallback
+Garden City,Nassau,NY,neighborhood_amenities,54.3,success
+Garden City,Nassau,NY,economic_security,74.9,success
+Garden City,Nassau,NY,climate_risk,87.5,success
+Garden City,Nassau,NY,active_outdoors,0.0,failed
+Garden City,Nassau,NY,natural_beauty,0.0,failed
+Garden City,Nassau,NY,diversity,59.0,success
+Garden City,Nassau,NY,social_fabric,65.2,success
+Garden City,Nassau,NY,built_beauty,0.0,failed
+Garden City,Nassau,NY,healthcare_access,0.0,failed
+Garden City,Nassau,NY,public_transit_access,96.8,success
+Garden City,Nassau,NY,air_travel_access,100,success
+Garden City,Nassau,NY,housing_value,67.5,success
+Glen Ridge,Essex,NJ,quality_education,0.0,fallback
+Glen Ridge,Essex,NJ,neighborhood_amenities,71.0,success
+Glen Ridge,Essex,NJ,economic_security,74.9,success
+Glen Ridge,Essex,NJ,climate_risk,87.5,success
+Glen Ridge,Essex,NJ,active_outdoors,0.0,failed
+Glen Ridge,Essex,NJ,natural_beauty,0.0,failed
+Glen Ridge,Essex,NJ,diversity,65.6,success
+Glen Ridge,Essex,NJ,social_fabric,50.5,success
+Glen Ridge,Essex,NJ,built_beauty,0.0,failed
+Glen Ridge,Essex,NJ,healthcare_access,0.0,failed
+Glen Ridge,Essex,NJ,public_transit_access,82.1,success
+Glen Ridge,Essex,NJ,air_travel_access,100,success
+Glen Ridge,Essex,NJ,housing_value,90.0,success
+Glen Rock,Bergen,NJ,quality_education,0.0,fallback
+Glen Rock,Bergen,NJ,neighborhood_amenities,80.8,success
+Glen Rock,Bergen,NJ,economic_security,74.9,success
+Glen Rock,Bergen,NJ,climate_risk,87.5,success
+Glen Rock,Bergen,NJ,active_outdoors,0.0,failed
+Glen Rock,Bergen,NJ,natural_beauty,0.0,failed
+Glen Rock,Bergen,NJ,diversity,65.2,success
+Glen Rock,Bergen,NJ,social_fabric,41.6,success
+Glen Rock,Bergen,NJ,built_beauty,0.0,failed
+Glen Rock,Bergen,NJ,healthcare_access,0.0,failed
+Glen Rock,Bergen,NJ,public_transit_access,81.9,success
+Glen Rock,Bergen,NJ,air_travel_access,100,success
+Glen Rock,Bergen,NJ,housing_value,74.9,success
+Glendale,Queens,NY,quality_education,0.0,fallback
+Glendale,Queens,NY,neighborhood_amenities,81.6,success
+Glendale,Queens,NY,economic_security,71.5,success
+Glendale,Queens,NY,climate_risk,87.5,success
+Glendale,Queens,NY,active_outdoors,0.0,failed
+Glendale,Queens,NY,natural_beauty,0.0,failed
+Glendale,Queens,NY,diversity,76.3,success
+Glendale,Queens,NY,social_fabric,54.6,success
+Glendale,Queens,NY,built_beauty,0.0,failed
+Glendale,Queens,NY,healthcare_access,0.0,failed
+Glendale,Queens,NY,public_transit_access,81.1,success
+Glendale,Queens,NY,air_travel_access,100,success
+Glendale,Queens,NY,housing_value,37.5,success
+Gowanus,Brooklyn,NY,quality_education,0.0,fallback
+Gowanus,Brooklyn,NY,neighborhood_amenities,95.5,success
+Gowanus,Brooklyn,NY,economic_security,71.5,success
+Gowanus,Brooklyn,NY,climate_risk,66.6,success
+Gowanus,Brooklyn,NY,active_outdoors,0.0,failed
+Gowanus,Brooklyn,NY,natural_beauty,0.0,failed
+Gowanus,Brooklyn,NY,diversity,75.3,success
+Gowanus,Brooklyn,NY,social_fabric,74.2,success
+Gowanus,Brooklyn,NY,built_beauty,0.0,failed
+Gowanus,Brooklyn,NY,healthcare_access,0.0,failed
+Gowanus,Brooklyn,NY,public_transit_access,95.3,success
+Gowanus,Brooklyn,NY,air_travel_access,100,success
+Gowanus,Brooklyn,NY,housing_value,26.5,success
+Gramercy Park,Manhattan,NY,quality_education,0.0,fallback
+Gramercy Park,Manhattan,NY,neighborhood_amenities,96.0,success
+Gramercy Park,Manhattan,NY,economic_security,71.5,success
+Gramercy Park,Manhattan,NY,climate_risk,77.8,success
+Gramercy Park,Manhattan,NY,active_outdoors,0.0,failed
+Gramercy Park,Manhattan,NY,natural_beauty,0.0,failed
+Gramercy Park,Manhattan,NY,diversity,65.5,success
+Gramercy Park,Manhattan,NY,social_fabric,62.0,success
+Gramercy Park,Manhattan,NY,built_beauty,0.0,failed
+Gramercy Park,Manhattan,NY,healthcare_access,0.0,failed
+Gramercy Park,Manhattan,NY,public_transit_access,97.1,success
+Gramercy Park,Manhattan,NY,air_travel_access,100,success
+Gramercy Park,Manhattan,NY,housing_value,39.2,success
+Great Kills,Staten Island,NY,quality_education,0.0,fallback
+Great Kills,Staten Island,NY,neighborhood_amenities,83.3,success
+Great Kills,Staten Island,NY,economic_security,71.5,success
+Great Kills,Staten Island,NY,climate_risk,62.5,success
+Great Kills,Staten Island,NY,active_outdoors,0.0,failed
+Great Kills,Staten Island,NY,natural_beauty,0.0,failed
+Great Kills,Staten Island,NY,diversity,65.2,success
+Great Kills,Staten Island,NY,social_fabric,56.3,success
+Great Kills,Staten Island,NY,built_beauty,0.0,failed
+Great Kills,Staten Island,NY,healthcare_access,0.0,failed
+Great Kills,Staten Island,NY,public_transit_access,60.7,success
+Great Kills,Staten Island,NY,air_travel_access,100,success
+Great Kills,Staten Island,NY,housing_value,54.3,success
+Great Neck,Nassau,NY,quality_education,0.0,fallback
+Great Neck,Nassau,NY,neighborhood_amenities,63.3,success
+Great Neck,Nassau,NY,economic_security,74.9,success
+Great Neck,Nassau,NY,climate_risk,62.5,success
+Great Neck,Nassau,NY,active_outdoors,0.0,failed
+Great Neck,Nassau,NY,natural_beauty,0.0,failed
+Great Neck,Nassau,NY,diversity,73.9,success
+Great Neck,Nassau,NY,social_fabric,75.5,success
+Great Neck,Nassau,NY,built_beauty,0.0,failed
+Great Neck,Nassau,NY,healthcare_access,0.0,failed
+Great Neck,Nassau,NY,public_transit_access,62.9,success
+Great Neck,Nassau,NY,air_travel_access,100,success
+Great Neck,Nassau,NY,housing_value,53.1,success
+Greenpoint,Brooklyn,NY,quality_education,0.0,fallback
+Greenpoint,Brooklyn,NY,neighborhood_amenities,91.0,success
+Greenpoint,Brooklyn,NY,economic_security,71.5,success
+Greenpoint,Brooklyn,NY,climate_risk,81.8,success
+Greenpoint,Brooklyn,NY,active_outdoors,0.0,failed
+Greenpoint,Brooklyn,NY,natural_beauty,0.0,failed
+Greenpoint,Brooklyn,NY,diversity,70.2,success
+Greenpoint,Brooklyn,NY,social_fabric,54.4,success
+Greenpoint,Brooklyn,NY,built_beauty,0.0,failed
+Greenpoint,Brooklyn,NY,healthcare_access,0.0,failed
+Greenpoint,Brooklyn,NY,public_transit_access,93.5,success
+Greenpoint,Brooklyn,NY,air_travel_access,100,success
+Greenpoint,Brooklyn,NY,housing_value,26.2,success
+Greenwich Village,Manhattan,NY,quality_education,0.0,fallback
+Greenwich Village,Manhattan,NY,neighborhood_amenities,96.0,success
+Greenwich Village,Manhattan,NY,economic_security,71.5,success
+Greenwich Village,Manhattan,NY,climate_risk,72.2,success
+Greenwich Village,Manhattan,NY,active_outdoors,0.0,failed
+Greenwich Village,Manhattan,NY,natural_beauty,0.0,failed
+Greenwich Village,Manhattan,NY,diversity,61.2,success
+Greenwich Village,Manhattan,NY,social_fabric,60.4,success
+Greenwich Village,Manhattan,NY,built_beauty,0.0,failed
+Greenwich Village,Manhattan,NY,healthcare_access,0.0,failed
+Greenwich Village,Manhattan,NY,public_transit_access,96.7,success
+Greenwich Village,Manhattan,NY,air_travel_access,100,success
+Greenwich Village,Manhattan,NY,housing_value,21.4,success
+Greenwich,Fairfield,CT,quality_education,0.0,fallback
+Greenwich,Fairfield,CT,neighborhood_amenities,74.4,success
+Greenwich,Fairfield,CT,economic_security,46.2,success
+Greenwich,Fairfield,CT,climate_risk,62.5,success
+Greenwich,Fairfield,CT,active_outdoors,0.0,failed
+Greenwich,Fairfield,CT,natural_beauty,0.0,failed
+Greenwich,Fairfield,CT,diversity,75.2,success
+Greenwich,Fairfield,CT,social_fabric,29.6,success
+Greenwich,Fairfield,CT,built_beauty,0.0,failed
+Greenwich,Fairfield,CT,healthcare_access,0.0,failed
+Greenwich,Fairfield,CT,public_transit_access,91.7,success
+Greenwich,Fairfield,CT,air_travel_access,100,success
+Greenwich,Fairfield,CT,housing_value,30.0,success
+Hamilton Heights,Manhattan,NY,quality_education,0.0,fallback
+Hamilton Heights,Manhattan,NY,neighborhood_amenities,88.9,success
+Hamilton Heights,Manhattan,NY,economic_security,71.5,success
+Hamilton Heights,Manhattan,NY,climate_risk,87.0,success
+Hamilton Heights,Manhattan,NY,active_outdoors,0.0,failed
+Hamilton Heights,Manhattan,NY,natural_beauty,0.0,failed
+Hamilton Heights,Manhattan,NY,diversity,80.5,success
+Hamilton Heights,Manhattan,NY,social_fabric,58.8,success
+Hamilton Heights,Manhattan,NY,built_beauty,0.0,failed
+Hamilton Heights,Manhattan,NY,healthcare_access,0.0,failed
+Hamilton Heights,Manhattan,NY,public_transit_access,93.1,success
+Hamilton Heights,Manhattan,NY,air_travel_access,100,success
+Hamilton Heights,Manhattan,NY,housing_value,37.5,success
+Harlem,Manhattan,NY,quality_education,0.0,fallback
+Harlem,Manhattan,NY,neighborhood_amenities,96.0,success
+Harlem,Manhattan,NY,economic_security,71.5,success
+Harlem,Manhattan,NY,climate_risk,70.8,success
+Harlem,Manhattan,NY,active_outdoors,0.0,failed
+Harlem,Manhattan,NY,natural_beauty,0.0,failed
+Harlem,Manhattan,NY,diversity,80.7,success
+Harlem,Manhattan,NY,social_fabric,68.1,success
+Harlem,Manhattan,NY,built_beauty,0.0,failed
+Harlem,Manhattan,NY,healthcare_access,0.0,failed
+Harlem,Manhattan,NY,public_transit_access,92.7,success
+Harlem,Manhattan,NY,air_travel_access,100,success
+Harlem,Manhattan,NY,housing_value,21.6,success
+Harrison,Westchester,NY,quality_education,0.0,fallback
+Harrison,Westchester,NY,neighborhood_amenities,51.6,success
+Harrison,Westchester,NY,economic_security,74.9,success
+Harrison,Westchester,NY,climate_risk,62.5,success
+Harrison,Westchester,NY,active_outdoors,0.0,failed
+Harrison,Westchester,NY,natural_beauty,0.0,failed
+Harrison,Westchester,NY,diversity,70.9,success
+Harrison,Westchester,NY,social_fabric,51.3,success
+Harrison,Westchester,NY,built_beauty,0.0,failed
+Harrison,Westchester,NY,healthcare_access,0.0,failed
+Harrison,Westchester,NY,public_transit_access,83.0,success
+Harrison,Westchester,NY,air_travel_access,100,success
+Harrison,Westchester,NY,housing_value,59.4,success
+Hastings-on-Hudson,Westchester,NY,quality_education,0.0,fallback
+Hastings-on-Hudson,Westchester,NY,neighborhood_amenities,73.5,success
+Hastings-on-Hudson,Westchester,NY,economic_security,74.9,success
+Hastings-on-Hudson,Westchester,NY,climate_risk,76.1,success
+Hastings-on-Hudson,Westchester,NY,active_outdoors,0.0,failed
+Hastings-on-Hudson,Westchester,NY,natural_beauty,0.0,failed
+Hastings-on-Hudson,Westchester,NY,diversity,69.5,success
+Hastings-on-Hudson,Westchester,NY,social_fabric,56.6,success
+Hastings-on-Hudson,Westchester,NY,built_beauty,0.0,failed
+Hastings-on-Hudson,Westchester,NY,healthcare_access,0.0,failed
+Hastings-on-Hudson,Westchester,NY,public_transit_access,63.2,success
+Hastings-on-Hudson,Westchester,NY,air_travel_access,100,success
+Hastings-on-Hudson,Westchester,NY,housing_value,42.5,success
+Hell's Kitchen,Manhattan,NY,quality_education,0.0,fallback
+Hell's Kitchen,Manhattan,NY,neighborhood_amenities,91.0,success
+Hell's Kitchen,Manhattan,NY,economic_security,71.5,success
+Hell's Kitchen,Manhattan,NY,climate_risk,73.5,success
+Hell's Kitchen,Manhattan,NY,active_outdoors,0.0,failed
+Hell's Kitchen,Manhattan,NY,natural_beauty,0.0,failed
+Hell's Kitchen,Manhattan,NY,diversity,73.1,success
+Hell's Kitchen,Manhattan,NY,social_fabric,53.3,success
+Hell's Kitchen,Manhattan,NY,built_beauty,0.0,failed
+Hell's Kitchen,Manhattan,NY,healthcare_access,0.0,failed
+Hell's Kitchen,Manhattan,NY,public_transit_access,98.3,success
+Hell's Kitchen,Manhattan,NY,air_travel_access,100,success
+Hell's Kitchen,Manhattan,NY,housing_value,24.6,success
+Hempstead,Nassau,NY,quality_education,0.0,fallback
+Hempstead,Nassau,NY,neighborhood_amenities,0.0,failed
+Hempstead,Nassau,NY,economic_security,74.9,success
+Hempstead,Nassau,NY,climate_risk,87.5,success
+Hempstead,Nassau,NY,active_outdoors,0.0,failed
+Hempstead,Nassau,NY,natural_beauty,0.0,failed
+Hempstead,Nassau,NY,diversity,72.5,success
+Hempstead,Nassau,NY,social_fabric,60.8,success
+Hempstead,Nassau,NY,built_beauty,0.0,failed
+Hempstead,Nassau,NY,healthcare_access,0.0,failed
+Hempstead,Nassau,NY,public_transit_access,32.0,success
+Hempstead,Nassau,NY,air_travel_access,100,success
+Hempstead,Nassau,NY,housing_value,80.0,success
+Hewlett,Nassau,NY,quality_education,0.0,fallback
+Hewlett,Nassau,NY,neighborhood_amenities,83.6,success
+Hewlett,Nassau,NY,economic_security,74.9,success
+Hewlett,Nassau,NY,climate_risk,80.5,success
+Hewlett,Nassau,NY,active_outdoors,0.0,failed
+Hewlett,Nassau,NY,natural_beauty,0.0,failed
+Hewlett,Nassau,NY,diversity,75.0,success
+Hewlett,Nassau,NY,social_fabric,63.8,success
+Hewlett,Nassau,NY,built_beauty,0.0,failed
+Hewlett,Nassau,NY,healthcare_access,0.0,failed
+Hewlett,Nassau,NY,public_transit_access,63.2,success
+Hewlett,Nassau,NY,air_travel_access,100,success
+Hewlett,Nassau,NY,housing_value,70.0,success
+Hoboken,Hudson,NJ,quality_education,0.0,fallback
+Hoboken,Hudson,NJ,neighborhood_amenities,96.0,success
+Hoboken,Hudson,NJ,economic_security,71.5,success
+Hoboken,Hudson,NJ,climate_risk,71.1,success
+Hoboken,Hudson,NJ,active_outdoors,0.0,failed
+Hoboken,Hudson,NJ,natural_beauty,0.0,failed
+Hoboken,Hudson,NJ,diversity,61.6,success
+Hoboken,Hudson,NJ,social_fabric,30.4,success
+Hoboken,Hudson,NJ,built_beauty,0.0,failed
+Hoboken,Hudson,NJ,healthcare_access,0.0,failed
+Hoboken,Hudson,NJ,public_transit_access,95.1,success
+Hoboken,Hudson,NJ,air_travel_access,100,success
+Hoboken,Hudson,NJ,housing_value,34.7,success
+Howard Beach,Queens,NY,quality_education,0.0,fallback
+Howard Beach,Queens,NY,neighborhood_amenities,44.9,success
+Howard Beach,Queens,NY,economic_security,74.9,success
+Howard Beach,Queens,NY,climate_risk,72.5,success
+Howard Beach,Queens,NY,active_outdoors,0.0,failed
+Howard Beach,Queens,NY,natural_beauty,0.0,failed
+Howard Beach,Queens,NY,diversity,0.0,success
+Howard Beach,Queens,NY,social_fabric,37.9,success
+Howard Beach,Queens,NY,built_beauty,0.0,failed
+Howard Beach,Queens,NY,healthcare_access,0.0,failed
+Howard Beach,Queens,NY,public_transit_access,83.5,success
+Howard Beach,Queens,NY,air_travel_access,100,success
+Howard Beach,Queens,NY,housing_value,65.0,success
+Hunts Point,Bronx,NY,quality_education,0.0,fallback
+Hunts Point,Bronx,NY,neighborhood_amenities,27.9,success
+Hunts Point,Bronx,NY,economic_security,71.5,success
+Hunts Point,Bronx,NY,climate_risk,62.5,success
+Hunts Point,Bronx,NY,active_outdoors,0.0,failed
+Hunts Point,Bronx,NY,natural_beauty,0.0,failed
+Hunts Point,Bronx,NY,diversity,85.6,success
+Hunts Point,Bronx,NY,social_fabric,51.6,success
+Hunts Point,Bronx,NY,built_beauty,0.0,failed
+Hunts Point,Bronx,NY,healthcare_access,0.0,failed
+Hunts Point,Bronx,NY,public_transit_access,68.7,success
+Hunts Point,Bronx,NY,air_travel_access,100,success
+Hunts Point,Bronx,NY,housing_value,34.2,success
+Inwood,Manhattan,NY,quality_education,0.0,fallback
+Inwood,Manhattan,NY,neighborhood_amenities,83.4,success
+Inwood,Manhattan,NY,economic_security,71.5,success
+Inwood,Manhattan,NY,climate_risk,64.3,success
+Inwood,Manhattan,NY,active_outdoors,0.0,failed
+Inwood,Manhattan,NY,natural_beauty,0.0,failed
+Inwood,Manhattan,NY,diversity,82.4,success
+Inwood,Manhattan,NY,social_fabric,60.3,success
+Inwood,Manhattan,NY,built_beauty,0.0,failed
+Inwood,Manhattan,NY,healthcare_access,70.0,success
+Inwood,Manhattan,NY,public_transit_access,91.0,success
+Inwood,Manhattan,NY,air_travel_access,100,success
+Inwood,Manhattan,NY,housing_value,37.7,success
+Irvington,Westchester,NY,quality_education,0.0,fallback
+Irvington,Westchester,NY,neighborhood_amenities,59.2,success
+Irvington,Westchester,NY,economic_security,74.9,success
+Irvington,Westchester,NY,climate_risk,74.8,success
+Irvington,Westchester,NY,active_outdoors,0.0,failed
+Irvington,Westchester,NY,natural_beauty,0.0,failed
+Irvington,Westchester,NY,diversity,68.8,success
+Irvington,Westchester,NY,social_fabric,0.0,failed
+Irvington,Westchester,NY,built_beauty,0.0,failed
+Irvington,Westchester,NY,healthcare_access,0.0,failed
+Irvington,Westchester,NY,public_transit_access,62.9,success
+Irvington,Westchester,NY,air_travel_access,100,success
+Irvington,Westchester,NY,housing_value,62.8,success
+Jackson Heights,Queens,NY,quality_education,0.0,fallback
+Jackson Heights,Queens,NY,neighborhood_amenities,90.0,success
+Jackson Heights,Queens,NY,economic_security,71.5,success
+Jackson Heights,Queens,NY,climate_risk,80.5,success
+Jackson Heights,Queens,NY,active_outdoors,0.0,failed
+Jackson Heights,Queens,NY,natural_beauty,0.0,failed
+Jackson Heights,Queens,NY,diversity,87.0,success
+Jackson Heights,Queens,NY,social_fabric,59.1,success
+Jackson Heights,Queens,NY,built_beauty,0.0,failed
+Jackson Heights,Queens,NY,healthcare_access,0.0,failed
+Jackson Heights,Queens,NY,public_transit_access,89.7,success
+Jackson Heights,Queens,NY,air_travel_access,100,success
+Jackson Heights,Queens,NY,housing_value,30.5,success
+Jamaica,Queens,NY,quality_education,0.0,fallback
+Jamaica,Queens,NY,neighborhood_amenities,91.0,success
+Jamaica,Queens,NY,economic_security,71.5,success
+Jamaica,Queens,NY,climate_risk,87.5,success
+Jamaica,Queens,NY,active_outdoors,0.0,failed
+Jamaica,Queens,NY,natural_beauty,0.0,failed
+Jamaica,Queens,NY,diversity,85.0,success
+Jamaica,Queens,NY,social_fabric,54.1,success
+Jamaica,Queens,NY,built_beauty,0.0,failed
+Jamaica,Queens,NY,healthcare_access,0.0,failed
+Jamaica,Queens,NY,public_transit_access,92.3,success
+Jamaica,Queens,NY,air_travel_access,100,success
+Jamaica,Queens,NY,housing_value,30.6,success
+Jersey City,Hudson,NJ,quality_education,0.0,fallback
+Jersey City,Hudson,NJ,neighborhood_amenities,96.6,success
+Jersey City,Hudson,NJ,economic_security,71.5,success
+Jersey City,Hudson,NJ,climate_risk,62.5,success
+Jersey City,Hudson,NJ,active_outdoors,0.0,failed
+Jersey City,Hudson,NJ,natural_beauty,0.0,failed
+Jersey City,Hudson,NJ,diversity,72.8,success
+Jersey City,Hudson,NJ,social_fabric,32.5,success
+Jersey City,Hudson,NJ,built_beauty,0.0,failed
+Jersey City,Hudson,NJ,healthcare_access,64.7,success
+Jersey City,Hudson,NJ,public_transit_access,85.8,success
+Jersey City,Hudson,NJ,air_travel_access,100,success
+Jersey City,Hudson,NJ,housing_value,24.8,success
+Katonah,Westchester,NY,quality_education,0.0,fallback
+Katonah,Westchester,NY,neighborhood_amenities,53.1,success
+Katonah,Westchester,NY,economic_security,55.8,success
+Katonah,Westchester,NY,climate_risk,62.5,success
+Katonah,Westchester,NY,active_outdoors,0.0,failed
+Katonah,Westchester,NY,natural_beauty,0.0,failed
+Katonah,Westchester,NY,diversity,65.4,success
+Katonah,Westchester,NY,social_fabric,66.0,success
+Katonah,Westchester,NY,built_beauty,0.0,failed
+Katonah,Westchester,NY,healthcare_access,0.0,failed
+Katonah,Westchester,NY,public_transit_access,63.2,success
+Katonah,Westchester,NY,air_travel_access,75.6,success
+Katonah,Westchester,NY,housing_value,69.5,success
+Kensington,Brooklyn,NY,quality_education,0.0,fallback
+Kensington,Brooklyn,NY,neighborhood_amenities,91.2,success
+Kensington,Brooklyn,NY,economic_security,71.5,success
+Kensington,Brooklyn,NY,climate_risk,82.0,success
+Kensington,Brooklyn,NY,active_outdoors,0.0,failed
+Kensington,Brooklyn,NY,natural_beauty,0.0,failed
+Kensington,Brooklyn,NY,diversity,72.9,success
+Kensington,Brooklyn,NY,social_fabric,57.2,success
+Kensington,Brooklyn,NY,built_beauty,0.0,failed
+Kensington,Brooklyn,NY,healthcare_access,0.0,failed
+Kensington,Brooklyn,NY,public_transit_access,88.9,success
+Kensington,Brooklyn,NY,air_travel_access,100,success
+Kensington,Brooklyn,NY,housing_value,50.3,success
+Kew Gardens,Queens,NY,quality_education,0.0,fallback
+Kew Gardens,Queens,NY,neighborhood_amenities,92.5,success
+Kew Gardens,Queens,NY,economic_security,71.5,success
+Kew Gardens,Queens,NY,climate_risk,87.5,success
+Kew Gardens,Queens,NY,active_outdoors,0.0,failed
+Kew Gardens,Queens,NY,natural_beauty,0.0,failed
+Kew Gardens,Queens,NY,diversity,76.1,success
+Kew Gardens,Queens,NY,social_fabric,43.8,success
+Kew Gardens,Queens,NY,built_beauty,0.0,failed
+Kew Gardens,Queens,NY,healthcare_access,0.0,failed
+Kew Gardens,Queens,NY,public_transit_access,92.0,success
+Kew Gardens,Queens,NY,air_travel_access,100,success
+Kew Gardens,Queens,NY,housing_value,60.0,success
+Kips Bay,Manhattan,NY,quality_education,0.0,fallback
+Kips Bay,Manhattan,NY,neighborhood_amenities,91.0,success
+Kips Bay,Manhattan,NY,economic_security,71.5,success
+Kips Bay,Manhattan,NY,climate_risk,87.5,success
+Kips Bay,Manhattan,NY,active_outdoors,0.0,failed
+Kips Bay,Manhattan,NY,natural_beauty,0.0,failed
+Kips Bay,Manhattan,NY,diversity,71.3,success
+Kips Bay,Manhattan,NY,social_fabric,56.8,success
+Kips Bay,Manhattan,NY,built_beauty,0.0,failed
+Kips Bay,Manhattan,NY,healthcare_access,0.0,failed
+Kips Bay,Manhattan,NY,public_transit_access,96.3,success
+Kips Bay,Manhattan,NY,air_travel_access,100,success
+Kips Bay,Manhattan,NY,housing_value,35.0,success
+Larchmont,Westchester,NY,quality_education,0.0,fallback
+Larchmont,Westchester,NY,neighborhood_amenities,95.5,success
+Larchmont,Westchester,NY,economic_security,74.9,success
+Larchmont,Westchester,NY,climate_risk,62.5,success
+Larchmont,Westchester,NY,active_outdoors,0.0,failed
+Larchmont,Westchester,NY,natural_beauty,0.0,failed
+Larchmont,Westchester,NY,diversity,63.1,success
+Larchmont,Westchester,NY,social_fabric,65.4,success
+Larchmont,Westchester,NY,built_beauty,0.0,failed
+Larchmont,Westchester,NY,healthcare_access,0.0,failed
+Larchmont,Westchester,NY,public_transit_access,81.7,success
+Larchmont,Westchester,NY,air_travel_access,100,success
+Larchmont,Westchester,NY,housing_value,51.2,success
+Lawrence,Nassau,NY,quality_education,0.0,fallback
+Lawrence,Nassau,NY,neighborhood_amenities,90.5,success
+Lawrence,Nassau,NY,economic_security,74.9,success
+Lawrence,Nassau,NY,climate_risk,62.5,success
+Lawrence,Nassau,NY,active_outdoors,0.0,failed
+Lawrence,Nassau,NY,natural_beauty,0.0,failed
+Lawrence,Nassau,NY,diversity,59.3,success
+Lawrence,Nassau,NY,social_fabric,86.2,success
+Lawrence,Nassau,NY,built_beauty,0.0,failed
+Lawrence,Nassau,NY,healthcare_access,0.0,failed
+Lawrence,Nassau,NY,public_transit_access,62.7,success
+Lawrence,Nassau,NY,air_travel_access,100,success
+Lawrence,Nassau,NY,housing_value,47.1,success
+Leonia,Bergen,NJ,quality_education,0.0,fallback
+Leonia,Bergen,NJ,neighborhood_amenities,75.4,success
+Leonia,Bergen,NJ,economic_security,74.9,success
+Leonia,Bergen,NJ,climate_risk,87.2,success
+Leonia,Bergen,NJ,active_outdoors,0.0,failed
+Leonia,Bergen,NJ,natural_beauty,0.0,failed
+Leonia,Bergen,NJ,diversity,82.5,success
+Leonia,Bergen,NJ,social_fabric,47.2,success
+Leonia,Bergen,NJ,built_beauty,0.0,failed
+Leonia,Bergen,NJ,healthcare_access,0.0,failed
+Leonia,Bergen,NJ,public_transit_access,71.6,success
+Leonia,Bergen,NJ,air_travel_access,100,success
+Leonia,Bergen,NJ,housing_value,54.9,success
+Little Italy,Manhattan,NY,quality_education,0.0,fallback
+Little Italy,Manhattan,NY,neighborhood_amenities,96.0,success
+Little Italy,Manhattan,NY,economic_security,71.5,success
+Little Italy,Manhattan,NY,climate_risk,63.4,success
+Little Italy,Manhattan,NY,active_outdoors,0.0,failed
+Little Italy,Manhattan,NY,natural_beauty,0.0,failed
+Little Italy,Manhattan,NY,diversity,69.5,success
+Little Italy,Manhattan,NY,social_fabric,62.9,success
+Little Italy,Manhattan,NY,built_beauty,0.0,failed
+Little Italy,Manhattan,NY,healthcare_access,0.0,failed
+Little Italy,Manhattan,NY,public_transit_access,97.2,success
+Little Italy,Manhattan,NY,air_travel_access,100,success
+Little Italy,Manhattan,NY,housing_value,24.7,success
+Long Beach,Nassau,NY,quality_education,0.0,fallback
+Long Beach,Nassau,NY,neighborhood_amenities,84.9,success
+Long Beach,Nassau,NY,economic_security,71.5,success
+Long Beach,Nassau,NY,climate_risk,62.5,success
+Long Beach,Nassau,NY,active_outdoors,0.0,failed
+Long Beach,Nassau,NY,natural_beauty,0.0,failed
+Long Beach,Nassau,NY,diversity,78.4,success
+Long Beach,Nassau,NY,social_fabric,63.1,success
+Long Beach,Nassau,NY,built_beauty,0.0,failed
+Long Beach,Nassau,NY,healthcare_access,0.0,failed
+Long Beach,Nassau,NY,public_transit_access,59.7,success
+Long Beach,Nassau,NY,air_travel_access,100,success
+Long Beach,Nassau,NY,housing_value,59.6,success
+Long Island City,Queens,NY,quality_education,0.0,fallback
+Long Island City,Queens,NY,neighborhood_amenities,96.0,success
+Long Island City,Queens,NY,economic_security,71.5,success
+Long Island City,Queens,NY,climate_risk,71.7,success
+Long Island City,Queens,NY,active_outdoors,0.0,failed
+Long Island City,Queens,NY,natural_beauty,0.0,failed
+Long Island City,Queens,NY,diversity,75.9,success
+Long Island City,Queens,NY,social_fabric,48.1,success
+Long Island City,Queens,NY,built_beauty,0.0,failed
+Long Island City,Queens,NY,healthcare_access,0.0,failed
+Long Island City,Queens,NY,public_transit_access,96.5,success
+Long Island City,Queens,NY,air_travel_access,100,success
+Long Island City,Queens,NY,housing_value,23.2,success
+Lower East Side,Manhattan,NY,quality_education,0.0,fallback
+Lower East Side,Manhattan,NY,neighborhood_amenities,91.0,success
+Lower East Side,Manhattan,NY,economic_security,71.5,success
+Lower East Side,Manhattan,NY,climate_risk,75.8,success
+Lower East Side,Manhattan,NY,active_outdoors,0.0,failed
+Lower East Side,Manhattan,NY,natural_beauty,0.0,failed
+Lower East Side,Manhattan,NY,diversity,78.8,success
+Lower East Side,Manhattan,NY,social_fabric,75.6,success
+Lower East Side,Manhattan,NY,built_beauty,0.0,failed
+Lower East Side,Manhattan,NY,healthcare_access,0.0,failed
+Lower East Side,Manhattan,NY,public_transit_access,95.8,success
+Lower East Side,Manhattan,NY,air_travel_access,100,success
+Lower East Side,Manhattan,NY,housing_value,24.7,success
+Lynbrook,Nassau,NY,quality_education,0.0,fallback
+Lynbrook,Nassau,NY,neighborhood_amenities,98.0,success
+Lynbrook,Nassau,NY,economic_security,71.5,success
+Lynbrook,Nassau,NY,climate_risk,70.1,success
+Lynbrook,Nassau,NY,active_outdoors,0.0,failed
+Lynbrook,Nassau,NY,natural_beauty,0.0,failed
+Lynbrook,Nassau,NY,diversity,79.7,success
+Lynbrook,Nassau,NY,social_fabric,71.2,success
+Lynbrook,Nassau,NY,built_beauty,0.0,failed
+Lynbrook,Nassau,NY,healthcare_access,0.0,failed
+Lynbrook,Nassau,NY,public_transit_access,78.7,success
+Lynbrook,Nassau,NY,air_travel_access,100,success
+Lynbrook,Nassau,NY,housing_value,49.2,success
+Madison,Morris,NJ,quality_education,0.0,fallback
+Madison,Morris,NJ,neighborhood_amenities,0.0,failed
+Madison,Morris,NJ,economic_security,74.9,success
+Madison,Morris,NJ,climate_risk,62.5,success
+Madison,Morris,NJ,active_outdoors,0.0,failed
+Madison,Morris,NJ,natural_beauty,0.0,failed
+Madison,Morris,NJ,diversity,73.3,success
+Madison,Morris,NJ,social_fabric,44.9,success
+Madison,Morris,NJ,built_beauty,0.0,failed
+Madison,Morris,NJ,healthcare_access,0.0,failed
+Madison,Morris,NJ,public_transit_access,32.0,success
+Madison,Morris,NJ,air_travel_access,99.1,success
+Madison,Morris,NJ,housing_value,54.5,success
+Malverne,Nassau,NY,quality_education,0.0,fallback
+Malverne,Nassau,NY,neighborhood_amenities,76.8,success
+Malverne,Nassau,NY,economic_security,74.9,success
+Malverne,Nassau,NY,climate_risk,87.5,success
+Malverne,Nassau,NY,active_outdoors,0.0,failed
+Malverne,Nassau,NY,natural_beauty,0.0,failed
+Malverne,Nassau,NY,diversity,73.4,success
+Malverne,Nassau,NY,social_fabric,63.9,success
+Malverne,Nassau,NY,built_beauty,0.0,failed
+Malverne,Nassau,NY,healthcare_access,0.0,failed
+Malverne,Nassau,NY,public_transit_access,63.5,success
+Malverne,Nassau,NY,air_travel_access,100,success
+Malverne,Nassau,NY,housing_value,75.0,success
+Mamaroneck,Westchester,NY,quality_education,0.0,fallback
+Mamaroneck,Westchester,NY,neighborhood_amenities,97.0,success
+Mamaroneck,Westchester,NY,economic_security,74.9,success
+Mamaroneck,Westchester,NY,climate_risk,62.5,success
+Mamaroneck,Westchester,NY,active_outdoors,0.0,failed
+Mamaroneck,Westchester,NY,natural_beauty,0.0,failed
+Mamaroneck,Westchester,NY,diversity,79.1,success
+Mamaroneck,Westchester,NY,social_fabric,41.1,success
+Mamaroneck,Westchester,NY,built_beauty,0.0,failed
+Mamaroneck,Westchester,NY,healthcare_access,0.0,failed
+Mamaroneck,Westchester,NY,public_transit_access,82.4,success
+Mamaroneck,Westchester,NY,air_travel_access,100,success
+Mamaroneck,Westchester,NY,housing_value,37.0,success
+Manhasset,Nassau,NY,quality_education,0.0,fallback
+Manhasset,Nassau,NY,neighborhood_amenities,61.6,success
+Manhasset,Nassau,NY,economic_security,74.9,success
+Manhasset,Nassau,NY,climate_risk,87.5,success
+Manhasset,Nassau,NY,active_outdoors,0.0,failed
+Manhasset,Nassau,NY,natural_beauty,0.0,failed
+Manhasset,Nassau,NY,diversity,81.8,success
+Manhasset,Nassau,NY,social_fabric,56.6,success
+Manhasset,Nassau,NY,built_beauty,0.0,failed
+Manhasset,Nassau,NY,healthcare_access,0.0,failed
+Manhasset,Nassau,NY,public_transit_access,63.9,success
+Manhasset,Nassau,NY,air_travel_access,100,success
+Manhasset,Nassau,NY,housing_value,41.8,success
+Manhattanville,Manhattan,NY,quality_education,0.0,fallback
+Manhattanville,Manhattan,NY,neighborhood_amenities,92.9,success
+Manhattanville,Manhattan,NY,economic_security,74.9,success
+Manhattanville,Manhattan,NY,climate_risk,76.5,success
+Manhattanville,Manhattan,NY,active_outdoors,0.0,failed
+Manhattanville,Manhattan,NY,natural_beauty,0.0,failed
+Manhattanville,Manhattan,NY,diversity,42.2,success
+Manhattanville,Manhattan,NY,social_fabric,58.3,success
+Manhattanville,Manhattan,NY,built_beauty,0.0,failed
+Manhattanville,Manhattan,NY,healthcare_access,0.0,failed
+Manhattanville,Manhattan,NY,public_transit_access,98.0,success
+Manhattanville,Manhattan,NY,air_travel_access,100,success
+Manhattanville,Manhattan,NY,housing_value,65.0,success
+Maplewood,Essex,NJ,quality_education,0.0,fallback
+Maplewood,Essex,NJ,neighborhood_amenities,15.0,success
+Maplewood,Essex,NJ,economic_security,74.9,success
+Maplewood,Essex,NJ,climate_risk,87.5,success
+Maplewood,Essex,NJ,active_outdoors,0.0,failed
+Maplewood,Essex,NJ,natural_beauty,0.0,failed
+Maplewood,Essex,NJ,diversity,68.5,success
+Maplewood,Essex,NJ,social_fabric,41.8,success
+Maplewood,Essex,NJ,built_beauty,0.0,failed
+Maplewood,Essex,NJ,healthcare_access,0.0,failed
+Maplewood,Essex,NJ,public_transit_access,81.9,success
+Maplewood,Essex,NJ,air_travel_access,100,success
+Maplewood,Essex,NJ,housing_value,58.5,success
+Maspeth,Queens,NY,quality_education,0.0,fallback
+Maspeth,Queens,NY,neighborhood_amenities,67.3,success
+Maspeth,Queens,NY,economic_security,71.5,success
+Maspeth,Queens,NY,climate_risk,77.9,success
+Maspeth,Queens,NY,active_outdoors,0.0,failed
+Maspeth,Queens,NY,natural_beauty,0.0,failed
+Maspeth,Queens,NY,diversity,72.5,success
+Maspeth,Queens,NY,social_fabric,47.8,success
+Maspeth,Queens,NY,built_beauty,0.0,failed
+Maspeth,Queens,NY,healthcare_access,0.0,failed
+Maspeth,Queens,NY,public_transit_access,85.2,success
+Maspeth,Queens,NY,air_travel_access,100,success
+Maspeth,Queens,NY,housing_value,31.1,success
+Merrick,Nassau,NY,quality_education,0.0,fallback
+Merrick,Nassau,NY,neighborhood_amenities,36.1,success
+Merrick,Nassau,NY,economic_security,74.9,success
+Merrick,Nassau,NY,climate_risk,71.5,success
+Merrick,Nassau,NY,active_outdoors,0.0,failed
+Merrick,Nassau,NY,natural_beauty,0.0,failed
+Merrick,Nassau,NY,diversity,56.3,success
+Merrick,Nassau,NY,social_fabric,74.1,success
+Merrick,Nassau,NY,built_beauty,55.0,success
+Merrick,Nassau,NY,healthcare_access,0.0,failed
+Merrick,Nassau,NY,public_transit_access,60.5,success
+Merrick,Nassau,NY,air_travel_access,100,success
+Merrick,Nassau,NY,housing_value,79.9,success
+Midtown East,Manhattan,NY,quality_education,0.0,fallback
+Midtown East,Manhattan,NY,neighborhood_amenities,97.0,success
+Midtown East,Manhattan,NY,economic_security,71.5,success
+Midtown East,Manhattan,NY,climate_risk,80.5,success
+Midtown East,Manhattan,NY,active_outdoors,0.0,failed
+Midtown East,Manhattan,NY,natural_beauty,0.0,failed
+Midtown East,Manhattan,NY,diversity,71.3,success
+Midtown East,Manhattan,NY,social_fabric,79.9,success
+Midtown East,Manhattan,NY,built_beauty,0.0,failed
+Midtown East,Manhattan,NY,healthcare_access,0.0,failed
+Midtown East,Manhattan,NY,public_transit_access,100.0,success
+Midtown East,Manhattan,NY,air_travel_access,100,success
+Midtown East,Manhattan,NY,housing_value,20.5,success
+Midtown,Manhattan,NY,quality_education,0.0,fallback
+Midtown,Manhattan,NY,neighborhood_amenities,97.0,success
+Midtown,Manhattan,NY,economic_security,71.5,success
+Midtown,Manhattan,NY,climate_risk,84.3,success
+Midtown,Manhattan,NY,active_outdoors,0.0,failed
+Midtown,Manhattan,NY,natural_beauty,0.0,failed
+Midtown,Manhattan,NY,diversity,77.9,success
+Midtown,Manhattan,NY,social_fabric,58.9,success
+Midtown,Manhattan,NY,built_beauty,0.0,failed
+Midtown,Manhattan,NY,healthcare_access,0.0,failed
+Midtown,Manhattan,NY,public_transit_access,97.7,success
+Midtown,Manhattan,NY,air_travel_access,100,success
+Midtown,Manhattan,NY,housing_value,25.5,success
+Millburn,Essex,NJ,quality_education,0.0,fallback
+Millburn,Essex,NJ,neighborhood_amenities,82.9,success
+Millburn,Essex,NJ,economic_security,74.9,success
+Millburn,Essex,NJ,climate_risk,76.8,success
+Millburn,Essex,NJ,active_outdoors,0.0,failed
+Millburn,Essex,NJ,natural_beauty,0.0,failed
+Millburn,Essex,NJ,diversity,75.4,success
+Millburn,Essex,NJ,social_fabric,53.6,success
+Millburn,Essex,NJ,built_beauty,0.0,failed
+Millburn,Essex,NJ,healthcare_access,0.0,failed
+Millburn,Essex,NJ,public_transit_access,81.5,success
+Millburn,Essex,NJ,air_travel_access,100,success
+Millburn,Essex,NJ,housing_value,45.5,success
+Mineola,Nassau,NY,quality_education,0.0,fallback
+Mineola,Nassau,NY,neighborhood_amenities,80.1,success
+Mineola,Nassau,NY,economic_security,71.5,success
+Mineola,Nassau,NY,climate_risk,67.0,success
+Mineola,Nassau,NY,active_outdoors,0.0,failed
+Mineola,Nassau,NY,natural_beauty,0.0,failed
+Mineola,Nassau,NY,diversity,74.0,success
+Mineola,Nassau,NY,social_fabric,52.1,success
+Mineola,Nassau,NY,built_beauty,0.0,failed
+Mineola,Nassau,NY,healthcare_access,0.0,failed
+Mineola,Nassau,NY,public_transit_access,91.2,success
+Mineola,Nassau,NY,air_travel_access,100,success
+Mineola,Nassau,NY,housing_value,48.3,success
+Montclair,Essex,NJ,quality_education,0.0,fallback
+Montclair,Essex,NJ,neighborhood_amenities,97.0,success
+Montclair,Essex,NJ,economic_security,74.9,success
+Montclair,Essex,NJ,climate_risk,74.3,success
+Montclair,Essex,NJ,active_outdoors,0.0,failed
+Montclair,Essex,NJ,natural_beauty,36.994883333333334,success
+Montclair,Essex,NJ,diversity,78.5,success
+Montclair,Essex,NJ,social_fabric,51.0,success
+Montclair,Essex,NJ,built_beauty,0.0,failed
+Montclair,Essex,NJ,healthcare_access,0.0,failed
+Montclair,Essex,NJ,public_transit_access,82.1,success
+Montclair,Essex,NJ,air_travel_access,100,success
+Montclair,Essex,NJ,housing_value,64.4,success
+Morningside Heights,Manhattan,NY,quality_education,0.0,fallback
+Morningside Heights,Manhattan,NY,neighborhood_amenities,91.0,success
+Morningside Heights,Manhattan,NY,economic_security,71.5,success
+Morningside Heights,Manhattan,NY,climate_risk,87.5,success
+Morningside Heights,Manhattan,NY,active_outdoors,0.0,failed
+Morningside Heights,Manhattan,NY,natural_beauty,0.0,failed
+Morningside Heights,Manhattan,NY,diversity,61.9,success
+Morningside Heights,Manhattan,NY,social_fabric,38.2,success
+Morningside Heights,Manhattan,NY,built_beauty,0.0,failed
+Morningside Heights,Manhattan,NY,healthcare_access,0.0,failed
+Morningside Heights,Manhattan,NY,public_transit_access,94.5,success
+Morningside Heights,Manhattan,NY,air_travel_access,100,success
+Morningside Heights,Manhattan,NY,housing_value,34.1,success
+Morris Park,Bronx,NY,quality_education,0.0,fallback
+Morris Park,Bronx,NY,neighborhood_amenities,61.9,success
+Morris Park,Bronx,NY,economic_security,71.5,success
+Morris Park,Bronx,NY,climate_risk,84.3,success
+Morris Park,Bronx,NY,active_outdoors,0.0,failed
+Morris Park,Bronx,NY,natural_beauty,0.0,failed
+Morris Park,Bronx,NY,diversity,84.5,success
+Morris Park,Bronx,NY,social_fabric,53.7,success
+Morris Park,Bronx,NY,built_beauty,0.0,failed
+Morris Park,Bronx,NY,healthcare_access,0.0,failed
+Morris Park,Bronx,NY,public_transit_access,80.2,success
+Morris Park,Bronx,NY,air_travel_access,100,success
+Morris Park,Bronx,NY,housing_value,31.3,success
+Morristown,Morris,NJ,quality_education,0.0,fallback
+Morristown,Morris,NJ,neighborhood_amenities,98.0,success
+Morristown,Morris,NJ,economic_security,74.9,success
+Morristown,Morris,NJ,climate_risk,62.5,success
+Morristown,Morris,NJ,active_outdoors,0.0,failed
+Morristown,Morris,NJ,natural_beauty,0.0,failed
+Morristown,Morris,NJ,diversity,71.7,success
+Morristown,Morris,NJ,social_fabric,62.7,success
+Morristown,Morris,NJ,built_beauty,0.0,failed
+Morristown,Morris,NJ,healthcare_access,0.0,failed
+Morristown,Morris,NJ,public_transit_access,64.3,success
+Morristown,Morris,NJ,air_travel_access,89.8,success
+Morristown,Morris,NJ,housing_value,42.2,success
+Mott Haven,Bronx,NY,quality_education,0.0,fallback
+Mott Haven,Bronx,NY,neighborhood_amenities,87.7,success
+Mott Haven,Bronx,NY,economic_security,71.5,success
+Mott Haven,Bronx,NY,climate_risk,63.0,success
+Mott Haven,Bronx,NY,active_outdoors,0.0,failed
+Mott Haven,Bronx,NY,natural_beauty,0.0,failed
+Mott Haven,Bronx,NY,diversity,84.0,success
+Mott Haven,Bronx,NY,social_fabric,61.0,success
+Mott Haven,Bronx,NY,built_beauty,0.0,failed
+Mott Haven,Bronx,NY,healthcare_access,0.0,failed
+Mott Haven,Bronx,NY,public_transit_access,91.0,success
+Mott Haven,Bronx,NY,air_travel_access,100,success
+Mott Haven,Bronx,NY,housing_value,29.4,success
+Mount Kisco,Westchester,NY,quality_education,0.0,fallback
+Mount Kisco,Westchester,NY,neighborhood_amenities,75.8,success
+Mount Kisco,Westchester,NY,economic_security,74.9,success
+Mount Kisco,Westchester,NY,climate_risk,62.5,success
+Mount Kisco,Westchester,NY,active_outdoors,0.0,failed
+Mount Kisco,Westchester,NY,natural_beauty,0.0,failed
+Mount Kisco,Westchester,NY,diversity,79.3,success
+Mount Kisco,Westchester,NY,social_fabric,55.9,success
+Mount Kisco,Westchester,NY,built_beauty,0.0,failed
+Mount Kisco,Westchester,NY,healthcare_access,0.0,failed
+Mount Kisco,Westchester,NY,public_transit_access,49.0,success
+Mount Kisco,Westchester,NY,air_travel_access,85.1,success
+Mount Kisco,Westchester,NY,housing_value,75.0,success
+Mount Vernon,Westchester,NY,quality_education,0.0,fallback
+Mount Vernon,Westchester,NY,neighborhood_amenities,48.3,success
+Mount Vernon,Westchester,NY,economic_security,71.5,success
+Mount Vernon,Westchester,NY,climate_risk,64.9,success
+Mount Vernon,Westchester,NY,active_outdoors,0.0,failed
+Mount Vernon,Westchester,NY,natural_beauty,0.0,failed
+Mount Vernon,Westchester,NY,diversity,83.8,success
+Mount Vernon,Westchester,NY,social_fabric,66.6,success
+Mount Vernon,Westchester,NY,built_beauty,0.0,failed
+Mount Vernon,Westchester,NY,healthcare_access,0.0,failed
+Mount Vernon,Westchester,NY,public_transit_access,69.6,success
+Mount Vernon,Westchester,NY,air_travel_access,100,success
+Mount Vernon,Westchester,NY,housing_value,33.3,success
+Murray Hill,Manhattan,NY,quality_education,0.0,fallback
+Murray Hill,Manhattan,NY,neighborhood_amenities,96.0,success
+Murray Hill,Manhattan,NY,economic_security,71.5,success
+Murray Hill,Manhattan,NY,climate_risk,84.3,success
+Murray Hill,Manhattan,NY,active_outdoors,0.0,failed
+Murray Hill,Manhattan,NY,natural_beauty,0.0,failed
+Murray Hill,Manhattan,NY,diversity,68.7,success
+Murray Hill,Manhattan,NY,social_fabric,0.0,failed
+Murray Hill,Manhattan,NY,built_beauty,0.0,failed
+Murray Hill,Manhattan,NY,healthcare_access,0.0,failed
+Murray Hill,Manhattan,NY,public_transit_access,97.3,success
+Murray Hill,Manhattan,NY,air_travel_access,100,success
+Murray Hill,Manhattan,NY,housing_value,22.5,success
+New Canaan,Fairfield,CT,quality_education,0.0,fallback
+New Canaan,Fairfield,CT,neighborhood_amenities,89.0,success
+New Canaan,Fairfield,CT,economic_security,54.6,success
+New Canaan,Fairfield,CT,climate_risk,62.5,success
+New Canaan,Fairfield,CT,active_outdoors,0.0,failed
+New Canaan,Fairfield,CT,natural_beauty,0.0,failed
+New Canaan,Fairfield,CT,diversity,63.2,success
+New Canaan,Fairfield,CT,social_fabric,32.6,success
+New Canaan,Fairfield,CT,built_beauty,0.0,failed
+New Canaan,Fairfield,CT,healthcare_access,0.0,failed
+New Canaan,Fairfield,CT,public_transit_access,28.0,success
+New Canaan,Fairfield,CT,air_travel_access,82.8,success
+New Canaan,Fairfield,CT,housing_value,53.4,success
+New Dorp,Staten Island,NY,quality_education,0.0,fallback
+New Dorp,Staten Island,NY,neighborhood_amenities,94.6,success
+New Dorp,Staten Island,NY,economic_security,71.5,success
+New Dorp,Staten Island,NY,climate_risk,62.5,success
+New Dorp,Staten Island,NY,active_outdoors,0.0,failed
+New Dorp,Staten Island,NY,natural_beauty,72.07786666666667,success
+New Dorp,Staten Island,NY,diversity,77.8,success
+New Dorp,Staten Island,NY,social_fabric,49.8,success
+New Dorp,Staten Island,NY,built_beauty,0.0,failed
+New Dorp,Staten Island,NY,healthcare_access,0.0,failed
+New Dorp,Staten Island,NY,public_transit_access,61.0,success
+New Dorp,Staten Island,NY,air_travel_access,100,success
+New Dorp,Staten Island,NY,housing_value,43.3,success
+New Hyde Park,Nassau,NY,quality_education,0.0,fallback
+New Hyde Park,Nassau,NY,neighborhood_amenities,50.8,success
+New Hyde Park,Nassau,NY,economic_security,74.9,success
+New Hyde Park,Nassau,NY,climate_risk,72.5,success
+New Hyde Park,Nassau,NY,active_outdoors,0.0,failed
+New Hyde Park,Nassau,NY,natural_beauty,0.0,failed
+New Hyde Park,Nassau,NY,diversity,76.6,success
+New Hyde Park,Nassau,NY,social_fabric,46.5,success
+New Hyde Park,Nassau,NY,built_beauty,0.0,failed
+New Hyde Park,Nassau,NY,healthcare_access,0.0,failed
+New Hyde Park,Nassau,NY,public_transit_access,91.7,success
+New Hyde Park,Nassau,NY,air_travel_access,100,success
+New Hyde Park,Nassau,NY,housing_value,54.3,success
+New Rochelle,Westchester,NY,quality_education,0.0,fallback
+New Rochelle,Westchester,NY,neighborhood_amenities,0.0,failed
+New Rochelle,Westchester,NY,economic_security,74.9,success
+New Rochelle,Westchester,NY,climate_risk,62.5,success
+New Rochelle,Westchester,NY,active_outdoors,0.0,failed
+New Rochelle,Westchester,NY,natural_beauty,0.0,failed
+New Rochelle,Westchester,NY,diversity,81.0,success
+New Rochelle,Westchester,NY,social_fabric,54.9,success
+New Rochelle,Westchester,NY,built_beauty,0.0,failed
+New Rochelle,Westchester,NY,healthcare_access,0.0,failed
+New Rochelle,Westchester,NY,public_transit_access,91.8,success
+New Rochelle,Westchester,NY,air_travel_access,100,success
+New Rochelle,Westchester,NY,housing_value,48.0,success
+NoHo,Manhattan,NY,quality_education,0.0,fallback
+NoHo,Manhattan,NY,neighborhood_amenities,96.0,success
+NoHo,Manhattan,NY,economic_security,71.5,success
+NoHo,Manhattan,NY,climate_risk,67.0,success
+NoHo,Manhattan,NY,active_outdoors,0.0,failed
+NoHo,Manhattan,NY,natural_beauty,0.0,failed
+NoHo,Manhattan,NY,diversity,68.9,success
+NoHo,Manhattan,NY,social_fabric,57.0,success
+NoHo,Manhattan,NY,built_beauty,0.0,failed
+NoHo,Manhattan,NY,healthcare_access,0.0,failed
+NoHo,Manhattan,NY,public_transit_access,97.5,success
+NoHo,Manhattan,NY,air_travel_access,100,success
+NoHo,Manhattan,NY,housing_value,18.7,success
+Nolita,Manhattan,NY,quality_education,0.0,fallback
+Nolita,Manhattan,NY,neighborhood_amenities,96.0,success
+Nolita,Manhattan,NY,economic_security,71.5,success
+Nolita,Manhattan,NY,climate_risk,66.8,success
+Nolita,Manhattan,NY,active_outdoors,0.0,failed
+Nolita,Manhattan,NY,natural_beauty,0.0,failed
+Nolita,Manhattan,NY,diversity,71.4,success
+Nolita,Manhattan,NY,social_fabric,59.6,success
+Nolita,Manhattan,NY,built_beauty,0.0,failed
+Nolita,Manhattan,NY,healthcare_access,0.0,failed
+Nolita,Manhattan,NY,public_transit_access,97.3,success
+Nolita,Manhattan,NY,air_travel_access,100,success
+Nolita,Manhattan,NY,housing_value,22.0,success
+Norwalk,Fairfield,CT,quality_education,0.0,fallback
+Norwalk,Fairfield,CT,neighborhood_amenities,68.3,success
+Norwalk,Fairfield,CT,economic_security,46.2,success
+Norwalk,Fairfield,CT,climate_risk,62.5,success
+Norwalk,Fairfield,CT,active_outdoors,0.0,failed
+Norwalk,Fairfield,CT,natural_beauty,0.0,failed
+Norwalk,Fairfield,CT,diversity,82.0,success
+Norwalk,Fairfield,CT,social_fabric,60.5,success
+Norwalk,Fairfield,CT,built_beauty,0.0,failed
+Norwalk,Fairfield,CT,healthcare_access,75.0,success
+Norwalk,Fairfield,CT,public_transit_access,51.2,success
+Norwalk,Fairfield,CT,air_travel_access,80.0,success
+Norwalk,Fairfield,CT,housing_value,60.0,success
+Oceanside,Nassau,NY,quality_education,0.0,fallback
+Oceanside,Nassau,NY,neighborhood_amenities,84.1,success
+Oceanside,Nassau,NY,economic_security,74.9,success
+Oceanside,Nassau,NY,climate_risk,62.5,success
+Oceanside,Nassau,NY,active_outdoors,0.0,failed
+Oceanside,Nassau,NY,natural_beauty,0.0,failed
+Oceanside,Nassau,NY,diversity,65.9,success
+Oceanside,Nassau,NY,social_fabric,67.5,success
+Oceanside,Nassau,NY,built_beauty,0.0,failed
+Oceanside,Nassau,NY,healthcare_access,0.0,failed
+Oceanside,Nassau,NY,public_transit_access,60.5,success
+Oceanside,Nassau,NY,air_travel_access,100,success
+Oceanside,Nassau,NY,housing_value,70.0,success
+Old Greenwich,Fairfield,CT,quality_education,0.0,fallback
+Old Greenwich,Fairfield,CT,neighborhood_amenities,34.3,success
+Old Greenwich,Fairfield,CT,economic_security,46.2,success
+Old Greenwich,Fairfield,CT,climate_risk,62.5,success
+Old Greenwich,Fairfield,CT,active_outdoors,0.0,failed
+Old Greenwich,Fairfield,CT,natural_beauty,0.0,failed
+Old Greenwich,Fairfield,CT,diversity,67.0,success
+Old Greenwich,Fairfield,CT,social_fabric,40.9,success
+Old Greenwich,Fairfield,CT,built_beauty,0.0,failed
+Old Greenwich,Fairfield,CT,healthcare_access,0.0,failed
+Old Greenwich,Fairfield,CT,public_transit_access,82.4,success
+Old Greenwich,Fairfield,CT,air_travel_access,100,success
+Old Greenwich,Fairfield,CT,housing_value,55.8,success
+Ossining,Westchester,NY,quality_education,0.0,fallback
+Ossining,Westchester,NY,neighborhood_amenities,84.4,success
+Ossining,Westchester,NY,economic_security,74.9,success
+Ossining,Westchester,NY,climate_risk,62.5,success
+Ossining,Westchester,NY,active_outdoors,0.0,failed
+Ossining,Westchester,NY,natural_beauty,0.0,failed
+Ossining,Westchester,NY,diversity,78.6,success
+Ossining,Westchester,NY,social_fabric,57.8,success
+Ossining,Westchester,NY,built_beauty,0.0,failed
+Ossining,Westchester,NY,healthcare_access,0.0,failed
+Ossining,Westchester,NY,public_transit_access,63.0,success
+Ossining,Westchester,NY,air_travel_access,94.7,success
+Ossining,Westchester,NY,housing_value,70.0,success
+Ozone Park,Queens,NY,quality_education,0.0,fallback
+Ozone Park,Queens,NY,neighborhood_amenities,64.8,success
+Ozone Park,Queens,NY,economic_security,71.5,success
+Ozone Park,Queens,NY,climate_risk,70.0,success
+Ozone Park,Queens,NY,active_outdoors,0.0,failed
+Ozone Park,Queens,NY,natural_beauty,0.0,failed
+Ozone Park,Queens,NY,diversity,87.3,success
+Ozone Park,Queens,NY,social_fabric,48.0,success
+Ozone Park,Queens,NY,built_beauty,0.0,failed
+Ozone Park,Queens,NY,healthcare_access,0.0,failed
+Ozone Park,Queens,NY,public_transit_access,68.2,success
+Ozone Park,Queens,NY,air_travel_access,100,success
+Ozone Park,Queens,NY,housing_value,37.9,success
+Park Slope,Brooklyn,NY,quality_education,0.0,fallback
+Park Slope,Brooklyn,NY,neighborhood_amenities,96.0,success
+Park Slope,Brooklyn,NY,economic_security,71.5,success
+Park Slope,Brooklyn,NY,climate_risk,78.7,success
+Park Slope,Brooklyn,NY,active_outdoors,0.0,failed
+Park Slope,Brooklyn,NY,natural_beauty,0.0,failed
+Park Slope,Brooklyn,NY,diversity,69.2,success
+Park Slope,Brooklyn,NY,social_fabric,39.0,success
+Park Slope,Brooklyn,NY,built_beauty,0.0,failed
+Park Slope,Brooklyn,NY,healthcare_access,0.0,failed
+Park Slope,Brooklyn,NY,public_transit_access,94.5,success
+Park Slope,Brooklyn,NY,air_travel_access,100,success
+Park Slope,Brooklyn,NY,housing_value,26.2,success
+Peekskill,Westchester,NY,quality_education,0.0,fallback
+Peekskill,Westchester,NY,neighborhood_amenities,57.8,success
+Peekskill,Westchester,NY,economic_security,74.9,success
+Peekskill,Westchester,NY,climate_risk,62.5,success
+Peekskill,Westchester,NY,active_outdoors,0.0,failed
+Peekskill,Westchester,NY,natural_beauty,0.0,failed
+Peekskill,Westchester,NY,diversity,86.0,success
+Peekskill,Westchester,NY,social_fabric,57.8,success
+Peekskill,Westchester,NY,built_beauty,0.0,failed
+Peekskill,Westchester,NY,healthcare_access,0.0,failed
+Peekskill,Westchester,NY,public_transit_access,41.0,success
+Peekskill,Westchester,NY,air_travel_access,72.4,success
+Peekskill,Westchester,NY,housing_value,50.0,success
+Pelham Bay,Bronx,NY,quality_education,0.0,fallback
+Pelham Bay,Bronx,NY,neighborhood_amenities,75.5,success
+Pelham Bay,Bronx,NY,economic_security,71.5,success
+Pelham Bay,Bronx,NY,climate_risk,76.7,success
+Pelham Bay,Bronx,NY,active_outdoors,0.0,failed
+Pelham Bay,Bronx,NY,natural_beauty,0.0,failed
+Pelham Bay,Bronx,NY,diversity,79.6,success
+Pelham Bay,Bronx,NY,social_fabric,54.3,success
+Pelham Bay,Bronx,NY,built_beauty,0.0,failed
+Pelham Bay,Bronx,NY,healthcare_access,0.0,failed
+Pelham Bay,Bronx,NY,public_transit_access,80.3,success
+Pelham Bay,Bronx,NY,air_travel_access,100,success
+Pelham Bay,Bronx,NY,housing_value,37.6,success
+Pelham Manor,Westchester,NY,quality_education,0.0,fallback
+Pelham Manor,Westchester,NY,neighborhood_amenities,44.2,success
+Pelham Manor,Westchester,NY,economic_security,74.9,success
+Pelham Manor,Westchester,NY,climate_risk,74.2,success
+Pelham Manor,Westchester,NY,active_outdoors,0.0,failed
+Pelham Manor,Westchester,NY,natural_beauty,0.0,failed
+Pelham Manor,Westchester,NY,diversity,65.4,success
+Pelham Manor,Westchester,NY,social_fabric,56.1,success
+Pelham Manor,Westchester,NY,built_beauty,0.0,failed
+Pelham Manor,Westchester,NY,healthcare_access,0.0,failed
+Pelham Manor,Westchester,NY,public_transit_access,81.9,success
+Pelham Manor,Westchester,NY,air_travel_access,100,success
+Pelham Manor,Westchester,NY,housing_value,73.3,success
+Pelham,Westchester,NY,quality_education,0.0,fallback
+Pelham,Westchester,NY,neighborhood_amenities,97.0,success
+Pelham,Westchester,NY,economic_security,74.9,success
+Pelham,Westchester,NY,climate_risk,78.7,success
+Pelham,Westchester,NY,active_outdoors,0.0,failed
+Pelham,Westchester,NY,natural_beauty,0.0,failed
+Pelham,Westchester,NY,diversity,76.5,success
+Pelham,Westchester,NY,social_fabric,53.2,success
+Pelham,Westchester,NY,built_beauty,0.0,failed
+Pelham,Westchester,NY,healthcare_access,0.0,failed
+Pelham,Westchester,NY,public_transit_access,91.9,success
+Pelham,Westchester,NY,air_travel_access,100,success
+Pelham,Westchester,NY,housing_value,63.8,success
+Pleasantville,Westchester,NY,quality_education,0.0,fallback
+Pleasantville,Westchester,NY,neighborhood_amenities,79.0,success
+Pleasantville,Westchester,NY,economic_security,74.9,success
+Pleasantville,Westchester,NY,climate_risk,62.5,success
+Pleasantville,Westchester,NY,active_outdoors,0.0,failed
+Pleasantville,Westchester,NY,natural_beauty,0.0,failed
+Pleasantville,Westchester,NY,diversity,67.2,success
+Pleasantville,Westchester,NY,social_fabric,68.5,success
+Pleasantville,Westchester,NY,built_beauty,0.0,failed
+Pleasantville,Westchester,NY,healthcare_access,0.0,failed
+Pleasantville,Westchester,NY,public_transit_access,64.1,success
+Pleasantville,Westchester,NY,air_travel_access,100,success
+Pleasantville,Westchester,NY,housing_value,59.1,success
+Port Chester,Westchester,NY,quality_education,0.0,fallback
+Port Chester,Westchester,NY,neighborhood_amenities,61.5,success
+Port Chester,Westchester,NY,economic_security,71.5,success
+Port Chester,Westchester,NY,climate_risk,62.5,success
+Port Chester,Westchester,NY,active_outdoors,0.0,failed
+Port Chester,Westchester,NY,natural_beauty,0.0,failed
+Port Chester,Westchester,NY,diversity,79.2,success
+Port Chester,Westchester,NY,social_fabric,50.0,success
+Port Chester,Westchester,NY,built_beauty,0.0,failed
+Port Chester,Westchester,NY,healthcare_access,0.0,failed
+Port Chester,Westchester,NY,public_transit_access,79.8,success
+Port Chester,Westchester,NY,air_travel_access,100,success
+Port Chester,Westchester,NY,housing_value,26.7,success
+Port Washington,Nassau,NY,quality_education,0.0,fallback
+Port Washington,Nassau,NY,neighborhood_amenities,0.0,failed
+Port Washington,Nassau,NY,economic_security,74.9,success
+Port Washington,Nassau,NY,climate_risk,62.5,success
+Port Washington,Nassau,NY,active_outdoors,0.0,failed
+Port Washington,Nassau,NY,natural_beauty,0.0,failed
+Port Washington,Nassau,NY,diversity,77.5,success
+Port Washington,Nassau,NY,social_fabric,70.3,success
+Port Washington,Nassau,NY,built_beauty,0.0,failed
+Port Washington,Nassau,NY,healthcare_access,0.0,failed
+Port Washington,Nassau,NY,public_transit_access,63.6,success
+Port Washington,Nassau,NY,air_travel_access,100,success
+Port Washington,Nassau,NY,housing_value,47.5,success
+Prospect Heights,Brooklyn,NY,quality_education,0.0,fallback
+Prospect Heights,Brooklyn,NY,neighborhood_amenities,96.0,success
+Prospect Heights,Brooklyn,NY,economic_security,71.5,success
+Prospect Heights,Brooklyn,NY,climate_risk,87.5,success
+Prospect Heights,Brooklyn,NY,active_outdoors,0.0,failed
+Prospect Heights,Brooklyn,NY,natural_beauty,0.0,failed
+Prospect Heights,Brooklyn,NY,diversity,71.1,success
+Prospect Heights,Brooklyn,NY,social_fabric,60.7,success
+Prospect Heights,Brooklyn,NY,built_beauty,0.0,failed
+Prospect Heights,Brooklyn,NY,healthcare_access,0.0,failed
+Prospect Heights,Brooklyn,NY,public_transit_access,94.6,success
+Prospect Heights,Brooklyn,NY,air_travel_access,100,success
+Prospect Heights,Brooklyn,NY,housing_value,54.0,success
+Red Hook,Brooklyn,NY,quality_education,0.0,fallback
+Red Hook,Brooklyn,NY,neighborhood_amenities,92.0,success
+Red Hook,Brooklyn,NY,economic_security,74.9,success
+Red Hook,Brooklyn,NY,climate_risk,62.5,success
+Red Hook,Brooklyn,NY,active_outdoors,0.0,failed
+Red Hook,Brooklyn,NY,natural_beauty,0.0,failed
+Red Hook,Brooklyn,NY,diversity,74.1,success
+Red Hook,Brooklyn,NY,social_fabric,58.9,success
+Red Hook,Brooklyn,NY,built_beauty,0.0,failed
+Red Hook,Brooklyn,NY,healthcare_access,0.0,failed
+Red Hook,Brooklyn,NY,public_transit_access,96.2,success
+Red Hook,Brooklyn,NY,air_travel_access,100,success
+Red Hook,Brooklyn,NY,housing_value,65.0,success
+Rego Park,Queens,NY,quality_education,0.0,fallback
+Rego Park,Queens,NY,neighborhood_amenities,79.7,success
+Rego Park,Queens,NY,economic_security,71.5,success
+Rego Park,Queens,NY,climate_risk,87.5,success
+Rego Park,Queens,NY,active_outdoors,0.0,failed
+Rego Park,Queens,NY,natural_beauty,0.0,failed
+Rego Park,Queens,NY,diversity,79.1,success
+Rego Park,Queens,NY,social_fabric,55.7,success
+Rego Park,Queens,NY,built_beauty,0.0,failed
+Rego Park,Queens,NY,healthcare_access,0.0,failed
+Rego Park,Queens,NY,public_transit_access,90.1,success
+Rego Park,Queens,NY,air_travel_access,100,success
+Rego Park,Queens,NY,housing_value,36.0,success
+Richmond Hill,Queens,NY,quality_education,0.0,fallback
+Richmond Hill,Queens,NY,neighborhood_amenities,79.3,success
+Richmond Hill,Queens,NY,economic_security,71.5,success
+Richmond Hill,Queens,NY,climate_risk,77.3,success
+Richmond Hill,Queens,NY,active_outdoors,0.0,failed
+Richmond Hill,Queens,NY,natural_beauty,0.0,failed
+Richmond Hill,Queens,NY,diversity,88.1,success
+Richmond Hill,Queens,NY,social_fabric,61.2,success
+Richmond Hill,Queens,NY,built_beauty,0.0,failed
+Richmond Hill,Queens,NY,healthcare_access,0.0,failed
+Richmond Hill,Queens,NY,public_transit_access,91.9,success
+Richmond Hill,Queens,NY,air_travel_access,100,success
+Richmond Hill,Queens,NY,housing_value,36.9,success
+Ridgewood,Bergen,NJ,quality_education,0.0,fallback
+Ridgewood,Bergen,NJ,neighborhood_amenities,100.0,success
+Ridgewood,Bergen,NJ,economic_security,74.9,success
+Ridgewood,Bergen,NJ,climate_risk,66.3,success
+Ridgewood,Bergen,NJ,active_outdoors,0.0,failed
+Ridgewood,Bergen,NJ,natural_beauty,0.0,failed
+Ridgewood,Bergen,NJ,diversity,69.8,success
+Ridgewood,Bergen,NJ,social_fabric,63.9,success
+Ridgewood,Bergen,NJ,built_beauty,0.0,failed
+Ridgewood,Bergen,NJ,healthcare_access,0.0,failed
+Ridgewood,Bergen,NJ,public_transit_access,82.5,success
+Ridgewood,Bergen,NJ,air_travel_access,100,success
+Ridgewood,Bergen,NJ,housing_value,52.4,success
+Ridgewood,Queens,NY,quality_education,0.0,fallback
+Ridgewood,Queens,NY,neighborhood_amenities,90.0,success
+Ridgewood,Queens,NY,economic_security,71.5,success
+Ridgewood,Queens,NY,climate_risk,87.3,success
+Ridgewood,Queens,NY,active_outdoors,0.0,failed
+Ridgewood,Queens,NY,natural_beauty,0.0,failed
+Ridgewood,Queens,NY,diversity,78.5,success
+Ridgewood,Queens,NY,social_fabric,45.7,success
+Ridgewood,Queens,NY,built_beauty,0.0,failed
+Ridgewood,Queens,NY,healthcare_access,0.0,failed
+Ridgewood,Queens,NY,public_transit_access,73.9,success
+Ridgewood,Queens,NY,air_travel_access,100,success
+Ridgewood,Queens,NY,housing_value,30.6,success
+Riverdale,Bronx,NY,quality_education,0.0,fallback
+Riverdale,Bronx,NY,neighborhood_amenities,64.0,success
+Riverdale,Bronx,NY,economic_security,71.5,success
+Riverdale,Bronx,NY,climate_risk,84.5,success
+Riverdale,Bronx,NY,active_outdoors,0.0,failed
+Riverdale,Bronx,NY,natural_beauty,0.0,failed
+Riverdale,Bronx,NY,diversity,79.0,success
+Riverdale,Bronx,NY,social_fabric,0.0,failed
+Riverdale,Bronx,NY,built_beauty,0.0,failed
+Riverdale,Bronx,NY,healthcare_access,0.0,failed
+Riverdale,Bronx,NY,public_transit_access,80.7,success
+Riverdale,Bronx,NY,air_travel_access,100,success
+Riverdale,Bronx,NY,housing_value,47.2,success
+Riverside,Fairfield,CT,quality_education,0.0,fallback
+Riverside,Fairfield,CT,neighborhood_amenities,30.6,success
+Riverside,Fairfield,CT,economic_security,46.2,success
+Riverside,Fairfield,CT,climate_risk,70.8,success
+Riverside,Fairfield,CT,active_outdoors,0.0,failed
+Riverside,Fairfield,CT,natural_beauty,0.0,failed
+Riverside,Fairfield,CT,diversity,59.0,success
+Riverside,Fairfield,CT,social_fabric,40.5,success
+Riverside,Fairfield,CT,built_beauty,0.0,failed
+Riverside,Fairfield,CT,healthcare_access,0.0,failed
+Riverside,Fairfield,CT,public_transit_access,81.8,success
+Riverside,Fairfield,CT,air_travel_access,100,success
+Riverside,Fairfield,CT,housing_value,50.8,success
+Rockaway Beach,Queens,NY,quality_education,0.0,fallback
+Rockaway Beach,Queens,NY,neighborhood_amenities,53.9,success
+Rockaway Beach,Queens,NY,economic_security,71.5,success
+Rockaway Beach,Queens,NY,climate_risk,66.3,success
+Rockaway Beach,Queens,NY,active_outdoors,0.0,failed
+Rockaway Beach,Queens,NY,natural_beauty,0.0,failed
+Rockaway Beach,Queens,NY,diversity,82.1,success
+Rockaway Beach,Queens,NY,social_fabric,45.2,success
+Rockaway Beach,Queens,NY,built_beauty,0.0,failed
+Rockaway Beach,Queens,NY,healthcare_access,0.0,failed
+Rockaway Beach,Queens,NY,public_transit_access,76.9,success
+Rockaway Beach,Queens,NY,air_travel_access,100,success
+Rockaway Beach,Queens,NY,housing_value,54.0,success
+Rockville Centre,Nassau,NY,quality_education,0.0,fallback
+Rockville Centre,Nassau,NY,neighborhood_amenities,98.0,success
+Rockville Centre,Nassau,NY,economic_security,74.9,success
+Rockville Centre,Nassau,NY,climate_risk,68.8,success
+Rockville Centre,Nassau,NY,active_outdoors,0.0,failed
+Rockville Centre,Nassau,NY,natural_beauty,0.0,failed
+Rockville Centre,Nassau,NY,diversity,72.5,success
+Rockville Centre,Nassau,NY,social_fabric,64.8,success
+Rockville Centre,Nassau,NY,built_beauty,0.0,failed
+Rockville Centre,Nassau,NY,healthcare_access,0.0,failed
+Rockville Centre,Nassau,NY,public_transit_access,82.2,success
+Rockville Centre,Nassau,NY,air_travel_access,100,success
+Rockville Centre,Nassau,NY,housing_value,44.1,success
+Roslyn,Nassau,NY,quality_education,0.0,fallback
+Roslyn,Nassau,NY,neighborhood_amenities,0.0,failed
+Roslyn,Nassau,NY,economic_security,74.9,success
+Roslyn,Nassau,NY,climate_risk,83.7,success
+Roslyn,Nassau,NY,active_outdoors,0.0,failed
+Roslyn,Nassau,NY,natural_beauty,0.0,failed
+Roslyn,Nassau,NY,diversity,71.0,success
+Roslyn,Nassau,NY,social_fabric,0.0,failed
+Roslyn,Nassau,NY,built_beauty,0.0,failed
+Roslyn,Nassau,NY,healthcare_access,0.0,failed
+Roslyn,Nassau,NY,public_transit_access,63.3,success
+Roslyn,Nassau,NY,air_travel_access,100,success
+Roslyn,Nassau,NY,housing_value,41.4,success
+Rye,Westchester,NY,quality_education,0.0,fallback
+Rye,Westchester,NY,neighborhood_amenities,0.0,failed
+Rye,Westchester,NY,economic_security,74.9,success
+Rye,Westchester,NY,climate_risk,63.0,success
+Rye,Westchester,NY,active_outdoors,0.0,failed
+Rye,Westchester,NY,natural_beauty,0.0,failed
+Rye,Westchester,NY,diversity,69.1,success
+Rye,Westchester,NY,social_fabric,59.7,success
+Rye,Westchester,NY,built_beauty,0.0,failed
+Rye,Westchester,NY,healthcare_access,0.0,failed
+Rye,Westchester,NY,public_transit_access,82.1,success
+Rye,Westchester,NY,air_travel_access,100,success
+Rye,Westchester,NY,housing_value,34.4,success
+Scarsdale,Westchester,NY,quality_education,0.0,fallback
+Scarsdale,Westchester,NY,neighborhood_amenities,82.7,success
+Scarsdale,Westchester,NY,economic_security,74.9,success
+Scarsdale,Westchester,NY,climate_risk,78.0,success
+Scarsdale,Westchester,NY,active_outdoors,0.0,failed
+Scarsdale,Westchester,NY,natural_beauty,0.0,failed
+Scarsdale,Westchester,NY,diversity,65.8,success
+Scarsdale,Westchester,NY,social_fabric,0.0,failed
+Scarsdale,Westchester,NY,built_beauty,0.0,failed
+Scarsdale,Westchester,NY,healthcare_access,0.0,failed
+Scarsdale,Westchester,NY,public_transit_access,62.8,success
+Scarsdale,Westchester,NY,air_travel_access,100,success
+Scarsdale,Westchester,NY,housing_value,56.5,success
+Sheepshead Bay,Brooklyn,NY,quality_education,0.0,fallback
+Sheepshead Bay,Brooklyn,NY,neighborhood_amenities,75.0,success
+Sheepshead Bay,Brooklyn,NY,economic_security,71.5,success
+Sheepshead Bay,Brooklyn,NY,climate_risk,62.5,success
+Sheepshead Bay,Brooklyn,NY,active_outdoors,0.0,failed
+Sheepshead Bay,Brooklyn,NY,natural_beauty,0.0,failed
+Sheepshead Bay,Brooklyn,NY,diversity,78.4,success
+Sheepshead Bay,Brooklyn,NY,social_fabric,57.4,success
+Sheepshead Bay,Brooklyn,NY,built_beauty,0.0,failed
+Sheepshead Bay,Brooklyn,NY,healthcare_access,0.0,failed
+Sheepshead Bay,Brooklyn,NY,public_transit_access,65.1,success
+Sheepshead Bay,Brooklyn,NY,air_travel_access,100,success
+Sheepshead Bay,Brooklyn,NY,housing_value,30.5,success
+Short Hills,Essex,NJ,quality_education,0.0,fallback
+Short Hills,Essex,NJ,neighborhood_amenities,15.0,success
+Short Hills,Essex,NJ,economic_security,74.9,success
+Short Hills,Essex,NJ,climate_risk,87.5,success
+Short Hills,Essex,NJ,active_outdoors,0.0,failed
+Short Hills,Essex,NJ,natural_beauty,0.0,failed
+Short Hills,Essex,NJ,diversity,57.2,success
+Short Hills,Essex,NJ,social_fabric,78.3,success
+Short Hills,Essex,NJ,built_beauty,0.0,failed
+Short Hills,Essex,NJ,healthcare_access,0.0,failed
+Short Hills,Essex,NJ,public_transit_access,78.7,success
+Short Hills,Essex,NJ,air_travel_access,100,success
+Short Hills,Essex,NJ,housing_value,56.6,success
+Sleepy Hollow,Westchester,NY,quality_education,0.0,fallback
+Sleepy Hollow,Westchester,NY,neighborhood_amenities,55.3,success
+Sleepy Hollow,Westchester,NY,economic_security,71.5,success
+Sleepy Hollow,Westchester,NY,climate_risk,62.5,success
+Sleepy Hollow,Westchester,NY,active_outdoors,0.0,failed
+Sleepy Hollow,Westchester,NY,natural_beauty,0.0,failed
+Sleepy Hollow,Westchester,NY,diversity,86.2,success
+Sleepy Hollow,Westchester,NY,social_fabric,63.6,success
+Sleepy Hollow,Westchester,NY,built_beauty,0.0,failed
+Sleepy Hollow,Westchester,NY,healthcare_access,0.0,failed
+Sleepy Hollow,Westchester,NY,public_transit_access,60.8,success
+Sleepy Hollow,Westchester,NY,air_travel_access,100,success
+Sleepy Hollow,Westchester,NY,housing_value,54.0,success
+SoHo,Manhattan,NY,quality_education,0.0,fallback
+SoHo,Manhattan,NY,neighborhood_amenities,96.0,success
+SoHo,Manhattan,NY,economic_security,71.5,success
+SoHo,Manhattan,NY,climate_risk,64.0,success
+SoHo,Manhattan,NY,active_outdoors,0.0,failed
+SoHo,Manhattan,NY,natural_beauty,0.0,failed
+SoHo,Manhattan,NY,diversity,72.2,success
+SoHo,Manhattan,NY,social_fabric,52.7,success
+SoHo,Manhattan,NY,built_beauty,0.0,failed
+SoHo,Manhattan,NY,healthcare_access,0.0,failed
+SoHo,Manhattan,NY,public_transit_access,96.8,success
+SoHo,Manhattan,NY,air_travel_access,100,success
+SoHo,Manhattan,NY,housing_value,25.7,success
+South Orange,Essex,NJ,quality_education,0.0,fallback
+South Orange,Essex,NJ,neighborhood_amenities,75.4,success
+South Orange,Essex,NJ,economic_security,74.9,success
+South Orange,Essex,NJ,climate_risk,87.5,success
+South Orange,Essex,NJ,active_outdoors,0.0,failed
+South Orange,Essex,NJ,natural_beauty,0.0,failed
+South Orange,Essex,NJ,diversity,67.8,success
+South Orange,Essex,NJ,social_fabric,49.9,success
+South Orange,Essex,NJ,built_beauty,0.0,failed
+South Orange,Essex,NJ,healthcare_access,0.0,failed
+South Orange,Essex,NJ,public_transit_access,81.5,success
+South Orange,Essex,NJ,air_travel_access,100,success
+South Orange,Essex,NJ,housing_value,80.0,success
+Southport,Fairfield,CT,quality_education,0.0,fallback
+Southport,Fairfield,CT,neighborhood_amenities,62.2,success
+Southport,Fairfield,CT,economic_security,54.6,success
+Southport,Fairfield,CT,climate_risk,62.5,success
+Southport,Fairfield,CT,active_outdoors,0.0,failed
+Southport,Fairfield,CT,natural_beauty,0.0,failed
+Southport,Fairfield,CT,diversity,61.7,success
+Southport,Fairfield,CT,social_fabric,52.8,success
+Southport,Fairfield,CT,built_beauty,0.0,failed
+Southport,Fairfield,CT,healthcare_access,0.0,failed
+Southport,Fairfield,CT,public_transit_access,63.2,success
+Southport,Fairfield,CT,air_travel_access,68.9,success
+Southport,Fairfield,CT,housing_value,63.9,success
+St. George,Staten Island,NY,quality_education,0.0,fallback
+St. George,Staten Island,NY,neighborhood_amenities,92.0,success
+St. George,Staten Island,NY,economic_security,71.5,success
+St. George,Staten Island,NY,climate_risk,87.5,success
+St. George,Staten Island,NY,active_outdoors,0.0,failed
+St. George,Staten Island,NY,natural_beauty,0.0,failed
+St. George,Staten Island,NY,diversity,79.4,success
+St. George,Staten Island,NY,social_fabric,45.3,success
+St. George,Staten Island,NY,built_beauty,0.0,failed
+St. George,Staten Island,NY,healthcare_access,0.0,failed
+St. George,Staten Island,NY,public_transit_access,60.8,success
+St. George,Staten Island,NY,air_travel_access,100,success
+St. George,Staten Island,NY,housing_value,25.3,success
+Stamford,Fairfield,CT,quality_education,0.0,fallback
+Stamford,Fairfield,CT,neighborhood_amenities,97.0,success
+Stamford,Fairfield,CT,economic_security,59.8,success
+Stamford,Fairfield,CT,climate_risk,62.5,success
+Stamford,Fairfield,CT,active_outdoors,0.0,failed
+Stamford,Fairfield,CT,natural_beauty,0.0,failed
+Stamford,Fairfield,CT,diversity,80.0,success
+Stamford,Fairfield,CT,social_fabric,30.3,success
+Stamford,Fairfield,CT,built_beauty,0.0,failed
+Stamford,Fairfield,CT,healthcare_access,0.0,failed
+Stamford,Fairfield,CT,public_transit_access,71.0,success
+Stamford,Fairfield,CT,air_travel_access,100,success
+Stamford,Fairfield,CT,housing_value,25.4,success
+Stapleton,Staten Island,NY,quality_education,0.0,fallback
+Stapleton,Staten Island,NY,neighborhood_amenities,90.1,success
+Stapleton,Staten Island,NY,economic_security,71.5,success
+Stapleton,Staten Island,NY,climate_risk,62.5,success
+Stapleton,Staten Island,NY,active_outdoors,0.0,failed
+Stapleton,Staten Island,NY,natural_beauty,0.0,failed
+Stapleton,Staten Island,NY,diversity,88.5,success
+Stapleton,Staten Island,NY,social_fabric,44.6,success
+Stapleton,Staten Island,NY,built_beauty,0.0,failed
+Stapleton,Staten Island,NY,healthcare_access,0.0,failed
+Stapleton,Staten Island,NY,public_transit_access,77.6,success
+Stapleton,Staten Island,NY,air_travel_access,100,success
+Stapleton,Staten Island,NY,housing_value,32.7,success
+Summit,Union,NJ,quality_education,0.0,fallback
+Summit,Union,NJ,neighborhood_amenities,93.0,success
+Summit,Union,NJ,economic_security,74.9,success
+Summit,Union,NJ,climate_risk,68.3,success
+Summit,Union,NJ,active_outdoors,0.0,failed
+Summit,Union,NJ,natural_beauty,0.0,failed
+Summit,Union,NJ,diversity,71.7,success
+Summit,Union,NJ,social_fabric,69.1,success
+Summit,Union,NJ,built_beauty,0.0,failed
+Summit,Union,NJ,healthcare_access,0.0,failed
+Summit,Union,NJ,public_transit_access,79.5,success
+Summit,Union,NJ,air_travel_access,100,success
+Summit,Union,NJ,housing_value,52.5,success
+Sunnyside,Queens,NY,quality_education,0.0,fallback
+Sunnyside,Queens,NY,neighborhood_amenities,0.0,failed
+Sunnyside,Queens,NY,economic_security,74.9,success
+Sunnyside,Queens,NY,climate_risk,62.7,success
+Sunnyside,Queens,NY,active_outdoors,0.0,failed
+Sunnyside,Queens,NY,natural_beauty,0.0,failed
+Sunnyside,Queens,NY,diversity,49.1,success
+Sunnyside,Queens,NY,social_fabric,57.5,success
+Sunnyside,Queens,NY,built_beauty,0.0,failed
+Sunnyside,Queens,NY,healthcare_access,0.0,failed
+Sunnyside,Queens,NY,public_transit_access,98.0,success
+Sunnyside,Queens,NY,air_travel_access,100,success
+Sunnyside,Queens,NY,housing_value,65.0,success
+Sunset Park,Brooklyn,NY,quality_education,0.0,fallback
+Sunset Park,Brooklyn,NY,neighborhood_amenities,92.6,success
+Sunset Park,Brooklyn,NY,economic_security,71.5,success
+Sunset Park,Brooklyn,NY,climate_risk,72.3,success
+Sunset Park,Brooklyn,NY,active_outdoors,0.0,failed
+Sunset Park,Brooklyn,NY,natural_beauty,0.0,failed
+Sunset Park,Brooklyn,NY,diversity,80.4,success
+Sunset Park,Brooklyn,NY,social_fabric,70.0,success
+Sunset Park,Brooklyn,NY,built_beauty,0.0,failed
+Sunset Park,Brooklyn,NY,healthcare_access,0.0,failed
+Sunset Park,Brooklyn,NY,public_transit_access,87.2,success
+Sunset Park,Brooklyn,NY,air_travel_access,100,success
+Sunset Park,Brooklyn,NY,housing_value,29.9,success
+Tarrytown,Westchester,NY,quality_education,0.0,fallback
+Tarrytown,Westchester,NY,neighborhood_amenities,65.8,success
+Tarrytown,Westchester,NY,economic_security,74.9,success
+Tarrytown,Westchester,NY,climate_risk,62.5,success
+Tarrytown,Westchester,NY,active_outdoors,0.0,failed
+Tarrytown,Westchester,NY,natural_beauty,0.0,failed
+Tarrytown,Westchester,NY,diversity,77.3,success
+Tarrytown,Westchester,NY,social_fabric,58.8,success
+Tarrytown,Westchester,NY,built_beauty,0.0,failed
+Tarrytown,Westchester,NY,healthcare_access,0.0,failed
+Tarrytown,Westchester,NY,public_transit_access,63.6,success
+Tarrytown,Westchester,NY,air_travel_access,100,success
+Tarrytown,Westchester,NY,housing_value,47.8,success
+Tenafly,Bergen,NJ,quality_education,0.0,fallback
+Tenafly,Bergen,NJ,neighborhood_amenities,88.6,success
+Tenafly,Bergen,NJ,economic_security,74.9,success
+Tenafly,Bergen,NJ,climate_risk,77.3,success
+Tenafly,Bergen,NJ,active_outdoors,0.0,failed
+Tenafly,Bergen,NJ,natural_beauty,0.0,failed
+Tenafly,Bergen,NJ,diversity,64.2,success
+Tenafly,Bergen,NJ,social_fabric,0.0,failed
+Tenafly,Bergen,NJ,built_beauty,0.0,failed
+Tenafly,Bergen,NJ,healthcare_access,0.0,failed
+Tenafly,Bergen,NJ,public_transit_access,52.0,success
+Tenafly,Bergen,NJ,air_travel_access,100,success
+Tenafly,Bergen,NJ,housing_value,61.9,success
+Tottenville,Staten Island,NY,quality_education,0.0,fallback
+Tottenville,Staten Island,NY,neighborhood_amenities,65.0,success
+Tottenville,Staten Island,NY,economic_security,74.9,success
+Tottenville,Staten Island,NY,climate_risk,62.5,success
+Tottenville,Staten Island,NY,active_outdoors,0.0,failed
+Tottenville,Staten Island,NY,natural_beauty,0.0,failed
+Tottenville,Staten Island,NY,diversity,68.5,success
+Tottenville,Staten Island,NY,social_fabric,63.7,success
+Tottenville,Staten Island,NY,built_beauty,0.0,failed
+Tottenville,Staten Island,NY,healthcare_access,0.0,failed
+Tottenville,Staten Island,NY,public_transit_access,70.0,success
+Tottenville,Staten Island,NY,air_travel_access,100,success
+Tottenville,Staten Island,NY,housing_value,54.6,success
+Tremont,Bronx,NY,quality_education,0.0,fallback
+Tremont,Bronx,NY,neighborhood_amenities,42.4,success
+Tremont,Bronx,NY,economic_security,71.5,success
+Tremont,Bronx,NY,climate_risk,73.2,success
+Tremont,Bronx,NY,active_outdoors,0.0,failed
+Tremont,Bronx,NY,natural_beauty,0.0,failed
+Tremont,Bronx,NY,diversity,84.3,success
+Tremont,Bronx,NY,social_fabric,56.6,success
+Tremont,Bronx,NY,built_beauty,0.0,failed
+Tremont,Bronx,NY,healthcare_access,0.0,failed
+Tremont,Bronx,NY,public_transit_access,89.5,success
+Tremont,Bronx,NY,air_travel_access,100,success
+Tremont,Bronx,NY,housing_value,35.0,success
+Tribeca,Manhattan,NY,quality_education,0.0,fallback
+Tribeca,Manhattan,NY,neighborhood_amenities,91.0,success
+Tribeca,Manhattan,NY,economic_security,71.5,success
+Tribeca,Manhattan,NY,climate_risk,75.7,success
+Tribeca,Manhattan,NY,active_outdoors,0.0,failed
+Tribeca,Manhattan,NY,natural_beauty,0.0,failed
+Tribeca,Manhattan,NY,diversity,58.1,success
+Tribeca,Manhattan,NY,social_fabric,49.7,success
+Tribeca,Manhattan,NY,built_beauty,58.8,success
+Tribeca,Manhattan,NY,healthcare_access,52.6,success
+Tribeca,Manhattan,NY,public_transit_access,97.0,success
+Tribeca,Manhattan,NY,air_travel_access,100,success
+Tribeca,Manhattan,NY,housing_value,25.7,success
+Tuckahoe,Westchester,NY,quality_education,0.0,fallback
+Tuckahoe,Westchester,NY,neighborhood_amenities,8.3,success
+Tuckahoe,Westchester,NY,economic_security,55.8,success
+Tuckahoe,Westchester,NY,climate_risk,76.1,success
+Tuckahoe,Westchester,NY,active_outdoors,0.0,failed
+Tuckahoe,Westchester,NY,natural_beauty,0.0,failed
+Tuckahoe,Westchester,NY,diversity,74.0,success
+Tuckahoe,Westchester,NY,social_fabric,70.0,success
+Tuckahoe,Westchester,NY,built_beauty,0.0,failed
+Tuckahoe,Westchester,NY,healthcare_access,0.0,failed
+Tuckahoe,Westchester,NY,public_transit_access,0,success
+Tuckahoe,Westchester,NY,air_travel_access,24.9,success
+Tuckahoe,Westchester,NY,housing_value,43.8,success
+Turtle Bay,Manhattan,NY,quality_education,0.0,fallback
+Turtle Bay,Manhattan,NY,neighborhood_amenities,91.0,success
+Turtle Bay,Manhattan,NY,economic_security,71.5,success
+Turtle Bay,Manhattan,NY,climate_risk,81.0,success
+Turtle Bay,Manhattan,NY,active_outdoors,0.0,failed
+Turtle Bay,Manhattan,NY,natural_beauty,0.0,failed
+Turtle Bay,Manhattan,NY,diversity,64.2,success
+Turtle Bay,Manhattan,NY,social_fabric,53.9,success
+Turtle Bay,Manhattan,NY,built_beauty,0.0,failed
+Turtle Bay,Manhattan,NY,healthcare_access,0.0,failed
+Turtle Bay,Manhattan,NY,public_transit_access,96.9,success
+Turtle Bay,Manhattan,NY,air_travel_access,100,success
+Turtle Bay,Manhattan,NY,housing_value,29.2,success
+Upper East Side,Manhattan,NY,quality_education,0.0,fallback
+Upper East Side,Manhattan,NY,neighborhood_amenities,96.0,success
+Upper East Side,Manhattan,NY,economic_security,71.5,success
+Upper East Side,Manhattan,NY,climate_risk,64.4,success
+Upper East Side,Manhattan,NY,active_outdoors,0.0,failed
+Upper East Side,Manhattan,NY,natural_beauty,0.0,failed
+Upper East Side,Manhattan,NY,diversity,68.7,success
+Upper East Side,Manhattan,NY,social_fabric,58.3,success
+Upper East Side,Manhattan,NY,built_beauty,0.0,failed
+Upper East Side,Manhattan,NY,healthcare_access,0.0,failed
+Upper East Side,Manhattan,NY,public_transit_access,96.6,success
+Upper East Side,Manhattan,NY,air_travel_access,100,success
+Upper East Side,Manhattan,NY,housing_value,29.7,success
+Upper West Side,Manhattan,NY,quality_education,0.0,fallback
+Upper West Side,Manhattan,NY,neighborhood_amenities,96.0,success
+Upper West Side,Manhattan,NY,economic_security,71.5,success
+Upper West Side,Manhattan,NY,climate_risk,69.8,success
+Upper West Side,Manhattan,NY,active_outdoors,0.0,failed
+Upper West Side,Manhattan,NY,natural_beauty,0.0,failed
+Upper West Side,Manhattan,NY,diversity,65.8,success
+Upper West Side,Manhattan,NY,social_fabric,58.8,success
+Upper West Side,Manhattan,NY,built_beauty,0.0,failed
+Upper West Side,Manhattan,NY,healthcare_access,0.0,failed
+Upper West Side,Manhattan,NY,public_transit_access,96.0,success
+Upper West Side,Manhattan,NY,air_travel_access,100,success
+Upper West Side,Manhattan,NY,housing_value,34.5,success
+Valley Stream,Nassau,NY,quality_education,0.0,fallback
+Valley Stream,Nassau,NY,neighborhood_amenities,88.6,success
+Valley Stream,Nassau,NY,economic_security,71.5,success
+Valley Stream,Nassau,NY,climate_risk,80.3,success
+Valley Stream,Nassau,NY,active_outdoors,0.0,failed
+Valley Stream,Nassau,NY,natural_beauty,0.0,failed
+Valley Stream,Nassau,NY,diversity,81.6,success
+Valley Stream,Nassau,NY,social_fabric,61.3,success
+Valley Stream,Nassau,NY,built_beauty,0.0,failed
+Valley Stream,Nassau,NY,healthcare_access,0.0,failed
+Valley Stream,Nassau,NY,public_transit_access,89.2,success
+Valley Stream,Nassau,NY,air_travel_access,100,success
+Valley Stream,Nassau,NY,housing_value,45.0,success
+Washington Heights,Manhattan,NY,quality_education,0.0,fallback
+Washington Heights,Manhattan,NY,neighborhood_amenities,85.6,success
+Washington Heights,Manhattan,NY,economic_security,71.5,success
+Washington Heights,Manhattan,NY,climate_risk,86.6,success
+Washington Heights,Manhattan,NY,active_outdoors,89.0,success
+Washington Heights,Manhattan,NY,natural_beauty,71.52853333333334,success
+Washington Heights,Manhattan,NY,diversity,86.0,success
+Washington Heights,Manhattan,NY,social_fabric,53.7,success
+Washington Heights,Manhattan,NY,built_beauty,0.0,failed
+Washington Heights,Manhattan,NY,healthcare_access,72.6,success
+Washington Heights,Manhattan,NY,public_transit_access,91.5,success
+Washington Heights,Manhattan,NY,air_travel_access,100,success
+Washington Heights,Manhattan,NY,housing_value,54.0,success
+Weehawken,Hudson,NJ,quality_education,0.0,fallback
+Weehawken,Hudson,NJ,neighborhood_amenities,73.5,success
+Weehawken,Hudson,NJ,economic_security,74.9,success
+Weehawken,Hudson,NJ,climate_risk,80.7,success
+Weehawken,Hudson,NJ,active_outdoors,0.0,failed
+Weehawken,Hudson,NJ,natural_beauty,0.0,failed
+Weehawken,Hudson,NJ,diversity,62.7,success
+Weehawken,Hudson,NJ,social_fabric,39.6,success
+Weehawken,Hudson,NJ,built_beauty,0.0,failed
+Weehawken,Hudson,NJ,healthcare_access,0.0,failed
+Weehawken,Hudson,NJ,public_transit_access,96.0,success
+Weehawken,Hudson,NJ,air_travel_access,100,success
+Weehawken,Hudson,NJ,housing_value,28.5,success
+West Orange,Essex,NJ,quality_education,0.0,fallback
+West Orange,Essex,NJ,neighborhood_amenities,30.7,success
+West Orange,Essex,NJ,economic_security,74.9,success
+West Orange,Essex,NJ,climate_risk,87.5,success
+West Orange,Essex,NJ,active_outdoors,0.0,failed
+West Orange,Essex,NJ,natural_beauty,0.0,failed
+West Orange,Essex,NJ,diversity,80.3,success
+West Orange,Essex,NJ,social_fabric,51.5,success
+West Orange,Essex,NJ,built_beauty,0.0,failed
+West Orange,Essex,NJ,healthcare_access,0.0,failed
+West Orange,Essex,NJ,public_transit_access,35.0,success
+West Orange,Essex,NJ,air_travel_access,100,success
+West Orange,Essex,NJ,housing_value,65.0,success
+West Village,Manhattan,NY,quality_education,0.0,fallback
+West Village,Manhattan,NY,neighborhood_amenities,96.0,success
+West Village,Manhattan,NY,economic_security,71.5,success
+West Village,Manhattan,NY,climate_risk,75.7,success
+West Village,Manhattan,NY,active_outdoors,0.0,failed
+West Village,Manhattan,NY,natural_beauty,0.0,failed
+West Village,Manhattan,NY,diversity,61.2,success
+West Village,Manhattan,NY,social_fabric,0.0,failed
+West Village,Manhattan,NY,built_beauty,0.0,failed
+West Village,Manhattan,NY,healthcare_access,0.0,failed
+West Village,Manhattan,NY,public_transit_access,96.7,success
+West Village,Manhattan,NY,air_travel_access,100,success
+West Village,Manhattan,NY,housing_value,21.4,success
+Westfield,Union,NJ,quality_education,0.0,fallback
+Westfield,Union,NJ,neighborhood_amenities,0.0,failed
+Westfield,Union,NJ,economic_security,74.9,success
+Westfield,Union,NJ,climate_risk,69.7,success
+Westfield,Union,NJ,active_outdoors,0.0,failed
+Westfield,Union,NJ,natural_beauty,0.0,failed
+Westfield,Union,NJ,diversity,72.4,success
+Westfield,Union,NJ,social_fabric,67.8,success
+Westfield,Union,NJ,built_beauty,0.0,failed
+Westfield,Union,NJ,healthcare_access,0.0,failed
+Westfield,Union,NJ,public_transit_access,60.5,success
+Westfield,Union,NJ,air_travel_access,100,success
+Westfield,Union,NJ,housing_value,52.8,success
+Weston,Fairfield,CT,quality_education,0.0,fallback
+Weston,Fairfield,CT,neighborhood_amenities,41.1,success
+Weston,Fairfield,CT,economic_security,54.6,success
+Weston,Fairfield,CT,climate_risk,75.8,success
+Weston,Fairfield,CT,active_outdoors,0.0,failed
+Weston,Fairfield,CT,natural_beauty,0.0,failed
+Weston,Fairfield,CT,diversity,68.0,success
+Weston,Fairfield,CT,social_fabric,0.0,failed
+Weston,Fairfield,CT,built_beauty,0.0,failed
+Weston,Fairfield,CT,healthcare_access,0.0,failed
+Weston,Fairfield,CT,public_transit_access,0,success
+Weston,Fairfield,CT,air_travel_access,68.3,success
+Weston,Fairfield,CT,housing_value,75.0,success
+Westport,Fairfield,CT,quality_education,0.0,fallback
+Westport,Fairfield,CT,neighborhood_amenities,18.0,success
+Westport,Fairfield,CT,economic_security,54.6,success
+Westport,Fairfield,CT,climate_risk,62.9,success
+Westport,Fairfield,CT,active_outdoors,0.0,failed
+Westport,Fairfield,CT,natural_beauty,0.0,failed
+Westport,Fairfield,CT,diversity,69.2,success
+Westport,Fairfield,CT,social_fabric,33.1,success
+Westport,Fairfield,CT,built_beauty,0.0,failed
+Westport,Fairfield,CT,healthcare_access,0.0,failed
+Westport,Fairfield,CT,public_transit_access,60.8,success
+Westport,Fairfield,CT,air_travel_access,73.4,success
+Westport,Fairfield,CT,housing_value,64.0,success
+Westwood,Bergen,NJ,quality_education,0.0,fallback
+Westwood,Bergen,NJ,neighborhood_amenities,47.4,success
+Westwood,Bergen,NJ,economic_security,55.8,success
+Westwood,Bergen,NJ,climate_risk,62.5,success
+Westwood,Bergen,NJ,active_outdoors,0.0,failed
+Westwood,Bergen,NJ,natural_beauty,0.0,failed
+Westwood,Bergen,NJ,diversity,71.7,success
+Westwood,Bergen,NJ,social_fabric,69.2,success
+Westwood,Bergen,NJ,built_beauty,0.0,failed
+Westwood,Bergen,NJ,healthcare_access,0.0,failed
+Westwood,Bergen,NJ,public_transit_access,32.6,success
+Westwood,Bergen,NJ,air_travel_access,44.8,success
+Westwood,Bergen,NJ,housing_value,75.0,success
+White Plains,Westchester,NY,quality_education,0.0,fallback
+White Plains,Westchester,NY,neighborhood_amenities,86.7,success
+White Plains,Westchester,NY,economic_security,71.5,success
+White Plains,Westchester,NY,climate_risk,62.5,success
+White Plains,Westchester,NY,active_outdoors,0.0,failed
+White Plains,Westchester,NY,natural_beauty,0.0,failed
+White Plains,Westchester,NY,diversity,84.2,success
+White Plains,Westchester,NY,social_fabric,46.2,success
+White Plains,Westchester,NY,built_beauty,0.0,failed
+White Plains,Westchester,NY,healthcare_access,0.0,failed
+White Plains,Westchester,NY,public_transit_access,63.9,success
+White Plains,Westchester,NY,air_travel_access,100,success
+White Plains,Westchester,NY,housing_value,31.5,success
+Williamsburg,Brooklyn,NY,quality_education,0.0,fallback
+Williamsburg,Brooklyn,NY,neighborhood_amenities,96.0,success
+Williamsburg,Brooklyn,NY,economic_security,71.5,success
+Williamsburg,Brooklyn,NY,climate_risk,78.1,success
+Williamsburg,Brooklyn,NY,active_outdoors,0.0,failed
+Williamsburg,Brooklyn,NY,natural_beauty,0.0,failed
+Williamsburg,Brooklyn,NY,diversity,53.6,success
+Williamsburg,Brooklyn,NY,social_fabric,48.4,success
+Williamsburg,Brooklyn,NY,built_beauty,0.0,failed
+Williamsburg,Brooklyn,NY,healthcare_access,0.0,failed
+Williamsburg,Brooklyn,NY,public_transit_access,86.3,success
+Williamsburg,Brooklyn,NY,air_travel_access,100,success
+Williamsburg,Brooklyn,NY,housing_value,26.5,success
+Wilton,Fairfield,CT,quality_education,0.0,fallback
+Wilton,Fairfield,CT,neighborhood_amenities,46.9,success
+Wilton,Fairfield,CT,economic_security,54.6,success
+Wilton,Fairfield,CT,climate_risk,86.3,success
+Wilton,Fairfield,CT,active_outdoors,0.0,failed
+Wilton,Fairfield,CT,natural_beauty,0.0,failed
+Wilton,Fairfield,CT,diversity,67.3,success
+Wilton,Fairfield,CT,social_fabric,61.4,success
+Wilton,Fairfield,CT,built_beauty,0.0,failed
+Wilton,Fairfield,CT,healthcare_access,0.0,failed
+Wilton,Fairfield,CT,public_transit_access,73.4,success
+Wilton,Fairfield,CT,air_travel_access,72.6,success
+Wilton,Fairfield,CT,housing_value,64.3,success
+Windsor Terrace,Brooklyn,NY,quality_education,0.0,fallback
+Windsor Terrace,Brooklyn,NY,neighborhood_amenities,94.4,success
+Windsor Terrace,Brooklyn,NY,economic_security,71.5,success
+Windsor Terrace,Brooklyn,NY,climate_risk,86.5,success
+Windsor Terrace,Brooklyn,NY,active_outdoors,0.0,failed
+Windsor Terrace,Brooklyn,NY,natural_beauty,0.0,failed
+Windsor Terrace,Brooklyn,NY,diversity,77.5,success
+Windsor Terrace,Brooklyn,NY,social_fabric,53.8,success
+Windsor Terrace,Brooklyn,NY,built_beauty,0.0,failed
+Windsor Terrace,Brooklyn,NY,healthcare_access,0.0,failed
+Windsor Terrace,Brooklyn,NY,public_transit_access,87.9,success
+Windsor Terrace,Brooklyn,NY,air_travel_access,100,success
+Windsor Terrace,Brooklyn,NY,housing_value,30.2,success
+Woodmere,Nassau,NY,quality_education,0.0,fallback
+Woodmere,Nassau,NY,neighborhood_amenities,26.1,success
+Woodmere,Nassau,NY,economic_security,74.9,success
+Woodmere,Nassau,NY,climate_risk,74.7,success
+Woodmere,Nassau,NY,active_outdoors,0.0,failed
+Woodmere,Nassau,NY,natural_beauty,0.0,failed
+Woodmere,Nassau,NY,diversity,62.3,success
+Woodmere,Nassau,NY,social_fabric,0.0,failed
+Woodmere,Nassau,NY,built_beauty,0.0,failed
+Woodmere,Nassau,NY,healthcare_access,0.0,failed
+Woodmere,Nassau,NY,public_transit_access,62.5,success
+Woodmere,Nassau,NY,air_travel_access,100,success
+Woodmere,Nassau,NY,housing_value,64.5,success
+Woodside,Queens,NY,quality_education,0.0,fallback
+Woodside,Queens,NY,neighborhood_amenities,92.6,success
+Woodside,Queens,NY,economic_security,71.5,success
+Woodside,Queens,NY,climate_risk,85.3,success
+Woodside,Queens,NY,active_outdoors,0.0,failed
+Woodside,Queens,NY,natural_beauty,0.0,failed
+Woodside,Queens,NY,diversity,80.0,success
+Woodside,Queens,NY,social_fabric,67.3,success
+Woodside,Queens,NY,built_beauty,0.0,failed
+Woodside,Queens,NY,healthcare_access,0.0,failed
+Woodside,Queens,NY,public_transit_access,92.4,success
+Woodside,Queens,NY,air_travel_access,100,success
+Woodside,Queens,NY,housing_value,31.3,success
+Yonkers,Westchester,NY,quality_education,0.0,fallback
+Yonkers,Westchester,NY,neighborhood_amenities,64.2,success
+Yonkers,Westchester,NY,economic_security,71.5,success
+Yonkers,Westchester,NY,climate_risk,62.5,success
+Yonkers,Westchester,NY,active_outdoors,0.0,failed
+Yonkers,Westchester,NY,natural_beauty,0.0,failed
+Yonkers,Westchester,NY,diversity,86.8,success
+Yonkers,Westchester,NY,social_fabric,56.9,success
+Yonkers,Westchester,NY,built_beauty,0.0,failed
+Yonkers,Westchester,NY,healthcare_access,0.0,failed
+Yonkers,Westchester,NY,public_transit_access,96.1,success
+Yonkers,Westchester,NY,air_travel_access,100,success
+Yonkers,Westchester,NY,housing_value,54.0,success
+Yorktown Heights,Westchester,NY,quality_education,0.0,fallback
+Yorktown Heights,Westchester,NY,neighborhood_amenities,77.4,success
+Yorktown Heights,Westchester,NY,economic_security,55.8,success
+Yorktown Heights,Westchester,NY,climate_risk,62.5,success
+Yorktown Heights,Westchester,NY,active_outdoors,0.0,failed
+Yorktown Heights,Westchester,NY,natural_beauty,0.0,failed
+Yorktown Heights,Westchester,NY,diversity,76.2,success
+Yorktown Heights,Westchester,NY,social_fabric,80.2,success
+Yorktown Heights,Westchester,NY,built_beauty,0.0,failed
+Yorktown Heights,Westchester,NY,healthcare_access,0.0,failed
+Yorktown Heights,Westchester,NY,public_transit_access,60.6,success
+Yorktown Heights,Westchester,NY,air_travel_access,75.3,success
+Yorktown Heights,Westchester,NY,housing_value,60.0,success
+Yorkville,Manhattan,NY,quality_education,0.0,fallback
+Yorkville,Manhattan,NY,neighborhood_amenities,91.0,success
+Yorkville,Manhattan,NY,economic_security,71.5,success
+Yorkville,Manhattan,NY,climate_risk,66.5,success
+Yorkville,Manhattan,NY,active_outdoors,0.0,failed
+Yorkville,Manhattan,NY,natural_beauty,0.0,failed
+Yorkville,Manhattan,NY,diversity,71.1,success
+Yorkville,Manhattan,NY,social_fabric,52.9,success
+Yorkville,Manhattan,NY,built_beauty,0.0,failed
+Yorkville,Manhattan,NY,healthcare_access,0.0,failed
+Yorkville,Manhattan,NY,public_transit_access,95.3,success
+Yorkville,Manhattan,NY,air_travel_access,100,success
+Yorkville,Manhattan,NY,housing_value,22.4,success

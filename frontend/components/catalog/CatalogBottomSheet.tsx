@@ -16,6 +16,7 @@ import {
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -238,78 +239,36 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            {statusBadge ? (
-              <div
-                className="max-w-full self-start"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  borderRadius: 20,
-                  padding: '3px 8px 3px 6px',
-                  marginBottom: 8,
-                  background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
-                  border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100, 116, 139, 0.5)',
-                }}
-              >
-                <span
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {statusBadge ? (
+                <div
+                  className="max-w-full self-start"
                   style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF',
-                  }}
-                  aria-hidden
-                />
-                <span
-                  className="min-w-0"
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    color: archetypeRamp[800],
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    borderRadius: 20,
+                    padding: '3px 8px 3px 6px',
+                    background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
+                    border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100, 116, 139, 0.5)',
                   }}
                 >
-                  {statusBadge.text}
-                </span>
-              </div>
-            ) : allIdx?.archetype ? (
-              <div
-                className="max-w-full self-start"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  borderRadius: 20,
-                  padding: '3px 8px 3px 6px',
-                  marginBottom: 8,
-                  background: archetypeRamp[50],
-                }}
-              >
-                <span
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    background: archetypeRamp[400],
-                  }}
-                  aria-hidden
-                />
-                <span
-                  className="min-w-0"
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    color: archetypeRamp[800],
-                  }}
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF' }} aria-hidden />
+                  <span className="min-w-0" style={{ fontSize: '0.7rem', fontWeight: 500, color: archetypeRamp[800] }}>{statusBadge.text}</span>
+                </div>
+              ) : allIdx?.archetype ? (
+                <div
+                  className="max-w-full self-start"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, borderRadius: 20, padding: '3px 8px 3px 6px', background: archetypeRamp[50] }}
                 >
-                  {allIdx.archetype}
-                </span>
-              </div>
-            ) : (
-              <p className="mb-2 text-[0.7rem] text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
-            )}
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: archetypeRamp[400] }} aria-hidden />
+                  <span className="min-w-0" style={{ fontSize: '0.7rem', fontWeight: 500, color: archetypeRamp[800] }}>{allIdx.archetype}</span>
+                </div>
+              ) : (
+                <p className="text-[0.7rem] text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
+              )}
+              {allIdx?.trajectory && <TrajectoryChip trajectory={allIdx.trajectory} size="xs" />}
+            </div>
 
             {chips.length > 0 && (
               <div

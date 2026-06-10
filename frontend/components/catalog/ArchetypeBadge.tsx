@@ -7,13 +7,16 @@ const BADGE: Record<
   ReturnType<typeof normalizeStatusArchetypeKey>,
   { bg: string; fg: string }
 > = {
-  wealthy:      { bg: '#EEEDFE', fg: '#3C3489' },
-  well_off:     { bg: '#FFF3CD', fg: '#7B5800' },
+  elite:        { bg: '#EEEDFE', fg: '#3C3489' },
+  affluent:     { bg: '#FFF3CD', fg: '#7B5800' },
   middle_class: { bg: '#E2E8F0', fg: '#334155' },
-  modest:       { bg: '#FEF3C7', fg: '#7A5C38' },
   working_class:{ bg: '#F1EFE8', fg: '#444441' },
   struggling:   { bg: '#E7E5E4', fg: '#292524' },
   transitional: { bg: '#F0FDF9', fg: '#134E4A' },
+  // Legacy aliases
+  wealthy:      { bg: '#EEEDFE', fg: '#3C3489' },
+  well_off:     { bg: '#FFF3CD', fg: '#7B5800' },
+  modest:       { bg: '#F1EFE8', fg: '#444441' },
 }
 
 export default function ArchetypeBadge({

@@ -1,0 +1,25 @@
+place_key,label,name,county_borough,state_abbr,pillar,issue,score,pillar_error,confidence,fallback_used,reason
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,public_transit_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,air_travel_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Beverly Hills|Los Angeles|CA,"Beverly Hills, Los Angeles, CA",Beverly Hills,Los Angeles,CA,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Frogtown|Los Angeles|CA,"Frogtown, Los Angeles, CA",Frogtown,Los Angeles,CA,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Frogtown|Los Angeles|CA,"Frogtown, Los Angeles, CA",Frogtown,Los Angeles,CA,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Frogtown|Los Angeles|CA,"Frogtown, Los Angeles, CA",Frogtown,Los Angeles,CA,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Frogtown|Los Angeles|CA,"Frogtown, Los Angeles, CA",Frogtown,Los Angeles,CA,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Frogtown|Los Angeles|CA,"Frogtown, Los Angeles, CA",Frogtown,Los Angeles,CA,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,economic_security,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,climate_risk,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,diversity,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,social_fabric,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,healthcare_access,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Larchmont Village|Los Angeles|CA,"Larchmont Village, Los Angeles, CA",Larchmont Village,Los Angeles,CA,housing_value,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Sunland-Tujunga|Los Angeles|CA,"Sunland-Tujunga, Los Angeles, CA",Sunland-Tujunga,Los Angeles,CA,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+View Park|Los Angeles|CA,"View Park, Los Angeles, CA",View Park,Los Angeles,CA,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+West LA|Los Angeles|CA,"West LA, Los Angeles, CA",West LA,Los Angeles,CA,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Westwood|Los Angeles|CA,"Westwood, Los Angeles, CA",Westwood,Los Angeles,CA,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed
+Whittier|Los Angeles|CA,"Whittier, Los Angeles, CA",Whittier,Los Angeles,CA,natural_beauty,pillar_error,0.0,RuntimeError,0,True,Pillar execution failed

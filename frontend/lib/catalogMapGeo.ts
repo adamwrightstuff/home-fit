@@ -140,11 +140,13 @@ export function getAllCatalogIndexDisplay(
   statusSignal: number | null
   archetype: string | null
   archetypeBadge: string | null
+  trajectory: string | null
 } {
   const rw = reweightScoreResponseFromPriorities(place.score, priorities)
   const s = place.score
   const br = s.status_signal_breakdown
   const archetype = br?.archetype ?? null
+  const trajectory = br?.trajectory ?? null
   const archetypeBadge = getStatusBadgeModel(
     br ?? null,
     typeof s.status_signal === 'number' ? s.status_signal : null
@@ -156,6 +158,7 @@ export function getAllCatalogIndexDisplay(
     statusSignal: typeof s.status_signal === 'number' ? s.status_signal : null,
     archetype,
     archetypeBadge,
+    trajectory,
   }
 }
 

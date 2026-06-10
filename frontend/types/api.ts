@@ -15,6 +15,9 @@ export interface StatusSignalTopDriver {
 export interface StatusSignalBreakdown {
   archetype?: string;
   archetype_rule?: string;
+  /** Lifecycle trajectory badge: Arrived | Up-and-Coming | Stable | Cooling | Declining */
+  trajectory?: 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining';
+  trajectory_rule?: string;
   status_label?: string;
   status_insight?: string;
   llm_summary?: string;

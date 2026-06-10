@@ -14,6 +14,7 @@ import {
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
 const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
@@ -152,28 +153,33 @@ export default function CatalogDetailPanel({
             })}
           </div>
 
-          {/* Archetype badge */}
-          {statusBadge ? (
-            <div
-              className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-full"
-              style={{
-                padding: '4px 10px 4px 7px',
-                background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
-                border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100,116,139,0.4)',
-              }}
-            >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF' }} aria-hidden />
-              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: archetypeRamp[800] }}>{statusBadge.text}</span>
-            </div>
-          ) : allIdx?.archetype ? (
-            <div
-              className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-full"
-              style={{ padding: '4px 10px 4px 7px', background: archetypeRamp[50] }}
-            >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: archetypeRamp[400] }} aria-hidden />
-              <span style={{ fontSize: '0.75rem', fontWeight: 500, color: archetypeRamp[800] }}>{allIdx.archetype}</span>
-            </div>
-          ) : null}
+          {/* Class + Trajectory badges */}
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {statusBadge ? (
+              <div
+                className="inline-flex max-w-full items-center gap-1.5 rounded-full"
+                style={{
+                  padding: '4px 10px 4px 7px',
+                  background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
+                  border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100,116,139,0.4)',
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF' }} aria-hidden />
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: archetypeRamp[800] }}>{statusBadge.text}</span>
+              </div>
+            ) : allIdx?.archetype ? (
+              <div
+                className="inline-flex max-w-full items-center gap-1.5 rounded-full"
+                style={{ padding: '4px 10px 4px 7px', background: archetypeRamp[50] }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: archetypeRamp[400] }} aria-hidden />
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: archetypeRamp[800] }}>{allIdx.archetype}</span>
+              </div>
+            ) : null}
+            {allIdx?.trajectory && (
+              <TrajectoryChip trajectory={allIdx.trajectory} />
+            )}
+          </div>
 
           {/* Standout pillar chips */}
           {chips.length > 0 && (

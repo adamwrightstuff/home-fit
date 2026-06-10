@@ -14,6 +14,8 @@ interface FilterSheetProps {
   filterArchetype: string
   onFilterArchetypeChange: (v: string) => void
   archetypes: string[]
+  filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
+  onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
   resultCount: number
 }
 
@@ -45,8 +47,11 @@ export default function FilterSheet({
   filterArchetype,
   onFilterArchetypeChange,
   archetypes,
+  filterTrajectory,
+  onFilterTrajectoryChange,
   resultCount,
 }: FilterSheetProps) {
+  type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -62,12 +67,14 @@ export default function FilterSheet({
 
   const activeCount =
     (filterType !== 'all' ? 1 : 0) +
-    (filterArchetype !== 'all' ? 1 : 0)
+    (filterArchetype !== 'all' ? 1 : 0) +
+    (filterTrajectory !== 'all' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
     onFilterTypeChange('all')
     onFilterArchetypeChange('all')
+    onFilterTrajectoryChange('all')
   }
 
   function chip(active: boolean, label: string, onClick: () => void) {
@@ -152,6 +159,16 @@ export default function FilterSheet({
               </div>
             </div>
           )}
+
+          {/* Trajectory */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Trajectory</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(['all', 'Arrived', 'Up-and-Coming', 'Stable', 'Cooling', 'Declining'] as TrajectoryOption[]).map((t) =>
+                chip(filterTrajectory === t, t === 'all' ? 'All' : t, () => onFilterTrajectoryChange(t))
+              )}
+            </div>
+          </div>
 
         </div>
 

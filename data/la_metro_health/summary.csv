@@ -1,0 +1,4 @@
+issue_type,count
+whole_row_failed,2
+whole_row_failed:rerun_failed_catalog_pillars: 400 Client Error: Bad Request for url: http://127.,2
+pillar_error,1

@@ -9,20 +9,23 @@ export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
 /** Status index map: hue encodes SES band; score maps to 50 / 200 / 400 bands. */
 export type StatusArchetypeRampKey =
-  | 'wealthy'
-  | 'well_off'
+  | 'elite'
+  | 'affluent'
   | 'middle_class'
-  | 'modest'
   | 'working_class'
   | 'struggling'
-  | 'transitional'  // Up-and-Coming overlay
+  | 'transitional'  // Up-and-Coming trajectory badge
+  // Legacy keys kept for old catalog entries
+  | 'wealthy'
+  | 'well_off'
+  | 'modest'
 
 export const STATUS_ARCHETYPE_RAMP: Record<
   StatusArchetypeRampKey,
   { 50: string; 200: string; 400: string; 600: string; 800: string }
 > = {
-  // Indigo — genuinely wealthy, high income + education.
-  wealthy: {
+  // Indigo — genuinely premium, top-tier income + education.
+  elite: {
     50: '#c7d2fe',
     200: '#818cf8',
     400: '#6366f1',
@@ -30,7 +33,7 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     800: '#312e81',
   },
   // Amber — solidly upper-middle class, professional.
-  well_off: {
+  affluent: {
     50: '#fffbeb',
     200: '#fcd34d',
     400: '#d97706',
@@ -44,14 +47,6 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     400: '#64748b',
     600: '#475569',
     800: '#334155',
-  },
-  // Warm tan — modest working-middle profile.
-  modest: {
-    50: '#fef3c7',
-    200: '#d4b483',
-    400: '#a07850',
-    600: '#7a5c38',
-    800: '#5a4228',
   },
   // Warm stone — working-class community.
   working_class: {
@@ -69,7 +64,7 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#44403c',
     800: '#292524',
   },
-  // Teal — Up-and-Coming overlay (cost ahead of wealth).
+  // Teal — Up-and-Coming trajectory badge.
   transitional: {
     50: '#f0fdfa',
     200: '#5eead4',
@@ -77,22 +72,25 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     600: '#0f766e',
     800: '#115e59',
   },
+  // Legacy aliases — map to new keys' colors
+  wealthy:     { 50: '#c7d2fe', 200: '#818cf8', 400: '#6366f1', 600: '#4338ca', 800: '#312e81' },
+  well_off:    { 50: '#fffbeb', 200: '#fcd34d', 400: '#d97706', 600: '#b45309', 800: '#78350f' },
+  modest:      { 50: '#d4cfc9', 200: '#a8a29e', 400: '#78716c', 600: '#57534e', 800: '#44403c' },
 }
 
 export function normalizeStatusArchetypeKey(archetype: string | null | undefined): StatusArchetypeRampKey {
   const a = (archetype ?? '').trim()
-  if (a === 'Wealthy') return 'wealthy'
-  if (a === 'Well-Off') return 'well_off'
+  // Current bands
+  if (a === 'Elite') return 'elite'
+  if (a === 'Affluent') return 'affluent'
   if (a === 'Middle Class') return 'middle_class'
-  if (a === 'Modest') return 'modest'
   if (a === 'Working Class') return 'working_class'
-  // Legacy fallback for old catalog data
-  if (a === 'Immigrant Community') return 'working_class'
   if (a === 'Struggling') return 'struggling'
   if (a === 'Up-and-Coming' || a === 'Transitional') return 'transitional'
-  // Legacy fallbacks
-  if (a === 'Established') return 'wealthy'
-  if (a === 'Affluent' || a === 'Upper Middle Class') return 'well_off'
+  // Legacy band names
+  if (a === 'Wealthy' || a === 'Established') return 'elite'
+  if (a === 'Well-Off' || a === 'Upper Middle Class') return 'affluent'
+  if (a === 'Modest' || a === 'Immigrant Community') return 'working_class'
   return 'working_class'
 }
 

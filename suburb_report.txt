@@ -1,0 +1,387 @@
+====================================================================
+HOMEFIT SUBURB REPORT — PERSONALIZED ANALYSIS
+
+Your priorities (HIGH weight):
+  Amenities, Natural Beauty, Education, Built Beauty,
+  Active Outdoors, Social Fabric
+Medium weight: Transit, Housing Value
+====================================================================
+
+====================================================================
+#1  GLEN RIDGE
+    Professional | Essex County
+    HomeFit Score:  80.3
+    Status Signal:  83
+    Happiness:      74
+    Longevity:      74
+
+    Neighbor profile:
+      Education rank:   97th percentile
+      White-collar rank: 96th percentile
+      Wealth rank:      70th percentile
+
+    PILLAR SCORES
+      Amenities          ##############......   74  [HIGH]
+      Natural Beauty     ################....   82  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       ###############.....   77  [HIGH]
+      Active Outdoors    ##############......   72  [HIGH]
+      Social Fabric      ##############......   72  [HIGH]
+      Transit            ################....   82  [MED]
+      Housing Value      ##################..   90  [MED]
+
+    WHY GO:
+      Best housing value (90) means most house for your money. Neigh
+      bors are 97th/96th percentile education and white-collar — the
+       most credential-dense community on the list. Balanced across 
+      every pillar with no weak spots. Small Victorian NJ town with 
+      genuine character.
+
+    WHY NOT:
+      Less name recognition than Westchester peers. Amenities (74) g
+      ood but not as strong as Irvington or Larchmont. Small town fe
+      el — not a destination.
+
+====================================================================
+#2  CHAPPAQUA
+    Professional | Westchester County
+    HomeFit Score:  80.2
+    Status Signal:  86
+    Happiness:      69
+    Longevity:      78
+
+    Neighbor profile:
+      Education rank:   100th percentile
+      White-collar rank: 92th percentile
+      Wealth rank:      75th percentile
+
+    PILLAR SCORES
+      Amenities          #################...   89  [HIGH]
+      Natural Beauty     ##################..   93  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       ##################..   92  [HIGH]
+      Active Outdoors    #############.......   67  [HIGH]
+      Social Fabric      ###############.....   76  [HIGH]
+      Transit            ###########.........   60  [MED]
+      Housing Value      ##############......   74  [MED]
+
+    WHY GO:
+      Best natural beauty (93) and built beauty (92) of the group — 
+      rolling hills, gorgeous older homes, serious greenery. 100th p
+      ercentile education neighbors. The place you raise kids outdoo
+      rs and never want to leave.
+
+    WHY NOT:
+      Transit (60) is the real tradeoff — Metro-North takes a while.
+       Active outdoors only 67, the lowest of top picks. Quieter and
+       more removed; less energy than Irvington or Larchmont.
+
+====================================================================
+#3  IRVINGTON
+    Professional | Westchester County
+    HomeFit Score:  79.5
+    Status Signal:  87
+    Happiness:      66
+    Longevity:      78
+
+    Neighbor profile:
+      Education rank:   100th percentile
+      White-collar rank: 91th percentile
+      Wealth rank:      80th percentile
+
+    PILLAR SCORES
+      Amenities          ###################.   97  [HIGH]
+      Natural Beauty     #################...   86  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       ##############......   72  [HIGH]
+      Active Outdoors    ################....   83  [HIGH]
+      Social Fabric      ############........   63  [HIGH]
+      Transit            ############........   63  [MED]
+      Housing Value      ############........   63  [MED]
+
+    WHY GO:
+      Most Brooklyn-adjacent feel — amenities (97) rivals Carroll Ga
+      rdens. Hudson River views, walkable village with real energy, 
+      active outdoors (83) for kids on trails along the water. 100th
+       percentile education, 80th percentile wealth.
+
+    WHY NOT:
+      Social fabric (63) is the relative weak spot — some transience
+      . Transit (63) manageable but not great. Housing value (63) re
+      flects Westchester pricing.
+
+====================================================================
+#4  MAMARONECK
+    Established | Westchester County
+    HomeFit Score:  79.0
+    Status Signal:  71
+    Happiness:      66
+    Longevity:      73
+
+    Neighbor profile:
+      Education rank:   47th percentile
+      White-collar rank: 72th percentile
+      Wealth rank:      94th percentile
+
+    PILLAR SCORES
+      Amenities          ##################..   90  [HIGH]
+      Natural Beauty     #################...   89  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       #################...   87  [HIGH]
+      Active Outdoors    ##############......   75  [HIGH]
+      Social Fabric      ############........   60  [HIGH]
+      Transit            ################....   82  [MED]
+      Housing Value      #######.............   37  [MED]
+
+    WHY GO:
+      Waterfront town with the best built beauty (87) and strong tra
+      nsit (82) — barely feels suburban coming from Brooklyn. Excell
+      ent amenities (90), nature (89), schools (95). 94th percentile
+       wealth neighborhood.
+
+    WHY NOT:
+      Neighbor credentials disappoint: 94th percentile wealth but on
+      ly 47th percentile education and 49th percentile occupation — 
+      money without the worldly professional crowd. Housing value (3
+      7) is the worst of the group.
+
+====================================================================
+#5  YORKTOWN HEIGHTS
+    Working Class | Westchester County
+    HomeFit Score:  76.8
+    Status Signal:  57
+    Happiness:      73
+    Longevity:      78
+
+    Neighbor profile:
+      Education rank:   65th percentile
+      White-collar rank: 64th percentile
+      Wealth rank:      66th percentile
+
+    PILLAR SCORES
+      Amenities          ################....   82  [HIGH]
+      Natural Beauty     ##################..   91  [HIGH]
+      Education          ##################..   90  [HIGH]
+      Built Beauty       ##############......   74  [HIGH]
+      Active Outdoors    ################....   83  [HIGH]
+      Social Fabric      ##############......   73  [HIGH]
+      Transit            ############........   61  [MED]
+      Housing Value      ############........   60  [MED]
+
+    WHY GO:
+      Best active outdoors (83) and natural beauty (91) — genuinely 
+      great for kids growing up outside. Highest happiness (73) and 
+      longevity (78) scores in the group; the data says people here 
+      are content. Strong social fabric (73).
+
+    WHY NOT:
+      Solidly middle-class neighbor profile: 65th percentile educati
+      on, 64th occupation, 66th wealth. Not the cosmopolitan crowd. 
+      Status signal (57) noticeably lower. Feels more Silver Lake th
+      an Brooklyn.
+
+====================================================================
+#6  MANHASSET
+    Established | Nassau County
+    HomeFit Score:  76.0
+    Status Signal:  68
+    Happiness:      68
+    Longevity:      67
+
+    Neighbor profile:
+      Education rank:   55th percentile
+      White-collar rank: 49th percentile
+      Wealth rank:      84th percentile
+
+    PILLAR SCORES
+      Amenities          ################....   83  [HIGH]
+      Natural Beauty     #################...   89  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       ################....   84  [HIGH]
+      Active Outdoors    ##############......   73  [HIGH]
+      Social Fabric      ##########..........   51  [HIGH]
+      Transit            ############........   64  [MED]
+      Housing Value      ########............   42  [MED]
+
+    WHY GO:
+      Beautiful Long Island village — built beauty (84), nature (89)
+      , schools (95). Old money with 84th percentile wealth. Perfect
+       airport access (100).
+
+    WHY NOT:
+      Neighbor credentials weak for the price: 55th percentile educa
+      tion, 49th percentile occupation — wealth without graduate deg
+      rees. Social fabric (51) is low. Housing value (42) reflects L
+      ong Island pricing.
+
+====================================================================
+#7  SOUTH ORANGE
+    Professional | Essex County
+    HomeFit Score:  75.8
+    Status Signal:  89
+    Happiness:      71
+    Longevity:      78
+
+    Neighbor profile:
+      Education rank:   100th percentile
+      White-collar rank: 100th percentile
+      Wealth rank:      80th percentile
+
+    PILLAR SCORES
+      Amenities          #############.......   69  [HIGH]
+      Natural Beauty     #################...   88  [HIGH]
+      Education          ################....   80  [HIGH]
+      Built Beauty       ###########.........   55  [HIGH]
+      Active Outdoors    ###############.....   75  [HIGH]
+      Social Fabric      ################....   81  [HIGH]
+      Transit            ################....   82  [MED]
+      Housing Value      ################....   80  [MED]
+
+    WHY GO:
+      Best social fabric in the entire group (81) — genuinely tight-
+      knit community. Best happiness score relative to overall score
+      . Strong transit (82), nature (88), active outdoors (75). High
+      est longevity (78). The place the data says people thrive.
+
+    WHY NOT:
+      Amenities (69) lowest of the group — less walkable than other 
+      picks. Education (80) solid but below the 90+ of top three. Bu
+      ilt beauty (55) modest. Less architecturally distinctive than 
+      Westchester options.
+
+====================================================================
+#8  LARCHMONT
+    Professional | Westchester County
+    HomeFit Score:  75.0
+    Status Signal:  92
+    Happiness:      61
+    Longevity:      72
+
+    Neighbor profile:
+      Education rank:   100th percentile
+      White-collar rank: 86th percentile
+      Wealth rank:      79th percentile
+
+    PILLAR SCORES
+      Amenities          ###################.   96  [HIGH]
+      Natural Beauty     #################...   89  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       ###########.........   57  [HIGH]
+      Active Outdoors    #############.......   67  [HIGH]
+      Social Fabric      ###########.........   58  [HIGH]
+      Transit            ################....   82  [MED]
+      Housing Value      ##########..........   51  [MED]
+
+    WHY GO:
+      Waterfront village on the Long Island Sound with a genuinely w
+      alkable downtown. 100th percentile education neighbors — stron
+      gest credential profile on the list. Amenities (95), nature (8
+      9), education (95), transit (82) all excellent.
+
+    WHY NOT:
+      Built beauty (57) is likely an undercount — OSM flagged for lo
+      w height diversity, a known suburban data artifact. Real chara
+      cter is comparable to adjacent Mamaroneck (87). Social fabric 
+      (57) and active outdoors (67) are the genuine gaps.
+
+====================================================================
+#9  MILLBURN
+    Professional | Essex County
+    HomeFit Score:  74.9
+    Status Signal:  89
+    Happiness:      57
+    Longevity:      67
+
+    Neighbor profile:
+      Education rank:   100th percentile
+      White-collar rank: 100th percentile
+      Wealth rank:      67th percentile
+
+    PILLAR SCORES
+      Amenities          ###############.....   77  [HIGH]
+      Natural Beauty     ################....   84  [HIGH]
+      Education          ###################.   95  [HIGH]
+      Built Beauty       #############.......   65  [HIGH]
+      Active Outdoors    ###############.....   78  [HIGH]
+      Social Fabric      ##########..........   50  [HIGH]
+      Transit            ################....   82  [MED]
+      Housing Value      #########...........   46  [MED]
+
+    WHY GO:
+      100th percentile education AND occupation — the strongest dual
+       credential score of any place here. Status signal (89). Good 
+      transit (82), strong nature (84), solid active outdoors (78).
+
+    WHY NOT:
+      Built beauty (65) and social fabric (51) are weak. Less archit
+      ectural character and community cohesion. Feels more corporate
+       suburb than village.
+
+====================================================================
+#10  ARDSLEY
+    Professional | Westchester County
+    HomeFit Score:  74.1
+    Status Signal:  83
+    Happiness:      66
+    Longevity:      64
+
+    Neighbor profile:
+      Education rank:   99th percentile
+      White-collar rank: 97th percentile
+      Wealth rank:      63th percentile
+
+    PILLAR SCORES
+      Amenities          ###############.....   78  [HIGH]
+      Natural Beauty     #################...   90  [HIGH]
+      Education          ##################..   92  [HIGH]
+      Built Beauty       ################....   82  [HIGH]
+      Active Outdoors    ###############.....   78  [HIGH]
+      Social Fabric      ########............   42  [HIGH]
+      Transit            #######.............   35  [MED]
+      Housing Value      ###############.....   79  [MED]
+
+    WHY GO:
+      Quiet Westchester overachiever — neighbors at 99th/97th percen
+      tile education and occupation. Built beauty (82), nature (90),
+       housing value (79) excellent. A sleeper with serious professi
+      onal density.
+
+    WHY NOT:
+      Transit (35) is the deal-breaker — not on a direct Metro-North
+       line, requires car or bus. Only viable if remote work is the 
+      norm. Social fabric (42) lowest of the group.
+
+====================================================================
+SUMMARY GUIDE
+====================================================================
+
+Most Brooklyn-adjacent feel:
+  Irvington, Larchmont
+
+Best for kids outdoors:
+  Chappaqua, Yorktown Heights, Irvington
+
+Most cosmopolitan / worldly neighbors:
+  Larchmont, Glen Ridge, Millburn, Ardsley
+
+Best transit from NYC:
+  Larchmont, Glen Ridge, Mamaroneck, South Orange (all 82)
+
+Best housing value / most space for money:
+  Glen Ridge (90), Ardsley (79), South Orange (80)
+
+Best community feel / social fabric:
+  South Orange (81), Chappaqua (76), Yorktown Heights (73)
+
+Skip if cosmopolitan neighbors matter:
+  Mamaroneck, Manhasset, Yorktown Heights
+
+Skip if transit matters:
+  Ardsley (35), Chappaqua (60)
+
+Note on Larchmont built beauty score:
+  Scored 57 due to a known OSM data artifact (low height
+  diversity flag in suburban towns). Real character is
+  comparable to Mamaroneck (87). Treat as top-4 quality.
+
+====================================================================
