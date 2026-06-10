@@ -882,6 +882,10 @@ def _classify_archetype(
     occupation_neutral: Optional[float],
     stability: Optional[float] = None,
     diversity_score: Optional[float] = None,
+    appreciation_3yr: Optional[float] = None,
+    velocity_6mo: Optional[float] = None,
+    renter_pct: Optional[float] = None,
+    area_type: Optional[str] = None,
 ) -> Tuple[str, str]:
     """
     DFG-style SES band classifier.
@@ -895,14 +899,15 @@ def _classify_archetype(
         ≥41  → Working Class  (z ≥ −0.55)
         <41  → Struggling
 
-    Up-and-Coming is a character overlay detected on top of the SES band when home
-    values have outpaced resident wealth (gentrification signal).
+    Up-and-Coming overlay fires when a neighborhood shows structural price pressure
+    (P/I imbalance) confirmed by real price momentum (Zillow velocity). Falls back
+    to stability-based detection when velocity data is unavailable.
 
     Returns (archetype, archetype_rule) for debug.
     """
-    wealth_val = float(wealth) if wealth is not None else 0.0
-    stab_val   = float(stability) if stability is not None else None
-    div_val    = float(diversity_score) if diversity_score is not None else 0.0
+    wealth_val  = float(wealth) if wealth is not None else 0.0
+    stab_val    = float(stability) if stability is not None else None
+    renter_val  = float(renter_pct) if renter_pct is not None else None
 
     # ── SES band ──────────────────────────────────────────────────────────────
     if wealth_val >= 75:
@@ -918,12 +923,32 @@ def _classify_archetype(
     else:
         ses, ses_rule = "Struggling", "dfg_struggling"
 
-    # ── Character overlays (applied on top of SES band) ───────────────────────
-    # Up-and-Coming: home values repricing well ahead of resident wealth.
-    # Only fires for Middle Class / Modest SES — genuinely wealthy areas aren't
-    # "up and coming," they're just expensive.
-    if ses in ("Middle Class", "Modest") and home_cost >= 65 and home_cost >= wealth_val + 15 and (stab_val is None or stab_val < 45):
-        return "Up-and-Coming", "upandcoming_gentrifying"
+    # ── Up-and-Coming overlay ─────────────────────────────────────────────────
+    # Structural gate: wealth 48–78 (not distressed, not fully established),
+    # renter > 30% (urban neighbourhood, not owner suburb),
+    # area_type = neighborhood (not suburb — suburban appreciation is a different signal).
+    _uac_band   = 48 <= wealth_val <= 78
+    _uac_renter = renter_val is None or renter_val > 0.30
+    _uac_urban  = area_type is None or area_type == 'neighborhood'
+
+    if _uac_band and _uac_renter and _uac_urban:
+        if appreciation_3yr is not None or velocity_6mo is not None:
+            # Velocity path: confirmed momentum from Zillow data.
+            # Strong momentum (3yr ≥ 10%): price movement is unambiguous, no pressure gate needed.
+            # Normal momentum (3yr ≥ 5% or 6mo ≥ 2%): require modest cost pressure.
+            _strong_momentum = appreciation_3yr is not None and appreciation_3yr >= 0.10
+            _normal_momentum = (
+                (appreciation_3yr is not None and appreciation_3yr >= 0.05) or
+                (velocity_6mo is not None and velocity_6mo >= 0.02)
+            )
+            _has_pressure = home_cost >= wealth_val - 5  # costs near or above wealth
+            if _strong_momentum or (_normal_momentum and _has_pressure):
+                return "Up-and-Coming", "upandcoming_velocity"
+        else:
+            # Fallback: no Zillow data — use stability-based detection.
+            if (home_cost >= 65 and home_cost >= wealth_val + 15
+                    and stab_val is not None and stab_val < 45):
+                return "Up-and-Coming", "upandcoming_stability_fallback"
 
     return ses, ses_rule
 
@@ -1017,6 +1042,7 @@ def compute_status_signal_with_breakdown(
     luxury_radius_m: Optional[int] = None,
     diversity_details: Optional[Dict[str, Any]] = None,
     area_type: Optional[str] = None,
+    zip_code: Optional[str] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Returns (score, breakdown) with components 0-100, wealth_character, archetype, status_label.
@@ -1112,6 +1138,16 @@ def compute_status_signal_with_breakdown(
             pass
 
     _div_score = (diversity_details or {}).get("score")
+
+    # Zillow velocity signals — used for Up-and-Coming overlay
+    _velocity: Dict[str, Any] = {}
+    if zip_code:
+        try:
+            from data_sources.zillow_home_values import get_zhvi_velocity
+            _velocity = get_zhvi_velocity(zip_code)
+        except Exception:
+            pass
+
     archetype, archetype_rule = _classify_archetype(
         education=education,
         wealth=wealth,
@@ -1120,6 +1156,10 @@ def compute_status_signal_with_breakdown(
         occupation_neutral=occupation_neutral,
         stability=stability,
         diversity_score=float(_div_score) if _div_score is not None else None,
+        appreciation_3yr=_velocity.get("appreciation_3yr"),
+        velocity_6mo=_velocity.get("velocity_6mo"),
+        renter_pct=(housing_details.get("summary") or housing_details).get("renter_pct"),
+        area_type=area_type,
     )
 
     w_wealth, w_home_cost, w_education, w_occupation = _get_archetype_weights(archetype)
@@ -1142,6 +1182,8 @@ def compute_status_signal_with_breakdown(
         "wealth": wealth,
         "wealth_gap": wealth_gap,
         "stability": stability,
+        "appreciation_3yr": _velocity.get("appreciation_3yr"),
+        "velocity_6mo": _velocity.get("velocity_6mo"),
     }
     breakdown["provisional_composite_score"] = (
         round(provisional, 1) if provisional is not None else None
