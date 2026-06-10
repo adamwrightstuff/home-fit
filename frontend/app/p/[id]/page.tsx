@@ -81,7 +81,7 @@ export default function PublicPlacePage() {
         <div className="hf-container">
           <div style={{ marginTop: '4rem', textAlign: 'center' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--hf-text-primary)', marginBottom: '0.5rem' }}>
-              This link isn't available
+              This link isn&apos;t available
             </p>
             <p className="tr-muted" style={{ marginBottom: '1.5rem' }}>
               {error ?? "This place score is either private or doesn't exist."}
