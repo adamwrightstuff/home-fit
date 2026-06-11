@@ -5760,13 +5760,13 @@ def _format_transit_modes(modes: list) -> str:
 
 def _build_place_summary(livability_pillars: dict, location_info: dict, only_pillars: Optional[set[str]] = None) -> str:
     """
-    Build a 2-4 sentence character-first summary per LIVABILITY SUMMARY SPEC.
-    Uses only data already in livability_pillars and location_info; no external calls.
-    Call with only_pillars=None so the summary includes all pillars that have data
-    (avoids showing only the most recently run pillar on incremental/rescore).
+    Build a 2-4 sentence character-first summary.
+    Leads with the highest-scoring content block. Blocks sorted by score descending
+    so the summary never opens with a negative if a positive sentence exists.
+    Merge rules (outdoors+amenities, healthcare+transit, education+housing) apply first,
+    then the resulting blocks are ordered by representative score.
     """
     place = (location_info or {}).get("city") or "This area"
-    sentences = []
 
     def include(pillar_key: str) -> bool:
         return only_pillars is None or pillar_key in only_pillars
@@ -5790,10 +5790,6 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     walk_10 = am_sum.get("within_10min_walk")
     if walk_10 is not None:
         walk_10 = int(walk_10)
-    downtown_m = am_sum.get("downtown_center_distance_m")
-    downtown_km = round(downtown_m / 1000, 1) if downtown_m is not None else None
-    omit_downtown_positive = downtown_km is not None and downtown_km > 5
-    downtown_display = _km_to_us_distance(downtown_km) if downtown_km is not None else None
 
     hc = livability_pillars.get("healthcare_access") or {}
     hc_sum = hc.get("summary") or {}
@@ -5818,6 +5814,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     air = livability_pillars.get("air_travel_access") or {}
     primary = air.get("primary_airport")
     air_sum = air.get("summary") or {}
+    air_score = air.get("score")
     has_intl = air_sum.get("has_international_hub")
     airport_name = None
     airport_km = None
@@ -5830,191 +5827,231 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     ed = livability_pillars.get("quality_education") or {}
     ed_sum = ed.get("summary") or {}
     ed_break = ed.get("breakdown") or {}
+    ed_score = ed.get("score")
     total_schools = ed_sum.get("total_schools_rated") or ed.get("total_schools_rated")
     if total_schools is not None:
         total_schools = int(total_schools)
     excellent = ed_sum.get("excellent_schools_count") or ed_break.get("excellent_schools_count")
-    if excellent is not None:
-        excellent = int(excellent)
-    else:
-        excellent = 0
+    excellent = int(excellent) if excellent is not None else 0
 
     hv = livability_pillars.get("housing_value") or {}
     hv_sum = hv.get("summary") or {}
     hv_score = hv.get("score")
     med_val = hv_sum.get("median_home_value")
     aff = hv_sum.get("affordability_rating")
-    if med_val is not None and isinstance(med_val, (int, float)):
-        med_val_str = f"${int(med_val):,}"
-    else:
-        med_val_str = None
+    med_val_str = f"${int(med_val):,}" if med_val is not None and isinstance(med_val, (int, float)) else None
 
     nb = livability_pillars.get("natural_beauty") or {}
     nb_score = nb.get("score")
 
-    # --- 1. Outdoors (skip if no parks and no trails) ---
+    # Band helpers
+    ao_band = _summary_band(ao_score) if ao_score is not None else None
+    am_band = _summary_band(am_score) if am_score is not None else None
+    hc_band = _summary_band(hc_score) if hc_score is not None else None
+    pt_band = _summary_band(pt_score) if pt_score is not None else None
+    ed_band = _summary_band(ed_score) if ed_score is not None else None
+    nb_band = _summary_band(nb_score) if nb_score is not None else None
+    air_band = _summary_band(air_score) if air_score is not None else None
+
+    housing_affordable = bool(aff and str(aff).lower() in ("affordable", "very affordable"))
+    housing_expensive = bool(aff and str(aff).lower() in ("expensive", "very expensive", "unaffordable"))
+
+    # blocks: list of [representative_score, sentence, suppressable_when_long]
+    blocks = []
+
+    # ------------------------------------------------------------------ #
+    # Block 1 — Outdoors + Amenities (merged or separate)
+    # ------------------------------------------------------------------ #
     outdoors_sentence = None
-    if include("active_outdoors") and (park_count > 0 or trail_count > 0):
-        band = _summary_band(ao_score)
-        if band == "strong":
-            tree_phrase = "well-treed" if (tree_pct and tree_pct >= 25) else "heavily wooded"
-            water_phrase = ", and water nearby to round things out" if has_water else ""
-            outdoors_sentence = f"{place} is a genuinely green place to live — {tree_phrase}, with parks and trails easy to find{water_phrase}."
-        elif band == "solid":
-            tree_phrase = "with some tree cover throughout the neighborhood" if (tree_pct and tree_pct >= 15) else "though it thins out toward the edges"
-            outdoors_sentence = f"There's decent green space here — a reasonable mix of parks and trails, {tree_phrase}."
-        elif band == "moderate":
-            outdoors_sentence = "There's decent green space here — a reasonable mix of parks and trails, with some tree cover throughout the neighborhood."
-        else:
-            park_phrase = "a few parks are within reach" if park_count > 0 else "green space is limited"
-            outdoors_sentence = f"Outdoor options are modest — {park_phrase}, and trails are sparse."
-
-    # --- 2. Amenities ---
     amenities_sentence = None
-    if include("neighborhood_amenities") and walk_10 is not None:
-        band = _summary_band(am_score)
-        if band == "strong":
-            center_phrase = f", with the center of {place} just {downtown_display} away" if (downtown_km is not None and downtown_km > 0 and not omit_downtown_positive) else ""
-            amenities_sentence = f"The neighborhood has real street-level energy — walkable shops, cafés, and daily errands are all within easy reach{center_phrase}."
-        elif band == "solid":
-            center_phrase = ", and the town center a short trip away" if (downtown_km is not None and downtown_km > 0 and downtown_km <= 5) else ""
-            amenities_sentence = f"There's a comfortable local feel here, with a reasonable spread of walkable businesses{center_phrase}."
-        else:
-            center_phrase = f", and the nearest center is {downtown_display} out" if downtown_display else ""
-            amenities_sentence = f"Day-to-day amenities are limited — most errands will need a car{center_phrase}."
 
-    # --- Combine Outdoors + Amenities when both strong ---
-    if outdoors_sentence and amenities_sentence and _summary_band(ao_score) == "strong" and _summary_band(am_score) == "strong":
-        sentences.append(
-            f"The area is well-treed and walkable, with parks and trails throughout and enough shops and cafés to make daily life easy on foot."
-        )
-        outdoors_sentence = None
-        amenities_sentence = None
+    if include("active_outdoors") and ao_score is not None and (park_count > 0 or trail_count > 0):
+        parts = []
+        if park_count > 0:
+            parts.append(f"{park_count} park{'s' if park_count != 1 else ''}")
+        if trail_count > 0:
+            parts.append(f"{trail_count} trail{'s' if trail_count != 1 else ''}")
+        access_str = " and ".join(parts) if parts else "parks and trails"
+        if ao_band == "strong":
+            outdoors_sentence = f"Outdoor life is genuinely accessible here — {access_str}, and real green space within easy reach."
+        elif ao_band == "solid":
+            outdoors_sentence = "There's decent outdoor access — a handful of parks and trails within reach for weekend use."
+        elif ao_band == "moderate":
+            outdoors_sentence = "Outdoor options exist but require some effort to get to."
+        else:
+            outdoors_sentence = "Green space is limited — this is a place where nature takes a back seat."
+
+    if include("neighborhood_amenities") and am_score is not None and walk_10 is not None:
+        if am_band == "strong":
+            amenities_sentence = "Real street-level energy — walkable shops, cafés, and daily errands all within easy reach."
+        elif am_band == "solid":
+            amenities_sentence = "Most daily needs are walkable, with a reasonable mix of shops and restaurants nearby."
+        elif am_band == "moderate":
+            amenities_sentence = "Amenities are there, but you'll need to be deliberate — not everything is within easy reach."
+        else:
+            amenities_sentence = "This is car-dependent territory — daily errands mean driving."
+
+    # Merge when both solid+ and at least one strong
+    if (outdoors_sentence and amenities_sentence
+            and ao_band in ("strong", "solid") and am_band in ("strong", "solid")
+            and (ao_band == "strong" or am_band == "strong")):
+        rep_score = max(ao_score or 0, am_score or 0)
+        if ao_band == "strong" and am_band == "strong":
+            merged = "The neighborhood earns its keep on the street — walkable daily life backed by real outdoor access."
+        elif ao_band == "strong":
+            merged = "Solid walkability and genuine outdoor access make the day-to-day here easy."
+        else:
+            merged = "Real street-level energy — walkable shops and cafés, with decent outdoor access nearby."
+        blocks.append([rep_score, merged, False])
     else:
         if outdoors_sentence:
-            sentences.append(outdoors_sentence)
+            blocks.append([ao_score or 0, outdoors_sentence, ao_band not in ("strong", "solid")])
         if amenities_sentence:
-            sentences.append(amenities_sentence)
+            blocks.append([am_score or 0, amenities_sentence, am_band not in ("strong", "solid")])
 
-    # --- 3. Healthcare (skip if no hospital data) ---
+    # ------------------------------------------------------------------ #
+    # Block 2 — Healthcare + Transit (merged or separate)
+    # ------------------------------------------------------------------ #
     healthcare_sentence = None
-    if include("healthcare_access") and hospital_km is not None:
-        band = _summary_band(hc_score)
-        if hospital_km < 3 and pharmacy_count >= 2:
-            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_display} away and pharmacies are close by for everyday needs."
-        elif band == "strong":
-            healthcare_sentence = f"Healthcare is well covered locally — a hospital is just {hospital_display} away and pharmacies are close by for everyday needs."
-        elif hospital_km <= 8 and pharmacy_count >= 1:
-            ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
-            healthcare_sentence = f"A hospital is {hospital_display} out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
-        elif band == "solid":
-            ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
-            healthcare_sentence = f"A hospital is {hospital_display} out, which most residents will find perfectly manageable, with {ph_phrase} nearby for day-to-day needs."
-        else:
-            healthcare_sentence = f"Healthcare requires a longer trip — the nearest hospital is {hospital_display} away and local pharmacy options are limited."
-
-    # --- 4. Transit ---
     transit_sentence = None
-    if include("public_transit_access"):
-        if has_transit:
-            band = _summary_band(pt_score)
-            mode_str = _format_transit_modes(list(modes_raw) if isinstance(modes_raw, (list, tuple)) else [modes_raw])
-            if band == "strong":
-                transit_sentence = f"{place} is well-connected — {mode_str} serve the area, making it easy to get around without a car."
-            elif band == "solid":
-                transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
-            else:
-                transit_sentence = f"Transit here runs on {mode_str}, which covers the basics, though a car still comes in handy for anything off the main corridors."
-        else:
-            if pt_score is not None and pt_score < 40:
-                transit_sentence = "Transit options are limited, so most residents rely on a car for getting around."
 
-    # --- Combine Healthcare + Transit when both present and we have real transit (saves a sentence for education+housing) ---
-    if healthcare_sentence and transit_sentence and hospital_km is not None and has_transit:
-        mode_str_combined = _format_transit_modes(list(modes_raw) if isinstance(modes_raw, (list, tuple)) else [modes_raw])
-        sentences.append(f"A hospital is {hospital_display} out and {mode_str_combined} cover the basics for getting around.")
-        healthcare_sentence = None
-        transit_sentence = None
+    if include("healthcare_access") and hospital_km is not None and hc_score is not None:
+        if hc_band == "strong" or (hospital_km < 3 and pharmacy_count >= 2):
+            healthcare_sentence = f"Healthcare is well covered — a hospital within {hospital_display} with pharmacies and clinics nearby."
+        elif hc_band == "solid" or (hospital_km <= 8 and pharmacy_count >= 1):
+            ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
+            healthcare_sentence = f"Medical care is accessible — a hospital {hospital_display} out and day-to-day health options nearby."
+        elif hc_band == "moderate":
+            healthcare_sentence = f"A hospital is {hospital_display} out — further than ideal but manageable for most."
+        else:
+            healthcare_sentence = f"Medical care requires planning here — the nearest hospital is {hospital_display} out."
+
+    if include("public_transit_access") and pt_score is not None:
+        if has_transit:
+            if pt_band == "strong":
+                transit_sentence = "Transit is a real asset — multiple options that genuinely reduce car dependence."
+            elif pt_band == "solid":
+                transit_sentence = "Getting around without a car is realistic here — transit covers the basics."
+            elif pt_band == "moderate":
+                transit_sentence = "Transit exists but a car makes life easier for most trips."
+            else:
+                transit_sentence = "Most residents drive — transit options here are minimal."
+        elif pt_score < 40:
+            transit_sentence = "Most residents drive — transit options here are minimal."
+
+    if healthcare_sentence and transit_sentence:
+        rep_score = max(hc_score or 0, pt_score or 0)
+        hc_strong = hc_band == "strong" or (hospital_km is not None and hospital_km < 3 and pharmacy_count >= 2)
+        pt_strong = pt_band == "strong"
+        pt_weak = pt_band not in ("strong", "solid")
+        if hc_strong and pt_strong:
+            merged = f"Well-served on the basics — a hospital within {hospital_display} and solid transit options that reduce car dependence."
+        elif hc_strong and pt_weak:
+            merged = f"Healthcare is close and reliable. Getting around without a car is harder — most residents drive."
+        elif pt_strong and not hc_strong:
+            merged = f"Transit is genuinely useful here. Medical care requires a bit more planning — the nearest hospital is {hospital_display} out."
+        else:
+            merged = f"A hospital is {hospital_display} out — manageable for most. Most residents also drive for day-to-day trips."
+        suppressable = hc_band not in ("strong", "solid") and pt_band not in ("strong", "solid")
+        blocks.append([rep_score, merged, suppressable])
     else:
         if healthcare_sentence:
-            sentences.append(healthcare_sentence)
+            blocks.append([hc_score or 0, healthcare_sentence, hc_band not in ("strong", "solid")])
         if transit_sentence:
-            sentences.append(transit_sentence)
+            blocks.append([pt_score or 0, transit_sentence, pt_band not in ("strong", "solid")])
 
-    # --- 6. Education (skip if 0 schools) ---
-    education_sentence = None
-    if include("quality_education") and total_schools is not None and total_schools > 0:
+    # ------------------------------------------------------------------ #
+    # Block 3 — Education + Housing (merged)
+    # ------------------------------------------------------------------ #
+    has_ed = include("quality_education") and total_schools is not None and total_schools > 0 and ed_score is not None
+    has_hv = include("housing_value") and med_val_str is not None
+
+    if has_ed and has_hv:
+        rep_score = max(ed_score or 0, hv_score or 0)
+        if ed_band == "strong" and not housing_expensive:
+            sentence = f"The schools are a real asset — {excellent} rated excellent — and housing is reasonably priced at {med_val_str} median for what you get."
+        elif ed_band == "strong" and housing_expensive:
+            sentence = f"School quality is high — {excellent} rated excellent — though housing reflects that demand at {med_val_str} median."
+        elif ed_band == "solid" and not housing_expensive:
+            sentence = f"Schools are solid and housing is accessible at {med_val_str} median — good fundamentals for families."
+        elif ed_band == "solid" and housing_expensive:
+            sentence = f"Decent schools at {med_val_str} median housing — you're paying for the neighborhood, not just the address."
+        elif housing_expensive:
+            sentence = f"Housing sits at a premium ({med_val_str} median) without strong schools to match — worth factoring in."
+        else:
+            sentence = f"Schools are a work in progress, but housing is accessible at {med_val_str} median — value is real here."
+        suppressable = ed_band not in ("strong", "solid") and not housing_affordable
+        blocks.append([rep_score, sentence, suppressable])
+    elif has_ed:
         if excellent >= 2:
-            education_sentence = f"{total_schools} schools serve the area, {excellent} of them rated excellent — a strong picture for families."
+            sentence = f"{total_schools} schools serve the area, {excellent} of them rated excellent — a strong picture for families."
         elif excellent == 1:
-            education_sentence = f"School options are solid, with {total_schools} schools nearby, including one rated excellent."
+            sentence = f"School options are solid, with {total_schools} schools nearby, including one rated excellent."
         else:
-            education_sentence = f"School options are limited here, with {total_schools} nearby and none rated excellent — worth researching further for families."
-
-    # --- 7. Housing (full sentence or closing clause) ---
-    if include("quality_education") or include("housing_value"):
-        housing_affordable = aff and str(aff).lower() in ("affordable", "very affordable")
-        housing_expensive = aff and str(aff).lower() in ("expensive", "very expensive", "unaffordable")
-        housing_moderate = not housing_affordable and not housing_expensive
-        use_housing_clause = housing_moderate and med_val_str and len(sentences) >= 3
-
-        if education_sentence and (med_val_str or aff):
-            if use_housing_clause and include("housing_value"):
-                sentences.append(f"{education_sentence.rstrip('.')} — and housing sits at a reasonable {med_val_str} median.")
-            elif housing_affordable and med_val_str and include("housing_value"):
-                sentences.append(f"{education_sentence.rstrip('.')} — and homes here are affordable at a {med_val_str} median.")
-            elif housing_expensive and med_val_str and include("housing_value"):
-                sentences.append(f"{education_sentence.rstrip('.')} — and housing is on the pricier side at a {med_val_str} median.")
-            elif housing_moderate and med_val_str and include("housing_value"):
-                sentences.append(f"{education_sentence.rstrip('.')} — and home prices are in the moderate range at around {med_val_str}.")
-            else:
-                sentences.append(education_sentence)
-                if include("housing_value") and med_val_str:
-                    if housing_affordable:
-                        sentences.append(f"On the housing side, {place} is genuinely accessible — a median home value of {med_val_str} sits comfortably within reach for most earners.")
-                    elif housing_expensive:
-                        sentences.append(f"Housing is on the pricier side — a median value of {med_val_str} reflects strong demand, and buyers will need to budget accordingly.")
-                    else:
-                        sentences.append(f"Home prices are in the moderate range, with a median of {med_val_str}, reasonable relative to local incomes though not cheap.")
+            sentence = f"Schools here are limited — {total_schools} nearby and none rated excellent."
+        blocks.append([ed_score or 0, sentence, ed_band not in ("strong", "solid")])
+    elif has_hv:
+        if housing_affordable:
+            sentence = f"{place} is genuinely accessible on housing — a {med_val_str} median sits within reach for most earners."
+        elif housing_expensive:
+            sentence = f"Housing is on the pricier side — a {med_val_str} median reflects strong demand."
         else:
-            if education_sentence:
-                sentences.append(education_sentence)
-            if include("housing_value") and (med_val_str or aff) and not use_housing_clause:
-                if housing_affordable and med_val_str:
-                    sentences.append(f"On the housing side, {place} is genuinely accessible — a median home value of {med_val_str} sits comfortably within reach for most earners.")
-                elif housing_expensive and med_val_str:
-                    sentences.append(f"Housing is on the pricier side — a median value of {med_val_str} reflects strong demand, and buyers will need to budget accordingly.")
-            elif housing_moderate and med_val_str:
-                sentences.append(f"Home prices are in the moderate range, with a median of {med_val_str}, reasonable relative to local incomes though not cheap.")
+            sentence = f"Home prices sit in the moderate range at {med_val_str} median."
+        blocks.append([hv_score or 0, sentence, not housing_affordable and not housing_expensive])
 
-    # --- Natural Beauty ---
+    # ------------------------------------------------------------------ #
+    # Block 4 — Natural Beauty (strong/solid only; moderate/weak held as filler)
+    # ------------------------------------------------------------------ #
     if include("natural_beauty") and nb_score is not None:
-        band = _summary_band(nb_score)
-        if band == "strong":
-            sentences.append(f"The natural setting stands out — {place} scores well for scenery, greenery, and outdoor character.")
-        elif band == "solid":
-            sentences.append(f"The area has a solid natural setting — decent scenery and greenery that add to livability.")
-        elif band == "moderate":
-            sentences.append(f"Natural beauty is moderate here — some greenery and scenic elements, with room to explore further.")
-        else:
-            sentences.append(f"Natural setting is modest — limited scenery and greenery; check the breakdown for details.")
-
-    # --- 5. Air (distance bands; skip if >60 km and no intl and already 4 sentences) ---
-    if include("air_travel_access") and airport_name and airport_km is not None:
-        skip_air = airport_km > 60 and not has_intl and len(sentences) >= 4
-        if not skip_air:
-            if airport_km < 30:
-                intl_phrase = ", with international connections" if has_intl else ""
-                sentences.append(f"{airport_name} is just {airport_display} away{intl_phrase}, making longer trips straightforward.")
-            elif airport_km <= 60:
-                intl_phrase = ", and it handles international routes" if has_intl else ""
-                sentences.append(f"For longer trips, {airport_name} is {airport_display} away — an easy drive{intl_phrase}.")
+        if nb_band == "strong":
+            if has_water:
+                nb_detail = "water access, strong canopy cover"
+            elif tree_pct and tree_pct >= 30:
+                nb_detail = "strong canopy cover and open space"
             else:
-                sentences.append(f"The nearest airport is a longer haul at {airport_display}, so frequent flyers will want to factor that in.")
+                nb_detail = "greenery and natural character"
+            blocks.append([nb_score, f"The natural setting is a genuine draw — {nb_detail} that most urban neighborhoods can't match.", False])
+        elif nb_band == "solid":
+            blocks.append([nb_score, "There's a reasonable amount of green and natural character — not dramatic, but present.", True])
 
-    # Cap at 4 sentences
-    chosen = sentences[:4]
-    return " ".join(chosen) if chosen else f"{place} has been scored across livability pillars; check the breakdown for details."
+    # ------------------------------------------------------------------ #
+    # Block 5 — Air Travel (strong or <30km; solid within 60km; else omit)
+    # ------------------------------------------------------------------ #
+    if include("air_travel_access") and airport_name and airport_km is not None:
+        if air_band == "strong" or airport_km < 30:
+            blocks.append([air_score or 0, f"{airport_name} is {airport_display} away — major airport access is excellent.", False])
+        elif air_band == "solid" and airport_km <= 60:
+            blocks.append([air_score or 0, f"Airport access is reasonable — {airport_name} is within easy reach for travel.", True])
+
+    # ------------------------------------------------------------------ #
+    # Sort by score descending — highest scoring block leads
+    # ------------------------------------------------------------------ #
+    blocks.sort(key=lambda x: x[0], reverse=True)
+
+    # ------------------------------------------------------------------ #
+    # Suppress lower-priority suppressable blocks when summary already long
+    # ------------------------------------------------------------------ #
+    if len(blocks) > 4:
+        kept = [b for b in blocks if not b[2]]
+        dropped = [b for b in blocks if b[2]]
+        # Re-sort each group by score
+        kept.sort(key=lambda x: x[0], reverse=True)
+        dropped.sort(key=lambda x: x[0], reverse=True)
+        # Fill up to 4 with suppressable blocks if needed
+        combined = kept + dropped
+        blocks = combined[:4]
+
+    # ------------------------------------------------------------------ #
+    # If fewer than 2 sentences, add natural beauty moderate/weak as filler
+    # ------------------------------------------------------------------ #
+    if len(blocks) < 2 and include("natural_beauty") and nb_score is not None and nb_band in ("moderate", "weak"):
+        if nb_band == "weak":
+            blocks.append([nb_score, "The trade-off for this location is nature — greenery and scenery are limited.", True])
+        blocks.sort(key=lambda x: x[0], reverse=True)
+
+    # Cap at 4
+    chosen = [b[1] for b in blocks[:4]]
+    return " ".join(chosen) if chosen else f"{place} is scored across livability, longevity, and happiness — see the full breakdown below."
 
 
 def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict
