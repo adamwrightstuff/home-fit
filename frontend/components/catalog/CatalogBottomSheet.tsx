@@ -8,15 +8,14 @@ import {
 } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
 import {
-  STATUS_ARCHETYPE_RAMP,
   fullBreakdownCtaStyle,
-  normalizeStatusArchetypeKey,
   statusArchetypeNumeral400,
   statusArchetypeNumeral600,
 } from '@/lib/indexColorSystem'
 import { getStatusBadgeModel } from '@/lib/statusSignalArchetype'
 import { HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
+import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 
 export type CatalogSheetSnap = 'peek' | 'expanded'
 
@@ -67,7 +66,6 @@ export default function CatalogBottomSheet({
 
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
-  const archetypeRamp = STATUS_ARCHETYPE_RAMP[normalizeStatusArchetypeKey(allIdx?.archetype)]
   const statusBadge = place
     ? getStatusBadgeModel(
         place.score.status_signal_breakdown ?? null,
@@ -239,36 +237,19 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {statusBadge ? (
-                <div
-                  className="max-w-full self-start"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    borderRadius: 20,
-                    padding: '3px 8px 3px 6px',
-                    background: statusBadge.variant === 'named' ? archetypeRamp[50] : 'transparent',
-                    border: statusBadge.variant === 'named' ? '1px solid transparent' : '1px solid rgba(100, 116, 139, 0.5)',
-                  }}
-                >
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: statusBadge.variant === 'named' ? archetypeRamp[400] : '#9CA3AF' }} aria-hidden />
-                  <span className="min-w-0" style={{ fontSize: '0.7rem', fontWeight: 500, color: archetypeRamp[800] }}>{statusBadge.text}</span>
-                </div>
-              ) : allIdx?.archetype ? (
-                <div
-                  className="max-w-full self-start"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, borderRadius: 20, padding: '3px 8px 3px 6px', background: archetypeRamp[50] }}
-                >
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: archetypeRamp[400] }} aria-hidden />
-                  <span className="min-w-0" style={{ fontSize: '0.7rem', fontWeight: 500, color: archetypeRamp[800] }}>{allIdx.archetype}</span>
-                </div>
-              ) : (
-                <p className="text-[0.7rem] text-[var(--hf-text-tertiary)]">No archetype in snapshot</p>
-              )}
-              {allIdx?.trajectory && <TrajectoryChip trajectory={allIdx.trajectory} size="xs" />}
-            </div>
+            {/* Archetype + Trajectory pill pair */}
+            {(allIdx?.archetype || allIdx?.trajectory) && (
+              <div className="mb-2" style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                {(statusBadge || allIdx?.archetype) && (
+                  <ArchetypeBadge
+                    archetype={allIdx?.archetype ?? null}
+                    breakdown={place.score.status_signal_breakdown ?? null}
+                    compositeScore={typeof place.score.status_signal === 'number' ? place.score.status_signal : null}
+                  />
+                )}
+                {allIdx?.trajectory && <TrajectoryChip trajectory={allIdx.trajectory} />}
+              </div>
+            )}
 
             {chips.length > 0 && (
               <div

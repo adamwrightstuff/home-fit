@@ -890,9 +890,9 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   </span>
                   <LongevityInfo />
                 </span>
-                {/* Archetype pill + Trajectory pill + combined ? */}
+                {/* Archetype pill + Trajectory pill + combined ? — pill pair wrapper keeps pills together as a unit */}
                 {(displayData!.status_signal_breakdown?.status_label || (displayData!.status_signal_breakdown as any)?.trajectory) && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
                     <StatusSignalInfo
                       onRefresh={handleRefreshStatusSignal}
                       refreshing={statusSignalRefreshLoading}
@@ -903,7 +903,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                     <TrajectoryChip
                       trajectory={(displayData!.status_signal_breakdown as any)?.trajectory ?? null}
                       interactive
-                      size="sm"
                     />
                     <ArchetypeTrajectoryInfo
                       breakdown={displayData!.status_signal_breakdown ?? null}

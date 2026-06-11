@@ -14,7 +14,6 @@ import { catalogRampKey } from '@/lib/catalogIndexColors'
 import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
 import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
-import SignalStrengthDots from '@/components/catalog/SignalStrengthDots'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
 function MetroDot({ metro }: { metro: 'nyc' | 'la' }) {
@@ -135,22 +134,16 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                   <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
                   <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
                   <td className="py-2 px-1 align-top">
-                    <div className="flex min-w-0 max-w-[14rem] flex-col gap-1">
-                      <div className="flex flex-wrap gap-1">
-                        <ArchetypeBadge
-                          archetype={p.score.status_signal_breakdown?.archetype ?? null}
-                          breakdown={p.score.status_signal_breakdown ?? null}
-                          compositeScore={
-                            typeof p.score.status_signal === 'number' ? p.score.status_signal : null
-                          }
-                        />
-                        <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} size="xs" />
-                      </div>
-                      <SignalStrengthDots
+                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                      <ArchetypeBadge
+                        archetype={p.score.status_signal_breakdown?.archetype ?? null}
                         breakdown={p.score.status_signal_breakdown ?? null}
-                        statusSignalScore={p.score.status_signal}
+                        compositeScore={
+                          typeof p.score.status_signal === 'number' ? p.score.status_signal : null
+                        }
                       />
-                    </div>
+                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} />
+                    </span>
                   </td>
                   <td className="py-2 pl-1">
                     {onCompareToggle && (

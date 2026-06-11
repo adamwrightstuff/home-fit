@@ -8,7 +8,6 @@ import { pillarDiffs, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { inferCatalogMetro } from '@/lib/catalogMapTypes'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import MetroDot from '@/components/catalog/MetroDot'
-import SignalStrengthDots from '@/components/catalog/SignalStrengthDots'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import TwinDiffRows from '@/components/catalog/TwinDiffRows'
 
@@ -91,7 +90,6 @@ export default function TwinResultCard({
             breakdown={br ?? null}
             compositeScore={typeof place.score.status_signal === 'number' ? place.score.status_signal : null}
           />
-          <SignalStrengthDots breakdown={br} statusSignalScore={place.score.status_signal} />
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">

@@ -43,10 +43,6 @@ export default function TrajectoryChip({
   if (!style) return null
 
   const exp = trajectoryExplainer(trajectory)
-  const fontSize = size === 'xs' ? '0.65rem' : '0.75rem'
-  const padding = size === 'xs' ? '3px 8px 3px 6px' : '4px 10px 4px 7px'
-  const iconSize = size === 'xs' ? 10 : 12
-
   return (
     <>
       <button
@@ -57,18 +53,21 @@ export default function TrajectoryChip({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 5,
-          borderRadius: 20,
-          padding,
+          height: 28,
+          padding: '0 10px',
+          borderRadius: 99,
           background: style.bg,
           border: 'none',
           cursor: interactive && exp ? 'pointer' : 'default',
-          minWidth: 36,
-          minHeight: 36,
+          whiteSpace: 'nowrap',
         }}
       >
-        <TrajectoryIcon trajectory={trajectory} size={iconSize} color={style.dot} />
-        {/* Hidden on mobile via globals.css .tr-trajectory-label */}
-        <span className="tr-trajectory-label" style={{ fontSize, fontWeight: 500, color: style.fg }}>
+        {/* Icon: explicit font-size: 13px prevents parent font-size inheritance */}
+        <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, flexShrink: 0 }}>
+          <TrajectoryIcon trajectory={trajectory} size={13} color={style.dot} />
+        </span>
+        {/* Hidden on mobile (≤768px) via globals.css .tr-trajectory-label */}
+        <span className="tr-trajectory-label" style={{ fontSize: 13, fontWeight: 500, color: style.fg }}>
           {trajectory}
         </span>
       </button>

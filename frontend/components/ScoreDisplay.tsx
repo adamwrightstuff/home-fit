@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import React, { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
@@ -104,6 +104,9 @@ interface ScoreDisplayProps {
   readOnlyPriorities?: boolean
   /** When set, Schools pillar expanded Details shows this block (e.g. premium code on saved place). */
   schoolsPremiumSection?: ReactNode
+  /** When set, renders this node after the nth pillar card (1-based). Used for mid-page conversion prompts. */
+  interstitialAfterCard?: number
+  interstitialContent?: ReactNode
 }
 
 // Use shared pillar order from lib/pillars
@@ -136,6 +139,8 @@ export default function ScoreDisplay({
   hideNotIncluded = false,
   readOnlyPriorities = false,
   schoolsPremiumSection,
+  interstitialAfterCard,
+  interstitialContent,
 }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
@@ -509,11 +514,13 @@ export default function ScoreDisplay({
           YOUR SCORED PILLARS
         </div>
         <div className="hf-pillar-cards-grid">
-          {included_pillars.map((key) => {
+          {included_pillars.map((key, idx) => {
             const pillar = (livability_pillars as any)[key]
             const importanceLevel = priorities?.[key as keyof typeof priorities]
             const level = importanceLevel === 'None' || importanceLevel === 'Low' || importanceLevel === 'Medium' || importanceLevel === 'High' ? importanceLevel : 'Medium'
+            const showInterstitial = interstitialContent && interstitialAfterCard != null && idx === interstitialAfterCard - 1
             return (
+              <React.Fragment key={key}>
               <PillarCard
                 key={key}
                 pillar_key={key}
@@ -576,6 +583,12 @@ export default function ScoreDisplay({
                 }
                 schoolsPremiumSection={key === 'quality_education' ? schoolsPremiumSection : undefined}
               />
+              {showInterstitial && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  {interstitialContent}
+                </div>
+              )}
+              </React.Fragment>
             )
           })}
         </div>

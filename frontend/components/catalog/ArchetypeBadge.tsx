@@ -35,8 +35,15 @@ export default function ArchetypeBadge({
   const isMixed = badge.variant !== 'named'
   return (
     <span
-      className="inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[0.65rem] font-semibold"
       style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        height: 28,
+        padding: '0 10px',
+        borderRadius: 99,
+        fontSize: 13,
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
         background: isMixed ? 'transparent' : b.bg,
         color: b.fg,
         border: isMixed ? '1px solid rgba(100, 116, 139, 0.5)' : '1px solid transparent',
