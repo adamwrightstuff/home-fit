@@ -1219,9 +1219,3 @@ body:has(.hf-catalog-root) .hf-api-version-footer {
   color: var(--tr-muted);
 }
 
-/* Trajectory chip: hide text label on mobile, show icon only */
-@media (max-width: 768px) {
-  .tr-trajectory-label {
-    display: none;
-  }
-}
