@@ -6,7 +6,6 @@ import type { StatusSignalBreakdown } from '@/types/api'
 import {
   getStatusBadgeModel,
   statusTooltipCopy,
-  trajectoryOneLiner,
 } from '@/lib/statusSignalArchetype'
 
 const ARCHETYPE_BADGE_STYLE: Record<string, { bg: string; text: string }> = {
@@ -42,9 +41,17 @@ export interface StatusSignalInfoProps {
   /** Gate the Refresh button to logged-in users viewing their own saved places. */
   isSignedIn?: boolean
   savedScoreId?: string | null
+  /**
+   * When true (default), clicking the Archetype pill opens the full detail modal.
+   * Set false on Public page where the detail modal is not shown.
+   */
+  allowDetailModal?: boolean
 }
 
-/** "?" button + optional archetype badge + modal for the archetype index. Use next to the Archetype label or score. */
+/**
+ * Archetype pill badge. Clicking opens the full Archetype detail modal (on Results/Saved).
+ * The combined "?" for Archetype+Trajectory lives in ArchetypeTrajectoryInfo — not here.
+ */
 export default function StatusSignalInfo({
   onRefresh,
   refreshing = false,
@@ -52,27 +59,49 @@ export default function StatusSignalInfo({
   compositeScore = null,
   isSignedIn,
   savedScoreId,
+  allowDetailModal = true,
 }: StatusSignalInfoProps) {
   const showRefresh = onRefresh != null && isSignedIn === true && !!savedScoreId
   const [showModal, setShowModal] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
   const archetype = breakdown?.archetype ?? 'Working Class'
-  const trajectory = breakdown?.trajectory ?? null
   const badgeStyle = ARCHETYPE_BADGE_STYLE[archetype] ?? ARCHETYPE_BADGE_STYLE['Working Class']
-  const trajStyle = trajectory ? (TRAJECTORY_BADGE_STYLE[trajectory] ?? null) : null
   const badgeModel = getStatusBadgeModel(breakdown ?? null, compositeScore)
   const helpCopy = statusTooltipCopy(breakdown ?? null, compositeScore)
 
   return (
     <>
       {breakdown?.status_label && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem', marginLeft: 6 }}>
+        allowDetailModal ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setRefreshError(null); setShowModal(true) }}
+            title={helpCopy ?? breakdown?.status_insight ?? STATUS_SIGNAL_COPY.tooltip}
+            aria-label={`Archetype: ${badgeModel.text}. Click for details.`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0.2rem 0.5rem',
+              marginLeft: 6,
+              borderRadius: 6,
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              background: badgeModel.variant === 'named' ? badgeStyle.bg : 'transparent',
+              color: badgeStyle.text,
+              border: badgeModel.variant === 'named' ? '1px solid transparent' : '1px solid var(--hf-border)',
+              cursor: 'pointer',
+            }}
+          >
+            {badgeModel.text}
+          </button>
+        ) : (
           <span
             className="hf-status-signature-badge"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               padding: '0.2rem 0.5rem',
+              marginLeft: 6,
               borderRadius: 6,
               fontSize: '0.7rem',
               fontWeight: 600,
@@ -84,55 +113,8 @@ export default function StatusSignalInfo({
           >
             {badgeModel.text}
           </span>
-          {trajStyle && trajectory && (
-            <span
-              title={trajectoryOneLiner(trajectory)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.2rem 0.5rem',
-                borderRadius: 6,
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                background: trajStyle.bg,
-                color: trajStyle.text,
-                cursor: 'help',
-              }}
-            >
-              {trajectory}
-            </span>
-          )}
-        </span>
+        )
       )}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setRefreshError(null)
-          setShowModal(true)
-        }}
-        title={STATUS_SIGNAL_COPY.tooltip}
-        aria-label="What is Archetype?"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 20,
-          height: 20,
-          padding: 0,
-          marginLeft: 4,
-          borderRadius: '50%',
-          border: '1px solid var(--hf-border)',
-          background: 'var(--hf-bg-subtle)',
-          color: 'var(--hf-text-secondary)',
-          cursor: 'pointer',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        ?
-      </button>
 
       {showModal && (
         <div

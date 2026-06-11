@@ -29,9 +29,12 @@ export { TrajectoryIcon }
 export default function TrajectoryChip({
   trajectory,
   size = 'sm',
+  interactive = false,
 }: {
   trajectory: string | null | undefined
   size?: 'sm' | 'xs'
+  /** When true, clicking the pill opens the Trajectory detail modal. False for catalog/public display-only use. */
+  interactive?: boolean
 }) {
   const [showModal, setShowModal] = useState(false)
 
@@ -48,7 +51,7 @@ export default function TrajectoryChip({
     <>
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); if (exp) setShowModal(true) }}
+        onClick={(e) => { e.stopPropagation(); if (interactive && exp) setShowModal(true) }}
         title={exp?.signals}
         style={{
           display: 'inline-flex',
@@ -58,7 +61,7 @@ export default function TrajectoryChip({
           padding,
           background: style.bg,
           border: 'none',
-          cursor: exp ? 'pointer' : 'default',
+          cursor: interactive && exp ? 'pointer' : 'default',
           minWidth: 36,
           minHeight: 36,
         }}

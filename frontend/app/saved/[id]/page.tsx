@@ -18,7 +18,8 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
-import TrajectoryInfo from '@/components/TrajectoryInfo'
+import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
+import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
@@ -739,7 +740,7 @@ export default function SavedDetailPage() {
               height: '280px',
               borderRadius: 12,
               overflow: 'hidden',
-              marginBottom: '1.5rem',
+              marginBottom: displayData.place_summary ? '1rem' : '1.5rem',
               background: 'var(--hf-bg-subtle)',
             }}
           >
@@ -749,6 +750,13 @@ export default function SavedDetailPage() {
               completed_pillars={Object.keys(displayData.livability_pillars ?? {})}
             />
           </div>
+
+          {/* Place summary — below map, above score block */}
+          {displayData.place_summary && (
+            <p style={{ margin: '0 0 1.5rem', fontSize: '0.95rem', lineHeight: 1.65, color: 'var(--hf-text-secondary)' }}>
+              {displayData.place_summary}
+            </p>
+          )}
 
           {/* HomeFit on top, Longevity & Archetype below (same layout as PlaceView) */}
           <div
@@ -806,28 +814,27 @@ export default function SavedDetailPage() {
                 </span>
                 <LongevityInfo />
               </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Archetype</span>
-                <span
-                  style={{
-                    fontWeight: 600,
-                    color:
-                      typeof displayData.status_signal === 'number' ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)',
-                  }}
-                >
-                  {typeof displayData.status_signal === 'number' ? Math.max(0, Math.min(100, displayData.status_signal)).toFixed(1) : '—'}
+              {/* Archetype pill + Trajectory pill + combined ? */}
+              {(displayData.status_signal_breakdown?.status_label || (displayData.status_signal_breakdown as any)?.trajectory) && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <StatusSignalInfo
+                    onRefresh={handleRefreshStatusSignal}
+                    refreshing={statusSignalRefreshLoading}
+                    breakdown={displayData.status_signal_breakdown ?? null}
+                    compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
+                    allowDetailModal
+                  />
+                  <TrajectoryChip
+                    trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null}
+                    interactive
+                    size="sm"
+                  />
+                  <ArchetypeTrajectoryInfo
+                    breakdown={displayData.status_signal_breakdown ?? null}
+                    trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null}
+                  />
                 </span>
-                <StatusSignalInfo
-                  onRefresh={handleRefreshStatusSignal}
-                  refreshing={statusSignalRefreshLoading}
-                  breakdown={displayData.status_signal_breakdown ?? null}
-                  compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
-                />
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Trajectory</span>
-                <TrajectoryInfo trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null} />
-              </span>
+              )}
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="tr-muted">Happiness Index</span>
                 <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
@@ -851,6 +858,7 @@ export default function SavedDetailPage() {
 
         <ScoreDisplay
           hideSummaryCard
+          hideNotIncluded
           data={displayData}
           priorities={priorities ?? DEFAULT_PRIORITIES}
           onPrioritiesChange={(next) => setPriorities(next)}

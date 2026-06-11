@@ -95,6 +95,13 @@ interface ScoreDisplayProps {
   rescoringPillarKey?: PillarKey | null
   /** When true, omit the summary card (location, Copy scores, score grid, Summary); show only pillar cards. Used when parent provides its own header (e.g. saved place detail). */
   hideSummaryCard?: boolean
+  /** When true, hide the NOT INCLUDED IN YOUR SCORE section entirely. */
+  hideNotIncluded?: boolean
+  /**
+   * When true, importance selectors are hidden on all pillar cards even if onPrioritiesChange is provided.
+   * Use on Public page where the user hasn't set preferences and the selectors would imply false interactivity.
+   */
+  readOnlyPriorities?: boolean
   /** When set, Schools pillar expanded Details shows this block (e.g. premium code on saved place). */
   schoolsPremiumSection?: ReactNode
 }
@@ -126,6 +133,8 @@ export default function ScoreDisplay({
   onRescorePillar,
   rescoringPillarKey,
   hideSummaryCard = false,
+  hideNotIncluded = false,
+  readOnlyPriorities = false,
   schoolsPremiumSection,
 }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
@@ -513,7 +522,7 @@ export default function ScoreDisplay({
                 loading={Boolean(isLoading && pillarLoadingKeys?.has(key))}
                 importanceLevel={level}
                 onImportanceChange={
-                  onPrioritiesChange
+                  onPrioritiesChange && !readOnlyPriorities
                     ? (newLevel) => {
                         const next = { ...priorities } as PillarPriorities
                         next[key as keyof PillarPriorities] = newLevel
@@ -571,7 +580,7 @@ export default function ScoreDisplay({
           })}
         </div>
 
-        {not_included_pillars.length > 0 && (
+        {not_included_pillars.length > 0 && !hideNotIncluded && (
           <div style={{ marginTop: '2rem' }}>
             <div className="tr-label" style={{ marginBottom: '0.75rem', color: 'var(--hf-text-secondary)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Not included in your score

@@ -15,7 +15,8 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
-import TrajectoryInfo from '@/components/TrajectoryInfo'
+import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
+import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -167,7 +168,7 @@ export default function PublicPlacePage() {
               height: '260px',
               borderRadius: 12,
               overflow: 'hidden',
-              marginBottom: '1.25rem',
+              marginBottom: displayData.place_summary ? '1rem' : '1.25rem',
               background: 'var(--hf-bg-subtle)',
             }}
           >
@@ -177,6 +178,13 @@ export default function PublicPlacePage() {
               completed_pillars={Object.keys(displayData.livability_pillars ?? {})}
             />
           </div>
+
+          {/* Place summary — primary hook for anonymous visitor */}
+          {displayData.place_summary && (
+            <p style={{ margin: '0 0 1.25rem', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--hf-text-secondary)' }}>
+              {displayData.place_summary}
+            </p>
+          )}
 
           {/* Score summary */}
           <div
@@ -233,22 +241,25 @@ export default function PublicPlacePage() {
                 </span>
                 <LongevityInfo />
               </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Archetype</span>
-                <span style={{ fontWeight: 600, color: typeof displayData.status_signal === 'number' ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)' }}>
-                  {typeof displayData.status_signal === 'number'
-                    ? Math.max(0, Math.min(100, displayData.status_signal)).toFixed(1)
-                    : '—'}
+              {/* Archetype pill + Trajectory pill + combined ? — no detail modals on public */}
+              {(displayData.status_signal_breakdown?.status_label || (displayData.status_signal_breakdown as any)?.trajectory) && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <StatusSignalInfo
+                    breakdown={displayData.status_signal_breakdown ?? null}
+                    compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
+                    allowDetailModal={false}
+                  />
+                  <TrajectoryChip
+                    trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null}
+                    interactive={false}
+                    size="sm"
+                  />
+                  <ArchetypeTrajectoryInfo
+                    breakdown={displayData.status_signal_breakdown ?? null}
+                    trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null}
+                  />
                 </span>
-                <StatusSignalInfo
-                  breakdown={displayData.status_signal_breakdown ?? null}
-                  compositeScore={typeof displayData.status_signal === 'number' ? displayData.status_signal : null}
-                />
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="tr-muted">Trajectory</span>
-                <TrajectoryInfo trajectory={(displayData.status_signal_breakdown as any)?.trajectory ?? null} />
-              </span>
+              )}
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className="tr-muted">Happiness</span>
                 <span style={{ fontWeight: 600, color: happinessIndex != null ? 'var(--c-blue-600)' : 'var(--hf-text-secondary)' }}>
@@ -263,11 +274,73 @@ export default function PublicPlacePage() {
         {/* Full pillar breakdown — read-only (no rescoring controls) */}
         <ScoreDisplay
           hideSummaryCard
+          hideNotIncluded
+          readOnlyPriorities
           data={displayData}
           priorities={priorities}
           onPrioritiesChange={setPriorities}
           placeSummary={displayData.place_summary ?? null}
         />
+
+        {/* Mid-page conversion prompt (Section 7) */}
+        {(() => {
+          const hasCustomWeights = Object.entries(priorities).some(([k, v]) => {
+            const def = (DEFAULT_PRIORITIES as unknown as Record<string, string>)[k] ?? 'Medium'
+            return v !== def
+          })
+          if (hasCustomWeights) {
+            return (
+              <div
+                style={{
+                  margin: '2rem 0',
+                  padding: '1.5rem',
+                  background: 'var(--hf-bg-subtle)',
+                  border: '1px solid var(--hf-border)',
+                  borderRadius: 12,
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--hf-text-primary)', marginBottom: '0.4rem' }}>
+                  See how this neighborhood scores for your priorities
+                </div>
+                <p className="tr-muted" style={{ margin: '0 0 1rem', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                  You&apos;re viewing this scored with someone else&apos;s weights. Adjust what matters to you and get your own personalized score.
+                </p>
+                <Link
+                  href={`/search?location=${encodeURIComponent(locationLabel)}`}
+                  className="hf-btn-secondary"
+                  style={{ padding: '0.7rem 1.25rem', fontSize: '0.9rem', borderRadius: 10 }}
+                >
+                  Score this neighborhood your way →
+                </Link>
+              </div>
+            )
+          }
+          return (
+            <div
+              style={{
+                margin: '2rem 0',
+                padding: '1.5rem',
+                background: 'var(--hf-bg-subtle)',
+                border: '1px solid var(--hf-border)',
+                borderRadius: 12,
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--hf-text-primary)', marginBottom: '0.4rem' }}>
+                Want scores like this for your neighborhood?
+              </div>
+              <p className="tr-muted" style={{ margin: '0 0 1rem', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                Trovamo weighs what matters to you — adjust priorities and get a personalized score.
+              </p>
+              <Link
+                href="/"
+                className="hf-btn-secondary"
+                style={{ padding: '0.7rem 1.25rem', fontSize: '0.9rem', borderRadius: 10 }}
+              >
+                Score your own neighborhood →
+              </Link>
+            </div>
+          )
+        })()}
 
         {/* Footer CTA */}
         <div

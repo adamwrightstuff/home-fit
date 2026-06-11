@@ -28,8 +28,12 @@ import HomeFitInfo from '@/components/HomeFitInfo'
 import LongevityInfo from '@/components/LongevityInfo'
 import StatusSignalInfo from '@/components/StatusSignalInfo'
 import HappinessInfo from '@/components/HappinessInfo'
+import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
+import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
+import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
+import { PILLAR_META } from '@/lib/pillars'
 
 type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -184,6 +188,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
   const [catalogSnapshot, setCatalogSnapshot] = useState(false)
   const [recomputeLoading, setRecomputeLoading] = useState(false)
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const runKeyRef = useRef(0)
 
   const searchOptions: SearchOptions | null = useMemo(() => {
@@ -803,7 +808,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   height: '280px',
                   borderRadius: 12,
                   overflow: 'hidden',
-                  marginBottom: '1.5rem',
+                  marginBottom: displayData?.place_summary ? '1rem' : '1.5rem',
                   background: 'var(--hf-bg-subtle)',
                 }}
               >
@@ -814,6 +819,13 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 />
               </div>
             ) : null}
+
+            {/* Place summary — below map, above score block */}
+            {displayData?.place_summary && (
+              <p style={{ margin: '0 0 1.5rem', fontSize: '0.95rem', lineHeight: 1.65, color: 'var(--hf-text-secondary)' }}>
+                {displayData.place_summary}
+              </p>
+            )}
 
             <div
               style={{
@@ -878,26 +890,27 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   </span>
                   <LongevityInfo />
                 </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span className="tr-muted">Archetype</span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color:
-                        typeof displayData!.status_signal === 'number' ? 'var(--c-coral-600)' : 'var(--hf-text-secondary)',
-                    }}
-                  >
-                    {typeof displayData!.status_signal === 'number'
-                      ? Math.max(0, Math.min(100, displayData!.status_signal)).toFixed(1)
-                      : '—'}
+                {/* Archetype pill + Trajectory pill + combined ? */}
+                {(displayData!.status_signal_breakdown?.status_label || (displayData!.status_signal_breakdown as any)?.trajectory) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <StatusSignalInfo
+                      onRefresh={handleRefreshStatusSignal}
+                      refreshing={statusSignalRefreshLoading}
+                      breakdown={displayData!.status_signal_breakdown ?? null}
+                      compositeScore={typeof displayData!.status_signal === 'number' ? displayData!.status_signal : null}
+                      allowDetailModal
+                    />
+                    <TrajectoryChip
+                      trajectory={(displayData!.status_signal_breakdown as any)?.trajectory ?? null}
+                      interactive
+                      size="sm"
+                    />
+                    <ArchetypeTrajectoryInfo
+                      breakdown={displayData!.status_signal_breakdown ?? null}
+                      trajectory={(displayData!.status_signal_breakdown as any)?.trajectory ?? null}
+                    />
                   </span>
-                  <StatusSignalInfo
-                    onRefresh={handleRefreshStatusSignal}
-                    refreshing={statusSignalRefreshLoading}
-                    breakdown={displayData!.status_signal_breakdown ?? null}
-                    compositeScore={typeof displayData!.status_signal === 'number' ? displayData!.status_signal : null}
-                  />
-                </span>
+                )}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   <span className="tr-muted">Happiness Index</span>
                   <span
@@ -957,6 +970,55 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
           </div>
         )}
 
+        {/* Section 8 — custom weights banner for anonymous viewers */}
+        {showSavedStyle && !user && !bannerDismissed && searchOptions && (() => {
+          const priorities = searchOptions.priorities as unknown as Record<string, string>
+          const nonDefaultPillars = Object.keys(priorities).filter((k) => {
+            const val = priorities[k]
+            const def = (DEFAULT_PRIORITIES as unknown as Record<string, string>)[k] ?? 'Medium'
+            return val !== def && (val === 'High' || val === 'None')
+          })
+          if (nonDefaultPillars.length === 0) return null
+          const top3 = nonDefaultPillars.slice(0, 3).map((k) => (PILLAR_META as any)[k]?.name ?? k)
+          const searchUrl = `/search?location=${encodeURIComponent(normalized?.location ?? '')}`
+          return (
+            <div
+              style={{
+                margin: '1rem 0',
+                padding: '0.85rem 1.1rem',
+                background: 'var(--hf-bg-subtle)',
+                border: '1px solid var(--hf-border)',
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem',
+                fontSize: '0.85rem',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ flex: 1, color: 'var(--hf-text-secondary)' }}>
+                <strong style={{ color: 'var(--hf-text-primary)', fontWeight: 600 }}>
+                  You&apos;re viewing this with someone&apos;s custom weights
+                </strong>
+                <span style={{ marginLeft: 6 }}>
+                  {top3.join(', ')}{nonDefaultPillars.length > 3 ? ', and more' : ''} weighted higher than default.{' '}
+                </span>
+                <Link href={searchUrl} style={{ color: 'var(--hf-primary-1)', fontWeight: 600, textDecoration: 'none' }}>
+                  Score this place your way →
+                </Link>
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss"
+                onClick={() => setBannerDismissed(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hf-text-secondary)', fontSize: '1rem', lineHeight: 1, padding: '0 0 0 4px', flexShrink: 0 }}
+              >
+                ×
+              </button>
+            </div>
+          )
+        })()}
+
         <div style={{ marginTop: showSavedStyle ? '0' : '1rem' }}>
           {progressivePayload && searchOptions ? (
             <ScoreDisplay
@@ -971,6 +1033,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               pillarLoadingKeys={!finalResponse ? pillarLoadingKeys : undefined}
               hideSummaryCard={Boolean(showSavedStyle)}
               placeSummary={displayData?.place_summary ?? null}
+              hideNotIncluded
             />
           ) : null}
         </div>
