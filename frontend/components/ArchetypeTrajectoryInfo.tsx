@@ -60,36 +60,82 @@ export default function ArchetypeTrajectoryInfo({ breakdown, trajectory }: Arche
         >
           <div
             className="tr-panel"
-            style={{ maxWidth: 440, width: '100%', padding: '1.5rem 1.75rem', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+            style={{
+              maxWidth: 480,
+              width: 'calc(100% - 2rem)',
+              margin: '1rem',
+              padding: '1.5rem',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="at-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}>
+            <h2
+              id="at-modal-title"
+              style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--hf-text-primary)' }}
+            >
               Archetype &amp; Trajectory
             </h2>
-            <p style={{ margin: '0.75rem 0 0', fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--hf-text-primary)' }}>
+
+            <p style={{
+              margin: '0.75rem 0 0',
+              fontSize: '0.9rem',
+              lineHeight: 1.6,
+              color: 'var(--hf-text-primary)',
+              whiteSpace: 'normal',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+            }}>
               Archetype describes a neighborhood&apos;s social character — who lives there, what they earn, what they do.
               Trajectory shows which way the market has moved over the past three years.
             </p>
 
-            {/* Trajectory table */}
-            <div style={{ marginTop: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* Fixed-layout table prevents column content from pushing modal width */}
+            <table style={{
+              width: '100%',
+              tableLayout: 'fixed',
+              borderCollapse: 'collapse',
+              marginTop: '1.25rem',
+            }}>
+              <tbody>
                 {TRAJECTORY_COPY.tableRows.map(({ label, desc }) => (
-                  <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--hf-text-primary)', minWidth: 110, flexShrink: 0 }}>
+                  <tr key={label}>
+                    <td style={{
+                      width: '40%',
+                      fontWeight: 500,
+                      fontSize: '0.85rem',
+                      color: 'var(--hf-text-primary)',
+                      padding: '6px 12px 6px 0',
+                      verticalAlign: 'top',
+                    }}>
                       {label}
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--hf-text-secondary)' }}>
+                    </td>
+                    <td style={{
+                      width: '60%',
+                      fontSize: '0.85rem',
+                      color: 'var(--hf-text-secondary)',
+                      padding: '6px 0',
+                      verticalAlign: 'top',
+                      wordWrap: 'break-word',
+                    }}>
                       {desc}
-                    </span>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
 
-            <p style={{ margin: '1.25rem 0 0', fontSize: '0.75rem', color: 'var(--hf-text-secondary)', lineHeight: 1.5 }}>
-              Archetype based on Census ACS + Status Signal model. {TRAJECTORY_COPY.source}
-            </p>
+            {/* Two separate lines — never concatenated */}
+            <div style={{ marginTop: '1rem' }}>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--hf-text-secondary)', lineHeight: 1.5 }}>
+                Archetype based on Census ACS + Status Signal model.
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--hf-text-secondary)', lineHeight: 1.5 }}>
+                Trajectory based on 3-year home value trend data.
+              </p>
+            </div>
 
             <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
               <button

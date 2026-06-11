@@ -3,19 +3,22 @@
 import { useState } from 'react'
 import { HOMEFIT_COPY } from '@/lib/pillars'
 
-/** Info icon + modal for HomeFit Score explanation. Use next to the HomeFit label or score. */
-export default function HomeFitInfo() {
+/**
+ * Info "?" button + modal for Trovamo Score explanation.
+ * Use next to the Trovamo Score label or score numeral.
+ * Pass catalog={true} on Explorer catalog surfaces (15 pillars);
+ * omit or pass false on Results / Saved / Public (13 pillars).
+ */
+export default function HomeFitInfo({ catalog = false }: { catalog?: boolean }) {
   const [showModal, setShowModal] = useState(false)
+  const body = catalog ? HOMEFIT_COPY.fullCatalog : HOMEFIT_COPY.full
 
   return (
     <>
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setShowModal(true)
-        }}
-        title={HOMEFIT_COPY.tooltip}
+        onClick={(e) => { e.stopPropagation(); setShowModal(true) }}
+        title={body}
         aria-label="What is the Trovamo Score?"
         style={{
           display: 'inline-flex',
@@ -60,40 +63,15 @@ export default function HomeFitInfo() {
           >
             <h2
               id="homefit-modal-title"
-              style={{
-                margin: 0,
-                fontSize: '1.2rem',
-                fontWeight: 700,
-                color: 'var(--c-purple-600)',
-              }}
+              style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--c-purple-600)' }}
             >
               Trovamo Score
             </h2>
             <p
               id="homefit-modal-desc"
-              style={{
-                margin: '0.75rem 0 0',
-                fontSize: '0.95rem',
-                lineHeight: 1.55,
-                color: 'var(--hf-text-primary)',
-              }}
+              style={{ margin: '0.75rem 0 0', fontSize: '0.95rem', lineHeight: 1.55, color: 'var(--hf-text-primary)' }}
             >
-              {HOMEFIT_COPY.full}
-            </p>
-            <p
-              style={{
-                margin: '1rem 0 0',
-                padding: '0.75rem 1rem',
-                borderRadius: 8,
-                background: 'var(--hf-bg-subtle)',
-                border: '1px solid var(--hf-border)',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                color: 'var(--hf-text-primary)',
-                lineHeight: 1.4,
-              }}
-            >
-              {HOMEFIT_COPY.distinction}
+              {body}
             </p>
             <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
               <button
