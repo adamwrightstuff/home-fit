@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "description": "Area-type quantile bands for Social Capital Atlas cohesion metrics (clustering, support ratio, civic organizations). Grades each place against its morphological peers so urban networks aren't penalized for structurally lower clustering.",
+  "score_anchors": {
+    "at_knot": [
+      12,
+      30,
+      50,
+      70,
+      85
+    ]
+  },
+  "by_area_type": {
+    "exurban": {
+      "clustering_zip": {
+        "p10": 0.081228,
+        "p25": 0.08616,
+        "p50": 0.09276,
+        "p75": 0.09946,
+        "p90": 0.10572,
+        "n": 2269
+      },
+      "support_ratio_zip": {
+        "p10": 0.735716,
+        "p25": 0.81567,
+        "p50": 0.88438,
+        "p75": 0.93561,
+        "p90": 0.961062,
+        "n": 2269
+      },
+      "civic_organizations_zip": {
+        "p10": 0.005619,
+        "p25": 0.008338,
+        "p50": 0.01267,
+        "p75": 0.018987,
+        "p90": 0.028814,
+        "n": 2264
+      }
+    },
+    "rural": {
+      "clustering_zip": {
+        "p10": 0.0903,
+        "p25": 0.099523,
+        "p50": 0.109574,
+        "p75": 0.12189,
+        "p90": 0.135494,
+        "n": 16759
+      },
+      "support_ratio_zip": {
+        "p10": 0.846628,
+        "p25": 0.91556,
+        "p50": 0.963309,
+        "p75": 0.98712,
+        "p90": 0.99526,
+        "n": 16759
+      },
+      "civic_organizations_zip": {
+        "p10": 0.006674,
+        "p25": 0.01037,
+        "p50": 0.0158,
+        "p75": 0.02303,
+        "p90": 0.0331,
+        "n": 16395
+      }
+    },
+    "suburban": {
+      "clustering_zip": {
+        "p10": 0.077251,
+        "p25": 0.08175,
+        "p50": 0.087175,
+        "p75": 0.0947,
+        "p90": 0.101058,
+        "n": 2152
+      },
+      "support_ratio_zip": {
+        "p10": 0.700594,
+        "p25": 0.771952,
+        "p50": 0.84033,
+        "p75": 0.90665,
+        "p90": 0.947348,
+        "n": 2152
+      },
+      "civic_organizations_zip": {
+        "p10": 0.00479,
+        "p25": 0.00739,
+        "p50": 0.01123,
+        "p75": 0.01717,
+        "p90": 0.027344,
+        "n": 2149
+      }
+    },
+    "urban_core": {
+      "clustering_zip": {
+        "p10": 0.07187,
+        "p25": 0.0765,
+        "p50": 0.0819,
+        "p75": 0.08829,
+        "p90": 0.09565,
+        "n": 641
+      },
+      "support_ratio_zip": {
+        "p10": 0.60138,
+        "p25": 0.69101,
+        "p50": 0.78897,
+        "p75": 0.85371,
+        "p90": 0.91034,
+        "n": 641
+      },
+      "civic_organizations_zip": {
+        "p10": 0.00314,
+        "p25": 0.005265,
+        "p50": 0.0079,
+        "p75": 0.01314,
+        "p90": 0.026702,
+        "n": 639
+      }
+    },
+    "urban_residential": {
+      "clustering_zip": {
+        "p10": 0.074019,
+        "p25": 0.07897,
+        "p50": 0.084225,
+        "p75": 0.091543,
+        "p90": 0.09846,
+        "n": 1204
+      },
+      "support_ratio_zip": {
+        "p10": 0.639601,
+        "p25": 0.724935,
+        "p50": 0.811555,
+        "p75": 0.887927,
+        "p90": 0.938721,
+        "n": 1204
+      },
+      "civic_organizations_zip": {
+        "p10": 0.004382,
+        "p25": 0.006775,
+        "p50": 0.01012,
+        "p75": 0.01663,
+        "p90": 0.028912,
+        "n": 1203
+      }
+    }
+  }
+}

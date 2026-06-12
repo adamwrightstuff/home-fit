@@ -16,13 +16,16 @@ Places augments thin/failed OSM. Imputed civic floor only when HOMEFIT_SF_CIVIC_
 from __future__ import annotations
 
 import json
+import math
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Optional, Tuple
 
 from data_sources import census_api, data_quality, osm_api
 from data_sources import irs_bmf
 from data_sources import community_participation
+from data_sources import social_capital_cohesion
 from data_sources.places_social_fabric_client import maybe_augment_civic_nodes_with_places
 from data_sources import social_fabric_bands
 from data_sources.us_census_divisions import get_division
@@ -154,17 +157,71 @@ def _civic_imputed_floor_score(area_type: Optional[str], density: Optional[float
 
 
 def _civic_node_type_weight(node_type: Optional[str]) -> float:
-    """Weighted effective civic nodes: library/community/townhall > worship > barber > cafe/bar/garden."""
+    """Weighted effective civic nodes by sociability: dedicated social infrastructure
+    (library/community/social centre/townhall) > worship/clubs > barber/market >
+    cafe/bar/restaurant/garden. Restaurants and fast food count (the third place of
+    immigrant/working-class neighborhoods) but at the lighter third-place weight."""
     t = (node_type or "").lower().strip()
-    if t in ("library", "community_centre", "townhall"):
+    if t in ("library", "community_centre", "social_centre", "townhall"):
         return 1.5
-    if t == "place_of_worship":
+    if t in ("place_of_worship", "club"):
         return 1.0
-    if t == "barber":
+    if t in ("barber", "marketplace"):
         return 0.75
-    if t in ("cafe", "bar", "community_garden", "botanical_garden"):
+    if t in ("cafe", "bar", "restaurant", "community_garden", "botanical_garden"):
         return 0.5
+    if t == "fast_food":
+        return 0.4
     return 1.0
+
+
+# Absolute walkable third-place density -> 0-100. Calibrated to effective civic
+# nodes per km^2 of *searched area* (the search radius varies by area type, so raw
+# counts aren't comparable; density is). Anchors: ~2/km^2 sparse, ~10 moderate,
+# ~40 excellent, ~75+ exceptional (dense Manhattan).
+_INFRA_DENSITY_KNOTS = [(2.0, 15.0), (8.0, 40.0), (18.0, 65.0), (40.0, 85.0), (75.0, 97.0)]
+
+
+def _infra_density_score(effective_nodes: Optional[float], radius_m: Optional[int]) -> float:
+    """
+    Score social infrastructure on ABSOLUTE walkable density, not area-type peer rank.
+
+    Cohesion (the bonding channel) is peer-normalized because urban friendship networks
+    are structurally less clustered — that's morphology, not a deficit. Infrastructure is
+    the opposite: a neighborhood with 50 third places per km^2 genuinely produces more
+    street-level community than one with 7, regardless of what its "peers" have. Peer-
+    normalizing it (the old civic band) made low-density suburbs saturate at 100 while
+    dense urban neighborhoods scored mid-pack — backwards from lived experience.
+    """
+    if not effective_nodes or not radius_m or radius_m <= 0:
+        return 0.0
+    area_km2 = math.pi * (float(radius_m) / 1000.0) ** 2
+    if area_km2 <= 0:
+        return 0.0
+    d = float(effective_nodes) / area_km2
+    knots = _INFRA_DENSITY_KNOTS
+    if d <= knots[0][0]:
+        return max(0.0, d / knots[0][0] * knots[0][1])
+    for i in range(len(knots) - 1):
+        x0, y0 = knots[i]
+        x1, y1 = knots[i + 1]
+        if x0 <= d <= x1:
+            return y0 + (d - x0) / (x1 - x0) * (y1 - y0)
+    # Above the top knot: gentle approach to 100.
+    x9, y9 = knots[-1]
+    return min(100.0, y9 + (d - x9) / 40.0 * 3.0)
+
+
+def _soft_or(a: float, b: float, max_weight: float = 0.6) -> float:
+    """
+    Combine the two social-fabric morphologies (bonding cohesion vs social
+    infrastructure x encounter) so a place can be excellent via either. A strict
+    average would demand a place be BOTH a tight suburban network AND a dense urban
+    street scene — which describes nowhere, so everything regresses to the middle.
+    Soft-OR leans on the stronger channel while still rewarding having both.
+    """
+    hi, lo = (a, b) if a >= b else (b, a)
+    return max_weight * hi + (1.0 - max_weight) * (0.5 * (a + b))
 
 
 def _sf_civic_imputation_enabled() -> bool:
@@ -223,7 +280,38 @@ def get_social_fabric_score(
         return census_api.get_tract_long_tenure_housing_pct(tract)
 
     def _get_civic():
-        return osm_api.query_civic_nodes(lat, lon, radius_m=civic_radius_m)
+        # Reliability guard: dense areas that come back empty/implausibly thin are almost
+        # always a rate-limited/partial Overpass response, not reality. Absolute-density
+        # scoring is unforgiving of that, so re-query with backoff before trusting a low
+        # count. Expected floor scales with density (a 10k+/sqmi tract with <8 civic nodes
+        # is not real). Helps live scoring, not just the batch re-score.
+        d = float(density) if density else 0.0
+        if d >= 10_000:
+            plausible_floor = 12
+        elif d >= 5_000:
+            plausible_floor = 8
+        elif d >= 2_500:
+            plausible_floor = 4
+        else:
+            plausible_floor = 0  # sparse areas legitimately have few; don't second-guess
+        result = None
+        for attempt in range(3):
+            result = osm_api.query_civic_nodes(lat, lon, radius_m=civic_radius_m)
+            n = len([x for x in (result.get("nodes") or []) if isinstance(x, dict)])
+            status_ok = result.get("source_status") == "ok"
+            if status_ok and n >= plausible_floor:
+                break
+            if attempt < 2:
+                # Mark the suspect result so the caller knows it was a low-confidence read
+                # if every retry still comes back thin.
+                time.sleep(1.5 * (attempt + 1))
+        if result is not None and plausible_floor > 0:
+            n = len([x for x in (result.get("nodes") or []) if isinstance(x, dict)])
+            result["civic_reliability"] = (
+                "ok" if (result.get("source_status") == "ok" and n >= plausible_floor)
+                else "suspect_thin"
+            )
+        return result
 
     def _get_bmf_auto():
         return irs_bmf.get_civic_orgs_per_1k(
@@ -375,8 +463,41 @@ def get_social_fabric_score(
     turnout_rate = participation_diag.get("turnout_rate")
 
     e = float(engagement_score) if engagement_score is not None else 0.0
-    raw = 1.2 * stability_score + 1.2 * civic_score + 1.2 * e
-    score = max(0.0, min(100.0, round(raw / 3.6, 1)))
+    # Blend in the Atlas behavioral civic-org signal (where people actually join)
+    # alongside the IRS BMF registration-based engagement.
+    civic_orgs_score = social_capital_cohesion.get_civic_orgs_score(zip_code, area_type)
+    if civic_orgs_score is not None:
+        e = 0.65 * e + 0.35 * civic_orgs_score
+
+    # ------------------------------------------------------------------
+    # Two-morphology composite. Social fabric is expressed two ways:
+    #   A. Bonding cohesion  — tight reciprocal networks (suburban-leaning).
+    #      Measured directly from the Social Capital Atlas (clustering + support),
+    #      area-type peer-normalized, with residential tenure as a minor input.
+    #   B. Infrastructure x encounter — dense walkable third-place life (urban-
+    #      leaning). Civic node score tilted by the Jacobs encounter multiplier.
+    # A place can win via either; engagement is a steadier, area-neutral term.
+    # ------------------------------------------------------------------
+    cohesion_score, cohesion_diag = social_capital_cohesion.get_cohesion_score(zip_code, area_type)
+
+    # Channel A: cohesion (direct measurement) blended with tenure rootedness.
+    # When the Atlas lacks the ZIP, fall back fully to tenure-based stability.
+    if cohesion_score is not None:
+        channel_a = 0.8 * cohesion_score + 0.2 * stability_score
+        channel_a_source = "atlas_cohesion+tenure"
+    else:
+        channel_a = stability_score
+        channel_a_source = "tenure_only"
+
+    # Channel B: social infrastructure on absolute walkable third-place density.
+    # (civic_score remains the peer-normalized view for the breakdown/summary, but the
+    # composite uses absolute density so dense urban street-life isn't peer-flattened.)
+    channel_b = _infra_density_score(civic_effective, civic_radius_m)
+
+    # Soft-OR across morphologies, then add the area-neutral engagement term.
+    morph = _soft_or(channel_a, channel_b, max_weight=0.55)
+    raw = 0.75 * morph + 0.25 * e
+    score = max(0.0, min(100.0, round(raw, 1)))
 
     source_status: Dict[str, str] = {}
     source_errors: list = []
@@ -493,6 +614,10 @@ def get_social_fabric_score(
         "stability": stability_score,
         "civic_gathering": civic_score,
         "engagement": engagement_score,
+        # Two-morphology view (new composite):
+        "cohesion": cohesion_score,
+        "bonding_cohesion": round(channel_a, 1),
+        "infrastructure_density": round(channel_b, 1),
     }
 
     summary = {
@@ -508,6 +633,7 @@ def get_social_fabric_score(
         "civic_node_count": civic_count,
         "civic_effective_weighted": round(civic_effective, 2),
         "civic_data_mode": civic_data_mode,
+        "civic_reliability": civic.get("civic_reliability", "ok"),
         "civic_search_radius_m": civic_radius_m,
         "civic_band_tier": civic_band_key,
         "tract_population_density_sqmi": round(density, 1) if density else None,
@@ -518,6 +644,20 @@ def get_social_fabric_score(
         "turnout_in_engagement_blend": participation_diag.get("turnout_in_engagement_blend"),
         "orgs_per_1k": orgs_per_1k,
         "voter_turnout_rate": round(turnout_rate, 4) if turnout_rate is not None else None,
+        "cohesion_score": cohesion_score,
+        "cohesion_clustering": cohesion_diag.get("clustering"),
+        "cohesion_support_ratio": cohesion_diag.get("support_ratio"),
+        "cohesion_clustering_score": cohesion_diag.get("clustering_score"),
+        "cohesion_support_score": cohesion_diag.get("support_score"),
+        "cohesion_area_type_band": cohesion_diag.get("area_type_band"),
+        "cohesion_resolution": cohesion_diag.get("resolution"),
+        "channel_a_bonding": round(channel_a, 1),
+        "channel_a_source": channel_a_source,
+        "channel_b_infra_density": round(channel_b, 1),
+        "civic_density_per_km2": round(
+            civic_effective / (math.pi * (civic_radius_m / 1000.0) ** 2), 1
+        ) if civic_effective and civic_radius_m else None,
+        "atlas_civic_orgs_score": round(civic_orgs_score, 1) if civic_orgs_score is not None else None,
         "rooted_pct_adjusted_for_bands": round(rooted_pct_adjusted, 2) if rooted_pct_adjusted is not None else None,
         "social_fabric_bands": bool(bands),
         "civic_places_fallback_used": places_recovered,
@@ -531,7 +671,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v13_sf_b25038_80_20",
+        "version": "v14_sf_two_morphology",
     }
 
     logger.info(

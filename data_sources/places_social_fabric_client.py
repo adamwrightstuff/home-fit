@@ -28,7 +28,10 @@ logger = get_logger(__name__)
 
 PLACES_NEARBY_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
-# Google primary types that correspond to civic third places (non-commercial).
+# Google primary types that correspond to civic third places. Includes Oldenburg
+# commercial third places (cafe/bar/restaurant) because Google's POI coverage of these
+# beats OSM in under-mapped immigrant/working-class areas — exactly where OSM thinness
+# would otherwise undercount real social fabric.
 CIVIC_INCLUDED_TYPES: List[str] = [
     "library",
     "church",
@@ -39,7 +42,22 @@ CIVIC_INCLUDED_TYPES: List[str] = [
     "city_hall",
     "local_government_office",
     "botanical_garden",
+    "cafe",
+    "coffee_shop",
+    "bar",
+    "restaurant",
 ]
+
+# Major chains excluded from the commercial third-place backfill (independent/local only).
+_THIRD_PLACE_CHAIN_NAMES = frozenset(
+    n.lower() for n in (
+        "Starbucks", "Dunkin", "Dunkin' Donuts", "Peet's Coffee", "The Coffee Bean",
+        "Dutch Bros", "Tim Hortons", "Panera", "McDonald's", "Burger King", "Wendy's",
+        "Subway", "Taco Bell", "KFC", "Popeyes", "Chipotle", "Domino's", "Pizza Hut",
+        "Chick-fil-A", "Five Guys", "Panda Express", "Sonic", "Arby's",
+    )
+)
+_COMMERCIAL_THIRD_PLACE_TYPES = frozenset({"cafe", "coffee_shop", "bar", "restaurant"})
 
 _WORSHIP_TYPES = frozenset(
     {"church", "mosque", "synagogue", "hindu_temple", "buddhist_temple"}
@@ -85,6 +103,12 @@ def _classify_civic_node_type(types: Optional[List[str]]) -> Optional[str]:
         return "townhall"
     if "botanical_garden" in ts:
         return "community_garden"
+    if "cafe" in ts or "coffee_shop" in ts:
+        return "cafe"
+    if "bar" in ts:
+        return "bar"
+    if "restaurant" in ts:
+        return "restaurant"
     return None
 
 
@@ -170,6 +194,12 @@ def _places_api_to_nodes(
         if not node_type:
             raw_skipped += 1
             continue
+        # Exclude national chains from the commercial third-place backfill (match OSM policy).
+        if node_type in _COMMERCIAL_THIRD_PLACE_TYPES:
+            nm = (_place_display_name(p) or "").lower()
+            if any(chain in nm for chain in _THIRD_PLACE_CHAIN_NAMES):
+                raw_skipped += 1
+                continue
         loc = p.get("location") or {}
         plat = loc.get("latitude")
         plon = loc.get("longitude")

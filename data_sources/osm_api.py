@@ -1331,6 +1331,15 @@ _THIRD_PLACE_CHAIN_FILTER = (
     ')"]'
 )
 
+# Restaurants/fast-food are third places too (often THE third place in immigrant and
+# working-class neighborhoods). Exclude only the big national fast-food chains via
+# brand — independent and local spots (incl. taquerias, halal carts, diners) count.
+_RESTAURANT_CHAIN_FILTER = (
+    '["brand"!~"McDonald|Burger King|Wendy|Subway|Taco Bell|KFC|Popeyes|Chipotle'
+    "|Domino|Pizza Hut|Chick-fil-A|Five Guys|Panda Express|Sonic|Arby|Jack in the Box"
+    '|Wingstop|Little Caesars|Papa John"]'
+)
+
 
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
@@ -1353,7 +1362,8 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
     Always returns a dict with source_status, nodes, and optional error.
     """
     cf = _THIRD_PLACE_CHAIN_FILTER
-    # Third places (cafes, bars, barbershops) are only queried at ≤1200m.
+    rf = _RESTAURANT_CHAIN_FILTER
+    # Third places (cafes, bars, barbershops, restaurants) are only queried at ≤1200m.
     # At 3000m (exurban/rural) they return too many results and cause timeouts.
     include_third_places = radius_m <= 1200
     third_place_queries = f"""
@@ -1363,7 +1373,11 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
       node["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
       way["amenity"~"^(bar|pub)$"]["name"]{cf}(around:{radius_m},{lat},{lon});
       node["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
-      way["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});""" if include_third_places else ""
+      way["shop"~"^(barber|hairdresser)$"]["name"](around:{radius_m},{lat},{lon});
+      // Restaurants and fast food (non-chain, named) — the third place of immigrant/
+      // working-class neighborhoods (taquerias, diners, halal spots, momo shops)
+      node["amenity"~"^(restaurant|fast_food)$"]["name"]{rf}(around:{radius_m},{lat},{lon});
+      way["amenity"~"^(restaurant|fast_food)$"]["name"]{rf}(around:{radius_m},{lat},{lon});""" if include_third_places else ""
     query = f"""
     [out:json][timeout:40];
     (
@@ -1384,6 +1398,15 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
       // Community gardens
       node["leisure"="community_garden"](around:{radius_m},{lat},{lon});
       way["leisure"="community_garden"](around:{radius_m},{lat},{lon});
+
+      // Social centres, social/fraternal clubs, and marketplaces (gathering hubs,
+      // esp. in older ethnic and working-class neighborhoods)
+      node["amenity"="social_centre"](around:{radius_m},{lat},{lon});
+      way["amenity"="social_centre"](around:{radius_m},{lat},{lon});
+      node["club"~"^(social|fraternity|sport|veterans|ethnic|charity)$"](around:{radius_m},{lat},{lon});
+      way["club"~"^(social|fraternity|sport|veterans|ethnic|charity)$"](around:{radius_m},{lat},{lon});
+      node["amenity"="marketplace"](around:{radius_m},{lat},{lon});
+      way["amenity"="marketplace"](around:{radius_m},{lat},{lon});
 {third_place_queries}
     );
     out body center;
@@ -1458,21 +1481,32 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
             amenity = tags.get("amenity", "")
             leisure = tags.get("leisure", "")
             shop = tags.get("shop", "")
+            club = tags.get("club", "")
 
             if amenity == "library":
                 node_type = "library"
             elif amenity == "community_centre":
                 node_type = "community_centre"
+            elif amenity == "social_centre":
+                node_type = "social_centre"
             elif amenity == "place_of_worship":
                 node_type = "place_of_worship"
             elif amenity == "townhall":
                 node_type = "townhall"
+            elif amenity == "marketplace":
+                node_type = "marketplace"
+            elif club:
+                node_type = "club"
             elif leisure == "community_garden":
                 node_type = "community_garden"
             elif amenity == "cafe":
                 node_type = "cafe"
             elif amenity in ("bar", "pub"):
                 node_type = "bar"
+            elif amenity == "restaurant":
+                node_type = "restaurant"
+            elif amenity == "fast_food":
+                node_type = "fast_food"
             elif shop in ("barber", "hairdresser"):
                 node_type = "barber"
             else:
