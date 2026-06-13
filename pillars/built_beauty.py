@@ -132,7 +132,25 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         if precomputed_arch_diversity is not None:
             diversity_metrics = precomputed_arch_diversity
         else:
+            # Reliability guard: the heavy 2000m building query times out in dense areas,
+            # returning zero coverage / zero confidence — which the scorer would otherwise
+            # launder into a fabricated ~57 floor. A zero-coverage / timeout / zero-confidence
+            # result almost always means a failed fetch, not a buildingless place (OSM has the
+            # buildings), so retry with backoff before trusting it.
+            import time as _time
             diversity_metrics = arch_diversity.compute_arch_diversity(lat, lon, radius_m=radius_m)
+            # Retries bypass the cache (__wrapped__) so a cached failure can't be re-served.
+            _fresh = getattr(arch_diversity.compute_arch_diversity, "__wrapped__",
+                             arch_diversity.compute_arch_diversity)
+            for _attempt in range(2):
+                _cov = diversity_metrics.get("built_coverage_ratio") or 0.0
+                _conf = diversity_metrics.get("confidence_0_1")
+                _conf = _conf if _conf is not None else 0.0
+                _timeout = diversity_metrics.get("data_warning") == "timeout"
+                if _cov > 0.0 and _conf > 0.0 and not _timeout:
+                    break
+                _time.sleep(1.5 * (_attempt + 1))
+                diversity_metrics = _fresh(lat, lon, radius_m=radius_m)
 
         if 'error' in diversity_metrics:
             logger.warning("Architectural diversity computation failed: %s", diversity_metrics.get('error'))
