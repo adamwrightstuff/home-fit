@@ -742,14 +742,25 @@ def get_public_transit_score(
 
     # Categorize routes by type
     heavy_rail_routes = []
+    subway_routes = []          # GTFS route_type 1: frequent, all-day, walk-to (urban)
+    commuter_rail_routes = []   # GTFS route_type 2: peak-oriented, often drive-to (suburban)
     light_rail_routes = []
     bus_routes = []
 
     for route in routes_data:
         route_type = route.get("route_type")
-        
+
         # GTFS route types: 0=Tram, 1=Subway, 2=Rail, 3=Bus
-        if route_type in [1, 2]:  # Subway/Metro or Commuter Rail
+        # Subway and commuter rail are split: they're both "heavy rail" by GTFS but offer
+        # very different access (subway ~4-5x the daily service, walk-to; commuter rail
+        # peak-oriented, often park-and-ride). Collapsing them let a single commuter
+        # station score like a subway hub. heavy_rail_routes kept as their union for
+        # back-compat (counts/summary/commuter-suburb detection).
+        if route_type == 1:  # Subway/Metro
+            subway_routes.append(route)
+            heavy_rail_routes.append(route)
+        elif route_type == 2:  # Commuter/Regional Rail
+            commuter_rail_routes.append(route)
             heavy_rail_routes.append(route)
         elif route_type == 0:  # Light rail/Tram
             light_rail_routes.append(route)
@@ -994,28 +1005,35 @@ def get_public_transit_score(
         # This cap applies to all area types - scores reflect actual quality
         return 95.0
 
-    # ── Absolute service-supply model (v2) ──────────────────────────────────
-    # Replaces expectation-relative normalization, which graded a suburb's single
-    # peak-only commuter line against a low bar (expected_heavy=1) and a subway hub
-    # against a high bar (expected=5) — compressing a 23x route-count difference into
-    # ~5 points (Pelham's 3 routes scored 90, ~= East Village's 70). Validated against
-    # Walk Score Transit Score (MAE 14.9 -> 9.4): score the *absolute* route supply,
-    # log-scaled with real headroom, rail weighted over bus for frequency/capacity.
-    _ANCHOR = 250.0
+    # ── Absolute service-supply model (v3: subway/commuter split) ────────────
+    # Replaces expectation-relative normalization (which graded a suburb's single line
+    # against a low bar and a subway hub against a high bar, letting Pelham's 3 commuter
+    # routes score 90 ~= East Village's 70). Score the *absolute* service supply,
+    # log-scaled with headroom, weighting each mode by its real daily service:
+    #   subway 3  >  light rail 2  >  commuter rail 1  >  bus 0.7
+    # Splitting subway (route_type 1) from commuter rail (route_type 2) decouples the
+    # urban top from the suburban floor: subway-rich neighborhoods reach ~95-100 while
+    # commuter-only suburbs stay ~40-55, regardless of anchor. The model uses only
+    # live-fetched GTFS route_type — no external benchmark dependency.
+    _ANCHOR = 120.0
+    subway_count = len(subway_routes)
+    commuter_count = len(commuter_rail_routes)
 
     def _abs_supply(weighted_routes: float) -> float:
         if weighted_routes <= 0:
             return 0.0
         return 100.0 * min(1.0, math.log(1.0 + weighted_routes) / math.log(1.0 + _ANCHOR))
 
-    # Per-mode display scores (absolute curve on that mode's weighted route count).
-    heavy_rail_score = _abs_supply(3.0 * heavy_count)
+    # Per-mode display scores (heavy rail = subway + commuter at their weights).
+    heavy_rail_score = _abs_supply(3.0 * subway_count + 1.0 * commuter_count)
     light_rail_score = _abs_supply(2.0 * light_count)
     bus_score = _abs_supply(0.7 * bus_count)
 
-    # Combined supply IS the score: summing weighted routes across modes naturally
-    # rewards multimodality, so no separate multimodal bonus is needed.
-    base_supply = _abs_supply(3.0 * heavy_count + 2.0 * light_count + 0.7 * bus_count)
+    # Combined supply IS the score: summing weighted routes rewards multimodality, so
+    # no separate multimodal bonus is needed.
+    base_supply = _abs_supply(
+        3.0 * subway_count + 1.0 * commuter_count + 2.0 * light_count + 0.7 * bus_count
+    )
     multimodal_bonus = 0.0
     total_score = base_supply
     # expected_* are retained above for diagnostics/back-compat but no longer gate the score.
@@ -1303,7 +1321,8 @@ def get_public_transit_score(
         },
         "summary": _build_summary_from_routes(
             heavy_rail_routes, light_rail_routes, bus_routes, routes_data,
-            stops_counts=stops_counts
+            stops_counts=stops_counts,
+            subway_rail=subway_routes, commuter_rail=commuter_rail_routes
         ),
         "data_quality": quality_metrics
     }
@@ -1365,6 +1384,8 @@ def get_public_transit_score(
         "light_rail_score": light_rail_score,
         "bus_score": bus_score,
         "heavy_rail_routes": len(heavy_rail_routes),
+        "subway_routes": len(subway_routes),
+        "commuter_rail_routes": len(commuter_rail_routes),
         "light_rail_routes": len(light_rail_routes),
         "bus_routes": len(bus_routes),
         "commute_minutes": commute_minutes,
@@ -1946,7 +1967,7 @@ def _score_bus_routes(routes: List[Dict], lat: float = None, lon: float = None, 
     return min(100, base_score + frequency_bonus + proximity_bonus)
 
 
-def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List, stops_counts: Optional[Dict[str, int]] = None) -> Dict:
+def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, all_routes: List, stops_counts: Optional[Dict[str, int]] = None, subway_rail: Optional[List] = None, commuter_rail: Optional[List] = None) -> Dict:
     """
     Build summary of transit access from routes and actual stop counts.
     
@@ -1963,6 +1984,8 @@ def _build_summary_from_routes(heavy_rail: List, light_rail: List, bus: List, al
     summary = {
         "total_routes": len(all_routes),  # Total distinct transit routes
         "heavy_rail_routes": len(heavy_rail),  # Heavy rail (subway/metro/commuter) route count
+        "subway_routes": len(subway_rail) if subway_rail is not None else None,  # GTFS route_type 1
+        "commuter_rail_routes": len(commuter_rail) if commuter_rail is not None else None,  # GTFS route_type 2
         "light_rail_routes": len(light_rail),  # Light rail/streetcar route count
         "bus_routes": len(bus),  # Bus route count
         "nearest_heavy_rail": heavy_rail[0] if heavy_rail else None,
