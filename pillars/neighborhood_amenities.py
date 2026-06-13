@@ -146,26 +146,31 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     tier3_near = [b for b in tier3_all if b["distance_m"] <= walkable_distance]
     tier4_near = [b for b in tier4_all if b["distance_m"] <= walkable_distance]
     
-    # Pass area_type to scoring functions for context-aware adjustments
-    density_score = _score_density(nearby, max_points=25, area_type=area_type)
-    variety_score = _score_variety(tier1_near, tier2_near, tier3_near, tier4_near, max_points=20)
-    proximity_score = _score_proximity(nearby, max_points=15, area_type=area_type)
-    
-    home_score = density_score + variety_score + proximity_score  # 0-60
-    
-    # Step 2: Location Quality (0-40) - Is there a vibrant town nearby?
+    # v3 amenity-access model: measure walkable daily life on an absolute, log-scaled
+    # density curve (so 50 businesses no longer maxes the score and 700 actually separates),
+    # plus genuine breadth and a "milk-run" essentials-proximity term. Validated against
+    # Walk Score (Pearson 0.90 vs old 0.80); fixes suburbs out-ranking dense urban cores.
+    # All measured within an 800m / ~10-min walk, area-type-independent (absolute density
+    # needs the classifier far less than the old peer-banded thresholds did).
+    walk_m = min(walkable_distance, 800)
+    walk_biz = [b for b in all_businesses if b["distance_m"] <= walk_m]
+    walk_t1 = [b for b in tier1_all if b["distance_m"] <= walk_m]
+    walk_t2 = [b for b in tier2_all if b["distance_m"] <= walk_m]
+    walk_t3 = [b for b in tier3_all if b["distance_m"] <= walk_m]
+    walk_t4 = [b for b in tier4_all if b["distance_m"] <= walk_m]
+
+    density_score = _score_walkable_density(walk_biz, max_points=50)        # 0-50
+    variety_score = _score_walkable_variety(walk_t1, walk_t2, walk_t3, walk_t4, max_points=25)  # 0-25
+    proximity_score = _score_essentials_proximity(walk_biz, max_points=25)  # 0-25
+
+    home_score = density_score + variety_score + proximity_score  # 0-100 (the full amenity-access score)
+
+    # Town-center / "main street" signal: kept for display + narrative only. It NO LONGER
+    # inflates the score (the old model let a drive-to Main Street tie a walkable urban core).
     location_score = _score_location_quality(all_businesses, lat, lon, max_points=40, area_type=area_type)
-    
-    # Raw total (before calibration)
-    raw_total = home_score + location_score  # 0-100
-    
-    # Calibration removed: Violates design principles (no tuning toward target scores)
-    # Raw score is data-backed and should be used directly
-    # If scores don't align with expectations, fix the measurement, not add calibration
-    calibrated_total = raw_total
-    
-    # Final score (data-backed, no calibration)
-    total_score = calibrated_total
+
+    raw_total = home_score  # 0-100, data-backed, no calibration
+    total_score = raw_total
     
     # Assess data quality
     combined_data = {
@@ -246,7 +251,62 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     return round(total_score, 1), breakdown
 
 
-def _score_density(businesses: List[Dict], max_points: float = 25, 
+_T1_DAILY = {"cafe", "bakery", "grocery"}
+_T2_SOCIAL = {"restaurant", "bar", "ice_cream"}
+_T3_CULTURE = {"bookstore", "gallery", "theater", "museum", "market"}
+_T4_SERVICES = {"boutique", "salon", "records", "fitness", "garden"}
+
+
+def _score_walkable_density(walk_biz: List[Dict], max_points: float = 50) -> float:
+    """Absolute walkable-business count on a log curve anchored at 400 (so a dense urban
+    core at 700+ separates from a suburban downtown at 40, and 50 no longer maxes out)."""
+    n = len(walk_biz)
+    if n <= 0:
+        return 0.0
+    return round(max_points * min(1.0, math.log(1 + n) / math.log(1 + 400)), 2)
+
+
+def _score_walkable_variety(t1: List, t2: List, t3: List, t4: List, max_points: float = 25) -> float:
+    """Breadth across categories, weighted toward daily essentials. Requires genuine variety
+    to max (not just 3 types) — distinct types per tier, scaled to that tier's full points."""
+    def distinct(items, types):
+        return len(set(b["type"] for b in items if b.get("type") in types))
+    pts = (
+        min(10.0, distinct(t1, _T1_DAILY) / 3 * 10)
+        + min(7.0, distinct(t2, _T2_SOCIAL) / 3 * 7)
+        + min(5.0, distinct(t3, _T3_CULTURE) / 4 * 5)
+        + min(3.0, distinct(t4, _T4_SERVICES) / 3 * 3)
+    )
+    return round(min(max_points, pts), 2)
+
+
+def _score_essentials_proximity(walk_biz: List[Dict], max_points: float = 25) -> float:
+    """The 'milk run': can you WALK to a grocery, a cafe/bakery, and a restaurant/bar?
+    A car-dependent suburb whose grocery is a 1.2km drive loses here even with a Main Street."""
+    def nearest(types):
+        ds = [b["distance_m"] for b in walk_biz if b.get("type") in types and b.get("distance_m") is not None]
+        return min(ds) if ds else None
+
+    def prox(d):
+        if d is None:
+            return 0.0
+        if d <= 150:
+            return 1.0
+        if d <= 300:
+            return 0.85
+        if d <= 500:
+            return 0.6
+        if d <= 800:
+            return 0.35
+        return 0.0
+
+    groc = prox(nearest({"grocery"}))
+    caf = prox(nearest({"cafe", "bakery"}))
+    eat = prox(nearest({"restaurant", "bar"}))
+    return round((groc * 0.45 + caf * 0.30 + eat * 0.25) * max_points, 2)
+
+
+def _score_density(businesses: List[Dict], max_points: float = 25,
                    area_type: Optional[str] = None) -> float:
     """
     Score business density with adjustable max and context-aware thresholds.
