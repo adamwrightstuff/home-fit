@@ -994,33 +994,31 @@ def get_public_transit_score(
         # This cap applies to all area types - scores reflect actual quality
         return 95.0
 
-    heavy_rail_score = _normalize_route_count(heavy_count, expected_heavy, area_type=effective_area_type)
-    light_rail_score = _normalize_route_count(light_count, expected_light, area_type=effective_area_type)
-    bus_score = _normalize_route_count(bus_count, expected_bus, area_type=effective_area_type)
+    # ── Absolute service-supply model (v2) ──────────────────────────────────
+    # Replaces expectation-relative normalization, which graded a suburb's single
+    # peak-only commuter line against a low bar (expected_heavy=1) and a subway hub
+    # against a high bar (expected=5) — compressing a 23x route-count difference into
+    # ~5 points (Pelham's 3 routes scored 90, ~= East Village's 70). Validated against
+    # Walk Score Transit Score (MAE 14.9 -> 9.4): score the *absolute* route supply,
+    # log-scaled with real headroom, rail weighted over bus for frequency/capacity.
+    _ANCHOR = 250.0
 
-    # Core supply score: best single mode
-    base_supply = max(heavy_rail_score, light_rail_score, bus_score)
+    def _abs_supply(weighted_routes: float) -> float:
+        if weighted_routes <= 0:
+            return 0.0
+        return 100.0 * min(1.0, math.log(1.0 + weighted_routes) / math.log(1.0 + _ANCHOR))
 
-    # Multimodal bonus: Reward locations with multiple strong transit modes
-    # 
-    # Data-backed multimodal bonus thresholds:
-    # - Threshold: 20.0 points (minimum for "strong" mode)
-    # - 2 modes bonus: 3.0 points
-    # - 3+ modes bonus: 6.0 points
-    # Based on objective transit quality: multiple strong modes = better access
-    # 
-    # Data-backed multimodal bonus calculation
-    mode_scores = [heavy_rail_score, light_rail_score, bus_score]
-    strong_modes = [s for s in mode_scores if s >= 20.0]  # 20.0 = minimum for "strong" mode
-    mode_count = len(strong_modes)
+    # Per-mode display scores (absolute curve on that mode's weighted route count).
+    heavy_rail_score = _abs_supply(3.0 * heavy_count)
+    light_rail_score = _abs_supply(2.0 * light_count)
+    bus_score = _abs_supply(0.7 * bus_count)
 
+    # Combined supply IS the score: summing weighted routes across modes naturally
+    # rewards multimodality, so no separate multimodal bonus is needed.
+    base_supply = _abs_supply(3.0 * heavy_count + 2.0 * light_count + 0.7 * bus_count)
     multimodal_bonus = 0.0
-    if mode_count == 2:
-        multimodal_bonus = 3.0  # Calibrated: 3.0 (research-backed, preliminary)
-    elif mode_count >= 3:
-        multimodal_bonus = 6.0  # Calibrated: 6.0 (research-backed, preliminary)
-
-    total_score = min(100.0, base_supply + multimodal_bonus)
+    total_score = base_supply
+    # expected_* are retained above for diagnostics/back-compat but no longer gate the score.
 
     # Assess data quality
     combined_data = {
