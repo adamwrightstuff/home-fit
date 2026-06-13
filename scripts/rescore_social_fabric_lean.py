@@ -26,6 +26,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data_sources import osm_api  # noqa: E402
 from data_sources import social_capital_cohesion as coh  # noqa: E402
+from data_sources.places_social_fabric_client import (  # noqa: E402
+    maybe_augment_civic_nodes_with_places,
+)
 from pillars.social_fabric import (  # noqa: E402
     _civic_node_type_weight,
     _infra_density_score,
@@ -41,33 +44,44 @@ SUSPECT_PATH = "data/social_fabric_rescore.suspect.jsonl"
 THROTTLE_S = 1.5
 
 
-def density_floor(density: float) -> int:
+def density_floor(density: float, area_type: str = None) -> int:
+    # Tightened vs the NYC run: LA's thin OSM was slipping low-density-urban/suburban
+    # undercounts past a floor of 4. Floors below now scale with population density.
     if density >= 10_000:
-        return 12
+        return 14
     if density >= 5_000:
-        return 8
+        return 10
     if density >= 2_500:
-        return 4
+        return 6
+    if density >= 1_000:
+        return 3
     return 0
 
 
-def fetch_civic_effective(lat, lon, radius, density):
-    """Fresh OSM civic query with retry-on-thin; returns (effective, raw_count, reliability)."""
-    floor = density_floor(density)
+def fetch_civic_effective(lat, lon, radius, density, area_type=None):
+    """Fresh OSM civic query + Places augmentation, retry-on-thin.
+    Returns (effective, raw_count, reliability)."""
+    floor = density_floor(density, area_type)
     result = None
     for attempt in range(3):
         result = osm_api.query_civic_nodes(lat, lon, radius_m=radius)
         nodes = [n for n in (result.get("nodes") or []) if isinstance(n, dict)]
-        ok = result.get("source_status") == "ok"
+        # Backfill thin/under-mapped OSM with Google Places (the step the original lean
+        # run skipped — this is the LA fix). Fires for urban_core/suburban + thin counts.
+        completeness = min(1.0, len(nodes) / 3.0)
+        result, _meta = maybe_augment_civic_nodes_with_places(
+            result, lat, lon, radius,
+            osm_completeness=completeness, civic_min_expected=3, area_type=area_type,
+        )
+        nodes = [n for n in (result.get("nodes") or []) if isinstance(n, dict)]
+        ok = result.get("source_status") in ("ok", "empty") or nodes
         if ok and len(nodes) >= floor:
             break
         if attempt < 2:
             time.sleep(1.5 * (attempt + 1))
     nodes = [n for n in (result.get("nodes") or []) if isinstance(n, dict)]
     eff = sum(_civic_node_type_weight(n.get("type")) for n in nodes)
-    reliability = "ok"
-    if floor > 0 and not (result.get("source_status") == "ok" and len(nodes) >= floor):
-        reliability = "suspect_thin"
+    reliability = "ok" if (floor == 0 or len(nodes) >= floor) else "suspect_thin"
     return eff, len(nodes), reliability
 
 
@@ -150,7 +164,9 @@ def main():
     n_ok = n_sus = 0
     for i, t in enumerate(targets, 1):
         try:
-            eff, raw, rel = fetch_civic_effective(t["lat"], t["lon"], t["radius"], t["density"])
+            eff, raw, rel = fetch_civic_effective(
+                t["lat"], t["lon"], t["radius"], t["density"], t["area_type"]
+            )
         except Exception as ex:
             print(f"[{i}/{len(targets)}] {t['name']:22s} ERROR {ex}", flush=True)
             time.sleep(THROTTLE_S); continue
