@@ -1,0 +1,274 @@
+{"name": "Ardsley", "old": 60.6, "new": 62.1, "cohesion": 79.4, "infra": 26.0, "bond": 72.3, "density_km2": 4.6, "civic_nodes": 23, "reliability": "ok", "area_type": "suburban"}
+{"name": "Astoria", "old": 40.9, "new": 67.0, "cohesion": 40.0, "infra": 85.2, "bond": 37.8, "density_km2": 40.7, "civic_nodes": 64, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Battery Park City", "old": 44.2, "new": 71.5, "cohesion": null, "infra": 93.7, "bond": 42.4, "density_km2": 65.5, "civic_nodes": 141, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bay Ridge", "old": 59.2, "new": 76.3, "cohesion": 47.4, "infra": 97.0, "bond": 47.5, "density_km2": 75.1, "civic_nodes": 146, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bayside", "old": 49.1, "new": 63.4, "cohesion": 65.0, "infra": 73.4, "bond": 60.0, "density_km2": 27.3, "civic_nodes": 51, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bed-Stuy", "old": 56.9, "new": 70.8, "cohesion": 29.5, "infra": 90.2, "bond": 29.2, "density_km2": 55.2, "civic_nodes": 90, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bedford", "old": 50.9, "new": 44.2, "cohesion": null, "infra": 0.8, "bond": 58.4, "density_km2": 0.1, "civic_nodes": 3, "reliability": "ok", "area_type": "rural"}
+{"name": "Bellmore", "old": 70.4, "new": 67.9, "cohesion": 85.0, "infra": 40.1, "bond": 84.6, "density_km2": 8.0, "civic_nodes": 49, "reliability": "ok", "area_type": "suburban"}
+{"name": "Belmont", "old": 39.7, "new": 50.2, "cohesion": 17.1, "infra": 69.1, "bond": 21.0, "density_km2": 22.5, "civic_nodes": 40, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bensonhurst", "old": 44.3, "new": 62.6, "cohesion": 58.7, "infra": 78.2, "bond": 58.7, "density_km2": 32.5, "civic_nodes": 62, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bloomfield", "old": 41.7, "new": 55.4, "cohesion": 72.3, "infra": 45.2, "bond": 64.9, "density_km2": 10.1, "civic_nodes": 19, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Boerum Hill", "old": 46.4, "new": 70.0, "cohesion": null, "infra": 100.0, "bond": 11.7, "density_km2": 122.9, "civic_nodes": 250, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Brighton Beach", "old": 48.8, "new": 68.9, "cohesion": null, "infra": 87.2, "bond": 49.3, "density_km2": 46.6, "civic_nodes": 86, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bronxville", "old": 49.9, "new": 62.6, "cohesion": 49.7, "infra": 69.9, "bond": 48.3, "density_km2": 23.4, "civic_nodes": 43, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Brooklyn Heights", "old": 44.2, "new": 69.1, "cohesion": null, "infra": 92.0, "bond": 34.0, "density_km2": 60.5, "civic_nodes": 112, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Bushwick", "old": 49.4, "new": 67.2, "cohesion": 43.5, "infra": 88.4, "bond": 45.3, "density_km2": 49.8, "civic_nodes": 75, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Canarsie", "old": 45.6, "new": 59.5, "cohesion": 40.8, "infra": 74.7, "bond": 46.3, "density_km2": 28.6, "civic_nodes": 39, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Carnegie Hill", "old": 61.8, "new": 75.9, "cohesion": 47.8, "infra": 98.0, "bond": 46.3, "density_km2": 87.9, "civic_nodes": 176, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Carroll Gardens", "old": 47.9, "new": 73.4, "cohesion": 30.3, "infra": 93.6, "bond": 33.2, "density_km2": 65.1, "civic_nodes": 128, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Cedarhurst", "old": 62.6, "new": 68.2, "cohesion": 84.8, "infra": 54.3, "bond": 80.3, "density_km2": 13.7, "civic_nodes": 22, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Chappaqua", "old": 67.5, "new": 45.7, "cohesion": null, "infra": 4.1, "bond": 60.4, "density_km2": 0.5, "civic_nodes": 14, "reliability": "ok", "area_type": "rural"}
+{"name": "Chatham", "old": 60.8, "new": 41.1, "cohesion": null, "infra": 30.6, "bond": 41.9, "density_km2": 5.7, "civic_nodes": 39, "reliability": "ok", "area_type": "suburban"}
+{"name": "Chelsea", "old": 50.7, "new": 73.7, "cohesion": null, "infra": 97.9, "bond": 41.0, "density_km2": 86.7, "civic_nodes": 181, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Chinatown", "old": 59.3, "new": 79.9, "cohesion": 44.4, "infra": 100.0, "bond": 47.6, "density_km2": 244.6, "civic_nodes": 499, "reliability": "ok", "area_type": "urban_core"}
+{"name": "City Island", "old": 47.3, "new": 49.2, "cohesion": 43.4, "infra": 45.0, "bond": 48.6, "density_km2": 10.0, "civic_nodes": 18, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Clinton Hill", "old": 57.1, "new": 73.0, "cohesion": 29.7, "infra": 95.1, "bond": 28.6, "density_km2": 69.5, "civic_nodes": 131, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Closter", "old": 64.9, "new": 60.7, "cohesion": 82.5, "infra": 8.7, "bond": 78.4, "density_km2": 1.2, "civic_nodes": 29, "reliability": "ok", "area_type": "exurban"}
+{"name": "Cobble Hill", "old": 42.1, "new": 77.9, "cohesion": 25.2, "infra": 99.9, "bond": 27.6, "density_km2": 114.2, "civic_nodes": 235, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Coney Island", "old": 51.0, "new": 52.7, "cohesion": 37.4, "infra": 67.2, "bond": 36.3, "density_km2": 20.4, "civic_nodes": 145, "reliability": "ok", "area_type": "suburban"}
+{"name": "Cranford", "old": 65.5, "new": 66.3, "cohesion": 79.0, "infra": 56.9, "bond": 71.5, "density_km2": 14.8, "civic_nodes": 94, "reliability": "ok", "area_type": "suburban"}
+{"name": "Cresskill", "old": 64.0, "new": 61.5, "cohesion": 85.0, "infra": 17.4, "bond": 79.2, "density_km2": 2.6, "civic_nodes": 16, "reliability": "ok", "area_type": "exurban"}
+{"name": "Croton-on-Hudson", "old": 74.8, "new": 36.0, "cohesion": 26.0, "infra": 2.4, "bond": 33.7, "density_km2": 0.3, "civic_nodes": 8, "reliability": "ok", "area_type": "rural"}
+{"name": "Crown Heights", "old": 46.5, "new": 61.0, "cohesion": 44.1, "infra": 73.0, "bond": 41.1, "density_km2": 26.8, "civic_nodes": 35, "reliability": "ok", "area_type": "urban_core"}
+{"name": "DUMBO", "old": 33.6, "new": 65.4, "cohesion": null, "infra": 88.0, "bond": 24.6, "density_km2": 48.9, "civic_nodes": 104, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Demarest", "old": 68.6, "new": 57.4, "cohesion": 72.1, "infra": 8.0, "bond": 71.2, "density_km2": 1.1, "civic_nodes": 27, "reliability": "ok", "area_type": "exurban"}
+{"name": "Ditmas Park", "old": 41.3, "new": 67.7, "cohesion": null, "infra": 87.0, "bond": 42.6, "density_km2": 45.9, "civic_nodes": 85, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Dobbs Ferry", "old": 52.9, "new": 58.2, "cohesion": 69.2, "infra": 35.2, "bond": 63.3, "density_km2": 6.9, "civic_nodes": 40, "reliability": "ok", "area_type": "suburban"}
+{"name": "East Harlem", "old": 36.3, "new": 69.2, "cohesion": 37.8, "infra": 90.9, "bond": 40.3, "density_km2": 57.3, "civic_nodes": 106, "reliability": "ok", "area_type": "urban_core"}
+{"name": "East Village", "old": 29.2, "new": 76.2, "cohesion": 46.7, "infra": 100.0, "bond": 43.2, "density_km2": 224.4, "civic_nodes": 470, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Cos Cob", "old": 40.7, "new": 50.5, "cohesion": 69.3, "bond": 63.4, "infra": 1.7, "density_km2": 0.2, "civic_nodes": 2, "reliability": "ok", "area_type": "suburban"}
+{"name": "Darien", "old": 68.7, "new": 34.8, "cohesion": 28.3, "bond": 35.8, "infra": 4.0, "density_km2": 0.5, "civic_nodes": 13, "reliability": "ok", "area_type": "rural"}
+{"name": "Elmhurst", "old": 39.6, "new": 67.1, "cohesion": 60.0, "bond": 55.2, "infra": 85.2, "density_km2": 40.6, "civic_nodes": 76, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Englewood", "old": 61.4, "new": 44.1, "cohesion": null, "bond": 43.8, "infra": 41.9, "density_km2": 8.8, "civic_nodes": 12, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Fairfield", "old": 60.1, "new": 47.2, "cohesion": null, "bond": 46.8, "infra": 44.3, "density_km2": 9.7, "civic_nodes": 67, "reliability": "ok", "area_type": "exurban"}
+{"name": "Financial District", "old": 45.6, "new": 70.3, "cohesion": null, "bond": 10.6, "infra": 100.0, "density_km2": 136.2, "civic_nodes": 300, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Flatbush", "old": 37.1, "new": 53.5, "cohesion": 30.6, "bond": 30.6, "infra": 67.6, "density_km2": 20.9, "civic_nodes": 26, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Floral Park", "old": 57.0, "new": 67.8, "cohesion": 83.1, "bond": 80.9, "infra": 49.8, "density_km2": 11.9, "civic_nodes": 13, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Flushing", "old": 41.9, "new": 61.4, "cohesion": 59.5, "bond": 58.6, "infra": 68.2, "density_km2": 21.6, "civic_nodes": 35, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Fordham", "old": 38.9, "new": 50.7, "cohesion": 17.1, "bond": 21.9, "infra": 69.7, "density_km2": 23.2, "civic_nodes": 36, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Forest Hills", "old": 45.4, "new": 68.3, "cohesion": null, "bond": 48.3, "infra": 86.5, "density_km2": 44.3, "civic_nodes": 90, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Fort Greene", "old": 58.6, "new": 72.9, "cohesion": null, "bond": 51.1, "infra": 96.8, "density_km2": 74.4, "civic_nodes": 581, "reliability": "ok", "area_type": "suburban"}
+{"name": "Fort Lee", "old": 48.3, "new": 65.7, "cohesion": 72.7, "bond": 60.5, "infra": 76.2, "density_km2": 30.3, "civic_nodes": 55, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Freeport", "old": 63.5, "new": 57.6, "cohesion": 68.5, "bond": 68.0, "infra": 42.3, "density_km2": 8.9, "civic_nodes": 46, "reliability": "ok", "area_type": "suburban"}
+{"name": "Garden City", "old": 73.0, "new": 63.3, "cohesion": 78.8, "bond": 77.8, "infra": 19.9, "density_km2": 3.2, "civic_nodes": 16, "reliability": "ok", "area_type": "suburban"}
+{"name": "Glen Ridge", "old": 77.3, "new": 60.9, "cohesion": 59.9, "bond": 62.8, "infra": 45.0, "density_km2": 10.0, "civic_nodes": 64, "reliability": "ok", "area_type": "suburban"}
+{"name": "Glen Rock", "old": 63.1, "new": 62.6, "cohesion": 82.2, "bond": 75.1, "infra": 17.6, "density_km2": 2.6, "civic_nodes": 14, "reliability": "ok", "area_type": "suburban"}
+{"name": "Glendale", "old": 44.5, "new": 49.5, "cohesion": 53.5, "bond": 57.5, "infra": 48.8, "density_km2": 11.5, "civic_nodes": 17, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Gowanus", "old": 59.5, "new": 69.4, "cohesion": 10.9, "bond": 15.1, "infra": 93.9, "density_km2": 65.9, "civic_nodes": 531, "reliability": "ok", "area_type": "suburban"}
+{"name": "Gramercy Park", "old": 42.0, "new": 76.5, "cohesion": null, "bond": 49.5, "infra": 100.0, "density_km2": 152.6, "civic_nodes": 331, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Great Kills", "old": 54.0, "new": 53.1, "cohesion": 54.8, "bond": 58.9, "infra": 61.3, "density_km2": 16.5, "civic_nodes": 27, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Great Neck", "old": 63.9, "new": 65.5, "cohesion": 85.3, "bond": 78.7, "infra": 36.3, "density_km2": 7.1, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Greenpoint", "old": 47.1, "new": 69.9, "cohesion": null, "bond": 36.0, "infra": 92.7, "density_km2": 62.6, "civic_nodes": 124, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Greenwich Village", "old": 39.4, "new": 78.8, "cohesion": 60.8, "bond": 56.6, "infra": 100.0, "density_km2": 199.2, "civic_nodes": 429, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Greenwich", "old": 58.7, "new": 39.8, "cohesion": null, "bond": 38.3, "infra": 29.8, "density_km2": 5.5, "civic_nodes": 37, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hamilton Heights", "old": 42.7, "new": 59.4, "cohesion": 25.0, "bond": 29.5, "infra": 74.7, "density_km2": 28.7, "civic_nodes": 53, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Harlem", "old": 43.5, "new": 72.2, "cohesion": 38.4, "bond": 39.8, "infra": 86.9, "density_km2": 45.5, "civic_nodes": 73, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Hastings-on-Hudson", "old": 69.6, "new": 59.3, "cohesion": 68.6, "bond": 66.0, "infra": 18.2, "density_km2": 2.8, "civic_nodes": 16, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hell's Kitchen", "old": 35.4, "new": 78.6, "cohesion": 41.5, "bond": 38.1, "infra": 100.0, "density_km2": 123.0, "civic_nodes": 266, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Hempstead", "old": 63.5, "new": 66.8, "cohesion": null, "bond": 80.9, "infra": 58.4, "density_km2": 15.3, "civic_nodes": 94, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hewlett", "old": 62.2, "new": 56.8, "cohesion": null, "bond": 72.3, "infra": 28.7, "density_km2": 5.3, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hoboken", "old": 32.7, "new": 77.6, "cohesion": 83.3, "bond": 70.0, "infra": 92.2, "density_km2": 61.0, "civic_nodes": 114, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Howard Beach", "old": 54.8, "new": 40.4, "cohesion": 48.1, "bond": 48.7, "infra": 18.0, "density_km2": 2.7, "civic_nodes": 21, "reliability": "ok", "area_type": "suburban"}
+{"name": "Inwood", "old": 45.5, "new": 56.4, "cohesion": 22.5, "bond": 29.8, "infra": 66.5, "density_km2": 19.6, "civic_nodes": 35, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Irvington", "old": 56.1, "new": 36.7, "cohesion": null, "bond": 42.4, "infra": 12.4, "density_km2": 1.7, "civic_nodes": 8, "reliability": "ok", "area_type": "suburban"}
+{"name": "Jackson Heights", "old": 44.4, "new": 53.8, "cohesion": 29.8, "bond": 37.0, "infra": 66.8, "density_km2": 20.0, "civic_nodes": 39, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Jamaica", "old": 34.0, "new": 50.7, "cohesion": 33.5, "bond": 32.7, "infra": 56.9, "density_km2": 14.8, "civic_nodes": 30, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Jersey City", "old": 30.9, "new": 68.1, "cohesion": null, "bond": 11.8, "infra": 93.8, "density_km2": 65.8, "civic_nodes": 129, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Katonah", "old": 61.6, "new": 36.3, "cohesion": null, "bond": 44.8, "infra": 1.7, "density_km2": 0.2, "civic_nodes": 6, "reliability": "ok", "area_type": "rural"}
+{"name": "Kensington", "old": 48.6, "new": 59.2, "cohesion": 46.3, "bond": 47.5, "infra": 71.5, "density_km2": 25.1, "civic_nodes": 48, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Kew Gardens", "old": 45.1, "new": 50.2, "cohesion": 23.6, "bond": 29.3, "infra": 55.1, "density_km2": 14.1, "civic_nodes": 28, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Kips Bay", "old": 54.0, "new": 79.5, "cohesion": 78.6, "bond": 71.1, "infra": 100.0, "density_km2": 120.3, "civic_nodes": 253, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Larchmont", "old": 65.1, "new": 49.6, "cohesion": 49.8, "bond": 49.4, "infra": 43.0, "density_km2": 9.2, "civic_nodes": 64, "reliability": "ok", "area_type": "suburban"}
+{"name": "Lawrence", "old": 66.0, "new": 63.7, "cohesion": 78.8, "bond": 75.4, "infra": 42.8, "density_km2": 9.1, "civic_nodes": 56, "reliability": "ok", "area_type": "suburban"}
+{"name": "Leonia", "old": 50.6, "new": 59.9, "cohesion": 84.6, "bond": 69.9, "infra": 30.8, "density_km2": 5.8, "civic_nodes": 32, "reliability": "ok", "area_type": "suburban"}
+{"name": "Little Italy", "old": 59.3, "new": 79.1, "cohesion": 44.4, "bond": 43.0, "infra": 100.0, "density_km2": 253.2, "civic_nodes": 513, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Long Beach", "old": 55.9, "new": 67.6, "cohesion": 85.1, "bond": 80.8, "infra": 56.8, "density_km2": 14.7, "civic_nodes": 20, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Long Island City", "old": 42.2, "new": 65.5, "cohesion": 15.7, "bond": 18.9, "infra": 87.5, "density_km2": 47.4, "civic_nodes": 98, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Lower East Side", "old": 52.5, "new": 79.4, "cohesion": 58.9, "bond": 62.6, "infra": 97.8, "density_km2": 86.1, "civic_nodes": 172, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Lynbrook", "old": 67.1, "new": 65.8, "cohesion": 84.3, "bond": 78.3, "infra": 47.4, "density_km2": 11.0, "civic_nodes": 75, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Madison", "old": 62.4, "new": 41.5, "cohesion": null, "bond": 40.6, "infra": 37.2, "density_km2": 7.3, "civic_nodes": 52, "reliability": "ok", "area_type": "suburban"}
+{"name": "Malverne", "old": 70.8, "new": 58.8, "cohesion": 68.7, "bond": 69.0, "infra": 26.8, "density_km2": 4.8, "civic_nodes": 28, "reliability": "ok", "area_type": "suburban"}
+{"name": "Mamaroneck", "old": 63.9, "new": 51.2, "cohesion": 49.8, "bond": 50.3, "infra": 49.9, "density_km2": 11.9, "civic_nodes": 78, "reliability": "ok", "area_type": "suburban"}
+{"name": "Manhasset", "old": 61.8, "new": 59.4, "cohesion": 78.3, "bond": 71.6, "infra": 28.0, "density_km2": 5.1, "civic_nodes": 29, "reliability": "ok", "area_type": "suburban"}
+{"name": "Manhattanville", "old": 56.5, "new": 63.6, "cohesion": 21.3, "bond": 18.7, "infra": 71.4, "density_km2": 25.0, "civic_nodes": 179, "reliability": "ok", "area_type": "suburban"}
+{"name": "Maplewood", "old": 67.2, "new": 44.8, "cohesion": 39.1, "bond": 40.8, "infra": 14.9, "density_km2": 2.0, "civic_nodes": 14, "reliability": "ok", "area_type": "suburban"}
+{"name": "Maspeth", "old": 41.5, "new": 46.9, "cohesion": 56.4, "bond": 60.0, "infra": 31.9, "density_km2": 6.1, "civic_nodes": 12, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Merrick", "old": 74.2, "new": 62.1, "cohesion": 78.2, "bond": 76.8, "infra": 28.1, "density_km2": 5.2, "civic_nodes": 28, "reliability": "ok", "area_type": "suburban"}
+{"name": "Midtown East", "old": 75.6, "new": 83.7, "cohesion": null, "bond": 65.6, "infra": 98.7, "density_km2": 97.2, "civic_nodes": 831, "reliability": "ok", "area_type": "suburban"}
+{"name": "Midtown", "old": 64.7, "new": 79.4, "cohesion": null, "bond": 28.1, "infra": 100.0, "density_km2": 173.8, "civic_nodes": 1535, "reliability": "ok", "area_type": "suburban"}
+{"name": "Millburn", "old": 58.1, "new": 34.8, "cohesion": null, "bond": 33.6, "infra": 21.7, "density_km2": 3.6, "civic_nodes": 24, "reliability": "ok", "area_type": "suburban"}
+{"name": "Mineola", "old": 35.5, "new": 63.5, "cohesion": 84.4, "bond": 76.4, "infra": 41.3, "density_km2": 8.5, "civic_nodes": 13, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Morningside Heights", "old": 43.4, "new": 67.3, "cohesion": null, "bond": 40.8, "infra": 86.7, "density_km2": 45.0, "civic_nodes": 87, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Morris Park", "old": 37.6, "new": 45.3, "cohesion": 32.8, "bond": 35.3, "infra": 53.0, "density_km2": 13.2, "civic_nodes": 22, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Morristown", "old": 52.7, "new": 51.7, "cohesion": null, "bond": 11.9, "infra": 65.7, "density_km2": 18.7, "civic_nodes": 130, "reliability": "ok", "area_type": "suburban"}
+{"name": "Mott Haven", "old": 47.2, "new": 51.8, "cohesion": 28.2, "bond": 34.8, "infra": 67.2, "density_km2": 20.5, "civic_nodes": 38, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Mount Kisco", "old": 65.8, "new": 60.8, "cohesion": 79.2, "bond": 76.6, "infra": 18.4, "density_km2": 2.8, "civic_nodes": 20, "reliability": "ok", "area_type": "suburban"}
+{"name": "Mount Vernon", "old": 44.1, "new": 58.3, "cohesion": null, "bond": 53.4, "infra": 67.8, "density_km2": 21.1, "civic_nodes": 24, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Murray Hill", "old": 58.9, "new": 79.5, "cohesion": 78.6, "bond": 70.3, "infra": 100.0, "density_km2": 134.7, "civic_nodes": 290, "reliability": "ok", "area_type": "urban_core"}
+{"name": "New Canaan", "old": 56.7, "new": 49.7, "cohesion": 67.9, "bond": 59.8, "infra": 3.7, "density_km2": 0.5, "civic_nodes": 12, "reliability": "ok", "area_type": "exurban"}
+{"name": "New Dorp", "old": 51.9, "new": 61.3, "cohesion": 58.1, "bond": 55.9, "infra": 71.7, "density_km2": 25.3, "civic_nodes": 50, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "New Hyde Park", "old": 42.0, "new": 59.8, "cohesion": null, "bond": 69.9, "infra": 55.1, "density_km2": 14.1, "civic_nodes": 15, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "New Rochelle", "old": 38.5, "new": 44.3, "cohesion": null, "bond": 31.0, "infra": 50.3, "density_km2": 12.1, "civic_nodes": 19, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "NoHo", "old": 60.5, "new": 80.8, "cohesion": 51.4, "bond": 48.9, "infra": 100.0, "density_km2": 208.7, "civic_nodes": 442, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Nolita", "old": 60.2, "new": 80.7, "cohesion": 51.4, "bond": 48.6, "infra": 100.0, "density_km2": 207.6, "civic_nodes": 432, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Norwalk", "old": 65.4, "new": 51.0, "cohesion": null, "bond": 56.0, "infra": 35.3, "density_km2": 6.9, "civic_nodes": 42, "reliability": "ok", "area_type": "suburban"}
+{"name": "Oceanside", "old": 76.8, "new": 65.2, "cohesion": 84.3, "bond": 83.8, "infra": 32.6, "density_km2": 6.2, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Old Greenwich", "old": 60.8, "new": 44.8, "cohesion": 46.9, "bond": 49.6, "infra": 8.4, "density_km2": 1.1, "civic_nodes": 8, "reliability": "ok", "area_type": "suburban"}
+{"name": "Ossining", "old": 55.6, "new": 65.5, "cohesion": 83.5, "bond": 73.1, "infra": 70.1, "density_km2": 23.6, "civic_nodes": 33, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Ozone Park", "old": 42.1, "new": 59.5, "cohesion": 80.1, "bond": 75.6, "infra": 41.9, "density_km2": 8.8, "civic_nodes": 17, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Park Slope", "old": 51.4, "new": 71.2, "cohesion": null, "bond": 31.5, "infra": 96.4, "density_km2": 73.3, "civic_nodes": 145, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Pelham Manor", "old": 55.4, "new": 43.4, "cohesion": null, "bond": 53.1, "infra": 14.5, "density_km2": 1.9, "civic_nodes": 12, "reliability": "ok", "area_type": "suburban"}
+{"name": "Pelham", "old": 57.5, "new": 68.4, "cohesion": 75.3, "bond": 70.9, "infra": 63.1, "density_km2": 17.2, "civic_nodes": 28, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Pleasantville", "old": 73.1, "new": 62.2, "cohesion": 73.5, "bond": 73.1, "infra": 18.5, "density_km2": 2.9, "civic_nodes": 16, "reliability": "ok", "area_type": "suburban"}
+{"name": "Port Washington", "old": 69.5, "new": 56.8, "cohesion": null, "bond": 73.5, "infra": 25.1, "density_km2": 4.4, "civic_nodes": 23, "reliability": "ok", "area_type": "suburban"}
+{"name": "Prospect Heights", "old": 55.9, "new": 70.0, "cohesion": 14.9, "bond": 17.6, "infra": 97.6, "density_km2": 83.6, "civic_nodes": 160, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Red Hook", "old": 58.2, "new": 53.7, "cohesion": 24.3, "bond": 21.7, "infra": 57.9, "density_km2": 15.1, "civic_nodes": 122, "reliability": "ok", "area_type": "suburban"}
+{"name": "Rego Park", "old": 45.3, "new": 58.0, "cohesion": 64.0, "bond": 66.0, "infra": 67.4, "density_km2": 20.6, "civic_nodes": 40, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Richmond Hill", "old": 47.7, "new": 47.3, "cohesion": 38.3, "bond": 43.6, "infra": 54.5, "density_km2": 13.8, "civic_nodes": 23, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Ridgewood", "old": 45.6, "new": 73.0, "cohesion": 53.5, "bond": 51.5, "infra": 97.1, "density_km2": 75.9, "civic_nodes": 135, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Riverdale", "old": 47.3, "new": 51.0, "cohesion": 46.8, "bond": 50.3, "infra": 50.9, "density_km2": 12.4, "civic_nodes": 17, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Riverside", "old": 58.7, "new": 37.9, "cohesion": null, "bond": 38.3, "infra": 18.3, "density_km2": 2.8, "civic_nodes": 19, "reliability": "ok", "area_type": "suburban"}
+{"name": "Rockaway Beach", "old": 33.6, "new": 50.5, "cohesion": null, "bond": 55.3, "infra": 50.5, "density_km2": 12.2, "civic_nodes": 21, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Rockville Centre", "old": 66.1, "new": 64.8, "cohesion": 77.9, "bond": 71.8, "infra": 53.5, "density_km2": 13.4, "civic_nodes": 96, "reliability": "ok", "area_type": "suburban"}
+{"name": "Roslyn", "old": 65.4, "new": 60.7, "cohesion": null, "bond": 77.7, "infra": 33.2, "density_km2": 6.4, "civic_nodes": 36, "reliability": "ok", "area_type": "suburban"}
+{"name": "Rye", "old": 57.9, "new": 54.3, "cohesion": 71.2, "bond": 66.3, "infra": 16.6, "density_km2": 2.4, "civic_nodes": 14, "reliability": "ok", "area_type": "suburban"}
+{"name": "Sheepshead Bay", "old": 47.4, "new": 60.3, "cohesion": 75.6, "bond": 74.3, "infra": 53.6, "density_km2": 13.4, "civic_nodes": 24, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Short Hills", "old": 44.0, "new": 56.6, "cohesion": 74.0, "bond": 71.8, "infra": 10.4, "density_km2": 1.4, "civic_nodes": 10, "reliability": "ok", "area_type": "suburban"}
+{"name": "SoHo", "old": 65.2, "new": 81.4, "cohesion": 51.4, "bond": 51.5, "infra": 100.0, "density_km2": 125.6, "civic_nodes": 270, "reliability": "ok", "area_type": "urban_core"}
+{"name": "South Orange", "old": 83.3, "new": 49.3, "cohesion": 34.9, "bond": 43.0, "infra": 28.5, "density_km2": 5.2, "civic_nodes": 36, "reliability": "ok", "area_type": "suburban"}
+{"name": "Southport", "old": 47.3, "new": 19.7, "cohesion": null, "bond": 12.0, "infra": 1.7, "density_km2": 0.2, "civic_nodes": 5, "reliability": "ok", "area_type": "rural"}
+{"name": "St. George", "old": 40.7, "new": 54.0, "cohesion": 49.7, "bond": 48.5, "infra": 55.4, "density_km2": 14.1, "civic_nodes": 27, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Stamford", "old": 34.5, "new": 55.5, "cohesion": null, "bond": 11.6, "infra": 70.5, "density_km2": 24.0, "civic_nodes": 44, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Stapleton", "old": 50.1, "new": 70.5, "cohesion": 49.7, "bond": 49.1, "infra": 83.6, "density_km2": 38.4, "civic_nodes": 60, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Summit", "old": 59.9, "new": 41.2, "cohesion": null, "bond": 33.4, "infra": 41.1, "density_km2": 8.5, "civic_nodes": 52, "reliability": "ok", "area_type": "suburban"}
+{"name": "Sunnyside", "old": 55.8, "new": 66.0, "cohesion": 27.3, "bond": 22.9, "infra": 76.8, "density_km2": 31.0, "civic_nodes": 242, "reliability": "ok", "area_type": "suburban"}
+{"name": "Sunset Park", "old": 58.3, "new": 72.2, "cohesion": null, "bond": 64.5, "infra": 88.6, "density_km2": 50.6, "civic_nodes": 99, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Tarrytown", "old": 43.3, "new": 64.7, "cohesion": 80.9, "bond": 74.8, "infra": 45.0, "density_km2": 10.0, "civic_nodes": 14, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Tenafly", "old": 64.6, "new": 63.6, "cohesion": 85.0, "bond": 77.7, "infra": 21.2, "density_km2": 3.5, "civic_nodes": 23, "reliability": "ok", "area_type": "suburban"}
+{"name": "Tottenville", "old": 68.6, "new": 51.3, "cohesion": 59.6, "bond": 61.6, "infra": 24.8, "density_km2": 4.3, "civic_nodes": 24, "reliability": "ok", "area_type": "suburban"}
+{"name": "Tremont", "old": 44.0, "new": 38.8, "cohesion": 17.1, "bond": 25.3, "infra": 48.3, "density_km2": 11.3, "civic_nodes": 14, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Tribeca", "old": 45.2, "new": 77.9, "cohesion": 42.8, "bond": 38.4, "infra": 97.9, "density_km2": 86.5, "civic_nodes": 184, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Tuckahoe", "old": 44.4, "new": 29.4, "cohesion": null, "bond": 29.7, "infra": 12.3, "density_km2": 1.6, "civic_nodes": 41, "reliability": "ok", "area_type": "rural"}
+{"name": "Turtle Bay", "old": 46.6, "new": 79.9, "cohesion": 55.2, "bond": 48.7, "infra": 98.2, "density_km2": 91.1, "civic_nodes": 199, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Upper East Side", "old": 49.9, "new": 77.1, "cohesion": 50.3, "bond": 42.6, "infra": 100.0, "density_km2": 145.5, "civic_nodes": 292, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Upper West Side", "old": 51.7, "new": 75.0, "cohesion": 31.5, "bond": 29.6, "infra": 99.3, "density_km2": 105.1, "civic_nodes": 204, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Washington Heights", "old": 40.6, "new": 54.2, "cohesion": 27.7, "bond": 29.3, "infra": 66.1, "density_km2": 19.2, "civic_nodes": 34, "reliability": "ok", "area_type": "urban_core"}
+{"name": "West Orange", "old": 46.1, "new": 51.7, "cohesion": 71.5, "bond": 64.4, "infra": 5.8, "density_km2": 0.8, "civic_nodes": 4, "reliability": "ok", "area_type": "suburban"}
+{"name": "West Village", "old": 53.4, "new": 78.9, "cohesion": 60.8, "bond": 56.8, "infra": 100.0, "density_km2": 180.4, "civic_nodes": 389, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Westfield", "old": 60.9, "new": 59.0, "cohesion": 73.8, "bond": 65.4, "infra": 32.9, "density_km2": 6.3, "civic_nodes": 45, "reliability": "ok", "area_type": "suburban"}
+{"name": "Weston", "old": 64.2, "new": 36.5, "cohesion": 23.1, "bond": 30.9, "infra": 1.3, "density_km2": 0.2, "civic_nodes": 4, "reliability": "ok", "area_type": "rural"}
+{"name": "Westport", "old": 60.8, "new": 32.7, "cohesion": 24.7, "bond": 29.6, "infra": 3.6, "density_km2": 0.5, "civic_nodes": 11, "reliability": "ok", "area_type": "rural"}
+{"name": "Westwood", "old": 67.3, "new": 62.7, "cohesion": 85.1, "bond": 78.1, "infra": 31.1, "density_km2": 5.9, "civic_nodes": 32, "reliability": "ok", "area_type": "suburban"}
+{"name": "White Plains", "old": 28.8, "new": 42.1, "cohesion": null, "bond": 37.3, "infra": 44.4, "density_km2": 9.8, "civic_nodes": 18, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Williamsburg", "old": 41.9, "new": 62.3, "cohesion": null, "bond": 11.4, "infra": 86.9, "density_km2": 45.7, "civic_nodes": 85, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Wilton", "old": 60.3, "new": 37.4, "cohesion": 33.4, "bond": 36.5, "infra": 2.8, "density_km2": 0.4, "civic_nodes": 9, "reliability": "ok", "area_type": "rural"}
+{"name": "Windsor Terrace", "old": 41.1, "new": 58.9, "cohesion": null, "bond": 53.1, "infra": 68.9, "density_km2": 22.2, "civic_nodes": 45, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Woodmere", "old": 67.4, "new": 63.2, "cohesion": 85.1, "bond": 83.8, "infra": 24.4, "density_km2": 4.3, "civic_nodes": 26, "reliability": "ok", "area_type": "suburban"}
+{"name": "Woodside", "old": 54.5, "new": 73.2, "cohesion": 55.1, "bond": 56.0, "infra": 92.3, "density_km2": 61.4, "civic_nodes": 114, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Yonkers", "old": 42.3, "new": 48.1, "cohesion": null, "bond": 52.2, "infra": 46.5, "density_km2": 10.6, "civic_nodes": 12, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Yorktown Heights", "old": 74.2, "new": 58.8, "cohesion": null, "bond": 83.0, "infra": 3.8, "density_km2": 0.5, "civic_nodes": 13, "reliability": "ok", "area_type": "rural"}
+{"name": "Yorkville", "old": 51.6, "new": 71.3, "cohesion": 47.8, "bond": 44.8, "infra": 90.5, "density_km2": 56.0, "civic_nodes": 116, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Glendale", "old": 33.2, "new": 58.6, "cohesion": null, "bond": 20.9, "infra": 77.7, "density_km2": 32.0, "civic_nodes": 58, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Long Beach", "old": 53.2, "new": 51.3, "cohesion": null, "bond": 19.5, "infra": 65.3, "density_km2": 18.3, "civic_nodes": 144, "reliability": "ok", "area_type": "suburban"}
+{"name": "Westwood", "old": 28.7, "new": 61.8, "cohesion": null, "bond": 7.5, "infra": 87.0, "density_km2": 45.9, "civic_nodes": 99, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Borough Park", "old": 50.8, "new": 52.3, "cohesion": 52.5, "bond": 58.1, "infra": 56.3, "density_km2": 14.5, "civic_nodes": 27, "reliability": "ok", "area_type": "urban_core"}
+{"name": "East New York", "old": 49.2, "new": 54.1, "cohesion": 33.9, "bond": 42.4, "infra": 67.1, "density_km2": 20.3, "civic_nodes": 26, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Eastchester", "old": 33.1, "new": 52.6, "cohesion": 34.3, "bond": 37.4, "infra": 65.0, "density_km2": 18.0, "civic_nodes": 26, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Edgewater", "old": 27.7, "new": 46.2, "cohesion": 42.7, "bond": 40.9, "infra": 48.5, "density_km2": 11.4, "civic_nodes": 23, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Flatlands", "old": 46.7, "new": 59.0, "cohesion": 57.9, "bond": 59.8, "infra": 66.3, "density_km2": 19.5, "civic_nodes": 26, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Hunts Point", "old": 35.9, "new": 55.7, "cohesion": 26.0, "bond": 30.1, "infra": 69.1, "density_km2": 22.5, "civic_nodes": 24, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Pelham Bay", "old": 36.7, "new": 47.9, "cohesion": 43.6, "bond": 43.8, "infra": 54.3, "density_km2": 13.7, "civic_nodes": 21, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Port Chester", "old": 44.0, "new": 64.6, "cohesion": 85.2, "bond": 79.7, "infra": 53.2, "density_km2": 13.3, "civic_nodes": 14, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Scarsdale", "old": 64.5, "new": 46.0, "cohesion": null, "bond": 53.9, "infra": 28.7, "density_km2": 5.3, "civic_nodes": 25, "reliability": "ok", "area_type": "suburban"}
+{"name": "Sleepy Hollow", "old": 45.3, "new": 56.6, "cohesion": null, "bond": 63.3, "infra": 58.7, "density_km2": 15.5, "civic_nodes": 24, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Agoura Hills", "old": 69.0, "new": 57.1, "cohesion": 63.5, "bond": 63.8, "infra": 27.6, "density_km2": 5.0, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Alhambra", "old": 57.9, "new": 66.1, "cohesion": null, "bond": 46.1, "infra": 83.2, "density_km2": 38.1, "civic_nodes": 69, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Altadena", "old": 72.7, "new": 38.3, "cohesion": 25.3, "bond": 33.7, "infra": 32.0, "density_km2": 6.1, "civic_nodes": 30, "reliability": "ok", "area_type": "suburban"}
+{"name": "Arcadia", "old": 62.6, "new": 43.1, "cohesion": null, "bond": 46.9, "infra": 33.4, "density_km2": 6.4, "civic_nodes": 37, "reliability": "ok", "area_type": "suburban"}
+{"name": "Arts District", "old": 57.4, "new": 48.3, "cohesion": 9.6, "bond": 12.9, "infra": 51.2, "density_km2": 12.5, "civic_nodes": 104, "reliability": "ok", "area_type": "suburban"}
+{"name": "Atwater Village", "old": 48.1, "new": 33.5, "cohesion": 13.7, "bond": 20.1, "infra": 29.0, "density_km2": 5.3, "civic_nodes": 46, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Bel Air", "old": 60.0, "new": 48.9, "cohesion": null, "bond": 65.2, "infra": 4.0, "density_km2": 0.5, "civic_nodes": 5, "reliability": "ok", "area_type": "suburban"}
+{"name": "Belmont Shore", "old": 38.9, "new": 68.7, "cohesion": 34.2, "bond": 33.6, "infra": 82.9, "density_km2": 37.7, "civic_nodes": 75, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Beverly Hills", "old": 53.2, "new": 42.6, "cohesion": null, "bond": 24.0, "infra": 49.3, "density_km2": 11.7, "civic_nodes": 78, "reliability": "ok", "area_type": "suburban"}
+{"name": "Boyle Heights", "old": 49.1, "new": 59.7, "cohesion": 47.1, "bond": 51.1, "infra": 66.8, "density_km2": 20.0, "civic_nodes": 29, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Brentwood", "old": 62.6, "new": 44.2, "cohesion": null, "bond": 47.9, "infra": 37.7, "density_km2": 7.4, "civic_nodes": 52, "reliability": "ok", "area_type": "suburban"}
+{"name": "Burbank", "old": 50.4, "new": 35.8, "cohesion": null, "bond": 11.0, "infra": 41.1, "density_km2": 8.4, "civic_nodes": 17, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Calabasas", "old": 52.1, "new": 48.7, "cohesion": 52.5, "bond": 51.0, "infra": 33.2, "density_km2": 6.4, "civic_nodes": 49, "reliability": "ok", "area_type": "suburban"}
+{"name": "Canoga Park", "old": 39.6, "new": 64.6, "cohesion": 57.3, "bond": 55.1, "infra": 74.6, "density_km2": 28.6, "civic_nodes": 44, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Cerritos", "old": 59.3, "new": 43.5, "cohesion": 38.9, "bond": 40.5, "infra": 51.5, "density_km2": 12.6, "civic_nodes": 75, "reliability": "ok", "area_type": "suburban"}
+{"name": "Chatsworth", "old": 61.0, "new": 36.8, "cohesion": 27.0, "bond": 34.0, "infra": 31.9, "density_km2": 6.1, "civic_nodes": 46, "reliability": "ok", "area_type": "suburban"}
+{"name": "Chinatown LA", "old": 59.1, "new": 50.9, "cohesion": null, "bond": 43.2, "infra": 57.5, "density_km2": 15.0, "civic_nodes": 116, "reliability": "ok", "area_type": "suburban"}
+{"name": "Compton", "old": 54.3, "new": 60.1, "cohesion": null, "bond": 68.1, "infra": 62.9, "density_km2": 17.2, "civic_nodes": 20, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Crenshaw", "old": 55.2, "new": 33.2, "cohesion": 37.2, "bond": 38.2, "infra": 28.0, "density_km2": 5.1, "civic_nodes": 32, "reliability": "ok", "area_type": "suburban"}
+{"name": "Culver City", "old": 64.1, "new": 60.0, "cohesion": 15.6, "bond": 21.0, "infra": 70.4, "density_km2": 24.0, "civic_nodes": 188, "reliability": "ok", "area_type": "suburban"}
+{"name": "Downey", "old": 65.2, "new": 57.7, "cohesion": null, "bond": 57.4, "infra": 65.5, "density_km2": 18.5, "civic_nodes": 32, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Downtown LA", "old": 39.7, "new": 65.7, "cohesion": 10.6, "bond": 10.4, "infra": 83.8, "density_km2": 38.7, "civic_nodes": 327, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Eagle Rock", "old": 61.0, "new": 56.5, "cohesion": 27.7, "bond": 32.9, "infra": 63.2, "density_km2": 17.3, "civic_nodes": 32, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "East Hollywood", "old": 37.2, "new": 60.2, "cohesion": 30.8, "bond": 33.3, "infra": 73.4, "density_km2": 27.2, "civic_nodes": 49, "reliability": "ok", "area_type": "urban_core"}
+{"name": "East Los Angeles", "old": 61.9, "new": 51.3, "cohesion": null, "bond": 59.4, "infra": 40.6, "density_km2": 8.2, "civic_nodes": 46, "reliability": "ok", "area_type": "suburban"}
+{"name": "Echo Park", "old": 44.4, "new": 66.8, "cohesion": 41.1, "bond": 40.7, "infra": 80.7, "density_km2": 35.2, "civic_nodes": 65, "reliability": "ok", "area_type": "urban_core"}
+{"name": "El Monte", "old": 68.2, "new": 52.8, "cohesion": null, "bond": 64.6, "infra": 31.4, "density_km2": 5.9, "civic_nodes": 34, "reliability": "ok", "area_type": "suburban"}
+{"name": "El Segundo", "old": 57.3, "new": 68.5, "cohesion": 70.3, "bond": 64.3, "infra": 74.3, "density_km2": 28.2, "civic_nodes": 52, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Elysian Valley", "old": 55.8, "new": 40.9, "cohesion": null, "bond": 44.5, "infra": 29.6, "density_km2": 5.5, "civic_nodes": 31, "reliability": "ok", "area_type": "suburban"}
+{"name": "Encino", "old": 57.5, "new": 46.1, "cohesion": null, "bond": 49.6, "infra": 42.8, "density_km2": 9.1, "civic_nodes": 65, "reliability": "ok", "area_type": "suburban"}
+{"name": "Franklin Village", "old": 65.7, "new": 24.7, "cohesion": 9.2, "bond": 22.3, "infra": 14.7, "density_km2": 2.0, "civic_nodes": 52, "reliability": "ok", "area_type": "rural"}
+{"name": "Glassell Park", "old": 62.3, "new": 31.7, "cohesion": 19.6, "bond": 26.0, "infra": 29.0, "density_km2": 5.4, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Granada Hills", "old": 55.0, "new": 35.8, "cohesion": 30.9, "bond": 33.2, "infra": 34.9, "density_km2": 6.8, "civic_nodes": 45, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hancock Park", "old": 60.3, "new": 36.3, "cohesion": 11.7, "bond": 17.7, "infra": 38.8, "density_km2": 7.7, "civic_nodes": 56, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hawthorne", "old": 33.7, "new": 56.1, "cohesion": 53.7, "bond": 49.8, "infra": 65.8, "density_km2": 18.9, "civic_nodes": 27, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Hermosa Beach", "old": 61.0, "new": 63.7, "cohesion": 39.9, "bond": 39.2, "infra": 73.3, "density_km2": 27.1, "civic_nodes": 54, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Hidden Hills", "old": 60.7, "new": 54.6, "cohesion": null, "bond": 71.8, "infra": 16.8, "density_km2": 2.4, "civic_nodes": 10, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hollywood Hills", "old": 39.4, "new": 22.7, "cohesion": 9.7, "bond": 16.1, "infra": 16.2, "density_km2": 2.3, "civic_nodes": 17, "reliability": "ok", "area_type": "suburban"}
+{"name": "Hollywood", "old": 60.8, "new": 52.0, "cohesion": 10.4, "bond": 14.9, "infra": 63.2, "density_km2": 17.3, "civic_nodes": 145, "reliability": "ok", "area_type": "suburban"}
+{"name": "Inglewood", "old": 44.5, "new": 61.0, "cohesion": null, "bond": 59.7, "infra": 70.5, "density_km2": 24.1, "civic_nodes": 34, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Koreatown", "old": 38.8, "new": 64.8, "cohesion": null, "bond": 30.8, "infra": 85.1, "density_km2": 40.4, "civic_nodes": 81, "reliability": "ok", "area_type": "urban_core"}
+{"name": "La Ca\u00f1ada Flintridge", "old": 65.7, "new": 60.2, "cohesion": 69.2, "bond": 67.3, "infra": 30.2, "density_km2": 5.6, "civic_nodes": 39, "reliability": "ok", "area_type": "suburban"}
+{"name": "La Crescenta", "old": 67.7, "new": 57.5, "cohesion": 66.2, "bond": 64.4, "infra": 35.4, "density_km2": 6.9, "civic_nodes": 40, "reliability": "ok", "area_type": "suburban"}
+{"name": "La Mirada", "old": 62.3, "new": 41.8, "cohesion": null, "bond": 47.1, "infra": 26.4, "density_km2": 4.7, "civic_nodes": 31, "reliability": "ok", "area_type": "suburban"}
+{"name": "Lakewood", "old": 56.3, "new": 48.3, "cohesion": null, "bond": 51.2, "infra": 50.8, "density_km2": 12.3, "civic_nodes": 90, "reliability": "ok", "area_type": "suburban"}
+{"name": "Larchmont Village", "old": 41.8, "new": 34.0, "cohesion": 11.7, "bond": 17.4, "infra": 32.3, "density_km2": 6.1, "civic_nodes": 49, "reliability": "ok", "area_type": "suburban"}
+{"name": "Leimert Park", "old": 61.8, "new": 33.9, "cohesion": 11.2, "bond": 17.4, "infra": 30.8, "density_km2": 5.8, "civic_nodes": 36, "reliability": "ok", "area_type": "suburban"}
+{"name": "Little Tokyo", "old": 58.1, "new": 69.6, "cohesion": 10.2, "bond": 15.3, "infra": 89.1, "density_km2": 51.9, "civic_nodes": 102, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Los Feliz", "old": 33.4, "new": 52.6, "cohesion": null, "bond": 27.0, "infra": 65.8, "density_km2": 18.8, "civic_nodes": 29, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Manhattan Beach", "old": 45.9, "new": 52.2, "cohesion": 56.7, "bond": 52.8, "infra": 41.0, "density_km2": 8.4, "civic_nodes": 19, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Mar Vista", "old": 63.6, "new": 46.9, "cohesion": 13.3, "bond": 22.4, "infra": 55.2, "density_km2": 14.1, "civic_nodes": 102, "reliability": "ok", "area_type": "suburban"}
+{"name": "Miracle Mile", "old": 30.7, "new": 54.2, "cohesion": 21.6, "bond": 19.7, "infra": 65.0, "density_km2": 18.0, "civic_nodes": 26, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Monrovia", "old": 60.4, "new": 48.6, "cohesion": null, "bond": 52.4, "infra": 49.1, "density_km2": 11.6, "civic_nodes": 80, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Montebello", "old": 66.1, "new": 49.9, "cohesion": null, "bond": 58.8, "infra": 34.4, "density_km2": 6.7, "civic_nodes": 35, "reliability": "ok", "area_type": "suburban"}
+{"name": "Monterey Park", "old": 69.4, "new": 57.6, "cohesion": null, "bond": 68.5, "infra": 46.5, "density_km2": 10.6, "civic_nodes": 82, "reliability": "ok", "area_type": "suburban"}
+{"name": "Mount Washington", "old": 61.9, "new": 33.2, "cohesion": 19.6, "bond": 26.9, "infra": 31.3, "density_km2": 5.9, "civic_nodes": 41, "reliability": "ok", "area_type": "suburban"}
+{"name": "North Hollywood", "old": 29.3, "new": 40.5, "cohesion": null, "bond": 11.7, "infra": 49.2, "density_km2": 11.7, "civic_nodes": 22, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Pacific Palisades", "old": 60.0, "new": 40.8, "cohesion": 29.7, "bond": 36.9, "infra": 25.4, "density_km2": 4.5, "civic_nodes": 28, "reliability": "ok", "area_type": "suburban"}
+{"name": "Palms", "old": 39.9, "new": 69.6, "cohesion": 29.4, "bond": 32.3, "infra": 83.9, "density_km2": 38.8, "civic_nodes": 67, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Palos Verdes Estates", "old": 39.6, "new": 48.2, "cohesion": null, "bond": 60.8, "infra": 15.9, "density_km2": 2.2, "civic_nodes": 9, "reliability": "ok", "area_type": "suburban"}
+{"name": "Pasadena", "old": 50.8, "new": 31.5, "cohesion": null, "bond": 9.9, "infra": 33.1, "density_km2": 6.3, "civic_nodes": 34, "reliability": "ok", "area_type": "suburban"}
+{"name": "Pico-Robertson", "old": 54.0, "new": 55.2, "cohesion": 57.6, "bond": 57.5, "infra": 51.5, "density_km2": 12.6, "civic_nodes": 18, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Playa Vista", "old": 25.2, "new": 32.8, "cohesion": 17.6, "bond": 16.5, "infra": 38.0, "density_km2": 7.5, "civic_nodes": 14, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Playa del Rey", "old": 26.7, "new": 55.2, "cohesion": 12.4, "bond": 14.3, "infra": 68.0, "density_km2": 21.3, "civic_nodes": 42, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Porter Ranch", "old": 54.3, "new": 54.7, "cohesion": null, "bond": 69.8, "infra": 24.7, "density_km2": 4.3, "civic_nodes": 34, "reliability": "ok", "area_type": "suburban"}
+{"name": "Rancho Palos Verdes", "old": 41.2, "new": 52.0, "cohesion": 63.2, "bond": 62.9, "infra": 9.9, "density_km2": 1.3, "civic_nodes": 8, "reliability": "ok", "area_type": "suburban"}
+{"name": "Redondo Beach", "old": 45.8, "new": 53.7, "cohesion": 38.1, "bond": 38.2, "infra": 66.1, "density_km2": 19.2, "civic_nodes": 33, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Reseda", "old": 53.4, "new": 44.1, "cohesion": null, "bond": 37.3, "infra": 48.1, "density_km2": 11.2, "civic_nodes": 24, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Rolling Hills Estates", "old": 60.4, "new": 52.5, "cohesion": null, "bond": 67.7, "infra": 17.7, "density_km2": 2.7, "civic_nodes": 11, "reliability": "ok", "area_type": "suburban"}
+{"name": "Rosemead", "old": 67.4, "new": 62.9, "cohesion": 82.1, "bond": 80.2, "infra": 43.1, "density_km2": 9.2, "civic_nodes": 61, "reliability": "ok", "area_type": "suburban"}
+{"name": "San Fernando", "old": 62.1, "new": 64.6, "cohesion": null, "bond": 49.9, "infra": 79.5, "density_km2": 34.0, "civic_nodes": 57, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "San Marino", "old": 58.4, "new": 60.5, "cohesion": 72.3, "bond": 67.7, "infra": 36.4, "density_km2": 7.1, "civic_nodes": 41, "reliability": "ok", "area_type": "suburban"}
+{"name": "San Pedro", "old": 43.0, "new": 65.9, "cohesion": 64.9, "bond": 61.9, "infra": 74.5, "density_km2": 28.4, "civic_nodes": 47, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Santa Monica", "old": 58.3, "new": 61.5, "cohesion": null, "bond": 39.4, "infra": 77.0, "density_km2": 31.2, "civic_nodes": 58, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Sherman Oaks", "old": 49.2, "new": 56.1, "cohesion": null, "bond": 47.5, "infra": 65.4, "density_km2": 18.4, "civic_nodes": 40, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Signal Hill", "old": 62.0, "new": 44.1, "cohesion": null, "bond": 51.1, "infra": 26.0, "density_km2": 4.6, "civic_nodes": 30, "reliability": "ok", "area_type": "suburban"}
+{"name": "Silver Lake", "old": 30.5, "new": 48.3, "cohesion": 32.8, "bond": 33.7, "infra": 52.3, "density_km2": 12.9, "civic_nodes": 30, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "Sunland-Tujunga", "old": 58.2, "new": 43.7, "cohesion": 50.7, "bond": 50.6, "infra": 36.0, "density_km2": 7.1, "civic_nodes": 38, "reliability": "ok", "area_type": "suburban"}
+{"name": "Sylmar", "old": 59.0, "new": 33.1, "cohesion": 31.1, "bond": 38.0, "infra": 25.5, "density_km2": 4.5, "civic_nodes": 31, "reliability": "ok", "area_type": "suburban"}
+{"name": "Tarzana", "old": 55.6, "new": 36.2, "cohesion": 33.5, "bond": 34.1, "infra": 30.8, "density_km2": 5.8, "civic_nodes": 45, "reliability": "ok", "area_type": "suburban"}
+{"name": "Temple City", "old": 64.3, "new": 62.1, "cohesion": 79.5, "bond": 76.1, "infra": 40.4, "density_km2": 8.2, "civic_nodes": 40, "reliability": "ok", "area_type": "suburban"}
+{"name": "Thousand Oaks", "old": 55.2, "new": 37.4, "cohesion": null, "bond": 37.8, "infra": 32.7, "density_km2": 6.2, "civic_nodes": 42, "reliability": "ok", "area_type": "suburban"}
+{"name": "Torrance", "old": 68.1, "new": 54.9, "cohesion": null, "bond": 64.6, "infra": 41.3, "density_km2": 8.5, "civic_nodes": 61, "reliability": "ok", "area_type": "suburban"}
+{"name": "Van Nuys", "old": 44.2, "new": 60.3, "cohesion": 17.6, "bond": 24.8, "infra": 73.7, "density_km2": 27.6, "civic_nodes": 41, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Venice", "old": 35.1, "new": 47.1, "cohesion": 15.0, "bond": 20.7, "infra": 50.7, "density_km2": 12.3, "civic_nodes": 25, "reliability": "ok", "area_type": "urban_residential"}
+{"name": "View Park", "old": 64.3, "new": 29.2, "cohesion": 20.7, "bond": 27.2, "infra": 27.3, "density_km2": 5.0, "civic_nodes": 26, "reliability": "ok", "area_type": "suburban"}
+{"name": "West Hollywood", "old": 39.4, "new": 44.9, "cohesion": null, "bond": 42.8, "infra": 47.6, "density_km2": 11.1, "civic_nodes": 20, "reliability": "ok", "area_type": "urban_core"}
+{"name": "West LA", "old": 21.7, "new": 70.0, "cohesion": 40.0, "bond": 34.7, "infra": 86.1, "density_km2": 43.2, "civic_nodes": 92, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Wilmington", "old": 42.3, "new": 47.9, "cohesion": null, "bond": 51.6, "infra": 47.6, "density_km2": 11.1, "civic_nodes": 19, "reliability": "ok", "area_type": "urban_core"}
+{"name": "Woodland Hills", "old": 61.1, "new": 40.7, "cohesion": 11.7, "bond": 19.2, "infra": 43.7, "density_km2": 9.5, "civic_nodes": 74, "reliability": "ok", "area_type": "suburban"}

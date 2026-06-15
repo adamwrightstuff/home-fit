@@ -1,0 +1,25 @@
+{"name": "Fieldston", "old": 31.5, "new": 47.5, "cohesion": 46.8, "bond": 44.3, "infra": 46.5, "density_km2": 10.6, "civic_nodes": 12, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "Harrison", "old": 35.6, "new": 43.0, "cohesion": null, "bond": 50.7, "infra": 21.4, "density_km2": 3.5, "civic_nodes": 3, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Montclair", "old": 48.4, "new": 22.6, "cohesion": null, "bond": 16.0, "infra": 9.9, "density_km2": 1.3, "civic_nodes": 3, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Peekskill", "old": 47.1, "new": 62.6, "cohesion": 85.1, "bond": 78.3, "infra": 32.5, "density_km2": 6.2, "civic_nodes": 7, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Valley Stream", "old": 57.3, "new": 59.6, "cohesion": 80.8, "bond": 78.1, "infra": 31.7, "density_km2": 6.0, "civic_nodes": 9, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Weehawken", "old": 24.8, "new": 40.1, "cohesion": 50.0, "bond": 41.6, "infra": 22.9, "density_km2": 3.9, "civic_nodes": 5, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "El Sereno", "old": 42.7, "new": 42.7, "cohesion": 38.5, "bond": 45.1, "infra": 32.5, "density_km2": 6.2, "civic_nodes": 8, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "Fieldston", "old": 31.5, "new": 47.5, "cohesion": 46.8, "bond": 44.3, "infra": 46.5, "density_km2": 10.6, "civic_nodes": 12, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "Harrison", "old": 35.6, "new": 43.0, "cohesion": null, "bond": 50.7, "infra": 21.4, "density_km2": 3.5, "civic_nodes": 3, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Montclair", "old": 48.4, "new": 22.6, "cohesion": null, "bond": 16.0, "infra": 9.9, "density_km2": 1.3, "civic_nodes": 3, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Peekskill", "old": 47.1, "new": 62.6, "cohesion": 85.1, "bond": 78.3, "infra": 32.5, "density_km2": 6.2, "civic_nodes": 7, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Valley Stream", "old": 57.3, "new": 59.6, "cohesion": 80.8, "bond": 78.1, "infra": 31.7, "density_km2": 6.0, "civic_nodes": 9, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Weehawken", "old": 24.8, "new": 40.1, "cohesion": 50.0, "bond": 41.6, "infra": 22.9, "density_km2": 3.9, "civic_nodes": 5, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "El Sereno", "old": 42.7, "new": 42.7, "cohesion": 38.5, "bond": 45.1, "infra": 32.5, "density_km2": 6.2, "civic_nodes": 8, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "Frogtown", "old": 35.9, "new": 37.0, "cohesion": null, "bond": 39.0, "infra": 25.1, "density_km2": 4.4, "civic_nodes": 5, "reliability": "suspect_thin", "area_type": "suburban"}
+{"name": "Gardena", "old": 45.0, "new": 45.5, "cohesion": 51.0, "bond": 49.2, "infra": 35.8, "density_km2": 7.0, "civic_nodes": 11, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Highland Park", "old": 44.6, "new": 37.1, "cohesion": 34.7, "bond": 36.3, "infra": 25.1, "density_km2": 4.4, "civic_nodes": 6, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "Hyde Park", "old": 57.1, "new": 27.9, "cohesion": 20.4, "bond": 27.9, "infra": 6.0, "density_km2": 0.8, "civic_nodes": 2, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Marina del Rey", "old": 20.3, "new": 28.4, "cohesion": 11.0, "bond": 10.9, "infra": 25.1, "density_km2": 4.4, "civic_nodes": 9, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Mid-City", "old": 37.1, "new": 37.9, "cohesion": 30.6, "bond": 35.5, "infra": 23.2, "density_km2": 4.0, "civic_nodes": 5, "reliability": "suspect_thin", "area_type": "urban_core"}
+{"name": "San Gabriel", "old": 57.9, "new": 47.2, "cohesion": null, "bond": 51.9, "infra": 42.2, "density_km2": 8.9, "civic_nodes": 13, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Studio City", "old": 33.9, "new": 33.4, "cohesion": 10.8, "bond": 17.5, "infra": 31.2, "density_km2": 5.9, "civic_nodes": 13, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Watts", "old": 59.0, "new": 36.2, "cohesion": 32.4, "bond": 37.1, "infra": 28.8, "density_km2": 5.3, "civic_nodes": 5, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Whittier", "old": 49.8, "new": 48.3, "cohesion": null, "bond": 52.3, "infra": 47.4, "density_km2": 11.0, "civic_nodes": 13, "reliability": "suspect_thin", "area_type": "urban_residential"}
+{"name": "Windsor Square", "old": 29.2, "new": 37.6, "cohesion": null, "bond": 43.6, "infra": 13.3, "density_km2": 1.8, "civic_nodes": 2, "reliability": "suspect_thin", "area_type": "urban_residential"}
