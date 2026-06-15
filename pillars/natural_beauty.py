@@ -4395,11 +4395,82 @@ def _v9_regional_normalize(raw: float, component: str, region: str) -> float:
     return min(100.0, raw / regional_median * global_ref)
 
 
+# Map each scenery-quiz preference to the V9 OWA component(s) it favors.
+_PREFERENCE_V9_COMPONENTS = {
+    PREFERENCE_MOUNTAINS: ("topo_score",),
+    PREFERENCE_OCEAN: ("water_score",),
+    PREFERENCE_LAKES_RIVERS: ("water_score",),
+    PREFERENCE_CANOPY: ("canopy_score", "gvi_score"),
+}
+_V9_OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.00]
+
+
+def _owa(scores: List[float]) -> float:
+    """Ordered Weighted Average: rank desc, apply positional weights (renormalized to the
+    number of components present)."""
+    s = sorted(scores, reverse=True)
+    w = _V9_OWA_WEIGHTS[:len(s)]
+    tot = sum(w) or 1.0
+    return sum((wi / tot) * si for wi, si in zip(w, s))
+
+
+def apply_v9_preference(owa_score: float, component_scores: Dict[str, float],
+                        preference_names: Optional[List[str]]) -> float:
+    """Bias the V9 natural-beauty score toward the user's preferred dimension(s).
+
+    The neutral OWA judges a place on its strongest dimensions (top slot = 0.62). A
+    preference forces the preferred dimension into that top slot, so it becomes the lead
+    criterion: a place whose preferred dimension is already its strength (a beach town for
+    "ocean") stays high, while a place weak in it is forced to lead with that weakness and
+    drops. preferred = mean of the preference's target components; the remaining dimensions
+    fill the lower OWA slots in rank order.
+
+    component_scores holds the per-dimension V9 scores (gvi/water/canopy/topo/landcover/bio).
+    Reusable by live scoring and the catalog fast-path. No / unknown preference -> unchanged.
+    """
+    if not preference_names:
+        return owa_score
+    targets: list[str] = []
+    for name in preference_names:
+        targets.extend(_PREFERENCE_V9_COMPONENTS.get(name, ()))
+    targets = list(dict.fromkeys(targets))  # dedup, preserve order
+    pref_vals = [component_scores[t] for t in targets
+                 if isinstance(component_scores.get(t), (int, float))]
+    if not pref_vals:
+        return owa_score
+    preferred = sum(pref_vals) / len(pref_vals)
+    others = sorted((v for k, v in component_scores.items()
+                     if k not in targets and isinstance(v, (int, float))), reverse=True)
+    ranked = [preferred] + others
+    w = _V9_OWA_WEIGHTS[:len(ranked)]
+    tot = sum(w) or 1.0
+    return round(sum((wi / tot) * si for wi, si in zip(w, ranked)), 2)
+
+
+_V9_COMPONENT_KEYS = ("gvi_score", "water_score", "canopy_score",
+                      "topo_score", "landcover_score", "bio_score")
+
+
+def v9_score_from_components(component_scores: Dict[str, float],
+                            preference_names: Optional[List[str]] = None) -> Optional[float]:
+    """Recompute the V9 natural-beauty score from its stored per-dimension component
+    scores (preference-independent), then apply any scenery preference. Used by the
+    catalog/cache fast-path so the served score is always correct regardless of what
+    score was cached. Returns None if no usable components are present."""
+    vals = [component_scores[k] for k in _V9_COMPONENT_KEYS
+            if isinstance(component_scores.get(k), (int, float))]
+    if not vals:
+        return None
+    owa_all = round(_owa(vals), 2)
+    return apply_v9_preference(owa_all, component_scores, preference_names)
+
+
 def _apply_v9_formula(
     result: Dict,
     tree_details: Dict,
     lat: Optional[float] = None,
     lon: Optional[float] = None,
+    preference_names: Optional[List[str]] = None,
 ) -> Tuple[float, Dict]:
     """
     Apply V9 formula to already-collected natural beauty data.
@@ -4481,10 +4552,19 @@ def _apply_v9_formula(
         [gvi_score, water_score, canopy_score, topo_score, landcover_score, bio_score],
         reverse=True
     )
-    total = round(sum(w * s for w, s in zip(_OWA_WEIGHTS, component_scores)), 2)
+    owa_total = round(sum(w * s for w, s in zip(_OWA_WEIGHTS, component_scores)), 2)
+
+    # Bias toward the user's scenery preference (no-op when none supplied).
+    comp_by_name = {
+        "gvi_score": gvi_score, "water_score": water_score, "canopy_score": canopy_score,
+        "topo_score": topo_score, "landcover_score": landcover_score, "bio_score": bio_score,
+    }
+    total = apply_v9_preference(owa_total, comp_by_name, preference_names)
 
     breakdown = {
         "owa_components": [round(s, 2) for s in component_scores],
+        "owa_score": owa_total,
+        "preference_applied": preference_names or None,
         "gvi_score": round(gvi_score, 2),
         "water_score": round(water_score, 2),
         "canopy_score": round(canopy_score, 2),
@@ -4517,9 +4597,13 @@ def get_natural_beauty_score(lat: float,
                              location_name: Optional[str] = None,
                              overrides: Optional[Dict[str, float]] = None,
                              enhancers_data: Optional[Dict] = None,
-                             disable_enhancers: bool = False) -> Tuple[float, Dict]:
+                             disable_enhancers: bool = False,
+                             natural_beauty_preference: Optional[List[str]] = None) -> Tuple[float, Dict]:
     """
     Public entry point for the natural beauty pillar.
+
+    natural_beauty_preference: scenery-quiz options (e.g. ["ocean"], ["mountains","canopy"])
+    that bias the V9 score toward the preferred dimension(s). None = neutral OWA.
     """
     result = calculate_natural_beauty(
         lat,
@@ -4549,6 +4633,7 @@ def get_natural_beauty_score(lat: float,
         tree_details if isinstance(tree_details, dict) else {},
         lat=lat,
         lon=lon,
+        preference_names=natural_beauty_preference,
     )
 
     # Which score to surface as the pillar score

@@ -538,7 +538,8 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
 
 
 def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_details: Dict,
-                         lat: Optional[float], lon: Optional[float]) -> tuple:
+                         lat: Optional[float], lon: Optional[float],
+                         natural_beauty_preference: Optional[List[str]] = None) -> tuple:
     """Apply V9 formula to an already-computed natural beauty result. Returns (score, details)."""
     try:
         v9_score, v9_breakdown = natural_beauty._apply_v9_formula(
@@ -546,6 +547,7 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
             natural_calc.get("details") or {},
             lat=lat,
             lon=lon,
+            preference_names=natural_beauty_preference,
         )
         natural_details["score_v7"] = round(float(natural_score), 2)
         natural_details["score_v9"] = round(float(v9_score), 2)
@@ -1207,6 +1209,7 @@ def _apply_allocation_to_cached_response(
     priorities_dict: Optional[Dict[str, str]],
     use_school_scoring: bool,
     only_pillars: Optional[set[str]] = None,
+    natural_beauty_preference: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Cached responses are stored without assuming a specific user priority allocation.
@@ -1266,6 +1269,23 @@ def _apply_allocation_to_cached_response(
     response["allocation_type"] = allocation_type
 
     livability_pillars = response.get("livability_pillars", {}) or {}
+
+    # Natural-beauty scenery preference: the catalog/cache template is preference-neutral
+    # (the cache key omits preferences for cross-user reuse). Recompute NB from its stored
+    # per-dimension component scores — which are preference-independent — and apply this
+    # request's preference. Done unconditionally so the served score is correct even if the
+    # cached score was populated by an earlier preference request.
+    nb = livability_pillars.get("natural_beauty")
+    v9b = (nb or {}).get("details", {}).get("v9_breakdown") if nb else None
+    if v9b:
+        comp = {k: v9b.get(k) for k in (
+            "gvi_score", "water_score", "canopy_score",
+            "topo_score", "landcover_score", "bio_score")}
+        recomputed = natural_beauty.v9_score_from_components(comp, natural_beauty_preference)
+        if recomputed is not None:
+            nb["score"] = recomputed
+            v9b["preference_applied"] = natural_beauty_preference or None
+
     total_score = 0.0
     for pillar_name, pillar_data in livability_pillars.items():
         weight = float(token_allocation.get(pillar_name, 0.0) or 0.0)
@@ -1438,6 +1458,7 @@ def _compute_single_score_internal(
                 priorities_dict=priorities_dict,
                 use_school_scoring=use_school_scoring,
                 only_pillars=only_pillars,
+                natural_beauty_preference=natural_beauty_preference,
             )
             if isinstance(response.get("metadata"), dict):
                 response["metadata"]["catalog_hit"] = True
@@ -1472,6 +1493,7 @@ def _compute_single_score_internal(
                     priorities_dict=priorities_dict,
                     use_school_scoring=use_school_scoring,
                     only_pillars=only_pillars,
+                    natural_beauty_preference=natural_beauty_preference,
                 )
                 _log_place_timing("total", start_perf)
                 return response
@@ -2133,7 +2155,8 @@ def _compute_single_score_internal(
 
     pillar_results['built_beauty'] = (built_score, built_details)
     natural_score, natural_details = _apply_v9_to_natural(
-        natural_calc or {}, natural_score, natural_details, lat, lon
+        natural_calc or {}, natural_score, natural_details, lat, lon,
+        natural_beauty_preference=natural_beauty_preference
     )
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
@@ -3176,6 +3199,7 @@ async def _stream_score_with_progress(
                         priorities_dict=priorities_dict,
                         use_school_scoring=use_school_scoring,
                         only_pillars=None,
+                        natural_beauty_preference=natural_beauty_preference,
                     )
 
                     # Emit pillar completion events quickly (match existing behavior: omit school pillar when disabled)
@@ -3658,7 +3682,8 @@ async def _stream_score_with_progress(
         
         pillar_results['built_beauty'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(
-            natural_calc or {}, natural_score, natural_details, lat, lon
+            natural_calc or {}, natural_score, natural_details, lat, lon,
+            natural_beauty_preference=natural_beauty_preference
         )
         pillar_results['natural_beauty'] = (natural_score, natural_details)
 
@@ -4770,7 +4795,8 @@ async def stream_score(
 
         pillar_results['built_beauty'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(
-            natural_calc or {}, natural_score, natural_details, lat, lon
+            natural_calc or {}, natural_score, natural_details, lat, lon,
+            natural_beauty_preference=natural_beauty_preference
         )
         pillar_results['natural_beauty'] = (natural_score, natural_details)
 
@@ -5873,23 +5899,23 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
             parts.append(f"{trail_count} trail{'s' if trail_count != 1 else ''}")
         access_str = " and ".join(parts) if parts else "parks and trails"
         if ao_band == "strong":
-            outdoors_sentence = f"Outdoor life is genuinely accessible here — {access_str}, and real green space within easy reach."
+            outdoors_sentence = f"{access_str.capitalize()} make outdoor life genuinely accessible here, with real green space within easy reach."
         elif ao_band == "solid":
-            outdoors_sentence = "There's decent outdoor access — a handful of parks and trails within reach for weekend use."
+            outdoors_sentence = "There's decent outdoor access, with a handful of parks and trails within reach for weekend use."
         elif ao_band == "moderate":
             outdoors_sentence = "Outdoor options exist but require some effort to get to."
         else:
-            outdoors_sentence = "Green space is limited — this is a place where nature takes a back seat."
+            outdoors_sentence = "Green space is limited. Nature takes a back seat here."
 
     if include("neighborhood_amenities") and am_score is not None and walk_10 is not None:
         if am_band == "strong":
-            amenities_sentence = "Real street-level energy — walkable shops, cafés, and daily errands all within easy reach."
+            amenities_sentence = "Walkable shops, cafés, and daily errands are all within easy reach. This neighborhood has real street-level energy."
         elif am_band == "solid":
             amenities_sentence = "Most daily needs are walkable, with a reasonable mix of shops and restaurants nearby."
         elif am_band == "moderate":
-            amenities_sentence = "Amenities are there, but you'll need to be deliberate — not everything is within easy reach."
+            amenities_sentence = "Amenities are there but you'll need to be deliberate. Not everything is within easy reach."
         else:
-            amenities_sentence = "This is car-dependent territory — daily errands mean driving."
+            amenities_sentence = "This is car-dependent territory. Daily errands mean driving."
 
     # Merge when both solid+ and at least one strong
     if (outdoors_sentence and amenities_sentence
@@ -5897,11 +5923,11 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
             and (ao_band == "strong" or am_band == "strong")):
         rep_score = max(ao_score or 0, am_score or 0)
         if ao_band == "strong" and am_band == "strong":
-            merged = "The neighborhood earns its keep on the street — walkable daily life backed by real outdoor access."
+            merged = "Walkable daily life backed by real outdoor access. This neighborhood earns its keep on the street."
         elif ao_band == "strong":
             merged = "Solid walkability and genuine outdoor access make the day-to-day here easy."
         else:
-            merged = "Real street-level energy — walkable shops and cafés, with decent outdoor access nearby."
+            merged = "Walkable shops and cafés with decent outdoor access nearby. The basics are well covered."
         blocks.append([rep_score, merged, False])
     else:
         if outdoors_sentence:
@@ -5917,27 +5943,26 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
 
     if include("healthcare_access") and hospital_km is not None and hc_score is not None:
         if hc_band == "strong" or (hospital_km < 3 and pharmacy_count >= 2):
-            healthcare_sentence = f"Healthcare is well covered — a hospital within {hospital_display} with pharmacies and clinics nearby."
+            healthcare_sentence = f"A hospital within {hospital_display} with pharmacies and clinics nearby. Healthcare is well covered."
         elif hc_band == "solid" or (hospital_km <= 8 and pharmacy_count >= 1):
-            ph_phrase = "a pharmacy" if pharmacy_count == 1 else "pharmacies and clinics"
-            healthcare_sentence = f"Medical care is accessible — a hospital {hospital_display} out and day-to-day health options nearby."
+            healthcare_sentence = f"A hospital {hospital_display} out with day-to-day health options nearby. Medical care is accessible."
         elif hc_band == "moderate":
-            healthcare_sentence = f"A hospital is {hospital_display} out — further than ideal but manageable for most."
+            healthcare_sentence = f"The nearest hospital is {hospital_display} out. Manageable for most but further than ideal."
         else:
-            healthcare_sentence = f"Medical care requires planning here — the nearest hospital is {hospital_display} out."
+            healthcare_sentence = f"The nearest hospital is {hospital_display} out. Medical care requires planning here."
 
     if include("public_transit_access") and pt_score is not None:
         if has_transit:
             if pt_band == "strong":
-                transit_sentence = "Transit is a real asset — multiple options that genuinely reduce car dependence."
+                transit_sentence = "Transit is a real asset here. Multiple options genuinely reduce car dependence."
             elif pt_band == "solid":
-                transit_sentence = "Getting around without a car is realistic here — transit covers the basics."
+                transit_sentence = "Getting around without a car is realistic. Transit covers the basics."
             elif pt_band == "moderate":
-                transit_sentence = "Transit exists but a car makes life easier for most trips."
+                transit_sentence = "Transit exists but a car makes most trips easier."
             else:
-                transit_sentence = "Most residents drive — transit options here are minimal."
+                transit_sentence = "Most residents drive. Transit options are thin."
         elif pt_score < 40:
-            transit_sentence = "Most residents drive — transit options here are minimal."
+            transit_sentence = "Most residents drive. Transit options are thin."
 
     if healthcare_sentence and transit_sentence:
         rep_score = max(hc_score or 0, pt_score or 0)
@@ -5945,13 +5970,13 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
         pt_strong = pt_band == "strong"
         pt_weak = pt_band not in ("strong", "solid")
         if hc_strong and pt_strong:
-            merged = f"Well-served on the basics — a hospital within {hospital_display} and solid transit options that reduce car dependence."
+            merged = f"A hospital within {hospital_display} and solid transit options that reduce car dependence. Well-served on the basics."
         elif hc_strong and pt_weak:
-            merged = f"Healthcare is close and reliable. Getting around without a car is harder — most residents drive."
+            merged = f"Healthcare is close and reliable. Most residents drive for everything else."
         elif pt_strong and not hc_strong:
-            merged = f"Transit is genuinely useful here. Medical care requires a bit more planning — the nearest hospital is {hospital_display} out."
+            merged = f"Transit is genuinely useful here. The nearest hospital is {hospital_display} out, so medical care takes a bit more planning."
         else:
-            merged = f"A hospital is {hospital_display} out — manageable for most. Most residents also drive for day-to-day trips."
+            merged = f"A hospital is {hospital_display} out, manageable for most. A car is the practical choice for getting around."
         suppressable = hc_band not in ("strong", "solid") and pt_band not in ("strong", "solid")
         blocks.append([rep_score, merged, suppressable])
     else:
@@ -5969,32 +5994,32 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     if has_ed and has_hv:
         rep_score = max(ed_score or 0, hv_score or 0)
         if ed_band == "strong" and not housing_expensive:
-            sentence = f"The schools are a real asset — {excellent} rated excellent — and housing is reasonably priced at {med_val_str} median for what you get."
+            sentence = f"{excellent} schools rated excellent and housing at {med_val_str} median. Strong fundamentals for families."
         elif ed_band == "strong" and housing_expensive:
-            sentence = f"School quality is high — {excellent} rated excellent — though housing reflects that demand at {med_val_str} median."
+            sentence = f"{excellent} schools rated excellent. Housing reflects that at {med_val_str} median."
         elif ed_band == "solid" and not housing_expensive:
-            sentence = f"Schools are solid and housing is accessible at {med_val_str} median — good fundamentals for families."
+            sentence = f"Solid schools and housing at {med_val_str} median. Good fundamentals for families."
         elif ed_band == "solid" and housing_expensive:
-            sentence = f"Decent schools at {med_val_str} median housing — you're paying for the neighborhood, not just the address."
+            sentence = f"Decent schools with housing at {med_val_str} median. You're paying for the neighborhood."
         elif housing_expensive:
-            sentence = f"Housing sits at a premium ({med_val_str} median) without strong schools to match — worth factoring in."
+            sentence = f"Housing sits at {med_val_str} median without strong schools to match. Worth factoring in."
         else:
-            sentence = f"Schools are a work in progress, but housing is accessible at {med_val_str} median — value is real here."
+            sentence = f"Schools are a work in progress. Housing is accessible at {med_val_str} median and the value is real."
         suppressable = ed_band not in ("strong", "solid") and not housing_affordable
         blocks.append([rep_score, sentence, suppressable])
     elif has_ed:
         if excellent >= 2:
-            sentence = f"{total_schools} schools serve the area, {excellent} of them rated excellent — a strong picture for families."
+            sentence = f"{total_schools} schools serve the area, {excellent} rated excellent. A strong picture for families."
         elif excellent == 1:
-            sentence = f"School options are solid, with {total_schools} schools nearby, including one rated excellent."
+            sentence = f"School options are solid, with {total_schools} schools nearby including one rated excellent."
         else:
-            sentence = f"Schools here are limited — {total_schools} nearby and none rated excellent."
+            sentence = f"Schools here are limited. {total_schools} nearby and none rated excellent."
         blocks.append([ed_score or 0, sentence, ed_band not in ("strong", "solid")])
     elif has_hv:
         if housing_affordable:
-            sentence = f"{place} is genuinely accessible on housing — a {med_val_str} median sits within reach for most earners."
+            sentence = f"Housing in {place} is genuinely accessible. A {med_val_str} median sits within reach for most earners."
         elif housing_expensive:
-            sentence = f"Housing is on the pricier side — a {med_val_str} median reflects strong demand."
+            sentence = f"Housing is on the pricier side. A {med_val_str} median reflects strong demand."
         else:
             sentence = f"Home prices sit in the moderate range at {med_val_str} median."
         blocks.append([hv_score or 0, sentence, not housing_affordable and not housing_expensive])
@@ -6005,23 +6030,23 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     if include("natural_beauty") and nb_score is not None:
         if nb_band == "strong":
             if has_water:
-                nb_detail = "water access, strong canopy cover"
+                nb_detail = "Water nearby and strong canopy cover"
             elif tree_pct and tree_pct >= 30:
-                nb_detail = "strong canopy cover and open space"
+                nb_detail = "Strong canopy cover and open space"
             else:
-                nb_detail = "greenery and natural character"
-            blocks.append([nb_score, f"The natural setting is a genuine draw — {nb_detail} that most urban neighborhoods can't match.", False])
+                nb_detail = "Greenery and natural character"
+            blocks.append([nb_score, f"The natural setting is a genuine draw. {nb_detail} that most urban neighborhoods can't match.", False])
         elif nb_band == "solid":
-            blocks.append([nb_score, "There's a reasonable amount of green and natural character — not dramatic, but present.", True])
+            blocks.append([nb_score, "There's a reasonable amount of green and natural character. Not dramatic, but present.", True])
 
     # ------------------------------------------------------------------ #
     # Block 5 — Air Travel (strong or <30km; solid within 60km; else omit)
     # ------------------------------------------------------------------ #
     if include("air_travel_access") and airport_name and airport_km is not None:
         if air_band == "strong" or airport_km < 30:
-            blocks.append([air_score or 0, f"{airport_name} is {airport_display} away — major airport access is excellent.", False])
+            blocks.append([air_score or 0, f"{airport_name} is {airport_display} out. Major airport access is excellent.", False])
         elif air_band == "solid" and airport_km <= 60:
-            blocks.append([air_score or 0, f"Airport access is reasonable — {airport_name} is within easy reach for travel.", True])
+            blocks.append([air_score or 0, f"{airport_name} is within easy reach. Airport access is reasonable for travel.", True])
 
     # ------------------------------------------------------------------ #
     # Sort by score descending — highest scoring block leads
@@ -6046,12 +6071,12 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     # ------------------------------------------------------------------ #
     if len(blocks) < 2 and include("natural_beauty") and nb_score is not None and nb_band in ("moderate", "weak"):
         if nb_band == "weak":
-            blocks.append([nb_score, "The trade-off for this location is nature — greenery and scenery are limited.", True])
+            blocks.append([nb_score, "Nature is the trade-off for this location. Greenery and scenery are limited.", True])
         blocks.sort(key=lambda x: x[0], reverse=True)
 
     # Cap at 4
     chosen = [b[1] for b in blocks[:4]]
-    return " ".join(chosen) if chosen else f"{place} is scored across livability, longevity, and happiness — see the full breakdown below."
+    return " ".join(chosen) if chosen else f"{place} is scored across livability, longevity, and happiness. See the full breakdown below."
 
 
 def _calculate_data_quality_summary(pillars: dict, area_type: str = None, form_context: str = None) -> dict:  # Changed from Dict to dict
