@@ -199,7 +199,7 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     
     # Multi-airport scoring
     score, primary_airport, airport_category = _calculate_multi_airport_score(
-        airports_with_distance, expectations
+        airports_with_distance, expectations, area_type
     )
 
     # Build response
@@ -239,133 +239,89 @@ def get_air_travel_score(lat: float, lon: float, area_type: Optional[str] = None
     return round(score, 1), breakdown
 
 
-def _calculate_multi_airport_score(airports: List[Dict], expectations: Dict) -> Tuple[float, Optional[Dict], str]:
+# Estimated effective driving speed to an airport (km/h), by area type. Airport trips
+# mix surface streets and highway; denser areas pay a traffic penalty. Tuned so a 25km
+# (straight-line) trip lands ~35-55 min — the range where access actually varies.
+_AIRPORT_DRIVE_KMH = {
+    # catalog vocabulary
+    "historic_urban": 34.0, "urban_residential": 40.0, "suburban": 52.0,
+    # other classifiers that may appear live
+    "urban_core": 33.0, "urban": 38.0, "dense_suburban": 45.0,
+    "exurban": 65.0, "rural": 72.0,
+}
+_ROAD_CIRCUITY = 1.3  # straight-line -> road distance multiplier
+
+# Service-level ceiling: an intl hub at a given drive time is worth more than a regional
+# field at the same time (more nonstops/destinations).
+_SERVICE_CEILING = {
+    "international_hub": 100.0, "major_hub": 92.0,
+    "regional_hub": 76.0, "unknown": 65.0,
+}
+# Drive-time bands (minutes -> base score). Replaces the flat 25km=100 plateau so access
+# actually grades with how far the airport really is.
+_TIME_BANDS = [(20, 100.0), (35, 88.0), (50, 74.0), (70, 58.0), (95, 42.0), (120, 26.0)]
+
+
+def _drive_minutes(distance_km: float, area_type: Optional[str]) -> float:
+    kmh = _AIRPORT_DRIVE_KMH.get((area_type or "").lower(), 50.0)
+    return (distance_km * _ROAD_CIRCUITY) / kmh * 60.0
+
+
+def _airport_band_score(distance_km: float, service_level: str, area_type: Optional[str]) -> Tuple[float, float]:
+    """Single-airport score from estimated drive time, capped by service level."""
+    mins = _drive_minutes(distance_km, area_type)
+    base = None
+    for t, s in _TIME_BANDS:
+        if mins <= t:
+            base = s
+            break
+    if base is None:
+        base = max(8.0, 26.0 - (mins - 120.0) * 0.25)  # gentle decay past 2 hours
+    ceiling = _SERVICE_CEILING.get(service_level, 65.0)
+    return min(base, ceiling), mins
+
+
+def _calculate_multi_airport_score(
+    airports: List[Dict], expectations: Dict, area_type: Optional[str] = None
+) -> Tuple[float, Optional[Dict], str]:
     """
-    Calculate score considering multiple airports with smooth decay curves.
-    
-    Args:
-        airports: List of airports with distance information
-        expectations: Contextual expectations for the area
-    
+    Score air access from estimated drive time to the best reachable airport, with a
+    small bonus for a genuinely separate second hub. Replaces the prior model, which
+    plateaued at 100 within 25km AND summed the best 3 airports — saturating every place
+    in a multi-airport metro (e.g. all of LA scored exactly 100).
+
     Returns:
         Tuple of (score, primary_airport, airport_category)
     """
     if not airports:
         return 0.0, None, "No nearby airports"
-    
-    # Score the best 3 airports within 150km (extended range)
-    # Prioritize airports within 100km, but include up to 150km with reduced scoring
-    best_airports = airports[:3]
-    
-    total_score = 0.0
-    primary_airport = None
-    airport_category = "Unknown"
-    
-    for i, airport in enumerate(best_airports):
-        distance_km = airport["distance_km"]
-        apt_type = airport["type"]
-        service_level = airport.get("service_level", "unknown")
-        
-        # Weight decreases for further airports
-        weight = 1.0 / (i + 1)  # 1.0, 0.5, 0.33
-        
-        # Calculate individual airport score
-        if apt_type == "large_airport":
-            base_score = _score_large_airport_smooth(distance_km, service_level)
-            if i == 0:  # Primary airport
-                primary_airport = airport
-                airport_category = "International hub" if service_level == "international_hub" else "Major hub"
-        elif apt_type == "medium_airport":
-            base_score = _score_medium_airport_smooth(distance_km, service_level)
-            if i == 0 and not primary_airport:  # Primary if no large airport
-                primary_airport = airport
-                airport_category = "Regional hub" if service_level == "regional_hub" else "Regional airport"
-        else:
-            base_score = _score_small_airport_smooth(distance_km)
-            if i == 0 and not primary_airport:  # Primary if no better options
-                primary_airport = airport
-                airport_category = "Small airport"
-        
-        # Apply weight and add to total
-        weighted_score = base_score * weight
-        total_score += weighted_score
-    
-    # Bonus for multiple airport options (redundancy)
-    if len(best_airports) >= 2:
-        redundancy_bonus = min(10, len(best_airports) * 3)  # Up to 10 point bonus
-        total_score += redundancy_bonus
-    
-    # Cap at 100
-    final_score = min(100, total_score)
-    
-    return final_score, primary_airport, airport_category
 
+    scored = []
+    for airport in airports:
+        s, mins = _airport_band_score(
+            airport["distance_km"], airport.get("service_level", "unknown"), area_type
+        )
+        scored.append((s, mins, airport))
+    scored.sort(key=lambda x: -x[0])
 
-def _score_large_airport_smooth(distance_km: float, service_level: str) -> float:
-    """Score large airport using smooth decay curve."""
-    # Base scores by service level
-    base_scores = {
-        "international_hub": 100.0,
-        "major_hub": 90.0,
-        "regional_hub": 80.0
-    }
-    
-    max_score = base_scores.get(service_level, 85.0)
-    optimal_distance = 25.0  # km
-    decay_rate = 0.02  # Steeper decay for airports
-    
-    if distance_km <= optimal_distance:
-        score = max_score
-    elif distance_km <= 100:
-        # Exponential decay beyond optimal distance (up to 100km)
-        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
+    best_score, _, primary_airport = scored[0]
+    sl = primary_airport.get("service_level", "unknown")
+    if primary_airport["type"] == "large_airport":
+        airport_category = "International hub" if sl == "international_hub" else "Major hub"
+    elif primary_airport["type"] == "medium_airport":
+        airport_category = "Regional hub" if sl == "regional_hub" else "Regional airport"
     else:
-        # Extended range (100-150km): continue decay but ensure minimum score
-        # At 100km, score is already low, so continue decay but don't go below 5-10 points
-        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
-        # Additional decay from 100-150km, but floor at 5 points for large airports
-        extended_decay = score_at_100km * math.exp(-0.03 * (distance_km - 100))
-        score = max(5.0, extended_decay)
-    
-    return min(max_score, max(0, score))
+        airport_category = "Small airport"
 
+    # Redundancy: a second, distinct hub reachable within ~60 min adds modest value
+    # (more nonstops, schedule resilience) — bounded so it can't recreate saturation.
+    final_score = best_score
+    for s, mins, apt in scored[1:]:
+        if apt["code"] != primary_airport["code"] and mins <= 60.0:
+            final_score = min(100.0, final_score + min(7.0, s * 0.10))
+            break
 
-def _score_medium_airport_smooth(distance_km: float, service_level: str) -> float:
-    """Score medium airport using smooth decay curve."""
-    max_score = 60.0
-    optimal_distance = 30.0  # km
-    decay_rate = 0.015
-    
-    if distance_km <= optimal_distance:
-        score = max_score
-    elif distance_km <= 100:
-        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
-    else:
-        # Extended range (100-150km): continue decay with minimum floor
-        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
-        extended_decay = score_at_100km * math.exp(-0.025 * (distance_km - 100))
-        score = max(3.0, extended_decay)  # Minimum 3 points for medium airports
-    
-    return min(max_score, max(0, score))
-
-
-def _score_small_airport_smooth(distance_km: float) -> float:
-    """Score small airport using smooth decay curve."""
-    max_score = 40.0
-    optimal_distance = 20.0  # km
-    decay_rate = 0.01
-    
-    if distance_km <= optimal_distance:
-        score = max_score
-    elif distance_km <= 100:
-        score = max_score * math.exp(-decay_rate * (distance_km - optimal_distance))
-    else:
-        # Extended range (100-150km): continue decay with minimum floor
-        score_at_100km = max_score * math.exp(-decay_rate * (100 - optimal_distance))
-        extended_decay = score_at_100km * math.exp(-0.02 * (distance_km - 100))
-        score = max(2.0, extended_decay)  # Minimum 2 points for small airports
-    
-    return min(max_score, max(0, score))
+    return round(min(100.0, final_score), 1), primary_airport, airport_category
 
 
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
