@@ -620,6 +620,49 @@ def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
         return None
 
 
+def get_transit_mode_share(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[float]:
+    """
+    Share of workers who commute by public transit, at the TRACT level (ACS 5-Year B08301).
+
+    Unlike get_economic_geography (CBSA/metro level — correct for labor-market data but it
+    averages a whole metro to one value), this resolves per place: East Village reads ~65%,
+    a car-dependent commuter suburb ~5-10%. Used to weight the transit pillar's commuter
+    commute credit by how much transit is actually used — so a short *car* commute doesn't
+    earn transit credit.
+
+    Returns the fraction 0..1, or None if unavailable.
+    """
+    if tract is None:
+        tract = get_census_tract(lat, lon)
+    if not tract:
+        return None
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        params = {
+            "get": "B08301_001E,B08301_010E",  # total workers, public-transit commuters
+            "for": f"tract:{tract['tract_fips']}",
+            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "key": CENSUS_API_KEY,
+        }
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        if len(data) < 2:
+            return None
+        total, transit = data[1][0], data[1][1]
+        if not total or total in {"-666666666", "-222222222"}:
+            return None
+        total = float(total)
+        transit = float(transit) if transit and transit not in {"-666666666", "-222222222"} else 0.0
+        if total <= 0:
+            return None
+        return max(0.0, min(1.0, transit / total))
+    except Exception as e:
+        print(f"   ⚠️  Transit mode share lookup failed: {e}")
+        return None
+
+
 def get_year_built_data(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[Dict]:
     """
     Get year built data from Census ACS 5-Year.
