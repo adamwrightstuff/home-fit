@@ -1298,6 +1298,32 @@ def get_public_transit_score(
         except Exception:
             pass
 
+    # Commuter-access floor: a town served by commuter rail with a reasonable Census commute
+    # is a genuinely good place to commute from — the reason people choose Pelham, Bronxville,
+    # Larchmont or Scarsdale — even when its raw route-supply is low. The station-distance
+    # heuristic above frequently fails to locate suburban rail stops (returns inf), so we
+    # credit the reliable Census commute-time signal directly. Gated on actual commuter rail
+    # so it rewards rail commute-ease (not car commuting), excludes subway places (already
+    # scored on supply), and applies as a FLOOR so it never lowers a higher supply score.
+    commuter_access_floor = None
+    if commuter_count > 0 and subway_count == 0 and total_score < 75.0:
+        try:
+            from data_sources.census_api import get_commute_time
+            _commute_min = get_commute_time(lat, lon)
+        except Exception:
+            _commute_min = None
+        if _commute_min and _commute_min > 0:
+            # Cap at 70: a commuter town with a short commute is a *good* place to commute
+            # from, but commuter rail is peak-oriented and Census commute time also reflects
+            # local car commuters — so it must stay clearly below subway-hub territory (85-100).
+            commuter_access_floor = round(min(70.0, _score_commute_time(_commute_min, area_type)), 1)
+            if commuter_access_floor > total_score:
+                logger.info(f"📊 Commuter-access floor: {total_score:.1f} -> {commuter_access_floor:.1f} "
+                            f"(commute={_commute_min:.0f}min, {commuter_count} commuter routes)",
+                            extra={"pillar_name": "public_transit_access", "lat": lat, "lon": lon,
+                                   "commuter_access_floor": commuter_access_floor})
+            total_score = max(total_score, commuter_access_floor)
+
     # Record data sources used
     try:
         ds = quality_metrics.get('data_sources', []) or []
