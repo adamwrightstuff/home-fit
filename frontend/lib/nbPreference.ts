@@ -106,6 +106,59 @@ export interface NbBreakdown {
   nb_scenic_cap?: number
 }
 
+// ── V9 preference (current model) ────────────────────────────────────────────
+// Mirrors pillars/natural_beauty.py apply_v9_preference. The V9 score is an Ordered
+// Weighted Average of six per-dimension scores; a preference forces its dimension into
+// the OWA lead slot (0.62) so it becomes the lead criterion. Reads the stored
+// details.v9_breakdown component scores — no V7 scenic-bonus math.
+const V9_OWA_WEIGHTS = [0.62, 0.25, 0.1, 0.02, 0.01, 0.0]
+const V9_COMPONENT_KEYS = [
+  'gvi_score', 'water_score', 'canopy_score', 'topo_score', 'landcover_score', 'bio_score',
+] as const
+const PREFERENCE_V9_COMPONENTS: Record<NbPreference, string[]> = {
+  mountains: ['topo_score'],
+  ocean: ['water_score'],
+  lakes_rivers: ['water_score'],
+  canopy: ['canopy_score', 'gvi_score'],
+}
+
+export interface V9Breakdown {
+  gvi_score?: number
+  water_score?: number
+  canopy_score?: number
+  topo_score?: number
+  landcover_score?: number
+  bio_score?: number
+}
+
+/**
+ * Re-score natural beauty for a scenery preference from the stored V9 component scores.
+ * Returns null if the V9 breakdown is missing (caller keeps the stored score).
+ */
+export function applyNbPreferenceV9(
+  v9: V9Breakdown | undefined | null,
+  preference: NbPreference,
+): number | null {
+  if (!v9) return null
+  const comp: Record<string, number> = {}
+  for (const k of V9_COMPONENT_KEYS) {
+    const v = (v9 as Record<string, unknown>)[k]
+    if (typeof v === 'number') comp[k] = v
+  }
+  const targets = PREFERENCE_V9_COMPONENTS[preference] ?? []
+  const prefVals = targets.map((t) => comp[t]).filter((v) => typeof v === 'number')
+  if (prefVals.length === 0) return null
+  const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
+  const others = Object.entries(comp)
+    .filter(([k]) => !targets.includes(k))
+    .map(([, v]) => v)
+    .sort((a, b) => b - a)
+  const ranked = [preferred, ...others]
+  const w = V9_OWA_WEIGHTS.slice(0, ranked.length)
+  const tot = w.reduce((a, b) => a + b, 0) || 1
+  return Math.round(ranked.reduce((s, v, i) => s + (w[i] / tot) * v, 0) * 100) / 100
+}
+
 /**
  * Compute a preference-adjusted NB score.
  * Returns null if the breakdown lacks the raw component fields (pre-rescore data).

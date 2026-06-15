@@ -32,7 +32,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
-import { type NbPreference } from '@/lib/nbPreference'
+import { type NbPreference, applyNbPreferenceV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -295,10 +295,30 @@ export default function CatalogPageClient({
         })
       : withIncome
 
-    // Natural beauty preference no longer modifies the score — the objective V9 score
-    // reflects what a place has (OWA on its strongest features). Preference is used for
-    // discovery/sorting only, not score adjustment.
-    return withPolitical
+    // Natural beauty preference: re-bias the V9 score toward the chosen scenery dimension
+    // from the stored per-dimension component scores (mirrors backend apply_v9_preference,
+    // forcing the preferred dimension into the OWA lead slot). The reweight downstream picks
+    // up the new natural_beauty score and recomputes total_score, so the list reranks.
+    const withNb = nbPreference
+      ? withPolitical.map((p) => {
+          const nb = (p.score.livability_pillars as any)?.natural_beauty
+          const v9 = nb?.details?.v9_breakdown
+          const newScore = applyNbPreferenceV9(v9, nbPreference)
+          if (newScore == null) return p
+          return {
+            ...p,
+            score: {
+              ...p.score,
+              livability_pillars: {
+                ...p.score.livability_pillars,
+                natural_beauty: { ...nb, score: newScore },
+              },
+            },
+          }
+        })
+      : withPolitical
+
+    return withNb
   }, [places, householdIncome, politicalPreference, nbPreference])
 
   const filteredPlaces = useMemo(() => {
