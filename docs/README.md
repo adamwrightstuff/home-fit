@@ -21,6 +21,8 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   the scenery-preference lead-slot mechanism (Python + TS mirror).
 - **[PILLAR_AIR_TRAVEL.md](PILLAR_AIR_TRAVEL.md)** — drive-time bands to the best hub
   (fixed the everything-scores-100 saturation).
+- **[PILLAR_DIVERSITY.md](PILLAR_DIVERSITY.md)** — entropy across race/income/age; the
+  tract geo-fallback fabricated-0 bug.
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
