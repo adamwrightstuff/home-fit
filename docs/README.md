@@ -27,6 +27,8 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   area-relative scoring, and the COMING_SOON coverage gap (null ≠ unsafe).
 - **[PILLAR_BUILT_BEAUTY.md](PILLAR_BUILT_BEAUTY.md)** — architectural diversity + historic
   coherence; the coverage-0 fabricated-floor issue and pending backfill.
+- **[PILLAR_HEALTHCARE_ACCESS.md](PILLAR_HEALTHCARE_ACCESS.md)** — facility count + proximity; saturates at the ceiling in dense metros.
+- **[PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md)** — nearby school ratings; the schools-gating Live-vs-Explorer divergence.
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
