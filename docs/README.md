@@ -15,6 +15,8 @@ Documentation for the home-fit scoring backend and catalog. Start here.
 ## Pillar deep-dives (full scoring flow)
 - **[PILLAR_TRANSIT.md](PILLAR_TRANSIT.md)** — public transit access: supply split (subway vs
   commuter), v3 absolute model, and the ridership-weighted commuter-access floor.
+- **[PILLAR_ECONOMIC_SECURITY.md](PILLAR_ECONOMIC_SECURITY.md)** — reachable job-market
+  (LODES gravity) + market quality; why it excludes resident outcomes.
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
