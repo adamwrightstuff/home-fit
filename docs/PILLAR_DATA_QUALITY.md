@@ -62,12 +62,35 @@ doesn't differentiate). Status: ✅ fixed, ⚠️ open, ℹ️ by-design.
 ## political_lean
 - ℹ️ **All null / disabled** (weight 0). Intentional.
 
-## climate_risk, social_fabric, active_outdoors, natural_beauty, housing_value
-- No coarse-geo or fabricated-value issues found. `social_fabric` systematically scores
-  low-density affluent areas low (Westport/Weston/Hollywood Hills ~22-37) — real signal about
-  walkable community fabric, not a bug, but it stacks the deck against car-dependent suburbs.
+## social_fabric — ⚠️ OPEN: density proxy overrides real civic strength (needs data-backed fix)
+`infrastructure_density` is largely a **population-density proxy**, and it dominates the
+score — penalizing low-density suburbs even when their *actual* civic life is strong. Worked
+example: **Larchmont 49.6 vs Bronxville 62.6**, yet Larchmont **beats** Bronxville on civic
+nodes (40 vs 19), civic gathering (100 vs 66), orgs/1k (1.4 vs 1.0), engagement (47 vs 43),
+stability (48 vs 41), rootedness (94 vs 89). The entire 13-pt gap is `infrastructure_density`
+(43 vs 70), driven only by density (5,977 vs 11,636 /sq mi). The pillar equates "fewer people
+per sq mi" with "weaker community" — wrong for affluent suburbs with strong club/org/civic
+fabric. **TODO (data-backed, not hand-waved):** investigate suburban & neighborhood social
+fabric — should `infrastructure_density` be down-weighted, or credited by civic-node /
+org / gathering strength when density is low? Derive the weighting from evidence, per place
+morphology, not intuition.
+
+## public_transit_access — ⚠️ OPEN: commuter floor leaks car commutes
+The commuter-access floor is `commute_score × ridership_ramp(transit_share)`, but
+`commute_score` is the mean commute of **all** workers (drivers included). In corporate-corridor
+suburbs (Harrison: ~24-min mean commute from local Purchase/White Plains office parks), short
+*driving* commutes inflate the transit score. **Harrison ranks #1 of all suburbs (83.4)** partly
+for this reason — it's the only town maxing both terms (commute 83.4 × full ramp at 35% share),
+but the commute term is driver-inflated. **TODO:** isolate transit-commuters' commute time
+(ACS B08134 by mode, if available) rather than all-worker mean.
+
+## climate_risk, active_outdoors, natural_beauty, housing_value
+- No coarse-geo or fabricated-value issues found.
 
 ## Cross-cutting reminders
+- **Data-backed logic per pillar:** when a pillar mis-ranks a place, fix the *logic* with
+  evidence (what the metric should measure and why), not a one-off nudge. Every weighting/
+  threshold should trace to a rationale, not a hand-wave.
 - **Weight normalization:** a place's weights must sum to 100 over its *scored* pillars
   (non-null score, excluding `political_lean`). Any reweight must renormalize over scored
   pillars only (the education-enable bug left 4 places at 92.86 until repaired).
