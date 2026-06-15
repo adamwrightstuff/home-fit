@@ -17,6 +17,10 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   commuter), v3 absolute model, and the ridership-weighted commuter-access floor.
 - **[PILLAR_ECONOMIC_SECURITY.md](PILLAR_ECONOMIC_SECURITY.md)** — reachable job-market
   (LODES gravity) + market quality; why it excludes resident outcomes.
+- **[PILLAR_NATURAL_BEAUTY.md](PILLAR_NATURAL_BEAUTY.md)** — V9 ordered-weighted-average +
+  the scenery-preference lead-slot mechanism (Python + TS mirror).
+- **[PILLAR_AIR_TRAVEL.md](PILLAR_AIR_TRAVEL.md)** — drive-time bands to the best hub
+  (fixed the everything-scores-100 saturation).
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
