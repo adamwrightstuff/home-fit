@@ -63,9 +63,10 @@ total_score = max(total_score, floor)
   `get_economic_geography` (which is CBSA/whole-metro and would return one value for everyone).
 - **No artificial cap.** A short *car* commute earns no transit credit (low share → low ramp);
   a town where people genuinely take the train does. Self-limiting, naturally below subway hubs.
-- Results: Harrison 83 (35% share), Darien 70, Bronxville/Scarsdale 59, Larchmont 56;
-  New Canaan 23 (12% share), Norwalk stays at supply (2% share). Subway places excluded
-  (`subway_count == 0`).
+- Results (with FRESH commute, post-fix): Harrison 62, Greenwich 61.8, Rye 60.7, Bronxville
+  58.9, Darien 56.6, Larchmont 56.1; New Canaan 22.7 (12% share), Norwalk stays at supply (2%
+  share). Subway places excluded (`subway_count == 0`). A tight, sane band — not the 83 outlier
+  the stale-commute bug produced.
 - History: a hard `min(70)` cap was tried first and rejected as artificial; replaced by
   ridership weighting. **Don't reintroduce the cap.** See transit-commuter-access-floor memory.
 
