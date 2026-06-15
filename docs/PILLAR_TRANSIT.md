@@ -72,8 +72,9 @@ total_score = max(total_score, floor)
 ## Catalog application
 The catalog is rescored offline (not via live fetch — too noisy):
 - `scripts/rescore_transit_split.py` → v3 supply from stored route counts.
-- `scripts/apply_commuter_access_floor.py` → the ridership-weighted floor, using the stored
-  Happiness `commute` value × a tract transit-share fetch. Run it **after** the v3 rescore
+- `scripts/apply_commuter_access_floor.py` → the ridership-weighted floor, using FRESH `get_commute_time` + tract transit-share (scripts/fix_commuter_floor_fresh.py).
+  NOTE: the original apply_commuter_access_floor.py used the *stored* Happiness commute, which was
+  stale for 36% of places (Harrison 83→62) — do not use it; use the fresh-fetch script. Run it **after** the v3 rescore
   (it floors the v3 supply). See CATALOG_RESCORE_RUNBOOK.
 
 ## Where it feeds

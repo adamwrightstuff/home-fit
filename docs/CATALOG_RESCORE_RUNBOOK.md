@@ -15,7 +15,7 @@ so you can audit what's applied.
 | Pillar | `_rescore_version` | Script | What it does |
 |---|---|---|---|
 | public_transit_access | `transit_v3_subway_commuter_split` | `scripts/rescore_transit_split.py` | split subway (rt 1) vs commuter rail (rt 2), weights 3/1/2/0.7, anchor 120 |
-| public_transit_access | `commuter_access_floor_ridership` | `scripts/apply_commuter_access_floor.py` | floor commuter-rail towns at commute-time × tract transit-ridership (no cap) |
+| public_transit_access | `commuter_access_floor_fresh` | `scripts/apply_commuter_access_floor.py` | floor commuter-rail towns at FRESH-commute × tract transit-ridership (use fix_commuter_floor_fresh.py — the stored-value apply_commuter_access_floor.py was stale for 36%) |
 | air_travel_access | `air_travel_commute_bands` | `scripts/rescore_air_travel.py` | drive-time bands to best hub (fixes the LA std-0 saturation) |
 | quality_education | `education_weight_enabled` | `scripts/enable_education_weight.py` | give education its weight (scores already existed) |
 | diversity | `diversity_transient_refetch` / `diversity_nodata_unresolvable` | `scripts/repair_diversity_and_weights.py` | fix the 2 broken diversity=0 records + renormalize weights to 100 |
