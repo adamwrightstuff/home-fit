@@ -1,10 +1,8 @@
 {
-  "_note": "NY state only LODES JT00 2022 build (see scripts/baselines/build_lodes_h8_commuter.py). US-wide parquet will widen this distribution.",
-  "_scope": "ny_lodes_2022_S000_JT00",
-  "n_h3_cells": 31913,
-  "wrr_jobs_p50": 0.5455,
-  "wrr_jobs_p90": 6.4159,
-  "wrr_jobs_p95": 16.0,
-  "wrr_jobs_p99": 147.4848,
-  "wrr_jobs_max": 14115.0
+  "n_h3_cells": 101317,
+  "wrr_jobs_p50": 0.5,
+  "wrr_jobs_p90": 8.0155,
+  "wrr_jobs_p95": 25.0,
+  "wrr_jobs_p99": 410.0,
+  "wrr_jobs_max": 34647.0
 }

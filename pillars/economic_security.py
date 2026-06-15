@@ -450,6 +450,25 @@ def get_economic_security_score(
         final_score, component_renorm = base_final_score, base_component_renorm
     final_score = float(final_score or 0.0)
 
+    # Reachable-market anchor. Economic security is the job market a place's residents can
+    # actually REACH — not the metro it's administratively filed under, and not its current
+    # residents' outcomes. The components above (from CBSA labor-market data) capture market
+    # QUALITY (wages, growth, diversity); job-accessibility (gravity over the LODES job grid)
+    # captures reachable SIZE + proximity. Blending it in fixes wrong-CBSA anchoring (Greenwich
+    # commutes to NYC, not Bridgeport) and adds within-metro differentiation (Harlem scores
+    # high — close to Manhattan jobs). Falls back to market quality alone where the LODES grid
+    # has no coverage.
+    market_quality_score = final_score
+    job_access_score_val = None
+    try:
+        from data_sources.job_accessibility import job_access_score
+        job_access_score_val = job_access_score(lat, lon)
+    except Exception:
+        job_access_score_val = None
+    if job_access_score_val is not None:
+        final_score = round(0.55 * job_access_score_val + 0.45 * market_quality_score, 1)
+    final_score = float(final_score or 0.0)
+
     metrics_present = [k for k, v in sub_scores.items() if isinstance(v, (int, float))]
     combined_data = {
         "metrics_present": metrics_present,
