@@ -23,6 +23,8 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   (fixed the everything-scores-100 saturation).
 - **[PILLAR_DIVERSITY.md](PILLAR_DIVERSITY.md)** — entropy across race/income/age; the
   tract geo-fallback fabricated-0 bug.
+- **[PILLAR_COMMUNITY_SAFETY.md](PILLAR_COMMUNITY_SAFETY.md)** — FBI CDE crime rates,
+  area-relative scoring, and the COMING_SOON coverage gap (null ≠ unsafe).
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
