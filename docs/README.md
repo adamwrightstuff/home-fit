@@ -12,6 +12,10 @@ Documentation for the home-fit scoring backend and catalog. Start here.
 - **[PILLAR_DATA_QUALITY.md](PILLAR_DATA_QUALITY.md)** — per-pillar register of known bugs,
   coverage gaps, and saturation (what's fixed, open, or by-design).
 
+## Pillar deep-dives (full scoring flow)
+- **[PILLAR_TRANSIT.md](PILLAR_TRANSIT.md)** — public transit access: supply split (subway vs
+  commuter), v3 absolute model, and the ridership-weighted commuter-access floor.
+
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
 - [beauty_area_type_reference.md](beauty_area_type_reference.md)
