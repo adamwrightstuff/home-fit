@@ -29,6 +29,13 @@ Documentation for the home-fit scoring backend and catalog. Start here.
   coherence; the coverage-0 fabricated-floor issue and pending backfill.
 - **[PILLAR_HEALTHCARE_ACCESS.md](PILLAR_HEALTHCARE_ACCESS.md)** — facility count + proximity; saturates at the ceiling in dense metros.
 - **[PILLAR_QUALITY_EDUCATION.md](PILLAR_QUALITY_EDUCATION.md)** — nearby school ratings; the schools-gating Live-vs-Explorer divergence.
+- **[PILLAR_SOCIAL_FABRIC.md](PILLAR_SOCIAL_FABRIC.md)** — stability + civic engagement +
+  cohesion; why it scores low-density affluence low.
+- **[PILLAR_ACTIVE_OUTDOORS.md](PILLAR_ACTIVE_OUTDOORS.md)** — daily / wild / water recreation access.
+- **[PILLAR_NEIGHBORHOOD_AMENITIES.md](PILLAR_NEIGHBORHOOD_AMENITIES.md)** — walkable density/variety/proximity; point-placement undercount gotcha.
+- **[PILLAR_HOUSING_VALUE.md](PILLAR_HOUSING_VALUE.md)** — affordability axis (low = expensive); income personalization.
+- **[PILLAR_CLIMATE_RISK.md](PILLAR_CLIMATE_RISK.md)** — heat / air / flood / trend; higher = safer.
+- *political_lean* — disabled (all null, weight 0); intentional, no deep-dive.
 
 ## Pillar references (data sources & methodology)
 - [economic_security_pillar_data_reference.md](economic_security_pillar_data_reference.md)
