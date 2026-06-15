@@ -543,6 +543,8 @@ def get_economic_security_score(
         "qcew_employment_growth_pct": round(float(qcew_employment_growth_pct), 2) if isinstance(qcew_employment_growth_pct, (int, float)) else None,
         "industry_diversity_hhi": round(float(industry_hhi), 4) if isinstance(industry_hhi, (int, float)) else None,
         "anchored_balance": round(float(anchored_balance), 3) if isinstance(anchored_balance, (int, float)) else None,
+        "job_access_score": job_access_score_val,
+        "market_quality_score": round(market_quality_score, 1),
     }
 
     # Expose industry shares for Status Signal (finance + arts)
