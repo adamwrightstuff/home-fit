@@ -69,6 +69,14 @@ def _county_fips_from_row(row, state_fips: str) -> str | None:
         return f"{sfp.zfill(2)}{cfp.zfill(3)}"
     if cfp and state_fips:
         return f"{state_fips.zfill(2)}{cfp.zfill(3)}"
+    # VEST CA-style: FIPS_CODE holds the full county FIPS but may drop the leading zero
+    # (Alameda = '6001' -> '06001'). CNTY_CODE is the bare county code (-> state + county).
+    fipsc = str(row.get("FIPS_CODE") or "").strip()
+    if fipsc:
+        return fipsc.zfill(5)
+    cnty = str(row.get("CNTY_CODE") or "").strip()
+    if cnty and state_fips:
+        return f"{state_fips.zfill(2)}{cnty.zfill(3)}"
     return None
 
 
