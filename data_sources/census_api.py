@@ -533,6 +533,14 @@ def get_housing_data(lat: float, lon: float, tract: Optional[Dict] = None, area_
         tract = get_census_tract(lat, lon)
     if not tract:
         return None
+    # If the pin resolved an empty tract (water/park/commercial — ~0 residents), no real
+    # housing data exists there and we'd fabricate a zero/fallback. Swap to the nearest
+    # populated tract. No-op for normal pins (their tract is already populated).
+    _pop = get_population(tract)
+    if not _pop or _pop < 100:
+        _better = get_census_tract_populated(lat, lon)
+        if _better:
+            tract = _better
 
     print("🏠 Fetching housing data from Census ACS...")
 
@@ -690,6 +698,42 @@ def get_commute_time_stable(lat: float, lon: float, ring_m: int = 700) -> Option
     if den <= 0:
         return None
     return round(num / den, 1)
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+def get_census_tract_populated(lat: float, lon: float, min_pop: int = 300) -> Optional[Dict]:
+    """
+    Like get_census_tract, but if the pin lands in an empty/uninhabited tract (water, park,
+    pure-commercial — Southport's pin resolves a 0-pop water tract '990000', Pelham Bay a park
+    tract), return the nearest POPULATED tract instead. Fixes census pillars (housing, diversity,
+    commute) that otherwise fabricate zeros/sentinels for these pins. Returns the pin's own tract
+    unchanged when it's already populated (the common case — no behavior change there).
+    """
+    import math
+    primary = get_census_tract(lat, lon)
+    if primary:
+        pop = get_population(primary)
+        if pop and pop >= min_pop:
+            return primary
+    # pin tract is empty/missing — spiral outward for the nearest populated tract
+    seen = set()
+    if primary:
+        seen.add((primary.get("state_fips"), primary.get("county_fips"), primary.get("tract_fips")))
+    for rm in (400, 800, 1200, 1800, 2500):
+        for ang in range(0, 360, 30):
+            dlat = rm / 111000.0 * math.cos(math.radians(ang))
+            dlon = rm / (111000.0 * math.cos(math.radians(lat))) * math.sin(math.radians(ang))
+            t = get_census_tract(lat + dlat, lon + dlon)
+            if not t:
+                continue
+            tid = (t.get("state_fips"), t.get("county_fips"), t.get("tract_fips"))
+            if tid in seen:
+                continue
+            seen.add(tid)
+            pop = get_population(t)
+            if pop and pop >= min_pop:
+                return t
+    return primary  # nothing better found; caller falls back as before
 
 
 def get_transit_mode_share(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[float]:
