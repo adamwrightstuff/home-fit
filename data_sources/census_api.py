@@ -607,11 +607,17 @@ def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             return None
 
         value = data[1][0]
-        if not value or value in {"-666666666", "-222222222"}:
+        if value is None:
+            return None
+        try:
+            commute_minutes = float(value)
+        except (TypeError, ValueError):
+            return None
+        # Census jam/no-data sentinels are large negatives (-666666666, -999999999,
+        # -888888888, -222222222, ...); a valid mean commute is a small positive number.
+        if commute_minutes <= 0:
             print("   ⚠️  Commute time data is unavailable or suppressed")
             return None
-
-        commute_minutes = float(value)
         print(f"   ✅ Mean commute time: {commute_minutes:.1f} minutes")
         return commute_minutes
 
