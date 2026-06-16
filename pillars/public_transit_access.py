@@ -1308,8 +1308,10 @@ def get_public_transit_score(
     commuter_access_floor = None
     if commuter_count > 0 and subway_count == 0 and total_score < 85.0:
         try:
-            from data_sources.census_api import get_commute_time, get_transit_mode_share
-            _commute_min = get_commute_time(lat, lon)
+            from data_sources.census_api import get_commute_time_stable, get_transit_mode_share
+            # Stable, area-aware commute (pop-weighted over the place's tracts) — single-pin
+            # get_commute_time resolves an unstable tract and drifts (Harrison 28<->39).
+            _commute_min = get_commute_time_stable(lat, lon)
             _transit_share = get_transit_mode_share(lat, lon)
         except Exception:
             _commute_min = _transit_share = None

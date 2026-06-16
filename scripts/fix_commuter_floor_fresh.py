@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time  # noqa: E402
 
-from data_sources.census_api import get_commute_time, get_transit_mode_share  # noqa: E402
+from data_sources.census_api import get_commute_time_stable, get_transit_mode_share  # noqa: E402
 from pillars.public_transit_access import _score_commute_time  # noqa: E402
 
 
@@ -86,7 +86,7 @@ def main():
                 if ta and ta.get("_rescore_version") in (TAG_OLD, TAG_NEW) and nm in base:
                     at = (sc.get("data_quality_summary", {}).get("area_classification", {})
                           .get("effective_area_type"))
-                    cm = _retry(get_commute_time, float(cat["lat"]), float(cat["lon"]))
+                    cm = _retry(get_commute_time_stable, float(cat["lat"]), float(cat["lon"]))
                     sh = _retry(get_transit_mode_share, float(cat["lat"]), float(cat["lon"]))
                     v3 = base[nm]
                     if cm and sh is not None:

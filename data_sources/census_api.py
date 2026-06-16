@@ -620,10 +620,76 @@ def get_commute_time(lat: float, lon: float, tract: Optional[Dict] = None) -> Op
             return None
         print(f"   ✅ Mean commute time: {commute_minutes:.1f} minutes")
         return commute_minutes
-
     except Exception as e:
         print(f"   ⚠️  Commute time lookup failed: {e}")
         return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+@handle_api_timeout(timeout_seconds=15)
+def _tract_commute_and_pop(state_fips: str, county_fips: str, tract_fips: str,
+                           year: str = "2022") -> Optional[Dict]:
+    """Mean commute (DP03_0025E) + population (B01003_001E) for ONE tract. Cached by tract."""
+    try:
+        u = f"{CENSUS_BASE_URL}/{year}/acs/acs5/profile"
+        p = {"get": "DP03_0025E", "for": f"tract:{tract_fips}",
+             "in": f"state:{state_fips} county:{county_fips}", "key": CENSUS_API_KEY}
+        cr = requests.get(u, params=p, timeout=10)
+        cm = None
+        if cr.status_code == 200 and len(cr.json()) > 1:
+            v = cr.json()[1][0]
+            try:
+                v = float(v)
+                cm = v if v > 0 else None
+            except (TypeError, ValueError):
+                cm = None
+        u2 = f"{CENSUS_BASE_URL}/{year}/acs/acs5"
+        p2 = {"get": "B01003_001E", "for": f"tract:{tract_fips}",
+              "in": f"state:{state_fips} county:{county_fips}", "key": CENSUS_API_KEY}
+        pr = requests.get(u2, params=p2, timeout=10)
+        pop = 0.0
+        if pr.status_code == 200 and len(pr.json()) > 1:
+            try:
+                pop = max(0.0, float(pr.json()[1][0] or 0))
+            except (TypeError, ValueError):
+                pop = 0.0
+        return {"commute_min": cm, "population": pop}
+    except Exception:
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL['census_data'])
+def get_commute_time_stable(lat: float, lon: float, ring_m: int = 700) -> Optional[float]:
+    """
+    Population-weighted mean commute over the tracts a place actually spans — STABLE and
+    representative, unlike single-pin get_commute_time which can resolve a different tract
+    on a different day (Harrison: 28-min Purchase tract at build, 39-min central tract now;
+    this returns ~36, weighted across both). Samples the pin + an 8-point ring, takes the
+    distinct tracts, pop-weights their commute, skipping empty/suppressed tracts.
+    """
+    import math
+    pts = [(lat, lon)]
+    for ang in range(0, 360, 45):
+        dlat = ring_m / 111000.0 * math.cos(math.radians(ang))
+        dlon = ring_m / (111000.0 * math.cos(math.radians(lat))) * math.sin(math.radians(ang))
+        pts.append((lat + dlat, lon + dlon))
+    seen = {}
+    for la, lo in pts:
+        t = get_census_tract(la, lo)
+        if not t:
+            continue
+        tid = (t.get("state_fips"), t.get("county_fips"), t.get("tract_fips"))
+        if all(tid) and tid not in seen:
+            seen[tid] = t
+    num = den = 0.0
+    for (sf, cf, tf) in seen:
+        m = _tract_commute_and_pop(sf, cf, tf)
+        if m and m.get("commute_min") and m.get("population", 0) > 0:
+            num += m["commute_min"] * m["population"]
+            den += m["population"]
+    if den <= 0:
+        return None
+    return round(num / den, 1)
 
 
 def get_transit_mode_share(lat: float, lon: float, tract: Optional[Dict] = None) -> Optional[float]:
