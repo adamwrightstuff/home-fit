@@ -90,8 +90,8 @@ def _env_bool(name: str, default: bool = False) -> bool:
         return default
     return str(raw).strip().lower() in {"1", "true", "yes", "y", "on"}
 
-# Schools: default OFF for public launch (SchoolDigger free quota is extremely low)
-ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=False)
+# Schools: default ON — paid SchoolDigger plan (was OFF for public launch on the free quota)
+ENABLE_SCHOOL_SCORING = _env_bool("ENABLE_SCHOOL_SCORING", default=True)
 
 # Streaming (SSE): default ON to avoid polling/job-404 issues; set ENABLE_STREAMING=false to disable
 ENABLE_STREAMING = _env_bool("ENABLE_STREAMING", default=True)
@@ -159,8 +159,9 @@ def _is_schools_allowed(
     premium_code: Optional[str] = None,
 ) -> bool:
     """
-    Schools are expensive and quota-limited. Default is OFF unless explicitly enabled.
-    Premium override can be granted via an internal code header (validated at the proxy).
+    Schools default ON (paid SchoolDigger plan). Per-request callers can still opt out via
+    enable_schools=False. Premium override can be granted via an internal code header
+    (validated at the proxy) for the rare case ENABLE_SCHOOL_SCORING is turned back off.
     """
     requested = enable_schools_param if enable_schools_param is not None else ENABLE_SCHOOL_SCORING
     if not requested:

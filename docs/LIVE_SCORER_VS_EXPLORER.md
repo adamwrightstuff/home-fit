@@ -28,15 +28,19 @@ where the client-side path diverges below.
 
 ## Design differences (intentional)
 
-### 1. Education / schools weighting — biggest one
-- **Live (default):** `ENABLE_SCHOOL_SCORING=False` (`main.py:94`; schools are quota-limited).
-  `_apply_schools_disabled_weight_override` zeros `quality_education` and redistributes — so
-  a default live score does **not** count schools.
-- **Explorer:** the catalog stores real education scores (status=success, confidence=85, not
-  the disabled-fallback), so `isSchoolsDisabledFromResult` (`frontend/lib/reweight.ts`) is
-  false and the Explorer **does** weight education.
-- **Effect:** good-school suburbs rank higher in the Explorer than in a default live score.
-  Intentional (catalog was built with schools on) but a real divergence.
+### 1. Education / schools weighting — RESOLVED 2026-06-16
+- **Live (default):** `ENABLE_SCHOOL_SCORING=True` (`main.py:94`, flipped from `False` now that
+  SchoolDigger is a paid plan). `_apply_schools_disabled_weight_override` only zeros
+  `quality_education` when a request explicitly opts out — so a default live score **does**
+  count schools, matching the Explorer.
+- **Explorer:** unchanged — catalog stores real education scores (status=success, confidence=85).
+- Rate limiting in `data_sources/schools_api.py` was also unhardcoded from the old free-tier
+  20/day, 1/min limits: `RATE_LIMIT_SECONDS` now defaults to 1.0s (env-tunable via
+  `SCHOOLDIGGER_RATE_LIMIT_SECONDS`) and `QUOTA_WARNING_THRESHOLD` to 500 (via
+  `SCHOOLDIGGER_QUOTA_WARNING_THRESHOLD`) — tune both once the actual paid-plan limits are
+  confirmed.
+- No longer a divergence. Was previously the biggest Design gap (good-school suburbs ranked
+  higher in the Explorer than in a default live score).
 
 ### 2. Personalization is computed client-side in the Explorer
 All applied in `catalog-page-client.tsx`'s `adjustedPlaces` memo, on the stored data:
@@ -84,7 +88,7 @@ accumulate drift. Until then, treat live as source of truth for scoring *logic* 
 catalog as a precomputed snapshot.
 
 ## Open items
-- [ ] Decide whether the Explorer default should match live on **schools** (both off, or both on).
+- [x] Decide whether the Explorer default should match live on **schools** — both ON as of 2026-06-16.
 - [ ] Single-source the NB-preference math (currently Python + a TS mirror).
 - [ ] Faithful catalog rebuild through main.py to clear accumulated offline-rescore drift.
 - [ ] Built Beauty catalog backfill (stale coverage-0 places).

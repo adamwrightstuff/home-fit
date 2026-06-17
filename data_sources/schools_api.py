@@ -77,9 +77,10 @@ def _nyc_csd_for_coords(lat: float, lon: float) -> Optional[Dict]:
 # Track API usage for quota management
 _request_count = 0
 _last_request_time = 0
-QUOTA_WARNING_THRESHOLD = 15  # Warn before 20/day limit
-# Pro plan can go much faster; override via SCHOOLDIGGER_RATE_LIMIT_SECONDS env var
-RATE_LIMIT_SECONDS = float(os.getenv("SCHOOLDIGGER_RATE_LIMIT_SECONDS", "65"))
+# Paid plan default: conservative 1 req/sec until the actual plan limit is confirmed.
+# Tune via SCHOOLDIGGER_RATE_LIMIT_SECONDS once the plan's real rate limit is known.
+QUOTA_WARNING_THRESHOLD = int(os.getenv("SCHOOLDIGGER_QUOTA_WARNING_THRESHOLD", "500"))
+RATE_LIMIT_SECONDS = float(os.getenv("SCHOOLDIGGER_RATE_LIMIT_SECONDS", "1.0"))
 
 # State name to abbreviation mapping
 STATE_ABBREVIATIONS = {
@@ -436,28 +437,27 @@ def _filter_by_district(
 def _fetch_schools(params: Dict) -> Optional[List[Dict]]:
     """
     Helper to fetch schools with error handling.
-    
-    NOTE: SchoolDigger free plan limits:
-    - 20 requests per day
-    - 1 request per minute
-    Exceeding limits causes data obfuscation (generic IDs, no school names)
+
+    NOTE: paid SchoolDigger plan. Rate limit and quota-warning threshold are env-tunable
+    (SCHOOLDIGGER_RATE_LIMIT_SECONDS, SCHOOLDIGGER_QUOTA_WARNING_THRESHOLD) — set these once
+    the plan's actual rate/quota limits are confirmed.
     """
     global _request_count, _last_request_time
-    
-    # Rate limiting: respect 1 request per minute limit
+
+    # Rate limiting: respect the configured per-request interval
     current_time = time.time()
     time_since_last = current_time - _last_request_time
     if _last_request_time > 0 and time_since_last < RATE_LIMIT_SECONDS:
         wait_time = RATE_LIMIT_SECONDS - time_since_last
-        print(f"⏳ Rate limiting: waiting {wait_time:.1f}s (1 req/min limit)...")
+        print(f"⏳ Rate limiting: waiting {wait_time:.1f}s...")
         time.sleep(wait_time)
-    
+
     _request_count += 1
     _last_request_time = time.time()
-    
+
     if _request_count >= QUOTA_WARNING_THRESHOLD:
-        print(f"⚠️  SchoolDigger quota warning: {_request_count} API requests this session")
-        print(f"⚠️  Free plan limit: 20/day, 1/min. Exceeding causes obfuscated data (generic IDs).")
+        print(f"⚠️  SchoolDigger quota warning: {_request_count} API requests this session "
+              f"(threshold {QUOTA_WARNING_THRESHOLD}, SCHOOLDIGGER_QUOTA_WARNING_THRESHOLD env-tunable)")
     
     # Verify 'st' parameter is included (REQUIRED)
     if 'st' not in params or not params.get('st'):
