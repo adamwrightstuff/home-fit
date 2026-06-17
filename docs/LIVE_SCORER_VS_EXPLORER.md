@@ -73,6 +73,13 @@ floor). A full live run can differ because:
   See [[transit-fetch-noisy]]. So live transit can differ run-to-run and from the catalog.
 - **built_beauty:** ~34% of catalog places carry stale coverage-0 scores; live has the
   reliability guard. See [[built-beauty-backfill-todo]].
+- **built_beauty confidence — RESOLVED 2026-06-16:** catalog `confidence` was frozen at
+  build time (mostly 90) and never re-derived after `assess_pillar_data_quality()` added
+  its `data_warning`-based discount (3% for `suspiciously_low_height_diversity` /
+  `low_building_coverage`, 12% for real failures like `api_error`). Recomputed from
+  already-stored `architectural_analysis` data (no OSM re-fetch) via
+  `scripts/recompute_built_beauty_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
+  Confidence is metadata only — doesn't cascade into score/total_score.
 
 ### 6. Offline-rescore approximations
 Catalog rescores used stored sub-components rather than a full live run, e.g.:
