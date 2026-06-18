@@ -17,9 +17,9 @@ export function getNaturalBeautyNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const treeScore = getPillarValue(pillar, 'summary.tree_score')
-  const localCanopy = getPillarValue(pillar, 'summary.local_canopy_pct')
-  const neighborhoodCanopy = getPillarValue(pillar, 'summary.neighborhood_canopy_pct')
+  const treeScore = getPillarValue(pillar, 'summary.natural_beauty.tree_score')
+  const localCanopy = getPillarValue(pillar, 'summary.natural_beauty.local_canopy_pct')
+  const neighborhoodCanopy = getPillarValue(pillar, 'summary.natural_beauty.neighborhood_canopy_pct')
 
   let greeneryPhrase = 'a mix of greenery and harder surfaces'
   if (typeof treeScore === 'number') {
@@ -47,8 +47,8 @@ export function getBuiltBeautyNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const diversity = getPillarValue(pillar, 'summary.diversity_score')
-  const heightDiversity = getPillarValue(pillar, 'summary.height_diversity')
+  const diversity = getPillarValue(pillar, 'summary.built_beauty.diversity_score')
+  const heightDiversity = getPillarValue(pillar, 'summary.built_beauty.height_diversity')
 
   let characterPhrase = 'a fairly plain built environment'
   if (typeof diversity === 'number') {
@@ -67,6 +67,13 @@ export function getBuiltBeautyNarrative(
     'Thoughtful architecture and human-scale streets help places feel welcoming and walkable, which supports comfort and social connection over time.'
 
   return `${locationSentence} ${genericSentence}`
+}
+
+export function getNeighborhoodBeautyNarrative(
+  placeLabel: string,
+  pillar: Record<string, unknown>
+): string {
+  return `${getBuiltBeautyNarrative(placeLabel, pillar)} ${getNaturalBeautyNarrative(placeLabel, pillar)}`
 }
 
 export function getNeighborhoodAmenitiesNarrative(
@@ -463,10 +470,8 @@ export function getPillarNarrative(
   pillar: Record<string, unknown>
 ): string | null {
   switch (key) {
-    case 'natural_beauty':
-      return getNaturalBeautyNarrative(placeLabel, pillar)
-    case 'built_beauty':
-      return getBuiltBeautyNarrative(placeLabel, pillar)
+    case 'neighborhood_beauty':
+      return getNeighborhoodBeautyNarrative(placeLabel, pillar)
     case 'neighborhood_amenities':
       return getNeighborhoodAmenitiesNarrative(placeLabel, pillar)
     case 'active_outdoors':

@@ -82,6 +82,56 @@ def _get_redis_client():
 _cache: Dict[str, Dict[str, Any]] = {}
 _cache_ttl: Dict[str, float] = {}
 
+# Disk cache (persistent fallback when Redis is unavailable).
+# In-memory cache dies with the process -- which means a batch script that makes expensive
+# live OSM/GEE calls throws all of them away on exit, forcing a full re-fetch next run.
+# When Redis is not available, we additionally persist results to a local directory so they
+# survive across processes. Production (which has Redis) never touches disk.
+_DISK_CACHE_DIR = os.getenv(
+    "HOMEFIT_DISK_CACHE_DIR",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".disk_cache"),
+)
+
+
+def _disk_cache_active() -> bool:
+    """Disk cache is the persistent fallback used only when Redis is unavailable."""
+    return _get_redis_client() is None
+
+
+def _disk_path(cache_key: str) -> str:
+    # cache_key is "prefix:func:md5hex"; the md5 hex is filesystem-safe on its own.
+    safe = hashlib.md5(cache_key.encode()).hexdigest()
+    return os.path.join(_DISK_CACHE_DIR, safe + ".json")
+
+
+def _disk_get(cache_key: str):
+    """Return (value, timestamp) from disk, or (None, 0) on miss/error."""
+    try:
+        path = _disk_path(cache_key)
+        if not os.path.exists(path):
+            return None, 0
+        with open(path, "r") as fh:
+            data = json.load(fh)
+        return data.get("value"), data.get("timestamp", 0)
+    except Exception as e:
+        logger.warning(f"Disk cache read error for {cache_key}: {e}")
+        return None, 0
+
+
+def _disk_set(cache_key: str, value: Any, timestamp: float) -> None:
+    try:
+        os.makedirs(_DISK_CACHE_DIR, exist_ok=True)
+        path = _disk_path(cache_key)
+        tmp = path + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump({"value": value, "timestamp": timestamp}, fh)
+        os.replace(tmp, path)  # atomic, never leaves a half-written cache file
+    except TypeError:
+        # Value isn't JSON-serializable -- skip disk (in-memory still holds it this run).
+        logger.debug(f"Disk cache skip (non-serializable) for {cache_key}")
+    except Exception as e:
+        logger.warning(f"Disk cache write error for {cache_key}: {e}")
+
 # Cache TTL settings (in seconds) - Differentiated by data stability
 # Stable data: 24-48h (Census, airports, geocoding)
 # Moderate data: 1-6h (OSM amenities, transit routes)
@@ -145,7 +195,17 @@ def cached(ttl_seconds: int = 3600):
             if cache_entry is None and cache_key in _cache:
                 cache_entry = _cache[cache_key]
                 cache_time = _cache_ttl.get(cache_key, 0)
-            
+
+            # Fall back to disk cache (persists across processes when Redis is unavailable).
+            # Populates in-memory on hit so subsequent calls in this process stay fast.
+            if cache_entry is None and _disk_cache_active():
+                disk_value, disk_time = _disk_get(cache_key)
+                if disk_value is not None:
+                    cache_entry = disk_value
+                    cache_time = disk_time
+                    _cache[cache_key] = disk_value
+                    _cache_ttl[cache_key] = disk_time
+
             # Check if cached entry is still valid
             if cache_entry is not None and (current_time - cache_time) < ttl_seconds:
                 logger.debug(f"Cache hit for {func.__name__}")
@@ -194,6 +254,11 @@ def cached(ttl_seconds: int = 3600):
                 # Also store in in-memory cache
                 _cache[cache_key] = result
                 _cache_ttl[cache_key] = current_time
+
+                # And persist to disk when Redis is unavailable, so expensive live calls
+                # survive process exit (a batch refetch can be resumed/re-merged for free).
+                if _disk_cache_active():
+                    _disk_set(cache_key, result, current_time)
             else:
                 logger.debug(f"Result is None - not caching (allows retry)")
             

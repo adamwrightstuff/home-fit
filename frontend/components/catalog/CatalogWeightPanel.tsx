@@ -9,7 +9,7 @@ import { NB_PREFERENCE_LABELS, type NbPreference } from '@/lib/nbPreference'
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
     title: 'Lifestyle',
-    keys: ['natural_beauty', 'built_beauty', 'active_outdoors', 'neighborhood_amenities'],
+    keys: ['neighborhood_beauty', 'active_outdoors', 'neighborhood_amenities'],
   },
   {
     title: 'Community',
@@ -52,7 +52,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
     if (key === 'political_lean' && level === 'None') {
       onPoliticalPreferenceChange?.(null)
     }
-    if (key === 'natural_beauty' && level === 'None') {
+    if (key === 'neighborhood_beauty' && level === 'None') {
       onNbPreferenceChange?.(null)
     }
   }
@@ -132,7 +132,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
-                      {key === 'natural_beauty' && current !== 'None' && (
+                      {key === 'neighborhood_beauty' && current !== 'None' && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => (
                             <button

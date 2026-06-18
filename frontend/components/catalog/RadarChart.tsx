@@ -12,8 +12,7 @@ const PAD = 52
 const SHORT_LABELS: Record<PillarKey, string> = {
   active_outdoors: 'Active',
   neighborhood_amenities: 'Amenities',
-  natural_beauty: 'Nature',
-  built_beauty: 'Beauty',
+  neighborhood_beauty: 'Beauty',
   social_fabric: 'Fabric',
   diversity: 'Diversity',
   quality_education: 'Schools',

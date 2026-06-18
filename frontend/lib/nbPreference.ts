@@ -163,3 +163,53 @@ export function adjustNbScore(
 
   return Math.max(0, Math.min(100, storedScore + deltaScenic + deltaUplift))
 }
+
+// --- combined_weight TS port (mirrors pillars/neighborhood_beauty.py _combined_weight) ---
+
+// Mirrors _LOG_LO / _LOG_HI in neighborhood_beauty.py: catalog density anchors (p1≈500, p95≈95474).
+const NB_LOG_LO = Math.log10(500)
+const NB_LOG_HI = Math.log10(95474)
+
+// Mirrors _AREA_TYPE_FLOOR in neighborhood_beauty.py.
+const NB_AREA_TYPE_FLOOR: Record<string, number> = {
+  urban_core: 0.65,
+  historic_urban: 0.65,
+}
+
+function clamp01(x: number): number {
+  return Math.max(0, Math.min(1, x))
+}
+
+function densityWeight(density: number | null | undefined): number | null {
+  if (density === null || density === undefined || density <= 0) return null
+  const d = clamp01((Math.log10(density) - NB_LOG_LO) / (NB_LOG_HI - NB_LOG_LO))
+  return 0.25 + 0.7 * d
+}
+
+/** TS mirror of pillars/neighborhood_beauty.py's combined_weight(): weight on built_beauty. */
+export function combinedWeight(density: number | null | undefined, effectiveAreaType?: string | null): number {
+  const w = densityWeight(density)
+  const floor = effectiveAreaType ? NB_AREA_TYPE_FLOOR[effectiveAreaType] : undefined
+  if (w === null) return floor !== undefined ? floor : 0.5
+  return floor !== undefined ? Math.max(w, floor) : w
+}
+
+/**
+ * Recompute the full blended neighborhood_beauty score after a client-side natural-beauty
+ * preference change, by reapplying the same density+area-type weight the backend uses.
+ * Returns null if the natural-beauty adjustment itself can't be computed (pre-rescore data).
+ */
+export function adjustNeighborhoodBeautyScore(
+  builtScore: number,
+  storedNaturalScore: number,
+  breakdown: NbBreakdown,
+  waterProximityType: string | undefined,
+  preference: NbPreference,
+  density: number | null | undefined,
+  effectiveAreaType?: string | null,
+): number | null {
+  const adjustedNatural = adjustNbScore(storedNaturalScore, breakdown, waterProximityType, preference, effectiveAreaType ?? undefined)
+  if (adjustedNatural === null) return null
+  const w = combinedWeight(density, effectiveAreaType)
+  return Math.round((w * builtScore + (1 - w) * adjustedNatural) * 100) / 100
+}

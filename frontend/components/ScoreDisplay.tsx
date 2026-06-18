@@ -549,25 +549,25 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
-                naturalBeautyPreference={key === 'natural_beauty' ? searchOptions?.natural_beauty_preference ?? null : undefined}
+                naturalBeautyPreference={key === 'neighborhood_beauty' ? searchOptions?.natural_beauty_preference ?? null : undefined}
                 onNaturalBeautyPreferenceChange={
-                  key === 'natural_beauty' && onSearchOptionsChange && searchOptions
+                  key === 'neighborhood_beauty' && onSearchOptionsChange && searchOptions
                     ? (preference) => {
                         onSearchOptionsChange({ ...searchOptions, natural_beauty_preference: preference })
                       }
                     : undefined
                 }
-                builtCharacterPreference={key === 'built_beauty' ? searchOptions?.built_character_preference ?? null : undefined}
-                builtDensityPreference={key === 'built_beauty' ? searchOptions?.built_density_preference ?? null : undefined}
+                builtCharacterPreference={key === 'neighborhood_beauty' ? searchOptions?.built_character_preference ?? null : undefined}
+                builtDensityPreference={key === 'neighborhood_beauty' ? searchOptions?.built_density_preference ?? null : undefined}
                 onBuiltCharacterPreferenceChange={
-                  key === 'built_beauty' && onSearchOptionsChange && searchOptions
+                  key === 'neighborhood_beauty' && onSearchOptionsChange && searchOptions
                     ? (value) => {
                         onSearchOptionsChange({ ...searchOptions, built_character_preference: value as SearchOptions['built_character_preference'] })
                       }
                     : undefined
                 }
                 onBuiltDensityPreferenceChange={
-                  key === 'built_beauty' && onSearchOptionsChange && searchOptions
+                  key === 'neighborhood_beauty' && onSearchOptionsChange && searchOptions
                     ? (value) => {
                         onSearchOptionsChange({ ...searchOptions, built_density_preference: value as SearchOptions['built_density_preference'] })
                       }
@@ -719,7 +719,7 @@ export default function ScoreDisplay({
                             </div>
                           )}
 
-                          {key === 'natural_beauty' && (
+                          {key === 'neighborhood_beauty' && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                               <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Scenery (up to 2):</span>
                               {ADD_NATURAL_BEAUTY_CHIPS.map(({ value, label }) => {
@@ -766,7 +766,7 @@ export default function ScoreDisplay({
                             </div>
                           )}
 
-                          {key === 'built_beauty' && (
+                          {key === 'neighborhood_beauty' && (
                             <>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 <span className="tr-muted" style={{ fontSize: '0.85rem' }}>Character:</span>

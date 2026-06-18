@@ -842,6 +842,145 @@ def get_building_density_gee(lat: float, lon: float, radius_m: int = 1000) -> Op
         return None
 
 
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))  # Building heights are very stable
+def get_building_height_diversity_ghsl(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Get building height statistics using the GHSL global building-height layer.
+
+    Unlike OSM-derived height/levels tags (sparse for low-density suburbs), GHSL provides
+    full-coverage satellite-derived building height estimates, making it a reliable fallback
+    when OSM `building:levels` tag coverage is too low to trust.
+
+    Uses JRC/GHSL/P2023A/GHS_BUILT_H (band: built_height), which is tiled and must be
+    mosaicked for full coverage (unlike the single-tile GHS_BUILT_S image used for building
+    density elsewhere in this module).
+
+    Returns:
+        {
+            "mean_height_m": float,
+            "std_height_m": float,
+            "p90_height_m": float
+        }
+        or None if unavailable.
+    """
+    if not GEE_AVAILABLE:
+        return None
+
+    try:
+        print(f"🏙️  Analyzing building height diversity (GHSL) at {lat}, {lon}...")
+
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+
+        # GHS_BUILT_H is distributed as tiles; mosaic() gives full-coverage access.
+        ghsl_height = (ee.ImageCollection('JRC/GHSL/P2023A/GHS_BUILT_H')
+                       .mosaic()
+                       .select('built_height'))
+
+        combined_reducer = (ee.Reducer.mean()
+                             .combine(ee.Reducer.stdDev(), sharedInputs=True)
+                             .combine(ee.Reducer.percentile([90]), sharedInputs=True))
+
+        stats = ghsl_height.reduceRegion(
+            reducer=combined_reducer,
+            geometry=buffer,
+            scale=100,
+            maxPixels=1e9
+        ).getInfo()
+
+        if not stats:
+            return None
+
+        mean_height = stats.get('built_height_mean')
+        std_height = stats.get('built_height_stdDev')
+        p90_height = stats.get('built_height_p90')
+
+        if mean_height is None:
+            return None
+
+        result = {
+            "mean_height_m": float(mean_height),
+            "std_height_m": float(std_height) if std_height is not None else 0.0,
+            "p90_height_m": float(p90_height) if p90_height is not None else float(mean_height)
+        }
+
+        print(f"   ✅ GHSL building height: mean={result['mean_height_m']:.1f}m, "
+              f"std={result['std_height_m']:.1f}m, p90={result['p90_height_m']:.1f}m")
+        return result
+
+    except Exception as e:
+        print(f"   ⚠️  GHSL building height error: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL.get('census_data', 48 * 3600))  # Building footprints are very stable
+def get_building_coverage_ms_footprints(lat: float, lon: float, radius_m: int = 1000) -> Optional[Dict]:
+    """
+    Get built coverage ratio using Microsoft's ML-derived US building footprint raster
+    (projects/sat-io/open-datasets/us_building_raster), rasterized at 30m from Microsoft's
+    nationwide building footprint vectors.
+
+    Unlike OSM building polygons (sparse footprint coverage for under-mapped low-density
+    suburbs -- e.g. Short Hills NJ has only 2% of expected building footprint mapped),
+    this dataset has full US coverage, making it a reliable fallback when OSM footprint
+    coverage is too low to trust for built_coverage_ratio -- the highest-weighted single
+    feature in the built_beauty model.
+
+    The building_total_area band reports summed building footprint area (sqm) per 30m
+    (900 sqm) pixel, capped at the pixel area, so mean(building_total_area) / 900 over a
+    region gives a built coverage fraction (0.0-1.0) directly comparable to the OSM-derived
+    built_coverage_ratio it replaces.
+
+    Returns:
+        {"built_coverage_ratio": float}  # 0.0-1.0 scale
+        or None if unavailable.
+    """
+    if not GEE_AVAILABLE:
+        return None
+
+    try:
+        print(f"🏗️  Analyzing building coverage (Microsoft footprints) at {lat}, {lon}...")
+
+        point = ee.Geometry.Point([lon, lat])
+        buffer = point.buffer(radius_m)
+
+        total_area = ee.Image('projects/sat-io/open-datasets/us_building_raster/building_total_area')
+
+        stats = total_area.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=buffer,
+            scale=30,
+            maxPixels=1e9
+        ).getInfo()
+
+        if not stats:
+            return None
+
+        mean_total_area = stats.get('b1')
+        if mean_total_area is None:
+            return None
+
+        pixel_area_sqm = 30 * 30
+        # Raw, unmasked ratio (mean building footprint area per pixel / pixel area) --
+        # diluted by water/non-buildable area inside the buffer (e.g. coastal towns where
+        # part of the circle is ocean). Callers that need a land-masked ratio comparable to
+        # OSM's built_coverage_ratio should use mean_building_area_per_pixel_sqm with their
+        # own effective_land_area_sqm instead of this raw ratio.
+        coverage_ratio_unmasked = max(0.0, min(1.0, float(mean_total_area) / pixel_area_sqm))
+
+        result = {
+            "built_coverage_ratio": coverage_ratio_unmasked,
+            "mean_building_area_per_pixel_sqm": float(mean_total_area),
+            "pixel_area_sqm": float(pixel_area_sqm),
+        }
+        print(f"   ✅ MS footprint coverage (unmasked): {coverage_ratio_unmasked:.3f}")
+        return result
+
+    except Exception as e:
+        print(f"   ⚠️  Microsoft footprint coverage error: {e}")
+        return None
+
+
 def get_topography_context(lat: float, lon: float, radius_m: int = 5000) -> Optional[Dict]:
     """
     Analyze elevation and slope context around a location.

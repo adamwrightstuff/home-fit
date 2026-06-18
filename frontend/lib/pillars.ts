@@ -1,6 +1,5 @@
 export type PillarKey =
-  | 'natural_beauty'
-  | 'built_beauty'
+  | 'neighborhood_beauty'
   | 'neighborhood_amenities'
   | 'active_outdoors'
   | 'healthcare_access'
@@ -22,10 +21,9 @@ export const PILLAR_ORDER: PillarKey[] = [
   'economic_security',
   'climate_risk',
   'active_outdoors',
-  'natural_beauty',
+  'neighborhood_beauty',
   'diversity',
   'social_fabric',
-  'built_beauty',
   'healthcare_access',
   'public_transit_access',
   'air_travel_access',
@@ -37,7 +35,7 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'social_fabric',
   'active_outdoors',
   'neighborhood_amenities',
-  'natural_beauty',
+  'neighborhood_beauty',
   'climate_risk',
   'quality_education',
 ])
@@ -47,8 +45,7 @@ export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'public_transit_access',
   'social_fabric',
   'housing_value',
-  'natural_beauty',
-  'built_beauty',
+  'neighborhood_beauty',
 ])
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
@@ -56,7 +53,7 @@ export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
   social_fabric: 40,
   neighborhood_amenities: 25,
   active_outdoors: 15,
-  natural_beauty: 10,
+  neighborhood_beauty: 10,
   climate_risk: 8,
   quality_education: 2,
 }
@@ -207,17 +204,11 @@ export const PILLAR_META: Record<
   PillarKey,
   { icon: string; name: string; description: string }
 > = {
-  natural_beauty: {
-    icon: '🌳',
-    name: 'Natural Beauty',
+  neighborhood_beauty: {
+    icon: '🏡',
+    name: 'Neighborhood Beauty',
     description:
-      'The natural landscape around you — mountains, water, or greenery — scored for what matters to you',
-  },
-  built_beauty: {
-    icon: '🏛️',
-    name: 'Built Beauty',
-    description:
-      "Architecture and streetscapes that feel thoughtfully designed—not cookie-cutter, but crafted with character",
+      'Architecture and landscape together — thoughtfully designed streets and buildings paired with trees, water, and scenic character, weighted by how dense or built-up the area is',
   },
   neighborhood_amenities: {
     icon: '🛒',
@@ -356,10 +347,8 @@ export function getPillarFailureType(pillar: {
 // Phase 1B: Long descriptions ("why this matters") for expand/tooltip
 // ---------------------------------------------------------------------------
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
-  natural_beauty:
-    'Access to trees, water, and scenic landscapes is linked to lower stress and better mental health. Neighborhoods with strong canopy and natural features tend to support walking and outdoor time, which supports long-term wellbeing.',
-  built_beauty:
-    'Thoughtfully designed streets and buildings create a sense of place and belonging. Diverse, human-scale architecture is associated with higher satisfaction and walkability, which in turn supports health and social connection.',
+  neighborhood_beauty:
+    'Combines architecture and landscape: thoughtfully designed streets and buildings create a sense of place and belonging, while access to trees, water, and scenic landscapes is linked to lower stress and better mental health. The two are blended based on how dense or built-up the area is — denser places weight built character more, leafier ones weight nature more.',
   neighborhood_amenities:
     'Being able to walk to cafés, groceries, and daily needs reduces car dependence and encourages routine activity. Neighborhoods with a mix of local businesses tend to foster social interaction and a stronger sense of community.',
   active_outdoors:

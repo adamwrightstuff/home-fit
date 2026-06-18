@@ -26,7 +26,7 @@ function pillarDisplayName(key: string): string {
     social_fabric: 'Social Fabric',
     neighborhood_amenities: 'Neighborhood Amenities',
     active_outdoors: 'Active Outdoors',
-    natural_beauty: 'Natural Beauty',
+    neighborhood_beauty: 'Neighborhood Beauty',
     climate_risk: 'Climate Risk',
     quality_education: 'Quality Education',
   }
