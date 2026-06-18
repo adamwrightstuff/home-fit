@@ -1224,7 +1224,7 @@ def _apply_allocation_to_cached_response(
         allocation_type = "priority_based"
         priority_levels: Optional[Dict[str, str]] = {}
         primary_pillars = [
-            "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+            "active_outdoors", "neighborhood_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
             "economic_security", "quality_education", "housing_value",
             "climate_risk", "social_fabric", "diversity", "community_safety",
@@ -1275,16 +1275,30 @@ def _apply_allocation_to_cached_response(
     # per-dimension component scores — which are preference-independent — and apply this
     # request's preference. Done unconditionally so the served score is correct even if the
     # cached score was populated by an earlier preference request.
-    nb = livability_pillars.get("natural_beauty")
-    v9b = (nb or {}).get("details", {}).get("v9_breakdown") if nb else None
+    # neighborhood_beauty nests the natural sub-pillar at details.natural_beauty; after
+    # recomputing its score, the blend (built_weight) must be reapplied so the merged
+    # pillar's top-level score reflects the new preference too.
+    nb_merged = livability_pillars.get("neighborhood_beauty")
+    nb_details = (nb_merged or {}).get("details", {}) if nb_merged else {}
+    natural_sub = nb_details.get("natural_beauty") if nb_details else None
+    v9b = (natural_sub or {}).get("v9_breakdown") if natural_sub else None
     if v9b:
         comp = {k: v9b.get(k) for k in (
             "gvi_score", "water_score", "canopy_score",
             "topo_score", "landcover_score", "bio_score")}
         recomputed = natural_beauty.v9_score_from_components(comp, natural_beauty_preference)
         if recomputed is not None:
-            nb["score"] = recomputed
+            natural_sub["score"] = recomputed
             v9b["preference_applied"] = natural_beauty_preference or None
+            built_score = nb_merged.get("built_beauty_score", nb_details.get("built_beauty_score"))
+            built_weight = nb_merged.get("built_weight", nb_details.get("built_weight"))
+            if built_score is not None and built_weight is not None:
+                new_score = round(float(built_weight) * float(built_score) + (1.0 - float(built_weight)) * float(recomputed), 2)
+                nb_merged["score"] = new_score
+                nb_merged["natural_beauty_score"] = recomputed
+                nb_merged.setdefault("breakdown", {})["natural_beauty_score"] = recomputed
+                if "summary" in nb_merged and isinstance(nb_merged["summary"], dict):
+                    nb_merged["summary"].setdefault("natural_beauty", {})["score"] = recomputed
 
     total_score = 0.0
     for pillar_name, pillar_data in livability_pillars.items():

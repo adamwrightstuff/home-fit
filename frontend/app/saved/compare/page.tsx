@@ -11,6 +11,7 @@ import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
+import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
 
 function isCatalogKey(id: string): boolean {
   return id.includes('|')
@@ -176,8 +177,24 @@ function CompareContent() {
     }
   }, [idA, idB, user])
 
-  const scoredA = rowA?.score_payload as ScoreResponse | undefined
-  const scoredB = rowB?.score_payload as ScoreResponse | undefined
+  const scoredARaw = rowA?.score_payload as ScoreResponse | undefined
+  const scoredBRaw = rowB?.score_payload as ScoreResponse | undefined
+  // Legacy saves predate the built_beauty+natural_beauty merge; synthesize neighborhood_beauty
+  // so compare doesn't silently drop the pillar's weight/score for older places.
+  const scoredA = useMemo(() => {
+    if (!scoredARaw) return scoredARaw
+    const livability_pillars = withSynthesizedNeighborhoodBeauty(scoredARaw.livability_pillars as unknown as Record<string, any>)
+    return livability_pillars === scoredARaw.livability_pillars
+      ? scoredARaw
+      : ({ ...scoredARaw, livability_pillars } as ScoreResponse)
+  }, [scoredARaw])
+  const scoredB = useMemo(() => {
+    if (!scoredBRaw) return scoredBRaw
+    const livability_pillars = withSynthesizedNeighborhoodBeauty(scoredBRaw.livability_pillars as unknown as Record<string, any>)
+    return livability_pillars === scoredBRaw.livability_pillars
+      ? scoredBRaw
+      : ({ ...scoredBRaw, livability_pillars } as ScoreResponse)
+  }, [scoredBRaw])
 
   const displayA = useMemo(() => {
     if (!rowA || !scoredA) return null

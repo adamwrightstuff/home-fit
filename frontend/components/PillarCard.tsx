@@ -731,7 +731,6 @@ export default function PillarCard({
               const canDens = Boolean(onBuiltDensityPreferenceChange)
               const charLabel = char ? BUILT_CHARACTER_CHIPS.find((c) => c.value === char)?.label : null
               const densLabel = dens ? BUILT_DENSITY_CHIPS.find((d) => d.value === dens)?.label : null
-              if (!canChar && !canDens && !char && !dens) return null
               return (
                 <div style={{ marginBottom: canChar || canDens ? '0.85rem' : '0.5rem' }}>
                   <div style={{ marginBottom: '0.5rem' }}>

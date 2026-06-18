@@ -266,3 +266,63 @@ export function adjustNeighborhoodBeautyScore(
   const w = combinedWeight(density, effectiveAreaType)
   return Math.round((w * builtScore + (1 - w) * adjustedNatural) * 100) / 100
 }
+
+/**
+ * Pre-migration saved scores / cache entries store standalone `built_beauty` and
+ * `natural_beauty` pillar entries with no `neighborhood_beauty` key at all. Synthesize one
+ * client-side, reapplying the real density+area-type blend, so legacy data still renders on
+ * a surface that now only ever looks for `neighborhood_beauty`. No-op if already merged.
+ */
+export function withSynthesizedNeighborhoodBeauty(
+  livabilityPillars: Record<string, any> | null | undefined,
+): Record<string, any> {
+  if (!livabilityPillars || typeof livabilityPillars !== 'object') return livabilityPillars ?? {}
+  if (livabilityPillars.neighborhood_beauty) return livabilityPillars
+  const built = livabilityPillars.built_beauty
+  const natural = livabilityPillars.natural_beauty
+  if (!built && !natural) return livabilityPillars
+
+  const builtScore = typeof built?.score === 'number' ? built.score : 0
+  const naturalScore = typeof natural?.score === 'number' ? natural.score : 0
+  const density = built?.details?.density ?? natural?.details?.density ?? null
+  const effectiveAreaType = built?.details?.effective_area_type ?? natural?.details?.effective_area_type ?? null
+  const w = built && natural ? combinedWeight(density, effectiveAreaType) : built ? 1 : 0
+  const score = Math.round((w * builtScore + (1 - w) * naturalScore) * 100) / 100
+  const weight = (built?.weight ?? 0) + (natural?.weight ?? 0)
+  const contribution = (built?.contribution ?? 0) + (natural?.contribution ?? 0)
+
+  const synthesized = {
+    score,
+    weight,
+    importance_level: built?.importance_level ?? natural?.importance_level ?? null,
+    contribution,
+    built_beauty_score: builtScore,
+    natural_beauty_score: naturalScore,
+    built_weight: w,
+    breakdown: {
+      built_beauty_score: builtScore,
+      natural_beauty_score: naturalScore,
+      built_weight: w,
+      effective_area_type: effectiveAreaType,
+      density,
+    },
+    summary: {
+      built_beauty: built?.summary ?? {},
+      natural_beauty: natural?.summary ?? {},
+      built_weight: w,
+    },
+    details: {
+      built_beauty: built?.details ?? {},
+      natural_beauty: natural?.details ?? {},
+      built_weight: w,
+      effective_area_type: effectiveAreaType,
+      density,
+      source: 'neighborhood_beauty_legacy_synthesized',
+    },
+    confidence: built?.confidence ?? natural?.confidence ?? 0,
+    data_quality: built?.data_quality ?? natural?.data_quality ?? {},
+    status: built?.status ?? natural?.status,
+  }
+
+  return { ...livabilityPillars, neighborhood_beauty: synthesized }
+}

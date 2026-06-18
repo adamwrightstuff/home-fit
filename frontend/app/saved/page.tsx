@@ -10,6 +10,7 @@ import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { ScoreResponse } from '@/types/api'
+import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
 
 type SortMode = 'score_desc' | 'score_asc' | 'recent'
 
@@ -25,7 +26,9 @@ function homeFitTotalFromRow(row: SavedScoreRow): number {
   if (!p || typeof p !== 'object' || p === null) return 0
   try {
     const priorities = prioritiesFromRow(row)
-    const reweighted = reweightScoreResponseFromPriorities(p as ScoreResponse, priorities)
+    const livability_pillars = withSynthesizedNeighborhoodBeauty((p as ScoreResponse).livability_pillars as unknown as Record<string, any>)
+    const payload = { ...(p as ScoreResponse), livability_pillars: livability_pillars as unknown as ScoreResponse['livability_pillars'] }
+    const reweighted = reweightScoreResponseFromPriorities(payload, priorities)
     return reweighted.total_score
   } catch {
     return Number((p as Record<string, unknown>).total_score ?? 0)
@@ -71,7 +74,7 @@ function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
 
 function summaryFromPayload(score_payload: unknown, row?: SavedScoreRow | null): { total: number; top2: string; bottom1: string } {
   const p = score_payload as Record<string, unknown>
-  const pillars = (p?.livability_pillars as Record<string, { score?: number }>) ?? {}
+  const pillars = withSynthesizedNeighborhoodBeauty(p?.livability_pillars as Record<string, any>) as Record<string, { score?: number }>
   let total = Number(p?.total_score ?? 0)
   let pillarsForRank = pillars
 
@@ -80,7 +83,8 @@ function summaryFromPayload(score_payload: unknown, row?: SavedScoreRow | null):
     total = homeFitTotalFromRow(row)
     try {
       const priorities = prioritiesFromRow(row)
-      const reweighted = reweightScoreResponseFromPriorities(score_payload as ScoreResponse, priorities)
+      const synthesizedPayload = { ...(score_payload as ScoreResponse), livability_pillars: pillars as unknown as ScoreResponse['livability_pillars'] }
+      const reweighted = reweightScoreResponseFromPriorities(synthesizedPayload, priorities)
       pillarsForRank = (reweighted.livability_pillars as unknown as Record<string, { score?: number }>) ?? pillars
     } catch {
       // keep raw pillars for ranking

@@ -7,6 +7,7 @@ import type { ScoreResponse } from '@/types/api'
 import type { SavedScoreRow } from '@/lib/savedScores'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
 import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY } from '@/lib/pillars'
+import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import ScoreDisplay from '@/components/ScoreDisplay'
@@ -56,7 +57,14 @@ export default function PublicPlacePage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  const rawPayload = row?.score_payload as ScoreResponse | undefined
+  const rawPayloadStored = row?.score_payload as ScoreResponse | undefined
+  const rawPayload = useMemo(() => {
+    if (!rawPayloadStored) return rawPayloadStored
+    const livability_pillars = withSynthesizedNeighborhoodBeauty(rawPayloadStored.livability_pillars as unknown as Record<string, any>)
+    return livability_pillars === rawPayloadStored.livability_pillars
+      ? rawPayloadStored
+      : ({ ...rawPayloadStored, livability_pillars } as ScoreResponse)
+  }, [rawPayloadStored])
 
   const displayData = useMemo(() => {
     if (!rawPayload) return null
