@@ -547,9 +547,12 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         buildings_to_process = building_ways
         if len(building_ways) > 2000:
             import random
-            # Use deterministic sampling for consistency
-            random.seed(42)  # Fixed seed for reproducibility
-            buildings_to_process = random.sample(building_ways, 2000)
+            # Sort by stable OSM id first: Overpass element order isn't guaranteed
+            # stable across calls/endpoints, so seeding alone doesn't make this
+            # reproducible unless the input order is fixed too.
+            sorted_buildings = sorted(building_ways, key=lambda b: b["id"])
+            random.seed(42)
+            buildings_to_process = random.sample(sorted_buildings, 2000)
             logger.info(f"[STREETWALL] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
         
         logger.info(f"[STREETWALL] Pre-computed {len(road_segments_precomputed)} segments, processing {len(buildings_to_process)} buildings")
@@ -828,8 +831,9 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         buildings_to_process = building_ways
         if len(building_ways) > 2000:
             import random
+            sorted_buildings = sorted(building_ways, key=lambda b: b["id"])
             random.seed(42)
-            buildings_to_process = random.sample(building_ways, 2000)
+            buildings_to_process = random.sample(sorted_buildings, 2000)
             logger.info(f"[SETBACK] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
         
         # For each building, find closest road segment and calculate setback
@@ -1150,8 +1154,9 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         buildings_to_process = building_ways
         if len(building_ways) > 2000:
             import random
+            sorted_buildings = sorted(building_ways, key=lambda b: b["id"])
             random.seed(42)
-            buildings_to_process = random.sample(building_ways, 2000)
+            buildings_to_process = random.sample(sorted_buildings, 2000)
             logger.info(f"[FACADE] Sampling {len(buildings_to_process)} buildings from {len(building_ways)} total")
         
         # For each building, find closest road segment and calculate setback

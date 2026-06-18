@@ -134,15 +134,20 @@ const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
 ]
 
 export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
-  natural_beauty: {
-    topLine: 'Trees, water, and terrain—three ingredients that shape how “natural” this place feels.',
+  neighborhood_beauty: {
+    topLine: 'Architecture and landscape together—built form, streetscape, and how green or scenic the area is.',
     metrics: [
+      { label: 'Density feel', path: 'breakdown.bb_best_fit_density', format: 'text' },
+      { label: 'Era character', path: 'breakdown.bb_best_fit_character', format: 'text' },
+      { label: 'Built form', path: 'summary.built_beauty.built_form_label', format: 'text' },
+      { label: 'Streetscape tags', path: 'summary.built_beauty.built_context_tags', format: 'text' },
+      { label: 'Median year built', path: 'summary.built_beauty.median_year_built', format: 'text' },
       { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
-      { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
-      { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },
-      { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'text' },
+      { label: 'Neighborhood canopy', path: 'summary.natural_beauty.neighborhood_canopy_pct', format: 'percent', max: 100 },
+      { label: 'Nearest mapped water', path: 'summary.natural_beauty.water_proximity_km', format: 'distance' },
+      { label: 'Terrain relief (local)', path: 'summary.natural_beauty.terrain_relief_m', format: 'text' },
     ],
-    degradedMessage: 'Limited data: some natural data sources were unavailable.',
+    degradedMessage: 'Limited data: some built environment or natural data sources were unavailable.',
   },
   active_outdoors: {
     topLine: 'Everyday parks, trails, and water access the score is built from.',
@@ -176,17 +181,6 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
       },
     ],
     degradedMessage: 'Limited data: OSM coverage is sparse here; this score may undercount amenities.',
-  },
-  built_beauty: {
-    topLine: 'What kind of built environment this is—form, tags from the map, and typical building age.',
-    metrics: [
-      { label: 'Density feel', path: 'breakdown.bb_best_fit_density', format: 'text' },
-      { label: 'Era character', path: 'breakdown.bb_best_fit_character', format: 'text' },
-      { label: 'Built form', path: 'summary.built_form_label', format: 'text' },
-      { label: 'Streetscape tags', path: 'summary.built_context_tags', format: 'text' },
-      { label: 'Median year built', path: 'summary.median_year_built', format: 'text' },
-    ],
-    degradedMessage: 'Limited data: some built environment data were unavailable.',
   },
   healthcare_access: {
     topLine: 'Hospital reach, and how many everyday care points are nearby.',

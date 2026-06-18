@@ -68,9 +68,68 @@ This reference describes what “beautiful” should mean for each `area_type` a
 | Urban Core Lowrise | Facade rhythm, setbacks, heritage scoring when landmarks present | Podium coherence vs. main street consistency split | Material entropy conflates brick dominance with monotony; block grain noisy in low coverage | Introduce lowrise skyline guardrail to penalize intrusive towers; fallback for missing materials based on rhythm + age |
 | Historic Urban | Heritage / median year percentile, phase 2/3 cadence (after confidence gate) | Rowhouse material recognition, stoop/porch signals | OSM landmarks missing for many districts; material share undercounts brick | Add brownstone heuristic (coherence + age) to stand in for missing landmarks; prefer coherence over diversity in normalization |
 | Urban Residential | Setback + facade rhythm improved with gate; coverage expectations good | Type/height diversity penalties still too strong; enhancer bonus rarely triggers | Material share low due to tagging; landmark counts small | Reweight diversity penalties downward when phase 2/3 scores are 65+; create design review bonus using municipal overlays if available |
-| Suburban | Coverage + streetwall detect strip malls; modern form bonus handles town centers | Coherence in planned communities not surfaced; streetscape quality relies on sparse phase 2/3 | Block grain often missing; material tags limited to “roof:shingle” | Add cul-de-sac coherence heuristic (consistent setbacks + low diversity) as positive; penalize big-box parcels via footprint kurtosis |
+| Suburban | Coverage + streetwall detect strip malls; modern form bonus handles town centers; **DONE (2026-06-17): positive coherence bonus implemented** (see below) | Streetscape quality relies on sparse phase 2/3 | Block grain often missing; material tags limited to “roof:shingle” | Penalize big-box parcels via footprint kurtosis |
 | Exurban | Current phase 2/3 fallback avoids zeros; can detect hamlet block grain | High diversity falsely inflates scores; low coverage not punished enough | OSM building data incomplete; landmarks rare, leading to flat enhancer | Introduce negative “sprawl dispersion” bonus when coverage <0.08 and diversity high; require real heritage evidence before enhancer |
 | Rural | Heritage logic works when courthouse/main street tagged | Scenic fallback absent; type diversity still inflates | Building footprints missing; phase 2/3 absent | Add rural village heuristic (coverage 0.08–0.15 + consistent setbacks) for positive signal; down-rank when big-box footprints detected |
+
+### Resolved: cul-de-sac / planned-community coherence credit (2026-06-17)
+The "Add cul-de-sac coherence heuristic (consistent setbacks + low diversity) as positive"
+candidate adjustment above is implemented. Two changes in `data_sources/arch_diversity.py`:
+
+1. **GHSL height-diversity fallback.** When OSM `building:levels` tag coverage is too sparse
+   to trust (`suspiciously_low_height_diversity` or `low_building_coverage` warnings —
+   together ~192 of 292 catalog places at time of writing), `compute_arch_diversity()` now
+   calls `get_building_height_diversity_ghsl()` (in `data_sources/gee_api.py`, satellite
+   building-height layer `JRC/GHSL/P2023A/GHS_BUILT_H`) and substitutes a calibrated height
+   diversity value (`_calibrate_ghsl_height_diversity()`) instead of the OSM-fabricated
+   near-zero. This also feeds `_coherence_signal()`'s `height_std` input with real data.
+2. **Positive coherence bonus.** `score_architectural_diversity_as_beauty()` now adds up to
+   `COHERENCE_BONUS_MAX_POINTS` (8–10 of the 50 architecture points, suburban/exurban/rural
+   only) when `_coherence_signal()` exceeds 0.5 — scaled linearly from 0 at 0.5 to the max at
+   1.0. This is additive and distinct from the pre-existing `_apply_diversity_coherence_multiplier`,
+   which only ever softened a diversity penalty (capped at 1.0x) and could never grant credit
+   above the unmultiplied diversity score.
+
+Caveat: the GHSL calibration anchors (`_calibrate_ghsl_height_diversity`) were derived from
+GHSL's documented value ranges, not from a live-sampled set of reference towns, because GEE
+credentials were unavailable in the implementing session/sandbox. Re-validate against live
+GHSL data for Larchmont, Bronxville, Short Hills, etc. before fully trusting a production
+catalog rescore.
+
+### Known limitation: multinomial effective_area_type can override correct base_area_type (2026-06-17)
+`get_effective_area_type()` (`data_sources/data_quality.py:1063`) predicts `effective_area_type`
+via a multinomial regression over architectural-diversity features (`built_coverage_ratio`,
+`building_type_diversity`, `levels_entropy`, `footprint_area_cv`), independent of density. For
+places with sparse/unusual OSM footprint coverage, this can override a correct density-derived
+`base_area_type`. Confirmed case: **Bedford, NY** (Westchester horse-country, `base_area_type
+=rural`, `density≈285/sq-mi`) predicts `effective_area_type=urban_residential`, inflating its
+built_beauty score because it's scored against urban_residential curves instead of rural ones.
+
+Not fixed — this is the same shared classifier other pillars (transit, active outdoors) key off
+of, and per explicit product constraint it must not be modified to chase one pillar's edge case.
+Documented as a known limitation, same bucket as the footprint-sparsity issue below. If revisited,
+fix should live in the multinomial model/feature set, not as a per-pillar override.
+
+### Known limitation: footprint-derived metrics still unreliable for ultra-low-density estates (2026-06-17)
+The 2026-06-17 GHSL height-diversity fix and coherence bonus (above) did NOT fix
+`setback_consistency`, `streetwall_continuity`, `facade_rhythm`, `footprint_variation` — these
+remain computed from the same sparse OSM building-footprint polygons that under-cover
+ultra-low-density luxury estates. Confirmed depressed scores: Hidden Hills (36/50), Rancho
+Palos Verdes (28/50), Bel Air (58/50). Root cause and scope match the original plan's explicitly
+deferred item: "Fully fixing footprint-derived metrics for under-mapped suburbs would need a
+second nationwide building-footprint source... a bigger, separate initiative." Microsoft Building
+Footprints coverage substitution exists (`get_building_coverage_ms_footprints`) but only feeds
+`built_coverage_ratio`, not the four metrics above.
+
+### Known limitation: diversity-as-beauty proxy has no incoherence penalty for dense areas (2026-06-17)
+The coherence bonus added 2026-06-17 rewards *low*-diversity suburban/exurban/rural areas for
+being coherent. There is no equivalent *penalty* for *high*-diversity urban areas whose diversity
+is chaotic/low-quality rather than intentional — the entropy-based diversity score can't tell
+"deliberately eclectic, high-quality streetscape" from "noisy strip-mall variety." Confirmed
+inflated scores: East Hollywood (100/50 — strip malls/medical complexes/traffic), Gowanus
+(93/50 — industrial/transitional canal zone). This is a real gap in the core diversity formula,
+not a blend or classification issue, and is a bigger lift than this session's scope (would need
+a chaos/coherence discriminator analogous to the existing one, applied to high-diversity cases).
 
 ### Cross-Cutting Observations
 - **Phase 2/3 confidence gate** prevents zeroing but we still need alternate positives when coverage is sparse (suburban, rural). Consider a separate “coherence proxy” using variance ratios.

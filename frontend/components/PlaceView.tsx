@@ -239,8 +239,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       setPillarsInProgress([pillarKey])
       const prioritiesForRequest: PillarPriorities = {
         active_outdoors: 'None',
-        built_beauty: 'None',
-        natural_beauty: 'None',
+        neighborhood_beauty: 'None',
         neighborhood_amenities: 'None',
         air_travel_access: 'None',
         public_transit_access: 'None',
@@ -444,11 +443,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         prev.built_density_preference !== newOptions.built_density_preference
       const diversityChanged = JSON.stringify(prev.diversity_preference ?? null) !== JSON.stringify(newOptions.diversity_preference ?? null)
 
-      if (naturalChanged && pillarScores.natural_beauty && selectedPillars.has('natural_beauty')) {
-        runSinglePillar('natural_beauty', newOptions)
-      }
-      if (builtChanged && pillarScores.built_beauty && selectedPillars.has('built_beauty')) {
-        runSinglePillar('built_beauty', newOptions)
+      if ((naturalChanged || builtChanged) && pillarScores.neighborhood_beauty && selectedPillars.has('neighborhood_beauty')) {
+        runSinglePillar('neighborhood_beauty', newOptions)
       }
       if (diversityChanged && pillarScores.diversity && selectedPillars.has('diversity')) {
         runSinglePillar('diversity', newOptions)
@@ -605,8 +601,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
     try {
       const prioritiesForRequest: PillarPriorities = {
         active_outdoors: 'None',
-        built_beauty: 'None',
-        natural_beauty: 'None',
+        neighborhood_beauty: 'None',
         neighborhood_amenities: 'None',
         air_travel_access: 'None',
         public_transit_access: 'None',
@@ -1202,7 +1197,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       </button>
                     ))}
                   </div>
-                  {key === 'natural_beauty' && onSearchOptionsChange && (
+                  {key === 'neighborhood_beauty' && onSearchOptionsChange && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
                       <span className="tr-muted" style={{ fontSize: '0.75rem', marginRight: '0.35rem' }}>(up to 2)</span>
@@ -1351,7 +1346,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       </div>
                     </div>
                   )}
-                  {key === 'built_beauty' && (
+                  {key === 'neighborhood_beauty' && (
                     <>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Character:</span>

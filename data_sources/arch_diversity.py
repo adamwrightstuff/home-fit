@@ -793,7 +793,119 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         # Low coverage: cap architecture at 35/50, moderate confidence
         confidence_0_1 = 0.6
         data_warning = "low_building_coverage"
-    
+
+    # GHSL fallback: when OSM building:levels tag coverage is too sparse to trust
+    # (suspiciously_low_height_diversity) or overall OSM footprint coverage is too low
+    # (low_building_coverage), the levels_entropy computed above is likely a fabricated
+    # near-zero artifact (untagged buildings default into the "1-story" bin). Substitute
+    # a GHSL-satellite-derived, calibrated height-diversity estimate instead, which has
+    # full coverage regardless of OSM tagging gaps.
+    # Only substitute GHSL height when the OSM HEIGHT signal itself is untrustworthy
+    # (suspiciously_low_height_diversity = untagged buildings fabricated into the 1-story
+    # bin). Low FOOTPRINT coverage (low_building_coverage) is a separate problem -- it does
+    # NOT mean the building:levels tags that do exist are wrong, and substituting GHSL there
+    # throws away a good OSM height signal (regressed well-mapped places like Hermosa Beach).
+    ghsl_height_substituted = False
+    if height_diversity_warning == "suspiciously_low_height_diversity":
+        try:
+            from .gee_api import get_building_height_diversity_ghsl
+            ghsl_result = get_building_height_diversity_ghsl(lat, lon, radius_m=radius_m)
+        except Exception as e:
+            logger.warning(f"[ARCH_DIVERSITY] GHSL height fallback import/call failed: {e}")
+            ghsl_result = None
+
+        if ghsl_result is not None:
+            calibrated_entropy = _calibrate_ghsl_height_diversity(ghsl_result.get("std_height_m"))
+            logger.info(
+                f"[ARCH_DIVERSITY] Substituting GHSL height diversity at ({lat:.4f}, {lon:.4f}): "
+                f"OSM levels_entropy={levels_entropy:.1f} -> GHSL-calibrated={calibrated_entropy:.1f} "
+                f"(GHSL mean={ghsl_result.get('mean_height_m')}, std={ghsl_result.get('std_height_m')})"
+            )
+            levels_entropy = calibrated_entropy
+            # Keep height_stats consistent with the substituted entropy so downstream
+            # consumers of mean_levels/std_levels/single_story_share (e.g. _coherence_signal's
+            # height_std input) also see real data instead of the fabricated near-zero.
+            mean_height_m = ghsl_result.get("mean_height_m")
+            std_height_m = ghsl_result.get("std_height_m")
+            if mean_height_m is not None:
+                # Rough meters-to-stories conversion (~3m per story) for consistency with
+                # the OSM-derived mean_levels/std_levels fields.
+                mean_levels = max(1.0, mean_height_m / 3.0)
+                std_levels = (std_height_m or 0.0) / 3.0
+                single_story_share = 1.0 if mean_levels <= 1.3 and std_levels < 0.3 else max(0.0, 1.0 - (std_levels / 1.5))
+                single_story_share = min(1.0, single_story_share)
+            ghsl_height_substituted = True
+            # Clear the warnings this substitution resolves -- the height signal is no
+            # longer fabricated, even if overall OSM footprint coverage remains low.
+            height_diversity_warning = None
+            if data_warning == "low_building_coverage":
+                # Don't clear the coverage warning itself (footprint coverage is still low;
+                # that's a separate, real data-quality issue this fix doesn't address), but
+                # note the height fix was applied alongside it.
+                pass
+
+    # Recompute diversity_score if levels_entropy was substituted above, so the composite
+    # score reflects the GHSL-calibrated value rather than the original fabricated one.
+    if ghsl_height_substituted:
+        diversity_score = min(100.0, 0.4 * levels_entropy + 0.4 * type_div + 0.2 * area_cv)
+
+    # Microsoft footprint fallback: when OSM building footprint coverage itself is too low
+    # to trust (low_building_coverage), built_coverage_ratio -- the highest-weighted single
+    # feature in the built_beauty model -- is likely undercounted because OSM hasn't mapped
+    # most buildings in the area, not because the area is actually sparsely built. Substitute
+    # Microsoft's ML-derived nationwide building footprint raster, which has full US coverage
+    # regardless of OSM mapping completeness.
+    ms_coverage_substituted = False
+    if data_warning == "low_building_coverage":
+        try:
+            from .gee_api import get_building_coverage_ms_footprints
+            ms_result = get_building_coverage_ms_footprints(lat, lon, radius_m=radius_m)
+        except Exception as e:
+            logger.warning(f"[ARCH_DIVERSITY] Microsoft footprint coverage fallback import/call failed: {e}")
+            ms_result = None
+
+        if ms_result is not None:
+            mean_area_per_pixel = ms_result.get("mean_building_area_per_pixel_sqm")
+            pixel_area_sqm = ms_result.get("pixel_area_sqm")
+            ms_coverage = None
+            if mean_area_per_pixel is not None and pixel_area_sqm and circle_area_sqm > 0:
+                # Land-mask the same way the OSM ratio is land-masked (total building area /
+                # effective_land_area_sqm, not raw circle area) -- otherwise coastal/edge
+                # locations get diluted by water/non-buildable pixels in the buffer that OSM's
+                # ratio already excludes, making MS look artificially worse than OSM there.
+                num_pixels_in_buffer = circle_area_sqm / pixel_area_sqm
+                total_building_area_sqm = mean_area_per_pixel * num_pixels_in_buffer
+                ms_coverage = max(0.0, min(1.0, total_building_area_sqm / effective_land_area_sqm))
+            # Only substitute when Microsoft shows MORE coverage than OSM. The entire
+            # justification for swapping is "OSM missed buildings"; if MS coverage is <= OSM's,
+            # OSM wasn't undercounting and substituting would only drag down a well-mapped
+            # place (regressed Bel Air / Hermosa Beach, where MS read lower than OSM).
+            if ms_coverage is not None and ms_coverage <= built_coverage_ratio:
+                logger.info(
+                    f"[ARCH_DIVERSITY] Skipping Microsoft coverage substitution at ({lat:.4f}, {lon:.4f}): "
+                    f"MS={ms_coverage:.3f} <= OSM={built_coverage_ratio:.3f} (OSM not undercounting)"
+                )
+                ms_coverage = None
+            if ms_coverage is not None:
+                logger.info(
+                    f"[ARCH_DIVERSITY] Substituting Microsoft footprint coverage (land-masked) at "
+                    f"({lat:.4f}, {lon:.4f}): OSM built_coverage_ratio={built_coverage_ratio:.3f} -> MS={ms_coverage:.3f}"
+                )
+                built_coverage_ratio = ms_coverage
+                ms_coverage_substituted = True
+                # Recompute the data-quality gate against the corrected coverage value --
+                # if the real coverage clears the threshold, this area was never actually
+                # sparsely built, OSM just hadn't mapped it.
+                if built_coverage_ratio < 0.30:
+                    confidence_0_1 = 0.4
+                    data_warning = "low_building_coverage"
+                elif built_coverage_ratio < 0.50:
+                    confidence_0_1 = 0.6
+                    data_warning = "low_building_coverage"
+                else:
+                    confidence_0_1 = 1.0
+                    data_warning = None
+
     material_top = sorted(materials.items(), key=lambda item: (-item[1], item[0]))
     material_entropy = entropy(list(material_groups.values())) * 100 if material_groups else 0.0
     material_profile = [
@@ -854,6 +966,8 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         "osm_building_coverage": round(built_coverage_ratio, 2),  # For reporting (0.00-1.00)
         "beauty_valid": beauty_valid,  # Always True - no hard failure
         "data_warning": height_diversity_warning or data_warning,  # Height diversity warning or coverage warning
+        "ghsl_height_substituted": ghsl_height_substituted,  # True if GHSL fallback replaced fabricated OSM height diversity
+        "ms_coverage_substituted": ms_coverage_substituted,  # True if Microsoft footprint raster replaced undercounted OSM coverage
         "confidence_0_1": confidence_0_1,  # 1.0 if good, 0.6 if <50%, 0.4 if <30%
         "material_profile": {
             "tagged_ratio": round(material_tagged / len(ways), 3) if ways else 0.0,
@@ -1105,6 +1219,7 @@ AREA_TYPE_WEIGHTS = {
         "streetwall_continuity": 8,
         "setback_consistency": 3,
         "facade_rhythm": 1,
+        "coherence_bonus": 10,           # Positive credit for coherent, well-kept low-diversity fabric
     },
     "exurban": {
         "height_diversity": 2,
@@ -1114,6 +1229,7 @@ AREA_TYPE_WEIGHTS = {
         "streetwall_continuity": 11,
         "setback_consistency": 3,
         "facade_rhythm": 1,
+        "coherence_bonus": 9,            # Positive credit for coherent, well-kept low-diversity fabric
     },
     "rural": {
         "height_diversity": 0,          # Design: height variation (not relevant)
@@ -1123,6 +1239,7 @@ AREA_TYPE_WEIGHTS = {
         "streetwall_continuity": 13,    # Form: facade continuity (reduced from 15)
         "setback_consistency": 3,       # Form: setback uniformity (less important)
         "facade_rhythm": 2,             # Form: facade alignment
+        "coherence_bonus": 8,            # Positive credit for coherent, well-kept low-diversity fabric
     },
     "unknown": {
         "height_diversity": 10,          # Equal weights as fallback
@@ -1133,6 +1250,18 @@ AREA_TYPE_WEIGHTS = {
         "setback_consistency": 2,
         "facade_rhythm": 2,
     },
+}
+
+# Max additive points (on the native 0-50 architecture scale) granted by the positive
+# coherence bonus in score_architectural_diversity_as_beauty(), applied only when
+# _coherence_signal() is high (>0.5, scaled 0.5->1.0 onto 0->max). Sized comparably to
+# the historic_era_integrity weight for these area types (see AREA_TYPE_WEIGHTS above).
+# Urban area types intentionally have no entry (and get no bonus) -- diversity itself is
+# the desired signal there, matching the scope of _apply_diversity_coherence_multiplier.
+COHERENCE_BONUS_MAX_POINTS = {
+    "suburban": 10.0,
+    "exurban": 9.0,
+    "rural": 8.0,
 }
 
 DESIGN_FORM_WEIGHTS = {
@@ -1383,17 +1512,63 @@ def _age_mix_balance(vintage_ratio: float) -> float:
     return _clamp01(balance)
 
 
+def _calibrate_ghsl_height_diversity(std_height_m: Optional[float]) -> float:
+    """
+    Map GHSL `std_height_m` (meters, from get_building_height_diversity_ghsl) onto the
+    existing model's `levels_entropy` / height_diversity scale (0-100 raw scale, of which
+    the catalog's observed range is roughly p50~=1.2, p95~=31.8 for the OSM-derived metric).
+
+    CAUTION: anchor points below were derived from GHSL's documented global value ranges for
+    the GHS_BUILT_H product (uniform single-family residential blocks typically show
+    std_height_m in the ~0.5-3m band; mixed-height/denser low-rise suburban fabric in the
+    ~3-8m band; areas with a meaningful mix of multi-story buildings above that), NOT from a
+    live-sampled set of reference towns -- GEE credentials were not available in this
+    environment/session to query Larchmont, Bronxville, Cobble Hill, Hermosa Beach, Bel Air,
+    Short Hills, The Woodlands, or Reston directly as the plan specified. This mapping MUST be
+    re-validated (and these anchors re-derived) against live GHSL data for those reference
+    towns before this is trusted for a production catalog rescore.
+
+    Anchors (std_height_m -> levels_entropy-equivalent):
+      0.0m  -> 0   (perfectly uniform heights -- legitimately low diversity)
+      1.5m  -> 8   (very uniform single-family blocks, slight roofline/story variation)
+      4.0m  -> 20  (typical mixed single-family + some 2-story variation)
+      8.0m  -> 35  (varied low-rise: ranch + colonial + occasional 3-story)
+      15.0m -> 50  (meaningful multi-story mix; approaching catalog's p95 ceiling)
+      25.0m+ -> 54 (cap; avoid saturating at the absolute max so values still discriminate)
+    """
+    if std_height_m is None:
+        return 0.0
+    std = max(0.0, float(std_height_m))
+
+    anchors = [
+        (0.0, 0.0),
+        (1.5, 8.0),
+        (4.0, 20.0),
+        (8.0, 35.0),
+        (15.0, 50.0),
+        (25.0, 54.0),
+    ]
+    if std >= anchors[-1][0]:
+        return anchors[-1][1]
+    for (x0, y0), (x1, y1) in zip(anchors, anchors[1:]):
+        if x0 <= std <= x1:
+            frac = (std - x0) / (x1 - x0) if x1 > x0 else 0.0
+            return y0 + frac * (y1 - y0)
+    return anchors[-1][1]
+
+
 def _coherence_signal(setback_value: Optional[float],
                       facade_rhythm_value: Optional[float],
                       streetwall_value: Optional[float],
                       material_entropy: Optional[float],
-                      height_std: Optional[float]) -> float:
+                      height_std: Optional[float],
+                      include_streetwall: bool = True) -> float:
     components: List[float] = []
     if setback_value is not None:
         components.append(_clamp01(setback_value / 100.0))
     if facade_rhythm_value is not None:
         components.append(_clamp01(facade_rhythm_value / 100.0))
-    if streetwall_value is not None:
+    if streetwall_value is not None and include_streetwall:
         components.append(_clamp01(streetwall_value / 100.0))
     if material_entropy is not None:
         # Lower entropy (more consistent materials) -> stronger coherence
@@ -2263,6 +2438,7 @@ def score_architectural_diversity_as_beauty(
     contextual_tags: Optional[List[str]] = None,
     pre_1940_pct: Optional[float] = None,
     nrhp_count: Optional[int] = None,
+    form_metrics_confidence_override: Optional[Dict[str, float]] = None,
 ) -> Tuple[float, Dict]:
     """
     Convert architectural diversity metrics to beauty score (0-50 points).
@@ -2577,6 +2753,19 @@ def score_architectural_diversity_as_beauty(
         except (TypeError, ValueError):
             logger.warning(f"Ignoring invalid override for facade_rhythm: {metric_overrides['facade_rhythm']!r}")
 
+    # Confidence override: when scoring offline from stored catalog values (lat/lon None,
+    # so no live fetch populated the *_confidence vars), feed the catalog's stored
+    # form_metrics_confidence so the confidence gate behaves identically to the original run.
+    if form_metrics_confidence_override:
+        if "block_grain" in form_metrics_confidence_override:
+            block_grain_confidence = float(form_metrics_confidence_override["block_grain"])
+        if "streetwall_continuity" in form_metrics_confidence_override:
+            streetwall_confidence = float(form_metrics_confidence_override["streetwall_continuity"])
+        if "setback_consistency" in form_metrics_confidence_override:
+            setback_confidence = float(form_metrics_confidence_override["setback_consistency"])
+        if "facade_rhythm" in form_metrics_confidence_override:
+            facade_rhythm_confidence = float(form_metrics_confidence_override["facade_rhythm"])
+
     form_metrics_fallback_info: Dict[str, Dict[str, Optional[float]]] = {}
 
     block_fallback = _form_metrics_fallback(
@@ -2684,12 +2873,17 @@ def score_architectural_diversity_as_beauty(
         "raw_confidence": facade_raw_confidence
     }
 
+    # Continuous street wall is a defining feature of dense urban form, not suburban/
+    # exurban/rural form -- large-lot suburbs are structurally near-zero on this metric
+    # by design, so including it here would mechanically suppress the coherence bonus
+    # for exactly the area types it's meant to credit.
     coherence_signal = _coherence_signal(
         setback_value,
         facade_rhythm_value,
         streetwall_value,
         material_entropy,
-        height_std
+        height_std,
+        include_streetwall=effective not in ("suburban", "exurban", "rural")
     )
     confidence_gate = _confidence_gate(
         [setback_confidence, facade_rhythm_confidence, streetwall_confidence]
@@ -2875,6 +3069,22 @@ def score_architectural_diversity_as_beauty(
     # Note: Both design_score and form_score are already in 0-50 native range
     final_score = min(50.0, design_score + form_score)
 
+    # Positive coherence bonus (suburban/exurban/rural only): credit genuinely coherent,
+    # well-kept low-diversity neighborhoods on their own merits. This is additive and
+    # distinct from `_apply_diversity_coherence_multiplier`, which only ever softens a
+    # diversity penalty (capped at 1.0x) -- it never grants points above the unmultiplied
+    # diversity score. Urban area types are intentionally excluded (diversity itself is the
+    # desired signal there), matching the multiplier's existing scope.
+    coherence_bonus_points = 0.0
+    if effective in ("suburban", "exurban", "rural"):
+        coherence_bonus_max = COHERENCE_BONUS_MAX_POINTS.get(effective, 0.0)
+        if coherence_bonus_max > 0.0 and coherence_signal > 0.5:
+            # Only credit coherence above the midpoint; scale linearly 0.5->1.0 coherence
+            # onto 0->max bonus points so a merely-average neighborhood gets nothing.
+            bonus_strength = _clamp01((coherence_signal - 0.5) / 0.5)
+            coherence_bonus_points = coherence_bonus_max * bonus_strength
+            final_score = min(50.0, final_score + coherence_bonus_points)
+
     if auto_oriented_penalty > 0.0:
         final_score = max(0.0, final_score - auto_oriented_penalty)
 
@@ -2958,7 +3168,8 @@ def score_architectural_diversity_as_beauty(
         "nrhp_count": int(nrhp_count) if isinstance(nrhp_count, (int, float)) else nrhp_count,
         "register_bonus": round(register_bonus, 2),
         "parking_share_estimate": round(parking_share, 3) if isinstance(parking_share, (int, float)) else None,
-        "auto_oriented_penalty": round(auto_oriented_penalty, 2)
+        "auto_oriented_penalty": round(auto_oriented_penalty, 2),
+        "coherence_bonus": round(coherence_bonus_points, 2)
     }
     metadata["synthetic_metrics"] = {
         "streetwall_proxy_used": streetwall_proxy_used

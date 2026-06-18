@@ -82,3 +82,6 @@ data/**/*recomputed.tmp.jsonl
 .vercel
 .env*.local
 data/irs_bmf_raw/
+
+# Local persistent HTTP/OSM/GEE cache (no Redis locally)
+.disk_cache/

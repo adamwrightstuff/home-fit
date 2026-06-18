@@ -256,133 +256,57 @@ def classify_morphology(
     location_input: Optional[str] = None
 ) -> str:
     """
-    Single, clear morphological classification using continuous scoring.
-    
-    This replaces the overlapping rules (Rule 1, Rule 2, Rule 3) with a unified
-    hierarchy based on intensity and context scores.
-    
+    Morphological classification driven by commercial dominance (urban_core)
+    vs. residential population density (everything else).
+
+    urban_core is defined by commercial/employment dominance, not by raw
+    density — a dense residential neighborhood is urban_residential even at
+    Manhattan-scale density. business_count must be businesses within 1km
+    (matches the live business_count signal and the catalog's
+    businesses_within_walkable) — NOT a profile/area-type-dependent radius,
+    which would make this circular.
+
     Args:
-        density: Population density
-        coverage: Building coverage ratio (0.0-1.0)
-        business_count: Number of businesses in 1km radius
-        metro_distance_km: Distance to principal city (km)
-        city: Optional city name for metro detection
-        location_input: Optional location string for "downtown" keyword check
-    
+        density: Population density (people/sq mi)
+        coverage: unused (kept for call-site compatibility)
+        business_count: Number of businesses within 1km
+        metro_distance_km: unused (kept for call-site compatibility)
+        city: unused (kept for call-site compatibility)
+        location_input: unused (kept for call-site compatibility)
+
     Returns:
-        Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural'
+        'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural',
+        or 'unknown' when density is missing/zero or looks unreliable
+        (e.g. a census tract with near-zero population but heavy commercial
+        activity nearby — a "dead tract" point-sample artifact). Returning
+        'unknown' rather than guessing is intentional: every pillar already
+        has a safe default for an unrecognized area_type.
     """
-    # Special case: "downtown" keyword = urban_core
-    if location_input and "downtown" in location_input.lower():
-        if density and density > 2000:
-            return "urban_core"
-        elif density:
-            return "urban_core"
-    
-    # REMOVED: Irvine special case - hardcoded city exceptions violate design principles
-    # If Irvine needs different classification, improve the classification logic itself
-    
-    # Calculate intensity and context scores
-    intensity = _calculate_intensity_score(density, coverage, business_count)
-    context = _calculate_context_score(metro_distance_km, city)
-    
-    # Check if within major metro area (by distance OR city name)
-    # This handles planned communities (Irvine, Reston) that have low coverage but are in major metros
-    is_major_metro = False
-    if metro_distance_km is not None and metro_distance_km < 50:
-        # Within 50km of a major metro principal city = major metro area
-        is_major_metro = True
-        context = max(context, 0.6)
-    elif city:
-        try:
-            from .regional_baselines import RegionalBaselineManager
-            baseline_mgr = RegionalBaselineManager()
-            city_lower = city.lower().strip()
-            for metro_name in baseline_mgr.major_metros.keys():
-                if metro_name.lower() == city_lower:
-                    is_major_metro = True
-                    context = max(context, 0.6)
-                    break
-        except Exception:
-            pass
-    
-    # Apply metro proximity boost for planned communities (spacious but in major metros)
-    if is_major_metro:
-        # If coverage is moderate (0.10-0.18), boost intensity for planned communities
-        # This ensures suburban classification for spacious planned communities in major metros
-        if coverage and 0.10 <= coverage < 0.18:
-            intensity = max(intensity, 0.40)  # Ensure suburban classification
-        # Also boost if intensity is very low but we're in a major metro
-        elif intensity < 0.30:
-            intensity = max(intensity, 0.35)  # At least moderate intensity for major metro areas
-    
-    # Handle missing density explicitly
-    if density is None:
-        # If we have strong coverage/business signals, assume moderate intensity
-        if coverage and coverage >= 0.22:
-            intensity = max(intensity, 0.4)
-        if business_count and business_count >= 75:
-            intensity = max(intensity, 0.5)
-    
-    # Single decision tree with graded transitions
-    # urban_core: high intensity + urban context
-    if intensity >= 0.75 and context >= 0.5:
+    if density is None or density <= 0:
+        return "unknown"
+
+    walk = business_count or 0
+
+    # Dead-tract guard: near-zero density but real commercial activity means
+    # the density point-sample landed on an unrepresentative tract (park,
+    # rail yard, low-population edge tract), not that the place is rural.
+    if density < 2000 and walk >= 80:
+        return "unknown"
+
+    ratio = walk / (density / 1000)
+
+    if ratio >= 100 and walk >= 100:
         return "urban_core"
-    elif intensity >= 0.70 and context >= 0.6:
-        return "urban_core"
-    elif intensity >= 0.65 and context >= 0.7:
-        return "urban_core"
-    
-    # urban_residential: high intensity but lower context, or moderate intensity + high context
-    if intensity >= 0.60 and context >= 0.4:
+    if density >= 25000:
         return "urban_residential"
-    elif intensity >= 0.55 and context >= 0.5:
+    if density >= 12000 and walk >= 100:
         return "urban_residential"
-    elif intensity >= 0.50 and context >= 0.6:
+    if walk >= 150:
         return "urban_residential"
-    elif intensity >= 0.45 and context >= 0.85:
-        # Low residential density but immediately adjacent to a major urban core (e.g. Arts District LA):
-        # warehouse/industrial morphology reads as low-density but is functionally urban.
-        return "urban_residential"
-    
-    # suburban: moderate intensity
-    # Also catch planned communities (high context, moderate coverage) that might score lower on intensity
-    if intensity >= 0.30:
+    if density >= 3000:
         return "suburban"
-    elif intensity >= 0.20 and context >= 0.4:
-        return "suburban"
-    elif intensity >= 0.15 and context >= 0.6:
-        # Planned communities in major metros: lower intensity (spacious) but high context
-        return "suburban"
-    
-    # exurban: low-moderate intensity
-    if intensity >= 0.15:
+    if density >= 800:
         return "exurban"
-    elif intensity >= 0.10:
-        return "exurban"
-    
-    # rural: very low intensity
-    if density and density < 450 and (coverage is None or coverage < 0.08):
-        return "rural"
-    
-    # Default fallback when density is None
-    # Use other signals to make a reasonable guess instead of "unknown"
-    if density is None:
-        # If we have business or coverage data, use that to classify
-        if business_count is not None or coverage is not None:
-            # Use the intensity score we calculated (which uses coverage/business)
-            if intensity >= 0.15:
-                return "exurban"
-            elif intensity >= 0.10:
-                return "exurban"
-            elif intensity >= 0.05:
-                return "rural"
-            else:
-                return "rural"
-        # If no signals at all, default to exurban (better than unknown)
-        # Most small towns without census data are exurban/rural
-        return "exurban"
-    
     return "rural"
 
 
@@ -965,21 +889,18 @@ def detect_area_type(lat: float, lon: float, density: Optional[float] = None,
                      built_coverage: Optional[float] = None,
                      metro_distance_km: Optional[float] = None) -> str:
     """
-    Detect area type using unified morphological classification.
-    
-    REFACTORED: Now uses continuous scoring instead of hard thresholds.
-    This replaces the overlapping rules (Rule 1, Rule 2, Rule 3) with a single
-    hierarchy based on intensity and context scores.
-    
+    Detect area type using commercial-dominance vs. residential-density
+    morphological classification (see classify_morphology()).
+
     Args:
         lat, lon: Coordinates
         density: Optional pre-fetched density (for efficiency)
-        city: Optional city name (used to identify major metros)
-        location_input: Optional raw location input string (for "downtown" keyword check)
-        business_count: Optional count of businesses in 1km radius (for business density)
-        built_coverage: Optional building coverage ratio 0.0-1.0 (for building density)
-        metro_distance_km: Optional distance to principal city in km (if None, will calculate)
-    
+        city: unused (kept for call-site compatibility)
+        location_input: unused (kept for call-site compatibility)
+        business_count: Optional count of businesses within 1km
+        built_coverage: unused (kept for call-site compatibility)
+        metro_distance_km: unused (kept for call-site compatibility)
+
     Returns:
         Base morphological type: 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural', 'unknown'
     """

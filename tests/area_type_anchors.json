@@ -1,0 +1,27 @@
+{
+  "_comment": "Must-never-drift anchor fixture for area-type classification. Each label is justified by the place's own signals (density people/sq-mi, walkable business count, businesses-per-1k-residents). Confirmed by product owner 2026-06-17. Ambiguous boundary cases (FiDi, Tribeca, Arts District) are deliberately excluded.",
+  "anchors": [
+    {"name": "Midtown",            "expected": "urban_core",         "density": 2020,   "walkable_businesses": 1228, "biz_per_1k": 1069},
+    {"name": "Midtown East",       "expected": "urban_core",         "density": 3640,   "walkable_businesses": 439,  "biz_per_1k": 252},
+
+    {"name": "Upper West Side",    "expected": "urban_residential",  "density": 115254, "walkable_businesses": 338,  "biz_per_1k": 5},
+    {"name": "Park Slope",         "expected": "urban_residential",  "density": 57949,  "walkable_businesses": 336,  "biz_per_1k": 11},
+    {"name": "Sunset Park",        "expected": "urban_residential",  "density": 117935, "walkable_businesses": 203,  "biz_per_1k": 3},
+    {"name": "Astoria",            "expected": "urban_residential",  "density": 25664,  "walkable_businesses": 113,  "biz_per_1k": 14},
+    {"name": "Greenwich Village",  "expected": "urban_residential",  "density": 89045,  "walkable_businesses": 755,  "biz_per_1k": 18},
+
+    {"name": "Scarsdale",          "expected": "suburban",           "density": 6724,   "walkable_businesses": 25,   "biz_per_1k": 5},
+    {"name": "Sherman Oaks",       "expected": "suburban",           "density": 10949,  "walkable_businesses": 54,   "biz_per_1k": 6},
+    {"name": "Studio City",        "expected": "suburban",           "density": 10692,  "walkable_businesses": 31,   "biz_per_1k": 6},
+    {"name": "Great Neck",         "expected": "suburban",           "density": 9478,   "walkable_businesses": 25,   "biz_per_1k": 7},
+
+    {"name": "Traverse City MI",   "expected": "exurban",            "density": 2690},
+    {"name": "Port Townsend WA",   "expected": "exurban",            "density": 1684},
+    {"name": "Coeur d'Alene ID",   "expected": "exurban",            "density": 2506},
+
+    {"name": "Marfa TX",           "expected": "rural",              "density": 1},
+    {"name": "Taos NM",            "expected": "rural",              "density": 33},
+    {"name": "Whitefish MT",       "expected": "rural",              "density": 348},
+    {"name": "Jackson WY",         "expected": "rural",              "density": 0}
+  ]
+}

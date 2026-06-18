@@ -1,0 +1,1450 @@
+{
+ "_comment": "Pre-change snapshot of current (OLD-classifier) area_type labels for the NYC/LA catalog. Used as the drift-diff baseline so any classify_morphology change reports exactly which places moved. Captured 2026-06-17 BEFORE the commercial-dominance rewrite.",
+ "labels": {
+  "Agoura Hills": {
+   "base_area_type": "suburban",
+   "density": 4828.975637600387,
+   "effective_area_type": "suburban"
+  },
+  "Alhambra": {
+   "base_area_type": "urban_residential",
+   "density": 11545.403792509489,
+   "effective_area_type": "suburban"
+  },
+  "Altadena": {
+   "base_area_type": "suburban",
+   "density": 4701.900072051355,
+   "effective_area_type": "suburban"
+  },
+  "Arcadia": {
+   "base_area_type": "suburban",
+   "density": 2154.165427308951,
+   "effective_area_type": "suburban"
+  },
+  "Ardsley": {
+   "base_area_type": "suburban",
+   "density": 3792.4381814528006,
+   "effective_area_type": "suburban"
+  },
+  "Arts District": {
+   "base_area_type": "suburban",
+   "density": 932.0840903220516,
+   "effective_area_type": "suburban"
+  },
+  "Astoria": {
+   "base_area_type": "urban_core",
+   "density": 25664.3400224355,
+   "effective_area_type": "suburban"
+  },
+  "Atwater Village": {
+   "base_area_type": "urban_residential",
+   "density": 9937.780182408409,
+   "effective_area_type": "suburban"
+  },
+  "Battery Park City": {
+   "base_area_type": "urban_residential",
+   "density": 121304.46761049048,
+   "effective_area_type": "urban_residential"
+  },
+  "Bay Ridge": {
+   "base_area_type": "urban_core",
+   "density": 72650.70962183732,
+   "effective_area_type": "suburban"
+  },
+  "Bayside": {
+   "base_area_type": "urban_residential",
+   "density": 10193.68926150072,
+   "effective_area_type": "suburban"
+  },
+  "Bed-Stuy": {
+   "base_area_type": "urban_residential",
+   "density": 76305.84784693194,
+   "effective_area_type": "historic_urban"
+  },
+  "Bedford": {
+   "base_area_type": "rural",
+   "density": 284.9440762057303,
+   "effective_area_type": "urban_residential"
+  },
+  "Bel Air": {
+   "base_area_type": "suburban",
+   "density": 727.7117874207864,
+   "effective_area_type": "suburban"
+  },
+  "Bellmore": {
+   "base_area_type": "suburban",
+   "density": 5387.083723494847,
+   "effective_area_type": "suburban"
+  },
+  "Belmont": {
+   "base_area_type": "urban_core",
+   "density": 82712.14300390384,
+   "effective_area_type": "suburban"
+  },
+  "Belmont Shore": {
+   "base_area_type": "urban_core",
+   "density": 16861.819124926194,
+   "effective_area_type": "suburban"
+  },
+  "Bensonhurst": {
+   "base_area_type": "urban_residential",
+   "density": 54106.21024872021,
+   "effective_area_type": "suburban"
+  },
+  "Beverly Hills": {
+   "base_area_type": "suburban",
+   "density": 6868.609797039525,
+   "effective_area_type": "historic_urban"
+  },
+  "Bloomfield": {
+   "base_area_type": "suburban",
+   "density": 12987.846458424989,
+   "effective_area_type": "suburban"
+  },
+  "Boerum Hill": {
+   "base_area_type": "urban_residential",
+   "density": 55074.40944638878,
+   "effective_area_type": "historic_urban"
+  },
+  "Borough Park": {
+   "base_area_type": "urban_residential",
+   "density": 49807.69230769231,
+   "effective_area_type": "historic_urban"
+  },
+  "Boyle Heights": {
+   "base_area_type": "urban_core",
+   "density": 21308.15995424906,
+   "effective_area_type": "suburban"
+  },
+  "Brentwood": {
+   "base_area_type": "suburban",
+   "density": 4115.092308425288,
+   "effective_area_type": "suburban"
+  },
+  "Brighton Beach": {
+   "base_area_type": "urban_residential",
+   "density": 58426.743030798905,
+   "effective_area_type": "suburban"
+  },
+  "Bronxville": {
+   "base_area_type": "suburban",
+   "density": 11635.798895649925,
+   "effective_area_type": "historic_urban"
+  },
+  "Brooklyn Heights": {
+   "base_area_type": "urban_residential",
+   "density": 137103.8173044766,
+   "effective_area_type": "historic_urban"
+  },
+  "Burbank": {
+   "base_area_type": "suburban",
+   "density": 11481.86519194168,
+   "effective_area_type": "urban_residential"
+  },
+  "Bushwick": {
+   "base_area_type": "urban_residential",
+   "density": 62391.06715222967,
+   "effective_area_type": "suburban"
+  },
+  "Calabasas": {
+   "base_area_type": "suburban",
+   "density": 1329.8653526944101,
+   "effective_area_type": "suburban"
+  },
+  "Canarsie": {
+   "base_area_type": "urban_core",
+   "density": 28132.427709243944,
+   "effective_area_type": "urban_residential"
+  },
+  "Canoga Park": {
+   "base_area_type": "urban_core",
+   "density": 19956.719665979188,
+   "effective_area_type": "historic_urban"
+  },
+  "Carnegie Hill": {
+   "base_area_type": "urban_core",
+   "density": 59463.91752577319,
+   "effective_area_type": "historic_urban"
+  },
+  "Carroll Gardens": {
+   "base_area_type": "urban_core",
+   "density": 37504.32692554606,
+   "effective_area_type": "historic_urban"
+  },
+  "Cedarhurst": {
+   "base_area_type": "suburban",
+   "density": 10828.523709011386,
+   "effective_area_type": "suburban"
+  },
+  "Cerritos": {
+   "base_area_type": "suburban",
+   "density": 8625.03877083223,
+   "effective_area_type": "urban_residential"
+  },
+  "Chappaqua": {
+   "base_area_type": "suburban",
+   "density": 854.5454572367579,
+   "effective_area_type": "suburban"
+  },
+  "Chatham": {
+   "base_area_type": "suburban",
+   "density": 3544.1247392963255,
+   "effective_area_type": "historic_urban"
+  },
+  "Chatsworth": {
+   "base_area_type": "suburban",
+   "density": 7490.781633368384,
+   "effective_area_type": "suburban"
+  },
+  "Chelsea": {
+   "base_area_type": "urban_residential",
+   "density": 139291.00664995337,
+   "effective_area_type": "suburban"
+  },
+  "Chinatown": {
+   "base_area_type": "urban_residential",
+   "density": 95474.07438388104,
+   "effective_area_type": "suburban"
+  },
+  "Chinatown LA": {
+   "base_area_type": "suburban",
+   "density": 6810.420995996861,
+   "effective_area_type": "suburban"
+  },
+  "City Island": {
+   "base_area_type": "suburban",
+   "density": 10375.926515350217,
+   "effective_area_type": "historic_urban"
+  },
+  "Clinton Hill": {
+   "base_area_type": "urban_core",
+   "density": 56125.63965162909,
+   "effective_area_type": "historic_urban"
+  },
+  "Closter": {
+   "base_area_type": "suburban",
+   "density": 3091.608968770462,
+   "effective_area_type": "suburban"
+  },
+  "Cobble Hill": {
+   "base_area_type": "urban_core",
+   "density": 52395.63970704648,
+   "effective_area_type": "historic_urban"
+  },
+  "Compton": {
+   "base_area_type": "urban_residential",
+   "density": 13389.373310275956,
+   "effective_area_type": "suburban"
+  },
+  "Coney Island": {
+   "base_area_type": "urban_residential",
+   "density": 32447.86029651772,
+   "effective_area_type": "suburban"
+  },
+  "Cos Cob": {
+   "base_area_type": "suburban",
+   "density": 1502.5597410012963,
+   "effective_area_type": "suburban"
+  },
+  "Cranford": {
+   "base_area_type": "suburban",
+   "density": 5507.560088993592,
+   "effective_area_type": "suburban"
+  },
+  "Crenshaw": {
+   "base_area_type": "suburban",
+   "density": 2405.5050111423993,
+   "effective_area_type": "suburban"
+  },
+  "Cresskill": {
+   "base_area_type": "suburban",
+   "density": 3231.1831177317645,
+   "effective_area_type": "suburban"
+  },
+  "Croton-on-Hudson": {
+   "base_area_type": "rural",
+   "density": 1314.9333378962585,
+   "effective_area_type": "historic_urban"
+  },
+  "Crown Heights": {
+   "base_area_type": "urban_core",
+   "density": 46171.67177693406,
+   "effective_area_type": "suburban"
+  },
+  "Culver City": {
+   "base_area_type": "suburban",
+   "density": 5933.294521943906,
+   "effective_area_type": "suburban"
+  },
+  "DUMBO": {
+   "base_area_type": "urban_residential",
+   "density": 29075.100906504336,
+   "effective_area_type": "urban_residential"
+  },
+  "Darien": {
+   "base_area_type": "rural",
+   "density": 2009.3829440288303,
+   "effective_area_type": "suburban"
+  },
+  "Demarest": {
+   "base_area_type": "suburban",
+   "density": 2378.8427251607322,
+   "effective_area_type": "urban_residential"
+  },
+  "Ditmas Park": {
+   "base_area_type": "urban_core",
+   "density": 48900.23508668821,
+   "effective_area_type": "suburban"
+  },
+  "Dobbs Ferry": {
+   "base_area_type": "suburban",
+   "density": 6310.411449097855,
+   "effective_area_type": "suburban"
+  },
+  "Downey": {
+   "base_area_type": "urban_residential",
+   "density": 11200.189036924383,
+   "effective_area_type": "suburban"
+  },
+  "Downtown LA": {
+   "base_area_type": "urban_core",
+   "density": 9784.248295096693,
+   "effective_area_type": "historic_urban"
+  },
+  "Eagle Rock": {
+   "base_area_type": "suburban",
+   "density": 13713.227265282354,
+   "effective_area_type": "suburban"
+  },
+  "East Harlem": {
+   "base_area_type": "urban_residential",
+   "density": 77508.30340734747,
+   "effective_area_type": "suburban"
+  },
+  "East Hollywood": {
+   "base_area_type": "urban_residential",
+   "density": 22948.763923016475,
+   "effective_area_type": "suburban"
+  },
+  "East Los Angeles": {
+   "base_area_type": "suburban",
+   "density": 5907.449374954309,
+   "effective_area_type": "suburban"
+  },
+  "East New York": {
+   "base_area_type": "urban_residential",
+   "density": 50870.61570830732,
+   "effective_area_type": "suburban"
+  },
+  "East Village": {
+   "base_area_type": "urban_residential",
+   "density": 181470.49312853676,
+   "effective_area_type": "suburban"
+  },
+  "Eastchester": {
+   "base_area_type": "urban_residential",
+   "density": 19574.14058491534,
+   "effective_area_type": "suburban"
+  },
+  "Echo Park": {
+   "base_area_type": "urban_residential",
+   "density": 16669.85608624104,
+   "effective_area_type": "urban_residential"
+  },
+  "Edgewater": {
+   "base_area_type": "suburban",
+   "density": 14183.219473844083,
+   "effective_area_type": "urban_residential"
+  },
+  "El Monte": {
+   "base_area_type": "suburban",
+   "density": 6821.206744782095,
+   "effective_area_type": "suburban"
+  },
+  "El Segundo": {
+   "base_area_type": "urban_residential",
+   "density": 10765.018986986088,
+   "effective_area_type": "suburban"
+  },
+  "El Sereno": {
+   "base_area_type": "urban_residential",
+   "density": 15307.5945724354,
+   "effective_area_type": "suburban"
+  },
+  "Elmhurst": {
+   "base_area_type": "urban_core",
+   "density": 48331.382854224736,
+   "effective_area_type": "historic_urban"
+  },
+  "Elysian Valley": {
+   "base_area_type": "suburban",
+   "density": 7524.814578067779,
+   "effective_area_type": "suburban"
+  },
+  "Encino": {
+   "base_area_type": "suburban",
+   "density": 5367.167147934879,
+   "effective_area_type": "urban_residential"
+  },
+  "Englewood": {
+   "base_area_type": "suburban",
+   "density": 10561.586032526991,
+   "effective_area_type": "suburban"
+  },
+  "Fairfield": {
+   "base_area_type": "exurban",
+   "density": 2600.1007724292754,
+   "effective_area_type": "suburban"
+  },
+  "Fieldston": {
+   "base_area_type": "urban_residential",
+   "density": 17115.913366456032,
+   "effective_area_type": "urban_residential"
+  },
+  "Financial District": {
+   "base_area_type": "urban_core",
+   "density": 88716.77414514136,
+   "effective_area_type": "suburban"
+  },
+  "Flatbush": {
+   "base_area_type": "urban_residential",
+   "density": 111373.29994962814,
+   "effective_area_type": "historic_urban"
+  },
+  "Flatlands": {
+   "base_area_type": "urban_core",
+   "density": 21221.334552542292,
+   "effective_area_type": "suburban"
+  },
+  "Floral Park": {
+   "base_area_type": "urban_residential",
+   "density": 11158.28049861067,
+   "effective_area_type": "historic_urban"
+  },
+  "Flushing": {
+   "base_area_type": "urban_core",
+   "density": 88810.87321578505,
+   "effective_area_type": "historic_urban"
+  },
+  "Fordham": {
+   "base_area_type": "urban_residential",
+   "density": 18594.745359352688,
+   "effective_area_type": "suburban"
+  },
+  "Forest Hills": {
+   "base_area_type": "urban_core",
+   "density": 63279.7278559741,
+   "effective_area_type": "suburban"
+  },
+  "Fort Greene": {
+   "base_area_type": "suburban",
+   "density": 0.0,
+   "effective_area_type": "urban_residential"
+  },
+  "Fort Lee": {
+   "base_area_type": "suburban",
+   "density": 11760.395989782448,
+   "effective_area_type": "suburban"
+  },
+  "Franklin Village": {
+   "base_area_type": "rural",
+   "density": 210.22282196059646,
+   "effective_area_type": "suburban"
+  },
+  "Freeport": {
+   "base_area_type": "suburban",
+   "density": 5284.063305058671,
+   "effective_area_type": "suburban"
+  },
+  "Frogtown": {
+   "base_area_type": "urban_residential",
+   "density": 12537.265695133554,
+   "effective_area_type": "suburban"
+  },
+  "Garden City": {
+   "base_area_type": "suburban",
+   "density": 3671.813531494651,
+   "effective_area_type": "suburban"
+  },
+  "Gardena": {
+   "base_area_type": "suburban",
+   "density": 13911.462764448981,
+   "effective_area_type": "suburban"
+  },
+  "Glassell Park": {
+   "base_area_type": "suburban",
+   "density": 7453.7460095178185,
+   "effective_area_type": "suburban"
+  },
+  "Glen Ridge": {
+   "base_area_type": "suburban",
+   "density": 6116.45915748658,
+   "effective_area_type": "historic_urban"
+  },
+  "Glen Rock": {
+   "base_area_type": "suburban",
+   "density": 4909.42295129832,
+   "effective_area_type": "urban_residential"
+  },
+  "Glendale": {
+   "base_area_type": "urban_residential",
+   "density": 20316.47281579659,
+   "effective_area_type": "suburban"
+  },
+  "Gowanus": {
+   "base_area_type": "suburban",
+   "density": 8265.127947817362,
+   "effective_area_type": "historic_urban"
+  },
+  "Gramercy Park": {
+   "base_area_type": "urban_core",
+   "density": 76112.40598793763,
+   "effective_area_type": "historic_urban"
+  },
+  "Granada Hills": {
+   "base_area_type": "urban_residential",
+   "density": 7867.018233323976,
+   "effective_area_type": "suburban"
+  },
+  "Great Kills": {
+   "base_area_type": "suburban",
+   "density": 11293.927031202365,
+   "effective_area_type": "suburban"
+  },
+  "Great Neck": {
+   "base_area_type": "suburban",
+   "density": 9478.408647437045,
+   "effective_area_type": "suburban"
+  },
+  "Greenpoint": {
+   "base_area_type": "urban_core",
+   "density": 36354.00221954765,
+   "effective_area_type": "historic_urban"
+  },
+  "Greenwich": {
+   "base_area_type": "suburban",
+   "density": 5093.905086058432,
+   "effective_area_type": "historic_urban"
+  },
+  "Greenwich Village": {
+   "base_area_type": "urban_core",
+   "density": 89044.51932558576,
+   "effective_area_type": "historic_urban"
+  },
+  "Hamilton Heights": {
+   "base_area_type": "urban_residential",
+   "density": 112618.29966880356,
+   "effective_area_type": "historic_urban"
+  },
+  "Hancock Park": {
+   "base_area_type": "urban_residential",
+   "density": 8340.590825423178,
+   "effective_area_type": "suburban"
+  },
+  "Harlem": {
+   "base_area_type": "urban_core",
+   "density": 47824.96058912369,
+   "effective_area_type": "urban_residential"
+  },
+  "Harrison": {
+   "base_area_type": "suburban",
+   "density": 12694.974274771186,
+   "effective_area_type": "suburban"
+  },
+  "Hastings-on-Hudson": {
+   "base_area_type": "suburban",
+   "density": 5386.516357923897,
+   "effective_area_type": "suburban"
+  },
+  "Hawthorne": {
+   "base_area_type": "urban_residential",
+   "density": 29029.487246634893,
+   "effective_area_type": "suburban"
+  },
+  "Hell's Kitchen": {
+   "base_area_type": "urban_core",
+   "density": 29305.83709296111,
+   "effective_area_type": "historic_urban"
+  },
+  "Hempstead": {
+   "base_area_type": "suburban",
+   "density": 8095.540760705593,
+   "effective_area_type": "suburban"
+  },
+  "Hermosa Beach": {
+   "base_area_type": "urban_residential",
+   "density": 10346.475372501958,
+   "effective_area_type": "suburban"
+  },
+  "Hewlett": {
+   "base_area_type": "suburban",
+   "density": 8619.062860349793,
+   "effective_area_type": "suburban"
+  },
+  "Hidden Hills": {
+   "base_area_type": "suburban",
+   "density": 1007.2467388488199,
+   "effective_area_type": "suburban"
+  },
+  "Highland Park": {
+   "base_area_type": "urban_core",
+   "density": 24246.949021400815,
+   "effective_area_type": "suburban"
+  },
+  "Hoboken": {
+   "base_area_type": "urban_residential",
+   "density": 52464.761217804225,
+   "effective_area_type": "suburban"
+  },
+  "Hollywood": {
+   "base_area_type": "urban_residential",
+   "density": 9534.561035192663,
+   "effective_area_type": "historic_urban"
+  },
+  "Hollywood Hills": {
+   "base_area_type": "suburban",
+   "density": 2708.5309224570547,
+   "effective_area_type": "suburban"
+  },
+  "Howard Beach": {
+   "base_area_type": "suburban",
+   "density": 0.0,
+   "effective_area_type": "urban_residential"
+  },
+  "Hunts Point": {
+   "base_area_type": "urban_residential",
+   "density": 22988.219381605137,
+   "effective_area_type": "suburban"
+  },
+  "Hyde Park": {
+   "base_area_type": "urban_core",
+   "density": 12914.084882852821,
+   "effective_area_type": "suburban"
+  },
+  "Inglewood": {
+   "base_area_type": "urban_residential",
+   "density": 23975.865929426647,
+   "effective_area_type": "historic_urban"
+  },
+  "Inwood": {
+   "base_area_type": "urban_core",
+   "density": 67953.39929779764,
+   "effective_area_type": "historic_urban"
+  },
+  "Irvington": {
+   "base_area_type": "suburban",
+   "density": 2362.2892923789213,
+   "effective_area_type": "suburban"
+  },
+  "Jackson Heights": {
+   "base_area_type": "urban_core",
+   "density": 57018.73359319068,
+   "effective_area_type": "suburban"
+  },
+  "Jamaica": {
+   "base_area_type": "urban_core",
+   "density": 16753.231453426943,
+   "effective_area_type": "suburban"
+  },
+  "Jersey City": {
+   "base_area_type": "urban_residential",
+   "density": 45450.20718232044,
+   "effective_area_type": "historic_urban"
+  },
+  "Katonah": {
+   "base_area_type": "rural",
+   "density": 437.178504583915,
+   "effective_area_type": "suburban"
+  },
+  "Kensington": {
+   "base_area_type": "urban_core",
+   "density": 80809.8792995186,
+   "effective_area_type": "historic_urban"
+  },
+  "Kew Gardens": {
+   "base_area_type": "urban_core",
+   "density": 20158.025434569943,
+   "effective_area_type": "suburban"
+  },
+  "Kips Bay": {
+   "base_area_type": "urban_residential",
+   "density": 172196.20952370047,
+   "effective_area_type": "historic_urban"
+  },
+  "Koreatown": {
+   "base_area_type": "urban_core",
+   "density": 36412.62261228704,
+   "effective_area_type": "suburban"
+  },
+  "La Ca\u00f1ada Flintridge": {
+   "base_area_type": "suburban",
+   "density": 1776.9048014772286,
+   "effective_area_type": "historic_urban"
+  },
+  "La Crescenta": {
+   "base_area_type": "suburban",
+   "density": 3870.890036072242,
+   "effective_area_type": "suburban"
+  },
+  "La Mirada": {
+   "base_area_type": "suburban",
+   "density": 3243.2674527969903,
+   "effective_area_type": "suburban"
+  },
+  "Lakewood": {
+   "base_area_type": "suburban",
+   "density": 8215.454762436968,
+   "effective_area_type": "suburban"
+  },
+  "Larchmont": {
+   "base_area_type": "suburban",
+   "density": 5976.710367614388,
+   "effective_area_type": "suburban"
+  },
+  "Larchmont Village": {
+   "base_area_type": "suburban",
+   "density": 5001.087790325215,
+   "effective_area_type": "suburban"
+  },
+  "Lawrence": {
+   "base_area_type": "suburban",
+   "density": 1821.8805716457232,
+   "effective_area_type": "suburban"
+  },
+  "Leimert Park": {
+   "base_area_type": "suburban",
+   "density": 8654.163624242039,
+   "effective_area_type": "suburban"
+  },
+  "Leonia": {
+   "base_area_type": "suburban",
+   "density": 5728.9976912225775,
+   "effective_area_type": "suburban"
+  },
+  "Little Italy": {
+   "base_area_type": "urban_core",
+   "density": 95474.07438388104,
+   "effective_area_type": "historic_urban"
+  },
+  "Little Tokyo": {
+   "base_area_type": "urban_core",
+   "density": 13125.01157735126,
+   "effective_area_type": "suburban"
+  },
+  "Long Beach": {
+   "base_area_type": "suburban",
+   "density": 7923.340190906836,
+   "effective_area_type": "suburban"
+  },
+  "Long Island City": {
+   "base_area_type": "urban_residential",
+   "density": 30570.859935366912,
+   "effective_area_type": "historic_urban"
+  },
+  "Los Feliz": {
+   "base_area_type": "urban_core",
+   "density": 15255.647316006802,
+   "effective_area_type": "suburban"
+  },
+  "Lower East Side": {
+   "base_area_type": "urban_core",
+   "density": 87667.5044115288,
+   "effective_area_type": "historic_urban"
+  },
+  "Lynbrook": {
+   "base_area_type": "suburban",
+   "density": 9873.550262406712,
+   "effective_area_type": "suburban"
+  },
+  "Madison": {
+   "base_area_type": "suburban",
+   "density": 4719.994962021392,
+   "effective_area_type": "suburban"
+  },
+  "Malverne": {
+   "base_area_type": "suburban",
+   "density": 7681.314680950647,
+   "effective_area_type": "suburban"
+  },
+  "Mamaroneck": {
+   "base_area_type": "suburban",
+   "density": 5154.271063706819,
+   "effective_area_type": "suburban"
+  },
+  "Manhasset": {
+   "base_area_type": "suburban",
+   "density": 2594.1191535334365,
+   "effective_area_type": "historic_urban"
+  },
+  "Manhattan Beach": {
+   "base_area_type": "suburban",
+   "density": 12321.941182652368,
+   "effective_area_type": "urban_residential"
+  },
+  "Manhattanville": {
+   "base_area_type": "suburban",
+   "density": 701.420683546643,
+   "effective_area_type": "historic_urban"
+  },
+  "Maplewood": {
+   "base_area_type": "suburban",
+   "density": 3796.503901313483,
+   "effective_area_type": "suburban"
+  },
+  "Mar Vista": {
+   "base_area_type": "urban_residential",
+   "density": 9435.3173077805,
+   "effective_area_type": "suburban"
+  },
+  "Marina del Rey": {
+   "base_area_type": "suburban",
+   "density": 12042.466415526063,
+   "effective_area_type": "urban_residential"
+  },
+  "Maspeth": {
+   "base_area_type": "urban_core",
+   "density": 19582.618058687545,
+   "effective_area_type": "suburban"
+  },
+  "Merrick": {
+   "base_area_type": "suburban",
+   "density": 3375.9933762749265,
+   "effective_area_type": "suburban"
+  },
+  "Mid-City": {
+   "base_area_type": "suburban",
+   "density": 14333.182632537235,
+   "effective_area_type": "suburban"
+  },
+  "Midtown": {
+   "base_area_type": "suburban",
+   "density": 2020.062281885308,
+   "effective_area_type": "suburban"
+  },
+  "Midtown East": {
+   "base_area_type": "suburban",
+   "density": 3640.27045942241,
+   "effective_area_type": "suburban"
+  },
+  "Millburn": {
+   "base_area_type": "suburban",
+   "density": 5602.613796688202,
+   "effective_area_type": "suburban"
+  },
+  "Mineola": {
+   "base_area_type": "urban_residential",
+   "density": 12016.159024136265,
+   "effective_area_type": "historic_urban"
+  },
+  "Miracle Mile": {
+   "base_area_type": "urban_core",
+   "density": 20710.808289919696,
+   "effective_area_type": "historic_urban"
+  },
+  "Monrovia": {
+   "base_area_type": "suburban",
+   "density": 9891.963272145986,
+   "effective_area_type": "suburban"
+  },
+  "Montclair": {
+   "base_area_type": "suburban",
+   "density": 14678.349784108577,
+   "effective_area_type": "suburban"
+  },
+  "Montebello": {
+   "base_area_type": "urban_residential",
+   "density": 9218.789826501106,
+   "effective_area_type": "suburban"
+  },
+  "Monterey Park": {
+   "base_area_type": "suburban",
+   "density": 7519.833445505041,
+   "effective_area_type": "suburban"
+  },
+  "Morningside Heights": {
+   "base_area_type": "urban_core",
+   "density": 52054.0977017014,
+   "effective_area_type": "historic_urban"
+  },
+  "Morris Park": {
+   "base_area_type": "urban_core",
+   "density": 30213.917405212458,
+   "effective_area_type": "historic_urban"
+  },
+  "Morristown": {
+   "base_area_type": "suburban",
+   "density": 9542.702477532706,
+   "effective_area_type": "historic_urban"
+  },
+  "Mott Haven": {
+   "base_area_type": "urban_core",
+   "density": 114617.23088507514,
+   "effective_area_type": "historic_urban"
+  },
+  "Mount Kisco": {
+   "base_area_type": "suburban",
+   "density": 8105.393422790409,
+   "effective_area_type": "urban_residential"
+  },
+  "Mount Vernon": {
+   "base_area_type": "urban_core",
+   "density": 26465.882352941175,
+   "effective_area_type": "suburban"
+  },
+  "Mount Washington": {
+   "base_area_type": "urban_residential",
+   "density": 8802.765445532485,
+   "effective_area_type": "suburban"
+  },
+  "Murray Hill": {
+   "base_area_type": "urban_core",
+   "density": 77073.1523640703,
+   "effective_area_type": "historic_urban"
+  },
+  "New Canaan": {
+   "base_area_type": "rural",
+   "density": 2172.360430269598,
+   "effective_area_type": "suburban"
+  },
+  "New Dorp": {
+   "base_area_type": "suburban",
+   "density": 13563.043299686402,
+   "effective_area_type": "suburban"
+  },
+  "New Hyde Park": {
+   "base_area_type": "urban_residential",
+   "density": 12765.026298641806,
+   "effective_area_type": "suburban"
+  },
+  "New Rochelle": {
+   "base_area_type": "suburban",
+   "density": 12452.438825004087,
+   "effective_area_type": "suburban"
+  },
+  "NoHo": {
+   "base_area_type": "urban_residential",
+   "density": 43014.910898290706,
+   "effective_area_type": "suburban"
+  },
+  "Nolita": {
+   "base_area_type": "urban_core",
+   "density": 95474.07438388104,
+   "effective_area_type": "historic_urban"
+  },
+  "North Hollywood": {
+   "base_area_type": "suburban",
+   "density": 13747.581816330578,
+   "effective_area_type": "urban_residential"
+  },
+  "Norwalk": {
+   "base_area_type": "exurban",
+   "density": 6143.611761016908,
+   "effective_area_type": "urban_residential"
+  },
+  "Oceanside": {
+   "base_area_type": "suburban",
+   "density": 5865.2328255911025,
+   "effective_area_type": "suburban"
+  },
+  "Old Greenwich": {
+   "base_area_type": "suburban",
+   "density": 3237.5238819492365,
+   "effective_area_type": "suburban"
+  },
+  "Ossining": {
+   "base_area_type": "suburban",
+   "density": 13226.968500428973,
+   "effective_area_type": "suburban"
+  },
+  "Ozone Park": {
+   "base_area_type": "urban_residential",
+   "density": 38137.11541881558,
+   "effective_area_type": "suburban"
+  },
+  "Pacific Palisades": {
+   "base_area_type": "suburban",
+   "density": 5874.994954492581,
+   "effective_area_type": "suburban"
+  },
+  "Palms": {
+   "base_area_type": "urban_core",
+   "density": 22943.70542714076,
+   "effective_area_type": "suburban"
+  },
+  "Palos Verdes Estates": {
+   "base_area_type": "suburban",
+   "density": 2118.177422122389,
+   "effective_area_type": "suburban"
+  },
+  "Park Slope": {
+   "base_area_type": "urban_residential",
+   "density": 57948.94164103035,
+   "effective_area_type": "suburban"
+  },
+  "Pasadena": {
+   "base_area_type": "urban_core",
+   "density": 6201.149487208035,
+   "effective_area_type": "historic_urban"
+  },
+  "Peekskill": {
+   "base_area_type": "suburban",
+   "density": 13986.227907787585,
+   "effective_area_type": "suburban"
+  },
+  "Pelham": {
+   "base_area_type": "suburban",
+   "density": 11605.495778073917,
+   "effective_area_type": "suburban"
+  },
+  "Pelham Bay": {
+   "base_area_type": "urban_residential",
+   "density": 41756.70799474619,
+   "effective_area_type": "suburban"
+  },
+  "Pelham Manor": {
+   "base_area_type": "suburban",
+   "density": 4200.534672354767,
+   "effective_area_type": "suburban"
+  },
+  "Pico-Robertson": {
+   "base_area_type": "urban_core",
+   "density": 12498.254441375664,
+   "effective_area_type": "suburban"
+  },
+  "Playa Vista": {
+   "base_area_type": "urban_residential",
+   "density": 16813.582519475192,
+   "effective_area_type": "urban_residential"
+  },
+  "Playa del Rey": {
+   "base_area_type": "urban_residential",
+   "density": 35669.70049057578,
+   "effective_area_type": "suburban"
+  },
+  "Pleasantville": {
+   "base_area_type": "suburban",
+   "density": 4956.567259771689,
+   "effective_area_type": "suburban"
+  },
+  "Port Chester": {
+   "base_area_type": "urban_residential",
+   "density": 17114.67601330098,
+   "effective_area_type": "urban_residential"
+  },
+  "Port Washington": {
+   "base_area_type": "exurban",
+   "density": 7118.535886413963,
+   "effective_area_type": "suburban"
+  },
+  "Porter Ranch": {
+   "base_area_type": "suburban",
+   "density": 4264.844535966155,
+   "effective_area_type": "urban_residential"
+  },
+  "Prospect Heights": {
+   "base_area_type": "urban_core",
+   "density": 57650.694066157,
+   "effective_area_type": "historic_urban"
+  },
+  "Rancho Palos Verdes": {
+   "base_area_type": "suburban",
+   "density": 1229.5107163115056,
+   "effective_area_type": "suburban"
+  },
+  "Red Hook": {
+   "base_area_type": "suburban",
+   "density": 309.16124593766204,
+   "effective_area_type": "historic_urban"
+  },
+  "Redondo Beach": {
+   "base_area_type": "suburban",
+   "density": 11865.363279335492,
+   "effective_area_type": "suburban"
+  },
+  "Rego Park": {
+   "base_area_type": "urban_core",
+   "density": 25282.803866621056,
+   "effective_area_type": "historic_urban"
+  },
+  "Reseda": {
+   "base_area_type": "suburban",
+   "density": 15141.854199683043,
+   "effective_area_type": "historic_urban"
+  },
+  "Richmond Hill": {
+   "base_area_type": "urban_residential",
+   "density": 41600.68511073578,
+   "effective_area_type": "historic_urban"
+  },
+  "Ridgewood": {
+   "base_area_type": "urban_residential",
+   "density": 25763.542309681034,
+   "effective_area_type": "suburban"
+  },
+  "Riverdale": {
+   "base_area_type": "urban_residential",
+   "density": 15688.978141071875,
+   "effective_area_type": "historic_urban"
+  },
+  "Riverside": {
+   "base_area_type": "suburban",
+   "density": 5093.905086058432,
+   "effective_area_type": "historic_urban"
+  },
+  "Rockaway Beach": {
+   "base_area_type": "urban_residential",
+   "density": 16867.493836980095,
+   "effective_area_type": "urban_residential"
+  },
+  "Rockville Centre": {
+   "base_area_type": "suburban",
+   "density": 8069.8436320301125,
+   "effective_area_type": "historic_urban"
+  },
+  "Rolling Hills Estates": {
+   "base_area_type": "suburban",
+   "density": 2228.906699266897,
+   "effective_area_type": "suburban"
+  },
+  "Rosemead": {
+   "base_area_type": "urban_residential",
+   "density": 7697.317072801092,
+   "effective_area_type": "suburban"
+  },
+  "Roslyn": {
+   "base_area_type": "suburban",
+   "density": 2458.1808804327857,
+   "effective_area_type": "suburban"
+  },
+  "Rye": {
+   "base_area_type": "suburban",
+   "density": 3215.244262377416,
+   "effective_area_type": "suburban"
+  },
+  "San Fernando": {
+   "base_area_type": "urban_residential",
+   "density": 11673.190228364549,
+   "effective_area_type": "historic_urban"
+  },
+  "San Gabriel": {
+   "base_area_type": "urban_residential",
+   "density": 11872.07607600403,
+   "effective_area_type": "suburban"
+  },
+  "San Marino": {
+   "base_area_type": "suburban",
+   "density": 4363.002605409487,
+   "effective_area_type": "suburban"
+  },
+  "San Pedro": {
+   "base_area_type": "urban_core",
+   "density": 16254.657359667532,
+   "effective_area_type": "suburban"
+  },
+  "Santa Monica": {
+   "base_area_type": "urban_residential",
+   "density": 13423.823417480655,
+   "effective_area_type": "suburban"
+  },
+  "Scarsdale": {
+   "base_area_type": "suburban",
+   "density": 6723.541127190258,
+   "effective_area_type": "suburban"
+  },
+  "Sheepshead Bay": {
+   "base_area_type": "urban_core",
+   "density": 45113.387931542406,
+   "effective_area_type": "suburban"
+  },
+  "Sherman Oaks": {
+   "base_area_type": "urban_residential",
+   "density": 10949.306128867398,
+   "effective_area_type": "suburban"
+  },
+  "Short Hills": {
+   "base_area_type": "suburban",
+   "density": 1772.3322774109108,
+   "effective_area_type": "suburban"
+  },
+  "Signal Hill": {
+   "base_area_type": "suburban",
+   "density": 6055.812613128203,
+   "effective_area_type": "urban_residential"
+  },
+  "Silver Lake": {
+   "base_area_type": "urban_residential",
+   "density": 10610.416899193959,
+   "effective_area_type": "suburban"
+  },
+  "Sleepy Hollow": {
+   "base_area_type": "urban_residential",
+   "density": 29782.131602959184,
+   "effective_area_type": "historic_urban"
+  },
+  "SoHo": {
+   "base_area_type": "urban_core",
+   "density": 30256.31741433853,
+   "effective_area_type": "historic_urban"
+  },
+  "South Orange": {
+   "base_area_type": "suburban",
+   "density": 4189.375001038149,
+   "effective_area_type": "suburban"
+  },
+  "Southport": {
+   "base_area_type": "rural",
+   "density": 1743.53255566473,
+   "effective_area_type": "urban_residential"
+  },
+  "St. George": {
+   "base_area_type": "urban_residential",
+   "density": 14786.825658809785,
+   "effective_area_type": "historic_urban"
+  },
+  "Stamford": {
+   "base_area_type": "urban_residential",
+   "density": 16732.293579131394,
+   "effective_area_type": "urban_residential"
+  },
+  "Stapleton": {
+   "base_area_type": "urban_residential",
+   "density": 18476.501649637717,
+   "effective_area_type": "historic_urban"
+  },
+  "Studio City": {
+   "base_area_type": "urban_residential",
+   "density": 10692.166354330084,
+   "effective_area_type": "suburban"
+  },
+  "Summit": {
+   "base_area_type": "suburban",
+   "density": 4231.425111853822,
+   "effective_area_type": "suburban"
+  },
+  "Sunland-Tujunga": {
+   "base_area_type": "suburban",
+   "density": 9100.359681057702,
+   "effective_area_type": "suburban"
+  },
+  "Sunnyside": {
+   "base_area_type": "suburban",
+   "density": 235.81522615930905,
+   "effective_area_type": "urban_residential"
+  },
+  "Sunset Park": {
+   "base_area_type": "urban_core",
+   "density": 117934.65160324756,
+   "effective_area_type": "historic_urban"
+  },
+  "Sylmar": {
+   "base_area_type": "urban_residential",
+   "density": 8669.689339425711,
+   "effective_area_type": "suburban"
+  },
+  "Tarrytown": {
+   "base_area_type": "suburban",
+   "density": 10741.115283610028,
+   "effective_area_type": "historic_urban"
+  },
+  "Tarzana": {
+   "base_area_type": "suburban",
+   "density": 6865.680031832145,
+   "effective_area_type": "urban_residential"
+  },
+  "Temple City": {
+   "base_area_type": "urban_residential",
+   "density": 9185.394895817877,
+   "effective_area_type": "suburban"
+  },
+  "Tenafly": {
+   "base_area_type": "suburban",
+   "density": 2157.016722908058,
+   "effective_area_type": "suburban"
+  },
+  "Thousand Oaks": {
+   "base_area_type": "suburban",
+   "density": 7649.306771893357,
+   "effective_area_type": "suburban"
+  },
+  "Torrance": {
+   "base_area_type": "suburban",
+   "density": 3171.668494273972,
+   "effective_area_type": "suburban"
+  },
+  "Tottenville": {
+   "base_area_type": "suburban",
+   "density": 7941.669116822415,
+   "effective_area_type": "historic_urban"
+  },
+  "Tremont": {
+   "base_area_type": "urban_residential",
+   "density": 29082.002530520127,
+   "effective_area_type": "historic_urban"
+  },
+  "Tribeca": {
+   "base_area_type": "urban_core",
+   "density": 79426.41919832736,
+   "effective_area_type": "historic_urban"
+  },
+  "Tuckahoe": {
+   "base_area_type": "suburban",
+   "density": 9274.426235012796,
+   "effective_area_type": "historic_urban"
+  },
+  "Turtle Bay": {
+   "base_area_type": "urban_core",
+   "density": 102994.51618812108,
+   "effective_area_type": "historic_urban"
+  },
+  "Upper East Side": {
+   "base_area_type": "urban_core",
+   "density": 182431.62796827976,
+   "effective_area_type": "historic_urban"
+  },
+  "Upper West Side": {
+   "base_area_type": "urban_residential",
+   "density": 115253.71940311775,
+   "effective_area_type": "suburban"
+  },
+  "Valley Stream": {
+   "base_area_type": "urban_residential",
+   "density": 10797.24295115982,
+   "effective_area_type": "suburban"
+  },
+  "Van Nuys": {
+   "base_area_type": "urban_core",
+   "density": 25228.755911868833,
+   "effective_area_type": "suburban"
+  },
+  "Venice": {
+   "base_area_type": "urban_core",
+   "density": 11729.630833902482,
+   "effective_area_type": "suburban"
+  },
+  "View Park": {
+   "base_area_type": "urban_residential",
+   "density": 6830.17526136341,
+   "effective_area_type": "suburban"
+  },
+  "Washington Heights": {
+   "base_area_type": "urban_core",
+   "density": 45408.09925857159,
+   "effective_area_type": "historic_urban"
+  },
+  "Watts": {
+   "base_area_type": "urban_residential",
+   "density": 12710.059987588775,
+   "effective_area_type": "suburban"
+  },
+  "Weehawken": {
+   "base_area_type": "urban_residential",
+   "density": 11105.881222180009,
+   "effective_area_type": "urban_residential"
+  },
+  "West Hollywood": {
+   "base_area_type": "urban_core",
+   "density": 24507.326891181212,
+   "effective_area_type": "suburban"
+  },
+  "West LA": {
+   "base_area_type": "urban_core",
+   "density": 16432.965739259984,
+   "effective_area_type": "suburban"
+  },
+  "West Orange": {
+   "base_area_type": "suburban",
+   "density": 3288.306876713154,
+   "effective_area_type": "suburban"
+  },
+  "West Village": {
+   "base_area_type": "urban_core",
+   "density": 89044.51932558576,
+   "effective_area_type": "historic_urban"
+  },
+  "Westfield": {
+   "base_area_type": "suburban",
+   "density": 4499.0515538925265,
+   "effective_area_type": "suburban"
+  },
+  "Weston": {
+   "base_area_type": "rural",
+   "density": 441.9511621514962,
+   "effective_area_type": "urban_residential"
+  },
+  "Westport": {
+   "base_area_type": "rural",
+   "density": 1958.9684746094147,
+   "effective_area_type": "urban_residential"
+  },
+  "Westwood": {
+   "base_area_type": "urban_core",
+   "density": 20764.71701447419,
+   "effective_area_type": "suburban"
+  },
+  "White Plains": {
+   "base_area_type": "urban_residential",
+   "density": 13594.081605210386,
+   "effective_area_type": "urban_residential"
+  },
+  "Whittier": {
+   "base_area_type": "suburban",
+   "density": 11025.210399759542,
+   "effective_area_type": "suburban"
+  },
+  "Williamsburg": {
+   "base_area_type": "urban_core",
+   "density": 48562.20561223562,
+   "effective_area_type": "historic_urban"
+  },
+  "Wilmington": {
+   "base_area_type": "urban_residential",
+   "density": 22213.35329060253,
+   "effective_area_type": "historic_urban"
+  },
+  "Wilton": {
+   "base_area_type": "rural",
+   "density": 847.7539087277896,
+   "effective_area_type": "urban_residential"
+  },
+  "Windsor Square": {
+   "base_area_type": "urban_residential",
+   "density": 11578.997160737877,
+   "effective_area_type": "suburban"
+  },
+  "Windsor Terrace": {
+   "base_area_type": "urban_core",
+   "density": 47797.94750141818,
+   "effective_area_type": "historic_urban"
+  },
+  "Woodland Hills": {
+   "base_area_type": "suburban",
+   "density": 4974.99156711942,
+   "effective_area_type": "suburban"
+  },
+  "Woodmere": {
+   "base_area_type": "suburban",
+   "density": 6627.689494951194,
+   "effective_area_type": "suburban"
+  },
+  "Woodside": {
+   "base_area_type": "urban_core",
+   "density": 48689.8802814268,
+   "effective_area_type": "urban_residential"
+  },
+  "Yonkers": {
+   "base_area_type": "urban_residential",
+   "density": 26993.012249298892,
+   "effective_area_type": "historic_urban"
+  },
+  "Yorktown Heights": {
+   "base_area_type": "rural",
+   "density": 801.7975050665335,
+   "effective_area_type": "suburban"
+  },
+  "Yorkville": {
+   "base_area_type": "urban_residential",
+   "density": 98726.63538191892,
+   "effective_area_type": "suburban"
+  }
+ }
+}

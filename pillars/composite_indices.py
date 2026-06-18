@@ -44,6 +44,34 @@ def _area_type_from_payload(payload: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def with_beauty_subscores(livability_pillars: Dict[str, Any]) -> Dict[str, Any]:
+    """Back-fill standalone built_beauty / natural_beauty entries from neighborhood_beauty.
+
+    neighborhood_beauty replaced the two standalone beauty pillars, but longevity and
+    happiness are defined on the *separate* sub-scores. The merged pillar carries those
+    sub-scores (built_beauty_score / natural_beauty_score) plus their full details; this
+    re-exposes them under the legacy keys so the index formulas keep working unchanged,
+    for both live responses and stored-JSON recompute paths. No-op if the standalone
+    keys already exist (pre-migration payloads).
+    """
+    if not isinstance(livability_pillars, dict):
+        return livability_pillars or {}
+    nb = livability_pillars.get("neighborhood_beauty")
+    if not isinstance(nb, dict):
+        return livability_pillars
+    if "natural_beauty" in livability_pillars and "built_beauty" in livability_pillars:
+        return livability_pillars
+    details = nb.get("details") or {}
+    out = dict(livability_pillars)
+    if "built_beauty" not in out:
+        bscore = nb.get("built_beauty_score")
+        out["built_beauty"] = {"score": bscore, **(details.get("built_beauty") or {})}
+    if "natural_beauty" not in out:
+        nscore = nb.get("natural_beauty_score")
+        out["natural_beauty"] = {"score": nscore, **(details.get("natural_beauty") or {})}
+    return out
+
+
 def build_total_score_breakdown(
     livability_pillars: Dict[str, Any],
     token_allocation: Optional[Dict[str, float]] = None,
@@ -80,6 +108,7 @@ def compute_longevity_index(
     pillar was in only_pillars partial run). Fallback: any longevity pillar with a score.
     Without token_allocation: all six pillars, missing score = 0.
     """
+    livability_pillars = with_beauty_subscores(livability_pillars)
     contributions: Dict[str, float] = {}
     if token_allocation is not None:
 
@@ -87,9 +116,20 @@ def compute_longevity_index(
             raw = (livability_pillars.get(p) or {}).get("score")
             return raw is not None and isinstance(raw, (int, float))
 
+        def _effective_weight(p: str) -> float:
+            # natural_beauty / built_beauty are now sub-scores of neighborhood_beauty;
+            # their longevity eligibility follows the merged pillar's weight.
+            w = float(token_allocation.get(p, 0.0) or 0.0)
+            if w == 0 and p in ("natural_beauty", "built_beauty"):
+                w = float(token_allocation.get("neighborhood_beauty", 0.0) or 0.0)
+            return w
+
         def _eligible(p: str) -> bool:
-            has_weight = (float(token_allocation.get(p, 0.0) or 0.0) > 0)
-            was_requested = only_pillars is not None and p in only_pillars
+            has_weight = _effective_weight(p) > 0
+            was_requested = only_pillars is not None and (
+                p in only_pillars
+                or (p in ("natural_beauty", "built_beauty") and "neighborhood_beauty" in only_pillars)
+            )
             return _has_score(p) and (has_weight or was_requested)
 
         eligible: List[str] = [p for p in LONGEVITY_INDEX_WEIGHTS if _eligible(p)]
@@ -157,7 +197,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
     loc = response.get("location_info") or {}
     state = loc.get("state")
     city = (loc.get("city") or "").strip() or None
-    pillars = response.get("livability_pillars") or {}
+    pillars = with_beauty_subscores(response.get("livability_pillars") or {})
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
     diversity_details = pillars.get("diversity")
@@ -234,7 +274,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     from pillars.happiness_index import compute_happiness_index_with_breakdown
     from pillars.status_signal import compute_status_signal_with_breakdown
 
-    pillars: Dict[str, Any] = payload.get("livability_pillars") or {}
+    pillars: Dict[str, Any] = with_beauty_subscores(payload.get("livability_pillars") or {})
     location_info = payload.get("location_info") or {}
     coordinates = payload.get("coordinates") or {}
     token_allocation = payload.get("token_allocation")

@@ -82,6 +82,10 @@ export interface LivabilityPillar {
   breakdown?: PillarBreakdown;
   summary?: PillarSummary;
   details?: any;
+  /** neighborhood_beauty only: built/natural sub-scores and density+area-type blend weight. */
+  built_beauty_score?: number;
+  natural_beauty_score?: number;
+  built_weight?: number;
   confidence: number;
   data_quality: DataQuality;
   area_classification?: AreaClassification;
@@ -99,8 +103,7 @@ export interface LivabilityPillar {
 
 export interface LivabilityPillars {
   active_outdoors: LivabilityPillar;
-  built_beauty: LivabilityPillar;
-  natural_beauty: LivabilityPillar;
+  neighborhood_beauty: LivabilityPillar;
   neighborhood_amenities: LivabilityPillar;
   air_travel_access: LivabilityPillar;
   public_transit_access: LivabilityPillar;
@@ -163,7 +166,7 @@ export interface ScoreResponse {
   /** Short factual summary (2–4 sentences) from pillar data; template-based, no LLM. */
   place_summary?: string;
   total_score: number;
-  /** Longevity Index: fixed blend of social_fabric, neighborhood_amenities, active_outdoors, natural_beauty, climate_risk, quality_education. Separate from total_score. */
+  /** Longevity Index: fixed blend of social_fabric, neighborhood_amenities, active_outdoors, neighborhood_beauty (natural sub-score), climate_risk, quality_education. Separate from total_score. */
   longevity_index?: number;
   /** Per-pillar contribution to longevity_index (same six pillars). */
   longevity_index_contributions?: Record<string, number>;
