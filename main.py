@@ -560,38 +560,53 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
     return final_score, natural_details
 
 
-def _fetch_business_count_with_places_fallback(lat: float, lon: float, radius_m: float = 1000) -> int:
+def _fetch_business_count_for_classification(lat: float, lon: float, radius_m: float = 1000) -> int:
     """
-    Business count for area_type classification (classify_morphology), with the same
-    Places-fallback augmentation the neighborhood_amenities pillar applies when OSM data
-    is thin/stale — otherwise a flaky/rate-limited Overpass silently zeroes business_count
-    and misclassifies commercial-dominant areas (e.g. Midtown) as suburban.
+    Raw OSM business count for the pre-pillar area_type estimate (classify_morphology).
+    Deliberately does NOT run the Places-fallback augmentation — that's a real, uncached
+    Google Places network call, and the neighborhood_amenities pillar already makes one
+    of those independently for its own (area-type-dependent-radius) business count. Doing
+    it again here would double the live Places cost on every request with thin OSM data.
+
+    Instead, this just benefits from query_local_businesses' own retry/stale-cache
+    fallback (see the 35s timeout on the caller's future.result()) and accepts that this
+    pre-pillar estimate can undercount commercial-dominant areas when OSM is degraded.
+    _reclassify_area_type_post_pillars() below corrects the canonical area_type afterward
+    using the pillar's own (possibly Places-augmented) count.
     """
     from data_sources import osm_api as _osm
-    from data_sources.data_quality import data_quality_manager, classify_morphology
-    from data_sources.places_fallback_client import maybe_augment_business_data_with_places
-    from data_sources import census_api as _ca
 
     business_data = _osm.query_local_businesses(lat, lon, radius_m=radius_m)
     if business_data is None:
-        business_data = {"tier1_daily": [], "tier2_social": [], "tier3_culture": [], "tier4_services": []}
-
-    all_businesses = (business_data.get("tier1_daily", []) + business_data.get("tier2_social", []) +
-                       business_data.get("tier3_culture", []) + business_data.get("tier4_services", []))
-
-    density = _ca.get_population_density(lat, lon)
-    area_type_guess = classify_morphology(density, None, len(all_businesses), None, None, None)
-    expected = data_quality_manager.get_expected_minimums(lat, lon, area_type_guess or "suburban")
-    completeness, _ = data_quality_manager.assess_data_completeness(
-        "neighborhood_amenities", {"all_businesses": all_businesses}, expected,
-    )
-    business_data, _meta = maybe_augment_business_data_with_places(
-        business_data, lat, lon, float(radius_m), True, float(completeness),
-        area_type=area_type_guess, density=density,
-    )
+        return 0
     all_businesses = (business_data.get("tier1_daily", []) + business_data.get("tier2_social", []) +
                        business_data.get("tier3_culture", []) + business_data.get("tier4_services", []))
     return len(all_businesses)
+
+
+def _reclassify_area_type_post_pillars(
+    area_type: str, density: Optional[float], amenities_details: Optional[Dict]
+) -> str:
+    """
+    Re-run classify_morphology using the neighborhood_amenities pillar's own business
+    count (computed after Places-fallback augmentation, if any) instead of the rougher
+    pre-pillar estimate. Pillars that already ran used the pre-pillar area_type for their
+    own radius profiles (acceptable — same tradeoff as the existing per-pillar
+    baseline_contexts divergence); this only corrects the canonical
+    data_quality_summary.area_classification reported in the final response.
+    """
+    if not amenities_details:
+        return area_type
+    try:
+        from data_sources.data_quality import classify_morphology
+        walk = (amenities_details.get("breakdown", {}) or {}).get("home_walkability", {}).get("businesses_within_1km")
+        if walk is None:
+            return area_type
+        corrected = classify_morphology(density, None, walk, None, None, None)
+        return corrected or area_type
+    except Exception as e:
+        logger.warning(f"area_type reclassification after pillars failed (non-fatal): {e}")
+        return area_type
 
 
 def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
@@ -1610,7 +1625,7 @@ def _compute_single_score_internal(
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
                     return 0
                 try:
-                    return _fetch_business_count_with_places_fallback(lat, lon)
+                    return _fetch_business_count_for_classification(lat, lon)
                 except Exception as e:
                     logger.warning(f"Business count query failed (non-fatal): {e}")
                     return 0
@@ -2500,7 +2515,11 @@ def _compute_single_score_internal(
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
-        "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
+        "data_quality_summary": _calculate_data_quality_summary(
+            livability_pillars,
+            area_type=_reclassify_area_type_post_pillars(area_type, density, livability_pillars.get("neighborhood_amenities")),
+            form_context=form_context,
+        ),
         "metadata": {
             "version": API_VERSION,
             "architecture": "13 Purpose-Driven Pillars",
@@ -4117,7 +4136,11 @@ async def _stream_score_with_progress(
             "token_allocation": token_allocation,
             "allocation_type": allocation_type,
             "overall_confidence": _calculate_overall_confidence(livability_pillars),
-            "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
+            "data_quality_summary": _calculate_data_quality_summary(
+                livability_pillars,
+                area_type=_reclassify_area_type_post_pillars(area_type, density, livability_pillars.get("neighborhood_amenities")),
+                form_context=form_context,
+            ),
             "metadata": {
                 "version": API_VERSION,
                 "architecture": "13 Purpose-Driven Pillars",
@@ -4393,14 +4416,7 @@ async def stream_score(
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
                     return 0
                 try:
-                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                    if business_data:
-                        all_businesses = (business_data.get("tier1_daily", []) + 
-                                        business_data.get("tier2_social", []) +
-                                        business_data.get("tier3_culture", []) +
-                                        business_data.get("tier4_services", []))
-                        return len(all_businesses)
-                    return 0
+                    return _fetch_business_count_for_classification(lat, lon)
                 except Exception as e:
                     logger.warning(f"Business count query failed (non-fatal): {e}")
                     return 0
@@ -5230,7 +5246,11 @@ async def stream_score(
         "token_allocation": token_allocation,
         "allocation_type": allocation_type,
         "overall_confidence": _calculate_overall_confidence(livability_pillars),
-        "data_quality_summary": _calculate_data_quality_summary(livability_pillars, area_type=area_type, form_context=form_context),
+        "data_quality_summary": _calculate_data_quality_summary(
+            livability_pillars,
+            area_type=_reclassify_area_type_post_pillars(area_type, density, livability_pillars.get("neighborhood_amenities")),
+            form_context=form_context,
+        ),
         "metadata": {
             "version": API_VERSION,
             "architecture": "10 Purpose-Driven Pillars",
