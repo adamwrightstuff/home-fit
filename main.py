@@ -560,6 +560,40 @@ def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_detai
     return final_score, natural_details
 
 
+def _fetch_business_count_with_places_fallback(lat: float, lon: float, radius_m: float = 1000) -> int:
+    """
+    Business count for area_type classification (classify_morphology), with the same
+    Places-fallback augmentation the neighborhood_amenities pillar applies when OSM data
+    is thin/stale — otherwise a flaky/rate-limited Overpass silently zeroes business_count
+    and misclassifies commercial-dominant areas (e.g. Midtown) as suburban.
+    """
+    from data_sources import osm_api as _osm
+    from data_sources.data_quality import data_quality_manager, classify_morphology
+    from data_sources.places_fallback_client import maybe_augment_business_data_with_places
+    from data_sources import census_api as _ca
+
+    business_data = _osm.query_local_businesses(lat, lon, radius_m=radius_m)
+    if business_data is None:
+        business_data = {"tier1_daily": [], "tier2_social": [], "tier3_culture": [], "tier4_services": []}
+
+    all_businesses = (business_data.get("tier1_daily", []) + business_data.get("tier2_social", []) +
+                       business_data.get("tier3_culture", []) + business_data.get("tier4_services", []))
+
+    density = _ca.get_population_density(lat, lon)
+    area_type_guess = classify_morphology(density, None, len(all_businesses), None, None, None)
+    expected = data_quality_manager.get_expected_minimums(lat, lon, area_type_guess or "suburban")
+    completeness, _ = data_quality_manager.assess_data_completeness(
+        "neighborhood_amenities", {"all_businesses": all_businesses}, expected,
+    )
+    business_data, _meta = maybe_augment_business_data_with_places(
+        business_data, lat, lon, float(radius_m), True, float(completeness),
+        area_type=area_type_guess, density=density,
+    )
+    all_businesses = (business_data.get("tier1_daily", []) + business_data.get("tier2_social", []) +
+                       business_data.get("tier3_culture", []) + business_data.get("tier4_services", []))
+    return len(all_businesses)
+
+
 def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     """Extract summary data from natural beauty details for display in UI."""
     summary = {}
@@ -573,11 +607,11 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     if isinstance(multi_radius, dict):
         # FIX: Use correct key names from multi_radius_canopy dict
         # Keys are: micro_400m, neighborhood_1000m, macro_2000m
-        summary["neighborhood_canopy_pct"] = round(multi_radius.get("neighborhood_1000m", 0), 1)
-        summary["local_canopy_pct"] = round(multi_radius.get("micro_400m", 0), 1)  # Fixed: was local_400m
-        summary["extended_canopy_pct"] = round(multi_radius.get("macro_2000m", 0), 1)  # Fixed: was extended_2000m
+        summary["neighborhood_canopy_pct"] = round(multi_radius.get("neighborhood_1000m") or 0, 1)
+        summary["local_canopy_pct"] = round(multi_radius.get("micro_400m") or 0, 1)  # Fixed: was local_400m
+        summary["extended_canopy_pct"] = round(multi_radius.get("macro_2000m") or 0, 1)  # Fixed: was extended_2000m
         # Add weighted canopy if available
-        if isinstance(tree_analysis, dict) and "weighted_canopy_pct" in tree_analysis:
+        if isinstance(tree_analysis, dict) and tree_analysis.get("weighted_canopy_pct") is not None:
             summary["weighted_canopy_pct"] = round(tree_analysis.get("weighted_canopy_pct", 0), 1)
     
     if isinstance(tree_analysis, dict):
@@ -1576,14 +1610,7 @@ def _compute_single_score_internal(
                 if only_pillars is not None and "neighborhood_amenities" not in only_pillars:
                     return 0
                 try:
-                    business_data = osm_api.query_local_businesses(lat, lon, radius_m=1000)
-                    if business_data:
-                        all_businesses = (business_data.get("tier1_daily", []) +
-                                        business_data.get("tier2_social", []) +
-                                        business_data.get("tier3_culture", []) +
-                                        business_data.get("tier4_services", []))
-                        return len(all_businesses)
-                    return 0
+                    return _fetch_business_count_with_places_fallback(lat, lon)
                 except Exception as e:
                     logger.warning(f"Business count query failed (non-fatal): {e}")
                     return 0
@@ -1628,7 +1655,7 @@ def _compute_single_score_internal(
                     logger.warning("density timed out in shared compute — skipping")
                     density = None
                 try:
-                    business_count = future_business_count.result(timeout=8)
+                    business_count = future_business_count.result(timeout=35)
                 except Exception:
                     logger.warning("business_count timed out in shared compute — defaulting to 0")
                     business_count = 0
@@ -4418,7 +4445,7 @@ async def stream_score(
                     logger.warning("density timed out in shared compute — skipping")
                     density = None
                 try:
-                    business_count = future_business_count.result(timeout=8)
+                    business_count = future_business_count.result(timeout=35)
                 except Exception:
                     logger.warning("business_count timed out in shared compute — defaulting to 0")
                     business_count = 0

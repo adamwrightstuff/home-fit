@@ -106,6 +106,12 @@ def score_via_job(
             "enable_schools": "false",
             "lat": str(lat),
             "lon": str(lon),
+            # Bypass the catalog fast-path, shared pre-pillar cache, and location
+            # cache (all gated on `not test_mode_enabled`) so a rescore actually
+            # recomputes instead of echoing back the stale catalog entry it's
+            # trying to replace. Does not fake/stub any data — test_mode only
+            # also enables optional override_* params, which we don't pass.
+            "test_mode": "true",
         },
         timeout=120,
     )
