@@ -99,17 +99,25 @@ def main():
     rows = [json.loads(l) for l in open(args.input) if l.strip()]
     rep = []
     for rec in rows:
-        bb = rec.get("score", {}).get("livability_pillars", {}).get("built_beauty")
-        if not bb:
+        lp = rec.get("score", {}).get("livability_pillars", {})
+        nb = lp.get("neighborhood_beauty")
+        if not nb:
             continue
-        d = bb["details"]; aa = d["architectural_analysis"]; m = aa["metrics"]
+        # Post-merge schema: built_beauty's own architectural_analysis lives nested under
+        # neighborhood_beauty.details.built_beauty (no separate top-level built_beauty pillar
+        # anymore -- see the neighborhood_beauty merge). recompute_arch() itself is unaffected
+        # by the merge (it only reads architectural_analysis/metrics), but the headline pillar
+        # write-back and re-blend into neighborhood_beauty.score are new.
+        d = nb["details"]["built_beauty"]
+        aa = d["architectural_analysis"]; m = aa["metrics"]
         cat = rec["catalog"]; name = cat.get("name", "?")
         try:
             lat, lon = float(cat["lat"]), float(cat["lon"])
         except (TypeError, ValueError, KeyError):
             continue
 
-        old_pillar = bb.get("score")
+        old_pillar = nb.get("built_beauty_score")
+        old_nb_score = nb.get("score")
 
         # api_error places have error-fallback inputs, not real measurements -- offline
         # recompute would produce garbage. Leave them untouched; they need a live re-fetch.
@@ -125,14 +133,22 @@ def main():
         raw = min(100.0, max(0.0, new_arch + enh) * 2.0)
         new_pillar, _ = normalize_beauty_score(raw, aa["classification"]["effective_area_type"])
 
-        # Write updated values back into the record (preview copy only)
+        # Write the corrected built_beauty sub-score back, then re-blend into the merged
+        # neighborhood_beauty score using the SAME built_weight already stored (density/
+        # effective_area_type haven't changed, so the blend weight itself is unaffected).
         aa["score"] = round(new_arch, 1)
         d["component_score_0_50"] = round(new_arch, 2)
         d["score_before_normalization"] = round(raw, 2)
-        bb["score"] = round(new_pillar, 2)
+        nb["built_beauty_score"] = round(new_pillar, 2)
+        built_weight = nb.get("built_weight", 0.5)
+        natural_score = nb.get("natural_beauty_score", 0.0)
+        new_nb_score = round(built_weight * new_pillar + (1.0 - built_weight) * natural_score, 2)
+        nb["score"] = new_nb_score
+        if "breakdown" in nb:
+            nb["breakdown"]["built_beauty_score"] = round(new_pillar, 2)
 
-        rep.append((name, old_pillar, round(new_pillar, 1),
-                    round((new_pillar - old_pillar), 1) if old_pillar is not None else None,
+        rep.append((name, old_nb_score, new_nb_score,
+                    round((new_nb_score - old_nb_score), 1) if old_nb_score is not None else None,
                     ",".join(notes) or "-", aa.get("data_warning")))
 
     with open(args.output, "w") as fh:
