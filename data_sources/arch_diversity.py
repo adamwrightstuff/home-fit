@@ -655,19 +655,24 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
         f"scaled_entropy={levels_entropy:.1f}"
     )
     
-    # Data quality validation: flag suspiciously low height diversity
-    # For suburban/exurban areas with 10+ buildings, height diversity < 5 suggests failed height queries
+    # Data quality validation: flag fabricated height diversity.
+    # Root cause, not outcome: when >85% of buildings have no building:levels tag, they're
+    # defaulted into the "1-story" bin (see the entropy/bin computation above), making
+    # levels_entropy unreliable regardless of where it numerically lands -- a handful of
+    # real outlier buildings can push the fabricated-bin-driven entropy to a misleadingly
+    # "plausible" value (e.g. 7-9) that still isn't a real measurement. Originally this also
+    # required `levels_entropy < 5.0` (added when this was just a diagnostic log, not yet
+    # wired to the GHSL substitution below) -- gating the fix on the unreliable outcome
+    # instead of the actual cause let borderline-but-still-fabricated cases slip through.
     height_diversity_warning = None
-    if len(ways) >= 10 and levels_entropy < 5.0:
-        # Check if most buildings are missing height data (all in "1" bin)
-        if bins.get("1", 0) / len(ways) > 0.85:
-            height_diversity_warning = "suspiciously_low_height_diversity"
-            # Log warning for debugging
-            logger.warning(
-                f"Height diversity suspiciously low ({levels_entropy:.1f}) with {len(ways)} buildings. "
-                f"Most buildings ({bins.get('1', 0)}/{len(ways)}) have missing/inferred height data. "
-                f"Location: {lat:.4f}, {lon:.4f}"
-            )
+    if len(ways) >= 10 and bins.get("1", 0) / len(ways) > 0.85:
+        height_diversity_warning = "suspiciously_low_height_diversity"
+        # Log warning for debugging
+        logger.warning(
+            f"Height diversity likely fabricated ({levels_entropy:.1f}) with {len(ways)} buildings. "
+            f"Most buildings ({bins.get('1', 0)}/{len(ways)}) have missing/inferred height data. "
+            f"Location: {lat:.4f}, {lon:.4f}"
+        )
     
     type_div_raw = entropy(list(types.values()))
     type_div = type_div_raw * 100
