@@ -2100,6 +2100,29 @@ def _compute_single_score_internal(
     # Extract results with error handling
     active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+    # active_outdoors ran on the pre-pillar area_type estimate (OSM-only business count),
+    # but the canonical area_type is corrected post-pillar using the amenities pillar's own
+    # (possibly Places-augmented) count. active_outdoors expectations swing sharply by
+    # area_type (e.g. expected_parks_within_1km: 8 for urban_core vs 380 for
+    # urban_residential), so a stale pre-pillar classification can score it under the wrong
+    # curve entirely. Re-run it (reusing already-fetched canopy data, no extra GEE/OSM calls
+    # for canopy) only when the post-pillar reclassification actually disagrees.
+    _corrected_area_type = _reclassify_area_type_post_pillars(area_type, density, amenities_details)
+    if _corrected_area_type and _corrected_area_type != area_type and _corrected_area_type != "unknown":
+        try:
+            active_outdoors_score, active_outdoors_details = get_active_outdoors_score_v2(
+                lat, lon, city=city, area_type=_corrected_area_type,
+                location_scope=location_scope,
+                precomputed_tree_canopy_5km=tree_canopy_5km,
+            )
+            logger.info(
+                f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
+            )
+        except Exception as e:
+            logger.warning(f"active_outdoors re-score after area_type correction failed (non-fatal): {e}")
+        area_type = _corrected_area_type
+
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
@@ -3671,6 +3694,25 @@ async def _stream_score_with_progress(
         # Extract results (similar to _compute_single_score_internal)
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+        # See _compute_single_score_internal: active_outdoors ran on the pre-pillar area_type
+        # estimate; re-score it if the post-pillar reclassification (using the amenities
+        # pillar's own business count) disagrees.
+        _corrected_area_type = _reclassify_area_type_post_pillars(area_type, density, amenities_details)
+        if _corrected_area_type and _corrected_area_type != area_type and _corrected_area_type != "unknown":
+            try:
+                active_outdoors_score, active_outdoors_details = get_active_outdoors_score_v2(
+                    lat, lon, city=city, area_type=_corrected_area_type,
+                    location_scope=location_scope,
+                    precomputed_tree_canopy_5km=tree_canopy_5km,
+                )
+                logger.info(
+                    f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
+                )
+            except Exception as e:
+                logger.warning(f"active_outdoors re-score after area_type correction failed (non-fatal): {e}")
+            area_type = _corrected_area_type
+
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
@@ -4798,6 +4840,25 @@ async def stream_score(
         # Extract results with error handling (no fallback scores - use 0.0 if failed)
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+
+        # See _compute_single_score_internal: active_outdoors ran on the pre-pillar area_type
+        # estimate; re-score it if the post-pillar reclassification (using the amenities
+        # pillar's own business count) disagrees.
+        _corrected_area_type = _reclassify_area_type_post_pillars(area_type, density, amenities_details)
+        if _corrected_area_type and _corrected_area_type != area_type and _corrected_area_type != "unknown":
+            try:
+                active_outdoors_score, active_outdoors_details = get_active_outdoors_score_v2(
+                    lat, lon, city=city, area_type=_corrected_area_type,
+                    location_scope=location_scope,
+                    precomputed_tree_canopy_5km=tree_canopy_5km,
+                )
+                logger.info(
+                    f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
+                )
+            except Exception as e:
+                logger.warning(f"active_outdoors re-score after area_type correction failed (non-fatal): {e}")
+            area_type = _corrected_area_type
+
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
