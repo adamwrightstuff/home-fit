@@ -81,7 +81,70 @@ floor). A full live run can differ because:
   `scripts/recompute_built_beauty_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
   Confidence is metadata only — doesn't cascade into score/total_score.
 
-### 6. Offline-rescore approximations
+### 6. Built Beauty form-metric non-determinism — RESOLVED 2026-06-21
+`compute_block_grain` had `@cached(ttl_seconds=CACHE_TTL['osm_queries'])`; `compute_
+streetwall_continuity`, `compute_setback_consistency`, and `compute_facade_rhythm` did not,
+despite a comment at the call site stating the 15s timeout relied on "caching handles
+retries." Verified: calling the same place twice with caches cleared produced different
+built_beauty scores minutes apart (Bronxville 71.4 → 86.6) purely from live OSM/Overpass
+timing variance on the uncached calls. Fixed by adding the missing decorator to all three
+(matching `compute_block_grain`'s existing pattern). Live scores for a fixed place should now
+be stable across requests within the 6h TTL.
+
+### 7. Built Beauty height_diversity fabrication trigger — RESOLVED 2026-06-21
+The GHSL height-substitution fallback (`get_building_height_diversity_ghsl`, already wired
+into `compute_arch_diversity`) only fired when `levels_entropy < 5.0 AND >85%` of buildings
+were untagged. The entropy threshold tested the unreliable *outcome*, not the actual cause —
+a handful of real outlier buildings among mostly-untagged ones can push the fabricated entropy
+to a misleadingly "plausible" value (7-9) that's still mostly fabrication, so borderline cases
+slipped past the fix. Confirmed live for Bronxville/Manhattan Beach (~97% of buildings
+untagged in both, entropy landing at 9.0/10.9 — both above the old 5.0 cutoff). Fixed by
+dropping the entropy condition; trigger is now the untagged-ratio alone.
+
+### 8. Built Beauty form-metric confidence formula — fixed, but does not affect score
+`coverage_confidence` for setback/facade_rhythm multiplied two fractional ratios (segment
+coverage × per-segment building-count validity), which compounds punitively — verified
+catalog-wide this reads ~0.02 on 100% of places, every area type, a structural property of
+the formula rather than a real reflection of data quality anywhere. Fixed to a single
+completeness ratio. **Caveat discovered during verification:** the production scoring path
+(`HOMEFIT_USE_CALIBRATED_BUILT_BEAUTY=1`, default on) never reads this confidence value at
+all — only the raw setback/facade/block_grain/streetwall *values* feed the calibrated model,
+never their confidence. The fix is correct and real, but it only affects an internal
+diagnostic field today; it does not move any live score unless the legacy (non-calibrated)
+path is ever re-enabled.
+
+### 9. active_outdoors scored under stale pre-pillar area_type — RESOLVED 2026-06-21
+Pillars run on a pre-pillar area_type estimate (OSM-only business count, 35s timeout); the
+*reported* area_type is corrected post-pillar using `neighborhood_amenities`'s own
+(possibly Places-augmented) count. `active_outdoors` expectations swing sharply by area_type
+(`expected_parks_within_1km`: 8 for urban_core vs 380 for urban_residential), so a stale
+pre-pillar classification can score it under the wrong curve entirely — isolated testing
+showed ±30pt swings on the same place/instant depending only on which area_type it ran
+under. Fixed: `active_outdoors` is now re-scored when the post-pillar reclassification
+disagrees with what it ran under (no-op on healthy-OSM requests; a real correction on
+thin-OSM ones). Catalog data predating this fix is NOT automatically corrected — places whose
+`area_type` was relabeled by the 2026-06-21 area-type fix still carry the *old* area_type's
+`active_outdoors` score until rescored.
+
+### 10. Diversity fabricated zero for villages with no Census tract — RESOLVED 2026-06-21
+`get_diversity_score()` returned `(0.0, details)` whenever `census_api.get_diversity_data()`
+found no tract match (common for small villages/unincorporated areas) — indistinguishable
+from a place with real Census data showing genuinely zero entropy. That fabricated 0 carried
+full weight in the headline total as a confidently-measured "least diverse possible" score.
+Fixed: now raises, routing through the existing pillar-failure path (`status='failed'`,
+excluded from the headline total) instead of fabricating a number.
+
+### 11. neighborhood_beauty catalog merge — offline, verified surgical
+The built_beauty/natural_beauty → neighborhood_beauty schema merge was applied to all 292
+LA/NYC catalog places offline (no live scoring), blending each row's already-stored sub-scores
+with the validated density+area-type formula. Verified zero pillar-score drift on every other
+pillar. A first pass also accidentally over-recomputed `status_signal`/`happiness_index` for
+*every* row (via an unconditional `recompute_composites_from_payload` call) even though
+`status_signal` doesn't depend on built_beauty/natural_beauty/neighborhood_beauty at all —
+reverted to last-known-good except for the rows whose `area_type` genuinely changed (where
+recomputing is legitimate, since `status_signal` does consume `area_type`).
+
+### 12. Offline-rescore approximations
 Catalog rescores used stored sub-components rather than a full live run, e.g.:
 - Commuter-access floor: catalog uses the stored Happiness `commute` value + a Census
   transit-share fetch; live fetches commute time live. Both deterministic-ish but can drift.
@@ -99,3 +162,9 @@ catalog as a precomputed snapshot.
 - [ ] Single-source the NB-preference math (currently Python + a TS mirror).
 - [ ] Faithful catalog rebuild through main.py to clear accumulated offline-rescore drift.
 - [ ] Built Beauty catalog backfill (stale coverage-0 places).
+- [ ] 5 places with broken/stale density (Fort Greene, Maspeth, Southport, Glendale [Queens],
+  Pelham Bay) — Fort Greene's stored `density=0.0` is confirmed stale (fresh Census lookup
+  returned 61,732/sq mi); the other 4 need the same check. Feeds wrong input into both
+  `active_outdoors` expectations and the `neighborhood_beauty` blend weight for these 5.
+- [ ] Catalog active_outdoors rescore for the 186 places whose area_type changed 2026-06-21
+  (see #9 above) — labels are correct, active_outdoors score is not, until rescored.
