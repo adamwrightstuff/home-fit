@@ -374,7 +374,8 @@ def compute_block_grain(lat: float, lon: float, radius_m: int = 1000) -> Dict[st
         }
 
 
-def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000, 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
+def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
                                    osm_data: Optional[Dict] = None) -> Dict[str, float]:
     """
     Compute streetwall continuity metric: measures building facade continuity along streets.
@@ -697,6 +698,7 @@ def compute_streetwall_continuity(lat: float, lon: float, radius_m: int = 1000,
         }
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
 def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
                                 osm_data: Optional[Dict] = None) -> Dict[str, float]:
     """
@@ -1026,6 +1028,7 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
         }
 
 
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
 def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
                           osm_data: Optional[Dict] = None) -> Dict[str, float]:
     """
