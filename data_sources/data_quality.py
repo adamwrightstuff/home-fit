@@ -1861,7 +1861,18 @@ def assess_pillar_data_quality(
         dw = arch.get("data_warning")
         if isinstance(dw, str) and dw:
             conf = int(out["confidence"])
-            if dw in INFORMATIONAL_DATA_WARNINGS:
+            # Use the real, already-computed architecture-specific confidence
+            # (architectural_analysis.confidence_0_1) as the discount factor instead of a
+            # flat constant. The flat multipliers (0.97/0.88) were nearly cosmetic -- e.g.
+            # a place with confidence_0_1=0.4 (genuinely low building-footprint coverage)
+            # still showed ~87% headline confidence (90 * 0.97), no different from a place
+            # with no data_warning at all. confidence_0_1 is the actual per-place signal this
+            # pillar already measured; use it directly so the discount reflects how
+            # unreliable the data genuinely is at this location, not a guess.
+            arch_confidence_0_1 = arch.get("confidence_0_1")
+            if isinstance(arch_confidence_0_1, (int, float)) and 0.0 <= arch_confidence_0_1 <= 1.0:
+                out["confidence"] = max(0, min(100, int(round(conf * arch_confidence_0_1))))
+            elif dw in INFORMATIONAL_DATA_WARNINGS:
                 out["confidence"] = max(0, min(100, int(round(conf * 0.97))))
             else:
                 out["confidence"] = max(0, min(100, int(round(conf * 0.88))))
