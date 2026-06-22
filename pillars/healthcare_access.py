@@ -683,9 +683,10 @@ def get_healthcare_access_score(lat: float, lon: float,
     
     # If query failed, adjust confidence to indicate API failure (not data absence)
     if query_failed:
-        # Set confidence to a low but non-zero value to indicate API failure
-        # This distinguishes from "no data found" (which would be 0)
-        quality_metrics['confidence'] = max(10, quality_metrics.get('confidence', 0))
+        # Cap confidence low to indicate API failure (non-zero distinguishes it
+        # from "no data found"). Previously used max(10, ...), which is a floor
+        # against an already-higher pre-failure confidence and never fires.
+        quality_metrics['confidence'] = min(10, quality_metrics.get('confidence', 0))
         quality_metrics['quality_tier'] = 'very_poor'
         quality_metrics['completeness'] = 0.0
         quality_metrics['data_warning'] = 'api_error'

@@ -538,6 +538,24 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
     return summary
 
 
+def _natural_beauty_data_totally_failed(tree_details: Any, natural_calc: Dict) -> bool:
+    """
+    True when _score_trees()'s independent sub-fetches (GEE canopy, OSM trees, Census,
+    street-view GVI, water proximity, topography, biodiversity) all failed for a location.
+    calculate_natural_beauty() does not raise in this case -- it returns a structurally
+    valid dict with tree_analysis={} and scenic_proxy={}, and the V9 formula then computes
+    a nonzero score (e.g. 3.1) from all-zero/missing inputs instead of failing honestly
+    (confirmed: every healthy place checked, including genuinely low-canopy ones like
+    El Monte 1.36%, has a non-empty tree_analysis here). Used to route this into the same
+    exceptions-dict / _set_pillar_status failure path as a real exception would.
+    """
+    if not isinstance(tree_details, dict):
+        return False
+    tree_analysis = tree_details.get("tree_analysis") or {}
+    scenic_proxy = tree_details.get("scenic_proxy") or (natural_calc.get("scenic_metadata") if isinstance(natural_calc, dict) else None) or {}
+    return not tree_analysis and not scenic_proxy
+
+
 def _apply_v9_to_natural(natural_calc: Dict, natural_score: float, natural_details: Dict,
                          lat: Optional[float], lon: Optional[float],
                          natural_beauty_preference: Optional[List[str]] = None) -> tuple:
@@ -1023,8 +1041,14 @@ def _set_pillar_status(
             is_failed = "built_beauty" in exceptions or "natural_beauty" in exceptions
         if is_failed:
             entry["status"] = "failed"
-            dq.setdefault("quality_tier", "very_poor")
-            dq.setdefault("fallback_reason", dq.get("reason", "Pillar execution failed"))
+            # Force-overwrite (not setdefault): for neighborhood_beauty, dq here is
+            # built_beauty's own healthy data_quality dict (already has a real quality_tier/
+            # confidence), so setdefault would never touch it -- a natural_beauty-only failure
+            # would set status='failed' while still showing "excellent / 87%" underneath.
+            dq["quality_tier"] = "very_poor"
+            dq["fallback_reason"] = dq.get("reason", "Pillar execution failed")
+            dq["confidence"] = min(int(dq.get("confidence") or 0), 10)
+            entry["confidence"] = min(int(entry.get("confidence") or 0), 10)
         elif data_quality_indicates_fallback(dq):
             entry["status"] = "fallback"
             dq.setdefault("quality_tier", "poor")
@@ -2243,6 +2267,11 @@ def _compute_single_score_internal(
                 "metrics": {}
             }
         }
+
+    if 'natural_beauty' not in exceptions and _natural_beauty_data_totally_failed(natural_details, natural_calc or {}):
+        exceptions['natural_beauty'] = RuntimeError(
+            "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
+        )
 
     pillar_results['built_beauty'] = (built_score, built_details)
     natural_score, natural_details = _apply_v9_to_natural(
@@ -3814,6 +3843,11 @@ async def _stream_score_with_progress(
                 }
             }
         
+        if 'natural_beauty' not in exceptions and _natural_beauty_data_totally_failed(natural_details, natural_calc or {}):
+            exceptions['natural_beauty'] = RuntimeError(
+                "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
+            )
+
         pillar_results['built_beauty'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(
             natural_calc or {}, natural_score, natural_details, lat, lon,
@@ -4955,6 +4989,11 @@ async def stream_score(
                     "metrics": {}
                 }
             }
+
+        if 'natural_beauty' not in exceptions and _natural_beauty_data_totally_failed(natural_details, natural_calc or {}):
+            exceptions['natural_beauty'] = RuntimeError(
+                "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
+            )
 
         pillar_results['built_beauty'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(

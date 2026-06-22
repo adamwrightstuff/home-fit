@@ -1770,6 +1770,16 @@ INFORMATIONAL_DATA_WARNINGS = frozenset(
     }
 )
 
+# Hard fetch/compute failures: the underlying signal is absent, not partial. Confidence
+# must be floored low so the UI's <50 rescore warning fires instead of showing a
+# cosmetically-discounted (~79-90%) "confident" score over no real data.
+HARD_DATA_WARNINGS = frozenset(
+    {
+        "api_error",
+        "timeout",
+    }
+)
+
 
 def data_quality_indicates_fallback(dq: Any) -> bool:
     """True if dq indicates fallback (top-level fallback_used or legacy fallback_metadata only)."""
@@ -1874,6 +1884,13 @@ def assess_pillar_data_quality(
                 out["confidence"] = max(0, min(100, int(round(conf * arch_confidence_0_1))))
             elif dw in INFORMATIONAL_DATA_WARNINGS:
                 out["confidence"] = max(0, min(100, int(round(conf * 0.97))))
+            elif dw in HARD_DATA_WARNINGS:
+                # Hard fetch failure (api_error/timeout) with no usable confidence_0_1:
+                # the architectural signal is genuinely absent, not merely partial. The
+                # ×0.88 fallback below is cosmetic (90 -> 79) and leaves confidence above
+                # the UI's <50 rescore threshold, masking a total failure as confident data
+                # (same bug class fixed in healthcare_access). Floor it low instead.
+                out["confidence"] = min(int(out["confidence"]), 10)
             else:
                 out["confidence"] = max(0, min(100, int(round(conf * 0.88))))
             out["confidence_notes"] = (out.get("confidence_notes") or []) + [
