@@ -88,6 +88,13 @@ def get_diversity_score(
         area_type = data_quality.detect_area_type(lat, lon, density=density, city=city)
 
     diversity_data = census_api.get_diversity_data(lat, lon, tract=tract, area_type=area_type)
+    if not diversity_data:
+        # No Census tract data at all (common for small villages/unincorporated areas) is a
+        # genuine absence of information, not a measured "zero diversity" — raising here
+        # routes through main.py's existing pillar-failure path (status='failed'), which is
+        # honestly excluded from the headline total, instead of silently reporting a
+        # fabricated 0/100 that drags the score down as if diversity were confidently measured.
+        raise RuntimeError(f"No Census diversity data available for ({lat}, {lon})")
     diversity_score: Optional[float] = None
     components_present: list[str] = []
     breakdown: Dict = {}
