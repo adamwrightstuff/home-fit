@@ -975,18 +975,24 @@ def compute_setback_consistency(lat: float, lon: float, radius_m: int = 1000,
             setback_consistency = max(0.0, 30.0 - (std_dev_for_scoring - 15.0) / 5.0 * 10.0)
         
         setback_consistency = max(0.0, min(100.0, setback_consistency))
-        
-        # Coverage confidence based on segment coverage (segments with buildings / total segments)
+
         total_segments = len(road_segments_precomputed)
-        segments_with_buildings = len(segment_setbacks)  # Segments that have at least 1 building
+        segments_with_buildings = len(segment_setbacks)
         analyzed_segments = len([s for s in segment_setbacks.values() if len(s) >= MIN_BUILDINGS_PER_SEGMENT])
-        
-        # Coverage confidence based on segment coverage ratio
-        if total_segments > 0:
-            segment_coverage_ratio = segments_with_buildings / total_segments
-            # Also factor in whether segments have enough buildings for statistical validity
-            valid_segment_ratio = analyzed_segments / max(1, segments_with_buildings) if segments_with_buildings > 0 else 0.0
-            coverage_confidence = segment_coverage_ratio * valid_segment_ratio
+
+        # Coverage confidence: share of all buildings found in the search area that actually
+        # contributed a usable setback measurement (>=MIN_BUILDINGS_PER_SEGMENT per segment).
+        # Previously this multiplied two fractional ratios (segment coverage x per-segment
+        # validity), which compounds punitively -- most real street grids have plenty of
+        # segments fronting parks/intersections/short blocks with 1-2 buildings that
+        # structurally fail the >=3-per-segment bar, so the product reads near-zero almost
+        # everywhere regardless of whether the underlying measurement (drawn from however
+        # many buildings DID qualify) is actually reliable. A single completeness ratio
+        # against the total building count found is the same pattern used elsewhere in this
+        # codebase (e.g. diversity's components_present/expected) and isn't double-penalized
+        # by street topology.
+        if building_ways:
+            coverage_confidence = min(1.0, total_buildings_in_valid_segments / len(building_ways))
         else:
             coverage_confidence = 0.0
         
@@ -1251,17 +1257,15 @@ def compute_facade_rhythm(lat: float, lon: float, radius_m: int = 1000,
         
         # Normalize to 0-100 scale (alignment percentage = score)
         facade_rhythm = alignment_percentage
-        
-        # Coverage confidence based on segment coverage (segments with buildings / total segments)
-        total_segments = len(road_segments_precomputed)
-        segments_with_buildings = len(segment_setbacks)  # Segments that have at least 1 building
-        
-        # Coverage confidence based on segment coverage ratio
-        if total_segments > 0:
-            segment_coverage_ratio = segments_with_buildings / total_segments
-            # Also factor in whether segments have enough buildings for statistical validity
-            valid_segment_ratio = analyzed_segments / max(1, segments_with_buildings) if segments_with_buildings > 0 else 0.0
-            coverage_confidence = segment_coverage_ratio * valid_segment_ratio
+
+        # Coverage confidence: share of all buildings found in the search area that actually
+        # contributed an alignment measurement (>=MIN_BUILDINGS_PER_SEGMENT per segment). See
+        # compute_setback_consistency's matching comment -- the previous compounding double-
+        # ratio (segment coverage x per-segment validity) reads near-zero almost everywhere
+        # regardless of real data quality, since most street grids have plenty of segments
+        # (parks, intersections, short blocks) that structurally fail the per-segment bar.
+        if building_ways:
+            coverage_confidence = min(1.0, total_buildings / len(building_ways))
         else:
             coverage_confidence = 0.0
         
