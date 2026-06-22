@@ -1009,7 +1009,19 @@ def _set_pillar_status(
         if not isinstance(entry, dict):
             continue
         dq = dict(entry.get("data_quality") or {})
-        if pillar_name in exceptions:
+        # neighborhood_beauty replaced two standalone pillar_tasks entries (built_beauty,
+        # natural_beauty); _execute_pillar still records their exceptions under those
+        # original task names, not under the merged key. Without this, a total failure of
+        # either sub-pillar (e.g. calculate_natural_beauty() raising) gets silently caught
+        # and contained correctly upstream, then LOST here -- the merged pillar still reports
+        # status='success' even though one of its two components fabricated a zero instead
+        # of real data (the exact bug class already fixed in diversity.py, but for
+        # neighborhood_beauty the failure was being swallowed one level above where that
+        # fix could reach).
+        is_failed = pillar_name in exceptions
+        if pillar_name == "neighborhood_beauty" and not is_failed:
+            is_failed = "built_beauty" in exceptions or "natural_beauty" in exceptions
+        if is_failed:
             entry["status"] = "failed"
             dq.setdefault("quality_tier", "very_poor")
             dq.setdefault("fallback_reason", dq.get("reason", "Pillar execution failed"))
