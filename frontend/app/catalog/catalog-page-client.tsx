@@ -32,7 +32,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
-import { type NbPreference, applyNbPreferenceV9 } from '@/lib/nbPreference'
+import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -297,13 +297,27 @@ export default function CatalogPageClient({
 
     // Natural beauty preference: re-bias the V9 score toward the chosen scenery dimension
     // from the stored per-dimension component scores (mirrors backend apply_v9_preference,
-    // forcing the preferred dimension into the OWA lead slot). The reweight downstream picks
-    // up the new natural_beauty score and recomputes total_score, so the list reranks.
+    // forcing the preferred dimension into the OWA lead slot), then re-blend with built_beauty
+    // using the same density+area-type weight the backend uses. Catalog rows only carry the
+    // merged neighborhood_beauty pillar (no standalone natural_beauty entry), and that's the
+    // key the reweight/sort step reads, so the adjustment must land there to actually rerank.
     const withNb = nbPreference
       ? withPolitical.map((p) => {
-          const nb = (p.score.livability_pillars as any)?.natural_beauty
-          const v9 = nb?.details?.v9_breakdown
-          const newScore = applyNbPreferenceV9(v9, nbPreference)
+          const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+          if (!nb) return p
+          const v9 = nb.details?.natural_beauty?.v9_breakdown
+          const builtScore = Number(nb.built_beauty_score ?? nb.breakdown?.built_beauty_score ?? 0)
+          const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
+          const density = nb.breakdown?.density ?? nb.details?.density ?? null
+          const effectiveAreaType = nb.breakdown?.effective_area_type ?? nb.details?.effective_area_type ?? null
+          const newScore = adjustNeighborhoodBeautyScoreV9(
+            builtScore,
+            storedNaturalScore,
+            v9,
+            nbPreference,
+            density,
+            effectiveAreaType
+          )
           if (newScore == null) return p
           return {
             ...p,
@@ -311,7 +325,7 @@ export default function CatalogPageClient({
               ...p.score,
               livability_pillars: {
                 ...p.score.livability_pillars,
-                natural_beauty: { ...nb, score: newScore },
+                neighborhood_beauty: { ...nb, score: newScore },
               },
             },
           }

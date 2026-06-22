@@ -268,6 +268,27 @@ export function adjustNeighborhoodBeautyScore(
 }
 
 /**
+ * Recompute the blended neighborhood_beauty score from a catalog row's nested
+ * `details.natural_beauty.v9_breakdown`, after re-biasing toward a scenery preference.
+ * Mirrors adjustNeighborhoodBeautyScore but for V9-scored catalog data (no nb_topo_raw/
+ * nb_water_raw fields available — those are V7-only). Returns null if the breakdown is
+ * missing the V9 component scores (no rescore data to re-bias).
+ */
+export function adjustNeighborhoodBeautyScoreV9(
+  builtScore: number,
+  storedNaturalScore: number,
+  v9: V9Breakdown | undefined | null,
+  preference: NbPreference,
+  density: number | null | undefined,
+  effectiveAreaType?: string | null,
+): number | null {
+  const adjustedNatural = applyNbPreferenceV9(v9, preference)
+  if (adjustedNatural === null) return null
+  const w = combinedWeight(density, effectiveAreaType)
+  return Math.round((w * builtScore + (1 - w) * adjustedNatural) * 100) / 100
+}
+
+/**
  * Pre-migration saved scores / cache entries store standalone `built_beauty` and
  * `natural_beauty` pillar entries with no `neighborhood_beauty` key at all. Synthesize one
  * client-side, reapplying the real density+area-type blend, so legacy data still renders on
