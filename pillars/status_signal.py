@@ -564,6 +564,7 @@ def compute_wealth(
     keys_to_try: List[str],
     baselines: Dict[str, Any],
     white_collar_pct: Optional[float] = None,
+    bach_pct: Optional[float] = None,
 ) -> Optional[float]:
     """
     DFG-style SES composite score (0-100 scale).
@@ -589,8 +590,11 @@ def compute_wealth(
         return None
 
     median_home = summary.get("median_home_value")
-    bach_pct = (summary.get("education_attainment") or {}).get("bachelor_pct")
-    # bach_pct may also live one level up (merged from social_fabric)
+    # Prefer the explicitly passed bach_pct (merged from social_fabric/diversity);
+    # the housing summary usually lacks education_attainment, which silently zeroed
+    # the education z-score and capped the composite below the Elite threshold.
+    if bach_pct is None:
+        bach_pct = (summary.get("education_attainment") or {}).get("bachelor_pct")
     if bach_pct is None:
         bach_pct = summary.get("bachelor_pct")
 
@@ -965,7 +969,7 @@ def _classify_trajectory(
     # Structural gate: wealth 48–78, urban neighbourhood, renter-heavy.
     _uac_band   = 48 <= wealth_val <= 78
     _uac_renter = renter_val is None or renter_val > 0.30
-    _uac_urban  = area_type is None or area_type == 'neighborhood'
+    _uac_urban  = area_type is None or area_type in ('urban_core', 'urban_residential')
 
     if _uac_band and _uac_renter and _uac_urban:
         if appreciation_3yr is not None or velocity_6mo is not None:
@@ -1155,7 +1159,8 @@ def compute_status_signal_with_breakdown(
     )
     _wc_pct: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
 
-    wealth = compute_wealth(housing_details, keys_to_try, baselines, white_collar_pct=_wc_pct)
+    _bach_pct = (merged_sf.get("education_attainment") or {}).get("bachelor_pct")
+    wealth = compute_wealth(housing_details, keys_to_try, baselines, white_collar_pct=_wc_pct, bach_pct=_bach_pct)
 
     pw, ph, pe, po = PROVISIONAL_COMPOSITE_WEIGHTS
     provisional = _composite_score_from_weights(

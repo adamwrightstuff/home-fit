@@ -197,6 +197,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
     loc = response.get("location_info") or {}
     state = loc.get("state")
     city = (loc.get("city") or "").strip() or None
+    zip_code = (loc.get("zip") or "").strip() or None
     pillars = with_beauty_subscores(response.get("livability_pillars") or {})
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
@@ -242,6 +243,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 lon=lon_f,
                 diversity_details=diversity_details,
                 area_type=area_type_bt,
+                zip_code=zip_code,
             )
             if result is not None:
                 score, breakdown = result
@@ -326,6 +328,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     econ = pillars.get("economic_security")
     amenities = pillars.get("neighborhood_amenities") or {}
     _city = (location_info.get("city") or "").strip() or None
+    _zip = (location_info.get("zip") or "").strip() or None
     area_type_pl = _area_type_from_payload(payload)
 
     if housing and econ and (social or diversity_details):
@@ -343,6 +346,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
                 lon=lon,
                 diversity_details=diversity_details,
                 area_type=area_type_pl,
+                zip_code=_zip,
             )
             if result is not None:
                 score, breakdown = result
