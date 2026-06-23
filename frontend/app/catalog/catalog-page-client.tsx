@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -396,6 +396,11 @@ export default function CatalogPageClient({
       const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
       const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
       return passesAirTravelDealbreaker(nearestAirportKm, effectiveAreaType)
+    },
+    quality_education: (p) => {
+      const qe = (p.score.livability_pillars as any)?.quality_education
+      const score = typeof qe?.score === 'number' ? qe.score : null
+      return passesQualityEducationDealbreaker(score)
     },
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])

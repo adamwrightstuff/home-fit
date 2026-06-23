@@ -296,6 +296,19 @@ export function passesAirTravelDealbreaker(
   return minutes <= AIR_TRAVEL_DEALBREAKER_MINUTES
 }
 
+/**
+ * Deal-breaker gate for quality_education: pillar score must clear 60 — the "3-star
+ * equivalent" tier in pillars/schools.py's rating formula (rankStars * 20, so 3/5 stars =
+ * 60). The catalog stores the already-aggregated rating, not a separate percentile field,
+ * so this anchors directly on score using that source system's own star-tier boundary.
+ */
+export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 60
+
+export function passesQualityEducationDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0
