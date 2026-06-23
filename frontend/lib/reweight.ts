@@ -1,5 +1,5 @@
 import type { ScoreResponse } from '@/types/api'
-import { PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import { PILLAR_ORDER, SCORE_BANDS, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 
 type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
@@ -307,6 +307,22 @@ export const QUALITY_EDUCATION_DEALBREAKER_SCORE = 60
 export function passesQualityEducationDealbreaker(score: number | null | undefined): boolean {
   if (score === null || score === undefined) return true
   return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
+}
+
+/**
+ * Deal-breaker gate for neighborhood_beauty: pillar score must clear the bottom of the
+ * "Fair" band in SCORE_BANDS (lib/pillars.ts) — the same score-badge boundary already shown
+ * to users on every pillar card. neighborhood_beauty has no documented quality threshold of
+ * its own (unlike housing_value/air_travel_access/quality_education), so this borrows the
+ * one real, user-visible boundary that exists rather than inventing a number: excludes only
+ * what the UI itself already labels "Low."
+ */
+export const NEIGHBORHOOD_BEAUTY_DEALBREAKER_SCORE =
+  SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
+
+export function passesNeighborhoodBeautyDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= NEIGHBORHOOD_BEAUTY_DEALBREAKER_SCORE
 }
 
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
