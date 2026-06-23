@@ -338,6 +338,29 @@ export function passesCommunitySafetyDealbreaker(score: number | null | undefine
   return score >= COMMUNITY_SAFETY_DEALBREAKER_SCORE
 }
 
+/**
+ * Deal-breaker gate for neighborhood_amenities: business count within walking distance must
+ * clear the "adequate" tier from pillars/neighborhood_amenities.py's _score_density —
+ * 15 businesses (suburban baseline), scaled +20% for urban_core (18) and -30% for
+ * exurban/rural (11). Anchors to that pillar's own research-backed floor, not an invented
+ * count.
+ */
+const AMENITIES_ADEQUATE_THRESHOLD: Record<string, number> = {
+  urban_core: 18,
+  exurban: 11,
+  rural: 11,
+}
+const AMENITIES_ADEQUATE_DEFAULT = 15 // suburban baseline
+
+export function passesNeighborhoodAmenitiesDealbreaker(
+  businessesWithinWalk: number | null | undefined,
+  effectiveAreaType: string | null | undefined
+): boolean {
+  if (businessesWithinWalk === null || businessesWithinWalk === undefined) return true
+  const threshold = AMENITIES_ADEQUATE_THRESHOLD[(effectiveAreaType || '').toLowerCase()] ?? AMENITIES_ADEQUATE_DEFAULT
+  return businessesWithinWalk >= threshold
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0

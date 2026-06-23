@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -411,6 +411,16 @@ export default function CatalogPageClient({
       const cs = (p.score.livability_pillars as any)?.community_safety
       const score = typeof cs?.score === 'number' ? cs.score : null
       return passesCommunitySafetyDealbreaker(score)
+    },
+    neighborhood_amenities: (p) => {
+      const na = (p.score.livability_pillars as any)?.neighborhood_amenities
+      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      const businessesWithinWalk = na?.breakdown?.home_walkability?.businesses_within_walk
+      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
+      return passesNeighborhoodAmenitiesDealbreaker(
+        typeof businessesWithinWalk === 'number' ? businessesWithinWalk : null,
+        effectiveAreaType
+      )
     },
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
