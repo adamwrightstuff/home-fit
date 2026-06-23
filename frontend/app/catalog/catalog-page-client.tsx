@@ -428,6 +428,18 @@ export default function CatalogPageClient({
   const { gatedPlaces, dealbreakerExcludedCount } = useMemo(() => {
     if (activeDealbreakerKeys.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
     const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
+    // TEMP DEBUG — remove after diagnosing dealbreaker exclusion bug.
+    if (typeof window !== 'undefined') {
+      ;(window as any).__dbDebug = {
+        activeDealbreakerKeys,
+        filteredPlacesCount: filteredPlaces.length,
+        survivorsCount: survivors.length,
+        perPlace: filteredPlaces.map((p) => ({
+          name: p.catalog.search_query,
+          checks: Object.fromEntries(activeDealbreakerKeys.map((k) => [k, DEALBREAKER_CHECKS[k]!(p)])),
+        })),
+      }
+    }
     if (survivors.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
     return { gatedPlaces: survivors, dealbreakerExcludedCount: filteredPlaces.length - survivors.length }
     // eslint-disable-next-line react-hooks/exhaustive-deps
