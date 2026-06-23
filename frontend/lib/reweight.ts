@@ -256,6 +256,22 @@ export function totalFromPartialPillarScores(
   return Math.round((weightedSum / weightSum) * 100) / 100
 }
 
+/**
+ * Deal-breaker gate for housing_value: price-to-income ratio must clear the standard
+ * affordability threshold (≤3x annual income — the same "Affordable (standard threshold)"
+ * cutoff documented in pillars/housing_value.py's _score_local_affordability). Independent
+ * of the importance weight; this only filters, never reweights.
+ */
+export const HOUSING_VALUE_DEALBREAKER_RATIO = 3.0
+
+export function passesHousingValueDealbreaker(
+  medianHomeValue: number | null | undefined,
+  income: number | null | undefined
+): boolean {
+  if (!medianHomeValue || !income || income <= 0) return true
+  return medianHomeValue / income <= HOUSING_VALUE_DEALBREAKER_RATIO
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0

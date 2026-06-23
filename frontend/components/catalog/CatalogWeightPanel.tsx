@@ -42,9 +42,15 @@ interface CatalogWeightPanelProps {
   onIncomeInputChange?: (v: string) => void
   onIncomeBlur?: () => void
   onIncomeClear?: () => void
+  /** Deal-breaker pillars (currently housing_value only). Independent of importance weight. */
+  dealbreakers?: Partial<Record<PillarKey, boolean>>
+  onDealbreakerToggle?: (key: PillarKey) => void
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear }: CatalogWeightPanelProps) {
+/** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
+const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value']
+
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -154,6 +160,16 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                             </button>
                           ))}
                         </div>
+                      )}
+                      {DEALBREAKER_PILLARS.includes(key) && (
+                        <label className="mt-2 flex items-center gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(dealbreakers?.[key])}
+                            onChange={() => onDealbreakerToggle?.(key)}
+                          />
+                          🚫 Deal breaker — exclude places that fail this
+                        </label>
                       )}
                       {key === 'political_lean' && current !== 'None' && (
                         <div className="mt-2 flex gap-1">

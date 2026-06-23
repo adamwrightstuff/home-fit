@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -116,6 +116,11 @@ export default function CatalogPageClient({
     return null
   })
   const [nbPreference, setNbPreference] = useState<NbPreference | null>(null)
+  /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
+  const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
+  const toggleDealbreaker = useCallback((key: PillarKey) => {
+    setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [snap, setSnap] = useState<CatalogSheetSnap>('peek')
   const [weightOpen, setWeightOpen] = useState(false)
@@ -373,6 +378,23 @@ export default function CatalogPageClient({
     priorities,
   ])
 
+  /**
+   * Deal-breaker gate (housing_value MVP): excludes places that fail an active dealbreaker,
+   * independent of importance weight. Never silently empties the list — if nothing survives,
+   * fall back to the unfiltered set rather than showing a blank screen.
+   */
+  const dealbreakerActive = Boolean(dealbreakers.housing_value)
+  const { gatedPlaces, dealbreakerExcludedCount } = useMemo(() => {
+    if (!dealbreakerActive) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
+    const survivors = filteredPlaces.filter((p) => {
+      const hv = (p.score.livability_pillars as any)?.housing_value
+      const medianHomeValue = Number(hv?.summary?.median_home_value ?? 0) || null
+      return passesHousingValueDealbreaker(medianHomeValue, householdIncome)
+    })
+    if (survivors.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
+    return { gatedPlaces: survivors, dealbreakerExcludedCount: filteredPlaces.length - survivors.length }
+  }, [filteredPlaces, dealbreakerActive, householdIncome])
+
   const queryPlace = twinQueryKey ? findPlaceByKey(adjustedPlaces, twinQueryKey) : null
 
   const twinCandidatePlaces = useMemo(() => {
@@ -402,10 +424,10 @@ export default function CatalogPageClient({
   }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
-    if (catalogMode !== 'twin') return filteredPlaces
+    if (catalogMode !== 'twin') return gatedPlaces
     if (!twinQueryKey) return []
-    return filteredPlaces
-  }, [catalogMode, twinQueryKey, filteredPlaces])
+    return gatedPlaces
+  }, [catalogMode, twinQueryKey, gatedPlaces])
 
   const explorerGeo = useMemo(
     () => buildCatalogFeatureCollection(mapPlacesNoTwinQuery, indexMode, priorities),
@@ -456,7 +478,7 @@ export default function CatalogPageClient({
 
   const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}-${mapData.features.length}`
 
-  const selectedPlace = useMemo(() => findPlaceByKey(filteredPlaces, selectedKey), [filteredPlaces, selectedKey])
+  const selectedPlace = useMemo(() => findPlaceByKey(gatedPlaces, selectedKey), [gatedPlaces, selectedKey])
 
   const selectedTwinMatch = useMemo(() => {
     if (!selectedKey || !twinQueryKey || selectedKey === twinQueryKey) return null
@@ -906,7 +928,7 @@ export default function CatalogPageClient({
           )}
 
           {hoverInfo && catalogMode === 'explorer' && (() => {
-            const hoverPlace = findPlaceByKey(filteredPlaces, hoverInfo.key)
+            const hoverPlace = findPlaceByKey(gatedPlaces, hoverInfo.key)
             if (!hoverPlace) return null
             const rw = reweightScoreResponseFromPriorities(hoverPlace.score, priorities)
             const hf = rw.total_score
@@ -979,9 +1001,17 @@ export default function CatalogPageClient({
         </div>
       )}
 
+      {viewMode === 'list' && catalogMode === 'explorer' && dealbreakerActive && (
+        <div className="border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
+          {dealbreakerExcludedCount > 0
+            ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded by Housing value`
+            : 'No places clear your Housing value must-have — showing closest matches anyway'}
+        </div>
+      )}
+
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <CatalogListView
-          places={filteredPlaces}
+          places={gatedPlaces}
           priorities={priorities}
           onTwinRow={onTwinRow}
           compareIds={compareIds}
@@ -1089,6 +1119,8 @@ export default function CatalogPageClient({
         onIncomeInputChange={setIncomeInputValue}
         onIncomeBlur={() => handleIncomeBlur(incomeInputValue, householdIncome)}
         onIncomeClear={handleIncomeClear}
+        dealbreakers={dealbreakers}
+        onDealbreakerToggle={toggleDealbreaker}
       />
 
       <PillarTwinDrawer
@@ -1101,7 +1133,7 @@ export default function CatalogPageClient({
 
       <CompareTray
         compareIds={compareIds}
-        places={filteredPlaces}
+        places={gatedPlaces}
         onRemove={(key) => setCompareIds((prev) => prev.filter((k) => k !== key))}
         onClear={() => setCompareIds([])}
       />
