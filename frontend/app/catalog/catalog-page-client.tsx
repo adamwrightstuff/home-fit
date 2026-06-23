@@ -424,13 +424,8 @@ export default function CatalogPageClient({
     },
     public_transit_access: (p) => {
       const pt = (p.score.livability_pillars as any)?.public_transit_access
-      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       const meanCommuteMinutes = pt?.summary?.mean_commute_minutes
-      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
-      return passesPublicTransitDealbreaker(
-        typeof meanCommuteMinutes === 'number' ? meanCommuteMinutes : null,
-        effectiveAreaType
-      )
+      return passesPublicTransitDealbreaker(typeof meanCommuteMinutes === 'number' ? meanCommuteMinutes : null)
     },
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])

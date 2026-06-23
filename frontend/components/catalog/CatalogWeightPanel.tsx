@@ -62,7 +62,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   neighborhood_beauty: 'Exclude places scoring below "Fair"',
   community_safety: 'Exclude places less safe than typical for the area type',
   neighborhood_amenities: 'Exclude places with too few businesses within walking distance',
-  public_transit_access: 'Exclude places with a long average commute for their area type',
+  public_transit_access: 'Exclude places with an average commute over 45 min',
 }
 
 export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
