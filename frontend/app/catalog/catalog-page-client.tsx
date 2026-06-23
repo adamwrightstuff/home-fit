@@ -431,6 +431,25 @@ export default function CatalogPageClient({
     }
     const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     if (survivors.length === 0) {
+      // TEMP DEBUG — remove after diagnosing housing_value/air_travel_access exclusion bug.
+      if (typeof window !== 'undefined') {
+        ;(window as any).__dbDebug2 = {
+          activeDealbreakerKeys,
+          householdIncome,
+          sample: filteredPlaces.slice(0, 5).map((p) => {
+            const hv = (p.score.livability_pillars as any)?.housing_value
+            const ata = (p.score.livability_pillars as any)?.air_travel_access
+            const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+            return {
+              name: p.catalog.search_query,
+              medianHomeValue: hv?.summary?.median_home_value,
+              nearestAirportKm: ata?.summary?.nearest_airport_km,
+              effectiveAreaType: nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type,
+              checks: Object.fromEntries(activeDealbreakerKeys.map((k) => [k, DEALBREAKER_CHECKS[k]!(p)])),
+            }
+          }),
+        }
+      }
       return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: true }
     }
     return {
