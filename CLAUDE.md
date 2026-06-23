@@ -46,7 +46,7 @@ Set `HOMEFIT_PILLARS_SEQUENTIAL=true` to run pillars one-at-a-time (useful for r
 
 ## Key Feature Flags
 
-`ENABLE_SCHOOL_SCORING` (default off — low free quota), `HOMEFIT_PILLARS_SEQUENTIAL` (default off), `HOMEFIT_CATALOG_CONTRIBUTIONS_ENABLED` (Supabase catalog aggregates, default off).
+`ENABLE_SCHOOL_SCORING` (default off — low free quota), `HOMEFIT_PILLARS_SEQUENTIAL` (default off), `HOMEFIT_CATALOG_CONTRIBUTIONS_ENABLED` (Supabase catalog aggregates, default off), `HOMEFIT_TRANSIT_STABLE_COMMUTE` (default off — live `/score` uses the fast single-pin Census commute lookup; set true when running catalog batch scoring so it uses the population-weighted multi-tract `get_commute_time_stable` instead, since single-pin resolution is tract-boundary-sensitive and the catalog is a one-time job that can afford the extra API calls).
 
 ## Baselines & Normalization
 

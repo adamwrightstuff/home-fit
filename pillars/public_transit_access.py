@@ -1055,8 +1055,18 @@ def get_public_transit_score(
     area_type_dq = data_quality.detect_area_type(lat, lon, density)
     quality_metrics = data_quality.assess_pillar_data_quality('public_transit_access', combined_data, lat, lon, area_type_dq)
 
-    # Commute time weighting (ACS mean travel time to work)
-    commute_minutes = census_api.get_commute_time(lat, lon)
+    # Commute time weighting (ACS mean travel time to work). Default: single-pin lookup
+    # (fast, 1 API call) for the live scorer's per-request latency budget. Set
+    # HOMEFIT_TRANSIT_STABLE_COMMUTE=true when building/rescoring the Explorer catalog --
+    # single-pin resolution is tract-boundary-sensitive (Harrison: 28<->39min on the same
+    # town) and a spot-check across 21 NYC catalog places found 43% would flip across a
+    # 45min threshold using the unstable value, with one swinging 14.9min. The catalog is a
+    # one-time batch job, so there's no reason not to pay for get_commute_time_stable's
+    # ~9x API calls there.
+    if os.getenv("HOMEFIT_TRANSIT_STABLE_COMMUTE", "false").lower() == "true":
+        commute_minutes = census_api.get_commute_time_stable(lat, lon)
+    else:
+        commute_minutes = census_api.get_commute_time(lat, lon)
     commute_score = None
     effective_area_type = area_type or area_type_dq
     if commute_minutes is not None and commute_minutes > 0:
