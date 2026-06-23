@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -406,6 +406,11 @@ export default function CatalogPageClient({
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       const score = typeof nb?.score === 'number' ? nb.score : null
       return passesNeighborhoodBeautyDealbreaker(score)
+    },
+    community_safety: (p) => {
+      const cs = (p.score.livability_pillars as any)?.community_safety
+      const score = typeof cs?.score === 'number' ? cs.score : null
+      return passesCommunitySafetyDealbreaker(score)
     },
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])

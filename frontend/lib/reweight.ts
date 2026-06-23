@@ -325,6 +325,19 @@ export function passesNeighborhoodBeautyDealbreaker(score: number | null | undef
   return score >= NEIGHBORHOOD_BEAUTY_DEALBREAKER_SCORE
 }
 
+/**
+ * Deal-breaker gate for community_safety: pillar score must clear 50 — the exact midpoint
+ * of pillars/community_safety.py's _z_to_slot mapping (z=0, i.e. crime rate exactly at the
+ * area-type-typical baseline, maps to slot=50). Anchors to "no worse than typical for this
+ * area type," the real center point of that pillar's own z-score normalization.
+ */
+export const COMMUNITY_SAFETY_DEALBREAKER_SCORE = 50
+
+export function passesCommunitySafetyDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= COMMUNITY_SAFETY_DEALBREAKER_SCORE
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0
