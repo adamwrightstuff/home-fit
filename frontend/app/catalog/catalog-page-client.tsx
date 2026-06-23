@@ -425,23 +425,19 @@ export default function CatalogPageClient({
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
   const dealbreakerActive = activeDealbreakerKeys.length > 0
-  const { gatedPlaces, dealbreakerExcludedCount } = useMemo(() => {
-    if (activeDealbreakerKeys.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
-    const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
-    // TEMP DEBUG — remove after diagnosing dealbreaker exclusion bug.
-    if (typeof window !== 'undefined') {
-      ;(window as any).__dbDebug = {
-        activeDealbreakerKeys,
-        filteredPlacesCount: filteredPlaces.length,
-        survivorsCount: survivors.length,
-        perPlace: filteredPlaces.map((p) => ({
-          name: p.catalog.search_query,
-          checks: Object.fromEntries(activeDealbreakerKeys.map((k) => [k, DEALBREAKER_CHECKS[k]!(p)])),
-        })),
-      }
+  const { gatedPlaces, dealbreakerExcludedCount, dealbreakerZeroSurvivors } = useMemo(() => {
+    if (activeDealbreakerKeys.length === 0) {
+      return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: false }
     }
-    if (survivors.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
-    return { gatedPlaces: survivors, dealbreakerExcludedCount: filteredPlaces.length - survivors.length }
+    const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
+    if (survivors.length === 0) {
+      return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0, dealbreakerZeroSurvivors: true }
+    }
+    return {
+      gatedPlaces: survivors,
+      dealbreakerExcludedCount: filteredPlaces.length - survivors.length,
+      dealbreakerZeroSurvivors: false,
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
 
@@ -1053,9 +1049,11 @@ export default function CatalogPageClient({
 
       {viewMode === 'list' && catalogMode === 'explorer' && dealbreakerActive && (
         <div className="border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
-          {dealbreakerExcludedCount > 0
-            ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
-            : 'No places clear all your must-haves — showing closest matches anyway'}
+          {dealbreakerZeroSurvivors
+            ? 'No places clear all your must-haves — showing closest matches anyway'
+            : dealbreakerExcludedCount > 0
+              ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
+              : `All ${gatedPlaces.length} shown clear your must-haves`}
         </div>
       )}
 
