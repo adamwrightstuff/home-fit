@@ -274,11 +274,15 @@ export function passesHousingValueDealbreaker(
 
 /**
  * Deal-breaker gate for air_travel_access: drive time to the nearest airport must clear
- * 120 minutes — the same breakpoint where pillars/air_travel_access.py's _TIME_BANDS ends
- * and scoring drops into "gentle decay past 2 hours." Mirrors that file's _drive_minutes
- * (road-circuity-adjusted distance / area-type drive speed).
+ * 60 minutes — the inflection point in pillars/air_travel_access.py's own _TIME_BANDS,
+ * where scoring transitions from "good" (50min = 74pts) to visibly declining (70min =
+ * 58pts), and which matches the general airport-catchment/relocation research convention
+ * of 30-60 minutes as the "acceptable" range before access starts reading as a drawback.
+ * 120 (the old value) was the band table's outer edge before "gentle decay," which is too
+ * lenient to function as a dealbreaker in dense multi-airport metros like NYC/LA. Mirrors
+ * that file's _drive_minutes (road-circuity-adjusted distance / area-type drive speed).
  */
-export const AIR_TRAVEL_DEALBREAKER_MINUTES = 120
+export const AIR_TRAVEL_DEALBREAKER_MINUTES = 60
 const AIRPORT_DRIVE_KMH: Record<string, number> = {
   historic_urban: 34.0, urban_residential: 40.0, suburban: 52.0,
   urban_core: 33.0, urban: 38.0, dense_suburban: 45.0,
