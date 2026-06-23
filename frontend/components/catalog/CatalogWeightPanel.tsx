@@ -50,6 +50,20 @@ interface CatalogWeightPanelProps {
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
 const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'neighborhood_beauty', 'community_safety', 'neighborhood_amenities']
 
+/**
+ * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
+ * thresholds in lib/reweight.ts's passesXDealbreaker functions. Keep these in sync if a
+ * threshold changes.
+ */
+const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
+  housing_value: 'Exclude places where home price exceeds 3x your household income',
+  air_travel_access: 'Exclude places more than 60 min drive from an airport',
+  quality_education: 'Exclude places with school ratings below 3-star equivalent',
+  neighborhood_beauty: 'Exclude places scoring below "Fair"',
+  community_safety: 'Exclude places less safe than typical for the area type',
+  neighborhood_amenities: 'Exclude places with too few businesses within walking distance',
+}
+
 export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
@@ -162,13 +176,19 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                         </div>
                       )}
                       {DEALBREAKER_PILLARS.includes(key) && (
-                        <label className="mt-2 flex items-center gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
+                        <label className="mt-2 flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
                           <input
                             type="checkbox"
+                            className="mt-0.5"
                             checked={Boolean(dealbreakers?.[key])}
                             onChange={() => onDealbreakerToggle?.(key)}
                           />
-                          🚫 Deal breaker — exclude places that fail this
+                          <span>
+                            🚫 Deal breaker
+                            <span className="block font-normal text-[var(--hf-text-secondary)]">
+                              {DEALBREAKER_DESCRIPTIONS[key]}
+                            </span>
+                          </span>
                         </label>
                       )}
                       {key === 'political_lean' && current !== 'None' && (
