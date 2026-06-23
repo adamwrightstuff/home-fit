@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -379,21 +379,34 @@ export default function CatalogPageClient({
   ])
 
   /**
-   * Deal-breaker gate (housing_value MVP): excludes places that fail an active dealbreaker,
-   * independent of importance weight. Never silently empties the list — if nothing survives,
-   * fall back to the unfiltered set rather than showing a blank screen.
+   * Deal-breaker gates: excludes places that fail any active dealbreaker, independent of
+   * importance weight. Never silently empties the list — if nothing survives, fall back to
+   * the unfiltered set rather than showing a blank screen. Add a pillar by adding an entry
+   * here and to DEALBREAKER_PILLARS in CatalogWeightPanel.
    */
-  const dealbreakerActive = Boolean(dealbreakers.housing_value)
-  const { gatedPlaces, dealbreakerExcludedCount } = useMemo(() => {
-    if (!dealbreakerActive) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
-    const survivors = filteredPlaces.filter((p) => {
+  const DEALBREAKER_CHECKS: Partial<Record<PillarKey, (p: CatalogMapPlace) => boolean>> = {
+    housing_value: (p) => {
       const hv = (p.score.livability_pillars as any)?.housing_value
       const medianHomeValue = Number(hv?.summary?.median_home_value ?? 0) || null
       return passesHousingValueDealbreaker(medianHomeValue, householdIncome)
-    })
+    },
+    air_travel_access: (p) => {
+      const ata = (p.score.livability_pillars as any)?.air_travel_access
+      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
+      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
+      return passesAirTravelDealbreaker(nearestAirportKm, effectiveAreaType)
+    },
+  }
+  const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
+  const dealbreakerActive = activeDealbreakerKeys.length > 0
+  const { gatedPlaces, dealbreakerExcludedCount } = useMemo(() => {
+    if (activeDealbreakerKeys.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
+    const survivors = filteredPlaces.filter((p) => activeDealbreakerKeys.every((k) => DEALBREAKER_CHECKS[k]!(p)))
     if (survivors.length === 0) return { gatedPlaces: filteredPlaces, dealbreakerExcludedCount: 0 }
     return { gatedPlaces: survivors, dealbreakerExcludedCount: filteredPlaces.length - survivors.length }
-  }, [filteredPlaces, dealbreakerActive, householdIncome])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
 
   const queryPlace = twinQueryKey ? findPlaceByKey(adjustedPlaces, twinQueryKey) : null
 
@@ -1004,8 +1017,8 @@ export default function CatalogPageClient({
       {viewMode === 'list' && catalogMode === 'explorer' && dealbreakerActive && (
         <div className="border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
           {dealbreakerExcludedCount > 0
-            ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded by Housing value`
-            : 'No places clear your Housing value must-have — showing closest matches anyway'}
+            ? `${gatedPlaces.length} match all your must-haves · ${dealbreakerExcludedCount} excluded`
+            : 'No places clear all your must-haves — showing closest matches anyway'}
         </div>
       )}
 

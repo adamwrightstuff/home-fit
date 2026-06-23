@@ -272,6 +272,30 @@ export function passesHousingValueDealbreaker(
   return medianHomeValue / income <= HOUSING_VALUE_DEALBREAKER_RATIO
 }
 
+/**
+ * Deal-breaker gate for air_travel_access: drive time to the nearest airport must clear
+ * 120 minutes — the same breakpoint where pillars/air_travel_access.py's _TIME_BANDS ends
+ * and scoring drops into "gentle decay past 2 hours." Mirrors that file's _drive_minutes
+ * (road-circuity-adjusted distance / area-type drive speed).
+ */
+export const AIR_TRAVEL_DEALBREAKER_MINUTES = 120
+const AIRPORT_DRIVE_KMH: Record<string, number> = {
+  historic_urban: 34.0, urban_residential: 40.0, suburban: 52.0,
+  urban_core: 33.0, urban: 38.0, dense_suburban: 45.0,
+  exurban: 65.0, rural: 72.0,
+}
+const ROAD_CIRCUITY = 1.3
+
+export function passesAirTravelDealbreaker(
+  nearestAirportKm: number | null | undefined,
+  effectiveAreaType: string | null | undefined
+): boolean {
+  if (!nearestAirportKm || nearestAirportKm <= 0) return true
+  const kmh = AIRPORT_DRIVE_KMH[(effectiveAreaType || '').toLowerCase()] ?? 50.0
+  const minutes = (nearestAirportKm * ROAD_CIRCUITY) / kmh * 60.0
+  return minutes <= AIR_TRAVEL_DEALBREAKER_MINUTES
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0
