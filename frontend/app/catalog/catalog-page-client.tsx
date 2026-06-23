@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -419,6 +419,16 @@ export default function CatalogPageClient({
       const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
       return passesNeighborhoodAmenitiesDealbreaker(
         typeof businessesWithinWalk === 'number' ? businessesWithinWalk : null,
+        effectiveAreaType
+      )
+    },
+    public_transit_access: (p) => {
+      const pt = (p.score.livability_pillars as any)?.public_transit_access
+      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      const meanCommuteMinutes = pt?.summary?.mean_commute_minutes
+      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
+      return passesPublicTransitDealbreaker(
+        typeof meanCommuteMinutes === 'number' ? meanCommuteMinutes : null,
         effectiveAreaType
       )
     },

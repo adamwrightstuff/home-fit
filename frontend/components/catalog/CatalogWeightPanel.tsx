@@ -48,7 +48,7 @@ interface CatalogWeightPanelProps {
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'neighborhood_beauty', 'community_safety', 'neighborhood_amenities']
+const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'neighborhood_beauty', 'community_safety', 'neighborhood_amenities', 'public_transit_access']
 
 /**
  * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
@@ -62,6 +62,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   neighborhood_beauty: 'Exclude places scoring below "Fair"',
   community_safety: 'Exclude places less safe than typical for the area type',
   neighborhood_amenities: 'Exclude places with too few businesses within walking distance',
+  public_transit_access: 'Exclude places with a long average commute for their area type',
 }
 
 export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {

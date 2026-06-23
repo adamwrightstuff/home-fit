@@ -365,6 +365,33 @@ export function passesNeighborhoodAmenitiesDealbreaker(
   return businessesWithinWalk >= threshold
 }
 
+/**
+ * Deal-breaker gate for public_transit_access: mean commute time must clear an area-type
+ * threshold -- the bands in pillars/public_transit_access.py's _score_commute_time vary by
+ * area type (not just an input conversion), so an area-type-keyed threshold matches that
+ * pillar's own precedent rather than inventing one (same pattern as neighborhood_amenities).
+ * 40min for urban/suburban tiers: the pillar's own code cites "p75=31.4min" for urban, but
+ * that figure's source files (scripts/calibrate_transit_parameters.py,
+ * analysis/transit_parameters_calibration.json) don't exist in the repo and can't be
+ * verified -- the catalog's own observed distribution for historic_urban+urban_residential
+ * (n=65) shows p75=41.3min, which is what 40 actually anchors to instead. 45min for
+ * exurban/rural/unknown, unchanged (matches that tier's own 60min->44.5pts band start).
+ */
+const TRANSIT_COMMUTE_THRESHOLD: Record<string, number> = {
+  urban_core: 40, urban_residential: 40, historic_urban: 40,
+  suburban: 40, urban_core_lowrise: 40,
+}
+const TRANSIT_COMMUTE_DEFAULT = 45 // exurban, rural, unknown
+
+export function passesPublicTransitDealbreaker(
+  meanCommuteMinutes: number | null | undefined,
+  effectiveAreaType: string | null | undefined
+): boolean {
+  if (meanCommuteMinutes === null || meanCommuteMinutes === undefined || meanCommuteMinutes <= 0) return true
+  const threshold = TRANSIT_COMMUTE_THRESHOLD[(effectiveAreaType || '').toLowerCase()] ?? TRANSIT_COMMUTE_DEFAULT
+  return meanCommuteMinutes <= threshold
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0
