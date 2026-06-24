@@ -33,8 +33,10 @@ CATALOGS = [
 
 def _blend_area_type(eff_at: str | None, density: float) -> str | None:
     """Correct area_type for blend_scores when the classifier mislabeled low-density
-    places as historic_urban/urban_core: their 0.65 built-weight floor is wrong."""
-    if eff_at in ("historic_urban", "urban_core") and (density or 0) < 10_000:
+    places as historic_urban/urban_core: their 0.65 built-weight floor is wrong.
+    Threshold 15k covers small historic suburbs (Bronxville ~12k) that ended up in
+    historic_urban but don't have urban-scale pedestrian density."""
+    if eff_at in ("historic_urban", "urban_core") and (density or 0) < 15_000:
         return "suburban"
     return eff_at
 

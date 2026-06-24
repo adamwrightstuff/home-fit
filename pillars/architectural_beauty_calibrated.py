@@ -299,9 +299,10 @@ def compute_built_beauty_v3(
     if at in ("urban_core", "historic_urban"):
         # Floor requires BOTH density AND age to be high: a modern building in a dense
         # district earns no premium; a pre-war dense neighborhood earns the full floor.
-        # Product term ensures neither factor alone can inflate the floor.
+        # max() backstop: low-density historic_urban places (e.g. Bronxville, 11k density)
+        # still get an age-driven floor so their bb isn't zeroed by sparse density.
         d01 = min(density / 80_000, 1.0)
-        floor = 0.15 + 0.38 * d01 + 0.50 * d01 * age
+        floor = 0.15 + max(0.38 * d01 + 0.50 * d01 * age, 0.35 * age)
         wf, wgr, ws, wa, bonus = 0.35, 0.15, 0.25, 0.25, 0.18
     elif at == "urban_residential":
         d01 = min(density / 80_000, 1.0)
