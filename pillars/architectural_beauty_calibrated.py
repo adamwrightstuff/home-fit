@@ -1,27 +1,20 @@
 """
 Calibrated architectural beauty scoring (0–100).
 
-This is a production-ready extraction of the calibration harness under `analysis/`.
-It is intentionally lightweight and dependency-free so it can run inside the API path.
+Reward side driven by HistoricCoherence (set upstream in built_beauty.py) plus
+OSM-derived variety and historic fabric proxies. Penalty side fires on parking,
+megaproject, strip-mall, sprawl, and extreme-footprint patterns.
 
-Design goals:
-- Reward coherent historic fabric (including low-diversity rowhouse districts).
-- Reward "cute/cozy" intentional uniformity (Carmel/Seaside).
-- Penalize car-dominant / megaproject patterns (parking, wide streets, megablocks).
-- Reduce the "diversity == good" bias with diminishing returns.
-
-Inputs (existing model metrics):
+Inputs:
 - height_diversity: 0–100
 - type_diversity: 0–100
 - footprint_variation: 0–100
 - built_coverage: 0–1
-
-Optional proxy inputs (computed from existing pipeline where possible):
-- ParkingFraction: 0–1
-- BlockSize: meters (larger = worse)
-- StreetWidthToHeight: ratio (larger = worse)
-- FrontageContinuity: 0–100
-- HistoricCoherence: 0–100
+- HistoricCoherence: 0–100 (optional, boosts historic_fabric)
+- FrontageContinuity: 0–100 (optional, boosts historic_fabric and dampens strip)
+- ParkingFraction: 0–1 (optional)
+- BlockSize: meters (optional)
+- StreetWidthToHeight: ratio (optional)
 """
 
 from __future__ import annotations
@@ -70,7 +63,7 @@ class CalibratedWeights:
     softcap_k: float
 
 
-# Default weights (fit against the enriched calibration set).
+# V1 weights (fit against the enriched calibration set — HistoricCoherence dependent).
 DEFAULT_WEIGHTS = CalibratedWeights(
     base=34.7411357283405,
     w_variety=31.088530924007067,
@@ -227,6 +220,131 @@ def compute_calibrated_architectural_beauty_score(
     )
 
     # Soft cap to avoid trivial 100s.
+    x = raw / 100.0
+    capped = 100.0 * (math.tanh(weights.softcap_k * x) / math.tanh(weights.softcap_k))
+    return float(_clamp(capped, 0.0, 100.0))
+
+
+def _compute_v2_architectural_beauty_score_RETIRED(
+    row: Dict[str, Any],
+) -> float:
+    """Retired — OSM form metrics (streetwall/block_grain/setback) don't discriminate
+    within pre-war urban neighborhoods; V1 with catalog rescore is the correct path."""
+    """
+    V2 calibrated architectural beauty score (0–100).
+
+    Reward side uses observable form signals only — no HistoricCoherence designation
+    floor. Penalty side is identical to V1.
+
+    Research basis:
+    - Enclosure (streetwall × setback): Gehl, Jacobs, MIT Place Pulse facade-continuity
+    - Grain (block_grain + footprint band): Jacobs small blocks, Ellard boredom research
+    - Heritage density (nrhp + tagged historic buildings): one-directional booster,
+      never a floor — high count confidently signals beauty, low count is not a penalty
+    - Density gate: prevents old-Census-tract auto districts from earning enclosure credit
+    """
+    # --- shared inputs with V1 (penalty terms) ---
+    height = float(row.get("height_diversity") or 0.0)
+    typ    = float(row.get("type_diversity") or 0.0)
+    foot   = float(row.get("footprint_variation") or 0.0)
+    cov    = float(row.get("built_coverage") or 0.0)
+
+    h = _clamp01(height / 100.0)
+    t = _clamp01(typ   / 100.0)
+    f = _clamp01(foot  / 100.0)
+    c = _clamp01(cov)
+
+    # --- new reward inputs ---
+    sw_raw = float(row.get("StreetwallContinuity") or 0.0)
+    bg_raw = float(row.get("BlockGrain")           or 0.0)
+    sb_raw = float(row.get("SetbackConsistency")   or 0.0)
+    heritage_raw = float(row.get("HeritageCount")  or 0.0)
+    density      = float(row.get("Density")        or 0.0)
+    myr_raw      = row.get("MedianYearBuilt")
+
+    sw = _clamp01(sw_raw / 100.0)
+    bg = _clamp01(bg_raw / 100.0)
+    sb = _clamp01(sb_raw / 100.0)
+
+    # Density enabling gate: smooth ramp from 0 at 1500/sqmi to 1 at 8000/sqmi.
+    # Prevents an old-Census auto district from earning enclosure/heritage credit.
+    urban_gate = _clamp01((density - 1500.0) / 6500.0)
+
+    # --- TERM 1: Street enclosure (primary reward) ---
+    # streetwall × setback consistency, gated by density.
+    # setback_consistency boosts coherent facades; lack of it signals parking aprons/gaps.
+    enclosure = _sat01(sw, 0.70) * (0.55 + 0.45 * sb) * (0.35 + 0.65 * urban_gate)
+
+    # --- TERM 2: Fine human-scale grain ---
+    # block_grain (fine = better) + moderate footprint variation bump (not "more = better").
+    foot_bump = _gauss(f, mu=0.55, sigma=0.28)
+    grain = (0.70 * _sat01(bg, 0.65) + 0.30 * foot_bump) * (0.40 + 0.60 * urban_gate)
+
+    # --- TERM 3: Historic fabric density (one-directional booster) ---
+    # heritage_density saturates at ~30 mapped historic structures; never a floor.
+    # Gated by both density (urban context) and streetwall (buildings address street).
+    heritage_density = _sat01(heritage_raw, 30.0)
+    # Continuous age factor: pre-war stock lifts score, post-1975 contributes nothing.
+    age_factor = 0.0
+    if myr_raw is not None:
+        try:
+            age_factor = _clamp01((1975.0 - float(myr_raw)) / 100.0)
+        except (TypeError, ValueError):
+            pass
+    historic_fabric = (
+        (0.70 * heritage_density + 0.30 * age_factor)
+        * (0.50 + 0.50 * urban_gate)
+        * (0.35 + 0.65 * sw)   # requires streetwall: heritage only counts if street is addressed
+    )
+
+    # --- Coverage pleasant band (reuse V1 Gaussians) ---
+    cov_mid      = _gauss(c, mu=0.22, sigma=0.10)
+    cov_spacious = _gauss(c, mu=0.14, sigma=0.07)
+    coverage_pleasant = max(cov_mid, cov_spacious)
+
+    # --- Penalty side (identical to V1) ---
+    parking_void_proxy  = _relu((0.20 - c) / 0.20) * _relu((f - 0.70) / 0.30)
+    megaproject_proxy   = _relu((c - 0.26) / 0.22) * _relu((f - 0.82) / 0.18) * _relu((0.30 - t) / 0.30)
+    strip_proxy         = _relu((t - 0.35) / 0.65) * _relu((0.20 - c) / 0.20) * _relu((f - 0.55) / 0.45)
+    lowrise_sprawl_proxy= _relu((0.14 - h) / 0.14) * _relu((t - 0.18) / 0.82) * _relu((c - 0.10) / 0.25)
+
+    pf_in = row.get("ParkingFraction")
+    if pf_in is not None:
+        try:
+            parking_void_proxy = max(parking_void_proxy, _clamp01(float(pf_in)))
+        except (TypeError, ValueError):
+            pass
+
+    bs_in = row.get("BlockSize")
+    if bs_in is not None:
+        try:
+            megaproject_proxy = max(megaproject_proxy, 0.75 * _clamp01((float(bs_in) - 180.0) / 160.0))
+        except (TypeError, ValueError):
+            pass
+
+    fc_in = row.get("FrontageContinuity")
+    if fc_in is not None:
+        try:
+            fc = _clamp01(float(fc_in) / 100.0)
+            strip_proxy *= (1.0 + (1.0 - fc) * 0.6)
+        except (TypeError, ValueError):
+            pass
+
+    extreme_foot = _relu((f - 0.92) / 0.08) * _clamp01((0.30 - c) / 0.30)
+
+    raw = (
+        weights.base
+        + weights.w_enclosure * enclosure
+        + weights.w_grain     * grain
+        + weights.w_historic  * historic_fabric
+        + weights.w_coverage  * coverage_pleasant
+        - weights.p_parking      * parking_void_proxy
+        - weights.p_megaproject  * megaproject_proxy
+        - weights.p_strip        * strip_proxy
+        - weights.p_sprawl       * lowrise_sprawl_proxy
+        - weights.p_extreme_foot * extreme_foot
+    )
+
     x = raw / 100.0
     capped = 100.0 * (math.tanh(weights.softcap_k * x) / math.tanh(weights.softcap_k))
     return float(_clamp(capped, 0.0, 100.0))
