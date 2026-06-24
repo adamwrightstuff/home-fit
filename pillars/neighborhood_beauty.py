@@ -8,6 +8,14 @@ classification.density, with a categorical floor for architecturally-dense but
 population-sparse area types (urban_core, historic_urban) so commercial cores
 (Midtown, Red Hook, Manhattanville) aren't under-weighted on built character just
 because few people live there.
+
+BCR ceiling (2026-06-23): built_coverage_ratio (Microsoft footprint-derived) caps how
+high density alone can push the built weight. Anchored at BCR_MAX=0.50, corresponding
+to the NLCD Medium/High Intensity boundary (~65-80% impervious surface) — the point
+where dense urban residential transitions to high-intensity built-over land per USGS
+NLCD classification. A place physically covered by 50%+ building footprints has earned
+full built-weight regardless of density; below that, density cannot claim more built
+character than the land coverage actually supports.
 """
 
 from __future__ import annotations
@@ -25,6 +33,11 @@ _LOG_HI = math.log10(95474)
 
 _AREA_TYPE_FLOOR = {"urban_core": 0.65, "historic_urban": 0.65}
 
+# BCR at which building footprint coverage fully justifies maximum built-weight.
+# Anchored to NLCD Medium/High Intensity boundary (~65-80% impervious surface).
+# Source: USGS National Land Cover Database developed land classification thresholds.
+_BCR_MAX = 0.50
+
 
 def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, x))
@@ -39,30 +52,46 @@ def _density_weight(density: Optional[float]) -> Optional[float]:
     return 0.25 + 0.70 * d
 
 
-def combined_weight(density: Optional[float], effective_area_type: Optional[str]) -> float:
-    """Public: density+area-type blend weight on built_beauty (1-w applies to natural)."""
-    return _combined_weight(density, effective_area_type)
+def _bcr_ceiling(bcr: Optional[float]) -> Optional[float]:
+    """Maximum built-weight justified by physical land coverage (Microsoft footprints)."""
+    if bcr is None or bcr < 0:
+        return None
+    return 0.25 + 0.70 * _clamp01(bcr / _BCR_MAX)
+
+
+def combined_weight(density: Optional[float], effective_area_type: Optional[str],
+                    built_coverage_ratio: Optional[float] = None) -> float:
+    """Public: density+area-type+BCR blend weight on built_beauty (1-w applies to natural)."""
+    return _combined_weight(density, effective_area_type, built_coverage_ratio)
 
 
 def blend_scores(built_score: float,
                  natural_score: float,
                  density: Optional[float],
-                 effective_area_type: Optional[str]) -> Dict[str, Any]:
+                 effective_area_type: Optional[str],
+                 built_coverage_ratio: Optional[float] = None) -> Dict[str, Any]:
     """Public: combine already-computed built + natural scores into the blend.
 
     Used by the main scoring path, which runs both underlying scorers itself (so it
     can surface their preferences/details) and only needs the weighted combination.
     """
-    w = _combined_weight(density, effective_area_type)
+    w = _combined_weight(density, effective_area_type, built_coverage_ratio)
     return {
         "score": round(w * float(built_score) + (1.0 - w) * float(natural_score), 2),
         "built_weight": round(w, 3),
     }
 
 
-def _combined_weight(density: Optional[float], effective_area_type: Optional[str]) -> float:
+def _combined_weight(density: Optional[float], effective_area_type: Optional[str],
+                     built_coverage_ratio: Optional[float] = None) -> float:
     w = _density_weight(density)
     floor = _AREA_TYPE_FLOOR.get(effective_area_type or "")
+
+    # Cap density-driven weight at what physical land coverage justifies.
+    ceiling = _bcr_ceiling(built_coverage_ratio)
+    if w is not None and ceiling is not None:
+        w = min(w, ceiling)
+
     if w is None:
         return floor if floor is not None else 0.5
     if floor is not None:
@@ -127,7 +156,15 @@ def calculate_neighborhood_beauty(lat: float,
     )
 
     effective_area_type = built_result.get("effective_area_type") or area_type
-    weight = _combined_weight(density, effective_area_type)
+
+    # Extract BCR from built_result for ceiling calculation (Microsoft footprint-derived).
+    bcr: Optional[float] = None
+    try:
+        bcr = built_result["details"]["architectural_analysis"]["metrics"]["built_coverage_ratio"]
+    except (KeyError, TypeError):
+        pass
+
+    weight = _combined_weight(density, effective_area_type, bcr)
 
     built_score = float(built_result["score"])
     natural_score = float(natural_result["score"])
@@ -137,6 +174,7 @@ def calculate_neighborhood_beauty(lat: float,
         "built_beauty_score": built_score,
         "natural_beauty_score": natural_score,
         "built_weight": round(weight, 3),
+        "built_coverage_ratio": bcr,
         "density": density,
         "effective_area_type": effective_area_type,
         "built_beauty_details": built_result.get("details"),
