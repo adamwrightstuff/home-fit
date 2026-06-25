@@ -1,5 +1,7 @@
 export type PillarKey =
   | 'neighborhood_beauty'
+  | 'natural_beauty'
+  | 'built_environment'
   | 'neighborhood_amenities'
   | 'active_outdoors'
   | 'healthcare_access'
@@ -35,7 +37,7 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'social_fabric',
   'active_outdoors',
   'neighborhood_amenities',
-  'neighborhood_beauty',
+  'natural_beauty',
   'climate_risk',
   'quality_education',
 ])
@@ -45,7 +47,7 @@ export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'public_transit_access',
   'social_fabric',
   'housing_value',
-  'neighborhood_beauty',
+  'natural_beauty',
 ])
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
@@ -53,7 +55,7 @@ export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
   social_fabric: 40,
   neighborhood_amenities: 25,
   active_outdoors: 15,
-  neighborhood_beauty: 10,
+  natural_beauty: 10,
   climate_risk: 8,
   quality_education: 2,
 }
@@ -210,6 +212,18 @@ export const PILLAR_META: Record<
     description:
       'Architecture and landscape together — thoughtfully designed streets and buildings paired with trees, water, and scenic character, weighted by how dense or built-up the area is',
   },
+  natural_beauty: {
+    icon: '🌿',
+    name: 'Natural Beauty',
+    description:
+      'Trees, water, topography, and scenic landscape — how much nature is woven into the place, from ocean views to urban tree canopy.',
+  },
+  built_environment: {
+    icon: '🏙️',
+    name: 'Built Environment',
+    description:
+      'The type of neighborhood you want to live in — from walkable urban core to quiet suburb or rural town. Match score based on area type.',
+  },
   neighborhood_amenities: {
     icon: '🛒',
     name: 'Daily Amenities',
@@ -349,6 +363,10 @@ export function getPillarFailureType(pillar: {
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
   neighborhood_beauty:
     'Combines architecture and landscape: thoughtfully designed streets and buildings create a sense of place and belonging, while access to trees, water, and scenic landscapes is linked to lower stress and better mental health. The two are blended based on how dense or built-up the area is — denser places weight built character more, leafier ones weight nature more.',
+  natural_beauty:
+    'Trees, water, topography, and scenic landscape — how much nature is woven into the place, from ocean views to urban tree canopy. Adjust the scenery preference to weight your preferred landscape type.',
+  built_environment:
+    'How well the neighborhood type matches what you are looking for — urban core, urban neighborhood, suburban, exurban, or rural. Score reflects how closely the area type aligns with your preference.',
   neighborhood_amenities:
     'Being able to walk to cafés, groceries, and daily needs reduces car dependence and encourages routine activity. Neighborhoods with a mix of local businesses tend to foster social interaction and a stronger sense of community.',
   active_outdoors:

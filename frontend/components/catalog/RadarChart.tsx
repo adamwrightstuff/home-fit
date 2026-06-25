@@ -13,6 +13,8 @@ const SHORT_LABELS: Record<PillarKey, string> = {
   active_outdoors: 'Active',
   neighborhood_amenities: 'Amenities',
   neighborhood_beauty: 'Beauty',
+  natural_beauty: 'Nature',
+  built_environment: 'Built Env',
   social_fabric: 'Fabric',
   diversity: 'Diversity',
   quality_education: 'Schools',

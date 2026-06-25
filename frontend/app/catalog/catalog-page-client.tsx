@@ -32,7 +32,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
-import { type NbPreference, adjustNeighborhoodBeautyScoreV9 } from '@/lib/nbPreference'
+import { type NbPreference, adjustNeighborhoodBeautyScoreV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -116,6 +116,7 @@ export default function CatalogPageClient({
     return null
   })
   const [nbPreference, setNbPreference] = useState<NbPreference | null>(null)
+  const [builtEnvPreference, setBuiltEnvPreference] = useState<BuiltEnvPreference | null>(null)
   /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -300,45 +301,45 @@ export default function CatalogPageClient({
         })
       : withIncome
 
-    // Natural beauty preference: re-bias the V9 score toward the chosen scenery dimension
-    // from the stored per-dimension component scores (mirrors backend apply_v9_preference,
-    // forcing the preferred dimension into the OWA lead slot), then re-blend with built_beauty
-    // using the same density+area-type weight the backend uses. Catalog rows only carry the
-    // merged neighborhood_beauty pillar (no standalone natural_beauty entry), and that's the
-    // key the reweight/sort step reads, so the adjustment must land there to actually rerank.
-    const withNb = nbPreference
-      ? withPolitical.map((p) => {
-          const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
-          if (!nb) return p
-          const v9 = nb.details?.natural_beauty?.v9_breakdown
-          const builtScore = Number(nb.built_beauty_score ?? nb.breakdown?.built_beauty_score ?? 0)
-          const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
-          const density = nb.breakdown?.density ?? nb.details?.density ?? null
-          const effectiveAreaType = nb.breakdown?.effective_area_type ?? nb.details?.effective_area_type ?? null
-          const newScore = adjustNeighborhoodBeautyScoreV9(
-            builtScore,
-            storedNaturalScore,
-            v9,
-            nbPreference,
-            density,
-            effectiveAreaType
-          )
-          if (newScore == null) return p
-          return {
-            ...p,
-            score: {
-              ...p.score,
-              livability_pillars: {
-                ...p.score.livability_pillars,
-                neighborhood_beauty: { ...nb, score: newScore },
-              },
-            },
-          }
-        })
-      : withPolitical
+    // Split neighborhood_beauty into synthetic natural_beauty and built_environment pillars.
+    // natural_beauty uses the stored sub-score (preference-adjusted if nbPreference is set).
+    // built_environment uses an area-type match score (0–100) based on builtEnvPreference.
+    // neighborhood_beauty itself is zeroed out so it doesn't double-count.
+    const withNb = withPolitical.map((p) => {
+      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      if (!nb) return p
+
+      const v9 = nb.details?.natural_beauty?.v9_breakdown
+      const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
+      const density = nb.breakdown?.density ?? nb.details?.density ?? null
+      const effectiveAreaType = nb.breakdown?.effective_area_type ?? nb.details?.effective_area_type ?? null
+
+      // Natural beauty score — optionally preference-adjusted
+      const adjustedNatural = nbPreference
+        ? (adjustNeighborhoodBeautyScoreV9(0, storedNaturalScore, v9, nbPreference, density, effectiveAreaType) ?? storedNaturalScore)
+        : storedNaturalScore
+
+      // Built environment match score — only meaningful when user has set a preference
+      const builtMatchScore = builtEnvPreference
+        ? builtEnvMatchScore(effectiveAreaType, builtEnvPreference)
+        : Number(nb.built_beauty_score ?? nb.breakdown?.built_beauty_score ?? 0)
+
+      return {
+        ...p,
+        score: {
+          ...p.score,
+          livability_pillars: {
+            ...p.score.livability_pillars,
+            neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
+            natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
+            built_environment: { score: builtMatchScore, status: 'success', weight: 0, contribution: 0 },
+          },
+        },
+      }
+    })
 
     return withNb
-  }, [places, householdIncome, politicalPreference, nbPreference])
+  }, [places, householdIncome, politicalPreference, nbPreference, builtEnvPreference])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -1166,6 +1167,8 @@ export default function CatalogPageClient({
         onPoliticalPreferenceChange={setPoliticalPreference}
         nbPreference={nbPreference}
         onNbPreferenceChange={setNbPreference}
+        builtEnvPreference={builtEnvPreference}
+        onBuiltEnvPreferenceChange={setBuiltEnvPreference}
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
         householdIncome={householdIncome}
         incomeInputValue={incomeInputValue}

@@ -24,11 +24,19 @@ function equalAllocation(pillars: PillarKey[]): Record<string, number> {
 function prioritiesToTokens(priorities: Partial<Record<string, string>> | null | undefined): Record<string, number> {
   if (!priorities) return equalAllocation(PILLAR_ORDER)
 
+  // Include extra keys (e.g. natural_beauty, built_environment) that are in priorities but not PILLAR_ORDER.
+  const allKeys: string[] = [...PILLAR_ORDER]
+  for (const k of Object.keys(priorities)) {
+    if (!allKeys.includes(k) && String(priorities[k] ?? 'none').toLowerCase().trim() !== 'none') {
+      allKeys.push(k)
+    }
+  }
+
   const weights: Record<string, number> = {}
   const weightMap: Record<string, number> = { none: 0, low: 1, medium: 2, high: 3 }
 
   let totalWeight = 0
-  for (const k of PILLAR_ORDER) {
+  for (const k of allKeys) {
     const raw = String(priorities[k] ?? 'none').toLowerCase().trim()
     const w = weightMap[raw] ?? 0
     weights[k] = w
@@ -40,8 +48,8 @@ function prioritiesToTokens(priorities: Partial<Record<string, string>> | null |
   // Largest remainder method, mirroring backend behavior (stable tie-break by original pillar order).
   const proportional: Record<string, number> = {}
   const fractional: Array<{ k: string; frac: number; idx: number }> = []
-  for (let idx = 0; idx < PILLAR_ORDER.length; idx++) {
-    const k = PILLAR_ORDER[idx]
+  for (let idx = 0; idx < allKeys.length; idx++) {
+    const k = allKeys[idx]
     const w = weights[k]
     if (w > 0) {
       const p = (w / totalWeight) * 100
@@ -54,7 +62,7 @@ function prioritiesToTokens(priorities: Partial<Record<string, string>> | null |
 
   const rounded: Record<string, number> = {}
   let totalRounded = 0
-  for (const k of PILLAR_ORDER) {
+  for (const k of allKeys) {
     const v = Math.trunc(proportional[k] ?? 0)
     rounded[k] = v
     totalRounded += v
@@ -73,7 +81,7 @@ function prioritiesToTokens(priorities: Partial<Record<string, string>> | null |
     }
   }
 
-  // Ensure all pillars exist.
+  // Ensure all standard pillars exist (extra keys already present via allKeys loop).
   for (const k of PILLAR_ORDER) rounded[k] = Number.isFinite(rounded[k]) ? rounded[k] : 0
   return rounded
 }

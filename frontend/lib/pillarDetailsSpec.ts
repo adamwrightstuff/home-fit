@@ -134,6 +134,24 @@ const TRANSIT_DISTANCE_BANDS: QualitativeBand[] = [
 ]
 
 export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
+  natural_beauty: {
+    topLine: 'Trees, water, topography, and scenic character — how much nature is woven into the place.',
+    metrics: [
+      { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
+      { label: 'Neighborhood canopy', path: 'summary.neighborhood_canopy_pct', format: 'percent', max: 100 },
+      { label: 'Nearest mapped water', path: 'summary.water_proximity_km', format: 'distance' },
+      { label: 'Terrain relief (local)', path: 'summary.terrain_relief_m', format: 'text' },
+    ],
+    degradedMessage: 'Limited data: natural beauty data sources were unavailable.',
+  },
+  built_environment: {
+    topLine: 'How well the neighborhood type matches your preference — from urban core to rural.',
+    metrics: [
+      { label: 'Area type', path: 'breakdown.effective_area_type', format: 'text' },
+      { label: 'Density (pop/sq mi)', path: 'breakdown.density', format: 'text' },
+    ],
+    degradedMessage: 'Area type data unavailable for this place.',
+  },
   neighborhood_beauty: {
     topLine: 'Architecture and landscape together—built form, streetscape, and how green or scenic the area is.',
     metrics: [

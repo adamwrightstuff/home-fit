@@ -51,6 +51,23 @@ All applied in `catalog-page-client.tsx`'s `adjustedPlaces` memo, on the stored 
 - **Political lean:** recomputed client-side from `breakdown.lean_2024`.
 The Live Scorer has its own server-side equivalents. Any change to one must be mirrored.
 
+### 10. neighborhood_beauty split in Explorer (2026-06-24)
+The Explorer weight panel splits `neighborhood_beauty` into two independently weighted pillars:
+- **`natural_beauty`** — the stored `natural_beauty_score` sub-score from the NB breakdown,
+  optionally re-biased by scenery preference (mountains/ocean/etc.). Feeds Longevity and
+  Happiness indices.
+- **`built_environment`** — a client-computed area-type **match score** (0–100) based on how
+  closely the place's `effective_area_type` matches the user's preferred neighborhood type
+  (Urban Core / Urban Neighborhood / Suburban / Exurban / Rural). Uses an asymmetric distance
+  penalty: being denser than preferred is penalized harder (60/30/5) than being sparser
+  (75/50/20). `historic_urban` maps to index 4 (same as `urban_core`).
+- The original `neighborhood_beauty` pillar is zeroed out in the catalog composite so it
+  doesn't double-count. The live scorer still returns the merged `neighborhood_beauty` score
+  and is unaffected.
+- Longevity and Happiness indices now reference `natural_beauty` (client-side catalog only);
+  the backend Python indices still use `neighborhood_beauty`. Mirror when the live scorer
+  is updated.
+
 ### 3. total_score recomputation
 Explorer recomputes `total_score` in the browser (`reweight.ts`); live computes it in Python.
 Same intended math, two implementations.

@@ -10,6 +10,57 @@
 
 export type NbPreference = 'mountains' | 'ocean' | 'lakes_rivers' | 'canopy'
 
+// ── Built Environment Preference ─────────────────────────────────────────────
+
+export type BuiltEnvPreference = 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural'
+
+export const BUILT_ENV_LABELS: Record<BuiltEnvPreference, string> = {
+  urban_core: 'Urban Core',
+  urban_residential: 'Urban Neighborhood',
+  suburban: 'Suburban',
+  exurban: 'Exurban',
+  rural: 'Rural',
+}
+
+// Density spectrum index: 0 (least dense) → 4 (most dense)
+const AREA_TYPE_INDEX: Record<string, number> = {
+  rural: 0,
+  exurban: 1,
+  suburban: 2,
+  urban_residential: 3,
+  urban_core: 4,
+  historic_urban: 4, // same density tier as urban_core; preserved as distinct tag for future display
+}
+
+/**
+ * Area type match score (0–100) for a place given the user's preferred area type.
+ * Asymmetric: being denser than preferred is penalized more than being less dense,
+ * since most users who want suburban are more tolerant of quiet exurban than dense urban.
+ */
+export function builtEnvMatchScore(
+  placeAreaType: string | null | undefined,
+  preference: BuiltEnvPreference,
+): number {
+  const normalized = (placeAreaType ?? '').toLowerCase().replace(/-/g, '_')
+  const placeIdx = AREA_TYPE_INDEX[normalized] ?? AREA_TYPE_INDEX['suburban']
+  const prefIdx = AREA_TYPE_INDEX[preference]
+  const diff = placeIdx - prefIdx // positive = denser than preferred
+
+  if (diff === 0) return 100
+  if (diff > 0) {
+    // Too dense — steeper penalty
+    if (diff === 1) return 60
+    if (diff === 2) return 30
+    return 5
+  } else {
+    // Too sparse — gentler penalty
+    const d = Math.abs(diff)
+    if (d === 1) return 75
+    if (d === 2) return 50
+    return 20
+  }
+}
+
 export const NB_PREFERENCE_LABELS: Record<NbPreference, string> = {
   mountains: 'Mountains',
   ocean: 'Ocean / Coast',

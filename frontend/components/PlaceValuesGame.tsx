@@ -133,7 +133,9 @@ type PillarWeights = Record<PillarKey, number>
 
 function inferWeights(answers: QuizAnswers): PillarWeights {
   const w: PillarWeights = {
-    neighborhood_beauty: 50,
+    neighborhood_beauty: 0,
+    natural_beauty: 50,
+    built_environment: 50,
     neighborhood_amenities: 50,
     active_outdoors: 50,
     healthcare_access: 50,

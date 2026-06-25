@@ -4,12 +4,12 @@ import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
-import { NB_PREFERENCE_LABELS, type NbPreference } from '@/lib/nbPreference'
+import { NB_PREFERENCE_LABELS, type NbPreference, BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
     title: 'Lifestyle',
-    keys: ['neighborhood_beauty', 'active_outdoors', 'neighborhood_amenities'],
+    keys: ['natural_beauty', 'built_environment', 'active_outdoors', 'neighborhood_amenities'],
   },
   {
     title: 'Community',
@@ -36,6 +36,8 @@ interface CatalogWeightPanelProps {
   onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
   nbPreference?: NbPreference | null
   onNbPreferenceChange?: (pref: NbPreference | null) => void
+  builtEnvPreference?: BuiltEnvPreference | null
+  onBuiltEnvPreferenceChange?: (pref: BuiltEnvPreference | null) => void
   onTakeQuiz?: () => void
   householdIncome?: number | null
   incomeInputValue?: string
@@ -65,7 +67,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   public_transit_access: 'Exclude places with an average commute over 45 min',
 }
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, builtEnvPreference, onBuiltEnvPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   function setLevel(key: PillarKey, level: PriorityLevel) {
@@ -73,8 +75,11 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
     if (key === 'political_lean' && level === 'None') {
       onPoliticalPreferenceChange?.(null)
     }
-    if (key === 'neighborhood_beauty' && level === 'None') {
+    if (key === 'natural_beauty' && level === 'None') {
       onNbPreferenceChange?.(null)
+    }
+    if (key === 'built_environment' && level === 'None') {
+      onBuiltEnvPreferenceChange?.(null)
     }
   }
 
@@ -153,7 +158,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           </button>
                         ))}
                       </div>
-                      {key === 'neighborhood_beauty' && current !== 'None' && (
+                      {key === 'natural_beauty' && current !== 'None' && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => (
                             <button
@@ -172,6 +177,29 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                               onClick={() => onNbPreferenceChange?.(nbPreference === pref ? null : pref)}
                             >
                               {NB_PREFERENCE_LABELS[pref]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {key === 'built_environment' && current !== 'None' && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(Object.keys(BUILT_ENV_LABELS) as BuiltEnvPreference[]).map((pref) => (
+                            <button
+                              key={pref}
+                              type="button"
+                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                                builtEnvPreference === pref
+                                  ? 'text-white'
+                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                              }`}
+                              style={
+                                builtEnvPreference === pref
+                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
+                                  : undefined
+                              }
+                              onClick={() => onBuiltEnvPreferenceChange?.(builtEnvPreference === pref ? null : pref)}
+                            >
+                              {BUILT_ENV_LABELS[pref]}
                             </button>
                           ))}
                         </div>
