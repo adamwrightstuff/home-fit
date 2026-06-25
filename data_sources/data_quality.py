@@ -1028,23 +1028,22 @@ def get_effective_area_type(
         - 'urban_core', 'suburban', 'exurban', 'rural' (base types)
         - 'historic_urban', 'urban_core_lowrise', 'urban_residential' (architectural subtypes)
     """
-    # Delegate directly to classify_morphology — density + business_count is the
-    # authoritative signal. The multinomial regression (building shapes only, no
-    # density) was overriding correct density-based results with wrong ones.
-    result = classify_morphology(
-        density=density,
-        coverage=built_coverage_ratio,
-        business_count=business_count,
-        metro_distance_km=None,
-    )
+    # area_type is already the output of classify_morphology (density + business_count).
+    # This function previously refined it with a building-morphology ML model that had
+    # no density input and produced wrong results. That model is removed.
+    # Only job now: normalize the retired historic_urban label to urban_residential,
+    # and re-run classify_morphology when business_count is explicitly provided
+    # (catalog patching path where stored area_type may be stale).
+    if business_count is not None:
+        result = classify_morphology(
+            density=density,
+            coverage=built_coverage_ratio,
+            business_count=business_count,
+            metro_distance_km=None,
+        )
+        if result != "unknown":
+            return result
 
-    if result != "unknown":
-        return result
-
-    # classify_morphology returns "unknown" for dead-tract points (near-zero
-    # residential density + real commercial activity — point landed on a park or
-    # rail-yard tract). Fall back to the caller-supplied area_type, normalizing
-    # any legacy historic_urban to urban_residential.
     if area_type == "historic_urban":
         return "urban_residential"
     return area_type
