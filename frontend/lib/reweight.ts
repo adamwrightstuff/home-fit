@@ -321,21 +321,6 @@ export function passesQualityEducationDealbreaker(score: number | null | undefin
   return score >= QUALITY_EDUCATION_DEALBREAKER_SCORE
 }
 
-/**
- * Deal-breaker gate for neighborhood_beauty: pillar score must clear the bottom of the
- * "Fair" band in SCORE_BANDS (lib/pillars.ts) — the same score-badge boundary already shown
- * to users on every pillar card. neighborhood_beauty has no documented quality threshold of
- * its own (unlike housing_value/air_travel_access/quality_education), so this borrows the
- * one real, user-visible boundary that exists rather than inventing a number: excludes only
- * what the UI itself already labels "Low."
- */
-export const NEIGHBORHOOD_BEAUTY_DEALBREAKER_SCORE =
-  SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
-
-export function passesNeighborhoodBeautyDealbreaker(score: number | null | undefined): boolean {
-  if (score === null || score === undefined) return true
-  return score >= NEIGHBORHOOD_BEAUTY_DEALBREAKER_SCORE
-}
 
 /**
  * Deal-breaker gate for community_safety: pillar score must clear 50 — the exact midpoint

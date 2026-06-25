@@ -333,7 +333,7 @@ def get_active_outdoors_score_v2(
     # Denver: 36 trails is legitimate (mountain city), not OSM artifacts
     is_mountain_town = context_flags.get("is_mountain_town", False)
     hiking_trails: List[Dict] = hiking_trails_raw
-    if area_type in {"urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"}:
+    if area_type in {"urban_core", "urban_residential", "urban_core_lowrise"}:
         # Skip filtering if detected as mountain town - legitimate high trail counts
         if not is_mountain_town:
             hiking_trails = _filter_urban_paths_from_trails(hiking_trails, area_type)
@@ -641,7 +641,7 @@ def _score_daily_urban_outdoors_v2(
     # parks within 800 m due to OSM micro-polygons. A small diminishing-return
     # penalty keeps scores aligned with real-world access instead of raw count.
     overflow_penalty = 0.0
-    if area_type in {"urban_core", "historic_urban"}:
+    if area_type in {"urban_core"}:
         expected_parks = max(1.0, exp_expectations.get('expected_parks_within_1km', 8.0))
         expected_park_area = max(1.0, exp_expectations.get('expected_park_area_hectares', 3.0))
         count_ratio = park_count / expected_parks if expected_parks else 0.0
@@ -852,7 +852,7 @@ def _score_wild_adventure_v2(
     else:
         nearest = min(camping, key=lambda c: c.get("distance_m", 1e9))
         d = nearest.get("distance_m", 1e9)
-        if area_type in {"urban_core", "historic_urban"}:
+        if area_type in {"urban_core"}:
             # Urban: closer threshold, steeper decay
             if d <= 15_000:
                 s_camp = 8.0
@@ -973,7 +973,7 @@ def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context:
     # Apply context-aware downweighting to avoid coastline fragments or ornamental
     # water bodies inflating scores in dense urban cores (Times Square) or arid
     # desert metros (Las Vegas, Phoenix).
-    if area_type in {"urban_core", "historic_urban"} and t not in {"beach"}:
+    if area_type in {"urban_core"} and t not in {"beach"}:
         base *= 0.4  # urban cores: non-beach water less impactful (reduced from 0.5)
     elif area_type in {"suburban", "urban_residential"} and t not in {"beach", "lake"}:
         base *= 0.9  # mild downweight
@@ -1099,7 +1099,7 @@ def _detect_special_contexts(
     # Anti-pattern: Don't detect dense urban cores as mountain towns even with high trail counts
     is_mountain_town = False
     # Dense urban areas where high trail counts are likely false positives (urban paths/greenways)
-    is_dense_urban = area_type_lower in {"urban_core", "historic_urban", "urban_residential", "urban_core_lowrise"}
+    is_dense_urban = area_type_lower in {"urban_core", "urban_residential", "urban_core_lowrise"}
     
     if total_trails >= 40:
         # Very high trail count (40+) is strong signal for mountain/outdoor-oriented area
@@ -1197,7 +1197,6 @@ def _detect_special_contexts(
     # The mountain_town flag will still adjust expectations appropriately in _score_wild_adventure_v2
     if is_mountain_town and area_type_lower in {
         "urban_core",
-        "historic_urban",
         "urban_residential",
         "urban_core_lowrise",
         # REMOVED: "suburban", "suburban_major_metro" - keep suburban classification accurate

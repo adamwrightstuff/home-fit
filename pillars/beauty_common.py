@@ -6,7 +6,6 @@ from typing import Dict, Optional, Tuple
 
 # Normalization parameters carried over from legacy neighborhood beauty pillar.
 AREA_NORMALIZATION: Dict[str, Dict[str, float]] = {
-    "historic_urban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
     "suburban": {"shift": 0.0, "scale": 1.0, "max": 100.0},
     "urban_residential": {"shift": 0.0, "scale": 1.0, "max": 100.0},
     "urban_core": {"shift": 0.0, "scale": 1.0, "max": 100.0},
@@ -78,7 +77,7 @@ def default_beauty_weights(area_type: Optional[str]) -> str:
     area_type = area_type.lower()
     if area_type in {"urban_core", "urban_residential", "urban_core_lowrise"}:
         return "trees:0.4,architecture:0.6"
-    if area_type in {"historic_urban", "suburban"}:
+    if area_type == "suburban":
         return "trees:0.35,architecture:0.65"
     if area_type == "exurban":
         return "trees:0.4,architecture:0.6"

@@ -352,7 +352,7 @@ I     RESEARCH-BACKED RATIONALE:
     # 
     # Calibration source: scripts/calibrate_transit_parameters.py
     # Calibration data: analysis/transit_parameters_calibration.json
-    if area_type in ("urban_core", "urban_residential", "historic_urban"):
+    if area_type in ("urban_core", "urban_residential"):
         if mean_minutes <= 20:
             return 95.0  # Research-backed: below p25 (22.7 min)
         if mean_minutes <= 30:

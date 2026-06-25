@@ -468,7 +468,6 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
 
 
 _BUILT_EFFECTIVE_AREA_LABELS: Dict[str, str] = {
-    "historic_urban": "Historic urban fabric",
     "urban_core": "Urban core",
     "urban_residential": "Urban residential",
     "suburban": "Suburban",

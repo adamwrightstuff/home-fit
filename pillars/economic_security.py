@@ -46,7 +46,7 @@ def _area_bucket(area_type: Optional[str]) -> str:
     if not area_type:
         return "all"
     at = area_type.lower()
-    if at in {"urban_core", "urban_residential", "historic_urban", "urban_core_lowrise"}:
+    if at in {"urban_core", "urban_residential", "urban_core_lowrise"}:
         return "urban"
     if at in {"suburban", "exurban"}:
         return "suburban"

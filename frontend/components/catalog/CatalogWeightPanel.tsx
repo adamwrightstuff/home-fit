@@ -50,7 +50,7 @@ interface CatalogWeightPanelProps {
 }
 
 /** Pillars with a deal-breaker gate wired up. Independent axis from importance — see housing_value MVP. */
-const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'neighborhood_beauty', 'community_safety', 'neighborhood_amenities', 'public_transit_access']
+const DEALBREAKER_PILLARS: PillarKey[] = ['housing_value', 'air_travel_access', 'quality_education', 'community_safety', 'neighborhood_amenities', 'public_transit_access']
 
 /**
  * Human-readable statement of what "fails" means per dealbreaker pillar — mirrors the exact
@@ -61,7 +61,6 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   housing_value: 'Exclude places where home price exceeds 3x your household income',
   air_travel_access: 'Exclude places more than 60 min drive from an airport',
   quality_education: 'Exclude places with school ratings below 3-star equivalent',
-  neighborhood_beauty: 'Exclude places scoring below "Fair"',
   community_safety: 'Exclude places less safe than typical for the area type',
   neighborhood_amenities: 'Exclude places with too few businesses within walking distance',
   public_transit_access: 'Exclude places with an average commute over 45 min',

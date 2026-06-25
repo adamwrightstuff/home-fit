@@ -561,16 +561,12 @@ def calculate_built_beauty(lat: float,
     # This only affects exceptional locations (built_native > 50) that would score > 100
     built_score_raw = min(100.0, built_native * 2.0)
 
-    # Character preference: penalize mismatch between what the user wants and what the place is.
-    # Historic place (effective_area_type historic_urban) vs contemporary preference -> penalize.
-    # Contemporary place vs historic preference -> penalize.
+    # Character preference: penalize contemporary preference in any place (historic_urban is retired;
+    # all places are either urban_residential or another non-historic type now).
     CHARACTER_MISMATCH_PENALTY = 8.0  # points on 0-100 scale
     if built_character_preference and effective_area_type:
         pref = (built_character_preference or "").strip().lower()
-        is_historic_place = (effective_area_type == "historic_urban")
-        if pref == "historic" and not is_historic_place:
-            built_score_raw = max(0.0, built_score_raw - CHARACTER_MISMATCH_PENALTY)
-        elif pref == "contemporary" and is_historic_place:
+        if pref == "historic":
             built_score_raw = max(0.0, built_score_raw - CHARACTER_MISMATCH_PENALTY)
     # no_preference -> no adjustment
 
