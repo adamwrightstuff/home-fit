@@ -292,7 +292,7 @@ export function passesHousingValueDealbreaker(
  */
 export const AIR_TRAVEL_DEALBREAKER_MINUTES = 60
 const AIRPORT_DRIVE_KMH: Record<string, number> = {
-  historic_urban: 34.0, urban_residential: 40.0, suburban: 52.0,
+  urban_residential: 40.0, suburban: 52.0,
   urban_core: 33.0, urban: 38.0, dense_suburban: 45.0,
   exurban: 65.0, rural: 72.0,
 }

@@ -64,7 +64,6 @@ from pillars.composite_indices import (
     attach_indices_version,
     backfill_status_happiness_if_missing,
     recompute_composites_from_payload,
-    with_beauty_subscores,
 )
 from data_sources.census_api import estimate_community_safety_disk_population
 from data_sources.crime_api import community_safety_crime_radius_m
@@ -4259,8 +4258,7 @@ async def _stream_score_with_progress(
             final_response["status_signal_breakdown"] = breakdown
 
         public_transit_details = livability_pillars.get("public_transit_access")
-        _beauty_pillars = with_beauty_subscores(livability_pillars)
-        natural_beauty_details = _beauty_pillars.get("natural_beauty")
+        natural_beauty_details = livability_pillars.get("natural_beauty")
         happiness_result = _compute_happiness_index_for_response(
             housing_details,
             public_transit_details,
@@ -5415,8 +5413,7 @@ async def stream_score(
             response["status_signal_breakdown"] = breakdown
 
         public_transit_details = livability_pillars.get("public_transit_access")
-        _beauty_pillars = with_beauty_subscores(livability_pillars)
-        natural_beauty_details = _beauty_pillars.get("natural_beauty")
+        natural_beauty_details = livability_pillars.get("natural_beauty")
         happiness_result = _compute_happiness_index_for_response(
             housing_details,
             public_transit_details,
