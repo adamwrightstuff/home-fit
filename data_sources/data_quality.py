@@ -1028,129 +1028,25 @@ def get_effective_area_type(
         - 'urban_core', 'suburban', 'exurban', 'rural' (base types)
         - 'historic_urban', 'urban_core_lowrise', 'urban_residential' (architectural subtypes)
     """
-    # historic_urban is retired as a scoring type — it's a label, not a scoring baseline.
-    # Normalize to urban_residential so existing catalog data gets consistent behavior.
-    # Preserve the original value as a minimum floor: commercial urban cores whose
-    # classify_morphology result was urban_core (later overridden to historic_urban by the
-    # old historic override) must not be downgraded by the multinomial.
-    _base_floor = area_type
-    if area_type == "historic_urban":
-        area_type = "urban_residential"
-
-    # MULTINOMIAL REGRESSION SYSTEM (default)
-    if use_multinomial:
-        # Check if we have minimum required features for multinomial regression
-        # Need: built_coverage_ratio, building_type_diversity, levels_entropy, footprint_area_cv
-        has_minimum_features = (
-            built_coverage_ratio is not None and
-            building_type_diversity is not None and
-            levels_entropy is not None and
-            footprint_area_cv is not None
-        )
-        
-        if has_minimum_features:
-            try:
-                # Compute rowhouse indicator
-                rowhouse_indicator = _compute_rowhouse_indicator(
-                    levels_entropy,
-                    building_type_diversity,
-                    footprint_area_cv
-                )
-                
-                # Normalize features
-                normalized_features = _normalize_features_for_classification(
-                    built_coverage_ratio,
-                    building_type_diversity,
-                    levels_entropy,
-                    footprint_area_cv,
-                    historic_landmarks,
-                    median_year_built,
-                    material_profile,
-                    rowhouse_indicator
-                )
-                
-                # Predict using multinomial regression
-                predicted_type, probabilities = predict_area_type_with_multinomial(normalized_features)
-
-                # historic_urban is retired as a scoring baseline — normalize to urban_residential.
-                if predicted_type == "historic_urban":
-                    predicted_type = "urban_residential"
-
-                logger.debug(
-                    f"Multinomial regression predicted: {predicted_type} "
-                    f"(probabilities: {probabilities})"
-                )
-
-                # Density sanity-check: the multinomial is trained on OSM building features
-                # only (no density input), so it can misclassify in both directions —
-                # dense neighborhoods with sparse OSM tagging look like suburbs, and
-                # low-density small towns with rich building data look like urban cores.
-                # Apply bidirectional bounds so the prediction can never contradict what
-                # the measured population density implies. Thresholds mirror
-                # classify_morphology() anchors (density in people/sq mi).
-                # Base-type floor: classify_morphology already applied business-count and
-                # walkability signals that the multinomial doesn't see. If it returned
-                # urban_core (commercial core like Downtown LA), the multinomial cannot
-                # downgrade below urban_residential regardless of density.
-                _BASE_TYPE_RANK = {"rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3, "historic_urban": 3, "urban_core": 4}
-                _base_rank = _BASE_TYPE_RANK.get(_base_floor, 0)
-                _pred_rank = _BASE_TYPE_RANK.get(predicted_type, 0)
-                if _base_rank >= _BASE_TYPE_RANK["urban_core"] and _pred_rank < _BASE_TYPE_RANK["urban_residential"]:
-                    predicted_type = "urban_residential"
-
-                if density is not None:
-                    # Floor: prediction cannot be too low for the measured density
-                    if density >= 25_000 and predicted_type in ("suburban", "exurban", "rural"):
-                        logger.debug(
-                            "Density sanity-check: upgrading %s → urban_residential (density=%.0f)",
-                            predicted_type, density,
-                        )
-                        predicted_type = "urban_residential"
-                    elif density >= 3_000 and predicted_type in ("exurban", "rural"):
-                        logger.debug(
-                            "Density sanity-check: upgrading %s → suburban (density=%.0f)",
-                            predicted_type, density,
-                        )
-                        predicted_type = "suburban"
-                    elif density >= 800 and predicted_type == "rural":
-                        logger.debug(
-                            "Density sanity-check: upgrading rural → exurban (density=%.0f)",
-                            density,
-                        )
-                        predicted_type = "exurban"
-                    # Ceiling: prediction cannot be too high for the measured density.
-                    # urban_residential requires ≥12k in classify_morphology; urban_core
-                    # requires commercial dominance (business count), not just density.
-                    elif density < 3_000 and predicted_type in ("urban_core", "urban_residential"):
-                        downgraded = "suburban" if density >= 800 else "exurban"
-                        logger.debug(
-                            "Density sanity-check: capping %s → %s (density=%.0f)",
-                            predicted_type, downgraded, density,
-                        )
-                        predicted_type = downgraded
-
-                return predicted_type
-                
-            except Exception as e:
-                logger.warning(f"Multinomial regression failed, using fallback: {e}")
-                # Fall through to fallback system
-    
-    # FALLBACK SYSTEM: Use rule-based tag mapping (backward compatibility)
-    tags = get_contextual_tags(
-        area_type, density, built_coverage_ratio, median_year_built,
-        historic_landmarks, business_count, levels_entropy,
-        building_type_diversity, footprint_area_cv, pre_1940_pct
+    # Delegate directly to classify_morphology — density + business_count is the
+    # authoritative signal. The multinomial regression (building shapes only, no
+    # density) was overriding correct density-based results with wrong ones.
+    result = classify_morphology(
+        density=density,
+        coverage=built_coverage_ratio,
+        business_count=business_count,
+        metro_distance_km=None,
     )
-    
-    # Map tags to legacy effective types for backward compatibility
-    if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
+
+    if result != "unknown":
+        return result
+
+    # classify_morphology returns "unknown" for dead-tract points (near-zero
+    # residential density + real commercial activity — point landed on a park or
+    # rail-yard tract). Fall back to the caller-supplied area_type, normalizing
+    # any legacy historic_urban to urban_residential.
+    if area_type == "historic_urban":
         return "urban_residential"
-    elif 'lowrise' in tags and area_type == 'urban_core':
-        return "urban_core_lowrise"
-    elif 'rowhouse' in tags and area_type == 'urban_core':
-        return "urban_residential"
-    
-    # No special tags, return base type
     return area_type
 
 
