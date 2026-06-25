@@ -976,7 +976,7 @@ def _classify_trajectory(
             _strong_momentum = appreciation_3yr is not None and appreciation_3yr >= 0.10
             _normal_momentum = (
                 (appreciation_3yr is not None and appreciation_3yr >= 0.05) or
-                (velocity_6mo is not None and velocity_6mo >= 0.02)
+                (appreciation_3yr is None and velocity_6mo is not None and velocity_6mo >= 0.05)
             )
             _has_pressure = home_cost >= wealth_val - 5
             if _strong_momentum or (_normal_momentum and _has_pressure):
