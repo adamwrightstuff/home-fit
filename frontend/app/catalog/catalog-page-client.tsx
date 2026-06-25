@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, SlidersHorizontal, X } from 'lucide-react'
 import CatalogMapView from '@/components/catalog/CatalogMapView'
@@ -82,6 +83,8 @@ export default function CatalogPageClient({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [places, setPlaces] = useState<CatalogMapPlaceWithMetro[]>([])
   const [loadMessage, setLoadMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -237,6 +240,45 @@ export default function CatalogPageClient({
     })()
     return () => ac.abort()
   }, [])
+
+  // Load preferences from Supabase on sign-in; save debounced on change when signed in.
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/me/preferences')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const opts = data?.explorer_options
+        if (!opts) return
+        const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+        if (opts.priorities) {
+          const merged = { ...DEFAULT_PRIORITIES }
+          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'built_environment'] as PillarKey[]) {
+            if (valid.includes(opts.priorities[k])) merged[k] = opts.priorities[k]
+          }
+          setPriorities(merged)
+        }
+        if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
+        if (opts.political_preference === 'progressive' || opts.political_preference === 'conservative') setPoliticalPreference(opts.political_preference)
+        if (typeof opts.household_income === 'number' && opts.household_income > 0) {
+          setHouseholdIncome(opts.household_income)
+          setIncomeInputValue(String(opts.household_income))
+        }
+      })
+      .catch(() => { /* silently ignore — sessionStorage fallback already applied */ })
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      fetch('/api/me/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priorities, dealbreakers, political_preference: politicalPreference, household_income: householdIncome }),
+      }).catch(() => {})
+    }, 1500)
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
+  }, [user, priorities, dealbreakers, politicalPreference, householdIncome])
 
   useEffect(() => {
     const key = searchParams.get('key')
