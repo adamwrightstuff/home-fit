@@ -29,7 +29,6 @@ const AREA_TYPE_INDEX: Record<string, number> = {
   suburban: 2,
   urban_residential: 3,
   urban_core: 4,
-  historic_urban: 4, // same density tier as urban_core; preserved as distinct tag for future display
 }
 
 /**
@@ -277,7 +276,6 @@ const NB_LOG_HI = Math.log10(95474)
 // Mirrors _AREA_TYPE_FLOOR in neighborhood_beauty.py.
 const NB_AREA_TYPE_FLOOR: Record<string, number> = {
   urban_core: 0.65,
-  historic_urban: 0.65,
 }
 
 function clamp01(x: number): number {
