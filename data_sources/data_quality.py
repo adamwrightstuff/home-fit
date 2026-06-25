@@ -1028,9 +1028,12 @@ def get_effective_area_type(
         - 'urban_core', 'suburban', 'exurban', 'rural' (base types)
         - 'historic_urban', 'urban_core_lowrise', 'urban_residential' (architectural subtypes)
     """
-    # historic_urban is retired as a classification — it's a label, not a scoring baseline.
-    # Normalize any stored historic_urban to urban_residential so existing catalog data
-    # and any code paths that still pass it in get consistent behavior.
+    # historic_urban is retired as a scoring type — it's a label, not a scoring baseline.
+    # Normalize to urban_residential so existing catalog data gets consistent behavior.
+    # Preserve the original value as a minimum floor: commercial urban cores whose
+    # classify_morphology result was urban_core (later overridden to historic_urban by the
+    # old historic override) must not be downgraded by the multinomial.
+    _base_floor = area_type
     if area_type == "historic_urban":
         area_type = "urban_residential"
 
@@ -1085,6 +1088,16 @@ def get_effective_area_type(
                 # Apply bidirectional bounds so the prediction can never contradict what
                 # the measured population density implies. Thresholds mirror
                 # classify_morphology() anchors (density in people/sq mi).
+                # Base-type floor: classify_morphology already applied business-count and
+                # walkability signals that the multinomial doesn't see. If it returned
+                # urban_core (commercial core like Downtown LA), the multinomial cannot
+                # downgrade below urban_residential regardless of density.
+                _BASE_TYPE_RANK = {"rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3, "historic_urban": 3, "urban_core": 4}
+                _base_rank = _BASE_TYPE_RANK.get(_base_floor, 0)
+                _pred_rank = _BASE_TYPE_RANK.get(predicted_type, 0)
+                if _base_rank >= _BASE_TYPE_RANK["urban_core"] and _pred_rank < _BASE_TYPE_RANK["urban_residential"]:
+                    predicted_type = "urban_residential"
+
                 if density is not None:
                     # Floor: prediction cannot be too low for the measured density
                     if density >= 25_000 and predicted_type in ("suburban", "exurban", "rural"):
