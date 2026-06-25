@@ -12,12 +12,14 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # Longevity Index (Blue Zone–inspired fixed weights on six pillars)
 # ---------------------------------------------------------------------------
 LONGEVITY_INDEX_WEIGHTS: Dict[str, float] = {
-    "social_fabric": 40.0,
-    "neighborhood_amenities": 25.0,
-    "active_outdoors": 15.0,
-    "natural_beauty": 10.0,
-    "climate_risk": 8.0,
-    "quality_education": 2.0,
+    "social_fabric": 35.0,       # Holt-Lunstad (2015): social isolation = 29% mortality increase
+    "active_outdoors": 22.0,     # Li (2019 JAMA, 900k): greenspace → 12-24% lower all-cause mortality; Kokkinos (2022 NEJM): fitness = top longevity predictor
+    "neighborhood_amenities": 15.0,  # Blue Zone "Move Naturally" walkability pathway; food access
+    "healthcare_access": 10.0,   # RWJF 2023: 5-7yr life expectancy gap between highest/lowest primary care access counties
+    "climate_risk": 8.0,         # Pope (2009): reducing fine particles → 0.61yr life expectancy gain
+    "natural_beauty": 5.0,       # Independent stress-reduction / cortisol pathway; partially overlaps active_outdoors
+    "quality_education": 3.0,    # Cutler & Lleras-Muney (2008): each year of education → 1.8% lower mortality
+    "community_safety": 8.0,     # Trauma and chronic stress from crime are real mortality factors; renormalized when degraded
 }
 
 INDEX_VERSION_LONGEVITY = "2"
@@ -220,6 +222,9 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 pillars.get("natural_beauty"),
                 state,
                 social_fabric_details=social,
+                built_beauty_details=pillars.get("built_beauty"),
+                community_safety_details=pillars.get("community_safety"),
+                neighborhood_amenities_details=amenities,
             )
             if hi is not None:
                 hi_score, hi_breakdown = hi
@@ -325,6 +330,9 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             pillars.get("natural_beauty"),
             state,
             social_fabric_details=social,
+            built_beauty_details=pillars.get("built_beauty"),
+            community_safety_details=pillars.get("community_safety"),
+            neighborhood_amenities_details=pillars.get("neighborhood_amenities"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result

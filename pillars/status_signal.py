@@ -1173,7 +1173,7 @@ def compute_status_signal_with_breakdown(
 
     stability: Optional[float] = None
     sf_breakdown = (social_fabric_details or {}).get("breakdown") or {}
-    _stab = sf_breakdown.get("stability")
+    _stab = sf_breakdown.get("rootedness") or sf_breakdown.get("stability")
     if _stab is not None:
         try:
             stability = float(_stab)

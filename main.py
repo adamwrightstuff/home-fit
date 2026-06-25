@@ -1139,6 +1139,8 @@ def _compute_happiness_index_for_response(
     state: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
     built_beauty_details: Optional[Dict[str, Any]] = None,
+    community_safety_details: Optional[Dict[str, Any]] = None,
+    neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
     """
     Compute Happiness Index (0-100) and breakdown from existing pillar data.
@@ -1153,6 +1155,8 @@ def _compute_happiness_index_for_response(
             state,
             social_fabric_details=social_fabric_details,
             built_beauty_details=built_beauty_details,
+            community_safety_details=community_safety_details,
+            neighborhood_amenities_details=neighborhood_amenities_details,
         )
     except Exception:
         return None
@@ -2623,6 +2627,8 @@ def _compute_single_score_internal(
         state,
         social_fabric_details=livability_pillars.get("social_fabric"),
         built_beauty_details=built_beauty_details_for_indices,
+        community_safety_details=livability_pillars.get("community_safety"),
+        neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
     )
     if happiness_result is not None:
         hi_score, hi_breakdown = happiness_result
@@ -4266,6 +4272,8 @@ async def _stream_score_with_progress(
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
             built_beauty_details=_beauty_pillars.get("built_beauty"),
+            community_safety_details=livability_pillars.get("community_safety"),
+            neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result
@@ -5421,6 +5429,8 @@ async def stream_score(
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
             built_beauty_details=_beauty_pillars.get("built_beauty"),
+            community_safety_details=livability_pillars.get("community_safety"),
+            neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result
