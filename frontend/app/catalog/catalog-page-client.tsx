@@ -31,7 +31,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesNeighborhoodBeautyDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
 import { type NbPreference, adjustNeighborhoodBeautyScoreV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -322,7 +322,7 @@ export default function CatalogPageClient({
       // Built environment match score — only meaningful when user has set a preference
       const builtMatchScore = builtEnvPreference
         ? builtEnvMatchScore(effectiveAreaType, builtEnvPreference)
-        : Number(nb.built_beauty_score ?? nb.breakdown?.built_beauty_score ?? 0)
+        : 50
 
       return {
         ...p,
@@ -402,11 +402,6 @@ export default function CatalogPageClient({
       const qe = (p.score.livability_pillars as any)?.quality_education
       const score = typeof qe?.score === 'number' ? qe.score : null
       return passesQualityEducationDealbreaker(score)
-    },
-    neighborhood_beauty: (p) => {
-      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
-      const score = typeof nb?.score === 'number' ? nb.score : null
-      return passesNeighborhoodBeautyDealbreaker(score)
     },
     community_safety: (p) => {
       const cs = (p.score.livability_pillars as any)?.community_safety

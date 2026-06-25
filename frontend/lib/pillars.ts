@@ -38,7 +38,7 @@ export const LONGEVITY_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'social_fabric',
   'active_outdoors',
   'neighborhood_amenities',
-  'neighborhood_beauty',
+  'natural_beauty',
   'climate_risk',
   'quality_education',
 ])
@@ -48,7 +48,7 @@ export const HAPPINESS_PILLAR_KEYS: ReadonlySet<PillarKey> = new Set<PillarKey>(
   'public_transit_access',
   'social_fabric',
   'housing_value',
-  'neighborhood_beauty',
+  'natural_beauty',
 ])
 
 /** Weights for Longevity Index (must match backend LONGEVITY_INDEX_WEIGHTS). */
@@ -56,7 +56,7 @@ export const LONGEVITY_INDEX_WEIGHTS: Record<string, number> = {
   social_fabric: 40,
   neighborhood_amenities: 25,
   active_outdoors: 15,
-  neighborhood_beauty: 10,
+  natural_beauty: 10,
   climate_risk: 8,
   quality_education: 2,
 }
