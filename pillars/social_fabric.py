@@ -494,9 +494,11 @@ def get_social_fabric_score(
 
     w_sc    = 0.20 if cohesion_score is not None else 0.0
     w_civic = 0.10 if civic_score > 0 else 0.0
-    w_part  = 1.0 - w_sc - w_civic
+    w_root  = 0.10
+    w_part  = 1.0 - w_sc - w_civic - w_root
 
-    raw = (w_sc * (cohesion_score or 0.0)
+    raw = (w_sc   * (cohesion_score or 0.0)
+           + w_root * stability_score
            + w_part * e
            + w_civic * civic_score)
     score = max(0.0, min(100.0, round(raw, 1)))
@@ -669,7 +671,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v16_sf_externally_validated",
+        "version": "v16b_sf_with_rootedness",
     }
 
     logger.info(

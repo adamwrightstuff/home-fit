@@ -54,11 +54,13 @@ def _peer_civic_score(civic_eff: Optional[float], band_tier: Optional[str]) -> O
         return None
 
 
-def _v16_score(participation: float, social_capital: Optional[float], peer_civic: Optional[float]) -> float:
+def _v16_score(participation: float, social_capital: Optional[float], peer_civic: Optional[float], rootedness: Optional[float]) -> float:
     w_sc    = 0.20 if social_capital is not None else 0.0
     w_civic = 0.10 if (peer_civic is not None and peer_civic > 0) else 0.0
-    w_part  = 1.0 - w_sc - w_civic
-    raw = (w_sc * (social_capital or 0.0)
+    w_root  = 0.10 if rootedness is not None else 0.0
+    w_part  = 1.0 - w_sc - w_civic - w_root
+    raw = (w_sc   * (social_capital or 0.0)
+           + w_root * (rootedness or 0.0)
            + w_part * participation
            + w_civic * (peer_civic or 0.0))
     return round(max(0.0, min(100.0, raw)), 1)
@@ -106,17 +108,19 @@ def recompute_row(row: dict) -> str:
     band_tier  = summary.get("civic_band_tier")
     peer_civic = _peer_civic_score(civic_eff, band_tier)
 
-    new_score = _v16_score(float(participation), new_sc, peer_civic)
+    rootedness = summary.get("stability_blend_pct")
+    new_score = _v16_score(float(participation), new_sc, peer_civic, rootedness)
     old_score = sf.get("score")
 
     sf["breakdown"] = {
         "participation":  round(float(participation), 1),
         "social_capital": new_sc,
         "peer_civic":     round(peer_civic, 1) if peer_civic is not None else None,
+        "rootedness":     round(rootedness, 1) if rootedness is not None else None,
     }
     sf["score"] = new_score
     if isinstance(sf.get("details"), dict):
-        sf["details"]["version"] = "v16_sf_externally_validated"
+        sf["details"]["version"] = "v16b_sf_with_rootedness"
 
     row["score"]["total_score"] = _recompute_total(row["score"]["livability_pillars"])
 
