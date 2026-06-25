@@ -483,17 +483,22 @@ def get_social_fabric_score(
     # Retained for summary diagnostics only — not in composite.
     channel_b = _infra_density_score(civic_effective, civic_radius_m)
 
-    # Weighted composite: social capital 45%, rootedness 40%, participation 15%.
-    # Weights reflect actual discrimination power in catalog data: participation stdev=6.7
-    # vs rootedness 16.7 and social_capital 23.5 — equal thirds over-weighted a flat signal.
-    # Fallback (no Atlas ZIP): 85% rootedness / 15% participation — same rationale.
-    if cohesion_score is not None:
-        channel_a_source = "atlas_cohesion"
-        raw = 0.45 * cohesion_score + 0.40 * stability_score + 0.15 * e
-    else:
-        channel_a_source = "tenure_only"
-        raw = 0.85 * stability_score + 0.15 * e
-    channel_a = cohesion_score if cohesion_score is not None else stability_score
+    # Weights from external validation (ec_zip + atlas_civic_orgs, non-circular):
+    #   participation=70%, social_capital=20%, peer_civic_gathering=10%, rootedness=0%
+    # Clustering reverted to 0.65 weight (external corr 0.30 vs support 0.07).
+    # Peer_civic re-enters as minor pathway term per Zahnow (2024): social infrastructure
+    # facilitates encounter → cohesion → wellbeing; peer-normalized so dense villages
+    # don't inflate it. Rootedness dropped: negatively correlated with external measures.
+    channel_a_source = "atlas_cohesion" if cohesion_score is not None else "none"
+    channel_a = cohesion_score if cohesion_score is not None else None
+
+    w_sc    = 0.20 if cohesion_score is not None else 0.0
+    w_civic = 0.10 if civic_score > 0 else 0.0
+    w_part  = 1.0 - w_sc - w_civic
+
+    raw = (w_sc * (cohesion_score or 0.0)
+           + w_part * e
+           + w_civic * civic_score)
     score = max(0.0, min(100.0, round(raw, 1)))
 
     source_status: Dict[str, str] = {}
@@ -608,9 +613,9 @@ def get_social_fabric_score(
     rooted_pct = mobility.get("rooted_pct") if mobility else None
 
     breakdown = {
-        "rootedness": stability_score,
         "participation": round(e, 1),
         "social_capital": cohesion_score,
+        "peer_civic": round(civic_score, 1) if civic_score else None,
     }
 
     summary = {
@@ -664,7 +669,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v15_sf_three_pillars",
+        "version": "v16_sf_externally_validated",
     }
 
     logger.info(
