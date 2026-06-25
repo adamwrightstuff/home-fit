@@ -1028,6 +1028,12 @@ def get_effective_area_type(
         - 'urban_core', 'suburban', 'exurban', 'rural' (base types)
         - 'historic_urban', 'urban_core_lowrise', 'urban_residential' (architectural subtypes)
     """
+    # historic_urban is retired as a classification — it's a label, not a scoring baseline.
+    # Normalize any stored historic_urban to urban_residential so existing catalog data
+    # and any code paths that still pass it in get consistent behavior.
+    if area_type == "historic_urban":
+        area_type = "urban_residential"
+
     # MULTINOMIAL REGRESSION SYSTEM (default)
     if use_multinomial:
         # Check if we have minimum required features for multinomial regression
@@ -1062,30 +1068,54 @@ def get_effective_area_type(
                 
                 # Predict using multinomial regression
                 predicted_type, probabilities = predict_area_type_with_multinomial(normalized_features)
-                
+
+                # historic_urban is retired as a scoring baseline — normalize to urban_residential.
+                if predicted_type == "historic_urban":
+                    predicted_type = "urban_residential"
+
                 logger.debug(
                     f"Multinomial regression predicted: {predicted_type} "
                     f"(probabilities: {probabilities})"
                 )
-                
-                # Override: clearly historic urban neighborhoods (Census signal) must be
-                # classified as historic_urban so Built Beauty character-preference penalty
-                # applies correctly (contemporary preference → -8 for historic places).
-                # Without this, multinomial can predict urban_core for dense brownstone
-                # neighborhoods (e.g. Carroll Gardens), causing historic→penalized, contemporary→no penalty.
-                if predicted_type in ("urban_core", "urban_residential"):
-                    strong_historic = (
-                        (median_year_built is not None and median_year_built < 1940)
-                        or (pre_1940_pct is not None and pre_1940_pct >= 10.0)
-                    )
-                    if strong_historic:
-                        predicted_type = "historic_urban"
+
+                # Density sanity-check: the multinomial is trained on OSM building features
+                # only (no density input), so it can misclassify in both directions —
+                # dense neighborhoods with sparse OSM tagging look like suburbs, and
+                # low-density small towns with rich building data look like urban cores.
+                # Apply bidirectional bounds so the prediction can never contradict what
+                # the measured population density implies. Thresholds mirror
+                # classify_morphology() anchors (density in people/sq mi).
+                if density is not None:
+                    # Floor: prediction cannot be too low for the measured density
+                    if density >= 25_000 and predicted_type in ("suburban", "exurban", "rural"):
                         logger.debug(
-                            "Effective area type overridden to historic_urban (median_year_built=%s, pre_1940_pct=%s)",
-                            median_year_built,
-                            pre_1940_pct,
+                            "Density sanity-check: upgrading %s → urban_residential (density=%.0f)",
+                            predicted_type, density,
                         )
-                
+                        predicted_type = "urban_residential"
+                    elif density >= 3_000 and predicted_type in ("exurban", "rural"):
+                        logger.debug(
+                            "Density sanity-check: upgrading %s → suburban (density=%.0f)",
+                            predicted_type, density,
+                        )
+                        predicted_type = "suburban"
+                    elif density >= 800 and predicted_type == "rural":
+                        logger.debug(
+                            "Density sanity-check: upgrading rural → exurban (density=%.0f)",
+                            density,
+                        )
+                        predicted_type = "exurban"
+                    # Ceiling: prediction cannot be too high for the measured density.
+                    # urban_residential requires ≥12k in classify_morphology; urban_core
+                    # requires commercial dominance (business count), not just density.
+                    elif density < 3_000 and predicted_type in ("urban_core", "urban_residential"):
+                        downgraded = "suburban" if density >= 800 else "exurban"
+                        logger.debug(
+                            "Density sanity-check: capping %s → %s (density=%.0f)",
+                            predicted_type, downgraded, density,
+                        )
+                        predicted_type = downgraded
+
                 return predicted_type
                 
             except Exception as e:
@@ -1101,10 +1131,7 @@ def get_effective_area_type(
     
     # Map tags to legacy effective types for backward compatibility
     if 'historic' in tags and area_type in ('urban_core', 'urban_residential'):
-        if 'rowhouse' in tags or 'uniform' in tags:
-            return "urban_residential"
-        else:
-            return "historic_urban"
+        return "urban_residential"
     elif 'lowrise' in tags and area_type == 'urban_core':
         return "urban_core_lowrise"
     elif 'rowhouse' in tags and area_type == 'urban_core':
