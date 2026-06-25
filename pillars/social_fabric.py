@@ -480,23 +480,18 @@ def get_social_fabric_score(
     # ------------------------------------------------------------------
     cohesion_score, cohesion_diag = social_capital_cohesion.get_cohesion_score(zip_code, area_type)
 
-    # Channel A: cohesion (direct measurement) blended with tenure rootedness.
-    # When the Atlas lacks the ZIP, fall back fully to tenure-based stability.
-    if cohesion_score is not None:
-        channel_a = 0.8 * cohesion_score + 0.2 * stability_score
-        channel_a_source = "atlas_cohesion+tenure"
-    else:
-        channel_a = stability_score
-        channel_a_source = "tenure_only"
-
-    # Channel B: social infrastructure on absolute walkable third-place density.
-    # (civic_score remains the peer-normalized view for the breakdown/summary, but the
-    # composite uses absolute density so dense urban street-life isn't peer-flattened.)
+    # Retained for summary diagnostics only — not in composite.
     channel_b = _infra_density_score(civic_effective, civic_radius_m)
 
-    # Soft-OR across morphologies, then add the area-neutral engagement term.
-    morph = _soft_or(channel_a, channel_b, max_weight=0.55)
-    raw = 0.75 * morph + 0.25 * e
+    # Three equal pillars: social capital (Atlas), rootedness (tenure), participation.
+    # infrastructure_density dropped — it was measuring neighborhood_amenities, not social fabric.
+    if cohesion_score is not None:
+        channel_a_source = "atlas_cohesion"
+        raw = (cohesion_score + stability_score + e) / 3.0
+    else:
+        channel_a_source = "tenure_only"
+        raw = 0.6 * stability_score + 0.4 * e
+    channel_a = cohesion_score if cohesion_score is not None else stability_score
     score = max(0.0, min(100.0, round(raw, 1)))
 
     source_status: Dict[str, str] = {}
@@ -611,13 +606,9 @@ def get_social_fabric_score(
     rooted_pct = mobility.get("rooted_pct") if mobility else None
 
     breakdown = {
-        "stability": stability_score,
-        "civic_gathering": civic_score,
-        "engagement": engagement_score,
-        # Two-morphology view (new composite):
-        "cohesion": cohesion_score,
-        "bonding_cohesion": round(channel_a, 1),
-        "infrastructure_density": round(channel_b, 1),
+        "rootedness": stability_score,
+        "participation": round(e, 1),
+        "social_capital": cohesion_score,
     }
 
     summary = {
@@ -671,7 +662,7 @@ def get_social_fabric_score(
         "source_status": source_status,
         "source_errors": source_errors,
         "area_classification": {"area_type": area_type},
-        "version": "v14_sf_two_morphology",
+        "version": "v15_sf_three_pillars",
     }
 
     logger.info(
