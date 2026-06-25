@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 """
-Offline Social Fabric v15 recompute (no API calls).
+Offline Social Fabric v15 recompute (no pillar API calls).
 
-Reads stored breakdown sub-scores (stability/rootedness, engagement/participation,
-cohesion/social_capital) and recomputes the composite using the v15 three-pillar formula:
-
-  When Atlas cohesion available: (cohesion + stability + engagement) / 3
-  When cohesion missing:         0.6 * stability + 0.4 * engagement
-
-Also migrates breakdown keys from old v14 names to new v15 names:
-  stability        → rootedness
-  engagement       → participation
-  cohesion         → social_capital
-  (civic_gathering, bonding_cohesion, infrastructure_density dropped)
+For each row:
+  1. If the row now has a ZIP (backfilled) but no stored social_capital, re-lookup from Atlas.
+  2. Re-blend social_capital using updated clustering/support weights (0.35/0.65).
+  3. Recompute composite with updated pillar weights:
+       social capital available: 0.45×sc + 0.40×rootedness + 0.15×participation
+       fallback (no Atlas):      0.85×rootedness + 0.15×participation
+  4. Migrate breakdown keys to v15 names.
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_v15_offline.py \\
@@ -33,6 +29,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from data_sources import social_capital_cohesion
+
 
 def _recompute_total(pillars: dict) -> float:
     weighted = total = 0.0
@@ -47,11 +45,11 @@ def _recompute_total(pillars: dict) -> float:
     return round(weighted / total, 4) if total > 0 else 0.0
 
 
-def _v15_score(stability: float, engagement: float, cohesion: Optional[float]) -> float:
-    if cohesion is not None:
-        raw = (cohesion + stability + engagement) / 3.0
+def _v15_score(rootedness: float, participation: float, social_capital: Optional[float]) -> float:
+    if social_capital is not None:
+        raw = 0.45 * social_capital + 0.40 * rootedness + 0.15 * participation
     else:
-        raw = 0.6 * stability + 0.4 * engagement
+        raw = 0.85 * rootedness + 0.15 * participation
     return round(max(0.0, min(100.0, raw)), 1)
 
 
@@ -61,34 +59,49 @@ def recompute_row(row: dict) -> str:
         return "skip_no_sf"
 
     breakdown = sf.get("breakdown") or {}
+    summary = sf.get("summary") or {}
 
-    # Support both old key names (v14) and new (v15 if partially applied)
-    stability = breakdown.get("stability") or breakdown.get("rootedness")
-    engagement = breakdown.get("engagement") or breakdown.get("participation")
-    cohesion = breakdown.get("cohesion") or breakdown.get("social_capital")
+    rootedness = breakdown.get("rootedness") or breakdown.get("stability")
+    participation = breakdown.get("participation") or breakdown.get("engagement")
+    stored_sc = breakdown.get("social_capital") or breakdown.get("cohesion")
 
-    if stability is None or engagement is None:
+    if rootedness is None or participation is None:
         return "skip_missing"
 
-    new_score = _v15_score(float(stability), float(engagement), float(cohesion) if cohesion is not None else None)
+    zip_code = row.get("score", {}).get("location_info", {}).get("zip")
+    area_type = (sf.get("area_classification") or {}).get("area_type")
+
+    # Re-lookup social capital — covers newly backfilled ZIPs and corrects
+    # the clustering/support weights (now 0.35/0.65 from 0.65/0.35).
+    new_sc, sc_diag = social_capital_cohesion.get_cohesion_score(zip_code, area_type)
+
+    # Update summary diagnostics with new cohesion blend
+    if new_sc is not None:
+        summary["cohesion_score"] = new_sc
+        summary["cohesion_clustering_score"] = sc_diag.get("clustering_score")
+        summary["cohesion_support_score"] = sc_diag.get("support_score")
+        summary["cohesion_resolution"] = sc_diag.get("resolution")
+        sf["summary"] = summary
+
+    social_capital = new_sc  # may be None if ZIP still not in Atlas
+
+    new_score = _v15_score(float(rootedness), float(participation), social_capital)
     old_score = sf.get("score")
 
-    # Migrate breakdown keys
     sf["breakdown"] = {
-        "rootedness": stability,
-        "participation": engagement,
-        "social_capital": cohesion,
+        "rootedness": rootedness,
+        "participation": participation,
+        "social_capital": social_capital,
     }
-
     sf["score"] = new_score
-    sf["details"] = sf.get("details") or {}
     if isinstance(sf.get("details"), dict):
         sf["details"]["version"] = "v15_sf_three_pillars"
 
     pillars = row["score"]["livability_pillars"]
     row["score"]["total_score"] = _recompute_total(pillars)
 
-    changed = old_score is None or abs(float(old_score) - new_score) > 0.05
+    newly_got_sc = (stored_sc is None and new_sc is not None)
+    changed = newly_got_sc or old_score is None or abs(float(old_score) - new_score) > 0.05
     return "changed" if changed else "unchanged"
 
 
@@ -105,15 +118,20 @@ def main() -> int:
 
     rows = [json.loads(l) for l in args.input.read_text().splitlines() if l.strip()]
     counts: dict = {"changed": 0, "unchanged": 0, "skip_no_sf": 0, "skip_missing": 0}
-
     examples: list = []
+
     for row in rows:
         status = recompute_row(row)
         counts[status] = counts.get(status, 0) + 1
-        if status == "changed" and len(examples) < 5:
+        if status == "changed" and len(examples) < 8:
             sf = row["score"]["livability_pillars"]["social_fabric"]
+            bd = sf["breakdown"]
             name = (row.get("catalog") or {}).get("name", "?")
-            examples.append(f"  {name}: new={sf['score']}")
+            sc = bd.get("social_capital")
+            examples.append(
+                f"  {name}: score={sf['score']}  sc={'N/A' if sc is None else round(sc,1)}"
+                f"  root={round(bd['rootedness'],1)}  part={round(bd['participation'],1)}"
+            )
 
     print(json.dumps(counts, indent=2))
     if examples:

@@ -164,7 +164,7 @@ def get_cohesion_score(
     diag["support_score"] = round(s_score, 1) if s_score is not None else None
 
     if c_score is not None and s_score is not None:
-        score = 0.65 * c_score + 0.35 * s_score
+        score = 0.35 * c_score + 0.65 * s_score
         diag["resolution"] = "clustering+support"
     elif c_score is not None:
         score = c_score

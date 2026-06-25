@@ -483,14 +483,16 @@ def get_social_fabric_score(
     # Retained for summary diagnostics only — not in composite.
     channel_b = _infra_density_score(civic_effective, civic_radius_m)
 
-    # Three equal pillars: social capital (Atlas), rootedness (tenure), participation.
-    # infrastructure_density dropped — it was measuring neighborhood_amenities, not social fabric.
+    # Weighted composite: social capital 45%, rootedness 40%, participation 15%.
+    # Weights reflect actual discrimination power in catalog data: participation stdev=6.7
+    # vs rootedness 16.7 and social_capital 23.5 — equal thirds over-weighted a flat signal.
+    # Fallback (no Atlas ZIP): 85% rootedness / 15% participation — same rationale.
     if cohesion_score is not None:
         channel_a_source = "atlas_cohesion"
-        raw = (cohesion_score + stability_score + e) / 3.0
+        raw = 0.45 * cohesion_score + 0.40 * stability_score + 0.15 * e
     else:
         channel_a_source = "tenure_only"
-        raw = 0.6 * stability_score + 0.4 * e
+        raw = 0.85 * stability_score + 0.15 * e
     channel_a = cohesion_score if cohesion_score is not None else stability_score
     score = max(0.0, min(100.0, round(raw, 1)))
 
