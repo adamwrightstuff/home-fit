@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 import time
 from typing import Dict, Optional, Tuple
 
@@ -807,10 +808,12 @@ def _get_fbi_rates(
     # -----------------------------------------------------------------------
     if state_abbr.upper() == "NY" and city_hint:
         county = (agency.get("counties") or "").title()
+        # Strip Nominatim prefixes ("Village of Ardsley" → "Ardsley", "Town of X" → "X")
+        _city_kw = re.sub(r"^(?:Village|Town|City|Hamlet)\s+of\s+", "", city_hint, flags=re.IGNORECASE).strip()
         if county:
-            ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year)
+            ny_row = _fetch_ny_state_agency_crimes(_city_kw, county, data_year)
             if ny_row is None:
-                ny_row = _fetch_ny_state_agency_crimes(city_hint, county, data_year - 1)
+                ny_row = _fetch_ny_state_agency_crimes(_city_kw, county, data_year - 1)
 
             # Hamlets and unincorporated communities in New York are policed by TOWN
             # police departments, which appear in the state dataset under the town name
@@ -1027,7 +1030,12 @@ def get_crime_rates(
 
     # FBI CDE + NY State UCR fallback for all other jurisdictions
     if state_abbr:
-        result = _get_fbi_rates(lat, lon, state_abbr, population, city_hint=city)
+        # Geocoder returns full state names ("California") — convert to 2-letter code
+        _abbr = state_abbr.strip()
+        if len(_abbr) > 2:
+            from data_sources.geocoding import STATE_ABBREVIATIONS
+            _abbr = STATE_ABBREVIATIONS.get(_abbr.lower(), _abbr)
+        result = _get_fbi_rates(lat, lon, _abbr, population, city_hint=city)
         if result:
             return result
 
