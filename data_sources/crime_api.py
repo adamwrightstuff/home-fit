@@ -1025,6 +1025,11 @@ def get_crime_rates(
             if result:
                 return result
 
-    # Outside mapped Socrata metros; data sources for other cities not yet released.
-    logger.debug("crime_api: outside NYC/LA bbox — coming_soon (city=%s state=%s)", city, state_abbr)
+    # FBI CDE + NY State UCR fallback for all other jurisdictions
+    if state_abbr:
+        result = _get_fbi_rates(lat, lon, state_abbr, population, city_hint=city)
+        if result:
+            return result
+
+    logger.debug("crime_api: no data source found — coming_soon (city=%s state=%s)", city, state_abbr)
     return {"coming_soon": True}

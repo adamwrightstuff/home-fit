@@ -33,7 +33,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
-import { type NbPreference, adjustNeighborhoodBeautyScoreV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
+import { type NbPreference, applyNbPreferenceV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -358,7 +358,7 @@ export default function CatalogPageClient({
 
       // Natural beauty score — optionally preference-adjusted
       const adjustedNatural = nbPreference
-        ? (adjustNeighborhoodBeautyScoreV9(0, storedNaturalScore, v9, nbPreference, density, effectiveAreaType) ?? storedNaturalScore)
+        ? (applyNbPreferenceV9(v9, nbPreference) ?? storedNaturalScore)
         : storedNaturalScore
 
       // Built environment match score — only meaningful when user has set a preference
