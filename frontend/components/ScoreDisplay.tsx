@@ -17,6 +17,7 @@ export interface RunPillarScoreOptions {
   priorities: PillarPriorities
   job_categories?: string[]
   natural_beauty_preference?: string[] | null
+  built_env_preference?: 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
   built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   diversity_preference?: string[] | null
@@ -554,6 +555,14 @@ export default function ScoreDisplay({
                   key === 'neighborhood_beauty' && onSearchOptionsChange && searchOptions
                     ? (preference) => {
                         onSearchOptionsChange({ ...searchOptions, natural_beauty_preference: preference })
+                      }
+                    : undefined
+                }
+                builtEnvPreference={key === 'built_environment' ? searchOptions?.built_env_preference ?? null : undefined}
+                onBuiltEnvPreferenceChange={
+                  key === 'built_environment' && onSearchOptionsChange && searchOptions
+                    ? (value) => {
+                        onSearchOptionsChange({ ...searchOptions, built_env_preference: value as SearchOptions['built_env_preference'] })
                       }
                     : undefined
                 }

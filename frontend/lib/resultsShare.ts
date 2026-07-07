@@ -7,6 +7,7 @@ export type ResultsRouteParams = {
   include_chains?: boolean
   enable_schools?: boolean
   natural_beauty_preference?: string | null
+  built_env_preference?: string | null
   built_character_preference?: string | null
   built_density_preference?: string | null
   diversity_preference?: string | null
@@ -50,6 +51,7 @@ export function buildResultsCacheKey(p: ResultsRouteParams): string {
     `include_chains=${p.include_chains ? '1' : '0'}`,
     `enable_schools=${p.enable_schools ? '1' : '0'}`,
     `natural_beauty_preference=${p.natural_beauty_preference ?? ''}`,
+    `built_env_preference=${p.built_env_preference ?? ''}`,
     `built_character_preference=${p.built_character_preference ?? ''}`,
     `built_density_preference=${p.built_density_preference ?? ''}`,
     `diversity_preference=${p.diversity_preference ?? ''}`,
@@ -67,6 +69,7 @@ export function buildResultsUrl(p: ResultsRouteParams): string {
   if (p.include_chains) usp.set('include_chains', '1')
   if (p.enable_schools) usp.set('enable_schools', '1')
   if (p.natural_beauty_preference) usp.set('natural_beauty_preference', p.natural_beauty_preference)
+  if (p.built_env_preference) usp.set('built_env_preference', p.built_env_preference)
   if (p.built_character_preference) usp.set('built_character_preference', p.built_character_preference)
   if (p.built_density_preference) usp.set('built_density_preference', p.built_density_preference)
   if (p.diversity_preference) usp.set('diversity_preference', p.diversity_preference)

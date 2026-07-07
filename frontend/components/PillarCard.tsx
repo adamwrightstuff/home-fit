@@ -23,6 +23,7 @@ import {
   type DetailMetricStatic,
 } from '@/lib/pillarDetailsSpec'
 import { getPillarNarrative } from '@/lib/pillarNarratives'
+import { BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
 
 interface PillarCardProps {
   pillar_key: PillarKey
@@ -47,6 +48,10 @@ interface PillarCardProps {
   naturalBeautyPreference?: string[] | null
   /** Natural Beauty only: when provided, show scenery preference chips and call with new value (can trigger rescore). */
   onNaturalBeautyPreferenceChange?: (preference: string[] | null) => void
+  /** Built Environment only: area-type preference (instant client-side match score). */
+  builtEnvPreference?: string | null
+  /** Built Environment only: when provided, show area-type chips and call with new value (no rescore needed). */
+  onBuiltEnvPreferenceChange?: (value: string | null) => void
   /** Built Beauty only: character preference applied when scoring. */
   builtCharacterPreference?: string | null
   /** Built Beauty only: density preference applied when scoring. */
@@ -89,6 +94,15 @@ const BUILT_DENSITY_CHIPS: Array<{
   { value: 'spread_out_residential', label: 'Spread out' },
   { value: 'walkable_residential', label: 'Walkable' },
   { value: 'dense_urban_living', label: 'Downtown' },
+]
+
+const BUILT_ENV_CHIPS: Array<{ value: BuiltEnvPreference | null; label: string }> = [
+  { value: null, label: 'None' },
+  { value: 'urban_core', label: 'Urban Core' },
+  { value: 'urban_residential', label: 'Urban Neighborhood' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'exurban', label: 'Exurban' },
+  { value: 'rural', label: 'Rural' },
 ]
 
 /** Demographic mix dimensions for Diversity pillar (headline = mean of selected, or all available if Any). */
@@ -249,6 +263,8 @@ export default function PillarCard({
   onImportanceChange,
   naturalBeautyPreference,
   onNaturalBeautyPreferenceChange,
+  builtEnvPreference,
+  onBuiltEnvPreferenceChange,
   builtCharacterPreference,
   builtDensityPreference,
   onBuiltCharacterPreferenceChange,
@@ -805,6 +821,49 @@ export default function PillarCard({
                       <span style={{ marginLeft: '0.35rem' }}>{densLabel}</span>
                     ) : null}
                   </div>
+                </div>
+              )
+            })()}
+            {pillar_key === 'built_environment' && (() => {
+              const currentPref = (builtEnvPreference as BuiltEnvPreference | null) ?? null
+              const canChange = Boolean(onBuiltEnvPreferenceChange)
+              const areaType = (pillar as any)?.details?.effective_area_type ?? (pillar as any)?.summary?.effective_area_type ?? null
+              return (
+                <div style={{ marginBottom: canChange ? '0.85rem' : '0.5rem' }}>
+                  {areaType && (
+                    <div style={{ marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--hf-text-secondary)' }}>
+                      This area: <strong>{BUILT_ENV_LABELS[areaType as BuiltEnvPreference] ?? areaType}</strong>
+                    </div>
+                  )}
+                  <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>
+                  {canChange ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                      {BUILT_ENV_CHIPS.map(({ value, label }) => {
+                        const selected = currentPref === value
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onBuiltEnvPreferenceChange!(value) }}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: selected ? 600 : 400,
+                              background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: selected ? 'white' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : currentPref ? (
+                    <span style={{ marginLeft: '0.35rem' }}>{BUILT_ENV_LABELS[currentPref as BuiltEnvPreference] ?? currentPref}</span>
+                  ) : null}
                 </div>
               )
             })()}
