@@ -18,6 +18,7 @@ import type { ScoreResponse } from '@/types/api'
 import type { SearchOptions } from './SearchOptions'
 import type { PillarPriorities } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
+import { BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
 import { useAuth } from '@/contexts/AuthContext'
 
 /** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
@@ -1256,6 +1257,38 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                               border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
                               cursor: atMax ? 'not-allowed' : 'pointer',
                               opacity: atMax ? 0.7 : 1,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {key === 'built_environment' && onSearchOptionsChange && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Area type:</span>
+                      {([null, 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural'] as const).map((value) => {
+                        const label = value === null ? 'No preference' : BUILT_ENV_LABELS[value as BuiltEnvPreference]
+                        const pref = (searchOptions as any).built_env_preference ?? null
+                        const chipSelected = pref === value
+                        return (
+                          <button
+                            key={String(value)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSearchOptionsChange({ ...searchOptions, built_env_preference: chipSelected ? null : value } as any)
+                            }}
+                            style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: 8,
+                              fontSize: '0.85rem',
+                              fontWeight: chipSelected ? 600 : 400,
+                              background: chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                              color: chipSelected ? 'white' : 'var(--hf-text-secondary)',
+                              border: `1px solid ${chipSelected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                              cursor: 'pointer',
                             }}
                           >
                             {label}
