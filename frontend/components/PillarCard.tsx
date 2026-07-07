@@ -836,34 +836,32 @@ export default function PillarCard({
                     </div>
                   )}
                   <span style={{ fontWeight: 600, color: 'var(--hf-text-primary)' }}>Preference:</span>
-                  {canChange ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
-                      {BUILT_ENV_CHIPS.map(({ value, label }) => {
-                        const selected = currentPref === value
-                        return (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); onBuiltEnvPreferenceChange!(value) }}
-                            style={{
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: 8,
-                              fontSize: '0.85rem',
-                              fontWeight: selected ? 600 : 400,
-                              background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
-                              color: selected ? 'white' : 'var(--hf-text-secondary)',
-                              border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : currentPref ? (
-                    <span style={{ marginLeft: '0.35rem' }}>{BUILT_ENV_LABELS[currentPref as BuiltEnvPreference] ?? currentPref}</span>
-                  ) : null}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                    {BUILT_ENV_CHIPS.map(({ value, label }) => {
+                      const selected = currentPref === value
+                      return (
+                        <button
+                          key={label}
+                          type="button"
+                          disabled={!canChange}
+                          onClick={(e) => { e.stopPropagation(); if (canChange) onBuiltEnvPreferenceChange!(value) }}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: 8,
+                            fontSize: '0.85rem',
+                            fontWeight: selected ? 600 : 400,
+                            background: selected ? 'var(--hf-primary-1)' : 'var(--hf-bg-subtle)',
+                            color: selected ? 'white' : 'var(--hf-text-secondary)',
+                            border: `1px solid ${selected ? 'var(--hf-primary-1)' : 'var(--hf-border)'}`,
+                            cursor: canChange ? 'pointer' : 'default',
+                            opacity: !canChange && !selected ? 0.5 : 1,
+                          }}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })()}

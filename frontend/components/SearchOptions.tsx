@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Info } from 'lucide-react'
 import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
+import { BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
 
 export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
@@ -502,6 +503,40 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
               })}
             </div>
           </div>
+
+          {/* Built Environment: area-type preference — only when pillar is included */}
+          {options.priorities.built_environment !== 'None' && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Built Environment Preference (optional)
+              </h4>
+            </div>
+            <p className="tr-muted" style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Select the area type you want to live in. The score reflects how closely the neighborhood matches your preference.
+            </p>
+            <div className="tr-panel" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {([null, 'urban_core', 'urban_residential', 'suburban', 'exurban', 'rural'] as const).map((value) => {
+                  const label = value === null ? 'No preference' : BUILT_ENV_LABELS[value as BuiltEnvPreference]
+                  const selected = (options.built_env_preference ?? null) === value
+                  return (
+                    <button
+                      key={String(value)}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => onChange({ ...options, built_env_preference: selected ? null : value })}
+                      className={`priority-btn ${selected ? 'active' : ''}`}
+                      style={{ padding: '0.5rem 0.85rem' }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+          )}
 
           {/* Economic Opportunity: Job category toggles — only when pillar is included */}
           {options.priorities.economic_security !== 'None' && (

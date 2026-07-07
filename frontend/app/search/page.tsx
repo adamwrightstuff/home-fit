@@ -41,6 +41,7 @@ export default function SearchPage() {
           enable_schools: parsed.enable_schools !== undefined ? parsed.enable_schools : false,
           job_categories: Array.isArray(parsed.job_categories) ? parsed.job_categories : [],
           natural_beauty_preference: Array.isArray(parsed.natural_beauty_preference) ? parsed.natural_beauty_preference : null,
+          built_env_preference: ['urban_core', 'urban_residential', 'suburban', 'exurban', 'rural'].includes(parsed.built_env_preference) ? parsed.built_env_preference : null,
           built_character_preference: ['historic', 'contemporary', 'no_preference'].includes(parsed.built_character_preference) ? parsed.built_character_preference : null,
           built_density_preference: ['spread_out_residential', 'walkable_residential', 'dense_urban_living'].includes(parsed.built_density_preference) ? parsed.built_density_preference : null,
           diversity_preference: Array.isArray(parsed.diversity_preference) ? parsed.diversity_preference : null,
@@ -57,6 +58,7 @@ export default function SearchPage() {
       enable_schools: false,
       job_categories: [],
       natural_beauty_preference: null,
+      built_env_preference: null,
       built_character_preference: null,
       built_density_preference: null,
       diversity_preference: null,
@@ -207,6 +209,7 @@ export default function SearchPage() {
                 include_chains: Boolean(search_options.include_chains),
                 enable_schools: Boolean(search_options.enable_schools),
                 natural_beauty_preference: search_options.natural_beauty_preference?.length ? JSON.stringify(search_options.natural_beauty_preference) : null,
+                built_env_preference: search_options.built_env_preference ?? null,
                 built_character_preference: search_options.built_character_preference ?? null,
                 built_density_preference: search_options.built_density_preference ?? null,
                 diversity_preference: search_options.diversity_preference?.length
@@ -260,6 +263,7 @@ export default function SearchPage() {
         priorities: JSON.stringify(options.priorities),
         job_categories: options.job_categories?.length ? options.job_categories.join(',') : undefined,
         natural_beauty_preference: options.natural_beauty_preference?.length ? JSON.stringify(options.natural_beauty_preference) : undefined,
+        built_env_preference: options.built_env_preference ?? undefined,
         built_character_preference: options.built_character_preference ?? undefined,
         built_density_preference: options.built_density_preference ?? undefined,
         diversity_preference:
