@@ -9,19 +9,12 @@ export type TwinMatchResult = {
   comparedPillars: PillarKey[]
 }
 
-/** Unchecked by default in Twin Finder (5 of 14). */
-export const TWIN_PILLAR_DEFAULT_UNCHECKED: PillarKey[] = [
-  'public_transit_access',
-  'climate_risk',
-  'air_travel_access',
-  'economic_security',
-  'quality_education',
-]
+/** Unchecked by default in Twin Finder. */
+export const TWIN_PILLAR_DEFAULT_UNCHECKED: PillarKey[] = []
 
-/** Default 8 pillars on: all except TWIN_PILLAR_DEFAULT_UNCHECKED. */
+/** Default: all pillars on. */
 export function defaultTwinPillarSet(): Set<PillarKey> {
-  const unchecked = new Set(TWIN_PILLAR_DEFAULT_UNCHECKED)
-  return new Set(PILLAR_ORDER.filter((k) => !unchecked.has(k)))
+  return new Set(PILLAR_ORDER)
 }
 
 function pillarScoreOrZero(place: CatalogMapPlace, k: PillarKey): number {
