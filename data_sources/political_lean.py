@@ -23,6 +23,23 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "el
 # Cache: state_abbr.lower() → list of precinct dicts
 _precinct_cache: Dict[str, List[dict]] = {}
 
+# Full state name → 2-letter abbreviation (for geocoder output normalization)
+_STATE_NAME_TO_ABBR: Dict[str, str] = {
+    'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR',
+    'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE',
+    'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID',
+    'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS',
+    'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+    'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
+    'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
+    'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+    'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
+    'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+    'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
+    'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV',
+    'wisconsin': 'WI', 'wyoming': 'WY',
+}
+
 # Approx degrees per mile at mid-latitudes (used for bbox pre-filter)
 _DEG_PER_MILE_LAT = 1.0 / 69.0
 _DEG_PER_MILE_LON = 1.0 / 54.6  # at ~40° lat, conservative enough for NY/CA/NJ/CT
@@ -38,7 +55,11 @@ def _haversine_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
 
 
 def _load_state(state_abbr: str) -> List[dict]:
-    key = state_abbr.lower()
+    # Normalize full state names ("California" → "CA") before cache lookup
+    _s = state_abbr.strip()
+    if len(_s) > 2:
+        _s = _STATE_NAME_TO_ABBR.get(_s.lower(), _s)
+    key = _s.lower()
     if key in _precinct_cache:
         return _precinct_cache[key]
     path = os.path.join(_DATA_DIR, f"{key}_precincts.json")
