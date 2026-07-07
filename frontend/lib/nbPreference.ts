@@ -182,31 +182,33 @@ export interface V9Breakdown {
 }
 
 /**
- * Re-score natural beauty for a scenery preference from the stored V9 component scores.
- * Returns null if the V9 breakdown is missing (caller keeps the stored score).
+ * Re-score natural beauty for one or more scenery preferences from stored V9 component scores.
+ * Each preference contributes its primary component score(s); results are averaged.
+ * Empty array or missing breakdown → null (caller keeps stored score).
  */
+export function applyNbPreferencesV9(
+  v9: V9Breakdown | undefined | null,
+  preferences: NbPreference[],
+): number | null {
+  if (!v9 || preferences.length === 0) return null
+  const scores: number[] = []
+  for (const pref of preferences) {
+    const targets = PREFERENCE_V9_COMPONENTS[pref] ?? []
+    const vals = targets
+      .map((t) => (v9 as Record<string, unknown>)[t])
+      .filter((v): v is number => typeof v === 'number')
+    if (vals.length > 0) scores.push(vals.reduce((a, b) => a + b, 0) / vals.length)
+  }
+  if (scores.length === 0) return null
+  return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100
+}
+
+/** @deprecated use applyNbPreferencesV9 */
 export function applyNbPreferenceV9(
   v9: V9Breakdown | undefined | null,
   preference: NbPreference,
 ): number | null {
-  if (!v9) return null
-  const comp: Record<string, number> = {}
-  for (const k of V9_COMPONENT_KEYS) {
-    const v = (v9 as Record<string, unknown>)[k]
-    if (typeof v === 'number') comp[k] = v
-  }
-  const targets = PREFERENCE_V9_COMPONENTS[preference] ?? []
-  const prefVals = targets.map((t) => comp[t]).filter((v) => typeof v === 'number')
-  if (prefVals.length === 0) return null
-  const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
-  const others = Object.entries(comp)
-    .filter(([k]) => !targets.includes(k))
-    .map(([, v]) => v)
-    .sort((a, b) => b - a)
-  const ranked = [preferred, ...others]
-  const w = V9_OWA_WEIGHTS.slice(0, ranked.length)
-  const tot = w.reduce((a, b) => a + b, 0) || 1
-  return Math.round(ranked.reduce((s, v, i) => s + (w[i] / tot) * v, 0) * 100) / 100
+  return applyNbPreferencesV9(v9, [preference])
 }
 
 /**

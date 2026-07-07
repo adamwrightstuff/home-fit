@@ -34,8 +34,8 @@ interface CatalogWeightPanelProps {
   onChange: (next: PillarPriorities) => void
   politicalPreference?: 'progressive' | 'conservative' | null
   onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
-  nbPreference?: NbPreference | null
-  onNbPreferenceChange?: (pref: NbPreference | null) => void
+  nbPreferences?: NbPreference[]
+  onNbPreferencesChange?: (prefs: NbPreference[]) => void
   builtEnvPreference?: BuiltEnvPreference | null
   onBuiltEnvPreferenceChange?: (pref: BuiltEnvPreference | null) => void
   onTakeQuiz?: () => void
@@ -72,7 +72,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
 
 const HIGH_LIMIT = 3
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreference, onNbPreferenceChange, builtEnvPreference, onBuiltEnvPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreferences = [], onNbPreferencesChange, builtEnvPreference, onBuiltEnvPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   const highCount = Object.values(priorities).filter((v) => v === 'High').length
@@ -84,7 +84,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
       onPoliticalPreferenceChange?.(null)
     }
     if (key === 'natural_beauty' && level === 'None') {
-      onNbPreferenceChange?.(null)
+      onNbPreferencesChange?.([])
     }
     if (key === 'built_environment' && level === 'None') {
       onBuiltEnvPreferenceChange?.(null)
@@ -180,25 +180,29 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                       </div>
                       {key === 'natural_beauty' && current !== 'None' && (
                         <div className="mt-2 flex flex-wrap gap-1">
-                          {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => (
-                            <button
-                              key={pref}
-                              type="button"
-                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                                nbPreference === pref
-                                  ? 'text-white'
-                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                              }`}
-                              style={
-                                nbPreference === pref
-                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
-                                  : undefined
-                              }
-                              onClick={() => onNbPreferenceChange?.(nbPreference === pref ? null : pref)}
-                            >
-                              {NB_PREFERENCE_LABELS[pref]}
-                            </button>
-                          ))}
+                          {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => {
+                            const active = nbPreferences.includes(pref)
+                            return (
+                              <button
+                                key={pref}
+                                type="button"
+                                className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                                  active
+                                    ? 'text-white'
+                                    : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                                }`}
+                                style={active ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
+                                onClick={() => {
+                                  const next = active
+                                    ? nbPreferences.filter((p) => p !== pref)
+                                    : [...nbPreferences, pref]
+                                  onNbPreferencesChange?.(next)
+                                }}
+                              >
+                                {NB_PREFERENCE_LABELS[pref]}
+                              </button>
+                            )
+                          })}
                         </div>
                       )}
                       {key === 'built_environment' && current !== 'None' && (

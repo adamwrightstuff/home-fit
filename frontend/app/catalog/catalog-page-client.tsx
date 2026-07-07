@@ -33,7 +33,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
-import { type NbPreference, applyNbPreferenceV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
+import { type NbPreference, applyNbPreferencesV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -118,7 +118,7 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return null
   })
-  const [nbPreference, setNbPreference] = useState<NbPreference | null>(null)
+  const [nbPreferences, setNbPreferences] = useState<NbPreference[]>([])
   const [builtEnvPreference, setBuiltEnvPreference] = useState<BuiltEnvPreference | null>(null)
   /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
@@ -357,8 +357,8 @@ export default function CatalogPageClient({
       const effectiveAreaType = nb.breakdown?.effective_area_type ?? nb.details?.effective_area_type ?? null
 
       // Natural beauty score — optionally preference-adjusted
-      const adjustedNatural = nbPreference
-        ? (applyNbPreferenceV9(v9, nbPreference) ?? storedNaturalScore)
+      const adjustedNatural = nbPreferences.length > 0
+        ? (applyNbPreferencesV9(v9, nbPreferences) ?? storedNaturalScore)
         : storedNaturalScore
 
       // Built environment match score — only meaningful when user has set a preference
@@ -381,7 +381,7 @@ export default function CatalogPageClient({
     })
 
     return withNb
-  }, [places, householdIncome, politicalPreference, nbPreference, builtEnvPreference])
+  }, [places, householdIncome, politicalPreference, nbPreferences, builtEnvPreference])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -677,7 +677,7 @@ export default function CatalogPageClient({
         onApplyPriorities={(quizPriorities, naturalBeautyPreference, _jobCats, politicalVibe) => {
           setPriorities(quizPriorities)
           if (naturalBeautyPreference?.length) {
-            setNbPreference(naturalBeautyPreference[0] as import('@/lib/nbPreference').NbPreference)
+            setNbPreferences(naturalBeautyPreference as import('@/lib/nbPreference').NbPreference[])
           }
           if (politicalVibe === 'progressive' || politicalVibe === 'conservative') {
             setPoliticalPreference(politicalVibe)
@@ -1218,8 +1218,8 @@ export default function CatalogPageClient({
         onChange={setPriorities}
         politicalPreference={politicalPreference}
         onPoliticalPreferenceChange={setPoliticalPreference}
-        nbPreference={nbPreference}
-        onNbPreferenceChange={setNbPreference}
+        nbPreferences={nbPreferences}
+        onNbPreferencesChange={setNbPreferences}
         builtEnvPreference={builtEnvPreference}
         onBuiltEnvPreferenceChange={setBuiltEnvPreference}
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
