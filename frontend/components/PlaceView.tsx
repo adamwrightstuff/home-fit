@@ -1202,7 +1202,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       </button>
                     ))}
                   </div>
-                  {key === 'neighborhood_beauty' && onSearchOptionsChange && (
+                  {(key === 'neighborhood_beauty' || key === 'natural_beauty') && onSearchOptionsChange && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span className="tr-muted" style={{ fontSize: '0.85rem', marginRight: '0.25rem' }}>Scenery:</span>
                       <span className="tr-muted" style={{ fontSize: '0.75rem', marginRight: '0.35rem' }}>(up to 2)</span>
