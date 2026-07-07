@@ -380,6 +380,34 @@ export function passesPublicTransitDealbreaker(
   return meanCommuteMinutes <= PUBLIC_TRANSIT_DEALBREAKER_MINUTES
 }
 
+// z=0 midpoint — only truly underserved areas (bottom ~10% of catalog) fail
+export const HEALTHCARE_ACCESS_DEALBREAKER_SCORE = 50
+export function passesHealthcareAccessDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= HEALTHCARE_ACCESS_DEALBREAKER_SCORE
+}
+
+// SCORE_BANDS "Fair" floor — meaningful minimum for outdoor recreation
+export const ACTIVE_OUTDOORS_DEALBREAKER_SCORE = SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
+export function passesActiveOutdoorsDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= ACTIVE_OUTDOORS_DEALBREAKER_SCORE
+}
+
+// Below catalog p25 — flags places with meaningfully elevated climate exposure
+export const CLIMATE_RISK_DEALBREAKER_SCORE = 60
+export function passesClimateRiskDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= CLIMATE_RISK_DEALBREAKER_SCORE
+}
+
+// SCORE_BANDS "Fair" floor — catches the bottom quintile of social cohesion
+export const SOCIAL_FABRIC_DEALBREAKER_SCORE = SCORE_BANDS.find((b) => b.label === 'Fair')?.min ?? 45
+export function passesSocialFabricDealbreaker(score: number | null | undefined): boolean {
+  if (score === null || score === undefined) return true
+  return score >= SOCIAL_FABRIC_DEALBREAKER_SCORE
+}
+
 /** Mirror of Python _score_local_affordability — step function on price-to-income ratio (0–50 pts). */
 function scoreLocalAffordability(homeValue: number, income: number): number {
   if (!homeValue || !income) return 0

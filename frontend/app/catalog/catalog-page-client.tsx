@@ -32,7 +32,7 @@ import {
 } from '@/lib/catalogMapTypes'
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
-import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { type NbPreference, applyNbPreferenceV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
@@ -464,6 +464,22 @@ export default function CatalogPageClient({
       const pt = (p.score.livability_pillars as any)?.public_transit_access
       const meanCommuteMinutes = pt?.summary?.mean_commute_minutes
       return passesPublicTransitDealbreaker(typeof meanCommuteMinutes === 'number' ? meanCommuteMinutes : null)
+    },
+    healthcare_access: (p) => {
+      const score = (p.score.livability_pillars as any)?.healthcare_access?.score
+      return passesHealthcareAccessDealbreaker(typeof score === 'number' ? score : null)
+    },
+    active_outdoors: (p) => {
+      const score = (p.score.livability_pillars as any)?.active_outdoors?.score
+      return passesActiveOutdoorsDealbreaker(typeof score === 'number' ? score : null)
+    },
+    climate_risk: (p) => {
+      const score = (p.score.livability_pillars as any)?.climate_risk?.score
+      return passesClimateRiskDealbreaker(typeof score === 'number' ? score : null)
+    },
+    social_fabric: (p) => {
+      const score = (p.score.livability_pillars as any)?.social_fabric?.score
+      return passesSocialFabricDealbreaker(typeof score === 'number' ? score : null)
     },
   }
   const activeDealbreakerKeys = (Object.keys(dealbreakers) as PillarKey[]).filter((k) => dealbreakers[k] && DEALBREAKER_CHECKS[k])
