@@ -3100,6 +3100,9 @@ def create_score_job(
     political_preference: Optional[str] = None,
     lat: Optional[str] = None,
     lon: Optional[str] = None,
+    mode: Optional[str] = None,
+    trip_type: Optional[str] = None,
+    travel_month: Optional[int] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
@@ -3234,6 +3237,9 @@ def create_score_job(
                 political_preference=political_preference_parsed,
                 lat_override=lat_override,
                 lon_override=lon_override,
+                mode=mode,
+                trip_type=trip_type,
+                travel_month=travel_month,
             )
             if schedule_catalog_contribution:
                 try:

@@ -15,6 +15,12 @@ import { getScore } from '@/lib/api';
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const NB_PREF: Record<string, string> = {
+  beach: '["ocean"]',
+  mountain: '["mountains"]',
+  road_trip: '["lakes_rivers"]',
+};
+
 export default function VacationPage() {
   const [tripType, setTripType] = useState<TripType | null>(null);
   const [travelMonth, setTravelMonth] = useState<number>(new Date().getMonth() + 1);
@@ -32,17 +38,12 @@ export default function VacationPage() {
     setScoreData(null);
 
     try {
-      const nbPref: Record<string, string> = {
-        beach: '["ocean"]',
-        mountain: '["mountains"]',
-        road_trip: '["lakes_rivers"]',
-      };
       const result = await getScore({
         location,
         mode: 'vacation',
         trip_type: tripType,
         travel_month: travelMonth,
-        natural_beauty_preference: nbPref[tripType] ?? undefined,
+        natural_beauty_preference: NB_PREF[tripType] ?? undefined,
       });
       setScoreData(result);
     } catch (err) {
@@ -62,82 +63,92 @@ export default function VacationPage() {
       <AppHeader tagline="Score any destination for your next trip" />
 
       <div className="hf-container" style={{ maxWidth: 720 }}>
-        {/* Entry form */}
-        <div className="hf-card" style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--hf-text-primary)' }}>
-            What kind of trip?
-          </h2>
-          <TripTypeSelector value={tripType} onChange={setTripType} />
 
-          <div style={{ marginTop: '1.25rem' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--hf-text-primary)', display: 'block', marginBottom: '0.5rem' }}>
-              When are you going?
-            </label>
-            <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-              {MONTH_NAMES.map((name, i) => {
-                const month = i + 1;
-                return (
-                  <button
-                    key={month}
-                    onClick={() => setTravelMonth(month)}
-                    style={{
-                      borderRadius: 8,
-                      border: `1.5px solid ${travelMonth === month ? '#3B82F6' : '#E5E7EB'}`,
-                      background: travelMonth === month ? '#EFF6FF' : '#fff',
-                      color: travelMonth === month ? '#1D4ED8' : '#4B5563',
-                      padding: '4px 10px',
-                      fontSize: '0.8125rem',
-                      fontWeight: travelMonth === month ? 600 : 400,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {name}
-                  </button>
-                );
-              })}
+        {/* Entry form — hidden once results load */}
+        {!scoreData && !loading && (
+          <div className="hf-card" style={{ marginBottom: '1.5rem' }}>
+            <h2 className="hf-section-title" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+              What kind of trip?
+            </h2>
+            <TripTypeSelector value={tripType} onChange={setTripType} />
+
+            <div style={{ marginTop: '1.25rem' }}>
+              <p className="hf-label" style={{ marginBottom: '0.5rem' }}>When are you going?</p>
+              <div className="hf-chip-row" style={{ marginTop: 0, gap: '0.375rem' }}>
+                {MONTH_NAMES.map((name, i) => {
+                  const month = i + 1;
+                  const active = travelMonth === month;
+                  return (
+                    <button
+                      key={month}
+                      onClick={() => setTravelMonth(month)}
+                      className="hf-chip"
+                      style={active ? {
+                        background: 'var(--hf-hover-bg)',
+                        borderColor: 'var(--hf-primary-1)',
+                        color: 'var(--hf-primary-1)',
+                        fontWeight: 600,
+                      } : {}}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.25rem' }}>
+              <LocationSearch
+                onSearch={handleSearch}
+                disabled={!tripType}
+                examples={['Sedona, AZ', 'Charleston, SC', 'Asheville, NC']}
+              />
+              {!tripType && (
+                <p className="hf-helper" style={{ marginTop: '0.5rem' }}>
+                  Select a trip type above to enable search.
+                </p>
+              )}
             </div>
           </div>
-
-          <div style={{ marginTop: '1.25rem' }}>
-            <LocationSearch
-              onSearch={handleSearch}
-              disabled={loading || !tripType}
-              examples={['Sedona, AZ', 'Charleston, SC', 'Asheville, NC']}
-            />
-            {!tripType && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)', marginTop: '0.5rem' }}>
-                Select a trip type above to enable search.
-              </p>
-            )}
-          </div>
-        </div>
+        )}
 
         {loading && (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <LoadingSpinner />
-            <p style={{ marginTop: '1rem', color: 'var(--hf-text-secondary)', fontSize: '0.875rem' }}>
+            <p className="hf-helper" style={{ marginTop: '1rem' }}>
               Scoring 7 vacation pillars…
             </p>
           </div>
         )}
 
-        {!loading && error && <ErrorMessage message={error} />}
+        {!loading && error && (
+          <>
+            <ErrorMessage message={error} />
+            <button onClick={handleReset} className="hf-btn-secondary" style={{ marginTop: '1rem' }}>
+              ← Try again
+            </button>
+          </>
+        )}
 
         {!loading && scoreData && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.75rem', background: '#E0F2FE', color: '#0369A1', padding: '3px 10px', borderRadius: 10, fontWeight: 500 }}>
+              <span style={{
+                fontSize: '0.8125rem', fontWeight: 500,
+                background: '#E0F2FE', color: '#0369A1',
+                padding: '3px 12px', borderRadius: 10,
+              }}>
                 Vacation · {tripType?.replace('_', ' ')} · {MONTH_NAMES[travelMonth - 1]}
               </span>
               <button
                 onClick={handleReset}
-                style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
+                className="hf-chip--ghost"
+                style={{ fontSize: '0.8125rem' }}
               >
                 ← New search
               </button>
             </div>
 
-            {/* NOAA climate profile — descriptive, not scored */}
             {scoreData.climate_profile && (
               <div style={{ marginBottom: '1.5rem' }}>
                 <ClimateProfileCard
@@ -157,8 +168,8 @@ export default function VacationPage() {
           </>
         )}
 
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--hf-text-secondary)' }}>
-          <Link href="/search" style={{ color: 'var(--hf-text-secondary)' }}>
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <Link href="/search" className="hf-helper" style={{ textDecoration: 'none' }}>
             Looking to move? Try livability scoring →
           </Link>
         </div>
