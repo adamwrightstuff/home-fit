@@ -1325,16 +1325,23 @@ def _apply_allocation_to_cached_response(
     use_school_scoring: bool,
     only_pillars: Optional[set[str]] = None,
     natural_beauty_preference: Optional[List[str]] = None,
+    forced_token_allocation: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """
     Cached responses are stored without assuming a specific user priority allocation.
     On cache hit, recompute weights and totals for the current request.
+    forced_token_allocation: when set (e.g. vacation mode presets), bypasses
+    tokens/priorities parsing and uses these weights directly.
     """
     import copy
     response = copy.deepcopy(cached_response)
 
     # Recompute allocation + priority levels (copied from existing logic)
-    if priorities_dict:
+    if forced_token_allocation is not None:
+        token_allocation = dict(forced_token_allocation)
+        allocation_type = "vacation_preset"
+        priority_levels = None
+    elif priorities_dict:
         token_allocation = parse_priority_allocation(priorities_dict)
         allocation_type = "priority_based"
         priority_levels: Optional[Dict[str, str]] = {}
@@ -1414,6 +1421,32 @@ def _apply_allocation_to_cached_response(
                 nb_merged.setdefault("breakdown", {})["natural_beauty_score"] = recomputed
                 if "summary" in nb_merged and isinstance(nb_merged["summary"], dict):
                     nb_merged["summary"].setdefault("natural_beauty", {})["score"] = recomputed
+
+    # Standalone natural_beauty pillar (used in vacation mode — not nested under neighborhood_beauty).
+    if natural_beauty_preference:
+        nb_standalone = livability_pillars.get("natural_beauty")
+        if isinstance(nb_standalone, dict):
+            v9b_standalone = (nb_standalone.get("details") or nb_standalone.get("breakdown") or {}).get("v9_breakdown")
+            if not v9b_standalone:
+                v9b_standalone = nb_standalone.get("v9_breakdown")
+            if isinstance(v9b_standalone, dict):
+                comp = {k: v9b_standalone.get(k) for k in (
+                    "gvi_score", "water_score", "canopy_score",
+                    "topo_score", "landcover_score", "bio_score")}
+                recomputed = natural_beauty.v9_score_from_components(comp, natural_beauty_preference)
+                if recomputed is not None:
+                    nb_standalone["score"] = recomputed
+                    v9b_standalone["preference_applied"] = natural_beauty_preference
+
+    # When only specific pillars were requested, strip the rest from the cached response.
+    if only_pillars:
+        _expanded = set(only_pillars)
+        if 'built_beauty' in only_pillars:
+            _expanded.add('built_environment')
+        if 'built_environment' in only_pillars:
+            _expanded.add('built_beauty')
+        livability_pillars = {k: v for k, v in livability_pillars.items() if k in _expanded}
+        response["livability_pillars"] = livability_pillars
 
     total_score = 0.0
     for pillar_name, pillar_data in livability_pillars.items():
@@ -1585,11 +1618,17 @@ def _compute_single_score_internal(
     _log_place_timing("detect_location_scope", t_scope)
     logger.info(f"Location scope: {location_scope}")
 
+    # Pre-compute vacation token allocation here so both cache fast-paths can use it.
+    _vacation_token_alloc: Optional[Dict[str, float]] = (
+        get_vacation_token_allocation(trip_type) if is_vacation_mode else None
+    )
+
     # ------------------------------------------------------------------
     # Catalog fast-path: if this lat/lon matches a pre-scored catalog entry,
     # skip all pillar scoring and serve the stored result (recomputing weights).
+    # Vacation mode is allowed: apply vacation weights + only_pillars filter.
     # ------------------------------------------------------------------
-    if not test_mode_enabled and only_pillars is None:
+    if not test_mode_enabled and (only_pillars is None or is_vacation_mode):
         catalog_key = (round(lat, 4), round(lon, 4))
         catalog_entry = _CATALOG_INDEX.get(catalog_key)
         if catalog_entry and catalog_entry.get("livability_pillars"):
@@ -1601,19 +1640,21 @@ def _compute_single_score_internal(
                 use_school_scoring=use_school_scoring,
                 only_pillars=only_pillars,
                 natural_beauty_preference=natural_beauty_preference,
+                forced_token_allocation=_vacation_token_alloc,
             )
             if isinstance(response.get("metadata"), dict):
                 response["metadata"]["catalog_hit"] = True
                 response["metadata"]["cache_hit"] = False
+                if is_vacation_mode:
+                    response["metadata"]["vacation_catalog_hit"] = True
             _log_place_timing("total", start_perf)
             return response
 
     # ------------------------------------------------------------------
     # Shared cross-user cache (Redis): return cached response template if available.
-    # This is keyed by geocoded coordinates + request options (not IP), and we
-    # recompute weights (priorities/tokens) on hit.
+    # Vacation mode is allowed: apply vacation weights + only_pillars filter.
     # ------------------------------------------------------------------
-    if not test_mode_enabled and only_pillars is None:
+    if not test_mode_enabled and (only_pillars is None or is_vacation_mode):
         try:
             t_location_cache = time.perf_counter()
             location_cache_key = _generate_location_cache_key(
@@ -1622,13 +1663,13 @@ def _compute_single_score_internal(
                 location_scope=location_scope,
                 include_chains=include_chains,
                 use_school_scoring=use_school_scoring,
-                only_pillars=only_pillars,
+                only_pillars=None,  # key on full-score template so vacation reuses livability cache
                 job_categories=job_categories,
             )
             cached_template = redis_get_compressed_json(location_cache_key)
             _log_place_timing("location_cache_read", t_location_cache)
             if isinstance(cached_template, dict) and cached_template.get("livability_pillars"):
-                cached_template["input"] = location  # reflect current user query string
+                cached_template["input"] = location
                 response = _apply_allocation_to_cached_response(
                     cached_template,
                     tokens=tokens,
@@ -1636,6 +1677,7 @@ def _compute_single_score_internal(
                     use_school_scoring=use_school_scoring,
                     only_pillars=only_pillars,
                     natural_beauty_preference=natural_beauty_preference,
+                    forced_token_allocation=_vacation_token_alloc,
                 )
                 _log_place_timing("total", start_perf)
                 return response
