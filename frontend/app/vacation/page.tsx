@@ -59,14 +59,74 @@ export default function VacationPage() {
     setError(null);
   };
 
+  // Results view — no hero, full-width container matching live scoring page
+  if (!loading && scoreData) {
+    return (
+      <main className="hf-page hf-page-no-hero">
+        <div className="hf-container">
+          {/* Vacation context bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <span style={{
+              fontSize: '0.8125rem', fontWeight: 500,
+              background: '#E0F2FE', color: '#0369A1',
+              padding: '3px 12px', borderRadius: 10,
+            }}>
+              Vacation · {tripType?.replace('_', ' ')} · {MONTH_NAMES[travelMonth - 1]}
+            </span>
+            <button
+              onClick={handleReset}
+              className="hf-chip--ghost"
+              style={{ fontSize: '0.8125rem' }}
+            >
+              ← New search
+            </button>
+          </div>
+
+          {scoreData.coordinates && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <MapEmbed
+                lat={scoreData.coordinates.lat}
+                lon={scoreData.coordinates.lon}
+                label={scoreData.input}
+              />
+            </div>
+          )}
+
+          {scoreData.climate_profile && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <ClimateProfileCard
+                profile={scoreData.climate_profile}
+                highlightMonth={travelMonth}
+              />
+            </div>
+          )}
+
+          <ScoreDisplay
+            data={scoreData}
+            placeSummary={scoreData.place_summary ?? null}
+            readOnlyPriorities
+            hideNotIncluded
+            hideCompositeIndices
+          />
+
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <Link href="/search" className="hf-helper" style={{ textDecoration: 'none' }}>
+              Looking to move? Try livability scoring →
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Entry form + loading/error — keep hero
   return (
-    <main className="hf-page">
-      <AppHeader tagline="Score any destination for your next trip" />
+    <main className={loading ? 'hf-page hf-page-no-hero' : 'hf-page'}>
+      {!loading && <AppHeader tagline="Score any destination for your next trip" />}
 
       <div className="hf-container" style={{ maxWidth: 720 }}>
 
-        {/* Entry form — hidden once results load */}
-        {!scoreData && !loading && (
+        {!loading && (
           <div className="hf-card" style={{ marginBottom: '1.5rem' }}>
             <h2 className="hf-section-title" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
               What kind of trip?
@@ -120,67 +180,21 @@ export default function VacationPage() {
         )}
 
         {!loading && error && (
-          <>
+          <div className="hf-card">
             <ErrorMessage message={error} />
             <button onClick={handleReset} className="hf-btn-secondary" style={{ marginTop: '1rem' }}>
               ← Try again
             </button>
-          </>
+          </div>
         )}
 
-        {!loading && scoreData && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{
-                fontSize: '0.8125rem', fontWeight: 500,
-                background: '#E0F2FE', color: '#0369A1',
-                padding: '3px 12px', borderRadius: 10,
-              }}>
-                Vacation · {tripType?.replace('_', ' ')} · {MONTH_NAMES[travelMonth - 1]}
-              </span>
-              <button
-                onClick={handleReset}
-                className="hf-chip--ghost"
-                style={{ fontSize: '0.8125rem' }}
-              >
-                ← New search
-              </button>
-            </div>
-
-            {scoreData.coordinates && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <MapEmbed
-                  lat={scoreData.coordinates.lat}
-                  lon={scoreData.coordinates.lon}
-                  label={scoreData.input}
-                />
-              </div>
-            )}
-
-            {scoreData.climate_profile && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <ClimateProfileCard
-                  profile={scoreData.climate_profile}
-                  highlightMonth={travelMonth}
-                />
-              </div>
-            )}
-
-            <ScoreDisplay
-              data={scoreData}
-              readOnlyPriorities
-              hideNotIncluded
-              hideCompositeIndices
-              searchOptions={null}
-            />
-          </>
+        {!loading && !error && !scoreData && (
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <Link href="/search" className="hf-helper" style={{ textDecoration: 'none' }}>
+              Looking to move? Try livability scoring →
+            </Link>
+          </div>
         )}
-
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <Link href="/search" className="hf-helper" style={{ textDecoration: 'none' }}>
-            Looking to move? Try livability scoring →
-          </Link>
-        </div>
       </div>
     </main>
   );
