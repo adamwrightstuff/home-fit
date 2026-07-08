@@ -98,6 +98,8 @@ interface ScoreDisplayProps {
   hideSummaryCard?: boolean
   /** When true, hide the NOT INCLUDED IN YOUR SCORE section entirely. */
   hideNotIncluded?: boolean
+  /** When true, hide longevity index, happiness index, and status signal cards (e.g. vacation mode). */
+  hideCompositeIndices?: boolean
   /**
    * When true, importance selectors are hidden on all pillar cards even if onPrioritiesChange is provided.
    * Use on Public page where the user hasn't set preferences and the selectors would imply false interactivity.
@@ -138,6 +140,7 @@ export default function ScoreDisplay({
   rescoringPillarKey,
   hideSummaryCard = false,
   hideNotIncluded = false,
+  hideCompositeIndices = false,
   readOnlyPriorities = false,
   schoolsPremiumSection,
   interstitialAfterCard,
@@ -146,8 +149,8 @@ export default function ScoreDisplay({
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const isLoading = Boolean(loading)
-  const longevity_index = typeof data.longevity_index === 'number' ? data.longevity_index : null
-  const happiness_index = typeof data.happiness_index === 'number' ? data.happiness_index : null
+  const longevity_index = !hideCompositeIndices && typeof data.longevity_index === 'number' ? data.longevity_index : null
+  const happiness_index = !hideCompositeIndices && typeof data.happiness_index === 'number' ? data.happiness_index : null
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -501,7 +504,7 @@ export default function ScoreDisplay({
             </div>
           </div>
         </div>
-        {(data.status_signal_breakdown || typeof data.status_signal === 'number') && (
+        {!hideCompositeIndices && (data.status_signal_breakdown || typeof data.status_signal === 'number') && (
           <StatusArchetypeCompass
             breakdown={data.status_signal_breakdown ?? null}
             score={typeof data.status_signal === 'number' ? data.status_signal : null}

@@ -151,6 +151,7 @@ export default function VacationPage() {
               data={scoreData}
               readOnlyPriorities
               hideNotIncluded
+              hideCompositeIndices
               searchOptions={null}
             />
           </>
