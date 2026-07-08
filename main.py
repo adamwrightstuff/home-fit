@@ -70,7 +70,7 @@ from data_sources.crime_api import community_safety_crime_radius_m
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS, data_quality_indicates_fallback
-from pillars.vacation_weights import VACATION_PILLAR_SET, get_vacation_token_allocation, get_vacation_natural_beauty_preference
+from pillars.vacation_weights import get_vacation_pillar_set, get_vacation_token_allocation, get_vacation_natural_beauty_preference
 
 ##########################
 # CONFIGURATION FLAGS
@@ -1535,7 +1535,7 @@ def _compute_single_score_internal(
     # Only applies when mode=vacation and no explicit only_pillars override is active.
     is_vacation_mode = (mode or "").strip().lower() == "vacation"
     if is_vacation_mode and only_pillars is None:
-        only_pillars = set(VACATION_PILLAR_SET)
+        only_pillars = set(get_vacation_pillar_set(trip_type))
         # Auto-inject natural_beauty_preference from trip type unless user already set one.
         if natural_beauty_preference is None:
             natural_beauty_preference = get_vacation_natural_beauty_preference(trip_type)
