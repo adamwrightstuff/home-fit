@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { catalogRowKey, type CatalogMapIndexMode, type CatalogMapPlace } from '@/lib/catalogMapTypes'
 import type { PillarPriorities } from '@/components/SearchOptions'
+import type { ClimateProfile } from '@/types/api'
+import { getClimateProfile } from '@/lib/api'
+import ClimateProfileCard from '@/components/vacation/ClimateProfileCard'
 import { getAllCatalogIndexDisplay, getStandoutPillarChips } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
 import {
@@ -50,6 +54,14 @@ export default function CatalogDetailPanel({
   onClose,
   onFullBreakdown,
 }: CatalogDetailPanelProps) {
+  const [climateProfile, setClimateProfile] = useState<ClimateProfile | null>(null)
+
+  useEffect(() => {
+    if (!place) { setClimateProfile(null); return }
+    setClimateProfile(null)
+    getClimateProfile(place.catalog.lat, place.catalog.lon).then(setClimateProfile).catch(() => {})
+  }, [place?.catalog.lat, place?.catalog.lon])
+
   const allIdx = place ? getAllCatalogIndexDisplay(place, priorities) : null
   const chips = place ? getStandoutPillarChips(place, indexMode, priorities) : []
   const statusBadge = place
@@ -198,6 +210,13 @@ export default function CatalogDetailPanel({
             <p style={{ margin: '0 0 16px', fontSize: '0.8rem', lineHeight: 1.6, color: 'var(--hf-text-secondary)' }}>
               {place.score.place_summary}
             </p>
+          )}
+
+          {/* Climate profile */}
+          {climateProfile && (
+            <div className="mb-3">
+              <ClimateProfileCard profile={climateProfile} />
+            </div>
           )}
 
           {/* CTA */}

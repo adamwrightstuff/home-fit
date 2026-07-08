@@ -2840,24 +2840,26 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.debug(f"Vacation cache write failed (non-fatal): {e}")
 
-    # Vacation mode: attach climate profile and mode metadata.
+    # Attach climate profile for all score requests.
+    try:
+        from data_sources.noaa_api import get_climate_profile
+        with ThreadPoolExecutor(max_workers=1) as _noaa_pool:
+            _f_noaa = _noaa_pool.submit(get_climate_profile, lat, lon)
+            try:
+                climate_profile = _f_noaa.result(timeout=8)
+                if climate_profile:
+                    response["climate_profile"] = climate_profile
+            except Exception:
+                pass  # graceful degrade — omit field if unavailable
+    except Exception as e:
+        logger.debug(f"NOAA climate profile fetch skipped: {e}")
+
+    # Vacation mode: attach mode metadata.
     if is_vacation_mode:
         response["vacation_mode"] = {
             "trip_type": (trip_type or "city").lower(),
             "travel_month": travel_month,
         }
-        try:
-            from data_sources.noaa_api import get_climate_profile
-            with ThreadPoolExecutor(max_workers=1) as _noaa_pool:
-                _f_noaa = _noaa_pool.submit(get_climate_profile, lat, lon)
-                try:
-                    climate_profile = _f_noaa.result(timeout=8)
-                    if climate_profile:
-                        response["climate_profile"] = climate_profile
-                except Exception:
-                    pass  # graceful degrade — omit field if unavailable
-        except Exception as e:
-            logger.debug(f"NOAA climate profile fetch skipped: {e}")
 
     attach_indices_version(response)
     return response
@@ -6687,6 +6689,16 @@ def geocode_location(location: str):
         "zip_code": zip_code or "",
         "display_name": display_name,
     }
+
+
+@app.get("/climate_profile", dependencies=[Depends(require_proxy_auth)])
+def climate_profile_endpoint(lat: float, lon: float):
+    """Return NOAA climate profile for a lat/lon."""
+    from data_sources.noaa_api import get_climate_profile
+    profile = get_climate_profile(lat, lon)
+    if not profile:
+        return {}
+    return profile
 
 
 @app.get("/healthz")

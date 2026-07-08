@@ -1,4 +1,4 @@
-import { ScoreResponse, ScoreRequestParams, GeocodeResult, RecomputePayload, RecomputeResponse } from '@/types/api';
+import { ScoreResponse, ScoreRequestParams, GeocodeResult, RecomputePayload, RecomputeResponse, ClimateProfile } from '@/types/api';
 
 // For production, the browser should call same-origin Vercel API routes (which proxy to Railway).
 const API_BASE_URL = '';
@@ -285,6 +285,13 @@ export async function recomputeComposites(payload: RecomputePayload): Promise<Re
     throw new Error(detail);
   }
   return data as RecomputeResponse;
+}
+
+export async function getClimateProfile(lat: number, lon: number): Promise<ClimateProfile | null> {
+  const res = await fetch(`${API_BASE_URL}/api/climate-profile?lat=${lat}&lon=${lon}`, { method: 'GET' })
+  if (!res.ok) return null
+  const data = await res.json()
+  return Object.keys(data).length > 0 ? (data as ClimateProfile) : null
 }
 
 export async function checkHealth(): Promise<any> {

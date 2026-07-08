@@ -20,6 +20,8 @@ import type { PillarPriorities } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import { BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
 import { useAuth } from '@/contexts/AuthContext'
+import ClimateProfileCard from './vacation/ClimateProfileCard'
+import type { ClimateProfile } from '@/types/api'
 
 /** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
 const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: string }> = [
@@ -181,6 +183,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
   const [statusSignalRefreshLoading, setStatusSignalRefreshLoading] = useState(false)
   /** Happiness Index (composite); set from initialPayload or after scoring. */
   const [happinessIndex, setHappinessIndex] = useState<number | null>(() => initialPayload?.happiness_index ?? null)
+  const [climateProfile, setClimateProfile] = useState<ClimateProfile | null>(() => initialPayload?.climate_profile ?? null)
   const [recomputeLoading, setRecomputeLoading] = useState(false)
   /** Pillar key that recently failed a rerun; show "Still unable to retrieve data" briefly. */
   const [rerunFailedPillar, setRerunFailedPillar] = useState<string | null>(null)
@@ -699,6 +702,8 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
       if (typeof (resp as { happiness_index?: number }).happiness_index === 'number') {
         setHappinessIndex((resp as { happiness_index: number }).happiness_index)
       }
+      const cp = (resp as { climate_profile?: ClimateProfile }).climate_profile
+      if (cp != null) setClimateProfile(cp)
       setProgress(100)
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Failed to run score.')
@@ -770,6 +775,12 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
           completed_pillars={Object.keys(pillarScores)}
         />
       </div>
+
+      {climateProfile && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <ClimateProfileCard profile={climateProfile} />
+        </div>
+      )}
 
       {/* Score Summary — HomeFit Score on top, Longevity & Archetype below in smaller font */}
       <div
