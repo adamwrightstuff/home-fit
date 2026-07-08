@@ -32,11 +32,17 @@ export default function VacationPage() {
     setScoreData(null);
 
     try {
+      const nbPref: Record<string, string> = {
+        beach: '["ocean"]',
+        mountain: '["mountains"]',
+        road_trip: '["lakes_rivers"]',
+      };
       const result = await getScore({
         location,
         mode: 'vacation',
         trip_type: tripType,
         travel_month: travelMonth,
+        natural_beauty_preference: nbPref[tripType] ?? undefined,
       });
       setScoreData(result);
     } catch (err) {

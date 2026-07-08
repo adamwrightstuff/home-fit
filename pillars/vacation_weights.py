@@ -3,7 +3,7 @@ Vacation mode: pillar set and weight presets by trip type.
 Used by main.py when mode=vacation is passed to /score.
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 VACATION_PILLAR_SET = frozenset({
     "natural_beauty",
@@ -57,6 +57,16 @@ VACATION_WEIGHT_PRESETS: Dict[str, Dict[str, float]] = {
 
 VALID_TRIP_TYPES = set(VACATION_WEIGHT_PRESETS.keys())
 
+# Auto-injected natural_beauty_preference by trip type.
+# Reweights internal natural_beauty sub-components (ocean/mountains/lakes_rivers/canopy)
+# without changing the pillar's overall token weight.
+VACATION_NATURAL_BEAUTY_PREFERENCE: Dict[str, Optional[List[str]]] = {
+    "beach": ["ocean"],
+    "mountain": ["mountains"],
+    "road_trip": ["lakes_rivers"],
+    "city": None,  # no scenery bias — canopy/streetscape matters more
+}
+
 
 def get_vacation_token_allocation(trip_type: Optional[str]) -> Dict[str, float]:
     """Return token allocation dict for the given trip type, defaulting to city."""
@@ -64,3 +74,9 @@ def get_vacation_token_allocation(trip_type: Optional[str]) -> Dict[str, float]:
     if key not in VACATION_WEIGHT_PRESETS:
         key = "city"
     return dict(VACATION_WEIGHT_PRESETS[key])
+
+
+def get_vacation_natural_beauty_preference(trip_type: Optional[str]) -> Optional[List[str]]:
+    """Return natural_beauty_preference list for the given trip type, or None."""
+    key = (trip_type or "city").lower().strip()
+    return VACATION_NATURAL_BEAUTY_PREFERENCE.get(key)
