@@ -16,10 +16,11 @@ from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
 
 
-def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = True, 
+def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = True,
                                      location_scope: Optional[str] = None,
                                      area_type: Optional[str] = None,
-                                     density: Optional[float] = None) -> Tuple[float, Dict]:
+                                     density: Optional[float] = None,
+                                     vacation_mode: bool = False) -> Tuple[float, Dict]:
     """
     Calculate neighborhood amenities score (0-100) using dual scoring:
     
@@ -38,7 +39,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     query_radius = int(profile.get('query_radius_m', 1500))
     print(f"   🔧 Radius profile (amenities): area_type={area_type}, scope={location_scope}, query_radius={query_radius}m")
-    business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains)
+    business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains, vacation_mode=vacation_mode)
     osm_query_failed = business_data is None
     if business_data is None:
         # Normalize so Google Places can still run (thin/empty OSM → searchNearby before imputed fallback).

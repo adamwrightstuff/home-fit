@@ -70,6 +70,7 @@ from data_sources.crime_api import community_safety_crime_radius_m
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.job_category_overlays import parse_job_categories
 from data_sources.data_quality import INFORMATIONAL_DATA_WARNINGS, data_quality_indicates_fallback
+from pillars.vacation_weights import VACATION_PILLAR_SET, get_vacation_token_allocation
 
 ##########################
 # CONFIGURATION FLAGS
@@ -1462,6 +1463,9 @@ def _compute_single_score_internal(
     lat_override: Optional[float] = None,
     lon_override: Optional[float] = None,
     user_household_income: Optional[int] = None,
+    mode: Optional[str] = None,
+    trip_type: Optional[str] = None,
+    travel_month: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1526,6 +1530,12 @@ def _compute_single_score_internal(
                 only_pillars = expanded_only
             if not only_pillars:
                 only_pillars = None
+
+    # Vacation mode: restrict to vacation pillar set and apply trip-type weight preset.
+    # Only applies when mode=vacation and no explicit only_pillars override is active.
+    is_vacation_mode = (mode or "").strip().lower() == "vacation"
+    if is_vacation_mode and only_pillars is None:
+        only_pillars = set(VACATION_PILLAR_SET)
 
     # Step 1: Geocode the location (or use provided lat/lon so refresh uses same point as initial score)
     lat: float
@@ -1932,7 +1942,7 @@ def _compute_single_score_internal(
             ('neighborhood_amenities', get_neighborhood_amenities_score, {
                 'lat': lat, 'lon': lon, 'include_chains': include_chains,
                 'location_scope': location_scope, 'area_type': area_type,
-                'density': density
+                'density': density, 'vacation_mode': is_vacation_mode,
             })
         )
     if _include_pillar('air_travel_access'):
@@ -2033,6 +2043,11 @@ def _compute_single_score_internal(
     token_allocation, allocation_type, priority_levels = _derive_token_allocation_for_scoring(
         priorities_dict, tokens, only_pillars, use_school_scoring
     )
+
+    # Override token allocation with vacation preset when no user-supplied weights.
+    if is_vacation_mode and allocation_type == "equal" and not priorities_dict and not tokens:
+        token_allocation = get_vacation_token_allocation(trip_type)
+        allocation_type = f"vacation_{(trip_type or 'city').lower()}"
 
     _partial_scores_for_longevity: Dict[str, float] = {}
 
@@ -2737,6 +2752,25 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.debug(f"Location cache write skipped/failed: {e}")
 
+    # Vacation mode: attach climate profile and mode metadata.
+    if is_vacation_mode:
+        response["vacation_mode"] = {
+            "trip_type": (trip_type or "city").lower(),
+            "travel_month": travel_month,
+        }
+        try:
+            from data_sources.noaa_api import get_climate_profile
+            with ThreadPoolExecutor(max_workers=1) as _noaa_pool:
+                _f_noaa = _noaa_pool.submit(get_climate_profile, lat, lon)
+                try:
+                    climate_profile = _f_noaa.result(timeout=8)
+                    if climate_profile:
+                        response["climate_profile"] = climate_profile
+                except Exception:
+                    pass  # graceful degrade — omit field if unavailable
+        except Exception as e:
+            logger.debug(f"NOAA climate profile fetch skipped: {e}")
+
     attach_indices_version(response)
     return response
 
@@ -2758,7 +2792,10 @@ def get_livability_score(request: Request,
                          political_preference: Optional[str] = None,
                          household_income: Optional[int] = None,
                          lat: Optional[str] = None,
-                         lon: Optional[str] = None):
+                         lon: Optional[str] = None,
+                         mode: Optional[str] = None,
+                         trip_type: Optional[str] = None,
+                         travel_month: Optional[int] = None):
     """
     Calculate livability score for a given address.
 
@@ -2908,6 +2945,9 @@ def get_livability_score(request: Request,
             lat_override=lat_override,
             lon_override=lon_override,
             user_household_income=household_income,
+            mode=mode,
+            trip_type=trip_type,
+            travel_month=travel_month,
         )
         if schedule_catalog_contribution:
             try:

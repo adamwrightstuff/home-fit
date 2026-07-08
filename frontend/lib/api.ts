@@ -135,6 +135,15 @@ export async function getScore(params: ScoreRequestParams): Promise<ScoreRespons
   if (params.household_income != null) {
     searchParams.append('household_income', String(params.household_income));
   }
+  if (params.mode) {
+    searchParams.append('mode', params.mode);
+  }
+  if (params.trip_type) {
+    searchParams.append('trip_type', params.trip_type);
+  }
+  if (params.travel_month != null) {
+    searchParams.append('travel_month', String(params.travel_month));
+  }
 
   // Premium schools gating: include saved premium code (if any).
   // This is validated server-side; sending it does not guarantee access.
@@ -334,6 +343,9 @@ export async function getScoreWithProgress(
     searchParams.append('lat', String(params.lat));
     searchParams.append('lon', String(params.lon));
   }
+  if (params.mode) searchParams.append('mode', params.mode);
+  if (params.trip_type) searchParams.append('trip_type', params.trip_type);
+  if (params.travel_month != null) searchParams.append('travel_month', String(params.travel_month));
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
       const premiumCode = window.sessionStorage.getItem('homefit_premium_code');

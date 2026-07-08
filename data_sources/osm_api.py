@@ -1550,7 +1550,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
 @safe_api_call("osm", required=False)
 @handle_api_timeout(timeout_seconds=60)
-def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True) -> Optional[Dict]:
+def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include_chains: bool = True, vacation_mode: bool = False) -> Optional[Dict]:
     """
     Query OSM for local businesses within walking distance.
     By default includes chain establishments. Radius is chosen by callers (e.g. pillar radius profile);
@@ -1558,6 +1558,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
 
     Args:
         include_chains: If True, include chain/franchise businesses
+        vacation_mode: If True, extend Tier 3 with tourism infrastructure tags (same network call)
 
     Returns:
         {
@@ -1574,6 +1575,15 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
     else:
         brand_filter = ''
     
+    # Extra Tier 3 tags when in vacation mode (same Overpass call, no added latency)
+    vacation_tier3 = f"""
+      node["tourism"~"attraction|zoo|aquarium|theme_park|viewpoint"](around:{radius_m},{lat},{lon});
+      way["tourism"~"attraction|zoo|aquarium|theme_park|viewpoint"](around:{radius_m},{lat},{lon});
+      node["natural"="waterfall"](around:{radius_m},{lat},{lon});
+      node["tourism"="hotel"](around:{radius_m},{lat},{lon});
+      way["tourism"="hotel"](around:{radius_m},{lat},{lon});
+    """ if vacation_mode else ""
+
     # Make name requirement optional - query businesses with or without names
     # We'll filter out unnamed businesses in processing if needed, but this allows us to
     # find businesses that exist in OSM even if they don't have names yet
@@ -1618,7 +1628,7 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
       
       node["amenity"="marketplace"](around:{radius_m},{lat},{lon});
       way["amenity"="marketplace"](around:{radius_m},{lat},{lon});
-      
+      {vacation_tier3}
       // TIER 4: SERVICES & RETAIL
       node["shop"~"clothes|fashion|boutique"]{brand_filter}(around:{radius_m},{lat},{lon});
       way["shop"~"clothes|fashion|boutique"]{brand_filter}(around:{radius_m},{lat},{lon});
@@ -2784,6 +2794,18 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             tier3_culture.append(business)
         elif amenity == "marketplace":
             business["type"] = "market"
+            tier3_culture.append(business)
+        elif tourism in ["attraction", "zoo", "aquarium", "theme_park"]:
+            business["type"] = "attraction"
+            tier3_culture.append(business)
+        elif tourism == "viewpoint":
+            business["type"] = "viewpoint"
+            tier3_culture.append(business)
+        elif tourism == "hotel":
+            business["type"] = "hotel"
+            tier3_culture.append(business)
+        elif tags.get("natural") == "waterfall":
+            business["type"] = "waterfall"
             tier3_culture.append(business)
         elif shop in ["clothes", "fashion", "boutique"]:
             business["type"] = "boutique"

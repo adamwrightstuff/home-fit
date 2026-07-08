@@ -179,9 +179,29 @@ export interface ScoreResponse {
   happiness_index_breakdown?: Record<string, unknown>;
   token_allocation: Record<string, number>;
   allocation_type: string;
+  /** Present when mode=vacation. Contains trip_type and travel_month. */
+  vacation_mode?: { trip_type: string; travel_month: number | null };
+  /** NOAA 1991-2020 monthly climate normals. Present when mode=vacation and NOAA_CDO_API_KEY is set. */
+  climate_profile?: ClimateProfile;
   overall_confidence: OverallConfidence;
   data_quality_summary: DataQualitySummary;
   metadata: Metadata;
+}
+
+export interface ClimateMonth {
+  month: number;
+  month_name: string;
+  avg_high_f: number | null;
+  avg_low_f: number | null;
+  avg_precip_in: number | null;
+  avg_snow_in: number | null;
+  comfort: 'hot' | 'warm' | 'warm_wet' | 'pleasant' | 'mild_wet' | 'cool' | 'cold' | 'unknown';
+}
+
+export interface ClimateProfile {
+  station_id: string;
+  normals_period: string;
+  months: ClimateMonth[];
 }
 
 export interface ScoreRequestParams {
@@ -210,6 +230,12 @@ export interface ScoreRequestParams {
   /** When set, backend uses these coordinates instead of geocoding location (ensures refresh uses same point). */
   lat?: number;
   lon?: number;
+  /** Scoring mode. "vacation" restricts pillars and applies trip-type weight preset. */
+  mode?: 'vacation';
+  /** Trip type for vacation mode: beach | mountain | city | road_trip */
+  trip_type?: 'beach' | 'mountain' | 'city' | 'road_trip';
+  /** Travel month (1–12) for vacation mode. Highlights relevant NOAA climate window. */
+  travel_month?: number;
 }
 
 /** Response from GET /geocode — used to show map before scoring. */
