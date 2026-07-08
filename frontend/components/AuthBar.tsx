@@ -83,6 +83,25 @@ export default function AuthBar() {
               Explore
             </Link>
             <Link
+              href="/vacation"
+              className="hf-auth-bar-btn"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                padding: '3px 10px',
+                borderRadius: 999,
+                border: '1px solid #FBD38D',
+                color: '#92400E',
+                background: '#FFFBEB',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+              }}
+            >
+              ✈️ Vacation
+            </Link>
+            <Link
               href="/search"
               className="hf-auth-bar-btn"
               style={{
@@ -140,6 +159,9 @@ export default function AuthBar() {
         <nav className={`hf-auth-bar-mobile-menu${mobileMenuOpen ? ' open' : ''}`} aria-label="Mobile menu">
           <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
             Explore
+          </Link>
+          <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }} onClick={closeMobileMenu}>
+            ✈️ Vacation
           </Link>
           <Link
             href="/search"
