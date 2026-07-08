@@ -2112,8 +2112,12 @@ def _compute_single_score_internal(
     )
 
     # Override token allocation with vacation preset when no user-supplied weights.
-    if is_vacation_mode and allocation_type == "equal" and not priorities_dict and not tokens:
-        token_allocation = get_vacation_token_allocation(trip_type)
+    # allocation_type is "default_equal" (not "equal") when no tokens/priorities passed.
+    if is_vacation_mode and not priorities_dict and not tokens:
+        vacation_alloc = get_vacation_token_allocation(trip_type)
+        # Merge into full 13-key dict: set vacation pillar weights, zero everything else.
+        for k in token_allocation:
+            token_allocation[k] = vacation_alloc.get(k, 0.0)
         allocation_type = f"vacation_{(trip_type or 'city').lower()}"
 
     _partial_scores_for_longevity: Dict[str, float] = {}
