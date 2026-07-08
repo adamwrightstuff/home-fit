@@ -5,8 +5,9 @@ import requests
 import json
 import time
 
-BASE_URL = "https://home-fit-production.up.railway.app"
-HEADERS = {"X-HomeFit-Proxy-Secret": "733f5a583601c3d63883954365e4b653a36f47ee45c5d84877884536abcfc7da"}
+import os
+BASE_URL = os.environ.get("HOMEFIT_API_URL", "https://home-fit-production.up.railway.app")
+HEADERS = {"X-HomeFit-Proxy-Secret": os.environ["HOMEFIT_PROXY_SECRET"]}
 
 TESTS = [
     ("Aspen, CO",        "mountain", 7),
@@ -15,6 +16,28 @@ TESTS = [
     ("Myrtle Beach, SC", "beach",    7),
     ("Nashville, TN",    "city",     10),
 ]
+
+def print_result(d, elapsed):
+    print(f"  Total score : {d.get('total_score', '?'):.1f}/100  ({elapsed:.1f}s)")
+    pillars = d.get("livability_pillars", {})
+    print(f"  {'PILLAR':<28} {'SCORE':>6}  {'WEIGHT':>7}  {'CONF':>6}")
+    print(f"  {'-'*52}")
+    for key, pdata in sorted(pillars.items(), key=lambda x: -x[1].get("weight", 0)):
+        score  = pdata.get("score")
+        weight = pdata.get("weight", 0)
+        conf   = pdata.get("confidence", "?")
+        if weight == 0:
+            continue
+        score_str = f"{score:.1f}" if isinstance(score, (int, float)) else "N/A"
+        print(f"  {key:<28} {score_str:>6}  {weight:>6.1f}%  {conf:>5}%")
+    alloc = d.get("metadata", {}).get("allocation_type", "?")
+    print(f"\n  allocation_type: {alloc}")
+    for key, pdata in pillars.items():
+        if pdata.get("weight", 0) > 0 and (pdata.get("score") or 0) == 0:
+            err = pdata.get("error") or pdata.get("data_quality", {}).get("reason") or pdata.get("status")
+            if err:
+                print(f"  [0-score] {key}: {err}")
+
 
 def test_location(location, trip_type, month):
     params = {
@@ -33,38 +56,38 @@ def test_location(location, trip_type, month):
     print(f"{'='*60}")
     t0 = time.time()
     try:
-        r = requests.get(f"{BASE_URL}/score", params=params, headers=HEADERS, timeout=360)
-        elapsed = time.time() - t0
-        if r.status_code != 200:
-            print(f"  ERROR {r.status_code}: {r.text[:200]}")
+        # Submit async job (query params, not body)
+        r = requests.post(f"{BASE_URL}/score/jobs", params=params, headers=HEADERS, timeout=30)
+        if r.status_code not in (200, 201, 202):
+            print(f"  ERROR submitting job {r.status_code}: {r.text[:200]}")
             return
+        job = r.json()
+        job_id = job.get("job_id") or job.get("id")
+        if not job_id:
+            print(f"  ERROR: no job_id in response: {job}")
+            return
+        print(f"  Job {job_id} submitted, polling...")
 
-        d = r.json()
-        print(f"  Total score : {d.get('total_score', '?'):.1f}/100  ({elapsed:.1f}s)")
-
-        pillars = d.get("livability_pillars", {})
-        print(f"  {'PILLAR':<28} {'SCORE':>6}  {'WEIGHT':>7}  {'CONF':>6}")
-        print(f"  {'-'*52}")
-        for key, pdata in sorted(pillars.items(), key=lambda x: -x[1].get("weight", 0)):
-            score  = pdata.get("score")
-            weight = pdata.get("weight", 0)
-            conf   = pdata.get("confidence", "?")
-            if weight == 0:
+        # Poll until done
+        while True:
+            time.sleep(5)
+            pr = requests.get(f"{BASE_URL}/score/jobs/{job_id}", headers=HEADERS, timeout=15)
+            if pr.status_code != 200:
+                print(f"  Poll error {pr.status_code}: {pr.text[:100]}")
                 continue
-            score_str = f"{score:.1f}" if isinstance(score, (int, float)) else "N/A"
-            print(f"  {key:<28} {score_str:>6}  {weight:>6.1f}%  {conf:>5}%")
-
-        alloc = d.get("metadata", {}).get("allocation_type", "?")
-        print(f"\n  allocation_type: {alloc}")
-        cache = d.get("metadata", {}).get("cache_hit", False)
-        print(f"  cache_hit: {cache}")
-
-        # Print error/status for any 0-score pillar
-        for key, pdata in pillars.items():
-            if pdata.get("weight", 0) > 0 and (pdata.get("score") or 0) == 0:
-                err = pdata.get("error") or pdata.get("data_quality", {}).get("reason") or pdata.get("status")
-                if err:
-                    print(f"  [0-score] {key}: {err}")
+            pj = pr.json()
+            status = pj.get("status")
+            if status in ("pending", "running"):
+                elapsed = time.time() - t0
+                print(f"  ... {status} ({elapsed:.0f}s)")
+                continue
+            if status == "done":
+                elapsed = time.time() - t0
+                result = pj.get("result") or pj
+                print_result(result, elapsed)
+                return
+            print(f"  Job ended with status={status}: {pj}")
+            return
 
     except requests.exceptions.Timeout:
         elapsed = time.time() - t0
