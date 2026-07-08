@@ -8,6 +8,7 @@ import ScoreDisplay from '@/components/ScoreDisplay';
 import ErrorMessage from '@/components/ErrorMessage';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ClimateProfileCard from '@/components/vacation/ClimateProfileCard';
+import MapEmbed from '@/components/vacation/MapEmbed';
 import TripTypeSelector, { type TripType } from '@/components/vacation/TripTypeSelector';
 import type { ScoreResponse } from '@/types/api';
 import { getScore } from '@/lib/api';
@@ -114,10 +115,7 @@ export default function VacationPage() {
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-            <LoadingSpinner />
-            <p className="hf-helper" style={{ marginTop: '1rem' }}>
-              Scoring 7 vacation pillars…
-            </p>
+            <LoadingSpinner message="Scoring vacation destination…" />
           </div>
         )}
 
@@ -148,6 +146,16 @@ export default function VacationPage() {
                 ← New search
               </button>
             </div>
+
+            {scoreData.coordinates && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <MapEmbed
+                  lat={scoreData.coordinates.lat}
+                  lon={scoreData.coordinates.lon}
+                  label={scoreData.input}
+                />
+              </div>
+            )}
 
             {scoreData.climate_profile && (
               <div style={{ marginBottom: '1.5rem' }}>

@@ -1642,6 +1642,19 @@ def _compute_single_score_internal(
         except Exception as e:
             logger.warning(f"Location cache read failed (non-fatal): {e}")
 
+    # Vacation mode result cache: keyed by (lat, lon, trip_type) — separate from the full-score
+    # location cache because vacation uses a different pillar set and weight preset.
+    _vacation_cache_key: Optional[str] = None
+    if not test_mode_enabled and is_vacation_mode and trip_type:
+        _vacation_cache_key = f"vacation_result:v{API_VERSION}:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
+        try:
+            _vacation_cached = redis_get_compressed_json(_vacation_cache_key)
+            if isinstance(_vacation_cached, dict) and _vacation_cached.get("livability_pillars"):
+                _log_place_timing("total", start_perf)
+                return _vacation_cached
+        except Exception as e:
+            logger.debug(f"Vacation cache read failed (non-fatal): {e}")
+
     # Shared pre-pillar cache: reuse census_tract, density, arch_diversity, area_type, tree_canopy, form_context
     # when another request already computed them for this (lat, lon). Only used for full-score requests.
     census_tract = None
@@ -1652,7 +1665,16 @@ def _compute_single_score_internal(
     form_context = None
 
     def _include_pillar(name: str) -> bool:
-        return only_pillars is None or name in only_pillars
+        if only_pillars is None:
+            return True
+        if name in only_pillars:
+            return True
+        # "built_beauty" is the internal fetch name; "built_environment" is the response/token key.
+        if name == 'built_beauty' and 'built_environment' in only_pillars:
+            return True
+        if name == 'built_environment' and 'built_beauty' in only_pillars:
+            return True
+        return False
 
     shared_blob = None
     if not test_mode_enabled and only_pillars is None:
@@ -2624,6 +2646,16 @@ def _compute_single_score_internal(
     _apply_pillar_failure_overrides(livability_pillars, exceptions)
     _set_pillar_status(livability_pillars, exceptions)
 
+    # When only specific pillars were requested, strip the rest so the frontend
+    # doesn't render them. Treat built_beauty/built_environment as the same pillar.
+    if only_pillars:
+        _expanded_only = set(only_pillars)
+        if 'built_beauty' in only_pillars:
+            _expanded_only.add('built_environment')
+        if 'built_environment' in only_pillars:
+            _expanded_only.add('built_beauty')
+        livability_pillars = {k: v for k, v in livability_pillars.items() if k in _expanded_only}
+
     # Build response
     longevity_index, longevity_contributions = compute_longevity_index(
         livability_pillars, token_allocation=token_allocation, only_pillars=only_pillars
@@ -2754,6 +2786,13 @@ def _compute_single_score_internal(
                 response["metadata"]["location_cache_write"] = True
         except Exception as e:
             logger.debug(f"Location cache write skipped/failed: {e}")
+
+    # Vacation result cache write.
+    if not test_mode_enabled and _vacation_cache_key:
+        try:
+            redis_set_compressed_json(_vacation_cache_key, response, LOCATION_CACHE_TTL_SECONDS)
+        except Exception as e:
+            logger.debug(f"Vacation cache write failed (non-fatal): {e}")
 
     # Vacation mode: attach climate profile and mode metadata.
     if is_vacation_mode:

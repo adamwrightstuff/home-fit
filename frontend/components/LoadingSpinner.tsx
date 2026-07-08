@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 
 interface LoadingSpinnerProps {
   startTime?: number
+  message?: string
 }
 
-export default function LoadingSpinner({ startTime }: LoadingSpinnerProps) {
+export default function LoadingSpinner({ startTime, message = 'Calculating livability score...' }: LoadingSpinnerProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function LoadingSpinner({ startTime }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-      <p className="text-gray-600">Calculating livability score...</p>
+      <p className="text-gray-600">{message}</p>
       <p className="text-sm text-gray-500 mt-2">{getTimeMessage()}</p>
     </div>
   )
