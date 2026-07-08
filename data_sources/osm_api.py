@@ -695,11 +695,11 @@ def query_nature_features(
     """
 
     query = (
-        "\n    [out:json][timeout:35];\n    (\n"
+        "\n    [out:json][timeout:30];\n    (\n"
         + (hiking_query if include_hiking else "")
         + water_query
         + camping_query
-        + "\n    );\n    out body;\n    >;\n    out skel qt;\n    "
+        + "\n    );\n    out tags;\n    "
     )
 
     _nf_key = f"query_nature_features:{lat:.5f}:{lon:.5f}:{int(radius_m)}:{1 if include_hiking else 0}"
@@ -709,7 +709,7 @@ def query_nature_features(
                 r = requests.post(
                     get_overpass_url(),
                     data={"data": query},
-                    timeout=_overpass_timeout(25),  # Reduced from 50s for faster failure
+                    timeout=_overpass_timeout(35),  # Match QL timeout; was 25s which cut off before Overpass finished
                     headers={"User-Agent": "HomeFit/1.0"}
                 )
                 if r.status_code != 200:
