@@ -35,11 +35,8 @@ def print_result(d, elapsed):
         print(f"  {key:<28} {score_str:>6}  {weight:>6.1f}%  {conf:>5}%")
     alloc = d.get("metadata", {}).get("allocation_type", "?")
     print(f"\n  allocation_type: {alloc}")
-    for key, pdata in pillars.items():
-        if pdata.get("weight", 0) > 0 and (pdata.get("score") or 0) == 0:
-            err = pdata.get("error") or pdata.get("data_quality", {}).get("reason") or pdata.get("status")
-            if err:
-                print(f"  [0-score] {key}: {err}")
+    nb = pillars.get("natural_beauty", {})
+    print(f"  natural_beauty data_quality: {nb.get('data_quality', 'MISSING')}")
 
 
 def test_location(location, trip_type, month):
