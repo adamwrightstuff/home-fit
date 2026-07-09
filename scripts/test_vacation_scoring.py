@@ -18,7 +18,7 @@ TESTS = [
 ]
 
 # Pillars to recheck — skip ones already confirmed working
-RECHECK_ONLY = "natural_beauty"  # set to None to score everything
+RECHECK_ONLY = None  # set to "pillar_name" to recheck a single pillar
 
 def print_result(d, elapsed):
     print(f"  Total score : {d.get('total_score', '?'):.1f}/100  ({elapsed:.1f}s)")
@@ -33,10 +33,8 @@ def print_result(d, elapsed):
             continue
         score_str = f"{score:.1f}" if isinstance(score, (int, float)) else "N/A"
         print(f"  {key:<28} {score_str:>6}  {weight:>6.1f}%  {conf:>5}%")
-    alloc = d.get("metadata", {}).get("allocation_type", "?")
+    alloc = d.get("allocation_type") or d.get("metadata", {}).get("allocation_type", "?")
     print(f"\n  allocation_type: {alloc}")
-    nb = pillars.get("natural_beauty", {})
-    print(f"  natural_beauty data_quality: {nb.get('data_quality', 'MISSING')}")
 
 
 def test_location(location, trip_type, month):
