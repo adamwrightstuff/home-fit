@@ -38,6 +38,8 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     # Query businesses with centralized radius profile
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     query_radius = int(profile.get('query_radius_m', 1500))
+    if vacation_mode:
+        query_radius = max(query_radius, 3000)
     print(f"   🔧 Radius profile (amenities): area_type={area_type}, scope={location_scope}, query_radius={query_radius}m")
     business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains, vacation_mode=vacation_mode)
     osm_query_failed = business_data is None
@@ -153,7 +155,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     # Walk Score (Pearson 0.90 vs old 0.80); fixes suburbs out-ranking dense urban cores.
     # All measured within an 800m / ~10-min walk, area-type-independent (absolute density
     # needs the classifier far less than the old peer-banded thresholds did).
-    walk_m = min(walkable_distance, 800)
+    walk_m = min(walkable_distance, 2000) if vacation_mode else min(walkable_distance, 800)
     walk_biz = [b for b in all_businesses if b["distance_m"] <= walk_m]
     walk_t1 = [b for b in tier1_all if b["distance_m"] <= walk_m]
     walk_t2 = [b for b in tier2_all if b["distance_m"] <= walk_m]
