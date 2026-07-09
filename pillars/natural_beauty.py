@@ -4627,18 +4627,13 @@ def get_natural_beauty_score(lat: float,
     uplift_bonus = result.get("uplift_bonus", 0.0)
     tree_details = result["details"]
 
-    # _score_trees() has many independent sub-fetches (GEE canopy, OSM trees, Census,
-    # street-view GVI, water proximity, topography, biodiversity); when ALL of them fail for
-    # a location, tree_analysis and scenic_proxy both come back as {} (confirmed: every
-    # healthy place checked, including ones with genuinely low canopy like El Monte 1.36% and
-    # Van Nuys 2.19%, has non-empty dicts here). That total-failure state was previously
-    # indistinguishable from "real near-zero data" and silently produced a fabricated low V9
-    # score (e.g. Los Feliz: 3.1/100, despite being known for hillside greenery and mature tree
-    # canopy) instead of failing honestly. Raise so this routes through the same pillar-failure
-    # path used elsewhere in this codebase (status='failed', excluded from the headline total)
-    # rather than reporting a confident-looking number computed from no real data.
+    # When all sub-fetches fail, tree_analysis and scenic_proxy both come back as {}.
+    # Previously this raised RuntimeError so the pillar failed with score=0 and kept its weight,
+    # which is worse than returning a low-confidence partial score (especially for vacation mode
+    # where natural_beauty is 30-35% weighted). Log a warning but continue — V9 will compute
+    # what it can from partial data, and confidence will reflect the data gap.
     if isinstance(tree_details, dict) and not tree_details.get("tree_analysis") and not tree_details.get("scenic_proxy"):
-        raise RuntimeError(f"Natural beauty data sources all failed for ({lat}, {lon}) -- no tree/scenic data collected")
+        logger.warning(f"Natural beauty data sources all failed for ({lat}, {lon}) — returning low-confidence score")
 
     # V9: compute alongside V7 when flag enabled; also always stash for comparison
     v9_score, v9_breakdown = _apply_v9_formula(

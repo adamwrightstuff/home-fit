@@ -1224,6 +1224,48 @@
       "runways": 2,
       "airlines": 4,
       "destinations": 8
+    },
+    {
+      "code": "FLG",
+      "name": "Flagstaff Pulliam Airport",
+      "city": "Flagstaff",
+      "state": "AZ",
+      "lat": 35.1385,
+      "lon": -111.6685,
+      "type": "small_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "low",
+      "runways": 1,
+      "airlines": 2,
+      "destinations": 3
+    },
+    {
+      "code": "SDM",
+      "name": "Brown Field Municipal Airport",
+      "city": "San Diego",
+      "state": "CA",
+      "lat": 32.5723,
+      "lon": -116.9802,
+      "type": "small_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "low",
+      "runways": 2,
+      "airlines": 1,
+      "destinations": 2
+    },
+    {
+      "code": "CNM",
+      "name": "Cavern City Air Terminal",
+      "city": "Carlsbad",
+      "state": "NM",
+      "lat": 32.3375,
+      "lon": -104.2632,
+      "type": "small_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "low",
+      "runways": 2,
+      "airlines": 1,
+      "destinations": 2
     }
   ]
 }
