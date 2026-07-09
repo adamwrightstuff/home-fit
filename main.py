@@ -6952,3 +6952,16 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Architectural diversity computation failed: {e}")
+
+@app.get("/debug/gee", dependencies=[Depends(require_proxy_auth)])
+def debug_gee(lat: float = 39.1911, lon: float = -106.8175):
+    """Test a live GEE canopy fetch and return the raw result or error."""
+    import traceback
+    from data_sources.gee_api import GEE_AVAILABLE, get_tree_canopy_gee
+    if not GEE_AVAILABLE:
+        return {"gee_available": False, "result": None, "error": "GEE_AVAILABLE=False"}
+    try:
+        result = get_tree_canopy_gee(lat, lon, radius_m=1000)
+        return {"gee_available": True, "result": result, "error": None}
+    except Exception as e:
+        return {"gee_available": True, "result": None, "error": str(e), "traceback": traceback.format_exc()}
