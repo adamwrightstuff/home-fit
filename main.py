@@ -1699,7 +1699,7 @@ def _compute_single_score_internal(
     # location cache because vacation uses a different pillar set and weight preset.
     _vacation_cache_key: Optional[str] = None
     if not test_mode_enabled and is_vacation_mode and trip_type:
-        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w7:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
+        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w8:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
         try:
             _vacation_cached = redis_get_compressed_json(_vacation_cache_key)
             if isinstance(_vacation_cached, dict) and _vacation_cached.get("livability_pillars"):
