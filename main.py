@@ -1665,7 +1665,7 @@ def _compute_single_score_internal(
     # Shared cross-user cache (Redis): return cached response template if available.
     # Vacation mode is allowed: apply vacation weights + only_pillars filter.
     # ------------------------------------------------------------------
-    if not test_mode_enabled and (only_pillars is None or is_vacation_mode):
+    if not test_mode_enabled and not is_vacation_mode and (only_pillars is None or is_vacation_mode):
         try:
             t_location_cache = time.perf_counter()
             location_cache_key = _generate_location_cache_key(
