@@ -4015,6 +4015,7 @@ async def _stream_score_with_progress(
                 "data_availability": tree_details.get("data_availability", {}),
                 "gvi_available": natural_calc.get("gvi_available", False) if isinstance(natural_calc, dict) else False,
                 "gvi_source": natural_calc.get("gvi_source", "unknown") if isinstance(natural_calc, dict) else "unknown",
+                "data_quality": natural_calc.get("data_quality", {}) if isinstance(natural_calc, dict) else {},
             }
         else:
             natural_score = 0.0
