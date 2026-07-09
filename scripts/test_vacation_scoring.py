@@ -17,6 +17,9 @@ TESTS = [
     ("Nashville, TN",    "city",     10),
 ]
 
+# Pillars to recheck — skip ones already confirmed working
+RECHECK_ONLY = "natural_beauty"  # set to None to score everything
+
 def print_result(d, elapsed):
     print(f"  Total score : {d.get('total_score', '?'):.1f}/100  ({elapsed:.1f}s)")
     pillars = d.get("livability_pillars", {})
@@ -50,6 +53,8 @@ def test_location(location, trip_type, month):
         params["natural_beauty_preference"] = '["ocean"]'
     elif trip_type == "mountain":
         params["natural_beauty_preference"] = '["mountains"]'
+    if RECHECK_ONLY:
+        params["only"] = RECHECK_ONLY
 
     print(f"\n{'='*60}")
     print(f"  {location} | {trip_type} | month={month}")
