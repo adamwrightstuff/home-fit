@@ -699,7 +699,7 @@ def query_nature_features(
         + (hiking_query if include_hiking else "")
         + water_query
         + camping_query
-        + "\n    );\n    out tags;\n    "
+        + "\n    );\n    out center tags;\n    "
     )
 
     _nf_key = f"query_nature_features:{lat:.5f}:{lon:.5f}:{int(radius_m)}:{1 if include_hiking else 0}"
@@ -2242,27 +2242,19 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             area_sqm = 0.0  # Nodes have no area
             way_length_m = 0.0
         elif elem_type == "way":
-            elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
-            
-            # Calculate way length for coastline filtering
-            if natural == "coastline" or (natural == "water" and water_type == "lake"):
-                way_nodes = elem.get("nodes", [])
-                if len(way_nodes) >= 2:
-                    total_length = 0.0
-                    prev_node = None
-                    for node_id in way_nodes:
-                        node = nodes_dict.get(node_id)
-                        if node and "lat" in node and "lon" in node:
-                            if prev_node:
-                                dist = haversine_distance(
-                                    prev_node["lat"], prev_node["lon"],
-                                    node["lat"], node["lon"]
-                                ) * 1000  # Convert km to meters
-                                total_length += dist
-                            prev_node = node
-                    way_length_m = total_length
+            # Use precomputed center (from out center tags) when available, fall back to node geometry
+            center = elem.get("center", {})
+            if center.get("lat") is not None:
+                elem_lat, elem_lon = center["lat"], center["lon"]
+                area_sqm = 0.0  # area not available from center-only output
+            else:
+                elem_lat, elem_lon, area_sqm = _get_way_geometry(elem, nodes_dict)
         elif elem_type == "relation":
-            elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
+            center = elem.get("center", {})
+            if center.get("lat") is not None:
+                elem_lat, elem_lon = center["lat"], center["lon"]
+            else:
+                elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
 
         if elem_lat is None:
             # DIAGNOSTIC: Log when geometry calculation fails for camping
