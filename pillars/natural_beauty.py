@@ -2056,6 +2056,10 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             sources.append("No tree data available")
 
     base_tree_score = max(0.0, min(50.0, score))
+    # When GEE is unavailable, mark that canopy was estimated from OSM/census so
+    # the confidence function doesn't zero out just because gee_canopy_pct is missing.
+    if 'gee_canopy_pct' not in details and score > 0:
+        details['canopy_pct'] = round(score * 2.0, 1)  # rough inverse of _score_tree_canopy
     details['sources'] = sources
     details['component_scores'] = {
         "canopy_score": canopy_points,
