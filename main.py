@@ -2359,6 +2359,7 @@ def _compute_single_score_internal(
             "data_availability": tree_details.get("data_availability", {}),
             "gvi_available": natural_calc.get("gvi_available", False),
             "gvi_source": natural_calc.get("gvi_source", "unknown"),
+            "data_quality": natural_calc.get("data_quality", {}),
             # Phase 7: versioned scoring (v7 is default display, v6 included for monitoring)
             "scoring_version": natural_calc.get("scoring_version"),
             "score_v6": natural_calc.get("score_v6"),
