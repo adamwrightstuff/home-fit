@@ -561,6 +561,17 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
     return summary
 
 
+_QUALITY_TIER_CONFIDENCE = {"excellent": 92, "good": 78, "fair": 60, "poor": 30, "very_poor": 5}
+
+def _dq_confidence(dq: dict) -> int:
+    """Return confidence from data_quality dict, falling back to quality_tier when confidence key absent (cached responses)."""
+    if not dq:
+        return 0
+    if "confidence" in dq:
+        return int(dq["confidence"])
+    return _QUALITY_TIER_CONFIDENCE.get(dq.get("quality_tier", ""), 0)
+
+
 def _natural_beauty_data_totally_failed(tree_details: Any, natural_calc: Dict) -> bool:
     """
     True when _score_trees()'s independent sub-fetches (GEE canopy, OSM trees, Census,
@@ -2487,7 +2498,7 @@ def _compute_single_score_internal(
             "details": natural_details,
             "breakdown": natural_details.get("breakdown", {}),
             "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
-            "confidence": natural_details.get("data_quality", {}).get("confidence", 0) if natural_details else 0,
+            "confidence": _dq_confidence(natural_details.get("data_quality", {}) if natural_details else {}),
             "data_quality": natural_details.get("data_quality", {}) if natural_details else {},
             "area_classification": natural_details.get("area_classification", {}) if natural_details else {},
         },
@@ -4218,7 +4229,7 @@ async def _stream_score_with_progress(
                 "details": natural_details,
                 "breakdown": natural_details.get("breakdown", {}),
                 "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference_parsed),
-                "confidence": natural_details.get("data_quality", {}).get("confidence", 0) if natural_details else 0,
+                "confidence": _dq_confidence(natural_details.get("data_quality", {}) if natural_details else {}),
                 "data_quality": natural_details.get("data_quality", {}) if natural_details else {},
                 "area_classification": natural_details.get("area_classification", {}) if natural_details else {},
             },
@@ -5401,7 +5412,7 @@ async def stream_score(
             "details": natural_details,
             "breakdown": natural_details.get("breakdown", {}),
             "summary": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
-            "confidence": natural_details.get("data_quality", {}).get("confidence", 0) if natural_details else 0,
+            "confidence": _dq_confidence(natural_details.get("data_quality", {}) if natural_details else {}),
             "data_quality": natural_details.get("data_quality", {}) if natural_details else {},
             "area_classification": natural_details.get("area_classification", {}) if natural_details else {},
         },
