@@ -43,8 +43,17 @@ def _initialize_gee():
                 print(f"🔑 GEE: using GOOGLE_APPLICATION_CREDENTIALS_JSON ({client_email})")
             except Exception:
                 pass
+            # Railway/Vercel sometimes double-escapes \n → \\n in env vars.
+            # Re-encode to fix the private key PEM block before writing to disk.
+            try:
+                creds_dict_fixed = json.loads(credentials_json)
+                if "private_key" in creds_dict_fixed:
+                    creds_dict_fixed["private_key"] = creds_dict_fixed["private_key"].replace("\\n", "\n")
+                credentials_json_fixed = json.dumps(creds_dict_fixed)
+            except Exception:
+                credentials_json_fixed = credentials_json
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-                f.write(credentials_json)
+                f.write(credentials_json_fixed)
                 temp_credentials_file = f.name
             try:
                 creds_dict = json.loads(credentials_json)
@@ -61,7 +70,9 @@ def _initialize_gee():
                 _log_gee_success("service account (GOOGLE_APPLICATION_CREDENTIALS_JSON)")
                 return True
             except Exception as e3:
+                import traceback
                 print(f"⚠️  GEE init failed (GOOGLE_APPLICATION_CREDENTIALS_JSON): {e3}")
+                print(f"⚠️  GEE traceback: {traceback.format_exc()}")
                 try:
                     os.unlink(temp_credentials_file)
                 except Exception:
