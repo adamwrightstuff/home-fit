@@ -24,7 +24,7 @@ function equalAllocation(pillars: PillarKey[]): Record<string, number> {
 function prioritiesToTokens(priorities: Partial<Record<string, string>> | null | undefined): Record<string, number> {
   if (!priorities) return equalAllocation(PILLAR_ORDER)
 
-  // Include extra keys (e.g. natural_beauty, built_environment) that are in priorities but not PILLAR_ORDER.
+  // Include extra keys (e.g. natural_beauty) that are in priorities but not PILLAR_ORDER.
   const allKeys: string[] = [...PILLAR_ORDER]
   for (const k of Object.keys(priorities)) {
     if (!allKeys.includes(k) && String(priorities[k] ?? 'none').toLowerCase().trim() !== 'none') {

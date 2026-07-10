@@ -561,14 +561,6 @@ export default function ScoreDisplay({
                       }
                     : undefined
                 }
-                builtEnvPreference={key === 'built_environment' ? searchOptions?.built_env_preference ?? null : undefined}
-                onBuiltEnvPreferenceChange={
-                  key === 'built_environment' && onSearchOptionsChange && searchOptions
-                    ? (value) => {
-                        onSearchOptionsChange({ ...searchOptions, built_env_preference: value as SearchOptions['built_env_preference'] })
-                      }
-                    : undefined
-                }
                 builtCharacterPreference={key === 'neighborhood_beauty' ? searchOptions?.built_character_preference ?? null : undefined}
                 builtDensityPreference={key === 'neighborhood_beauty' ? searchOptions?.built_density_preference ?? null : undefined}
                 onBuiltCharacterPreferenceChange={
