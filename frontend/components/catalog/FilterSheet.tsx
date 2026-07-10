@@ -227,7 +227,7 @@ export default function FilterSheet({
 
           {/* Scenery type */}
           <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Scenery</div>
+            <div style={LABEL_STYLE}>Scenery (select multiple)</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {NB_TYPE_OPTIONS.map(({ value, label }) =>
                 chip(filterNbTypes.includes(value), label, () => toggleNbType(value))
