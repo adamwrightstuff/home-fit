@@ -106,18 +106,20 @@ def proxy_headers() -> Dict[str, str]:
 
 MIN_CONFIDENCE = 50  # pillars below this are treated as failed
 
+# These pillars are structurally low-confidence for vacation destinations
+# (sparse healthcare data for small towns, no major airport = legitimate 0%)
+CONFIDENCE_EXEMPT = {"healthcare_access", "air_travel_access"}
+
 
 def _has_good_scores(obj: dict) -> bool:
-    """Return True only if every weighted pillar has confidence >= MIN_CONFIDENCE."""
+    """Return True if the place has a complete set of pillar scores (score != None for all weighted pillars)."""
     pillars = obj.get("pillars", {})
     if not pillars:
         return False
-    for pdata in pillars.values():
-        weight = pdata.get("weight") or 0
-        if weight == 0:
+    for name, pdata in pillars.items():
+        if (pdata.get("weight") or 0) == 0:
             continue
-        conf = pdata.get("confidence")
-        if conf is None or conf < MIN_CONFIDENCE:
+        if pdata.get("score") is None:
             return False
     return True
 
@@ -140,12 +142,13 @@ def load_completed(path: Path) -> set:
     return keys
 
 
-def score_destination(
+def _submit_and_poll(
     session: requests.Session,
     base_url: str,
     location: str,
     trip_type: str,
     travel_month: int,
+    only_pillars: Optional[list] = None,
     timeout: int = 600,
 ) -> dict:
     headers = proxy_headers()
@@ -159,6 +162,8 @@ def score_destination(
         params["natural_beauty_preference"] = '["ocean"]'
     elif trip_type == "mountain":
         params["natural_beauty_preference"] = '["mountains"]'
+    if only_pillars:
+        params["only"] = ",".join(only_pillars)
 
     r = session.post(f"{base_url}/score/jobs", params=params, headers=headers, timeout=30)
     r.raise_for_status()
@@ -181,32 +186,65 @@ def score_destination(
     raise TimeoutError(f"Job {job_id} did not complete within {timeout}s")
 
 
-def run_one(base_url: str, location: str, trip_type: str, output: Path) -> dict:
+def _low_conf_pillars(pillars: dict) -> list:
+    """Pillars with no score at all (None) — these need a rescore."""
+    return [k for k, v in pillars.items()
+            if (v.get("weight") or 0) > 0 and v.get("score") is None]
+
+
+def run_one(base_url: str, location: str, trip_type: str, output: Path,
+            existing: Optional[dict] = None) -> dict:
     travel_month = TRIP_TYPE_MONTH.get(trip_type, 7)
     session = requests.Session()
-    result = {"location": location, "trip_type": trip_type, "success": False}
+
+    # Start from existing partial result if available
+    result = existing.copy() if existing else {"location": location, "trip_type": trip_type}
+    result["success"] = False
+    existing_pillars = result.get("pillars", {})
+
+    # Determine which pillars need scoring
+    low = _low_conf_pillars(existing_pillars)
+    only = low if existing_pillars and low else None  # full score if no existing data
+
     try:
         t0 = time.time()
-        score_data = score_destination(session, base_url, location, trip_type, travel_month)
+        score_data = _submit_and_poll(session, base_url, location, trip_type, travel_month, only_pillars=only)
         elapsed = time.time() - t0
-        pillars = {
+
+        new_pillars = {
             k: {"score": v.get("score"), "weight": v.get("weight"), "confidence": v.get("confidence")}
             for k, v in score_data.get("livability_pillars", {}).items()
         }
+
+        # Merge: new scores overwrite old only for the pillars that were re-scored
+        merged_pillars = {**existing_pillars, **new_pillars}
+
+        # Recompute total from merged pillars
+        total_weight = sum((v.get("weight") or 0) for v in merged_pillars.values())
+        if total_weight > 0:
+            merged_total = sum(
+                (v.get("score") or 0) * (v.get("weight") or 0)
+                for v in merged_pillars.values()
+            ) / total_weight
+        else:
+            merged_total = score_data.get("total_score") or 0
+
         result.update({
             "elapsed_s": round(elapsed, 1),
-            "total_score": score_data.get("total_score"),
-            "allocation_type": score_data.get("allocation_type") or score_data.get("metadata", {}).get("allocation_type"),
-            "pillars": pillars,
+            "total_score": round(merged_total, 1),
+            "allocation_type": score_data.get("allocation_type") or score_data.get("metadata", {}).get("allocation_type") or result.get("allocation_type"),
+            "pillars": merged_pillars,
             "score_data": score_data,
         })
-        if _has_good_scores(result):
+
+        low_after = _low_conf_pillars(merged_pillars)
+        if not low_after:
             result["success"] = True
-            print(f"  ✅ {location} ({trip_type}) → {score_data.get('total_score', '?'):.1f}  [{elapsed:.0f}s]")
+            label = f"patched {low}" if only else "full score"
+            print(f"  ✅ {location} ({trip_type}) → {merged_total:.1f}  [{elapsed:.0f}s] ({label})")
         else:
-            low = [k for k, v in pillars.items() if (v.get("weight") or 0) > 0 and (v.get("confidence") or 0) < MIN_CONFIDENCE]
-            result["error"] = f"low confidence pillars: {low}"
-            print(f"  ⚠️  {location} ({trip_type}) → low conf on {low}, will retry")
+            result["error"] = f"low confidence pillars: {low_after}"
+            print(f"  ⚠️  {location} ({trip_type}) → still low conf on {low_after}")
     except Exception as e:
         result["error"] = str(e)
         print(f"  ❌ {location} ({trip_type}) → {e}")
@@ -226,11 +264,9 @@ def main():
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    completed = load_completed(output)
-
-    # Rewrite JSONL keeping only good entries so bad ones get replaced
+    # Load existing results: best entry per (location, trip_type)
+    existing_map: dict = {}  # (loc, tt) -> best partial result so far
     if output.exists():
-        good_lines = []
         with output.open() as f:
             for line in f:
                 line = line.strip()
@@ -238,17 +274,27 @@ def main():
                     continue
                 try:
                     obj = json.loads(line)
-                    if obj.get("success") and _has_good_scores(obj):
-                        good_lines.append(line)
                 except json.JSONDecodeError:
-                    pass
-        with output.open("w") as f:
-            for line in good_lines:
-                f.write(line + "\n")
+                    continue
+                key = (obj.get("location"), obj.get("trip_type"))
+                prev = existing_map.get(key)
+                # Keep the entry with the most high-confidence pillars
+                def _good_count(o):
+                    return sum(1 for v in o.get("pillars", {}).values()
+                               if (v.get("weight") or 0) > 0 and (v.get("confidence") or 0) >= MIN_CONFIDENCE)
+                if prev is None or _good_count(obj) > _good_count(prev):
+                    existing_map[key] = obj
+
+    completed = {k for k, v in existing_map.items() if v.get("success") and _has_good_scores(v)}
+
+    # Rewrite JSONL with only the best entry per location (drop duplicates/failures)
+    with output.open("w") as f:
+        for obj in existing_map.values():
+            f.write(json.dumps(obj) + "\n")
 
     todo = [(loc, tt) for loc, tt in DESTINATIONS_DEDUPED if (loc, tt) not in completed]
 
-    print(f"Vacation batch scoring: {len(todo)} to score, {len(completed)} already done")
+    print(f"Vacation batch scoring: {len(todo)} to score/patch, {len(completed)} already done")
     print(f"Output: {output}\n")
 
     if not todo:
@@ -257,7 +303,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         futures = {
-            pool.submit(run_one, args.base_url, loc, tt, output): (loc, tt)
+            pool.submit(run_one, args.base_url, loc, tt, output, existing_map.get((loc, tt))): (loc, tt)
             for loc, tt in todo
         }
         for fut in as_completed(futures):
