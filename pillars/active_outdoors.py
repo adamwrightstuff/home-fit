@@ -79,6 +79,7 @@ def get_active_outdoors_score_v2(
     area_type: Optional[str] = None,
     location_scope: Optional[str] = None,
     precomputed_tree_canopy_5km: Optional[float] = None,
+    trip_type: Optional[str] = None,
 ) -> Tuple[float, Dict]:
     """
     Compute Active Outdoors v2 (0–100).
@@ -385,6 +386,11 @@ def get_active_outdoors_score_v2(
     # 3) Component scores
     daily_score = _score_daily_urban_outdoors_v2(parks, playgrounds, recreational_facilities, scoring_area_type, expectations)
     is_mountain_town = context_flags.get("is_mountain_town", False)
+    # Vacation mountain trips: user declared this is a mountain destination, force mountain scoring
+    # even when OSM trail data is sparse (Vail, Park City, Moab, Jackson all fail OSM detection)
+    if trip_type == "mountain" and not is_mountain_town:
+        is_mountain_town = True
+        logger.info("🏔️ [AO v2] Forced is_mountain_town=True (trip_type=mountain)")
     # IMPORTANT: Pass scoring_area_type (not original area_type) so mountain town detection works
     # If Denver is detected as mountain town, scoring_area_type = "exurban", which enables higher expectations
     wild_score = _score_wild_adventure_v2(

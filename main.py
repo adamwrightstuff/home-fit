@@ -1699,7 +1699,7 @@ def _compute_single_score_internal(
     # location cache because vacation uses a different pillar set and weight preset.
     _vacation_cache_key: Optional[str] = None
     if not test_mode_enabled and is_vacation_mode and trip_type:
-        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w8:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
+        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w9:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
         try:
             _vacation_cached = redis_get_compressed_json(_vacation_cache_key)
             if isinstance(_vacation_cached, dict) and _vacation_cached.get("livability_pillars"):
@@ -1987,7 +1987,8 @@ def _compute_single_score_internal(
             ('active_outdoors', get_active_outdoors_score_v2, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope,
-                'precomputed_tree_canopy_5km': tree_canopy_5km
+                'precomputed_tree_canopy_5km': tree_canopy_5km,
+                'trip_type': trip_type if is_vacation_mode else None,
             })
         )
     if need_built_beauty:
@@ -2278,6 +2279,7 @@ def _compute_single_score_internal(
                 lat, lon, city=city, area_type=_corrected_area_type,
                 location_scope=location_scope,
                 precomputed_tree_canopy_5km=tree_canopy_5km,
+                trip_type=trip_type if is_vacation_mode else None,
             )
             logger.info(
                 f"active_outdoors re-scored after area_type correction: {area_type} -> {_corrected_area_type}"
