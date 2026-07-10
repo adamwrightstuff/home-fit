@@ -363,7 +363,7 @@ export default function CatalogPageClient({
       if (filterNbTypes.length > 0) {
         const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
         const v9 = nb?.details?.natural_beauty?.v9_breakdown as V9Breakdown | undefined
-        const passes = filterNbTypes.every((t) => {
+        const passes = filterNbTypes.some((t) => {
           if (t === 'mountains') return (v9?.topo_score ?? 0) >= 35
           if (t === 'ocean') return (v9?.water_score ?? 0) >= 55
           if (t === 'lakes_rivers') return (v9?.water_score ?? 0) >= 40
