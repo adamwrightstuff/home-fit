@@ -361,10 +361,21 @@ export default function CatalogPageClient({
         ? (applyNbPreferencesV9(v9, nbPreferences) ?? storedNaturalScore)
         : storedNaturalScore
 
-      // Built environment match score — only meaningful when user has set a preference
-      const builtMatchScore = builtEnvPreference
+      // Built environment match score — only injected when user has picked a subtype.
+      // Without a subtype the pillar has no score and reweightScoreResponseFromPriorities
+      // excludes it from allocSum, renormalizing the remaining weights instead of
+      // contributing a flat 50 that gives every place the same score.
+      const builtEnvScore = builtEnvPreference
         ? builtEnvMatchScore(effectiveAreaType, builtEnvPreference)
-        : 50
+        : null
+
+      const syntheticPillars: Record<string, unknown> = {
+        neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
+        natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
+      }
+      if (builtEnvScore !== null) {
+        syntheticPillars.built_environment = { score: builtEnvScore, status: 'success', weight: 0, contribution: 0 }
+      }
 
       return {
         ...p,
@@ -372,9 +383,7 @@ export default function CatalogPageClient({
           ...p.score,
           livability_pillars: {
             ...p.score.livability_pillars,
-            neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-            natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
-            built_environment: { score: builtMatchScore, status: 'success', weight: 0, contribution: 0 },
+            ...syntheticPillars,
           },
         },
       }

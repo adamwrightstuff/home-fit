@@ -24,14 +24,14 @@ _NYC_CSD_TABLE = {
     3:  {"districtID": "3600078", "lat": 40.783, "lon": -73.977},  # Upper West Side
     4:  {"districtID": "3600079", "lat": 40.795, "lon": -73.934},  # East Harlem
     5:  {"districtID": "3600081", "lat": 40.813, "lon": -73.950},  # Harlem
-    6:  {"districtID": "3600083", "lat": 40.843, "lon": -73.935},  # Washington Heights/Inwood
+    6:  {"districtID": "3600083", "lat": 40.858, "lon": -73.928},  # Washington Heights/Inwood
     7:  {"districtID": "3600084", "lat": 40.812, "lon": -73.920},  # Mott Haven/Melrose (S Bronx)
     8:  {"districtID": "3600085", "lat": 40.831, "lon": -73.889},  # Hunts Point/Soundview
     9:  {"districtID": "3600086", "lat": 40.845, "lon": -73.909},  # Morrisania/Tremont
     10: {"districtID": "3600087", "lat": 40.873, "lon": -73.900},  # Kingsbridge/Riverdale
     11: {"districtID": "3600088", "lat": 40.859, "lon": -73.861},  # Pelham Pkwy/Morris Park
     12: {"districtID": "3600090", "lat": 40.840, "lon": -73.899},  # Crotona/Belmont
-    13: {"districtID": "3600091", "lat": 40.692, "lon": -73.973},  # Brooklyn Heights/Fort Greene
+    13: {"districtID": "3600091", "lat": 40.695, "lon": -73.990},  # Brooklyn Heights/Fort Greene
     14: {"districtID": "3600119", "lat": 40.714, "lon": -73.955},  # Williamsburg/Greenpoint
     15: {"districtID": "3600092", "lat": 40.667, "lon": -73.990},  # Park Slope/Carroll Gardens/Gowanus
     16: {"districtID": "3600094", "lat": 40.687, "lon": -73.935},  # Brownsville/Bushwick
@@ -45,7 +45,7 @@ _NYC_CSD_TABLE = {
     24: {"districtID": "3600098", "lat": 40.714, "lon": -73.898},  # Middle Village/Maspeth/Ridgewood (centroid shifted west to capture Maspeth)
     25: {"districtID": "3600122", "lat": 40.760, "lon": -73.830},  # Flushing/Jackson Heights
     26: {"districtID": "3600099", "lat": 40.722, "lon": -73.787},  # Bayside/Howard Beach
-    27: {"districtID": "3600123", "lat": 40.690, "lon": -73.820},  # Far Rockaway/Jamaica
+    27: {"districtID": "3600123", "lat": 40.660, "lon": -73.835},  # Far Rockaway/Jamaica
     28: {"districtID": "3600100", "lat": 40.721, "lon": -73.837},  # Forest Hills/Jamaica
     29: {"districtID": "3600101", "lat": 40.687, "lon": -73.775},  # Springfield Gardens
     30: {"districtID": "3600102", "lat": 40.761, "lon": -73.926},  # Astoria/LIC/Sunnyside

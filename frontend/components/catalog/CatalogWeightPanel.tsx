@@ -206,26 +206,31 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                         </div>
                       )}
                       {key === 'built_environment' && current !== 'None' && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {(Object.keys(BUILT_ENV_LABELS) as BuiltEnvPreference[]).map((pref) => (
-                            <button
-                              key={pref}
-                              type="button"
-                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                                builtEnvPreference === pref
-                                  ? 'text-white'
-                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                              }`}
-                              style={
-                                builtEnvPreference === pref
-                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
-                                  : undefined
-                              }
-                              onClick={() => onBuiltEnvPreferenceChange?.(builtEnvPreference === pref ? null : pref)}
-                            >
-                              {BUILT_ENV_LABELS[pref]}
-                            </button>
-                          ))}
+                        <div className="mt-2">
+                          {!builtEnvPreference && (
+                            <p className="mb-1.5 text-xs font-semibold text-amber-600">Select a type to activate this weight</p>
+                          )}
+                          <div className="flex flex-wrap gap-1">
+                            {(Object.keys(BUILT_ENV_LABELS) as BuiltEnvPreference[]).map((pref) => (
+                              <button
+                                key={pref}
+                                type="button"
+                                className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+                                  builtEnvPreference === pref
+                                    ? 'text-white'
+                                    : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                                }`}
+                                style={
+                                  builtEnvPreference === pref
+                                    ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
+                                    : undefined
+                                }
+                                onClick={() => onBuiltEnvPreferenceChange?.(builtEnvPreference === pref ? null : pref)}
+                              >
+                                {BUILT_ENV_LABELS[pref]}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {DEALBREAKER_PILLARS.includes(key) && (
