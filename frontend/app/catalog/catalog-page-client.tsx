@@ -33,7 +33,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
-import { type NbPreference, applyNbPreferencesV9 } from '@/lib/nbPreference'
+import type { V9Breakdown } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -106,19 +106,9 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return { ...DEFAULT_PRIORITIES }
   })
-  const [politicalPreference, setPoliticalPreference] = useState<'progressive' | 'conservative' | null>(() => {
-    try {
-      const stored = sessionStorage.getItem('homefit_search_options')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed.political_preference === 'progressive' || parsed.political_preference === 'conservative') {
-          return parsed.political_preference
-        }
-      }
-    } catch { /* ignore */ }
-    return null
-  })
-  const [nbPreferences, setNbPreferences] = useState<NbPreference[]>([])
+  const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
+  const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
+  const [filterDiversity, setFilterDiversity] = useState<'all' | 'high' | 'mixed' | 'low'>('all')
   /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -257,7 +247,6 @@ export default function CatalogPageClient({
           setPriorities(merged)
         }
         if (opts.dealbreakers && typeof opts.dealbreakers === 'object') setDealbreakers(opts.dealbreakers)
-        if (opts.political_preference === 'progressive' || opts.political_preference === 'conservative') setPoliticalPreference(opts.political_preference)
         if (typeof opts.household_income === 'number' && opts.household_income > 0) {
           setHouseholdIncome(opts.household_income)
           setIncomeInputValue(String(opts.household_income))
@@ -273,11 +262,11 @@ export default function CatalogPageClient({
       fetch('/api/me/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priorities, dealbreakers, political_preference: politicalPreference, household_income: householdIncome }),
+        body: JSON.stringify({ priorities, dealbreakers, household_income: householdIncome }),
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, politicalPreference, householdIncome])
+  }, [user, priorities, dealbreakers, householdIncome])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -329,32 +318,12 @@ export default function CatalogPageClient({
       ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
       : places
 
-    // Apply political_lean preference
-    const withPolitical = politicalPreference
-      ? withIncome.map((p) => {
-          const pl = (p.score.livability_pillars as any)?.political_lean
-          const lean2024 = pl?.breakdown?.lean_2024
-          if (typeof lean2024 !== 'number') return p
-          const polScore = politicalPreference === 'progressive'
-            ? Math.max(0, Math.min(100, ((lean2024 + 1) / 2) * 100))
-            : Math.max(0, Math.min(100, ((1 - lean2024) / 2) * 100))
-          return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars, political_lean: { ...pl, score: polScore } } } }
-        })
-      : withIncome
-
-    // Synthesize natural_beauty from neighborhood_beauty sub-score (preference-adjusted if set).
+    // Synthesize natural_beauty from neighborhood_beauty sub-score.
     // Zero out neighborhood_beauty so it doesn't double-count.
-    const withNb = withPolitical.map((p) => {
+    return withIncome.map((p) => {
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       if (!nb) return p
-
-      const v9 = nb.details?.natural_beauty?.v9_breakdown
       const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
-
-      const adjustedNatural = nbPreferences.length > 0
-        ? (applyNbPreferencesV9(v9, nbPreferences) ?? storedNaturalScore)
-        : storedNaturalScore
-
       return {
         ...p,
         score: {
@@ -362,14 +331,12 @@ export default function CatalogPageClient({
           livability_pillars: {
             ...p.score.livability_pillars,
             neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-            natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
+            natural_beauty: { score: storedNaturalScore, status: 'success', weight: 0, contribution: 0 },
           },
         },
       }
     })
-
-    return withNb
-  }, [places, householdIncome, politicalPreference, nbPreferences])
+  }, [places, householdIncome])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -387,6 +354,31 @@ export default function CatalogPageClient({
         const tr = p.score.status_signal_breakdown?.trajectory
         if (tr !== filterTrajectory) return false
       }
+      if (filterPoliticalLean !== 'all') {
+        const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
+        if (typeof lean !== 'number') return false
+        if (filterPoliticalLean === 'progressive' && lean <= 0) return false
+        if (filterPoliticalLean === 'conservative' && lean >= 0) return false
+      }
+      if (filterNbTypes.length > 0) {
+        const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+        const v9 = nb?.details?.natural_beauty?.v9_breakdown as V9Breakdown | undefined
+        const passes = filterNbTypes.every((t) => {
+          if (t === 'mountains') return (v9?.topo_score ?? 0) >= 35
+          if (t === 'ocean') return (v9?.water_score ?? 0) >= 55
+          if (t === 'lakes_rivers') return (v9?.water_score ?? 0) >= 40
+          if (t === 'canopy') return (v9?.canopy_score ?? 0) >= 50 || (v9?.gvi_score ?? 0) >= 50
+          return true
+        })
+        if (!passes) return false
+      }
+      if (filterDiversity !== 'all') {
+        const divScore = (p.score.livability_pillars as any)?.diversity?.score
+        if (typeof divScore !== 'number') return false
+        if (filterDiversity === 'high' && divScore < 65) return false
+        if (filterDiversity === 'mixed' && (divScore < 40 || divScore >= 65)) return false
+        if (filterDiversity === 'low' && divScore >= 40) return false
+      }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -402,6 +394,9 @@ export default function CatalogPageClient({
     filterAreaTypes,
     filterArchetype,
     filterTrajectory,
+    filterPoliticalLean,
+    filterNbTypes,
+    filterDiversity,
     indexMode,
     sortByName,
     sortDir,
@@ -613,13 +608,13 @@ export default function CatalogPageClient({
         natural_beauty_preference: null as string | null,
         built_character_preference: null as string | null,
         built_density_preference: null as string | null,
-        political_preference: politicalPreference ?? null,
+        political_preference: null,
       }
       const cacheKey = buildResultsCacheKey(routeParams)
       writeCatalogResultsHydrate({ v: 1, cacheKey, score: place.score })
       router.push(buildResultsUrl(routeParams))
     },
-    [priorities, politicalPreference, router]
+    [priorities, router]
   )
 
   const clearSelection = useCallback(() => {
@@ -661,16 +656,8 @@ export default function CatalogPageClient({
   if (showQuiz) {
     return (
       <PlaceValuesGame
-        onApplyPriorities={(quizPriorities, naturalBeautyPreference, _jobCats, politicalVibe) => {
+        onApplyPriorities={(quizPriorities) => {
           setPriorities(quizPriorities)
-          if (naturalBeautyPreference?.length) {
-            setNbPreferences(naturalBeautyPreference as import('@/lib/nbPreference').NbPreference[])
-          }
-          if (politicalVibe === 'progressive' || politicalVibe === 'conservative') {
-            setPoliticalPreference(politicalVibe)
-          } else {
-            setPoliticalPreference(null)
-          }
           setShowQuiz(false)
         }}
         onBack={() => setShowQuiz(false)}
@@ -823,9 +810,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -889,9 +876,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1203,10 +1190,7 @@ export default function CatalogPageClient({
         onClose={() => setWeightOpen(false)}
         priorities={priorities}
         onChange={setPriorities}
-        politicalPreference={politicalPreference}
-        onPoliticalPreferenceChange={setPoliticalPreference}
-        nbPreferences={nbPreferences}
-        onNbPreferencesChange={setNbPreferences}
+
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
         householdIncome={householdIncome}
         incomeInputValue={incomeInputValue}
@@ -1244,6 +1228,12 @@ export default function CatalogPageClient({
         archetypes={archetypes}
         filterTrajectory={filterTrajectory}
         onFilterTrajectoryChange={setFilterTrajectory}
+        filterPoliticalLean={filterPoliticalLean}
+        onFilterPoliticalLeanChange={setFilterPoliticalLean}
+        filterNbTypes={filterNbTypes}
+        onFilterNbTypesChange={setFilterNbTypes}
+        filterDiversity={filterDiversity}
+        onFilterDiversityChange={setFilterDiversity}
         resultCount={filteredPlaces.length}
       />
 

@@ -12,6 +12,13 @@ const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'rural', label: 'Rural' },
 ]
 
+const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'mountains', label: 'Mountains' },
+  { value: 'ocean', label: 'Ocean / Coast' },
+  { value: 'lakes_rivers', label: 'Lakes & Rivers' },
+  { value: 'canopy', label: 'Tree Canopy' },
+]
+
 interface FilterSheetProps {
   open: boolean
   onClose: () => void
@@ -24,6 +31,12 @@ interface FilterSheetProps {
   archetypes: string[]
   filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
+  filterPoliticalLean: 'all' | 'progressive' | 'conservative'
+  onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative') => void
+  filterNbTypes: string[]
+  onFilterNbTypesChange: (v: string[]) => void
+  filterDiversity: 'all' | 'high' | 'mixed' | 'low'
+  onFilterDiversityChange: (v: 'all' | 'high' | 'mixed' | 'low') => void
   resultCount: number
 }
 
@@ -57,6 +70,12 @@ export default function FilterSheet({
   archetypes,
   filterTrajectory,
   onFilterTrajectoryChange,
+  filterPoliticalLean,
+  onFilterPoliticalLeanChange,
+  filterNbTypes,
+  onFilterNbTypesChange,
+  filterDiversity,
+  onFilterDiversityChange,
   resultCount,
 }: FilterSheetProps) {
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
@@ -76,13 +95,19 @@ export default function FilterSheet({
   const activeCount =
     (filterAreaTypes.length > 0 ? 1 : 0) +
     (filterArchetype !== 'all' ? 1 : 0) +
-    (filterTrajectory !== 'all' ? 1 : 0)
+    (filterTrajectory !== 'all' ? 1 : 0) +
+    (filterPoliticalLean !== 'all' ? 1 : 0) +
+    (filterNbTypes.length > 0 ? 1 : 0) +
+    (filterDiversity !== 'all' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
     onFilterAreaTypesChange([])
     onFilterArchetypeChange('all')
     onFilterTrajectoryChange('all')
+    onFilterPoliticalLeanChange('all')
+    onFilterNbTypesChange([])
+    onFilterDiversityChange('all')
   }
 
   function toggleAreaType(value: string) {
@@ -90,6 +115,14 @@ export default function FilterSheet({
       onFilterAreaTypesChange(filterAreaTypes.filter((v) => v !== value))
     } else {
       onFilterAreaTypesChange([...filterAreaTypes, value])
+    }
+  }
+
+  function toggleNbType(value: string) {
+    if (filterNbTypes.includes(value)) {
+      onFilterNbTypesChange(filterNbTypes.filter((v) => v !== value))
+    } else {
+      onFilterNbTypesChange([...filterNbTypes, value])
     }
   }
 
@@ -189,6 +222,46 @@ export default function FilterSheet({
               {(['all', 'Arrived', 'Up-and-Coming', 'Stable', 'Cooling', 'Declining'] as TrajectoryOption[]).map((t) =>
                 chip(filterTrajectory === t, t === 'all' ? 'All' : t === 'Up-and-Coming' ? 'Up & Coming' : t, () => onFilterTrajectoryChange(t))
               )}
+            </div>
+          </div>
+
+          {/* Scenery type */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Scenery</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {NB_TYPE_OPTIONS.map(({ value, label }) =>
+                chip(filterNbTypes.includes(value), label, () => toggleNbType(value))
+              )}
+            </div>
+            {filterNbTypes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterNbTypesChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Political lean */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Political Lean</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterPoliticalLean === 'all', 'All', () => onFilterPoliticalLeanChange('all'))}
+              {chip(filterPoliticalLean === 'progressive', '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'progressive' ? 'all' : 'progressive'))}
+              {chip(filterPoliticalLean === 'conservative', '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'conservative' ? 'all' : 'conservative'))}
+            </div>
+          </div>
+
+          {/* Diversity */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Diversity</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterDiversity === 'all', 'All', () => onFilterDiversityChange('all'))}
+              {chip(filterDiversity === 'high', 'High', () => onFilterDiversityChange(filterDiversity === 'high' ? 'all' : 'high'))}
+              {chip(filterDiversity === 'mixed', 'Mixed', () => onFilterDiversityChange(filterDiversity === 'mixed' ? 'all' : 'mixed'))}
+              {chip(filterDiversity === 'low', 'Low', () => onFilterDiversityChange(filterDiversity === 'low' ? 'all' : 'low'))}
             </div>
           </div>
         </div>

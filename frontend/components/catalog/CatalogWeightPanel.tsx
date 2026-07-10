@@ -4,7 +4,6 @@ import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
-import { NB_PREFERENCE_LABELS, type NbPreference } from '@/lib/nbPreference'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
@@ -13,7 +12,7 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
   },
   {
     title: 'Community',
-    keys: ['social_fabric', 'diversity', 'quality_education', 'community_safety', 'political_lean'],
+    keys: ['social_fabric', 'quality_education', 'community_safety'],
   },
   {
     title: 'Practicality',
@@ -32,10 +31,6 @@ interface CatalogWeightPanelProps {
   onClose: () => void
   priorities: PillarPriorities
   onChange: (next: PillarPriorities) => void
-  politicalPreference?: 'progressive' | 'conservative' | null
-  onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
-  nbPreferences?: NbPreference[]
-  onNbPreferencesChange?: (prefs: NbPreference[]) => void
   onTakeQuiz?: () => void
   householdIncome?: number | null
   incomeInputValue?: string
@@ -70,7 +65,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
 
 const HIGH_LIMIT = 3
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreferences = [], onNbPreferencesChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   const highCount = Object.values(priorities).filter((v) => v === 'High').length
@@ -78,12 +73,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
   function setLevel(key: PillarKey, level: PriorityLevel) {
     if (level === 'High' && priorities[key] !== 'High' && highCount >= HIGH_LIMIT) return
     onChange({ ...priorities, [key]: level })
-    if (key === 'political_lean' && level === 'None') {
-      onPoliticalPreferenceChange?.(null)
-    }
-    if (key === 'natural_beauty' && level === 'None') {
-      onNbPreferencesChange?.([])
-    }
   }
 
   return (
@@ -173,33 +162,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           )
                         })}
                       </div>
-                      {key === 'natural_beauty' && current !== 'None' && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {(Object.keys(NB_PREFERENCE_LABELS) as NbPreference[]).map((pref) => {
-                            const active = nbPreferences.includes(pref)
-                            return (
-                              <button
-                                key={pref}
-                                type="button"
-                                className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                                  active
-                                    ? 'text-white'
-                                    : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                                }`}
-                                style={active ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : undefined}
-                                onClick={() => {
-                                  const next = active
-                                    ? nbPreferences.filter((p) => p !== pref)
-                                    : [...nbPreferences, pref]
-                                  onNbPreferencesChange?.(next)
-                                }}
-                              >
-                                {NB_PREFERENCE_LABELS[pref]}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
                       {DEALBREAKER_PILLARS.includes(key) && (
                         <label className="mt-2 flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
                           <input
@@ -215,29 +177,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                             </span>
                           </span>
                         </label>
-                      )}
-                      {key === 'political_lean' && current !== 'None' && (
-                        <div className="mt-2 flex gap-1">
-                          {(['progressive', 'conservative'] as const).map((pref) => (
-                            <button
-                              key={pref}
-                              type="button"
-                              className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                                politicalPreference === pref
-                                  ? 'text-white'
-                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                              }`}
-                              style={
-                                politicalPreference === pref
-                                  ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
-                                  : undefined
-                              }
-                              onClick={() => onPoliticalPreferenceChange?.(politicalPreference === pref ? null : pref)}
-                            >
-                              {pref === 'progressive' ? '🔵 Progressive' : '🔴 Conservative'}
-                            </button>
-                          ))}
-                        </div>
                       )}
                     </div>
                   )
