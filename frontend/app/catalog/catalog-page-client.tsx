@@ -33,7 +33,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
-import { type NbPreference, applyNbPreferencesV9, type BuiltEnvPreference, builtEnvMatchScore } from '@/lib/nbPreference'
+import { type NbPreference, applyNbPreferencesV9 } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -98,7 +98,7 @@ export default function CatalogPageClient({
         const parsed = JSON.parse(stored)
         const merged = { ...DEFAULT_PRIORITIES }
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
-        for (const k of [...PILLAR_ORDER, 'natural_beauty', 'built_environment'] as PillarKey[]) {
+        for (const k of [...PILLAR_ORDER, 'natural_beauty'] as PillarKey[]) {
           if (valid.includes(parsed[k])) merged[k] = parsed[k]
         }
         return merged
@@ -119,7 +119,6 @@ export default function CatalogPageClient({
     return null
   })
   const [nbPreferences, setNbPreferences] = useState<NbPreference[]>([])
-  const [builtEnvPreference, setBuiltEnvPreference] = useState<BuiltEnvPreference | null>(null)
   /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -138,7 +137,7 @@ export default function CatalogPageClient({
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
   const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
-  const [filterType, setFilterType] = useState<'all' | 'neighborhood' | 'suburb'>('all')
+  const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
   const [filterArchetype, setFilterArchetype] = useState<string>('all')
   const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>('all')
   /** When true, list sorts by name; map coloring still follows `indexMode`. */
@@ -252,7 +251,7 @@ export default function CatalogPageClient({
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
         if (opts.priorities) {
           const merged = { ...DEFAULT_PRIORITIES }
-          for (const k of [...PILLAR_ORDER, 'natural_beauty', 'built_environment'] as PillarKey[]) {
+          for (const k of [...PILLAR_ORDER, 'natural_beauty'] as PillarKey[]) {
             if (valid.includes(opts.priorities[k])) merged[k] = opts.priorities[k]
           }
           setPriorities(merged)
@@ -343,39 +342,18 @@ export default function CatalogPageClient({
         })
       : withIncome
 
-    // Split neighborhood_beauty into synthetic natural_beauty and built_environment pillars.
-    // natural_beauty uses the stored sub-score (preference-adjusted if nbPreference is set).
-    // built_environment uses an area-type match score (0–100) based on builtEnvPreference.
-    // neighborhood_beauty itself is zeroed out so it doesn't double-count.
+    // Synthesize natural_beauty from neighborhood_beauty sub-score (preference-adjusted if set).
+    // Zero out neighborhood_beauty so it doesn't double-count.
     const withNb = withPolitical.map((p) => {
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       if (!nb) return p
 
       const v9 = nb.details?.natural_beauty?.v9_breakdown
       const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
-      const density = nb.breakdown?.density ?? nb.details?.density ?? null
-      const effectiveAreaType = nb.breakdown?.effective_area_type ?? nb.details?.effective_area_type ?? null
 
-      // Natural beauty score — optionally preference-adjusted
       const adjustedNatural = nbPreferences.length > 0
         ? (applyNbPreferencesV9(v9, nbPreferences) ?? storedNaturalScore)
         : storedNaturalScore
-
-      // Built environment match score — only injected when user has picked a subtype.
-      // Without a subtype the pillar has no score and reweightScoreResponseFromPriorities
-      // excludes it from allocSum, renormalizing the remaining weights instead of
-      // contributing a flat 50 that gives every place the same score.
-      const builtEnvScore = builtEnvPreference
-        ? builtEnvMatchScore(effectiveAreaType, builtEnvPreference)
-        : null
-
-      const syntheticPillars: Record<string, unknown> = {
-        neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-        natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
-      }
-      if (builtEnvScore !== null) {
-        syntheticPillars.built_environment = { score: builtEnvScore, status: 'success', weight: 0, contribution: 0 }
-      }
 
       return {
         ...p,
@@ -383,23 +361,23 @@ export default function CatalogPageClient({
           ...p.score,
           livability_pillars: {
             ...p.score.livability_pillars,
-            ...syntheticPillars,
+            neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
+            natural_beauty: { score: adjustedNatural, status: 'success', weight: 0, contribution: 0 },
           },
         },
       }
     })
 
     return withNb
-  }, [places, householdIncome, politicalPreference, nbPreferences, builtEnvPreference])
+  }, [places, householdIncome, politicalPreference, nbPreferences])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
     let list = adjustedPlaces.filter((p) => {
       if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) return false
-      if (filterType !== 'all') {
-        const ty = (p.catalog.type || '').toLowerCase()
-        if (filterType === 'neighborhood' && ty !== 'neighborhood') return false
-        if (filterType === 'suburb' && ty !== 'suburb') return false
+      if (filterAreaTypes.length > 0) {
+        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
+        if (!filterAreaTypes.includes(at)) return false
       }
       if (filterArchetype !== 'all') {
         const ar = p.score.status_signal_breakdown?.archetype
@@ -421,7 +399,7 @@ export default function CatalogPageClient({
     adjustedPlaces,
     filterText,
     filterMetro,
-    filterType,
+    filterAreaTypes,
     filterArchetype,
     filterTrajectory,
     indexMode,
@@ -845,9 +823,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -911,9 +889,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterType !== 'all' ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1229,8 +1207,6 @@ export default function CatalogPageClient({
         onPoliticalPreferenceChange={setPoliticalPreference}
         nbPreferences={nbPreferences}
         onNbPreferencesChange={setNbPreferences}
-        builtEnvPreference={builtEnvPreference}
-        onBuiltEnvPreferenceChange={setBuiltEnvPreference}
         onTakeQuiz={() => { setWeightOpen(false); setShowQuiz(true) }}
         householdIncome={householdIncome}
         incomeInputValue={incomeInputValue}
@@ -1261,8 +1237,8 @@ export default function CatalogPageClient({
         onClose={() => setFilterSheetOpen(false)}
         filterMetro={filterMetro}
         onFilterMetroChange={setFilterMetro}
-        filterType={filterType}
-        onFilterTypeChange={setFilterType}
+        filterAreaTypes={filterAreaTypes}
+        onFilterAreaTypesChange={setFilterAreaTypes}
         filterArchetype={filterArchetype}
         onFilterArchetypeChange={setFilterArchetype}
         archetypes={archetypes}

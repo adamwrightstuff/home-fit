@@ -4,13 +4,21 @@ import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import { X } from 'lucide-react'
 
+const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'urban_core', label: 'Urban Core' },
+  { value: 'urban_residential', label: 'Urban Neighborhood' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'exurban', label: 'Exurban' },
+  { value: 'rural', label: 'Rural' },
+]
+
 interface FilterSheetProps {
   open: boolean
   onClose: () => void
   filterMetro: 'all' | 'nyc' | 'la'
   onFilterMetroChange: (v: 'all' | 'nyc' | 'la') => void
-  filterType: 'all' | 'neighborhood' | 'suburb'
-  onFilterTypeChange: (v: 'all' | 'neighborhood' | 'suburb') => void
+  filterAreaTypes: string[]
+  onFilterAreaTypesChange: (v: string[]) => void
   filterArchetype: string
   onFilterArchetypeChange: (v: string) => void
   archetypes: string[]
@@ -42,8 +50,8 @@ export default function FilterSheet({
   onClose,
   filterMetro,
   onFilterMetroChange,
-  filterType,
-  onFilterTypeChange,
+  filterAreaTypes,
+  onFilterAreaTypesChange,
   filterArchetype,
   onFilterArchetypeChange,
   archetypes,
@@ -66,15 +74,23 @@ export default function FilterSheet({
   if (!open) return null
 
   const activeCount =
-    (filterType !== 'all' ? 1 : 0) +
+    (filterAreaTypes.length > 0 ? 1 : 0) +
     (filterArchetype !== 'all' ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
-    onFilterTypeChange('all')
+    onFilterAreaTypesChange([])
     onFilterArchetypeChange('all')
     onFilterTrajectoryChange('all')
+  }
+
+  function toggleAreaType(value: string) {
+    if (filterAreaTypes.includes(value)) {
+      onFilterAreaTypesChange(filterAreaTypes.filter((v) => v !== value))
+    } else {
+      onFilterAreaTypesChange([...filterAreaTypes, value])
+    }
   }
 
   function chip(active: boolean, label: string, onClick: () => void) {
@@ -97,12 +113,10 @@ export default function FilterSheet({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         className="fixed inset-0 z-[69] bg-black/40"
       />
-      {/* Mobile: bottom sheet — Desktop: centered modal */}
       <div
         role="dialog"
         aria-modal="true"
@@ -112,7 +126,6 @@ export default function FilterSheet({
           md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
           md:w-[480px] md:rounded-2xl md:border md:border-gray-200 md:shadow-xl"
       >
-        {/* Handle bar — mobile only */}
         <div className="flex justify-center pt-2.5 md:hidden">
           <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
         </div>
@@ -137,14 +150,23 @@ export default function FilterSheet({
             </div>
           </div>
 
-          {/* Type */}
+          {/* Area type */}
           <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Type</div>
+            <div style={LABEL_STYLE}>Built environment</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['all', 'neighborhood', 'suburb'] as const).map((t) =>
-                chip(filterType === t, t === 'all' ? 'All' : t === 'neighborhood' ? 'Neighborhood' : 'Suburb', () => onFilterTypeChange(t))
+              {AREA_TYPE_OPTIONS.map(({ value, label }) =>
+                chip(filterAreaTypes.includes(value), label, () => toggleAreaType(value))
               )}
             </div>
+            {filterAreaTypes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterAreaTypesChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {/* Class */}
@@ -169,10 +191,8 @@ export default function FilterSheet({
               )}
             </div>
           </div>
-
         </div>
 
-        {/* Sticky footer */}
         <div
           style={{
             position: 'sticky',

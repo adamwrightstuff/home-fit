@@ -4,12 +4,12 @@ import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
-import { NB_PREFERENCE_LABELS, type NbPreference, BUILT_ENV_LABELS, type BuiltEnvPreference } from '@/lib/nbPreference'
+import { NB_PREFERENCE_LABELS, type NbPreference } from '@/lib/nbPreference'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
   {
     title: 'Lifestyle',
-    keys: ['natural_beauty', 'built_environment', 'active_outdoors', 'neighborhood_amenities'],
+    keys: ['natural_beauty', 'active_outdoors', 'neighborhood_amenities'],
   },
   {
     title: 'Community',
@@ -36,8 +36,6 @@ interface CatalogWeightPanelProps {
   onPoliticalPreferenceChange?: (pref: 'progressive' | 'conservative' | null) => void
   nbPreferences?: NbPreference[]
   onNbPreferencesChange?: (prefs: NbPreference[]) => void
-  builtEnvPreference?: BuiltEnvPreference | null
-  onBuiltEnvPreferenceChange?: (pref: BuiltEnvPreference | null) => void
   onTakeQuiz?: () => void
   householdIncome?: number | null
   incomeInputValue?: string
@@ -72,7 +70,7 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
 
 const HIGH_LIMIT = 3
 
-export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreferences = [], onNbPreferencesChange, builtEnvPreference, onBuiltEnvPreferenceChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
+export default function CatalogWeightPanel({ open, onClose, priorities, onChange, politicalPreference, onPoliticalPreferenceChange, nbPreferences = [], onNbPreferencesChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
   const highCount = Object.values(priorities).filter((v) => v === 'High').length
@@ -85,9 +83,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
     }
     if (key === 'natural_beauty' && level === 'None') {
       onNbPreferencesChange?.([])
-    }
-    if (key === 'built_environment' && level === 'None') {
-      onBuiltEnvPreferenceChange?.(null)
     }
   }
 
@@ -203,34 +198,6 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                               </button>
                             )
                           })}
-                        </div>
-                      )}
-                      {key === 'built_environment' && current !== 'None' && (
-                        <div className="mt-2">
-                          {!builtEnvPreference && (
-                            <p className="mb-1.5 text-xs font-semibold text-amber-600">Select a type to activate this weight</p>
-                          )}
-                          <div className="flex flex-wrap gap-1">
-                            {(Object.keys(BUILT_ENV_LABELS) as BuiltEnvPreference[]).map((pref) => (
-                              <button
-                                key={pref}
-                                type="button"
-                                className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
-                                  builtEnvPreference === pref
-                                    ? 'text-white'
-                                    : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
-                                }`}
-                                style={
-                                  builtEnvPreference === pref
-                                    ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' }
-                                    : undefined
-                                }
-                                onClick={() => onBuiltEnvPreferenceChange?.(builtEnvPreference === pref ? null : pref)}
-                              >
-                                {BUILT_ENV_LABELS[pref]}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       )}
                       {DEALBREAKER_PILLARS.includes(key) && (
