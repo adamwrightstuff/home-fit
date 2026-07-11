@@ -125,7 +125,33 @@ def main() -> None:
             .get("water_type", "?")
         )
         new_score = new_nb.get("score", "?")
-        print(f"  water_type: {old_wt} → {new_wt}  |  nb_score: {new_score}")
+        new_confidence = new_nb.get("confidence")
+        old_confidence = (
+            target.get("score", {})
+            .get("livability_pillars", {})
+            .get("neighborhood_beauty", {})
+            .get("confidence")
+        )
+        print(f"  water_type: {old_wt} → {new_wt}  |  nb_score: {new_score}  |  confidence: {old_confidence} → {new_confidence}")
+
+        # Skip if new confidence is lower than existing — don't overwrite good data with worse
+        if (
+            new_confidence is not None
+            and old_confidence is not None
+            and float(new_confidence) < float(old_confidence)
+        ):
+            print(f"  SKIP — new confidence {new_confidence} < existing {old_confidence}, keeping current score")
+            failed += 1
+            time.sleep(DELAY_S)
+            continue
+
+        # Skip if new confidence is below minimum threshold
+        MIN_CONFIDENCE = 0.80
+        if new_confidence is not None and float(new_confidence) < MIN_CONFIDENCE:
+            print(f"  SKIP — new confidence {new_confidence} below minimum {MIN_CONFIDENCE}")
+            failed += 1
+            time.sleep(DELAY_S)
+            continue
 
         # Merge new neighborhood_beauty into the row
         row_idx = index[query]
