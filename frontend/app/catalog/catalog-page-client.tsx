@@ -343,8 +343,8 @@ export default function CatalogPageClient({
     return withSchoolType.map((p) => {
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       if (!nb) return p
-      const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
       const existingNb = (p.score.livability_pillars as any)?.natural_beauty
+      const storedNaturalScore = Number(existingNb?.score ?? nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
       const v9 = existingNb?.v9_breakdown as V9Breakdown | undefined
       const prefScore = filterNbTypes.length > 0 && v9
         ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? storedNaturalScore)
