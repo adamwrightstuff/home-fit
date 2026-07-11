@@ -35,6 +35,8 @@ interface FilterSheetProps {
   onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative') => void
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
+  filterSchoolType: 'any' | 'public_only' | 'charter'
+  onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   resultCount: number
 }
 
@@ -72,6 +74,8 @@ export default function FilterSheet({
   onFilterPoliticalLeanChange,
   filterNbTypes,
   onFilterNbTypesChange,
+  filterSchoolType,
+  onFilterSchoolTypeChange,
   resultCount,
 }: FilterSheetProps) {
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
@@ -93,7 +97,8 @@ export default function FilterSheet({
     (filterArchetype !== 'all' ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean !== 'all' ? 1 : 0) +
-    (filterNbTypes.length > 0 ? 1 : 0)
+    (filterNbTypes.length > 0 ? 1 : 0) +
+    (filterSchoolType !== 'any' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
@@ -102,6 +107,7 @@ export default function FilterSheet({
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange('all')
     onFilterNbTypesChange([])
+    onFilterSchoolTypeChange('any')
   }
 
   function toggleAreaType(value: string) {
@@ -236,6 +242,16 @@ export default function FilterSheet({
                 Clear
               </button>
             )}
+          </div>
+
+          {/* School type */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Schools</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterSchoolType === 'any', 'Any', () => onFilterSchoolTypeChange('any'))}
+              {chip(filterSchoolType === 'public_only', '🏫 Public only', () => onFilterSchoolTypeChange(filterSchoolType === 'public_only' ? 'any' : 'public_only'))}
+              {chip(filterSchoolType === 'charter', '🎓 Charter', () => onFilterSchoolTypeChange(filterSchoolType === 'charter' ? 'any' : 'charter'))}
+            </div>
           </div>
 
           {/* Political lean */}

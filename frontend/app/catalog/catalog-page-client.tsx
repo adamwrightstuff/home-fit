@@ -108,6 +108,7 @@ export default function CatalogPageClient({
   })
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
+  const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -317,9 +318,28 @@ export default function CatalogPageClient({
       ? places.map((p) => ({ ...p, score: applyUserIncomeToScore(p.score, householdIncome) }))
       : places
 
+    // Recompute quality_education score based on school type preference.
+    const withSchoolType = filterSchoolType === 'any' ? withIncome : withIncome.map((p) => {
+      const edu = (p.score.livability_pillars as any)?.quality_education
+      if (!edu?.by_level) return p
+      const allSchools: { rating: number; is_charter_school?: boolean | null }[] = Object.values(edu.by_level).flat() as any
+      const filtered = allSchools.filter((s) =>
+        filterSchoolType === 'public_only' ? s.is_charter_school === false : s.is_charter_school === true
+      )
+      if (filtered.length === 0) {
+        return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars,
+          quality_education: { ...edu, score: null, status: 'no_data' } } } }
+      }
+      const baseAvg = filtered.reduce((sum, s) => sum + (s.rating ?? 0), 0) / filtered.length
+      const breakdown = edu.breakdown ?? {}
+      const newScore = Math.min(100, baseAvg + (breakdown.access_bonus ?? 0) + (breakdown.early_ed_bonus ?? 0))
+      return { ...p, score: { ...p.score, livability_pillars: { ...p.score.livability_pillars,
+        quality_education: { ...edu, score: newScore, breakdown: { ...breakdown, base_avg_rating: baseAvg } } } } }
+    })
+
     // Synthesize natural_beauty from neighborhood_beauty sub-score.
     // Zero out neighborhood_beauty so it doesn't double-count.
-    return withIncome.map((p) => {
+    return withSchoolType.map((p) => {
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       if (!nb) return p
       const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
@@ -335,7 +355,7 @@ export default function CatalogPageClient({
         },
       }
     })
-  }, [places, householdIncome])
+  }, [places, householdIncome, filterSchoolType])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -388,6 +408,7 @@ if (!t) return true
     filterTrajectory,
     filterPoliticalLean,
     filterNbTypes,
+    filterSchoolType,
     indexMode,
     sortByName,
     sortDir,
@@ -801,9 +822,9 @@ if (!t) return true
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -867,9 +888,9 @@ if (!t) return true
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1223,6 +1244,8 @@ if (!t) return true
         onFilterPoliticalLeanChange={setFilterPoliticalLean}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
+        filterSchoolType={filterSchoolType}
+        onFilterSchoolTypeChange={setFilterSchoolType}
         resultCount={filteredPlaces.length}
       />
 
