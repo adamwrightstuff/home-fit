@@ -228,7 +228,9 @@ def get_schools(
             if lat is not None and lon is not None:
                 schools = _filter_schools_by_distance(schools, lat, lon, _radius_miles())
             if schools:
-                schools = _filter_by_district(schools)
+                # Pin to correct district via tight coordinate lookup to avoid cross-boundary bleed
+                target_districts = _find_districts_by_coordinates(lat, lon, state, base_params) if (lat is not None and lon is not None) else None
+                schools = _filter_by_district(schools, target_districts or None)
             if schools and _rated_count(schools) >= 1:
                 print(f"✅ ZIP-based query returned {len(schools)} schools ({_rated_count(schools)} rated)")
                 return schools
@@ -239,11 +241,14 @@ def get_schools(
     if lat is not None and lon is not None:
         radius = _radius_miles()
         print(f"📍 Attempting coordinate-based query (radius: {radius} miles)...")
+        # Pin to correct district via tight coordinate lookup BEFORE fetching schools —
+        # prevents cross-boundary bleed (e.g. Bronx charter schools in Pelham Manor results)
+        target_districts = _find_districts_by_coordinates(lat, lon, state, base_params)
         schools = _fetch_schools_by_coordinates(lat, lon, radius, base_params)
         if schools:
             schools = _filter_schools_by_distance(schools, lat, lon, radius)
             if schools:
-                schools = _filter_by_district(schools)
+                schools = _filter_by_district(schools, target_districts or None)
             if schools:
                 print(f"✅ Coordinate-based query returned {len(schools)} schools")
                 return schools
