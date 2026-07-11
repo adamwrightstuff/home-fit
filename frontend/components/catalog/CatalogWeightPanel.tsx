@@ -12,7 +12,7 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
   },
   {
     title: 'Community',
-    keys: ['social_fabric', 'quality_education', 'community_safety'],
+    keys: ['social_fabric', 'diversity', 'quality_education', 'community_safety'],
   },
   {
     title: 'Practicality',

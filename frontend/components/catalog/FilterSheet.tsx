@@ -35,8 +35,6 @@ interface FilterSheetProps {
   onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative') => void
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
-  filterDiversity: 'all' | 'high' | 'mixed' | 'low'
-  onFilterDiversityChange: (v: 'all' | 'high' | 'mixed' | 'low') => void
   resultCount: number
 }
 
@@ -74,8 +72,6 @@ export default function FilterSheet({
   onFilterPoliticalLeanChange,
   filterNbTypes,
   onFilterNbTypesChange,
-  filterDiversity,
-  onFilterDiversityChange,
   resultCount,
 }: FilterSheetProps) {
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
@@ -97,8 +93,7 @@ export default function FilterSheet({
     (filterArchetype !== 'all' ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean !== 'all' ? 1 : 0) +
-    (filterNbTypes.length > 0 ? 1 : 0) +
-    (filterDiversity !== 'all' ? 1 : 0)
+    (filterNbTypes.length > 0 ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
@@ -107,7 +102,6 @@ export default function FilterSheet({
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange('all')
     onFilterNbTypesChange([])
-    onFilterDiversityChange('all')
   }
 
   function toggleAreaType(value: string) {
@@ -254,16 +248,6 @@ export default function FilterSheet({
             </div>
           </div>
 
-          {/* Diversity */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={LABEL_STYLE}>Diversity</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterDiversity === 'all', 'All', () => onFilterDiversityChange('all'))}
-              {chip(filterDiversity === 'high', 'High', () => onFilterDiversityChange(filterDiversity === 'high' ? 'all' : 'high'))}
-              {chip(filterDiversity === 'mixed', 'Mixed', () => onFilterDiversityChange(filterDiversity === 'mixed' ? 'all' : 'mixed'))}
-              {chip(filterDiversity === 'low', 'Low', () => onFilterDiversityChange(filterDiversity === 'low' ? 'all' : 'low'))}
-            </div>
-          </div>
         </div>
 
         <div

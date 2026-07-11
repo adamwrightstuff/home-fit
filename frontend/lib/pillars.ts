@@ -24,6 +24,7 @@ export const PILLAR_ORDER: PillarKey[] = [
   'climate_risk',
   'active_outdoors',
   'natural_beauty',
+  'diversity',
   'social_fabric',
   'healthcare_access',
   'public_transit_access',

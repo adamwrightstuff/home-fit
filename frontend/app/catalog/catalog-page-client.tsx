@@ -108,8 +108,7 @@ export default function CatalogPageClient({
   })
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
-  const [filterDiversity, setFilterDiversity] = useState<'all' | 'high' | 'mixed' | 'low'>('all')
-  /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
+/** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
     setDealbreakers((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -372,14 +371,7 @@ export default function CatalogPageClient({
         })
         if (!passes) return false
       }
-      if (filterDiversity !== 'all') {
-        const divScore = (p.score.livability_pillars as any)?.diversity?.score
-        if (typeof divScore !== 'number') return false
-        if (filterDiversity === 'high' && divScore < 65) return false
-        if (filterDiversity === 'mixed' && (divScore < 40 || divScore >= 65)) return false
-        if (filterDiversity === 'low' && divScore >= 40) return false
-      }
-      if (!t) return true
+if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
       const st = (p.catalog.state_abbr || '').toLowerCase()
@@ -396,7 +388,6 @@ export default function CatalogPageClient({
     filterTrajectory,
     filterPoliticalLean,
     filterNbTypes,
-    filterDiversity,
     indexMode,
     sortByName,
     sortDir,
@@ -810,9 +801,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -876,9 +867,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterDiversity !== 'all' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1232,8 +1223,6 @@ export default function CatalogPageClient({
         onFilterPoliticalLeanChange={setFilterPoliticalLean}
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
-        filterDiversity={filterDiversity}
-        onFilterDiversityChange={setFilterDiversity}
         resultCount={filteredPlaces.length}
       />
 

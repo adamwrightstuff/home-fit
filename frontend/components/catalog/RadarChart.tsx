@@ -16,7 +16,7 @@ const SHORT_LABELS: Record<PillarKey, string> = {
   natural_beauty: 'Nature',
   built_environment: '',
   social_fabric: 'Fabric',
-  diversity: '',
+  diversity: 'Diversity',
   quality_education: 'Schools',
   community_safety: 'Safety',
   political_lean: '',
