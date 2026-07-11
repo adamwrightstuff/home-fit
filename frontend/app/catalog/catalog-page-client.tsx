@@ -33,7 +33,7 @@ import {
 import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
-import type { V9Breakdown } from '@/lib/nbPreference'
+import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -339,10 +339,16 @@ export default function CatalogPageClient({
 
     // Synthesize natural_beauty from neighborhood_beauty sub-score.
     // Zero out neighborhood_beauty so it doesn't double-count.
+    // If scenery preferences are active, re-score natural_beauty via v9 preference weighting.
     return withSchoolType.map((p) => {
       const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
       if (!nb) return p
       const storedNaturalScore = Number(nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
+      const existingNb = (p.score.livability_pillars as any)?.natural_beauty
+      const v9 = existingNb?.v9_breakdown as V9Breakdown | undefined
+      const prefScore = filterNbTypes.length > 0 && v9
+        ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? storedNaturalScore)
+        : storedNaturalScore
       return {
         ...p,
         score: {
@@ -350,12 +356,12 @@ export default function CatalogPageClient({
           livability_pillars: {
             ...p.score.livability_pillars,
             neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-            natural_beauty: { ...(p.score.livability_pillars as any)?.natural_beauty, score: storedNaturalScore, status: 'success', weight: 0, contribution: 0 },
+            natural_beauty: { ...existingNb, score: prefScore, status: 'success', weight: 0, contribution: 0 },
           },
         },
       }
     })
-  }, [places, householdIncome, filterSchoolType])
+  }, [places, householdIncome, filterSchoolType, filterNbTypes])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -379,19 +385,7 @@ export default function CatalogPageClient({
         if (filterPoliticalLean === 'progressive' && lean <= 0) return false
         if (filterPoliticalLean === 'conservative' && lean >= 0) return false
       }
-      if (filterNbTypes.length > 0) {
-        const nb = (p.score.livability_pillars as any)?.natural_beauty
-        const v9 = nb?.v9_breakdown as V9Breakdown | undefined
-        const passes = filterNbTypes.some((t) => {
-          if (t === 'mountains') return (v9?.topo_score ?? 0) >= 35
-          if (t === 'ocean') return (v9?.water_score ?? 0) >= 55
-          if (t === 'lakes_rivers') return (v9?.water_score ?? 0) >= 40
-          if (t === 'canopy') return (v9?.canopy_score ?? 0) >= 50 || (v9?.gvi_score ?? 0) >= 50
-          return true
-        })
-        if (!passes) return false
-      }
-if (!t) return true
+      if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
       const st = (p.catalog.state_abbr || '').toLowerCase()
@@ -407,7 +401,6 @@ if (!t) return true
     filterArchetype,
     filterTrajectory,
     filterPoliticalLean,
-    filterNbTypes,
     filterSchoolType,
     indexMode,
     sortByName,
