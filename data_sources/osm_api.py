@@ -1052,7 +1052,7 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                 r for r in rivers
                 if r.get("name")
                 and isinstance(r.get("distance_km"), (int, float))
-                and float(r["distance_km"]) <= ocean_dist * 2.0
+                and float(r["distance_km"]) <= max(ocean_dist * 2.0, 2.0)
                 and float(r.get("area_km2") or 0.0) >= 0.5  # major waterway only (East River, Hudson scale)
             ]
             if major_rivers_nearby:
