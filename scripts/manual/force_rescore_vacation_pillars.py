@@ -107,7 +107,10 @@ def main():
         if loc in FORCE_AIR_TRAVEL:
             pillars_to_rescore.append("air_travel_access")
         if FORCE_ACTIVE_OUTDOORS_MOUNTAIN and tt == "mountain":
-            pillars_to_rescore.append("active_outdoors")
+            ao = row.get("pillars", {}).get("active_outdoors", {})
+            # Only rescore if confidence is 0 (Overpass timeout) or score suspiciously low for a mountain resort
+            if (ao.get("confidence") or 0) == 0 or (ao.get("score") or 0) < 20:
+                pillars_to_rescore.append("active_outdoors")
         if pillars_to_rescore:
             todo[(loc, tt)] = pillars_to_rescore
 
