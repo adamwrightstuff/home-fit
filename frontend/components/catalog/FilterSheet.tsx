@@ -249,8 +249,8 @@ export default function FilterSheet({
             <div style={LABEL_STYLE}>Schools</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterSchoolType === 'any', 'Any', () => onFilterSchoolTypeChange('any'))}
-              {chip(filterSchoolType === 'public_only', '🏫 Public only', () => onFilterSchoolTypeChange(filterSchoolType === 'public_only' ? 'any' : 'public_only'))}
-              {chip(filterSchoolType === 'charter', '🎓 Charter', () => onFilterSchoolTypeChange(filterSchoolType === 'charter' ? 'any' : 'charter'))}
+              {chip(filterSchoolType === 'public_only', 'Public only', () => onFilterSchoolTypeChange(filterSchoolType === 'public_only' ? 'any' : 'public_only'))}
+              {chip(filterSchoolType === 'charter', 'Charter', () => onFilterSchoolTypeChange(filterSchoolType === 'charter' ? 'any' : 'charter'))}
             </div>
           </div>
 
