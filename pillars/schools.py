@@ -173,7 +173,8 @@ def get_school_data(
             "student_teacher_ratio": round(student_teacher_ratio, 1) if student_teacher_ratio else None,
             "trend": trend,
             "enrollment": enrollment,
-            "rank_movement": rank_movement
+            "rank_movement": rank_movement,
+            "is_charter_school": school.get("isCharterSchool") == "Yes",
         }
 
         # Categorize by level
