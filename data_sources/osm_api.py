@@ -695,7 +695,7 @@ def query_nature_features(
     """
 
     query = (
-        "\n    [out:json][timeout:30];\n    (\n"
+        f"\n    [out:json][timeout:{_overpass_timeout(30)}];\n    (\n"
         + (hiking_query if include_hiking else "")
         + water_query
         + camping_query
@@ -825,7 +825,7 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
     import math
     
     query = f"""
-    [out:json][timeout:40];
+    [out:json][timeout:{_overpass_timeout(40)}];
     (
       // WATERWAYS (rivers, streams)
       way["waterway"](around:{radius_m},{lat},{lon});
@@ -1379,7 +1379,7 @@ def query_civic_nodes(lat: float, lon: float, radius_m: int = 800) -> Dict:
       node["amenity"~"^(restaurant|fast_food)$"]["name"]{rf}(around:{radius_m},{lat},{lon});
       way["amenity"~"^(restaurant|fast_food)$"]["name"]{rf}(around:{radius_m},{lat},{lon});""" if include_third_places else ""
     query = f"""
-    [out:json][timeout:40];
+    [out:json][timeout:{_overpass_timeout(40)}];
     (
       // Libraries and community centres
       node["amenity"="library"](around:{radius_m},{lat},{lon});
