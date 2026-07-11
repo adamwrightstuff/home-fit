@@ -350,7 +350,7 @@ export default function CatalogPageClient({
           livability_pillars: {
             ...p.score.livability_pillars,
             neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-            natural_beauty: { score: storedNaturalScore, status: 'success', weight: 0, contribution: 0 },
+            natural_beauty: { ...(p.score.livability_pillars as any)?.natural_beauty, score: storedNaturalScore, status: 'success', weight: 0, contribution: 0 },
           },
         },
       }
@@ -380,8 +380,8 @@ export default function CatalogPageClient({
         if (filterPoliticalLean === 'conservative' && lean >= 0) return false
       }
       if (filterNbTypes.length > 0) {
-        const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
-        const v9 = nb?.details?.natural_beauty?.v9_breakdown as V9Breakdown | undefined
+        const nb = (p.score.livability_pillars as any)?.natural_beauty
+        const v9 = nb?.v9_breakdown as V9Breakdown | undefined
         const passes = filterNbTypes.some((t) => {
           if (t === 'mountains') return (v9?.topo_score ?? 0) >= 35
           if (t === 'ocean') return (v9?.water_score ?? 0) >= 55
