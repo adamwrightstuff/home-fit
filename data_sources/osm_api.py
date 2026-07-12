@@ -394,7 +394,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
     """
     # Core parks/playgrounds query used by Active Outdoors and Natural Beauty fallback.
     query = f"""
-    [out:json][timeout:15];
+    [out:json][timeout:30];
     (
       // PARKS & GREEN SPACES - core (skip nodes except playgrounds)
       way["leisure"~"^(park|garden|dog_park|playground)$"](around:{radius_m},{lat},{lon});
@@ -1582,6 +1582,9 @@ def query_local_businesses(lat: float, lon: float, radius_m: int = 1000, include
       node["natural"="waterfall"](around:{radius_m},{lat},{lon});
       node["tourism"="hotel"](around:{radius_m},{lat},{lon});
       way["tourism"="hotel"](around:{radius_m},{lat},{lon});
+      node["historic"~"monument|memorial|castle|ruins|archaeological_site|building|district|landmark"](around:{radius_m},{lat},{lon});
+      way["historic"~"monument|memorial|castle|ruins|archaeological_site|building|district|landmark"](around:{radius_m},{lat},{lon});
+      relation["historic"="district"](around:{radius_m},{lat},{lon});
     """ if vacation_mode else ""
 
     # Make name requirement optional - query businesses with or without names
@@ -2789,6 +2792,9 @@ def _process_business_features(elements: List[Dict], center_lat: float, center_l
             tier3_culture.append(business)
         elif tourism in ["attraction", "zoo", "aquarium", "theme_park"]:
             business["type"] = "attraction"
+            tier3_culture.append(business)
+        elif tags.get("historic") in ["monument", "memorial", "castle", "ruins", "archaeological_site", "building", "district", "landmark"]:
+            business["type"] = "landmark"
             tier3_culture.append(business)
         elif tourism == "viewpoint":
             business["type"] = "viewpoint"

@@ -256,7 +256,7 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
 
 _T1_DAILY = {"cafe", "bakery", "grocery"}
 _T2_SOCIAL = {"restaurant", "bar", "ice_cream"}
-_T3_CULTURE = {"bookstore", "gallery", "theater", "museum", "market"}
+_T3_CULTURE = {"bookstore", "gallery", "theater", "museum", "market", "attraction", "landmark"}
 _T4_SERVICES = {"boutique", "salon", "records", "fitness", "garden"}
 
 
