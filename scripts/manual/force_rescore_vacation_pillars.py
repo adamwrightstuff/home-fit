@@ -19,17 +19,14 @@ TRIP_TYPE_MONTH = {"beach": 7, "mountain": 7, "city": 10}
 
 # Rescore air_travel for places that had 0.0 because airports were missing from DB.
 # Rescore active_outdoors for all mountain destinations with the new is_mountain_town fix.
-FORCE_AIR_TRAVEL = {
-    "Virginia Beach, VA",
-    "Bar Harbor, ME",
-    "Kill Devil Hills, NC",
-    "Bend, OR",
-    "Moab, UT",
-    "Telluride, CO",
-    "Memphis, TN",
-}
+FORCE_AIR_TRAVEL = set()
 
-FORCE_ACTIVE_OUTDOORS_MOUNTAIN = True  # rescore AO for all mountain trip_type
+FORCE_ACTIVE_OUTDOORS_MOUNTAIN = False
+
+# Rescore neighborhood_amenities for city trips + historic mountain towns to pick up
+# new historic landmark + tourism attraction signals added to vacation Tier 3
+FORCE_AMENITIES_CITY = True
+FORCE_AMENITIES_LOCATIONS = {"Santa Fe, NM", "Sedona, AZ"}
 
 
 def poll_job(job_id: str, timeout: int = 600) -> dict:
@@ -108,9 +105,10 @@ def main():
             pillars_to_rescore.append("air_travel_access")
         if FORCE_ACTIVE_OUTDOORS_MOUNTAIN and tt == "mountain":
             ao = row.get("pillars", {}).get("active_outdoors", {})
-            # Only rescore if confidence is 0 (Overpass timeout) or score suspiciously low for a mountain resort
             if (ao.get("confidence") or 0) == 0 or (ao.get("score") or 0) < 20:
                 pillars_to_rescore.append("active_outdoors")
+        if (FORCE_AMENITIES_CITY and tt == "city") or loc in FORCE_AMENITIES_LOCATIONS:
+            pillars_to_rescore.append("neighborhood_amenities")
         if pillars_to_rescore:
             todo[(loc, tt)] = pillars_to_rescore
 
