@@ -101,6 +101,9 @@ export default function AuthBar() {
             >
               ✈️ Vacation
             </Link>
+            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
+              Destinations
+            </Link>
             <Link
               href="/search"
               className="hf-auth-bar-btn"
@@ -162,6 +165,9 @@ export default function AuthBar() {
           </Link>
           <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }} onClick={closeMobileMenu}>
             ✈️ Vacation
+          </Link>
+          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+            Destinations
           </Link>
           <Link
             href="/search"
