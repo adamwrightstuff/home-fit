@@ -126,7 +126,7 @@ def _rotate_overpass_endpoint(current_index: int) -> int:
 # Global query throttling to avoid rate limiting
 _last_query_time = 0.0
 _query_lock = threading.Lock()
-_BASE_MIN_QUERY_INTERVAL = 0.0  # No artificial throttle — back off only on actual 429 responses
+_BASE_MIN_QUERY_INTERVAL = 0.5  # 500ms base pacing; prevents Overpass IP bans under batch load
 _current_min_query_interval = _BASE_MIN_QUERY_INTERVAL
 
 def _retry_overpass(
@@ -192,17 +192,18 @@ def _retry_overpass(
             _set_overpass_url_for_request(current_endpoint)
             # Throttle queries to avoid rate limiting *per attempt*
             global _last_query_time, _current_min_query_interval, _query_lock
+            sleep_time = 0.0
             with _query_lock:
                 time_since_last = time.time() - _last_query_time
                 min_interval = _current_min_query_interval
                 if time_since_last < min_interval:
                     remaining = min_interval - time_since_last
-                    # Add small jitter to avoid aligned bursts
                     jitter = random.uniform(0, 0.25 * min_interval)
                     sleep_time = remaining + jitter
-                    logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s (interval={min_interval:.2f}s, jitter={jitter:.2f}s)")
-                    time.sleep(sleep_time)
                 _last_query_time = time.time()
+            if sleep_time > 0:
+                logger.debug(f"Throttling OSM query: waiting {sleep_time:.2f}s (interval={min_interval:.2f}s)")
+                time.sleep(sleep_time)
             
             try:
                 resp = request_fn()
