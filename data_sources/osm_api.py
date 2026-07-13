@@ -432,9 +432,7 @@ def query_green_spaces(lat: float, lon: float, radius_m: int = 1000) -> Optional
       node["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
       way["leisure"="dog_park"]["access"!="private"](around:{radius_m},{lat},{lon});
     );
-    out body;
-    >;
-    out skel qt;
+    out body center;
     """
 
     _gs_key = f"query_green_spaces:{lat:.5f}:{lon:.5f}:{int(radius_m)}"
