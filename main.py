@@ -1699,7 +1699,7 @@ def _compute_single_score_internal(
     # location cache because vacation uses a different pillar set and weight preset.
     _vacation_cache_key: Optional[str] = None
     if not test_mode_enabled and is_vacation_mode and trip_type:
-        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w11:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
+        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w12:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
         try:
             _vacation_cached = redis_get_compressed_json(_vacation_cache_key)
             if isinstance(_vacation_cached, dict) and _vacation_cached.get("livability_pillars"):
@@ -4172,7 +4172,12 @@ async def _stream_score_with_progress(
         )
         neighborhood_beauty_score = _nb_blend["score"]
         neighborhood_beauty_built_weight = _nb_blend["built_weight"]
-        built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
+        # Vacation mode: use raw built_beauty quality score (already area-type-calibrated)
+        # rather than preference-match (which returns 50 when no preference is set).
+        if is_vacation_mode and built_score is not None:
+            built_env_score = built_score
+        else:
+            built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
 
         # Calculate weighted total
         total_score = (

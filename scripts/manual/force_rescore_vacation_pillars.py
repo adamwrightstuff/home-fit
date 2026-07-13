@@ -23,10 +23,12 @@ FORCE_AIR_TRAVEL = set()
 
 FORCE_ACTIVE_OUTDOORS_MOUNTAIN = False
 
-# Rescore neighborhood_amenities for city trips + historic mountain towns to pick up
-# new historic landmark + tourism attraction signals added to vacation Tier 3
-FORCE_AMENITIES_CITY = True
-FORCE_AMENITIES_LOCATIONS = {"Santa Fe, NM", "Sedona, AZ"}
+FORCE_AMENITIES_CITY = False
+FORCE_AMENITIES_LOCATIONS: set = set()
+
+# Rescore beach AO where Overpass local+regional both failed (waterfront_lifestyle=0
+# despite being an actual beach destination). Only rescore if wl=0 and score<40.
+FORCE_ACTIVE_OUTDOORS_BEACH = True
 
 
 def poll_job(job_id: str, timeout: int = 600) -> dict:
@@ -106,6 +108,14 @@ def main():
         if FORCE_ACTIVE_OUTDOORS_MOUNTAIN and tt == "mountain":
             ao = row.get("pillars", {}).get("active_outdoors", {})
             if (ao.get("confidence") or 0) == 0 or (ao.get("score") or 0) < 20:
+                pillars_to_rescore.append("active_outdoors")
+        if FORCE_ACTIVE_OUTDOORS_BEACH and tt == "beach":
+            sd = row.get("score_data", {})
+            lp = sd.get("livability_pillars", {})
+            ao = lp.get("active_outdoors", {}) or row.get("pillars", {}).get("active_outdoors", {})
+            ao_score = ao.get("score") or 0
+            wl = (ao.get("breakdown") or {}).get("waterfront_lifestyle", 0) if "breakdown" in ao else 0
+            if wl == 0 and ao_score < 40:
                 pillars_to_rescore.append("active_outdoors")
         if (FORCE_AMENITIES_CITY and tt == "city") or loc in FORCE_AMENITIES_LOCATIONS:
             pillars_to_rescore.append("neighborhood_amenities")
