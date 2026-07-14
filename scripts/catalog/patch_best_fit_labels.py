@@ -1,5 +1,5 @@
 """
-Add best-fit preference labels to natural_beauty and built_beauty breakdowns.
+Add best-fit preference labels to natural_beauty and built_environment breakdowns.
 
 Pure computation from existing summary fields — no API calls, no GEE.
 
@@ -115,7 +115,7 @@ def patch(input_path: Path, in_place: bool, no_backup: bool) -> None:
             nb_bd["nb_best_fit_label"] = _NB_LABELS[fit]
             patched += 1
 
-        bb = pillars.get("built_beauty") or {}
+        bb = pillars.get("built_environment") or {}
         bb_summary = bb.get("summary") or {}
         if bb_summary:
             bb_bd = bb.setdefault("breakdown", {})

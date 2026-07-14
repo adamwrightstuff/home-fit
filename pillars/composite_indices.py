@@ -222,7 +222,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 pillars.get("natural_beauty"),
                 state,
                 social_fabric_details=social,
-                built_beauty_details=pillars.get("built_beauty"),
+                built_environment_details=pillars.get("built_environment"),
                 community_safety_details=pillars.get("community_safety"),
                 neighborhood_amenities_details=amenities,
             )
@@ -330,7 +330,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             pillars.get("natural_beauty"),
             state,
             social_fabric_details=social,
-            built_beauty_details=pillars.get("built_beauty"),
+            built_environment_details=pillars.get("built_environment"),
             community_safety_details=pillars.get("community_safety"),
             neighborhood_amenities_details=pillars.get("neighborhood_amenities"),
         )

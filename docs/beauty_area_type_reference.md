@@ -103,7 +103,7 @@ via a multinomial regression over architectural-diversity features (`built_cover
 places with sparse/unusual OSM footprint coverage, this can override a correct density-derived
 `base_area_type`. Confirmed case: **Bedford, NY** (Westchester horse-country, `base_area_type
 =rural`, `density≈285/sq-mi`) predicts `effective_area_type=urban_residential`, inflating its
-built_beauty score because it's scored against urban_residential curves instead of rural ones.
+built_environment score because it's scored against urban_residential curves instead of rural ones.
 
 Not fixed — this is the same shared classifier other pillars (transit, active outdoors) key off
 of, and per explicit product constraint it must not be modified to chase one pillar's edge case.

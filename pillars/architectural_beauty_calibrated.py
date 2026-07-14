@@ -1,7 +1,7 @@
 """
 Calibrated architectural beauty scoring (0–100).
 
-Reward side driven by HistoricCoherence (set upstream in built_beauty.py) plus
+Reward side driven by HistoricCoherence (set upstream in built_environment.py) plus
 OSM-derived variety and historic fabric proxies. Penalty side fires on parking,
 megaproject, strip-mall, sprawl, and extreme-footprint patterns.
 
@@ -225,7 +225,7 @@ def compute_calibrated_architectural_beauty_score(
     return float(_clamp(capped, 0.0, 100.0))
 
 
-def compute_built_beauty_v3(
+def compute_built_environment_v3(
     row: Dict[str, Any],
     area_type: str = "suburban",
     density: float = 0.0,

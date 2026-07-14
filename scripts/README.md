@@ -84,10 +84,10 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | `status_signal_breakdown_md.py` | Saved JSON → markdown breakdown. |
 | `inspect_brand_matches.py` | Brand matches from saved score JSON. |
 | `compare_beauty_larchmont.py` | Town vs address beauty comparison. |
-| `investigate_built_beauty_preferences.py` | Built beauty preference permutations. |
+| `investigate_built_environment_preferences.py` | Built beauty preference permutations. |
 | `investigate_housing_issues.py` | Housing data spot investigations. |
-| `collect_built_beauty_research_data.py` | Research sampling for built beauty stats. |
-| `debug_built_beauty.py` | Built beauty JSON CLI. |
+| `collect_built_environment_research_data.py` | Research sampling for built beauty stats. |
+| `debug_built_environment.py` | Built beauty JSON CLI. |
 | `debug_climate_risk.py` | Climate pillar + GEE debug. |
 | `normalize_dynamism_by_bucket.py` | Dynamism normalization experiment CSV. |
 | `validate_economic_security.py` | Economic pillar distribution / resilience checks. |

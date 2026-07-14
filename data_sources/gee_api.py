@@ -935,7 +935,7 @@ def get_building_coverage_ms_footprints(lat: float, lon: float, radius_m: int = 
     suburbs -- e.g. Short Hills NJ has only 2% of expected building footprint mapped),
     this dataset has full US coverage, making it a reliable fallback when OSM footprint
     coverage is too low to trust for built_coverage_ratio -- the highest-weighted single
-    feature in the built_beauty model.
+    feature in the built_environment model.
 
     The building_total_area band reports summed building footprint area (sqm) per 30m
     (900 sqm) pixel, capped at the pixel area, so mean(building_total_area) / 900 over a

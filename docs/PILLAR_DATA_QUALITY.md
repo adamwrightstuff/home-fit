@@ -26,10 +26,10 @@ doesn't differentiate). Status: ✅ fixed, ⚠️ open, ℹ️ by-design.
   FBI CDE crime data isn't wired up there yet. Pillar correctly returns None; weight drops.
   NOT bad data — do not treat these nulls as broken.
 
-## built_beauty
+## built_environment
 - ⚠️ **~34% of catalog carries stale coverage-0 scores** (transient Overpass timeouts at build
   time → fabricated ~57 floor). Live has a reliability guard; the catalog backfill is pending.
-  Concrete example: Short Hills built_beauty=21 (confidence 90 ≠ stale, but other low-confidence
+  Concrete example: Short Hills built_environment=21 (confidence 90 ≠ stale, but other low-confidence
   ones are). See built-beauty-backfill memory.
 
 ## public_transit_access

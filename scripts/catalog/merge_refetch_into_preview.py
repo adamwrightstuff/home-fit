@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Merge live-refetched built_beauty results into the offline-rescored preview catalogs.
+Merge live-refetched built_environment results into the offline-rescored preview catalogs.
 
 Pure local JSON splicing -- NO live calls. Requires refetch JSONLs produced by the
-current refetch_built_beauty.py, which persists the FULL calculate_built_beauty() result
+current refetch_built_environment.py, which persists the FULL calculate_built_environment() result
 (under "full_result") for every clean place, not just a summary. This does a complete
 wholesale replacement of bb["score"] and bb["details"] from that full result -- no nested
 field is ever left stale, because every nested field is overwritten.
@@ -57,13 +57,13 @@ def merge(tag, preview_path, refetch_jsonls):
         r = clean.get(name)
         if not r:
             continue
-        bb = rec["score"]["livability_pillars"].get("built_beauty")
+        bb = rec["score"]["livability_pillars"].get("built_environment")
         if not bb:
             continue
         old_score = bb.get("score")
         full = r["full_result"]
-        # Wholesale replace -- calculate_built_beauty()'s return dict keys map 1:1 onto
-        # the catalog's built_beauty subtree (score, score_before_normalization,
+        # Wholesale replace -- calculate_built_environment()'s return dict keys map 1:1 onto
+        # the catalog's built_environment subtree (score, score_before_normalization,
         # component_score_0_50, details, architectural_details, enhancers, ...).
         bb["score"] = full["score"]
         bb["details"] = full["details"]

@@ -1066,7 +1066,7 @@ def get_form_context(
     """
     Get form context for beauty pillars (architectural classification).
     
-    This is computed once and shared by built_beauty and natural_beauty.
+    This is computed once and shared by built_environment and natural_beauty.
     Returns None if beauty pillars are not requested (no architectural features needed).
     
     Args:
@@ -1151,7 +1151,7 @@ def get_baseline_context(
         # Default: use area_type if it's in allowed set
         return area_type if area_type in ALLOWED_BASELINE_CONTEXTS else 'suburban'
     
-    elif pillar_name in ('built_beauty', 'natural_beauty'):
+    elif pillar_name in ('built_environment', 'natural_beauty'):
         # Beauty pillars use form_context directly (if available) or area_type
         # But form_context values like 'historic_urban' are not in ALLOWED_BASELINE_CONTEXTS
         # So we need to map them back to base types for expectation lookups
@@ -1261,8 +1261,8 @@ class DataQualityManager:
             return self._assess_economic_security_completeness(data, expected_minimums)
         elif pillar_name == 'housing_value':
             return self._assess_housing_completeness(data, expected_minimums)
-        elif pillar_name == 'built_beauty':
-            return self._assess_built_beauty_completeness(data, expected_minimums)
+        elif pillar_name == 'built_environment':
+            return self._assess_built_environment_completeness(data, expected_minimums)
         elif pillar_name == 'natural_beauty':
             return self._assess_natural_beauty_completeness(data, expected_minimums)
         elif pillar_name == 'public_transit_access':
@@ -1390,7 +1390,7 @@ class DataQualityManager:
         completeness = metric_score
         return completeness, self._get_quality_tier(completeness)
     
-    def _assess_built_beauty_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+    def _assess_built_environment_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """Assess built beauty data completeness."""
         arch_analysis = data.get('architectural_analysis', {})
         enhancers = data.get('enhancers', {})
@@ -1801,7 +1801,7 @@ def assess_pillar_data_quality(
 
     # Built beauty: align headline confidence with architectural data_warning so we
     # do not show ~90% confidence alongside a hard OSM/API failure string.
-    if pillar_name == "built_beauty" and data:
+    if pillar_name == "built_environment" and data:
         arch = data.get("architectural_analysis") or {}
         dw = arch.get("data_warning")
         if isinstance(dw, str) and dw:
@@ -1829,7 +1829,7 @@ def assess_pillar_data_quality(
             else:
                 out["confidence"] = max(0, min(100, int(round(conf * 0.88))))
             out["confidence_notes"] = (out.get("confidence_notes") or []) + [
-                f"built_beauty_data_warning:{dw}"
+                f"built_environment_data_warning:{dw}"
             ]
 
     return out

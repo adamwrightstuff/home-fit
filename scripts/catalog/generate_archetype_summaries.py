@@ -91,7 +91,7 @@ def build_prompt(name: str, place_type: str, metro: str, ss: dict, pillars: dict
     amenities = _pillar_score(pillars, "neighborhood_amenities")
     schools   = _pillar_score(pillars, "education")
     social    = _pillar_score(pillars, "social_fabric")
-    beauty    = _pillar_score(pillars, "built_beauty")
+    beauty    = _pillar_score(pillars, "built_environment")
     nature    = _pillar_score(pillars, "natural_beauty")
     health    = _pillar_score(pillars, "healthcare")
     climate   = _pillar_score(pillars, "climate_risk")

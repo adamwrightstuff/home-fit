@@ -9,13 +9,13 @@ Usage:
     cd /path/to/home-fit
 
     # Built beauty — both catalogs
-    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_beauty
+    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_environment
 
     # Built beauty — NYC only
-    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_beauty --catalog nyc
+    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_environment --catalog nyc
 
     # Built beauty — LA only
-    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_beauty --catalog la
+    PYTHONPATH=. python3 scripts/catalog/rescore_pillar_and_recompute.py built_environment --catalog la
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ NYC = REPO / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 LA  = REPO / "data" / "la_metro_place_catalog_scores_merged.jsonl"
 
 PILLAR_SCRIPTS = {
-    "built_beauty": REPO / "scripts" / "catalog" / "rescore_built_beauty_full.py",
+    "built_environment": REPO / "scripts" / "catalog" / "rescore_built_environment_full.py",
 }
 
 

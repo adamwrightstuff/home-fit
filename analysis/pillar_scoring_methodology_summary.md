@@ -49,7 +49,7 @@
 - **Calibration**: `calibrated_score = a * raw_score + b`
 - **Status**: Data-backed with regression-informed calibration
 
-### 6. built_beauty ✅
+### 6. built_environment ✅
 - **Data Source**: OSM (buildings, architecture), GEE (tree canopy)
 - **Scoring**: Direct measurements from OSM/GEE
 - **Regression**: None
@@ -111,7 +111,7 @@
 | public_transit_access | Transitland + OSM | Route count/distance | None | ✅ Pure data-backed |
 | housing_value | Census | Ratio calculations | None | ✅ Pure data-backed |
 | neighborhood_amenities | OSM | Count-based + calibration | Linear (calibration) | ✅ Data-backed + calibration |
-| built_beauty | OSM + GEE | Component-based | None | ✅ Pure data-backed |
+| built_environment | OSM + GEE | Component-based | None | ✅ Pure data-backed |
 | natural_beauty | GEE + OSM + Census | Component sum | None (ridge removed) | ✅ Pure data-backed |
 | active_outdoors | OSM + GEE | Component sum | None | ✅ Pure data-backed |
 

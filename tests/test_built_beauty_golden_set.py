@@ -5,7 +5,7 @@ These tests are *live* integration checks: they call the real scoring pipeline,
 which may hit external data sources (OSM Overpass, Census, etc.).
 
 To run locally:
-  RUN_LIVE_GOLDEN_BUILT_BEAUTY=1 python3 -m pytest -q tests/test_built_beauty_golden_set.py
+  RUN_LIVE_GOLDEN_BUILT_BEAUTY=1 python3 -m pytest -q tests/test_built_environment_golden_set.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from typing import Dict, Optional, Tuple
 
 import pytest
 
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 
 
 pytestmark = pytest.mark.skipif(
@@ -73,8 +73,8 @@ def _compact_debug(result: Dict) -> Dict:
 
 
 @pytest.mark.parametrize("loc", GOLDEN_LOCATIONS, ids=lambda x: x.name)
-def test_built_beauty_golden_location_in_expected_range(loc: GoldenLocation) -> None:
-    result = calculate_built_beauty(loc.lat, loc.lon, location_name=loc.name)
+def test_built_environment_golden_location_in_expected_range(loc: GoldenLocation) -> None:
+    result = calculate_built_environment(loc.lat, loc.lon, location_name=loc.name)
     score = float(result.get("score") or 0.0)
     lo, hi = loc.expected_range
 

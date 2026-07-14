@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Offline merge of built_beauty + natural_beauty -> neighborhood_beauty in the catalogs.
+Offline merge of built_environment + natural_beauty -> neighborhood_beauty in the catalogs.
 
-NO live scoring. Uses each row's already-stored built_beauty / natural_beauty scores
+NO live scoring. Uses each row's already-stored built_environment / natural_beauty scores
 and details, blends them with the validated density+area-type formula
 (pillars.neighborhood_beauty.blend_scores), and emits a single neighborhood_beauty
 pillar with the exact structure main.py produces live (sub-scores + nested details +
@@ -27,7 +27,7 @@ from pillars.composite_indices import recompute_composites_from_payload  # noqa:
 
 # main.py's exact summary builders (reuse so catalog == live shape).
 from main import (  # noqa: E402
-    _extract_built_beauty_summary,
+    _extract_built_environment_summary,
     _natural_beauty_summary_with_preference,
 )
 
@@ -49,13 +49,13 @@ _RERUN = _load_rerun()
 
 
 def _merge_one(score: dict) -> bool:
-    """Replace built_beauty + natural_beauty with neighborhood_beauty in-place. Returns True if merged."""
+    """Replace built_environment + natural_beauty with neighborhood_beauty in-place. Returns True if merged."""
     lp = score.get("livability_pillars")
     if not isinstance(lp, dict):
         return False
     if "neighborhood_beauty" in lp:
         return False
-    bb = lp.get("built_beauty")
+    bb = lp.get("built_environment")
     nbp = lp.get("natural_beauty")
     if not isinstance(bb, dict) or not isinstance(nbp, dict):
         return False
@@ -79,22 +79,22 @@ def _merge_one(score: dict) -> bool:
         "importance_level": None,
         "contribution": 0.0,     # set by recompute_totals
         "breakdown": {
-            "built_beauty_score": built_score,
+            "built_environment_score": built_score,
             "natural_beauty_score": natural_score,
             "built_weight": bw,
             "effective_area_type": eff_at,
             "density": density,
         },
         "summary": {
-            "built_beauty": _extract_built_beauty_summary(built_details),
+            "built_environment": _extract_built_environment_summary(built_details),
             "natural_beauty": _natural_beauty_summary_with_preference(natural_details, None),
             "built_weight": bw,
         },
-        "built_beauty_score": built_score,
+        "built_environment_score": built_score,
         "natural_beauty_score": natural_score,
         "built_weight": bw,
         "details": {
-            "built_beauty": built_details,
+            "built_environment": built_details,
             "natural_beauty": natural_details,
             "built_weight": bw,
             "effective_area_type": eff_at,
@@ -109,7 +109,7 @@ def _merge_one(score: dict) -> bool:
     # Rebuild dict preserving order, neighborhood_beauty where active_outdoors-adjacent.
     new_lp = {}
     for k, v in lp.items():
-        if k == "built_beauty":
+        if k == "built_environment":
             new_lp["neighborhood_beauty"] = merged
         elif k == "natural_beauty":
             continue
@@ -151,13 +151,13 @@ def main() -> int:
             _recompute(sc)
             nbp = sc["livability_pillars"]["neighborhood_beauty"]
             print("merged:", ok)
-            print("  built=", nbp["built_beauty_score"], "natural=", nbp["natural_beauty_score"],
+            print("  built=", nbp["built_environment_score"], "natural=", nbp["natural_beauty_score"],
                   "built_weight=", nbp["built_weight"], "-> neighborhood_beauty=", nbp["score"])
             print("  weight=", nbp["weight"], "contribution=", nbp["contribution"])
             print("  total_score=", sc.get("total_score"), "longevity=", sc.get("longevity_index"),
                   "happiness=", sc.get("happiness_index"), "status=", sc.get("status_signal"))
-            print("  has built_beauty key still?", "built_beauty" in sc["livability_pillars"])
-            print("  summary.built_beauty keys:", list(nbp["summary"]["built_beauty"].keys())[:6])
+            print("  has built_environment key still?", "built_environment" in sc["livability_pillars"])
+            print("  summary.built_environment keys:", list(nbp["summary"]["built_environment"].keys())[:6])
             print("  summary.natural_beauty keys:", list(nbp["summary"]["natural_beauty"].keys())[:6])
             return 0
         print("Chelsea not found")

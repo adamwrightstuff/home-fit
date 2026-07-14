@@ -20,14 +20,14 @@ Then refresh composites (longevity / status / happiness) from the merged file:
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
     --output data/nyc_metro_place_catalog_scores_merged.jsonl
 
-Re-score only rows where a pillar's confidence is below a threshold (e.g. built_beauty < 92),
+Re-score only rows where a pillar's confidence is below a threshold (e.g. built_environment < 92),
 with catalog centroids pinned (same coordinates as CSV):
 
   PYTHONPATH=. python3 scripts/catalog/rescore_catalog_pillar.py \\
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
     --in-place \\
-    --pillars built_beauty \\
-    --confidence-filter-pillar built_beauty \\
+    --pillars built_environment \\
+    --confidence-filter-pillar built_environment \\
     --confidence-filter-lt 92 \\
     --use-catalog-coordinates
 

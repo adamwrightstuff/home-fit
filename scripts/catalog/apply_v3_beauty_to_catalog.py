@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Apply compute_built_beauty_v3 to catalog using stored form metrics.
+Apply compute_built_environment_v3 to catalog using stored form metrics.
 No API calls — reads signals from JSONL.
 
 Differences from the old HC-based offline patcher:
@@ -22,7 +22,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
-from pillars.architectural_beauty_calibrated import compute_built_beauty_v3
+from pillars.architectural_beauty_calibrated import compute_built_environment_v3
 from pillars import neighborhood_beauty as nb_pillar
 
 CATALOGS = [
@@ -60,8 +60,8 @@ def recompute(path: Path, dry_run: bool) -> dict:
 
         stats["total"] += 1
         nb = d.get("score", {}).get("livability_pillars", {}).get("neighborhood_beauty", {})
-        summary_bb = (nb.get("summary") or {}).get("built_beauty") or {}
-        det_bb = (nb.get("details") or {}).get("built_beauty") or {}
+        summary_bb = (nb.get("summary") or {}).get("built_environment") or {}
+        det_bb = (nb.get("details") or {}).get("built_environment") or {}
         arch = det_bb.get("architectural_analysis") or {}
         metrics = arch.get("metrics") or {}
         hist_ctx = arch.get("historic_context") or {}
@@ -91,9 +91,9 @@ def recompute(path: Path, dry_run: bool) -> dict:
             "ParkingFraction":      parking_frac,
         }
 
-        new_score = round(compute_built_beauty_v3(row, area_type=eff_at or "suburban",
+        new_score = round(compute_built_environment_v3(row, area_type=eff_at or "suburban",
                                                    density=density or 0.0), 2)
-        old_score = bkd.get("built_beauty_score")
+        old_score = bkd.get("built_environment_score")
 
         if old_score is not None and abs(new_score - float(old_score)) > 0.1:
             nat_score  = bkd.get("natural_beauty_score") or 0.0
@@ -111,10 +111,10 @@ def recompute(path: Path, dry_run: bool) -> dict:
             print(f"  {name:35s}  bb {float(old_score):5.1f}→{new_score:5.1f}  "
                   f"nb {old_nb}→{new_nb}  bw={blend['built_weight']:.2f}")
 
-            nb["breakdown"]["built_beauty_score"] = new_score
+            nb["breakdown"]["built_environment_score"] = new_score
             nb["score"] = new_nb
-            if "built_beauty" in (nb.get("summary") or {}):
-                nb["summary"]["built_beauty"]["component_score"] = new_score
+            if "built_environment" in (nb.get("summary") or {}):
+                nb["summary"]["built_environment"]["component_score"] = new_score
             stats["changed"] += 1
 
         out_lines.append(json.dumps(d, separators=(",", ":")))

@@ -32,7 +32,7 @@ PILLAR_KEYS: List[str] = [
     "natural_beauty",
     "diversity",
     "social_fabric",
-    "built_beauty",
+    "built_environment",
     "healthcare_access",
     "public_transit_access",
     "air_travel_access",

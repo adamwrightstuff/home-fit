@@ -39,20 +39,20 @@ This document maps TSV column names to API response paths for all pillars.
 
 | TSV Column | API Response Path | Notes |
 |------------|------------------|-------|
-| **Built Beauty Score** | `livability_pillars.built_beauty.score` | Total score (0-100) |
-| **Height Diversity** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.height_diversity` | Height diversity metric |
-| **Type Diversity** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.type_diversity` | Building type diversity |
-| **Footprint Variation** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.footprint_variation` | Footprint area CV |
-| **Built Coverage Ratio** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.built_coverage_ratio` | Built coverage ratio |
-| **Block Grain** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.block_grain` | Block grain metric |
-| **Streetwall Continuity** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.streetwall_continuity` | Streetwall continuity |
-| **Setback Consistency** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.setback_consistency` | Setback consistency |
-| **Facade Rhythm** | `livability_pillars.built_beauty.breakdown.architectural_analysis.metrics.facade_rhythm` | Facade rhythm |
-| **Landmark Count** | `livability_pillars.built_beauty.breakdown.architectural_analysis.historic_context.landmarks` | Historic landmarks count |
-| **Median Year Built** | `livability_pillars.built_beauty.breakdown.architectural_analysis.historic_context.median_year_built` | Median year built |
-| **Material Share (Brick %)** | `livability_pillars.built_beauty.breakdown.architectural_analysis.material_profile.brick_pct` | Brick percentage (if available) |
-| **Enhancer Bonus** | `livability_pillars.built_beauty.breakdown.enhancer_bonus.built_scaled` | Scaled enhancer bonus |
-| **Rowhouse Bonus** | `livability_pillars.built_beauty.breakdown.architectural_analysis.bonus_breakdown.rowhouse` | Rowhouse bonus |
+| **Built Beauty Score** | `livability_pillars.built_environment.score` | Total score (0-100) |
+| **Height Diversity** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.height_diversity` | Height diversity metric |
+| **Type Diversity** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.type_diversity` | Building type diversity |
+| **Footprint Variation** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.footprint_variation` | Footprint area CV |
+| **Built Coverage Ratio** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.built_coverage_ratio` | Built coverage ratio |
+| **Block Grain** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.block_grain` | Block grain metric |
+| **Streetwall Continuity** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.streetwall_continuity` | Streetwall continuity |
+| **Setback Consistency** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.setback_consistency` | Setback consistency |
+| **Facade Rhythm** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.facade_rhythm` | Facade rhythm |
+| **Landmark Count** | `livability_pillars.built_environment.breakdown.architectural_analysis.historic_context.landmarks` | Historic landmarks count |
+| **Median Year Built** | `livability_pillars.built_environment.breakdown.architectural_analysis.historic_context.median_year_built` | Median year built |
+| **Material Share (Brick %)** | `livability_pillars.built_environment.breakdown.architectural_analysis.material_profile.brick_pct` | Brick percentage (if available) |
+| **Enhancer Bonus** | `livability_pillars.built_environment.breakdown.enhancer_bonus.built_scaled` | Scaled enhancer bonus |
+| **Rowhouse Bonus** | `livability_pillars.built_environment.breakdown.architectural_analysis.bonus_breakdown.rowhouse` | Rowhouse bonus |
 
 ---
 
@@ -204,7 +204,7 @@ This document maps TSV column names to API response paths for all pillars.
 
 5. **Distance Units**: All distances are in kilometers unless otherwise specified (e.g., `downtown_center_distance_m` is in meters).
 
-6. **Form Context**: Only available for beauty pillars (built_beauty, natural_beauty) and is located at `data_quality_summary.form_context`.
+6. **Form Context**: Only available for beauty pillars (built_environment, natural_beauty) and is located at `data_quality_summary.form_context`.
 
 7. **Area Type**: Can be found at either `data_quality_summary.area_classification.type` (top-level) or `livability_pillars.{pillar}.area_classification.area_type` (pillar-specific).
 

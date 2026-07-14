@@ -43,7 +43,7 @@ from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score_v2
-from pillars import built_beauty, natural_beauty, neighborhood_beauty
+from pillars import built_environment, natural_beauty, neighborhood_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -256,7 +256,7 @@ def _compute_scoring_hash() -> str:
     scoring_files = [
         # Pillar scoring logic
         "pillars/active_outdoors.py",
-        "pillars/built_beauty.py",
+        "pillars/built_environment.py",
         "pillars/natural_beauty.py",
         "pillars/neighborhood_amenities.py",
         "pillars/air_travel_access.py",
@@ -367,7 +367,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     - "High" → weight 3
 
     Args:
-        priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "built_beauty": "Medium"})
+        priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "built_environment": "Medium"})
 
     Returns:
         Dict mapping pillar names to token counts (sums to exactly 100)
@@ -507,7 +507,7 @@ def _built_env_match_score(effective_area_type: Optional[str], preference: Optio
     return 20.0
 
 
-def _extract_built_beauty_summary(built_details: Dict) -> Dict:
+def _extract_built_environment_summary(built_details: Dict) -> Dict:
     """Extract summary data from Built Beauty details for display in UI."""
     summary = {}
     arch_analysis = built_details.get("architectural_analysis", {})
@@ -793,7 +793,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     Parse token allocation string or return default equal distribution.
     
-    Format: "active_outdoors:5,built_beauty:4,natural_beauty:4,air_travel:3,..."
+    Format: "active_outdoors:5,built_environment:4,natural_beauty:4,air_travel:3,..."
     Default: Equal distribution across all 13 primary pillars (totals 100).
     
     Note: This function now uses 100 tokens total (migrated from 20 tokens).
@@ -852,7 +852,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
                 total_allocated += count
             elif pillar in alias_pillars:
                 split = count / 2.0
-                token_dict["built_beauty"] = token_dict.get("built_beauty", 0.0) + split
+                token_dict["built_environment"] = token_dict.get("built_environment", 0.0) + split
                 token_dict["natural_beauty"] = token_dict.get("natural_beauty", 0.0) + split
                 total_allocated += count
         
@@ -950,7 +950,7 @@ def _derive_token_allocation_for_scoring(
         priority_levels: Dict[str, str] = {}
         primary_pillars = [
             "active_outdoors",
-            "built_beauty",
+            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
@@ -1062,7 +1062,7 @@ def _set_pillar_status(
         if not isinstance(entry, dict):
             continue
         dq = dict(entry.get("data_quality") or {})
-        # neighborhood_beauty replaced two standalone pillar_tasks entries (built_beauty,
+        # neighborhood_beauty replaced two standalone pillar_tasks entries (built_environment,
         # natural_beauty); _execute_pillar still records their exceptions under those
         # original task names, not under the merged key. Without this, a total failure of
         # either sub-pillar (e.g. calculate_natural_beauty() raising) gets silently caught
@@ -1073,11 +1073,11 @@ def _set_pillar_status(
         # fix could reach).
         is_failed = pillar_name in exceptions
         if pillar_name == "neighborhood_beauty" and not is_failed:
-            is_failed = "built_beauty" in exceptions or "natural_beauty" in exceptions
+            is_failed = "built_environment" in exceptions or "natural_beauty" in exceptions
         if is_failed:
             entry["status"] = "failed"
             # Force-overwrite (not setdefault): for neighborhood_beauty, dq here is
-            # built_beauty's own healthy data_quality dict (already has a real quality_tier/
+            # built_environment's own healthy data_quality dict (already has a real quality_tier/
             # confidence), so setdefault would never touch it -- a natural_beauty-only failure
             # would set status='failed' while still showing "excellent / 87%" underneath.
             dq["quality_tier"] = "very_poor"
@@ -1156,12 +1156,12 @@ def _compute_status_signal_for_response(
 def _need_arch_diversity_for_area_type(only_pillars: Optional[set[str]]) -> bool:
     """
     Full scores (and catalog JSONL) pass built_coverage into area_type detection.
-    Status Signal refresh uses only=...neighborhood_amenities... without built_beauty; we still
+    Status Signal refresh uses only=...neighborhood_amenities... without built_environment; we still
     need arch diversity so area_type matches a full run and Status Signal aligns with catalog.
     """
     if only_pillars is None:
         return True
-    if "built_beauty" in only_pillars:
+    if "built_environment" in only_pillars:
         return True
     if "neighborhood_amenities" in only_pillars:
         return True
@@ -1175,7 +1175,7 @@ def _compute_happiness_index_for_response(
     natural_beauty_details: Optional[Dict[str, Any]],
     state: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_beauty_details: Optional[Dict[str, Any]] = None,
+    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
@@ -1191,7 +1191,7 @@ def _compute_happiness_index_for_response(
             natural_beauty_details,
             state,
             social_fabric_details=social_fabric_details,
-            built_beauty_details=built_beauty_details,
+            built_environment_details=built_environment_details,
             community_safety_details=community_safety_details,
             neighborhood_amenities_details=neighborhood_amenities_details,
         )
@@ -1232,7 +1232,7 @@ def root():
         "version": API_VERSION,
         "pillars": [
             "active_outdoors",
-            "built_beauty",
+            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
@@ -1423,7 +1423,7 @@ def _apply_allocation_to_cached_response(
         if recomputed is not None:
             natural_sub["score"] = recomputed
             v9b["preference_applied"] = natural_beauty_preference or None
-            built_score = nb_merged.get("built_beauty_score", nb_details.get("built_beauty_score"))
+            built_score = nb_merged.get("built_environment_score", nb_details.get("built_environment_score"))
             built_weight = nb_merged.get("built_weight", nb_details.get("built_weight"))
             if built_score is not None and built_weight is not None:
                 new_score = round(float(built_weight) * float(built_score) + (1.0 - float(built_weight)) * float(recomputed), 2)
@@ -1451,12 +1451,7 @@ def _apply_allocation_to_cached_response(
 
     # When only specific pillars were requested, strip the rest from the cached response.
     if only_pillars:
-        _expanded = set(only_pillars)
-        if 'built_beauty' in only_pillars:
-            _expanded.add('built_environment')
-        if 'built_environment' in only_pillars:
-            _expanded.add('built_beauty')
-        livability_pillars = {k: v for k, v in livability_pillars.items() if k in _expanded}
+        livability_pillars = {k: v for k, v in livability_pillars.items() if k in only_pillars}
         response["livability_pillars"] = livability_pillars
 
     total_score = 0.0
@@ -1568,7 +1563,7 @@ def _compute_single_score_internal(
                 expanded_only = set()
                 for name in raw_only:
                     if name == "neighborhood_beauty":
-                        expanded_only.update({"built_beauty", "natural_beauty"})
+                        expanded_only.update({"built_environment", "natural_beauty"})
                     else:
                         expanded_only.add(name)
                 only_pillars = expanded_only
@@ -1720,14 +1715,7 @@ def _compute_single_score_internal(
     def _include_pillar(name: str) -> bool:
         if only_pillars is None:
             return True
-        if name in only_pillars:
-            return True
-        # "built_beauty" is the internal fetch name; "built_environment" is the response/token key.
-        if name == 'built_beauty' and 'built_environment' in only_pillars:
-            return True
-        if name == 'built_environment' and 'built_beauty' in only_pillars:
-            return True
-        return False
+        return name in only_pillars
 
     shared_blob = None
     if not test_mode_enabled and only_pillars is None:
@@ -1861,11 +1849,11 @@ def _compute_single_score_internal(
 
         # Compute form_context once when beauty pillars are requested
         form_context = None
-        need_built_beauty = _include_pillar('built_beauty')
+        need_built_environment = _include_pillar('built_environment')
         need_natural_beauty = _include_pillar('natural_beauty')
         need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
-        if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
+        if need_built_environment or need_natural_beauty or need_neighborhood_beauty:
             try:
                 from data_sources.data_quality import get_form_context
                 from data_sources import census_api
@@ -1977,7 +1965,7 @@ def _compute_single_score_internal(
                 logger.error(f"{name} pillar failed after retry: {e2}")
                 return (name, None, e2)
 
-    need_built_beauty = _include_pillar('built_beauty')
+    need_built_environment = _include_pillar('built_environment')
     need_natural_beauty = _include_pillar('natural_beauty')
     need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
@@ -1991,9 +1979,9 @@ def _compute_single_score_internal(
                 'trip_type': trip_type if is_vacation_mode else None,
             })
         )
-    if need_built_beauty:
+    if need_built_environment:
         pillar_tasks.append(
-            ('built_beauty', built_beauty.calculate_built_beauty, {
+            ('built_environment', built_environment.calculate_built_environment, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': beauty_overrides if beauty_overrides else None,
@@ -2171,7 +2159,7 @@ def _compute_single_score_internal(
                 _score = 0.0
             else:
                 pillar_results[name] = result
-                if name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                if name in ('built_environment', 'natural_beauty') and isinstance(result, dict):
                     _score = float(result.get('score', 0.0))
                 elif name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
                     _score = float(result[0] if result[0] is not None else 0.0)
@@ -2198,7 +2186,7 @@ def _compute_single_score_internal(
                         _score = 0.0
                     else:
                         pillar_results[pillar_name] = result
-                        if pillar_name in ('built_beauty', 'natural_beauty') and isinstance(result, dict):
+                        if pillar_name in ('built_environment', 'natural_beauty') and isinstance(result, dict):
                             _score = float(result.get('score', 0.0))
                         elif pillar_name == 'quality_education' and isinstance(result, (tuple, list)) and len(result) >= 1:
                             _score = float(result[0] if result[0] is not None else 0.0)
@@ -2319,7 +2307,7 @@ def _compute_single_score_internal(
     _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
     # Extract built/natural beauty from parallel results
-    built_calc = pillar_results.get('built_beauty')
+    built_calc = pillar_results.get('built_environment')
     natural_calc = pillar_results.get('natural_beauty')
 
     if built_calc:
@@ -2333,7 +2321,7 @@ def _compute_single_score_internal(
             "enhancer_bonus_scaled": 0.0,
             "score_before_normalization": 0.0,
             "normalization": None,
-            "source": "built_beauty",
+            "source": "built_environment",
             "architectural_analysis": {},
             "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
         }
@@ -2403,7 +2391,7 @@ def _compute_single_score_internal(
             "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
         )
 
-    pillar_results['built_beauty'] = (built_score, built_details)
+    pillar_results['built_environment'] = (built_score, built_details)
     natural_score, natural_details = _apply_v9_to_natural(
         natural_calc or {}, natural_score, natural_details, lat, lon,
         natural_beauty_preference=natural_beauty_preference
@@ -2485,7 +2473,7 @@ def _compute_single_score_internal(
             "details": {
                 "effective_area_type": nb_effective_area_type,
                 "built_env_preference": built_env_preference,
-                "built_beauty_score": built_score,
+                "built_environment_score": built_score,
             },
             "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
             "summary": {"effective_area_type": nb_effective_area_type},
@@ -2511,22 +2499,22 @@ def _compute_single_score_internal(
             "importance_level": None,
             "contribution": 0.0,
             "breakdown": {
-                "built_beauty_score": built_score,
+                "built_environment_score": built_score,
                 "natural_beauty_score": natural_score,
                 "built_weight": neighborhood_beauty_built_weight,
                 "effective_area_type": nb_effective_area_type,
                 "density": density,
             },
             "summary": {
-                "built_beauty": _extract_built_beauty_summary(built_details),
+                "built_environment": _extract_built_environment_summary(built_details),
                 "natural_beauty": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
                 "built_weight": neighborhood_beauty_built_weight,
             },
-            "built_beauty_score": built_score,
+            "built_environment_score": built_score,
             "natural_beauty_score": natural_score,
             "built_weight": neighborhood_beauty_built_weight,
             "details": {
-                "built_beauty": built_details,
+                "built_environment": built_details,
                 "natural_beauty": natural_details,
                 "built_weight": neighborhood_beauty_built_weight,
                 "effective_area_type": nb_effective_area_type,
@@ -2706,15 +2694,9 @@ def _compute_single_score_internal(
     _apply_pillar_failure_overrides(livability_pillars, exceptions)
     _set_pillar_status(livability_pillars, exceptions)
 
-    # When only specific pillars were requested, strip the rest so the frontend
-    # doesn't render them. Treat built_beauty/built_environment as the same pillar.
+    # When only specific pillars were requested, strip the rest so the frontend doesn't render them.
     if only_pillars:
-        _expanded_only = set(only_pillars)
-        if 'built_beauty' in only_pillars:
-            _expanded_only.add('built_environment')
-        if 'built_environment' in only_pillars:
-            _expanded_only.add('built_beauty')
-        livability_pillars = {k: v for k, v in livability_pillars.items() if k in _expanded_only}
+        livability_pillars = {k: v for k, v in livability_pillars.items() if k in only_pillars}
 
     # Build response
     longevity_index, longevity_contributions = compute_longevity_index(
@@ -2778,7 +2760,7 @@ def _compute_single_score_internal(
     # neighborhood_beauty replaced the two standalone pillars; happiness/longevity still
     # consume the separate sub-scores, so synthesize the old per-pillar shape from them.
     natural_beauty_details = {"score": natural_score, **(natural_details or {})}
-    built_beauty_details_for_indices = {"score": built_score, **(built_details or {})}
+    built_environment_details_for_indices = {"score": built_score, **(built_details or {})}
     happiness_result = _compute_happiness_index_for_response(
         housing_details,
         public_transit_details,
@@ -2786,7 +2768,7 @@ def _compute_single_score_internal(
         natural_beauty_details,
         state,
         social_fabric_details=livability_pillars.get("social_fabric"),
-        built_beauty_details=built_beauty_details_for_indices,
+        built_environment_details=built_environment_details_for_indices,
         community_safety_details=livability_pillars.get("community_safety"),
         neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
     )
@@ -2815,7 +2797,7 @@ def _compute_single_score_internal(
         built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
         natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
         if built_overrides:
-            overrides_payload["built_beauty"] = built_overrides
+            overrides_payload["built_environment"] = built_overrides
         if natural_overrides:
             overrides_payload["natural_beauty"] = natural_overrides
         if overrides_payload:
@@ -2917,7 +2899,7 @@ def get_livability_score(request: Request,
         priorities: Optional priority-based allocation (JSON string or query param)
                    Format: JSON object mapping pillar names to priority levels
                    Priority levels: "None" (0), "Low" (1), "Medium" (2), "High" (3)
-                   Example: '{"active_outdoors":"High","built_beauty":"Medium",...}'
+                   Example: '{"active_outdoors":"High","built_environment":"Medium",...}'
                    Default: Equal distribution across all pillars (100 tokens total)
         include_chains: Include chain/franchise businesses in amenities score (default: True)
         enable_schools: Enable school scoring for this request (default: uses global ENABLE_SCHOOL_SCORING flag)
@@ -3211,7 +3193,7 @@ def create_score_job(
     Use GET /score/jobs/{job_id} to poll status/result.
     If only=pillar1,pillar2 is set, only those pillars are computed (tap-to-score flow).
     """
-    # Parse only_pillars (e.g. "economic_security" or "built_beauty,natural_beauty")
+    # Parse only_pillars (e.g. "economic_security" or "built_environment,natural_beauty")
     only_pillars: Optional[set[str]] = None
     if only:
         raw_only = {part.strip() for part in only.split(",") if part.strip()}
@@ -3219,7 +3201,7 @@ def create_score_job(
             expanded = set()
             for name in raw_only:
                 if name == "beauty":
-                    expanded.update({"built_beauty", "natural_beauty"})
+                    expanded.update({"built_environment", "natural_beauty"})
                 else:
                     expanded.add(name)
             only_pillars = expanded if expanded else None
@@ -3558,7 +3540,7 @@ async def _stream_score_with_progress(
                     # Emit pillar completion events quickly (match existing behavior: omit school pillar when disabled)
                     pillar_order = [
                         "active_outdoors",
-                        "built_beauty",
+                        "built_environment",
                         "natural_beauty",
                         "neighborhood_amenities",
                         "air_travel_access",
@@ -3663,7 +3645,7 @@ async def _stream_score_with_progress(
 
         # Compute form_context only when beauty pillars are requested
         form_context = None
-        if _include_pillar("built_beauty") or _include_pillar("natural_beauty"):
+        if _include_pillar("built_environment") or _include_pillar("natural_beauty"):
             t_form = time.perf_counter()
             try:
                 from data_sources.data_quality import get_form_context
@@ -3725,7 +3707,7 @@ async def _stream_score_with_progress(
             })
         )
         pillar_tasks.append(
-            ('built_beauty', built_beauty.calculate_built_beauty, {
+            ('built_environment', built_environment.calculate_built_environment, {
                 'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                 'location_scope': location_scope, 'location_name': location,
                 'test_overrides': None,
@@ -3844,7 +3826,7 @@ async def _stream_score_with_progress(
                     f"event: complete\n"
                     f"data: {json.dumps({'status': 'complete', 'pillar': pillar_name, 'error': str(error), 'completed': completed_count, 'total': total_pillars})}\n\n"
                 )
-            if pillar_name in ['built_beauty', 'natural_beauty']:
+            if pillar_name in ['built_environment', 'natural_beauty']:
                 score = result.get('score', 0.0) if isinstance(result, dict) else 0.0
             elif pillar_name == 'quality_education':
                 if isinstance(result, tuple) and len(result) >= 2:
@@ -3987,7 +3969,7 @@ async def _stream_score_with_progress(
         _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
         # Extract built/natural beauty
-        built_calc = pillar_results.get('built_beauty')
+        built_calc = pillar_results.get('built_environment')
         natural_calc = pillar_results.get('natural_beauty')
         
         if built_calc:
@@ -4001,7 +3983,7 @@ async def _stream_score_with_progress(
                 "enhancer_bonus_scaled": 0.0,
                 "score_before_normalization": 0.0,
                 "normalization": None,
-                "source": "built_beauty",
+                "source": "built_environment",
                 "architectural_analysis": {},
                 "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
             }
@@ -4058,7 +4040,7 @@ async def _stream_score_with_progress(
                 "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
             )
 
-        pillar_results['built_beauty'] = (built_score, built_details)
+        pillar_results['built_environment'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(
             natural_calc or {}, natural_score, natural_details, lat, lon,
             natural_beauty_preference=natural_beauty_preference
@@ -4124,7 +4106,7 @@ async def _stream_score_with_progress(
             priority_levels = {}
             primary_pillars = [
                 "active_outdoors",
-                "built_beauty",
+                "built_environment",
                 "natural_beauty",
                 "neighborhood_amenities",
                 "air_travel_access",
@@ -4172,7 +4154,7 @@ async def _stream_score_with_progress(
         )
         neighborhood_beauty_score = _nb_blend["score"]
         neighborhood_beauty_built_weight = _nb_blend["built_weight"]
-        # Vacation mode: use raw built_beauty quality score (already area-type-calibrated)
+        # Vacation mode: use raw built_environment quality score (already area-type-calibrated)
         # rather than preference-match (which returns 50 when no preference is set).
         if is_vacation_mode and built_score is not None:
             built_env_score = built_score
@@ -4222,7 +4204,7 @@ async def _stream_score_with_progress(
                 "weight": token_allocation.get("built_environment", 0.0),
                 "importance_level": priority_levels.get("built_environment") if priority_levels else None,
                 "contribution": round(built_env_score * token_allocation.get("built_environment", 0.0) / 100, 2),
-                "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_beauty_score": built_score},
+                "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
                 "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
                 "summary": {"effective_area_type": nb_effective_area_type},
                 "confidence": 100,
@@ -4247,22 +4229,22 @@ async def _stream_score_with_progress(
                 "importance_level": None,
                 "contribution": 0.0,
                 "breakdown": {
-                    "built_beauty_score": built_score,
+                    "built_environment_score": built_score,
                     "natural_beauty_score": natural_score,
                     "built_weight": neighborhood_beauty_built_weight,
                     "effective_area_type": nb_effective_area_type,
                     "density": density,
                 },
                 "summary": {
-                    "built_beauty": _extract_built_beauty_summary(built_details),
+                    "built_environment": _extract_built_environment_summary(built_details),
                     "natural_beauty": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference_parsed),
                     "built_weight": neighborhood_beauty_built_weight,
                 },
-                "built_beauty_score": built_score,
+                "built_environment_score": built_score,
                 "natural_beauty_score": natural_score,
                 "built_weight": neighborhood_beauty_built_weight,
                 "details": {
-                    "built_beauty": built_details,
+                    "built_environment": built_details,
                     "natural_beauty": natural_details,
                     "built_weight": neighborhood_beauty_built_weight,
                     "effective_area_type": nb_effective_area_type,
@@ -4504,7 +4486,7 @@ async def _stream_score_with_progress(
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
-            built_beauty_details=_beauty_pillars.get("built_beauty"),
+            built_environment_details=_beauty_pillars.get("built_environment"),
             community_safety_details=livability_pillars.get("community_safety"),
             neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
@@ -4625,7 +4607,7 @@ async def stream_score(
             expanded = set()
             for name in raw_only:
                 if name == "beauty":
-                    expanded.update({"built_beauty", "natural_beauty"})
+                    expanded.update({"built_environment", "natural_beauty"})
                 else:
                     expanded.add(name)
             only_pillars = expanded if expanded else None
@@ -4857,11 +4839,11 @@ async def stream_score(
 
         # Compute form_context once when beauty pillars are requested (shared across beauty pillars)
         form_context = None
-        need_built_beauty = _include_pillar('built_beauty')
+        need_built_environment = _include_pillar('built_environment')
         need_natural_beauty = _include_pillar('natural_beauty')
         need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
         
-        if need_built_beauty or need_natural_beauty or need_neighborhood_beauty:
+        if need_built_environment or need_natural_beauty or need_neighborhood_beauty:
             try:
                 from data_sources.data_quality import get_form_context
                 from data_sources import census_api
@@ -4939,10 +4921,10 @@ async def stream_score(
                     'precomputed_tree_canopy_5km': tree_canopy_5km  # Optional: pre-computed tree canopy
                 })
             )
-        # Add built_beauty and natural_beauty to parallel execution
-        if need_built_beauty:
+        # Add built_environment and natural_beauty to parallel execution
+        if need_built_environment:
             pillar_tasks.append(
-                ('built_beauty', built_beauty.calculate_built_beauty, {
+                ('built_environment', built_environment.calculate_built_environment, {
                     'lat': lat, 'lon': lon, 'city': city, 'area_type': area_type,
                     'location_scope': location_scope, 'location_name': location,
                     'test_overrides': beauty_overrides if beauty_overrides else None,
@@ -5165,10 +5147,10 @@ async def stream_score(
         _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
         # Extract built/natural beauty from parallel results
-        built_calc = pillar_results.get('built_beauty')
+        built_calc = pillar_results.get('built_environment')
         natural_calc = pillar_results.get('natural_beauty')
         
-        # Handle built_beauty result
+        # Handle built_environment result
         if built_calc:
             built_score = built_calc["score"]
             built_details = built_calc["details"]
@@ -5180,7 +5162,7 @@ async def stream_score(
                 "enhancer_bonus_scaled": 0.0,
                 "score_before_normalization": 0.0,
                 "normalization": None,
-                "source": "built_beauty",
+                "source": "built_environment",
                 "architectural_analysis": {},
                 "enhancer_bonus": {"built_raw": 0.0, "built_scaled": 0.0, "scaled_total": 0.0}
             }
@@ -5237,7 +5219,7 @@ async def stream_score(
                 "Natural beauty data sources all failed (empty tree_analysis and scenic_proxy)"
             )
 
-        pillar_results['built_beauty'] = (built_score, built_details)
+        pillar_results['built_environment'] = (built_score, built_details)
         natural_score, natural_details = _apply_v9_to_natural(
             natural_calc or {}, natural_score, natural_details, lat, lon,
             natural_beauty_preference=natural_beauty_preference
@@ -5275,7 +5257,7 @@ async def stream_score(
             # Store original priority levels for response (normalize to proper case: None/Low/Medium/High)
             priority_levels = {}
             primary_pillars = [
-                "active_outdoors", "built_beauty", "natural_beauty", "neighborhood_amenities",
+                "active_outdoors", "built_environment", "natural_beauty", "neighborhood_amenities",
                 "air_travel_access", "public_transit_access", "healthcare_access",
                 "economic_security", "quality_education", "housing_value", "climate_risk",
                 "social_fabric", "diversity", "community_safety",
@@ -5405,7 +5387,7 @@ async def stream_score(
             "weight": token_allocation.get("built_environment", 0.0),
             "importance_level": priority_levels.get("built_environment") if priority_levels else None,
             "contribution": round(built_env_score * token_allocation.get("built_environment", 0.0) / 100, 2),
-            "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_beauty_score": built_score},
+            "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
             "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
             "summary": {"effective_area_type": nb_effective_area_type},
             "confidence": 100,
@@ -5430,22 +5412,22 @@ async def stream_score(
             "importance_level": None,
             "contribution": 0.0,
             "breakdown": {
-                "built_beauty_score": built_score,
+                "built_environment_score": built_score,
                 "natural_beauty_score": natural_score,
                 "built_weight": neighborhood_beauty_built_weight,
                 "effective_area_type": nb_effective_area_type,
                 "density": density,
             },
             "summary": {
-                "built_beauty": _extract_built_beauty_summary(built_details),
+                "built_environment": _extract_built_environment_summary(built_details),
                 "natural_beauty": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
                 "built_weight": neighborhood_beauty_built_weight,
             },
-            "built_beauty_score": built_score,
+            "built_environment_score": built_score,
             "natural_beauty_score": natural_score,
             "built_weight": neighborhood_beauty_built_weight,
             "details": {
-                "built_beauty": built_details,
+                "built_environment": built_details,
                 "natural_beauty": natural_details,
                 "built_weight": neighborhood_beauty_built_weight,
                 "effective_area_type": nb_effective_area_type,
@@ -5636,7 +5618,7 @@ async def stream_score(
             "architecture": "10 Purpose-Driven Pillars",
             "pillars": {
                 "active_outdoors": "Can I be active outside regularly? (Parks, beaches, trails, camping)",
-                "built_beauty": "Are the buildings and streets visually harmonious? (Architecture, form, materials, heritage)",
+                "built_environment": "Are the buildings and streets visually harmonious? (Architecture, form, materials, heritage)",
                 "natural_beauty": "Is the landscape beautiful and calming? (Tree canopy, scenic adjacency, viewpoints)",
                 "neighborhood_amenities": "Can I walk to great spots? (Indie cafes, restaurants, shops, culture)",
                 "air_travel_access": "How easily can I fly? (Airport proximity and type)",
@@ -5687,7 +5669,7 @@ async def stream_score(
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
-            built_beauty_details=_beauty_pillars.get("built_beauty"),
+            built_environment_details=_beauty_pillars.get("built_environment"),
             community_safety_details=livability_pillars.get("community_safety"),
             neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
@@ -5716,7 +5698,7 @@ async def stream_score(
             built_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in arch_override_keys}
             natural_overrides = {k: beauty_overrides[k] for k in sorted(beauty_overrides) if k in tree_override_keys}
             if built_overrides:
-                overrides_payload["built_beauty"] = built_overrides
+                overrides_payload["built_environment"] = built_overrides
             if natural_overrides:
                 overrides_payload["natural_beauty"] = natural_overrides
             if overrides_payload:
@@ -6765,7 +6747,7 @@ def health_check():
         "architecture": "11 Purpose-Driven Pillars",
         "pillars": [
             "active_outdoors",
-            "built_beauty",
+            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
@@ -6868,7 +6850,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         # Use centralized helper function for consistency
         # Fetch historic data using shared helper to avoid duplicate API calls
         from data_sources.data_quality import get_effective_area_type
-        from pillars.built_beauty import _fetch_historic_data
+        from pillars.built_environment import _fetch_historic_data
         
         # Get historic markers for historic district detection using shared helper
         historic_data = _fetch_historic_data(lat, lon, radius_m=radius_m)

@@ -2,7 +2,7 @@
 
 **Purpose:** Confirm what data comes back for Carroll Gardens built beauty and how the score is calculated for each preference permutation (historic/contemporary × spread_out/walkable).
 
-**Script:** `scripts/debug/investigate_built_beauty_preferences.py` — run with no args for Carroll Gardens, or `--lat/--lon/--name` or `--location "..."`. Use `--json` for machine-readable output; use `--save path.json` to write that JSON to a file. First run can take 2+ minutes (OSM/Census APIs).
+**Script:** `scripts/debug/investigate_built_environment_preferences.py` — run with no args for Carroll Gardens, or `--lat/--lon/--name` or `--location "..."`. Use `--json` for machine-readable output; use `--save path.json` to write that JSON to a file. First run can take 2+ minutes (OSM/Census APIs).
 
 ---
 
@@ -14,7 +14,7 @@ For any location, the built beauty pipeline returns:
 |-------|--------|--------|
 | **area_type** | `detect_area_type(lat, lon, density, business_count, built_coverage, ...)` | Morphology: `urban_core`, `suburban`, `exurban`, `urban_residential`, etc. |
 | **form_context** | `get_form_context(area_type, density, levels_entropy, ...)` (multinomial) | Architectural classification: `historic_urban`, `urban_residential`, `urban_core`, `suburban`, `exurban`, etc. |
-| **effective_area_type** | Same as `form_context` when passed into built_beauty | Used for (1) character mismatch penalty and (2) normalization. **Does not change** with density preference. |
+| **effective_area_type** | Same as `form_context` when passed into built_environment | Used for (1) character mismatch penalty and (2) normalization. **Does not change** with density preference. |
 | **area_type_for_scoring** | Derived from **built_density_preference** only | `spread_out_residential` → `exurban`; `walkable_residential` → `suburban`; `dense_urban_living` → `urban_core`. This is what is passed into `score_architectural_diversity_as_beauty()` as `area_type` for **target bands**. |
 
 So for Carroll Gardens:
@@ -27,7 +27,7 @@ So for Carroll Gardens:
 
 ## 2. Carroll Gardens reference data (from research run)
 
-From `analysis/research_data/built_beauty_raw_data.json` (one run; no preference split):
+From `analysis/research_data/built_environment_raw_data.json` (one run; no preference split):
 
 | Metric | Value |
 |--------|--------|
@@ -118,13 +118,13 @@ If you observe **contemporary + walkable** > **historic + walkable**, that contr
 
 ```bash
 # Full run (2+ min with APIs)
-python3 scripts/debug/investigate_built_beauty_preferences.py
+python3 scripts/debug/investigate_built_environment_preferences.py
 
 # JSON only (e.g. to save or diff)
-python3 scripts/debug/investigate_built_beauty_preferences.py --json > /tmp/built_beauty_sample.json
+python3 scripts/debug/investigate_built_environment_preferences.py --json > /tmp/built_environment_sample.json
 
 # Save JSON to a file directly
-python3 scripts/debug/investigate_built_beauty_preferences.py --save /tmp/built_beauty_sample.json
+python3 scripts/debug/investigate_built_environment_preferences.py --save /tmp/built_environment_sample.json
 ```
 
 The script prints for each permutation:

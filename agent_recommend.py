@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 # Mirrors frontend/lib/pillars.ts PillarKey (order matches validation set)
 PILLAR_KEYS: tuple[str, ...] = (
     "natural_beauty",
-    "built_beauty",
+    "built_environment",
     "neighborhood_amenities",
     "active_outdoors",
     "healthcare_access",

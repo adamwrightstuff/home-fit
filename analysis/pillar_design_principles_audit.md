@@ -10,12 +10,12 @@
 - ✅ natural_beauty.py - Calibration removed
 - ✅ healthcare_access.py - Calibration removed (replaced with RATIO_SCORING_PARAMS)
 - ✅ public_transit_access.py - Calibration removed (data-backed thresholds)
-- ✅ built_beauty.py - No calibration
+- ✅ built_environment.py - No calibration
 - ✅ air_travel_access.py - No calibration
 - ✅ housing_value.py - No calibration
 - ✅ schools.py - No calibration
 
-**Note:** The legacy `neighborhood_beauty` combined module was removed; beauty is scored via `built_beauty` and `natural_beauty` only. The name may still appear as a token alias in `main.py`.
+**Note:** The legacy `neighborhood_beauty` combined module was removed; beauty is scored via `built_environment` and `natural_beauty` only. The name may still appear as a token alias in `main.py`.
 
 ## Fixes Applied
 

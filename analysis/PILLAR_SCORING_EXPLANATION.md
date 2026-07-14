@@ -407,7 +407,7 @@ total_score = affordability + space + efficiency  # 0-100
 
 ---
 
-## 7. Built Beauty (`pillars/built_beauty.py`)
+## 7. Built Beauty (`pillars/built_environment.py`)
 
 ### Scoring Method
 **Pure data-backed component sum** (no calibration)
@@ -516,7 +516,7 @@ airport_score = base_score(airport_type) * exp(-decay_rate * (distance - optimal
 
 ## 9. Neighborhood Beauty (legacy name only)
 
-The combined module `pillars/neighborhood_beauty.py` has been **removed**. Scoring uses **`built_beauty`** and **`natural_beauty`** directly.
+The combined module `pillars/neighborhood_beauty.py` has been **removed**. Scoring uses **`built_environment`** and **`natural_beauty`** directly.
 
 - **API / tokens:** `neighborhood_beauty` may still appear as a **token alias** that splits weight between built and natural (see `main.py`).
 - **No separate pillar:** There is no third beauty score path in production.
@@ -707,7 +707,7 @@ score = min(100, total_raw)
 | **healthcare_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed ratios |
 | **public_transit_access** | ❌ None | ❌ None | ❌ None | ✅ Data-backed breakpoints |
 | **Price-to-Space (housing_value)** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
-| **built_beauty** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
+| **built_environment** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **air_travel_access** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **economic_security** | ❌ None | ❌ None | ❌ None | ✅ Pure data-backed |
 | **quality_education** | ❌ None | ❌ None | ❌ None | ✅ Data-backed + bonuses |
@@ -741,7 +741,7 @@ score = min(100, total_raw)
 
 | Source | Used By | Purpose |
 |--------|---------|---------|
-| **OSM API** | natural_beauty, active_outdoors, neighborhood_amenities, built_beauty, healthcare_access, quality_education, social_fabric | Parks, businesses, buildings, civic nodes, early ed, colleges |
+| **OSM API** | natural_beauty, active_outdoors, neighborhood_amenities, built_environment, healthcare_access, quality_education, social_fabric | Parks, businesses, buildings, civic nodes, early ed, colleges |
 | **GEE API** | natural_beauty, active_outdoors, climate_risk | Tree canopy, topography, landcover; LST heat; Sentinel-5P air quality; TerraClimate trend |
 | **FEMA NFHL** | climate_risk | Flood zone (ArcGIS FeatureServer point-in-polygon) |
 | **Census API** | All pillars (as needed) | Population density, housing, commute time, tree canopy, mobility B07003, diversity B02001/B19001/B01001 |

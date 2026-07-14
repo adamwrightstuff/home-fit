@@ -359,7 +359,7 @@ class RegionalBaselineManager:
                 'healthcare_access': 85,    # Excellent healthcare
                 'air_travel_access': 90,    # Major airports
                 'neighborhood_amenities': 80,        # Dense amenities
-                'built_beauty': 55,         # Architecture carries more weight than greenery
+                'built_environment': 55,         # Architecture carries more weight than greenery
                 'natural_beauty': 30,       # Limited nature access
                 'public_transit_access': 85, # Excellent transit
                 'quality_education': 70,    # Good schools
@@ -370,7 +370,7 @@ class RegionalBaselineManager:
                 'healthcare_access': 75,    # Good healthcare
                 'air_travel_access': 70,    # Regional airports
                 'neighborhood_amenities': 50,        # Moderate amenities
-                'built_beauty': 55,         # Cohesive but less intricate architecture
+                'built_environment': 55,         # Cohesive but less intricate architecture
                 'natural_beauty': 65,       # Tree canopy and neighborhood greenery
                 'public_transit_access': 45, # Limited transit
                 'quality_education': 80,    # Excellent schools
@@ -381,7 +381,7 @@ class RegionalBaselineManager:
                 'healthcare_access': 55,    # Limited healthcare
                 'air_travel_access': 40,    # Limited air access
                 'neighborhood_amenities': 25,        # Few amenities
-                'built_beauty': 45,         # Quaint main streets, limited variation
+                'built_environment': 45,         # Quaint main streets, limited variation
                 'natural_beauty': 85,       # Scenic landscape focus
                 'public_transit_access': 20, # No transit
                 'quality_education': 65,    # Decent schools
@@ -392,7 +392,7 @@ class RegionalBaselineManager:
                 'healthcare_access': 35,   # Limited healthcare
                 'air_travel_access': 20,    # No air access
                 'neighborhood_amenities': 10,        # No amenities
-                'built_beauty': 35,         # Sparse historic fabric
+                'built_environment': 35,         # Sparse historic fabric
                 'natural_beauty': 95,       # Exceptional natural scenery
                 'public_transit_access': 5, # No transit
                 'quality_education': 50,    # Limited schools

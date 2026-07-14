@@ -114,11 +114,11 @@ def _component_green(natural_beauty_details: Optional[Dict[str, Any]]) -> Option
     return None
 
 
-def _component_built(built_beauty_details: Optional[Dict[str, Any]]) -> Optional[float]:
+def _component_built(built_environment_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """B: 0–100 = full Built Beauty pillar score."""
-    if not built_beauty_details:
+    if not built_environment_details:
         return None
-    score = built_beauty_details.get("score")
+    score = built_environment_details.get("score")
     if isinstance(score, (int, float)):
         return max(0.0, min(100.0, float(score)))
     return None
@@ -153,7 +153,7 @@ def compute_happiness_index_with_breakdown(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_beauty_details: Optional[Dict[str, Any]] = None,
+    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
@@ -185,7 +185,7 @@ def compute_happiness_index_with_breakdown(
     N = _component_neighborhood(neighborhood_amenities_details)
     H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
-    B = _component_built(built_beauty_details)
+    B = _component_built(built_environment_details)
 
     breakdown["social"] = round(S, 1) if S is not None else None
     breakdown["safety"] = round(F, 1) if F is not None else None
@@ -236,7 +236,7 @@ def compute_happiness_index(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_beauty_details: Optional[Dict[str, Any]] = None,
+    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
@@ -248,7 +248,7 @@ def compute_happiness_index(
         natural_beauty_details,
         state_abbrev,
         social_fabric_details=social_fabric_details,
-        built_beauty_details=built_beauty_details,
+        built_environment_details=built_environment_details,
         community_safety_details=community_safety_details,
         neighborhood_amenities_details=neighborhood_amenities_details,
     )

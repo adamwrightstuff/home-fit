@@ -17,7 +17,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 )
 
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 from data_sources.data_quality import classify_morphology
 from data_sources import census_api
 
@@ -60,7 +60,7 @@ def test_rule_based_scoring():
             area_type = classify_morphology(density, None, None, metro_distance_km=None)
             
             # Calculate built beauty (now uses rule-based scoring)
-            result_dict = calculate_built_beauty(
+            result_dict = calculate_built_environment(
                 lat=lat,
                 lon=lon,
                 area_type=area_type,

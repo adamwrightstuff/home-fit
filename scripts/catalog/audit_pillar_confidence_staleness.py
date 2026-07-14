@@ -10,7 +10,7 @@ Two tiers:
   1. Generic hard-failure floor check (all 13 pillars): if data_quality.data_warning(s)
      contains a known hard-failure marker, confidence must be floored to <=10. Catches
      drift like the healthcare_access query_failed bug (eab6652).
-  2. Pillar-specific checks (registry below): built_beauty's coverage-threshold
+  2. Pillar-specific checks (registry below): built_environment's coverage-threshold
      consistency (osm_building_coverage vs data_warning/confidence_0_1).
 
 Report-only -- does not modify the catalog. Add new pillar-specific checks to
@@ -70,11 +70,11 @@ def generic_floor_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[st
     return None
 
 
-def built_beauty_coverage_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[str]:
-    """Tier 2: neighborhood_beauty's nested built_beauty coverage vs data_warning consistency."""
+def built_environment_coverage_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[str]:
+    """Tier 2: neighborhood_beauty's nested built_environment coverage vs data_warning consistency."""
     if pillar_name != "neighborhood_beauty":
         return None
-    aa = ((pillar.get("details") or {}).get("built_beauty") or {}).get("architectural_analysis")
+    aa = ((pillar.get("details") or {}).get("built_environment") or {}).get("architectural_analysis")
     if not isinstance(aa, dict):
         return None
     cov = aa.get("osm_building_coverage")
@@ -91,7 +91,7 @@ def built_beauty_coverage_check(pillar_name: str, pillar: Dict[str, Any]) -> Opt
 
 # Registry of pillar-specific checks. Each fn: (pillar_name, pillar_dict) -> Optional[issue_str]
 PILLAR_SPECIFIC_CHECKS = [
-    built_beauty_coverage_check,
+    built_environment_coverage_check,
 ]
 
 

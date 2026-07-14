@@ -38,10 +38,10 @@ def _extract(name: str):
     nb = d["score"]["livability_pillars"]["neighborhood_beauty"]
     bk = nb["breakdown"]
     aa = (nb.get("details", {})
-            .get("built_beauty", {})
+            .get("built_environment", {})
             .get("architectural_analysis", {}) or {})
     return (
-        bk["built_beauty_score"],
+        bk["built_environment_score"],
         bk["natural_beauty_score"],
         bk["density"],
         bk["effective_area_type"],

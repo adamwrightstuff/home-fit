@@ -193,11 +193,11 @@ def main():
     print(f"\n  A area_type: {shared_a['area_type']}")
     print(f"  B area_type: {shared_b['area_type']}")
 
-    from pillars import built_beauty, natural_beauty
+    from pillars import built_environment, natural_beauty
     from data_sources.radius_profiles import get_radius_profile
 
     def beauty_radius_info(area_type, location_scope):
-        rp_b = get_radius_profile("built_beauty", area_type, location_scope)
+        rp_b = get_radius_profile("built_environment", area_type, location_scope)
         rp_n = get_radius_profile("natural_beauty", area_type, location_scope)
         return {
             "arch_radius_m": rp_b.get("architectural_diversity_radius_m", 2000),
@@ -209,7 +209,7 @@ def main():
     print(f"\n  A radii: arch={rad_a['arch_radius_m']}m, tree={rad_a['tree_radius_m']}m")
     print(f"  B radii: arch={rad_b['arch_radius_m']}m, tree={rad_b['tree_radius_m']}m")
 
-    built_a = built_beauty.calculate_built_beauty(
+    built_a = built_environment.calculate_built_environment(
         a["lat"], a["lon"],
         city=a["city"],
         area_type=shared_a["area_type"],
@@ -219,7 +219,7 @@ def main():
         density=shared_a["density"],
         form_context=shared_a["form_context"],
     )
-    built_b = built_beauty.calculate_built_beauty(
+    built_b = built_environment.calculate_built_environment(
         b["lat"], b["lon"],
         city=b["city"],
         area_type=shared_b["area_type"],

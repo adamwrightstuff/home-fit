@@ -1,6 +1,6 @@
 # Beauty Pillar Design Principles
 
-This document outlines shared design principles for the `built_beauty` and `natural_beauty` pillars to ensure consistency, maintainability, and scalability.
+This document outlines shared design principles for the `built_environment` and `natural_beauty` pillars to ensure consistency, maintainability, and scalability.
 
 ## Core Principles
 

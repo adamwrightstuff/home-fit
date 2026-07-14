@@ -856,7 +856,7 @@ def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict
 
     # Microsoft footprint fallback: when OSM building footprint coverage itself is too low
     # to trust (low_building_coverage), built_coverage_ratio -- the highest-weighted single
-    # feature in the built_beauty model -- is likely undercounted because OSM hasn't mapped
+    # feature in the built_environment model -- is likely undercounted because OSM hasn't mapped
     # most buildings in the area, not because the area is actually sparsely built. Substitute
     # Microsoft's ML-derived nationwide building footprint raster, which has full US coverage
     # regardless of OSM mapping completeness.

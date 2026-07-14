@@ -76,7 +76,7 @@ if density and density < 450 and business_count and business_count >= 50:
 
 **Impact**: Bozeman and other locations with missing rowhouse_bonus values would break data extraction.
 
-**Fix Applied** (`pillars/built_beauty.py`):
+**Fix Applied** (`pillars/built_environment.py`):
 - Ensured rowhouse_bonus defaults to 0.0 when missing
 - Changed: `coverage_cap_metadata.get("rowhouse_bonus")` 
 - To: `coverage_cap_metadata.get("rowhouse_bonus") or 0.0`
@@ -155,7 +155,7 @@ if density and density < 450 and business_count and business_count >= 50:
    - Added height diversity validation (lines ~343-347)
    - Added dense urban area validation (lines ~353-361)
 
-2. `pillars/built_beauty.py`:
+2. `pillars/built_environment.py`:
    - Fixed rowhouse_bonus default value (line ~250)
 
 ## Next Steps

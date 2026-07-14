@@ -17,7 +17,7 @@ So the difference is by design: we score **the place you asked for** (that lat/l
 ### Built beauty
 
 - **Data**: OSM buildings (and roads for form metrics) in a **2 km radius** around the geocoded point.
-- **Radius**: From `get_radius_profile('built_beauty', area_type, location_scope)` → `architectural_diversity_radius_m` is 2000 m for both suburban and neighborhood.
+- **Radius**: From `get_radius_profile('built_environment', area_type, location_scope)` → `architectural_diversity_radius_m` is 2000 m for both suburban and neighborhood.
 - So the **center** is what changes: “Larchmont NY” uses the town center; “2 Springdale Dr” would use that address’s coordinates. Different circles ⇒ different building set, different built coverage, form metrics (streetwall, setback, facade rhythm), and thus different built beauty score.
 
 ### Natural beauty

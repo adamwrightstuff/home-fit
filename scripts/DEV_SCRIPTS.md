@@ -21,8 +21,8 @@ Update references in analysis docs when you cite a script path (e.g. `scripts/de
 | Social Fabric PRD | `baselines/build_irs_engagement_baselines.py`, `build_voter_registration_baselines.py`, `build_stability_baselines.py` |
 | Economic / OEWS | `baselines/build_oews_metro_wages.py` |
 | Natural Earth / water | `baselines/download_natural_earth_water.py` |
-| Built beauty research | `debug/collect_built_beauty_research_data.py` |
-| Carroll Gardens built beauty | `debug/investigate_built_beauty_preferences.py` |
+| Built beauty research | `debug/collect_built_environment_research_data.py` |
+| Carroll Gardens built beauty | `debug/investigate_built_environment_preferences.py` |
 | Housing spot checks | `debug/investigate_housing_issues.py` |
 | Tribeca vs Carroll status signal | `debug/compare_status_signal.py` |
 | Natural beauty validation | `debug/validate_natural_beauty_scoring.py` |

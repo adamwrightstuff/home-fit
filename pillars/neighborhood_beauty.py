@@ -1,5 +1,5 @@
 """
-Neighborhood Beauty: combined built_beauty + natural_beauty pillar.
+Neighborhood Beauty: combined built_environment + natural_beauty pillar.
 
 Replaces the two formerly-independent beauty pillars with a single density-weighted
 blend. The blend weight is the validated formula from this session's
@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Optional
 
-from pillars import built_beauty, natural_beauty
+from pillars import built_environment, natural_beauty
 
 # Real catalog-wide density distribution (n=290): p25=5508, p50=11605, p95=95474.
 # Anchored at p1-ish (500) through p95 (95474) so the curve spans the real range
@@ -61,7 +61,7 @@ def _bcr_ceiling(bcr: Optional[float]) -> Optional[float]:
 
 def combined_weight(density: Optional[float], effective_area_type: Optional[str],
                     built_coverage_ratio: Optional[float] = None) -> float:
-    """Public: density+area-type+BCR blend weight on built_beauty (1-w applies to natural)."""
+    """Public: density+area-type+BCR blend weight on built_environment (1-w applies to natural)."""
     return _combined_weight(density, effective_area_type, built_coverage_ratio)
 
 
@@ -122,7 +122,7 @@ def calculate_neighborhood_beauty(lat: float,
     Compute the combined neighborhood beauty score by running both underlying
     scorers and blending them with a density+area-type weight.
     """
-    built_result = built_beauty.calculate_built_beauty(
+    built_result = built_environment.calculate_built_environment(
         lat, lon,
         city=city,
         area_type=area_type,
@@ -171,13 +171,13 @@ def calculate_neighborhood_beauty(lat: float,
     combined_score = weight * built_score + (1.0 - weight) * natural_score
 
     details = {
-        "built_beauty_score": built_score,
+        "built_environment_score": built_score,
         "natural_beauty_score": natural_score,
         "built_weight": round(weight, 3),
         "built_coverage_ratio": bcr,
         "density": density,
         "effective_area_type": effective_area_type,
-        "built_beauty_details": built_result.get("details"),
+        "built_environment_details": built_result.get("details"),
         "natural_beauty_details": natural_result.get("details"),
         "source": "neighborhood_beauty",
     }
@@ -185,7 +185,7 @@ def calculate_neighborhood_beauty(lat: float,
     return {
         "score": round(combined_score, 2),
         "details": details,
-        "built_beauty_full": built_result,
+        "built_environment_full": built_result,
         "natural_beauty_full": natural_result,
         "effective_area_type": effective_area_type,
         "data_quality": built_result.get("data_quality"),

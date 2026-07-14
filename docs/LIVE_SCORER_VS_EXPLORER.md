@@ -88,14 +88,14 @@ floor). A full live run can differ because:
 - **public_transit_access:** the live Transitland fetch is **noisy** — it can undercount
   routes (Astoria → 2 subway lines on a bad fetch). The catalog uses stable stored counts.
   See [[transit-fetch-noisy]]. So live transit can differ run-to-run and from the catalog.
-- **built_beauty:** ~34% of catalog places carry stale coverage-0 scores; live has the
+- **built_environment:** ~34% of catalog places carry stale coverage-0 scores; live has the
   reliability guard. See [[built-beauty-backfill-todo]].
-- **built_beauty confidence — RESOLVED 2026-06-16:** catalog `confidence` was frozen at
+- **built_environment confidence — RESOLVED 2026-06-16:** catalog `confidence` was frozen at
   build time (mostly 90) and never re-derived after `assess_pillar_data_quality()` added
   its `data_warning`-based discount (3% for `suspiciously_low_height_diversity` /
   `low_building_coverage`, 12% for real failures like `api_error`). Recomputed from
   already-stored `architectural_analysis` data (no OSM re-fetch) via
-  `scripts/recompute_built_beauty_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
+  `scripts/recompute_built_environment_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
   Confidence is metadata only — doesn't cascade into score/total_score.
 
 ### 6. Built Beauty form-metric non-determinism — RESOLVED 2026-06-21
@@ -103,7 +103,7 @@ floor). A full live run can differ because:
 streetwall_continuity`, `compute_setback_consistency`, and `compute_facade_rhythm` did not,
 despite a comment at the call site stating the 15s timeout relied on "caching handles
 retries." Verified: calling the same place twice with caches cleared produced different
-built_beauty scores minutes apart (Bronxville 71.4 → 86.6) purely from live OSM/Overpass
+built_environment scores minutes apart (Bronxville 71.4 → 86.6) purely from live OSM/Overpass
 timing variance on the uncached calls. Fixed by adding the missing decorator to all three
 (matching `compute_block_grain`'s existing pattern). Live scores for a fixed place should now
 be stable across requests within the 6h TTL.
@@ -152,12 +152,12 @@ Fixed: now raises, routing through the existing pillar-failure path (`status='fa
 excluded from the headline total) instead of fabricating a number.
 
 ### 11. neighborhood_beauty catalog merge — offline, verified surgical
-The built_beauty/natural_beauty → neighborhood_beauty schema merge was applied to all 292
+The built_environment/natural_beauty → neighborhood_beauty schema merge was applied to all 292
 LA/NYC catalog places offline (no live scoring), blending each row's already-stored sub-scores
 with the validated density+area-type formula. Verified zero pillar-score drift on every other
 pillar. A first pass also accidentally over-recomputed `status_signal`/`happiness_index` for
 *every* row (via an unconditional `recompute_composites_from_payload` call) even though
-`status_signal` doesn't depend on built_beauty/natural_beauty/neighborhood_beauty at all —
+`status_signal` doesn't depend on built_environment/natural_beauty/neighborhood_beauty at all —
 reverted to last-known-good except for the rows whose `area_type` genuinely changed (where
 recomputing is legitimate, since `status_signal` does consume `area_type`).
 

@@ -1,7 +1,7 @@
 # Built Beauty Research Data Collection
 
 **Date:** January 13, 2025 (Updated)  
-**Data Source:** Direct computation from `compute_arch_diversity` and `calculate_built_beauty`  
+**Data Source:** Direct computation from `compute_arch_diversity` and `calculate_built_environment`  
 **Sample Sizes:** Urban Core (14 ✅), Urban Residential (7 ⚠️), Suburban (19 ✅), Exurban (5 ⚠️), Rural (15 ✅)  
 **Total Locations:** 60  
 **Note:** Urban Residential and Exurban still need more samples (target: 10+ per area type)
@@ -225,16 +225,16 @@ Built Coverage:     median=0.034 (p25=0.002, p75=0.059, min=0.000, max=0.089)
 
 ## Data Files
 
-- **Raw Data**: `analysis/research_data/built_beauty_raw_data.json`
-- **Statistics**: `analysis/research_data/built_beauty_statistics.json`
-- **Collection Script**: `scripts/debug/collect_built_beauty_research_data.py`
+- **Raw Data**: `analysis/research_data/built_environment_raw_data.json`
+- **Statistics**: `analysis/research_data/built_environment_statistics.json`
+- **Collection Script**: `scripts/debug/collect_built_environment_research_data.py`
 
 ---
 
 ## Methodology
 
 1. Collected architectural diversity metrics directly from `compute_arch_diversity()`
-2. Collected form metrics from `calculate_built_beauty()` 
+2. Collected form metrics from `calculate_built_environment()` 
 3. Grouped by actual area type (from `classify_morphology()`)
 4. Calculated medians, percentiles (p25, p75), min, max
 5. Compared to current `CONTEXT_TARGETS` values in code
