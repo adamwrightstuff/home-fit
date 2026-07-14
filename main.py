@@ -488,10 +488,11 @@ _AREA_TYPE_INDEX: Dict[str, int] = {
     "rural": 0, "exurban": 1, "suburban": 2, "urban_residential": 3, "urban_core": 4,
 }
 
-def _built_env_match_score(effective_area_type: Optional[str], preference: Optional[str]) -> float:
-    """Area-type preference match score (0-100). Mirrors builtEnvMatchScore in nbPreference.ts."""
+def _built_env_match_score(effective_area_type: Optional[str], preference: Optional[str]) -> Optional[float]:
+    """Area-type preference match score (0-100). Returns None when no preference is set so callers
+    can emit a null score rather than a meaningless 50 that would pollute the blend."""
     if not preference:
-        return 50.0
+        return None
     normalized = (effective_area_type or "").lower().replace("-", "_")
     place_idx = _AREA_TYPE_INDEX.get(normalized, _AREA_TYPE_INDEX["suburban"])
     pref_idx = _AREA_TYPE_INDEX.get(preference, _AREA_TYPE_INDEX["suburban"])
@@ -2405,6 +2406,7 @@ def _compute_single_score_internal(
     neighborhood_beauty_score = _nb_blend["score"]
     neighborhood_beauty_built_weight = _nb_blend["built_weight"]
     built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
+    built_env_eligible = built_env_score is not None
 
     if school_avg is None:
         school_avg = 0.0
@@ -2427,7 +2429,7 @@ def _compute_single_score_internal(
 
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100)
-        + (built_env_score * token_allocation.get("built_environment", 0.0) / 100)
+        + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
         + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
         + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
         + (air_travel_score * token_allocation["air_travel_access"] / 100)
@@ -2467,9 +2469,9 @@ def _compute_single_score_internal(
         },
         "built_environment": {
             "score": built_env_score,
-            "weight": token_allocation.get("built_environment", 0.0),
+            "weight": token_allocation.get("built_environment", 0.0) if built_env_eligible else 0.0,
             "importance_level": priority_levels.get("built_environment") if priority_levels else None,
-            "contribution": round(built_env_score * token_allocation.get("built_environment", 0.0) / 100, 2),
+            "contribution": round((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100, 2) if built_env_eligible else 0.0,
             "details": {
                 "effective_area_type": nb_effective_area_type,
                 "built_env_preference": built_env_preference,
@@ -4154,17 +4156,18 @@ async def _stream_score_with_progress(
         )
         neighborhood_beauty_score = _nb_blend["score"]
         neighborhood_beauty_built_weight = _nb_blend["built_weight"]
-        # Vacation mode: use raw built_environment quality score (already area-type-calibrated)
-        # rather than preference-match (which returns 50 when no preference is set).
+        # Vacation mode: use raw built_environment quality score (already area-type-calibrated).
+        # Non-vacation: preference-match score; None when no preference set (excluded from blend).
         if is_vacation_mode and built_score is not None:
             built_env_score = built_score
         else:
             built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
+        built_env_eligible = built_env_score is not None
 
         # Calculate weighted total
         total_score = (
             (active_outdoors_score * token_allocation["active_outdoors"] / 100)
-            + (built_env_score * token_allocation.get("built_environment", 0.0) / 100)
+            + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
             + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
             + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
             + (air_travel_score * token_allocation["air_travel_access"] / 100)
@@ -4201,9 +4204,9 @@ async def _stream_score_with_progress(
             },
             "built_environment": {
                 "score": built_env_score,
-                "weight": token_allocation.get("built_environment", 0.0),
+                "weight": token_allocation.get("built_environment", 0.0) if built_env_eligible else 0.0,
                 "importance_level": priority_levels.get("built_environment") if priority_levels else None,
-                "contribution": round(built_env_score * token_allocation.get("built_environment", 0.0) / 100, 2),
+                "contribution": round((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100, 2) if built_env_eligible else 0.0,
                 "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
                 "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
                 "summary": {"effective_area_type": nb_effective_area_type},
@@ -5327,10 +5330,11 @@ async def stream_score(
         neighborhood_beauty_score = _nb_blend["score"]
         neighborhood_beauty_built_weight = _nb_blend["built_weight"]
         built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
+        built_env_eligible = built_env_score is not None
 
         total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
-        (built_env_score * token_allocation.get("built_environment", 0.0) / 100) +
+        ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100) +
         (natural_score * token_allocation.get("natural_beauty", 0.0) / 100) +
         (amenities_score * token_allocation["neighborhood_amenities"] / 100) +
         (air_travel_score * token_allocation["air_travel_access"] / 100) +
@@ -5384,9 +5388,9 @@ async def stream_score(
         },
         "built_environment": {
             "score": built_env_score,
-            "weight": token_allocation.get("built_environment", 0.0),
+            "weight": token_allocation.get("built_environment", 0.0) if built_env_eligible else 0.0,
             "importance_level": priority_levels.get("built_environment") if priority_levels else None,
-            "contribution": round(built_env_score * token_allocation.get("built_environment", 0.0) / 100, 2),
+            "contribution": round((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100, 2) if built_env_eligible else 0.0,
             "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
             "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
             "summary": {"effective_area_type": nb_effective_area_type},

@@ -357,7 +357,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
         const areaType = (finalResponse.livability_pillars as any)?.built_environment?.details?.effective_area_type ?? null
         const newScore = next.built_env_preference
           ? builtEnvMatchScore(areaType, next.built_env_preference as BuiltEnvPreference)
-          : 50
+          : null
         const patchedResponse: ScoreResponse = {
           ...finalResponse,
           livability_pillars: {
