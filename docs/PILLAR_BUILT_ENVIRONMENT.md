@@ -1,7 +1,7 @@
 # Pillar Deep-Dive: Built Beauty
 
-How `pillars/built_beauty.py` scores a location (`get_built_beauty_score` →
-`calculate_built_beauty`).
+How `pillars/built_environment.py` scores a location (`get_built_environment_score` →
+`calculate_built_environment`).
 
 ## What it measures
 The aesthetic quality of the *built* environment — architectural character and diversity,
@@ -34,7 +34,7 @@ When the OSM building-footprint fetch **times out**, it returns `coverage = 0` /
   place that still comes back zero-coverage/zero-confidence (keeps its old score rather than
   overwriting with a fabricated number). This fixes **live/future** scoring.
 - **~34% of the existing catalog still carries stale coverage-0 scores** from before the guard.
-  Concrete tell: an affluent leafy suburb scoring oddly low on built_beauty (low-confidence
+  Concrete tell: an affluent leafy suburb scoring oddly low on built_environment (low-confidence
   ones). Short Hills at 21 was investigated — that one is *confidence 90* (real, suburban
   sprawl genuinely scores low on architectural built form), so not every low score is stale.
 - The **catalog backfill is pending** and must run faithfully through `main.py` context (the

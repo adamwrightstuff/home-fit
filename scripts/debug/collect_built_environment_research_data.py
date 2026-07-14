@@ -12,7 +12,7 @@ This script:
 4. Outputs raw data and statistical analysis
 
 Usage:
-    python scripts/collect_built_beauty_research_data.py
+    python scripts/collect_built_environment_research_data.py
 """
 
 import sys
@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from data_sources.arch_diversity import compute_arch_diversity
 from data_sources.data_quality import classify_morphology
 from data_sources import census_api
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 
 # Research locations - diverse neighborhoods across area types
 # Goal: 10+ samples per area type for statistical significance
@@ -113,8 +113,8 @@ RESEARCH_LOCATIONS = [
 OUTPUT_DIR = Path(__file__).resolve().parents[2] / "analysis" / "research_data"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-RAW_DATA_FILE = OUTPUT_DIR / "built_beauty_raw_data.json"
-STATISTICS_FILE = OUTPUT_DIR / "built_beauty_statistics.json"
+RAW_DATA_FILE = OUTPUT_DIR / "built_environment_raw_data.json"
+STATISTICS_FILE = OUTPUT_DIR / "built_environment_statistics.json"
 
 
 def collect_location_data(location: Dict, radius_m: int = 2000) -> Optional[Dict]:
@@ -153,7 +153,7 @@ def collect_location_data(location: Dict, radius_m: int = 2000) -> Optional[Dict
         )
         
         # Get built beauty score (includes form metrics)
-        built_result = calculate_built_beauty(
+        built_result = calculate_built_environment(
             location["lat"],
             location["lon"],
             location_name=location["name"]
@@ -350,7 +350,7 @@ def main():
     print(f"\n{'='*60}")
     print("NEXT STEPS")
     print(f"{'='*60}")
-    print("1. Review statistics in: analysis/research_data/built_beauty_statistics.json")
+    print("1. Review statistics in: analysis/research_data/built_environment_statistics.json")
     print("2. Compare medians to current CONTEXT_TARGETS values")
     print("3. Consider sample sizes (aim for n>=10 per area type for high confidence)")
     print("4. Create analysis document with recommendations")

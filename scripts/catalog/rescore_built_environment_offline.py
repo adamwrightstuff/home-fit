@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Offline built_beauty rescorer (preview-safe).
+Offline built_environment rescorer (preview-safe).
 
-Recomputes built_beauty for every place from the catalog's STORED OSM-derived inputs plus
+Recomputes built_environment for every place from the catalog's STORED OSM-derived inputs plus
 fast GEE calls (GHSL height, Microsoft footprint coverage) and the coherence fix -- NO live
 OSM fetch. Writes the rescored catalog to --output (never overwrites the input unless you
 point --output at it explicitly), so you can inspect before committing anything.
@@ -11,7 +11,7 @@ Compares the new self-consistent score against the catalog's stored headline (wh
 to be a stale orphan inconsistent with its own components -- see session diagnosis).
 
 Usage (preview, originals untouched):
-  PYTHONPATH=. python3 scripts/catalog/rescore_built_beauty_offline.py \
+  PYTHONPATH=. python3 scripts/catalog/rescore_built_environment_offline.py \
     --input data/la_metro_place_catalog_scores_merged.jsonl \
     --output /tmp/la_rescored_preview.jsonl
 """
@@ -103,12 +103,12 @@ def main():
         nb = lp.get("neighborhood_beauty")
         if not nb:
             continue
-        # Post-merge schema: built_beauty's own architectural_analysis lives nested under
-        # neighborhood_beauty.details.built_beauty (no separate top-level built_beauty pillar
+        # Post-merge schema: built_environment's own architectural_analysis lives nested under
+        # neighborhood_beauty.details.built_environment (no separate top-level built_environment pillar
         # anymore -- see the neighborhood_beauty merge). recompute_arch() itself is unaffected
         # by the merge (it only reads architectural_analysis/metrics), but the headline pillar
         # write-back and re-blend into neighborhood_beauty.score are new.
-        d = nb["details"]["built_beauty"]
+        d = nb["details"]["built_environment"]
         aa = d["architectural_analysis"]; m = aa["metrics"]
         cat = rec["catalog"]; name = cat.get("name", "?")
         try:
@@ -116,7 +116,7 @@ def main():
         except (TypeError, ValueError, KeyError):
             continue
 
-        old_pillar = nb.get("built_beauty_score")
+        old_pillar = nb.get("built_environment_score")
         old_nb_score = nb.get("score")
 
         # api_error places have error-fallback inputs, not real measurements -- offline
@@ -133,19 +133,19 @@ def main():
         raw = min(100.0, max(0.0, new_arch + enh) * 2.0)
         new_pillar, _ = normalize_beauty_score(raw, aa["classification"]["effective_area_type"])
 
-        # Write the corrected built_beauty sub-score back, then re-blend into the merged
+        # Write the corrected built_environment sub-score back, then re-blend into the merged
         # neighborhood_beauty score using the SAME built_weight already stored (density/
         # effective_area_type haven't changed, so the blend weight itself is unaffected).
         aa["score"] = round(new_arch, 1)
         d["component_score_0_50"] = round(new_arch, 2)
         d["score_before_normalization"] = round(raw, 2)
-        nb["built_beauty_score"] = round(new_pillar, 2)
+        nb["built_environment_score"] = round(new_pillar, 2)
         built_weight = nb.get("built_weight", 0.5)
         natural_score = nb.get("natural_beauty_score", 0.0)
         new_nb_score = round(built_weight * new_pillar + (1.0 - built_weight) * natural_score, 2)
         nb["score"] = new_nb_score
         if "breakdown" in nb:
-            nb["breakdown"]["built_beauty_score"] = round(new_pillar, 2)
+            nb["breakdown"]["built_environment_score"] = round(new_pillar, 2)
 
         rep.append((name, old_nb_score, new_nb_score,
                     round((new_nb_score - old_nb_score), 1) if old_nb_score is not None else None,

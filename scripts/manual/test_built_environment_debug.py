@@ -12,7 +12,7 @@ sys.path.insert(
 )
 
 from data_sources.arch_diversity import compute_arch_diversity
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 import json
 
 # Test locations with expected score ranges
@@ -73,7 +73,7 @@ WOODBRIDGE_IRVINE = {
 
 TEST_LOCATIONS = [BEACON_HILL, LEVITTOWN, GEORGETOWN_DC, GERMAN_VILLAGE, CELEBRATION_FL, WOODBRIDGE_IRVINE]
 
-def test_built_beauty_benchmark(location):
+def test_built_environment_benchmark(location):
     """Step 6: Test Built Beauty scoring against benchmarks"""
     print(f"\n{'='*60}")
     print(f"Benchmark Test: {location['name']}")
@@ -84,7 +84,7 @@ def test_built_beauty_benchmark(location):
     
     try:
         # Calculate built beauty score
-        result = calculate_built_beauty(
+        result = calculate_built_environment(
             location['lat'],
             location['lon'],
             location_name=location['name']
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     
     # Test all locations
     for location in TEST_LOCATIONS:
-        location_result = test_built_beauty_benchmark(location)
+        location_result = test_built_environment_benchmark(location)
         if location_result:
             results.append(location_result)
         print(f"\n\n")

@@ -12,7 +12,7 @@ Then applies the current formula (including rowhouse coherence gate + VintageFab
 
 Usage:
     cd /path/to/home-fit
-    PYTHONPATH=. python3 scripts/catalog/rescore_built_beauty_full.py
+    PYTHONPATH=. python3 scripts/catalog/rescore_built_environment_full.py
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ from typing import Any, Dict, Optional
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
-from pillars.built_beauty import _fetch_historic_data, calculate_built_beauty
-from main import _extract_built_beauty_summary
+from pillars.built_environment import _fetch_historic_data, calculate_built_environment
+from main import _extract_built_environment_summary
 
 CATALOGS = [
     REPO / "data" / "nyc_metro_place_catalog_scores_merged.jsonl",
@@ -80,13 +80,13 @@ def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     loc = sc.get("location_info") or {}
     city = (loc.get("city") or "").strip() or None
 
-    bb = sc.get("livability_pillars", {}).get("built_beauty", {})
+    bb = sc.get("livability_pillars", {}).get("built_environment", {})
     summary = bb.get("summary") or {}
 
     # Reuse stored OSM building metrics — skip Overpass building query
     precomputed = _stored_arch_diversity(summary)
 
-    result = calculate_built_beauty(
+    result = calculate_built_environment(
         lat, lon,
         city=city,
         precomputed_arch_diversity=precomputed,
@@ -97,7 +97,7 @@ def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None
 
     built_details = result.get("details") or {}
-    new_summary = _extract_built_beauty_summary(built_details)
+    new_summary = _extract_built_environment_summary(built_details)
     data_quality = result.get("data_quality") or {}
 
     old_weight = bb.get("weight")
@@ -140,7 +140,7 @@ def process_catalog(path: Path) -> None:
     for i, row in enumerate(rows):
         name = (row.get("catalog") or {}).get("name", "?")
         sc = row.get("score") or row
-        old_bb = sc.get("livability_pillars", {}).get("built_beauty", {})
+        old_bb = sc.get("livability_pillars", {}).get("built_environment", {})
         old_score = old_bb.get("score") or 0
 
         print(f"[{i+1}/{len(rows)}] {name} (old={old_score:.1f}) ...", end=" ", flush=True)
@@ -151,7 +151,7 @@ def process_catalog(path: Path) -> None:
                 failed += 1
             else:
                 new_score = new_bb["score"]
-                sc["livability_pillars"]["built_beauty"] = new_bb
+                sc["livability_pillars"]["built_environment"] = new_bb
                 delta = new_score - old_score
                 print(f"{old_score:.1f} → {new_score:.1f}  ({delta:+.1f})")
                 succeeded += 1

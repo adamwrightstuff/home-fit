@@ -5,9 +5,9 @@ Built Beauty diagnostics CLI.
 Prints a stable JSON breakdown using the existing Built Beauty pipeline.
 
 Examples:
-  python scripts/debug_built_beauty.py --lat 42.3588 --lon -71.0707 --name "Beacon Hill"
+  python scripts/debug_built_environment.py --lat 42.3588 --lon -71.0707 --name "Beacon Hill"
 
-  python scripts/debug_built_beauty.py --compare \
+  python scripts/debug_built_environment.py --compare \
     "Beacon Hill,42.3588,-71.0707" \
     "StripMall,33.9137,-118.4064"
 """
@@ -39,9 +39,9 @@ def _run_one(lat: float, lon: float, name: Optional[str] = None) -> Dict[str, An
     # Ensure repo root is importable (matches existing scripts style).
     sys.path.insert(0, _project_root())
 
-    from pillars.built_beauty import calculate_built_beauty  # type: ignore
+    from pillars.built_environment import calculate_built_environment  # type: ignore
 
-    result: Dict[str, Any] = calculate_built_beauty(
+    result: Dict[str, Any] = calculate_built_environment(
         lat,
         lon,
         location_name=name,

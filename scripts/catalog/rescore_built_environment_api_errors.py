@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rescore built_beauty for catalog entries where the Overpass API failed during
+Rescore built_environment for catalog entries where the Overpass API failed during
 the original batch run (data_warnings contains "api_error"), leaving all OSM
 building metrics at zero.
 
@@ -8,7 +8,7 @@ Runs entirely offline against the pillar code — no API server required.
 
 Usage:
     cd /path/to/home-fit
-    PYTHONPATH=. python3 scripts/catalog/rescore_built_beauty_api_errors.py \
+    PYTHONPATH=. python3 scripts/catalog/rescore_built_environment_api_errors.py \
         --input data/nyc_metro_place_catalog_scores_merged.jsonl \
         --output data/nyc_metro_place_catalog_scores_merged.jsonl \
         [--dry-run] [--delay 3.0] [--limit N]
@@ -27,19 +27,19 @@ from typing import Any, Dict, Optional
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 
 
 def _is_api_error(entry: Dict[str, Any]) -> bool:
-    bb = (entry.get("score") or entry).get("livability_pillars", {}).get("built_beauty", {})
+    bb = (entry.get("score") or entry).get("livability_pillars", {}).get("built_environment", {})
     if not isinstance(bb, dict):
         return False
     dq = bb.get("data_quality") or {}
     return "api_error" in (dq.get("data_warnings") or [])
 
 
-def _extract_built_beauty_summary(built_details: Dict) -> Dict:
-    """Mirror of main.py _extract_built_beauty_summary."""
+def _extract_built_environment_summary(built_details: Dict) -> Dict:
+    """Mirror of main.py _extract_built_environment_summary."""
     summary: Dict[str, Any] = {}
     arch_analysis = built_details.get("architectural_analysis") or {}
 
@@ -92,8 +92,8 @@ def _extract_built_beauty_summary(built_details: Dict) -> Dict:
 
 def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
-    Call calculate_built_beauty for one catalog entry.
-    Returns the new built_beauty pillar dict, or None on failure.
+    Call calculate_built_environment for one catalog entry.
+    Returns the new built_environment pillar dict, or None on failure.
     """
     score_block = entry.get("score") or entry
     coords = score_block.get("coordinates") or {}
@@ -111,12 +111,12 @@ def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     loc = score_block.get("location_info") or {}
     city = (loc.get("city") or "").strip() or None
 
-    existing_bb = score_block.get("livability_pillars", {}).get("built_beauty", {})
+    existing_bb = score_block.get("livability_pillars", {}).get("built_environment", {})
     old_weight = existing_bb.get("weight")
     old_importance = existing_bb.get("importance_level")
     old_contribution = existing_bb.get("contribution")
 
-    result = calculate_built_beauty(lat, lon, city=city)
+    result = calculate_built_environment(lat, lon, city=city)
 
     new_score = result.get("score")
     if new_score is None:
@@ -143,7 +143,7 @@ def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             "component_score_0_50": round(result.get("component_score_0_50") or 0, 2),
             "enhancer_bonus_raw": round(result.get("built_bonus_raw") or 0, 2),
         },
-        "summary": _extract_built_beauty_summary(built_details),
+        "summary": _extract_built_environment_summary(built_details),
         "confidence": 90 if got_data else 50,
         "data_quality": data_quality,
         "status": "success" if got_data else "fallback",
@@ -152,7 +152,7 @@ def rescore_entry(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Rescore built_beauty for api_error catalog entries")
+    parser = argparse.ArgumentParser(description="Rescore built_environment for api_error catalog entries")
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--dry-run", action="store_true")
@@ -180,7 +180,7 @@ def main() -> None:
     if args.dry_run:
         for _, r in targets:
             name = (r.get("catalog") or {}).get("name", "?")
-            score = (r.get("score") or r).get("livability_pillars", {}).get("built_beauty", {}).get("score")
+            score = (r.get("score") or r).get("livability_pillars", {}).get("built_environment", {}).get("score")
             print(f"  would rescore: {name} (current={score})")
         return
 
@@ -192,7 +192,7 @@ def main() -> None:
     succeeded = failed = already_good = 0
     for i, (row_idx, row) in enumerate(targets):
         name = (row.get("catalog") or {}).get("name", "?")
-        old_score = (row.get("score") or row).get("livability_pillars", {}).get("built_beauty", {}).get("score")
+        old_score = (row.get("score") or row).get("livability_pillars", {}).get("built_environment", {}).get("score")
         print(f"[{i+1}/{len(targets)}] {name} (old={old_score}) ...", end=" ", flush=True)
 
         try:
@@ -211,7 +211,7 @@ def main() -> None:
             else:
                 # Patch the row
                 score_block = row.get("score") or row
-                score_block["livability_pillars"]["built_beauty"].update(new_bb)
+                score_block["livability_pillars"]["built_environment"].update(new_bb)
                 print(f"OK  {old_score:.1f} → {new_score:.1f}")
                 succeeded += 1
 

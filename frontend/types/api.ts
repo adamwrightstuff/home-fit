@@ -83,7 +83,7 @@ export interface LivabilityPillar {
   summary?: PillarSummary;
   details?: any;
   /** neighborhood_beauty only: built/natural sub-scores and density+area-type blend weight. */
-  built_beauty_score?: number;
+  built_environment_score?: number;
   natural_beauty_score?: number;
   built_weight?: number;
   confidence: number;

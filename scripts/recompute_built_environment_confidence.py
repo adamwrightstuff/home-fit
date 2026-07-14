@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Recompute built_beauty `confidence` for every catalog place from already-stored data.
+Recompute built_environment `confidence` for every catalog place from already-stored data.
 
 Catalog confidence was frozen at build time (mostly 90, or hardcoded 85 by the recent
 stale-coverage backfill). `data_sources/data_quality.py:assess_pillar_data_quality` now
@@ -13,7 +13,7 @@ enhancer data already in each catalog row (no OSM re-fetch).
 confidence is metadata only (not part of score/contribution math), so this does NOT cascade
 into total_score or happiness_index.
 
-Usage: python3 scripts/recompute_built_beauty_confidence.py [--dry-run]
+Usage: python3 scripts/recompute_built_environment_confidence.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def main():
                 row = json.loads(line)
                 cat = row.get("catalog", {})
                 sc = row.get("score", {})
-                bb = sc.get("livability_pillars", {}).get("built_beauty")
+                bb = sc.get("livability_pillars", {}).get("built_environment")
                 if bb:
                     aa = bb.get("details", {}).get("architectural_analysis", {}) or {}
                     combined = {
@@ -63,7 +63,7 @@ def main():
                     except (TypeError, ValueError, KeyError):
                         outf.write(json.dumps(row) + "\n")
                         continue
-                    qm = assess_pillar_data_quality("built_beauty", combined, lat, lon, at)
+                    qm = assess_pillar_data_quality("built_environment", combined, lat, lon, at)
                     old_conf = bb.get("confidence")
                     new_conf = qm["confidence"]
                     if old_conf != new_conf:

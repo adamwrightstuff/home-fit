@@ -157,9 +157,9 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     metrics: [
       { label: 'Density feel', path: 'breakdown.bb_best_fit_density', format: 'text' },
       { label: 'Era character', path: 'breakdown.bb_best_fit_character', format: 'text' },
-      { label: 'Built form', path: 'summary.built_beauty.built_form_label', format: 'text' },
-      { label: 'Streetscape tags', path: 'summary.built_beauty.built_context_tags', format: 'text' },
-      { label: 'Median year built', path: 'summary.built_beauty.median_year_built', format: 'text' },
+      { label: 'Built form', path: 'summary.built_environment.built_form_label', format: 'text' },
+      { label: 'Streetscape tags', path: 'summary.built_environment.built_context_tags', format: 'text' },
+      { label: 'Median year built', path: 'summary.built_environment.median_year_built', format: 'text' },
       { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
       { label: 'Neighborhood canopy', path: 'summary.natural_beauty.neighborhood_canopy_pct', format: 'percent', max: 100 },
       { label: 'Nearest mapped water', path: 'summary.natural_beauty.water_proximity_km', format: 'distance' },

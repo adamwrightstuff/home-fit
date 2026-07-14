@@ -3,13 +3,13 @@
 Carroll Gardens (and any location) Built Beauty preference-permutation investigation.
 
 Runs the same pipeline as the API: resolve location → shared data (area_type, density,
-arch_diversity, form_context) → calculate_built_beauty for each preference pair.
+arch_diversity, form_context) → calculate_built_environment for each preference pair.
 Prints actual data returned and how the score is derived for each permutation.
 
 Usage:
-  python scripts/investigate_built_beauty_preferences.py
-  python scripts/investigate_built_beauty_preferences.py --location "Carroll Gardens Brooklyn NY"
-  python scripts/investigate_built_beauty_preferences.py --lat 40.679 --lon -73.991 --name "Carroll Gardens"
+  python scripts/investigate_built_environment_preferences.py
+  python scripts/investigate_built_environment_preferences.py --location "Carroll Gardens Brooklyn NY"
+  python scripts/investigate_built_environment_preferences.py --lat 40.679 --lon -73.991 --name "Carroll Gardens"
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ PREFERENCE_PERMUTATIONS: List[Tuple[Optional[str], Optional[str]]] = [
     ("historic", "walkable_residential"),
 ]
 
-# Maps density preference → area_type_for_scoring (used inside built_beauty)
+# Maps density preference → area_type_for_scoring (used inside built_environment)
 DENSITY_TO_AREA_TYPE: Dict[str, str] = {
     "spread_out_residential": "exurban",
     "walkable_residential": "suburban",
@@ -148,7 +148,7 @@ def _fetch_shared_data(lat: float, lon: float, location_name: Optional[str]) -> 
     }
 
 
-def _run_built_beauty(
+def _run_built_environment(
     lat: float,
     lon: float,
     shared: Dict[str, Any],
@@ -157,9 +157,9 @@ def _run_built_beauty(
     built_density_preference: Optional[str],
 ) -> Dict[str, Any]:
     _ensure_path()
-    from pillars.built_beauty import calculate_built_beauty
+    from pillars.built_environment import calculate_built_environment
 
-    result = calculate_built_beauty(
+    result = calculate_built_environment(
         lat,
         lon,
         city=shared.get("city"),
@@ -256,7 +256,7 @@ def main() -> int:
     runs: List[Dict[str, Any]] = []
     for perm in PREFERENCE_PERMUTATIONS:
         char_pref, dens_pref = perm
-        result = _run_built_beauty(
+        result = _run_built_environment(
             lat, lon, shared, name,
             built_character_preference=char_pref,
             built_density_preference=dens_pref,

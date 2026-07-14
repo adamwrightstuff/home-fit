@@ -132,7 +132,7 @@ def load_catalog(path, metro):
             d = json.loads(line)
             cat = d.get('catalog', {})
             sc = d.get('score', d)
-            bb = sc.get('livability_pillars', {}).get('built_beauty', {})
+            bb = sc.get('livability_pillars', {}).get('built_environment', {})
             if not isinstance(bb, dict):
                 continue
             score = bb.get('score')

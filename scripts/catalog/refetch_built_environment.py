@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Live refetch of built_beauty for the places whose stored data is unusable
+Live refetch of built_environment for the places whose stored data is unusable
 (api_error fallbacks + the 2 misclassified hyper-dense Manhattan cores).
 
 Runs the real scoring pipeline (live OSM + GHSL/Microsoft via current code) with
@@ -8,7 +8,7 @@ deliberate pacing between places to avoid self-inflicted Overpass rate limiting.
 Writes results to a separate JSONL; never touches the source catalogs.
 
 Usage:
-  PYTHONPATH=. python3 scripts/catalog/refetch_built_beauty.py \
+  PYTHONPATH=. python3 scripts/catalog/refetch_built_environment.py \
     --worklist /tmp/refetch_worklist.json --tag nyc --out /tmp/refetch_nyc.jsonl --sleep 15
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ try:
 except Exception:
     pass
 
-from pillars.built_beauty import calculate_built_beauty
+from pillars.built_environment import calculate_built_environment
 
 
 def load_catalog_index(path):
@@ -54,7 +54,7 @@ def main():
     for i, place in enumerate(wl, 1):
         name = place["name"]; lat = place["lat"]; lon = place["lon"]
         rec = idx.get(name, {})
-        bb = rec.get("score", {}).get("livability_pillars", {}).get("built_beauty", {})
+        bb = rec.get("score", {}).get("livability_pillars", {}).get("built_environment", {})
         old = bb.get("score")
         det = bb.get("details", {}) if isinstance(bb, dict) else {}
         aa = det.get("architectural_analysis", {})
@@ -71,7 +71,7 @@ def main():
         for attempt in range(1, MAX_TRIES + 1):
             t0 = time.time()
             try:
-                res = calculate_built_beauty(
+                res = calculate_built_environment(
                     lat, lon,
                     area_type=area_type, density=density,
                     enhancers_data=stored_enh,
@@ -94,7 +94,7 @@ def main():
                         "effective_area_type": res.get("effective_area_type"),
                         "data_warning": warn, "tries": attempt,
                         "secs": round(time.time() - t0, 1),
-                        # Full result, so the entire built_beauty subtree can be replaced
+                        # Full result, so the entire built_environment subtree can be replaced
                         # wholesale (no nested fields left stale from before this refetch).
                         "full_result": res,
                     }

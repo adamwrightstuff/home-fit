@@ -115,7 +115,7 @@ export default function SavedDetailPage() {
   }, [id, user])
 
   const rawPayloadStored = row?.score_payload as ScoreResponse | undefined
-  // Pre-migration saved scores store standalone built_beauty/natural_beauty pillars with no
+  // Pre-migration saved scores store standalone built_environment/natural_beauty pillars with no
   // neighborhood_beauty key; synthesize one so this surface (which only looks for the merged
   // key) still renders legacy saves.
   const rawPayload = useMemo(() => {

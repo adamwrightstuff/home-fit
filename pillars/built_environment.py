@@ -125,7 +125,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
 
         radius_m = 2000
         if area_type:
-            rp = get_radius_profile('built_beauty', area_type, location_scope)
+            rp = get_radius_profile('built_environment', area_type, location_scope)
             radius_m = int(rp.get('architectural_diversity_radius_m', 2000))
 
         # Use precomputed data if available (from main.py initial call), otherwise compute
@@ -468,7 +468,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
         return None, {"error": str(exc), "note": "Architectural diversity unavailable"}
 
 
-def calculate_built_beauty(lat: float,
+def calculate_built_environment(lat: float,
                            lon: float,
                            city: Optional[str] = None,
                            area_type: Optional[str] = None,
@@ -593,7 +593,7 @@ def calculate_built_beauty(lat: float,
         "normalization": built_norm_meta,
         "architectural_analysis": arch_details,
         "enhancer_bonus": enhancer_meta,
-        "source": "built_beauty"
+        "source": "built_environment"
     }
 
     # Assess data quality (consistent with other pillars)
@@ -602,7 +602,7 @@ def calculate_built_beauty(lat: float,
         "enhancers": enhancers_data or {},
     }
     quality_metrics = assess_pillar_data_quality(
-        "built_beauty", combined_data, lat, lon, effective_area_type or area_type or "suburban"
+        "built_environment", combined_data, lat, lon, effective_area_type or area_type or "suburban"
     )
 
     return {
@@ -619,7 +619,7 @@ def calculate_built_beauty(lat: float,
     }
 
 
-def get_built_beauty_score(lat: float,
+def get_built_environment_score(lat: float,
                            lon: float,
                            city: Optional[str] = None,
                            area_type: Optional[str] = None,
@@ -631,7 +631,7 @@ def get_built_beauty_score(lat: float,
     """
     Public entry point for the built beauty pillar.
     """
-    result = calculate_built_beauty(
+    result = calculate_built_environment(
         lat,
         lon,
         city=city,

@@ -179,7 +179,7 @@ function CompareContent() {
 
   const scoredARaw = rowA?.score_payload as ScoreResponse | undefined
   const scoredBRaw = rowB?.score_payload as ScoreResponse | undefined
-  // Legacy saves predate the built_beauty+natural_beauty merge; synthesize neighborhood_beauty
+  // Legacy saves predate the built_environment+natural_beauty merge; synthesize neighborhood_beauty
   // so compare doesn't silently drop the pillar's weight/score for older places.
   const scoredA = useMemo(() => {
     if (!scoredARaw) return scoredARaw

@@ -287,7 +287,7 @@ export default function PillarCard({
 
   // Built Beauty: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
-  const builtMetrics = pillar_key === 'neighborhood_beauty' ? pillar.details?.built_beauty?.architectural_analysis?.metrics : null
+  const builtMetrics = pillar_key === 'neighborhood_beauty' ? pillar.details?.built_environment?.architectural_analysis?.metrics : null
   const summary =
     pillar_key === 'neighborhood_beauty' && isRecord(builtMetrics)
       ? {

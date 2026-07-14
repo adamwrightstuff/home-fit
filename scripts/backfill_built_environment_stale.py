@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-Faithful backfill of built_beauty for catalog places with stale ZERO building data.
+Faithful backfill of built_environment for catalog places with stale ZERO building data.
 
-~34% of catalog places carry built_beauty scores computed from coverage-0 / zero-diversity
-OSM data (build-time Overpass timeouts), then a prior `rescore_built_beauty_full.py` reused
+~34% of catalog places carry built_environment scores computed from coverage-0 / zero-diversity
+OSM data (build-time Overpass timeouts), then a prior `rescore_built_environment_full.py` reused
 those zeros and HARDCODED confidence 90 — so they look fine (East Village 94.2, conf 90) but
 their architectural-diversity signal is empty; the score rides the historic-coherence
 fallback.
 
 This RE-FETCHES OSM buildings (`compute_arch_diversity`, radius 2000m, same as main.py) and
-re-scores via `calculate_built_beauty(precomputed_arch_diversity=fresh, ...)` — the same call
-main.py makes (avoids the ±10pt drift of the standalone `get_built_beauty_score` loop).
+re-scores via `calculate_built_environment(precomputed_arch_diversity=fresh, ...)` — the same call
+main.py makes (avoids the ±10pt drift of the standalone `get_built_environment_score` loop).
 
 GUARDED: if the re-fetch STILL returns zero coverage (Overpass failed again), the place is
 quarantined — its old score is kept, never overwritten with another fabricated number.
 Resumable; throttled (Overpass is rate-limit-prone — see transit-fetch-noisy memory).
 
 Phases:
-  fetch -> data/built_beauty_backfill.jsonl   (rerun skips done)
+  fetch -> data/built_environment_backfill.jsonl   (rerun skips done)
   apply -> rewrites catalogs (.bakBB), cascades total_score + happiness 'built' (weight 0.05)
 
-Usage: python3 scripts/backfill_built_beauty_stale.py fetch
-       python3 scripts/backfill_built_beauty_stale.py apply
+Usage: python3 scripts/backfill_built_environment_stale.py fetch
+       python3 scripts/backfill_built_environment_stale.py apply
 """
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ CATALOGS = [
     "data/nyc_metro_place_catalog_scores_merged.jsonl",
     "data/la_metro_place_catalog_scores_merged.jsonl",
 ]
-SIDECAR = "data/built_beauty_backfill.jsonl"
-PILLAR = "built_beauty"
+SIDECAR = "data/built_environment_backfill.jsonl"
+PILLAR = "built_environment"
 THROTTLE = 1.5  # Overpass is rate-limit-prone; go slow
 
 
@@ -101,7 +101,7 @@ def load_done():
 
 def fetch():
     from data_sources.arch_diversity import compute_arch_diversity
-    from pillars.built_beauty import calculate_built_beauty
+    from pillars.built_environment import calculate_built_environment
 
     done = load_done()
     targets = [t for t in iter_stale() if t["name"] not in done]
@@ -117,7 +117,7 @@ def fetch():
                        "quarantined": True}
                 n_q += 1
             else:
-                res = calculate_built_beauty(
+                res = calculate_built_environment(
                     t["lat"], t["lon"], city=t["city"], area_type=t["area_type"],
                     location_scope="neighborhood", precomputed_arch_diversity=ad,
                 )
@@ -169,7 +169,7 @@ def apply():
                     bb["score"] = new
                     bb["contribution"] = round(new * w / 100.0, 4)
                     bb["confidence"] = 85
-                    bb["_rescore_version"] = "built_beauty_stale_backfill"
+                    bb["_rescore_version"] = "built_environment_stale_backfill"
                     tsb = sc.get("total_score_breakdown", {}).get(PILLAR)
                     if tsb:
                         oc = tsb["contribution"]

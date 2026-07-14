@@ -290,7 +290,7 @@ function densityWeight(density: number | null | undefined): number | null {
   return 0.25 + 0.7 * d
 }
 
-/** TS mirror of pillars/neighborhood_beauty.py's combined_weight(): weight on built_beauty. */
+/** TS mirror of pillars/neighborhood_beauty.py's combined_weight(): weight on built_environment. */
 export function combinedWeight(density: number | null | undefined, effectiveAreaType?: string | null): number {
   const w = densityWeight(density)
   const floor = effectiveAreaType ? NB_AREA_TYPE_FLOOR[effectiveAreaType] : undefined
@@ -340,7 +340,7 @@ export function adjustNeighborhoodBeautyScoreV9(
 }
 
 /**
- * Pre-migration saved scores / cache entries store standalone `built_beauty` and
+ * Pre-migration saved scores / cache entries store standalone `built_environment` and
  * `natural_beauty` pillar entries with no `neighborhood_beauty` key at all. Synthesize one
  * client-side, reapplying the real density+area-type blend, so legacy data still renders on
  * a surface that now only ever looks for `neighborhood_beauty`. No-op if already merged.
@@ -350,7 +350,7 @@ export function withSynthesizedNeighborhoodBeauty(
 ): Record<string, any> {
   if (!livabilityPillars || typeof livabilityPillars !== 'object') return livabilityPillars ?? {}
   if (livabilityPillars.neighborhood_beauty) return livabilityPillars
-  const built = livabilityPillars.built_beauty
+  const built = livabilityPillars.built_environment
   const natural = livabilityPillars.natural_beauty
   if (!built && !natural) return livabilityPillars
 
@@ -368,23 +368,23 @@ export function withSynthesizedNeighborhoodBeauty(
     weight,
     importance_level: built?.importance_level ?? natural?.importance_level ?? null,
     contribution,
-    built_beauty_score: builtScore,
+    built_environment_score: builtScore,
     natural_beauty_score: naturalScore,
     built_weight: w,
     breakdown: {
-      built_beauty_score: builtScore,
+      built_environment_score: builtScore,
       natural_beauty_score: naturalScore,
       built_weight: w,
       effective_area_type: effectiveAreaType,
       density,
     },
     summary: {
-      built_beauty: built?.summary ?? {},
+      built_environment: built?.summary ?? {},
       natural_beauty: natural?.summary ?? {},
       built_weight: w,
     },
     details: {
-      built_beauty: built?.details ?? {},
+      built_environment: built?.details ?? {},
       natural_beauty: natural?.details ?? {},
       built_weight: w,
       effective_area_type: effectiveAreaType,

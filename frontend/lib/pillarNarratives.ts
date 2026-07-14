@@ -47,8 +47,8 @@ export function getBuiltBeautyNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
 ): string {
-  const diversity = getPillarValue(pillar, 'summary.built_beauty.diversity_score')
-  const heightDiversity = getPillarValue(pillar, 'summary.built_beauty.height_diversity')
+  const diversity = getPillarValue(pillar, 'summary.built_environment.diversity_score')
+  const heightDiversity = getPillarValue(pillar, 'summary.built_environment.height_diversity')
 
   let characterPhrase = 'a fairly plain built environment'
   if (typeof diversity === 'number') {

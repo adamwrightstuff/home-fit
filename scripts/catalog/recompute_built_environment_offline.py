@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Offline built_beauty score recompute from stored catalog signals.
+Offline built_environment score recompute from stored catalog signals.
 
 Uses only what's already in the JSONL — no API calls. Approximates
 HistoricCoherence from stored myr + nrhp_count (covers >95% of cases
@@ -8,7 +8,7 @@ identically to the live path). Fixes stale 100s introduced by the HC
 override regression without a full rescore.
 
 Usage:
-    PYTHONPATH=. python3 scripts/catalog/recompute_built_beauty_offline.py [--dry-run]
+    PYTHONPATH=. python3 scripts/catalog/recompute_built_environment_offline.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ def _hc_from_stored(myr, nrhp_count, block_grain, streetwall) -> float:
         return 0.0
 
     # Rowhouse proxy: low block_grain (fine grain) + high streetwall + pre-war
-    # mirrors rowhouse tag heuristic in built_beauty.py
+    # mirrors rowhouse tag heuristic in built_environment.py
     bg = float(block_grain or 0)
     sw = float(streetwall or 0)
     rowhouse_like = (bg < 55 and sw > 20 and myr_val <= 1955)
@@ -71,8 +71,8 @@ def recompute(path: Path, dry_run: bool) -> dict:
 
         stats["total"] += 1
         nb = d.get("score", {}).get("livability_pillars", {}).get("neighborhood_beauty", {})
-        summary_bb = (nb.get("summary") or {}).get("built_beauty") or {}
-        det_bb = (nb.get("details") or {}).get("built_beauty") or {}
+        summary_bb = (nb.get("summary") or {}).get("built_environment") or {}
+        det_bb = (nb.get("details") or {}).get("built_environment") or {}
         arch = det_bb.get("architectural_analysis") or {}
         metrics = arch.get("metrics") or {}
         hist_ctx = arch.get("historic_context") or {}
@@ -105,7 +105,7 @@ def recompute(path: Path, dry_run: bool) -> dict:
         }
 
         new_score = round(compute_calibrated_architectural_beauty_score(row), 2)
-        old_score = (nb.get("breakdown") or {}).get("built_beauty_score")
+        old_score = (nb.get("breakdown") or {}).get("built_environment_score")
 
         if old_score is not None and abs(new_score - float(old_score)) > 0.1:
             name = d.get("catalog", {}).get("name", "?")
@@ -119,10 +119,10 @@ def recompute(path: Path, dry_run: bool) -> dict:
             new_nb = round(blend["score"], 4)
             print(f"  {name:35s}  bb {old_score:5.1f}→{new_score:5.1f}  nb {old_nb}→{new_nb}  (HC={hc:.0f})")
             # Patch in-place
-            nb["breakdown"]["built_beauty_score"] = new_score
+            nb["breakdown"]["built_environment_score"] = new_score
             nb["score"] = new_nb
-            if "summary" in nb and "built_beauty" in nb["summary"]:
-                nb["summary"]["built_beauty"]["component_score"] = new_score
+            if "summary" in nb and "built_environment" in nb["summary"]:
+                nb["summary"]["built_environment"]["component_score"] = new_score
             stats["changed"] += 1
 
         out_lines.append(json.dumps(d, separators=(",", ":")))

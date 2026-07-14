@@ -18,14 +18,14 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pillars.built_beauty import get_built_beauty_score  # noqa: E402
+from pillars.built_environment import get_built_environment_score  # noqa: E402
 
 CATALOGS = [
     "data/nyc_metro_place_catalog_scores_merged.jsonl",
     "data/la_metro_place_catalog_scores_merged.jsonl",
 ]
-OUT = "data/built_beauty_rescore.jsonl"
-SUSPECT = "data/built_beauty_rescore.suspect.jsonl"
+OUT = "data/built_environment_rescore.jsonl"
+SUSPECT = "data/built_environment_rescore.suspect.jsonl"
 THROTTLE = 1.0
 
 
@@ -40,7 +40,7 @@ def iter_catalog():
                 continue
             cat = r.get("catalog", {})
             sc = r.get("score", {})
-            bb = sc.get("livability_pillars", {}).get("built_beauty", {})
+            bb = sc.get("livability_pillars", {}).get("built_environment", {})
             if not bb:
                 continue
             try:
@@ -91,7 +91,7 @@ def main():
     n_ok = n_sus = n_err = 0
     for i, t in enumerate(targets, 1):
         try:
-            score, details = get_built_beauty_score(
+            score, details = get_built_environment_score(
                 t["lat"], t["lon"], city=t["city"], area_type=t["area_type"],
                 location_name=t["name"],
             )
