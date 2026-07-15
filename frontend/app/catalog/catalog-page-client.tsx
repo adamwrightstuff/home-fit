@@ -109,7 +109,7 @@ export default function CatalogPageClient({
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
-  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'High' | 'Some' | 'Low'>('all')
+  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -386,9 +386,8 @@ export default function CatalogPageClient({
         if (filterPoliticalLean === 'progressive' && lean <= 0) return false
         if (filterPoliticalLean === 'conservative' && lean >= 0) return false
       }
-      if (filterLocalScene !== 'all') {
-        if (p.score.local_scene_bucket !== filterLocalScene) return false
-      }
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()

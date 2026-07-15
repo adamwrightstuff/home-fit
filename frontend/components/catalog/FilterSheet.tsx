@@ -37,8 +37,8 @@ interface FilterSheetProps {
   onFilterNbTypesChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
-  filterLocalScene: 'all' | 'High' | 'Some' | 'Low'
-  onFilterLocalSceneChange: (v: 'all' | 'High' | 'Some' | 'Low') => void
+  filterLocalScene: 'all' | 'Some' | 'High'
+  onFilterLocalSceneChange: (v: 'all' | 'Some' | 'High') => void
   resultCount: number
 }
 
@@ -280,9 +280,8 @@ export default function FilterSheet({
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
-              {chip(filterLocalScene === 'High', 'High', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
-              {chip(filterLocalScene === 'Some', 'Some', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
-              {chip(filterLocalScene === 'Low', 'Low', () => onFilterLocalSceneChange(filterLocalScene === 'Low' ? 'all' : 'Low'))}
+              {chip(filterLocalScene === 'Some', 'Some+', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
+              {chip(filterLocalScene === 'High', 'High only', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
             </div>
           </div>
 
