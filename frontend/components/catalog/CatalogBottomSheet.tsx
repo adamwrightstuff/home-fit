@@ -237,9 +237,9 @@ export default function CatalogBottomSheet({
               })}
             </div>
 
-            {/* Archetype + Trajectory pill pair */}
-            {(allIdx?.archetype || allIdx?.trajectory) && (
-              <div className="mb-2" style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+            {/* Archetype + Trajectory + Local Scene pill row */}
+            {(allIdx?.archetype || allIdx?.trajectory || place.score.local_scene_bucket) && (
+              <div className="mb-2" style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                 {(statusBadge || allIdx?.archetype) && (
                   <ArchetypeBadge
                     archetype={allIdx?.archetype ?? null}
@@ -248,6 +248,22 @@ export default function CatalogBottomSheet({
                   />
                 )}
                 {allIdx?.trajectory && <TrajectoryChip trajectory={allIdx.trajectory} />}
+                {place.score.local_scene_bucket && (
+                  <span
+                    title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      padding: '2px 7px',
+                      borderRadius: 999,
+                      background: 'var(--hf-hover-bg)',
+                      border: '0.5px solid var(--hf-border)',
+                      color: 'var(--hf-text-secondary)',
+                    }}
+                  >
+                    Scene: {place.score.local_scene_bucket}
+                  </span>
+                )}
               </div>
             )}
 

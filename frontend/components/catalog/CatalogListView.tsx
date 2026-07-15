@@ -134,7 +134,7 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                   <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
                   <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
                   <td className="py-2 px-1 align-top">
-                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                       <ArchetypeBadge
                         archetype={p.score.status_signal_breakdown?.archetype ?? null}
                         breakdown={p.score.status_signal_breakdown ?? null}
@@ -143,6 +143,22 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                         }
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} />
+                      {p.score.local_scene_bucket && (
+                        <span
+                          title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: 999,
+                            background: 'var(--hf-hover-bg)',
+                            border: '0.5px solid var(--hf-border)',
+                            color: 'var(--hf-text-secondary)',
+                          }}
+                        >
+                          Scene: {p.score.local_scene_bucket}
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className="py-2 pl-1">
