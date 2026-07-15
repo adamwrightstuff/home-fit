@@ -26,8 +26,8 @@ interface FilterSheetProps {
   onFilterMetroChange: (v: 'all' | 'nyc' | 'la') => void
   filterAreaTypes: string[]
   onFilterAreaTypesChange: (v: string[]) => void
-  filterArchetype: string
-  onFilterArchetypeChange: (v: string) => void
+  filterArchetypes: string[]
+  onFilterArchetypesChange: (v: string[]) => void
   archetypes: string[]
   filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
@@ -67,8 +67,8 @@ export default function FilterSheet({
   onFilterMetroChange,
   filterAreaTypes,
   onFilterAreaTypesChange,
-  filterArchetype,
-  onFilterArchetypeChange,
+  filterArchetypes,
+  onFilterArchetypesChange,
   archetypes,
   filterTrajectory,
   onFilterTrajectoryChange,
@@ -98,7 +98,7 @@ export default function FilterSheet({
 
   const activeCount =
     (filterAreaTypes.length > 0 ? 1 : 0) +
-    (filterArchetype !== 'all' ? 1 : 0) +
+    (filterArchetypes.length > 0 ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean !== 'all' ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
@@ -108,7 +108,7 @@ export default function FilterSheet({
   function handleClearAll() {
     onFilterMetroChange('all')
     onFilterAreaTypesChange([])
-    onFilterArchetypeChange('all')
+    onFilterArchetypesChange([])
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange('all')
     onFilterNbTypesChange([])
@@ -211,13 +211,27 @@ export default function FilterSheet({
           {/* Class */}
           {archetypes.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={LABEL_STYLE}>Class</div>
+              <div style={LABEL_STYLE}>Class (select multiple)</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {chip(filterArchetype === 'all', 'All classes', () => onFilterArchetypeChange('all'))}
                 {archetypes.map((a) =>
-                  chip(filterArchetype === a, displayArchetypeLabel(a), () => onFilterArchetypeChange(a))
+                  chip(filterArchetypes.includes(a), displayArchetypeLabel(a), () => {
+                    if (filterArchetypes.includes(a)) {
+                      onFilterArchetypesChange(filterArchetypes.filter((x) => x !== a))
+                    } else {
+                      onFilterArchetypesChange([...filterArchetypes, a])
+                    }
+                  })
                 )}
               </div>
+              {filterArchetypes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onFilterArchetypesChange([])}
+                  style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Clear
+                </button>
+              )}
             </div>
           )}
 
