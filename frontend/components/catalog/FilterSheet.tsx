@@ -37,6 +37,8 @@ interface FilterSheetProps {
   onFilterNbTypesChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
+  filterLocalScene: 'all' | 'High' | 'Some' | 'Low'
+  onFilterLocalSceneChange: (v: 'all' | 'High' | 'Some' | 'Low') => void
   resultCount: number
 }
 
@@ -76,6 +78,8 @@ export default function FilterSheet({
   onFilterNbTypesChange,
   filterSchoolType,
   onFilterSchoolTypeChange,
+  filterLocalScene,
+  onFilterLocalSceneChange,
   resultCount,
 }: FilterSheetProps) {
   type TrajectoryOption = 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
@@ -98,7 +102,8 @@ export default function FilterSheet({
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean !== 'all' ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
-    (filterSchoolType !== 'any' ? 1 : 0)
+    (filterSchoolType !== 'any' ? 1 : 0) +
+    (filterLocalScene !== 'all' ? 1 : 0)
 
   function handleClearAll() {
     onFilterMetroChange('all')
@@ -108,6 +113,7 @@ export default function FilterSheet({
     onFilterPoliticalLeanChange('all')
     onFilterNbTypesChange([])
     onFilterSchoolTypeChange('any')
+    onFilterLocalSceneChange('all')
   }
 
   function toggleAreaType(value: string) {
@@ -261,6 +267,22 @@ export default function FilterSheet({
               {chip(filterPoliticalLean === 'all', 'All', () => onFilterPoliticalLeanChange('all'))}
               {chip(filterPoliticalLean === 'progressive', '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'progressive' ? 'all' : 'progressive'))}
               {chip(filterPoliticalLean === 'conservative', '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'conservative' ? 'all' : 'conservative'))}
+            </div>
+          </div>
+
+          {/* Local Scene */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+              <div style={LABEL_STYLE}>Local Scene</div>
+            </div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterLocalScene === 'all', 'All', () => onFilterLocalSceneChange('all'))}
+              {chip(filterLocalScene === 'High', 'High', () => onFilterLocalSceneChange(filterLocalScene === 'High' ? 'all' : 'High'))}
+              {chip(filterLocalScene === 'Some', 'Some', () => onFilterLocalSceneChange(filterLocalScene === 'Some' ? 'all' : 'Some'))}
+              {chip(filterLocalScene === 'Low', 'Low', () => onFilterLocalSceneChange(filterLocalScene === 'Low' ? 'all' : 'Low'))}
             </div>
           </div>
 

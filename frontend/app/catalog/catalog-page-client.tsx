@@ -109,6 +109,7 @@ export default function CatalogPageClient({
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
+  const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'High' | 'Some' | 'Low'>('all')
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -385,6 +386,9 @@ export default function CatalogPageClient({
         if (filterPoliticalLean === 'progressive' && lean <= 0) return false
         if (filterPoliticalLean === 'conservative' && lean >= 0) return false
       }
+      if (filterLocalScene !== 'all') {
+        if (p.score.local_scene_bucket !== filterLocalScene) return false
+      }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -402,6 +406,7 @@ export default function CatalogPageClient({
     filterTrajectory,
     filterPoliticalLean,
     filterSchoolType,
+    filterLocalScene,
     indexMode,
     sortByName,
     sortDir,
@@ -815,9 +820,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -881,9 +886,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetype !== 'all' ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1239,6 +1244,8 @@ export default function CatalogPageClient({
         onFilterNbTypesChange={setFilterNbTypes}
         filterSchoolType={filterSchoolType}
         onFilterSchoolTypeChange={setFilterSchoolType}
+        filterLocalScene={filterLocalScene}
+        onFilterLocalSceneChange={setFilterLocalScene}
         resultCount={filteredPlaces.length}
       />
 

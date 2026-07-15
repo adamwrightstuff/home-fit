@@ -174,6 +174,10 @@ export interface ScoreResponse {
   status_signal?: number;
   /** Detailed breakdown for archetype index (archetype, status_label, status_insight, top_drivers, analysis_radius_note). */
   status_signal_breakdown?: StatusSignalBreakdown;
+  /** Local Scene score (0–100): concentration of independent, experience-oriented businesses. Catalog-only; computed from business_list. */
+  local_scene_score?: number;
+  /** Local Scene bucket: 'High' | 'Some' | 'Low'. */
+  local_scene_bucket?: 'High' | 'Some' | 'Low';
   /** Happiness Index: commute (35%), social fabric (30%), housing value (20%), natural beauty (15%); renormalized if missing. Not a pillar. */
   happiness_index?: number;
   happiness_index_breakdown?: Record<string, unknown>;
