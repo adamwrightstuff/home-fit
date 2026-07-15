@@ -147,13 +147,17 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                         <span
                           title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."
                           style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                            padding: '2px 7px',
-                            borderRadius: 999,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            height: 28,
+                            padding: '0 10px',
+                            borderRadius: 99,
                             background: 'var(--hf-hover-bg)',
-                            border: '0.5px solid var(--hf-border)',
+                            border: 'none',
+                            fontSize: 13,
+                            fontWeight: 500,
                             color: 'var(--hf-text-secondary)',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           Scene: {p.score.local_scene_bucket}
