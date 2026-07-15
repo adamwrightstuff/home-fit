@@ -152,11 +152,11 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                             height: 28,
                             padding: '0 10px',
                             borderRadius: 99,
-                            background: 'var(--hf-hover-bg)',
+                            background: '#f1f5f9',
                             border: 'none',
                             fontSize: 13,
                             fontWeight: 500,
-                            color: 'var(--hf-text-secondary)',
+                            color: '#334155',
                             whiteSpace: 'nowrap',
                           }}
                         >
