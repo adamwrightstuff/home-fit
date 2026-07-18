@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """
-Targeted rescore of neighborhood_beauty for NYC catalog places whose stored
+Targeted rescore of natural_beauty for NYC catalog places whose stored
 water_type is 'ocean' but are not genuinely coastal (river/estuary misclassification).
 
-Runs only=neighborhood_beauty against the local API for each affected place,
+Runs only=natural_beauty against the local API for each affected place,
 merges the result back, and recomputes composites.
 
 Prerequisites:
-  - Local API running with the OSM water fix: PYTHONPATH=. python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+  - Local API running: PYTHONPATH=. python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
   - Run from repo root: PYTHONPATH=. python3 scripts/catalog/rescore_water_type_fix.py
-
-Estimated time: ~60-120s per place × 65 places = 1-2 hours.
 """
 from __future__ import annotations
 
@@ -24,9 +22,9 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
+INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 API_BASE = "http://localhost:8000"
-DELAY_S = 1.0  # pause between requests to avoid hammering OSM
+DELAY_S = 5.0
 
 # Places that are genuinely coastal — leave these alone even if tagged ocean
 GENUINE_OCEAN = {
@@ -43,41 +41,37 @@ def catalog_key(row: dict) -> str:
     return c.get("search_query") or c.get("name", "")
 
 
+def get_water_type(row: dict) -> str | None:
+    nb = row.get("score", {}).get("livability_pillars", {}).get("natural_beauty", {})
+    return nb.get("v9_breakdown", {}).get("inputs", {}).get("water_type")
+
+
 def identify_targets(rows: list[dict]) -> list[dict]:
     targets = []
     for row in rows:
-        nb = row.get("score", {}).get("livability_pillars", {}).get("neighborhood_beauty", {})
-        v9 = nb.get("details", {}).get("natural_beauty", {}).get("v9_breakdown", {})
-        wt = v9.get("inputs", {}).get("water_type")
+        wt = get_water_type(row)
         name = row.get("catalog", {}).get("name", "")
         if wt == "ocean" and name not in GENUINE_OCEAN:
             targets.append(row)
     return targets
 
 
-def fetch_nb_score(search_query: str) -> dict | None:
+def fetch_score(search_query: str, lat: float | None = None, lon: float | None = None) -> dict | None:
     url = f"{API_BASE}/score"
-    params = {"location": search_query, "only": "neighborhood_beauty"}
-    try:
-        r = requests.get(url, params=params, timeout=120)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        print(f"  ERROR fetching {search_query}: {e}")
-        return None
-
-
-def recompute_total(pillars: dict) -> float:
-    weighted = total = 0.0
-    for p in pillars.values():
-        if not isinstance(p, dict):
-            continue
-        score = p.get("score")
-        weight = p.get("weight")
-        if score is not None and weight is not None:
-            weighted += float(score) * float(weight)
-            total += float(weight)
-    return round(weighted / total, 4) if total > 0 else 0.0
+    params: dict = {"location": search_query, "only": "natural_beauty"}
+    if lat is not None and lon is not None:
+        params["lat"] = str(lat)
+        params["lon"] = str(lon)
+    for attempt in range(3):
+        try:
+            r = requests.get(url, params=params, timeout=240)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            print(f"  attempt {attempt+1}/3 failed: {e}")
+            if attempt < 2:
+                time.sleep(10)
+    return None
 
 
 def main() -> None:
@@ -94,79 +88,38 @@ def main() -> None:
     for i, target in enumerate(targets):
         name = target.get("catalog", {}).get("name", "?")
         query = catalog_key(target)
-        old_wt = (
-            target.get("score", {})
-            .get("livability_pillars", {})
-            .get("neighborhood_beauty", {})
-            .get("details", {})
-            .get("natural_beauty", {})
-            .get("v9_breakdown", {})
-            .get("inputs", {})
-            .get("water_type", "?")
-        )
+        old_wt = get_water_type(target)
         print(f"[{i+1}/{len(targets)}] {name} (was: {old_wt})")
 
-        result = fetch_nb_score(query)
+        cat = target.get("catalog", {})
+        result = fetch_score(query, lat=cat.get("lat"), lon=cat.get("lon"))
         if not result:
             failed += 1
             continue
 
-        new_nb = result.get("livability_pillars", {}).get("neighborhood_beauty")
+        new_nb = result.get("livability_pillars", {}).get("natural_beauty")
         if not new_nb:
-            print(f"  SKIP — no neighborhood_beauty in response")
+            print(f"  SKIP — no natural_beauty in response")
             failed += 1
             continue
 
-        new_wt = (
-            new_nb.get("details", {})
-            .get("natural_beauty", {})
-            .get("v9_breakdown", {})
-            .get("inputs", {})
-            .get("water_type", "?")
-        )
+        new_wt = new_nb.get("v9_breakdown", {}).get("inputs", {}).get("water_type", "?")
         new_score = new_nb.get("score", "?")
-        new_confidence = new_nb.get("confidence")
-        old_confidence = (
-            target.get("score", {})
-            .get("livability_pillars", {})
-            .get("neighborhood_beauty", {})
-            .get("confidence")
-        )
-        print(f"  water_type: {old_wt} → {new_wt}  |  nb_score: {new_score}  |  confidence: {old_confidence} → {new_confidence}")
+        print(f"  water_type: {old_wt} → {new_wt}  |  score: {new_score}")
 
-        # Skip if new confidence is lower than existing — don't overwrite good data with worse
-        if (
-            new_confidence is not None
-            and old_confidence is not None
-            and float(new_confidence) < float(old_confidence)
-        ):
-            print(f"  SKIP — new confidence {new_confidence} < existing {old_confidence}, keeping current score")
-            failed += 1
-            time.sleep(DELAY_S)
-            continue
-
-        # Skip if new confidence is below minimum threshold
-        MIN_CONFIDENCE = 0.80
-        if new_confidence is not None and float(new_confidence) < MIN_CONFIDENCE:
-            print(f"  SKIP — new confidence {new_confidence} below minimum {MIN_CONFIDENCE}")
-            failed += 1
-            time.sleep(DELAY_S)
-            continue
-
-        # Merge new neighborhood_beauty into the row
         row_idx = index[query]
-        rows[row_idx]["score"]["livability_pillars"]["neighborhood_beauty"] = new_nb
-        rows[row_idx]["score"]["total_score"] = recompute_total(
-            rows[row_idx]["score"]["livability_pillars"]
-        )
+        rows[row_idx]["score"]["livability_pillars"]["natural_beauty"] = new_nb
         updated += 1
 
         time.sleep(DELAY_S)
 
     print(f"\nDone. {updated} updated, {failed} failed.")
+    if updated == 0:
+        print("Nothing to write.")
+        return
     print(f"Writing {INPUT.name}...")
     INPUT.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
-    print("Done.")
+    print(f"Done. Run recompute_catalog_composites.py --input {INPUT} --output {INPUT} next.")
 
 
 if __name__ == "__main__":
