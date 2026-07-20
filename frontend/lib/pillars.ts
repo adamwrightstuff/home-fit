@@ -160,7 +160,7 @@ export const HAPPINESS_INDEX_COPY = {
     'Captures day-to-day livability, weighted toward commute and social connection.',
   /** Short version for subtitle or card label. */
   short:
-    'Commute, social fabric, housing space-for-price, nature, and built beauty — fixed weights when all five are available.',
+    'Commute, social fabric, housing space-for-price, nature, and built environment — fixed weights when all five are available.',
 } as const
 
 /** Copy for Trajectory UX: tooltip and per-state modal copy. */

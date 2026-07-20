@@ -110,7 +110,7 @@ function PopoverContent({ indexId }: { indexId: IndexId }) {
       { label: 'Social Fabric', pct: 30 },
       { label: 'Housing value for space', pct: 15 },
       { label: 'Natural beauty', pct: 15 },
-      { label: 'Built beauty', pct: 5 },
+      { label: 'Built environment', pct: 5 },
     ]
     return (
       <>
