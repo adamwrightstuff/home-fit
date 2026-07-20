@@ -5,15 +5,15 @@ Components (all 0–100, renormalized when missing):
 - S (Social Fabric): Social Fabric pillar score. Strongest cross-study predictor of wellbeing.
 - F (Safety): Community Safety pillar score. Fear of crime is a primary wellbeing drag (Loukaitou-Sideris 2006).
 - C (Commute): existing commute score from public_transit (shorter = better).
-- N (Neighborhood): Neighborhood Amenities pillar. Daily walkable engagement → positive affect.
+- N (Neighborhood): Neighborhood Amenities pillar. Walkable access to daily life → positive affect (research shows this is the actual built-environment happiness mechanism, not architectural aesthetics).
 - H (Home Space-to-Price): Home Price to Space pillar score.
 - G (Green): Natural Beauty pillar score — daily nature contact → stress reduction (Bratman 2015).
-- B (Built): Built Beauty pillar score (architecture and streetscape).
 
-Base weights: S 0.30, F 0.20, C 0.20, N 0.12, H 0.10, G 0.05, B 0.03 (renormalized over available).
+Base weights: S 0.30, F 0.20, C 0.20, N 0.15, H 0.10, G 0.05 (renormalized over available).
 Note: Commute reduced from 0.35; Putnam's mechanism routes through social fabric (already at 30%)
 so 35% double-penalized transit-dependent neighborhoods for the same social erosion pathway.
 Safety added: when degraded/missing, renormalized over remaining components.
+Built Beauty removed: architectural aesthetics effect on happiness is mediated through walkability/amenity access, already captured by N.
 """
 
 from __future__ import annotations
@@ -26,10 +26,9 @@ from typing import Any, Dict, Optional, Tuple
 W_SOCIAL = 0.30
 W_SAFETY = 0.20
 W_COMMUTE = 0.20
-W_NEIGHBORHOOD = 0.12
+W_NEIGHBORHOOD = 0.15
 W_HOME = 0.10
 W_GREEN = 0.05
-W_BUILT = 0.03
 
 _BASELINES_CACHE: Optional[Dict[str, Any]] = None
 
@@ -114,15 +113,6 @@ def _component_green(natural_beauty_details: Optional[Dict[str, Any]]) -> Option
     return None
 
 
-def _component_built(built_environment_details: Optional[Dict[str, Any]]) -> Optional[float]:
-    """B: 0–100 = full Built Beauty pillar score."""
-    if not built_environment_details:
-        return None
-    score = built_environment_details.get("score")
-    if isinstance(score, (int, float)):
-        return max(0.0, min(100.0, float(score)))
-    return None
-
 
 def _component_safety(community_safety_details: Optional[Dict[str, Any]]) -> Optional[float]:
     """F: 0–100 = Community Safety pillar score. Missing/degraded → None (renormalized out)."""
@@ -153,7 +143,6 @@ def compute_happiness_index_with_breakdown(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
@@ -161,7 +150,7 @@ def compute_happiness_index_with_breakdown(
     Compute Happiness Index (0–100) and component breakdown.
 
     Returns (score, breakdown) with breakdown keys: social, safety, commute, neighborhood,
-    home_space, green, built, and component_weights used (after renormalization for missing).
+    home_space, green, and component_weights used (after renormalization for missing).
     Safety renormalizes out when degraded/missing — no place penalized for missing data.
     """
     from data_sources.us_census_divisions import get_division
@@ -174,7 +163,6 @@ def compute_happiness_index_with_breakdown(
         "neighborhood": None,
         "home_space": None,
         "green": None,
-        "built": None,
         "component_weights": {},
     }
 
@@ -185,7 +173,6 @@ def compute_happiness_index_with_breakdown(
     N = _component_neighborhood(neighborhood_amenities_details)
     H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
-    B = _component_built(built_environment_details)
 
     breakdown["social"] = round(S, 1) if S is not None else None
     breakdown["safety"] = round(F, 1) if F is not None else None
@@ -193,7 +180,6 @@ def compute_happiness_index_with_breakdown(
     breakdown["neighborhood"] = round(N, 1) if N is not None else None
     breakdown["home_space"] = round(H, 1) if H is not None else None
     breakdown["green"] = round(G, 1) if G is not None else None
-    breakdown["built"] = round(B, 1) if B is not None else None
 
     weights = []
     components = []
@@ -215,9 +201,6 @@ def compute_happiness_index_with_breakdown(
     if G is not None:
         weights.append(W_GREEN)
         components.append((G, "green"))
-    if B is not None:
-        weights.append(W_BUILT)
-        components.append((B, "built"))
 
     if not components:
         return None, breakdown
@@ -236,7 +219,6 @@ def compute_happiness_index(
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
@@ -248,7 +230,6 @@ def compute_happiness_index(
         natural_beauty_details,
         state_abbrev,
         social_fabric_details=social_fabric_details,
-        built_environment_details=built_environment_details,
         community_safety_details=community_safety_details,
         neighborhood_amenities_details=neighborhood_amenities_details,
     )

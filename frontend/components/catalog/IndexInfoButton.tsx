@@ -108,9 +108,9 @@ function PopoverContent({ indexId }: { indexId: IndexId }) {
     const rows = [
       { label: 'Commute ease (Transit)', pct: 35 },
       { label: 'Social Fabric', pct: 30 },
-      { label: 'Housing value for space', pct: 15 },
-      { label: 'Natural beauty', pct: 15 },
-      { label: 'Built environment', pct: 5 },
+      { label: 'Housing value for space', pct: 10 },
+      { label: 'Natural beauty', pct: 10 },
+      { label: 'Neighborhood amenities', pct: 15 },
     ]
     return (
       <>

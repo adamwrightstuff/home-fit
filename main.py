@@ -1176,7 +1176,6 @@ def _compute_happiness_index_for_response(
     natural_beauty_details: Optional[Dict[str, Any]],
     state: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
-    built_environment_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
@@ -1192,7 +1191,6 @@ def _compute_happiness_index_for_response(
             natural_beauty_details,
             state,
             social_fabric_details=social_fabric_details,
-            built_environment_details=built_environment_details,
             community_safety_details=community_safety_details,
             neighborhood_amenities_details=neighborhood_amenities_details,
         )
@@ -2762,7 +2760,6 @@ def _compute_single_score_internal(
     # neighborhood_beauty replaced the two standalone pillars; happiness/longevity still
     # consume the separate sub-scores, so synthesize the old per-pillar shape from them.
     natural_beauty_details = {"score": natural_score, **(natural_details or {})}
-    built_environment_details_for_indices = {"score": built_score, **(built_details or {})}
     happiness_result = _compute_happiness_index_for_response(
         housing_details,
         public_transit_details,
@@ -2770,7 +2767,6 @@ def _compute_single_score_internal(
         natural_beauty_details,
         state,
         social_fabric_details=livability_pillars.get("social_fabric"),
-        built_environment_details=built_environment_details_for_indices,
         community_safety_details=livability_pillars.get("community_safety"),
         neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
     )
@@ -4489,7 +4485,7 @@ async def _stream_score_with_progress(
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
-            built_environment_details=_beauty_pillars.get("built_environment"),
+
             community_safety_details=livability_pillars.get("community_safety"),
             neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
@@ -5673,7 +5669,7 @@ async def stream_score(
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
-            built_environment_details=_beauty_pillars.get("built_environment"),
+
             community_safety_details=livability_pillars.get("community_safety"),
             neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
         )
