@@ -169,7 +169,7 @@ const PREFERENCE_V9_COMPONENTS: Record<NbPreference, string[]> = {
   mountains: ['topo_score'],
   ocean: ['water_score'],
   lakes_rivers: ['water_score'],
-  canopy: ['canopy_score', 'gvi_score'],
+  canopy: ['gvi_score'],
 }
 
 export interface V9Breakdown {
