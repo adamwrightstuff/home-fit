@@ -15,12 +15,12 @@ filter threshold for "meaningful SF/townhouse inventory".
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/backfill_housing_stock.py \\
-      --input data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl \\
-      --output data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+      --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
+      --output data/nyc_metro_place_catalog_scores_merged.jsonl
 
   # Dry-run (print results, don't write):
   PYTHONPATH=. python3 scripts/catalog/backfill_housing_stock.py \\
-      --input data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl \\
+      --input data/la_metro_place_catalog_scores_merged.jsonl \\
       --dry-run
 """
 from __future__ import annotations

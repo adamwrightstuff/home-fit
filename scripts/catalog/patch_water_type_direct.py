@@ -15,7 +15,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from data_sources.osm_api import query_water_features
 from pillars.natural_beauty import _v9_score_water
 
-INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 DELAY_S = 2.0
 OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.00]
 

@@ -14,8 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 CATALOGS = [
-    ROOT / 'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
-    ROOT / 'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl',
+    ROOT / 'data/nyc_metro_place_catalog_scores_merged.jsonl',
+    ROOT / 'data/la_metro_place_catalog_scores_merged.jsonl',
 ]
 
 KNOWN_CHAINS = {

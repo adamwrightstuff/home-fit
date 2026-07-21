@@ -23,7 +23,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 API_BASE = "http://localhost:8000"
 DELAY_S = 5.0
 

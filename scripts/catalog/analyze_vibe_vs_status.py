@@ -134,8 +134,8 @@ def load_catalog(path, metro):
 
 
 def main():
-    nyc_path = ROOT / 'data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl'
-    la_path  = ROOT / 'data/la_metro_place_catalog_scores_merged.composites_recomputed.jsonl'
+    nyc_path = ROOT / 'data/nyc_metro_place_catalog_scores_merged.jsonl'
+    la_path  = ROOT / 'data/la_metro_place_catalog_scores_merged.jsonl'
 
     records = load_catalog(nyc_path, 'NYC') + load_catalog(la_path, 'LA')
 

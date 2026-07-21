@@ -22,8 +22,8 @@ wellbeing; peer-normalized civic score re-enters at 10% as the encounter-facilit
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/recompute_social_fabric_v15_offline.py \\
-    --input data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl \\
-    --output data/nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+    --input data/nyc_metro_place_catalog_scores_merged.jsonl \\
+    --output data/nyc_metro_place_catalog_scores_merged.jsonl
 """
 from __future__ import annotations
 

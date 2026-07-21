@@ -32,7 +32,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 DEFAULT_INPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
-DEFAULT_OUTPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
+DEFAULT_OUTPUT = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 
 _COMPOSITE_KEYS = (
     "longevity_index",
@@ -70,7 +70,7 @@ def main() -> int:
         "--output",
         type=Path,
         default=None,
-        help="Output JSONL (default: ...merged.composites_recomputed.jsonl). Incompatible with --in-place.",
+        help="Output JSONL (default: same as --input, in-place). Incompatible with --in-place.",
     )
     ap.add_argument(
         "--in-place",
