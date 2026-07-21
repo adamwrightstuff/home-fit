@@ -2200,7 +2200,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         _wb_area = float(_wb.get("area_km2") or 0.0)
         _lc_water_pct = float(landcover_metrics.get("water_pct", 0.0) or 0.0)
         _wb_dist = float(water_proximity_data.get("nearest_distance_km") or 0.0)
-        if _wb_type in ("river", "stream") and _wb_area < 0.5 and _lc_water_pct >= 20.0 and _wb_dist <= 1.0:
+        _wb_named = bool(_wb.get("name"))
+        if _wb_type in ("river", "stream") and _wb_area < 0.5 and not _wb_named and _lc_water_pct >= 20.0 and _wb_dist <= 1.0:
             _area_key = area_type_key if area_type_key else ""
             _inferred_type = "bay" if _area_key in ("urban_core", "historic_urban", "urban_core_lowrise") else "ocean"
             water_proximity_data = {

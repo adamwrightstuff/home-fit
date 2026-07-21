@@ -56,6 +56,17 @@ Pre-computed JSON files in `data/` provide metro-specific and area-type-specific
 
 Scripts in `scripts/catalog/` handle batch scoring of place catalogs to JSONL, re-running failed pillars, rescoring single pillars, recomputing composites, and exporting CSVs. These are not production code — they're admin tools. See `scripts/README.md` for the full inventory.
 
+## Before Suggesting a Rescore
+
+**NON-NEGOTIABLE pre-check before recommending any rescore or re-run:**
+1. Pull the actual stored score AND the breakdown (daily_urban_outdoors, wild_adventure, waterfront_lifestyle) for affected places
+2. A place with 0 parks but reasonable sub-scores is NOT broken — other components may be carrying it correctly (e.g. Astoria 62.9 carried by wild_adventure)
+3. Only flag for rescore when: score is implausibly low for that geography AND the breakdown shows all sub-components near zero AND there is known green space there (e.g. Pelham Bay Park = NYC's largest park → AO of 3.8 is absurd)
+4. State the expected score range AND which sub-component should be higher AND why before suggesting any action
+5. Never list a place as broken just because it has an error flag or 0 parks — always check the full breakdown first
+
+Never suggest a rescore based on an error flag alone. Error flags (overpass_error, overpass_empty) are inputs to the analysis, not the conclusion.
+
 ## Design Rules (read before changing scoring logic)
 
 `DESIGN_PRINCIPLES.md` is the authoritative checklist. The core constraint: expected values must come from empirical research, not target scores. Never add hardcoded city exceptions — use area-type classification instead.

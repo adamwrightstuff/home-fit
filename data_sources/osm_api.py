@@ -1052,7 +1052,13 @@ def query_water_features(lat: float, lon: float, radius_m: int = 15000) -> Optio
                 if r.get("name")
                 and isinstance(r.get("distance_km"), (int, float))
                 and float(r["distance_km"]) <= max(ocean_dist * 2.0, 2.0)
-                and float(r.get("area_km2") or 0.0) >= 0.5  # major waterway only (East River, Hudson scale)
+                and (
+                    # Polygon rivers (natural=water,water=river) need significant area
+                    float(r.get("area_km2") or 0.0) >= 0.5
+                    # Linear-way rivers (waterway=river centerlines) have area≈0 by construction;
+                    # require them to be closer than the ocean so we don't override genuine coasts
+                    or (float(r.get("area_km2") or 0.0) < 0.01 and float(r["distance_km"]) <= ocean_dist)
+                )
             ]
             if major_rivers_nearby:
                 nearest_waterbody = major_rivers_nearby[0]
@@ -1854,13 +1860,16 @@ def _process_green_features(elements: List[Dict], center_lat: float, center_lon:
                 elem_lat, elem_lon = _get_relation_centroid(elem, ways_dict, nodes_dict)
                 area_sqm = 0
                 if elem_lat is None:
-                    # Fallback: Try to use relation's center point if available (some relations have center tags)
-                    center_lat = tags.get("center:lat") or tags.get("lat")
-                    center_lon = tags.get("center:lon") or tags.get("lon")
-                    if center_lat and center_lon:
+                    # Fallback: use OSM center attribute (populated by "out body center;")
+                    # or center:lat/lon tags. Use local vars to avoid clobbering the
+                    # function-level center_lat/center_lon parameters.
+                    _rel_center = elem.get("center") or {}
+                    _tag_clat = _rel_center.get("lat") or tags.get("center:lat") or tags.get("lat")
+                    _tag_clon = _rel_center.get("lon") or tags.get("center:lon") or tags.get("lon")
+                    if _tag_clat and _tag_clon:
                         try:
-                            elem_lat = float(center_lat)
-                            elem_lon = float(center_lon)
+                            elem_lat = float(_tag_clat)
+                            elem_lon = float(_tag_clon)
                             centroid_reason = "relation-center-tag"
                         except (ValueError, TypeError):
                             centroid_reason = "relation-centroid-fail"

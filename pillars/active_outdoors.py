@@ -521,13 +521,18 @@ def _score_daily_urban_outdoors_v2(
     
     # Calculate area from parks >=0.1 ha only
     total_area_ha = sum(
-        p.get("area_sqm", 0.0) / 10_000.0 
-        for p in parks 
+        p.get("area_sqm", 0.0) / 10_000.0
+        for p in parks
         if (p.get("area_sqm", 0.0) / 10_000.0) >= MIN_PARK_AREA_HA
     )
-    
+
     # Count all parks (including small ones) for density scoring
     park_count = len(parks)
+
+    # When OSM uses out body center (dense areas), geometry is omitted so area_sqm=0.
+    # Impute minimum area so park count still drives the score.
+    if total_area_ha == 0 and park_count > 0:
+        total_area_ha = park_count * MIN_PARK_AREA_HA
     playground_count = len(playgrounds)
     facility_count = len(recreational_facilities)
     

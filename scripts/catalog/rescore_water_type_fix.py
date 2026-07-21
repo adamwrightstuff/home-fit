@@ -43,7 +43,7 @@ def catalog_key(row: dict) -> str:
 
 def get_water_type(row: dict) -> str | None:
     nb = row.get("score", {}).get("livability_pillars", {}).get("natural_beauty", {})
-    return nb.get("v9_breakdown", {}).get("inputs", {}).get("water_type")
+    return nb.get("details", {}).get("v9_breakdown", {}).get("inputs", {}).get("water_type")
 
 
 def identify_targets(rows: list[dict]) -> list[dict]:
@@ -56,6 +56,10 @@ def identify_targets(rows: list[dict]) -> list[dict]:
     return targets
 
 
+_PROXY_SECRET = "733f5a583601c3d63883954365e4b653a36f47ee45c5d84877884536abcfc7da"
+_HEADERS = {"X-HomeFit-Proxy-Secret": _PROXY_SECRET}
+
+
 def fetch_score(search_query: str, lat: float | None = None, lon: float | None = None) -> dict | None:
     url = f"{API_BASE}/score"
     params: dict = {"location": search_query, "only": "natural_beauty"}
@@ -64,7 +68,7 @@ def fetch_score(search_query: str, lat: float | None = None, lon: float | None =
         params["lon"] = str(lon)
     for attempt in range(3):
         try:
-            r = requests.get(url, params=params, timeout=240)
+            r = requests.get(url, params=params, timeout=240, headers=_HEADERS)
             r.raise_for_status()
             return r.json()
         except Exception as e:
@@ -103,7 +107,8 @@ def main() -> None:
             failed += 1
             continue
 
-        new_wt = new_nb.get("v9_breakdown", {}).get("inputs", {}).get("water_type", "?")
+        v9 = new_nb.get("details", {}).get("v9_breakdown") or new_nb.get("v9_breakdown") or {}
+        new_wt = v9.get("inputs", {}).get("water_type", "?")
         new_score = new_nb.get("score", "?")
         print(f"  water_type: {old_wt} → {new_wt}  |  score: {new_score}")
 

@@ -145,7 +145,16 @@ def get_way_center(elem: Dict, nodes_dict: Dict) -> Tuple[Optional[float], Optio
     Returns:
         Tuple of (lat, lon, area_sqm)
     """
-    if elem.get("type") != "way" or "nodes" not in elem:
+    if elem.get("type") != "way":
+        return None, None, 0
+
+    # out body center; puts centroid in elem["center"] without returning child nodes
+    if "center" in elem:
+        c = elem["center"]
+        if c.get("lat") is not None and c.get("lon") is not None:
+            return float(c["lat"]), float(c["lon"]), 0.0
+
+    if "nodes" not in elem:
         return None, None, 0
 
     coords = []
