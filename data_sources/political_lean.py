@@ -100,13 +100,22 @@ def lookup_political_lean(
     lat_min, lat_max = lat - lat_pad, lat + lat_pad
     lon_min, lon_max = lon - lon_pad, lon + lon_pad
 
-    dem_24 = rep_24 = dem_20 = rep_20 = 0
-    count = 0
+    nearby = []
     for p in precincts:
         plat, plon = p["lat"], p["lon"]
         if not (lat_min <= plat <= lat_max and lon_min <= plon <= lon_max):
             continue
         if _haversine_miles(lat, lon, plat, plon) <= radius_miles:
+            nearby.append(p)
+
+    # Prefer granular data: use precinct/municipality-matched records when available;
+    # fall back to county-matched records only if nothing better exists within radius.
+    granular = [p for p in nearby if p.get("match_tier") not in ("county", "none")]
+    pool = granular if granular else nearby
+
+    dem_24 = rep_24 = dem_20 = rep_20 = 0
+    count = 0
+    for p in pool:
             dem_24 += p.get("dem_2024", 0)
             rep_24 += p.get("rep_2024", 0)
             dem_20 += p.get("dem_2020", 0)

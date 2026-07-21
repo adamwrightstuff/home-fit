@@ -312,6 +312,7 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
 
         # Get 2024 votes — precinct → municipality → county
         dem_24, rep_24 = 0, 0
+        match_tier = "none"
         if csv_2024 and fips5:
             prec_raw = str(row.get(prec_col) or "") if prec_col else ""
             prec_name = _normalize_shp(prec_raw)
@@ -321,12 +322,15 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
             if prec_key in precinct_votes:
                 dem_24, rep_24 = precinct_votes[prec_key]
                 matched_precinct += 1
+                match_tier = "precinct"
             elif muni_key in municipality_votes:
                 dem_24, rep_24 = municipality_votes[muni_key]
                 matched_municipality += 1
+                match_tier = "municipality"
             elif fips5 in county_votes:
                 dem_24, rep_24 = county_votes[fips5]
                 matched_county += 1
+                match_tier = "county"
             else:
                 no_match += 1
         elif csv_2024:
@@ -339,6 +343,7 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
             "rep_2020": rep_20,
             "dem_2024": dem_24,
             "rep_2024": rep_24,
+            "match_tier": match_tier,
         })
 
     if csv_2024:
