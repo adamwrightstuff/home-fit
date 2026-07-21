@@ -13,6 +13,7 @@ Prerequisites:
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -56,8 +57,8 @@ def identify_targets(rows: list[dict]) -> list[dict]:
     return targets
 
 
-_PROXY_SECRET = "733f5a583601c3d63883954365e4b653a36f47ee45c5d84877884536abcfc7da"
-_HEADERS = {"X-HomeFit-Proxy-Secret": _PROXY_SECRET}
+_PROXY_SECRET = os.environ.get("HOMEFIT_PROXY_SECRET", "")
+_HEADERS = {"X-HomeFit-Proxy-Secret": _PROXY_SECRET} if _PROXY_SECRET else {}
 
 
 def fetch_score(search_query: str, lat: float | None = None, lon: float | None = None) -> dict | None:
