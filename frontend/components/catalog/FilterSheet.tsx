@@ -31,8 +31,8 @@ interface FilterSheetProps {
   archetypes: string[]
   filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
-  filterPoliticalLean: 'all' | 'progressive' | 'conservative'
-  onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative') => void
+  filterPoliticalLean: 'all' | 'progressive' | 'conservative' | 'moderate'
+  onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative' | 'moderate') => void
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
@@ -280,6 +280,7 @@ export default function FilterSheet({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterPoliticalLean === 'all', 'All', () => onFilterPoliticalLeanChange('all'))}
               {chip(filterPoliticalLean === 'progressive', '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'progressive' ? 'all' : 'progressive'))}
+              {chip(filterPoliticalLean === 'moderate', '🟣 Moderate', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'moderate' ? 'all' : 'moderate'))}
               {chip(filterPoliticalLean === 'conservative', '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'conservative' ? 'all' : 'conservative'))}
             </div>
           </div>

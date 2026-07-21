@@ -106,7 +106,7 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return { ...DEFAULT_PRIORITIES }
   })
-  const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative'>('all')
+  const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative' | 'moderate'>('all')
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
@@ -385,6 +385,7 @@ export default function CatalogPageClient({
         if (typeof lean !== 'number') return false
         if (filterPoliticalLean === 'progressive' && lean <= 0) return false
         if (filterPoliticalLean === 'conservative' && lean >= 0) return false
+        if (filterPoliticalLean === 'moderate' && Math.abs(lean) > 0.3) return false
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false

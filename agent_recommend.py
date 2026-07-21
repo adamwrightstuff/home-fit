@@ -36,7 +36,7 @@ PILLAR_KEYS: tuple[str, ...] = (
     "political_lean",
 )
 
-VALID_POLITICAL_PREFERENCES = frozenset({"progressive", "conservative"})
+VALID_POLITICAL_PREFERENCES = frozenset({"progressive", "conservative", "moderate"})
 
 VALID_PRIORITY_LEVELS = frozenset({"None", "Low", "Medium", "High"})
 
@@ -139,6 +139,9 @@ def _political_lean_score_from_raw(lean_2024: Optional[float], preference: Optio
         return 0.0
     if preference == "progressive":
         return max(0.0, min(100.0, (lean_2024 + 1.0) / 2.0 * 100.0))
+    if preference == "moderate":
+        # peaks at lean_2024=0 (true center), falls off symmetrically toward ±1
+        return max(0.0, min(100.0, (1.0 - abs(lean_2024)) * 100.0))
     return max(0.0, min(100.0, (1.0 - lean_2024) / 2.0 * 100.0))
 
 
