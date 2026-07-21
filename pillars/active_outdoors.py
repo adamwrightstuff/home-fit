@@ -570,8 +570,10 @@ def _score_daily_urban_outdoors_v2(
     exp_park_count = exp_expectations.get('expected_parks_within_1km', 8.0)
     exp_play = exp_expectations.get('expected_playgrounds_within_1km', 2.0)
 
-    s_area = _sat_ratio_v2(total_area_ha, exp_park_ha, 15.0)
-    s_count = _sat_ratio_v2(park_count, exp_park_count, 10.0)
+    # Area at 2000m radius measures anchor-park adjacency (Prospect Park, Central Park),
+    # not daily local park access. Count is the better proxy for walkable density.
+    s_area = _sat_ratio_v2(total_area_ha, exp_park_ha, 3.0)
+    s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
     s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
     
     # DEBUG: Log daily urban outdoors calculations
