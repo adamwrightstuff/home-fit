@@ -66,11 +66,81 @@ _SPLIT_MODES = frozenset({
 
 
 def _normalize(s: str) -> str:
-    """Normalize precinct name for fuzzy matching."""
+    """Normalize precinct name for matching.
+
+    Handles several NY naming schemes:
+      Ward-ED:  CSV 'Town of Albany Ward 3 ED 5' / SHP 'Albany City 3-5' -> 'ALBANY 3-5'
+      NYC:      CSV '001/41' (ED/AD)               / SHP '41001' (ADED)   -> '41001'
+      Nassau:   CSV '113001' (1+5-digit)            / SHP 'Glen Cove 13001' -> numeric only
+    """
     s = s.upper().strip()
-    s = re.sub(r"[^A-Z0-9 ]", " ", s)
+
+    # NYC boroughs: CSV format 'EEE/AD' -> canonical 'ADED' matching shapefile
+    m = re.match(r"^(\d{1,3})/(\d{1,2})$", s)
+    if m:
+        ed = m.group(1).zfill(3)
+        ad = m.group(2).zfill(2)
+        return ad + ed
+
+    # Nassau: pure 6-digit CSV code -> drop leading digit to match 5-digit shapefile numeric
+    m = re.match(r"^(\d)(\d{5})$", s)
+    if m:
+        return m.group(2)
+
+    # Strip leading jurisdiction qualifier from CSV names
+    s = re.sub(r"^(TOWN OF|CITY OF|VILLAGE OF)\s+", "", s)
+    # Convert 'NAME Ward W ED E' -> 'NAME W-E'
+    m = re.match(r"^(.+?)\s+WARD\s+(\d+)\s+ED\s+(\d+)", s)
+    if m:
+        name = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", m.group(1)).strip()
+        name = re.sub(r"\s+", " ", name).strip()
+        return f"{name} {m.group(2)}-{m.group(3)}"
+    # Strip inline CITY/TOWN/VILLAGE qualifiers (shapefile: 'Albany City 3-5')
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    s = re.sub(r"[^A-Z0-9 \-]", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
+
+
+def _extract_municipality(precinct_raw: str) -> str:
+    """Extract municipality name from a CSV precinct string for sub-county fallback."""
+    s = precinct_raw.upper().strip()
+    s = re.sub(r"^(TOWN OF|CITY OF|VILLAGE OF)\s+", "", s)
+    # Remove trailing 'Ward X ED Y ...' or bare 'ED Y' or bare number
+    s = re.sub(r"\s+WARD\s+\d+.*$", "", s)
+    s = re.sub(r"\s+ED\s+\d+.*$", "", s)
+    s = re.sub(r"\s+\d+(-\d+)?$", "", s)
+    # Strip trailing bare 'ED' left after number removal
+    s = re.sub(r"\s+ED$", "", s)
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    s = re.sub(r"[^A-Z0-9 ]", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _normalize_shp(s: str) -> str:
+    """Normalize a shapefile PRECINCT name to match _normalize() output for CSV."""
+    s = s.upper().strip()
+    # Pure numeric (NYC boroughs): already in canonical form
+    if re.match(r"^\d+$", s):
+        return s
+    # Nassau: 'Glen Cove 13001' -> keep just the numeric suffix
+    m = re.match(r"^[A-Z ]+\s+(\d{5})$", s)
+    if m:
+        return m.group(1)
+    # Ward-ED: 'Albany City 3-5' -> 'ALBANY 3-5'
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    s = re.sub(r"[^A-Z0-9 \-]", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _shp_municipality(precinct_raw: str) -> str:
+    """Extract municipality name from a shapefile PRECINCT string."""
+    s = precinct_raw.upper().strip()
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    # Remove trailing number or ward-ed suffix
+    s = re.sub(r"\s+\d+(-\d+)?$", "", s)
+    s = re.sub(r"[^A-Z0-9 ]", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def _find_vote_cols(columns: list, year: str, party: str) -> list:
@@ -106,15 +176,17 @@ def _county_fips_from_row(row, state_fips: str) -> str | None:
     return None
 
 
-def _load_2024_votes(csv_path: str) -> tuple[dict, dict]:
+def _load_2024_votes(csv_path: str) -> tuple[dict, dict, dict]:
     """
     Returns:
-      precinct_votes: (county_fips, norm_precinct) -> (dem, rep)
-      county_votes:   county_fips -> (dem, rep)
+      precinct_votes:     (county_fips, norm_precinct) -> (dem, rep)
+      municipality_votes: (county_fips, municipality)  -> (dem, rep)
+      county_votes:       county_fips -> (dem, rep)
     """
-    # Raw accumulators
     prec_dem: dict[tuple, int] = {}
     prec_rep: dict[tuple, int] = {}
+    muni_dem: dict[tuple, int] = {}
+    muni_rep: dict[tuple, int] = {}
     total_dem: dict[str, int] = {}
     total_rep: dict[str, int] = {}
     split_dem: dict[str, int] = {}
@@ -128,7 +200,9 @@ def _load_2024_votes(csv_path: str) -> tuple[dict, dict]:
             if "PRESIDENT" not in office:
                 continue
             fips = str(row.get("county_fips") or "").strip()
-            prec = _normalize(row.get("precinct") or "")
+            prec_raw = row.get("precinct") or ""
+            prec = _normalize(prec_raw)
+            muni = _extract_municipality(prec_raw)
             party = (row.get("party_simplified") or "").upper().strip()
             if party not in ("DEMOCRAT", "REPUBLICAN"):
                 continue
@@ -138,12 +212,20 @@ def _load_2024_votes(csv_path: str) -> tuple[dict, dict]:
                 continue
             mode = (row.get("mode") or "").upper().strip()
 
-            # Precinct-level accumulation (all modes summed per precinct)
-            key = (fips, prec)
+            # Precinct-level (all modes summed)
+            pkey = (fips, prec)
             if party == "DEMOCRAT":
-                prec_dem[key] = prec_dem.get(key, 0) + votes
+                prec_dem[pkey] = prec_dem.get(pkey, 0) + votes
             else:
-                prec_rep[key] = prec_rep.get(key, 0) + votes
+                prec_rep[pkey] = prec_rep.get(pkey, 0) + votes
+
+            # Municipality-level (all modes summed)
+            if muni:
+                mkey = (fips, muni)
+                if party == "DEMOCRAT":
+                    muni_dem[mkey] = muni_dem.get(mkey, 0) + votes
+                else:
+                    muni_rep[mkey] = muni_rep.get(mkey, 0) + votes
 
             # County-level fallback
             if mode == "TOTAL":
@@ -157,20 +239,17 @@ def _load_2024_votes(csv_path: str) -> tuple[dict, dict]:
                 else:
                     split_rep[fips] = split_rep.get(fips, 0) + votes
 
-    precinct_votes = {}
-    all_keys = set(prec_dem) | set(prec_rep)
-    for k in all_keys:
-        precinct_votes[k] = (prec_dem.get(k, 0), prec_rep.get(k, 0))
+    precinct_votes = {k: (prec_dem.get(k, 0), prec_rep.get(k, 0)) for k in set(prec_dem) | set(prec_rep)}
+    municipality_votes = {k: (muni_dem.get(k, 0), muni_rep.get(k, 0)) for k in set(muni_dem) | set(muni_rep)}
 
     county_votes = {}
-    all_fips = set(total_dem) | set(total_rep) | set(split_dem) | set(split_rep)
-    for fips in all_fips:
+    for fips in set(total_dem) | set(total_rep) | set(split_dem) | set(split_rep):
         if fips in total_dem or fips in total_rep:
             county_votes[fips] = (total_dem.get(fips, 0), total_rep.get(fips, 0))
         else:
             county_votes[fips] = (split_dem.get(fips, 0), split_rep.get(fips, 0))
 
-    return precinct_votes, county_votes
+    return precinct_votes, municipality_votes, county_votes
 
 
 def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
@@ -190,12 +269,13 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
 
     # Load 2024 data
     precinct_votes: dict = {}
+    municipality_votes: dict = {}
     county_votes: dict = {}
     county_name_to_fips: dict[str, str] = {}
     if csv_2024:
         print(f"Loading 2024 CSV: {csv_2024}")
-        precinct_votes, county_votes = _load_2024_votes(csv_2024)
-        print(f"  {len(precinct_votes)} precinct entries, {len(county_votes)} county entries")
+        precinct_votes, municipality_votes, county_votes = _load_2024_votes(csv_2024)
+        print(f"  {len(precinct_votes)} precinct entries, {len(municipality_votes)} municipality entries, {len(county_votes)} county entries")
 
         # Build county name → fips for NJ-style shapefiles
         sep = "\t" if csv_2024.endswith(".tab") else ","
@@ -210,6 +290,7 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
 
     records = []
     matched_precinct = 0
+    matched_municipality = 0
     matched_county = 0
     no_match = 0
 
@@ -229,14 +310,20 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
             county_name_raw = str(row.get("COUNTY") or "").strip().upper()
             fips5 = county_name_to_fips.get(county_name_raw)
 
-        # Get 2024 votes — try precinct match first, fall back to county
+        # Get 2024 votes — precinct → municipality → county
         dem_24, rep_24 = 0, 0
         if csv_2024 and fips5:
-            prec_name = _normalize(str(row.get(prec_col) or "")) if prec_col else ""
+            prec_raw = str(row.get(prec_col) or "") if prec_col else ""
+            prec_name = _normalize_shp(prec_raw)
             prec_key = (fips5, prec_name)
+            muni_name = _shp_municipality(prec_raw)
+            muni_key = (fips5, muni_name)
             if prec_key in precinct_votes:
                 dem_24, rep_24 = precinct_votes[prec_key]
                 matched_precinct += 1
+            elif muni_key in municipality_votes:
+                dem_24, rep_24 = municipality_votes[muni_key]
+                matched_municipality += 1
             elif fips5 in county_votes:
                 dem_24, rep_24 = county_votes[fips5]
                 matched_county += 1
@@ -255,9 +342,10 @@ def process(state: str, shp_2020: str, csv_2024: str | None) -> list[dict]:
         })
 
     if csv_2024:
-        total = matched_precinct + matched_county + no_match
-        print(f"  2024 join: {matched_precinct} precinct-level ({round(matched_precinct/total*100)}%), "
-              f"{matched_county} county-fallback ({round(matched_county/total*100)}%), "
+        total = matched_precinct + matched_municipality + matched_county + no_match
+        print(f"  2024 join: {matched_precinct} precinct ({round(matched_precinct/total*100)}%), "
+              f"{matched_municipality} municipality ({round(matched_municipality/total*100)}%), "
+              f"{matched_county} county ({round(matched_county/total*100)}%), "
               f"{no_match} unmatched")
 
     print(f"Built {len(records)} precinct records for {state}")
