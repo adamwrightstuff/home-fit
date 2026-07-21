@@ -183,9 +183,12 @@ export interface V9Breakdown {
 }
 
 /**
- * Re-score natural beauty for one or more scenery preferences from stored V9 component scores.
- * Each preference contributes its primary component score(s); results are averaged.
- * Empty array or missing breakdown → null (caller keeps stored score).
+ * Re-score natural beauty for one or more scenery preferences using full OWA re-weighting.
+ * Mirrors apply_v9_preference() in natural_beauty.py: forces the preferred component(s) into
+ * the OWA lead slot (0.62) so they become the lead criterion, while all other components still
+ * fill the lower slots. This means a place strong in its preferred dimension stays high; a place
+ * weak in it drops — but the drop is tempered by the other components, unlike returning the raw
+ * component score which ignores everything else.
  */
 export function applyNbPreferencesV9(
   v9: V9Breakdown | undefined | null,
@@ -193,32 +196,39 @@ export function applyNbPreferencesV9(
 ): number | null {
   if (!v9 || preferences.length === 0) return null
   const waterType = v9.inputs?.water_type
-  const scores: number[] = []
-  for (const pref of preferences) {
-    const targets = PREFERENCE_V9_COMPONENTS[pref] ?? []
-    const vals = targets
-      .map((t) => {
-        let val = (v9 as Record<string, unknown>)[t]
-        if (typeof val !== 'number') return undefined
-        // Apply water-type multiplier for water-typed preferences so ocean vs
-        // lakes_rivers produce different results from the same water_score.
-        if (t === 'water_score' && waterType && (pref === 'ocean' || pref === 'lakes_rivers')) {
-          // Penalize mismatched water type; preserve matched type as-is.
-          // V7's waterTypeMult was designed for raw components, not normalized scores —
-          // applying it directly to water_score causes ceiling compression and doesn't
-          // penalize rivers under ocean preference (both default to 1.0x).
-          const isCoastal = /ocean|coast|bay|harbor|sea/i.test(waterType)
-          const isLakeRiver = /lake|reservoir|river|stream|canal/i.test(waterType)
-          const match = pref === 'ocean' ? isCoastal : isLakeRiver
-          if (!match) val = val * 0.25
-        }
-        return val as number
-      })
-      .filter((v): v is number => typeof v === 'number')
-    if (vals.length > 0) scores.push(vals.reduce((a, b) => a + b, 0) / vals.length)
+
+  // Build effective per-component scores, applying water-type penalty where needed.
+  const effective: Partial<Record<string, number>> = {}
+  for (const key of V9_COMPONENT_KEYS) {
+    const val = (v9 as Record<string, unknown>)[key]
+    if (typeof val === 'number') effective[key] = val
   }
-  if (scores.length === 0) return null
-  return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100
+  if (waterType) {
+    for (const pref of preferences) {
+      if ((pref === 'ocean' || pref === 'lakes_rivers') && typeof effective['water_score'] === 'number') {
+        const isCoastal = /ocean|coast|bay|harbor|sea/i.test(waterType)
+        const isLakeRiver = /lake|reservoir|river|stream|canal/i.test(waterType)
+        const match = pref === 'ocean' ? isCoastal : isLakeRiver
+        if (!match) effective['water_score'] = effective['water_score']! * 0.25
+      }
+    }
+  }
+
+  // Collect preferred targets (deduped across all selected preferences).
+  const targets = new Set(preferences.flatMap((p) => PREFERENCE_V9_COMPONENTS[p] ?? []))
+  const prefVals = Array.from(targets).map((t) => effective[t]).filter((v): v is number => typeof v === 'number')
+  if (prefVals.length === 0) return null
+
+  // OWA: preferred mean → lead slot; remaining components fill lower slots in desc order.
+  const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
+  const others = Object.entries(effective)
+    .filter(([k]) => !targets.has(k))
+    .map(([, v]) => v as number)
+    .sort((a, b) => b - a)
+  const ranked = [preferred, ...others]
+  const weights = V9_OWA_WEIGHTS.slice(0, ranked.length)
+  const tot = weights.reduce((a, b) => a + b, 0) || 1
+  return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }
 
 /** @deprecated use applyNbPreferencesV9 */
