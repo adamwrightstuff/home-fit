@@ -62,8 +62,8 @@ def _census_int(val) -> Optional[int]:
         return None
 
 
-def get_census_tract(lat: float, lon: float) -> Optional[dict]:
-    """Resolve Census tract for a lat/lon via the Census geocoder."""
+def get_geocoder_geographies(lat: float, lon: float) -> dict:
+    """Return the full geographies dict from the Census geocoder for a lat/lon."""
     try:
         url = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
         params = {
@@ -71,34 +71,42 @@ def get_census_tract(lat: float, lon: float) -> Optional[dict]:
             "y": lat,
             "benchmark": "Public_AR_Current",
             "vintage": "Current_Current",
-            "layers": "Census Tracts",
+            "layers": "Census Tracts,Incorporated Places",
             "format": "json",
         }
         r = requests.get(url, params=params, timeout=15)
         r.raise_for_status()
-        data = r.json()
-        tracts = data.get("result", {}).get("geographies", {}).get("Census Tracts", [])
-        if not tracts:
-            return None
-        t = tracts[0]
-        return {
-            "state_fips": t.get("STATE"),
-            "county_fips": t.get("COUNTY"),
-            "tract_fips": t.get("TRACT"),
-        }
+        return r.json().get("result", {}).get("geographies", {})
     except Exception as e:
         print(f"    Geocoder error: {e}")
+        return {}
+
+
+def _parse_b25024_row(row: list, source: str) -> Optional[dict]:
+    """Parse a B25024 data row (no NAME column) into a housing_stock dict."""
+    total      = _census_int(row[0])
+    det        = _census_int(row[1])  # 1-unit detached
+    att        = _census_int(row[2])  # 1-unit attached / rowhouse
+    two        = _census_int(row[3])  # 2 units
+    three_four = _census_int(row[4])  # 3–4 units
+    if total is None or total == 0:
         return None
+    low_density = sum(v for v in (det, att, two, three_four) if v is not None)
+    return {
+        "pct_low_density": round(low_density / total, 4),
+        "total_units": total,
+        "source": source,
+    }
 
 
-def fetch_b25024(tract: dict) -> Optional[dict]:
-    """Fetch B25024 for a tract. Returns parsed dict or None."""
+def fetch_b25024_place(state_fips: str, place_fips: str) -> Optional[dict]:
+    """Fetch B25024 at the Census incorporated-place level."""
     try:
         url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
         params = {
             "get": B25024_VARS,
-            "for": f"tract:{tract['tract_fips']}",
-            "in": f"state:{tract['state_fips']} county:{tract['county_fips']}",
+            "for": f"place:{place_fips}",
+            "in": f"state:{state_fips}",
             "key": CENSUS_API_KEY,
         }
         r = requests.get(url, params=params, timeout=15)
@@ -106,25 +114,75 @@ def fetch_b25024(tract: dict) -> Optional[dict]:
         data = r.json()
         if len(data) < 2:
             return None
-        # header row + data row; no NAME column so indices match variable order
-        row = data[1]
-        total    = _census_int(row[0])
-        det      = _census_int(row[1])  # 1-unit detached
-        att      = _census_int(row[2])  # 1-unit attached / rowhouse
-        two      = _census_int(row[3])  # 2 units
-        three_four = _census_int(row[4])  # 3–4 units
-        if total is None or total == 0:
-            return None
-        low_density = sum(v for v in (det, att, two, three_four) if v is not None)
-        pct = round(low_density / total, 4)
-        return {
-            "pct_low_density": pct,
-            "total_units": total,
-            "source": "acs5_2022_tract",
-        }
+        return _parse_b25024_row(data[1], "acs5_2022_place")
     except Exception as e:
-        print(f"    B25024 fetch error: {e}")
+        print(f"    B25024 place fetch error: {e}")
         return None
+
+
+def fetch_b25024_tract(state_fips: str, county_fips: str, tract_fips: str) -> Optional[dict]:
+    """Fetch B25024 at the Census tract level (fallback when no place match)."""
+    try:
+        url = f"{CENSUS_BASE_URL}/2022/acs/acs5"
+        params = {
+            "get": B25024_VARS,
+            "for": f"tract:{tract_fips}",
+            "in": f"state:{state_fips} county:{county_fips}",
+            "key": CENSUS_API_KEY,
+        }
+        r = requests.get(url, params=params, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if len(data) < 2:
+            return None
+        return _parse_b25024_row(data[1], "acs5_2022_tract")
+    except Exception as e:
+        print(f"    B25024 tract fetch error: {e}")
+        return None
+
+
+def fetch_b25024(lat: float, lon: float) -> Optional[dict]:
+    """
+    Fetch B25024 for a location.
+
+    Strategy: prefer tract-level (specific to the neighborhood). For small incorporated
+    places (total_units < 50k) where a single tract is unrepresentative of the whole
+    municipality, fall back to place-level. This correctly handles both cases:
+    - Large-city neighborhoods (Silver Lake, Echo Park): tract gives the actual local mix
+    - Small villages (Bronxville, Scarsdale): place gives the whole-municipality aggregate,
+      which is more reliable than whichever single tract the pin happens to land in
+    """
+    geos = get_geocoder_geographies(lat, lon)
+    places = geos.get("Incorporated Places", [])
+    tracts = geos.get("Census Tracts", [])
+
+    # Always try tract first
+    tract_result = None
+    if tracts:
+        t = tracts[0]
+        state_fips = t.get("STATE")
+        county_fips = t.get("COUNTY")
+        tract_fips = t.get("TRACT")
+        if state_fips and county_fips and tract_fips:
+            tract_result = fetch_b25024_tract(state_fips, county_fips, tract_fips)
+
+    # For small incorporated places, use place-level instead — a single tract is too
+    # sensitive to pin placement within a tiny municipality.
+    if places:
+        p = places[0]
+        state_fips = p.get("STATE") or p.get("STATEFP")
+        place_fips = p.get("PLACE") or p.get("PLACEFP")
+        if state_fips and place_fips:
+            place_result = fetch_b25024_place(state_fips, place_fips)
+            if place_result and place_result["total_units"] < 50_000:
+                print(f"    (place-level: {p.get('NAME', place_fips)}, {place_result['total_units']:,} units)")
+                return place_result
+
+    if tract_result:
+        print(f"    (tract-level)")
+        return tract_result
+
+    return None
 
 
 def backfill(input_path: str, output_path: str, dry_run: bool = False, skip_existing: bool = True) -> None:
@@ -154,18 +212,9 @@ def backfill(input_path: str, output_path: str, dry_run: bool = False, skip_exis
         lon = float(row["catalog"]["lon"])
         print(f"  [{idx+1}/{len(needs_backfill)}] {name} ({lat:.4f}, {lon:.4f})")
 
-        tract = get_census_tract(lat, lon)
-        if not tract:
-            print(f"    ✗ no tract")
-            failed += 1
-            time.sleep(0.5)
-            continue
-
-        time.sleep(0.3)  # stay well under Census rate limits
-
-        result = fetch_b25024(tract)
+        result = fetch_b25024(lat, lon)
         if not result:
-            print(f"    ✗ B25024 fetch failed")
+            print(f"    ✗ fetch failed")
             failed += 1
             time.sleep(0.5)
             continue
