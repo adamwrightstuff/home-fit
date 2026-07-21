@@ -350,7 +350,7 @@ export default function CatalogPageClient({
       const existingNb = (p.score.livability_pillars as any)?.natural_beauty
       const storedNaturalScore = Number(existingNb?.score ?? nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
       const v9 = existingNb?.v9_breakdown as V9Breakdown | undefined
-      const prefScore = filterNbTypes.length > 0 && v9
+      const prefScore = filterNbTypes.length > 0 && filterNbTypes.length < 4 && v9
         ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? storedNaturalScore)
         : storedNaturalScore
       return {
@@ -404,29 +404,32 @@ export default function CatalogPageClient({
         const tr = p.score.status_signal_breakdown?.trajectory
         if (tr !== filterTrajectory) return false
       }
-      if (filterPoliticalLean.length > 0) {
+      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
-        if (typeof lean !== 'number') return false
-        const matchesAny = filterPoliticalLean.some(pref => {
-          if (pref === 'progressive') return lean > 0
-          if (pref === 'conservative') return lean < 0
-          if (pref === 'moderate') return Math.abs(lean) <= 0.3
-          return false
-        })
-        if (!matchesAny) return false
+        if (typeof lean === 'number') {
+          const matchesAny = filterPoliticalLean.some(pref => {
+            if (pref === 'progressive') return lean > 0
+            if (pref === 'conservative') return lean < 0
+            if (pref === 'moderate') return Math.abs(lean) <= 0.3
+            return false
+          })
+          if (!matchesAny) return false
+        }
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
-      if (filterHousingType.length > 0) {
+      if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
         const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        const passesAny = filterHousingType.some((t) => {
-          if (t === 'sf_townhouse') return pctLow !== null && pctLow >= 0.25
-          if (t === 'small_multifamily') return pctLow !== null && pctLow >= 0.1 && pctLow < 0.7
-          if (t === 'apartment') return pctLow !== null && pctLow < 0.3
-          return false
-        })
-        if (!passesAny) return false
+        if (pctLow !== null) {
+          const passesAny = filterHousingType.some((t) => {
+            if (t === 'sf_townhouse') return pctLow >= 0.25
+            if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
+            if (t === 'apartment') return pctLow < 0.3
+            return false
+          })
+          if (!passesAny) return false
+        }
       }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
