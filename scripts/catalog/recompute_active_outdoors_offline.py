@@ -1,31 +1,88 @@
 #!/usr/bin/env python3
 """
-Offline active_outdoors recompute using stored OSM counts + updated baselines.
+Offline active_outdoors recompute using stored OSM summary data.
 
-Re-runs daily and wild sub-scores from stored summary data with the new
-empirically-calibrated expectations in regional_baselines.py.
-Water (waterfront_lifestyle) sub-score is preserved unchanged — its
-expectations didn't change and the feature type isn't stored.
+What gets recomputed vs preserved:
+  - wild_adventure: fully recomputed from stored trail counts, canopy, camping distance
+  - daily_urban_outdoors: count + play + facilities from stored; s_nearest=0 (not stored)
+  - waterfront_lifestyle: scaled from stored score (cap 20->25), type not stored so can't re-score
 
-Max error vs live rescore: ~3 pts (recreational_facilities not stored).
+For exact waterfront re-scoring, run a targeted water re-fetch (separate script).
 
 Usage:
   PYTHONPATH=. python3 scripts/catalog/recompute_active_outdoors_offline.py \
     --input data/nyc_metro_place_catalog_scores_merged.jsonl \
-    --output data/nyc_metro_place_catalog_scores_merged.jsonl
+    --in-place
 """
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from pillars.active_outdoors import _score_daily_urban_outdoors_v2, _score_wild_adventure_v2
 from data_sources.regional_baselines import get_contextual_expectations
+from data_sources.data_quality import get_baseline_context
+from pillars.active_outdoors import _score_wild_adventure_v2
+
+
+def _sat_ratio_v2(value: float, expected: float, max_score: float) -> float:
+    if expected <= 0:
+        return 0.0
+    ratio = value / expected
+    return max_score * (1 - math.exp(-2.5 * ratio))
+
+
+def _recompute_daily(local: dict, area_type: str, expectations: dict) -> float:
+    park_count = int(local.get("count") or 0)
+    playground_count = int(local.get("playgrounds") or 0)
+
+    exp_park_count = expectations.get("expected_parks_within_1km", 8.0)
+    exp_play = expectations.get("expected_playgrounds_within_1km", 2.0)
+    exp_facilities = expectations.get("expected_recreational_facilities_within_1km", 3.0)
+
+    s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
+    s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
+    # facilities not stored; use 0 (max 3pt error)
+    s_facilities = 0.0
+    # s_nearest not stored; use 0 (conservative — parks without distance data get no proximity bonus)
+    s_nearest = 0.0
+
+    return min(35.0, s_count + s_nearest + s_play + s_facilities)
+
+
+def _recompute_wild(summary: dict, area_type: str) -> float:
+    trails = summary.get("trails", {})
+    trail_total = int(trails.get("count_total") or 0)
+    trail_near = int(trails.get("count_within_5km") or 0)
+
+    camping_s = summary.get("camping", {})
+    camping_sites = int(camping_s.get("sites") or 0)
+    camping_nearest_km = float(camping_s.get("nearest_km") or 99.0)
+
+    canopy_pct = float((summary.get("environment") or {}).get("tree_canopy_pct_5km") or 0.0)
+
+    # Synthetic trail list: trail_near within 5km, rest outside
+    hiking_trails = (
+        [{"distance_m": 1000}] * trail_near +
+        [{"distance_m": 6000}] * max(0, trail_total - trail_near)
+    )
+    # Synthetic camping list with distance_m
+    camping = [{"distance_m": camping_nearest_km * 1000}] * camping_sites
+
+    return _score_wild_adventure_v2(hiking_trails, camping, canopy_pct, area_type)
+
+
+def _scale_waterfront(stored_water: float) -> float:
+    # Old cap was 20, new cap is 25. Scale proportionally.
+    # A place that scored 20/20 should now score 25/25.
+    if stored_water <= 0:
+        return 0.0
+    return min(25.0, stored_water * (25.0 / 20.0))
 
 
 def _recompute_total(pillars: dict) -> float:
@@ -52,52 +109,20 @@ def recompute_row(row: dict) -> tuple[bool, str]:
     breakdown = ao.get("breakdown", {})
     area_type = (ao.get("area_classification") or {}).get("area_type", "suburban")
 
-    local = summary.get("local_parks", {})
-    park_count = int(local.get("count") or 0)
-    playgrounds_count = int(local.get("playgrounds") or 0)
-    total_area_ha = float(local.get("total_park_area_ha") or 0.0)
+    baseline_context = get_baseline_context(area_type=area_type, form_context=None, pillar_name="active_outdoors")
+    expectations = get_contextual_expectations(baseline_context, "active_outdoors") or {}
 
-    trails_summary = summary.get("trails", {})
-    trail_total = int(trails_summary.get("count_total") or 0)
-    trail_near = int(trails_summary.get("count_within_5km") or 0)
+    stored_water = float(breakdown.get("waterfront_lifestyle") or 0.0)
 
-    camping_summary = summary.get("camping", {})
-    camping_sites = int(camping_summary.get("sites") or 0)
-    camping_nearest_km = float(camping_summary.get("nearest_km") or 99.0)
+    daily = _recompute_daily(summary.get("local_parks", {}), area_type, expectations)
+    wild = _recompute_wild(summary, area_type)
+    water = _scale_waterfront(stored_water)
 
-    canopy_pct = float((summary.get("environment") or {}).get("tree_canopy_pct_5km") or 0.0)
-
-    stored_water_score = float(breakdown.get("waterfront_lifestyle") or 0.0)
-
-    # Synthetic park list: one park with all area, rest with zero
-    parks = [{"area_sqm": total_area_ha * 10_000}] if total_area_ha > 0 else []
-    parks += [{"area_sqm": 0.0}] * max(0, park_count - len(parks))
-
-    playgrounds = [{}] * playgrounds_count
-    recreational_facilities = []  # not stored; max 3pt error
-
-    # Synthetic trail list: trail_near within 5km, rest outside
-    hiking_trails = (
-        [{"distance_m": 1000}] * trail_near +
-        [{"distance_m": 6000}] * max(0, trail_total - trail_near)
-    )
-
-    # Synthetic camping list
-    camping = [{"distance_km": camping_nearest_km}] * camping_sites
-
-    expectations = get_contextual_expectations(area_type, "active_outdoors") or {}
-
-    daily = _score_daily_urban_outdoors_v2(
-        parks, playgrounds, recreational_facilities, area_type, expectations
-    )
-    wild = _score_wild_adventure_v2(
-        hiking_trails, camping, canopy_pct, area_type
-    )
-
-    new_total = round(max(0.0, min(100.0, daily + wild + stored_water_score)), 1)
+    new_total = round(max(0.0, min(100.0, daily + wild + water)), 1)
 
     breakdown["daily_urban_outdoors"] = round(daily, 1)
     breakdown["wild_adventure"] = round(wild, 1)
+    breakdown["waterfront_lifestyle"] = round(water, 1)
     ao["score"] = new_total
     score_doc["total_score"] = _recompute_total(pillars)
     return True, "ok"
@@ -106,10 +131,16 @@ def recompute_row(row: dict) -> tuple[bool, str]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--output")
+    parser.add_argument("--in-place", action="store_true")
     args = parser.parse_args()
 
-    rows = [json.loads(l) for l in Path(args.input).read_text().splitlines() if l.strip()]
+    if not args.in_place and not args.output:
+        print("Provide --output or --in-place")
+        sys.exit(1)
+
+    path = Path(args.input)
+    rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
     ok = skip = err = 0
 
     for row in rows:
@@ -122,8 +153,9 @@ def main() -> None:
             err += 1
             print(f"  ERROR: {reason}")
 
-    Path(args.output).write_text("\n".join(json.dumps(r) for r in rows) + "\n")
-    print(f"Done: {ok} recomputed, {skip} skipped, {err} errors")
+    out = Path(args.output) if args.output else path
+    out.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    print(f"Done: {ok} recomputed, {skip} skipped, {err} errors → {out}")
 
 
 if __name__ == "__main__":

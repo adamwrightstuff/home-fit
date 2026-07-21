@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getSavedScore, type SavedScoreRow } from '@/lib/savedScores'
 import type { CatalogMapPlaceWithMetro } from '@/lib/catalogMapTypes'
 import { catalogRowKey } from '@/lib/catalogMapTypes'
-import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
+import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/lib/reweight'
 import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
@@ -144,6 +144,19 @@ function CompareContent() {
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortBy>('diff')
 
+  const householdIncome = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('homefit_search_options')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return typeof parsed.household_income === 'number' && parsed.household_income > 0
+        ? parsed.household_income
+        : null
+    } catch {
+      return null
+    }
+  }, [])
+
   useEffect(() => {
     if (!idA || !idB || idA === idB) {
       setError('Select two different saved places to compare.')
@@ -183,18 +196,20 @@ function CompareContent() {
   // so compare doesn't silently drop the pillar's weight/score for older places.
   const scoredA = useMemo(() => {
     if (!scoredARaw) return scoredARaw
-    const livability_pillars = withSynthesizedNeighborhoodBeauty(scoredARaw.livability_pillars as unknown as Record<string, any>)
-    return livability_pillars === scoredARaw.livability_pillars
-      ? scoredARaw
-      : ({ ...scoredARaw, livability_pillars } as ScoreResponse)
-  }, [scoredARaw])
+    const withIncome = householdIncome ? applyUserIncomeToScore(scoredARaw, householdIncome) : scoredARaw
+    const livability_pillars = withSynthesizedNeighborhoodBeauty(withIncome.livability_pillars as unknown as Record<string, any>)
+    return livability_pillars === withIncome.livability_pillars
+      ? withIncome
+      : ({ ...withIncome, livability_pillars } as ScoreResponse)
+  }, [scoredARaw, householdIncome])
   const scoredB = useMemo(() => {
     if (!scoredBRaw) return scoredBRaw
-    const livability_pillars = withSynthesizedNeighborhoodBeauty(scoredBRaw.livability_pillars as unknown as Record<string, any>)
-    return livability_pillars === scoredBRaw.livability_pillars
-      ? scoredBRaw
-      : ({ ...scoredBRaw, livability_pillars } as ScoreResponse)
-  }, [scoredBRaw])
+    const withIncome = householdIncome ? applyUserIncomeToScore(scoredBRaw, householdIncome) : scoredBRaw
+    const livability_pillars = withSynthesizedNeighborhoodBeauty(withIncome.livability_pillars as unknown as Record<string, any>)
+    return livability_pillars === withIncome.livability_pillars
+      ? withIncome
+      : ({ ...withIncome, livability_pillars } as ScoreResponse)
+  }, [scoredBRaw, householdIncome])
 
   const displayA = useMemo(() => {
     if (!rowA || !scoredA) return null

@@ -877,21 +877,19 @@ class RegionalBaselineManager:
                 # Urban residential areas (dense neighborhoods in cities) - typically have good transit
                 # but may have fewer routes than true urban cores. Use slightly lower expectations.
                 'active_outdoors': {
-                    # EMPIRICALLY CALIBRATED from NYC+LA catalog (n=98 urban_residential places).
-                    # Query radius for this area type: local=2000m, trails=15km.
-                    # P25/P50/P75 from catalog OSM data:
-                    #   parks_count:  268 / 383 / 473  (2000m radius)
-                    #   area_ha:      622 / 961 / 1417 (2000m radius, includes large park polygons)
-                    #   playgrounds:   16 /  31 /  57  (2000m radius)
-                    #   trails_15km:   10 /  10 /  10  (post urban-path filter, capped)
-                    # Targets set at P50 so median place scores ~63% per component, creating real spread.
-                    'expected_parks_within_1km': 380,  # P50 at 2000m radius (n=98)
+                    # RECALIBRATED for local_radius_m=1000m (was 2000m).
+                    # 2000m expectations were distorted by anchor parks (Prospect Park, Central Park)
+                    # inflating area_ha to 960 — measuring adjacency, not daily walkable access.
+                    # 1000m targets set to reflect genuine walkable park density in dense neighborhoods.
+                    # Rough estimate: ~25% of 2000m count at 1000m (area scales as r²), anchor parks excluded.
+                    # Will be refined after rescore produces empirical 1000m distributions.
+                    'expected_parks_within_1km': 90,   # Est. P50 at 1000m radius
                     'expected_parks_within_5km': 380,
-                    'expected_park_area_hectares': 960,  # P50 at 2000m radius (n=98)
-                    'expected_playgrounds_within_1km': 30,  # P50 at 2000m radius (n=98)
-                    'expected_recreational_facilities_within_1km': 10,
+                    'expected_park_area_hectares': 60, # Est. P50 at 1000m (anchor parks excluded)
+                    'expected_playgrounds_within_1km': 10,  # Est. P50 at 1000m radius
+                    'expected_recreational_facilities_within_1km': 5,
                     'expected_water_access_within_15km': 1,
-                    'expected_trails_within_15km': 10,  # P50 post-filter (n=98); also raises filter cap to 30
+                    'expected_trails_within_15km': 10,
                     'expected_camping_within_15km': 0
                 },
                 'healthcare_access': {

@@ -51,6 +51,12 @@ def get_radius_profile(pillar: str, area_type: str | None, scope: str | None) ->
                 "trail_radius_m": 15000,    # Trails: Align with expected-values window
                 "regional_radius_m": 15000  # Water/camping: Unchanged
             }
+        elif a == "urban_residential":
+            return {
+                "local_radius_m": 1000,     # Parks: 12-minute walk (denser than suburban, less than car-oriented)
+                "trail_radius_m": 15000,    # Trails: Align with expected-values window
+                "regional_radius_m": 15000  # Water/camping: Unchanged
+            }
         elif a == "suburban":
             return {
                 "local_radius_m": 1500,     # Parks: Car-oriented access

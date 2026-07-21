@@ -18,11 +18,11 @@ const PREFERENCE_AO_COMPONENTS: Record<AoPreference, keyof AoBreakdown> = {
   waterfront: 'waterfront_lifestyle',
 }
 
-// Raw contribution caps from active_outdoors.py (daily≤30, wild≤50, waterfront≤20, sum=100).
+// Raw contribution caps from active_outdoors.py (daily≤35, wild≤40, waterfront≤25, sum=100).
 const AO_COMPONENT_MAX: Record<keyof AoBreakdown, number> = {
-  daily_urban_outdoors: 30,
-  wild_adventure: 50,
-  waterfront_lifestyle: 20,
+  daily_urban_outdoors: 35,
+  wild_adventure: 40,
+  waterfront_lifestyle: 25,
 }
 
 // OWA weights mirror the NB V9 model: lead slot gets 0.62, others fill down.
