@@ -19,6 +19,12 @@ const NB_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'canopy', label: 'Tree Canopy' },
 ]
 
+const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'local_parks', label: 'Local Parks' },
+  { value: 'trails_regional', label: 'Trails & Regional Parks' },
+  { value: 'waterfront', label: 'Waterfront' },
+]
+
 interface FilterSheetProps {
   open: boolean
   onClose: () => void
@@ -35,6 +41,8 @@ interface FilterSheetProps {
   onFilterPoliticalLeanChange: (v: string[]) => void
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
+  filterAoTypes: string[]
+  onFilterAoTypesChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -76,6 +84,8 @@ export default function FilterSheet({
   onFilterPoliticalLeanChange,
   filterNbTypes,
   onFilterNbTypesChange,
+  filterAoTypes,
+  onFilterAoTypesChange,
   filterSchoolType,
   onFilterSchoolTypeChange,
   filterLocalScene,
@@ -102,6 +112,7 @@ export default function FilterSheet({
     (filterTrajectory !== 'all' ? 1 : 0) +
     (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
+    (filterAoTypes.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0)
 
@@ -112,6 +123,7 @@ export default function FilterSheet({
     onFilterTrajectoryChange('all')
     onFilterPoliticalLeanChange([])
     onFilterNbTypesChange([])
+    onFilterAoTypesChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
   }
@@ -257,6 +269,34 @@ export default function FilterSheet({
               <button
                 type="button"
                 onClick={() => onFilterNbTypesChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Active Outdoors type */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Active Outdoors (select multiple)</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Reweights the Active Outdoors score toward your selected dimensions.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {AO_TYPE_OPTIONS.map(({ value, label }) =>
+                chip(filterAoTypes.includes(value), label, () => {
+                  if (filterAoTypes.includes(value)) {
+                    onFilterAoTypesChange(filterAoTypes.filter((v) => v !== value))
+                  } else {
+                    onFilterAoTypesChange([...filterAoTypes, value])
+                  }
+                })
+              )}
+            </div>
+            {filterAoTypes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterAoTypesChange([])}
                 style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Clear
