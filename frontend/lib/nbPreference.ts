@@ -179,6 +179,7 @@ export interface V9Breakdown {
   topo_score?: number
   landcover_score?: number
   bio_score?: number
+  inputs?: { water_type?: string }
 }
 
 /**
@@ -191,11 +192,28 @@ export function applyNbPreferencesV9(
   preferences: NbPreference[],
 ): number | null {
   if (!v9 || preferences.length === 0) return null
+  const waterType = v9.inputs?.water_type
   const scores: number[] = []
   for (const pref of preferences) {
     const targets = PREFERENCE_V9_COMPONENTS[pref] ?? []
     const vals = targets
-      .map((t) => (v9 as Record<string, unknown>)[t])
+      .map((t) => {
+        let val = (v9 as Record<string, unknown>)[t]
+        if (typeof val !== 'number') return undefined
+        // Apply water-type multiplier for water-typed preferences so ocean vs
+        // lakes_rivers produce different results from the same water_score.
+        if (t === 'water_score' && waterType && (pref === 'ocean' || pref === 'lakes_rivers')) {
+          // Penalize mismatched water type; preserve matched type as-is.
+          // V7's waterTypeMult was designed for raw components, not normalized scores —
+          // applying it directly to water_score causes ceiling compression and doesn't
+          // penalize rivers under ocean preference (both default to 1.0x).
+          const isCoastal = /ocean|coast|bay|harbor|sea/i.test(waterType)
+          const isLakeRiver = /lake|reservoir|river|stream|canal/i.test(waterType)
+          const match = pref === 'ocean' ? isCoastal : isLakeRiver
+          if (!match) val = val * 0.25
+        }
+        return val as number
+      })
       .filter((v): v is number => typeof v === 'number')
     if (vals.length > 0) scores.push(vals.reduce((a, b) => a + b, 0) / vals.length)
   }
