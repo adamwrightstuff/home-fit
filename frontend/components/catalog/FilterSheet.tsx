@@ -43,6 +43,8 @@ interface FilterSheetProps {
   onFilterNbTypesChange: (v: string[]) => void
   filterAoTypes: string[]
   onFilterAoTypesChange: (v: string[]) => void
+  filterHousingType: string[]
+  onFilterHousingTypeChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
   onFilterSchoolTypeChange: (v: 'any' | 'public_only' | 'charter') => void
   filterLocalScene: 'all' | 'Some' | 'High'
@@ -86,6 +88,8 @@ export default function FilterSheet({
   onFilterNbTypesChange,
   filterAoTypes,
   onFilterAoTypesChange,
+  filterHousingType,
+  onFilterHousingTypeChange,
   filterSchoolType,
   onFilterSchoolTypeChange,
   filterLocalScene,
@@ -113,6 +117,7 @@ export default function FilterSheet({
     (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
     (filterAoTypes.length > 0 ? 1 : 0) +
+    (filterHousingType.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0)
 
@@ -124,6 +129,7 @@ export default function FilterSheet({
     onFilterPoliticalLeanChange([])
     onFilterNbTypesChange([])
     onFilterAoTypesChange([])
+    onFilterHousingTypeChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
   }
@@ -297,6 +303,40 @@ export default function FilterSheet({
               <button
                 type="button"
                 onClick={() => onFilterAoTypesChange([])}
+                style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Housing Stock */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={LABEL_STYLE}>Housing Stock</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+              Filter by the dominant housing type available. Based on Census share of units in each structure type.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {chip(filterHousingType.includes('sf_townhouse'), 'Single-Family / Townhouse', () => {
+                onFilterHousingTypeChange(filterHousingType.includes('sf_townhouse')
+                  ? filterHousingType.filter((v) => v !== 'sf_townhouse')
+                  : [...filterHousingType, 'sf_townhouse'])
+              })}
+              {chip(filterHousingType.includes('small_multifamily'), 'Small Multifamily (2–4 unit)', () => {
+                onFilterHousingTypeChange(filterHousingType.includes('small_multifamily')
+                  ? filterHousingType.filter((v) => v !== 'small_multifamily')
+                  : [...filterHousingType, 'small_multifamily'])
+              })}
+              {chip(filterHousingType.includes('apartment'), 'Apartment / Condo / Co-op', () => {
+                onFilterHousingTypeChange(filterHousingType.includes('apartment')
+                  ? filterHousingType.filter((v) => v !== 'apartment')
+                  : [...filterHousingType, 'apartment'])
+              })}
+            </div>
+            {filterHousingType.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onFilterHousingTypeChange([])}
                 style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Clear
