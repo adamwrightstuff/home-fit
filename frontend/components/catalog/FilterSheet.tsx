@@ -31,8 +31,8 @@ interface FilterSheetProps {
   archetypes: string[]
   filterTrajectory: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'
   onFilterTrajectoryChange: (v: 'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining') => void
-  filterPoliticalLean: 'all' | 'progressive' | 'conservative' | 'moderate'
-  onFilterPoliticalLeanChange: (v: 'all' | 'progressive' | 'conservative' | 'moderate') => void
+  filterPoliticalLean: string[]
+  onFilterPoliticalLeanChange: (v: string[]) => void
   filterNbTypes: string[]
   onFilterNbTypesChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
@@ -100,7 +100,7 @@ export default function FilterSheet({
     (filterAreaTypes.length > 0 ? 1 : 0) +
     (filterArchetypes.length > 0 ? 1 : 0) +
     (filterTrajectory !== 'all' ? 1 : 0) +
-    (filterPoliticalLean !== 'all' ? 1 : 0) +
+    (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0)
@@ -110,7 +110,7 @@ export default function FilterSheet({
     onFilterAreaTypesChange([])
     onFilterArchetypesChange([])
     onFilterTrajectoryChange('all')
-    onFilterPoliticalLeanChange('all')
+    onFilterPoliticalLeanChange([])
     onFilterNbTypesChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
@@ -278,10 +278,10 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Political Lean</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {chip(filterPoliticalLean === 'all', 'All', () => onFilterPoliticalLeanChange('all'))}
-              {chip(filterPoliticalLean === 'progressive', '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'progressive' ? 'all' : 'progressive'))}
-              {chip(filterPoliticalLean === 'moderate', '🟣 Moderate', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'moderate' ? 'all' : 'moderate'))}
-              {chip(filterPoliticalLean === 'conservative', '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean === 'conservative' ? 'all' : 'conservative'))}
+              {chip(filterPoliticalLean.length === 0, 'All', () => onFilterPoliticalLeanChange([]))}
+              {chip(filterPoliticalLean.includes('progressive'), '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('progressive') ? filterPoliticalLean.filter(v => v !== 'progressive') : [...filterPoliticalLean, 'progressive']))}
+              {chip(filterPoliticalLean.includes('moderate'), '🟣 Moderate', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('moderate') ? filterPoliticalLean.filter(v => v !== 'moderate') : [...filterPoliticalLean, 'moderate']))}
+              {chip(filterPoliticalLean.includes('conservative'), '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('conservative') ? filterPoliticalLean.filter(v => v !== 'conservative') : [...filterPoliticalLean, 'conservative']))}
             </div>
           </div>
 

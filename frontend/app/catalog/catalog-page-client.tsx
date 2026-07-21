@@ -106,7 +106,7 @@ export default function CatalogPageClient({
     } catch { /* ignore */ }
     return { ...DEFAULT_PRIORITIES }
   })
-  const [filterPoliticalLean, setFilterPoliticalLean] = useState<'all' | 'progressive' | 'conservative' | 'moderate'>('all')
+  const [filterPoliticalLean, setFilterPoliticalLean] = useState<string[]>([])
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
@@ -380,12 +380,16 @@ export default function CatalogPageClient({
         const tr = p.score.status_signal_breakdown?.trajectory
         if (tr !== filterTrajectory) return false
       }
-      if (filterPoliticalLean !== 'all') {
+      if (filterPoliticalLean.length > 0) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean !== 'number') return false
-        if (filterPoliticalLean === 'progressive' && lean <= 0) return false
-        if (filterPoliticalLean === 'conservative' && lean >= 0) return false
-        if (filterPoliticalLean === 'moderate' && Math.abs(lean) > 0.3) return false
+        const matchesAny = filterPoliticalLean.some(pref => {
+          if (pref === 'progressive') return lean > 0
+          if (pref === 'conservative') return lean < 0
+          if (pref === 'moderate') return Math.abs(lean) <= 0.3
+          return false
+        })
+        if (!matchesAny) return false
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
@@ -820,9 +824,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
                     </span>
                   )}
                 </button>
@@ -886,9 +890,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean !== 'all' ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
