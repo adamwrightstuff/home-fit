@@ -563,72 +563,45 @@ def compute_wealth(
     housing_details: Dict[str, Any],
     keys_to_try: List[str],
     baselines: Dict[str, Any],
-    white_collar_pct: Optional[float] = None,
-    bach_pct: Optional[float] = None,
 ) -> Optional[float]:
     """
-    DFG-style SES composite score (0-100 scale).
+    DFG-style financial wealth score (0-100 scale): income + home value only.
 
-    Replaces the old mean+gap formula which penalised uniformly affluent suburbs
-    (e.g. Ardsley, Chatham, Glen Rock) because their low wealth-gap capped their score.
+    Education and occupation z-scores were removed (F04) — they are scored as
+    dedicated status_signal components (compute_education, compute_occupation)
+    and including them here caused double-counting in the SES composite.
 
-    Formula: 0.35×z(mean_income) + 0.25×z(bach_pct) + 0.25×z(occ_pct) + 0.15×z(home_val)
-    All z-scores normalised against the full metro tract distribution (nyc_metro / la_metro)
-    and capped at ±3.0 to prevent gentrification-driven home-value spikes from dominating.
-
-    Returns a 0-100 score mapped from the z-composite:
-      raw composite typically ranges −2.0 → +3.0 across the full tract population.
-      We map [−3, +3] → [0, 100] linearly so downstream code retains the 0-100 expectation.
+    Formula: 0.70×z(mean_income) + 0.30×z(home_val)
+    Z-scores normalised against the full metro tract distribution and capped at ±3.0.
+    Maps [−3, +3] → [0, 100] linearly.
     """
     summary = housing_details.get("summary") or housing_details
 
     mean_income = summary.get("mean_household_income")
     if mean_income is None or not isinstance(mean_income, (int, float)) or mean_income <= 0:
-        # Fall back to median if mean unavailable
         mean_income = summary.get("median_household_income")
     if mean_income is None or not isinstance(mean_income, (int, float)) or mean_income <= 0:
         return None
 
     median_home = summary.get("median_home_value")
-    # Prefer the explicitly passed bach_pct (merged from social_fabric/diversity);
-    # the housing summary usually lacks education_attainment, which silently zeroed
-    # the education z-score and capped the composite below the Elite threshold.
-    if bach_pct is None:
-        bach_pct = (summary.get("education_attainment") or {}).get("bachelor_pct")
-    if bach_pct is None:
-        bach_pct = summary.get("bachelor_pct")
 
     dfg = _get_dfg_params(baselines, keys_to_try)
     if dfg is None:
-        # No DFG params — fall back to income-only normalised score
         min_mean, max_mean = _get_baseline(baselines, keys_to_try, "wealth", "mean_hh_income")
         if min_mean is None or max_mean is None:
             return None
         return _normalize_min_max(float(mean_income), min_mean, max_mean)
 
     p_inc = dfg["mean_income"]
-    p_edu = dfg.get("edu_pct", {})
-    p_occ = dfg.get("occ_pct", {})
     p_hv  = dfg.get("home_val", {})
 
     z_inc = _dfg_z(float(mean_income), p_inc["mean"], p_inc["std"])
 
-    # Education: use bach_pct when available
-    z_edu = 0.0
-    if bach_pct is not None and p_edu.get("std", 0) > 0:
-        z_edu = _dfg_z(float(bach_pct), p_edu["mean"], p_edu["std"])
-
-    # Occupation: white_collar_pct passed in from compute_occupation
-    z_occ = 0.0
-    if white_collar_pct is not None and isinstance(white_collar_pct, (int, float)) and p_occ.get("std", 0) > 0:
-        z_occ = _dfg_z(float(white_collar_pct), p_occ["mean"], p_occ["std"])
-
-    # Home value
     z_hv = 0.0
     if median_home is not None and isinstance(median_home, (int, float)) and median_home > 0 and p_hv.get("std", 0) > 0:
         z_hv = _dfg_z(float(median_home), p_hv["mean"], p_hv["std"])
 
-    composite = 0.35 * z_inc + 0.25 * z_edu + 0.25 * z_occ + 0.15 * z_hv
+    composite = 0.70 * z_inc + 0.30 * z_hv
 
     # Map [−3, +3] → [0, 100]
     return max(0.0, min(100.0, (composite + 3.0) / 6.0 * 100.0))
@@ -1159,8 +1132,7 @@ def compute_status_signal_with_breakdown(
     )
     _wc_pct: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
 
-    _bach_pct = (merged_sf.get("education_attainment") or {}).get("bachelor_pct")
-    wealth = compute_wealth(housing_details, keys_to_try, baselines, white_collar_pct=_wc_pct, bach_pct=_bach_pct)
+    wealth = compute_wealth(housing_details, keys_to_try, baselines)
 
     pw, ph, pe, po = PROVISIONAL_COMPOSITE_WEIGHTS
     provisional = _composite_score_from_weights(
