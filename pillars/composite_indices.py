@@ -345,29 +345,41 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     area_type_pl = _area_type_from_payload(payload)
 
     if housing and econ and (social or diversity_details):
-        try:
-            business_list = (amenities.get("breakdown") or {}).get("business_list") or amenities.get("business_list") or []
-            result = compute_status_signal_with_breakdown(
-                housing,
-                social,
-                econ,
-                business_list,
-                census_tract,
-                state,
-                city=_city,
-                lat=lat,
-                lon=lon,
-                diversity_details=diversity_details,
-                area_type=area_type_pl,
-                zip_code=_zip,
-            )
-            if result is not None:
-                score, breakdown = result
-                if score is not None:
-                    out["status_signal"] = max(0.0, min(100.0, float(score)))
-                out["status_signal_breakdown"] = breakdown
-        except Exception:
-            pass
+        if census_tract is not None:
+            # Full recompute: census tract available, baseline selection will be correct.
+            try:
+                business_list = (amenities.get("breakdown") or {}).get("business_list") or amenities.get("business_list") or []
+                result = compute_status_signal_with_breakdown(
+                    housing,
+                    social,
+                    econ,
+                    business_list,
+                    census_tract,
+                    state,
+                    city=_city,
+                    lat=lat,
+                    lon=lon,
+                    diversity_details=diversity_details,
+                    area_type=area_type_pl,
+                    zip_code=_zip,
+                )
+                if result is not None:
+                    score, breakdown = result
+                    if score is not None:
+                        out["status_signal"] = max(0.0, min(100.0, float(score)))
+                    out["status_signal_breakdown"] = breakdown
+            except Exception:
+                pass
+        else:
+            # census_tract unavailable — recomputing status_signal without it would use the
+            # national fallback baseline instead of the correct metro baseline (nyc_metro /
+            # la_metro), producing badly wrong z-scores. Preserve the stored values instead.
+            stored_ss = payload.get("status_signal")
+            stored_ss_bd = payload.get("status_signal_breakdown")
+            if stored_ss is not None:
+                out["status_signal"] = stored_ss
+            if stored_ss_bd is not None:
+                out["status_signal_breakdown"] = stored_ss_bd
 
     try:
         happiness_result = compute_happiness_index_with_breakdown(
