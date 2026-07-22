@@ -43,6 +43,7 @@ _COMPOSITE_KEYS = (
     "happiness_index",
     "happiness_index_breakdown",
     "total_score_breakdown",
+    "total_score",
 )
 
 
@@ -50,6 +51,9 @@ def _merge_composites_into_score(score: Dict[str, Any], composites: Dict[str, An
     for k in _COMPOSITE_KEYS:
         if k in composites and composites[k] is not None:
             score[k] = composites[k]
+    # data_gaps: always write (None clears a previously-set value)
+    if "data_gaps" in composites:
+        score["data_gaps"] = composites["data_gaps"]
     iv = composites.get("indices_version")
     if iv is not None:
         md = score.get("metadata")

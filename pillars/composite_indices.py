@@ -222,7 +222,6 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
                 pillars.get("natural_beauty"),
                 state,
                 social_fabric_details=social,
-                built_environment_details=pillars.get("built_environment"),
                 community_safety_details=pillars.get("community_safety"),
                 neighborhood_amenities_details=amenities,
             )
@@ -237,7 +236,11 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
 
 def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Recompute longevity, status_signal, happiness from stored pillar JSON (no pillar re-run).
+    Recompute longevity, status_signal, happiness, and total_score from stored pillar JSON
+    (no pillar re-run). Also applies stored-data corrections before computing composites:
+      F15 — social fabric stability cliff suppressed for high-value markets.
+      F19 — fabricated neighborhood_amenities scores (confidence=0) nullified.
+      F02 — ghost weight redistribution; total_score recomputed with corrected weights.
     """
     from pillars.happiness_index import compute_happiness_index_with_breakdown
     from pillars.status_signal import compute_status_signal_with_breakdown
@@ -263,8 +266,48 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         "happiness_index": None,
         "happiness_index_breakdown": None,
         "total_score_breakdown": None,
+        "total_score": None,
+        "data_gaps": None,
         "indices_version": dict(INDICES_VERSION_METADATA),
     }
+
+    # F15: Stability cliff tiebreaker from stored data.
+    # stability_blend_pct > 85 in a high-value market (median_home_value >= $350k) means
+    # community attachment, not captivity — suppress the cliff penalty.
+    sf_data = pillars.get("social_fabric")
+    hv_data = pillars.get("housing_value")
+    if isinstance(sf_data, dict) and isinstance(hv_data, dict):
+        sf_summary = sf_data.get("summary") or {}
+        hv_summary = hv_data.get("summary") or {}
+        stab_pct = sf_summary.get("stability_blend_pct")
+        median_hv = hv_summary.get("median_home_value")
+        sf_breakdown = sf_data.get("breakdown") or {}
+        rootedness = sf_breakdown.get("rootedness")
+        if (
+            isinstance(stab_pct, (int, float))
+            and stab_pct > 85.0
+            and isinstance(median_hv, (int, float))
+            and median_hv >= 350_000
+            and isinstance(rootedness, (int, float))
+        ):
+            uncapped = min(100.0, (stab_pct / 85.0) * 100.0)
+            if rootedness < uncapped:
+                corrected_root = uncapped
+                s_cap = float(sf_breakdown.get("social_capital") or 0.0)
+                p_civ = float(sf_breakdown.get("peer_civic") or 0.0)
+                part = float(sf_breakdown.get("participation") or 0.0)
+                w_sc = 0.20 if s_cap > 0 else 0.0
+                w_civic = 0.10 if p_civ > 0 else 0.0
+                w_root = 0.10
+                w_part = 1.0 - w_sc - w_civic - w_root
+                new_raw = w_sc * s_cap + w_root * corrected_root + w_part * part + w_civic * p_civ
+                sf_data["score"] = round(max(0.0, min(100.0, new_raw)), 1)
+                sf_breakdown["rootedness"] = round(corrected_root, 1)
+
+    # F19: Nullify fabricated neighborhood_amenities scores (confidence=0 with a score set).
+    na_data = pillars.get("neighborhood_amenities")
+    if isinstance(na_data, dict) and na_data.get("confidence") == 0 and na_data.get("score") is not None:
+        na_data["score"] = None
 
     try:
         li, contrib = compute_longevity_index(
@@ -330,7 +373,6 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
             pillars.get("natural_beauty"),
             state,
             social_fabric_details=social,
-            built_environment_details=pillars.get("built_environment"),
             community_safety_details=pillars.get("community_safety"),
             neighborhood_amenities_details=pillars.get("neighborhood_amenities"),
         )
@@ -352,5 +394,42 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         out["total_score_breakdown"] = build_total_score_breakdown(pillars, token_allocation)
     except Exception:
         out["total_score_breakdown"] = {}
+
+    # F02: Ghost weight redistribution + total_score recomputation.
+    # Build weight map: token_allocation first, fall back to per-pillar weight fields.
+    _ta_raw: Dict[str, float] = dict(token_allocation) if token_allocation else {}
+    for p_name, p_data in (pillars or {}).items():
+        if isinstance(p_data, dict) and p_name not in _ta_raw:
+            w = p_data.get("weight")
+            if isinstance(w, (int, float)):
+                _ta_raw[p_name] = float(w)
+
+    _data_gap_pillars: List[str] = []
+    for p_name, p_data in (pillars or {}).items():
+        if not isinstance(p_data, dict):
+            continue
+        if p_data.get("score") is None and _ta_raw.get(p_name, 0.0) > 0:
+            _ta_raw[p_name] = 0.0
+            _data_gap_pillars.append(p_name)
+
+    _rem = sum(_ta_raw.values())
+    if _rem > 0:
+        _scale = 100.0 / _rem
+        _ta_raw = {k: v * _scale for k, v in _ta_raw.items()}
+
+    _total = 0.0
+    for p_name, p_data in (pillars or {}).items():
+        if not isinstance(p_data, dict):
+            continue
+        p_score = p_data.get("score")
+        if isinstance(p_score, (int, float)):
+            _total += float(p_score) * _ta_raw.get(p_name, 0.0) / 100.0
+
+    out["total_score"] = round(min(100.0, max(0.0, _total)), 2)
+    out["data_gaps"] = {
+        "pillars": _data_gap_pillars,
+        "rescore_available": True,
+        "note": "These pillars had no data. Their weights were redistributed to scored pillars.",
+    } if _data_gap_pillars else None
 
     return out
