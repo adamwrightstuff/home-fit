@@ -303,6 +303,10 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
                 new_raw = w_sc * s_cap + w_root * corrected_root + w_part * part + w_civic * p_civ
                 sf_data["score"] = round(max(0.0, min(100.0, new_raw)), 1)
                 sf_breakdown["rootedness"] = round(corrected_root, 1)
+                # Update stored contribution so total_score recomputation picks up the fix.
+                _sf_w = sf_data.get("weight")
+                if isinstance(_sf_w, (int, float)):
+                    sf_data["contribution"] = round(sf_data["score"] * _sf_w / 100.0, 4)
 
     # F19: Nullify fabricated neighborhood_amenities scores (confidence=0 with a score set).
     na_data = pillars.get("neighborhood_amenities")
@@ -395,37 +399,63 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     except Exception:
         out["total_score_breakdown"] = {}
 
-    # F02: Ghost weight redistribution + total_score recomputation.
-    # Build weight map: token_allocation first, fall back to per-pillar weight fields.
-    _ta_raw: Dict[str, float] = dict(token_allocation) if token_allocation else {}
+    # F02: Total score from stored contributions (authoritative) + recomputed for pillars
+    # whose contribution was not stored.  Per-pillar weight is authoritative (it reflects
+    # any redistribution that happened at original scoring time); token_allocation is the
+    # fallback only when per-pillar weight is absent (None).
+    #
+    # Ghost weight redistribution applies to the recomputed-contribution pillars only:
+    # if a pillar has no score (None) and a non-zero weight, zero its weight and
+    # redistribute proportionally across the recomputed-contribution pillars.
+    # Stored-contribution pillars are left as-is (they already baked in whatever
+    # redistribution happened at scoring time).
+    _stored_total = 0.0
+    _recompute_weights: Dict[str, float] = {}
+
     for p_name, p_data in (pillars or {}).items():
-        if isinstance(p_data, dict) and p_name not in _ta_raw:
+        if not isinstance(p_data, dict):
+            continue
+        contrib = p_data.get("contribution")
+        if isinstance(contrib, (int, float)):
+            _stored_total += float(contrib)
+        else:
+            # Contribution not stored — recompute from weight × score.
+            # Per-pillar weight takes precedence; token_allocation is the fallback.
             w = p_data.get("weight")
-            if isinstance(w, (int, float)):
-                _ta_raw[p_name] = float(w)
+            if not isinstance(w, (int, float)):
+                w = (token_allocation or {}).get(p_name)
+            _recompute_weights[p_name] = float(w) if isinstance(w, (int, float)) else 0.0
 
     _data_gap_pillars: List[str] = []
     for p_name, p_data in (pillars or {}).items():
-        if not isinstance(p_data, dict):
+        if not isinstance(p_data, dict) or p_name not in _recompute_weights:
             continue
-        if p_data.get("score") is None and _ta_raw.get(p_name, 0.0) > 0:
-            _ta_raw[p_name] = 0.0
+        if p_data.get("score") is None and _recompute_weights[p_name] > 0:
+            _recompute_weights[p_name] = 0.0
             _data_gap_pillars.append(p_name)
 
-    _rem = sum(_ta_raw.values())
-    if _rem > 0:
-        _scale = 100.0 / _rem
-        _ta_raw = {k: v * _scale for k, v in _ta_raw.items()}
+    _recomp_rem = sum(_recompute_weights.values())
+    if _recomp_rem > 0 and _data_gap_pillars:
+        # Redistribute only the weights freed by F02 zeroing within recomputed pillars.
+        _scale = (_recomp_rem + sum(
+            _recompute_weights[p] for p in _data_gap_pillars  # already zeroed, but track delta
+        )) / _recomp_rem
+        # simpler: just renormalize the remaining non-zero weights to their original sum
+        _orig_sum = _recomp_rem + sum(
+            float((pillars.get(p) or {}).get("weight") or (token_allocation or {}).get(p) or 0)
+            for p in _data_gap_pillars
+        )
+        if _recomp_rem > 0:
+            _scale = _orig_sum / _recomp_rem
+            _recompute_weights = {k: v * _scale for k, v in _recompute_weights.items()}
 
-    _total = 0.0
-    for p_name, p_data in (pillars or {}).items():
-        if not isinstance(p_data, dict):
-            continue
-        p_score = p_data.get("score")
-        if isinstance(p_score, (int, float)):
-            _total += float(p_score) * _ta_raw.get(p_name, 0.0) / 100.0
+    _recomp_total = 0.0
+    for p_name, w in _recompute_weights.items():
+        p_score = (pillars.get(p_name) or {}).get("score")
+        if isinstance(p_score, (int, float)) and w > 0:
+            _recomp_total += float(p_score) * w / 100.0
 
-    out["total_score"] = round(min(100.0, max(0.0, _total)), 2)
+    out["total_score"] = round(min(100.0, max(0.0, _stored_total + _recomp_total)), 2)
     out["data_gaps"] = {
         "pillars": _data_gap_pillars,
         "rescore_available": True,
