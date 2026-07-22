@@ -14,6 +14,9 @@ from data_sources.places_fallback_client import maybe_augment_business_data_with
 import math
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.utils import haversine_distance
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: bool = True,
@@ -33,14 +36,14 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     Returns:
         (total_score, detailed_breakdown)
     """
-    print(f"🍽️  Analyzing neighborhood amenities and walkability...")
+    logger.debug("Analyzing neighborhood amenities and walkability")
     
     # Query businesses with centralized radius profile
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     query_radius = int(profile.get('query_radius_m', 1500))
     if vacation_mode:
         query_radius = max(query_radius, 3000)
-    print(f"   🔧 Radius profile (amenities): area_type={area_type}, scope={location_scope}, query_radius={query_radius}m")
+    logger.debug("Radius profile (amenities): area_type=%s, scope=%s, query_radius=%dm", area_type, location_scope, query_radius)
     business_data = osm_api.query_local_businesses(lat, lon, radius_m=query_radius, include_chains=include_chains, vacation_mode=vacation_mode)
     osm_query_failed = business_data is None
     if business_data is None:
@@ -89,17 +92,17 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     tier4_all = business_data["tier4_services"]
     all_businesses = tier1_all + tier2_all + tier3_all + tier4_all
     if places_fallback_meta.get("used"):
-        print(
-            f"   🌐 Places fallback: merged {places_fallback_meta.get('mapped_added', 0)} places "
-            f"(OSM completeness was {osm_completeness_pre:.2f})"
+        logger.debug(
+            "Places fallback: merged %d places (OSM completeness was %.2f)",
+            places_fallback_meta.get("mapped_added", 0), osm_completeness_pre,
         )
 
     # Still empty after Places (or Places disabled / no API key): density-area imputed score vs 0
     if not all_businesses:
         if osm_query_failed:
-            print("⚠️  OSM business data unavailable")
+            logger.warning("OSM business data unavailable")
         else:
-            print("⚠️  No indie businesses found in OSM data")
+            logger.warning("No indie businesses found in OSM data")
         # Apply fallback score for urban/suburban areas (likely OSM gap — include after Places exhausted)
         should_apply_fallback = False
         fallback_reason = ""
@@ -115,33 +118,39 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
             fallback_reason = f"moderate density ({density:.0f} people/km²)"
 
         if should_apply_fallback:
-            if area_type == "urban_core":
-                fallback_score = 25.0
-            elif area_type == "urban_residential":
-                fallback_score = 20.0
-            elif area_type == "suburban":
-                fallback_score = 15.0
-            elif density and density > 5000:
-                fallback_score = 25.0
-            elif density and density > 2000:
-                fallback_score = 20.0
-            elif density and density > 1500:
-                fallback_score = 18.0
-            else:
-                fallback_score = 15.0
-
-            extra = " (OSM API unavailable)" if osm_query_failed else " (OSM data gap)"
-            print(f"   📊 Applying fallback score {fallback_score:.1f} for {fallback_reason}{extra}")
-            return fallback_score, _empty_breakdown_with_fallback(
-                fallback_score, area_type or "unknown", lat, lon
+            failure_reason = (
+                f"osm_unavailable ({fallback_reason})" if osm_query_failed
+                else f"osm_data_gap ({fallback_reason})"
             )
-        print("⚠️  No indie businesses found")
-        return 0, _empty_breakdown(lat, lon, area_type)
+            logger.warning("neighborhood_amenities returning None: %s", failure_reason)
+            return None, {
+                "score": None,
+                "failed": True,
+                "failure_reason": failure_reason,
+                "confidence": 0,
+                "data_quality_index": 0.0,
+                "business_list": [],
+                "breakdown": {},
+                "summary": {},
+                "data_quality": {"confidence": 0},
+            }
+        logger.warning("neighborhood_amenities: no businesses found, returning None")
+        return None, {
+            "score": None,
+            "failed": True,
+            "failure_reason": "no_businesses_found",
+            "confidence": 0,
+            "data_quality_index": 0.0,
+            "business_list": [],
+            "breakdown": {},
+            "summary": {},
+            "data_quality": {"confidence": 0},
+        }
 
     # Step 1: Home Walkability (0-60) - What's within walkable distance?
     profile = get_radius_profile('neighborhood_amenities', area_type, location_scope)
     walkable_distance = int(profile.get('walkable_distance_m', 1000))
-    print(f"   🔧 Walkability window (amenities): walkable={walkable_distance}m")
+    logger.debug("Walkability window (amenities): walkable=%dm", walkable_distance)
     nearby = [b for b in all_businesses if b["distance_m"] <= walkable_distance]
     
     tier1_near = [b for b in tier1_all if b["distance_m"] <= walkable_distance]
@@ -246,10 +255,11 @@ def get_neighborhood_amenities_score(lat: float, lon: float, include_chains: boo
     }
     
     # Log results
-    print(f"✅ Neighborhood Amenities v2 (calibrated): {total_score:.1f}/100 [raw={raw_total:.1f}]")
-    print(f"   🏠 Home Walkability: {home_score:.1f}/60 ({len(nearby)} businesses within walkable)")
-    print(f"   🌆 Location Quality: {location_score:.1f}/40")
-    print(f"   📊 Data Quality: {quality_metrics['quality_tier']} ({quality_metrics['confidence']}% confidence)")
+    logger.debug(
+        "Neighborhood Amenities v2: %.1f/100 [raw=%.1f] | walkability=%.1f/60 (%d biz) | location=%.1f/40 | dq=%s (%d%%)",
+        total_score, raw_total, home_score, len(nearby), location_score,
+        quality_metrics["quality_tier"], quality_metrics["confidence"],
+    )
     
     return round(total_score, 1), breakdown
 

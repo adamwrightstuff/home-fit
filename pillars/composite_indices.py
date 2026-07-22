@@ -119,7 +119,7 @@ def compute_longevity_index(
         contrib = score * weight / 100.0
         contributions[pillar] = round(contrib, 2)
         total += contrib
-    return round(total, 2), contributions
+    return round(min(100.0, total), 2), contributions
 
 
 LONGEVITY_INDEX_PILLAR_KEYS = frozenset(LONGEVITY_INDEX_WEIGHTS.keys())

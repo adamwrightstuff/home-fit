@@ -718,13 +718,6 @@ def _extract_natural_beauty_summary(natural_details: Dict) -> Dict:
     # NEW: Add water proximity metrics
     if isinstance(natural_context, dict):
         water_proximity = natural_context.get("water_proximity", {})
-        # #region agent log
-        try:
-            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"F","location":"main.py:340","message":"Extracting water proximity from summary","data":{{"water_proximity_present":{bool(water_proximity)},"nearest_km":{water_proximity.get("nearest_distance_km") if isinstance(water_proximity,dict) else None}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-        except OSError:
-            pass
-        # #endregion
         if isinstance(water_proximity, dict):
             if water_proximity.get("nearest_distance_km") is not None:
                 summary["water_proximity_km"] = round(water_proximity.get("nearest_distance_km", 0), 1)
@@ -824,17 +817,12 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         # Default equal distribution across primary pillars (100 tokens total).
         base_pillars = list(primary_pillars)
 
-        equal_tokens = 100.0 / len(primary_pillars)
+        n = len(primary_pillars)
+        base = 100 // n
+        extra = 100 - base * n
         default_allocation: Dict[str, float] = {}
-        remainder = 100.0
         for i, pillar in enumerate(primary_pillars):
-            if i < len(primary_pillars) - 1:
-                t = int(equal_tokens)
-                default_allocation[pillar] = float(t)
-                remainder -= t
-            else:
-                # Last primary pillar gets remainder to ensure exact 100
-                default_allocation[pillar] = remainder
+            default_allocation[pillar] = float(base + (1 if i < extra else 0))
 
         return default_allocation
     
@@ -2250,7 +2238,7 @@ def _compute_single_score_internal(
 
     # Extract results with error handling
     active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-    amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+    amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
     # active_outdoors ran on the pre-pillar area_type estimate (OSM-only business count),
     # but the canonical area_type is corrected post-pillar using the amenities pillar's own
@@ -2429,7 +2417,7 @@ def _compute_single_score_internal(
         (active_outdoors_score * token_allocation["active_outdoors"] / 100)
         + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
         + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
-        + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
+        + ((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100)
         + (air_travel_score * token_allocation["air_travel_access"] / 100)
         + (transit_score * token_allocation["public_transit_access"] / 100)
         + (healthcare_score * token_allocation["healthcare_access"] / 100)
@@ -2529,7 +2517,7 @@ def _compute_single_score_internal(
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
             "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
-            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
+            "contribution": round((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": _na_breakdown_with_business,
             "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
@@ -3923,7 +3911,7 @@ async def _stream_score_with_progress(
         # For now, build the response structure manually using our results
         # Extract results (similar to _compute_single_score_internal)
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
         # See _compute_single_score_internal: active_outdoors ran on the pre-pillar area_type
         # estimate; re-score it if the post-pillar reclassification (using the amenities
@@ -4165,7 +4153,7 @@ async def _stream_score_with_progress(
             (active_outdoors_score * token_allocation["active_outdoors"] / 100)
             + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
             + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
-            + (amenities_score * token_allocation["neighborhood_amenities"] / 100)
+            + ((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100)
             + (air_travel_score * token_allocation["air_travel_access"] / 100)
             + (transit_score * token_allocation["public_transit_access"] / 100)
             + (healthcare_score * token_allocation["healthcare_access"] / 100)
@@ -4258,7 +4246,7 @@ async def _stream_score_with_progress(
                 "score": amenities_score,
                 "weight": token_allocation["neighborhood_amenities"],
                 "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
-                "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
+                "contribution": round((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100, 2),
                 "breakdown": _na_breakdown_with_business,
                 "summary": amenities_details.get("summary", {}),
                 "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),
@@ -5108,7 +5096,7 @@ async def stream_score(
 
         # Extract results with error handling (no fallback scores - use 0.0 if failed)
         active_outdoors_score, active_outdoors_details = pillar_results.get('active_outdoors') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
-        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
+        amenities_score, amenities_details = pillar_results.get('neighborhood_amenities') or (None, {"breakdown": {}, "summary": {}, "data_quality": {}})
 
         # See _compute_single_score_internal: active_outdoors ran on the pre-pillar area_type
         # estimate; re-score it if the post-pillar reclassification (using the amenities
@@ -5332,7 +5320,7 @@ async def stream_score(
         (active_outdoors_score * token_allocation["active_outdoors"] / 100) +
         ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100) +
         (natural_score * token_allocation.get("natural_beauty", 0.0) / 100) +
-        (amenities_score * token_allocation["neighborhood_amenities"] / 100) +
+        ((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100) +
         (air_travel_score * token_allocation["air_travel_access"] / 100) +
         (transit_score * token_allocation["public_transit_access"] / 100) +
         (healthcare_score * token_allocation["healthcare_access"] / 100) +
@@ -5442,7 +5430,7 @@ async def stream_score(
             "score": amenities_score,
             "weight": token_allocation["neighborhood_amenities"],
             "importance_level": priority_levels.get("neighborhood_amenities") if priority_levels else None,
-            "contribution": round(amenities_score * token_allocation["neighborhood_amenities"] / 100, 2),
+            "contribution": round((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100, 2),
             "breakdown": _na_breakdown_with_business,
             "summary": amenities_details.get("summary", {}),
             "confidence": amenities_details.get("data_quality", {}).get("confidence", 0),

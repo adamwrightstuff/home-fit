@@ -659,38 +659,12 @@ def _get_adaptive_context_weights(
         logger.warning(f"Adjusted weights sum to {total}, falling back to base weights")
         return base_weights
     
-    # Validate: ensure weights are reasonable (each between 0.1 and 0.8)
-    # If any weight is out of bounds, scale adjustments
-    max_weight = max(adjusted_weights.values())
-    min_weight = min(adjusted_weights.values())
-    
-    if max_weight > 0.8 or min_weight < 0.1:
-        # Scale adjustments to keep weights in bounds
-        # Reduce all adjustments proportionally if max too high
-        if max_weight > 0.8:
-            scale_factor = 0.75 / max_weight  # Bring max down to 0.75
-            adjustments["topography"] *= scale_factor
-            adjustments["landcover"] *= scale_factor
-            adjustments["water"] *= scale_factor
-            # Recalculate
-            adjusted_weights = {
-                "topography": base_weights["topography"] * adjustments["topography"],
-                "landcover": base_weights["landcover"] * adjustments["landcover"],
-                "water": base_weights["water"] * adjustments["water"]
-            }
-            total = sum(adjusted_weights.values())
-            if total > 0:
-                adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
-        
-        # Ensure minimum weight
-        for key in adjusted_weights:
-            if adjusted_weights[key] < 0.1:
-                adjusted_weights[key] = 0.1
-        # Renormalize if we adjusted minimum
-        total = sum(adjusted_weights.values())
-        if total > 0:
-            adjusted_weights = {k: v / total for k, v in adjusted_weights.items()}
-    
+    # Clamp each weight to [0.1, 0.8] and renormalize once if any bound was hit.
+    clamped = {k: max(0.1, min(0.8, v)) for k, v in adjusted_weights.items()}
+    if clamped != adjusted_weights:
+        total = sum(clamped.values())
+        adjusted_weights = {k: v / total for k, v in clamped.items()}
+
     return adjusted_weights
 
 
@@ -1201,19 +1175,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                  preference_water_type_weights: Optional[Dict[str, float]] = None,
                  preference_viewshed_blend: bool = False) -> Tuple[float, Dict]:
     """Score trees from multiple real data sources (0-50)."""
-    # #region agent log
-    try:
-        import os
-        import time
-        log_dir = '/Users/adamwright/home-fit/.cursor'
-        os.makedirs(log_dir, exist_ok=True)
-        log_entry = f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"ENTRY","location":"natural_beauty.py:910","message":"_score_trees called","data":{{"lat":{lat},"lon":{lon},"city":"{city or "unknown"}","area_type":"{area_type or "unknown"}"}},"timestamp":{int(time.time()*1000)}}}\n'
-        with open(f'{log_dir}/debug.log', 'a') as f:
-            f.write(log_entry)
-        logger.info(f"DEBUG: _score_trees called for {city or 'unknown'} at {lat},{lon}")
-    except Exception as e:
-        logger.error(f"DEBUG LOG ERROR: {e}")
-    # #endregion
     score = 0.0
     sources: List[str] = []
     details: Dict = {}
@@ -2068,20 +2029,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
     natural_context_details: Dict[str, Dict] = {}
     context_bonus_total = 0.0
 
-    # #region agent log
-    try:
-        import os
-        import time
-        log_dir = '/Users/adamwright/home-fit/.cursor'
-        os.makedirs(log_dir, exist_ok=True)
-        log_entry = f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"ENTRY","location":"natural_beauty.py:1470","message":"Context bonus calculation started","data":{{"lat":{lat},"lon":{lon},"area_type":"{area_type}"}},"timestamp":{int(time.time()*1000)}}}\n'
-        with open(f'{log_dir}/debug.log', 'a') as f:
-            f.write(log_entry)
-        logger.info(f"DEBUG: Context bonus calc started for {city or 'unknown'} - lat={lat}, lon={lon}, area_type={area_type}")
-    except Exception as e:
-        logger.error(f"DEBUG LOG ERROR: {e}")
-    # #endregion
-
     try:
         from data_sources.gee_api import get_topography_context, get_landcover_context_gee, get_viewshed_proxy
     except ImportError:  # pragma: no cover - optional dependency
@@ -2145,44 +2092,16 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                     if f == future:
                         if key == 'topography' and isinstance(result, dict):
                             topography_metrics = result
-                            # #region agent log
-                            try:
-                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1518","message":"Topography metrics fetched","data":{{"relief_m":{topography_metrics.get("relief_range_m")},"prominence_m":{topography_metrics.get("terrain_prominence_m")},"ruggedness_m":{topography_metrics.get("ruggedness_index_m")}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-                            except OSError:
-                                pass
-                            # #endregion
                         elif key == 'landcover' and isinstance(result, dict):
                             landcover_metrics = result
-                            # #region agent log
-                            try:
-                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"B","location":"natural_beauty.py:1520","message":"Landcover metrics fetched","data":{{"source":"{landcover_metrics.get("source","unknown")}","forest_pct":{landcover_metrics.get("forest_pct",0)},"water_pct":{landcover_metrics.get("water_pct",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-                            except OSError:
-                                pass
-                            # #endregion
                         elif key == 'water' and isinstance(result, dict):
                             water_proximity_data = result
-                            # #region agent log
-                            try:
-                                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1522","message":"Water proximity data fetched","data":{{"nearest_distance_km":{water_proximity_data.get("nearest_distance_km")},"count":{water_proximity_data.get("count",0)}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-                            except OSError:
-                                pass
-                            # #endregion
                         break
             except Exception as exc:
                 # Log which call failed for debugging
                 for key, f in futures.items():
                     if f == future:
                         logger.debug(f"Parallel {key} data fetch failed: {exc}, using defaults")
-                        # #region agent log
-                        try:
-                            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1528","message":"Parallel data fetch failed","data":{{"key":"{key}","error":"{str(exc)[:100]}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-                        except OSError:
-                            pass
-                        # #endregion
                         break
     
     # Normalize: treat "query succeeded but no usable nearest distance" as missing for scoring purposes.
@@ -2572,14 +2491,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             natural_context_components["topography_bonus_total"] = round(topography_bonus_total, 2)
         natural_context_details["topography_metrics"] = topography_metrics
         context_bonus_total += topography_score
-        # #region agent log
-        try:
-            with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                bonus_info = f'"bonus_total":{topography_bonus_total}' if topography_bonuses else '"bonuses":"none"'
-                f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"C","location":"natural_beauty.py:1893","message":"Topography score calculated","data":{{"raw":{topography_score_raw},"weight":{terrain_adjusted_weights["topography"]},"base":{topography_score_base},{bonus_info},"final":{topography_score},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-        except OSError:
-            pass
-        # #endregion
     if landcover_metrics:
         natural_context_details["landcover_metrics"] = landcover_metrics
         natural_context_details["landcover_source"] = landcover_metrics.get("source")
@@ -2618,15 +2529,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 "source": water_proximity_data.get("source", "none"),
                 "count": int(water_proximity_data.get("count", 0) or 0),
             }
-            # #region agent log
-            try:
-                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                    nearest_water_km = water_proximity_data.get("nearest_distance_km")
-                    waterbody = water_proximity_data.get("nearest_waterbody", {})
-                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"A","location":"natural_beauty.py:1609","message":"Water proximity stored in details","data":{{"nearest_km":{nearest_water_km},"waterbody_type":"{waterbody.get("type","none") if isinstance(waterbody,dict) else "none"}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-            except OSError:
-                pass
-            # #endregion
         # Apply area-type-specific weights (adjusted for high-relief areas)
         # Ensure scores are always valid numbers
         landcover_score_raw = float(landcover_score_raw) if isinstance(landcover_score_raw, (int, float)) and not math.isnan(landcover_score_raw) else 0.0
@@ -2643,15 +2545,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_components["water"] = round(water_score, 2)
         natural_context_components["water_raw"] = round(water_score_raw, 2)
         context_bonus_total += landcover_score + water_score
-        # #region agent log - Add to API response
-        natural_context_details["debug_water_proximity"] = {
-            "available": bool(water_proximity_data and water_proximity_data.get("nearest_distance_km") is not None),
-            "nearest_distance_km": water_proximity_data.get("nearest_distance_km") if water_proximity_data else None,
-            "count": water_proximity_data.get("count", 0) if water_proximity_data else 0,
-            "nearest_waterbody": water_proximity_data.get("nearest_waterbody") if water_proximity_data else None,
-            "source": water_proximity_data.get("source", "none") if water_proximity_data else "none",
-        }
-        # #endregion
         biodiversity_index = (
             BIODIVERSITY_WEIGHTS["forest"] * float(landcover_metrics.get("forest_pct", 0.0)) +
             BIODIVERSITY_WEIGHTS["wetland"] * float(landcover_metrics.get("wetland_pct", 0.0)) +
@@ -2796,25 +2689,11 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                             natural_context_components["water_visibility_bonus"] = round(water_visibility_bonus, 2)
                             logger.debug(f"Applied water visibility bonus ({water_visibility_bonus:.2f}) for {nearest_distance_km:.1f}km {water_proximity_type} with {visible_natural_pct:.1f}% visible natural")
                 
-                # #region agent log
-                try:
-                    with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                        f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1677","message":"Viewshed bonus calculated","data":{{"visible_natural_pct":{visible_natural_pct},"factor":{viewshed_factor},"bonus":{viewshed_bonus},"mountain_backdrop_bonus":{mountain_backdrop_bonus},"context_bonus_after":{context_bonus_total}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-                except OSError:
-                    pass
-                # #endregion
         except Exception as viewshed_error:
             logger.debug("Viewshed proxy calculation failed: %s, using defaults", viewshed_error)
             viewshed_metrics = None
 
     total_context_before_cap = context_bonus_total
-    # #region agent log
-    try:
-        with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-            f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"E","location":"natural_beauty.py:1686","message":"Context bonus before cap","data":{{"total":{context_bonus_total},"cap":{NATURAL_CONTEXT_BONUS_CAP},"area_type":"{area_type_key}"}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-    except OSError:
-        pass
-    # #endregion
     if context_bonus_total > NATURAL_CONTEXT_BONUS_CAP:
         context_bonus_total = NATURAL_CONTEXT_BONUS_CAP
 
@@ -2828,7 +2707,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         natural_context_details["context_weights"] = context_weights  # Show adaptive weights (adjusted by landscape)
         natural_context_details["base_context_weights"] = base_context_weights  # Show base weights for comparison
         natural_context_details["landscape_context_tags"] = landscape_tags  # Store landscape tags for UI
-        # #region agent log - Add debug info to API response
         natural_context_details["debug_breakdown"] = {
             "area_type_key": area_type_key,
             "landscape_tags": landscape_tags,
@@ -2854,7 +2732,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             "landcover_available": bool(landcover_metrics),
             "topography_available": bool(topography_metrics)
         }
-        # #endregion
         details["natural_context"] = natural_context_details
     else:
         # FIX: Ensure structure is always populated, even when empty
@@ -3146,13 +3023,6 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 reduction_reasons.append(f"Moderate context bonus ({context_bonus_total:.1f})")
             
             expectation_penalty = base_penalty * penalty_reduction_factor
-            # #region agent log
-            try:
-                with open('/Users/adamwright/home-fit/.cursor/debug.log', 'a') as f:
-                    f.write(f'{{"sessionId":"debug-truckee","runId":"run1","hypothesisId":"D","location":"natural_beauty.py:1969","message":"Penalty reduction calculated","data":{{"base_penalty":{base_penalty},"reduction_factor":{penalty_reduction_factor},"final_penalty":{expectation_penalty},"context_bonus":{context_bonus_total},"water_km":{nearest_water_km},"reasons":{reduction_reasons}}},"timestamp":{int(__import__("time").time()*1000)}}}\n')
-            except OSError:
-                pass
-            # #endregion
             if penalty_reduction_factor < 1.0:
                 details["canopy_expectation"]["penalty_reduction"] = {
                     "original_penalty": round(base_penalty, 2),
@@ -4327,10 +4197,6 @@ def _v9_score_bio(bio_val: float) -> float:
 # regional baselines before scoring so climate-determined vegetation levels don't
 # systematically penalize arid or mediterranean regions. Topo and water stay absolute
 # because dramatic terrain and coastal proximity are universally scarce and valuable.
-_V9_WEIGHTS = {
-    "gvi": 0.22, "water": 0.25, "canopy": 0.18, "topo": 0.25, "landcover": 0.07, "bio": 0.03,
-}
-
 # GVI reference used as the normalization target (national urban median, %).
 _V9_GVI_GLOBAL_REF = 20.0
 # Canopy reference used as the normalization target (national urban median, %).
@@ -4486,7 +4352,7 @@ def _apply_v9_formula(
     dbg = nc.get("debug_breakdown") or {}
 
     region = _get_nb_region(lat, lon)
-    weights = _V9_WEIGHTS
+    weights = _V9_OWA_WEIGHTS
 
     # GVI: use direct measurement; fall back to canopy proxy if street-view data absent
     gvi_pct = tree_details.get("green_view_index") or 0.0
@@ -4548,12 +4414,11 @@ def _apply_v9_formula(
     # and applying fixed positional weights. A place is judged on its strengths — two
     # exceptional dimensions reach 80+, three reach 90+. Weak components contribute
     # almost nothing, so a place isn't penalized for lacking features outside its character.
-    _OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.00]
     component_scores = sorted(
         [gvi_score, water_score, canopy_score, topo_score, landcover_score, bio_score],
         reverse=True
     )
-    owa_total = round(sum(w * s for w, s in zip(_OWA_WEIGHTS, component_scores)), 2)
+    owa_total = round(sum(w * s for w, s in zip(_V9_OWA_WEIGHTS, component_scores)), 2)
 
     # Bias toward the user's scenery preference (no-op when none supplied).
     comp_by_name = {
