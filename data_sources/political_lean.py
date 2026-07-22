@@ -108,9 +108,22 @@ def lookup_political_lean(
         if _haversine_miles(lat, lon, plat, plon) <= radius_miles:
             nearby.append(p)
 
-    # Prefer granular data: use precinct/municipality-matched records when available;
-    # fall back to county-matched records only if nothing better exists within radius.
+    # Prefer granular data: use precinct/municipality-matched records when available.
+    # If none exist within the base radius, expand up to 2× to find granular neighbors
+    # before falling back to county-aggregate records (which may cover an entire county).
     granular = [p for p in nearby if p.get("match_tier") not in ("county", "none")]
+    if not granular and radius_miles < 2.0:
+        expanded_radius = min(radius_miles * 2, 2.0)
+        exp_lat_pad = expanded_radius * _DEG_PER_MILE_LAT
+        exp_lon_pad = expanded_radius * _DEG_PER_MILE_LON
+        for p in precincts:
+            plat, plon = p["lat"], p["lon"]
+            if not (lat - exp_lat_pad <= plat <= lat + exp_lat_pad and
+                    lon - exp_lon_pad <= plon <= lon + exp_lon_pad):
+                continue
+            if p not in nearby and _haversine_miles(lat, lon, plat, plon) <= expanded_radius:
+                if p.get("match_tier") not in ("county", "none"):
+                    granular.append(p)
     pool = granular if granular else nearby
 
     dem_24 = rep_24 = dem_20 = rep_20 = 0

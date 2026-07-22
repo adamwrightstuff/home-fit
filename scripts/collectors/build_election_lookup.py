@@ -105,14 +105,22 @@ def _normalize(s: str) -> str:
 def _extract_municipality(precinct_raw: str) -> str:
     """Extract municipality name from a CSV precinct string for sub-county fallback."""
     s = precinct_raw.upper().strip()
-    s = re.sub(r"^(TOWN OF|CITY OF|VILLAGE OF)\s+", "", s)
-    # Remove trailing 'Ward X ED Y ...' or bare 'ED Y' or bare number
+    s = re.sub(r"^(TOWN OF|CITY OF|VILLAGE OF|TOWNSHIP OF)\s+", "", s)
+    # NJ: 'Atlantic City W1 D1' / 'Buena Borough D01' / 'Brigantine Ward 01'
+    s = re.sub(r"\s+W\d+(\s+D\d+)?$", "", s)
+    s = re.sub(r"\s+D\d+$", "", s)
+    # NJ Burlington: 'Bass River Township Election District 1'
+    # NJ Camden: 'Audubon District 1'
+    s = re.sub(r"\s+(ELECTION\s+)?DISTRICT.*$", "", s)
+    # Remove trailing 'Ward X ED Y ...' or bare 'Ward X' or bare 'ED Y' or bare number
     s = re.sub(r"\s+WARD\s+\d+.*$", "", s)
     s = re.sub(r"\s+ED\s+\d+.*$", "", s)
     s = re.sub(r"\s+\d+(-\d+)?$", "", s)
     # Strip trailing bare 'ED' left after number removal
     s = re.sub(r"\s+ED$", "", s)
-    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    # NJ abbreviations: Boro, Twp
+    s = re.sub(r"\b(BORO|TWP)\b", "", s)
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE|BOROUGH|TOWNSHIP)\b", "", s)
     s = re.sub(r"[^A-Z0-9 ]", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
@@ -136,7 +144,9 @@ def _normalize_shp(s: str) -> str:
 def _shp_municipality(precinct_raw: str) -> str:
     """Extract municipality name from a shapefile PRECINCT string."""
     s = precinct_raw.upper().strip()
-    s = re.sub(r"\b(CITY|TOWN|VILLAGE)\b", "", s)
+    s = re.sub(r"\b(CITY|TOWN|VILLAGE|BOROUGH|TOWNSHIP)\b", "", s)
+    # Strip NJ ward/congressional-district suffixes e.g. 'W1 CD11', 'W3'
+    s = re.sub(r"\s+W\d+(\s+CD\d+)?$", "", s)
     # Remove trailing number or ward-ed suffix
     s = re.sub(r"\s+\d+(-\d+)?$", "", s)
     s = re.sub(r"[^A-Z0-9 ]", " ", s)
@@ -219,9 +229,15 @@ def _load_2024_votes(csv_path: str) -> tuple[dict, dict, dict]:
             else:
                 prec_rep[pkey] = prec_rep.get(pkey, 0) + votes
 
-            # Municipality-level (all modes summed)
-            if muni:
-                mkey = (fips, muni)
+            # Municipality-level: use jurisdiction_name when jurisdiction_fips indicates sub-county
+            # granularity (len > 5 means it encodes a place/MCD, not just the county).
+            # NJ jurisdiction_name is county-level; CT is town-level with 10-digit fips.
+            jurisdiction = (row.get("jurisdiction_name") or "").strip().upper()
+            jfips = str(row.get("jurisdiction_fips") or "").strip()
+            sub_county_jurisdiction = jurisdiction if (jurisdiction and len(jfips) > 5) else ""
+            muni_key_name = sub_county_jurisdiction if sub_county_jurisdiction else muni
+            if muni_key_name:
+                mkey = (fips, muni_key_name)
                 if party == "DEMOCRAT":
                     muni_dem[mkey] = muni_dem.get(mkey, 0) + votes
                 else:
