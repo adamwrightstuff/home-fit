@@ -121,7 +121,7 @@ def _component_safety(community_safety_details: Optional[Dict[str, Any]]) -> Opt
     if community_safety_details.get("status") not in ("success", None):
         return None
     score = community_safety_details.get("score")
-    if isinstance(score, (int, float)) and float(score) > 0:
+    if isinstance(score, (int, float)) and float(score) >= 0:
         return max(0.0, min(100.0, float(score)))
     return None
 
