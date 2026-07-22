@@ -516,9 +516,11 @@ def _score_daily_urban_outdoors_v2(
     facility_count = len(recreational_facilities)
 
     exp_expectations = expectations or {}
-    exp_park_count = exp_expectations.get("expected_parks_within_1km", 8.0)
-    exp_play = exp_expectations.get("expected_playgrounds_within_1km", 2.0)
-    exp_facilities = exp_expectations.get("expected_recreational_facilities_within_1km", 3.0)
+    # Floor at 1 so _sat_ratio_v2 never divides by zero — rural has expected=0 for 1km
+    # but the query radius for rural is 2000m so parks exist; expect at least 1.
+    exp_park_count = max(1.0, exp_expectations.get("expected_parks_within_1km", 8.0))
+    exp_play = max(1.0, exp_expectations.get("expected_playgrounds_within_1km", 2.0))
+    exp_facilities = max(1.0, exp_expectations.get("expected_recreational_facilities_within_1km", 3.0))
 
     # 1. Park count density (0-22)
     s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)

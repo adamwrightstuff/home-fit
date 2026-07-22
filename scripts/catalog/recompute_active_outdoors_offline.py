@@ -41,9 +41,9 @@ def _recompute_daily(local: dict, area_type: str, expectations: dict) -> float:
     park_count = int(local.get("count") or 0)
     playground_count = int(local.get("playgrounds") or 0)
 
-    exp_park_count = expectations.get("expected_parks_within_1km", 8.0)
-    exp_play = expectations.get("expected_playgrounds_within_1km", 2.0)
-    exp_facilities = expectations.get("expected_recreational_facilities_within_1km", 3.0)
+    exp_park_count = max(1.0, expectations.get("expected_parks_within_1km", 8.0))
+    exp_play = max(1.0, expectations.get("expected_playgrounds_within_1km", 2.0))
+    exp_facilities = max(1.0, expectations.get("expected_recreational_facilities_within_1km", 3.0))
 
     s_count = _sat_ratio_v2(park_count, exp_park_count, 22.0)
     s_play = _sat_ratio_v2(playground_count, exp_play, 5.0)
