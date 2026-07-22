@@ -3,6 +3,8 @@ Happiness Index: 0–100 composite from existing pillar data (not a pillar).
 
 Components (all 0–100, renormalized when missing):
 - S (Social Fabric): Social Fabric pillar score. Strongest cross-study predictor of wellbeing.
+  Modified by economic opportunity (Putnam): economic stress erodes the happiness return on social
+  capital; opportunity amplifies it.  Modifier range ±15%: eco=0 → S×0.85, eco=100 → S×1.15.
 - F (Safety): Community Safety pillar score. Fear of crime is a primary wellbeing drag (Loukaitou-Sideris 2006).
 - C (Commute): existing commute score from public_transit (shorter = better).
 - N (Neighborhood): Neighborhood Amenities pillar. Walkable access to daily life → positive affect (research shows this is the actual built-environment happiness mechanism, not architectural aesthetics).
@@ -29,6 +31,11 @@ W_COMMUTE = 0.20
 W_NEIGHBORHOOD = 0.15
 W_HOME = 0.10
 W_GREEN = 0.05
+
+# Economic opportunity modifier on social fabric (Putnam: opportunity conditions the happiness
+# return on social capital).  Range: eco=0 → ×0.85, eco=50 → ×1.00, eco=100 → ×1.15.
+_ECO_MOD_MIN = 0.85
+_ECO_MOD_RANGE = 0.30  # 1.15 - 0.85
 
 _BASELINES_CACHE: Optional[Dict[str, Any]] = None
 
@@ -163,6 +170,7 @@ def compute_happiness_index_with_breakdown(
         "neighborhood": None,
         "home_space": None,
         "green": None,
+        "eco_modifier": 1.0,
         "component_weights": {},
     }
 
@@ -174,7 +182,20 @@ def compute_happiness_index_with_breakdown(
     H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
 
+    # Economic opportunity modifier on social fabric (Putnam): economic stress erodes the
+    # happiness return on community bonds; opportunity amplifies it.  Applied only when both
+    # S and an economic score are available; otherwise S is used unmodified.
+    eco_score: Optional[float] = None
+    if economic_security_details:
+        _raw = economic_security_details.get("score")
+        if isinstance(_raw, (int, float)) and _raw >= 0:
+            eco_score = float(_raw)
+    eco_modifier = (_ECO_MOD_MIN + (eco_score / 100.0) * _ECO_MOD_RANGE) if eco_score is not None else 1.0
+    if S is not None and eco_score is not None:
+        S = max(0.0, min(100.0, S * eco_modifier))
+
     breakdown["social"] = round(S, 1) if S is not None else None
+    breakdown["eco_modifier"] = round(eco_modifier, 3)
     breakdown["safety"] = round(F, 1) if F is not None else None
     breakdown["commute"] = round(C, 1) if C is not None else None
     breakdown["neighborhood"] = round(N, 1) if N is not None else None
