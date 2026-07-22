@@ -421,6 +421,23 @@ def get_social_fabric_score(
             else:
                 stability_score = _score_stability_from_pct(stability_pct)
 
+    # F15 tiebreaker: suppress the above-85% penalty when home values are high.
+    # High same-house-rate in an expensive market signals community attachment (Putnam);
+    # in a cheap market it signals captive/disinvestment ("stuck in place").
+    # Threshold: national median home value ~$300k; use $350k to be conservative.
+    _STABILITY_CLIFF_HV_THRESHOLD = 350_000
+    if stability_pct is not None and stability_pct > 85.0:
+        _uncapped = min(100.0, (stability_pct / 85.0) * 100.0)
+        if stability_score < _uncapped:
+            # Cliff fired — check if home values justify suppressing it.
+            try:
+                _hv_data = census_api.get_housing_data(lat, lon, tract=tract) or {}
+                _median_hv = _hv_data.get("median_home_value")
+                if isinstance(_median_hv, (int, float)) and _median_hv >= _STABILITY_CLIFF_HV_THRESHOLD:
+                    stability_score = _uncapped
+            except Exception:
+                pass  # no data → keep existing score (penalize by default)
+
     nodes = civic.get("nodes") or []
     civic_count = len(nodes)
     civic_effective = sum(_civic_node_type_weight(n.get("type") if isinstance(n, dict) else None) for n in nodes)

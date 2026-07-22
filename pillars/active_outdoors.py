@@ -5,7 +5,6 @@ Scores access to outdoor activities and recreation
 
 import math
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Tuple, Optional, List
 
 from data_sources import osm_api
@@ -228,21 +227,14 @@ def get_active_outdoors_score_v2(
         except Exception:
             return 0.0
     
-    _fetchers = {
-        "parks": _fetch_parks,
-        "trails": _fetch_trails,
-        "regional": _fetch_regional,
-        "canopy": _fetch_canopy,
-    }
-    _results: Dict = {}
-    with ThreadPoolExecutor(max_workers=4) as _pool:
-        _futures = {_pool.submit(fn): name for name, fn in _fetchers.items()}
-        for _fut in as_completed(_futures):
-            _results[_futures[_fut]] = _fut.result()
-    local = _results["parks"]
-    nature_trail = _results["trails"]
-    nature_regional = _results["regional"]
-    canopy_pct_5km = _results["canopy"]
+    # Sequential fetch: this function is called from inside the outer ThreadPoolExecutor
+    # in main.py (one slot per pillar), so nesting another pool would create 52+ peak
+    # threads across 13 pillars.  The four calls here are short-latency OSM/GEE fetches
+    # that don't benefit from intra-pillar parallelism.
+    local = _fetch_parks()
+    nature_trail = _fetch_trails()
+    nature_regional = _fetch_regional()
+    canopy_pct_5km = _fetch_canopy()
     
     # Extract data from results
     parks: List[Dict] = local.get("parks", []) or []

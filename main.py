@@ -1073,6 +1073,14 @@ def _set_pillar_status(
             dq["fallback_reason"] = dq.get("reason", "Pillar execution failed")
             dq["confidence"] = min(int(dq.get("confidence") or 0), 10)
             entry["confidence"] = min(int(entry.get("confidence") or 0), 10)
+        elif entry.get("score") is None:
+            # Pillar returned None (no data available, not a code failure).
+            # Weight has been redistributed to scored pillars (F02).
+            entry["status"] = "no_data"
+            dq["quality_tier"] = "none"
+            dq["confidence"] = 0
+            entry["confidence"] = 0
+            entry["rescore_available"] = True
         elif data_quality_indicates_fallback(dq):
             entry["status"] = "fallback"
             dq.setdefault("quality_tier", "poor")
@@ -2283,6 +2291,11 @@ def _compute_single_score_internal(
         political_lean_score, political_lean_details = _raw_political_lean
     else:
         political_lean_score, political_lean_details = None, {}
+    # F02: Ghost weight redistribution — pillars with score=None (no data) retain their
+    # full token weight in the denominator, depressing total_score ceiling.  Zero their
+    # weight and rescale remaining weights proportionally to 100.
+    _no_data_pillars: List[str] = []
+
     if political_lean_score is None and "political_lean" in token_allocation and token_allocation["political_lean"] > 0:
         token_allocation = dict(token_allocation)
         token_allocation["political_lean"] = 0.0
@@ -2290,6 +2303,20 @@ def _compute_single_score_internal(
         if _remaining > 0:
             _scale = 100.0 / _remaining
             token_allocation = {k: v * _scale for k, v in token_allocation.items()}
+        _no_data_pillars.append("political_lean")
+
+    for _pillar_key, _score_val in [
+        ("community_safety", community_safety_score),
+        ("neighborhood_amenities", amenities_score),
+    ]:
+        if _score_val is None and _pillar_key in token_allocation and token_allocation[_pillar_key] > 0:
+            token_allocation = dict(token_allocation)
+            token_allocation[_pillar_key] = 0.0
+            _remaining = sum(token_allocation.values())
+            if _remaining > 0:
+                _scale = 100.0 / _remaining
+                token_allocation = {k: v * _scale for k, v in token_allocation.items()}
+            _no_data_pillars.append(_pillar_key)
 
     _inject_white_collar_into_economic_security(economic_security_details, census_tract)
 
@@ -2723,7 +2750,12 @@ def _compute_single_score_internal(
             "architecture": "13 Purpose-Driven Pillars",
             "note": "Total score = weighted average of 13 pillars. Equal token distribution by default.",
             "test_mode": test_mode_enabled
-        }
+        },
+        **({"data_gaps": {
+            "pillars": _no_data_pillars,
+            "rescore_available": True,
+            "note": "These pillars had no data. Their weights were redistributed to scored pillars.",
+        }} if _no_data_pillars else {}),
     }
     status_signal_result = _compute_status_signal_for_response(
         housing_details,
