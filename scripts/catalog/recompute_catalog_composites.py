@@ -64,6 +64,20 @@ def _merge_composites_into_score(score: Dict[str, Any], composites: Dict[str, An
 
 
 def main() -> int:
+    # Bypass __init__.py files that eagerly import heavy pillars/data-source modules
+    # (gee_api → ee, osm_api, etc.) which aren't installed in every environment.
+    # Pre-registering empty package namespaces lets individual submodules load on demand.
+    import sys
+    import types as _types
+    for _pkg_name, _pkg_dir in [
+        ("pillars", REPO_ROOT / "pillars"),
+        ("data_sources", REPO_ROOT / "data_sources"),
+    ]:
+        if _pkg_name not in sys.modules:
+            _pkg = _types.ModuleType(_pkg_name)
+            _pkg.__path__ = [str(_pkg_dir)]  # type: ignore[attr-defined]
+            _pkg.__package__ = _pkg_name
+            sys.modules[_pkg_name] = _pkg
     from pillars.composite_indices import recompute_composites_from_payload
 
     ap = argparse.ArgumentParser(
@@ -104,6 +118,11 @@ def main() -> int:
         action="store_true",
         help="With --in-place, write the output without creating a timestamped .bak copy.",
     )
+    ap.add_argument(
+        "--no-census",
+        action="store_true",
+        help="Skip get_census_tract lookups (use when running offline or behind a proxy that blocks Census API).",
+    )
     args = ap.parse_args()
 
     if args.in_place and args.output is not None:
@@ -124,6 +143,15 @@ def main() -> int:
     if not args.input.is_file():
         print(f"Input not found: {args.input}", file=sys.stderr)
         return 1
+
+    if args.no_census:
+        # Patch get_census_tract to return None immediately so the Census geocoder
+        # (blocked in offline/proxy environments) doesn't stall every row.
+        # The lazy `from data_sources import census_api as _ca` inside
+        # recompute_composites_from_payload will pick up the already-imported module.
+        import data_sources.census_api as _census_mod
+        _census_mod.get_census_tract = lambda *a, **k: None  # type: ignore[method-assign]
+        print("Census tract lookups disabled (--no-census).")
 
     only_set: Optional[Set[str]] = None
     if args.only_search_query:
