@@ -46,6 +46,12 @@ _COMPOSITE_KEYS = (
     "total_score",
 )
 
+# Fields that should not move when recomputing from stored pillar data.
+# status_signal is driven by Census tract data that doesn't change between
+# pillar rescores; any drift > threshold indicates a baseline-selection bug.
+_STABLE_FIELDS = ("status_signal",)
+_DRIFT_THRESHOLD = 5.0  # pts — abort if any stable field moves beyond this
+
 
 def _merge_composites_into_score(score: Dict[str, Any], composites: Dict[str, Any]) -> None:
     for k in _COMPOSITE_KEYS:
@@ -111,7 +117,15 @@ def main() -> int:
     ap.add_argument(
         "--dry-run",
         action="store_true",
-        help="Recompute in memory but do not write output file",
+        help="Recompute in memory, print delta summary, do not write output file",
+    )
+    ap.add_argument(
+        "--no-abort-on-drift",
+        action="store_true",
+        help=(
+            "Skip the circuit-breaker that aborts when a stable field (status_signal) "
+            f"moves more than {_DRIFT_THRESHOLD} pts. Use only when you understand why it drifted."
+        ),
     )
     ap.add_argument(
         "--no-backup",
@@ -163,6 +177,8 @@ def main() -> int:
     errors = 0
     lines_out: list[str] = []
     matched_queries: Set[str] = set()
+    # drift_records[field] = list of (name, old, new) for every recomputed row
+    drift_records: Dict[str, List[tuple]] = {f: [] for f in _STABLE_FIELDS}
 
     with args.input.open("r", encoding="utf-8") as f:
         for line_no, line in enumerate(f, start=1):
@@ -208,10 +224,17 @@ def main() -> int:
                 continue
 
             try:
+                old_stable = {f: score.get(f) for f in _STABLE_FIELDS}
                 composites = recompute_composites_from_payload(score)
                 _merge_composites_into_score(score, composites)
                 record["score"] = score
                 processed += 1
+                label = sq or f"line {line_no}"
+                for f in _STABLE_FIELDS:
+                    old_v = old_stable[f]
+                    new_v = score.get(f)
+                    if old_v is not None and new_v is not None:
+                        drift_records[f].append((label, float(old_v), float(new_v)))
             except Exception as e:
                 print(f"Line {line_no}: recompute error: {e}", file=sys.stderr)
                 errors += 1
@@ -227,12 +250,45 @@ def main() -> int:
         if missing:
             print(f"Warning: no catalog row for search_query: {sorted(missing)}", file=sys.stderr)
 
+    # Delta summary — always printed (dry-run and normal run).
+    def _print_delta_summary() -> bool:
+        """Print per-stable-field delta report. Returns True if circuit breaker should fire."""
+        abort = False
+        for field, records in drift_records.items():
+            if not records:
+                print(f"  {field}: no data (all rows missing old or new value)")
+                continue
+            deltas = [new - old for _, old, new in records]
+            mean_d = sum(deltas) / len(deltas)
+            max_d = max(deltas, key=abs)
+            large = [(name, old, new) for name, old, new in records if abs(new - old) > _DRIFT_THRESHOLD]
+            flag = " *** LARGE DRIFT ***" if large else ""
+            print(f"  {field}: n={len(records)}, mean Δ{mean_d:+.2f}, max Δ{max_d:+.2f}{flag}")
+            if large:
+                for name, old, new in large[:10]:
+                    print(f"    {name}: {old:.1f} → {new:.1f} (Δ{new - old:+.1f})")
+                if not args.no_abort_on_drift:
+                    abort = True
+        return abort
+
     if args.dry_run:
         print(
             f"dry-run: recomputed {processed} rows in memory "
             f"(skipped non-success/no-score: {skipped}, parse errors: {errors})"
         )
+        print("Delta report (stable fields):")
+        _print_delta_summary()
         return 0
+
+    print("Delta report (stable fields):")
+    should_abort = _print_delta_summary()
+    if should_abort:
+        print(
+            f"ABORT: status_signal drifted >{_DRIFT_THRESHOLD} pts on one or more entries. "
+            "No output written. Investigate the cause, then re-run with --no-abort-on-drift to override.",
+            file=sys.stderr,
+        )
+        return 2
 
     if args.in_place and not args.no_backup:
         bak = args.input.parent / f"{args.input.name}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
