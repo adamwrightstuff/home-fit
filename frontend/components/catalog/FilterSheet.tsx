@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
+import { type WaterfrontSubPreference, WATERFRONT_SUB_LABELS } from '@/lib/aoPreference'
 import { X } from 'lucide-react'
 
 const AREA_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -43,6 +44,8 @@ interface FilterSheetProps {
   onFilterNbTypesChange: (v: string[]) => void
   filterAoTypes: string[]
   onFilterAoTypesChange: (v: string[]) => void
+  filterWaterfrontSubPref: WaterfrontSubPreference | null
+  onFilterWaterfrontSubPrefChange: (v: WaterfrontSubPreference | null) => void
   filterHousingType: string[]
   onFilterHousingTypeChange: (v: string[]) => void
   filterSchoolType: 'any' | 'public_only' | 'charter'
@@ -88,6 +91,8 @@ export default function FilterSheet({
   onFilterNbTypesChange,
   filterAoTypes,
   onFilterAoTypesChange,
+  filterWaterfrontSubPref,
+  onFilterWaterfrontSubPrefChange,
   filterHousingType,
   onFilterHousingTypeChange,
   filterSchoolType,
@@ -117,6 +122,7 @@ export default function FilterSheet({
     (filterPoliticalLean.length > 0 ? 1 : 0) +
     (filterNbTypes.length > 0 ? 1 : 0) +
     (filterAoTypes.length > 0 ? 1 : 0) +
+    (filterWaterfrontSubPref !== null ? 1 : 0) +
     (filterHousingType.length > 0 ? 1 : 0) +
     (filterSchoolType !== 'any' ? 1 : 0) +
     (filterLocalScene !== 'all' ? 1 : 0)
@@ -129,6 +135,7 @@ export default function FilterSheet({
     onFilterPoliticalLeanChange([])
     onFilterNbTypesChange([])
     onFilterAoTypesChange([])
+    onFilterWaterfrontSubPrefChange(null)
     onFilterHousingTypeChange([])
     onFilterSchoolTypeChange('any')
     onFilterLocalSceneChange('all')
@@ -293,6 +300,7 @@ export default function FilterSheet({
                 chip(filterAoTypes.includes(value), label, () => {
                   if (filterAoTypes.includes(value)) {
                     onFilterAoTypesChange(filterAoTypes.filter((v) => v !== value))
+                    if (value === 'waterfront') onFilterWaterfrontSubPrefChange(null)
                   } else {
                     onFilterAoTypesChange([...filterAoTypes, value])
                   }
@@ -302,13 +310,39 @@ export default function FilterSheet({
             {filterAoTypes.length > 0 && (
               <button
                 type="button"
-                onClick={() => onFilterAoTypesChange([])}
+                onClick={() => { onFilterAoTypesChange([]); onFilterWaterfrontSubPrefChange(null) }}
                 style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Clear
               </button>
             )}
           </div>
+
+          {/* Waterfront sub-preference — visible only when Waterfront is selected */}
+          {filterAoTypes.includes('waterfront') && (
+            <div style={{ marginBottom: 20, paddingLeft: 12, borderLeft: '2px solid var(--hf-border, #e5e7eb)' }}>
+              <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>Waterfront type</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                Further refine the waterfront score toward a specific water type.
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {(Object.keys(WATERFRONT_SUB_LABELS) as WaterfrontSubPreference[]).map((key) =>
+                  chip(filterWaterfrontSubPref === key, WATERFRONT_SUB_LABELS[key], () =>
+                    onFilterWaterfrontSubPrefChange(filterWaterfrontSubPref === key ? null : key)
+                  )
+                )}
+              </div>
+              {filterWaterfrontSubPref !== null && (
+                <button
+                  type="button"
+                  onClick={() => onFilterWaterfrontSubPrefChange(null)}
+                  style={{ marginTop: 6, fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Housing Stock */}
           <div style={{ marginBottom: 20 }}>

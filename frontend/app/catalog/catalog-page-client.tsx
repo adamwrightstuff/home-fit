@@ -34,7 +34,7 @@ import { writeCatalogResultsHydrate } from '@/lib/catalogResultsHydrate'
 import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
-import { applyAoPreferences, type AoPreference, type AoBreakdown } from '@/lib/aoPreference'
+import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
 import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -110,6 +110,7 @@ export default function CatalogPageClient({
   const [filterPoliticalLean, setFilterPoliticalLean] = useState<string[]>([])
   const [filterNbTypes, setFilterNbTypes] = useState<string[]>([])
   const [filterAoTypes, setFilterAoTypes] = useState<string[]>([])
+  const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
   const [filterHousingType, setFilterHousingType] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
@@ -366,14 +367,46 @@ export default function CatalogPageClient({
       }
     })
 
-    // If active outdoors sub-preferences are active, reweight the AO score to the average
-    // of the selected sub-components (daily_urban_outdoors, wild_adventure, waterfront_lifestyle).
-    if (filterAoTypes.length === 0 || filterAoTypes.length === 3) return withNb
+    // If active outdoors sub-preferences are active, reweight the AO score toward selected
+    // sub-components (daily_urban_outdoors, wild_adventure, waterfront_lifestyle).
+    // When a waterfront sub-preference (ocean_beach / lake_river / bay_harbor) is also set,
+    // first re-weight waterfront_lifestyle toward that water type, then apply the AO OWA.
+    const aoActive = filterAoTypes.length > 0 && filterAoTypes.length < 3
+    if (!aoActive && !filterWaterfrontSubPref) return withNb
     return withNb.map((p) => {
       const ao = (p.score.livability_pillars as any)?.active_outdoors
       if (!ao) return p
       const bk = ao.breakdown as AoBreakdown | undefined
-      const reweighted = applyAoPreferences(bk, filterAoTypes as AoPreference[])
+
+      // Inject waterfront sub-preference into breakdown before AO OWA reweighting
+      let effectiveBk = bk
+      if (filterWaterfrontSubPref && filterAoTypes.includes('waterfront') && bk) {
+        const prefWf = applyWaterfrontPreference(bk, filterWaterfrontSubPref)
+        if (prefWf !== null) {
+          // applyAoPreferences normalizes waterfront_lifestyle (0–25 raw) to 0–100.
+          // prefWf is already 0–100, so convert back to raw range before injection.
+          effectiveBk = { ...bk, waterfront_lifestyle: (prefWf * 25) / 100 }
+        }
+      }
+
+      if (!aoActive) {
+        // Sub-pref only (no AO type filter active): update waterfront component directly
+        if (!effectiveBk || effectiveBk === bk) return p
+        const newWf = effectiveBk.waterfront_lifestyle
+        if (typeof newWf !== 'number') return p
+        return {
+          ...p,
+          score: {
+            ...p.score,
+            livability_pillars: {
+              ...p.score.livability_pillars,
+              active_outdoors: { ...ao, breakdown: effectiveBk },
+            },
+          },
+        }
+      }
+
+      const reweighted = applyAoPreferences(effectiveBk, filterAoTypes as AoPreference[])
       if (reweighted === null) return p
       return {
         ...p,
@@ -386,7 +419,7 @@ export default function CatalogPageClient({
         },
       }
     })
-  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes])
+  }, [places, householdIncome, filterSchoolType, filterNbTypes, filterAoTypes, filterWaterfrontSubPref])
 
   const filteredPlaces = useMemo(() => {
     const t = filterText.trim().toLowerCase()
@@ -1286,7 +1319,12 @@ export default function CatalogPageClient({
         filterNbTypes={filterNbTypes}
         onFilterNbTypesChange={setFilterNbTypes}
         filterAoTypes={filterAoTypes}
-        onFilterAoTypesChange={setFilterAoTypes}
+        onFilterAoTypesChange={(next) => {
+          setFilterAoTypes(next)
+          if (!next.includes('waterfront')) setFilterWaterfrontSubPref(null)
+        }}
+        filterWaterfrontSubPref={filterWaterfrontSubPref}
+        onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
         filterSchoolType={filterSchoolType}
