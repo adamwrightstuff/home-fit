@@ -106,6 +106,8 @@ export function applyWaterfrontPreference(
 
   const prefIdx = keys.indexOf(preference)
   const prefVal = vals[prefIdx]
+  // A place with zero of the preferred water type gets no cross-category boost.
+  if (prefVal === 0) return 0
   const others = vals.filter((_, i) => i !== prefIdx).sort((a, b) => b - a)
 
   const ranked = [prefVal, ...others]
