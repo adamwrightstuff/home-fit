@@ -56,6 +56,14 @@ Pre-computed JSON files in `data/` provide metro-specific and area-type-specific
 
 Scripts in `scripts/catalog/` handle batch scoring of place catalogs to JSONL, re-running failed pillars, rescoring single pillars, recomputing composites, and exporting CSVs. These are not production code — they're admin tools. See `scripts/README.md` for the full inventory.
 
+## Before Suggesting an API Rescore or Live API Call
+
+**NON-NEGOTIABLE: always ask "what data does this fix actually require?" before reaching for the API.**
+
+If the correction can be derived from numbers already stored in the catalog JSONL — sub-scores, breakdowns, weights, composite totals, NB water_type, area_type, etc. — do it offline. The API is only justified when the fix requires data that is not stored: new Overpass queries, fresh Census calls, GEE canopy, geocoding. A pure logic change applied to existing scores is never a reason to call the API.
+
+This has been called out as a repeated mistake. Don't do it again.
+
 ## Before Suggesting a Rescore
 
 **NON-NEGOTIABLE pre-check before recommending any rescore or re-run:**
