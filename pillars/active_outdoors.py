@@ -84,9 +84,9 @@ def get_active_outdoors_score_v2(
     Compute Active Outdoors v2 (0–100).
 
     Built on three objective components (same scale as Natural Beauty-style pillars):
-      - Daily Urban Outdoors (0–30)
+      - Daily Urban Outdoors (0–35)
       - Wild Adventure Backbone (0–50)
-      - Waterfront Lifestyle (0–20)
+      - Waterfront Lifestyle (0–25)
 
     Final score = daily + wild + water (capped 0–100). Underlying data: OSM, GEE canopy, etc.
     area_type sets expectations only (no per-city score hacks).
@@ -657,6 +657,8 @@ def _score_wild_adventure_v2(
                "s_canopy": s_canopy, "s_camp": s_camp, "final_wild": final_wild}
     )
     return final_wild
+
+
 _WATERFRONT_CATEGORY: Dict[str, str] = {
     "beach": "ocean_beach",
     "coastline": "ocean_beach",
@@ -757,6 +759,8 @@ def _score_water_lifestyle_v2(
                "waterfront_breakdown": waterfront_breakdown}
     )
     return final_water, waterfront_breakdown
+
+
 def _filter_urban_paths_from_trails(hiking_trails: List[Dict], area_type: str) -> List[Dict]:
     """
     Filter out urban paths/cycle paths from hiking trails in dense urban cores.

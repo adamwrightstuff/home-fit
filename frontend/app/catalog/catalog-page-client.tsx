@@ -367,42 +367,24 @@ export default function CatalogPageClient({
       }
     })
 
-    // If active outdoors sub-preferences are active, reweight the AO score toward selected
-    // sub-components (daily_urban_outdoors, wild_adventure, waterfront_lifestyle).
-    // When a waterfront sub-preference (ocean_beach / lake_river / bay_harbor) is also set,
-    // first re-weight waterfront_lifestyle toward that water type, then apply the AO OWA.
+    // Reweight AO score toward selected sub-components (1–2 selected = partial preference;
+    // 0 or 3 = no reweighting). When a waterfront sub-preference is also active, first
+    // re-weight waterfront_lifestyle toward the chosen water type, then apply AO OWA.
     const aoActive = filterAoTypes.length > 0 && filterAoTypes.length < 3
-    if (!aoActive && !filterWaterfrontSubPref) return withNb
+    if (!aoActive) return withNb
     return withNb.map((p) => {
       const ao = (p.score.livability_pillars as any)?.active_outdoors
       if (!ao) return p
       const bk = ao.breakdown as AoBreakdown | undefined
 
-      // Inject waterfront sub-preference into breakdown before AO OWA reweighting
+      // Inject waterfront sub-preference before AO OWA so the sub-type affects ranking
       let effectiveBk = bk
       if (filterWaterfrontSubPref && filterAoTypes.includes('waterfront') && bk) {
         const prefWf = applyWaterfrontPreference(bk, filterWaterfrontSubPref)
         if (prefWf !== null) {
-          // applyAoPreferences normalizes waterfront_lifestyle (0–25 raw) to 0–100.
-          // prefWf is already 0–100, so convert back to raw range before injection.
+          // applyAoPreferences normalizes waterfront_lifestyle (0–25 raw) to 0–100,
+          // so convert prefWf (already 0–100) back to raw range before injection.
           effectiveBk = { ...bk, waterfront_lifestyle: (prefWf * 25) / 100 }
-        }
-      }
-
-      if (!aoActive) {
-        // Sub-pref only (no AO type filter active): update waterfront component directly
-        if (!effectiveBk || effectiveBk === bk) return p
-        const newWf = effectiveBk.waterfront_lifestyle
-        if (typeof newWf !== 'number') return p
-        return {
-          ...p,
-          score: {
-            ...p.score,
-            livability_pillars: {
-              ...p.score.livability_pillars,
-              active_outdoors: { ...ao, breakdown: effectiveBk },
-            },
-          },
         }
       }
 
@@ -1321,7 +1303,7 @@ export default function CatalogPageClient({
         filterAoTypes={filterAoTypes}
         onFilterAoTypesChange={(next) => {
           setFilterAoTypes(next)
-          if (!next.includes('waterfront')) setFilterWaterfrontSubPref(null)
+          if (!next.includes('waterfront') || next.length >= 3) setFilterWaterfrontSubPref(null)
         }}
         filterWaterfrontSubPref={filterWaterfrontSubPref}
         onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
