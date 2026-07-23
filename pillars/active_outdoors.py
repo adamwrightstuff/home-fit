@@ -388,7 +388,7 @@ def get_active_outdoors_score_v2(
     wild_score = _score_wild_adventure_v2(
         hiking_trails, camping, canopy_pct_5km, scoring_area_type, is_mountain_town=is_mountain_town
     )
-    water_score = _score_water_lifestyle_v2(
+    water_score, waterfront_breakdown = _score_water_lifestyle_v2(
         swimming, scoring_area_type, is_desert_context=is_desert_context
     )
 
@@ -417,6 +417,7 @@ def get_active_outdoors_score_v2(
             "daily_urban_outdoors": round(daily_score, 1),
             "wild_adventure": round(wild_score, 1),
             "waterfront_lifestyle": round(water_score, 1),
+            "waterfront_breakdown": waterfront_breakdown,
         },
         "summary": {
             **_build_summary_v2(
@@ -656,30 +657,44 @@ def _score_wild_adventure_v2(
                "s_canopy": s_canopy, "s_camp": s_camp, "final_wild": final_wild}
     )
     return final_wild
-def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context: bool = False) -> float:
+_WATERFRONT_CATEGORY: Dict[str, str] = {
+    "beach": "ocean_beach",
+    "coastline": "ocean_beach",
+    "coastline_rocky": "ocean_beach",
+    "lake": "lake_river",
+    "swimming_area": "lake_river",
+    "bay": "bay_harbor",
+}
+_WATERFRONT_BASE: Dict[str, float] = {
+    "beach": 25.0,
+    "swimming_area": 22.0,
+    "lake": 22.0,
+    "coastline": 15.0,
+    "coastline_rocky": 10.0,
+    "bay": 12.0,
+}
+
+
+def _score_water_lifestyle_v2(
+    swimming: list, area_type: str, is_desert_context: bool = False
+) -> Tuple[float, Dict]:
     """
     Waterfront Lifestyle (0-25):
       Score the BEST water feature by its computed score, not just the nearest.
       A distant ocean beach beats a nearby ornamental pond.
 
-    Budget raised 20->25 to match new 35+40+25=100 component totals.
+    Returns (score, waterfront_breakdown) where waterfront_breakdown contains
+    per-category best scores normalized to 0-100 for preference reweighting.
+    Categories: ocean_beach (beach/coastline), lake_river (lake/swimming_area), bay_harbor (bay).
     """
+    _empty_breakdown: Dict = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
     if not swimming:
-        return 0.0
+        return 0.0, _empty_breakdown
 
-    base_scores = {
-        "beach": 25.0,
-        "swimming_area": 22.0,
-        "lake": 22.0,
-        "coastline": 15.0,
-        "coastline_rocky": 10.0,
-        "bay": 12.0,
-    }
-
-    def feature_score(feat):
+    def feature_score(feat: Dict) -> float:
         d = feat.get("distance_m", 1e9)
         t = feat.get("type")
-        base = base_scores.get(t, 10.0)
+        base = _WATERFRONT_BASE.get(t, 10.0)
 
         # Context downweights
         if area_type in {"urban_core"} and t not in {"beach"}:
@@ -699,16 +714,33 @@ def _score_water_lifestyle_v2(swimming: list, area_type: str, is_desert_context:
 
         return base
 
-    best_score = max(feature_score(f) for f in swimming)
+    category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
+    all_feature_scores = []
+    for feat in swimming:
+        s = feature_score(feat)
+        all_feature_scores.append(s)
+        cat = _WATERFRONT_CATEGORY.get(feat.get("type", ""), "lake_river")
+        if s > category_best[cat]:
+            category_best[cat] = s
+
+    best_score = max(all_feature_scores)
     final_water = max(0.0, min(25.0, best_score))
+
+    # Normalize each category to 0-100 (budget cap is 25)
+    waterfront_breakdown: Dict = {
+        cat: round(min(100.0, v / 25.0 * 100.0), 1)
+        for cat, v in category_best.items()
+    }
 
     logger.info(
         f"[WATERFRONT LIFESTYLE] area_type={area_type} desert={is_desert_context} "
-        f"features={len(swimming)} -> {final_water:.1f}/25",
+        f"features={len(swimming)} -> {final_water:.1f}/25 "
+        f"breakdown={waterfront_breakdown}",
         extra={"pillar_name": "active_outdoors_v2", "area_type": area_type,
-               "swimming_count": len(swimming), "final_water": final_water}
+               "swimming_count": len(swimming), "final_water": final_water,
+               "waterfront_breakdown": waterfront_breakdown}
     )
-    return final_water
+    return final_water, waterfront_breakdown
 def _filter_urban_paths_from_trails(hiking_trails: List[Dict], area_type: str) -> List[Dict]:
     """
     Filter out urban paths/cycle paths from hiking trails in dense urban cores.
