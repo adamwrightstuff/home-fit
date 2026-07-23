@@ -691,10 +691,26 @@ def _score_water_lifestyle_v2(
     if not swimming:
         return 0.0, _empty_breakdown
 
+    # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
+    # natural=coastline is the unambiguous OSM ocean signal. If any coastline feature
+    # is present in the same result set, beach features are confirmed ocean beaches and
+    # keep their full base score. Without coastline confirmation, beach is an inland
+    # park/lake beach and scores like swimming_area (not like ocean beach).
+    has_coastline_nearby = any(
+        f.get("type") in ("coastline", "coastline_rocky") for f in swimming
+    )
+    effective_category = dict(_WATERFRONT_CATEGORY)
+    if not has_coastline_nearby:
+        effective_category["beach"] = "lake_river"
+
     def feature_score(feat: Dict) -> float:
         d = feat.get("distance_m", 1e9)
         t = feat.get("type")
         base = _WATERFRONT_BASE.get(t, 10.0)
+
+        # Inland park beach: downgrade to swimming_area level (no ocean confirmation)
+        if t == "beach" and not has_coastline_nearby:
+            base = _WATERFRONT_BASE["swimming_area"]
 
         # Context downweights
         if area_type in {"urban_core"} and t not in {"beach"}:
@@ -713,16 +729,6 @@ def _score_water_lifestyle_v2(
             base *= math.exp(-0.00025 * (d - 3_000))
 
         return base
-
-    # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
-    # If any coastline feature is present in the same result set, the area is coastal
-    # and beach features are ocean beaches. Otherwise beach → lake_river.
-    has_coastline_nearby = any(
-        f.get("type") in ("coastline", "coastline_rocky") for f in swimming
-    )
-    effective_category = dict(_WATERFRONT_CATEGORY)
-    if not has_coastline_nearby:
-        effective_category["beach"] = "lake_river"
 
     category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
     all_feature_scores = []
