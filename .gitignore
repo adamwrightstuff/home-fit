@@ -86,3 +86,4 @@ data/irs_bmf_raw/
 
 # Local persistent HTTP/OSM/GEE cache (no Redis locally)
 .disk_cache/
+shortlist_results.json
