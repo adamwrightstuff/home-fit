@@ -714,12 +714,22 @@ def _score_water_lifestyle_v2(
 
         return base
 
+    # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
+    # If any coastline feature is present in the same result set, the area is coastal
+    # and beach features are ocean beaches. Otherwise beach → lake_river.
+    has_coastline_nearby = any(
+        f.get("type") in ("coastline", "coastline_rocky") for f in swimming
+    )
+    effective_category = dict(_WATERFRONT_CATEGORY)
+    if not has_coastline_nearby:
+        effective_category["beach"] = "lake_river"
+
     category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
     all_feature_scores = []
     for feat in swimming:
         s = feature_score(feat)
         all_feature_scores.append(s)
-        cat = _WATERFRONT_CATEGORY.get(feat.get("type", ""), "lake_river")
+        cat = effective_category.get(feat.get("type", ""), "lake_river")
         if s > category_best[cat]:
             category_best[cat] = s
 
