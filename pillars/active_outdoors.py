@@ -694,12 +694,17 @@ def _score_water_lifestyle_v2(
         return 0.0, _empty_breakdown
 
     # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
-    # natural=coastline is the unambiguous OSM ocean signal. If any coastline feature
-    # is present in the same result set, beach features are confirmed ocean beaches and
-    # keep their full base score. Without coastline confirmation, beach is an inland
-    # park/lake beach and scores like swimming_area (not like ocean beach).
+    # natural=coastline is the unambiguous OSM ocean signal. A coastline feature within
+    # 15km of the scoring center confirms nearby beaches are ocean beaches. Beyond 15km
+    # the coastline belongs to a different water body — e.g. Long Island Sound coastline
+    # at 17-27km contaminates Hudson River towns like Tarrytown and Ossining, causing
+    # their river beaches to be misclassified as ocean_beach. 15km is chosen to stay
+    # above the ~2-4km OSM geometry offset documented for Venice CA while excluding the
+    # LI Sound / Hudson River conflation case.
     has_coastline_nearby = any(
-        f.get("type") in ("coastline", "coastline_rocky") for f in swimming
+        f.get("type") in ("coastline", "coastline_rocky")
+        and f.get("distance_m", 1e9) <= 15_000
+        for f in swimming
     )
     effective_category = dict(_WATERFRONT_CATEGORY)
     if not has_coastline_nearby:
