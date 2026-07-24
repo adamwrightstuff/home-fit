@@ -256,6 +256,18 @@ export default function CatalogPageClient({
           setHouseholdIncome(opts.household_income)
           setIncomeInputValue(String(opts.household_income))
         }
+        const f = opts.filters
+        if (f && typeof f === 'object') {
+          if (Array.isArray(f.filterAreaTypes)) setFilterAreaTypes(f.filterAreaTypes)
+          if (Array.isArray(f.filterArchetypes)) setFilterArchetypes(f.filterArchetypes)
+          if (typeof f.filterTrajectory === 'string') setFilterTrajectory(f.filterTrajectory)
+          if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
+          if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
+          if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
+          if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
+          if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
+          if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
+        }
       })
       .catch(() => { /* silently ignore — sessionStorage fallback already applied */ })
   }, [user])
@@ -267,11 +279,26 @@ export default function CatalogPageClient({
       fetch('/api/me/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priorities, dealbreakers, household_income: householdIncome }),
+        body: JSON.stringify({
+          priorities,
+          dealbreakers,
+          household_income: householdIncome,
+          filters: {
+            filterAreaTypes,
+            filterArchetypes,
+            filterTrajectory,
+            filterPoliticalLean,
+            filterNbTypes,
+            filterAoTypes,
+            filterHousingType,
+            filterSchoolType,
+            filterLocalScene,
+          },
+        }),
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterSchoolType, filterLocalScene])
 
   useEffect(() => {
     const key = searchParams.get('key')
