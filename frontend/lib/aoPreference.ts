@@ -78,8 +78,9 @@ export function applyAoPreferences(
     .filter((v): v is number => typeof v === 'number')
     .sort((a, b) => b - a)
 
+  const dynamicLead = Math.min(1.0, 0.62 + 0.38 * (preferred / 100))
   const ranked = [preferred, ...others]
-  const weights = AO_OWA_WEIGHTS.slice(0, ranked.length)
+  const weights = [dynamicLead, ...AO_OWA_WEIGHTS.slice(1, ranked.length)]
   const tot = weights.reduce((a, b) => a + b, 0) || 1
   return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }
@@ -110,8 +111,9 @@ export function applyWaterfrontPreference(
   if (prefVal === 0) return 0
   const others = vals.filter((_, i) => i !== prefIdx).sort((a, b) => b - a)
 
+  const dynamicLead = Math.min(1.0, 0.62 + 0.38 * (prefVal / 100))
   const ranked = [prefVal, ...others]
-  const weights = WATERFRONT_OWA_WEIGHTS.slice(0, ranked.length)
+  const weights = [dynamicLead, ...WATERFRONT_OWA_WEIGHTS.slice(1, ranked.length)]
   const tot = weights.reduce((a, b) => a + b, 0) || 1
   return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }
