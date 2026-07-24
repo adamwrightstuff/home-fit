@@ -693,14 +693,13 @@ def _score_water_lifestyle_v2(
     if not swimming:
         return 0.0, _empty_breakdown
 
-    # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
-    # natural=coastline is the unambiguous OSM ocean signal. We confirm each beach
-    # individually: a coastline feature must sit within 3km of that beach's own distance
-    # from the scoring center. A global boolean fails for places like Windsor Terrace or
-    # the Upper East Side, where Upper New York Harbor coastline is 6-11km away — real
-    # ocean signal for coastal Brooklyn but a false positive for inland Hudson River towns.
-    # The 3km slop accounts for OSM geometry offsets (coastline ways may not center exactly
-    # at the water's edge) while still separating a beach at 0.3km from a coastline at 17km.
+    # natural=beach is ambiguous — ocean beaches and inland park beaches share the tag.
+    # natural=coastline is the unambiguous OSM ocean signal. Confirm each beach individually:
+    # the nearest coastline must be within 3km of that beach's own distance from the scoring
+    # center. This keeps the check local to each feature rather than global — a coastline
+    # that is far from all local beaches cannot contaminate their classification even if it
+    # falls within the regional query radius. The 3km tolerance covers OSM geometry offsets
+    # without conflating beaches and coastlines that belong to different water bodies.
     min_coastline_dist = min(
         (f.get("distance_m", 1e9) for f in swimming
          if f.get("type") in ("coastline", "coastline_rocky")),
