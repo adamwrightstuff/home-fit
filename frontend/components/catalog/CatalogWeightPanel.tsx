@@ -3,6 +3,7 @@
 import { X } from 'lucide-react'
 import { fullBreakdownCtaStyle } from '@/lib/indexColorSystem'
 import { PILLAR_META, type PillarKey } from '@/lib/pillars'
+import PillarInfoIcon from '@/components/PillarInfoIcon'
 import type { PillarPriorities, PriorityLevel } from '@/components/SearchOptions'
 
 const GROUPS: { title: string; keys: PillarKey[] }[] = [
@@ -123,8 +124,9 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                   const current = priorities[key]
                   return (
                     <div key={key}>
-                      <div className="mb-1 text-xs font-medium text-[var(--hf-text-primary)]">
-                        {meta.icon} {meta.name}
+                      <div className="mb-1 flex items-center gap-1 text-xs font-medium text-[var(--hf-text-primary)]">
+                        <span>{meta.icon} {meta.name}</span>
+                        <PillarInfoIcon pillarKey={key} />
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {LEVELS.map((lv) => (

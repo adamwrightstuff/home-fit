@@ -12,6 +12,7 @@ import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type P
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
 import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
+import PillarInfoIcon from '@/components/PillarInfoIcon'
 
 function isCatalogKey(id: string): boolean {
   return id.includes('|')
@@ -628,8 +629,9 @@ function CompareContent() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.2rem' }}>{p.meta.icon}</span>
                         <div>
-                          <div style={{ fontWeight: 700, color: 'var(--hf-text-primary)', fontSize: '0.95rem' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--hf-text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             {p.meta.name}
+                            <PillarInfoIcon pillarKey={p.key} />
                           </div>
                           {p.isLongevity && (
                             <div style={{ marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>

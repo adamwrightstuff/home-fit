@@ -20,6 +20,7 @@ import type { PillarPriorities } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import { useAuth } from '@/contexts/AuthContext'
 import ClimateProfileCard from './vacation/ClimateProfileCard'
+import PillarInfoIcon from './PillarInfoIcon'
 import type { ClimateProfile } from '@/types/api'
 
 /** Natural Beauty inner-weight preference (multi-select, max 2; "Any" is exclusive). */
@@ -976,6 +977,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                        <PillarInfoIcon pillarKey={key} />
                         <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.45rem', borderRadius: 6, background: 'var(--hf-border)', color: 'var(--hf-text-secondary)' }}>
                           Coming soon
                         </span>
@@ -1011,6 +1013,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: 700, color: 'var(--hf-text-primary)' }}>{meta.name}</span>
+                      <PillarInfoIcon pillarKey={key} />
                       {isLongevityPillar(key) && (
                         <span
                           className="tr-muted"

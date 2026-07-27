@@ -215,81 +215,81 @@ export const PILLAR_META: Record<
     icon: '🌿',
     name: 'Natural Beauty',
     description:
-      'Trees, water, topography, and scenic landscape — how much nature is woven into the place, from ocean views to urban tree canopy.',
+      'Tree canopy coverage, green space, water features, and topography. Captures the scenic character of the surrounding landscape.',
   },
   built_environment: {
     icon: '🏙️',
     name: 'Built Environment',
     description:
-      'The type of neighborhood you want to live in — from walkable urban core to quiet suburb or rural town. Match score based on area type.',
+      'Architectural variety, historic fabric, and urban design quality. Rewards walkable streetscapes and penalizes strip-mall sprawl.',
   },
   neighborhood_amenities: {
     icon: '🛒',
     name: 'Daily Amenities',
     description:
-      'A walkable town center with a variety of daily amenities — from coffee and groceries to shops and restaurants — within reach.',
+      'Walkable access to restaurants, shops, and everyday errands from your front door, plus the vibrancy of the nearest town center.',
   },
   active_outdoors: {
     icon: '🏃',
     name: 'Active Outdoors',
-    description: 'Easy access to trails, parks, and waterfront recreation—for weekend adventures or after-work runs',
+    description: 'Proximity to parks, trails, hiking, swimming, and camping. Measures how much outdoor recreation you can access without a major trip.',
   },
   healthcare_access: {
     icon: '🏥',
     name: 'Healthcare Access',
     description:
-      "Quality medical care nearby when you need it—hospitals, doctors, specialists, and pharmacies you can count on",
+      'Density and proximity of hospitals, primary care providers, pharmacies, and emergency services. Measures physical access, not affordability.',
   },
   public_transit_access: {
     icon: '🚇',
     name: 'Public Transit Access',
-    description: "Reliable transit options that get you where you're going—so driving isn't your only choice",
+    description: 'Proximity to rail and subway, stop density, and route frequency. Scores how car-optional daily life can realistically be.',
   },
   air_travel_access: {
     icon: '✈️',
     name: 'Air Travel Access',
-    description: 'Good airports within reasonable reach—making trips to see family or explore new places less of a hassle',
+    description: 'Drive time and tier quality of reachable airports. Scores how quickly you can get to a large or medium hub from your doorstep.',
   },
   economic_security: {
     icon: '📈',
     name: 'Economic Opportunity',
     description:
-      'The strength of the local job market for your profession—or the health of the local economy if you work remotely.',
+      'Strength of the local job market: employment density, wage growth potential, industry variety, and resilience to economic downturns.',
   },
   quality_education: {
     icon: '🏫',
     name: 'Schools',
-    description: 'Strong local schools that set kids up for success—from early education through high school and beyond',
+    description: 'K–12 school quality ratings, early education availability, and nearby college or university access.',
   },
   housing_value: {
     icon: '🏠',
     name: 'Home Price to Space',
     description:
-      "More space and quality for your money — where housing costs make sense for what you're getting",
+      'Affordability relative to local incomes, median home size, and how much space you get per dollar spent.',
   },
   climate_risk: {
     icon: '🌡️',
     name: 'Climate & Flood Risk',
     description:
-      'Lower exposure to heat, flooding, and poor air quality—so the place stays livable for decades',
+      'Forward-looking exposure to heat, air pollution, flooding, and long-term warming trends. Higher score means lower risk.',
   },
   social_fabric: {
     icon: '🤝',
     name: 'Social Fabric',
     description:
-      'Neighbors, civic spaces, and local rootedness that support belonging—not just shops but libraries, community centers, and long-term residents.',
+      'Residential stability, density of civic gathering places (churches, clubs), and community engagement through nonprofits and volunteering.',
   },
   diversity: {
     icon: '🌐',
     name: 'Diversity',
     description:
-      'Race, income, and age mix in the neighborhood—entropy-based measure of how varied the community is.',
+      'How evenly the population is distributed across race, income, and age, measured by demographic entropy at the Census tract level.',
   },
   community_safety: {
     icon: '🛡️',
     name: 'Community Safety',
     description:
-      'Local crime rates and safety conditions — how secure the area feels day-to-day based on reported incidents.',
+      'Violent and property crime rates benchmarked against comparable neighborhoods, adjusted for year-over-year trend.',
   },
   political_lean: {
     icon: '🗳️',

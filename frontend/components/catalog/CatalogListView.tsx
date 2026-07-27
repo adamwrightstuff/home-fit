@@ -43,7 +43,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
           const fill = score != null ? homefitPillarBarFill(score) : 'rgba(0,0,0,0.08)'
           return (
             <div key={k} className="flex min-w-0 items-center gap-2 text-[0.65rem]">
-              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">{PILLAR_META[k].name}</span>
+              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]" title={PILLAR_META[k].description}>{PILLAR_META[k].name}</span>
               <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
                 {score != null && (
                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
