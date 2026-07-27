@@ -3,15 +3,28 @@
 import { useEffect, useRef, useState } from 'react'
 import { PILLAR_META } from '@/lib/pillars'
 
+export interface PillarPoi {
+  lat: number
+  lon: number
+  name?: string
+  type?: string
+  distance_m?: number
+}
+
 interface InteractiveMapProps {
   location: string
   coordinates?: { lat: number; lon: number } | null
   completed_pillars: string[]
+  pois?: PillarPoi[] | null
+  activePillarLabel?: string | null
 }
 
 const TOTAL_PILLARS = Object.keys(PILLAR_META).length
 
-export default function InteractiveMap({ location, coordinates, completed_pillars }: InteractiveMapProps) {
+const POI_COLOR = '#1D9E75'
+const POI_STROKE = '#FFFFFF'
+
+export default function InteractiveMap({ location, coordinates, completed_pillars, pois, activePillarLabel }: InteractiveMapProps) {
   const map_container_ref = useRef<HTMLDivElement>(null)
   const map_ref = useRef<any>(null)
   const [map_loaded, set_map_loaded] = useState(false)
@@ -294,6 +307,72 @@ export default function InteractiveMap({ location, coordinates, completed_pillar
 
     updateMap()
   }, [coordinates, location, completed_pillars, map_loaded])
+
+  // POI pin layer — adds/updates/removes when pois prop changes
+  useEffect(() => {
+    if (!map_ref.current || !map_loaded) return
+
+    const map = map_ref.current
+
+    const applyPois = () => {
+      try {
+        const features = (pois ?? []).map((p) => ({
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: [p.lon, p.lat] },
+          properties: { name: p.name ?? '', type: p.type ?? '', distance_m: p.distance_m ?? 0 },
+        }))
+
+        const geojson = { type: 'FeatureCollection' as const, features }
+
+        if (map.getSource('pois')) {
+          ;(map.getSource('pois') as any).setData(geojson)
+        } else {
+          map.addSource('pois', { type: 'geojson', data: geojson })
+          map.addLayer({
+            id: 'poi-circles',
+            type: 'circle',
+            source: 'pois',
+            paint: {
+              'circle-radius': 7,
+              'circle-color': POI_COLOR,
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': POI_STROKE,
+              'circle-opacity': 0.88,
+            },
+          })
+        }
+
+        // Fit bounds to show all pois + center pin
+        if (features.length > 0 && coordinates) {
+          const lons = features.map((f) => f.geometry.coordinates[0]).concat(coordinates.lon)
+          const lats = features.map((f) => f.geometry.coordinates[1]).concat(coordinates.lat)
+          const pad = 0.01
+          map.fitBounds(
+            [[Math.min(...lons) - pad, Math.min(...lats) - pad], [Math.max(...lons) + pad, Math.max(...lats) + pad]],
+            { padding: 40, duration: 600, maxZoom: 14 }
+          )
+        }
+      } catch (e) {
+        console.warn('InteractiveMap: POI layer error', e)
+      }
+    }
+
+    if (!pois || pois.length === 0) {
+      // Clear layer and fly back to default zoom
+      try {
+        if (map.getLayer('poi-circles')) map.removeLayer('poi-circles')
+        if (map.getSource('pois')) map.removeSource('pois')
+      } catch {}
+      if (coordinates) map.flyTo({ center: [coordinates.lon, coordinates.lat], zoom: 12, duration: 600 })
+      return
+    }
+
+    if (!map.isStyleLoaded()) {
+      map.once('style.load', applyPois)
+    } else {
+      applyPois()
+    }
+  }, [pois, map_loaded, coordinates])
 
   return (
     <div 

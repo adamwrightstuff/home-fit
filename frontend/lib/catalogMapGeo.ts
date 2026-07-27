@@ -3,7 +3,7 @@ import { PILLAR_META, PILLAR_ORDER, type PillarKey } from '@/lib/pillars'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import type { CatalogMapIndexMode, CatalogMapPlace } from '@/lib/catalogMapTypes'
-import { catalogRowKey } from '@/lib/catalogMapTypes'
+import { catalogRowKey, isPillarIndexMode } from '@/lib/catalogMapTypes'
 import {
   catalogModeToRamp,
   mapBubbleStroke,
@@ -59,6 +59,11 @@ function displayScoreForMode(
   }
   if (mode === 'happiness') {
     return { v: typeof s.happiness_index === 'number' ? s.happiness_index : null, archetype: null }
+  }
+  if (isPillarIndexMode(mode)) {
+    const pillar = (s.livability_pillars as any)?.[mode]
+    const score = typeof pillar?.score === 'number' ? pillar.score : null
+    return { v: score, archetype: null }
   }
   const archetype = s.status_signal_breakdown?.archetype ?? null
   return {
@@ -227,7 +232,7 @@ export function displayIndexValue(
       sub: badge.text,
     }
   }
-  const labels: Record<CatalogMapIndexMode, string> = {
+  const labels: Record<'homefit' | 'longevity' | 'happiness' | 'status', string> = {
     homefit: 'Trovamo',
     longevity: 'Longevity',
     happiness: 'Happiness',

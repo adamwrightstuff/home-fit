@@ -309,6 +309,7 @@ export default function SearchPage() {
             placeSummary={(display_score_data || score_data)?.place_summary ?? null}
             searchOptions={search_options}
             onRunPillarScore={handleRunPillarScore}
+            showMap
             onSave={async (payload, priorities) => {
               try {
                 const payloadWithConfig: ScoreResponse = {

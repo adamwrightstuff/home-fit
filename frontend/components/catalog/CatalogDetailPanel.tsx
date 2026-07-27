@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import { catalogRowKey, type CatalogMapIndexMode, type CatalogMapPlace } from '@/lib/catalogMapTypes'
+import { catalogRowKey, isPillarIndexMode, type CatalogMapIndexMode, type CatalogMapPlace } from '@/lib/catalogMapTypes'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import type { ClimateProfile } from '@/types/api'
 import { getClimateProfile } from '@/lib/api'
@@ -26,7 +26,9 @@ const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] 
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
-const PEEK_RAMP_CSS: Record<Exclude<CatalogMapIndexMode, 'status'>, { c400: string; c600: string }> = {
+type CompositeIndexMode = 'homefit' | 'longevity' | 'happiness'
+
+const PEEK_RAMP_CSS: Record<CompositeIndexMode, { c400: string; c600: string }> = {
   homefit: { c400: 'var(--c-purple-400)', c600: 'var(--c-purple-600)' },
   longevity: { c400: 'var(--c-teal-400)', c600: 'var(--c-teal-600)' },
   happiness: { c400: 'var(--c-blue-400)', c600: 'var(--c-blue-600)' },
@@ -70,7 +72,8 @@ export default function CatalogDetailPanel({
         typeof place.score.status_signal === 'number' ? place.score.status_signal : null
       )
     : null
-  const breakdownBtn = fullBreakdownCtaStyle(catalogRampKey(indexMode))
+  const safeRampKey = isPillarIndexMode(indexMode) ? 'teal' : catalogRampKey(indexMode as any)
+  const breakdownBtn = fullBreakdownCtaStyle(safeRampKey)
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
     if (!allIdx) return null
@@ -117,6 +120,9 @@ export default function CatalogDetailPanel({
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--hf-text-secondary)', marginTop: 2 }}>
               {place.catalog.county_borough}, {place.catalog.state_abbr}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', opacity: 0.65, marginTop: 2 }}>
+              Scored July 2026
             </div>
           </div>
         ) : (

@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, type ReactNode } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ScoreResponse } from '@/types/api'
 import type { PillarPriorities, SearchOptions } from '@/components/SearchOptions'
 import TotalScore from './TotalScore'
 import PillarCard from './PillarCard'
+import InteractiveMap, { type PillarPoi } from './InteractiveMap'
 import LongevityInfo from './LongevityInfo'
 import HappinessInfo from './HappinessInfo'
 import StatusArchetypeCompass from './StatusArchetypeCompass'
@@ -110,6 +111,10 @@ interface ScoreDisplayProps {
   /** When set, renders this node after the nth pillar card (1-based). Used for mid-page conversion prompts. */
   interstitialAfterCard?: number
   interstitialContent?: ReactNode
+  /** Called when a pillar card is expanded or collapsed (key, expanded). */
+  onPillarExpandToggle?: (key: string, expanded: boolean) => void
+  /** When true, renders an interactive map above the score summary that shows contributing POIs when a pillar is expanded. */
+  showMap?: boolean
 }
 
 // Use shared pillar order from lib/pillars
@@ -145,12 +150,43 @@ export default function ScoreDisplay({
   schoolsPremiumSection,
   interstitialAfterCard,
   interstitialContent,
+  onPillarExpandToggle,
+  showMap = false,
 }: ScoreDisplayProps) {
   const { openAuthModal } = useAuth()
   const { location_info, total_score, livability_pillars, overall_confidence, metadata } = data
   const isLoading = Boolean(loading)
   const longevity_index = !hideCompositeIndices && typeof data.longevity_index === 'number' ? data.longevity_index : null
   const happiness_index = !hideCompositeIndices && typeof data.happiness_index === 'number' ? data.happiness_index : null
+
+  const [mapActivePillar, setMapActivePillar] = useState<string | null>(null)
+
+  const mapPois = useMemo((): PillarPoi[] => {
+    if (!showMap || !mapActivePillar || !livability_pillars) return []
+    const pillar = (livability_pillars as any)[mapActivePillar]
+    if (!pillar) return []
+    const bd = pillar.breakdown ?? {}
+    if (mapActivePillar === 'neighborhood_amenities') {
+      return (bd.business_list ?? []).filter((b: any) => b.lat != null && b.lon != null).map((b: any) => ({
+        lat: b.lat, lon: b.lon, name: b.name, type: b.type, distance_m: b.distance_m,
+      }))
+    }
+    if (mapActivePillar === 'active_outdoors') {
+      return (bd.parks ?? []).filter((p: any) => p.lat != null && p.lon != null).map((p: any) => ({
+        lat: p.lat, lon: p.lon, name: p.tags?.name ?? p.name ?? 'Park', type: 'park', distance_m: p.distance_m,
+      }))
+    }
+    return []
+  }, [showMap, mapActivePillar, livability_pillars])
+
+  const handlePillarExpand = useCallback((key: string, expanded: boolean) => {
+    onPillarExpandToggle?.(key, expanded)
+    if (!showMap) return
+    const hasPois = key === 'neighborhood_amenities' || key === 'active_outdoors'
+    if (expanded && hasPois) setMapActivePillar(key)
+    else if (!expanded && mapActivePillar === key) setMapActivePillar(null)
+  }, [showMap, mapActivePillar, onPillarExpandToggle])
+
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -335,8 +371,37 @@ export default function ScoreDisplay({
       </div>
     ) : null
 
+  const mapCoords = data.coordinates
+  const mapLocationLabel = [location_info?.city, location_info?.state].filter(Boolean).join(', ') || ''
+
   return (
     <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+      {showMap && mapCoords && (
+        <div style={{ borderRadius: 12, overflow: 'hidden', background: 'var(--hf-bg-subtle)' }}>
+          <div style={{ height: 280 }}>
+            <InteractiveMap
+              location={mapLocationLabel}
+              coordinates={{ lat: mapCoords.lat, lon: mapCoords.lon }}
+              completed_pillars={Object.keys(livability_pillars ?? {})}
+              pois={mapPois.length > 0 ? mapPois : null}
+            />
+          </div>
+          {mapActivePillar && mapPois.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.45rem 0.75rem', background: 'var(--hf-bg-card)',
+              borderTop: '1px solid var(--hf-border)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--hf-text-secondary)' }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#1D9E75', display: 'inline-block', flexShrink: 0 }} />
+                <span>{PILLAR_META[mapActivePillar as PillarKey]?.name}</span>
+                <span>· {mapPois.length} places</span>
+              </div>
+              <button type="button" onClick={() => setMapActivePillar(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hf-text-secondary)', fontSize: '1.1rem', lineHeight: 1, padding: '0 0.25rem' }} aria-label="Clear map pins">×</button>
+            </div>
+          )}
+        </div>
+      )}
       {!hideSummaryCard && (
       <div className="hf-card">
         {/* Prominent Save row: first thing under the location so it’s impossible to miss */}
@@ -586,6 +651,7 @@ export default function ScoreDisplay({
                     : undefined
                 }
                 schoolsPremiumSection={key === 'quality_education' ? schoolsPremiumSection : undefined}
+                onExpandToggle={handlePillarExpand}
               />
               {showInterstitial && (
                 <div style={{ gridColumn: '1 / -1' }}>

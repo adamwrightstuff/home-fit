@@ -7,6 +7,7 @@ import {
   getStandoutPillarChips,
 } from '@/lib/catalogMapGeo'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
+import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import {
   fullBreakdownCtaStyle,
   statusArchetypeNumeral400,
@@ -26,11 +27,10 @@ const INDEX_TABS: { id: CatalogMapIndexMode; label: string; tooltip: string }[] 
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
 ]
 
-/** CSS token pairs for peek score strip (non–archetype index columns). */
-const PEEK_RAMP_CSS: Record<
-  Exclude<CatalogMapIndexMode, 'status'>,
-  { c400: string; c600: string }
-> = {
+type CompositeIndexMode = 'homefit' | 'longevity' | 'happiness'
+
+/** CSS token pairs for peek score strip (composite index columns only). */
+const PEEK_RAMP_CSS: Record<CompositeIndexMode, { c400: string; c600: string }> = {
   homefit: { c400: 'var(--c-purple-400)', c600: 'var(--c-purple-600)' },
   longevity: { c400: 'var(--c-teal-400)', c600: 'var(--c-teal-600)' },
   happiness: { c400: 'var(--c-blue-400)', c600: 'var(--c-blue-600)' },
@@ -74,22 +74,23 @@ export default function CatalogBottomSheet({
     : null
 
   const scoreForTab = (id: CatalogMapIndexMode): number | null => {
+    if (!place) return null
+    if (isPillarIndexMode(id)) {
+      const pillar = (place.score.livability_pillars as any)?.[id]
+      return typeof pillar?.score === 'number' ? pillar.score : null
+    }
     if (!allIdx) return null
     switch (id) {
-      case 'homefit':
-        return allIdx.homefit
-      case 'longevity':
-        return allIdx.longevity
-      case 'happiness':
-        return allIdx.happiness
-      case 'status':
-        return allIdx.statusSignal
-      default:
-        return null
+      case 'homefit': return allIdx.homefit
+      case 'longevity': return allIdx.longevity
+      case 'happiness': return allIdx.happiness
+      case 'status': return allIdx.statusSignal
+      default: return null
     }
   }
 
-  const breakdownBtn = fullBreakdownCtaStyle(catalogRampKey(indexMode))
+  const safeRampKey = isPillarIndexMode(indexMode) ? 'teal' : catalogRampKey(indexMode as any)
+  const breakdownBtn = fullBreakdownCtaStyle(safeRampKey)
 
   const scoreNumeralStyle = (tabId: CatalogMapIndexMode, active: boolean) => {
     if (tabId === 'status') {
@@ -107,7 +108,8 @@ export default function CatalogBottomSheet({
         textUnderlineOffset: active ? 2 : undefined,
       }
     }
-    const { c400, c600 } = PEEK_RAMP_CSS[tabId]
+    const ramp = PEEK_RAMP_CSS[tabId as keyof typeof PEEK_RAMP_CSS] ?? { c400: '#1D9E75', c600: '#0F6E56' }
+    const { c400, c600 } = ramp
     const color = active ? c400 : c600
     return {
       fontSize: '1.1rem',
@@ -180,6 +182,9 @@ export default function CatalogBottomSheet({
                   }}
                 >
                   {place.catalog.county_borough}, {place.catalog.state_abbr}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--hf-text-secondary)', opacity: 0.7, marginTop: 2 }}>
+                  Scored July 2026
                 </div>
               </div>
               <button

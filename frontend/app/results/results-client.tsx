@@ -1064,6 +1064,7 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               hideSummaryCard={Boolean(showSavedStyle)}
               placeSummary={displayData?.place_summary ?? null}
               hideNotIncluded
+              showMap
             />
           ) : null}
         </div>

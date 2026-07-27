@@ -67,6 +67,8 @@ interface PillarCardProps {
   importanceLevel?: 'None' | 'Low' | 'Medium' | 'High'
   /** When provided, show None/Low/Medium/High toggle and call with new level (client-side reweight). */
   onImportanceChange?: (level: 'None' | 'Low' | 'Medium' | 'High') => void
+  /** Called when the details panel is expanded or collapsed. */
+  onExpandToggle?: (key: string, expanded: boolean) => void
 }
 
 /** Natural Beauty scenery preference options (max 2; "Any" clears selection). */
@@ -258,6 +260,7 @@ export default function PillarCard({
   diversityPreference,
   onDiversityPreferenceChange,
   schoolsPremiumSection,
+  onExpandToggle,
 }: PillarCardProps) {
   const [expanded, setExpanded] = useState(false)
   const meta = PILLAR_META[pillar_key]
@@ -628,7 +631,11 @@ export default function PillarCard({
           type="button"
           className="hf-btn-link"
           onClick={() => {
-            if (!isLoading) setExpanded((v) => !v)
+            if (!isLoading) {
+              const next = !expanded
+              setExpanded(next)
+              onExpandToggle?.(pillar_key, next)
+            }
           }}
           disabled={isLoading}
         >

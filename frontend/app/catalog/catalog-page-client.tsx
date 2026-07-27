@@ -26,6 +26,8 @@ import { catalogTabActiveStyle } from '@/lib/indexColorSystem'
 import {
   catalogRowKey,
   inferCatalogMetro,
+  isPillarIndexMode,
+  PILLAR_INDEX_MODES,
   type CatalogMapIndexMode,
   type CatalogMapPlace,
   type CatalogMapPlaceWithMetro,
@@ -40,7 +42,7 @@ import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/l
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
-const INDEXES: { id: CatalogMapIndexMode; label: string; tooltip: string }[] = [
+const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
   { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
@@ -851,6 +853,19 @@ export default function CatalogPageClient({
                 })}
                 <button
                   type="button"
+                  aria-pressed={isPillarIndexMode(indexMode) && !sortByName}
+                  title="Color map by a specific pillar score"
+                  className="rounded-full px-2.5 py-1 text-xs font-bold"
+                  style={isPillarIndexMode(indexMode) && !sortByName
+                    ? { background: '#E1F5EE', color: '#0F6E56', border: 'none' }
+                    : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                  onClick={() => {
+                    if (!isPillarIndexMode(indexMode)) setIndexModeAndListSort('active_outdoors')
+                    else setIndexModeAndListSort('homefit')
+                  }}
+                >Pillar</button>
+                <button
+                  type="button"
                   aria-pressed={sortByName}
                   className={`text-[0.65rem] font-semibold ${sortByName ? 'text-[var(--hf-primary-1)] underline' : 'text-[var(--hf-text-secondary)]'}`}
                   onClick={() => setSortByName(true)}
@@ -862,6 +877,23 @@ export default function CatalogPageClient({
                 >{sortDir === 'desc' ? 'Desc' : 'Asc'}</button>
               </div>
             </>
+          )}
+
+          {catalogMode === 'explorer' && isPillarIndexMode(indexMode) && (
+            <div className="flex items-center gap-1 px-1 py-1 border-t border-[var(--hf-border)] w-full overflow-x-auto">
+              {PILLAR_INDEX_MODES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={indexMode === p.id}
+                  className="rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold whitespace-nowrap"
+                  style={indexMode === p.id
+                    ? { background: '#1D9E75', color: '#fff', border: 'none' }
+                    : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                  onClick={() => setIndexModeAndListSort(p.id)}
+                >{p.label}</button>
+              ))}
+            </div>
           )}
 
           {catalogMode === 'twin' && (

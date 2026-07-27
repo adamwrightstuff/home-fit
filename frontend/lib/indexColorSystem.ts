@@ -4,6 +4,7 @@
  */
 
 import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
+import { isPillarIndexMode } from '@/lib/catalogMapTypes'
 
 export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 
@@ -126,6 +127,7 @@ export const RAMP_HEX: Record<IndexRampKey, { 50: string; 200: string; 400: stri
 }
 
 export function catalogModeToRamp(mode: CatalogMapIndexMode): IndexRampKey {
+  if (isPillarIndexMode(mode)) return 'teal'
   switch (mode) {
     case 'homefit':
       return 'purple'
