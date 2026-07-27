@@ -388,7 +388,7 @@ def get_active_outdoors_score_v2(
     wild_score = _score_wild_adventure_v2(
         hiking_trails, camping, canopy_pct_5km, scoring_area_type, is_mountain_town=is_mountain_town
     )
-    water_score, waterfront_breakdown = _score_water_lifestyle_v2(
+    water_score, waterfront_breakdown, best_water_type, best_water_dist_m = _score_water_lifestyle_v2(
         swimming, scoring_area_type, is_desert_context=is_desert_context
     )
 
@@ -421,7 +421,8 @@ def get_active_outdoors_score_v2(
         },
         "summary": {
             **_build_summary_v2(
-                parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km
+                parks, playgrounds, hiking_trails, swimming, camping, canopy_pct_5km,
+                best_water_type=best_water_type, best_water_dist_m=best_water_dist_m,
             ),
             "overpass": {
                 "local": local.get("_overpass_outcome")
@@ -669,11 +670,11 @@ _WATERFRONT_CATEGORY: Dict[str, str] = {
 }
 _WATERFRONT_BASE: Dict[str, float] = {
     "beach": 25.0,
-    "swimming_area": 22.0,
-    "lake": 22.0,
-    "coastline": 15.0,
+    "swimming_area": 20.0,
+    "lake": 17.0,
+    "coastline": 18.0,
     "coastline_rocky": 10.0,
-    "bay": 12.0,
+    "bay": 20.0,
 }
 
 
@@ -720,9 +721,12 @@ def _score_water_lifestyle_v2(
 
         # Context downweights
         if area_type in {"urban_core"} and t not in {"beach"}:
-            base *= 0.4
-        elif area_type in {"suburban", "urban_residential"} and t not in {"beach", "lake"}:
-            base *= 0.9
+            base *= 0.75
+        elif area_type in {"suburban", "urban_residential"}:
+            if t == "lake":
+                base *= 0.95
+            elif t not in {"beach", "bay"}:
+                base *= 0.9
 
         if is_desert_context:
             if t not in {"beach", "lake"}:
@@ -754,6 +758,15 @@ def _score_water_lifestyle_v2(
     best_score = max(all_feature_scores)
     final_water = max(0.0, min(25.0, best_score))
 
+    # Track the winning feature's type and distance for offline recalibration.
+    best_feat_type: Optional[str] = None
+    best_feat_dist_m: Optional[float] = None
+    for feat, s in zip(swimming, all_feature_scores):
+        if s == best_score:
+            best_feat_type = feat.get("type")
+            best_feat_dist_m = feat.get("distance_m")
+            break
+
     # Normalize each category to 0-100 (budget cap is 25)
     waterfront_breakdown: Dict = {
         cat: round(min(100.0, v / 25.0 * 100.0), 1)
@@ -768,7 +781,7 @@ def _score_water_lifestyle_v2(
                "swimming_count": len(swimming), "final_water": final_water,
                "waterfront_breakdown": waterfront_breakdown}
     )
-    return final_water, waterfront_breakdown
+    return final_water, waterfront_breakdown, best_feat_type, best_feat_dist_m
 
 
 def _filter_urban_paths_from_trails(hiking_trails: List[Dict], area_type: str) -> List[Dict]:
@@ -966,6 +979,8 @@ def _build_summary_v2(
     swimming: list,
     camping: list,
     canopy_pct: float,
+    best_water_type: Optional[str] = None,
+    best_water_dist_m: Optional[float] = None,
 ) -> Dict:
     def nearest_km(features: list) -> Optional[float]:
         if not features:
@@ -974,6 +989,15 @@ def _build_summary_v2(
         if d >= 1e9:
             return None
         return round(d / 1000.0, 2)
+
+    water: Dict = {
+        "features": len(swimming),
+        "nearest_km": nearest_km(swimming),
+    }
+    if best_water_type is not None:
+        water["best_feature_type"] = best_water_type
+    if best_water_dist_m is not None:
+        water["best_feature_dist_m"] = round(best_water_dist_m, 1)
 
     return {
         "local_parks": {
@@ -989,10 +1013,7 @@ def _build_summary_v2(
                 1 for h in hiking if h.get("distance_m", 1e9) <= 5000
             ),
         },
-        "water": {
-            "features": len(swimming),
-            "nearest_km": nearest_km(swimming),
-        },
+        "water": water,
         "camping": {
             "sites": len(camping),
             "nearest_km": nearest_km(camping),
