@@ -693,22 +693,21 @@ def _score_water_lifestyle_v2(
     if not swimming:
         return 0.0, _empty_breakdown
 
-    # natural=beach is ambiguous — ocean beach AND inland park beaches share this tag.
-    # natural=coastline is the unambiguous OSM ocean signal. A coastline feature within
-    # 15km of the scoring center confirms nearby beaches are ocean beaches. Beyond 15km
-    # the coastline belongs to a different water body — e.g. Long Island Sound coastline
-    # at 17-27km contaminates Hudson River towns like Tarrytown and Ossining, causing
-    # their river beaches to be misclassified as ocean_beach. 15km is chosen to stay
-    # above the ~2-4km OSM geometry offset documented for Venice CA while excluding the
-    # LI Sound / Hudson River conflation case.
-    has_coastline_nearby = any(
-        f.get("type") in ("coastline", "coastline_rocky")
-        and f.get("distance_m", 1e9) <= 15_000
-        for f in swimming
+    # natural=beach is ambiguous — ocean beaches and inland park beaches share the tag.
+    # natural=coastline is the unambiguous OSM ocean signal. Confirm each beach individually:
+    # the nearest coastline must be within 3km of that beach's own distance from the scoring
+    # center. This keeps the check local to each feature rather than global — a coastline
+    # that is far from all local beaches cannot contaminate their classification even if it
+    # falls within the regional query radius. The 3km tolerance covers OSM geometry offsets
+    # without conflating beaches and coastlines that belong to different water bodies.
+    min_coastline_dist = min(
+        (f.get("distance_m", 1e9) for f in swimming
+         if f.get("type") in ("coastline", "coastline_rocky")),
+        default=1e9,
     )
-    effective_category = dict(_WATERFRONT_CATEGORY)
-    if not has_coastline_nearby:
-        effective_category["beach"] = "lake_river"
+
+    def _beach_is_ocean(beach_dist: float) -> bool:
+        return min_coastline_dist <= beach_dist + 3_000
 
     def feature_score(feat: Dict) -> float:
         d = feat.get("distance_m", 1e9)
@@ -716,7 +715,7 @@ def _score_water_lifestyle_v2(
         base = _WATERFRONT_BASE.get(t, 10.0)
 
         # Inland park beach: downgrade to swimming_area level (no ocean confirmation)
-        if t == "beach" and not has_coastline_nearby:
+        if t == "beach" and not _beach_is_ocean(d):
             base = _WATERFRONT_BASE["swimming_area"]
 
         # Context downweights
@@ -737,12 +736,18 @@ def _score_water_lifestyle_v2(
 
         return base
 
+    def _feat_category(feat: Dict) -> str:
+        t = feat.get("type", "")
+        if t == "beach":
+            return "ocean_beach" if _beach_is_ocean(feat.get("distance_m", 1e9)) else "lake_river"
+        return _WATERFRONT_CATEGORY.get(t, "lake_river")
+
     category_best: Dict[str, float] = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
     all_feature_scores = []
     for feat in swimming:
         s = feature_score(feat)
         all_feature_scores.append(s)
-        cat = effective_category.get(feat.get("type", ""), "lake_river")
+        cat = _feat_category(feat)
         if s > category_best[cat]:
             category_best[cat] = s
 

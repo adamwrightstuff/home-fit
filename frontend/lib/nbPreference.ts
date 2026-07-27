@@ -220,13 +220,15 @@ export function applyNbPreferencesV9(
   if (prefVals.length === 0) return null
 
   // OWA: preferred mean → lead slot; remaining components fill lower slots in desc order.
+  // Lead weight scales with the preferred score so high-scoring preferred dimensions dominate more.
   const preferred = prefVals.reduce((a, b) => a + b, 0) / prefVals.length
   const others = Object.entries(effective)
     .filter(([k]) => !targets.has(k))
     .map(([, v]) => v as number)
     .sort((a, b) => b - a)
+  const dynamicLead = Math.min(1.0, 0.62 + 0.38 * (preferred / 100))
   const ranked = [preferred, ...others]
-  const weights = V9_OWA_WEIGHTS.slice(0, ranked.length)
+  const weights = [dynamicLead, ...V9_OWA_WEIGHTS.slice(1, ranked.length)]
   const tot = weights.reduce((a, b) => a + b, 0) || 1
   return Math.round((ranked.reduce((sum, s, i) => sum + (weights[i] / tot) * s, 0)) * 100) / 100
 }

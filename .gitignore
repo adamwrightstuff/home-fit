@@ -78,6 +78,7 @@ frontend/*.tsbuildinfo
 # Catalog tooling noise (use git for canonical merged JSONLs only)
 data/**/*.jsonl.bak*
 data/**/*.jsonl.bak
+data/**/*.jsonl.*.bak
 data/**/*.temp.jsonl
 data/**/*recomputed.tmp.jsonl
 .vercel

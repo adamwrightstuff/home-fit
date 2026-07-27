@@ -680,6 +680,8 @@ def query_nature_features(
       relation[\"natural\"=\"beach\"](around:{radius_m},{lat},{lon});
       way[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
       relation[\"natural\"=\"water\"][\"water\"~\"^(lake|bay)$\"](around:{radius_m},{lat},{lon});
+      way[\"waterway\"~\"^(river|canal)$\"](around:{radius_m},{lat},{lon});
+      relation[\"waterway\"~\"^(river|canal)$\"](around:{radius_m},{lat},{lon});
       way[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
       relation[\"leisure\"=\"swimming_area\"](around:{radius_m},{lat},{lon});
     """
@@ -2115,6 +2117,7 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
         leisure = tags.get("leisure")
         tourism = tags.get("tourism")
         water_type = tags.get("water")
+        waterway = tags.get("waterway")
         piste_type = tags.get("piste:type")
 
         feature = None
@@ -2228,6 +2231,12 @@ def _process_nature_features(elements: List[Dict], center_lat: float, center_lon
             if access in ["private", "no", "restricted"]:
                 continue  # Skip private bays
             feature = {"type": "bay", "name": tags.get("name")}
+            category = "swimming"
+        elif waterway in ("river", "canal"):
+            access = tags.get("access", "").lower()
+            if access in ["private", "no", "restricted"]:
+                continue
+            feature = {"type": "lake", "name": tags.get("name")}
             category = "swimming"
         elif leisure == "swimming_area":
             feature = {"type": "swimming_area", "name": tags.get("name")}
