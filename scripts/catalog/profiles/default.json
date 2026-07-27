@@ -1,0 +1,32 @@
+{
+  "weights": {
+    "community_safety": "High",
+    "quality_education": "High",
+    "social_fabric": "High",
+    "neighborhood_amenities": "Medium",
+    "natural_beauty": "Medium",
+    "diversity": "None",
+    "healthcare_access": "Low",
+    "active_outdoors": "Low",
+    "housing_value": "Low",
+    "public_transit_access": "Low",
+    "air_travel_access": "None",
+    "economic_security": "None",
+    "climate_risk": "None",
+    "political_lean": "None",
+    "built_environment": "None"
+  },
+  "filters": {
+    "archetypes": ["Elite", "Affluent"],
+    "trajectories": ["Arrived"],
+    "local_scene": "High",
+    "built_forms": ["Historic urban fabric", "Urban residential", "Suburban"],
+    "political_lean": ["lean_d", "moderate"],
+    "housing": ["sf_townhouse"]
+  },
+  "preferences": {
+    "nb": ["ocean", "canopy"],
+    "ao": ["local_parks", "waterfront"],
+    "waterfront_sub": null
+  }
+}
