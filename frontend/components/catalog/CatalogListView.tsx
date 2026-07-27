@@ -11,7 +11,8 @@ import {
   type CatalogMapPlace,
 } from '@/lib/catalogMapTypes'
 import { catalogRampKey } from '@/lib/catalogIndexColors'
-import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
+import { scoreBandFill, homefitPillarBarFill, RAMP_HEX } from '@/lib/indexColorSystem'
+import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
@@ -64,12 +65,15 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
 interface CatalogListViewProps {
   places: CatalogMapPlace[]
   priorities: PillarPriorities
+  indexMode?: CatalogMapIndexMode
   onTwinRow: (key: string) => void
   compareIds?: string[]
   onCompareToggle?: (key: string) => void
 }
 
-export default function CatalogListView({ places, priorities, onTwinRow, compareIds = [], onCompareToggle }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle }: CatalogListViewProps) {
+  const pillarMode = isPillarIndexMode(indexMode)
+  const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   const toggleRow = (key: string) => {
@@ -83,9 +87,15 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
           <tr className="border-b border-[var(--hf-border)]">
             <th className="py-2 pr-2 font-semibold">Place</th>
             <th className="py-2 px-1"> </th>
-            <th className="py-2 px-1 font-semibold" title="Trovamo score">Tro</th>
-            <th className="py-2 px-1 font-semibold" title="Longevity index">Lon</th>
-            <th className="py-2 px-1 font-semibold" title="Happiness index">Hap</th>
+            {pillarMode ? (
+              <th className="py-2 px-1 font-semibold" colSpan={3} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
+            ) : (
+              <>
+                <th className="py-2 px-1 font-semibold" title="Trovamo score">Tro</th>
+                <th className="py-2 px-1 font-semibold" title="Longevity index">Lon</th>
+                <th className="py-2 px-1 font-semibold" title="Happiness index">Hap</th>
+              </>
+            )}
             <th className="py-2 px-1 font-semibold">Archetype</th>
             <th className="py-2 pl-1"> </th>
           </tr>
@@ -130,9 +140,28 @@ export default function CatalogListView({ places, priorities, onTwinRow, compare
                   <td className="py-2 px-1">
                     <MetroDot metro={metro} />
                   </td>
-                  <td className="py-2 px-1">{bar(hf, 'homefit')}</td>
-                  <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
-                  <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
+                  {pillarMode ? (() => {
+                    const pScore = (p.score.livability_pillars as any)?.[indexMode]?.score ?? null
+                    const v = typeof pScore === 'number' && Number.isFinite(pScore) ? pScore : null
+                    return (
+                      <td className="py-2 px-1" colSpan={3}>
+                        {v == null ? <span className="text-[var(--hf-text-tertiary)]">—</span> : (
+                          <div className="flex items-center gap-1">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                              <div className="h-full rounded-full" style={{ width: `${v}%`, background: RAMP_HEX.teal[400] }} />
+                            </div>
+                            <span className="tabular-nums text-[var(--hf-text-secondary)]">{v.toFixed(0)}</span>
+                          </div>
+                        )}
+                      </td>
+                    )
+                  })() : (
+                    <>
+                      <td className="py-2 px-1">{bar(hf, 'homefit')}</td>
+                      <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
+                      <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
+                    </>
+                  )}
                   <td className="py-2 px-1 align-top">
                     <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                       <ArchetypeBadge

@@ -67,6 +67,7 @@ function sortPlaces(
       if (sortKey === 'homefit') return reweightScoreResponseFromPriorities(p.score, priorities).total_score
       if (sortKey === 'longevity') return p.score.longevity_index ?? NaN
       if (sortKey === 'happiness') return p.score.happiness_index ?? NaN
+      if (isPillarIndexMode(sortKey)) return (p.score.livability_pillars as any)?.[sortKey]?.score ?? NaN
       return p.score.status_signal ?? NaN
     }
     const va = get(a)
@@ -1223,6 +1224,7 @@ export default function CatalogPageClient({
         <CatalogListView
           places={gatedPlaces}
           priorities={priorities}
+          indexMode={indexMode}
           onTwinRow={onTwinRow}
           compareIds={compareIds}
           onCompareToggle={handleCompareToggle}
