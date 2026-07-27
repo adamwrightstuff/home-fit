@@ -105,9 +105,79 @@ ALLOWED_BUILT_FORMS = {
     "Suburban",               # Suburban
 }
 HOUSING_STOCK_MIN_PCT_LOW_DENSITY = 0.30  # Single-family/townhouse mix meaningful
-NB_WATER_TYPES = {"ocean", "bay"}         # Ocean/Coast + Bays & Harbors
-CANOPY_MIN = 0.0                           # Tree canopy: prefer high but don't hard-filter
-AO_BAY_HARBOR_THRESHOLD = 0.0            # bay_harbor > 0 is rare in NYC; treat as soft bonus
+
+# Scenery sub-preferences (mirrors Trovamo filter sheet)
+NB_PREFERENCES = ["ocean", "canopy"]   # Ocean/Coast + Tree Canopy
+AO_PREFERENCES = ["local_parks", "waterfront"]  # Local Parks + Waterfront
+
+# OWA constants — mirrors frontend/lib/nbPreference.ts and aoPreference.ts
+_V9_OWA_WEIGHTS = [0.62, 0.25, 0.10, 0.02, 0.01, 0.0]
+_V9_COMPONENT_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcover_score", "bio_score"]
+_PREFERENCE_V9_COMPONENTS: dict[str, list[str]] = {
+    "mountains": ["topo_score"],
+    "ocean": ["water_score"],
+    "lakes_rivers": ["water_score"],
+    "canopy": ["gvi_score"],
+}
+
+_AO_OWA_WEIGHTS = [0.62, 0.25, 0.13]
+_AO_COMPONENT_MAX = {"daily_urban_outdoors": 35.0, "wild_adventure": 50.0, "waterfront_lifestyle": 25.0}
+_PREFERENCE_AO_COMPONENTS = {
+    "local_parks": "daily_urban_outdoors",
+    "trails_regional": "wild_adventure",
+    "waterfront": "waterfront_lifestyle",
+}
+
+
+def _apply_nb_preferences_v9(v9: dict, preferences: list) -> Optional[float]:
+    if not v9 or not preferences:
+        return None
+    water_type = (v9.get("inputs") or {}).get("water_type", "") or ""
+    effective: dict[str, float] = {}
+    for key in _V9_COMPONENT_KEYS:
+        val = v9.get(key)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            effective[key] = float(val)
+    for pref in preferences:
+        if pref in ("ocean", "lakes_rivers") and "water_score" in effective:
+            import re as _re
+            is_coastal = bool(_re.search(r"ocean|coast|bay|harbor|sea", water_type, _re.I))
+            is_lake_river = bool(_re.search(r"lake|reservoir|river|stream|canal", water_type, _re.I))
+            match = is_coastal if pref == "ocean" else is_lake_river
+            if not match:
+                effective["water_score"] *= 0.25
+    targets: set[str] = set(c for p in preferences for c in _PREFERENCE_V9_COMPONENTS.get(p, []))
+    pref_vals = [effective[t] for t in targets if t in effective]
+    if not pref_vals:
+        return None
+    preferred = sum(pref_vals) / len(pref_vals)
+    others = sorted([v for k, v in effective.items() if k not in targets], reverse=True)
+    dynamic_lead = min(1.0, 0.62 + 0.38 * (preferred / 100))
+    ranked = [preferred] + others
+    weights = [dynamic_lead] + _V9_OWA_WEIGHTS[1:len(ranked)]
+    tot = sum(weights) or 1
+    return round(sum(w / tot * s for w, s in zip(weights, ranked)), 2)
+
+
+def _apply_ao_preferences(ao_bd: dict, preferences: list) -> Optional[float]:
+    if not ao_bd or not preferences:
+        return None
+    normalized: dict[str, float] = {}
+    for key, cap in _AO_COMPONENT_MAX.items():
+        raw = ao_bd.get(key)
+        if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+            normalized[key] = min(100.0, (float(raw) / cap) * 100)
+    targets: set[str] = {_PREFERENCE_AO_COMPONENTS[p] for p in preferences if p in _PREFERENCE_AO_COMPONENTS}
+    pref_vals = [normalized[t] for t in targets if t in normalized]
+    if not pref_vals:
+        return None
+    preferred = sum(pref_vals) / len(pref_vals)
+    others = sorted([v for k, v in normalized.items() if k not in targets], reverse=True)
+    dynamic_lead = min(1.0, 0.62 + 0.38 * (preferred / 100))
+    ranked = [preferred] + others
+    weights = [dynamic_lead] + _AO_OWA_WEIGHTS[1:len(ranked)]
+    tot = sum(weights) or 1
+    return round(sum(w / tot * s for w, s in zip(weights, ranked)), 2)
 
 
 def _get(d: dict, *keys, default=None):
@@ -128,11 +198,16 @@ def _pillar_score(lp: dict, key: str) -> Optional[float]:
     return None
 
 
-def _weighted_score(lp: dict) -> float:
+def _weighted_score(lp: dict, nb_adjusted: Optional[float] = None, ao_adjusted: Optional[float] = None) -> float:
     total_weight = sum(PILLAR_WEIGHTS.values()) or 1
     total = 0.0
     for key, w in PILLAR_WEIGHTS.items():
-        s = _pillar_score(lp, key) or 0.0
+        if key == "natural_beauty" and nb_adjusted is not None:
+            s = nb_adjusted
+        elif key == "active_outdoors" and ao_adjusted is not None:
+            s = ao_adjusted
+        else:
+            s = _pillar_score(lp, key) or 0.0
         total += w * s
     return round(total / total_weight, 2)
 
@@ -184,10 +259,8 @@ def _score_row(row: dict) -> dict:
     score = row.get("score", {})
     lp = score.get("livability_pillars", {})
 
-    weighted = _weighted_score(lp)
-
     nb = lp.get("natural_beauty", {})
-    v9 = nb.get("v9_breakdown", {})
+    v9 = nb.get("v9_breakdown", {}) if isinstance(nb, dict) else {}
     nb_inp = v9.get("inputs", {}) if isinstance(v9, dict) else {}
     water_type = nb_inp.get("water_type") if isinstance(nb_inp, dict) else None
     canopy_score = v9.get("canopy_score") if isinstance(v9, dict) else None
@@ -198,18 +271,11 @@ def _score_row(row: dict) -> dict:
     daily_urban = ao_bd.get("daily_urban_outdoors", 0.0) if isinstance(ao_bd, dict) else 0.0
     waterfront_lifestyle = ao_bd.get("waterfront_lifestyle", 0.0) if isinstance(ao_bd, dict) else 0.0
 
-    # Soft scenery bonus: Ocean/Coast water type + canopy
-    scenery_bonus = 0.0
-    if water_type in NB_WATER_TYPES:
-        scenery_bonus += 5.0
-    if bay_harbor > 0:
-        scenery_bonus += 3.0
-    if canopy_score and canopy_score >= 40:
-        scenery_bonus += 2.0
-    elif canopy_score and canopy_score >= 20:
-        scenery_bonus += 1.0
+    nb_adjusted = _apply_nb_preferences_v9(v9 if isinstance(v9, dict) else {}, NB_PREFERENCES)
+    ao_adjusted = _apply_ao_preferences(ao_bd if isinstance(ao_bd, dict) else {}, AO_PREFERENCES)
 
-    final_score = round(weighted + scenery_bonus, 2)
+    weighted = _weighted_score(lp, nb_adjusted=nb_adjusted, ao_adjusted=ao_adjusted)
+    final_score = weighted
 
     ss = score.get("status_signal_breakdown", {})
     pl_bd = lp.get("political_lean", {}).get("breakdown", {})
@@ -220,7 +286,8 @@ def _score_row(row: dict) -> dict:
         "state": catalog.get("state_abbr", "?"),
         "final_score": final_score,
         "weighted_pillar_score": weighted,
-        "scenery_bonus": scenery_bonus,
+        "nb_adjusted": round(nb_adjusted, 1) if nb_adjusted is not None else None,
+        "ao_adjusted": round(ao_adjusted, 1) if ao_adjusted is not None else None,
         "archetype": ss.get("archetype") if isinstance(ss, dict) else None,
         "trajectory": ss.get("trajectory") if isinstance(ss, dict) else None,
         "local_scene": score.get("local_scene_bucket"),
