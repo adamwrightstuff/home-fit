@@ -450,9 +450,11 @@ export default function CatalogPageClient({
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean === 'number') {
           const matchesAny = filterPoliticalLean.some(pref => {
-            if (pref === 'progressive') return lean >= 0.15
+            if (pref === 'strong_d') return lean >= 0.5
+            if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
             if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
-            if (pref === 'conservative') return lean < -0.15
+            if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
+            if (pref === 'strong_r') return lean < -0.5
             return false
           })
           if (!matchesAny) return false

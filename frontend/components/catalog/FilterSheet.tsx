@@ -393,9 +393,24 @@ export default function FilterSheet({
             <div style={LABEL_STYLE}>Political Lean</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {chip(filterPoliticalLean.length === 0, 'All', () => onFilterPoliticalLeanChange([]))}
-              {chip(filterPoliticalLean.includes('progressive'), '🔵 Progressive', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('progressive') ? filterPoliticalLean.filter(v => v !== 'progressive') : [...filterPoliticalLean, 'progressive']))}
-              {chip(filterPoliticalLean.includes('moderate'), '🟣 Moderate', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('moderate') ? filterPoliticalLean.filter(v => v !== 'moderate') : [...filterPoliticalLean, 'moderate']))}
-              {chip(filterPoliticalLean.includes('conservative'), '🔴 Conservative', () => onFilterPoliticalLeanChange(filterPoliticalLean.includes('conservative') ? filterPoliticalLean.filter(v => v !== 'conservative') : [...filterPoliticalLean, 'conservative']))}
+              {(['strong_d', 'lean_d', 'moderate', 'lean_r', 'strong_r'] as const).map((val) => {
+                const labels: Record<string, string> = {
+                  strong_d: '🔵 Strong D',
+                  lean_d: '🔵 Lean D',
+                  moderate: '🟣 Moderate',
+                  lean_r: '🔴 Lean R',
+                  strong_r: '🔴 Strong R',
+                }
+                return chip(
+                  filterPoliticalLean.includes(val),
+                  labels[val],
+                  () => onFilterPoliticalLeanChange(
+                    filterPoliticalLean.includes(val)
+                      ? filterPoliticalLean.filter(v => v !== val)
+                      : [...filterPoliticalLean, val]
+                  )
+                )
+              })}
             </div>
           </div>
 
