@@ -63,15 +63,10 @@ const DEALBREAKER_DESCRIPTIONS: Partial<Record<PillarKey, string>> = {
   social_fabric: 'Exclude places with weak community cohesion scores',
 }
 
-const HIGH_LIMIT = 3
-
 export default function CatalogWeightPanel({ open, onClose, priorities, onChange, onTakeQuiz, householdIncome, incomeInputValue = '', onIncomeInputChange, onIncomeBlur, onIncomeClear, dealbreakers, onDealbreakerToggle }: CatalogWeightPanelProps) {
   if (!open) return null
 
-  const highCount = Object.values(priorities).filter((v) => v === 'High').length
-
   function setLevel(key: PillarKey, level: PriorityLevel) {
-    if (level === 'High' && priorities[key] !== 'High' && highCount >= HIGH_LIMIT) return
     onChange({ ...priorities, [key]: level })
   }
 
@@ -91,12 +86,9 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
           <div>
             <div className="flex items-center gap-2 font-bold text-[var(--hf-text-primary)]">
               Weights
-              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${highCount >= HIGH_LIMIT ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}>
-                {highCount}/{HIGH_LIMIT} High
-              </span>
             </div>
             <p className="text-xs text-[var(--hf-text-secondary)]">
-              Scores reflect equal weighting — adjust importance to personalize. Max {HIGH_LIMIT} High priorities.
+              Scores reflect equal weighting — adjust importance to personalize.
             </p>
             {onTakeQuiz && (
               <button
@@ -135,20 +127,14 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                         {meta.icon} {meta.name}
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {LEVELS.map((lv) => {
-                          const isHighCapped = lv === 'High' && current !== 'High' && highCount >= HIGH_LIMIT
-                          return (
+                        {LEVELS.map((lv) => (
                           <button
                             key={lv}
                             type="button"
-                            disabled={isHighCapped}
-                            title={isHighCapped ? `Max ${HIGH_LIMIT} High priorities` : undefined}
                             className={`rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
                               current === lv
                                 ? 'text-white'
-                                : isHighCapped
-                                  ? 'cursor-not-allowed bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] opacity-30'
-                                  : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
+                                : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'
                             }`}
                             style={
                               current === lv
@@ -159,8 +145,7 @@ export default function CatalogWeightPanel({ open, onClose, priorities, onChange
                           >
                             {lv}
                           </button>
-                          )
-                        })}
+                        ))}
                       </div>
                       {DEALBREAKER_PILLARS.includes(key) && (
                         <label className="mt-2 flex items-start gap-2 text-xs font-medium text-[var(--hf-text-primary)]">
