@@ -17,9 +17,9 @@ import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 
-function MetroDot({ metro }: { metro: 'nyc' | 'la' }) {
-  const c = metro === 'nyc' ? '#6B5CE7' : '#E76B5C'
-  return <span className="inline-block h-2 w-2 rounded-full" style={{ background: c }} title={metro.toUpperCase()} />
+const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F' }
+function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' }) {
+  return <span className="inline-block h-2 w-2 rounded-full" style={{ background: METRO_DOT_COLOR[metro] }} title={metro.toUpperCase()} />
 }
 
 function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; priorities: PillarPriorities }) {
@@ -106,7 +106,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             const idx = getAllCatalogIndexDisplay(p, priorities)
             const rw = reweightScoreResponseFromPriorities(p.score, priorities)
             const hf = rw.total_score
-            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: 'nyc' | 'la' })
+            const metro = inferCatalogMetro(p as CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' })
             const expanded = expandedKey === key
             const bar = (v: number | null, mode: CatalogMapIndexMode) => {
               if (v == null || !Number.isFinite(v)) return <span className="text-[var(--hf-text-tertiary)]">—</span>

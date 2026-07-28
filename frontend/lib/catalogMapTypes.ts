@@ -44,7 +44,7 @@ export interface CatalogMapPlace {
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
-export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' }
+export type CatalogMapPlaceWithMetro = CatalogMapPlace & { metro: 'nyc' | 'la' | 'sf' }
 
 export interface CatalogMapApiResponse {
   places: CatalogMapPlace[] | CatalogMapPlaceWithMetro[]
@@ -55,8 +55,13 @@ export function catalogRowKey(c: Pick<CatalogRow, 'name' | 'county_borough' | 's
   return `${c.name}|${c.county_borough}|${c.state_abbr}`
 }
 
-/** Single-metro API responses omit `metro`; infer from state when missing. */
-export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' }): 'nyc' | 'la' {
-  if (p.metro === 'nyc' || p.metro === 'la') return p.metro
-  return p.catalog.state_abbr === 'CA' ? 'la' : 'nyc'
+const SF_COUNTIES = new Set(['San Francisco', 'San Mateo', 'Santa Clara', 'Alameda', 'Contra Costa', 'Marin'])
+
+/** Single-metro API responses omit `metro`; infer from catalog fields when missing. */
+export function inferCatalogMetro(p: CatalogMapPlace & { metro?: 'nyc' | 'la' | 'sf' }): 'nyc' | 'la' | 'sf' {
+  if (p.metro === 'nyc' || p.metro === 'la' || p.metro === 'sf') return p.metro
+  if (p.catalog.state_abbr === 'CA') {
+    return SF_COUNTIES.has(p.catalog.county_borough) ? 'sf' : 'la'
+  }
+  return 'nyc'
 }

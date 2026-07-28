@@ -10,7 +10,7 @@ type CatalogMapGeoJson =
   | ReturnType<typeof import('@/lib/catalogMapGeo').buildCatalogFeatureCollection>
   | ReturnType<typeof import('@/lib/catalogMapGeo').buildTwinMatchFeatureCollection>
 
-export type CatalogMapRegion = 'nyc' | 'la' | 'both'
+export type CatalogMapRegion = 'nyc' | 'la' | 'sf' | 'both'
 
 interface CatalogMapViewProps {
   data: CatalogMapGeoJson
@@ -49,8 +49,13 @@ const LA_METRO_BOUNDS: [[number, number], [number, number]] = [
   [-117.55, 34.45],
 ]
 
+const SF_METRO_BOUNDS: [[number, number], [number, number]] = [
+  [-122.7, 37.2],
+  [-121.7, 38.2],
+]
+
 const BOTH_METRO_BOUNDS: [[number, number], [number, number]] = [
-  [-118.8, 33.5],
+  [-122.8, 33.5],
   [-73.6, 41.1],
 ]
 
@@ -139,7 +144,7 @@ export default function CatalogMapView({
         }
 
         const initialBounds =
-          region === 'la' ? LA_METRO_BOUNDS : region === 'both' ? BOTH_METRO_BOUNDS : NYC_METRO_BOUNDS
+          region === 'la' ? LA_METRO_BOUNDS : region === 'sf' ? SF_METRO_BOUNDS : region === 'both' ? BOTH_METRO_BOUNDS : NYC_METRO_BOUNDS
         const map = new maplibregl.Map({
           container: container_ref.current,
           style,

@@ -83,7 +83,7 @@ function sortPlaces(
 export default function CatalogPageClient({
   initialMetroFilter = 'all',
 }: {
-  initialMetroFilter?: 'all' | 'nyc' | 'la'
+  initialMetroFilter?: 'all' | 'nyc' | 'la' | 'sf'
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -134,7 +134,7 @@ export default function CatalogPageClient({
   const [twinSameBand, setTwinSameBand] = useState(false)
   const [twinPillars, setTwinPillars] = useState<Set<PillarKey>>(() => defaultTwinPillarSet())
   const [filterText, setFilterText] = useState('')
-  const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la'>(initialMetroFilter)
+  const [filterMetro, setFilterMetro] = useState<'all' | 'nyc' | 'la' | 'sf'>(initialMetroFilter)
   const [filterAreaTypes, setFilterAreaTypes] = useState<string[]>([])
   const [filterArchetypes, setFilterArchetypes] = useState<string[]>([])
   const [filterTrajectory, setFilterTrajectory] = useState<'all' | 'Arrived' | 'Up-and-Coming' | 'Stable' | 'Cooling' | 'Declining'>('all')
@@ -634,7 +634,7 @@ export default function CatalogPageClient({
   const mapRegion = useMemo(() => {
     if (catalogMode === 'twin' && queryPlace && twinQueryKey) {
       const qm = inferCatalogMetro(queryPlace)
-      if (twinCrossMetro) return qm === 'nyc' ? 'la' : 'nyc'
+      if (twinCrossMetro) return qm === 'nyc' ? 'la' : qm === 'la' ? 'sf' : 'nyc'
       return qm
     }
     if (filterMetro === 'all') return 'both'
@@ -821,7 +821,7 @@ export default function CatalogPageClient({
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
               {/* Metro */}
               <div className="flex items-center gap-1 shrink-0">
-                {(['all', 'nyc', 'la'] as const).map((m) => (
+                {(['all', 'nyc', 'la', 'sf'] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -985,7 +985,7 @@ export default function CatalogPageClient({
 
           {catalogMode === 'explorer' && (
             <div className="flex items-center gap-0.5 shrink-0">
-              {(['all', 'nyc', 'la'] as const).map((m) => (
+              {(['all', 'nyc', 'la', 'sf'] as const).map((m) => (
                 <button
                   key={m}
                   type="button"

@@ -29,8 +29,8 @@ const AO_TYPE_OPTIONS: { value: string; label: string }[] = [
 interface FilterSheetProps {
   open: boolean
   onClose: () => void
-  filterMetro: 'all' | 'nyc' | 'la'
-  onFilterMetroChange: (v: 'all' | 'nyc' | 'la') => void
+  filterMetro: 'all' | 'nyc' | 'la' | 'sf'
+  onFilterMetroChange: (v: 'all' | 'nyc' | 'la' | 'sf') => void
   filterAreaTypes: string[]
   onFilterAreaTypesChange: (v: string[]) => void
   filterArchetypes: string[]
@@ -208,7 +208,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Metro</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['all', 'nyc', 'la'] as const).map((m) =>
+              {(['all', 'nyc', 'la', 'sf'] as const).map((m) =>
                 chip(filterMetro === m, m === 'all' ? 'All metros' : m.toUpperCase(), () => onFilterMetroChange(m))
               )}
             </div>

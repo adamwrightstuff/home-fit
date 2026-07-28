@@ -7,12 +7,13 @@ import type { ScoreResponse } from '@/types/api'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export type CatalogMapMetro = 'nyc' | 'la'
+export type CatalogMapMetro = 'nyc' | 'la' | 'sf'
 
 /** Single canonical file per metro (composites live inside each row's `score`). */
 const METRO_FILES: Record<CatalogMapMetro, readonly string[]> = {
   nyc: ['nyc_metro_place_catalog_scores_merged.jsonl'],
   la: ['la_metro_place_catalog_scores_merged.jsonl'],
+  sf: ['sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
 }
 
 function dataRoots(): string[] {
@@ -72,17 +73,18 @@ export async function GET(request: Request) {
   if (raw === 'all') {
     const nyc = loadMetroFile('nyc')
     const la = loadMetroFile('la')
-    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la]
-    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null].filter(Boolean).join('+') || 'missing'
+    const sf = loadMetroFile('sf')
+    const places: CatalogMapPlaceWithMetro[] = [...nyc, ...la, ...sf]
+    const sources = [nyc.length ? 'nyc' : null, la.length ? 'la' : null, sf.length ? 'sf' : null].filter(Boolean).join('+') || 'missing'
     return NextResponse.json({
       places,
       source: sources === 'missing' ? 'missing' : `all:${sources}`,
     } satisfies CatalogMapApiResponse & { detail?: string })
   }
 
-  if (raw !== 'nyc' && raw !== 'la') {
+  if (raw !== 'nyc' && raw !== 'la' && raw !== 'sf') {
     return NextResponse.json(
-      { error: 'Invalid metro. Use metro=nyc, metro=la, or metro=all.' },
+      { error: 'Invalid metro. Use metro=nyc, metro=la, metro=sf, or metro=all.' },
       { status: 400 }
     )
   }
