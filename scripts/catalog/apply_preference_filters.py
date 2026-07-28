@@ -348,6 +348,14 @@ def score_row(row: dict, weights: dict[str, int], nb_prefs: list[str], ao_prefs:
 
     display_pillars = [k for k in ALL_PILLARS if weights.get(k, 0) > 0]
 
+    def _display_score(key: str) -> Optional[float]:
+        if key == "natural_beauty" and nb_adjusted is not None:
+            return round(nb_adjusted, 1)
+        if key == "active_outdoors" and ao_adjusted is not None:
+            return round(ao_adjusted, 1)
+        s = pillar_score(lp, key)
+        return round(s, 1) if s is not None else None
+
     return {
         "name":           catalog.get("name", "?"),
         "state":          catalog.get("state_abbr", "?"),
@@ -368,10 +376,7 @@ def score_row(row: dict, weights: dict[str, int], nb_prefs: list[str], ao_prefs:
         "ao_waterfront":  round(wf_lifestyle, 1),
         "pol_label":      lean_label_for(lean_2024),
         "lean_2024":      round(lean_2024, 3) if lean_2024 is not None else None,
-        "pillar_scores":  {
-            k: round(pillar_score(lp, k), 1) if pillar_score(lp, k) is not None else None
-            for k in display_pillars
-        },
+        "pillar_scores":  {k: _display_score(k) for k in display_pillars},
     }
 
 
