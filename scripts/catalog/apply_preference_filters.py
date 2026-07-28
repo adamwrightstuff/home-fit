@@ -174,17 +174,20 @@ def weighted_score(
     nb_adjusted: Optional[float] = None,
     ao_adjusted: Optional[float] = None,
 ) -> float:
-    total_weight = sum(weights.values()) or 1
+    total_weight = 0
     total = 0.0
     for key, w in weights.items():
         if key == "natural_beauty" and nb_adjusted is not None:
-            s = nb_adjusted
+            s: Optional[float] = nb_adjusted
         elif key == "active_outdoors" and ao_adjusted is not None:
             s = ao_adjusted
         else:
-            s = pillar_score(lp, key) or 0.0
+            s = pillar_score(lp, key)
+        if s is None:
+            continue  # skip degraded/missing pillars — don't penalise as 0
+        total_weight += w
         total += w * s
-    return round(total / total_weight, 2)
+    return round(total / total_weight, 2) if total_weight else 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -581,7 +584,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         )
         for pk in col_pillars:
             v = ps.get(pk)
-            row_str += f" {(v or 0):>6.1f}"
+            row_str += f" {'    —' if v is None else f'{v:>6.1f}'}"
         print(row_str)
 
     if args.output:
