@@ -145,13 +145,6 @@ def compute_commuter_denominator_boost(
     if wrr <= _MIN_WRR:
         return multiplier, meta
 
-    if violent_per_1k <= 0 or property_per_1k <= 0:
-        return multiplier, meta
-
-    pv = property_per_1k / max(1e-9, violent_per_1k)
-    if pv < _MIN_PROPERTY_VIOLENT_RATIO:
-        return multiplier, meta
-
     raw_mult = max(1.0, 1.0 + math.log10(max(1.0, wrr)))
     multiplier = float(min(raw_mult, _POP_MULT_CAP))
 

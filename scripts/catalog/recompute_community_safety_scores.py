@@ -25,6 +25,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 sys.path.insert(0, ROOT)
 
+import math
+
 from pillars.community_safety import _score_rates, _trend_delta, _get_baselines
 
 DEFAULT_INPUTS = [
@@ -52,21 +54,42 @@ def recompute_record(score: dict) -> tuple[float | None, float | None, str]:
     if precision == "DEGRADED":
         return None, None, "DEGRADED"
 
-    v = bd.get("violent_per_1k")
-    p = bd.get("property_per_1k")
-    if not isinstance(v, (int, float)) or not isinstance(p, (int, float)):
+    # Use pre-boost residential rates as canonical input; fall back to stored rates.
+    v_raw = bd.get("violent_per_1k_residential_radius", bd.get("violent_per_1k"))
+    p_raw = bd.get("property_per_1k_residential_radius", bd.get("property_per_1k"))
+    if not isinstance(v_raw, (int, float)) or not isinstance(p_raw, (int, float)):
         return None, None, "missing rates"
 
     area_type = _get_area_type(score)
     trend_pct = bd.get("trend_pct")
 
-    v_slot, p_slot, raw, _ = _score_rates(float(v), float(p), area_type)
+    # Re-apply commuter multiplier from stored wrr_jobs (no H3 re-lookup — avoids
+    # coordinate drift between scoring time and recompute time).
+    _MIN_WRR = 5.0
+    _POP_MULT_CAP = 3.5
+    commuter_ctx = bd.get("commuter_context", {})
+    wrr = commuter_ctx.get("wrr_jobs") if commuter_ctx else None
+    if isinstance(wrr, (int, float)) and wrr > _MIN_WRR:
+        commuter_mult = float(min(_POP_MULT_CAP, max(1.0, 1.0 + math.log10(max(1.0, wrr)))))
+        commuter_meta = dict(commuter_ctx)
+        commuter_meta["commuter_denominator_boost"] = True
+        commuter_meta["effective_pop_multiplier"] = round(commuter_mult, 4)
+    else:
+        commuter_mult = 1.0
+        commuter_meta = dict(commuter_ctx) if commuter_ctx else {}
+
+    v_adj = float(v_raw) / commuter_mult
+    p_adj = float(p_raw) / commuter_mult
+
+    v_slot, p_slot, raw, _ = _score_rates(v_adj, p_adj, area_type)
     td = _trend_delta(trend_pct)
     new_score = round(max(0.0, min(100.0, raw + td)), 1)
 
     old_score = safety.get("score")
 
-    # Update the stored breakdown to reflect new slot values.
+    # Update breakdown with new adjusted rates, slot values, and commuter context.
+    bd["violent_per_1k"] = round(v_adj, 3)
+    bd["property_per_1k"] = round(p_adj, 3)
     bd["violent_slot"] = round(v_slot, 1)
     bd["property_slot"] = round(p_slot, 1)
     bd["raw_score"] = round(raw, 1)
@@ -78,6 +101,8 @@ def recompute_record(score: dict) -> tuple[float | None, float | None, str]:
         "property_mean": bl.get("property_mean"),
         "property_std": bl.get("property_std"),
     }
+    if commuter_meta:
+        bd["commuter_context"] = commuter_meta
 
     safety["score"] = new_score
 
