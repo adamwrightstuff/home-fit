@@ -668,7 +668,7 @@ def get_social_fabric_score(
         "cohesion_support_score": cohesion_diag.get("support_score"),
         "cohesion_area_type_band": cohesion_diag.get("area_type_band"),
         "cohesion_resolution": cohesion_diag.get("resolution"),
-        "channel_a_bonding": round(channel_a, 1),
+        "channel_a_bonding": round(channel_a, 1) if channel_a is not None else None,
         "channel_a_source": channel_a_source,
         "channel_b_infra_density": round(channel_b, 1),
         "civic_density_per_km2": round(
