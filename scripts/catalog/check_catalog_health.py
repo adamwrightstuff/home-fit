@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -181,6 +182,60 @@ def recompute_longevity(breakdown: Dict[str, Any]) -> Optional[float]:
         return None
     total = sum(v for v in breakdown.values() if isinstance(v, (int, float)))
     return round(total, 2) if total else None
+
+
+def compute_outliers(
+    rows: List[Dict[str, Any]],
+    pillar_filter: Optional[str] = None,
+    min_group: int = 8,
+    low_z: float = -2.0,
+    high_z: float = 2.5,
+) -> Dict[Tuple[str, str], Tuple[float, float, float, str, str]]:
+    """Return {(name, pillar): (z, mean, sd, area_type, 'low'|'high')} for outliers.
+
+    Groups by (pillar, area_type). Groups smaller than min_group are skipped.
+    """
+    groups: Dict[Tuple[str, str], List[Tuple[str, float]]] = defaultdict(list)
+
+    for row in rows:
+        if not row.get("success"):
+            continue
+        cat = row.get("catalog") or {}
+        name = cat.get("name") or cat.get("search_query") or "?"
+        sc = row.get("score") or {}
+        lp = sc.get("livability_pillars") or {}
+        for pillar, pdata in lp.items():
+            if pillar_filter and pillar != pillar_filter:
+                continue
+            if not isinstance(pdata, dict):
+                continue
+            if pillar in NO_SCORE_EXPECTED:
+                continue
+            score_val = pdata.get("score")
+            if not isinstance(score_val, (int, float)):
+                continue
+            ac = pdata.get("area_classification") or {}
+            area_type = ac.get("area_type") or "unknown"
+            groups[(pillar, area_type)].append((name, score_val))
+
+    outliers: Dict[Tuple[str, str], Tuple[float, float, float, str, str]] = {}
+    for (pillar, area_type), entries in groups.items():
+        if len(entries) < min_group:
+            continue
+        scores = [s for _, s in entries]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / (len(scores) - 1)
+        sd = math.sqrt(variance) if variance > 0 else 0.0
+        if sd < 1.0:
+            continue
+        for name, score_val in entries:
+            z = (score_val - mean) / sd
+            if z < low_z:
+                outliers[(name, pillar)] = (z, mean, sd, area_type, "low")
+            elif z > high_z:
+                outliers[(name, pillar)] = (z, mean, sd, area_type, "high")
+
+    return outliers
 
 
 def check_row(
@@ -397,7 +452,34 @@ def main() -> int:
                 truncated = ', '.join(places[:5]) + ('...' if len(places) > 5 else '')
                 print(f"  {pillar}.{sub}: {len(places)} place(s) — {truncated}")
 
-    # ── Section 9: Place metadata ──────────────────────────────────────────
+    # ── Section 9: Plausibility outliers ──────────────────────────────────
+    # Build name→row lookup for score retrieval
+    name_to_row: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        cat = row.get("catalog") or {}
+        n = cat.get("name") or cat.get("search_query") or "?"
+        name_to_row[n] = row
+
+    outliers = compute_outliers(rows, pillar_filter=args.pillar)
+    if outliers:
+        print("\n── PLAUSIBILITY OUTLIERS (z < -2.0 low  /  z > +2.5 high) ────────")
+        by_pillar: Dict[str, list] = defaultdict(list)
+        for (name, pillar), (z, mean, sd, area_type, direction) in outliers.items():
+            by_pillar[pillar].append((name, z, mean, sd, area_type, direction))
+        for pillar in sorted(by_pillar):
+            entries_sorted = sorted(by_pillar[pillar], key=lambda t: t[1])
+            print(f"\n  {pillar}:")
+            for name, z, mean, sd, area_type, direction in entries_sorted:
+                row2 = name_to_row.get(name) or {}
+                lp2 = (row2.get("score") or {}).get("livability_pillars") or {}
+                score_val = (lp2.get(pillar) or {}).get("score")
+                score_str = f"{score_val:.1f}" if isinstance(score_val, (int, float)) else "?"
+                tag = "LOW" if direction == "low" else "HIGH"
+                print(f"    • {name:<32} score={score_str:<6} z={z:+.2f}  ({area_type}: mean={mean:.1f} sd={sd:.1f})  {tag}")
+    else:
+        print("\n  ✓ No plausibility outliers detected.")
+
+    # ── Section 10: Place metadata ─────────────────────────────────────────
     if place_meta_issues:
         print("\n── PLACE METADATA ISSUES ──────────────────────────────────────────")
         # Group by flag type
@@ -409,7 +491,7 @@ def main() -> int:
             truncated = ', '.join(places[:6]) + ('...' if len(places) > 6 else '')
             print(f"  {flag}: {len(places)} place(s) — {truncated}")
 
-    # ── Section 10: Per-place summary ─────────────────────────────────────
+    # ── Section 11: Per-place summary ─────────────────────────────────────
     print("\n── PER-PLACE FLAG SUMMARY ─────────────────────────────────────────")
     shown = 0
     for name, place_flags, pillar_flags, total in results:
@@ -435,6 +517,9 @@ def main() -> int:
     print(f"  Fallback used           : {sum(len(v) for v in fallback_issues.values())}")
     print(f"  Missing subcomponents   : {sum(len(vv) for v in missing_sub.values() for vv in v.values())}")
     print(f"  Metadata issues         : {sum(len(pf) for _, pf, _, _ in results)}")
+    n_low = sum(1 for v in outliers.values() if v[4] == "low")
+    n_high = sum(1 for v in outliers.values() if v[4] == "high")
+    print(f"  Plausibility outliers   : {len(outliers)} ({n_low} low / {n_high} high)")
     lean_missing = sum(
         1 for row in rows
         if (row.get("score", {}).get("livability_pillars", {}).get("political_lean", {}).get("breakdown") or {}).get("lean_2024") is None
