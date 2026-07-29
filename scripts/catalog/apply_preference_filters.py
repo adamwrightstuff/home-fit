@@ -243,7 +243,7 @@ def passes_political_filter(lean_2024: Optional[float], filter_labels: list[str]
     if not filter_labels:
         return True
     if lean_2024 is None:
-        return True
+        return False
     return any(
         lo <= lean_2024 < hi
         for label in filter_labels
