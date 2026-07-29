@@ -121,6 +121,7 @@ def recompute_row(row: dict) -> str:
     sf["score"] = new_score
     if isinstance(sf.get("details"), dict):
         sf["details"]["version"] = "v16b_sf_with_rootedness"
+    sf["_rescore_version"] = "v16b_sf_with_rootedness"
 
     row["score"]["total_score"] = _recompute_total(row["score"]["livability_pillars"])
 

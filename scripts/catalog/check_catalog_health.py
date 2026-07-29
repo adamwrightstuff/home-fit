@@ -54,20 +54,25 @@ NO_SCORE_EXPECTED = {"political_lean"}
 # None = pillar isn't versioned yet, handled separately.
 OLD_VERSIONS: Dict[str, set] = {
     "public_transit_access": {"commuter_access_floor_fresh"},
-    "social_fabric":         {"v14_two_morphology"},
+    "social_fabric":         {"v14_two_morphology", "v14_sf_two_morphology"},
 }
 
 # Latest version per pillar — presence of this version means the place is current.
 # Absence means either unversioned (old) or on a known old version above.
+# NOTE: transit has two valid terminal versions depending on place type:
+#   commuter_access_floor_ridership — commuter-rail towns (floor applied on top of v3)
+#   transit_v3_subway_commuter_split — subway towns (floor is a no-op; v3 is terminal)
+# The transit-specific check below handles this; LATEST_VERSIONS holds the floor version
+# so unversioned places surface correctly.
 LATEST_VERSIONS: Dict[str, str] = {
     "active_outdoors":        "active_outdoors_v2_component_sum",
     "air_travel_access":      "air_travel_commute_bands",
     "economic_security":      "econ_job_access_blend",
     "housing_value":          "housing_empty_tract_fix",
     "neighborhood_amenities": "amenities_v3_walkable_density",
-    "public_transit_access":  "transit_v3_subway_commuter_split",
+    "public_transit_access":  "commuter_access_floor_ridership",
     "quality_education":      "education_weight_enabled",
-    "social_fabric":          "v14_sf_two_morphology",
+    "social_fabric":          "v16b_sf_with_rootedness",
 }
 
 # Expected non-None breakdown subcomponents per pillar.
@@ -160,6 +165,24 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
         for key in NB_V9_KEYS:
             if v9.get(key) is None:
                 flags.append(f"missing:v9.{key}")
+
+    # Transit has two valid terminal versions: commuter_access_floor_ridership for
+    # commuter-rail towns, transit_v3_subway_commuter_split for subway towns.
+    # Override the generic version flag accordingly.
+    if pillar == "public_transit_access" and got == "transit_v3_subway_commuter_split":
+        summary = data.get("summary") or {}
+        modes = summary.get("transit_modes_available") or []
+        commuter_routes = summary.get("commuter_rail_routes") or 0
+        if "Subway/Metro" in modes:
+            # Subway town — v3 is the correct terminal; clear any spurious version: flag
+            flags = [f for f in flags if not f.startswith("version:")]
+        elif commuter_routes > 0:
+            # Has commuter rail — floor should have been applied (or checked); flag it
+            flags = [f for f in flags if not f.startswith("version:")]
+            flags.append("OLD_VERSION:floor_not_applied")
+        else:
+            # Bus-only / no rail — v3 is the correct terminal state; clear version: flag
+            flags = [f for f in flags if not f.startswith("version:")]
 
     return flags
 

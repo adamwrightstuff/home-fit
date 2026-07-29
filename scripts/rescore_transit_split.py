@@ -63,7 +63,7 @@ def new_score(summary: dict) -> float:
 def apply_cascade(sc: dict) -> tuple[float, float] | None:
     """Mutate one place's score dict in place. Returns (old_pillar, new_pillar) or None."""
     lp = sc.get("livability_pillars", {}).get("public_transit_access")
-    if not lp:
+    if not lp or "weight" not in lp or lp.get("score") is None:
         return None
     summary = lp.get("summary", {})
     old = lp["score"]
