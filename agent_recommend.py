@@ -26,7 +26,7 @@ PILLAR_KEYS: tuple[str, ...] = (
     "healthcare_access",
     "public_transit_access",
     "air_travel_access",
-    "economic_security",
+    "economic_opportunity",
     "quality_education",
     "housing_value",
     "climate_risk",

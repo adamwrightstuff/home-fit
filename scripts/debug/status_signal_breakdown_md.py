@@ -29,7 +29,7 @@ def load_breakdown(path: str) -> dict:
     pillars = data.get("livability_pillars") or {}
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
-    economic = pillars.get("economic_security")
+    economic = pillars.get("economic_opportunity")
     amenities = pillars.get("neighborhood_amenities")
     business_list = get_business_list(data)
     coords = data.get("coordinates") or {}

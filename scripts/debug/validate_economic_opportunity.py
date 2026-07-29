@@ -8,10 +8,10 @@ Validate economic security pillar: distribution check + resilience spot-check.
    and diversified metros.
 
 Run from project root:
-  python3 scripts/validate_economic_security.py [--api] [--base-url URL]
+  python3 scripts/validate_economic_opportunity.py [--api] [--base-url URL]
 
 Without --api: calls pillar directly (slower, no server needed).
-With --api: calls /score?only=economic_security (requires server on base-url).
+With --api: calls /score?only=economic_opportunity (requires server on base-url).
 """
 
 from __future__ import annotations
@@ -110,12 +110,12 @@ def _distribution_stats(vals: List[float]) -> Dict[str, float]:
 def fetch_via_api(location: str, base_url: str, timeout: int = 120) -> Optional[Dict[str, Any]]:
     import requests
     url = f"{base_url}/score"
-    params = {"location": location, "only": "economic_security"}
+    params = {"location": location, "only": "economic_opportunity"}
     try:
         r = requests.get(url, params=params, timeout=timeout)
         r.raise_for_status()
         data = r.json()
-        return data.get("livability_pillars", {}).get("economic_security")
+        return data.get("livability_pillars", {}).get("economic_opportunity")
     except Exception as e:
         print(f"  API error for {location}: {e}", file=sys.stderr)
         return None
@@ -126,7 +126,7 @@ def fetch_via_pillar(location: str, quick: bool = False) -> Optional[Dict[str, A
         from data_sources.geocoding import geocode
         from data_sources.census_api import get_census_tract, get_population_density
         from data_sources.data_quality import detect_area_type
-        from pillars.economic_security import get_economic_security_score
+        from pillars.economic_opportunity import get_economic_opportunity_score
 
         g = geocode(location)
         if not g:
@@ -139,7 +139,7 @@ def fetch_via_pillar(location: str, quick: bool = False) -> Optional[Dict[str, A
         else:
             density = get_population_density(lat, lon, tract=tract) or 0.0
             area_type = detect_area_type(lat, lon, density=density, city=city, location_input=location)
-        score, details = get_economic_security_score(
+        score, details = get_economic_opportunity_score(
             lat, lon, city=city, state=state, area_type=area_type, census_tract=tract
         )
         return {

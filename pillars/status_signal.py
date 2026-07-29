@@ -745,7 +745,7 @@ def _fetch_white_collar_pct_tract(tract: Optional[Dict[str, Any]]) -> Optional[f
 
 
 def compute_occupation(
-    economic_security_details: Dict[str, Any],
+    economic_opportunity_details: Dict[str, Any],
     social_fabric_details: Dict[str, Any],
     tract: Optional[Dict[str, Any]],
     keys_to_try: List[str],
@@ -753,7 +753,7 @@ def compute_occupation(
     archetype: Optional[str] = None,
 ) -> Optional[float]:
     """Occupation: S2401 Management/Business/Science/Arts (white_collar_pct) normalized against CBSA."""
-    white_collar_pct = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
+    white_collar_pct = (economic_opportunity_details.get("breakdown") or {}).get("white_collar_pct")
     if white_collar_pct is None and tract:
         white_collar_pct = _fetch_white_collar_pct_tract(tract)
     if white_collar_pct is None:
@@ -1019,7 +1019,7 @@ def _backfill_status_signal_social_inputs(
 def compute_status_signal(
     housing_details: Optional[Dict[str, Any]],
     social_fabric_details: Optional[Dict[str, Any]],
-    economic_security_details: Optional[Dict[str, Any]],
+    economic_opportunity_details: Optional[Dict[str, Any]],
     business_list: Optional[List[Dict[str, Any]]],
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
@@ -1033,7 +1033,7 @@ def compute_status_signal(
     result, _ = compute_status_signal_with_breakdown(
         housing_details,
         social_fabric_details,
-        economic_security_details,
+        economic_opportunity_details,
         business_list,
         tract,
         state_abbrev,
@@ -1045,7 +1045,7 @@ def compute_status_signal(
 def compute_status_signal_with_breakdown(
     housing_details: Optional[Dict[str, Any]],
     social_fabric_details: Optional[Dict[str, Any]],
-    economic_security_details: Optional[Dict[str, Any]],
+    economic_opportunity_details: Optional[Dict[str, Any]],
     business_list: Optional[List[Dict[str, Any]]],
     tract: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
@@ -1089,7 +1089,7 @@ def compute_status_signal_with_breakdown(
         "original_archetype_rule": None,
         "rerun_inputs": None,
     }
-    if not housing_details or not economic_security_details:
+    if not housing_details or not economic_opportunity_details:
         return None, breakdown
     merged_sf = _merge_social_and_diversity_for_signal(social_fabric_details, diversity_details)
     merged_sf = _backfill_status_signal_social_inputs(merged_sf, tract, lat, lon)
@@ -1124,13 +1124,13 @@ def compute_status_signal_with_breakdown(
 
     # Occupation computed first so white_collar_pct feeds into the DFG composite
     occupation_neutral = compute_occupation(
-        economic_security_details,
+        economic_opportunity_details,
         merged_sf,
         tract,
         keys_to_try,
         baselines,
     )
-    _wc_pct: Optional[float] = (economic_security_details.get("breakdown") or {}).get("white_collar_pct")
+    _wc_pct: Optional[float] = (economic_opportunity_details.get("breakdown") or {}).get("white_collar_pct")
 
     wealth = compute_wealth(housing_details, keys_to_try, baselines)
 

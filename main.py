@@ -49,7 +49,7 @@ from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
 from pillars.healthcare_access import get_healthcare_access_score
 from pillars.housing_value import get_housing_value_score
-from pillars.economic_security import get_economic_security_score
+from pillars.economic_opportunity import get_economic_opportunity_score
 from pillars.climate_risk import get_climate_risk_score
 from pillars.social_fabric import get_social_fabric_score
 from pillars.diversity import get_diversity_score, parse_diversity_preference
@@ -265,7 +265,7 @@ def _compute_scoring_hash() -> str:
         "pillars/housing_value.py",
         "pillars/schools.py",
         "pillars/beauty_common.py",
-        "pillars/economic_security.py",
+        "pillars/economic_opportunity.py",
         "pillars/climate_risk.py",
         "pillars/social_fabric.py",
         "pillars/diversity.py",
@@ -380,7 +380,7 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
         "air_travel_access",
         "public_transit_access",
         "healthcare_access",
-        "economic_security",
+        "economic_opportunity",
         "quality_education",
         "housing_value",
         "climate_risk",
@@ -801,7 +801,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
         "air_travel_access",
         "public_transit_access",
         "healthcare_access",
-        "economic_security",
+        "economic_opportunity",
         "quality_education",
         "housing_value",
         "climate_risk",
@@ -945,7 +945,7 @@ def _derive_token_allocation_for_scoring(
             "air_travel_access",
             "public_transit_access",
             "healthcare_access",
-            "economic_security",
+            "economic_opportunity",
             "quality_education",
             "housing_value",
             "climate_risk",
@@ -1091,20 +1091,20 @@ def _set_pillar_status(
         entry["data_quality"] = dq
 
 
-def _inject_white_collar_into_economic_security(
-    economic_security_details: Dict[str, Any],
+def _inject_white_collar_into_economic_opportunity(
+    economic_opportunity_details: Dict[str, Any],
     census_tract: Optional[Dict[str, Any]],
 ) -> None:
-    """Set economic_security_details['breakdown']['white_collar_pct'] from S2401 when tract is available."""
+    """Set economic_opportunity_details['breakdown']['white_collar_pct'] from S2401 when tract is available."""
     if not census_tract:
         return
     try:
         from pillars.status_signal import _fetch_white_collar_pct_tract
         wc = _fetch_white_collar_pct_tract(census_tract)
         if wc is not None:
-            if economic_security_details.get("breakdown") is None:
-                economic_security_details["breakdown"] = {}
-            economic_security_details["breakdown"]["white_collar_pct"] = wc
+            if economic_opportunity_details.get("breakdown") is None:
+                economic_opportunity_details["breakdown"] = {}
+            economic_opportunity_details["breakdown"]["white_collar_pct"] = wc
     except Exception:
         pass
 
@@ -1112,7 +1112,7 @@ def _inject_white_collar_into_economic_security(
 def _compute_status_signal_for_response(
     housing_details: Dict[str, Any],
     social_fabric_details: Dict[str, Any],
-    economic_security_details: Dict[str, Any],
+    economic_opportunity_details: Dict[str, Any],
     amenities_details: Dict[str, Any],
     census_tract: Optional[Dict[str, Any]],
     state: Optional[str],
@@ -1137,7 +1137,7 @@ def _compute_status_signal_for_response(
     return compute_status_signal_with_breakdown(
         housing_details,
         social_fabric_details,
-        economic_security_details,
+        economic_opportunity_details,
         business_list,
         census_tract,
         state,
@@ -1168,7 +1168,7 @@ def _need_arch_diversity_for_area_type(only_pillars: Optional[set[str]]) -> bool
 def _compute_happiness_index_for_response(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
-    economic_security_details: Optional[Dict[str, Any]],
+    economic_opportunity_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
@@ -1184,7 +1184,7 @@ def _compute_happiness_index_for_response(
         return compute_happiness_index_with_breakdown(
             housing_details,
             public_transit_details,
-            economic_security_details,
+            economic_opportunity_details,
             natural_beauty_details,
             state,
             social_fabric_details=social_fabric_details,
@@ -1356,7 +1356,7 @@ def _apply_allocation_to_cached_response(
         primary_pillars = [
             "active_outdoors", "neighborhood_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
-            "economic_security", "quality_education", "housing_value",
+            "economic_opportunity", "quality_education", "housing_value",
             "climate_risk", "social_fabric", "diversity", "community_safety",
         ]
         for pillar in primary_pillars:
@@ -2030,9 +2030,9 @@ def _compute_single_score_internal(
                 'density': density
             })
         )
-    if _include_pillar('economic_security'):
+    if _include_pillar('economic_opportunity'):
         pillar_tasks.append(
-            ('economic_security', get_economic_security_score, {
+            ('economic_opportunity', get_economic_opportunity_score, {
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -2276,7 +2276,7 @@ def _compute_single_score_internal(
     air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
     transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
-    economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+    economic_opportunity_score, economic_opportunity_details = pillar_results.get('economic_opportunity') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
     climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
     social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
@@ -2320,7 +2320,7 @@ def _compute_single_score_internal(
                 token_allocation = {k: v * _scale for k, v in token_allocation.items()}
             _no_data_pillars.append(_pillar_key)
 
-    _inject_white_collar_into_economic_security(economic_security_details, census_tract)
+    _inject_white_collar_into_economic_opportunity(economic_opportunity_details, census_tract)
 
     # Extract built/natural beauty from parallel results
     built_calc = pillar_results.get('built_environment')
@@ -2450,7 +2450,7 @@ def _compute_single_score_internal(
         + (air_travel_score * token_allocation["air_travel_access"] / 100)
         + (transit_score * token_allocation["public_transit_access"] / 100)
         + (healthcare_score * token_allocation["healthcare_access"] / 100)
-        + (economic_security_score * token_allocation["economic_security"] / 100)
+        + (economic_opportunity_score * token_allocation["economic_opportunity"] / 100)
         + (school_avg * token_allocation["quality_education"] / 100)
         + (housing_score * token_allocation["housing_value"] / 100)
         + (climate_risk_score * token_allocation["climate_risk"] / 100)
@@ -2588,19 +2588,19 @@ def _compute_single_score_internal(
             "data_quality": healthcare_details.get("data_quality", {}),
             "area_classification": healthcare_details.get("area_classification", {})
         },
-        "economic_security": {
-            "score": economic_security_score,
-            "base_score": economic_security_details.get("base_score"),
-            "selected_job_categories": economic_security_details.get("selected_job_categories"),
-            "job_category_overlays": (economic_security_details.get("breakdown") or {}).get("job_category_overlays"),
-            "weight": token_allocation["economic_security"],
-            "importance_level": priority_levels.get("economic_security") if priority_levels else None,
-            "contribution": round(economic_security_score * token_allocation["economic_security"] / 100, 2),
-            "breakdown": economic_security_details.get("breakdown", {}),
-            "summary": economic_security_details.get("summary", {}),
-            "confidence": economic_security_details.get("data_quality", {}).get("confidence", 0),
-            "data_quality": economic_security_details.get("data_quality", {}),
-            "area_classification": economic_security_details.get("area_classification", {})
+        "economic_opportunity": {
+            "score": economic_opportunity_score,
+            "base_score": economic_opportunity_details.get("base_score"),
+            "selected_job_categories": economic_opportunity_details.get("selected_job_categories"),
+            "job_category_overlays": (economic_opportunity_details.get("breakdown") or {}).get("job_category_overlays"),
+            "weight": token_allocation["economic_opportunity"],
+            "importance_level": priority_levels.get("economic_opportunity") if priority_levels else None,
+            "contribution": round(economic_opportunity_score * token_allocation["economic_opportunity"] / 100, 2),
+            "breakdown": economic_opportunity_details.get("breakdown", {}),
+            "summary": economic_opportunity_details.get("summary", {}),
+            "confidence": economic_opportunity_details.get("data_quality", {}).get("confidence", 0),
+            "data_quality": economic_opportunity_details.get("data_quality", {}),
+            "area_classification": economic_opportunity_details.get("area_classification", {})
         },
         "quality_education": {
             "score": school_avg,
@@ -2762,7 +2762,7 @@ def _compute_single_score_internal(
     status_signal_result = _compute_status_signal_for_response(
         housing_details,
         social_fabric_details,
-        economic_security_details,
+        economic_opportunity_details,
         amenities_details,
         census_tract,
         state,
@@ -2785,7 +2785,7 @@ def _compute_single_score_internal(
     happiness_result = _compute_happiness_index_for_response(
         housing_details,
         public_transit_details,
-        economic_security_details,
+        economic_opportunity_details,
         natural_beauty_details,
         state,
         social_fabric_details=livability_pillars.get("social_fabric"),
@@ -3214,7 +3214,7 @@ def create_score_job(
     Use GET /score/jobs/{job_id} to poll status/result.
     If only=pillar1,pillar2 is set, only those pillars are computed (tap-to-score flow).
     """
-    # Parse only_pillars (e.g. "economic_security" or "built_environment,natural_beauty")
+    # Parse only_pillars (e.g. "economic_opportunity" or "built_environment,natural_beauty")
     only_pillars: Optional[set[str]] = None
     if only:
         raw_only = {part.strip() for part in only.split(",") if part.strip()}
@@ -3777,7 +3777,7 @@ async def _stream_score_with_progress(
             })
         )
         pillar_tasks.append(
-            ('economic_security', get_economic_security_score, {
+            ('economic_opportunity', get_economic_opportunity_score, {
                 'lat': lat, 'lon': lon, 'city': city, 'state': state, 'area_type': area_type,
                 'census_tract': census_tract,
                 'job_categories': job_categories,
@@ -3969,7 +3969,7 @@ async def _stream_score_with_progress(
         air_travel_score, air_travel_details = pillar_results.get('air_travel_access') or (0.0, {"primary_airport": {}, "summary": {}, "data_quality": {}})
         transit_score, transit_details = pillar_results.get('public_transit_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         healthcare_score, healthcare_details = pillar_results.get('healthcare_access') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
-        economic_security_score, economic_security_details = pillar_results.get('economic_security') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
+        economic_opportunity_score, economic_opportunity_details = pillar_results.get('economic_opportunity') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         housing_score, housing_details = pillar_results.get('housing_value') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}})
         climate_risk_score, climate_risk_details = pillar_results.get('climate_risk') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
         social_fabric_score, social_fabric_details = pillar_results.get('social_fabric') or (0.0, {"breakdown": {}, "summary": {}, "data_quality": {}, "area_classification": {}})
@@ -4012,7 +4012,7 @@ async def _stream_score_with_progress(
                     token_allocation = {k: v * _scale for k, v in token_allocation.items()}
                 _no_data_pillars.append(_pillar_key)
 
-        _inject_white_collar_into_economic_security(economic_security_details, census_tract)
+        _inject_white_collar_into_economic_opportunity(economic_opportunity_details, census_tract)
 
         # Extract built/natural beauty
         built_calc = pillar_results.get('built_environment')
@@ -4158,7 +4158,7 @@ async def _stream_score_with_progress(
                 "air_travel_access",
                 "public_transit_access",
                 "healthcare_access",
-                "economic_security",
+                "economic_opportunity",
                 "quality_education",
                 "housing_value",
                 "climate_risk",
@@ -4217,7 +4217,7 @@ async def _stream_score_with_progress(
             + (air_travel_score * token_allocation["air_travel_access"] / 100)
             + (transit_score * token_allocation["public_transit_access"] / 100)
             + (healthcare_score * token_allocation["healthcare_access"] / 100)
-            + (economic_security_score * token_allocation["economic_security"] / 100)
+            + (economic_opportunity_score * token_allocation["economic_opportunity"] / 100)
             + (school_avg * token_allocation["quality_education"] / 100)
             + (housing_score * token_allocation["housing_value"] / 100)
             + (climate_risk_score * token_allocation["climate_risk"] / 100)
@@ -4348,19 +4348,19 @@ async def _stream_score_with_progress(
                 "data_quality": healthcare_details.get("data_quality", {}),
                 "area_classification": healthcare_details.get("area_classification", {})
             },
-            "economic_security": {
-                "score": economic_security_score,
-                "base_score": economic_security_details.get("base_score"),
-                "selected_job_categories": economic_security_details.get("selected_job_categories"),
-                "job_category_overlays": (economic_security_details.get("breakdown") or {}).get("job_category_overlays"),
-                "weight": token_allocation["economic_security"],
-                "importance_level": priority_levels.get("economic_security") if priority_levels else None,
-                "contribution": round(economic_security_score * token_allocation["economic_security"] / 100, 2),
-                "breakdown": economic_security_details.get("breakdown", {}),
-                "summary": economic_security_details.get("summary", {}),
-                "confidence": economic_security_details.get("data_quality", {}).get("confidence", 0),
-                "data_quality": economic_security_details.get("data_quality", {}),
-                "area_classification": economic_security_details.get("area_classification", {})
+            "economic_opportunity": {
+                "score": economic_opportunity_score,
+                "base_score": economic_opportunity_details.get("base_score"),
+                "selected_job_categories": economic_opportunity_details.get("selected_job_categories"),
+                "job_category_overlays": (economic_opportunity_details.get("breakdown") or {}).get("job_category_overlays"),
+                "weight": token_allocation["economic_opportunity"],
+                "importance_level": priority_levels.get("economic_opportunity") if priority_levels else None,
+                "contribution": round(economic_opportunity_score * token_allocation["economic_opportunity"] / 100, 2),
+                "breakdown": economic_opportunity_details.get("breakdown", {}),
+                "summary": economic_opportunity_details.get("summary", {}),
+                "confidence": economic_opportunity_details.get("data_quality", {}).get("confidence", 0),
+                "data_quality": economic_opportunity_details.get("data_quality", {}),
+                "area_classification": economic_opportunity_details.get("area_classification", {})
             },
             "quality_education": {
                 "score": school_avg,
@@ -4513,7 +4513,7 @@ async def _stream_score_with_progress(
         status_signal_result = _compute_status_signal_for_response(
             housing_details,
             social_fabric_details,
-            economic_security_details,
+            economic_opportunity_details,
             amenities_details,
             census_tract,
             state,
@@ -4534,7 +4534,7 @@ async def _stream_score_with_progress(
         happiness_result = _compute_happiness_index_for_response(
             housing_details,
             public_transit_details,
-            economic_security_details,
+            economic_opportunity_details,
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
@@ -5717,7 +5717,7 @@ def health_check():
             "air_travel_access",
             "public_transit_access",
             "healthcare_access",
-            "economic_security",
+            "economic_opportunity",
             "quality_education",
             "housing_value"
         ]

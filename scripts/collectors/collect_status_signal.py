@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Status Signal collector: reads data/locations.csv, calls the API with only the four
-Status Signal pillars (housing_value, social_fabric, economic_security, neighborhood_amenities),
+Status Signal pillars (housing_value, social_fabric, economic_opportunity, neighborhood_amenities),
 and appends raw JSON to data/results.csv.
 
 Idempotent: skips locations already in results.csv. Restartable.
@@ -50,7 +50,7 @@ MAX_RETRIES = 3
 RETRY_BACKOFF_FACTOR = 2.0
 REQUEST_TIMEOUT_SECONDS = 300
 
-ONLY_PILLARS = "housing_value,social_fabric,economic_security,neighborhood_amenities"
+ONLY_PILLARS = "housing_value,social_fabric,economic_opportunity,neighborhood_amenities"
 
 
 def call_api(location: str) -> Optional[Dict]:

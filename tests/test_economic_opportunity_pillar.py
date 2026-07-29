@@ -8,7 +8,7 @@ class TestEconomicSecurityPillar(unittest.TestCase):
     """
     def test_score_shape_and_range(self):
         from data_sources.economic_security_data import EconomicGeo
-        import pillars.economic_security as econ
+        import pillars.economic_opportunity as econ
 
         fake_geo = EconomicGeo(
             level="county",
@@ -60,7 +60,7 @@ class TestEconomicSecurityPillar(unittest.TestCase):
         ), patch.object(econ, "fetch_acs_table", _fake_table), patch.object(
             econ, "fetch_bds_establishment_dynamics", _fake_bds
         ):
-            score, details = econ.get_economic_security_score(
+            score, details = econ.get_economic_opportunity_score(
                 37.0,
                 -122.0,
                 city="Test City",
@@ -83,7 +83,7 @@ class TestEconomicSecurityPillar(unittest.TestCase):
         self.assertIn("ecosystem", details["breakdown"])
 
     def test_job_category_overlays_adjust_score_when_requested(self):
-        import pillars.economic_security as econ
+        import pillars.economic_opportunity as econ
 
         # Force a deterministic overlay: +10 job-market when tech_professional selected.
         def _fake_overlays(**kwargs):
@@ -100,7 +100,7 @@ class TestEconomicSecurityPillar(unittest.TestCase):
             }
 
         with patch.object(econ, "compute_job_category_overlays", _fake_overlays):
-            score, details = econ.get_economic_security_score(
+            score, details = econ.get_economic_opportunity_score(
                 37.0,
                 -122.0,
                 city="Test City",

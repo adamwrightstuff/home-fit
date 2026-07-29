@@ -34,7 +34,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 PILLAR_ORDER: List[str] = [
-    "quality_education", "neighborhood_amenities", "economic_security", "climate_risk",
+    "quality_education", "neighborhood_amenities", "economic_opportunity", "climate_risk",
     "active_outdoors", "neighborhood_beauty", "diversity", "social_fabric",
     "healthcare_access", "public_transit_access", "air_travel_access", "housing_value",
     "community_safety",

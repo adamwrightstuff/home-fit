@@ -24,7 +24,7 @@ const SHORT_LABELS: Record<PillarKey, string> = {
   healthcare_access: 'Health',
   air_travel_access: 'Air',
   housing_value: 'Housing',
-  economic_security: 'Economy',
+  economic_opportunity: 'Economy',
   climate_risk: 'Climate',
 }
 

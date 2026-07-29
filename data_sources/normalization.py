@@ -1,7 +1,7 @@
 """
 Normalization helpers for converting raw area-level metrics to 0–100 scores.
 
-For economic_security, we normalize within (census_division × area_bucket) using
+For economic_opportunity, we normalize within (census_division × area_bucket) using
 precomputed mean/std stored in `data/economic_baselines.json`, then convert z-scores
 to percentiles (Normal CDF) and map to 0–100.
 """

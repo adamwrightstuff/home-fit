@@ -765,7 +765,7 @@ export default function ScoreDisplay({
                             ))}
                           </div>
 
-                          {key === 'economic_security' && (
+                          {key === 'economic_opportunity' && (
                             <div>
                               <div className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Job categories (optional)</div>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>

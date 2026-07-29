@@ -67,7 +67,7 @@ OLD_VERSIONS: Dict[str, set] = {
 LATEST_VERSIONS: Dict[str, str] = {
     "active_outdoors":        "active_outdoors_v2_component_sum",
     "air_travel_access":      "air_travel_commute_bands",
-    "economic_security":      "econ_job_access_blend",
+    # economic_opportunity: live scorer computes job_access natively; no migration stamp expected
     "housing_value":          "housing_empty_tract_fix",
     "neighborhood_amenities": "amenities_v3_walkable_density",
     "public_transit_access":  "commuter_access_floor_ridership",
@@ -81,7 +81,7 @@ EXPECTED_BREAKDOWN: Dict[str, List[str]] = {
     "neighborhood_amenities": ["home_walkability", "location_quality"],
     "public_transit_access":  ["heavy_rail", "bus", "commute_time"],
     "healthcare_access":      ["hospital_access", "primary_care", "pharmacies"],
-    "economic_security":      ["density", "mobility", "ecosystem", "resilience"],
+    "economic_opportunity":      ["density", "mobility", "ecosystem", "resilience"],
     "quality_education":      ["base_avg_rating"],
     "housing_value":          ["local_affordability", "space", "value_efficiency"],
     "climate_risk":           ["heat_exposure_pts", "air_quality_pts", "flood_zone_pts", "climate_trend_pts"],

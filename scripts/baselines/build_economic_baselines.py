@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build `data/economic_baselines.json` for the economic_security pillar.
+Build `data/economic_baselines.json` for the economic_opportunity pillar.
 
 This script samples locations, computes raw economic-security submetrics at the
 pillar's evaluation geography (CBSA preferred, county fallback), then produces
@@ -29,7 +29,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from data_sources.geocoding import geocode
 from data_sources.census_api import get_census_tract, get_population_density
 from data_sources.data_quality import detect_area_type
-from data_sources.economic_security_data import (
+from data_sources.economic_opportunity_data import (
     get_economic_geography,
     fetch_acs_profile_dp03,
     fetch_acs_table,

@@ -25,7 +25,7 @@ def main():
     base_url = os.environ.get("HOMEFIT_API_URL", "http://localhost:8000")
     timeout = int(os.environ.get("HOMEFIT_TIMEOUT", "120"))
 
-    only = "housing_value,social_fabric,economic_security,neighborhood_amenities"
+    only = "housing_value,social_fabric,economic_opportunity,neighborhood_amenities"
     print(f"Scoring: {location} (Status Signal pillars only)", flush=True)
     try:
         r = requests.get(
@@ -47,7 +47,7 @@ def main():
     pillars = data.get("livability_pillars") or {}
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
-    economic = pillars.get("economic_security")
+    economic = pillars.get("economic_opportunity")
     amenities = pillars.get("neighborhood_amenities")
     business_list = []
     if amenities:

@@ -227,7 +227,7 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     ],
     degradedMessage: 'Limited data: airport data unavailable.',
   },
-  economic_security: {
+  economic_opportunity: {
     topLine: 'Labor market stress, typical pay, and where we compared this place.',
     metrics: [
       { label: 'Unemployment rate', path: 'summary.unemployment_rate_pct', format: 'percent', max: 100 },

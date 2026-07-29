@@ -39,7 +39,7 @@ DEFAULT_JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.json
 PILLAR_ORDER: List[str] = [
     "quality_education",
     "neighborhood_amenities",
-    "economic_security",
+    "economic_opportunity",
     "climate_risk",
     "active_outdoors",
     "natural_beauty",

@@ -141,7 +141,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     healthcare_access: 50,
     public_transit_access: 50,
     air_travel_access: 50,
-    economic_security: 30,
+    economic_opportunity: 30,
     quality_education: 50,
     housing_value: 50,
     climate_risk: 50,
@@ -261,10 +261,10 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
 
     if (hasNonRemote) {
       // At least one concrete local sector: boost Economic Opportunity
-      set('economic_security', Math.max(get('economic_security'), 65))
+      set('economic_opportunity', Math.max(get('economic_opportunity'), 65))
     } else if (hasRemote) {
       // Remote only: local job market matters less than default
-      set('economic_security', Math.min(get('economic_security'), 20))
+      set('economic_opportunity', Math.min(get('economic_opportunity'), 20))
     }
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Live rescore of active_outdoors, public_transit_access, and economic_security
+Live rescore of active_outdoors, public_transit_access, and economic_opportunity
 for catalog places whose effective_area_type changed (reclassified places).
 
 These pillars use area_type for radius/bucket selection and can't be fixed offline.
@@ -15,7 +15,7 @@ from pathlib import Path
 
 from pillars.active_outdoors import get_active_outdoors_score
 from pillars.public_transit_access import get_public_transit_score
-from pillars.economic_security import get_economic_security_score
+from pillars.economic_opportunity import get_economic_opportunity_score
 
 CATALOGS = [
     Path("data/nyc_metro_place_catalog_scores_merged.jsonl"),
@@ -25,7 +25,7 @@ CATALOGS = [
 PILLARS = {
     "active_outdoors": get_active_outdoors_score,
     "public_transit_access": get_public_transit_score,
-    "economic_security": get_economic_security_score,
+    "economic_opportunity": get_economic_opportunity_score,
 }
 
 
@@ -61,13 +61,13 @@ def rescore_place(row: dict) -> dict:
     except Exception as e:
         print(f"    public_transit_access error: {e}")
 
-    # economic_security
+    # economic_opportunity
     try:
-        s, d = get_economic_security_score(lat, lon, city=city, state=state, area_type=area_type)
+        s, d = get_economic_opportunity_score(lat, lon, city=city, state=state, area_type=area_type)
         if s is not None:
-            pillars["economic_security"] = {**d, "score": round(float(s), 2), "status": "success"}
+            pillars["economic_opportunity"] = {**d, "score": round(float(s), 2), "status": "success"}
     except Exception as e:
-        print(f"    economic_security error: {e}")
+        print(f"    economic_opportunity error: {e}")
 
     return row
 

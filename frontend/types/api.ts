@@ -109,7 +109,7 @@ export interface LivabilityPillars {
   public_transit_access: LivabilityPillar;
   healthcare_access: LivabilityPillar;
   // Defensive: some deployments may not include this pillar yet.
-  economic_security?: LivabilityPillar;
+  economic_opportunity?: LivabilityPillar;
   quality_education: LivabilityPillar;
   housing_value: LivabilityPillar;
   /** Climate & Flood Risk (Phase 1A); may be absent in older deployments. */
@@ -215,7 +215,7 @@ export interface ScoreRequestParams {
   job_categories?: string;
   include_chains?: boolean;
   enable_schools?: boolean;
-  /** Request only these pillars (e.g. "economic_security"); backend param "only". */
+  /** Request only these pillars (e.g. "economic_opportunity"); backend param "only". */
   only?: string;
   /** Natural Beauty preference: JSON array of 1–2 of mountains, ocean, lakes_rivers, canopy. */
   natural_beauty_preference?: string;

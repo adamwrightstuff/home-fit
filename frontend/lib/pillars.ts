@@ -7,7 +7,7 @@ export type PillarKey =
   | 'healthcare_access'
   | 'public_transit_access'
   | 'air_travel_access'
-  | 'economic_security'
+  | 'economic_opportunity'
   | 'quality_education'
   | 'housing_value'
   | 'climate_risk'
@@ -20,7 +20,7 @@ export type PillarKey =
 export const PILLAR_ORDER: PillarKey[] = [
   'quality_education',
   'neighborhood_amenities',
-  'economic_security',
+  'economic_opportunity',
   'climate_risk',
   'active_outdoors',
   'natural_beauty',
@@ -191,7 +191,7 @@ export const TRAJECTORY_COPY = {
 
 /** Comma-separated pillar names required to compute the archetype index (for only= param). */
 export const STATUS_SIGNAL_ONLY_PILLARS =
-  'housing_value,social_fabric,economic_security,neighborhood_amenities,diversity'
+  'housing_value,social_fabric,economic_opportunity,neighborhood_amenities,diversity'
 
 export function isLongevityPillar(key: PillarKey): boolean {
   return LONGEVITY_PILLAR_KEYS.has(key)
@@ -250,7 +250,7 @@ export const PILLAR_META: Record<
     name: 'Air Travel Access',
     description: 'Drive time and tier quality of reachable airports. Scores how quickly you can get to a large or medium hub from your doorstep.',
   },
-  economic_security: {
+  economic_opportunity: {
     icon: '📈',
     name: 'Economic Opportunity',
     description:
@@ -376,7 +376,7 @@ export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
     'Reliable transit expands options for work, education, and social life without depending on a car. It can reduce commute stress, support physical activity (walking to stops), and improve financial stability by lowering transport costs.',
   air_travel_access:
     'Reasonable access to airports makes it easier to stay connected with family, travel for work, and take trips. It supports social bonds and life satisfaction, especially for those who value mobility.',
-  economic_security:
+  economic_opportunity:
     'Local job market strength for your profession, or overall economic health if you work remotely. Job category focus personalizes density, ecosystem, and resilience.',
   quality_education:
     'Strong local schools support child development and family satisfaction. Access to good K–12 and nearby higher education is associated with long-term outcomes and neighborhood stability.',

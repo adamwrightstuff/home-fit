@@ -5,7 +5,7 @@ with full economic breakdown (to explain low scores).
 
 1. Reads data/economic_baselines.json and reports n for "all"/"all" key metrics.
 2. Calls API with diagnostics for Carroll Gardens Brooklyn NY and Larchmont NY,
-   prints total_score, economic_security score, division/area_bucket, and raw
+   prints total_score, economic_opportunity score, division/area_bucket, and raw
    economic summary (unemployment, employment ratio, dynamism, resilience, etc.).
 
 Run from project root:
@@ -86,7 +86,7 @@ def score_locations():
             continue
         total = data.get("total_score")
         pillars = data.get("livability_pillars") or data.get("pillars") or {}
-        econ = pillars.get("economic_security") or {}
+        econ = pillars.get("economic_opportunity") or {}
         econ_score = econ.get("score")
         details = econ.get("details") or econ
         summary = details.get("summary") or {}

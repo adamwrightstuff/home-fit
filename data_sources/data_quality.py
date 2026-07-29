@@ -1257,8 +1257,8 @@ class DataQualityManager:
             return self._assess_airport_completeness(data, expected_minimums)
         elif pillar_name == 'neighborhood_amenities':
             return self._assess_business_completeness(data, expected_minimums)
-        elif pillar_name == 'economic_security':
-            return self._assess_economic_security_completeness(data, expected_minimums)
+        elif pillar_name == 'economic_opportunity':
+            return self._assess_economic_opportunity_completeness(data, expected_minimums)
         elif pillar_name == 'housing_value':
             return self._assess_housing_completeness(data, expected_minimums)
         elif pillar_name == 'built_environment':
@@ -1276,9 +1276,9 @@ class DataQualityManager:
         else:
             return self._assess_generic_completeness(data, expected_minimums)
 
-    def _assess_economic_security_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
+    def _assess_economic_opportunity_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
         """
-        Assess economic_security completeness.
+        Assess economic_opportunity completeness.
 
         This pillar is metric-driven (not count-driven), so completeness reflects how many
         submetrics were successfully computed.
@@ -1290,7 +1290,7 @@ class DataQualityManager:
         if not isinstance(metrics_present, list):
             metrics_present = []
 
-        # Current pillar uses 6 scored submetrics (see pillars/economic_security.py).
+        # Current pillar uses 6 scored submetrics (see pillars/economic_opportunity.py).
         total_expected = 6
         completeness = min(1.0, len(metrics_present) / max(1, total_expected))
 

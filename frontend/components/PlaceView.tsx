@@ -250,7 +250,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         air_travel_access: 'None',
         public_transit_access: 'None',
         healthcare_access: 'None',
-        economic_security: 'None',
+        economic_opportunity: 'None',
         quality_education: 'None',
         housing_value: 'None',
         climate_risk: 'None',
@@ -614,7 +614,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
         air_travel_access: 'None',
         public_transit_access: 'None',
         healthcare_access: 'None',
-        economic_security: 'None',
+        economic_opportunity: 'None',
         quality_education: 'None',
         housing_value: 'None',
         climate_risk: 'None',
@@ -1330,7 +1330,7 @@ export default function PlaceView({ place, searchOptions, onSearchOptionsChange,
                       })}
                     </div>
                   )}
-                  {key === 'economic_security' && onSearchOptionsChange && (
+                  {key === 'economic_opportunity' && onSearchOptionsChange && (
                     <div style={{ borderTop: '1px solid var(--hf-border)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <span className="tr-muted" style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>Economic Opportunity Focus (optional)</span>
                       <p className="tr-muted" style={{ fontSize: '0.8rem', margin: 0 }}>

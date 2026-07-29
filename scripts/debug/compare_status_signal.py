@@ -19,7 +19,7 @@ def fetch_and_breakdown(location: str, base_url: str, timeout: int):
     from data_sources import census_api as _ca
     from pillars.status_signal import compute_status_signal_with_breakdown
 
-    only = "housing_value,social_fabric,economic_security,neighborhood_amenities"
+    only = "housing_value,social_fabric,economic_opportunity,neighborhood_amenities"
     r = requests.get(
         f"{base_url}/score",
         params={"location": location, "only": only},
@@ -31,7 +31,7 @@ def fetch_and_breakdown(location: str, base_url: str, timeout: int):
     pillars = data.get("livability_pillars") or {}
     housing = pillars.get("housing_value")
     social = pillars.get("social_fabric")
-    economic = pillars.get("economic_security")
+    economic = pillars.get("economic_opportunity")
     amenities = pillars.get("neighborhood_amenities")
     business_list = []
     if amenities:

@@ -12,7 +12,7 @@ from . import public_transit_access
 from . import healthcare_access
 from . import schools
 from . import housing_value
-from . import economic_security
+from . import economic_opportunity
 from . import climate_risk
 from . import social_fabric
 from . import diversity
@@ -28,7 +28,7 @@ __all__ = [
     "air_travel_access",
     "public_transit_access",
     "healthcare_access",
-    "economic_security",
+    "economic_opportunity",
     "schools",
     "housing_value",
     "climate_risk",

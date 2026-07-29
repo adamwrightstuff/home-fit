@@ -49,7 +49,7 @@ ALL_PILLARS = [
     "community_safety", "quality_education", "social_fabric",
     "neighborhood_amenities", "natural_beauty", "active_outdoors",
     "healthcare_access", "public_transit_access", "housing_value",
-    "diversity", "air_travel_access", "economic_security",
+    "diversity", "air_travel_access", "economic_opportunity",
     "climate_risk", "political_lean", "built_environment",
 ]
 

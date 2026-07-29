@@ -1,5 +1,5 @@
 """
-Job category overlays for Economic Opportunity (economic_security).
+Job category overlays for Economic Opportunity (economic_opportunity).
 
 These overlays are an optional personalization layer:
 - Base pillar remains profession-agnostic.

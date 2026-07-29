@@ -160,7 +160,7 @@ def _component_education(education_details: Optional[Dict[str, Any]]) -> Optiona
 def compute_happiness_index_with_breakdown(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
-    economic_security_details: Optional[Dict[str, Any]],
+    economic_opportunity_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
@@ -203,8 +203,8 @@ def compute_happiness_index_with_breakdown(
     # happiness return on community bonds; opportunity amplifies it.  Applied only when both
     # S and an economic score are available; otherwise S is used unmodified.
     eco_score: Optional[float] = None
-    if economic_security_details:
-        _raw = economic_security_details.get("score")
+    if economic_opportunity_details:
+        _raw = economic_opportunity_details.get("score")
         if isinstance(_raw, (int, float)) and _raw >= 0:
             eco_score = float(_raw)
     eco_modifier = (_ECO_MOD_MIN + (eco_score / 100.0) * _ECO_MOD_RANGE) if eco_score is not None else 1.0
@@ -257,7 +257,7 @@ def compute_happiness_index_with_breakdown(
 def compute_happiness_index(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
-    economic_security_details: Optional[Dict[str, Any]],
+    economic_opportunity_details: Optional[Dict[str, Any]],
     natural_beauty_details: Optional[Dict[str, Any]],
     state_abbrev: Optional[str],
     social_fabric_details: Optional[Dict[str, Any]] = None,
@@ -269,7 +269,7 @@ def compute_happiness_index(
     result, _ = compute_happiness_index_with_breakdown(
         housing_details,
         public_transit_details,
-        economic_security_details,
+        economic_opportunity_details,
         natural_beauty_details,
         state_abbrev,
         social_fabric_details=social_fabric_details,

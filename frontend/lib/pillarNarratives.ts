@@ -482,7 +482,7 @@ export function getPillarNarrative(
       return getPublicTransitNarrative(placeLabel, pillar)
     case 'air_travel_access':
       return getAirTravelNarrative(placeLabel, pillar)
-    case 'economic_security':
+    case 'economic_opportunity':
       return getEconomicOpportunityNarrative(placeLabel, pillar)
     case 'quality_education':
       return getQualityEducationNarrative(placeLabel, pillar)

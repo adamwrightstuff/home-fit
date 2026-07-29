@@ -15,7 +15,7 @@ interface PillarPriorities {
   air_travel_access: PriorityLevel
   public_transit_access: PriorityLevel
   healthcare_access: PriorityLevel
-  economic_security: PriorityLevel
+  economic_opportunity: PriorityLevel
   quality_education: PriorityLevel
   housing_value: PriorityLevel
   climate_risk: PriorityLevel
@@ -67,7 +67,7 @@ const DEFAULT_PRIORITIES: PillarPriorities = {
   air_travel_access: 'Medium',
   public_transit_access: 'Medium',
   healthcare_access: 'Medium',
-  economic_security: 'Medium',
+  economic_opportunity: 'Medium',
   quality_education: 'Medium',
   housing_value: 'Medium',
   climate_risk: 'Medium',
@@ -505,7 +505,7 @@ function SearchOptionsComponent({ options, onChange, disabled, expanded: externa
 
 
           {/* Economic Opportunity: Job category toggles — only when pillar is included */}
-          {options.priorities.economic_security !== 'None' && (
+          {options.priorities.economic_opportunity !== 'None' && (
           <div style={{ marginTop: '1.5rem' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>

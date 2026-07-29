@@ -159,7 +159,7 @@ def _weighted_avg(scores: Dict[str, Optional[float]], weights: Dict[str, float])
     return out, renorm
 
 
-def get_economic_security_score(
+def get_economic_opportunity_score(
     lat: float,
     lon: float,
     *,
@@ -180,7 +180,7 @@ def get_economic_security_score(
     # If we can't resolve geography, return 0 with low confidence but consistent shape.
     if geo is None:
         combined_data = {"metrics_present": [], "raw": {}, "geo": None}
-        dq = assess_pillar_data_quality("economic_security", combined_data, lat, lon, area_type or "suburban")
+        dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban")
         return 0.0, {
             "score": 0.0,
             "breakdown": {},
@@ -498,7 +498,7 @@ def get_economic_security_score(
             "year": year_now,
         },
     }
-    dq = assess_pillar_data_quality("economic_security", combined_data, lat, lon, area_type or "suburban")
+    dq = assess_pillar_data_quality("economic_opportunity", combined_data, lat, lon, area_type or "suburban")
 
     breakdown = {
         "density": {

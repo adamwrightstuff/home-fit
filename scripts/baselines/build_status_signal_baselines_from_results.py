@@ -218,8 +218,8 @@ def extract_metrics_from_response(
     if self_emp is not None and isinstance(self_emp, (int, float)):
         out["self_employed_pct"] = float(self_emp)
 
-    # Occupation: economic_security industry_shares_pct + white_collar_pct from breakdown or S2401
-    econ = pillars.get("economic_security") or {}
+    # Occupation: economic_opportunity industry_shares_pct + white_collar_pct from breakdown or S2401
+    econ = pillars.get("economic_opportunity") or {}
     breakdown = econ.get("breakdown") or {}
     industry = econ.get("industry_shares_pct") or {}
     fr = industry.get("finance_realestate")

@@ -168,7 +168,7 @@ def backfill_status_happiness_if_missing(response: Dict[str, Any]) -> None:
     diversity_details = pillars.get("diversity")
     if not isinstance(diversity_details, dict):
         diversity_details = None
-    econ = pillars.get("economic_security")
+    econ = pillars.get("economic_opportunity")
     amenities = pillars.get("neighborhood_amenities")
     if (
         lat is None
@@ -339,7 +339,7 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     diversity_details = pillars.get("diversity")
     if not isinstance(diversity_details, dict):
         diversity_details = None
-    econ = pillars.get("economic_security")
+    econ = pillars.get("economic_opportunity")
     amenities = pillars.get("neighborhood_amenities") or {}
     _city = (location_info.get("city") or "").strip() or None
     _zip = (location_info.get("zip") or "").strip() or None

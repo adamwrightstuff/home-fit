@@ -2,9 +2,9 @@
 """
 Build data/economic_baselines.json from data/results.csv (collector output).
 
-Reads scored API responses from results.csv, extracts economic_security summary
+Reads scored API responses from results.csv, extracts economic_opportunity summary
 metrics and (division, area_bucket) from each row, aggregates by division and
-area_bucket, and writes mean/std per metric so the economic_security pillar
+area_bucket, and writes mean/std per metric so the economic_opportunity pillar
 normalization uses observed ranges.
 
 Metrics extracted from summary: unemployment_rate, emp_pop_ratio,
@@ -57,7 +57,7 @@ def _mean_std(values: List[float]) -> Tuple[float, float]:
 def extract_economic_metrics(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Return (division, area_bucket, metrics_dict) or None."""
     pillars = raw.get("livability_pillars") or {}
-    econ = pillars.get("economic_security") or {}
+    econ = pillars.get("economic_opportunity") or {}
     summary = econ.get("summary") or {}
     division = summary.get("division")
     area_bucket = summary.get("area_bucket") or "all"

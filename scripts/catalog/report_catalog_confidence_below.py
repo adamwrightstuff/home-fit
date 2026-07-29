@@ -28,7 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PILLAR_ORDER: List[str] = [
     "quality_education",
     "neighborhood_amenities",
-    "economic_security",
+    "economic_opportunity",
     "climate_risk",
     "active_outdoors",
     "natural_beauty",

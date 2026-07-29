@@ -21,7 +21,7 @@ const GROUPS: { title: string; keys: PillarKey[] }[] = [
   },
   {
     title: 'Economics',
-    keys: ['economic_security', 'climate_risk'],
+    keys: ['economic_opportunity', 'climate_risk'],
   },
 ]
 
