@@ -17,6 +17,16 @@ amenities ``business_list`` when rows include lat/lon (max per bucket).
     --only-search-query "Floral Park, NY" \\
     --only-search-query "Merrick, NY" \\
     --output data/catalog_three_recomputed.jsonl
+
+ALWAYS USE --no-census UNLESS you are deliberately updating status_signal.
+
+Without --no-census the script makes live Census tract lookups using stored lat/lon.
+Single-point geocoding is tract-boundary-sensitive and returns a different tract than
+the original scoring pipeline, which selects a different metro baseline, which drifts
+status_signal by up to 9 pts with no real data change. The --no-census flag preserves
+the stored status_signal by skipping the lookup entirely. Only omit it when you have
+intentionally changed the status_signal formula or baselines and want those changes
+applied to the catalog.
 """
 from __future__ import annotations
 
