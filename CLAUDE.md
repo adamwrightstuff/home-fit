@@ -56,6 +56,12 @@ Pre-computed JSON files in `data/` provide metro-specific and area-type-specific
 
 Scripts in `scripts/catalog/` handle batch scoring of place catalogs to JSONL, re-running failed pillars, rescoring single pillars, recomputing composites, and exporting CSVs. These are not production code — they're admin tools. See `scripts/README.md` for the full inventory.
 
+**Catalog health check** — always run with `--no-unversioned` to suppress unversioned-pillar noise:
+```bash
+PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py --no-unversioned
+```
+Focus on one pillar: `--pillar active_outdoors`. CSV export: `--csv > health.csv`. The check is read-only and does not call the API. Checks: old scoring versions, null scores, low confidence, degraded pillars, data warnings, fallback usage, missing subcomponents, metadata gaps, composite drift, and statistical plausibility outliers (z < -2.0 low / z > +2.5 high grouped by pillar × area_type).
+
 ## Before Suggesting an API Rescore or Live API Call
 
 **NON-NEGOTIABLE: always ask "what data does this fix actually require?" before reaching for the API.**
