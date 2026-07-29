@@ -18,17 +18,34 @@ HEADERS = {"X-HomeFit-Proxy-Secret": os.environ["HOMEFIT_PROXY_SECRET"]}
 TRIP_TYPE_MONTH = {"beach": 7, "mountain": 7, "city": 10}
 
 # Rescore air_travel for places that had 0.0 because airports were missing from DB.
-# Rescore active_outdoors for all mountain destinations with the new is_mountain_town fix.
 FORCE_AIR_TRAVEL = set()
 
 FORCE_ACTIVE_OUTDOORS_MOUNTAIN = False
+FORCE_ACTIVE_OUTDOORS_BEACH = False
 
 FORCE_AMENITIES_CITY = False
-FORCE_AMENITIES_LOCATIONS: set = set()
 
-# Rescore beach AO where Overpass local+regional both failed (waterfront_lifestyle=0
-# despite being an actual beach destination). Only rescore if wl=0 and score<40.
-FORCE_ACTIVE_OUTDOORS_BEACH = True
+# Targeted reruns for confirmed Overpass/GEE failures found in July 2026 validation.
+FORCE_NATURAL_BEAUTY_LOCATIONS: set = {
+    "South Lake Tahoe, CA",   # GEE empty, score=0
+    "Newport, RI",            # conf=0, score=0
+    "Denver, CO",             # conf=0, score=0
+    "Memphis, TN",            # pillars=0 but score_data=25.7 — serialization bug, rerun to get clean value
+}
+
+FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = {
+    "New Orleans, LA",        # conf=0, Overpass failed
+    "Washington, DC",         # conf=0, Overpass failed
+    "Vail, CO",               # all 3 Overpass queries errored
+    "Virginia Beach, VA",     # 2 Overpass errors, water=0
+    "Hilton Head, SC",        # trail query errored, trails=0
+    "Key West, FL",           # local Overpass errored, waterfront undercounted
+    "Destin, FL",             # 2 Overpass errors, water=0
+}
+
+FORCE_AMENITIES_LOCATIONS: set = {
+    "Napa, CA",               # Places fallback failed, score=0 despite conf=22
+}
 
 
 def poll_job(job_id: str, timeout: int = 600) -> dict:
@@ -117,6 +134,10 @@ def main():
             wl = (ao.get("breakdown") or {}).get("waterfront_lifestyle", 0) if "breakdown" in ao else 0
             if wl == 0 and ao_score < 40:
                 pillars_to_rescore.append("active_outdoors")
+        if loc in FORCE_ACTIVE_OUTDOORS_LOCATIONS and "active_outdoors" not in pillars_to_rescore:
+            pillars_to_rescore.append("active_outdoors")
+        if loc in FORCE_NATURAL_BEAUTY_LOCATIONS:
+            pillars_to_rescore.append("natural_beauty")
         if (FORCE_AMENITIES_CITY and tt == "city") or loc in FORCE_AMENITIES_LOCATIONS:
             pillars_to_rescore.append("neighborhood_amenities")
         if pillars_to_rescore:
