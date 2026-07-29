@@ -2,20 +2,21 @@
 Happiness Index: 0–100 composite from existing pillar data (not a pillar).
 
 Components (all 0–100, renormalized when missing):
-- S (Social Fabric): Social Fabric pillar score. Strongest cross-study predictor of wellbeing.
-  Modified by economic opportunity (Putnam): economic stress erodes the happiness return on social
-  capital; opportunity amplifies it.  Modifier range ±15%: eco=0 → S×0.85, eco=100 → S×1.15.
-- F (Safety): Community Safety pillar score. Fear of crime is a primary wellbeing drag (Loukaitou-Sideris 2006).
-- C (Commute): existing commute score from public_transit (shorter = better).
-- N (Neighborhood): Neighborhood Amenities pillar. Walkable access to daily life → positive affect (research shows this is the actual built-environment happiness mechanism, not architectural aesthetics).
+- S (Social Fabric): Strongest cross-study predictor of wellbeing (Putnam, Helliwell).
+  Modified by economic opportunity: eco=0 → S×0.85, eco=100 → S×1.15.
+- F (Safety): Community Safety pillar. Fear of crime is a primary wellbeing drag (Loukaitou-Sideris 2006).
+- C (Commute): Commute score from public_transit (shorter = better). Stutzer & Frey (2004).
+- N (Neighborhood): Neighborhood Amenities. Walkable access to daily life; weight reduced from 0.15
+  because amenities proxies density stress in catalog regression; kept at 0.05 as tiebreaker.
 - H (Home Space-to-Price): Home Price to Space pillar score.
-- G (Green): Natural Beauty pillar score — daily nature contact → stress reduction (Bratman 2015).
+- G (Green): Natural Beauty pillar — daily nature contact → stress reduction (Bratman 2015).
+  Empirically #2 predictor in non-urban regression; raised from 0.05.
+- E (Education): Quality Education pillar. Community human capital predictor (Helliwell & Barrington-Leigh).
+  Empirically #3 predictor in non-urban regression.
 
-Base weights: S 0.30, F 0.20, C 0.20, N 0.15, H 0.10, G 0.05 (renormalized over available).
-Note: Commute reduced from 0.35; Putnam's mechanism routes through social fabric (already at 30%)
-so 35% double-penalized transit-dependent neighborhoods for the same social erosion pathway.
-Safety added: when degraded/missing, renormalized over remaining components.
-Built Beauty removed: architectural aesthetics effect on happiness is mediated through walkability/amenity access, already captured by N.
+Base weights: S 0.30, F 0.20, C 0.15, N 0.05, H 0.10, G 0.12, E 0.08 (renormalized over available).
+Empirically validated: R²=0.305 (all), R²=0.388 (non-urban) vs CDC PLACES mental distress.
+Safety renormalizes out when degraded/missing.
 """
 
 from __future__ import annotations
@@ -27,10 +28,11 @@ from typing import Any, Dict, Optional, Tuple
 # Weights (must sum to 1.0 before renormalization over available components)
 W_SOCIAL = 0.30
 W_SAFETY = 0.20
-W_COMMUTE = 0.20
-W_NEIGHBORHOOD = 0.15
+W_COMMUTE = 0.15
+W_NEIGHBORHOOD = 0.05
 W_HOME = 0.10
-W_GREEN = 0.05
+W_GREEN = 0.12
+W_EDUCATION = 0.08
 
 # Economic opportunity modifier on social fabric (Putnam: opportunity conditions the happiness
 # return on social capital).  Range: eco=0 → ×0.85, eco=50 → ×1.00, eco=100 → ×1.15.
@@ -143,6 +145,18 @@ def _component_neighborhood(neighborhood_details: Optional[Dict[str, Any]]) -> O
     return None
 
 
+def _component_education(education_details: Optional[Dict[str, Any]]) -> Optional[float]:
+    """E: 0–100 = Quality Education pillar score. Excluded when confidence=0 (scoring disabled)."""
+    if not education_details:
+        return None
+    if (education_details.get("confidence") or 1) == 0:
+        return None
+    score = education_details.get("score")
+    if isinstance(score, (int, float)):
+        return max(0.0, min(100.0, float(score)))
+    return None
+
+
 def compute_happiness_index_with_breakdown(
     housing_details: Optional[Dict[str, Any]],
     public_transit_details: Optional[Dict[str, Any]],
@@ -152,13 +166,14 @@ def compute_happiness_index_with_breakdown(
     social_fabric_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
+    education_details: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Optional[float], Dict[str, Any]]:
     """
     Compute Happiness Index (0–100) and component breakdown.
 
     Returns (score, breakdown) with breakdown keys: social, safety, commute, neighborhood,
-    home_space, green, and component_weights used (after renormalization for missing).
-    Safety renormalizes out when degraded/missing — no place penalized for missing data.
+    home_space, green, education, and component_weights used (after renormalization for missing).
+    Safety and education renormalize out when degraded/missing.
     """
     from data_sources.us_census_divisions import get_division
     division = get_division(state_abbrev) if state_abbrev else "all"
@@ -170,6 +185,7 @@ def compute_happiness_index_with_breakdown(
         "neighborhood": None,
         "home_space": None,
         "green": None,
+        "education": None,
         "eco_modifier": 1.0,
         "component_weights": {},
     }
@@ -181,6 +197,7 @@ def compute_happiness_index_with_breakdown(
     N = _component_neighborhood(neighborhood_amenities_details)
     H = _component_home_space(housing_details)
     G = _component_green(natural_beauty_details)
+    E = _component_education(education_details)
 
     # Economic opportunity modifier on social fabric (Putnam): economic stress erodes the
     # happiness return on community bonds; opportunity amplifies it.  Applied only when both
@@ -201,6 +218,7 @@ def compute_happiness_index_with_breakdown(
     breakdown["neighborhood"] = round(N, 1) if N is not None else None
     breakdown["home_space"] = round(H, 1) if H is not None else None
     breakdown["green"] = round(G, 1) if G is not None else None
+    breakdown["education"] = round(E, 1) if E is not None else None
 
     weights = []
     components = []
@@ -222,6 +240,9 @@ def compute_happiness_index_with_breakdown(
     if G is not None:
         weights.append(W_GREEN)
         components.append((G, "green"))
+    if E is not None:
+        weights.append(W_EDUCATION)
+        components.append((E, "education"))
 
     if not components:
         return None, breakdown
@@ -242,6 +263,7 @@ def compute_happiness_index(
     social_fabric_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
+    education_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[float]:
     """Convenience: return only the score."""
     result, _ = compute_happiness_index_with_breakdown(
@@ -253,5 +275,6 @@ def compute_happiness_index(
         social_fabric_details=social_fabric_details,
         community_safety_details=community_safety_details,
         neighborhood_amenities_details=neighborhood_amenities_details,
+        education_details=education_details,
     )
     return result

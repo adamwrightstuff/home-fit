@@ -1174,6 +1174,7 @@ def _compute_happiness_index_for_response(
     social_fabric_details: Optional[Dict[str, Any]] = None,
     community_safety_details: Optional[Dict[str, Any]] = None,
     neighborhood_amenities_details: Optional[Dict[str, Any]] = None,
+    education_details: Optional[Dict[str, Any]] = None,
 ) -> Optional[tuple]:
     """
     Compute Happiness Index (0-100) and breakdown from existing pillar data.
@@ -1189,6 +1190,7 @@ def _compute_happiness_index_for_response(
             social_fabric_details=social_fabric_details,
             community_safety_details=community_safety_details,
             neighborhood_amenities_details=neighborhood_amenities_details,
+            education_details=education_details,
         )
     except Exception:
         return None
@@ -2789,6 +2791,7 @@ def _compute_single_score_internal(
         social_fabric_details=livability_pillars.get("social_fabric"),
         community_safety_details=livability_pillars.get("community_safety"),
         neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
+        education_details=livability_pillars.get("quality_education"),
     )
     if happiness_result is not None:
         hi_score, hi_breakdown = happiness_result
@@ -4535,9 +4538,9 @@ async def _stream_score_with_progress(
             natural_beauty_details,
             state,
             social_fabric_details=livability_pillars.get("social_fabric"),
-
             community_safety_details=livability_pillars.get("community_safety"),
             neighborhood_amenities_details=livability_pillars.get("neighborhood_amenities"),
+            education_details=livability_pillars.get("quality_education"),
         )
         if happiness_result is not None:
             hi_score, hi_breakdown = happiness_result
