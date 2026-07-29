@@ -1144,6 +1144,12 @@ export default function CatalogPageClient({
             const lon = hoverPlace.score.longevity_index ?? null
             const hap = hoverPlace.score.happiness_index ?? null
             const archetype = hoverPlace.score.status_signal_breakdown?.archetype ?? null
+            const pillarScore = isPillarIndexMode(indexMode)
+              ? ((hoverPlace.score.livability_pillars as any)?.[indexMode]?.score ?? null) as number | null
+              : null
+            const pillarLabel = isPillarIndexMode(indexMode)
+              ? (PILLAR_INDEX_MODES.find(p => p.id === indexMode)?.label ?? null)
+              : null
             return (
               <div
                 style={{
@@ -1168,13 +1174,21 @@ export default function CatalogPageClient({
                 <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
                   {hoverPlace.catalog.county_borough} · {hoverPlace.catalog.state_abbr}
                 </div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#1a1a2e', marginBottom: 2 }}>
-                  Score {Number.isFinite(hf) ? hf.toFixed(0) : '—'}
-                </div>
-                <div style={{ fontSize: 11, color: '#6b7280', display: 'flex', gap: 8, marginBottom: archetype ? 4 : 0 }}>
-                  <span>Lon {lon != null && Number.isFinite(lon) ? lon.toFixed(0) : '—'}</span>
-                  <span>Hap {hap != null && Number.isFinite(hap) ? hap.toFixed(0) : '—'}</span>
-                </div>
+                {pillarLabel != null ? (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0F6E56', marginBottom: 2 }}>
+                    {pillarLabel} {pillarScore != null && Number.isFinite(pillarScore) ? pillarScore.toFixed(0) : '—'}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#1a1a2e', marginBottom: 2 }}>
+                    Score {Number.isFinite(hf) ? hf.toFixed(0) : '—'}
+                  </div>
+                )}
+                {!pillarLabel && (
+                  <div style={{ fontSize: 11, color: '#6b7280', display: 'flex', gap: 8, marginBottom: archetype ? 4 : 0 }}>
+                    <span>Lon {lon != null && Number.isFinite(lon) ? lon.toFixed(0) : '—'}</span>
+                    <span>Hap {hap != null && Number.isFinite(hap) ? hap.toFixed(0) : '—'}</span>
+                  </div>
+                )}
                 {archetype && (
                   <div style={{ fontSize: 11, background: '#f3f4f6', borderRadius: 4, padding: '2px 6px', display: 'inline-block', color: '#374151' }}>
                     {archetype}
