@@ -12,7 +12,7 @@ export default function QuizPage() {
       const stored = sessionStorage.getItem('homefit_search_options')
       const opts = stored ? JSON.parse(stored) : {}
       const political_preference = politicalVibe === 'progressive' || politicalVibe === 'conservative' ? politicalVibe : null
-      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, ...priorities, political_preference }))
+      sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, priorities, political_preference }))
     } catch {
       // ignore
     }
