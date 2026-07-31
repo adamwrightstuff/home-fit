@@ -12,8 +12,8 @@ export type IndexRampKey = 'purple' | 'teal' | 'blue' | 'coral'
 export type StatusArchetypeRampKey =
   | 'elite'
   | 'affluent'
-  | 'middle_class'
-  | 'working_class'
+  | 'middle'
+  | 'working'
   | 'struggling'
   | 'transitional'  // Up-and-Coming trajectory badge
   // Legacy keys kept for old catalog entries
@@ -42,7 +42,7 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     800: '#78350f',
   },
   // Slate — balanced middle class baseline.
-  middle_class: {
+  middle: {
     50: '#e2e8f0',
     200: '#94a3b8',
     400: '#64748b',
@@ -50,7 +50,7 @@ export const STATUS_ARCHETYPE_RAMP: Record<
     800: '#334155',
   },
   // Warm stone — working-class community.
-  working_class: {
+  working: {
     50: '#d4cfc9',
     200: '#a8a29e',
     400: '#78716c',
@@ -84,15 +84,15 @@ export function normalizeStatusArchetypeKey(archetype: string | null | undefined
   // Current bands
   if (a === 'Elite') return 'elite'
   if (a === 'Affluent') return 'affluent'
-  if (a === 'Middle Class') return 'middle_class'
-  if (a === 'Working Class') return 'working_class'
+  if (a === 'Middle Class') return 'middle'
+  if (a === 'Working Class') return 'working'
   if (a === 'Struggling') return 'struggling'
   if (a === 'Up-and-Coming' || a === 'Transitional') return 'transitional'
   // Legacy band names
   if (a === 'Wealthy' || a === 'Established') return 'elite'
   if (a === 'Well-Off' || a === 'Upper Middle Class') return 'affluent'
-  if (a === 'Modest' || a === 'Immigrant Community') return 'working_class'
-  return 'working_class'
+  if (a === 'Modest' || a === 'Immigrant Community') return 'working'
+  return 'working'
 }
 
 export const RAMP_HEX: Record<IndexRampKey, { 50: string; 200: string; 400: string; 600: string; 800: string }> = {

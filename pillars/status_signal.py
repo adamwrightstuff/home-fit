@@ -887,7 +887,7 @@ def _classify_archetype(
       <41  → Struggling
 
     Returns (ses_band, rule) for debug. Up-and-Coming is now a trajectory
-    signal, not a class band — see _classify_trajectory().
+    signal, not an archetype — see _classify_trajectory().
     """
     wealth_val = float(wealth) if wealth is not None else 0.0
 
@@ -896,9 +896,9 @@ def _classify_archetype(
     elif wealth_val >= 63:
         return "Affluent", "dfg_affluent"
     elif wealth_val >= 55:
-        return "Middle Class", "dfg_middle_class"
+        return "Middle Class", "dfg_middle"
     elif wealth_val >= 41:
-        return "Working Class", "dfg_working_class"
+        return "Working Class", "dfg_working"
     else:
         return "Struggling", "dfg_struggling"
 
@@ -922,7 +922,7 @@ def _classify_trajectory(
     Arrived     — Elite/Affluent with no negative signal: locked in, established.
     Stable      — Middle Class with no momentum signal.
     (No badge)  — Working Class / Struggling without Up-and-Coming signal; trajectory adds
-                  no information beyond the class band. Returned as "Stable" internally but
+                  no information beyond the archetype. Returned as "Stable" internally but
                   filtered out by the frontend for those bands.
     """
     wealth_val = float(wealth) if wealth is not None else 0.0
@@ -1072,7 +1072,7 @@ def compute_status_signal_with_breakdown(
         "luxury_presence_detail": None,
         "wealth_character": "typical",
         "archetype": "Working Class",
-        "archetype_rule": "dfg_working_class_default",
+        "archetype_rule": "dfg_working_default",
         "trajectory": "Stable",
         "trajectory_rule": "stable_default",
         "classifier_inputs": {},
