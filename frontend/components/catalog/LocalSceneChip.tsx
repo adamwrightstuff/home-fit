@@ -1,6 +1,6 @@
 'use client'
 
-import { Martini } from 'lucide-react'
+import { Wine } from 'lucide-react'
 
 type Bucket = 'High' | 'Some' | 'Low'
 
@@ -40,7 +40,7 @@ export default function LocalSceneChip({
         whiteSpace: 'nowrap',
       }}
     >
-      <Martini
+      <Wine
         size={compact ? 10 : 13}
         style={{ flexShrink: 0, color: style.icon }}
       />
