@@ -601,30 +601,8 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    if (!twinCrossMetro) {
-      return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
-    }
-    // Cross-metro: rank per other-metro independently so every metro gets representation
-    const metros = (['nyc', 'la', 'sf'] as const).filter((m) => m !== inferCatalogMetro(queryPlace))
-    const perMetro = metros.map((m) =>
-      rankTwinMatches(
-        queryPlace,
-        twinCandidatePlaces.filter((p) => inferCatalogMetro(p) === m),
-        twinPillarList,
-        keyFn,
-        6,
-        twinSameBand
-      )
-    )
-    // Interleave: best from each metro first, then second-best, etc.
-    const merged: TwinMatchResult[] = []
-    const maxLen = Math.max(...perMetro.map((r) => r.length))
-    for (let i = 0; i < maxLen; i++) {
-      for (const group of perMetro) {
-        if (group[i]) merged.push(group[i])
-      }
-    }
-    return merged
+    // Rank all cross-metro candidates by match% regardless of city
+    return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
   }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
@@ -775,6 +753,11 @@ export default function CatalogPageClient({
       <PlaceValuesGame
         onApplyPriorities={(quizPriorities) => {
           setPriorities(quizPriorities)
+          try {
+            const stored = sessionStorage.getItem('homefit_search_options')
+            const opts = stored ? JSON.parse(stored) : {}
+            sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, ...quizPriorities }))
+          } catch { /* ignore */ }
           setShowQuiz(false)
         }}
         onBack={() => setShowQuiz(false)}
@@ -786,8 +769,8 @@ export default function CatalogPageClient({
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
       <HeroBand />
       <header className="z-30 shrink-0 border-b border-[var(--hf-border)] bg-white/95 backdrop-blur">
-        {/* ── Desktop single-row toolbar ── */}
-        <div className="hidden md:flex md:items-center md:gap-2 md:px-4 md:py-2 md:flex-wrap">
+        {/* ── Desktop toolbar: Row 1 — mode, search, metro, controls ── */}
+        <div className="hidden md:flex md:items-center md:gap-2 md:px-4 md:py-2">
           {/* Mode tabs */}
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -800,7 +783,15 @@ export default function CatalogPageClient({
               type="button"
               className={`rounded-full px-3 py-1 text-xs font-bold ${catalogMode === 'twin' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
               style={catalogMode === 'twin' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
-              onClick={() => { setCatalogMode('twin'); setViewMode('list') }}
+              onClick={() => {
+                setCatalogMode('twin')
+                setViewMode('list')
+                if (selectedKey && !twinQueryKey) {
+                  setTwinQueryKey(selectedKey)
+                  setTwinSearchText('')
+                  router.replace(`/catalog?mode=twin&key=${encodeURIComponent(selectedKey)}`, { scroll: false })
+                }
+              }}
             >Twin finder</button>
           </div>
 
@@ -875,87 +866,14 @@ export default function CatalogPageClient({
                   >{m === 'all' ? 'All' : m.toUpperCase()}</button>
                 ))}
               </div>
-
-              <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
-              {/* Sort */}
-              <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] shrink-0">Sort</span>
-              <div className="flex items-center gap-1 shrink-0">
-                {INDEXES.map((x) => {
-                  const active = indexMode === x.id && !sortByName
-                  const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
-                  return (
-                    <div key={x.id} className="flex items-center gap-0.5">
-                      <button
-                        type="button"
-                        aria-pressed={active}
-                        title={x.tooltip}
-                        className="rounded-full px-2.5 py-1 text-xs font-bold"
-                        style={active ? { ...activeStyle, border: 'none' } : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-                        onClick={() => setIndexModeAndListSort(x.id)}
-                      >{x.label}</button>
-                      <IndexInfoButton indexId={x.id} />
-                    </div>
-                  )
-                })}
-                <button
-                  type="button"
-                  aria-pressed={isPillarIndexMode(indexMode) && !sortByName}
-                  title="Color map by a specific pillar score"
-                  className="rounded-full px-2.5 py-1 text-xs font-bold"
-                  style={isPillarIndexMode(indexMode) && !sortByName
-                    ? { background: '#E1F5EE', color: '#0F6E56', border: 'none' }
-                    : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-                  onClick={() => {
-                    if (!isPillarIndexMode(indexMode)) setIndexModeAndListSort('active_outdoors')
-                    else setIndexModeAndListSort('homefit')
-                  }}
-                >Pillar</button>
-                <button
-                  type="button"
-                  aria-pressed={sortByName}
-                  className={`rounded-full px-2.5 py-1 text-xs font-bold ${sortByName ? '' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] border border-[var(--hf-border)]'}`}
-                  style={sortByName ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' } : {}}
-                  onClick={() => setSortByName(true)}
-                >A–Z</button>
-                {/* Direction toggle — icon only */}
-                <button
-                  type="button"
-                  title={sortDir === 'desc' ? 'Sorted high → low (click to reverse)' : 'Sorted low → high (click to reverse)'}
-                  className="flex items-center justify-center rounded-lg border border-[var(--hf-border)] p-1 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
-                  onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-                  aria-label={sortDir === 'desc' ? 'Descending — click to sort ascending' : 'Ascending — click to sort descending'}
-                >
-                  {sortDir === 'desc'
-                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                    : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-                  }
-                </button>
-              </div>
             </>
-          )}
-
-          {catalogMode === 'explorer' && isPillarIndexMode(indexMode) && (
-            <div className="flex items-center gap-1 px-1 py-1 border-t border-[var(--hf-border)] w-full overflow-x-auto">
-              {PILLAR_INDEX_MODES.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  aria-pressed={indexMode === p.id}
-                  className="rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold whitespace-nowrap"
-                  style={indexMode === p.id
-                    ? { background: '#1D9E75', color: '#fff', border: 'none' }
-                    : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-                  onClick={() => setIndexModeAndListSort(p.id)}
-                >{p.label}</button>
-              ))}
-            </div>
           )}
 
           {catalogMode === 'twin' && (
             <div className="flex items-center gap-1 shrink-0">
               {twinControlsLocked && (
                 <span className="text-[0.65rem] text-[var(--hf-text-tertiary)] italic">
-                  Tap a neighborhood to start
+                  Search a neighborhood to start
                 </span>
               )}
               <button
@@ -1023,6 +941,85 @@ export default function CatalogPageClient({
             </button>
           </div>
         </div>
+
+        {/* ── Desktop toolbar: Row 2 — sort (explorer only) ── */}
+        {catalogMode === 'explorer' && (
+          <div className="hidden md:flex md:items-center md:gap-1.5 md:px-4 md:py-1.5 border-t border-[var(--hf-border)]" style={{ background: 'var(--hf-bg-subtle)' }}>
+            <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] shrink-0 mr-0.5">Sort</span>
+            {/* Score indexes — Archetype intentionally excluded from sort row */}
+            {INDEXES.filter(x => x.id !== 'status').map((x) => {
+              const active = indexMode === x.id && !sortByName
+              const activeStyle = catalogTabActiveStyle(catalogRampKey(x.id))
+              return (
+                <div key={x.id} className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    title={x.tooltip}
+                    className="rounded-full px-2.5 py-0.5 text-xs font-bold"
+                    style={active ? { ...activeStyle, border: 'none' } : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                    onClick={() => setIndexModeAndListSort(x.id)}
+                  >{x.label}</button>
+                  <IndexInfoButton indexId={x.id} />
+                </div>
+              )
+            })}
+            <button
+              type="button"
+              aria-pressed={isPillarIndexMode(indexMode) && !sortByName}
+              title="Color map by a specific pillar score"
+              className="rounded-full px-2.5 py-0.5 text-xs font-bold"
+              style={isPillarIndexMode(indexMode) && !sortByName
+                ? { background: '#E1F5EE', color: '#0F6E56', border: 'none' }
+                : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+              onClick={() => {
+                if (!isPillarIndexMode(indexMode)) setIndexModeAndListSort('active_outdoors')
+                else setIndexModeAndListSort('homefit')
+              }}
+            >Pillar</button>
+            <button
+              type="button"
+              aria-pressed={sortByName}
+              className="rounded-full px-2.5 py-0.5 text-xs font-bold"
+              style={sortByName
+                ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }
+                : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+              onClick={() => setSortByName(true)}
+            >A–Z</button>
+
+            <div className="h-3 w-px bg-[var(--hf-border)] mx-1" />
+
+            {/* Direction — visible text button */}
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)] border border-[var(--hf-border)]"
+              onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              aria-label={sortDir === 'desc' ? 'Highest first — click to reverse' : 'Lowest first — click to reverse'}
+            >
+              {sortDir === 'desc'
+                ? <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Highest first</>
+                : <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Lowest first</>
+              }
+            </button>
+
+            {isPillarIndexMode(indexMode) && (
+              <div className="flex items-center gap-1 ml-2 overflow-x-auto">
+                {PILLAR_INDEX_MODES.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    aria-pressed={indexMode === p.id}
+                    className="rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold whitespace-nowrap"
+                    style={indexMode === p.id
+                      ? { background: '#1D9E75', color: '#fff', border: 'none' }
+                      : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                    onClick={() => setIndexModeAndListSort(p.id)}
+                  >{p.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Mobile header: single compact row ── */}
         <div className="md:hidden flex items-center gap-1.5 px-3 py-2 min-h-[48px]">

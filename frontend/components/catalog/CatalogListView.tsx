@@ -209,32 +209,16 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
-                      {(p.score.status_signal_breakdown?.llm_summary || p.score.local_scene_bucket) && (
-                        <div style={{ padding: '0.75rem 1rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {p.score.status_signal_breakdown?.llm_summary && (
+                        <div style={{ padding: '0.75rem 1rem 0' }}>
                           {p.score.local_scene_bucket && (
-                            <span
-                              title="Reflects the presence of independent places to spend time — cafés, bookstores, bars, galleries."
-                              style={{
-                                alignSelf: 'flex-start',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                height: 24,
-                                padding: '0 10px',
-                                borderRadius: 99,
-                                background: '#f1f5f9',
-                                fontSize: 12,
-                                fontWeight: 500,
-                                color: '#334155',
-                              }}
-                            >
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--hf-text-tertiary)', display: 'block', marginBottom: '0.25rem' }}>
                               {p.score.local_scene_bucket === 'High' ? 'Vibrant scene' : p.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
                             </span>
                           )}
-                          {p.score.status_signal_breakdown?.llm_summary && (
-                            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-secondary)' }}>
-                              {p.score.status_signal_breakdown.llm_summary}
-                            </p>
-                          )}
+                          <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-secondary)' }}>
+                            {p.score.status_signal_breakdown.llm_summary}
+                          </p>
                         </div>
                       )}
                       <ExplorerPillarGrid place={p} priorities={priorities} />
