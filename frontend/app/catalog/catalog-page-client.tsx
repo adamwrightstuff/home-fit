@@ -43,7 +43,7 @@ import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
 const INDEXES: { id: 'homefit' | 'longevity' | 'happiness' | 'status'; label: string; tooltip: string }[] = [
-  { id: 'homefit', label: 'Trovamo', tooltip: HOMEFIT_COPY.tooltip },
+  { id: 'homefit', label: 'HomeFit', tooltip: HOMEFIT_COPY.tooltip },
   { id: 'longevity', label: 'Longevity', tooltip: LONGEVITY_COPY.tooltip },
   { id: 'happiness', label: 'Happiness', tooltip: HAPPINESS_INDEX_COPY.tooltip },
   { id: 'status', label: 'Archetype', tooltip: STATUS_SIGNAL_COPY.tooltip },
@@ -948,7 +948,7 @@ export default function CatalogPageClient({
                 </button>
                 <button
                   type="button"
-                  title={indexMode !== 'homefit' ? 'Weights apply to Trovamo score only' : undefined}
+                  title={indexMode !== 'homefit' ? 'Weights apply to HomeFit score only' : undefined}
                   className="rounded-lg border border-[var(--hf-border-strong)] px-2.5 py-1 text-xs font-bold text-[var(--hf-text-primary)] hover:bg-[var(--hf-hover-bg)]"
                   style={{ opacity: indexMode !== 'homefit' ? 0.4 : 1, pointerEvents: indexMode !== 'homefit' ? 'none' : 'auto' }}
                   onClick={() => setWeightOpen(true)}
@@ -1306,7 +1306,7 @@ export default function CatalogPageClient({
               const rw = reweightScoreResponseFromPriorities(queryPlace.score, priorities)
               const hf = rw.total_score
               return Number.isFinite(hf) ? (
-                <span style={{ color: 'var(--hf-text-secondary)' }}> · Trovamo {hf.toFixed(1)}</span>
+                <span style={{ color: 'var(--hf-text-secondary)' }}> · HomeFit {hf.toFixed(1)}</span>
               ) : null
             })()}
           </span>
