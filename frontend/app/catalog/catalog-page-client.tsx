@@ -756,7 +756,7 @@ export default function CatalogPageClient({
           try {
             const stored = sessionStorage.getItem('homefit_search_options')
             const opts = stored ? JSON.parse(stored) : {}
-            sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, ...quizPriorities }))
+            sessionStorage.setItem('homefit_search_options', JSON.stringify({ ...opts, priorities: quizPriorities }))
           } catch { /* ignore */ }
           setShowQuiz(false)
         }}
