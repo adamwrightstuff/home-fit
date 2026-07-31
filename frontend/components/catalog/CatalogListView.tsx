@@ -16,6 +16,7 @@ import { isPillarIndexMode, PILLAR_INDEX_MODES } from '@/lib/catalogMapTypes'
 import { PILLAR_META, PILLAR_ORDER } from '@/lib/pillars'
 import ArchetypeBadge from '@/components/catalog/ArchetypeBadge'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
+import LocalSceneChip from '@/components/catalog/LocalSceneChip'
 
 const METRO_DOT_COLOR: Record<'nyc' | 'la' | 'sf', string> = { nyc: '#6B5CE7', la: '#E76B5C', sf: '#2A9D8F' }
 function MetroDot({ metro }: { metro: 'nyc' | 'la' | 'sf' }) {
@@ -57,21 +58,6 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
             </div>
           )
         })}
-        {(() => {
-          const lsScore = typeof place.score.local_scene_score === 'number' ? place.score.local_scene_score : null
-          const lsBucket = place.score.local_scene_bucket ?? null
-          if (lsScore == null) return null
-          const lsLabel = lsBucket === 'High' ? 'Vibrant Scene' : lsBucket === 'Some' ? 'Some Scene' : 'Quiet Area'
-          return (
-            <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
-              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">Local Scene</span>
-              <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
-                <div className="h-full rounded-full" style={{ width: `${Math.min(100, lsScore)}%`, background: 'rgba(99,102,241,0.45)' }} />
-              </div>
-              <span className="w-[4.5rem] shrink-0 text-right text-[var(--hf-text-tertiary)]">{lsLabel}</span>
-            </div>
-          )
-        })()}
       </div>
     </div>
   )
@@ -123,7 +109,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 )}
               </th>
             )}
-            <th className="py-2 px-1 font-semibold">Archetype &amp; Trajectory</th>
+            <th className="py-2 px-1 font-semibold">Archetype &amp; Character</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>
@@ -195,6 +181,7 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compact
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
+                      <LocalSceneChip bucket={p.score.local_scene_bucket ?? null} compact />
                     </span>
                   </td>
                   <td className="py-2 pl-1">
