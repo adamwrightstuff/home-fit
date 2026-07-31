@@ -47,11 +47,16 @@ export default function TwinFinderPanel({
 
   if (!twinQueryKey && twinSearchText.trim() === '') {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 pb-24 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 pb-24 text-center">
         <Search className="h-12 w-12 text-[var(--hf-text-tertiary)] opacity-60" strokeWidth={1.25} />
-        <p className="max-w-sm text-sm font-medium text-[var(--hf-text-secondary)]">
-          Select a neighborhood to find its closest match in another metro
-        </p>
+        <div className="max-w-xs space-y-1.5">
+          <p className="text-sm font-semibold text-[var(--hf-text-primary)]">
+            Find your neighborhood&apos;s twin
+          </p>
+          <p className="text-xs text-[var(--hf-text-secondary)]">
+            Pick any neighborhood and HomeFit compares it across 13 pillars to surface its closest match in a different metro — same character, different city.
+          </p>
+        </div>
       </div>
     )
   }

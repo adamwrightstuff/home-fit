@@ -46,9 +46,10 @@ export function twinDistance(
   return { distance: Math.sqrt(sum), compared: [...pillars] }
 }
 
-/** Spec: max(0, round((1 - distance / 100) * 100)). */
-export function matchPctFromDistance(distance: number): number {
-  return Math.max(0, Math.round((1 - distance / 100) * 100))
+/** Normalize distance by max possible (100 * sqrt(N)) so match% is meaningful with any number of pillars. */
+export function matchPctFromDistance(distance: number, numPillars: number): number {
+  const maxDist = 100 * Math.sqrt(Math.max(1, numPillars))
+  return Math.max(0, Math.round((1 - distance / maxDist) * 100))
 }
 
 /** Extract SES band from a place's status_signal breakdown. */
@@ -76,7 +77,7 @@ export function rankTwinMatches(
       key: keyFn(place),
       place,
       distance,
-      matchPct: matchPctFromDistance(distance),
+      matchPct: matchPctFromDistance(distance, compared.length),
       comparedPillars: compared,
     })
   }

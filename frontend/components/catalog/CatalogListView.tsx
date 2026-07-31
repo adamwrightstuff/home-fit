@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import type { PillarPriorities } from '@/components/SearchOptions'
 import { getAllCatalogIndexDisplay } from '@/lib/catalogMapGeo'
 import { reweightScoreResponseFromPriorities } from '@/lib/reweight'
@@ -31,7 +31,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
   return (
     <div className="space-y-1 border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-2 py-3">
       <div className="mb-2 text-[0.6rem] font-bold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
-        Pillars (score · weight in Trovamo blend)
+        Pillars (score · weight in HomeFit blend)
       </div>
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {PILLAR_ORDER.map((k) => {
@@ -76,6 +76,14 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
+  const avgScore = useMemo(() => {
+    const scores = places
+      .map((p) => reweightScoreResponseFromPriorities(p.score, priorities).total_score)
+      .filter((s): s is number => typeof s === 'number' && Number.isFinite(s))
+    if (scores.length === 0) return null
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+  }, [places, priorities])
+
   const toggleRow = (key: string) => {
     setExpandedKey((cur) => (cur === key ? null : key))
   }
@@ -91,9 +99,14 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
               <th className="py-2 px-1 font-semibold" colSpan={3} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
             ) : (
               <>
-                <th className="py-2 px-1 font-semibold" title="HomeFit score">HF</th>
-                <th className="py-2 px-1 font-semibold" title="Longevity index">Lon</th>
-                <th className="py-2 px-1 font-semibold" title="Happiness index">Hap</th>
+                <th className="py-2 px-1 font-semibold">
+                  <abbr title="HomeFit score — weighted composite of all 13 pillars (0–100)" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Score</abbr>
+                  {avgScore != null && (
+                    <span className="ml-1.5 font-normal text-[0.6rem] text-[var(--hf-text-tertiary)]">avg {avgScore}</span>
+                  )}
+                </th>
+                <th className="py-2 px-1 font-semibold"><abbr title="Longevity index — predicts long-term health outcomes based on Blue Zone research" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Lon.</abbr></th>
+                <th className="py-2 px-1 font-semibold"><abbr title="Happiness index — day-to-day livability weighted toward commute and social connection" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Hap.</abbr></th>
               </>
             )}
             <th className="py-2 px-1 font-semibold">Archetype &amp; Trajectory</th>
