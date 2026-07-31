@@ -341,10 +341,45 @@ def check_row(
 
         stored_l = sc.get("longevity_index")
         lb = sc.get("longevity_index_breakdown") or {}
-        if stored_l is not None and lb:
+        if stored_l is None:
+            place_flags.append("missing:longevity_index")
+        elif lb:
             computed_l = recompute_longevity(lb)
             if computed_l is not None and abs(stored_l - computed_l) > 1.0:
                 place_flags.append(f"longevity_drift:{stored_l:.1f}vs{computed_l:.1f}")
+
+        # status_signal drift — breakdown.composite_score should match top-level
+        stored_ss = sc.get("status_signal")
+        ssb = sc.get("status_signal_breakdown") or {}
+        if stored_ss is None:
+            place_flags.append("missing:status_signal")
+        elif ssb:
+            comp_ss = ssb.get("composite_score")
+            if comp_ss is not None and abs(stored_ss - comp_ss) > 0.5:
+                place_flags.append(f"status_signal_drift:{stored_ss:.1f}vs{comp_ss:.1f}")
+
+        # total_score drift — sum of per-pillar contributions should equal stored total
+        stored_t = sc.get("total_score")
+        tb = sc.get("total_score_breakdown") or {}
+        if stored_t is None:
+            place_flags.append("missing:total_score")
+        elif tb:
+            computed_t = round(sum(
+                (v.get("contribution") or 0.0)
+                for v in tb.values()
+                if isinstance(v, dict)
+            ), 2)
+            if abs(stored_t - computed_t) > 1.0:
+                place_flags.append(f"total_score_drift:{stored_t:.1f}vs{computed_t:.1f}")
+
+        # happiness null check (drift already handled above)
+        if sc.get("happiness_index") is None:
+            place_flags.append("missing:happiness_index")
+
+        # lean_2024 per-place (political_lean.breakdown.lean_2024)
+        pl_bd = (lp_any.get("political_lean") or {}).get("breakdown") or {}
+        if pl_bd.get("lean_2024") is None:
+            place_flags.append("missing:lean_2024")
 
     return name, place_flags, pillar_flags
 
@@ -414,6 +449,8 @@ def main() -> int:
     null_scores:         Dict[str, List[str]] = defaultdict(list)
     fallback_zeros:      Dict[str, List[str]] = defaultdict(list)
     absent_pillars:      Dict[str, List[str]] = defaultdict(list)
+    composite_drifts:    Dict[str, List[str]] = defaultdict(list)
+    missing_composites:  Dict[str, List[str]] = defaultdict(list)
     low_conf:            Dict[str, List[Tuple[str,str]]] = defaultdict(list)
     degraded_issues:     Dict[str, List[str]] = defaultdict(list)
     warning_issues:      Dict[str, List[str]] = defaultdict(list)
@@ -446,6 +483,17 @@ def main() -> int:
                     transit_api_fallbacks[pillar].append(name)
                 elif f.startswith("missing:"):
                     missing_sub[pillar][f[8:]].append(name)
+
+    for name, place_flags, _, _ in results:
+        for f in place_flags:
+            if f.endswith("_drift") or "_drift:" in f:
+                key = f.split(":")[0]
+                composite_drifts[key].append(f"{name} ({f.split(':',1)[1]})")
+            elif f.startswith("missing:") and f[8:] in (
+                "total_score", "status_signal", "happiness_index",
+                "longevity_index", "lean_2024",
+            ):
+                missing_composites[f[8:]].append(name)
 
     place_meta_issues = [(n, pf) for n, pf, _, _ in results if pf]
 
@@ -526,6 +574,18 @@ def main() -> int:
             truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
             print(f"  {pillar}: {len(places)} place(s) — {truncated}")
 
+    # ── Section 7c: Composite drift / missing composites ─────────────────
+    if composite_drifts or missing_composites:
+        print("\n── COMPOSITE DRIFT / MISSING (total_score, status_signal, happiness, longevity) ─")
+        for key in sorted(missing_composites):
+            places = missing_composites[key]
+            truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
+            print(f"  missing:{key}: {len(places)} place(s) — {truncated}")
+        for key in sorted(composite_drifts):
+            entries = composite_drifts[key]
+            truncated = ', '.join(entries[:4]) + (f' +{len(entries)-4} more' if len(entries) > 4 else '')
+            print(f"  {key}: {len(entries)} place(s) — {truncated}")
+
     # ── Section 8: Missing subcomponents ──────────────────────────────────
     if missing_sub:
         print("\n── MISSING SUBCOMPONENTS ──────────────────────────────────────────")
@@ -605,11 +665,12 @@ def main() -> int:
     n_low = sum(1 for v in outliers.values() if v[4] == "low")
     n_high = sum(1 for v in outliers.values() if v[4] == "high")
     print(f"  Plausibility outliers   : {len(outliers)} ({n_low} low / {n_high} high)")
-    lean_missing = sum(
-        1 for row in rows
-        if (row.get("score", {}).get("livability_pillars", {}).get("political_lean", {}).get("breakdown") or {}).get("lean_2024") is None
-    )
-    print(f"  Missing lean_2024       : {lean_missing} / {len(rows)} places (election data gap)")
+    n_composite_drift  = sum(len(v) for v in composite_drifts.values())
+    n_missing_composite = sum(len(v) for v in missing_composites.values())
+    print(f"  Composite drift         : {n_composite_drift}")
+    print(f"  Missing composites      : {n_missing_composite}")
+    lean_missing = len(missing_composites.get("lean_2024", []))
+    print(f"  Missing lean_2024       : {lean_missing} / {len(results)} places (election data gap)")
     print()
 
     return 0
