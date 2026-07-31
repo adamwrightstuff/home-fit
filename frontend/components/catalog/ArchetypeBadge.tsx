@@ -23,10 +23,12 @@ export default function ArchetypeBadge({
   archetype,
   breakdown,
   compositeScore,
+  compact = false,
 }: {
   archetype: string | null | undefined
   breakdown?: { archetype?: string; signal_strength_label?: string; classifier_inputs?: Record<string, unknown> } | null
   compositeScore?: number | null
+  compact?: boolean
 }) {
   if (!archetype?.trim() && !breakdown) return null
   const key = normalizeStatusArchetypeKey(archetype ?? breakdown?.archetype ?? null)
@@ -38,10 +40,10 @@ export default function ArchetypeBadge({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        height: 28,
-        padding: '0 10px',
+        height: compact ? 20 : 28,
+        padding: compact ? '0 7px' : '0 10px',
         borderRadius: 99,
-        fontSize: 13,
+        fontSize: compact ? 11 : 13,
         fontWeight: 500,
         whiteSpace: 'nowrap',
         background: isMixed ? 'transparent' : b.bg,

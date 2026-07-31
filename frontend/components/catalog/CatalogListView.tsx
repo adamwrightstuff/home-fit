@@ -174,8 +174,9 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         compositeScore={
                           typeof p.score.status_signal === 'number' ? p.score.status_signal : null
                         }
+                        compact
                       />
-                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} />
+                      <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} compact />
                     </span>
                   </td>
                   <td className="py-2 pl-1">

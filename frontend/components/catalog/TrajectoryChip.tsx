@@ -30,11 +30,14 @@ export default function TrajectoryChip({
   trajectory,
   size = 'sm',
   interactive = false,
+  compact = false,
 }: {
   trajectory: string | null | undefined
   size?: 'sm' | 'xs'
   /** When true, clicking the pill opens the Trajectory detail modal. False for catalog/public display-only use. */
   interactive?: boolean
+  /** Compact list mode: neutral background, icon carries color, smaller sizing. */
+  compact?: boolean
 }) {
   const [showModal, setShowModal] = useState(false)
 
@@ -52,22 +55,20 @@ export default function TrajectoryChip({
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 5,
-          height: 28,
-          padding: '0 10px',
+          gap: compact ? 4 : 5,
+          height: compact ? 20 : 28,
+          padding: compact ? '0 7px' : '0 10px',
           borderRadius: 99,
-          background: style.bg,
+          background: compact ? '#f1f5f9' : style.bg,
           border: 'none',
           cursor: interactive && exp ? 'pointer' : 'default',
           whiteSpace: 'nowrap',
         }}
       >
-        {/* Icon: explicit font-size: 13px prevents parent font-size inheritance */}
-        <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, flexShrink: 0 }}>
-          <TrajectoryIcon trajectory={trajectory} size={13} color={style.dot} />
+        <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+          <TrajectoryIcon trajectory={trajectory} size={compact ? 10 : 13} color={style.dot} />
         </span>
-        {/* Hidden on mobile (≤768px) via globals.css .tr-trajectory-label */}
-        <span className="tr-trajectory-label" style={{ fontSize: 13, fontWeight: 500, color: style.fg }}>
+        <span className="tr-trajectory-label" style={{ fontSize: compact ? 11 : 13, fontWeight: 500, color: compact ? '#475569' : style.fg }}>
           {trajectory}
         </span>
       </button>
