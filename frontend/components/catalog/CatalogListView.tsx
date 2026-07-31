@@ -86,11 +86,9 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
   }, [places, priorities])
 
   const toggleRow = (key: string) => {
-    setExpandedKey((cur) => {
-      const next = cur === key ? null : key
-      onRowExpand?.(next)
-      return next
-    })
+    const next = expandedKey === key ? null : key
+    setExpandedKey(next)
+    onRowExpand?.(next)
   }
 
   return (

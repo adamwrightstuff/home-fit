@@ -17,20 +17,22 @@ export function defaultTwinPillarSet(): Set<PillarKey> {
   return new Set(PILLAR_ORDER)
 }
 
-function pillarScoreOrZero(place: CatalogMapPlace, k: PillarKey): number {
+function pillarScoreOrNull(place: CatalogMapPlace, k: PillarKey): number | null {
   const p = place.score.livability_pillars as unknown as
     | Record<string, { score?: number; status?: string }>
     | undefined
   const row = p?.[k]
-  if (!row || row.status === 'failed') return 0
+  if (!row || row.status === 'failed' || row.status === 'no_data' || row.status === 'fallback') return null
   const s = row.score
-  if (typeof s !== 'number' || !Number.isFinite(s)) return 0
+  if (typeof s !== 'number' || !Number.isFinite(s)) return null
   return s
 }
 
 /**
- * Euclidean distance over selected pillars; null/zero scores count as 0.
- * distance = sqrt( Σ (query - candidate)² ) for each selected pillar.
+ * Euclidean distance over selected pillars.
+ * Pillars where either query or candidate has no data are skipped entirely
+ * so missing-data gaps don't unfairly penalize candidates (e.g. SF built_beauty=null).
+ * Normalization uses the count of pillars that were actually compared.
  */
 export function twinDistance(
   query: CatalogMapPlace,
@@ -38,12 +40,15 @@ export function twinDistance(
   pillars: PillarKey[]
 ): { distance: number; compared: PillarKey[] } {
   let sum = 0
+  const compared: PillarKey[] = []
   for (const k of pillars) {
-    const a = pillarScoreOrZero(query, k)
-    const b = pillarScoreOrZero(candidate, k)
+    const a = pillarScoreOrNull(query, k)
+    const b = pillarScoreOrNull(candidate, k)
+    if (a === null || b === null) continue
     sum += (a - b) ** 2
+    compared.push(k)
   }
-  return { distance: Math.sqrt(sum), compared: [...pillars] }
+  return { distance: Math.sqrt(sum), compared }
 }
 
 /** Normalize distance by max possible (100 * sqrt(N)) so match% is meaningful with any number of pillars. */
@@ -92,8 +97,8 @@ export function pillarDiffs(
 ): { key: PillarKey; diff: number; query: number; twin: number }[] {
   const rows: { key: PillarKey; diff: number; query: number; twin: number }[] = []
   for (const k of pillars) {
-    const a = pillarScoreOrZero(query, k)
-    const b = pillarScoreOrZero(twin, k)
+    const a = pillarScoreOrNull(query, k) ?? 0
+    const b = pillarScoreOrNull(twin, k) ?? 0
     rows.push({ key: k, diff: b - a, query: a, twin: b })
   }
   return rows
