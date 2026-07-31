@@ -601,7 +601,7 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    // Rank all cross-metro candidates by match% regardless of city
+    // Pure global match% ordering — best matches regardless of city
     return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
   }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
 
@@ -1325,6 +1325,7 @@ export default function CatalogPageClient({
           onTwinRow={onTwinRow}
           compareIds={compareIds}
           onCompareToggle={handleCompareToggle}
+          onRowExpand={setSelectedKey}
         />
       )}
 

@@ -69,9 +69,10 @@ interface CatalogListViewProps {
   onTwinRow: (key: string) => void
   compareIds?: string[]
   onCompareToggle?: (key: string) => void
+  onRowExpand?: (key: string | null) => void
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -85,7 +86,11 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
   }, [places, priorities])
 
   const toggleRow = (key: string) => {
-    setExpandedKey((cur) => (cur === key ? null : key))
+    setExpandedKey((cur) => {
+      const next = cur === key ? null : key
+      onRowExpand?.(next)
+      return next
+    })
   }
 
   return (
@@ -209,16 +214,18 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
-                      {p.score.status_signal_breakdown?.llm_summary && (
+                      {(p.score.local_scene_bucket || p.score.status_signal_breakdown?.llm_summary) && (
                         <div style={{ padding: '0.75rem 1rem 0' }}>
                           {p.score.local_scene_bucket && (
                             <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--hf-text-tertiary)', display: 'block', marginBottom: '0.25rem' }}>
                               {p.score.local_scene_bucket === 'High' ? 'Vibrant scene' : p.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
                             </span>
                           )}
-                          <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-secondary)' }}>
-                            {p.score.status_signal_breakdown.llm_summary}
-                          </p>
+                          {p.score.status_signal_breakdown?.llm_summary && (
+                            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-secondary)' }}>
+                              {p.score.status_signal_breakdown.llm_summary}
+                            </p>
+                          )}
                         </div>
                       )}
                       <ExplorerPillarGrid place={p} priorities={priorities} />
