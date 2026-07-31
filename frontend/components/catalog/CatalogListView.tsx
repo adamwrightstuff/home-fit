@@ -163,13 +163,18 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         )}
                       </td>
                     )
-                  })() : (
-                    <td className="py-2 px-1">
-                      <span className="text-sm font-bold tabular-nums" style={{ color: hf != null ? scoreBandFill(catalogRampKey('homefit'), hf) : 'var(--hf-text-tertiary)' }}>
-                        {hf != null ? hf.toFixed(0) : '—'}
-                      </span>
-                    </td>
-                  )}
+                  })() : (() => {
+                    const compositeV = indexMode === 'longevity' ? idx.longevity : indexMode === 'happiness' ? idx.happiness : null
+                    const displayV = compositeV ?? hf
+                    const rampKey = indexMode === 'longevity' ? 'longevity' : indexMode === 'happiness' ? 'happiness' : 'homefit'
+                    return (
+                      <td className="py-2 px-1">
+                        <span className="text-sm font-bold tabular-nums" style={{ color: displayV != null ? scoreBandFill(catalogRampKey(rampKey), displayV) : 'var(--hf-text-tertiary)' }}>
+                          {displayV != null ? displayV.toFixed(0) : '—'}
+                        </span>
+                      </td>
+                    )
+                  })()}
                   <td className="py-2 px-1 align-top">
                     <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
                       <ArchetypeBadge
