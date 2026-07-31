@@ -91,12 +91,12 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
               <th className="py-2 px-1 font-semibold" colSpan={3} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
             ) : (
               <>
-                <th className="py-2 px-1 font-semibold" title="Trovamo score">Tro</th>
+                <th className="py-2 px-1 font-semibold" title="HomeFit score">HF</th>
                 <th className="py-2 px-1 font-semibold" title="Longevity index">Lon</th>
                 <th className="py-2 px-1 font-semibold" title="Happiness index">Hap</th>
               </>
             )}
-            <th className="py-2 px-1 font-semibold">Archetype</th>
+            <th className="py-2 px-1 font-semibold">Archetype &amp; Trajectory</th>
             <th className="py-2 pl-1"> </th>
           </tr>
         </thead>

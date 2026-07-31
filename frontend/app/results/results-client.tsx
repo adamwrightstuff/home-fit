@@ -741,9 +741,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   border: '1px solid var(--hf-border)',
                 }}
               >
-                <div className="tr-label" style={{ marginBottom: '0.25rem' }}>
-                  Score summary for
-                </div>
                 <div style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)', fontWeight: 800, color: 'var(--hf-text-primary)' }}>
                   {locationLabel}
                 </div>
@@ -753,11 +750,8 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                     const state = displayData!.location_info?.state
                     const zip = displayData!.location_info?.zip
                     const parts = [city, state, zip].filter(Boolean).join(', ')
-                    return parts ? `Location: ${parts}` : null
+                    return parts || null
                   })()}
-                </div>
-                <div className="tr-muted" style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>
-                  Coordinates: {displayData!.coordinates.lat.toFixed(6)}, {displayData!.coordinates.lon.toFixed(6)}
                 </div>
               </div>
 
@@ -769,16 +763,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                 <Link href="/search" className="hf-btn-link" style={{ fontSize: '0.95rem' }}>
                   ← New search
                 </Link>
-                {catalogSnapshot && (
-                  <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
-                    NYC metro catalog snapshot — refresh to recompute live
-                  </span>
-                )}
-                {showCachedNote && !catalogSnapshot && (
-                  <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
-                    Showing cached results
-                  </span>
-                )}
                 {finalResponse && searchOptions ? (
                   user ? (
                     savedScoreId ? (
@@ -820,15 +804,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                     {saveErr}
                   </span>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={handleRefresh}
-                  className="hf-btn-secondary"
-                  style={{ padding: '0.85rem 1.25rem', borderRadius: 12, fontSize: '0.95rem', minHeight: 44 }}
-                  disabled={refreshing}
-                >
-                  {refreshing ? 'Refreshing…' : 'Refresh data'}
-                </button>
               </nav>
             </div>
 
@@ -958,16 +933,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
                   </span>
                   <HappinessInfo />
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleRecomputeComposites()}
-                  disabled={recomputeLoading}
-                  className="hf-btn-link"
-                  style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: recomputeLoading ? 0.6 : 1 }}
-                  aria-label="Refresh indices"
-                >
-                  {recomputeLoading ? 'Refreshing…' : 'Refresh indices'}
-                </button>
               </div>
             </div>
           </div>
@@ -977,25 +942,6 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
               ← New search
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {catalogSnapshot && (
-                <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
-                  NYC metro catalog snapshot — refresh to recompute live
-                </span>
-              )}
-              {showCachedNote && !catalogSnapshot && (
-                <span className="tr-muted" style={{ fontSize: '0.9rem' }}>
-                  Showing cached results
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleRefresh}
-                className="hf-btn-secondary"
-                style={{ padding: '0.55rem 0.9rem', borderRadius: 10, minHeight: 44 }}
-                disabled={refreshing}
-              >
-                {refreshing ? 'Refreshing…' : 'Refresh data'}
-              </button>
             </div>
           </div>
         )}

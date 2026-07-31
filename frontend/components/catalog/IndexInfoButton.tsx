@@ -11,7 +11,7 @@ interface IndexInfoButtonProps {
 }
 
 const INDEX_NAMES: Record<IndexId, string> = {
-  homefit: 'Trovamo Score',
+  homefit: 'HomeFit Score',
   longevity: 'Longevity Index',
   happiness: 'Happiness Index',
   status: 'Archetype',
@@ -63,10 +63,10 @@ function PopoverContent({ indexId }: { indexId: IndexId }) {
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
           <MapPin size={14} color="#6B5CF6" />
-          <span style={{ fontWeight: 700, fontSize: 13 }}>Trovamo Score</span>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>HomeFit Score</span>
         </div>
         <p style={{ fontSize: 12, color: '#4b5563', margin: '0 0 8px', lineHeight: 1.5 }}>
-          A composite of all 15 pillars, weighted equally by default. Adjust weights to personalize.
+          A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.
         </p>
         <div style={{ fontSize: 11, color: '#9ca3af', borderTop: '1px solid #f3f4f6', paddingTop: 6 }}>
           Use <em>Adjust weights</em> to match your priorities →
@@ -98,7 +98,7 @@ function PopoverContent({ indexId }: { indexId: IndexId }) {
           })}
         </div>
         <div style={{ fontSize: 11, color: '#9ca3af', borderTop: '1px solid #f3f4f6', paddingTop: 6 }}>
-          Same formula for everyone — ignores your Trovamo weights.
+          Same formula for everyone — ignores your HomeFit weights.
         </div>
       </>
     )

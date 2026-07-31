@@ -54,12 +54,6 @@ export default function HeroBand() {
         >
           Take the quiz →
         </Link>
-        <Link
-          href="/methodology"
-          style={{ fontSize: 13, color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}
-        >
-          How scores work →
-        </Link>
       </div>
       <button
         type="button"

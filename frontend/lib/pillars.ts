@@ -123,15 +123,15 @@ export const LONGEVITY_COPY = {
     'Trovamo = right for you. Longevity = right for your health over time.',
 } as const
 
-/** Copy for Trovamo Score UX: tooltip, subtitle, full modal, and callout distinction. */
+/** Copy for HomeFit Score UX: tooltip, subtitle, full modal, and callout distinction. */
 export const HOMEFIT_COPY = {
   /** Full body for modal — Results, Saved, Public (13 active pillars). */
   full:
     'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
-  /** Full body for modal — Explorer catalog (15 pillars including Community Safety + Political Vibe). */
+  /** Full body for modal — Explorer catalog (13 active pillars). */
   fullCatalog:
-    'A composite of all 15 pillars, weighted equally by default. Adjust weights to personalize.',
-  /** Subtitle under "Trovamo Score" label. */
+    'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
+  /** Subtitle under "HomeFit Score" label. */
   subtitle:
     'How well this place meets your lifestyle needs based on your personalized preferences.',
   /** One-line tooltip for ? button. */
@@ -139,7 +139,7 @@ export const HOMEFIT_COPY = {
     'A composite of all 13 pillars, weighted equally by default. Adjust weights to personalize.',
   /** Callout in modal. */
   distinction:
-    'Trovamo = right for you. Longevity = right for your health over time.',
+    'HomeFit = right for you. Longevity = right for your health over time.',
 } as const
 
 /** Copy for Archetype index UX: tooltip and modal. */
