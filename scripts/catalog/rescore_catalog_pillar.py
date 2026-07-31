@@ -87,7 +87,7 @@ get_score = _rerun.get_score
 load_last_per_place = _rerun.load_last_per_place
 proxy_headers = _rerun.proxy_headers
 recompute_totals = _rerun.recompute_totals
-PILLAR_ORDER: List[str] = list(_rerun.PILLAR_ORDER)
+PILLAR_ORDER: List[str] = list(_rerun.PILLAR_ORDER) + ["natural_beauty", "built_beauty"]
 
 
 def pillar_confidence(obj: Dict[str, Any], pillar_name: str) -> Optional[float]:
