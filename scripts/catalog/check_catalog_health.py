@@ -50,6 +50,15 @@ CONFIDENCE_THRESHOLDS: Dict[str, int] = {
 # Pillars where score=None is expected (no aggregate numeric score by design)
 NO_SCORE_EXPECTED = {"political_lean"}
 
+# Pillars that must be present and scored in every catalog row.
+# Absence of the key entirely (not just null score) is flagged as pillar_absent.
+EXPECTED_PILLARS = {
+    "active_outdoors", "natural_beauty", "neighborhood_amenities",
+    "air_travel_access", "public_transit_access", "healthcare_access",
+    "economic_opportunity", "quality_education", "housing_value",
+    "climate_risk", "social_fabric", "diversity", "community_safety",
+}
+
 # Known OLD versions that should be flagged (scored under a superseded algorithm).
 # None = pillar isn't versioned yet, handled separately.
 OLD_VERSIONS: Dict[str, set] = {
@@ -117,8 +126,12 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     flags: List[str] = []
 
     score = data.get("score")
+    status = data.get("status")
     if score is None and pillar not in NO_SCORE_EXPECTED:
         flags.append("score_null")
+    # fallback with score=0 is a data gap (e.g. education where SchoolDigger returned nothing)
+    elif status == "fallback" and score == 0 and pillar not in NO_SCORE_EXPECTED:
+        flags.append("fallback_zero")
 
     dq = data.get("data_quality") or {}
 
@@ -165,6 +178,12 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
         for key in NB_V9_KEYS:
             if v9.get(key) is None:
                 flags.append(f"missing:v9.{key}")
+
+    # Transit: check if Transitland API was unavailable and score fell back to commute-time only
+    if pillar == "public_transit_access":
+        summary = data.get("summary") or {}
+        if summary.get("fallback_applied") is True:
+            flags.append("transit_api_fallback")
 
     # Transit has two valid terminal versions: commuter_access_floor_ridership for
     # commuter-rail towns, transit_v3_subway_commuter_split for subway towns.
@@ -304,6 +323,13 @@ def check_row(
         if flags:
             pillar_flags[pillar] = flags
 
+    # Check for expected pillars entirely absent from the JSONL
+    for pillar in EXPECTED_PILLARS:
+        if pillar_filter and pillar != pillar_filter:
+            continue
+        if pillar not in lp:
+            pillar_flags.setdefault(pillar, []).append("pillar_absent")
+
     # Composite drift — recompute from stored breakdown components
     if not pillar_filter:
         stored_h = sc.get("happiness_index")
@@ -386,10 +412,13 @@ def main() -> int:
     old_version_issues:  Dict[str, List[str]] = defaultdict(list)
     unversioned_issues:  Dict[str, List[str]] = defaultdict(list)
     null_scores:         Dict[str, List[str]] = defaultdict(list)
+    fallback_zeros:      Dict[str, List[str]] = defaultdict(list)
+    absent_pillars:      Dict[str, List[str]] = defaultdict(list)
     low_conf:            Dict[str, List[Tuple[str,str]]] = defaultdict(list)
     degraded_issues:     Dict[str, List[str]] = defaultdict(list)
     warning_issues:      Dict[str, List[str]] = defaultdict(list)
     fallback_issues:     Dict[str, List[str]] = defaultdict(list)
+    transit_api_fallbacks: Dict[str, List[str]] = defaultdict(list)
     missing_sub:         Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
 
     for name, _, pillar_flags, _ in results:
@@ -401,6 +430,10 @@ def main() -> int:
                     unversioned_issues[pillar].append(f"{name} ({f})")
                 elif f == "score_null":
                     null_scores[pillar].append(name)
+                elif f == "fallback_zero":
+                    fallback_zeros[pillar].append(name)
+                elif f == "pillar_absent":
+                    absent_pillars[pillar].append(name)
                 elif f.startswith("conf_"):
                     low_conf[pillar].append((name, f))
                 elif f == "degraded":
@@ -409,6 +442,8 @@ def main() -> int:
                     warning_issues[pillar].append(f"{name}[{f[5:]}]")
                 elif f == "fallback_used":
                     fallback_issues[pillar].append(name)
+                elif f == "transit_api_fallback":
+                    transit_api_fallbacks[pillar].append(name)
                 elif f.startswith("missing:"):
                     missing_sub[pillar][f[8:]].append(name)
 
@@ -439,6 +474,22 @@ def main() -> int:
         for pillar in sorted(null_scores):
             print(f"  {pillar}: {', '.join(null_scores[pillar])}")
 
+    # ── Section 3b: Absent pillars (key not in JSONL at all) ──────────────
+    if absent_pillars:
+        print("\n── ABSENT PILLARS (never scored — key missing from JSONL) ─────────")
+        for pillar in sorted(absent_pillars):
+            places = absent_pillars[pillar]
+            truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
+            print(f"  {pillar}: {len(places)} place(s) — {truncated}")
+
+    # ── Section 3c: Fallback zeros (status=fallback, score=0 — no real data) ──
+    if fallback_zeros:
+        print("\n── FALLBACK ZEROS (status=fallback, score=0 — treat as missing) ───")
+        for pillar in sorted(fallback_zeros):
+            places = fallback_zeros[pillar]
+            truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
+            print(f"  {pillar}: {len(places)} place(s) — {truncated}")
+
     # ── Section 4: Low confidence ──────────────────────────────────────────
     if low_conf:
         print("\n── LOW CONFIDENCE ─────────────────────────────────────────────────")
@@ -466,6 +517,14 @@ def main() -> int:
         print("\n── FALLBACK SCORING ───────────────────────────────────────────────")
         for pillar in sorted(fallback_issues):
             print(f"  {pillar}: {', '.join(fallback_issues[pillar])}")
+
+    # ── Section 7b: Transit API fallback ──────────────────────────────────
+    if transit_api_fallbacks:
+        print("\n── TRANSIT API FALLBACK (Transitland unavailable — commute-time only) ─")
+        for pillar in sorted(transit_api_fallbacks):
+            places = transit_api_fallbacks[pillar]
+            truncated = ', '.join(places[:6]) + (f' +{len(places)-6} more' if len(places) > 6 else '')
+            print(f"  {pillar}: {len(places)} place(s) — {truncated}")
 
     # ── Section 8: Missing subcomponents ──────────────────────────────────
     if missing_sub:
@@ -534,10 +593,13 @@ def main() -> int:
     print(f"  Known old versions      : {sum(len(v) for v in old_version_issues.values())}")
     print(f"  Unversioned pillars     : {sum(len(v) for v in unversioned_issues.values())}")
     print(f"  Null scores             : {sum(len(v) for v in null_scores.values())}")
+    print(f"  Absent pillars          : {sum(len(v) for v in absent_pillars.values())}")
+    print(f"  Fallback zeros          : {sum(len(v) for v in fallback_zeros.values())}")
     print(f"  Low confidence          : {sum(len(v) for v in low_conf.values())}")
     print(f"  Degraded                : {sum(len(v) for v in degraded_issues.values())}")
     print(f"  Data warnings           : {sum(len(v) for v in warning_issues.values())}")
     print(f"  Fallback used           : {sum(len(v) for v in fallback_issues.values())}")
+    print(f"  Transit API fallback    : {sum(len(v) for v in transit_api_fallbacks.values())}")
     print(f"  Missing subcomponents   : {sum(len(vv) for v in missing_sub.values() for vv in v.values())}")
     print(f"  Metadata issues         : {sum(len(pf) for _, pf, _, _ in results)}")
     n_low = sum(1 for v in outliers.values() if v[4] == "low")
