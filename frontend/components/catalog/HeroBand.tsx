@@ -1,31 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function HeroBand() {
-  const { user, loading } = useAuth()
-  const [dismissed, setDismissed] = useState(true) // default true to avoid flash
+  const { loading } = useAuth()
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDismissed(localStorage.getItem('trovamo_hero_dismissed') === 'true')
-    }
-  }, [])
-
-  if (loading || dismissed) return null
-
-  function handleDismiss() {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('trovamo_hero_dismissed', 'true')
-    }
-    setDismissed(true)
-  }
+  if (loading) return null
 
   return (
     <div
-      className="relative flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3"
+      className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3"
       style={{ gap: '1rem' }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -55,25 +40,6 @@ export default function HeroBand() {
           Take the quiz →
         </Link>
       </div>
-      <button
-        type="button"
-        aria-label="Dismiss"
-        onClick={handleDismiss}
-        style={{
-          position: 'absolute',
-          top: 6,
-          right: 8,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: 16,
-          color: '#9ca3af',
-          lineHeight: 1,
-          padding: '2px 4px',
-        }}
-      >
-        ×
-      </button>
     </div>
   )
 }
