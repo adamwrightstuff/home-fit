@@ -181,10 +181,9 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
   const we = answers.weekend_energy
   if (we === 'outdoors') {
     set('active_outdoors', 85)
-    set('neighborhood_beauty', 80)
+    set('natural_beauty', Math.max(get('natural_beauty'), 80))
   } else if (we === 'neighborhood') {
     set('neighborhood_amenities', 85)
-    set('neighborhood_beauty', Math.max(get('neighborhood_beauty'), 70))
   } else if (we === 'home_social') {
     set('social_fabric', 80)
   } else if (we === 'travel') {
@@ -219,13 +218,13 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('climate_risk', Math.min(get('climate_risk'), 40))
   }
 
-  // community_vibe → diversity (primary) + neighborhood_beauty + social_fabric
+  // community_vibe → diversity (primary) + built_environment/natural_beauty + social_fabric
   const cv = answers.community_vibe
   if (cv === 'diverse') {
     set('diversity', 85)
     set('social_fabric', Math.max(get('social_fabric'), 70))
   } else if (cv === 'architectural') {
-    set('neighborhood_beauty', Math.max(get('neighborhood_beauty'), 85))
+    set('built_environment', Math.max(get('built_environment'), 85))
     set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 65))
     set('diversity', 40)
   } else if (cv === 'tight_knit') {
@@ -245,10 +244,10 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('political_lean', 80)
   }
 
-  // natural_scenery: if user picked 1–2 scenery types (not "no strong preference"), boost Neighborhood Beauty importance
+  // natural_scenery: if user picked 1–2 scenery types (not "no strong preference"), boost Natural Beauty importance
   const scenery = answers.natural_scenery.filter((v) => v !== 'no_preference')
   if (scenery.length > 0) {
-    set('neighborhood_beauty', Math.max(get('neighborhood_beauty'), 80))
+    set('natural_beauty', Math.max(get('natural_beauty'), 80))
   }
 
   // job_categories:

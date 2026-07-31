@@ -14,7 +14,7 @@ export default function HeroBand() {
     }
   }, [])
 
-  if (loading || user || dismissed) return null
+  if (loading || dismissed) return null
 
   function handleDismiss() {
     if (typeof window !== 'undefined') {
