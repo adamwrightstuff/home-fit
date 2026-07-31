@@ -141,8 +141,8 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                   onClick={() => toggleRow(key)}
                 >
                   <td className="py-2 pr-2">
-                    <div className="font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
-                    <div className="text-[0.65rem] text-[var(--hf-text-secondary)]">
+                    <div className="text-sm font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</div>
+                    <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
                   </td>
@@ -164,11 +164,6 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                       <span className="text-sm font-bold tabular-nums" style={{ color: hf != null ? scoreBandFill(catalogRampKey('homefit'), hf) : 'var(--hf-text-tertiary)' }}>
                         {hf != null ? hf.toFixed(0) : '—'}
                       </span>
-                      {idx.longevity != null && idx.happiness != null && (
-                        <div className="text-[0.6rem] text-[var(--hf-text-tertiary)] tabular-nums mt-0.5">
-                          <abbr title="Longevity index" style={{ textDecoration: 'none' }}>L</abbr>{idx.longevity.toFixed(0)} · <abbr title="Happiness index" style={{ textDecoration: 'none' }}>H</abbr>{idx.happiness.toFixed(0)}
-                        </div>
-                      )}
                     </td>
                   )}
                   <td className="py-2 px-1 align-top">
@@ -213,16 +208,33 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
                     <td colSpan={5} className="p-0">
-                      {p.score.status_signal_breakdown?.llm_summary && (
-                        <p style={{
-                          margin: 0,
-                          padding: '0.75rem 1rem 0',
-                          fontSize: '0.85rem',
-                          lineHeight: 1.55,
-                          color: 'var(--hf-text-secondary)',
-                        }}>
-                          {p.score.status_signal_breakdown.llm_summary}
-                        </p>
+                      {(p.score.status_signal_breakdown?.llm_summary || p.score.local_scene_bucket) && (
+                        <div style={{ padding: '0.75rem 1rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {p.score.local_scene_bucket && (
+                            <span
+                              title="Reflects the presence of independent places to spend time — cafés, bookstores, bars, galleries."
+                              style={{
+                                alignSelf: 'flex-start',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                height: 24,
+                                padding: '0 10px',
+                                borderRadius: 99,
+                                background: '#f1f5f9',
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: '#334155',
+                              }}
+                            >
+                              {p.score.local_scene_bucket === 'High' ? 'Vibrant scene' : p.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
+                            </span>
+                          )}
+                          {p.score.status_signal_breakdown?.llm_summary && (
+                            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--hf-text-secondary)' }}>
+                              {p.score.status_signal_breakdown.llm_summary}
+                            </p>
+                          )}
+                        </div>
                       )}
                       <ExplorerPillarGrid place={p} priorities={priorities} />
                     </td>

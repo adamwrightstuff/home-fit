@@ -270,7 +270,7 @@ export default function CatalogBottomSheet({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Scene: {place.score.local_scene_bucket}
+                    {place.score.local_scene_bucket === 'High' ? 'Vibrant scene' : place.score.local_scene_bucket === 'Some' ? 'Some scene' : 'Quiet area'}
                   </span>
                 )}
               </div>
