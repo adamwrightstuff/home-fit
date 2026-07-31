@@ -57,6 +57,21 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
             </div>
           )
         })}
+        {(() => {
+          const lsScore = typeof place.score.local_scene_score === 'number' ? place.score.local_scene_score : null
+          const lsBucket = place.score.local_scene_bucket ?? null
+          if (lsScore == null) return null
+          const lsLabel = lsBucket === 'High' ? 'Vibrant Scene' : lsBucket === 'Some' ? 'Some Scene' : 'Quiet Area'
+          return (
+            <div className="flex min-w-0 items-center gap-2 text-[0.65rem]">
+              <span className="w-[7.5rem] shrink-0 truncate text-[var(--hf-text-primary)]">Local Scene</span>
+              <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, lsScore)}%`, background: 'rgba(99,102,241,0.45)' }} />
+              </div>
+              <span className="w-[4.5rem] shrink-0 text-right text-[var(--hf-text-tertiary)]">{lsLabel}</span>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
