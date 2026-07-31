@@ -830,6 +830,33 @@ export default function CatalogPageClient({
                   <X className="h-3 w-3" />
                 </button>
               )}
+              {!twinQueryKey && twinSearchText.trim().length > 0 && (() => {
+                const q = twinSearchText.trim().toLowerCase()
+                const hits = places.filter((p) => {
+                  const name = (p.catalog.name || '').toLowerCase()
+                  return name.includes(q) || (p.catalog.county_borough || '').toLowerCase().includes(q) || (p.catalog.state_abbr || '').toLowerCase().includes(q)
+                }).slice(0, 8)
+                if (hits.length === 0) return null
+                return (
+                  <ul className="absolute left-0 top-full z-50 mt-1 w-72 rounded-xl border border-[var(--hf-border)] bg-white shadow-lg overflow-hidden">
+                    {hits.map((p) => {
+                      const key = catalogRowKey(p.catalog)
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-[var(--hf-hover-bg)]"
+                            onMouseDown={(e) => { e.preventDefault(); onTwinSelectFromSearch(key) }}
+                          >
+                            <span className="font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</span>
+                            <span className="text-[var(--hf-text-tertiary)]">{p.catalog.county_borough}, {p.catalog.state_abbr}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )
+              })()}
             </div>
           )}
 
@@ -1090,6 +1117,33 @@ export default function CatalogPageClient({
                   <X className="h-4 w-4" />
                 </button>
               )}
+              {!twinQueryKey && twinSearchText.trim().length > 0 && (() => {
+                const q = twinSearchText.trim().toLowerCase()
+                const hits = places.filter((p) => {
+                  const name = (p.catalog.name || '').toLowerCase()
+                  return name.includes(q) || (p.catalog.county_borough || '').toLowerCase().includes(q) || (p.catalog.state_abbr || '').toLowerCase().includes(q)
+                }).slice(0, 8)
+                if (hits.length === 0) return null
+                return (
+                  <ul className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border border-[var(--hf-border)] bg-white shadow-lg overflow-hidden">
+                    {hits.map((p) => {
+                      const key = catalogRowKey(p.catalog)
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--hf-hover-bg)]"
+                            onMouseDown={(e) => { e.preventDefault(); onTwinSelectFromSearch(key) }}
+                          >
+                            <span className="font-semibold text-[var(--hf-text-primary)]">{p.catalog.name}</span>
+                            <span className="text-xs text-[var(--hf-text-tertiary)]">{p.catalog.county_borough}, {p.catalog.state_abbr}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )
+              })()}
             </div>
           </div>
         )}
