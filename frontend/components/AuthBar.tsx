@@ -78,25 +78,29 @@ export default function AuthBar() {
           </Link>
 
           {/* Middle nav — hidden on mobile, visible md+ */}
-          <nav className="hf-auth-bar-nav hidden md:flex" aria-label="Main" style={{ alignItems: 'center', gap: '0.15rem' }}>
+          <nav className="hf-auth-bar-nav hidden md:flex" aria-label="Main" style={{ alignItems: 'center', gap: '0.5rem' }}>
             {/* HomeFit cluster */}
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', color: '#9CA3AF', textTransform: 'uppercase', marginRight: '0.1rem' }}>HomeFit</span>
-            <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
+            <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontWeight: 600, fontSize: '0.875rem' }}>
+              HomeFit
+            </Link>
+            <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.8rem' }}>
               Explore
             </Link>
-            <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }}>
+            <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.8rem' }}>
               Search
             </Link>
 
             {/* Divider */}
-            <span style={{ width: 1, height: 18, background: '#D1D5DB', margin: '0 0.4rem', display: 'inline-block', flexShrink: 0 }} aria-hidden="true" />
+            <span style={{ width: 1, height: 18, background: '#D1D5DB', margin: '0 0.25rem', display: 'inline-block', flexShrink: 0 }} aria-hidden="true" />
 
             {/* TravelFit cluster */}
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', color: '#9CA3AF', textTransform: 'uppercase', marginRight: '0.1rem' }}>TravelFit</span>
-            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }}>
+            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E', fontWeight: 600, fontSize: '0.875rem' }}>
+              TravelFit
+            </Link>
+            <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.8rem' }}>
               Explore
             </Link>
-            <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }}>
+            <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.8rem' }}>
               Search
             </Link>
           </nav>
@@ -131,18 +135,22 @@ export default function AuthBar() {
 
         {/* Mobile dropdown */}
         <nav className={`hf-auth-bar-mobile-menu${mobileMenuOpen ? ' open' : ''}`} aria-label="Mobile menu">
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: '#9CA3AF', textTransform: 'uppercase', padding: '0 8px' }}>HomeFit</span>
-          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e', fontWeight: 600 }} onClick={closeMobileMenu}>
+            HomeFit
+          </Link>
+          <Link href="/catalog" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
             Explore
           </Link>
-          <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#1a1a2e' }} onClick={closeMobileMenu}>
+          <Link href="/search" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#6B7280', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
             Search
           </Link>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: '#9CA3AF', textTransform: 'uppercase', padding: '0 8px', marginTop: '0.25rem' }}>TravelFit</span>
-          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }} onClick={closeMobileMenu}>
+          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E', fontWeight: 600, marginTop: '0.25rem' }} onClick={closeMobileMenu}>
+            TravelFit
+          </Link>
+          <Link href="/vacation/explorer" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
             Explore
           </Link>
-          <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#92400E' }} onClick={closeMobileMenu}>
+          <Link href="/vacation" className="hf-auth-bar-btn" style={{ textDecoration: 'none', color: '#B45309', fontSize: '0.85rem', paddingLeft: '1.25rem' }} onClick={closeMobileMenu}>
             Search
           </Link>
           {accountNav}

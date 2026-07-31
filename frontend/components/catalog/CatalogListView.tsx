@@ -96,18 +96,14 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             <th className="py-2 pr-2 font-semibold">Place</th>
             <th className="py-2 px-1"> </th>
             {pillarMode ? (
-              <th className="py-2 px-1 font-semibold" colSpan={3} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
+              <th className="py-2 px-1 font-semibold" colSpan={1} title={activePillarMeta?.label}>{activePillarMeta?.label ?? 'Pillar'}</th>
             ) : (
-              <>
-                <th className="py-2 px-1 font-semibold">
-                  <abbr title="HomeFit score — weighted composite of all 13 pillars (0–100)" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Score</abbr>
-                  {avgScore != null && (
-                    <span className="ml-1.5 font-normal text-[0.6rem] text-[var(--hf-text-tertiary)]">avg {avgScore}</span>
-                  )}
-                </th>
-                <th className="py-2 px-1 font-semibold"><abbr title="Longevity index — predicts long-term health outcomes based on Blue Zone research" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Lon.</abbr></th>
-                <th className="py-2 px-1 font-semibold"><abbr title="Happiness index — day-to-day livability weighted toward commute and social connection" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Hap.</abbr></th>
-              </>
+              <th className="py-2 px-1 font-semibold">
+                <abbr title="HomeFit score — weighted composite of all 13 pillars (0–100)" style={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', cursor: 'help' }}>Score</abbr>
+                {avgScore != null && (
+                  <span className="ml-1.5 font-normal text-[0.6rem] text-[var(--hf-text-tertiary)]">avg {avgScore}</span>
+                )}
+              </th>
             )}
             <th className="py-2 px-1 font-semibold">Archetype &amp; Trajectory</th>
             <th className="py-2 pl-1"> </th>
@@ -139,8 +135,8 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             return (
               <Fragment key={key}>
                 <tr
-                  className={`cursor-pointer border-b border-[var(--hf-border)] align-top ${
-                    expanded ? 'bg-[var(--hf-hover-bg)]' : ''
+                  className={`group/row cursor-pointer border-b border-[var(--hf-border)] align-top ${
+                    expanded ? 'bg-[var(--hf-hover-bg)]' : 'hover:bg-[var(--hf-hover-bg)]'
                   }`}
                   onClick={() => toggleRow(key)}
                 >
@@ -157,23 +153,23 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     const pScore = (p.score.livability_pillars as any)?.[indexMode]?.score ?? null
                     const v = typeof pScore === 'number' && Number.isFinite(pScore) ? pScore : null
                     return (
-                      <td className="py-2 px-1" colSpan={3}>
+                      <td className="py-2 px-1">
                         {v == null ? <span className="text-[var(--hf-text-tertiary)]">—</span> : (
-                          <div className="flex items-center gap-1">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--hf-bg-subtle)]">
-                              <div className="h-full rounded-full" style={{ width: `${v}%`, background: RAMP_HEX.teal[400] }} />
-                            </div>
-                            <span className="tabular-nums text-[var(--hf-text-secondary)]">{v.toFixed(0)}</span>
-                          </div>
+                          <span className="text-sm font-bold tabular-nums" style={{ color: RAMP_HEX.teal[400] }}>{v.toFixed(0)}</span>
                         )}
                       </td>
                     )
                   })() : (
-                    <>
-                      <td className="py-2 px-1">{bar(hf, 'homefit')}</td>
-                      <td className="py-2 px-1">{bar(idx.longevity, 'longevity')}</td>
-                      <td className="py-2 px-1">{bar(idx.happiness, 'happiness')}</td>
-                    </>
+                    <td className="py-2 px-1">
+                      <span className="text-sm font-bold tabular-nums" style={{ color: hf != null ? scoreBandFill(catalogRampKey('homefit'), hf) : 'var(--hf-text-tertiary)' }}>
+                        {hf != null ? hf.toFixed(0) : '—'}
+                      </span>
+                      {idx.longevity != null && idx.happiness != null && (
+                        <div className="text-[0.6rem] text-[var(--hf-text-tertiary)] tabular-nums mt-0.5">
+                          <abbr title="Longevity index" style={{ textDecoration: 'none' }}>L</abbr>{idx.longevity.toFixed(0)} · <abbr title="Happiness index" style={{ textDecoration: 'none' }}>H</abbr>{idx.happiness.toFixed(0)}
+                        </div>
+                      )}
+                    </td>
                   )}
                   <td className="py-2 px-1 align-top">
                     <span style={{ display: 'inline-flex', flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
@@ -185,64 +181,38 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                         }
                       />
                       <TrajectoryChip trajectory={p.score.status_signal_breakdown?.trajectory ?? null} />
-                      {p.score.local_scene_bucket && (
-                        <span
-                          title="Reflects the presence of independent places to spend time, like cafés, bookstores, bars, and galleries."
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            height: 28,
-                            padding: '0 10px',
-                            borderRadius: 99,
-                            background: '#f1f5f9',
-                            border: 'none',
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: '#334155',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Scene: {p.score.local_scene_bucket}
-                        </span>
-                      )}
                     </span>
                   </td>
                   <td className="py-2 pl-1">
-                    {onCompareToggle && (
+                    <div className="flex items-center gap-1">
+                      {onCompareToggle && (
+                        <button
+                          type="button"
+                          aria-label={`Add ${p.catalog.name} to comparison`}
+                          aria-pressed={compareIds.includes(key)}
+                          className={`rounded border px-1.5 py-0.5 text-[0.65rem] font-bold opacity-0 transition-opacity group-hover/row:opacity-100 focus:opacity-100 ${
+                            compareIds.includes(key) ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-500'
+                          }`}
+                          disabled={!compareIds.includes(key) && compareIds.length >= 2}
+                          title={!compareIds.includes(key) && compareIds.length >= 2 ? 'Max 2 neighborhoods' : undefined}
+                          onClick={(e) => { e.stopPropagation(); onCompareToggle(key) }}
+                        >
+                          {compareIds.includes(key) ? '✓' : 'Compare'}
+                        </button>
+                      )}
                       <button
                         type="button"
-                        aria-label={`Add ${p.catalog.name} to comparison`}
-                        aria-pressed={compareIds.includes(key)}
-                        className={`mr-1 rounded border px-1.5 py-0.5 text-[0.65rem] font-bold ${
-                          compareIds.includes(key)
-                            ? 'border-gray-200 text-gray-300'
-                            : 'border-gray-200 text-gray-500'
-                        }`}
-                        disabled={!compareIds.includes(key) && compareIds.length >= 2}
-                        title={!compareIds.includes(key) && compareIds.length >= 2 ? 'Max 2 neighborhoods' : undefined}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onCompareToggle(key)
-                        }}
+                        className="rounded border border-[var(--hf-border)] px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
+                        onClick={(e) => { e.stopPropagation(); onTwinRow(key) }}
                       >
-                        {compareIds.includes(key) ? '✓ Added' : 'Compare'}
+                        Twin →
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className="rounded border border-[var(--hf-border)] px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--hf-primary-1)]"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onTwinRow(key)
-                      }}
-                    >
-                      Twin →
-                    </button>
+                    </div>
                   </td>
                 </tr>
                 {expanded && (
                   <tr className="border-b border-[var(--hf-border)] bg-[var(--hf-bg-subtle)]">
-                    <td colSpan={7} className="p-0">
+                    <td colSpan={5} className="p-0">
                       {p.score.status_signal_breakdown?.llm_summary && (
                         <p style={{
                           margin: 0,

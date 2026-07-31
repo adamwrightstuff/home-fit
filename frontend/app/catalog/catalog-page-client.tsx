@@ -863,21 +863,22 @@ export default function CatalogPageClient({
           {catalogMode === 'explorer' && (
             <>
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
-              {/* Metro */}
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Metro — segmented control */}
+              <div className="flex items-center shrink-0 overflow-hidden rounded-lg border border-[var(--hf-border)]">
                 {(['all', 'nyc', 'la', 'sf'] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
-                    className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                    className={`border-r border-[var(--hf-border)] px-2.5 py-0.5 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] hover:bg-white'}`}
                     style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                     onClick={() => setFilterMetro(m)}
-                  >{m === 'all' ? 'All metros' : m.toUpperCase()}</button>
+                  >{m === 'all' ? 'All' : m.toUpperCase()}</button>
                 ))}
               </div>
 
               <div className="h-4 w-px bg-[var(--hf-border)] shrink-0" />
-              {/* Index tabs */}
+              {/* Sort */}
+              <span className="text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)] shrink-0">Sort</span>
               <div className="flex items-center gap-1 shrink-0">
                 {INDEXES.map((x) => {
                   const active = indexMode === x.id && !sortByName
@@ -912,14 +913,23 @@ export default function CatalogPageClient({
                 <button
                   type="button"
                   aria-pressed={sortByName}
-                  className={`text-[0.65rem] font-semibold ${sortByName ? 'text-[var(--hf-primary-1)] underline' : 'text-[var(--hf-text-secondary)]'}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-bold ${sortByName ? '' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] border border-[var(--hf-border)]'}`}
+                  style={sortByName ? { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' } : {}}
                   onClick={() => setSortByName(true)}
                 >A–Z</button>
+                {/* Direction toggle — icon only */}
                 <button
                   type="button"
-                  className="text-[0.65rem] font-semibold text-[var(--hf-primary-1)]"
+                  title={sortDir === 'desc' ? 'Sorted high → low (click to reverse)' : 'Sorted low → high (click to reverse)'}
+                  className="flex items-center justify-center rounded-lg border border-[var(--hf-border)] p-1 text-[var(--hf-text-secondary)] hover:bg-[var(--hf-hover-bg)]"
                   onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-                >{sortDir === 'desc' ? 'Desc' : 'Asc'}</button>
+                  aria-label={sortDir === 'desc' ? 'Descending — click to sort ascending' : 'Ascending — click to sort descending'}
+                >
+                  {sortDir === 'desc'
+                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                    : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                  }
+                </button>
               </div>
             </>
           )}
