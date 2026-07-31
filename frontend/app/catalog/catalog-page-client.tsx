@@ -600,15 +600,32 @@ export default function CatalogPageClient({
 
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
-    return rankTwinMatches(
-      queryPlace,
-      twinCandidatePlaces,
-      twinPillarList,
-      (pl) => catalogRowKey(pl.catalog),
-      12,
-      twinSameBand
+    const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
+    if (!twinCrossMetro) {
+      return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
+    }
+    // Cross-metro: rank per other-metro independently so every metro gets representation
+    const metros = (['nyc', 'la', 'sf'] as const).filter((m) => m !== inferCatalogMetro(queryPlace))
+    const perMetro = metros.map((m) =>
+      rankTwinMatches(
+        queryPlace,
+        twinCandidatePlaces.filter((p) => inferCatalogMetro(p) === m),
+        twinPillarList,
+        keyFn,
+        6,
+        twinSameBand
+      )
     )
-  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand])
+    // Interleave: best from each metro first, then second-best, etc.
+    const merged: TwinMatchResult[] = []
+    const maxLen = Math.max(...perMetro.map((r) => r.length))
+    for (let i = 0; i < maxLen; i++) {
+      for (const group of perMetro) {
+        if (group[i]) merged.push(group[i])
+      }
+    }
+    return merged
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return gatedPlaces
@@ -767,7 +784,7 @@ export default function CatalogPageClient({
 
   return (
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
-      <div className="hidden md:block"><HeroBand /></div>
+      <HeroBand />
       <header className="z-30 shrink-0 border-b border-[var(--hf-border)] bg-white/95 backdrop-blur">
         {/* ── Desktop single-row toolbar ── */}
         <div className="hidden md:flex md:items-center md:gap-2 md:px-4 md:py-2 md:flex-wrap">
@@ -899,6 +916,11 @@ export default function CatalogPageClient({
 
           {catalogMode === 'twin' && (
             <div className="flex items-center gap-1 shrink-0">
+              {twinControlsLocked && (
+                <span className="text-[0.65rem] text-[var(--hf-text-tertiary)] italic">
+                  Tap a neighborhood to start
+                </span>
+              )}
               <button
                 type="button"
                 disabled={twinControlsLocked}
