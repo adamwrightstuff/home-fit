@@ -651,7 +651,7 @@ export default function CatalogPageClient({
   const mapRegion = useMemo(() => {
     if (catalogMode === 'twin' && queryPlace && twinQueryKey) {
       const qm = inferCatalogMetro(queryPlace)
-      if (twinCrossMetro) return qm === 'nyc' ? 'la' : qm === 'la' ? 'sf' : 'nyc'
+      if (twinCrossMetro) return 'both'
       return qm
     }
     if (filterMetro === 'all') return 'both'
@@ -818,7 +818,7 @@ export default function CatalogPageClient({
           ) : (
             <div className="relative flex items-center shrink-0">
               <input
-                type="search"
+                type="text"
                 placeholder="Search a neighborhood to find its twin…"
                 value={twinQueryKey && queryPlace ? queryPlace.catalog.name : twinSearchText}
                 onChange={(e) => { if (twinQueryKey) return; setTwinSearchText(e.target.value) }}
@@ -1078,7 +1078,7 @@ export default function CatalogPageClient({
             </div>
             <div className="relative">
               <input
-                type="search"
+                type="text"
                 placeholder="Search a neighborhood to find its twin…"
                 value={twinQueryKey && queryPlace ? queryPlace.catalog.name : twinSearchText}
                 onChange={(e) => { if (twinQueryKey) return; setTwinSearchText(e.target.value) }}
