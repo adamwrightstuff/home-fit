@@ -102,8 +102,9 @@ export default function CatalogPageClient({
         const parsed = JSON.parse(stored)
         const merged = { ...DEFAULT_PRIORITIES }
         const valid: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
+        const source = parsed.priorities ?? parsed
         for (const k of [...PILLAR_ORDER, 'natural_beauty'] as PillarKey[]) {
-          if (valid.includes(parsed[k])) merged[k] = parsed[k]
+          if (valid.includes(source[k])) merged[k] = source[k]
         }
         return merged
       }
