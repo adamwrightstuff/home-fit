@@ -64,7 +64,7 @@ def _compute(biz: list) -> tuple[float, str] | tuple[None, None]:
 
     total = sum(by_type.values())
     if not total:
-        return None, None
+        return 0.0, 'Low'
 
     cafe     = by_type.get('cafe', 0)
     salon    = by_type.get('salon', 0)
@@ -119,11 +119,6 @@ def process(path: Path) -> None:
                .get('neighborhood_amenities', {})
                .get('breakdown', {})
                .get('business_list', []))
-
-        if not biz:
-            out.append(line)
-            no_biz += 1
-            continue
 
         score, bucket = _compute(biz)
         if score is None:
