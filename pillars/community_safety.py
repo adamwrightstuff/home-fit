@@ -90,6 +90,7 @@ _PRECISION_MAP = {
     "lasd_station":     "PRECINCT_PROXY",
     "ny_state_ucr":     "AGENCY_VERIFIED",
     "fbi_nibrs_agency": "AGENCY_VERIFIED",
+    "fbi_ucr_agency":   "PRECINCT_PROXY",  # non-NIBRS agency with UCR summary data (e.g. county sheriff)
     "fbi_cde_state":    "DEGRADED",
 }
 

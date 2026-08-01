@@ -22,7 +22,7 @@ CACHE_KEY_VERSION = os.getenv("HOMEFIT_CACHE_KEY_VERSION", "2")
 
 # Cache schema versioning (structural changes).
 # Bump this when you change what is stored/returned in cached payloads.
-CACHE_SCHEMA_VERSION = os.getenv("HOMEFIT_CACHE_SCHEMA_VERSION", "1")
+CACHE_SCHEMA_VERSION = os.getenv("HOMEFIT_CACHE_SCHEMA_VERSION", "2")  # bumped: _fetch_fbi_rate now returns (rate, tier) tuple
 
 # Cache key prefix (namespacing).
 # CRITICAL: prevents cache clear/stats from touching unrelated Redis keys.

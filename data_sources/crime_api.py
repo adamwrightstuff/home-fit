@@ -154,6 +154,7 @@ _FBI_PROPERTY_KEYS = frozenset({
 })
 
 _REQUEST_TIMEOUT = 20
+_AGENCIES_TIMEOUT = 45  # CA agencies list is 221KB and can exceed the default 20s
 
 
 # ---------------------------------------------------------------------------
@@ -399,7 +400,7 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
         return None
     try:
         url = f"{_FBI_CDE_BASE}/agency/byStateAbbr/{state_abbr.upper()}"
-        resp = requests.get(url, params={"API_KEY": api_key}, timeout=_REQUEST_TIMEOUT)
+        resp = requests.get(url, params={"API_KEY": api_key}, timeout=_AGENCIES_TIMEOUT)
         if resp.status_code != 200:
             logger.warning("FBI CDE agencies returned %d for %s", resp.status_code, state_abbr)
             return None
@@ -422,17 +423,16 @@ def _fetch_fbi_agencies(state_abbr: str) -> Optional[list]:
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
 def _fetch_fbi_rate(
     ori: str, offense_type: str, year: int, agency_name: Optional[str] = None
-) -> Optional[float]:
+) -> Optional[Tuple[float, str]]:
     """
     Fetch an annual crime rate per 100k from the FBI CDE summarized/agency endpoint.
 
-    For NIBRS-reporting agencies: if ``agency_name`` is provided and a matching
-    agency-specific key exists in the response, that per-agency rate is returned
-    (Tier 2 granularity).  Otherwise, the state-level rate is returned as a
-    fallback (Tier 3).
+    Returns ``(rate, tier)`` where tier is one of:
+      ``"agency"``   — per-agency key found (works for NIBRS and UCR-reporting non-NIBRS agencies)
+      ``"state"``    — state-level aggregate (fallback when no per-agency key)
+      ``"national"`` — US national rate (last-resort)
 
-    We take the December value of the rolling monthly series as the full-year
-    figure, consistent with how we have always used this endpoint.
+    Old disk-cache entries may be bare floats; callers handle that via ``_unpack_fbi_rate``.
     """
     api_key = _get_fbi_key()
     if not api_key:
@@ -459,12 +459,10 @@ def _fetch_fbi_rate(
             vals = list(month_vals.values())
             return float(month_vals.get(dec_key) or vals[-1])
 
-        # Tier 2: prefer agency-specific key when the caller supplies the expected
-        # agency name (only reliable for NIBRS-reporting agencies whose name appears
-        # explicitly in the response).
+        # Tier 2: per-agency key when the caller supplies the expected agency name.
+        # Works for NIBRS agencies *and* non-NIBRS agencies that report UCR summary
+        # data to the FBI (the CDE response always contains a per-agency Offenses key).
         if agency_name:
-            # Normalise: "Beverly Hills Police Department" → look for that substring
-            # in the Offenses key e.g. "Beverly Hills Police Department Offenses"
             ag_key = next(
                 (k for k in rates_by_label
                  if "Offenses" in k
@@ -475,32 +473,43 @@ def _fetch_fbi_rate(
             )
             if ag_key:
                 val = _extract(ag_key)
-                if val is not None:
+                if val is not None and val > 0:
                     logger.debug("FBI CDE agency rate for '%s' %s %d: %.2f", agency_name, offense_type, year, val)
-                    return val
+                    return (val, "agency")
 
         # Tier 3: state-level aggregate
         for label in rates_by_label:
             if "Offenses" in label and "United States" not in label:
                 val = _extract(label)
                 if val is not None:
-                    return val
+                    return (val, "state")
 
         # Last-resort: national rate
         for label in rates_by_label:
             if "United States" in label and "Offenses" in label:
                 val = _extract(label)
                 if val is not None:
-                    return val
+                    return (val, "national")
         return None
     except Exception as e:
         logger.warning("FBI CDE rate fetch failed: %s", e)
         return None
 
 
+def _unpack_fbi_rate(result) -> Tuple[Optional[float], Optional[str]]:
+    """Unpack (rate, tier) from _fetch_fbi_rate, handling legacy bare-float cache entries."""
+    if result is None:
+        return None, None
+    if isinstance(result, (list, tuple)) and len(result) == 2:
+        return result[0], result[1]
+    # Legacy disk-cache entry: bare float
+    return float(result), "state"
+
+
 # Keep the old name as an alias so existing callers don't break
 def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[float]:
-    return _fetch_fbi_rate(ori, offense_type, year)
+    rate, _ = _unpack_fbi_rate(_fetch_fbi_rate(ori, offense_type, year))
+    return rate
 
 
 # Keywords that identify transit, campus, and other special-purpose police
@@ -550,10 +559,32 @@ _SUBURB_TO_PARENT_CITY: Dict[str, str] = {
     "cos cob":        "Greenwich",
     "old greenwich":  "Greenwich",
     "riverside":      "Greenwich",   # CT — not NJ Riverside
-    # CT neighborhoods within Fairfield  
+    # CT neighborhoods within Fairfield
     "southport":      "Fairfield",
     # NJ communities served by township PD rather than own PD
     "short hills":    "Millburn",
+}
+
+# CA suburbs → exact FBI agency name for the law enforcement agency that serves them.
+# Used when _find_nearest_agency picks the wrong agency (bad lat/lon in FBI DB) or
+# when the city's own PD is absent from the FBI database.
+# Only include agencies confirmed to report real (non-zero) data to the FBI.
+_CA_SUBURB_TO_AGENCY: Dict[str, str] = {
+    # Unincorporated Alameda County — served by Alameda County Sheriff
+    "castro valley":  "Alameda County Sheriff's Office",
+    # Unincorporated Contra Costa County — served by Contra Costa Sheriff
+    "alamo":          "Contra Costa County Sheriff's Office",
+    # San Mateo County: unincorporated + small cities whose PD is absent from FBI DB
+    "half moon bay":  "San Mateo County Sheriff's Office",
+    "woodside":       "San Mateo County Sheriff's Office",
+    "portola valley": "San Mateo County Sheriff's Office",
+    "san carlos":     "San Mateo County Sheriff's Office",
+    "millbrae":       "San Mateo County Sheriff's Office",
+    # Marin County: Central Marin PD is the consolidated agency for Corte Madera + Larkspur
+    "corte madera":   "Central Marin Police Department",
+    "larkspur":       "Central Marin Police Department",
+    # Marin County unincorporated — served by Marin County Sheriff
+    "kentfield":      "Marin County Sheriff's Office",
 }
 
 
@@ -939,19 +970,57 @@ def _get_fbi_rates(
                 city_hint, agency_display_name, ori,
             )
 
+    # Tier 2c: CA explicit suburb → serving agency.
+    # Handles unincorporated communities (served by county sheriff) and small cities
+    # whose own PD is absent from the FBI database.  Only agencies confirmed to
+    # report real non-zero data are listed in _CA_SUBURB_TO_AGENCY.
+    if not nibrs_city_match and city_hint and state_abbr.upper() == "CA":
+        ca_agency_name = _CA_SUBURB_TO_AGENCY.get(city_hint.lower())
+        if ca_agency_name:
+            ca_ag = next(
+                (ag for ag in agencies
+                 if (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+                 == ca_agency_name.lower()),
+                None,
+            )
+            if ca_ag:
+                ori = ca_ag.get("ori") or ca_ag.get("ORI") or ori
+                agency_display_name = ca_ag.get("agency_name") or ca_ag.get("agencyName") or agency_display_name
+                is_nibrs = bool(ca_ag.get("is_nibrs"))
+                nibrs_city_match = True
+                logger.debug(
+                    "FBI CDE: CA suburb '%s' → explicit agency %s (NIBRS=%s, ORI %s)",
+                    city_hint, agency_display_name, is_nibrs, ori,
+                )
+
     agency_name_hint = agency_display_name if nibrs_city_match else None
 
-    violent_rate_100k = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
-    if violent_rate_100k is None:
-        violent_rate_100k = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+    v_result = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
+    v_rate_0, v_tier_0 = _unpack_fbi_rate(v_result) if v_result else (None, None)
+
+    # FBI per-agency data is released 12-18 months after year end.  If we have an
+    # agency match but the current data_year only returned a state-level aggregate,
+    # try the prior year which is more likely to have per-agency data finalized.
+    if agency_name_hint and v_tier_0 != "agency":
+        v_result_py = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+        _, v_tier_py = _unpack_fbi_rate(v_result_py) if v_result_py else (None, None)
+        if v_tier_py == "agency":
+            v_result = v_result_py
+            prev_year -= 1
+
+    if v_result is None:
+        v_result = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
         prev_year -= 1
 
-    if violent_rate_100k is None:
+    if v_result is None:
         return None
 
-    property_rate_100k = _fetch_fbi_rate(ori, "property-crime", data_year, agency_name_hint)
-    if property_rate_100k is None:
-        property_rate_100k = _fetch_fbi_rate(ori, "property-crime", prev_year, agency_name_hint)
+    violent_rate_100k, violent_tier = _unpack_fbi_rate(v_result)
+
+    p_result = _fetch_fbi_rate(ori, "property-crime", data_year, agency_name_hint)
+    if p_result is None:
+        p_result = _fetch_fbi_rate(ori, "property-crime", prev_year, agency_name_hint)
+    property_rate_100k, _ = _unpack_fbi_rate(p_result) if p_result else (None, None)
 
     # Convert per-100k → per-1k
     violent_rate = round(violent_rate_100k / 100.0, 3)
@@ -959,12 +1028,20 @@ def _get_fbi_rates(
 
     # Trend: compare current year violent to prior year
     trend_pct: Optional[float] = None
-    prev_violent_100k = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+    pv_result = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
+    prev_violent_100k, _ = _unpack_fbi_rate(pv_result) if pv_result else (None, None)
     if prev_violent_100k and prev_violent_100k > 0:
         raw_trend = (violent_rate_100k - prev_violent_100k) / prev_violent_100k * 100
         trend_pct = round(max(-100.0, min(100.0, raw_trend)), 1)
 
-    source = "fbi_nibrs_agency" if nibrs_city_match else "fbi_cde_state"
+    # Source reflects actual data tier returned by _fetch_fbi_rate:
+    #   "agency" tier → per-agency key was found in the CDE response
+    #   "state"/"national" tier → only state/national aggregate was available
+    if nibrs_city_match and violent_tier == "agency":
+        source = "fbi_nibrs_agency" if is_nibrs else "fbi_ucr_agency"
+    else:
+        source = "fbi_cde_state"
+
     return {
         "violent_per_1k": violent_rate,
         "property_per_1k": property_rate,
