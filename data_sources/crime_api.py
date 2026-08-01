@@ -526,6 +526,12 @@ _SPECIAL_PURPOSE_AGENCY_SKIP = frozenset({
     "campus police",
     "stevens institute",
     "housing authority",
+    "transit district",
+    "rapid transit",
+    "bart",
+    "fire protection",
+    "fire department",
+    "department of forestry",
 })
 
 
@@ -595,18 +601,36 @@ def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]
     Scan all agencies for a NIBRS-reporting PD whose name contains all words
     from city_hint (len > 3).  Used as a fallback when _find_nearest_agency
     selects the wrong agency due to bad lat/lon data in the FBI database.
+
+    Prefers city police departments over county sheriffs so that an incorporated
+    city like Santa Clara gets its own PD rather than the county sheriff.
     """
     if not city_hint or not agencies:
         return None
     words = [w.lower() for w in city_hint.split() if len(w) > 3]
     if not words:
         return None
-    for ag in agencies:
-        name = (ag.get("agency_name") or ag.get("agencyName") or "").lower()
-        if all(w in name for w in words) and not _is_special_purpose_agency(name):
-            if ag.get("is_nibrs"):
-                return ag
-    return None
+    candidates = [
+        ag for ag in agencies
+        if ag.get("is_nibrs")
+        and not _is_special_purpose_agency(
+            (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+        )
+        and all(
+            w in (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+            for w in words
+        )
+    ]
+    if not candidates:
+        return None
+    # Prefer city police departments over county sheriffs / other agencies
+    pd_match = next(
+        (ag for ag in candidates
+         if "police department" in (ag.get("agency_name") or ag.get("agencyName") or "").lower()
+         or "police dept" in (ag.get("agency_name") or ag.get("agencyName") or "").lower()),
+        None,
+    )
+    return pd_match if pd_match is not None else candidates[0]
 
 
 @cached(ttl_seconds=CACHE_TTL["crime_data"])
