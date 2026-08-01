@@ -35,6 +35,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { saveScore } from '@/lib/savedScores'
 import { DEFAULT_PRIORITIES } from '@/components/SearchOptions'
 import { PILLAR_META } from '@/lib/pillars'
+import FamilyServicesPanel from '@/components/FamilyServicesPanel'
 
 type RawSearchParams = Record<string, string | string[] | undefined>
 
@@ -1014,6 +1015,10 @@ export default function ResultsClient({ initialSearchParams }: { initialSearchPa
             />
           ) : null}
         </div>
+
+        {mapCoords && (
+          <FamilyServicesPanel lat={mapCoords.lat} lon={mapCoords.lon} />
+        )}
       </div>
     </main>
   )
