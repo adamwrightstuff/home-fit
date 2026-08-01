@@ -1599,6 +1599,12 @@ def _compute_single_score_internal(
             state = ""
             city = ""
             geocode_data = {}
+        # Nominatim omits city/town/village for some incorporated cities (returns only county).
+        # Fall back to parsing the first component of the location string (e.g. "Alameda, California" → "Alameda").
+        if not city and location:
+            _parts = [p.strip() for p in location.split(",")]
+            if len(_parts) >= 2 and _parts[0] and not any(c.isdigit() for c in _parts[0]):
+                city = _parts[0]
         logger.info(f"Using provided coordinates: {lat}, {lon}")
     else:
         from data_sources.geocoding import geocode_with_full_result
@@ -1611,6 +1617,11 @@ def _compute_single_score_internal(
                 detail="Could not geocode the provided location. Please check the address."
             )
         lat, lon, zip_code, state, city, geocode_data = geo_result
+        # Same fallback: if geocoder returns empty city for a "City, State" query, parse from string.
+        if not city and location:
+            _parts = [p.strip() for p in location.split(",")]
+            if len(_parts) >= 2 and _parts[0] and not any(c.isdigit() for c in _parts[0]):
+                city = _parts[0]
     logger.info(f"Coordinates: {lat}, {lon}")
     logger.info(f"Location: {city}, {state} {zip_code}")
     
