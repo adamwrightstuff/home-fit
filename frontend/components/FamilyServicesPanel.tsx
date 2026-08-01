@@ -121,7 +121,12 @@ export default function FamilyServicesPanel({ lat, lon }: { lat: number; lon: nu
     setLoading(true)
     fetch(`/api/family-services?lat=${lat}&lon=${lon}`)
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false) })
+      .then((d) => {
+        if (d && Array.isArray(d.childcare) && Array.isArray(d.activities)) {
+          setData(d)
+        }
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [lat, lon])
 
