@@ -268,6 +268,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterPoliticalLean)) setFilterPoliticalLean(f.filterPoliticalLean)
           if (Array.isArray(f.filterNbTypes)) setFilterNbTypes(f.filterNbTypes)
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
+          if (typeof f.filterWaterfrontSubPref === 'string') setFilterWaterfrontSubPref(f.filterWaterfrontSubPref as WaterfrontSubPreference)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
@@ -294,6 +295,7 @@ export default function CatalogPageClient({
             filterPoliticalLean,
             filterNbTypes,
             filterAoTypes,
+            filterWaterfrontSubPref,
             filterHousingType,
             filterSchoolType,
             filterLocalScene,
@@ -302,7 +304,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterHousingType, filterSchoolType, filterLocalScene])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterSchoolType, filterLocalScene])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -469,15 +471,14 @@ export default function CatalogPageClient({
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
         const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        if (pctLow !== null) {
-          const passesAny = filterHousingType.some((t) => {
-            if (t === 'sf_townhouse') return pctLow >= 0.25
-            if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
-            if (t === 'apartment') return pctLow < 0.3
-            return false
-          })
-          if (!passesAny) return false
-        }
+        if (pctLow === null) return false
+        const passesAny = filterHousingType.some((t) => {
+          if (t === 'sf_townhouse') return pctLow >= 0.25
+          if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
+          if (t === 'apartment') return pctLow < 0.3
+          return false
+        })
+        if (!passesAny) return false
       }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
