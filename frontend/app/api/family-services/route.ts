@@ -70,7 +70,11 @@ async function searchNearby(
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('[family-services] Places API error', res.status, err.slice(0, 300));
+    return [];
+  }
   const data = await res.json();
   const places = data.places ?? [];
   return places.map((p: Record<string, unknown>) => {
