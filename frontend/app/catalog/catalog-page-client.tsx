@@ -584,6 +584,13 @@ export default function CatalogPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
 
+  const metroResultCounts = useMemo(() => {
+    if (filterMetro !== 'all') return null
+    const counts = { nyc: 0, la: 0, sf: 0 }
+    for (const p of gatedPlaces) counts[inferCatalogMetro(p)]++
+    return counts
+  }, [filterMetro, gatedPlaces])
+
   const queryPlace = twinQueryKey ? findPlaceByKey(adjustedPlaces, twinQueryKey) : null
 
   const twinCandidatePlaces = useMemo(() => {
@@ -865,7 +872,12 @@ export default function CatalogPageClient({
                     className={`border-r border-[var(--hf-border)] px-2.5 py-0.5 text-[0.65rem] font-bold last:border-r-0 ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)] hover:bg-white'}`}
                     style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                     onClick={() => setFilterMetro(m)}
-                  >{m === 'all' ? 'All' : m.toUpperCase()}</button>
+                  >
+                    {m === 'all' ? 'All' : m.toUpperCase()}
+                    {m !== 'all' && metroResultCounts && (
+                      <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
+                    )}
+                  </button>
                 ))}
               </div>
             </>
@@ -1050,7 +1062,12 @@ export default function CatalogPageClient({
                   className={`rounded-full px-2 py-1 text-[0.65rem] font-bold ${filterMetro === m ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
                   style={filterMetro === m ? { background: 'var(--hf-primary-1)' } : {}}
                   onClick={() => setFilterMetro(m)}
-                >{m === 'all' ? 'All' : m.toUpperCase()}</button>
+                >
+                    {m === 'all' ? 'All' : m.toUpperCase()}
+                    {m !== 'all' && metroResultCounts && (
+                      <span className="ml-0.5 font-normal opacity-60">({metroResultCounts[m]})</span>
+                    )}
+                  </button>
               ))}
             </div>
           )}
