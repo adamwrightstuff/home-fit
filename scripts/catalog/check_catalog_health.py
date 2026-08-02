@@ -297,6 +297,8 @@ def check_row(
     # to be useful as a per-place flag
 
     sc = row.get("score") or {}
+    if not (sc.get("location_info") or {}).get("zip", "").strip():
+        place_flags.append("missing:zip")
     lp_any = sc.get("livability_pillars") or {}
 
     # Area type — check inside any pillar's area_classification (stored per-pillar, not top-level)

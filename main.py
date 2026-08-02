@@ -509,12 +509,12 @@ def _built_env_match_score(effective_area_type: Optional[str], preference: Optio
 
 
 def _extract_built_environment_summary(built_details: Dict) -> Dict:
-    """Extract summary data from Built Beauty details for display in UI."""
+    """Extract summary data from Built Environment details for display in UI."""
     summary = {}
     arch_analysis = built_details.get("architectural_analysis", {})
     
     if isinstance(arch_analysis, dict):
-        # Built Beauty stores metrics under architectural_analysis.metrics (the top-level keys
+        # Built Environment stores metrics under architectural_analysis.metrics (the top-level keys
         # were placeholders in earlier iterations).
         metrics = arch_analysis.get("metrics", {}) if isinstance(arch_analysis.get("metrics"), dict) else {}
         summary["height_diversity"] = round(metrics.get("height_diversity", arch_analysis.get("height_diversity", 0)) or 0, 2)
@@ -1622,6 +1622,10 @@ def _compute_single_score_internal(
             _parts = [p.strip() for p in location.split(",")]
             if len(_parts) >= 2 and _parts[0] and not any(c.isdigit() for c in _parts[0]):
                 city = _parts[0]
+    # When the geocoder returns no zip (common for city-level queries), resolve from coordinates.
+    if not zip_code and lat is not None and lon is not None:
+        from data_sources.geocoding import zip_from_coordinates
+        zip_code = zip_from_coordinates(lat, lon) or ""
     logger.info(f"Coordinates: {lat}, {lon}")
     logger.info(f"Location: {city}, {state} {zip_code}")
     
@@ -2918,7 +2922,7 @@ def get_livability_score(request: Request,
     Calculate livability score for a given address.
 
     Returns scores across 13 token-weighted pillars (default equal weights) plus optional composite indices:
-    - Active Outdoors, Built Beauty, Natural Beauty, Neighborhood Amenities
+    - Active Outdoors, Built Environment, Natural Beauty, Neighborhood Amenities
     - Air Travel Access, Public Transit Access, Healthcare Access, Economic Security
     - Quality Education, Housing Value, Climate Risk, Social Fabric, Diversity
     - Composite (not token-weighted): status_signal, happiness_index — derived from census/tract and pillar context; see response fields.
@@ -5912,7 +5916,7 @@ def sandbox_arch_diversity(lat: float, lon: float, radius_m: int = 1000):
         
         raw_total = height_beauty + type_beauty + footprint_beauty + coherence_bonus - penalty
         mult = DENSITY_MULTIPLIER.get(effective_area_type, 1.0)
-        # Built Beauty component score is capped at 33.0 to maintain balance with other pillars.
+        # Built Environment component score is capped at 33.0 to maintain balance with other pillars.
         # This cap is based on the architectural diversity scoring system where:
         # - Component scores (height, type, footprint, coherence) are additive
         # - The cap prevents any single component from dominating the overall livability score

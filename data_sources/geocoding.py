@@ -1907,7 +1907,31 @@ def reverse_geocode(lat: float, lon: float) -> Optional[str]:
                 address_details.get("municipality", ""))
         
         return city if city else None
-        
+
     except Exception as e:
         print(f"Reverse geocoding error: {e}")
+        return None
+
+
+def zip_from_coordinates(lat: float, lon: float) -> Optional[str]:
+    """
+    Resolve a ZIP code from lat/lon via Nominatim reverse geocode.
+    Used as fallback when forward geocoding a city name returns no zip.
+    """
+    try:
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lon, "format": "json", "addressdetails": 1},
+            headers={"User-Agent": "HomeFit/1.0"},
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        postcode = data.get("address", {}).get("postcode", "")
+        # Nominatim sometimes returns ZIP+4; strip to 5 digits
+        if postcode:
+            return postcode[:5]
+        return None
+    except Exception:
         return None
