@@ -667,7 +667,7 @@ export default function CatalogPageClient({
     }
   }, [catalogMode, queryPlace, twinRanked])
 
-  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}-${mapData.features.length}`
+  const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}`
 
   const selectedPlace = useMemo(() => findPlaceByKey(gatedPlaces, selectedKey), [gatedPlaces, selectedKey])
 
