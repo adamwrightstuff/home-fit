@@ -1016,22 +1016,26 @@ export default function CatalogPageClient({
               }
             </button>
 
-            {isPillarIndexMode(indexMode) && (
-              <div className="flex items-center gap-1 ml-2 overflow-x-auto">
-                {PILLAR_INDEX_MODES.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    aria-pressed={indexMode === p.id}
-                    className="rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold whitespace-nowrap"
-                    style={indexMode === p.id
-                      ? { background: '#1D9E75', color: '#fff', border: 'none' }
-                      : { background: 'transparent', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
-                    onClick={() => setIndexModeAndListSort(p.id)}
-                  >{p.label}</button>
-                ))}
-              </div>
-            )}
+          </div>
+        )}
+
+        {catalogMode === 'explorer' && isPillarIndexMode(indexMode) && !sortByName && (
+          <div
+            className="hidden md:flex flex-wrap gap-1.5 px-4 py-2 border-t border-[var(--hf-border)]"
+            style={{ background: 'var(--hf-bg-subtle)' }}
+          >
+            {PILLAR_INDEX_MODES.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={indexMode === p.id}
+                className="rounded-full px-3 py-1 text-[0.65rem] font-bold whitespace-nowrap transition-colors"
+                style={indexMode === p.id
+                  ? { background: '#1D9E75', color: '#fff', border: 'none' }
+                  : { background: 'var(--hf-bg)', color: 'var(--hf-text-secondary)', border: '0.5px solid var(--hf-border)' }}
+                onClick={() => setIndexModeAndListSort(p.id)}
+              >{p.label}</button>
+            ))}
           </div>
         )}
 
