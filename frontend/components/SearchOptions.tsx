@@ -32,9 +32,9 @@ interface SearchOptions {
   job_categories: string[]
   /** Natural Beauty preference from quiz: 1–2 of mountains, ocean, lakes_rivers, canopy; null = no preference. */
   natural_beauty_preference?: string[] | null
-  /** Built Beauty character: historic | contemporary | no_preference; null = no selection. */
+  /** Built Environment character: historic | contemporary | no_preference; null = no selection. */
   built_character_preference?: 'historic' | 'contemporary' | 'no_preference' | null
-  /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living; null = no selection. */
+  /** Built Environment density: spread_out_residential | walkable_residential | dense_urban_living; null = no selection. */
   built_density_preference?: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living' | null
   /** Built Environment area-type preference: urban_core | urban_residential | suburban | exurban | rural; null = no preference (score = 50). */
   built_env_preference?: 'urban_core' | 'urban_residential' | 'suburban' | 'exurban' | 'rural' | null
