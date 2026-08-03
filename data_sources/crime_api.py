@@ -922,13 +922,12 @@ def _get_fbi_rates(
     is_nibrs = bool(agency.get("is_nibrs"))
     agency_display_name = agency.get("agencyName") or agency.get("agency_name") or ""
 
-    # Guard: only use per-agency NIBRS data when we're confident the right agency
-    # was matched.  _find_nearest_agency picks by distance, so for a non-NIBRS
-    # city it may return a nearby adjacent municipality.  Verify the city_hint
-    # (e.g. "Beverly Hills") actually appears in the agency name.
+    # Guard: only use per-agency data when we're confident the right agency was
+    # matched.  _find_nearest_agency picks by distance, so verify the city_hint
+    # (e.g. "Beverly Hills") actually appears in the agency name.  Works for
+    # both NIBRS reporters and legacy UCR summary reporters.
     nibrs_city_match = (
-        is_nibrs
-        and city_hint
+        city_hint
         and any(
             word.lower() in agency_display_name.lower()
             for word in (city_hint or "").split()
@@ -941,7 +940,7 @@ def _get_fbi_rates(
     if not nibrs_city_match and city_hint:
         parent_city = _SUBURB_TO_PARENT_CITY.get(city_hint.lower())
         if parent_city:
-            parent_match = is_nibrs and any(
+            parent_match = any(
                 word.lower() in agency_display_name.lower()
                 for word in parent_city.split()
                 if len(word) > 3
@@ -998,15 +997,17 @@ def _get_fbi_rates(
     v_result = _fetch_fbi_rate(ori, "violent-crime", data_year, agency_name_hint)
     v_rate_0, v_tier_0 = _unpack_fbi_rate(v_result) if v_result else (None, None)
 
-    # FBI per-agency data is released 12-18 months after year end.  If we have an
-    # agency match but the current data_year only returned a state-level aggregate,
-    # try the prior year which is more likely to have per-agency data finalized.
+    # FBI per-agency data is released 12-18 months after year end; non-NIBRS
+    # legacy-UCR agencies often lag 2-3 years.  Walk back up to 3 years to find
+    # the most recent year with per-agency data before falling back to state aggregate.
     if agency_name_hint and v_tier_0 != "agency":
-        v_result_py = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
-        _, v_tier_py = _unpack_fbi_rate(v_result_py) if v_result_py else (None, None)
-        if v_tier_py == "agency":
-            v_result = v_result_py
-            prev_year -= 1
+        for _fallback_year in range(prev_year, prev_year - 3, -1):
+            v_result_py = _fetch_fbi_rate(ori, "violent-crime", _fallback_year, agency_name_hint)
+            _, v_tier_py = _unpack_fbi_rate(v_result_py) if v_result_py else (None, None)
+            if v_tier_py == "agency":
+                v_result = v_result_py
+                prev_year = _fallback_year - 1
+                break
 
     if v_result is None:
         v_result = _fetch_fbi_rate(ori, "violent-crime", prev_year, agency_name_hint)
