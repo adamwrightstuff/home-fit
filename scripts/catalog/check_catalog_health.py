@@ -128,7 +128,13 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
     score = data.get("score")
     status = data.get("status")
     if score is None and pillar not in NO_SCORE_EXPECTED:
-        flags.append("score_null")
+        # built_environment is preference-gated: top-level score is null when no user
+        # preference is set (catalog mode), but the quality score is in details.
+        # Check that instead so we don't false-flag preference-gated nulls as data gaps.
+        if pillar == "built_environment" and (data.get("details") or {}).get("built_environment_score"):
+            pass
+        else:
+            flags.append("score_null")
     # fallback with score=0 is a data gap (e.g. education where SchoolDigger returned nothing)
     elif status == "fallback" and score == 0 and pillar not in NO_SCORE_EXPECTED:
         flags.append("fallback_zero")
