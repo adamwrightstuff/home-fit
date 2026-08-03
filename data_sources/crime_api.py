@@ -52,6 +52,11 @@ _FBI_CDE_BASE = "https://api.usa.gov/crime/fbi/cde"
 # "Index Crimes by County and Agency: Beginning 1990"
 _NY_STATE_CRIME_DS = "https://data.ny.gov/resource/ca8h-8gjq.json"
 
+# CA DOJ "Crimes and Clearances" — per-agency UCR counts for every CA LEA.
+# Covers non-NIBRS agencies the FBI CDE no longer publishes individually.
+# Downloaded from: https://openjustice.doj.ca.gov/data
+_CA_DOJ_CSV = os.path.join(os.path.dirname(__file__), "static", "ca_doj_crimes_clearances.csv")
+
 # ---------------------------------------------------------------------------
 # LASD (LA County Sheriff) station-level crime data
 # Pre-aggregated from lasd.org annual Part I & II Crimes CSV.
@@ -155,6 +160,68 @@ _FBI_PROPERTY_KEYS = frozenset({
 
 _REQUEST_TIMEOUT = 20
 _AGENCIES_TIMEOUT = 45  # CA agencies list is 221KB and can exceed the default 20s
+
+
+# ---------------------------------------------------------------------------
+# CA DOJ per-agency lookup (lazy-loaded)
+# ---------------------------------------------------------------------------
+
+_ca_doj_index: Optional[Dict] = None  # {(agency_lower, year): {violent, property}}
+
+def _load_ca_doj() -> Dict:
+    global _ca_doj_index
+    if _ca_doj_index is not None:
+        return _ca_doj_index
+    import csv
+    idx: Dict = {}
+    try:
+        with open(_CA_DOJ_CSV, newline="", encoding="utf-8-sig") as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                try:
+                    year = int(row["Year"])
+                    agency = (row.get("NCICCode") or "").strip().lower()
+                    violent = int(row.get("Violent_sum") or 0)
+                    prop = int(row.get("Property_sum") or 0)
+                    if agency:
+                        idx[(agency, year)] = {"violent": violent, "property": prop}
+                except (ValueError, KeyError):
+                    continue
+        logger.debug("CA DOJ: loaded %d agency-year rows", len(idx))
+    except Exception as exc:
+        logger.warning("CA DOJ: failed to load %s: %s", _CA_DOJ_CSV, exc)
+    _ca_doj_index = idx
+    return idx
+
+
+def _get_ca_doj_rates(city: str, population: int, data_year: int) -> Optional[Dict]:
+    """Return per-1k crime rates from CA DOJ data for `city`, trying up to 3 years back."""
+    idx = _load_ca_doj()
+    key = city.strip().lower()
+    for yr in range(data_year, data_year - 4, -1):
+        row = idx.get((key, yr))
+        if row is None:
+            continue
+        if row["violent"] == 0 and row["property"] == 0:
+            continue
+        pop = max(population, 1)
+        violent_rate = round(row["violent"] / pop * 1000, 3)
+        prop_rate = round(row["property"] / pop * 1000, 3)
+        # trend: compare to prior year if available
+        prev = idx.get((key, yr - 1))
+        trend_pct: Optional[float] = None
+        if prev and prev["violent"] > 0:
+            raw = (row["violent"] - prev["violent"]) / prev["violent"] * 100
+            trend_pct = round(max(-100.0, min(100.0, raw)), 1)
+        return {
+            "violent_per_1k": violent_rate,
+            "property_per_1k": prop_rate,
+            "trend_pct": trend_pct,
+            "source": "ca_doj_ucr",
+            "agency_name": city,
+            "data_year": yr,
+        }
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1041,6 +1108,18 @@ def _get_fbi_rates(
     if nibrs_city_match and violent_tier == "agency":
         source = "fbi_nibrs_agency" if is_nibrs else "fbi_ucr_agency"
     else:
+        # FBI CDE has no per-agency data for this location.  For CA cities,
+        # try the CA DOJ "Crimes and Clearances" dataset which covers all CA
+        # LEAs regardless of NIBRS participation.
+        if city_hint and state_abbr.upper() == "CA":
+            ca_doj = _get_ca_doj_rates(city_hint, population, data_year)
+            if ca_doj:
+                logger.debug(
+                    "CA DOJ fallback for '%s': violent=%.3f property=%.3f (year %d)",
+                    city_hint, ca_doj["violent_per_1k"], ca_doj["property_per_1k"],
+                    ca_doj.get("data_year", data_year),
+                )
+                return ca_doj
         source = "fbi_cde_state"
 
     return {
