@@ -471,14 +471,15 @@ export default function CatalogPageClient({
       if (filterHousingType.length > 0 && filterHousingType.length < 3) {
         const hs = (p.score as any).housing_stock
         const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
-        if (pctLow === null) return true  // no housing data — don't exclude (avoids wiping entire SF metro)
-        const passesAny = filterHousingType.some((t) => {
-          if (t === 'sf_townhouse') return pctLow >= 0.25
-          if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
-          if (t === 'apartment') return pctLow < 0.3
-          return false
-        })
-        if (!passesAny) return false
+        if (pctLow !== null) {
+          const passesAny = filterHousingType.some((t) => {
+            if (t === 'sf_townhouse') return pctLow >= 0.25
+            if (t === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
+            if (t === 'apartment') return pctLow < 0.3
+            return false
+          })
+          if (!passesAny) return false
+        }
       }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()

@@ -45,7 +45,7 @@ PYTHONPATH=. python3 scripts/catalog/recompute_catalog_composites.py \
 | `report_catalog_confidence_below.py` | Count places under a confidence threshold per pillar. |
 | `audit_pillar_confidence_staleness.py` | Audit for stale confidence/data_warning fields. |
 | `verify_rescore_pillar.py` | E2E check that single-pillar rescore flow works. |
-| `analyze_built_environment_patterns.py` | Cross-catalog built beauty pattern analysis. |
+| `analyze_built_environment_patterns.py` | Cross-catalog built environment pattern analysis. |
 | `analyze_vibe_vs_status.py` | Scatter: vibe score vs status signal across NYC + LA. |
 
 **Canonical health check:**
@@ -100,7 +100,7 @@ PYTHONPATH=. python3 scripts/catalog/rescore_catalog_pillar.py \
 | `rescore_ao_waterfront.py` | AO places with known waterfront data issues. |
 | `refetch_ao_local_parks.py` | Re-fetch only the local parks Overpass query for `overpass_local` failures. |
 | `rescore_built_environment_api_errors.py` | Built environment where Overpass failed. |
-| `rescore_built_environment_full.py` | Full built beauty rescore for both catalog files. |
+| `rescore_built_environment_full.py` | Full built environment rescore for both catalog files. |
 | `refetch_built_environment.py` | Live refetch of built_environment where stored data is unusable. |
 | `rescore_social_fabric_targeted.py` | Social fabric places with known data issues. |
 | `rescore_political_lean.py` | Add/refresh political_lean data. |
@@ -171,6 +171,48 @@ Not part of the fix pipeline — used for investigation or one-off generation.
 | `apply_preference_filters.py` | Mirror of filter + weight UI — all levers configurable, no hardcoded profile. |
 | `compute_local_scene.py` | Compute local_scene_score from stored business_list data. |
 | `generate_archetype_summaries.py` | Claude-based archetype classifications and neighborhood summaries. |
+
+---
+
+## New Metro Expansion
+
+Use `score_metro.py` — a single command that runs all phases in order and produces a deployment-ready JSONL. Never use individual scripts for a new metro.
+
+### Step 0 — Frontend registration (one-time, before scoring)
+
+Three files to edit:
+- `frontend/app/api/catalog-map/route.ts` — add `xx: ['xx_metro_...jsonl']` to `METRO_FILES`
+- `frontend/next.config.js` — add the JSONL path to `outputFileTracingIncludes` (Vercel deploys it)
+- `frontend/lib/catalogMapTypes.ts` — extend `inferCatalogMetro` if the metro is in a new state
+
+### Step 1 — Run the all-in-one scorer
+
+```bash
+HOMEFIT_API_BASE=https://home-fit-production.up.railway.app \
+HOMEFIT_PROXY_SECRET=<secret> \
+HOMEFIT_TRANSIT_STABLE_COMMUTE=true \
+ANTHROPIC_API_KEY=<key> \
+PYTHONPATH=. python3 scripts/catalog/score_metro.py \
+  --csv  data/xx_metro_place_catalog.csv \
+  --out  data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl \
+  --metro xx
+```
+
+This runs all 11 phases in sequence: CBSA baselines → batch scoring → retry failures → housing stock (Census) → ZIP codes (Nominatim) → political lean → local scene → best-fit labels → charter school flag → archetype summaries (Claude) → composite recompute → community safety baselines. Coverage report is printed at the end.
+
+The job is resumable — re-run if interrupted; already-scored places are skipped.
+
+Skip individual phases with `--skip-batch`, `--skip-housing`, `--skip-archs`, etc.
+
+### Step 2 — Verify
+
+```bash
+PYTHONPATH=. python3 scripts/catalog/check_catalog_health.py \
+  --no-unversioned \
+  --input data/xx_metro_place_catalog_scores_merged.composites_recomputed.jsonl
+```
+
+All key fields (`housing_stock`, `built_environment`, `political_lean`, `local_scene_bucket`) should print ≥95% in the coverage table `score_metro.py` already printed.
 
 ---
 

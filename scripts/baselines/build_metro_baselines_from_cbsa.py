@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """
-Rebuild la_metro and nyc_metro baselines in data/status_signal_baselines.json
-from actual Census ACS 5-year tract data for CBSA 31080 (LA) and 35620 (NYC).
-
+Rebuild per-metro baselines in data/status_signal_baselines.json.
 Fetches all tracts across all counties in each CBSA, computes p5/p95 for:
   - mean_hh_income (wealth)
   - median_home_value (home_cost)
   - white_collar_pct (occupation)
   - bach_pct, grad_pct (education)
 
-Then patches cbsa_to_baseline to route these CBSAs to the rebuilt entries.
+Built-in CBSAs (always run): LA 31080, NYC 35620.
+Add a new metro via --add-metro:
+
+  PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py \\
+    --add-metro sf_metro 41860 06:001,013,041,075,081 41940 06:085,069
+
+  Format: --add-metro KEY  CBSA STATE:COUNTY[,COUNTY...]  [CBSA STATE:COUNTY,...] ...
+  Multiple CBSA codes can map to the same baseline key (e.g. SF proper + South Bay).
+  Repeat --add-metro for multiple new metros.
 
 Usage (from project root):
   PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py
+  PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py --add-metro sf_metro 41860 06:001,013,041,075,081 41940 06:085,069
+  PYTHONPATH=. python3 scripts/baselines/build_metro_baselines_from_cbsa.py --only sf_metro
 """
 
 from __future__ import annotations
@@ -39,11 +47,19 @@ CBSA_COUNTIES: Dict[str, Dict[str, List[str]]] = {
         "34": ["003", "013", "017", "019", "023", "025", "027", "029", "031", "035", "037", "039", "041"],
         "42": ["103"],  # Pike County PA
     },
+    "41860": {  # San Francisco-Oakland-Hayward, CA
+        "06": ["001", "013", "041", "075", "081"],  # Alameda, Contra Costa, Marin, SF, San Mateo
+    },
+    "41940": {  # San Jose-Sunnyvale-Santa Clara, CA
+        "06": ["085", "069"],  # Santa Clara, San Benito
+    },
 }
 
 CBSA_TO_KEY = {
     "31080": "la_metro",
     "35620": "nyc_metro",
+    "41860": "sf_metro",
+    "41940": "sf_metro",  # South Bay maps to same sf_metro key; data is merged
 }
 
 # S2401 white-collar component variables (management through health practitioners)
@@ -246,6 +262,51 @@ def build_cbsa_baselines(cbsa_code: str) -> Dict:
 
 
 def main() -> None:
+    import argparse
+    p = argparse.ArgumentParser(description="Rebuild per-metro status_signal_baselines from CBSA tract data.")
+    p.add_argument(
+        "--only",
+        metavar="KEY",
+        help="Only rebuild the named metro key (e.g. sf_metro). Default: rebuild all.",
+    )
+    p.add_argument(
+        "--add-metro",
+        metavar="ARG",
+        nargs="+",
+        action="append",
+        help=(
+            "Add a new metro at runtime without editing this file. "
+            "Format: KEY CBSA STATE:COUNTY[,COUNTY] [CBSA STATE:COUNTY ...]. "
+            "E.g. --add-metro sf_metro 41860 06:001,013,041,075,081 41940 06:085,069"
+        ),
+    )
+    args = p.parse_args()
+
+    cbsa_counties = dict(CBSA_COUNTIES)
+    cbsa_to_key = dict(CBSA_TO_KEY)
+
+    # Parse --add-metro KEY CBSA STATE:COUNTIES [CBSA STATE:COUNTIES ...]
+    for tokens in (args.add_metro or []):
+        if len(tokens) < 3:
+            print(f"ERROR: --add-metro needs KEY CBSA STATE:COUNTIES ... got {tokens}")
+            return
+        key = tokens[0]
+        i = 1
+        while i < len(tokens):
+            cbsa = tokens[i]
+            i += 1
+            counties_by_state: Dict[str, List[str]] = {}
+            while i < len(tokens) and ":" in tokens[i]:
+                state, cnties = tokens[i].split(":", 1)
+                counties_by_state[state] = cnties.split(",")
+                i += 1
+            if not counties_by_state:
+                print(f"ERROR: no STATE:COUNTIES found after CBSA {cbsa}")
+                return
+            cbsa_counties[cbsa] = counties_by_state
+            cbsa_to_key[cbsa] = key
+            print(f"  Registered CBSA {cbsa} → {key}: {counties_by_state}")
+
     baselines_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         "data", "status_signal_baselines.json",
@@ -253,21 +314,66 @@ def main() -> None:
     with open(baselines_path, "r", encoding="utf-8") as f:
         baselines = json.load(f)
 
-    for cbsa_code, key in CBSA_TO_KEY.items():
-        print(f"\n=== CBSA {cbsa_code} → {key} ===")
-        metro_data = build_cbsa_baselines(cbsa_code)
+    # Group CBSAs by key so multiple CBSAs can merge into one baseline entry
+    key_to_cbsas: Dict[str, List[str]] = {}
+    for cbsa, key in cbsa_to_key.items():
+        if args.only and key != args.only:
+            continue
+        key_to_cbsas.setdefault(key, []).append(cbsa)
+
+    for key, cbsas in key_to_cbsas.items():
+        print(f"\n=== {key} (CBSAs: {', '.join(cbsas)}) ===")
+        # Temporarily swap CBSA_COUNTIES so build_cbsa_baselines finds our entries
+        orig = dict(CBSA_COUNTIES)
+        CBSA_COUNTIES.update(cbsa_counties)
+        try:
+            if len(cbsas) == 1:
+                metro_data = build_cbsa_baselines(cbsas[0])
+            else:
+                # Merge multiple CBSAs: collect all tract lists and recompute p5/p95
+                metro_data = _merge_cbsa_baselines([build_cbsa_baselines(c) for c in cbsas])
+        finally:
+            CBSA_COUNTIES.clear()
+            CBSA_COUNTIES.update(orig)
+
         if not metro_data:
-            print(f"  ERROR: no data collected for CBSA {cbsa_code}")
+            print(f"  ERROR: no data collected for {key}")
             continue
         baselines[key] = metro_data
         print(f"  Updated {key} in baselines")
 
-    baselines["cbsa_to_baseline"] = {cbsa: key for cbsa, key in CBSA_TO_KEY.items()}
-    print(f"\ncbsa_to_baseline set to {baselines['cbsa_to_baseline']}")
+    baselines["cbsa_to_baseline"] = {cbsa: key for cbsa, key in cbsa_to_key.items()}
+    print(f"\ncbsa_to_baseline: {baselines['cbsa_to_baseline']}")
 
     with open(baselines_path, "w", encoding="utf-8") as f:
         json.dump(baselines, f, indent=2, sort_keys=True)
     print(f"\nWrote {baselines_path}")
+
+
+def _merge_cbsa_baselines(datasets: list) -> Dict:
+    """Merge multiple CBSA baseline dicts by averaging their p5/p95 values."""
+    datasets = [d for d in datasets if d]
+    if not datasets:
+        return {}
+    if len(datasets) == 1:
+        return datasets[0]
+    # Simple strategy: average the p5 and p95 across datasets
+    result: Dict = {}
+    for section in datasets[0].keys():
+        result[section] = {}
+        for metric in datasets[0][section].keys():
+            vals = [d[section][metric] for d in datasets if section in d and metric in d[section]]
+            if not vals:
+                continue
+            if isinstance(vals[0], dict):
+                result[section][metric] = {
+                    k: sum(v[k] for v in vals) / len(vals)
+                    for k in vals[0].keys()
+                    if all(k in v for v in vals)
+                }
+            else:
+                result[section][metric] = sum(vals) / len(vals)
+    return result
 
 
 if __name__ == "__main__":
