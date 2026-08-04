@@ -242,6 +242,17 @@ def check_row(
             if computed_l is not None and abs(stored_l - computed_l) > 1.0:
                 place_flags.append(f"longevity_drift:{stored_l:.1f}vs{computed_l:.1f}")
 
+        # Weight/token_allocation mismatch — pillar has valid score but weight zeroed out
+        ta = sc.get("token_allocation") or {}
+        for pillar, pdata in lp_any.items():
+            if not isinstance(pdata, dict):
+                continue
+            ta_weight = ta.get(pillar, 0) or 0
+            stored_weight = pdata.get("weight")
+            score = pdata.get("score")
+            if ta_weight > 0 and stored_weight == 0.0 and score is not None:
+                place_flags.append(f"weight_zeroed:{pillar}")
+
     return name, place_flags, pillar_flags
 
 
