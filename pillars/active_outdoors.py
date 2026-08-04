@@ -345,20 +345,32 @@ def get_active_outdoors_score_v2(
     conf_notes = _active_outdoors_confidence_notes(
         dq, parks, playgrounds, hiking_trails, swimming, camping
     )
+    local_overpass_outcome = local.get("_overpass_outcome") if isinstance(local, dict) else None
+    trail_overpass_outcome = nature_trail.get("_overpass_outcome") if isinstance(nature_trail, dict) else None
+    regional_overpass_outcome = nature_regional.get("_overpass_outcome") if isinstance(nature_regional, dict) else None
+
     dq = {
         **dq,
         "confidence_notes": conf_notes,
-        "overpass_local_outcome": local.get("_overpass_outcome")
-        if isinstance(local, dict)
-        else None,
-        "overpass_trail_outcome": nature_trail.get("_overpass_outcome")
-        if isinstance(nature_trail, dict)
-        else None,
-        "overpass_regional_outcome": nature_regional.get("_overpass_outcome")
-        if isinstance(nature_regional, dict)
-        else None,
+        "overpass_local_outcome": local_overpass_outcome,
+        "overpass_trail_outcome": trail_overpass_outcome,
+        "overpass_regional_outcome": regional_overpass_outcome,
         "places_ao": places_ao_meta,
     }
+
+    # When both local and trail Overpass queries fail in a populated area, daily_urban_outdoors
+    # scores 0 because parks/playgrounds are empty — not because the place has no parks.
+    # Mark degraded so the health check and callers can distinguish data failure from true zero.
+    if (
+        local_overpass_outcome == "overpass_error"
+        and trail_overpass_outcome == "overpass_error"
+        and area_type in {"urban_core", "urban_residential", "suburban"}
+    ):
+        dq["degraded"] = True
+        reasons = list(dq.get("degraded_reasons") or [])
+        if "overpass_local_failure" not in reasons:
+            reasons.append("overpass_local_failure")
+        dq["degraded_reasons"] = reasons
 
     if scoring_area_type != area_type:
         logger.info(
@@ -680,7 +692,7 @@ _WATERFRONT_BASE: Dict[str, float] = {
 
 def _score_water_lifestyle_v2(
     swimming: list, area_type: str, is_desert_context: bool = False
-) -> Tuple[float, Dict]:
+) -> Tuple[float, Dict, Optional[str], Optional[float]]:
     """
     Waterfront Lifestyle (0-25):
       Score the BEST water feature by its computed score, not just the nearest.
@@ -692,7 +704,7 @@ def _score_water_lifestyle_v2(
     """
     _empty_breakdown: Dict = {"ocean_beach": 0.0, "lake_river": 0.0, "bay_harbor": 0.0}
     if not swimming:
-        return 0.0, _empty_breakdown
+        return 0.0, _empty_breakdown, None, None
 
     # natural=beach is ambiguous — ocean beaches and inland park beaches share the tag.
     # natural=coastline is the unambiguous OSM ocean signal. Confirm each beach individually:

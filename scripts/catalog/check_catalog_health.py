@@ -11,6 +11,7 @@ Checks:
   6. Data warnings — non-empty data_quality.data_warnings
   7. Fallback scoring used — data_quality.fallback_metadata.fallback_used=True
   8. Missing subcomponents — expected breakdown keys absent or None
+  8b. Zero subcomponents — breakdown key present but =0 when that indicates data failure
   9. Missing catalog metadata — null lat/lon, empty search_query, null lean_2024
  10. No area type — area_classification empty and score.area_type null
  11. Composite drift — stored happiness/longevity vs recomputed from breakdown
@@ -102,6 +103,29 @@ EXPECTED_BREAKDOWN: Dict[str, List[str]] = {
 
 NB_V9_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcover_score"]
 
+# Subcomponents where a stored value of exactly 0 is suspicious — it indicates a data
+# failure (Overpass timeout, GEE API error, missing source data) rather than a true zero.
+# Legitimate zeros (crime trend flat = 0, no elite schools = 0, no waterfront = 0) are
+# NOT listed here.
+#
+# Values are either "always" (zero is implausible regardless of geography) or a set of
+# area_type strings (zero is only suspicious in those geographies).
+ZERO_SUSPICIOUS_SUBCOMPONENTS: Dict[str, Dict[str, Any]] = {
+    "active_outdoors": {
+        # Every urban/suburban place has some parks or green space; 0 means Overpass failed
+        "daily_urban_outdoors": {"urban_core", "urban_residential", "suburban"},
+    },
+    "natural_beauty": {
+        # Satellite land-cover is available everywhere on Earth; 0 = GEE call failed
+        "landcover_score": "always",
+    },
+    "healthcare_access": {
+        # Any populated place has at least some hospitals/clinics within range; 0 = API error
+        "specialized_care": "always",
+        "emergency_services": "always",
+    },
+}
+
 HAPPINESS_COMPONENT_WEIGHTS = {
     "social":       0.30,
     "safety":       0.20,
@@ -177,6 +201,14 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
         val = breakdown.get(key)
         if val is None:
             flags.append(f"missing:{key}")
+
+    # Zero subcomponents — present but =0 when that signals data failure, not true zero
+    area_type = (data.get("area_classification") or {}).get("area_type") or ""
+    for key, condition in (ZERO_SUSPICIOUS_SUBCOMPONENTS.get(pillar) or {}).items():
+        val = breakdown.get(key)
+        if val is not None and val == 0:
+            if condition == "always" or area_type in condition:
+                flags.append(f"zero:{key}")
 
     # natural_beauty v9_breakdown
     if pillar == "natural_beauty":
@@ -465,6 +497,7 @@ def main() -> int:
     fallback_issues:     Dict[str, List[str]] = defaultdict(list)
     transit_api_fallbacks: Dict[str, List[str]] = defaultdict(list)
     missing_sub:         Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
+    zero_sub:            Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
 
     for name, _, pillar_flags, _ in results:
         for pillar, flags in pillar_flags.items():
@@ -491,6 +524,8 @@ def main() -> int:
                     transit_api_fallbacks[pillar].append(name)
                 elif f.startswith("missing:"):
                     missing_sub[pillar][f[8:]].append(name)
+                elif f.startswith("zero:"):
+                    zero_sub[pillar][f[5:]].append(name)
 
     for name, place_flags, _, _ in results:
         for f in place_flags:
@@ -602,6 +637,14 @@ def main() -> int:
                 truncated = ', '.join(places[:5]) + ('...' if len(places) > 5 else '')
                 print(f"  {pillar}.{sub}: {len(places)} place(s) — {truncated}")
 
+    # ── Section 8b: Zero subcomponents ────────────────────────────────────
+    if zero_sub:
+        print("\n── ZERO SUBCOMPONENTS (present=0 — likely data failure, not true zero) ─")
+        for pillar in sorted(zero_sub):
+            for sub, places in sorted(zero_sub[pillar].items()):
+                truncated = ', '.join(places[:5]) + (f' +{len(places)-5} more' if len(places) > 5 else '')
+                print(f"  {pillar}.{sub}: {len(places)} place(s) — {truncated}")
+
     # ── Section 9: Plausibility outliers ──────────────────────────────────
     # Build name→row lookup for score retrieval
     name_to_row: Dict[str, Dict[str, Any]] = {}
@@ -669,6 +712,7 @@ def main() -> int:
     print(f"  Fallback used           : {sum(len(v) for v in fallback_issues.values())}")
     print(f"  Transit API fallback    : {sum(len(v) for v in transit_api_fallbacks.values())}")
     print(f"  Missing subcomponents   : {sum(len(vv) for v in missing_sub.values() for vv in v.values())}")
+    print(f"  Zero subcomponents      : {sum(len(vv) for v in zero_sub.values() for vv in v.values())}")
     print(f"  Metadata issues         : {sum(len(pf) for _, pf, _, _ in results)}")
     n_low = sum(1 for v in outliers.values() if v[4] == "low")
     n_high = sum(1 for v in outliers.values() if v[4] == "high")
