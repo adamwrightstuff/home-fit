@@ -142,7 +142,11 @@ ZERO_ONE_CONFIDENCE_PILLARS = {"political_lean"}
 
 def pillar_version(pillar: str, data: Dict[str, Any]) -> Optional[str]:
     if pillar == "natural_beauty":
-        return data.get("scoring_version") or data.get("scoring_formula")
+        # Older batch runs (NYC/LA) store scoring_formula at pillar root.
+        # Newer batch runs (SF) store it inside details. Check both; prefer scoring_formula.
+        details = data.get("details") or {}
+        return (details.get("scoring_formula") or details.get("scoring_version") or
+                data.get("scoring_formula") or data.get("scoring_version"))
     return data.get("_rescore_version") or data.get("_version") or data.get("version")
 
 
@@ -210,9 +214,10 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
             if condition == "always" or area_type in condition:
                 flags.append(f"zero:{key}")
 
-    # natural_beauty v9_breakdown
-    if pillar == "natural_beauty":
-        v9 = data.get("v9_breakdown") or {}
+    # natural_beauty v9_breakdown — stored at pillar root in older batches (NYC/LA),
+    # inside details in newer batches (SF). Check both locations.
+    if pillar == "natural_beauty" and got == "v9":
+        v9 = data.get("v9_breakdown") or (data.get("details") or {}).get("v9_breakdown") or {}
         for key in NB_V9_KEYS:
             if v9.get(key) is None:
                 flags.append(f"missing:v9.{key}")
