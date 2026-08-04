@@ -53,20 +53,16 @@ for vacation catalog, and whether the OSM-down score cap is being applied puniti
 ---
 
 ## BUG-002 · social_fabric = 0 for Fort Greene and Glendale
-**Severity: HIGH** | Affects: Fort Greene NY, Southport CT, Glendale CA
+**Severity: HIGH** | ✅ FIXED 2026-08-04 | Affects: Fort Greene NY, Southport CT, Glendale CA
 
 **Root cause confirmed (2026-07-28):** `pillars/social_fabric.py:671` calls `round(channel_a, 1)` without a None guard. `channel_a` is None when the Social Capital Atlas has no ZIP-level cohesion data, causing the entire pillar to crash with `TypeError: type NoneType doesn't define __round__ method`. Scoring formula at line 521 correctly skips cohesion via `w_sc=0.0` but never reaches it because the breakdown dict serialization runs first and crashes. Southport is a separate timeout failure.
 
 **Fix applied (2026-07-28):** `pillars/social_fabric.py:671` patched to `round(channel_a, 1) if channel_a is not None else None`.
 
-**Rescore required** (API must be running, fix must be deployed):
-```bash
-cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/catalog/rerun_failed_catalog_pillars.py --input data/nyc_metro_place_catalog_scores_merged.jsonl --output data/nyc_metro_place_catalog_scores_merged.jsonl --pillar social_fabric
-```
-```bash
-cd /Users/adamwright/Dev/home-fit && PYTHONPATH=. python3 scripts/catalog/rerun_failed_catalog_pillars.py --input data/la_metro_place_catalog_scores_merged.jsonl --output data/la_metro_place_catalog_scores_merged.jsonl --pillar social_fabric
-```
-Then recompute composites on both catalogs.
+**Rescored:**
+- Fort Greene NY: already fixed in prior session (score=40.2)
+- NYC Glendale: already fixed in prior session (score=41.1)
+- LA Glendale: rescored 2026-08-04 → social_fabric=52.9 (conf=92, success); composites recomputed with --no-census (zero status_signal drift)
 
 ---
 
@@ -177,15 +173,17 @@ Also check the anomaly detector script — it may have the same coercion bug in 
 ---
 
 ## BUG-010 · Rye matched to wrong police agency (Johnson City Village PD)
-**Severity: HIGH** | Confirmed by user from live scorer output
+**Severity: HIGH** | Confirmed 2026-08-04 (still present in catalog)
 
 Rye, NY's community_safety score of 78.2 was computed using crime data from
 "Johnson City Village Police Department" — either upstate NY or Tennessee — not Rye, NY.
-The merged JSONL doesn't store `agency_name`, but the live scorer returned the wrong match.
+Confirmed stored in catalog: `breakdown.agency_name = 'Johnson City Village Police Department'`,
+`precision_level = AGENCY_VERIFIED`, `source = fbi_nibrs_agency`.
 
 **Fix requires:** inspect the UCR/NIBRS agency matching logic for Rye, NY; check whether
 the geo-lookup is fuzzy-matching on town name without state/county filtering, which would
-explain matching "Rye" to a Johnson City agency.
+explain matching "Rye" to a Johnson City agency. After fix, rescore community_safety for Rye
+and recompute composites with --no-census.
 
 ---
 
