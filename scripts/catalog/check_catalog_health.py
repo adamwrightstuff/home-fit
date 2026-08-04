@@ -403,17 +403,37 @@ def check_row(
             if comp_ss is not None and abs(stored_ss - comp_ss) > 0.5:
                 place_flags.append(f"status_signal_drift:{stored_ss:.1f}vs{comp_ss:.1f}")
 
-        # total_score drift — sum of per-pillar contributions should equal stored total
+        # total_score drift — recompute from stored contributions + token_allocation fallback.
+        # Two known false-positive patterns are excluded:
+        #   1. contribution=None pillars get recomputed from token_allocation at runtime;
+        #      health check must do the same or it under-counts and flags false drift.
+        #   2. SF-style high-scoring places: uncapped contribution sum > 100 but stored total
+        #      is correctly min(100, sum) — compare after applying the same cap.
         stored_t = sc.get("total_score")
-        tb = sc.get("total_score_breakdown") or {}
+        token_alloc = sc.get("token_allocation") or {}
+        pillars_for_drift = sc.get("livability_pillars") or {}
         if stored_t is None:
             place_flags.append("missing:total_score")
-        elif tb:
-            computed_t = round(sum(
-                (v.get("contribution") or 0.0)
-                for v in tb.values()
-                if isinstance(v, dict)
-            ), 2)
+        elif pillars_for_drift:
+            _s_total = 0.0
+            _r_weights: Dict[str, float] = {}
+            for _pname, _pdata in pillars_for_drift.items():
+                if not isinstance(_pdata, dict):
+                    continue
+                _contrib = _pdata.get("contribution")
+                if isinstance(_contrib, (int, float)):
+                    _s_total += float(_contrib)
+                else:
+                    _w = _pdata.get("weight")
+                    if not isinstance(_w, (int, float)):
+                        _w = token_alloc.get(_pname)
+                    _r_weights[_pname] = float(_w) if isinstance(_w, (int, float)) else 0.0
+            _r_total = sum(
+                float((pillars_for_drift.get(_p) or {}).get("score") or 0.0) * _w / 100.0
+                for _p, _w in _r_weights.items()
+                if isinstance((pillars_for_drift.get(_p) or {}).get("score"), (int, float)) and _w > 0
+            )
+            computed_t = round(min(100.0, _s_total + _r_total), 2)
             if abs(stored_t - computed_t) > 1.0:
                 place_flags.append(f"total_score_drift:{stored_t:.1f}vs{computed_t:.1f}")
 
