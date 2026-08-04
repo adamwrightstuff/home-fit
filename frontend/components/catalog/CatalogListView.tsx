@@ -71,9 +71,11 @@ interface CatalogListViewProps {
   compareIds?: string[]
   onCompareToggle?: (key: string) => void
   onRowExpand?: (key: string | null) => void
+  /** When set (search mode), keyed by row key — lists filter/dealbreaker labels that exclude the place. */
+  filteredOutReasons?: Record<string, string[]>
 }
 
-export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand }: CatalogListViewProps) {
+export default function CatalogListView({ places, priorities, indexMode = 'homefit', onTwinRow, compareIds = [], onCompareToggle, onRowExpand, filteredOutReasons }: CatalogListViewProps) {
   const pillarMode = isPillarIndexMode(indexMode)
   const activePillarMeta = pillarMode ? PILLAR_INDEX_MODES.find(p => p.id === indexMode) : null
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -114,8 +116,13 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
           </tr>
         </thead>
         <tbody>
-          {places.map((p) => {
+          {places.map((p, i) => {
             const key = catalogRowKey(p.catalog)
+            const failReasons = filteredOutReasons?.[key] ?? []
+            const isFilteredOut = failReasons.length > 0
+            const prevKey = i > 0 ? catalogRowKey(places[i - 1]!.catalog) : null
+            const prevWasPassing = prevKey ? (filteredOutReasons?.[prevKey] ?? []).length === 0 : false
+            const showDivider = filteredOutReasons && isFilteredOut && prevWasPassing
             const idx = getAllCatalogIndexDisplay(p, priorities)
             const rw = reweightScoreResponseFromPriorities(p.score, priorities)
             const hf = rw.total_score
@@ -138,10 +145,21 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
             }
             return (
               <Fragment key={key}>
+                {showDivider && (
+                  <tr>
+                    <td colSpan={5} className="py-1.5 px-0">
+                      <div className="flex items-center gap-2 text-[0.6rem] font-semibold uppercase tracking-wide text-[var(--hf-text-tertiary)]">
+                        <div className="h-px flex-1 bg-[var(--hf-border)]" />
+                        <span>Outside your filters</span>
+                        <div className="h-px flex-1 bg-[var(--hf-border)]" />
+                      </div>
+                    </td>
+                  </tr>
+                )}
                 <tr
                   className={`group/row cursor-pointer border-b border-[var(--hf-border)] align-top ${
                     expanded ? 'bg-[var(--hf-hover-bg)]' : 'hover:bg-[var(--hf-hover-bg)]'
-                  }`}
+                  } ${isFilteredOut ? 'opacity-50' : ''}`}
                   onClick={() => toggleRow(key)}
                 >
                   <td className="py-2 pr-2">
@@ -149,6 +167,15 @@ export default function CatalogListView({ places, priorities, indexMode = 'homef
                     <div className="text-[0.6rem] text-[var(--hf-text-tertiary)]">
                       {p.catalog.county_borough}, {p.catalog.state_abbr}
                     </div>
+                    {isFilteredOut && (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {failReasons.map((r) => (
+                          <span key={r} className="rounded-full bg-amber-50 px-1.5 py-px text-[0.55rem] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="py-2 px-1">
                     <MetroDot metro={metro} />

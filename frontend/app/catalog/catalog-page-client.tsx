@@ -37,7 +37,7 @@ import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
-import { PILLAR_ORDER, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
+import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
@@ -585,6 +585,80 @@ export default function CatalogPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredPlaces, activeDealbreakerKeys.join(','), householdIncome])
 
+  const searchResults = useMemo<{ hits: CatalogMapPlaceWithMetro[]; reasons: Record<string, string[]> } | null>(() => {
+    const t = filterText.trim().toLowerCase()
+    if (!t || catalogMode !== 'explorer') return null
+
+    const hits = adjustedPlaces.filter((p) => {
+      const name = (p.catalog.name || '').toLowerCase()
+      const county = (p.catalog.county_borough || '').toLowerCase()
+      const st = (p.catalog.state_abbr || '').toLowerCase()
+      return name.includes(t) || county.includes(t) || st.includes(t)
+    })
+
+    const reasons: Record<string, string[]> = {}
+    for (const p of hits) {
+      const key = catalogRowKey(p.catalog)
+      const r: string[] = []
+      if (filterMetro !== 'all' && inferCatalogMetro(p) !== filterMetro) r.push(`Metro: ${filterMetro.toUpperCase()}`)
+      if (filterAreaTypes.length > 0) {
+        const at = p.score.data_quality_summary?.area_classification?.area_type ?? ''
+        if (!filterAreaTypes.includes(at)) r.push('Area type')
+      }
+      if (filterArchetypes.length > 0) {
+        const ar = p.score.status_signal_breakdown?.archetype
+        if (!ar || !filterArchetypes.includes(ar)) r.push('Archetype')
+      }
+      if (filterTrajectory !== 'all') {
+        const tr = p.score.status_signal_breakdown?.trajectory
+        if (tr !== filterTrajectory) r.push('Trajectory')
+      }
+      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
+        const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
+        if (typeof lean === 'number') {
+          const matchesAny = filterPoliticalLean.some((pref) => {
+            if (pref === 'strong_d') return lean >= 0.5
+            if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
+            if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
+            if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
+            if (pref === 'strong_r') return lean < -0.5
+            return false
+          })
+          if (!matchesAny) r.push('Political lean')
+        }
+      }
+      if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
+      if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
+      if (filterHousingType.length > 0 && filterHousingType.length < 3) {
+        const hs = (p.score as any).housing_stock
+        const pctLow = typeof hs?.pct_low_density === 'number' ? hs.pct_low_density : null
+        if (pctLow !== null) {
+          const passesAny = filterHousingType.some((ht) => {
+            if (ht === 'sf_townhouse') return pctLow >= 0.25
+            if (ht === 'small_multifamily') return pctLow >= 0.1 && pctLow < 0.7
+            if (ht === 'apartment') return pctLow < 0.3
+            return false
+          })
+          if (!passesAny) r.push('Housing type')
+        }
+      }
+      for (const k of activeDealbreakerKeys) {
+        if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
+      }
+      if (r.length > 0) reasons[key] = r
+    }
+
+    // Passing results first, filtered-out results after
+    hits.sort((a, b) => {
+      const aFail = (reasons[catalogRowKey(a.catalog)] ?? []).length > 0 ? 1 : 0
+      const bFail = (reasons[catalogRowKey(b.catalog)] ?? []).length > 0 ? 1 : 0
+      return aFail - bFail
+    })
+
+    return { hits, reasons }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterHousingType, activeDealbreakerKeys.join(','), householdIncome])
+
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
     const counts = { nyc: 0, la: 0, sf: 0 }
@@ -670,7 +744,12 @@ export default function CatalogPageClient({
 
   const fitKey = `${catalogMode}-${twinQueryKey ?? 'nq'}-${filterMetro}-${twinCrossMetro}-${twinPillarList.join(',')}`
 
-  const selectedPlace = useMemo(() => findPlaceByKey(gatedPlaces, selectedKey), [gatedPlaces, selectedKey])
+  const selectedPlace = useMemo(() => {
+    const fromGated = findPlaceByKey(gatedPlaces, selectedKey)
+    if (fromGated) return fromGated
+    if (searchResults && selectedKey) return findPlaceByKey(searchResults.hits, selectedKey) ?? null
+    return null
+  }, [gatedPlaces, selectedKey, searchResults])
 
   const selectedTwinMatch = useMemo(() => {
     if (!selectedKey || !twinQueryKey || selectedKey === twinQueryKey) return null
@@ -811,7 +890,7 @@ export default function CatalogPageClient({
           {catalogMode === 'explorer' ? (
             <input
               type="search"
-              placeholder="Filter neighborhoods…"
+              placeholder="Search neighborhoods…"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-44 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-xs shrink-0"
@@ -1331,7 +1410,7 @@ export default function CatalogPageClient({
         </div>
       )}
 
-      {viewMode === 'list' && catalogMode === 'explorer' && dealbreakerActive && (
+      {viewMode === 'list' && catalogMode === 'explorer' && !searchResults && dealbreakerActive && (
         <div className="border-b border-[var(--hf-border)] bg-[var(--hf-hover-bg)] px-4 py-2 text-xs text-[var(--hf-text-secondary)]">
           {dealbreakerZeroSurvivors
             ? 'No places clear all your must-haves — showing closest matches anyway'
@@ -1343,7 +1422,8 @@ export default function CatalogPageClient({
 
       {viewMode === 'list' && catalogMode === 'explorer' && (
         <CatalogListView
-          places={gatedPlaces}
+          places={searchResults ? searchResults.hits : gatedPlaces}
+          filteredOutReasons={searchResults?.reasons}
           priorities={priorities}
           indexMode={indexMode}
           onTwinRow={onTwinRow}
