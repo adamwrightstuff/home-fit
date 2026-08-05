@@ -1455,6 +1455,7 @@ def _compute_single_score_internal(
     mode: Optional[str] = None,
     trip_type: Optional[str] = None,
     travel_month: Optional[int] = None,
+    traveler_profile: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Internal function to compute score for a single location.
@@ -1585,7 +1586,7 @@ def _compute_single_score_internal(
 
     # Pre-compute vacation token allocation here so both cache fast-paths can use it.
     _vacation_token_alloc: Optional[Dict[str, float]] = (
-        get_vacation_token_allocation(trip_type) if is_vacation_mode else None
+        get_vacation_token_allocation(trip_type, traveler_profile) if is_vacation_mode else None
     )
 
     # ------------------------------------------------------------------
@@ -1653,7 +1654,7 @@ def _compute_single_score_internal(
     # location cache because vacation uses a different pillar set and weight preset.
     _vacation_cache_key: Optional[str] = None
     if not test_mode_enabled and is_vacation_mode and trip_type:
-        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w12:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}"
+        _vacation_cache_key = f"vacation_result:v{API_VERSION}:w12:{round(lat, 4):.4f}:{round(lon, 4):.4f}:{trip_type}:{traveler_profile or ''}"
         try:
             _vacation_cached = redis_get_compressed_json(_vacation_cache_key)
             if isinstance(_vacation_cached, dict) and _vacation_cached.get("livability_pillars"):
@@ -2071,7 +2072,7 @@ def _compute_single_score_internal(
     # Override token allocation with vacation preset when no user-supplied weights.
     # allocation_type is "default_equal" (not "equal") when no tokens/priorities passed.
     if is_vacation_mode and not priorities_dict and not tokens:
-        vacation_alloc = get_vacation_token_allocation(trip_type)
+        vacation_alloc = get_vacation_token_allocation(trip_type, traveler_profile)
         # Merge into full 13-key dict: set vacation pillar weights, zero everything else.
         for k in token_allocation:
             token_allocation[k] = vacation_alloc.get(k, 0.0)
@@ -2822,7 +2823,8 @@ def get_livability_score(request: Request,
                          lon: Optional[str] = None,
                          mode: Optional[str] = None,
                          trip_type: Optional[str] = None,
-                         travel_month: Optional[int] = None):
+                         travel_month: Optional[int] = None,
+                         traveler_profile: Optional[str] = None):
     """
     Calculate livability score for a given address.
 
@@ -2975,6 +2977,7 @@ def get_livability_score(request: Request,
             mode=mode,
             trip_type=trip_type,
             travel_month=travel_month,
+            traveler_profile=traveler_profile,
         )
         if schedule_catalog_contribution:
             try:
@@ -3127,6 +3130,7 @@ def create_score_job(
     mode: Optional[str] = None,
     trip_type: Optional[str] = None,
     travel_month: Optional[int] = None,
+    traveler_profile: Optional[str] = None,
 ):
     """
     Create an async score job. Returns quickly with a job_id.
@@ -3264,6 +3268,7 @@ def create_score_job(
                 mode=mode,
                 trip_type=trip_type,
                 travel_month=travel_month,
+                traveler_profile=traveler_profile,
             )
             if schedule_catalog_contribution:
                 try:

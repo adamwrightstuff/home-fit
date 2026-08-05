@@ -237,6 +237,8 @@ export interface ScoreRequestParams {
   trip_type?: 'beach' | 'mountain' | 'city' | 'road_trip';
   /** Travel month (1–12) for vacation mode. Highlights relevant NOAA climate window. */
   travel_month?: number;
+  /** Traveler profile for vacation mode: adventurer | relaxer | culture | family | remote_worker */
+  traveler_profile?: string;
 }
 
 /** Response from GET /geocode — used to show map before scoring. */

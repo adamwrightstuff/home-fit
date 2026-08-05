@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
 import type { VacationPlace, TripType } from '@/lib/vacationCatalogTypes'
 import { TRIP_TYPE_LABEL, TRIP_TYPE_EMOJI, VACATION_PILLAR_LABELS } from '@/lib/vacationCatalogTypes'
+import type { TravelerProfile } from '@/components/vacation/TravelerProfileSelector'
+import { PROFILE_META, recomputeScoreWithProfile } from '@/lib/travelerProfiles'
 
 const TRIP_TYPES: TripType[] = ['beach', 'mountain', 'city']
 
@@ -269,6 +271,7 @@ export default function VacationExplorerPage() {
   const [places, setPlaces] = useState<VacationPlace[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<TripType | 'all'>('all')
+  const [profile, setProfile] = useState<TravelerProfile | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   useEffect(() => {
@@ -278,15 +281,22 @@ export default function VacationExplorerPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const filtered = places.filter((p) => filter === 'all' || p.trip_type === filter)
+  const filtered = useMemo(() => {
+    const base = places.filter((p) => filter === 'all' || p.trip_type === filter)
+    if (!profile) return base
+    return base
+      .map((p) => ({ ...p, total_score: recomputeScoreWithProfile(p, profile) }))
+      .sort((a, b) => b.total_score - a.total_score)
+  }, [places, filter, profile])
+
   const selectedPlace = selectedKey ? (filtered.find((p) => p.key === selectedKey) ?? places.find((p) => p.key === selectedKey) ?? null) : null
 
   return (
     <div className="hf-viewport hf-catalog-root flex min-h-0 flex-col">
       {/* ── Toolbar ── */}
       <header className="z-30 shrink-0 border-b border-[var(--hf-border)] bg-white/95 backdrop-blur">
-        <div className="flex items-center gap-2 px-3 py-2 md:px-4">
-          {/* Trip type pills */}
+        {/* Row 1: trip type + count */}
+        <div className="flex items-center gap-2 px-3 pt-2 pb-1 md:px-4">
           <div className="flex items-center gap-1 shrink-0">
             {(['all', ...TRIP_TYPES] as const).map((t) => {
               const active = filter === t
@@ -307,11 +317,37 @@ export default function VacationExplorerPage() {
               )
             })}
           </div>
-
-          {/* Count */}
           <span className="text-xs text-[var(--hf-text-tertiary)] shrink-0">
             {loading ? 'Loading…' : `${filtered.length} destinations`}
           </span>
+        </div>
+
+        {/* Row 2: traveler profile chips */}
+        <div className="flex items-center gap-1 overflow-x-auto px-3 pb-2 md:px-4" style={{ scrollbarWidth: 'none' }}>
+          <span className="shrink-0 text-[11px] text-[var(--hf-text-tertiary)] mr-1">Who:</span>
+          {PROFILE_META.map((p) => {
+            const active = profile === p.value
+            return (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setProfile(active ? null : p.value)}
+                className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
+                style={
+                  active
+                    ? { background: 'var(--hf-primary-1)', color: '#fff', border: 'none' }
+                    : { background: 'var(--hf-hover-bg)', color: 'var(--hf-text-secondary)', border: 'none' }
+                }
+              >
+                {p.emoji} {p.label}
+              </button>
+            )
+          })}
+          {profile && (
+            <span className="shrink-0 text-[10px] text-[var(--hf-text-tertiary)] ml-1 italic">
+              scores recomputed
+            </span>
+          )}
         </div>
       </header>
 

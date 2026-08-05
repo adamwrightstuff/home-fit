@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ClimateProfileCard from '@/components/vacation/ClimateProfileCard';
 import MapEmbed from '@/components/vacation/MapEmbed';
 import TripTypeSelector, { type TripType } from '@/components/vacation/TripTypeSelector';
+import TravelerProfileSelector, { type TravelerProfile } from '@/components/vacation/TravelerProfileSelector';
 import type { ScoreResponse } from '@/types/api';
 import { getScore } from '@/lib/api';
 
@@ -24,6 +25,7 @@ const NB_PREF: Record<string, string> = {
 
 export default function VacationPage() {
   const [tripType, setTripType] = useState<TripType | null>(null);
+  const [travelerProfile, setTravelerProfile] = useState<TravelerProfile | null>(null);
   const [travelMonth, setTravelMonth] = useState<number>(new Date().getMonth() + 1);
   const [loading, setLoading] = useState(false);
   const [scoreData, setScoreData] = useState<ScoreResponse | null>(null);
@@ -45,6 +47,7 @@ export default function VacationPage() {
         trip_type: tripType,
         travel_month: travelMonth,
         natural_beauty_preference: NB_PREF[tripType] ?? undefined,
+        traveler_profile: travelerProfile ?? undefined,
       });
       setScoreData(result);
     } catch (err) {
@@ -72,6 +75,7 @@ export default function VacationPage() {
               padding: '3px 12px', borderRadius: 10,
             }}>
               Vacation · {tripType?.replace('_', ' ')} · {MONTH_NAMES[travelMonth - 1]}
+              {travelerProfile && ` · ${travelerProfile.replace('_', ' ')}`}
             </span>
             <button
               onClick={handleReset}
@@ -132,6 +136,16 @@ export default function VacationPage() {
               What kind of trip?
             </h2>
             <TripTypeSelector value={tripType} onChange={setTripType} />
+
+            <div style={{ marginTop: '1.25rem' }}>
+              <p className="hf-label" style={{ marginBottom: '0.5rem' }}>
+                Who's traveling?
+                <span style={{ fontWeight: 400, color: 'var(--hf-text-tertiary)', marginLeft: 6, fontSize: '0.75rem' }}>
+                  optional
+                </span>
+              </p>
+              <TravelerProfileSelector value={travelerProfile} onChange={setTravelerProfile} />
+            </div>
 
             <div style={{ marginTop: '1.25rem' }}>
               <p className="hf-label" style={{ marginBottom: '0.5rem' }}>When are you going?</p>
