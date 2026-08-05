@@ -449,17 +449,16 @@ export default function CatalogPageClient({
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
-        if (typeof lean === 'number') {
-          const matchesAny = filterPoliticalLean.some(pref => {
-            if (pref === 'strong_d') return lean >= 0.5
-            if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
-            if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
-            if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
-            if (pref === 'strong_r') return lean < -0.5
-            return false
-          })
-          if (!matchesAny) return false
-        }
+        if (typeof lean !== 'number') return false
+        const matchesAny = filterPoliticalLean.some(pref => {
+          if (pref === 'strong_d') return lean >= 0.5
+          if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
+          if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
+          if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
+          if (pref === 'strong_r') return lean < -0.5
+          return false
+        })
+        if (!matchesAny) return false
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') return false
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') return false
@@ -610,17 +609,15 @@ export default function CatalogPageClient({
       }
       if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
-        if (typeof lean === 'number') {
-          const matchesAny = filterPoliticalLean.some((pref) => {
-            if (pref === 'strong_d') return lean >= 0.5
-            if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
-            if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
-            if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
-            if (pref === 'strong_r') return lean < -0.5
-            return false
-          })
-          if (!matchesAny) r.push('Political lean')
-        }
+        const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
+          if (pref === 'strong_d') return lean >= 0.5
+          if (pref === 'lean_d') return lean >= 0.15 && lean < 0.5
+          if (pref === 'moderate') return lean >= -0.15 && lean < 0.15
+          if (pref === 'lean_r') return lean >= -0.5 && lean < -0.15
+          if (pref === 'strong_r') return lean < -0.5
+          return false
+        })
+        if (!matchesAny) r.push('Political lean')
       }
       if (filterLocalScene === 'Some' && p.score.local_scene_bucket === 'Low') r.push('Local scene')
       if (filterLocalScene === 'High' && p.score.local_scene_bucket !== 'High') r.push('Local scene')
