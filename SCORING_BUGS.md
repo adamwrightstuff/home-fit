@@ -114,18 +114,22 @@ for Sleepy Hollow to see if it got classified with wrong coordinates.
 ---
 
 ## BUG-007 · Overpass errors → score collapse (no fallback triggered)
-**Severity: MEDIUM** | Affects: 68 places total
+**Severity: MEDIUM** | ✅ FIXED 2026-08-05 | Affects: 22 places (reduced from original 68 estimate)
 
-Places with confirmed overpass_error/overpass_empty outcomes AND pillar score < 40:
-Moab, San Francisco, Philadelphia, New Orleans, Santa Monica, Provincetown, Charleston SC,
-Malibu, Washington DC, Pasadena CA, Santa Fe, South Lake Tahoe, Bar Harbor, Austin TX,
-Virginia Beach.
+All 22 had `places_ao.reason=disabled_or_no_key` and `daily_urban_outdoors=0` due to local
+Overpass query failures. `wild_adventure` and `waterfront_lifestyle` were partially populated
+from working queries. Google Places AO fallback was off at scoring time — not a code bug.
 
-These aren't all wrong scores — some may be legitimately low — but the Overpass failure
-should have triggered the Google Places AO fallback, and apparently didn't for many of them.
+**Fix applied:** rescored `active_outdoors` for all 22 with fresh Overpass (transient failures
+cleared). Walnut Creek threw ValueError on rescore — retained pre-rescore value (38.9/conf=90).
+Newark and South San Francisco still have local+trail Overpass errors but regional ok; scores
+30.1 and 27.3 are plausible for flat industrial suburbs.
 
-**Fix requires:** for each flagged place, check `places_ao.triggered` and `places_ao.reason`
-in the AO breakdown to confirm whether fallback fired and whether it recovered the score.
+| Metro | Places fixed |
+|---|---|
+| SF (17) | Atherton, Campbell, Evergreen, Excelsior, Foster City, Kentfield, Los Altos Hills, Mill Valley, Newark, Orinda, San Bruno, San Ramon, Santa Clara, South San Francisco, Sunnyvale, Walnut Creek (retained), Willow Glen |
+| NYC (2) | Ditmas Park, Ridgewood |
+| LA (3) | Little Tokyo, Pasadena, West LA |
 
 ---
 
