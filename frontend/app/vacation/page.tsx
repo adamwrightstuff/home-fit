@@ -139,7 +139,7 @@ export default function VacationPage() {
 
             <div style={{ marginTop: '1.25rem' }}>
               <p className="hf-label" style={{ marginBottom: '0.5rem' }}>
-                Who's traveling?
+                Who&apos;s traveling?
                 <span style={{ fontWeight: 400, color: 'var(--hf-text-tertiary)', marginLeft: 6, fontSize: '0.75rem' }}>
                   optional
                 </span>
