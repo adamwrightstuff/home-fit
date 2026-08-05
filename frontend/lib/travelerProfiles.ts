@@ -72,3 +72,12 @@ export function recomputeScoreWithProfile(
   // Normalize in case weights don't sum exactly to 100 due to null pillars
   return Math.round((weighted / totalWeight) * 10) / 10
 }
+
+/** Return the profile's pillar weight map for a given trip type, or null if no profile/match. */
+export function getProfileWeights(
+  profile: TravelerProfile | null,
+  tripType: string,
+): Record<string, number> | null {
+  if (!profile) return null
+  return PROFILE_WEIGHTS[profile]?.[tripType] ?? null
+}
