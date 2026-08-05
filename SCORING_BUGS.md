@@ -104,16 +104,24 @@ for these places in the stored JSONL to see which sub-component zeroed.
 ---
 
 ## BUG-005 · Transit near-zero for Canarsie and Coney Island (NYC urban)
-**Severity: HIGH** | Canarsie=2.6, Coney Island=3.0 vs. urban_residential mean 84.1 (3.9σ)
+**Severity: HIGH** | ✅ FIXED 2026-08-04 | Canarsie=2.6, Coney Island=3.0 vs. urban_residential mean 84.1 (3.9σ)
 
 Both are served by NYC subway (L train and D/F/N/Q respectively). Transit=2-3 in an NYC
 urban_residential place is impossible — these have more transit access than most US cities.
 
-**Likely cause:** transit fetch failed or returned empty for these specific census tracts,
-and the commuter-access floor (which requires transit ridership data) also failed to apply.
+**Root cause (2026-08-04):** Transitland API returned 0 routes for both coordinates at scoring
+time (transient API failure / data gap). All route counts stored as 0. Commuter-access floor
+did not help — it requires `commuter_count > 0` (commuter rail suburbs only, not subway places).
+The stored `contribution=0.0` was the bug. Transitland now returns 10 routes for Canarsie and
+15 for Coney Island at the same coordinates (1500m radius, same area_type=urban_residential).
 
-**Fix requires:** inspect public_transit_access breakdown for both places in the JSONL;
-confirm whether commuter_floor was applied and what the GTFS/commute lookup returned.
+**Fix applied (2026-08-04):** Rescored `public_transit_access` for both places
+(`HOMEFIT_TRANSIT_STABLE_COMMUTE=true`); recomputed composites (`--no-census`, zero
+status_signal drift). Propagated to `composites_recomputed.jsonl`.
+
+**Result:**
+- Canarsie: transit 2.6 → 49.6 (1 heavy/L train + 11 bus), total_score → 59.43
+- Coney Island: transit 0.0 → 61.5 (5 heavy/D+F+N+Q + 8 bus), total_score → 74.33
 
 ---
 
