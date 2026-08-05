@@ -35,11 +35,11 @@ This document maps TSV column names to API response paths for all pillars.
 
 ---
 
-## Built Beauty
+## Built Environment
 
 | TSV Column | API Response Path | Notes |
 |------------|------------------|-------|
-| **Built Beauty Score** | `livability_pillars.built_environment.score` | Total score (0-100) |
+| **Built Environment Score** | `livability_pillars.built_environment.score` | Total score (0-100) |
 | **Height Diversity** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.height_diversity` | Height diversity metric |
 | **Type Diversity** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.type_diversity` | Building type diversity |
 | **Footprint Variation** | `livability_pillars.built_environment.breakdown.architectural_analysis.metrics.footprint_variation` | Footprint area CV |

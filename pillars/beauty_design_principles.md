@@ -11,7 +11,7 @@ This document outlines shared design principles for the `built_environment` and 
 - More predictable and debuggable
 - Easier to tune individual components
 - Prevents compounding effects that lead to extreme values
-- Consistent with built beauty's approach
+- Consistent with built environment's approach
 
 **Implementation:**
 ```python
@@ -158,7 +158,7 @@ details = {
 
 ## Bonus Magnitude Guidelines
 
-### Built Beauty
+### Built Environment
 - **Component score:** 0-50 (native range)
 - **Enhancer bonus:** 0-8.0 (BUILT_ENHANCER_CAP)
 - **Total raw:** 0-100 (component * 2.0 + enhancer)
@@ -245,5 +245,5 @@ if location in SPECIAL_LOCATIONS:
 4. Does this have a rollback plan?
 5. Is this documented with clear rationale?
 6. Have regression tests been run?
-7. Does this maintain consistency with built beauty?
+7. Does this maintain consistency with built environment?
 

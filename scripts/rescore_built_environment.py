@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Live re-score of Built Beauty to repair the ~34% of catalog places whose building
+Live re-score of Built Environment to repair the ~34% of catalog places whose building
 fetch timed out at build time (coverage 0 / confidence 0, then laundered into a ~57
 floor). The in-pillar reliability guard retries the building query; any place that
 STILL comes back zero-coverage/zero-confidence is quarantined (kept at its old score),

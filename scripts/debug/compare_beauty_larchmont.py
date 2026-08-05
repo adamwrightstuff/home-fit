@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Compare built beauty and natural beauty scores for two locations that should
+Compare built environment and natural beauty scores for two locations that should
 be in the same area: a town name vs a specific address in that town.
 
 Example: "Larchmont NY" vs "2 Springdale Dr Larchmont NY"

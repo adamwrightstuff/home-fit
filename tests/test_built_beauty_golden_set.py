@@ -1,5 +1,5 @@
 """
-Built Beauty golden set regression tests.
+Built Environment golden set regression tests.
 
 These tests are *live* integration checks: they call the real scoring pipeline,
 which may hit external data sources (OSM Overpass, Census, etc.).
@@ -21,7 +21,7 @@ from pillars.built_environment import calculate_built_environment
 
 pytestmark = pytest.mark.skipif(
     os.getenv("RUN_LIVE_GOLDEN_BUILT_BEAUTY") != "1",
-    reason="Live Built Beauty golden set disabled. Set RUN_LIVE_GOLDEN_BUILT_BEAUTY=1 to run.",
+    reason="Live Built Environment golden set disabled. Set RUN_LIVE_GOLDEN_BUILT_BEAUTY=1 to run.",
 )
 
 

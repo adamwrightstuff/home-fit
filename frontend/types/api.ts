@@ -221,9 +221,9 @@ export interface ScoreRequestParams {
   natural_beauty_preference?: string;
   /** Built Environment area-type preference: urban_core | urban_residential | suburban | exurban | rural. */
   built_env_preference?: string;
-  /** Built Beauty character: historic | contemporary | no_preference. */
+  /** Built Environment character: historic | contemporary | no_preference. */
   built_character_preference?: string;
-  /** Built Beauty density: spread_out_residential | walkable_residential | dense_urban_living. */
+  /** Built Environment density: spread_out_residential | walkable_residential | dense_urban_living. */
   built_density_preference?: string;
   /** Diversity: JSON array of race, income, and/or age (e.g. '["race","income"]'). Omitted = average all dimensions with data. */
   diversity_preference?: string;

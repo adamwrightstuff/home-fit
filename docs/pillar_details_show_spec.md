@@ -62,7 +62,7 @@ When a user taps **Show details** on a pillar card on the Place Results screen, 
 
 ---
 
-## 4. Built Beauty
+## 4. Built Environment
 
 **Top line:** "Street and building design, diversity, and human scale."
 

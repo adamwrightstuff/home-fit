@@ -98,7 +98,7 @@ floor). A full live run can differ because:
   `scripts/recompute_built_environment_confidence.py`: 282/292 places corrected (179 NYC, 103 LA).
   Confidence is metadata only — doesn't cascade into score/total_score.
 
-### 6. Built Beauty form-metric non-determinism — RESOLVED 2026-06-21
+### 6. Built Environment form-metric non-determinism — RESOLVED 2026-06-21
 `compute_block_grain` had `@cached(ttl_seconds=CACHE_TTL['osm_queries'])`; `compute_
 streetwall_continuity`, `compute_setback_consistency`, and `compute_facade_rhythm` did not,
 despite a comment at the call site stating the 15s timeout relied on "caching handles
@@ -108,7 +108,7 @@ timing variance on the uncached calls. Fixed by adding the missing decorator to 
 (matching `compute_block_grain`'s existing pattern). Live scores for a fixed place should now
 be stable across requests within the 6h TTL.
 
-### 7. Built Beauty height_diversity fabrication trigger — RESOLVED 2026-06-21
+### 7. Built Environment height_diversity fabrication trigger — RESOLVED 2026-06-21
 The GHSL height-substitution fallback (`get_building_height_diversity_ghsl`, already wired
 into `compute_arch_diversity`) only fired when `levels_entropy < 5.0 AND >85%` of buildings
 were untagged. The entropy threshold tested the unreliable *outcome*, not the actual cause —
@@ -118,7 +118,7 @@ slipped past the fix. Confirmed live for Bronxville/Manhattan Beach (~97% of bui
 untagged in both, entropy landing at 9.0/10.9 — both above the old 5.0 cutoff). Fixed by
 dropping the entropy condition; trigger is now the untagged-ratio alone.
 
-### 8. Built Beauty form-metric confidence formula — fixed, but does not affect score
+### 8. Built Environment form-metric confidence formula — fixed, but does not affect score
 `coverage_confidence` for setback/facade_rhythm multiplied two fractional ratios (segment
 coverage × per-segment building-count validity), which compounds punitively — verified
 catalog-wide this reads ~0.02 on 100% of places, every area type, a structural property of
@@ -170,7 +170,7 @@ Catalog rescores used stored sub-components rather than a full live run, e.g.:
 ## How to reconcile (the real fix)
 The clean way to eliminate Drift is to **rebuild the catalog by running places through the
 live `main.py` scorer** (the "faithful backfill through main.py context" — same caveat noted
-for Built Beauty in [[built-beauty-backfill-todo]]). Offline rescores are faster but
+for Built Environment in [[built-beauty-backfill-todo]]). Offline rescores are faster but
 accumulate drift. Until then, treat live as source of truth for scoring *logic* and the
 catalog as a precomputed snapshot.
 
@@ -178,7 +178,7 @@ catalog as a precomputed snapshot.
 - [x] Decide whether the Explorer default should match live on **schools** — both ON as of 2026-06-16.
 - [ ] Single-source the NB-preference math (currently Python + a TS mirror).
 - [ ] Faithful catalog rebuild through main.py to clear accumulated offline-rescore drift.
-- [ ] Built Beauty catalog backfill (stale coverage-0 places).
+- [ ] Built Environment catalog backfill (stale coverage-0 places).
 - [ ] 5 places with broken/stale density (Fort Greene, Maspeth, Southport, Glendale [Queens],
   Pelham Bay) — Fort Greene's stored `density=0.0` is confirmed stale (fresh Census lookup
   returned 61,732/sq mi); the other 4 need the same check. Feeds wrong input into both

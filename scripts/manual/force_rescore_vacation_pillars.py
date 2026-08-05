@@ -38,6 +38,7 @@ FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = {
     "Washington, DC",         # conf=0, Overpass failed
     "Vail, CO",               # all 3 Overpass queries errored
     "Virginia Beach, VA",     # 2 Overpass errors, water=0
+    "Charleston, SC",         # AO=3.2, Overpass failure suspected
     "Hilton Head, SC",        # trail query errored, trails=0
     "Key West, FL",           # local Overpass errored, waterfront undercounted
     "Destin, FL",             # 2 Overpass errors, water=0

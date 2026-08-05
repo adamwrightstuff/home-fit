@@ -1362,7 +1362,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         
         base_water_score = base_water_factor * 12.0
         
-        # Coastal bonus (additive, capped) - consistent with built beauty pattern
+        # Coastal bonus (additive, capped) - consistent with built environment pattern
         coastal_bonus = 0.0
         if water_pct > 25.0:
             coastal_bonus = 6.0  # Major waterfront (>25%): 6.0 bonus
@@ -1371,7 +1371,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
         elif water_pct > 5.0:
             coastal_bonus = 2.0  # Moderate water (5-15%): 2.0 bonus
         
-        # Area-type bonus (additive, capped) - consistent with built beauty pattern
+        # Area-type bonus (additive, capped) - consistent with built environment pattern
         area_bonus = 0.0
         if context_area_type in ("historic_urban", "urban_core_lowrise", "suburban", "urban_residential"):
             area_bonus = 3.0  # Fixed bonus for these area types
@@ -1391,7 +1391,7 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
             elif water_rarity_ratio < 1.0:
                 rarity_bonus = 3.0  # Moderately rare
         
-        # Visibility bonus/penalty (additive, can be negative) - consistent with built beauty pattern
+        # Visibility bonus/penalty (additive, can be negative) - consistent with built environment pattern
         visibility_bonus = 0.0
         if topography_metrics:
             elevation_mean = float(topography_metrics.get("elevation_mean_m", 0.0))
@@ -1505,8 +1505,8 @@ def _score_trees(lat: float, lon: float, city: Optional[str], location_scope: Op
                 }.get(proximity_source, 0.3)
                 proximity_bonus *= proximity_confidence
         
-        # Calculate water score: base + bonuses (additive, like built beauty)
-        # This is consistent with built beauty's pattern: base + material_bonus + heritage_bonus + etc.
+        # Calculate water score: base + bonuses (additive, like built environment)
+        # This is consistent with built environment's pattern: base + material_bonus + heritage_bonus + etc.
         # NEW: Include proximity bonus in water scoring
         water_score = min(WATER_BONUS_MAX, base_water_score + coastal_bonus + area_bonus + rarity_bonus + visibility_bonus + proximity_bonus)
 

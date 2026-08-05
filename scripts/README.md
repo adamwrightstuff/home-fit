@@ -86,7 +86,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 | `compare_beauty_larchmont.py` | Town vs address beauty comparison. |
 | `investigate_built_environment_preferences.py` | Built beauty preference permutations. |
 | `investigate_housing_issues.py` | Housing data spot investigations. |
-| `collect_built_environment_research_data.py` | Research sampling for built beauty stats. |
+| `collect_built_environment_research_data.py` | Research sampling for built environment stats. |
 | `debug_built_environment.py` | Built beauty JSON CLI. |
 | `debug_climate_risk.py` | Climate pillar + GEE debug. |
 | `normalize_dynamism_by_bucket.py` | Dynamism normalization experiment CSV. |
@@ -95,7 +95,7 @@ Run Python entrypoints from the **repository root** with `PYTHONPATH=.` unless a
 
 ### `manual/` (`test_*.py`)
 
-Ad-hoc tests: API health, healthcare, natural beauty, built beauty, rule-based scoring, social fabric, etc. Open each file’s docstring for usage.
+Ad-hoc tests: API health, healthcare, natural beauty, built environment, rule-based scoring, social fabric, etc. Open each file’s docstring for usage.
 
 ---
 

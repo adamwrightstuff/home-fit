@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cross-catalog built beauty pattern analysis.
+Cross-catalog built environment pattern analysis.
 Beauty classifications are type-neutral: historic urban, prewar residential,
 planned suburban, midcentury modern, hillside, coastal, and estate communities
 are all treated as valid forms of architectural beauty.

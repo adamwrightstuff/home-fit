@@ -553,9 +553,9 @@ def get_natural_landscape_tags(
 
 # ============================================================================
 # MULTINOMIAL REGRESSION MODEL FOR AREA TYPE CLASSIFICATION
-# Data-driven classification using normalized Built Beauty features
+# Data-driven classification using normalized Built Environment features
 # Source: Statistical modeling using Target Area Types and normalized features
-# Method: Multinomial logistic regression (8 features, independent of Built Beauty scoring)
+# Method: Multinomial logistic regression (8 features, independent of Built Environment scoring)
 # ============================================================================
 
 MULTINOMIAL_AREA_TYPE_COEFFICIENTS = {
@@ -667,7 +667,7 @@ def _normalize_features_for_classification(
     Normalize features for multinomial regression area type classification.
     
     Normalizes 8 features to 0-1 range for use with multinomial regression model.
-    All features are available early (independent of Built Beauty scoring).
+    All features are available early (independent of Built Environment scoring).
     
     Args:
         built_coverage_ratio: Building coverage ratio (0.0-1.0)
@@ -736,7 +736,7 @@ def predict_area_type_with_multinomial(
     Predict area type using multinomial logistic regression.
     
     This is a data-driven alternative to rule-based classification.
-    Uses normalized features (8 features, independent of Built Beauty scoring).
+    Uses normalized features (8 features, independent of Built Environment scoring).
     
     Args:
         normalized_features: Dict of normalized feature values (0-1 range)
@@ -999,7 +999,7 @@ def get_effective_area_type(
     Determine effective area type using multinomial logistic regression.
     
     **NEW SYSTEM (use_multinomial=True, default):** Uses data-driven multinomial regression
-    model trained on normalized Built Beauty features. This replaces rule-based mapping
+    model trained on normalized Built Environment features. This replaces rule-based mapping
     with statistical modeling per DESIGN_PRINCIPLES.md Addendum.
     
     **FALLBACK SYSTEM (use_multinomial=False):** Uses rule-based tag mapping for backward
@@ -1391,7 +1391,7 @@ class DataQualityManager:
         return completeness, self._get_quality_tier(completeness)
     
     def _assess_built_environment_completeness(self, data: Dict, expected: Dict) -> Tuple[float, str]:
-        """Assess built beauty data completeness."""
+        """Assess built environment data completeness."""
         arch_analysis = data.get('architectural_analysis', {})
         enhancers = data.get('enhancers', {})
         

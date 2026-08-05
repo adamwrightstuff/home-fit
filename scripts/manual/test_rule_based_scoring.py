@@ -59,7 +59,7 @@ def test_rule_based_scoring():
             density = census_api.get_population_density(lat, lon) or 0.0
             area_type = classify_morphology(density, None, None, metro_distance_km=None)
             
-            # Calculate built beauty (now uses rule-based scoring)
+            # Calculate built environment (now uses rule-based scoring)
             result_dict = calculate_built_environment(
                 lat=lat,
                 lon=lon,

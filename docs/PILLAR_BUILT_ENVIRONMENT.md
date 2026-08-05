@@ -1,4 +1,4 @@
-# Pillar Deep-Dive: Built Beauty
+# Pillar Deep-Dive: Built Environment
 
 How `pillars/built_environment.py` scores a location (`get_built_environment_score` →
 `calculate_built_environment`).

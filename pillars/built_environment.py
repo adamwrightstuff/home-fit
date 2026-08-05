@@ -1,5 +1,5 @@
 """
-Built Beauty pillar implementation (architecture, form, and built enhancers).
+Built Environment pillar implementation (architecture, form, and built enhancers).
 """
 
 from __future__ import annotations
@@ -173,7 +173,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                 return None, details
             # Soft failure (beauty_valid=True) - continue with zero/default values
             # The diversity_metrics dict already has all metrics set to 0, so we can proceed
-            logger.info("Continuing built beauty calculation with default values due to API error (beauty_valid=True)")
+            logger.info("Continuing built environment calculation with default values due to API error (beauty_valid=True)")
 
         # Use pre-computed density if provided, otherwise fetch it
         if density is None:
@@ -278,7 +278,7 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
             coverage_cap_metadata = {}
 
         # ------------------------------------------------------------------
-        # Calibrated architecture scorer (0–100), mapped to 0–50 for Built Beauty.
+        # Calibrated architecture scorer (0–100), mapped to 0–50 for Built Environment.
         # Enabled by default; can be disabled via env for rollback.
         # ------------------------------------------------------------------
         use_calibrated = os.getenv("HOMEFIT_USE_CALIBRATED_BUILT_BEAUTY", "1").strip() == "1"
@@ -352,10 +352,10 @@ def _score_architectural_diversity(lat: float, lon: float, city: Optional[str] =
                     }
                 )
 
-                # Replace architecture score used by Built Beauty (0–50).
+                # Replace architecture score used by Built Environment (0–50).
                 beauty_score = float(calibrated_beauty_score_0_100) / 2.0
             except Exception as e:
-                logger.warning("Calibrated Built Beauty scorer failed; falling back to legacy: %s", e)
+                logger.warning("Calibrated Built Environment scorer failed; falling back to legacy: %s", e)
                 beauty_score = legacy_beauty_score_0_50
         
         # Use form_context if provided (computed once in main.py), otherwise compute it
@@ -484,7 +484,7 @@ def calculate_built_environment(lat: float,
                            built_character_preference: Optional[str] = None,
                            built_density_preference: Optional[str] = None) -> Dict:
     """
-    Compute built beauty components prior to normalization.
+    Compute built environment components prior to normalization.
     """
     arch_score, arch_details = _score_architectural_diversity(
         lat,
@@ -629,7 +629,7 @@ def get_built_environment_score(lat: float,
                            enhancers_data: Optional[Dict] = None,
                            disable_enhancers: bool = False) -> Tuple[float, Dict]:
     """
-    Public entry point for the built beauty pillar.
+    Public entry point for the built environment pillar.
     """
     result = calculate_built_environment(
         lat,

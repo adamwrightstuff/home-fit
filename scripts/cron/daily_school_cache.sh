@@ -7,6 +7,7 @@
 set -euo pipefail
 
 REPO=/Users/adamwright/Dev/home-fit
+PYTHON=/opt/homebrew/bin/python3
 LOG="$REPO/logs/school_cron.log"
 CATALOG="$REPO/data/sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl"
 PORT=8099
@@ -24,7 +25,7 @@ set +a
 PYTHONPATH="$REPO" \
 ENABLE_SCHOOL_SCORING=true \
 SCHOOLDIGGER_QUOTA_WARNING_THRESHOLD=15 \
-  python3 -m uvicorn main:app \
+  $PYTHON -m uvicorn main:app \
     --host 127.0.0.1 --port $PORT \
     --log-level warning >> "$LOG" 2>&1 &
 API_PID=$!
@@ -38,7 +39,7 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-PYTHONPATH="$REPO" python3 "$REPO/scripts/catalog/rescore_catalog_pillar.py" \
+PYTHONPATH="$REPO" $PYTHON "$REPO/scripts/catalog/rescore_catalog_pillar.py" \
   --input "$CATALOG" \
   --pillars quality_education \
   --base-url "http://127.0.0.1:$PORT" \

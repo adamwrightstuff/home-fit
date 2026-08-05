@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Debug script for Built Beauty pillar.
+Debug script for Built Environment pillar.
 Tests OSM data retrieval and feature calculations step by step.
 Step 6: Benchmark testing with expected score ranges.
 """
@@ -74,7 +74,7 @@ WOODBRIDGE_IRVINE = {
 TEST_LOCATIONS = [BEACON_HILL, LEVITTOWN, GEORGETOWN_DC, GERMAN_VILLAGE, CELEBRATION_FL, WOODBRIDGE_IRVINE]
 
 def test_built_environment_benchmark(location):
-    """Step 6: Test Built Beauty scoring against benchmarks"""
+    """Step 6: Test Built Environment scoring against benchmarks"""
     print(f"\n{'='*60}")
     print(f"Benchmark Test: {location['name']}")
     print(f"{'='*60}")
@@ -83,7 +83,7 @@ def test_built_environment_benchmark(location):
     print(f"Expected score (midpoint): {location['expected_score']}")
     
     try:
-        # Calculate built beauty score
+        # Calculate built environment score
         result = calculate_built_environment(
             location['lat'],
             location['lon'],
@@ -193,7 +193,7 @@ def test_built_environment_benchmark(location):
         return None
 
 if __name__ == "__main__":
-    print("Built Beauty Pillar Benchmark Testing")
+    print("Built Environment Pillar Benchmark Testing")
     print("=" * 60)
     
     results = []

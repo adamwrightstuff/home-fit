@@ -1002,11 +1002,11 @@ DENSITY_MULTIPLIER = {
     "unknown": 1.00,
 }
 
-# Ridge Regression Weights for Built Beauty Scoring
+# Ridge Regression Weights for Built Environment Scoring
 # Source: Statistical modeling per area type (see DESIGN_PRINCIPLES.md Addendum)
 # Method: Ridge regression with per-area-type modeling
 # Weights are normalized to sum to 1.0 per area type
-# Global Ridge regression weights for Built Beauty scoring
+# Global Ridge regression weights for Built Environment scoring
 # Based on regression analysis of 56 locations (R²=0.1626, MAE=5.84, RMSE=7.43)
 # Feature order: [Norm Height Div, Norm Type Div, Norm Footprint Var, Norm Built Cov,
 #                 Norm Block Grain, Norm Streetwall, Norm Setback, Norm Facade,
@@ -1050,7 +1050,7 @@ def _score_with_ridge_regression(
     elevation_range: Optional[float] = None
 ) -> Tuple[float, Dict[str, float]]:
     """
-    Score Built Beauty using global Ridge regression weights.
+    Score Built Environment using global Ridge regression weights.
     
     This implements the statistical modeling approach based on regression analysis of 56 locations.
     Features are normalized to 0-1 range, then weighted by global Ridge regression coefficients.

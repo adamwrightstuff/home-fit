@@ -1,6 +1,6 @@
-## Built Beauty Ideals by Area Type
+## Built Environment Ideals by Area Type
 
-This reference describes what “beautiful” should mean for each `area_type` and subtype in the built beauty pillar. Values reference existing metrics exposed through `data_sources/arch_diversity.py` and downstream scoring logic.
+This reference describes what “beautiful” should mean for each `area_type` and subtype in the built environment pillar. Values reference existing metrics exposed through `data_sources/arch_diversity.py` and downstream scoring logic.
 
 ### Urban Core
 - Cohesive skyline with purposeful variation: `height_diversity` high (20–35) but anchored by consistent streetwalls.

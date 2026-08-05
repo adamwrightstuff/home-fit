@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Carroll Gardens (and any location) Built Beauty preference-permutation investigation.
+Carroll Gardens (and any location) Built Environment preference-permutation investigation.
 
 Runs the same pipeline as the API: resolve location → shared data (area_type, density,
 arch_diversity, form_context) → calculate_built_environment for each preference pair.
@@ -215,7 +215,7 @@ def _summarize_one(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Investigate Built Beauty scoring across preference permutations (Carroll Gardens or custom location)."
+        description="Investigate Built Environment scoring across preference permutations (Carroll Gardens or custom location)."
     )
     parser.add_argument("--lat", type=float, default=40.679, help="Latitude (default: Carroll Gardens)")
     parser.add_argument("--lon", type=float, default=-73.991, help="Longitude (default: Carroll Gardens)")
@@ -292,7 +292,7 @@ def main() -> int:
         return 0
 
     # Human-readable table
-    print("Permutation summaries (how Built Beauty is calculated per preference):")
+    print("Permutation summaries (how Built Environment is calculated per preference):")
     print("-" * 100)
     for r in runs:
         s = r["summary"]

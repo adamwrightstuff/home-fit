@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Built Beauty Research Data Collection
+Built Environment Research Data Collection
 
-Collects built beauty feature values from diverse locations to establish
+Collects built environment feature values from diverse locations to establish
 research-backed expected values for scoring.
 
 This script:
@@ -119,7 +119,7 @@ STATISTICS_FILE = OUTPUT_DIR / "built_environment_statistics.json"
 
 def collect_location_data(location: Dict, radius_m: int = 2000) -> Optional[Dict]:
     """
-    Collect built beauty features for a location.
+    Collect built environment features for a location.
     
     Returns:
         Dict with location info and feature values, or None if data collection failed
@@ -152,7 +152,7 @@ def collect_location_data(location: Dict, radius_m: int = 2000) -> Optional[Dict
             location_input=location["name"]
         )
         
-        # Get built beauty score (includes form metrics)
+        # Get built environment score (includes form metrics)
         built_result = calculate_built_environment(
             location["lat"],
             location["lon"],
@@ -178,7 +178,7 @@ def collect_location_data(location: Dict, radius_m: int = 2000) -> Optional[Dict
             "footprint_variation": arch_result.get("footprint_area_cv"),
             "built_coverage_ratio": arch_result.get("built_coverage_ratio"),
             
-            # Form metrics (from built beauty calculation)
+            # Form metrics (from built environment calculation)
             "block_grain": metrics.get("block_grain"),
             "streetwall_continuity": metrics.get("streetwall_continuity"),
             "setback_consistency": metrics.get("setback_consistency"),
@@ -302,7 +302,7 @@ def save_data(all_data: List[Dict], analysis: Dict):
 def main():
     """Main collection function."""
     print("="*60)
-    print("Built Beauty Research Data Collection")
+    print("Built Environment Research Data Collection")
     print("="*60)
     print(f"Total locations: {len(RESEARCH_LOCATIONS)}")
     print(f"Output directory: {OUTPUT_DIR}")

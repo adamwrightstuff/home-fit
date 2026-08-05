@@ -23,7 +23,7 @@ This repo may include `.github/workflows/railway-deploy.yml` using `railway up` 
 
 The repo has a **root `Dockerfile`**. Railway should build from it automatically. If logs show `python3: command not found`, trigger a **Redeploy** so the image rebuilds. If the service **Root Directory** points at a subfolder, set it to the repo root so the Dockerfile is visible.
 
-### NRHP dataset (Built Beauty historic register)
+### NRHP dataset (Built Environment historic register)
 
 - `scripts/baselines/build_nrhp_db.py` builds `data_cache/nrhp.sqlite`.
 - `railway.json` can run the NRHP build during deploy; see that file for the exact build command.

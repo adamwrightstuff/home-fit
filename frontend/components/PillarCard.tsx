@@ -49,13 +49,13 @@ interface PillarCardProps {
   onNaturalBeautyPreferenceChange?: (preference: string[] | null) => void
   /** Built Environment only: area-type preference (instant client-side match score). */
   /** Built Environment only: when provided, show area-type chips and call with new value (no rescore needed). */
-  /** Built Beauty only: character preference applied when scoring. */
+  /** Built Environment only: character preference applied when scoring. */
   builtCharacterPreference?: string | null
-  /** Built Beauty only: density preference applied when scoring. */
+  /** Built Environment only: density preference applied when scoring. */
   builtDensityPreference?: string | null
-  /** Built Beauty only: update character preference (shown with chips; use with Rescore). */
+  /** Built Environment only: update character preference (shown with chips; use with Rescore). */
   onBuiltCharacterPreferenceChange?: (value: string | null) => void
-  /** Built Beauty only: update density preference (shown with chips; use with Rescore). */
+  /** Built Environment only: update density preference (shown with chips; use with Rescore). */
   onBuiltDensityPreferenceChange?: (value: string | null) => void
   /** Demographic diversity only: which mix dimensions to emphasize. */
   diversityPreference?: string[] | null
@@ -80,7 +80,7 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'canopy', label: 'Greenery' },
 ]
 
-/** Built Beauty — mirrors ScoreDisplay / PlaceView so Rescore uses the same query params. */
+/** Built Environment — mirrors ScoreDisplay / PlaceView so Rescore uses the same query params. */
 const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
   { value: 'historic', label: 'Historic' },
   { value: 'contemporary', label: 'Contemporary' },
@@ -288,7 +288,7 @@ export default function PillarCard({
   const numericScore =
     typeof pillar.score === 'number' && Number.isFinite(pillar.score) ? pillar.score : null
 
-  // Built Beauty: the useful metrics live under details.architectural_analysis.metrics.
+  // Built Environment: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
   const builtMetrics = pillar_key === 'neighborhood_beauty' ? pillar.details?.built_environment?.architectural_analysis?.metrics : null
   const summary =

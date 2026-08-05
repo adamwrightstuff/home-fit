@@ -32,14 +32,14 @@ const NATURAL_BEAUTY_PREFERENCE_CHIPS: Array<{ value: string | null; label: stri
   { value: 'canopy', label: 'Greenery' },
 ]
 
-/** Built Beauty character preference (single select). */
+/** Built Environment character preference (single select). */
 const BUILT_CHARACTER_CHIPS: Array<{ value: 'historic' | 'contemporary' | 'no_preference'; label: string }> = [
   { value: 'historic', label: 'Historic character' },
   { value: 'contemporary', label: 'Contemporary design' },
   { value: 'no_preference', label: 'No preference' },
 ]
 
-/** Built Beauty density preference (single select). */
+/** Built Environment density preference (single select). */
 const BUILT_DENSITY_CHIPS: Array<{ value: 'spread_out_residential' | 'walkable_residential' | 'dense_urban_living'; label: string }> = [
   { value: 'spread_out_residential', label: 'Spread out residential' },
   { value: 'walkable_residential', label: 'Walkable residential' },

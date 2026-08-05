@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Built Beauty diagnostics CLI.
+Built Environment diagnostics CLI.
 
-Prints a stable JSON breakdown using the existing Built Beauty pipeline.
+Prints a stable JSON breakdown using the existing Built Environment pipeline.
 
 Examples:
   python scripts/debug_built_environment.py --lat 42.3588 --lon -71.0707 --name "Beacon Hill"
@@ -74,7 +74,7 @@ def _run_compare(items: List[Tuple[str, float, float]]) -> Dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Built Beauty diagnostics (JSON).")
+    parser = argparse.ArgumentParser(description="Built Environment diagnostics (JSON).")
 
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--lat", type=float, help="Latitude for a single run")
