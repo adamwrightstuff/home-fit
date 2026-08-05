@@ -87,7 +87,7 @@ get_score = _rerun.get_score
 load_last_per_place = _rerun.load_last_per_place
 proxy_headers = _rerun.proxy_headers
 recompute_totals = _rerun.recompute_totals
-PILLAR_ORDER: List[str] = list(_rerun.PILLAR_ORDER) + ["natural_beauty", "built_beauty"]
+PILLAR_ORDER: List[str] = list(_rerun.PILLAR_ORDER) + ["natural_beauty", "built_environment"]
 
 
 def pillar_confidence(obj: Dict[str, Any], pillar_name: str) -> Optional[float]:
@@ -170,7 +170,19 @@ def merge_pillar_response(
     if isinstance(new_pillars, dict):
         for k in pillars:
             if k in new_pillars:
-                lp[k] = new_pillars[k]
+                new_pd = new_pillars[k]
+                # Preserve the existing pillar weight: when only=k is passed, the API assigns
+                # all 100 tokens to k, producing weight=100.0 which is wrong for catalog use.
+                # Use the weight already stored in the catalog (from original full scoring).
+                if isinstance(new_pd, dict):
+                    existing_w = (lp.get(k) or {}).get("weight")
+                    if existing_w is not None and existing_w != new_pd.get("weight"):
+                        new_pd = dict(new_pd)
+                        new_pd["weight"] = existing_w
+                        score = new_pd.get("score")
+                        if isinstance(score, (int, float)) and isinstance(existing_w, (int, float)):
+                            new_pd["contribution"] = round(score * existing_w / 100.0, 4)
+                lp[k] = new_pd
 
     old["livability_pillars"] = lp
     for fld in ("input", "coordinates", "location_info"):
