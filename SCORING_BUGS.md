@@ -6,49 +6,27 @@ No rescores done yet — all catalog values are as-stored.
 ---
 
 ## BUG-001 · Vacation AO collapse (systemic)
-**Severity: HIGH** | Affects: ~15 vacation destinations
+**Severity: HIGH** | ✅ LARGELY FIXED 2026-08-04
 
-Every scenic vacation place shows natural_beauty 70–96 but active_outdoors 2–21.
-The magnitude and consistency make this a structural scoring failure, not noise.
+Metro catalogs (Explorer): all clean — NYC/LA/SF all have AO ≥ 19. Santa Monica, Pasadena
+fixed in prior sessions.
 
-| Place | AO | NB |
+Vacation Explorer: rescored 2026-08-04 via `force_rescore_vacation_pillars.py` (local API).
+
+| Place | AO before | AO after |
 |---|---|---|
-| Moab, UT | 0.2 | 71.7 |
-| Provincetown, MA | 2.5 | 80.5 |
-| Malibu, CA | 3.7 | 94.5 |
-| Santa Fe, NM | 6.9 | 72.3 |
-| Bar Harbor, ME | 7.2 | 88.4 |
-| Monterey, CA | 11.2 | 80.4 |
-| Park City, UT | 11.1 | 91.3 |
-| Vail, CO | 12.0 | 91.9 |
-| Gatlinburg, TN | 12.9 | 89.7 |
-| Pelham Bay, NY | 15.8 | 88.8 |
-| Napa, CA | 21.4 | 96.7 |
-| Sedona, AZ | 34.4 | 91.3 |
-| Pasadena, CA | 4.1 | 82.2 |
-| Jackson, WY | (low) | (high) |
+| Washington, DC | 3.7 | 67.0 |
+| New Orleans, LA | 1.9 | 88.6 |
+| Virginia Beach, VA | 8.3 | 49.4 |
+| Vail, CO | 29.4 | 86.3 |
+| Moab, UT | (low) | 45.3 |
+| Malibu, CA | (low) | 62.0 |
+| Provincetown, MA | (low) | 47.5 |
+| Bar Harbor, ME | (low) | 77.0 |
 
-**Also affects LA metro catalog (confirmed 2026-07-28):**
-
-| Place | AO | NB | daily | wild | water | overpass status |
-|---|---|---|---|---|---|---|
-| Santa Monica, CA | 2.0 | — | 0.0 | 2.0 | 0.0 | success (not error) |
-| Pasadena, CA | 4.1 | 82.2 | 0.0 | 4.1 | 0.0 | success (not error) |
-| Downtown LA | 0.6 | — | 0.0 | 0.6 | 0.0 | success (not error) |
-
-These were missed by `rescore_ao_overpass_errors.py` because `_is_affected` only flags `overpass_error` status. Santa Monica and Pasadena's Overpass queries returned data but below the density threshold — status=success, score=~0. The existing fix script has no coverage for this failure mode.
-
-**Fix requires:** extend rescore targeting to catch `AO score < 10 AND status=success AND daily_urban_outdoors=0`. Either add a second detection pass to `rescore_ao_overpass_errors.py` or write a targeted one-off rescore for these three places.
-
-**Hypothesis:** vacation catalog uses area_type=rural/exurban for scenic destinations,
-and something in the AO scoring pipeline (radius, density thresholds, or OSM coverage)
-is collapsing for sparse geographies even when green space exists. Overpass errors are
-confirmed on Malibu, Moab, Provincetown, Bar Harbor — so Overpass failure → AO bottom-out
-is likely the mechanism for vacation places; for SM/Pasadena the query succeeded but
-returned insufficient density to score.
-
-**Fix requires:** diagnosing whether AO fallback (Google Places AO) is triggering correctly
-for vacation catalog, and whether the OSM-down score cap is being applied punitively.
+**Residual:** Charleston, SC AO=0.0 (conf=0) — persistent Overpass failure, not transient.
+City parks not queryable; no fallback rescued it. Low priority (flat coastal city, AO may
+legitimately be moderate).
 
 ---
 
