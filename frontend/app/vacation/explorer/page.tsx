@@ -6,7 +6,7 @@ import { scoreBandFill, homefitPillarBarFill } from '@/lib/indexColorSystem'
 import type { VacationPlace, TripType } from '@/lib/vacationCatalogTypes'
 import { TRIP_TYPE_LABEL, TRIP_TYPE_EMOJI, VACATION_PILLAR_LABELS } from '@/lib/vacationCatalogTypes'
 import type { TravelerProfile } from '@/components/vacation/TravelerProfileSelector'
-import { PROFILE_META, recomputeScoreWithProfile, getProfileWeights } from '@/lib/travelerProfiles'
+import { PROFILE_META, recomputeScoreWithProfile, getDisplayWeights } from '@/lib/travelerProfiles'
 
 const TRIP_TYPES: TripType[] = ['beach', 'mountain', 'city']
 
@@ -179,12 +179,9 @@ function BottomSheet({
   profile: TravelerProfile | null
   onClose: () => void
 }) {
-  const profileWeights = place ? getProfileWeights(profile, place.trip_type) : null
+  const displayWeights = place ? getDisplayWeights(profile, place.trip_type) : {}
   const entries = place
-    ? Object.entries(place.pillars).filter(([key, v]) => {
-        const w = profileWeights ? (profileWeights[key] ?? 0) : (v.weight ?? 0)
-        return w > 0
-      })
+    ? Object.entries(place.pillars).filter(([key]) => (displayWeights[key] ?? 0) > 0)
     : []
 
   return (
@@ -258,7 +255,7 @@ function BottomSheet({
                       {p.score != null ? score.toFixed(0) : '—'}
                     </span>
                     <span className="w-8 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">
-                      {(profileWeights ? (profileWeights[key] ?? p.weight) : p.weight).toFixed(0)}%
+                      {(displayWeights[key] ?? 0).toFixed(0)}%
                     </span>
                   </div>
                 )

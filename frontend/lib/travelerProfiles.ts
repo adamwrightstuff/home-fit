@@ -73,11 +73,24 @@ export function recomputeScoreWithProfile(
   return Math.round((weighted / totalWeight) * 10) / 10
 }
 
-/** Return the profile's pillar weight map for a given trip type, or null if no profile/match. */
-export function getProfileWeights(
+// Mirrors VACATION_WEIGHT_PRESETS in pillars/vacation_weights.py (BE excluded from city).
+const BASE_VACATION_WEIGHTS: Record<string, Record<string, number>> = {
+  beach:    { active_outdoors: 24, natural_beauty: 30, neighborhood_amenities: 21, air_travel_access: 15, healthcare_access: 2,  climate_risk: 8  },
+  mountain: { active_outdoors: 32, natural_beauty: 35, neighborhood_amenities: 10, air_travel_access: 12, healthcare_access: 3,  climate_risk: 8  },
+  city:     { active_outdoors: 10, natural_beauty: 16, neighborhood_amenities: 45, air_travel_access: 15, healthcare_access: 5,  climate_risk: 9  },
+}
+
+/**
+ * Return the effective pillar weight map for display — profile weights if active,
+ * otherwise the base vacation weights (not stored catalog weights, which may be stale).
+ */
+export function getDisplayWeights(
   profile: TravelerProfile | null,
   tripType: string,
-): Record<string, number> | null {
-  if (!profile) return null
-  return PROFILE_WEIGHTS[profile]?.[tripType] ?? null
+): Record<string, number> {
+  if (profile) {
+    const pw = PROFILE_WEIGHTS[profile]?.[tripType]
+    if (pw) return pw
+  }
+  return BASE_VACATION_WEIGHTS[tripType] ?? {}
 }
