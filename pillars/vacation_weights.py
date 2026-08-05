@@ -5,8 +5,9 @@ Used by main.py when mode=vacation is passed to /score.
 
 from typing import Dict, FrozenSet, List, Optional
 
-# Per-trip-type pillar sets. built_environment is only meaningful for city/road_trip
-# (streetscape, architecture); it carries no useful signal for beach or mountain trips.
+# Per-trip-type pillar sets. built_environment excluded from city: all 19 catalog cities
+# scored exactly 50 (zero variance), so it provides no differentiation signal.
+# NA alone reliably separates urban from rural destinations.
 VACATION_PILLAR_SETS: Dict[str, FrozenSet[str]] = {
     "beach": frozenset({
         "natural_beauty",
@@ -30,7 +31,6 @@ VACATION_PILLAR_SETS: Dict[str, FrozenSet[str]] = {
         "neighborhood_amenities",
         "air_travel_access",
         "climate_risk",
-        "built_environment",
         "healthcare_access",
     }),
     "road_trip": frozenset({
@@ -64,13 +64,12 @@ VACATION_WEIGHT_PRESETS: Dict[str, Dict[str, float]] = {
         "healthcare_access": 3.0,
     },
     "city": {
-        "neighborhood_amenities": 35.0,  # food/culture/nightlife is the point
-        "built_environment": 20.0,       # architecture, streetscape — meaningful here
+        "neighborhood_amenities": 45.0,  # food/culture/nightlife is the point; absorbed BE's 20%
         "air_travel_access": 15.0,
-        "natural_beauty": 12.0,
-        "active_outdoors": 8.0,
-        "climate_risk": 7.0,
-        "healthcare_access": 3.0,
+        "natural_beauty": 16.0,
+        "active_outdoors": 10.0,
+        "climate_risk": 9.0,
+        "healthcare_access": 5.0,
     },
     "road_trip": {
         "active_outdoors": 25.0,         # parks, scenery stops
@@ -92,27 +91,27 @@ TRAVELER_PROFILE_WEIGHTS: Dict[str, Dict[str, Dict[str, float]]] = {
     "adventurer": {
         "beach":    {"active_outdoors": 36.0, "natural_beauty": 26.0, "neighborhood_amenities": 8.0,  "air_travel_access": 15.0, "healthcare_access": 7.0,  "climate_risk": 8.0},
         "mountain": {"active_outdoors": 44.0, "natural_beauty": 28.0, "neighborhood_amenities": 4.0,  "air_travel_access": 15.0, "healthcare_access": 5.0,  "climate_risk": 4.0},
-        "city":     {"active_outdoors": 24.0, "built_environment": 8.0, "natural_beauty": 12.0, "neighborhood_amenities": 20.0, "air_travel_access": 15.0, "healthcare_access": 8.0, "climate_risk": 13.0},
+        "city":     {"active_outdoors": 30.0, "natural_beauty": 12.0, "neighborhood_amenities": 20.0, "air_travel_access": 15.0, "healthcare_access": 8.0, "climate_risk": 15.0},
     },
     "relaxer": {
         "beach":    {"active_outdoors": 10.0, "natural_beauty": 44.0, "neighborhood_amenities": 18.0, "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 10.0},
         "mountain": {"active_outdoors": 15.0, "natural_beauty": 50.0, "neighborhood_amenities": 8.0,  "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 9.0},
-        "city":     {"active_outdoors": 8.0,  "built_environment": 14.0, "natural_beauty": 22.0, "neighborhood_amenities": 28.0, "air_travel_access": 15.0, "healthcare_access": 5.0, "climate_risk": 8.0},
+        "city":     {"active_outdoors": 8.0,  "natural_beauty": 30.0, "neighborhood_amenities": 32.0, "air_travel_access": 15.0, "healthcare_access": 5.0, "climate_risk": 10.0},
     },
     "culture": {
         "beach":    {"active_outdoors": 10.0, "natural_beauty": 18.0, "neighborhood_amenities": 48.0, "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 6.0},
         "mountain": {"active_outdoors": 12.0, "natural_beauty": 22.0, "neighborhood_amenities": 38.0, "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 10.0},
-        "city":     {"active_outdoors": 4.0,  "built_environment": 22.0, "natural_beauty": 6.0,  "neighborhood_amenities": 50.0, "air_travel_access": 15.0, "healthcare_access": 3.0, "climate_risk": 0.0},
+        "city":     {"active_outdoors": 5.0,  "natural_beauty": 7.0,  "neighborhood_amenities": 70.0, "air_travel_access": 15.0, "healthcare_access": 3.0, "climate_risk": 0.0},
     },
     "family": {
         "beach":    {"active_outdoors": 18.0, "natural_beauty": 24.0, "neighborhood_amenities": 28.0, "air_travel_access": 15.0, "healthcare_access": 10.0, "climate_risk": 5.0},
         "mountain": {"active_outdoors": 22.0, "natural_beauty": 26.0, "neighborhood_amenities": 18.0, "air_travel_access": 15.0, "healthcare_access": 10.0, "climate_risk": 9.0},
-        "city":     {"active_outdoors": 8.0,  "built_environment": 10.0, "natural_beauty": 10.0, "neighborhood_amenities": 30.0, "air_travel_access": 15.0, "healthcare_access": 16.0, "climate_risk": 11.0},
+        "city":     {"active_outdoors": 8.0,  "natural_beauty": 10.0, "neighborhood_amenities": 35.0, "air_travel_access": 15.0, "healthcare_access": 20.0, "climate_risk": 12.0},
     },
     "remote_worker": {
         "beach":    {"active_outdoors": 12.0, "natural_beauty": 22.0, "neighborhood_amenities": 35.0, "air_travel_access": 15.0, "healthcare_access": 4.0,  "climate_risk": 12.0},
         "mountain": {"active_outdoors": 16.0, "natural_beauty": 24.0, "neighborhood_amenities": 32.0, "air_travel_access": 15.0, "healthcare_access": 4.0,  "climate_risk": 9.0},
-        "city":     {"active_outdoors": 5.0,  "built_environment": 18.0, "natural_beauty": 8.0,  "neighborhood_amenities": 40.0, "air_travel_access": 15.0, "healthcare_access": 3.0, "climate_risk": 11.0},
+        "city":     {"active_outdoors": 7.0,  "natural_beauty": 10.0, "neighborhood_amenities": 50.0, "air_travel_access": 15.0, "healthcare_access": 3.0, "climate_risk": 15.0},
     },
 }
 

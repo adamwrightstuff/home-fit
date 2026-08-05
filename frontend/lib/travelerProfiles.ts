@@ -21,27 +21,27 @@ const PROFILE_WEIGHTS: Record<TravelerProfile, Record<string, Record<string, num
   adventurer: {
     beach:    { active_outdoors: 36, natural_beauty: 26, neighborhood_amenities: 8,  air_travel_access: 15, healthcare_access: 7,  climate_risk: 8  },
     mountain: { active_outdoors: 44, natural_beauty: 28, neighborhood_amenities: 4,  air_travel_access: 15, healthcare_access: 5,  climate_risk: 4  },
-    city:     { active_outdoors: 24, built_environment: 8, natural_beauty: 12, neighborhood_amenities: 20, air_travel_access: 15, healthcare_access: 8, climate_risk: 13 },
+    city:     { active_outdoors: 30, natural_beauty: 12, neighborhood_amenities: 20, air_travel_access: 15, healthcare_access: 8, climate_risk: 15 },
   },
   relaxer: {
     beach:    { active_outdoors: 10, natural_beauty: 44, neighborhood_amenities: 18, air_travel_access: 15, healthcare_access: 3,  climate_risk: 10 },
     mountain: { active_outdoors: 15, natural_beauty: 50, neighborhood_amenities: 8,  air_travel_access: 15, healthcare_access: 3,  climate_risk: 9  },
-    city:     { active_outdoors: 8,  built_environment: 14, natural_beauty: 22, neighborhood_amenities: 28, air_travel_access: 15, healthcare_access: 5, climate_risk: 8 },
+    city:     { active_outdoors: 8,  natural_beauty: 30, neighborhood_amenities: 32, air_travel_access: 15, healthcare_access: 5, climate_risk: 10 },
   },
   culture: {
     beach:    { active_outdoors: 10, natural_beauty: 18, neighborhood_amenities: 48, air_travel_access: 15, healthcare_access: 3,  climate_risk: 6  },
     mountain: { active_outdoors: 12, natural_beauty: 22, neighborhood_amenities: 38, air_travel_access: 15, healthcare_access: 3,  climate_risk: 10 },
-    city:     { active_outdoors: 4,  built_environment: 22, natural_beauty: 6,  neighborhood_amenities: 50, air_travel_access: 15, healthcare_access: 3, climate_risk: 0 },
+    city:     { active_outdoors: 5,  natural_beauty: 7,  neighborhood_amenities: 70, air_travel_access: 15, healthcare_access: 3, climate_risk: 0 },
   },
   family: {
     beach:    { active_outdoors: 18, natural_beauty: 24, neighborhood_amenities: 28, air_travel_access: 15, healthcare_access: 10, climate_risk: 5  },
     mountain: { active_outdoors: 22, natural_beauty: 26, neighborhood_amenities: 18, air_travel_access: 15, healthcare_access: 10, climate_risk: 9  },
-    city:     { active_outdoors: 8,  built_environment: 10, natural_beauty: 10, neighborhood_amenities: 30, air_travel_access: 15, healthcare_access: 16, climate_risk: 11 },
+    city:     { active_outdoors: 8,  natural_beauty: 10, neighborhood_amenities: 35, air_travel_access: 15, healthcare_access: 20, climate_risk: 12 },
   },
   remote_worker: {
     beach:    { active_outdoors: 12, natural_beauty: 22, neighborhood_amenities: 35, air_travel_access: 15, healthcare_access: 4,  climate_risk: 12 },
     mountain: { active_outdoors: 16, natural_beauty: 24, neighborhood_amenities: 32, air_travel_access: 15, healthcare_access: 4,  climate_risk: 9  },
-    city:     { active_outdoors: 5,  built_environment: 18, natural_beauty: 8,  neighborhood_amenities: 40, air_travel_access: 15, healthcare_access: 3, climate_risk: 11 },
+    city:     { active_outdoors: 7,  natural_beauty: 10, neighborhood_amenities: 50, air_travel_access: 15, healthcare_access: 3, climate_risk: 15 },
   },
 }
 
