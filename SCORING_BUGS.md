@@ -158,17 +158,21 @@ check if the gravity model is using the right employment center data for LA.
 ---
 
 ## BUG-009 · Summit community_safety = None coerced to 0
-**Severity: HIGH** | Confirmed in stored JSONL
+**Severity: HIGH** | ✅ FIXED 2026-08-04 | Affects: 10 places (Summit, Hempstead, Sleepy Hollow, Southport, Glendale NY, Pelham Bay NY, East LA, Lakewood, Palos Verdes Estates, Rancho Palos Verdes)
 
-Summit has `community_safety.score = None`, `confidence = 0`, status DEGRADED.
-The composites_recompute script is treating None as 0, which tanks Summit's total score
-unfairly. A place with no usable safety data should be excluded or shown as N/A, not penalized.
+**Root cause:** Original scorer wrote `contribution = round(None × weight, 2) = 0.0` for pillars
+with `score=None`. The recompute script treated this stored `0.0` as an authoritative contribution
+and summed it into `_stored_total`, penalising places as if the pillar scored 0.
 
-**Stored evidence:** `cs.score = None`, `cs.confidence = 0` in composites_recomputed JSONL.
+**Fix (`pillars/composite_indices.py`):** Detect stored-gap pattern (`contribution=0.0 AND score=None
+AND weight>0`) and exclude from denominator; scale up `_stored_total + _recomp_total` by
+`100 / (100 - gap_weight)` to fill the hole. `data_gaps` field now includes these pillars.
 
-**Fix requires:** find where composites are assembled and add a None guard so missing pillar
-scores are excluded from the weighted average rather than contributing 0 × weight.
-Also check the anomaly detector script — it may have the same coercion bug in its flag output.
+**Fix (`scripts/catalog/rerun_failed_catalog_pillars.py`):** `recompute_totals` now writes
+`contribution=None` (not 0.0) for score=None pillars, and renormalises total_score over
+available weight only — prevents recurrence.
+
+**Result:** Summit 65.73 → 71.71. All 10 affected places rescored; `data_gaps` field populated.
 
 ---
 

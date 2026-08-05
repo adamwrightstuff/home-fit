@@ -107,16 +107,25 @@ def recompute_totals(score: Dict[str, Any]) -> None:
     score["token_allocation"] = alloc
     score["allocation_type"] = "equal_default_schools_off"
     total = 0.0
+    avail_w = 0.0
     for k in PILLAR_ORDER:
         p = pillars.get(k)
         if not isinstance(p, dict):
             continue
-        s = float(p.get("score") or 0.0)
+        raw_score = p.get("score")
         w = float(alloc.get(k, 0.0) or 0.0)
         p["weight"] = w
-        p["contribution"] = round(s * w / 100.0, 2)
-        total += s * w / 100.0
+        if raw_score is None:
+            p["contribution"] = None  # not 0.0 — prevents stored-gap penalty
+        else:
+            s = float(raw_score)
+            p["contribution"] = round(s * w / 100.0, 2)
+            total += s * w / 100.0
+            avail_w += w
         pillars[k] = p
+    # Renormalize: if some pillars had no score, scale up to fill their gap
+    if 0 < avail_w < 100.0:
+        total = total * (100.0 / avail_w)
     score["total_score"] = round(total, 2)
     try:
         from pillars.composite_indices import build_total_score_breakdown

@@ -422,16 +422,26 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
     # if a pillar has no score (None) and a non-zero weight, zero its weight and
     # redistribute proportionally across the recomputed-contribution pillars.
     # Stored-contribution pillars are left as-is (they already baked in whatever
-    # redistribution happened at scoring time).
+    # redistribution happened at scoring time) — EXCEPT for the stored-gap pattern:
+    # when score=None and contribution=0.0 are both stored (original scorer did
+    # None×weight=0 instead of propagating None), we detect this as a data gap and
+    # scale up the denominator so the place is not penalised.
     _stored_total = 0.0
     _recompute_weights: Dict[str, float] = {}
+    _stored_gap_pillars: List[str] = []
 
     for p_name, p_data in (pillars or {}).items():
         if not isinstance(p_data, dict):
             continue
         contrib = p_data.get("contribution")
-        if isinstance(contrib, (int, float)):
+        _pillar_w = float(p_data.get("weight") or (token_allocation or {}).get(p_name) or 0)
+        # Stored data-gap: score=None but contribution=0.0 and weight>0 was written at
+        # scoring time (None × weight = 0 coercion).  Exclude from denominator.
+        _is_stored_gap = (contrib == 0.0 and p_data.get("score") is None and _pillar_w > 0)
+        if isinstance(contrib, (int, float)) and not _is_stored_gap:
             _stored_total += float(contrib)
+        elif _is_stored_gap:
+            _stored_gap_pillars.append(p_name)
         else:
             # Contribution not stored — recompute from weight × score.
             # Per-pillar weight takes precedence; token_allocation is the fallback.
@@ -469,11 +479,24 @@ def recompute_composites_from_payload(payload: Dict[str, Any]) -> Dict[str, Any]
         if isinstance(p_score, (int, float)) and w > 0:
             _recomp_total += float(p_score) * w / 100.0
 
-    out["total_score"] = round(min(100.0, max(0.0, _stored_total + _recomp_total)), 2)
+    # Scale up if any stored-contribution pillars were data gaps (excluded from denominator).
+    # F02 redistribution handles the recomputed-path gaps; this handles stored-path gaps.
+    if _stored_gap_pillars:
+        _stored_gap_w = sum(
+            float((pillars.get(p) or {}).get("weight") or (token_allocation or {}).get(p) or 0)
+            for p in _stored_gap_pillars
+        )
+        _denom = max(1.0, 100.0 - _stored_gap_w)
+        _gap_scale = 100.0 / _denom
+    else:
+        _gap_scale = 1.0
+
+    out["total_score"] = round(min(100.0, max(0.0, (_stored_total + _recomp_total) * _gap_scale)), 2)
+    _all_gap_pillars = _data_gap_pillars + _stored_gap_pillars
     out["data_gaps"] = {
-        "pillars": _data_gap_pillars,
+        "pillars": _all_gap_pillars,
         "rescore_available": True,
         "note": "These pillars had no data. Their weights were redistributed to scored pillars.",
-    } if _data_gap_pillars else None
+    } if _all_gap_pillars else None
 
     return out
