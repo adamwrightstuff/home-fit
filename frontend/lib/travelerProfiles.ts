@@ -26,7 +26,7 @@ const PROFILE_WEIGHTS: Record<TravelerProfile, Record<string, Record<string, num
   relaxer: {
     beach:    { active_outdoors: 10, natural_beauty: 44, neighborhood_amenities: 18, air_travel_access: 15, healthcare_access: 3,  climate_risk: 10 },
     mountain: { active_outdoors: 15, natural_beauty: 50, neighborhood_amenities: 8,  air_travel_access: 15, healthcare_access: 3,  climate_risk: 9  },
-    city:     { active_outdoors: 8,  built_environment: 10, natural_beauty: 26, neighborhood_amenities: 28, air_travel_access: 15, healthcare_access: 5, climate_risk: 8 },
+    city:     { active_outdoors: 8,  built_environment: 14, natural_beauty: 22, neighborhood_amenities: 28, air_travel_access: 15, healthcare_access: 5, climate_risk: 8 },
   },
   culture: {
     beach:    { active_outdoors: 10, natural_beauty: 18, neighborhood_amenities: 48, air_travel_access: 15, healthcare_access: 3,  climate_risk: 6  },

@@ -97,7 +97,7 @@ TRAVELER_PROFILE_WEIGHTS: Dict[str, Dict[str, Dict[str, float]]] = {
     "relaxer": {
         "beach":    {"active_outdoors": 10.0, "natural_beauty": 44.0, "neighborhood_amenities": 18.0, "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 10.0},
         "mountain": {"active_outdoors": 15.0, "natural_beauty": 50.0, "neighborhood_amenities": 8.0,  "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 9.0},
-        "city":     {"active_outdoors": 8.0,  "built_environment": 10.0, "natural_beauty": 26.0, "neighborhood_amenities": 28.0, "air_travel_access": 15.0, "healthcare_access": 5.0, "climate_risk": 8.0},
+        "city":     {"active_outdoors": 8.0,  "built_environment": 14.0, "natural_beauty": 22.0, "neighborhood_amenities": 28.0, "air_travel_access": 15.0, "healthcare_access": 5.0, "climate_risk": 8.0},
     },
     "culture": {
         "beach":    {"active_outdoors": 10.0, "natural_beauty": 18.0, "neighborhood_amenities": 48.0, "air_travel_access": 15.0, "healthcare_access": 3.0,  "climate_risk": 6.0},
