@@ -173,17 +173,21 @@ Also check the anomaly detector script — it may have the same coercion bug in 
 ---
 
 ## BUG-010 · Rye matched to wrong police agency (Johnson City Village PD)
-**Severity: HIGH** | Confirmed 2026-08-04 (still present in catalog)
+**Severity: HIGH** | ✅ FIXED 2026-08-04
 
-Rye, NY's community_safety score of 78.2 was computed using crime data from
-"Johnson City Village Police Department" — either upstate NY or Tennessee — not Rye, NY.
-Confirmed stored in catalog: `breakdown.agency_name = 'Johnson City Village Police Department'`,
-`precision_level = AGENCY_VERIFIED`, `source = fbi_nibrs_agency`.
+**Root cause:** `city_hint="Rye City"` → the word "City" (4 chars, passed `len > 3` filter) matched
+"Johnson **City** Village Police Department", producing a false-positive `nibrs_city_match`. Also,
+`_find_nibrs_agency_by_name` couldn't find "Rye City PD" because "Rye" (3 chars) was filtered
+out by the same `len > 3` guard.
 
-**Fix requires:** inspect the UCR/NIBRS agency matching logic for Rye, NY; check whether
-the geo-lookup is fuzzy-matching on town name without state/county filtering, which would
-explain matching "Rye" to a Johnson City agency. After fix, rescore community_safety for Rye
-and recompute composites with --no-census.
+**Fix (data_sources/crime_api.py):**
+- Added `_CITY_HINT_GENERIC` frozenset (`{"city", "town", "village", "county", ...}`) to exclude
+  generic place-type words from city name → agency name matching
+- Changed `len(word) > 3` to `len(word) >= 3` in `nibrs_city_match` and `_find_nibrs_agency_by_name`,
+  with `_CITY_HINT_GENERIC` exclusion applied
+
+**Result:** 78.2 → 74.4, source switched from `fbi_nibrs_agency / Johnson City Village PD`
+to `ny_state_ucr / Rye Brook Vg PD` (Westchester County, correct jurisdiction).
 
 ---
 

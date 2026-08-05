@@ -57,6 +57,16 @@ _NY_STATE_CRIME_DS = "https://data.ny.gov/resource/ca8h-8gjq.json"
 # Downloaded from: https://openjustice.doj.ca.gov/data
 _CA_DOJ_CSV = os.path.join(os.path.dirname(__file__), "static", "ca_doj_crimes_clearances.csv")
 
+# Cities whose crimes are reported under a county sheriff or regional PD in the CA DOJ dataset.
+# Maps city_hint (lowercase) → (ca_doj_agency_name, service_population).
+# Service population = total population the agency serves (used as rate denominator).
+# Marin County Sheriff service population derived from 2020 Census:
+#   Marin County total ~258,826 minus cities with own PDs (Belvedere, Central Marin,
+#   Fairfax, Mill Valley, Novato, Ross, San Rafael, Sausalito, Tiburon ≈ 182k) = ~77k.
+_CA_DOJ_SERVING_AGENCIES: Dict[str, Tuple[str, int]] = {
+    "san anselmo": ("Marin Co. Sheriff's Department", 77_000),
+}
+
 # ---------------------------------------------------------------------------
 # LASD (LA County Sheriff) station-level crime data
 # Pre-aggregated from lasd.org annual Part I & II Crimes CSV.
@@ -197,7 +207,14 @@ def _load_ca_doj() -> Dict:
 def _get_ca_doj_rates(city: str, population: int, data_year: int) -> Optional[Dict]:
     """Return per-1k crime rates from CA DOJ data for `city`, trying up to 3 years back."""
     idx = _load_ca_doj()
-    key = city.strip().lower()
+    # Check if this city's crimes are reported under a serving agency (e.g. county sheriff).
+    override = _CA_DOJ_SERVING_AGENCIES.get(city.strip().lower())
+    if override:
+        agency_name, service_pop = override
+        key = agency_name.strip().lower()
+        population = service_pop
+    else:
+        key = city.strip().lower()
     for yr in range(data_year, data_year - 4, -1):
         row = idx.get((key, yr))
         if row is None:
@@ -579,6 +596,13 @@ def _fetch_fbi_state_rate(ori: str, offense_type: str, year: int) -> Optional[fl
     return rate
 
 
+# Generic place-type words that appear in both city names and agency names but
+# don't identify a specific jurisdiction.  Excluded from city-name → agency-name
+# matching so that "Rye City" doesn't match "Johnson City Village PD" via "City".
+_CITY_HINT_GENERIC = frozenset({
+    "city", "town", "village", "county", "township", "borough",
+})
+
 # Keywords that identify transit, campus, and other special-purpose police
 # agencies that should NOT be selected as the nearest agency for a municipality.
 # These agencies have widespread or misregistered coordinates in the FBI database
@@ -705,7 +729,7 @@ def _find_nibrs_agency_by_name(agencies: list, city_hint: str) -> Optional[Dict]
     """
     if not city_hint or not agencies:
         return None
-    words = [w.lower() for w in city_hint.split() if len(w) > 3]
+    words = [w.lower() for w in city_hint.split() if len(w) >= 3 and w.lower() not in _CITY_HINT_GENERIC]
     if not words:
         return None
     candidates = [
@@ -998,7 +1022,7 @@ def _get_fbi_rates(
         and any(
             word.lower() in agency_display_name.lower()
             for word in (city_hint or "").split()
-            if len(word) > 3  # skip short words like "San", "Los", "Del"
+            if len(word) >= 3 and word.lower() not in _CITY_HINT_GENERIC
         )
     )
 
