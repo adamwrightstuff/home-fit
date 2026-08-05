@@ -35,7 +35,7 @@ if str(REPO_ROOT) not in sys.path:
 
 PILLAR_ORDER: List[str] = [
     "quality_education", "neighborhood_amenities", "economic_opportunity", "climate_risk",
-    "active_outdoors", "neighborhood_beauty", "diversity", "social_fabric",
+    "active_outdoors", "diversity", "social_fabric",
     "healthcare_access", "public_transit_access", "air_travel_access", "housing_value",
     "community_safety",
 ]
@@ -71,10 +71,10 @@ def generic_floor_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[st
 
 
 def built_environment_coverage_check(pillar_name: str, pillar: Dict[str, Any]) -> Optional[str]:
-    """Tier 2: neighborhood_beauty's nested built_environment coverage vs data_warning consistency."""
-    if pillar_name != "neighborhood_beauty":
+    """Tier 2: built_environment coverage vs data_warning consistency."""
+    if pillar_name != "built_environment":
         return None
-    aa = ((pillar.get("details") or {}).get("built_environment") or {}).get("architectural_analysis")
+    aa = (pillar.get("details") or {}).get("architectural_analysis")
     if not isinstance(aa, dict):
         return None
     cov = aa.get("osm_building_coverage")

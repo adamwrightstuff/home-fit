@@ -1,5 +1,4 @@
 export type PillarKey =
-  | 'neighborhood_beauty'
   | 'natural_beauty'
   | 'built_environment'
   | 'neighborhood_amenities'
@@ -205,12 +204,6 @@ export const PILLAR_META: Record<
   PillarKey,
   { icon: string; name: string; description: string }
 > = {
-  neighborhood_beauty: {
-    icon: '🏡',
-    name: 'Neighborhood Beauty',
-    description:
-      'Architecture and landscape together — thoughtfully designed streets and buildings paired with trees, water, and scenic character, weighted by how dense or built-up the area is',
-  },
   natural_beauty: {
     icon: '🌿',
     name: 'Natural Beauty',
@@ -360,8 +353,6 @@ export function getPillarFailureType(pillar: {
 // Phase 1B: Long descriptions ("why this matters") for expand/tooltip
 // ---------------------------------------------------------------------------
 export const PILLAR_LONG_DESCRIPTIONS: Record<PillarKey, string> = {
-  neighborhood_beauty:
-    'Combines architecture and landscape: thoughtfully designed streets and buildings create a sense of place and belonging, while access to trees, water, and scenic landscapes is linked to lower stress and better mental health. The two are blended based on how dense or built-up the area is — denser places weight built character more, leafier ones weight nature more.',
   natural_beauty:
     'Trees, water, topography, and scenic landscape — how much nature is woven into the place, from ocean views to urban tree canopy. Adjust the scenery preference to weight your preferred landscape type.',
   built_environment:

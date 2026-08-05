@@ -190,18 +190,18 @@ function formatSpecMetricValue(
 }
 
 const METRIC_EXPLAINERS: Record<string, string> = {
-  'neighborhood_beauty:Neighborhood canopy': 'Share of your neighborhood area with tree cover (satellite canopy).',
-  'neighborhood_beauty:Nearest mapped water': 'Distance to the nearest water feature we use for scoring (rivers, lakes, coast, etc.).',
-  'neighborhood_beauty:Terrain relief (local)': 'Elevation range nearby (meters)—hills and valleys add texture.',
+  'natural_beauty:Neighborhood canopy': 'Share of your neighborhood area with tree cover (satellite canopy).',
+  'natural_beauty:Nearest mapped water': 'Distance to the nearest water feature we use for scoring (rivers, lakes, coast, etc.).',
+  'natural_beauty:Terrain relief (local)': 'Elevation range nearby (meters)—hills and valleys add texture.',
   'active_outdoors:Parks (nearby)': 'OSM parks counted within the local search radius used for this score.',
   'active_outdoors:Trail segments within 5 km': 'Hiking or trail ways within five kilometers.',
   'active_outdoors:Nearest water access': 'Distance to the nearest swimmable or recreation water access.',
   'neighborhood_amenities:Businesses within ~1 km': 'Count of mapped shops and services used for walkability near home.',
   'neighborhood_amenities:Typical distance to businesses': 'Median distance to businesses we found—shorter usually means easier errands.',
   'neighborhood_amenities:Places within ~10 min walk': 'Rough count within about 800 m (≈10 minute walk).',
-  'neighborhood_beauty:Built form': 'High-level character of the built area (e.g. historic urban vs suburban) from OSM signals.',
-  'neighborhood_beauty:Streetscape tags': 'Short tags from the map that describe the streetscape (e.g. rowhouse, historic).',
-  'neighborhood_beauty:Median year built': 'Typical building age nearby—older can mean more character, not always “better.”',
+  'built_environment:Built form': 'High-level character of the built area (e.g. historic urban vs suburban) from OSM signals.',
+  'built_environment:Streetscape tags': 'Short tags from the map that describe the streetscape (e.g. rowhouse, historic).',
+  'built_environment:Median year built': 'Typical building age nearby—older can mean more character, not always “better.”',
   'healthcare_access:Hospitals in search': 'Major hospitals found in the OSM search used for this pillar.',
   'healthcare_access:Nearest hospital': 'Road distance to the closest hospital with a usable distance.',
   'healthcare_access:Pharmacies nearby': 'Pharmacies with distance in the search area.',
@@ -290,17 +290,15 @@ export default function PillarCard({
 
   // Built Environment: the useful metrics live under details.architectural_analysis.metrics.
   // Some summary fields are placeholders (often zeros), so override them when available.
-  const builtMetrics = pillar_key === 'neighborhood_beauty' ? pillar.details?.built_environment?.architectural_analysis?.metrics : null
+  const builtMetrics = pillar_key === 'built_environment' ? pillar.details?.architectural_analysis?.metrics : null
   const summary =
-    pillar_key === 'neighborhood_beauty' && isRecord(builtMetrics)
+    pillar_key === 'built_environment' && isRecord(builtMetrics)
       ? {
           ...rawSummary,
           height_diversity: builtMetrics.height_diversity ?? rawSummary.height_diversity,
           type_diversity: builtMetrics.type_diversity ?? rawSummary.type_diversity,
           footprint_variation: builtMetrics.footprint_variation ?? rawSummary.footprint_variation,
           built_coverage_ratio: builtMetrics.built_coverage_ratio ?? rawSummary.built_coverage_ratio,
-          // Prefer the real metric from architectural_analysis.metrics.
-          // (Summary values are sometimes placeholders.)
           diversity_score:
             builtMetrics.diversity_score ?? rawSummary.diversity_score ?? pillar.details?.architectural_analysis?.score,
         }
@@ -670,7 +668,7 @@ export default function PillarCard({
           ) : null}
 
           <div className="tr-muted" style={{ fontSize: '0.95rem' }}>
-            {pillar_key === 'neighborhood_beauty' && (() => {
+            {pillar_key === 'natural_beauty' && (() => {
               const fromProps = naturalBeautyPreference && naturalBeautyPreference.length > 0 ? naturalBeautyPreference : null
               const fromPillar = Array.isArray((pillar as any)?.summary?.natural_beauty_preference) && (pillar as any).summary.natural_beauty_preference.length > 0
                 ? (pillar as any).summary.natural_beauty_preference as string[]
@@ -733,7 +731,7 @@ export default function PillarCard({
                 </div>
               )
             })()}
-            {pillar_key === 'neighborhood_beauty' && (() => {
+            {pillar_key === 'built_environment' && (() => {
               const char = builtCharacterPreference ?? null
               const dens = builtDensityPreference ?? null
               const canChar = Boolean(onBuiltCharacterPreferenceChange)

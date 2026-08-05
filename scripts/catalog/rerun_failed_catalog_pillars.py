@@ -37,7 +37,6 @@ PILLAR_ORDER: List[str] = [
     "economic_opportunity",
     "climate_risk",
     "active_outdoors",
-    "neighborhood_beauty",
     "diversity",
     "social_fabric",
     "healthcare_access",

@@ -41,7 +41,6 @@ JSONL = REPO_ROOT / "data" / "nyc_metro_place_catalog_scores_merged.jsonl"
 CONFIDENCE_THRESHOLDS: Dict[str, int] = {
     "healthcare_access":    30,
     "air_travel_access":    50,
-    "neighborhood_beauty":  30,
     "built_environment":    30,
     "quality_education":    50,
     "community_safety":     50,
@@ -98,7 +97,6 @@ EXPECTED_BREAKDOWN: Dict[str, List[str]] = {
     "social_fabric":          ["participation", "social_capital", "peer_civic", "rootedness"],
     "diversity":              ["race_entropy", "income_entropy", "age_entropy"],
     "community_safety":       ["violent_per_1k", "property_per_1k"],
-    "neighborhood_beauty":    ["built_environment_score", "natural_beauty_score"],
 }
 
 NB_V9_KEYS = ["gvi_score", "water_score", "canopy_score", "topo_score", "landcover_score"]

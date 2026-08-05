@@ -11,7 +11,6 @@ import { reweightScoreResponseFromPriorities, applyUserIncomeToScore } from '@/l
 import { PILLAR_META, PILLAR_ORDER, isLongevityPillar, isHappinessPillar, type PillarKey } from '@/lib/pillars'
 import type { ScoreResponse } from '@/types/api'
 import { DEFAULT_PRIORITIES, type PillarPriorities } from '@/components/SearchOptions'
-import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
 import PillarInfoIcon from '@/components/PillarInfoIcon'
 
 function isCatalogKey(id: string): boolean {
@@ -193,23 +192,13 @@ function CompareContent() {
 
   const scoredARaw = rowA?.score_payload as ScoreResponse | undefined
   const scoredBRaw = rowB?.score_payload as ScoreResponse | undefined
-  // Legacy saves predate the built_environment+natural_beauty merge; synthesize neighborhood_beauty
-  // so compare doesn't silently drop the pillar's weight/score for older places.
   const scoredA = useMemo(() => {
     if (!scoredARaw) return scoredARaw
-    const withIncome = householdIncome ? applyUserIncomeToScore(scoredARaw, householdIncome) : scoredARaw
-    const livability_pillars = withSynthesizedNeighborhoodBeauty(withIncome.livability_pillars as unknown as Record<string, any>)
-    return livability_pillars === withIncome.livability_pillars
-      ? withIncome
-      : ({ ...withIncome, livability_pillars } as ScoreResponse)
+    return householdIncome ? applyUserIncomeToScore(scoredARaw, householdIncome) : scoredARaw
   }, [scoredARaw, householdIncome])
   const scoredB = useMemo(() => {
     if (!scoredBRaw) return scoredBRaw
-    const withIncome = householdIncome ? applyUserIncomeToScore(scoredBRaw, householdIncome) : scoredBRaw
-    const livability_pillars = withSynthesizedNeighborhoodBeauty(withIncome.livability_pillars as unknown as Record<string, any>)
-    return livability_pillars === withIncome.livability_pillars
-      ? withIncome
-      : ({ ...withIncome, livability_pillars } as ScoreResponse)
+    return householdIncome ? applyUserIncomeToScore(scoredBRaw, householdIncome) : scoredBRaw
   }, [scoredBRaw, householdIncome])
 
   const displayA = useMemo(() => {

@@ -36,9 +36,9 @@ def rescore_place(row: dict) -> dict:
     if not lat or not lon:
         return row
 
-    nb = score.get("livability_pillars", {}).get("neighborhood_beauty", {})
-    area_type = nb.get("breakdown", {}).get("effective_area_type")
-    density = nb.get("breakdown", {}).get("density")
+    be = score.get("livability_pillars", {}).get("built_environment", {})
+    area_type = be.get("breakdown", {}).get("effective_area_type")
+    density = be.get("breakdown", {}).get("density")
     loc = score.get("location_info", {})
     city = loc.get("city")
     state = loc.get("state")
@@ -78,8 +78,8 @@ def process(path: Path):
 
     for i, row in enumerate(rows, 1):
         name = row.get("catalog", {}).get("name", "?")
-        nb = row["score"].get("livability_pillars", {}).get("neighborhood_beauty", {})
-        area_type = nb.get("breakdown", {}).get("effective_area_type", "")
+        be = row["score"].get("livability_pillars", {}).get("built_environment", {})
+        area_type = be.get("breakdown", {}).get("effective_area_type", "")
 
         # Only rescore places that are NOT suburban/exurban/rural — those didn't change
         # meaningfully, and skipping them saves ~2/3 of API calls.

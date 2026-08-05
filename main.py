@@ -43,7 +43,7 @@ from data_sources.error_handling import check_api_credentials
 from data_sources.telemetry import record_request_metrics, record_error, get_telemetry_stats
 from pillars.schools import get_school_data
 from pillars.active_outdoors import get_active_outdoors_score_v2
-from pillars import built_environment, natural_beauty, neighborhood_beauty
+from pillars import built_environment, natural_beauty
 from pillars.neighborhood_amenities import get_neighborhood_amenities_score
 from pillars.air_travel_access import get_air_travel_score
 from pillars.public_transit_access import get_public_transit_score
@@ -367,14 +367,13 @@ def parse_priority_allocation(priorities: Optional[Dict[str, str]]) -> Dict[str,
     - "High" → weight 3
 
     Args:
-        priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "built_environment": "Medium"})
+        priorities: Dict mapping pillar names to priority strings (e.g., {"active_outdoors": "High", "natural_beauty": "Medium"})
 
     Returns:
         Dict mapping pillar names to token counts (sums to exactly 100)
     """
     primary_pillars = [
         "active_outdoors",
-        "built_environment",
         "natural_beauty",
         "neighborhood_amenities",
         "air_travel_access",
@@ -795,7 +794,6 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
     """
     primary_pillars = [
         "active_outdoors",
-        "built_environment",
         "natural_beauty",
         "neighborhood_amenities",
         "air_travel_access",
@@ -939,7 +937,6 @@ def _derive_token_allocation_for_scoring(
         priority_levels: Dict[str, str] = {}
         primary_pillars = [
             "active_outdoors",
-            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
@@ -1051,24 +1048,9 @@ def _set_pillar_status(
         if not isinstance(entry, dict):
             continue
         dq = dict(entry.get("data_quality") or {})
-        # neighborhood_beauty replaced two standalone pillar_tasks entries (built_environment,
-        # natural_beauty); _execute_pillar still records their exceptions under those
-        # original task names, not under the merged key. Without this, a total failure of
-        # either sub-pillar (e.g. calculate_natural_beauty() raising) gets silently caught
-        # and contained correctly upstream, then LOST here -- the merged pillar still reports
-        # status='success' even though one of its two components fabricated a zero instead
-        # of real data (the exact bug class already fixed in diversity.py, but for
-        # neighborhood_beauty the failure was being swallowed one level above where that
-        # fix could reach).
         is_failed = pillar_name in exceptions
-        if pillar_name == "neighborhood_beauty" and not is_failed:
-            is_failed = "built_environment" in exceptions or "natural_beauty" in exceptions
         if is_failed:
             entry["status"] = "failed"
-            # Force-overwrite (not setdefault): for neighborhood_beauty, dq here is
-            # built_environment's own healthy data_quality dict (already has a real quality_tier/
-            # confidence), so setdefault would never touch it -- a natural_beauty-only failure
-            # would set status='failed' while still showing "excellent / 87%" underneath.
             dq["quality_tier"] = "very_poor"
             dq["fallback_reason"] = dq.get("reason", "Pillar execution failed")
             dq["confidence"] = min(int(dq.get("confidence") or 0), 10)
@@ -1354,7 +1336,7 @@ def _apply_allocation_to_cached_response(
         allocation_type = "priority_based"
         priority_levels: Optional[Dict[str, str]] = {}
         primary_pillars = [
-            "active_outdoors", "neighborhood_beauty", "neighborhood_amenities",
+            "active_outdoors", "natural_beauty", "neighborhood_amenities",
             "air_travel_access", "public_transit_access", "healthcare_access",
             "economic_opportunity", "quality_education", "housing_value",
             "climate_risk", "social_fabric", "diversity", "community_safety",
@@ -1400,37 +1382,8 @@ def _apply_allocation_to_cached_response(
 
     livability_pillars = response.get("livability_pillars", {}) or {}
 
-    # Natural-beauty scenery preference: the catalog/cache template is preference-neutral
-    # (the cache key omits preferences for cross-user reuse). Recompute NB from its stored
-    # per-dimension component scores — which are preference-independent — and apply this
-    # request's preference. Done unconditionally so the served score is correct even if the
-    # cached score was populated by an earlier preference request.
-    # neighborhood_beauty nests the natural sub-pillar at details.natural_beauty; after
-    # recomputing its score, the blend (built_weight) must be reapplied so the merged
-    # pillar's top-level score reflects the new preference too.
-    nb_merged = livability_pillars.get("neighborhood_beauty")
-    nb_details = (nb_merged or {}).get("details", {}) if nb_merged else {}
-    natural_sub = nb_details.get("natural_beauty") if nb_details else None
-    v9b = (natural_sub or {}).get("v9_breakdown") if natural_sub else None
-    if v9b:
-        comp = {k: v9b.get(k) for k in (
-            "gvi_score", "water_score", "canopy_score",
-            "topo_score", "landcover_score", "bio_score")}
-        recomputed = natural_beauty.v9_score_from_components(comp, natural_beauty_preference)
-        if recomputed is not None:
-            natural_sub["score"] = recomputed
-            v9b["preference_applied"] = natural_beauty_preference or None
-            built_score = nb_merged.get("built_environment_score", nb_details.get("built_environment_score"))
-            built_weight = nb_merged.get("built_weight", nb_details.get("built_weight"))
-            if built_score is not None and built_weight is not None:
-                new_score = round(float(built_weight) * float(built_score) + (1.0 - float(built_weight)) * float(recomputed), 2)
-                nb_merged["score"] = new_score
-                nb_merged["natural_beauty_score"] = recomputed
-                nb_merged.setdefault("breakdown", {})["natural_beauty_score"] = recomputed
-                if "summary" in nb_merged and isinstance(nb_merged["summary"], dict):
-                    nb_merged["summary"].setdefault("natural_beauty", {})["score"] = recomputed
-
-    # Standalone natural_beauty pillar (used in vacation mode — not nested under neighborhood_beauty).
+    # Natural-beauty scenery preference: the cache template is preference-neutral.
+    # Recompute NB from its stored per-dimension component scores and apply this request's preference.
     if natural_beauty_preference:
         nb_standalone = livability_pillars.get("natural_beauty")
         if isinstance(nb_standalone, dict):
@@ -1557,13 +1510,7 @@ def _compute_single_score_internal(
         if only_param:
             raw_only = {part.strip() for part in only_param.split(",") if part.strip()}
             if raw_only:
-                expanded_only = set()
-                for name in raw_only:
-                    if name == "neighborhood_beauty":
-                        expanded_only.update({"built_environment", "natural_beauty"})
-                    else:
-                        expanded_only.add(name)
-                only_pillars = expanded_only
+                only_pillars = raw_only
             if not only_pillars:
                 only_pillars = None
 
@@ -1863,9 +1810,8 @@ def _compute_single_score_internal(
         form_context = None
         need_built_environment = _include_pillar('built_environment')
         need_natural_beauty = _include_pillar('natural_beauty')
-        need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
-        if need_built_environment or need_natural_beauty or need_neighborhood_beauty:
+        if need_built_environment or need_natural_beauty:
             try:
                 from data_sources.data_quality import get_form_context
                 from data_sources import census_api
@@ -1979,7 +1925,6 @@ def _compute_single_score_internal(
 
     need_built_environment = _include_pillar('built_environment')
     need_natural_beauty = _include_pillar('natural_beauty')
-    need_neighborhood_beauty = _include_pillar('neighborhood_beauty')
 
     pillar_tasks = []
     if _include_pillar('active_outdoors'):
@@ -2430,11 +2375,6 @@ def _compute_single_score_internal(
     pillar_results['natural_beauty'] = (natural_score, natural_details)
 
     nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
-    _nb_blend = neighborhood_beauty.blend_scores(
-        built_score, natural_score, density, nb_effective_area_type
-    )
-    neighborhood_beauty_score = _nb_blend["score"]
-    neighborhood_beauty_built_weight = _nb_blend["built_weight"]
     built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
     built_env_eligible = built_env_score is not None
 
@@ -2459,7 +2399,6 @@ def _compute_single_score_internal(
 
     total_score = (
         (active_outdoors_score * token_allocation["active_outdoors"] / 100)
-        + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
         + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
         + ((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100)
         + (air_travel_score * token_allocation["air_travel_access"] / 100)
@@ -2499,9 +2438,9 @@ def _compute_single_score_internal(
         },
         "built_environment": {
             "score": built_env_score,
-            "weight": token_allocation.get("built_environment", 0.0) if built_env_eligible else 0.0,
-            "importance_level": priority_levels.get("built_environment") if priority_levels else None,
-            "contribution": round((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100, 2) if built_env_eligible else 0.0,
+            "weight": 0.0,
+            "importance_level": None,
+            "contribution": 0.0,
             "details": {
                 "effective_area_type": nb_effective_area_type,
                 "built_env_preference": built_env_preference,
@@ -2524,38 +2463,6 @@ def _compute_single_score_internal(
             "confidence": _dq_confidence(natural_details.get("data_quality", {}) if natural_details else {}),
             "data_quality": natural_details.get("data_quality", {}) if natural_details else {},
             "area_classification": natural_details.get("area_classification", {}) if natural_details else {},
-        },
-        "neighborhood_beauty": {
-            "score": neighborhood_beauty_score,
-            "weight": 0.0,
-            "importance_level": None,
-            "contribution": 0.0,
-            "breakdown": {
-                "built_environment_score": built_score,
-                "natural_beauty_score": natural_score,
-                "built_weight": neighborhood_beauty_built_weight,
-                "effective_area_type": nb_effective_area_type,
-                "density": density,
-            },
-            "summary": {
-                "built_environment": _extract_built_environment_summary(built_details),
-                "natural_beauty": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference),
-                "built_weight": neighborhood_beauty_built_weight,
-            },
-            "built_environment_score": built_score,
-            "natural_beauty_score": natural_score,
-            "built_weight": neighborhood_beauty_built_weight,
-            "details": {
-                "built_environment": built_details,
-                "natural_beauty": natural_details,
-                "built_weight": neighborhood_beauty_built_weight,
-                "effective_area_type": nb_effective_area_type,
-                "density": density,
-                "source": "neighborhood_beauty",
-            },
-            "confidence": built_calc.get("data_quality", {}).get("confidence", 0) if built_calc else 0,
-            "data_quality": built_calc.get("data_quality", {}) if built_calc else {},
-            "area_classification": {},
         },
         "neighborhood_amenities": {
             "score": amenities_score,
@@ -2794,8 +2701,6 @@ def _compute_single_score_internal(
         response["status_signal_breakdown"] = breakdown
 
     public_transit_details = livability_pillars.get("public_transit_access")
-    # neighborhood_beauty replaced the two standalone pillars; happiness/longevity still
-    # consume the separate sub-scores, so synthesize the old per-pillar shape from them.
     natural_beauty_details = {"score": natural_score, **(natural_details or {})}
     happiness_result = _compute_happiness_index_for_response(
         housing_details,
@@ -4210,23 +4115,12 @@ async def _stream_score_with_progress(
         )
         
         nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
-        _nb_blend = neighborhood_beauty.blend_scores(
-            built_score, natural_score, density, nb_effective_area_type
-        )
-        neighborhood_beauty_score = _nb_blend["score"]
-        neighborhood_beauty_built_weight = _nb_blend["built_weight"]
-        # Vacation mode: use raw built_environment quality score (already area-type-calibrated).
-        # Non-vacation: preference-match score; None when no preference set (excluded from blend).
-        if is_vacation_mode and built_score is not None:
-            built_env_score = built_score
-        else:
-            built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
+        built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
         built_env_eligible = built_env_score is not None
 
         # Calculate weighted total
         total_score = (
             (active_outdoors_score * token_allocation["active_outdoors"] / 100)
-            + ((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100)
             + (natural_score * token_allocation.get("natural_beauty", 0.0) / 100)
             + ((amenities_score or 0.0) * token_allocation["neighborhood_amenities"] / 100)
             + (air_travel_score * token_allocation["air_travel_access"] / 100)
@@ -4263,9 +4157,9 @@ async def _stream_score_with_progress(
             },
             "built_environment": {
                 "score": built_env_score,
-                "weight": token_allocation.get("built_environment", 0.0) if built_env_eligible else 0.0,
-                "importance_level": priority_levels.get("built_environment") if priority_levels else None,
-                "contribution": round((built_env_score or 0.0) * token_allocation.get("built_environment", 0.0) / 100, 2) if built_env_eligible else 0.0,
+                "weight": 0.0,
+                "importance_level": None,
+                "contribution": 0.0,
                 "details": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference, "built_environment_score": built_score},
                 "breakdown": {"effective_area_type": nb_effective_area_type, "built_env_preference": built_env_preference},
                 "summary": {"effective_area_type": nb_effective_area_type},
@@ -4284,38 +4178,6 @@ async def _stream_score_with_progress(
                 "confidence": _dq_confidence(natural_details.get("data_quality", {}) if natural_details else {}),
                 "data_quality": natural_details.get("data_quality", {}) if natural_details else {},
                 "area_classification": natural_details.get("area_classification", {}) if natural_details else {},
-            },
-            "neighborhood_beauty": {
-                "score": neighborhood_beauty_score,
-                "weight": 0.0,
-                "importance_level": None,
-                "contribution": 0.0,
-                "breakdown": {
-                    "built_environment_score": built_score,
-                    "natural_beauty_score": natural_score,
-                    "built_weight": neighborhood_beauty_built_weight,
-                    "effective_area_type": nb_effective_area_type,
-                    "density": density,
-                },
-                "summary": {
-                    "built_environment": _extract_built_environment_summary(built_details),
-                    "natural_beauty": _natural_beauty_summary_with_preference(natural_details, natural_beauty_preference_parsed),
-                    "built_weight": neighborhood_beauty_built_weight,
-                },
-                "built_environment_score": built_score,
-                "natural_beauty_score": natural_score,
-                "built_weight": neighborhood_beauty_built_weight,
-                "details": {
-                    "built_environment": built_details,
-                    "natural_beauty": natural_details,
-                    "built_weight": neighborhood_beauty_built_weight,
-                    "effective_area_type": nb_effective_area_type,
-                    "density": density,
-                    "source": "neighborhood_beauty",
-                },
-                "confidence": built_calc.get("data_quality", {}).get("confidence", 0) if built_calc else 0,
-                "data_quality": built_calc.get("data_quality", {}) if built_calc else {},
-                "area_classification": {},
             },
             "neighborhood_amenities": {
                 "score": amenities_score,
@@ -5318,12 +5180,7 @@ def _build_place_summary(livability_pillars: dict, location_info: dict, only_pil
     med_val_str = f"${int(med_val):,}" if med_val is not None and isinstance(med_val, (int, float)) else None
 
     nb = livability_pillars.get("natural_beauty") or {}
-    if not nb:
-        # Post-merge: natural_beauty is a sub-score of neighborhood_beauty.
-        _nbh = livability_pillars.get("neighborhood_beauty") or {}
-        nb_score = _nbh.get("natural_beauty_score")
-    else:
-        nb_score = nb.get("score")
+    nb_score = nb.get("score")
 
     # Band helpers
     ao_band = _summary_band(ao_score) if ao_score is not None else None

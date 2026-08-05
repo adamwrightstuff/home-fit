@@ -69,13 +69,6 @@ export function getBuiltBeautyNarrative(
   return `${locationSentence} ${genericSentence}`
 }
 
-export function getNeighborhoodBeautyNarrative(
-  placeLabel: string,
-  pillar: Record<string, unknown>
-): string {
-  return `${getBuiltBeautyNarrative(placeLabel, pillar)} ${getNaturalBeautyNarrative(placeLabel, pillar)}`
-}
-
 export function getNeighborhoodAmenitiesNarrative(
   placeLabel: string,
   pillar: Record<string, unknown>
@@ -470,8 +463,6 @@ export function getPillarNarrative(
   pillar: Record<string, unknown>
 ): string | null {
   switch (key) {
-    case 'neighborhood_beauty':
-      return getNeighborhoodBeautyNarrative(placeLabel, pillar)
     case 'neighborhood_amenities':
       return getNeighborhoodAmenitiesNarrative(placeLabel, pillar)
     case 'active_outdoors':

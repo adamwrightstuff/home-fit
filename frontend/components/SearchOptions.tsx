@@ -8,7 +8,6 @@ export type PriorityLevel = 'None' | 'Low' | 'Medium' | 'High'
 
 interface PillarPriorities {
   active_outdoors: PriorityLevel
-  neighborhood_beauty: PriorityLevel
   natural_beauty: PriorityLevel
   built_environment: PriorityLevel
   neighborhood_amenities: PriorityLevel
@@ -60,7 +59,6 @@ const PRIORITY_LEVELS: PriorityLevel[] = ['None', 'Low', 'Medium', 'High']
 
 const DEFAULT_PRIORITIES: PillarPriorities = {
   active_outdoors: 'Medium',
-  neighborhood_beauty: 'None',
   natural_beauty: 'Medium',
   built_environment: 'None',
   neighborhood_amenities: 'Medium',

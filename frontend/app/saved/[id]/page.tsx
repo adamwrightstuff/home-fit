@@ -21,7 +21,6 @@ import HappinessInfo from '@/components/HappinessInfo'
 import ArchetypeTrajectoryInfo from '@/components/ArchetypeTrajectoryInfo'
 import TrajectoryChip from '@/components/catalog/TrajectoryChip'
 import { longevityIndexFromLivabilityPillars, HOMEFIT_COPY, STATUS_SIGNAL_ONLY_PILLARS } from '@/lib/pillars'
-import { withSynthesizedNeighborhoodBeauty } from '@/lib/nbPreference'
 
 function prioritiesFromRow(row: SavedScoreRow): PillarPriorities {
   const p = row.priorities as Record<string, string> | null | undefined
@@ -114,16 +113,7 @@ export default function SavedDetailPage() {
       .finally(() => setLoading(false))
   }, [id, user])
 
-  const rawPayloadStored = row?.score_payload as ScoreResponse | undefined
-  // Pre-migration saved scores store standalone built_environment/natural_beauty pillars with no
-  // neighborhood_beauty key; synthesize one so this surface (which only looks for the merged
-  // key) still renders legacy saves.
-  const rawPayload = useMemo(() => {
-    if (!rawPayloadStored) return rawPayloadStored
-    const livability_pillars = withSynthesizedNeighborhoodBeauty(rawPayloadStored.livability_pillars as unknown as Record<string, any>)
-    if (livability_pillars === rawPayloadStored.livability_pillars) return rawPayloadStored
-    return { ...rawPayloadStored, livability_pillars } as ScoreResponse
-  }, [rawPayloadStored])
+  const rawPayload = row?.score_payload as ScoreResponse | undefined
   const displayData = useMemo(() => {
     if (!rawPayload || !priorities) return null
     const rew = reweightScoreResponseFromPriorities(rawPayload, priorities)

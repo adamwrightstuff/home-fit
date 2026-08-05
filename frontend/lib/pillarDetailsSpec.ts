@@ -152,21 +152,6 @@ export const PILLAR_DETAILS_SPEC: Record<PillarKey, PillarDetailsSpec> = {
     ],
     degradedMessage: 'Area type data unavailable for this place.',
   },
-  neighborhood_beauty: {
-    topLine: 'Architecture and landscape together—built form, streetscape, and how green or scenic the area is.',
-    metrics: [
-      { label: 'Density feel', path: 'breakdown.bb_best_fit_density', format: 'text' },
-      { label: 'Era character', path: 'breakdown.bb_best_fit_character', format: 'text' },
-      { label: 'Built form', path: 'summary.built_environment.built_form_label', format: 'text' },
-      { label: 'Streetscape tags', path: 'summary.built_environment.built_context_tags', format: 'text' },
-      { label: 'Median year built', path: 'summary.built_environment.median_year_built', format: 'text' },
-      { label: 'Best natural fit', path: 'breakdown.nb_best_fit_label', format: 'text' },
-      { label: 'Neighborhood canopy', path: 'summary.natural_beauty.neighborhood_canopy_pct', format: 'percent', max: 100 },
-      { label: 'Nearest mapped water', path: 'summary.natural_beauty.water_proximity_km', format: 'distance' },
-      { label: 'Terrain relief (local)', path: 'summary.natural_beauty.terrain_relief_m', format: 'text' },
-    ],
-    degradedMessage: 'Limited data: some built environment or natural data sources were unavailable.',
-  },
   active_outdoors: {
     topLine: 'Everyday parks, trails, and water access the score is built from.',
     metrics: [

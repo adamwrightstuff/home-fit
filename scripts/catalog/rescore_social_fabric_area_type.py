@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Rescore social_fabric for all catalog places using the corrected effective_area_type
-from neighborhood_beauty breakdown (already patched to use classify_morphology).
+from built_environment breakdown.
 
 Usage:
     PYTHONPATH=. python3 scripts/catalog/rescore_social_fabric_area_type.py
@@ -35,9 +35,9 @@ def process(path: Path):
             continue
 
         loc_info = score.get("location_info", {})
-        nb = score.get("livability_pillars", {}).get("neighborhood_beauty", {})
-        area_type = nb.get("breakdown", {}).get("effective_area_type")
-        density = nb.get("breakdown", {}).get("density")
+        be = score.get("livability_pillars", {}).get("built_environment", {})
+        area_type = be.get("breakdown", {}).get("effective_area_type")
+        density = be.get("breakdown", {}).get("density")
         zip_code = loc_info.get("zip")
         name = row.get("catalog", {}).get("name", "?")
 

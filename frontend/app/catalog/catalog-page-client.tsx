@@ -375,30 +375,25 @@ export default function CatalogPageClient({
         quality_education: { ...edu, score: newScore, breakdown: { ...breakdown, base_avg_rating: baseAvg } } } } }
     })
 
-    // Synthesize natural_beauty from neighborhood_beauty sub-score.
-    // Zero out neighborhood_beauty so it doesn't double-count.
-    // If scenery preferences are active, re-score natural_beauty via v9 preference weighting.
-    const withNb = withSchoolType.map((p) => {
-      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
-      if (!nb) return p
-      const existingNb = (p.score.livability_pillars as any)?.natural_beauty
-      const storedNaturalScore = Number(existingNb?.score ?? nb.natural_beauty_score ?? nb.breakdown?.natural_beauty_score ?? 0)
-      const v9 = existingNb?.v9_breakdown as V9Breakdown | undefined
-      const prefScore = filterNbTypes.length > 0 && filterNbTypes.length < 4 && v9
-        ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? storedNaturalScore)
-        : storedNaturalScore
-      return {
-        ...p,
-        score: {
-          ...p.score,
-          livability_pillars: {
-            ...p.score.livability_pillars,
-            neighborhood_beauty: { ...nb, score: 0, weight: 0, contribution: 0 },
-            natural_beauty: { ...existingNb, score: prefScore, status: 'success', weight: 0, contribution: 0 },
-          },
-        },
-      }
-    })
+    // Apply scenery preferences to natural_beauty via v9 preference weighting.
+    const withNb = filterNbTypes.length > 0 && filterNbTypes.length < 4
+      ? withSchoolType.map((p) => {
+          const nb = (p.score.livability_pillars as any)?.natural_beauty
+          if (!nb) return p
+          const v9 = nb.v9_breakdown as V9Breakdown | undefined
+          const prefScore = v9 ? (applyNbPreferencesV9(v9, filterNbTypes as NbPreference[]) ?? nb.score) : nb.score
+          return {
+            ...p,
+            score: {
+              ...p.score,
+              livability_pillars: {
+                ...p.score.livability_pillars,
+                natural_beauty: { ...nb, score: prefScore },
+              },
+            },
+          }
+        })
+      : withSchoolType
 
     // Reweight AO score toward selected sub-components (1–2 selected = partial preference;
     // 0 or 3 = no reweighting). When a waterfront sub-preference is also active, first
@@ -520,9 +515,9 @@ export default function CatalogPageClient({
     },
     air_travel_access: (p) => {
       const ata = (p.score.livability_pillars as any)?.air_travel_access
-      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      const be = (p.score.livability_pillars as any)?.built_environment
       const nearestAirportKm = Number(ata?.summary?.nearest_airport_km ?? 0) || null
-      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
+      const effectiveAreaType = be?.breakdown?.effective_area_type ?? be?.details?.effective_area_type ?? null
       return passesAirTravelDealbreaker(nearestAirportKm, effectiveAreaType)
     },
     quality_education: (p) => {
@@ -537,9 +532,9 @@ export default function CatalogPageClient({
     },
     neighborhood_amenities: (p) => {
       const na = (p.score.livability_pillars as any)?.neighborhood_amenities
-      const nb = (p.score.livability_pillars as any)?.neighborhood_beauty
+      const be = (p.score.livability_pillars as any)?.built_environment
       const businessesWithinWalk = na?.breakdown?.home_walkability?.businesses_within_walk
-      const effectiveAreaType = nb?.breakdown?.effective_area_type ?? nb?.details?.effective_area_type ?? null
+      const effectiveAreaType = be?.breakdown?.effective_area_type ?? be?.details?.effective_area_type ?? null
       return passesNeighborhoodAmenitiesDealbreaker(
         typeof businessesWithinWalk === 'number' ? businessesWithinWalk : null,
         effectiveAreaType
