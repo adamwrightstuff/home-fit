@@ -449,7 +449,7 @@ export default function CatalogPageClient({
         const tr = p.score.status_signal_breakdown?.trajectory
         if (tr !== filterTrajectory) return false
       }
-      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
+      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         if (typeof lean !== 'number') return false
         const matchesAny = filterPoliticalLean.some(pref => {
@@ -616,7 +616,7 @@ export default function CatalogPageClient({
         const tr = p.score.status_signal_breakdown?.trajectory
         if (tr !== filterTrajectory) r.push('Trajectory')
       }
-      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 3) {
+      if (filterPoliticalLean.length > 0 && filterPoliticalLean.length < 5) {
         const lean = (p.score.livability_pillars as any)?.political_lean?.breakdown?.lean_2024
         const matchesAny = typeof lean === 'number' && filterPoliticalLean.some((pref) => {
           if (pref === 'strong_d') return lean >= 0.5
