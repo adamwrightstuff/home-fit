@@ -263,6 +263,35 @@ MAJOR_HOSPITALS = [
     ("Children's Hospital of Michigan", 42.3314, -83.0458, "large"),
     ("Children's Hospital of Minnesota", 44.9778, -93.2650, "large"),
     ("Children's Mercy Hospital", 39.0458, -94.5844, "large"),
+
+    # Community / regional hospitals for resort/rural destinations
+    # (academic-center fallback misses these, causing wildly wrong distances)
+    ("St. John's Medical Center", 43.4824, -110.7634, "medium"),           # Jackson, WY
+    ("Vail Health Hospital", 39.6430, -106.3754, "medium"),                # Vail, CO
+    ("Yampa Valley Medical Center", 40.4845, -106.8318, "medium"),         # Steamboat Springs, CO
+    ("Moab Regional Hospital", 38.5745, -109.5486, "small"),               # Moab, UT
+    ("The Outer Banks Hospital", 35.9520, -75.6167, "medium"),             # Kill Devil Hills / Nags Head, NC
+    ("Sentara Virginia Beach General Hospital", 36.7872, -76.0339, "large"), # Virginia Beach, VA
+    ("Sacred Heart Hospital on the Emerald Coast", 30.3699, -86.5100, "medium"), # Destin, FL
+    ("Fort Walton Beach Medical Center", 30.4040, -86.5773, "medium"),     # Fort Walton Beach, FL
+    ("Mount Desert Island Hospital", 44.3728, -68.2028, "small"),          # Bar Harbor, ME
+    ("Mission Hospital Asheville", 35.5751, -82.5423, "large"),            # Asheville, NC
+    ("Newport Hospital", 41.4944, -71.3175, "medium"),                     # Newport, RI
+    ("Barton Memorial Hospital", 38.9406, -119.9626, "medium"),            # South Lake Tahoe, CA
+    ("Coastal Carolina Hospital", 32.2283, -80.8519, "medium"),            # Hilton Head, SC
+    ("Community Hospital of the Monterey Peninsula", 36.5935, -121.9018, "medium"), # Monterey, CA
+    ("CHRISTUS St. Vincent Regional Medical Center", 35.6909, -106.0153, "large"), # Santa Fe, NM
+    ("Summit Health Medical Center", 39.5741, -106.0980, "medium"),        # Breckenridge / Frisco, CO
+    ("Montrose Memorial Hospital", 38.4784, -107.8779, "medium"),          # Telluride area, CO
+    ("LeConte Medical Center", 35.8717, -83.5657, "medium"),               # Gatlinburg / Sevierville, TN
+    ("Copley Hospital", 44.5598, -72.6232, "small"),                       # Stowe / Morrisville, VT
+    ("University of Utah Health Park City", 40.6441, -111.4980, "medium"), # Park City, UT
+    ("Cape Cod Hospital", 41.6429, -70.2778, "medium"),                    # Provincetown area, MA
+    ("Falmouth Hospital", 41.5523, -70.6076, "small"),                     # Cape Cod, MA
+    ("Queen of the Valley Medical Center", 38.3019, -122.3059, "large"),   # Napa, CA
+    ("St. David's Medical Center", 30.2930, -97.7285, "large"),            # Austin, TX
+    ("Seton Medical Center Austin", 30.3001, -97.7426, "large"),           # Austin, TX
+    ("St. David's South Austin Medical Center", 30.2245, -97.7794, "large"), # Austin, TX
 ]
 
 # Major urgent care chains database (fallback for OSM gaps)
