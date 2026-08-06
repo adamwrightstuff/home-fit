@@ -19,7 +19,10 @@ NOAA_CDO_BASE = "https://www.ncdc.noaa.gov/cdo-web/api/v2"
 NOAA_CDO_API_KEY = os.getenv("NOAA_CDO_API_KEY", "")
 
 # Monthly normal data types we care about
-_DATATYPES = "MLY-TMAX-NORMAL,MLY-TMIN-NORMAL,MLY-PRCP-NORMAL,MLY-SNOW-NORMAL"
+_DATATYPES = (
+    "MLY-TMAX-NORMAL,MLY-TMIN-NORMAL,MLY-PRCP-NORMAL,MLY-SNOW-NORMAL,"
+    "MLY-SUNSHINE-PCTPOSBL,MLY-DEWP-NORMAL,MLY-WIND-AVGSPD"
+)
 
 _MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -137,10 +140,26 @@ def _fetch_normals(station_id: str) -> Optional[Dict[str, Any]]:
             except (TypeError, ValueError):
                 return None
 
+        def _tenths(raw) -> Optional[float]:
+            # Generic tenths-unit parser (temperature, dewpoint, wind speed)
+            if raw is None:
+                return None
+            try:
+                v = float(raw)
+                return round(v / 10.0, 1) if v not in (-9999.0, -7777.0) else None
+            except (TypeError, ValueError):
+                return None
+
         tmax = _temp_f(m.get("MLY-TMAX-NORMAL"))
         tmin = _temp_f(m.get("MLY-TMIN-NORMAL"))
         prcp = _precip_in(m.get("MLY-PRCP-NORMAL"))
         snow = _precip_in(m.get("MLY-SNOW-NORMAL"))
+        # Sunshine: tenths of percent at first-order stations; None at co-op stations
+        sunshine_pct = _tenths(m.get("MLY-SUNSHINE-PCTPOSBL"))
+        if sunshine_pct is not None:
+            sunshine_pct = min(100.0, sunshine_pct)
+        dewpoint_f = _temp_f(m.get("MLY-DEWP-NORMAL"))
+        wind_mph = _tenths(m.get("MLY-WIND-AVGSPD"))
 
         months_out.append({
             "month": i,
@@ -149,6 +168,9 @@ def _fetch_normals(station_id: str) -> Optional[Dict[str, Any]]:
             "avg_low_f": tmin,
             "avg_precip_in": prcp,
             "avg_snow_in": snow,
+            "sunshine_pct": sunshine_pct,
+            "dewpoint_f": dewpoint_f,
+            "wind_mph": wind_mph,
             "comfort": _comfort_label(tmax, prcp),
         })
 
