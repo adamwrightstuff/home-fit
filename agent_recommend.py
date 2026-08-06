@@ -17,6 +17,8 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from climate_preferences import score_climate_match
+
 # Mirrors frontend/lib/pillars.ts PillarKey (order matches validation set)
 PILLAR_KEYS: tuple[str, ...] = (
     "natural_beauty",
@@ -100,6 +102,7 @@ def _normalize_catalog_row(line_obj: Dict[str, Any]) -> Optional[Dict[str, Any]]
     return {
         "neighborhood": search_query,
         "search_query": search_query,
+        "place_name": (cat.get("name") or "").strip(),
         "archetype": archetype,
         "status_label": status_label,
         "pillar_scores": pillar_scores,
@@ -107,6 +110,28 @@ def _normalize_catalog_row(line_obj: Dict[str, Any]) -> Optional[Dict[str, Any]]
         # Full score payload for client hydration (matches catalog map → /results handoff).
         "score_full": score if isinstance(score, dict) else {},
     }
+
+
+@lru_cache(maxsize=1)
+def _load_climate_index() -> Dict[str, Any]:
+    """Returns {place_name: climate_dict} from catalog_climate_profiles.jsonl."""
+    path = REPO_ROOT / "data" / "catalog_climate_profiles.jsonl"
+    index: Dict[str, Any] = {}
+    if not path.is_file():
+        return index
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                r = json.loads(line)
+                name = (r.get("name") or "").strip()
+                if name:
+                    index[name] = r.get("climate")
+            except json.JSONDecodeError:
+                continue
+    return index
 
 
 @lru_cache(maxsize=1)
@@ -150,15 +175,26 @@ def prerank_neighborhoods(
     priorities: Dict[str, str],
     top_n: int = 10,
     political_preference: Optional[str] = None,
+    climate_preferences: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, Any]]:
     numeric = priorities_to_numeric(priorities)
     total_weight = sum(numeric.values()) or 1
+    climate_index = _load_climate_index() if climate_preferences else {}
+    active_climate_axes = sum(1 for k in ("cold_tolerance", "heat_tolerance", "rain_tolerance", "seasons") if climate_preferences and climate_preferences.get(k))
+    climate_weight = min(active_climate_axes * 0.08, 0.28) if active_climate_axes else 0.0
     scored: List[Dict[str, Any]] = []
     for n in catalog:
         ps = dict(n["pillar_scores"])
         if numeric.get("political_lean", 0) > 0:
             ps["political_lean"] = _political_lean_score_from_raw(n.get("lean_2024"), political_preference)
-        weighted = sum(numeric.get(pillar, 0) * ps.get(pillar, 0.0) for pillar in PILLAR_KEYS) / total_weight
+        pillar_weighted = sum(numeric.get(pillar, 0) * ps.get(pillar, 0.0) for pillar in PILLAR_KEYS) / total_weight
+        if climate_weight > 0:
+            climate_data = climate_index.get(n.get("place_name", ""))
+            cm = score_climate_match(climate_data, climate_preferences or {})
+            climate_score = cm["score"] if cm else 50.0
+            weighted = (1 - climate_weight) * pillar_weighted + climate_weight * climate_score
+        else:
+            weighted = pillar_weighted
         payload = {
             "neighborhood": n["neighborhood"],
             "archetype": n["archetype"],
@@ -194,7 +230,10 @@ def _strip_json_fence(raw: str) -> str:
     return text
 
 
-def build_prompt(priorities: Dict[str, str], context: Dict[str, Any], candidates: List[Dict[str, Any]]) -> str:
+def build_prompt(priorities: Dict[str, str], context: Dict[str, Any], candidates: List[Dict[str, Any]], climate_preferences: Optional[Dict[str, str]] = None) -> str:
+    climate_block = ""
+    if climate_preferences:
+        climate_block = f"\nClimate/weather preferences (influence the pre-ranking; reference in explanations when relevant):\n{json.dumps(climate_preferences, indent=2)}\n"
     return f"""You are a neighborhood matching assistant for HomeFit, a platform that scores neighborhoods across livability pillars.
 
 A user completed a preference quiz. Their pillar priorities (keys are canonical; values are None/Low/Medium/High) are:
@@ -202,7 +241,7 @@ A user completed a preference quiz. Their pillar priorities (keys are canonical;
 
 Additional context about this user:
 {json.dumps(context, indent=2)}
-
+{climate_block}
 Below are the top candidate neighborhoods pre-ranked by weighted pillar match. Each includes pillar_scores (0–100), archetype, and percentile_band (status signature label from data):
 {json.dumps(candidates, indent=2)}
 
@@ -223,6 +262,7 @@ def get_recommendations(
     *,
     model: Optional[str] = None,
     political_preference: Optional[str] = None,
+    climate_preferences: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, Any]]:
     try:
         import anthropic
@@ -236,11 +276,11 @@ def get_recommendations(
     model_id = (model or os.getenv("HOMEFIT_ANTHROPIC_MODEL", "") or "").strip() or "claude-haiku-4-5-20251001"
 
     catalog = load_catalog_records()
-    candidates = prerank_neighborhoods(catalog, priorities, top_n=10, political_preference=political_preference)
+    candidates = prerank_neighborhoods(catalog, priorities, top_n=10, political_preference=political_preference, climate_preferences=climate_preferences)
     if not candidates:
         return []
 
-    prompt = build_prompt(priorities, context, candidates)
+    prompt = build_prompt(priorities, context, candidates, climate_preferences=climate_preferences)
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
         model=model_id,
@@ -278,6 +318,7 @@ class RecommendRequest(BaseModel):
     priorities: Dict[str, str]
     context: Dict[str, Any] = Field(default_factory=dict)
     political_preference: Optional[str] = None
+    climate_preferences: Optional[Dict[str, str]] = None
 
     @field_validator("priorities")
     @classmethod
@@ -304,7 +345,7 @@ def recommend_neighborhoods(req: RecommendRequest) -> Dict[str, Any]:
         pref = req.political_preference
         if pref and pref.strip().lower() not in VALID_POLITICAL_PREFERENCES:
             pref = None
-        results = get_recommendations(req.priorities, req.context, political_preference=pref)
+        results = get_recommendations(req.priorities, req.context, political_preference=pref, climate_preferences=req.climate_preferences or None)
     except HTTPException:
         raise
     except Exception as e:

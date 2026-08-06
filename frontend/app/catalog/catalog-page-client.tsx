@@ -37,6 +37,7 @@ import { buildResultsCacheKey, buildResultsUrl } from '@/lib/resultsShare'
 import { reweightScoreResponseFromPriorities, applyUserIncomeToScore, passesHousingValueDealbreaker, passesAirTravelDealbreaker, passesQualityEducationDealbreaker, passesCommunitySafetyDealbreaker, passesNeighborhoodAmenitiesDealbreaker, passesPublicTransitDealbreaker, passesHealthcareAccessDealbreaker, passesActiveOutdoorsDealbreaker, passesClimateRiskDealbreaker, passesSocialFabricDealbreaker } from '@/lib/reweight'
 import { applyNbPreferencesV9, type NbPreference, type V9Breakdown } from '@/lib/nbPreference'
 import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type AoBreakdown, type WaterfrontSubPreference } from '@/lib/aoPreference'
+import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
@@ -118,6 +119,7 @@ export default function CatalogPageClient({
   const [filterHousingType, setFilterHousingType] = useState<string[]>([])
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
+  const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>({})
 /** Deal-breaker pillars (housing_value MVP). Independent of importance weight — see CatalogWeightPanel. */
   const [dealbreakers, setDealbreakers] = useState<Partial<Record<PillarKey, boolean>>>({})
   const toggleDealbreaker = useCallback((key: PillarKey) => {
@@ -482,7 +484,15 @@ export default function CatalogPageClient({
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    return sortPlaces(list, sortKey, sortDir, priorities)
+    const sorted = sortPlaces(list, sortKey, sortDir, priorities)
+    if (!hasClimatePreferences(climatePrefs)) return sorted
+    return [...sorted].sort((a, b) => {
+      const am = scoreClimateMatch(a.climate, climatePrefs)
+      const bm = scoreClimateMatch(b.climate, climatePrefs)
+      const as = am?.score ?? -1
+      const bs = bm?.score ?? -1
+      return bs - as
+    })
   }, [
     adjustedPlaces,
     filterText,
@@ -494,6 +504,7 @@ export default function CatalogPageClient({
     filterSchoolType,
     filterLocalScene,
     filterHousingType,
+    climatePrefs,
     indexMode,
     sortByName,
     sortDir,
@@ -829,6 +840,12 @@ export default function CatalogPageClient({
     [router]
   )
 
+  const climateActiveCount =
+    (climatePrefs.cold_tolerance ? 1 : 0) +
+    (climatePrefs.heat_tolerance ? 1 : 0) +
+    (climatePrefs.rain_tolerance ? 1 : 0) +
+    (climatePrefs.seasons ? 1 : 0)
+
   if (showQuiz) {
     return (
       <PlaceValuesGame
@@ -1003,9 +1020,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount}
                     </span>
                   )}
                 </button>
@@ -1157,9 +1174,9 @@ export default function CatalogPageClient({
               aria-label="Filters"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) > 0 && (
+              {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0)}
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount}
                 </span>
               )}
             </button>
@@ -1570,6 +1587,8 @@ export default function CatalogPageClient({
         onFilterSchoolTypeChange={setFilterSchoolType}
         filterLocalScene={filterLocalScene}
         onFilterLocalSceneChange={setFilterLocalScene}
+        climatePrefs={climatePrefs}
+        onClimatePrefsChange={setClimatePrefs}
         resultCount={filteredPlaces.length}
       />
 

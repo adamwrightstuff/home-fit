@@ -53,10 +53,20 @@ export function isPillarIndexMode(mode: CatalogMapIndexMode): boolean {
   return PILLAR_INDEX_MODES.some((m) => m.id === mode)
 }
 
+/** Derived climate indicators joined from catalog_climate_profiles.jsonl. */
+export interface ClimateIndicators {
+  jan_f: number       // mean January temp °F
+  jul_f: number       // mean July temp °F
+  swing_f: number     // jul_f - jan_f (seasonal variation)
+  annual_precip_in: number
+  avg_solar: number   // kWh/m²/day (sunshine proxy)
+}
+
 /** Parsed line from `nyc_metro_place_catalog_scores_merged.jsonl`. */
 export interface CatalogMapPlace {
   catalog: CatalogRow
   score: ScoreResponse
+  climate?: ClimateIndicators
 }
 
 /** After `metro=all`, each place is tagged with its source metro. */
