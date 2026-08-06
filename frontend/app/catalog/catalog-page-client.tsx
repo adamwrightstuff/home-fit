@@ -483,16 +483,14 @@ export default function CatalogPageClient({
       const st = (p.catalog.state_abbr || '').toLowerCase()
       return name.includes(t) || county.includes(t) || st.includes(t)
     })
+    if (hasClimatePreferences(climatePrefs)) {
+      list = list.filter((p) => {
+        const cm = scoreClimateMatch(p.climate, climatePrefs)
+        return !cm || cm.score >= 30
+      })
+    }
     const sortKey: CatalogMapIndexMode | 'name' = sortByName ? 'name' : indexMode
-    const sorted = sortPlaces(list, sortKey, sortDir, priorities)
-    if (!hasClimatePreferences(climatePrefs)) return sorted
-    return [...sorted].sort((a, b) => {
-      const am = scoreClimateMatch(a.climate, climatePrefs)
-      const bm = scoreClimateMatch(b.climate, climatePrefs)
-      const as = am?.score ?? -1
-      const bs = bm?.score ?? -1
-      return bs - as
-    })
+    return sortPlaces(list, sortKey, sortDir, priorities)
   }, [
     adjustedPlaces,
     filterText,

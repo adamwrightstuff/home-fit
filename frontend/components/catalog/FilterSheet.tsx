@@ -443,7 +443,7 @@ export default function FilterSheet({
           <div style={{ marginBottom: 20 }}>
             <div style={LABEL_STYLE}>Weather</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>
-              Sorts and filters by how well each place matches your climate preferences. Any combination of axes is fine — unset axes are ignored.
+              Filters out places that are a poor climate match. Any combination of axes is fine — unset axes are ignored.
             </div>
 
             {/* Cold winters */}
