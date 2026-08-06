@@ -3,7 +3,7 @@
     "version": "1.0",
     "source": "OurAirports.com + FAA data",
     "last_updated": "2024-01-15",
-    "total_airports": 88,
+    "total_airports": 99,
     "description": "Comprehensive US commercial airports database with service levels and metadata"
   },
   "airports": [
@@ -1364,6 +1364,34 @@
       "runways": 2,
       "airlines": 5,
       "destinations": 10
+    },
+    {
+      "code": "PVD",
+      "name": "Rhode Island T.F. Green International Airport",
+      "city": "Warwick",
+      "state": "RI",
+      "lat": 41.7272,
+      "lon": -71.4283,
+      "type": "medium_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "medium",
+      "runways": 2,
+      "airlines": 8,
+      "destinations": 20
+    },
+    {
+      "code": "RNO",
+      "name": "Reno-Tahoe International Airport",
+      "city": "Reno",
+      "state": "NV",
+      "lat": 39.4991,
+      "lon": -119.7681,
+      "type": "medium_airport",
+      "service_level": "regional_hub",
+      "passenger_volume": "medium",
+      "runways": 2,
+      "airlines": 8,
+      "destinations": 20
     }
   ]
 }

@@ -18,7 +18,10 @@ HEADERS = {"X-HomeFit-Proxy-Secret": os.environ["HOMEFIT_PROXY_SECRET"]}
 TRIP_TYPE_MONTH = {"beach": 7, "mountain": 7, "city": 10}
 
 # Rescore air_travel for places that had 0.0 because airports were missing from DB.
-FORCE_AIR_TRAVEL = set()
+FORCE_AIR_TRAVEL = {
+    "Newport, RI",            # PVD now in airports.json; was resolving to BOS (100km)
+    "South Lake Tahoe, CA",   # RNO now in airports.json; was resolving to SMF (120km)
+}
 
 FORCE_ACTIVE_OUTDOORS_MOUNTAIN = False
 FORCE_ACTIVE_OUTDOORS_BEACH = False
@@ -27,25 +30,20 @@ FORCE_AMENITIES_CITY = False
 
 # Targeted reruns for confirmed Overpass/GEE failures found in July 2026 validation.
 FORCE_NATURAL_BEAUTY_LOCATIONS: set = {
-    "South Lake Tahoe, CA",   # GEE empty, score=0
-    "Newport, RI",            # conf=0, score=0
-    "Denver, CO",             # conf=0, score=0
-    "Memphis, TN",            # pillars=0 but score_data=25.7 — serialization bug, rerun to get clean value
+    "Newport, RI",            # NB=0, conf=0 — canopy+scenic both returned zero; ocean destination
+    "South Lake Tahoe, CA",   # NB=0, conf=0 — Sierra Nevada/Lake Tahoe; clear GEE failure
 }
 
-FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = {
-    "New Orleans, LA",        # conf=0, Overpass failed
-    "Washington, DC",         # conf=0, Overpass failed
-    "Vail, CO",               # all 3 Overpass queries errored
-    "Virginia Beach, VA",     # 2 Overpass errors, water=0
-    "Charleston, SC",         # AO=3.2, Overpass failure suspected
-    "Hilton Head, SC",        # trail query errored, trails=0
-    "Key West, FL",           # local Overpass errored, waterfront undercounted
-    "Destin, FL",             # 2 Overpass errors, water=0
-}
+FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = set()
 
 FORCE_AMENITIES_LOCATIONS: set = {
-    "Napa, CA",               # Places fallback failed, score=0 despite conf=22
+    "Napa, CA",               # geocode was hitting Napa County not Napa city — pin override below
+}
+
+# Explicit lat/lon overrides for places where the geocoder resolves to the wrong point.
+# Key = location string as stored in the JSONL.
+COORDINATE_OVERRIDES: dict = {
+    "Napa, CA": {"lat": 38.2971, "lon": -122.2855},  # Napa city downtown, not Napa County
 }
 
 
@@ -73,6 +71,8 @@ def rescore_pillars(location: str, trip_type: str, pillars: list) -> dict:
         "travel_month": travel_month,
         "only": ",".join(pillars),
     }
+    if location in COORDINATE_OVERRIDES:
+        params.update(COORDINATE_OVERRIDES[location])
     if trip_type == "beach":
         params["natural_beauty_preference"] = '["ocean"]'
     elif trip_type == "mountain":
@@ -159,6 +159,12 @@ def main():
             }
 
             row = rows[(loc, tt)]
+            # Preserve original weights — single-pillar rescore jobs return weight=0
+            # for the rescored pillar because weight allocation requires all pillars.
+            for k, v in new_pillars.items():
+                orig_weight = (row.get("pillars", {}).get(k) or {}).get("weight")
+                if (v.get("weight") or 0) == 0 and orig_weight:
+                    v["weight"] = orig_weight
             merged = {**row.get("pillars", {}), **new_pillars}
 
             total_w = sum((v.get("weight") or 0) for v in merged.values())
