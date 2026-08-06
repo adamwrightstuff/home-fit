@@ -1988,7 +1988,7 @@ def _compute_single_score_internal(
         pillar_tasks.append(
             ('healthcare_access', get_healthcare_access_score, {
                 'lat': lat, 'lon': lon, 'area_type': area_type, 'location_scope': location_scope, 'city': city,
-                'density': density
+                'density': density, 'vacation_mode': is_vacation_mode,
             })
         )
     if _include_pillar('economic_opportunity'):

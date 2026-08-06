@@ -36,6 +36,30 @@ FORCE_NATURAL_BEAUTY_LOCATIONS: set = {
 
 FORCE_ACTIVE_OUTDOORS_LOCATIONS: set = set()
 
+# Rescore HC for all vacation places scored < 40 — new vacation_mode distance-only curve.
+FORCE_HEALTHCARE_LOCATIONS: set = {
+    "Park City, UT",
+    "Breckenridge, CO",
+    "Telluride, CO",
+    "Gatlinburg, TN",
+    "Stowe, VT",
+    "Napa, CA",
+    "Provincetown, MA",
+    "Jackson, WY",
+    "Malibu, CA",
+    "Hilton Head, SC",
+    "Steamboat Springs, CO",
+    "South Lake Tahoe, CA",
+    "Rehoboth Beach, DE",
+    "Aspen, CO",
+    "Vail, CO",
+    "Kill Devil Hills, NC",
+    "Virginia Beach, VA",
+    "Destin, FL",
+    "Asheville, NC",
+    "Memphis, TN",
+}
+
 FORCE_AMENITIES_LOCATIONS: set = {
     "Napa, CA",               # geocode was hitting Napa County not Napa city — pin override below
 }
@@ -139,6 +163,8 @@ def main():
             pillars_to_rescore.append("active_outdoors")
         if loc in FORCE_NATURAL_BEAUTY_LOCATIONS:
             pillars_to_rescore.append("natural_beauty")
+        if loc in FORCE_HEALTHCARE_LOCATIONS and "healthcare_access" not in pillars_to_rescore:
+            pillars_to_rescore.append("healthcare_access")
         if (FORCE_AMENITIES_CITY and tt == "city") or loc in FORCE_AMENITIES_LOCATIONS:
             pillars_to_rescore.append("neighborhood_amenities")
         if pillars_to_rescore:

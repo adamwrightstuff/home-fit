@@ -344,11 +344,65 @@ def _get_fallback_hospitals(lat: float, lon: float, max_distance_km: float = 60.
     return hospitals
 
 
+def _get_vacation_healthcare_score(lat: float, lon: float) -> Tuple[float, Dict]:
+    """
+    Vacation-mode HC: distance to nearest hospital only.
+    Measures emergency access, not residential healthcare adequacy.
+    Curve: ≤5km→90, ≤15km→75, ≤30km→60, ≤60km→45, ≤90km→30, >90km→20
+    """
+    healthcare_data = _get_osm_healthcare(lat, lon)
+    hospitals = healthcare_data.get('hospitals', [])
+
+    nearest_km: Optional[float] = None
+    nearest_name: Optional[str] = None
+
+    with_dist = _with_numeric_distance(hospitals)
+    if with_dist:
+        nearest = min(with_dist, key=lambda x: x['distance_km'])
+        nearest_km = nearest['distance_km']
+        nearest_name = nearest.get('name')
+
+    if nearest_km is None:
+        _, nearest_db = _score_hospitals(lat, lon)
+        if nearest_db:
+            nearest_km = nearest_db['distance_km']
+            nearest_name = nearest_db.get('name')
+
+    if nearest_km is None:
+        score = 20.0
+    elif nearest_km <= 5:
+        score = 90.0
+    elif nearest_km <= 15:
+        score = 75.0
+    elif nearest_km <= 30:
+        score = 60.0
+    elif nearest_km <= 60:
+        score = 45.0
+    elif nearest_km <= 90:
+        score = 30.0
+    else:
+        score = 20.0
+
+    confidence = 80 if nearest_km is not None and nearest_km < 100 else 30
+    print(f"✅ Vacation Healthcare Score: {score:.0f}/100 (nearest hospital: {nearest_name}, {nearest_km}km)")
+    return round(score, 1), {
+        'score': score,
+        'breakdown': {'hospital_distance': score},
+        'summary': {
+            'nearest_hospital_km': nearest_km,
+            'nearest_hospital_name': nearest_name,
+            'scoring_mode': 'vacation_distance_only',
+        },
+        'data_quality': {'confidence': confidence, 'quality_tier': 'good'},
+    }
+
+
 def get_healthcare_access_score(lat: float, lon: float,
                                 area_type: Optional[str] = None,
                                 location_scope: Optional[str] = None,
                                 city: Optional[str] = None,
-                                density: Optional[float] = None) -> Tuple[float, Dict]:
+                                density: Optional[float] = None,
+                                vacation_mode: bool = False) -> Tuple[float, Dict]:
     """
     Calculate healthcare access score (0-100).
 
@@ -370,6 +424,9 @@ def get_healthcare_access_score(lat: float, lon: float,
     Returns:
         (total_score, detailed_breakdown)
     """
+    if vacation_mode:
+        return _get_vacation_healthcare_score(lat, lon)
+
     print(f"🏥 Analyzing healthcare access...")
 
     # Use provided area_type if available (already computed in main.py)
