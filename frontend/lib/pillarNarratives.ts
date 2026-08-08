@@ -43,31 +43,6 @@ export function getNaturalBeautyNarrative(
   return `${locationSentence} ${genericSentence}`
 }
 
-export function getBuiltBeautyNarrative(
-  placeLabel: string,
-  pillar: Record<string, unknown>
-): string {
-  const diversity = getPillarValue(pillar, 'summary.built_environment.diversity_score')
-  const heightDiversity = getPillarValue(pillar, 'summary.built_environment.height_diversity')
-
-  let characterPhrase = 'a fairly plain built environment'
-  if (typeof diversity === 'number') {
-    if (diversity >= 70) characterPhrase = 'a lot of visual variety and character in its buildings and streets'
-    else if (diversity <= 30) characterPhrase = 'more uniform, cookie-cutter buildings and streets'
-  }
-
-  let scalePhrase = ''
-  if (typeof heightDiversity === 'number') {
-    if (heightDiversity >= 60) scalePhrase = ' with a mix of building heights that can feel more interesting on foot'
-    else if (heightDiversity <= 20) scalePhrase = ' with more uniform building heights that can feel less varied'
-  }
-
-  const locationSentence = `${placeLabel} has ${characterPhrase}${scalePhrase}.`
-  const genericSentence =
-    'Thoughtful architecture and human-scale streets help places feel welcoming and walkable, which supports comfort and social connection over time.'
-
-  return `${locationSentence} ${genericSentence}`
-}
 
 export function getNeighborhoodAmenitiesNarrative(
   placeLabel: string,
