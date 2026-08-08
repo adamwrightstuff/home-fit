@@ -223,8 +223,7 @@ function inferWeights(answers: QuizAnswers): PillarWeights {
     set('diversity', 85)
     set('social_fabric', Math.max(get('social_fabric'), 70))
   } else if (cv === 'architectural') {
-    set('built_environment', Math.max(get('built_environment'), 85))
-    set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 65))
+    set('neighborhood_amenities', Math.max(get('neighborhood_amenities'), 85))
     set('diversity', 40)
   } else if (cv === 'tight_knit') {
     set('social_fabric', Math.max(get('social_fabric'), 85))

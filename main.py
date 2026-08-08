@@ -507,59 +507,6 @@ def _built_env_match_score(effective_area_type: Optional[str], preference: Optio
     return 20.0
 
 
-def _extract_built_environment_summary(built_details: Dict) -> Dict:
-    """Extract summary data from Built Environment details for display in UI."""
-    summary = {}
-    arch_analysis = built_details.get("architectural_analysis", {})
-    
-    if isinstance(arch_analysis, dict):
-        # Built Environment stores metrics under architectural_analysis.metrics (the top-level keys
-        # were placeholders in earlier iterations).
-        metrics = arch_analysis.get("metrics", {}) if isinstance(arch_analysis.get("metrics"), dict) else {}
-        summary["height_diversity"] = round(metrics.get("height_diversity", arch_analysis.get("height_diversity", 0)) or 0, 2)
-        summary["type_diversity"] = round(metrics.get("type_diversity", arch_analysis.get("type_diversity", 0)) or 0, 2)
-        summary["footprint_variation"] = round(metrics.get("footprint_variation", arch_analysis.get("footprint_variation", 0)) or 0, 2)
-        summary["built_coverage_ratio"] = round(metrics.get("built_coverage_ratio", arch_analysis.get("built_coverage_ratio", 0)) or 0, 3)
-        summary["diversity_score"] = round(metrics.get("diversity_score", arch_analysis.get("diversity_score", 0)) or 0, 2)
-        classification = arch_analysis.get("classification") or {}
-        if isinstance(classification, dict):
-            eat = classification.get("effective_area_type")
-            label = _humanize_built_effective_area_type(eat if isinstance(eat, str) else None)
-            if label:
-                summary["built_form_label"] = label
-            tags = classification.get("contextual_tags")
-            if isinstance(tags, list) and tags:
-                summary["built_context_tags"] = ", ".join(
-                    str(t).replace("_", " ").strip().title() for t in tags if t is not None
-                )
-        historic_ctx = arch_analysis.get("historic_context") or {}
-        median_yb = arch_analysis.get("median_year_built")
-        if median_yb is None and isinstance(historic_ctx, dict):
-            median_yb = historic_ctx.get("median_year_built")
-        if median_yb is not None:
-            try:
-                summary["median_year_built"] = int(median_yb)
-            except (TypeError, ValueError):
-                pass
-        pre_1940 = arch_analysis.get("pre_1940_pct")
-        if pre_1940 is None and isinstance(historic_ctx, dict):
-            pre_1940 = historic_ctx.get("pre_1940_pct")
-        if pre_1940 is not None:
-            try:
-                summary["pre_1940_pct"] = round(float(pre_1940), 1)
-            except (TypeError, ValueError):
-                pass
-        # For "Did you know" facts: total heritage structures (OSM historic + NRHP)
-        if isinstance(historic_ctx, dict):
-            landmarks = historic_ctx.get("landmarks") or 0
-            nrhp = historic_ctx.get("nrhp_count") or 0
-            summary["heritage_count"] = int(landmarks) + int(nrhp)
-    
-    summary["component_score"] = round(built_details.get("component_score_0_50", 0), 2)
-    summary["enhancer_bonus"] = round(built_details.get("enhancer_bonus_scaled", 0), 2)
-    
-    return summary
-
 
 _QUALITY_TIER_CONFIDENCE = {"excellent": 92, "good": 78, "fair": 60, "poor": 30, "very_poor": 5}
 
@@ -838,9 +785,7 @@ def parse_token_allocation(tokens: Optional[str]) -> Dict[str, float]:
                 token_dict[pillar] = token_dict.get(pillar, 0.0) + count
                 total_allocated += count
             elif pillar in alias_pillars:
-                split = count / 2.0
-                token_dict["built_environment"] = token_dict.get("built_environment", 0.0) + split
-                token_dict["natural_beauty"] = token_dict.get("natural_beauty", 0.0) + split
+                token_dict["natural_beauty"] = token_dict.get("natural_beauty", 0.0) + count
                 total_allocated += count
         
         # Auto-normalize to 100 tokens (preserve user intent ratios)
@@ -1211,16 +1156,19 @@ def root():
         "version": API_VERSION,
         "pillars": [
             "active_outdoors",
-            "built_environment",
             "natural_beauty",
             "neighborhood_amenities",
             "air_travel_access",
             "public_transit_access",
             "healthcare_access",
+            "economic_opportunity",
             "quality_education",
             "housing_value",
-        ]
-        ,
+            "climate_risk",
+            "social_fabric",
+            "diversity",
+            "community_safety",
+        ],
         "endpoints": {
             "score": "/score?location=ADDRESS",
             "docs": "/docs"
@@ -2377,7 +2325,6 @@ def _compute_single_score_internal(
 
     nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
     built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
-    built_env_eligible = built_env_score is not None
 
     if school_avg is None:
         school_avg = 0.0
@@ -4121,7 +4068,6 @@ async def _stream_score_with_progress(
         
         nb_effective_area_type = (built_calc or {}).get("effective_area_type") or area_type
         built_env_score = _built_env_match_score(nb_effective_area_type, built_env_preference)
-        built_env_eligible = built_env_score is not None
 
         # Calculate weighted total
         total_score = (
