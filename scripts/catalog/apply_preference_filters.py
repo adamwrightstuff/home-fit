@@ -191,6 +191,33 @@ def weighted_score(
 
 
 # ---------------------------------------------------------------------------
+# Heritage / built character filter
+# ---------------------------------------------------------------------------
+
+# Places with heritage_count >= this are classified as "historic".
+# Calibrate once we have empirical benchmarks; current value is an eyeball split
+# (NYC distribution: ~73/187 above 20, ~73 in 6–20 range, ~32 at 1–5, ~4 at 0).
+HERITAGE_HISTORIC_THRESHOLD = 10
+
+
+def passes_heritage_filter(heritage_count: Optional[int], preference: Optional[str]) -> bool:
+    """
+    True when the place satisfies the built-character preference.
+    Fails open (returns True) when heritage_count is None — SF has no data yet.
+    'no_preference' and None preference always pass.
+    """
+    if not preference or preference == "no_preference":
+        return True
+    if heritage_count is None:
+        return True
+    if preference == "historic":
+        return heritage_count >= HERITAGE_HISTORIC_THRESHOLD
+    if preference == "contemporary":
+        return heritage_count < HERITAGE_HISTORIC_THRESHOLD
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Housing stock classification — mirrors catalog-page-client.tsx thresholds
 # ---------------------------------------------------------------------------
 
@@ -286,6 +313,14 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
         built_form = be_summary.get("built_form_label") if isinstance(be_summary, dict) else None
         if built_form not in built_forms:
             return False, f"built_form={built_form}"
+
+    built_character = cfg.get("built_character")
+    if built_character and built_character != "no_preference":
+        be_summary = (lp.get("built_environment") or {}).get("summary") or {}
+        hc = be_summary.get("heritage_count") if isinstance(be_summary, dict) else None
+        hc = int(hc) if hc is not None else None
+        if not passes_heritage_filter(hc, built_character):
+            return False, f"heritage_count={hc}"
 
     political_lean = cfg.get("political_lean", [])
     if political_lean:
@@ -422,6 +457,7 @@ DEFAULT_PROFILE: dict = {
         "built_forms": [],
         "political_lean": [],
         "housing": [],
+        "built_character": None,
     },
     "preferences": {
         "nb": [],
@@ -478,6 +514,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Allow political lean (strong_d/lean_d/moderate/lean_r/strong_r). Repeatable. Empty = all.")
     p.add_argument("--housing", action="append", default=[], metavar="TYPE",
                    help="Allow housing type (sf_townhouse/small_multifamily/apartment). Repeatable. Empty = all.")
+    p.add_argument("--built-character", default=None,
+                   choices=["historic", "contemporary", "no_preference"],
+                   help="Filter by neighborhood character: historic (heritage_count >= threshold) or contemporary.")
     p.add_argument("--nb-pref", action="append", default=[], metavar="PREF",
                    help="Natural beauty sub-preference (mountains/ocean/lakes_rivers/canopy). Repeatable.")
     p.add_argument("--ao-pref", action="append", default=[], metavar="PREF",
@@ -524,6 +563,8 @@ def main(argv: Optional[list[str]] = None) -> None:
         filters["political_lean"] = args.political_lean
     if args.housing:
         filters["housing"] = args.housing
+    if args.built_character:
+        filters["built_character"] = args.built_character
 
     prefs = profile.setdefault("preferences", {})
     if args.nb_pref:
@@ -536,14 +577,15 @@ def main(argv: Optional[list[str]] = None) -> None:
     # Build resolved config
     weights = resolve_weights(profile.get("weights", {}))
     cfg = {
-        "archetypes":    filters.get("archetypes", []),
-        "trajectories":  filters.get("trajectories", []),
-        "local_scene":   filters.get("local_scene", "all"),
-        "built_forms":   filters.get("built_forms", []),
+        "archetypes":     filters.get("archetypes", []),
+        "trajectories":   filters.get("trajectories", []),
+        "local_scene":    filters.get("local_scene", "all"),
+        "built_forms":    filters.get("built_forms", []),
         "political_lean": filters.get("political_lean", []),
-        "housing":       filters.get("housing", []),
-        "nb_prefs":      prefs.get("nb", []),
-        "ao_prefs":      prefs.get("ao", []),
+        "housing":        filters.get("housing", []),
+        "built_character": filters.get("built_character"),
+        "nb_prefs":       prefs.get("nb", []),
+        "ao_prefs":       prefs.get("ao", []),
         "waterfront_sub": prefs.get("waterfront_sub"),
     }
 

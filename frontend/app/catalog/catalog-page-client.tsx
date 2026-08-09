@@ -117,6 +117,7 @@ export default function CatalogPageClient({
   const [filterAoTypes, setFilterAoTypes] = useState<string[]>([])
   const [filterWaterfrontSubPref, setFilterWaterfrontSubPref] = useState<WaterfrontSubPreference | null>(null)
   const [filterHousingType, setFilterHousingType] = useState<string[]>([])
+  const [filterBuiltCharacter, setFilterBuiltCharacter] = useState<'historic' | 'contemporary' | ''>('')
   const [filterSchoolType, setFilterSchoolType] = useState<'any' | 'public_only' | 'charter'>('any')
   const [filterLocalScene, setFilterLocalScene] = useState<'all' | 'Some' | 'High'>('all')
   const [climatePrefs, setClimatePrefs] = useState<ClimatePreferences>({})
@@ -272,6 +273,7 @@ export default function CatalogPageClient({
           if (Array.isArray(f.filterAoTypes)) setFilterAoTypes(f.filterAoTypes)
           if (typeof f.filterWaterfrontSubPref === 'string') setFilterWaterfrontSubPref(f.filterWaterfrontSubPref as WaterfrontSubPreference)
           if (Array.isArray(f.filterHousingType)) setFilterHousingType(f.filterHousingType)
+          if (f.filterBuiltCharacter === 'historic' || f.filterBuiltCharacter === 'contemporary') setFilterBuiltCharacter(f.filterBuiltCharacter)
           if (typeof f.filterSchoolType === 'string') setFilterSchoolType(f.filterSchoolType)
           if (typeof f.filterLocalScene === 'string') setFilterLocalScene(f.filterLocalScene)
         }
@@ -299,6 +301,7 @@ export default function CatalogPageClient({
             filterAoTypes,
             filterWaterfrontSubPref,
             filterHousingType,
+            filterBuiltCharacter,
             filterSchoolType,
             filterLocalScene,
           },
@@ -306,7 +309,7 @@ export default function CatalogPageClient({
       }).catch(() => {})
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterSchoolType, filterLocalScene])
+  }, [user, priorities, dealbreakers, householdIncome, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterNbTypes, filterAoTypes, filterWaterfrontSubPref, filterHousingType, filterBuiltCharacter, filterSchoolType, filterLocalScene])
 
   useEffect(() => {
     const key = searchParams.get('key')
@@ -477,6 +480,13 @@ export default function CatalogPageClient({
           if (!passesAny) return false
         }
       }
+      if (filterBuiltCharacter !== '') {
+        const hc = (p.score.livability_pillars as any)?.built_environment?.summary?.heritage_count
+        if (typeof hc === 'number') {
+          if (filterBuiltCharacter === 'historic' && hc < 10) return false
+          if (filterBuiltCharacter === 'contemporary' && hc >= 10) return false
+        }
+      }
       if (!t) return true
       const name = (p.catalog.name || '').toLowerCase()
       const county = (p.catalog.county_borough || '').toLowerCase()
@@ -502,6 +512,7 @@ export default function CatalogPageClient({
     filterSchoolType,
     filterLocalScene,
     filterHousingType,
+    filterBuiltCharacter,
     climatePrefs,
     indexMode,
     sortByName,
@@ -643,6 +654,13 @@ export default function CatalogPageClient({
           if (!passesAny) r.push('Housing type')
         }
       }
+      if (filterBuiltCharacter !== '') {
+        const hc = (p.score.livability_pillars as any)?.built_environment?.summary?.heritage_count
+        if (typeof hc === 'number') {
+          if (filterBuiltCharacter === 'historic' && hc < 10) r.push('Neighborhood character')
+          if (filterBuiltCharacter === 'contemporary' && hc >= 10) r.push('Neighborhood character')
+        }
+      }
       for (const k of activeDealbreakerKeys) {
         if (!DEALBREAKER_CHECKS[k]?.(p)) r.push(`${PILLAR_META[k].name} must-have`)
       }
@@ -658,7 +676,7 @@ export default function CatalogPageClient({
 
     return { hits, reasons }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterHousingType, activeDealbreakerKeys.join(','), householdIncome])
+  }, [filterText, adjustedPlaces, catalogMode, filterMetro, filterAreaTypes, filterArchetypes, filterTrajectory, filterPoliticalLean, filterLocalScene, filterHousingType, filterBuiltCharacter, activeDealbreakerKeys.join(','), householdIncome])
 
   const metroResultCounts = useMemo(() => {
     if (filterMetro !== 'all') return null
@@ -1018,9 +1036,9 @@ export default function CatalogPageClient({
                 >
                   <span>⚙</span>
                   Filters
-                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
+                  {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBuiltCharacter !== '' ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount > 0 && (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white" style={{ background: 'var(--hf-primary-1)' }}>
-                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount}
+                      {(filterAreaTypes.length > 0 ? 1 : 0) + (filterArchetypes.length > 0 ? 1 : 0) + (filterTrajectory !== 'all' ? 1 : 0) + (filterPoliticalLean.length > 0 ? 1 : 0) + (filterNbTypes.length > 0 ? 1 : 0) + (filterAoTypes.length > 0 ? 1 : 0) + (filterHousingType.length > 0 ? 1 : 0) + (filterBuiltCharacter !== '' ? 1 : 0) + (filterSchoolType !== 'any' ? 1 : 0) + (filterLocalScene !== 'all' ? 1 : 0) + climateActiveCount}
                     </span>
                   )}
                 </button>
@@ -1581,6 +1599,8 @@ export default function CatalogPageClient({
         onFilterWaterfrontSubPrefChange={setFilterWaterfrontSubPref}
         filterHousingType={filterHousingType}
         onFilterHousingTypeChange={setFilterHousingType}
+        filterBuiltCharacter={filterBuiltCharacter}
+        onFilterBuiltCharacterChange={setFilterBuiltCharacter}
         filterSchoolType={filterSchoolType}
         onFilterSchoolTypeChange={setFilterSchoolType}
         filterLocalScene={filterLocalScene}
