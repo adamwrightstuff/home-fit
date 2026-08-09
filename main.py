@@ -1653,9 +1653,11 @@ def _compute_single_score_internal(
             from data_sources import census_api as _ca
             from data_sources import data_quality as _dq
             from data_sources import osm_api
-            from data_sources.arch_diversity import compute_arch_diversity
+            from data_sources.arch_diversity import compute_arch_diversity, get_built_coverage_only
             from data_sources.regional_baselines import RegionalBaselineManager
-            
+
+            need_built_environment = _include_pillar('built_environment')
+
             # Parallelize independent API calls that don't depend on each other
             def _fetch_census_tract():
                 try:
@@ -1682,8 +1684,10 @@ def _compute_single_score_internal(
 
             def _fetch_built_coverage():
                 try:
-                    arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-                    return arch_diversity
+                    if need_built_environment:
+                        return compute_arch_diversity(lat, lon, radius_m=2000)
+                    coverage = get_built_coverage_only(lat, lon, radius_m=2000)
+                    return {"built_coverage_ratio": coverage} if coverage is not None else {}
                 except Exception as e:
                     logger.warning(f"Built coverage query failed (non-fatal): {e}")
                     return None
@@ -3502,7 +3506,13 @@ async def _stream_score_with_progress(
                 arch_diversity_data = None
                 if _need_arch_diversity_for_area_type(only_pillars):
                     try:
-                        arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
+                        need_be = only_pillars is None or "built_environment" in only_pillars
+                        if need_be:
+                            arch_diversity_data = compute_arch_diversity(lat, lon, radius_m=2000)
+                        else:
+                            from data_sources.arch_diversity import get_built_coverage_only
+                            coverage = get_built_coverage_only(lat, lon, radius_m=2000)
+                            arch_diversity_data = {"built_coverage_ratio": coverage} if coverage is not None else {}
                     except Exception:
                         arch_diversity_data = None
 

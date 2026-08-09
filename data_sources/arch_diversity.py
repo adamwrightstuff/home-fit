@@ -127,6 +127,43 @@ def _estimate_water_area_sqm(lat: float, lon: float, radius_m: int) -> Dict[str,
 
 
 @cached(ttl_seconds=CACHE_TTL['osm_queries'])
+def get_built_coverage_only(lat: float, lon: float, radius_m: int = 2000) -> Optional[float]:
+    """
+    Lightweight built coverage ratio for area-type classification.
+    One Overpass buildings query, no water mask, no GEE fallbacks.
+    Returns coverage ratio (0.0–1.0) or None on failure.
+    """
+    q = f"""
+    [out:json][timeout:30];
+    (
+      way["building"](around:{radius_m},{lat},{lon});
+      way["building:part"](around:{radius_m},{lat},{lon});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    try:
+        def _do_request():
+            return requests.post(get_overpass_url(), data={"data": q}, timeout=60, headers={"User-Agent": "HomeFit/1.0"})
+        resp = _retry_overpass(_do_request, query_type="architectural_diversity")
+        if resp is None or resp.status_code != 200:
+            return None
+        data = _safe_overpass_json(resp, context="built coverage query")
+        if not isinstance(data, dict):
+            return None
+        elements = data.get("elements", [])
+        if not elements:
+            return 0.0
+        total_built_area_sqm, _, _ = _sum_polygon_areas_from_elements(elements, lat=lat)
+        circle_area_sqm = math.pi * (radius_m ** 2)
+        return min(1.0, total_built_area_sqm / circle_area_sqm) if circle_area_sqm > 0 else 0.0
+    except Exception as e:
+        logger.warning(f"get_built_coverage_only failed: {e}")
+        return None
+
+
+@cached(ttl_seconds=CACHE_TTL['osm_queries'])
 def compute_arch_diversity(lat: float, lon: float, radius_m: int = 1000) -> Dict[str, Any]:
     """
     Return a dict with sandbox metrics (0-100 scaled where applicable):

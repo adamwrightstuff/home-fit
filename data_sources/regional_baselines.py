@@ -987,10 +987,8 @@ def get_area_classification(lat: float, lon: float, city: str = None,
     
     if built_coverage is None:
         try:
-            from .arch_diversity import compute_arch_diversity
-            arch_diversity = compute_arch_diversity(lat, lon, radius_m=2000)
-            if arch_diversity:
-                built_coverage = arch_diversity.get("built_coverage_ratio")
+            from .arch_diversity import get_built_coverage_only
+            built_coverage = get_built_coverage_only(lat, lon, radius_m=2000)
         except Exception:
             built_coverage = None
     
