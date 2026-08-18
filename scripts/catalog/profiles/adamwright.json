@@ -13,20 +13,19 @@
     "economic_opportunity": "Medium",
     "active_outdoors": "Medium",
     "climate_risk": "None",
-    "political_lean": "None",
-    "built_environment": "None"
+    "political_lean": "None"
   },
   "filters": {
-    "archetypes": [],
+    "archetypes": ["Affluent", "Elite"],
     "trajectories": [],
     "local_scene": null,
-    "built_forms": [],
-    "political_lean": [],
-    "housing": []
+    "built_forms": ["Suburban", "Urban residential"],
+    "political_lean": ["lean_d", "strong_d"],
+    "housing": ["sf_townhouse"]
   },
   "preferences": {
-    "nb": null,
-    "ao": null,
+    "nb": ["ocean", "canopy"],
+    "ao": ["local_parks", "waterfront"],
     "waterfront_sub": null
   },
   "dealbreakers": {
