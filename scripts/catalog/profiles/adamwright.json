@@ -1,0 +1,39 @@
+{
+  "weights": {
+    "natural_beauty": "High",
+    "quality_education": "High",
+    "neighborhood_amenities": "High",
+    "public_transit_access": "Low",
+    "air_travel_access": "Low",
+    "healthcare_access": "Medium",
+    "community_safety": "Medium",
+    "diversity": "Medium",
+    "housing_value": "Low",
+    "social_fabric": "High",
+    "economic_opportunity": "Medium",
+    "active_outdoors": "Medium",
+    "climate_risk": "None",
+    "political_lean": "None",
+    "built_environment": "None"
+  },
+  "filters": {
+    "archetypes": [],
+    "trajectories": [],
+    "local_scene": null,
+    "built_forms": [],
+    "political_lean": [],
+    "housing": []
+  },
+  "preferences": {
+    "nb": null,
+    "ao": null,
+    "waterfront_sub": null
+  },
+  "dealbreakers": {
+    "public_transit_access": true,
+    "air_travel_access": true,
+    "healthcare_access": true,
+    "community_safety": true,
+    "social_fabric": true
+  }
+}
