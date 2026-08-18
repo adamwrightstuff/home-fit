@@ -53,7 +53,7 @@ ALL_PILLARS = [
     "climate_risk", "political_lean", "built_environment",
 ]
 
-PRIORITY_TO_NUMERIC = {"None": 0, "Low": 33, "Medium": 66, "High": 100}
+PRIORITY_TO_NUMERIC = {"None": 0, "Low": 1, "Medium": 2, "High": 3}
 
 # ---------------------------------------------------------------------------
 # OWA helpers — mirrors frontend/lib/nbPreference.ts + aoPreference.ts
@@ -309,10 +309,11 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
 
     area_types = cfg.get("area_types", [])
     if area_types:
-        nb_bd = (lp.get("neighborhood_beauty") or {}).get("breakdown") or {}
-        effective_area_type = nb_bd.get("effective_area_type") if isinstance(nb_bd, dict) else None
-        if effective_area_type not in area_types:
-            return False, f"area_type={effective_area_type}"
+        dqs = score.get("data_quality_summary") or {}
+        ac = dqs.get("area_classification") or {}
+        area_type = ac.get("area_type") if isinstance(ac, dict) else None
+        if area_type not in area_types:
+            return False, f"area_type={area_type}"
 
     built_forms = cfg.get("built_forms", [])
     if built_forms:
