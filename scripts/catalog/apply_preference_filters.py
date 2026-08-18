@@ -307,6 +307,13 @@ def passes_hard_filters(row: dict, cfg: dict) -> tuple[bool, str]:
         if local_scene == "Some" and ls == "Low":
             return False, f"local_scene={ls}"
 
+    area_types = cfg.get("area_types", [])
+    if area_types:
+        nb_bd = (lp.get("neighborhood_beauty") or {}).get("breakdown") or {}
+        effective_area_type = nb_bd.get("effective_area_type") if isinstance(nb_bd, dict) else None
+        if effective_area_type not in area_types:
+            return False, f"area_type={effective_area_type}"
+
     built_forms = cfg.get("built_forms", [])
     if built_forms:
         be_summary = (lp.get("built_environment") or {}).get("summary") or {}

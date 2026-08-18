@@ -19,7 +19,7 @@
     "archetypes": ["Affluent", "Elite"],
     "trajectories": [],
     "local_scene": null,
-    "built_forms": ["Suburban", "Urban residential"],
+    "area_types": ["suburban", "urban_residential"],
     "political_lean": ["lean_d", "strong_d"],
     "housing": ["sf_townhouse"]
   },
