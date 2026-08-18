@@ -220,6 +220,19 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
             if v9.get(key) is None:
                 flags.append(f"missing:v9.{key}")
 
+    # Healthcare: flag sparse hospital data in urban/suburban areas — the most common
+    # failure mode is an Overpass timeout that returns 0-3 results and falls back to the
+    # MAJOR_HOSPITALS database, producing a plausible-looking score with bad underlying data.
+    if pillar == "healthcare_access":
+        summary = data.get("summary") or {}
+        hosp_count = summary.get("hospital_count")
+        nearest_km = summary.get("nearest_hospital_km")
+        dense = area_type in ("urban_core", "urban_residential", "suburban")
+        if dense and isinstance(hosp_count, (int, float)) and hosp_count <= 3:
+            flags.append(f"sparse_hospitals:{int(hosp_count)}")
+        if dense and isinstance(nearest_km, (int, float)) and nearest_km > 5:
+            flags.append(f"far_nearest_hospital:{nearest_km:.1f}km")
+
     # Transit: check if Transitland API was unavailable and score fell back to commute-time only
     if pillar == "public_transit_access":
         summary = data.get("summary") or {}
@@ -519,6 +532,7 @@ def main() -> int:
     warning_issues:      Dict[str, List[str]] = defaultdict(list)
     fallback_issues:     Dict[str, List[str]] = defaultdict(list)
     transit_api_fallbacks: Dict[str, List[str]] = defaultdict(list)
+    sparse_hc:           List[str] = []  # sparse_hospitals / far_nearest_hospital flags
     missing_sub:         Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
     zero_sub:            Dict[str, Dict[str, List[str]]] = defaultdict(lambda: defaultdict(list))
 
@@ -545,6 +559,8 @@ def main() -> int:
                     fallback_issues[pillar].append(name)
                 elif f == "transit_api_fallback":
                     transit_api_fallbacks[pillar].append(name)
+                elif f.startswith("sparse_hospitals:") or f.startswith("far_nearest_hospital:"):
+                    sparse_hc.append(f"{name}[{f}]")
                 elif f.startswith("missing:"):
                     missing_sub[pillar][f[8:]].append(name)
                 elif f.startswith("zero:"):
@@ -619,6 +635,15 @@ def main() -> int:
         for pillar in sorted(degraded_issues):
             places = degraded_issues[pillar]
             print(f"  {pillar}: {len(places)} — {', '.join(places[:8])}{'...' if len(places)>8 else ''}")
+
+    # ── Section 5b: Healthcare Overpass failures ───────────────────────────
+    if sparse_hc:
+        print("\n── HEALTHCARE: SPARSE/FAR HOSPITAL DATA (likely Overpass failure) ──")
+        print(f"  {len(sparse_hc)} place(s) — run fix_healthcare_bad_overpass.sh on Railway:")
+        for entry in sparse_hc[:30]:
+            print(f"    • {entry}")
+        if len(sparse_hc) > 30:
+            print(f"    ... +{len(sparse_hc)-30} more")
 
     # ── Section 6: Data warnings ───────────────────────────────────────────
     if warning_issues:
