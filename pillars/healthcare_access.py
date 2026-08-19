@@ -265,6 +265,67 @@ MAJOR_HOSPITALS = [
     ("Children's Hospital of Minnesota", 44.9778, -93.2650, "large"),
     ("Children's Mercy Hospital", 39.0458, -94.5844, "large"),
 
+    # NYC Metro — borough community hospitals (not in the academic-center list above)
+    ("Maimonides Medical Center", 40.6335, -74.0120, "large"),             # Borough Park / Boro Park, Brooklyn
+    ("NYU Langone Health Brooklyn", 40.6379, -74.0179, "medium"),          # Sunset Park, Brooklyn (former Lutheran)
+    ("NewYork-Presbyterian Brooklyn Methodist", 40.6617, -73.9890, "large"), # Park Slope, Brooklyn
+    ("Kings County Hospital Center", 40.6566, -73.9435, "large"),          # Flatbush, Brooklyn
+    ("SUNY Downstate Medical Center", 40.6552, -73.9415, "large"),         # Flatbush, Brooklyn
+    ("Interfaith Medical Center", 40.6724, -73.9431, "medium"),            # Crown Heights, Brooklyn
+    ("Wyckoff Heights Medical Center", 40.7029, -73.9205, "medium"),       # Bushwick, Brooklyn
+    ("Woodhull Medical Center", 40.7031, -73.9384, "medium"),              # Williamsburg, Brooklyn
+    ("Coney Island Hospital", 40.5768, -73.9958, "medium"),                # Coney Island, Brooklyn
+    ("Forest Hills Hospital", 40.7197, -73.8476, "medium"),               # Forest Hills, Queens
+    ("Elmhurst Hospital Center", 40.7446, -73.8820, "large"),              # Elmhurst, Queens
+    ("NewYork-Presbyterian Queens", 40.7370, -73.8281, "large"),           # Flushing, Queens
+    ("Flushing Hospital Medical Center", 40.7440, -73.8155, "medium"),     # Flushing, Queens
+    ("Queens Hospital Center", 40.7008, -73.8050, "medium"),               # Jamaica, Queens
+    ("Jamaica Hospital Medical Center", 40.6987, -73.8003, "medium"),      # Jamaica / Ozone Park, Queens
+    ("Jacobi Medical Center", 40.8553, -73.8475, "large"),                 # Pelham Pkwy, Bronx
+    ("Lincoln Medical Center", 40.8191, -73.9259, "large"),                # Mott Haven, Bronx
+    ("North Central Bronx Hospital", 40.8866, -73.8776, "medium"),         # Norwood, Bronx
+    ("Montefiore Medical Center Bronx", 40.8802, -73.8791, "large"),       # Norwood / Wakefield, Bronx
+    ("BronxCare Health System", 40.8415, -73.9245, "large"),               # Grand Concourse, Bronx
+    ("Richmond University Medical Center", 40.6380, -74.1155, "medium"),   # West Brighton, Staten Island
+    ("Staten Island University Hospital North", 40.6095, -74.0838, "large"), # Seaview, Staten Island
+    ("Staten Island University Hospital South", 40.5520, -74.1690, "medium"), # Prince's Bay, Staten Island
+
+    # NYC Metro — Westchester / Hudson Valley
+    ("Westchester Medical Center", 41.0750, -73.7993, "large"),            # Valhalla, NY (Level I trauma)
+    ("White Plains Hospital", 41.0340, -73.7629, "medium"),                # White Plains, NY
+    ("Phelps Hospital Northwell", 41.0895, -73.8629, "medium"),            # Sleepy Hollow, NY
+    ("Northern Westchester Hospital", 41.2102, -73.7281, "medium"),        # Mount Kisco, NY
+    ("Hudson Valley Hospital Center", 41.2743, -73.8851, "medium"),        # Cortlandt Manor, NY (near Peekskill)
+    ("Montefiore New Rochelle Hospital", 40.9141, -73.7854, "medium"),     # New Rochelle, NY (near Mount Vernon)
+
+    # NYC Metro — New Jersey
+    ("Morristown Medical Center", 40.7967, -74.4760, "large"),             # Morristown, NJ (Atlantic Health)
+    ("Overlook Medical Center", 40.7174, -74.3631, "large"),               # Summit, NJ (Atlantic Health)
+    ("Saint Barnabas Medical Center", 40.7891, -74.3182, "large"),         # Livingston, NJ (RWJBarnabas)
+    ("Newark Beth Israel Medical Center", 40.7282, -74.1738, "large"),     # Newark, NJ
+    ("University Hospital Newark", 40.7443, -74.1855, "large"),            # Newark, NJ
+    ("Hackensack University Medical Center", 40.8862, -74.0441, "large"),  # Hackensack, NJ
+    ("Holy Name Medical Center", 40.8801, -74.0143, "medium"),             # Teaneck, NJ
+    ("Englewood Health", 40.8921, -73.9727, "medium"),                     # Englewood, NJ
+    ("Valley Hospital", 40.9794, -74.1164, "large"),                       # Ridgewood, NJ
+    ("Mountainside Medical Center", 40.8221, -74.2135, "medium"),          # Montclair, NJ
+    ("St. Joseph's University Medical Center", 40.9176, -74.1652, "large"), # Paterson, NJ
+    ("Chilton Medical Center", 41.0050, -74.3118, "medium"),               # Pompton Plains, NJ
+
+    # NYC Metro — Connecticut (Fairfield County)
+    ("Stamford Hospital", 41.0547, -73.5346, "large"),                     # Stamford, CT
+    ("Greenwich Hospital", 41.0259, -73.6323, "medium"),                   # Greenwich, CT
+    ("Bridgeport Hospital", 41.1840, -73.2001, "large"),                   # Bridgeport, CT
+    ("Norwalk Hospital", 41.1196, -73.4166, "medium"),                     # Norwalk, CT
+    ("St. Vincent's Medical Center Bridgeport", 41.1673, -73.2012, "medium"), # Bridgeport, CT
+
+    # NYC Metro — Long Island
+    ("South Nassau Communities Hospital", 40.6381, -73.6370, "medium"),    # Oceanside, NY
+    ("Nassau University Medical Center", 40.7329, -73.5457, "large"),      # East Meadow, NY
+    ("North Shore University Hospital", 40.7756, -73.6924, "large"),       # Manhasset, NY
+    ("NYU Langone Long Island", 40.7231, -73.5917, "large"),               # Mineola, NY
+    ("Long Island Jewish Medical Center", 40.7547, -73.7065, "large"),     # New Hyde Park, NY
+
     # Community / regional hospitals for resort/rural destinations
     # (academic-center fallback misses these, causing wildly wrong distances)
     ("St. John's Medical Center", 43.4824, -110.7634, "medium"),           # Jackson, WY
