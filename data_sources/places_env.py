@@ -31,3 +31,9 @@ def places_ao_fallback_enabled() -> bool:
     if not google_places_api_key():
         return False
     return places_master_fallback_enabled() or _truthy("HOMEFIT_PLACES_AO_FALLBACK_ENABLED")
+
+
+def places_hc_fallback_enabled() -> bool:
+    if not google_places_api_key():
+        return False
+    return places_master_fallback_enabled() or _truthy("HOMEFIT_PLACES_HC_FALLBACK_ENABLED")

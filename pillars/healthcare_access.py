@@ -28,6 +28,7 @@ from typing import Dict, Tuple, List, Optional
 from data_sources import osm_api, data_quality
 from data_sources.regional_baselines import get_contextual_expectations, get_area_classification
 from data_sources.radius_profiles import get_radius_profile
+from data_sources.places_healthcare_client import maybe_augment_healthcare_with_places
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -509,6 +510,20 @@ def get_healthcare_access_score(lat: float, lon: float,
                     hospitals.append(fb_hosp)
             print(f"   ✅ Added {len(fallback_hospitals)} hospitals from fallback database")
     
+    # Google Places augmentation: supplements thin or failed OSM data
+    places_meta = maybe_augment_healthcare_with_places(
+        lat, lon,
+        radius_m=fac_radius_m,
+        hospitals=hospitals,
+        urgent_care=urgent_care,
+        pharmacies=pharmacies,
+        clinics=clinics,
+        doctors=doctors,
+        query_failed=query_failed,
+    )
+    if places_meta.get("triggered"):
+        print(f"   🔍 Places HC: {places_meta['reason']} — added {places_meta['hospitals_added']} hospitals, {places_meta['pharmacies_added']} pharmacies, {places_meta['doctors_added']} doctors (calls={places_meta['http_calls']})")
+
     # Log warning if no data found (could indicate OSM failure)
     if not hospitals and not urgent_care and not pharmacies and not clinics and not doctors:
         print(f"   ⚠️  WARNING: No healthcare facilities found. This may indicate:")
@@ -848,7 +863,8 @@ def get_healthcare_access_score(lat: float, lon: float,
             nearest_hospital, urgent_care, pharmacies, clinics
         ),
         "data_quality": quality_metrics,
-        "area_classification": area_metadata
+        "area_classification": area_metadata,
+        "places_augmentation": places_meta if places_meta.get("triggered") else None,
     }
 
     # Enrich summary with counts
