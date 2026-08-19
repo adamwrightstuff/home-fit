@@ -175,7 +175,10 @@ def main():
         cat = row.get("catalog", {})
         lat = float(cat["lat"])
         lon = float(cat["lon"])
-        city = cat.get("name")
+        # Prefer geocoded city (location_info.city) over catalog name for NPI lookups;
+        # neighborhood names like "Almaden Valley" aren't valid NPPES city names.
+        geocoded_city = (row.get("score", {}).get("location_info", {}) or {}).get("city")
+        city = geocoded_city or cat.get("name")
 
         if is_full_rescore:
             pillars = (row.get("score", {}).get("livability_pillars", {}) or {})

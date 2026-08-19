@@ -29,6 +29,7 @@ from data_sources import osm_api, data_quality
 from data_sources.regional_baselines import get_contextual_expectations, get_area_classification
 from data_sources.radius_profiles import get_radius_profile
 from data_sources.places_healthcare_client import maybe_augment_healthcare_with_places
+from data_sources.npi_specialty_client import get_specialty_count as _npi_specialty_count, state_from_latlon as _state_from_latlon
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -756,9 +757,19 @@ def get_healthcare_access_score(lat: float, lon: float,
     expected_specialties = 8.0
     
     if specialty_count <= 0:
-        if apply_primary_care_fallback and len(hospitals) > 0:
-            # If we have hospitals (from fallback database) but no specialty data due to OSM failure,
-            # apply small fallback assuming hospitals have some specialties
+        # Try NPI federal registry whenever specialty tags are absent — fires whether the
+        # gap comes from Overpass failure or (more commonly) missing OSM specialty tagging.
+        state = _state_from_latlon(lat, lon)
+        npi_count = _npi_specialty_count(city or "", state, lat=lat, lon=lon)
+        if npi_count > 0:
+            specialty_count = npi_count
+            print(f"   🏥 NPI specialty count: {npi_count} (state={state})")
+
+        if specialty_count > 0:
+            specialty_ratio = specialty_count / expected_specialties
+            specialty_score = _ratio_score(specialty_ratio, max_score=15.0)
+        elif apply_primary_care_fallback and len(hospitals) > 0:
+            # Legacy density-based fallback when NPI is unavailable or returned 0
             if area_type == "urban_core" or (pop_density and pop_density > 5000):
                 specialty_score = 8.0
             elif area_type == "urban_residential" or (pop_density and pop_density > 2000):
