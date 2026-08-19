@@ -8,7 +8,7 @@ Answer in one sentence. Lead with the fix, not the explanation. No code snippets
 
 ## What This Is
 
-HomeFit is a personalized livability scoring API that evaluates any location across 13 research-backed pillars (active outdoors, built environment, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, diversity) to produce a weighted 0–100 score. Production backend runs on Railway; frontend on Vercel.
+HomeFit is a personalized livability scoring API that evaluates any location across 13 research-backed pillars (active outdoors, natural beauty, neighborhood amenities, air travel, public transit, healthcare, education, housing value, economic security, climate risk, social fabric, diversity, community safety) to produce a weighted 0–100 score. Political lean is a 14th opt-in pillar (weight=0 unless the user declares a preference). Built environment is scored but not a primary residential pillar — it only appears in vacation road_trip mode. Production backend runs on Railway; frontend on Vercel.
 
 ## Running Locally
 

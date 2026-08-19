@@ -104,12 +104,11 @@ status_signal drift). Propagated to `composites_recomputed.jsonl`.
 ---
 
 ## BUG-006 · Sleepy Hollow air_travel = 58 (5.2σ below urban_residential mean 94.3)
-**Severity: MEDIUM**
+**Severity: MEDIUM** | ✅ CLOSED 2026-08-05 — NOT A BUG
 
-Sleepy Hollow is 30 miles from JFK, LGA, and EWR. air_travel=58 for an NYC suburb is wrong.
-
-**Fix requires:** check air_travel breakdown (nearest airport distance, # airports in radius)
-for Sleepy Hollow to see if it got classified with wrong coordinates.
+Anomaly detector compared Sleepy Hollow (suburban) to urban_residential mean (94.3). Score
+of 58 is correct: consistent with the suburban distance band (LGA@34.7km). Greenwich=58
+@34.6km, White Plains=58 @30.1km, Cos Cob=58 @38.1km — all same band, same score.
 
 ---
 
@@ -186,16 +185,17 @@ to `ny_state_ucr / Rye Brook Vg PD` (Westchester County, correct jurisdiction).
 ---
 
 ## BUG-011 · CT places passing political lean filter with null lean
-**Severity: MEDIUM** | Confirmed: New Canaan, Old Greenwich, Weston
+**Severity: MEDIUM** | ✅ FIXED 2026-08-05 | Confirmed: New Canaan, Old Greenwich, Weston
 
 All three show `lean_2024 = None`, `pl.score = None`, `display_label = None`.
 Known from memory: CT political lean data has only ~8 values statewide (near-useless).
-The filter is letting these through with "?" display rather than excluding them cleanly,
-so the Explorer shows a lean value that is actually unknown data, not a real signal.
 
-**Fix requires:** ensure places with `lean_2024 = None` are explicitly excluded from any
-lean-based filtering/display rather than displaying as ambiguous — they are not moderate,
-they are unscored.
+**Fix applied (`frontend/app/catalog/catalog-page-client.tsx`):**
+- Filter block: changed `if (typeof lean === 'number')` guard to hard-exclude null lean places
+  (`if (typeof lean !== 'number') return false`) so null-lean places are always excluded
+  when a political lean filter is active
+- Chip display block: folded the number check into the matchesAny expression so null-lean
+  places are always shown as not-matching rather than ambiguously passing
 
 ---
 

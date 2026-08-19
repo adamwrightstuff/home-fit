@@ -402,11 +402,14 @@ def check_row(
                 place_flags.append(f"status_signal_drift:{stored_ss:.1f}vs{comp_ss:.1f}")
 
         # total_score drift — recompute from stored contributions + token_allocation fallback.
-        # Two known false-positive patterns are excluded:
+        # False-positive patterns excluded:
         #   1. contribution=None pillars get recomputed from token_allocation at runtime;
         #      health check must do the same or it under-counts and flags false drift.
         #   2. SF-style high-scoring places: uncapped contribution sum > 100 but stored total
         #      is correctly min(100, sum) — compare after applying the same cap.
+        #   3. Stored data-gap pillars (score=None, contribution=0.0, weight>0): recompute
+        #      applies a gap scale (100 / (100 - gap_w)) to avoid penalising the place for
+        #      a missing pillar.  Health check must mirror this or it flags correct totals.
         stored_t = sc.get("total_score")
         token_alloc = sc.get("token_allocation") or {}
         pillars_for_drift = sc.get("livability_pillars") or {}
@@ -415,14 +418,20 @@ def check_row(
         elif pillars_for_drift:
             _s_total = 0.0
             _r_weights: Dict[str, float] = {}
+            _gap_w = 0.0
             for _pname, _pdata in pillars_for_drift.items():
                 if not isinstance(_pdata, dict):
                     continue
                 _contrib = _pdata.get("contribution")
-                if isinstance(_contrib, (int, float)):
+                _stored_w = _pdata.get("weight")
+                _pillar_w = float(_stored_w) if isinstance(_stored_w, (int, float)) else float(token_alloc.get(_pname) or 0)
+                _is_gap = (_contrib == 0.0 and _pdata.get("score") is None and _pillar_w > 0)
+                if _is_gap:
+                    _gap_w += _pillar_w
+                elif isinstance(_contrib, (int, float)):
                     _s_total += float(_contrib)
                 else:
-                    _w = _pdata.get("weight")
+                    _w = _stored_w
                     if not isinstance(_w, (int, float)):
                         _w = token_alloc.get(_pname)
                     _r_weights[_pname] = float(_w) if isinstance(_w, (int, float)) else 0.0
@@ -431,7 +440,8 @@ def check_row(
                 for _p, _w in _r_weights.items()
                 if isinstance((pillars_for_drift.get(_p) or {}).get("score"), (int, float)) and _w > 0
             )
-            computed_t = round(min(100.0, _s_total + _r_total), 2)
+            _gap_scale = (100.0 / (100.0 - _gap_w)) if _gap_w > 0 else 1.0
+            computed_t = round(min(100.0, (_s_total + _r_total) * _gap_scale), 2)
             if abs(stored_t - computed_t) > 1.0:
                 place_flags.append(f"total_score_drift:{stored_t:.1f}vs{computed_t:.1f}")
 
