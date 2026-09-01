@@ -137,6 +137,10 @@ HAPPINESS_COMPONENT_WEIGHTS = {
 # Pillars that store confidence on 0-1 scale instead of 0-100
 ZERO_ONE_CONFIDENCE_PILLARS = {"political_lean"}
 
+# Pillars where confidence is structurally undefined in residential catalog mode
+# and should not be flagged (built_environment is vacation/road_trip only)
+SKIP_CONFIDENCE_PILLARS = {"built_environment"}
+
 
 def pillar_version(pillar: str, data: Dict[str, Any]) -> Optional[str]:
     if pillar == "natural_beauty":
@@ -169,8 +173,8 @@ def check_pillar(pillar: str, data: Dict[str, Any], show_unversioned: bool) -> L
 
     conf = dq.get("confidence")
     threshold = CONFIDENCE_THRESHOLDS.get(pillar, CONFIDENCE_THRESHOLDS["default"])
-    # Some pillars (political_lean) store confidence on 0-1 scale — skip those
-    if pillar in ZERO_ONE_CONFIDENCE_PILLARS:
+    # Some pillars store confidence on 0-1 scale or are structurally unscored in catalog mode
+    if pillar in ZERO_ONE_CONFIDENCE_PILLARS or pillar in SKIP_CONFIDENCE_PILLARS:
         conf = None
     if isinstance(conf, (int, float)) and conf < threshold:
         flags.append(f"conf_{int(conf)}")

@@ -635,6 +635,7 @@ def get_social_fabric_score(
         "participation": round(e, 1),
         "social_capital": cohesion_score,
         "peer_civic": round(civic_score, 1) if civic_score else None,
+        "rootedness": round(rooted_pct, 1) if rooted_pct is not None else None,
     }
 
     summary = {
