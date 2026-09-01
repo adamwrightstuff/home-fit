@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Loader2, RefreshCcw, Search } from 'lucide-react'
+import { ChevronLeft, Loader2, RefreshCcw, Search, X } from 'lucide-react'
 import type { PillarPriorities, PriorityLevel } from './SearchOptions'
 import { JOB_CATEGORY_OPTIONS } from './SearchOptions'
 import AppHeader from './AppHeader'
@@ -488,7 +488,17 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
               <ChevronLeft size={18} />
               Back
             </button>
-            <span />
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="hf-btn-link"
+                aria-label="Exit quiz"
+                style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem' }}
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
           <section className="hf-card" aria-labelledby="agent-rec-heading">
             <h2
@@ -621,9 +631,17 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             <div className="tr-label" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Question {current_step + 1} of {TOTAL_QUESTIONS}
             </div>
-            <div className="tr-muted" style={{ fontWeight: 800 }}>
-              {Math.round(progress_pct)}%
-            </div>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="hf-btn-link"
+                aria-label="Exit quiz"
+                style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem' }}
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
           <div className="tr-panel" style={{ marginBottom: '1.5rem' }}>
             <div style={{ height: 10, background: '#f1f3f5', borderRadius: 999, overflow: 'hidden' }}>
@@ -715,7 +733,17 @@ export default function PlaceValuesGame({ onApplyPriorities, onBack }: PlaceValu
             <ChevronLeft size={18} />
             Back
           </button>
-          <span />
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="hf-btn-link"
+              aria-label="Exit quiz"
+              style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem' }}
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
         <div className="hf-card">
           <h2 className="hf-section-title" style={{ marginBottom: '0.75rem' }}>
