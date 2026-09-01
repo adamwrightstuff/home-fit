@@ -1,12 +1,33 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function HeroBand() {
   const { loading } = useAuth()
+  const [dismissed, setDismissed] = useState(false)
 
   if (loading) return null
+
+  if (dismissed) {
+    return (
+      <div className="flex items-center justify-end border-b border-gray-100 bg-white px-4 py-2">
+        <Link
+          href="/quiz"
+          style={{
+            fontSize: 13,
+            color: 'var(--hf-primary-1)',
+            fontWeight: 600,
+            textDecoration: 'none',
+          }}
+        >
+          Take the quiz →
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -39,6 +60,23 @@ export default function HeroBand() {
         >
           Take the quiz →
         </Link>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            color: '#9ca3af',
+          }}
+        >
+          <X size={18} />
+        </button>
       </div>
     </div>
   )
