@@ -391,7 +391,7 @@ export default function CatalogMapView({
   return (
     <div className="relative w-full flex-1 min-h-0" style={{ background: '#e5e7eb' }}>
       <div ref={container_ref} className="absolute inset-0 w-full h-full" />
-      <MapLegend show={mapVariant === 'explorer'} />
+      <MapLegend show={mapVariant === 'explorer'} indexMode={indexMode} />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/90 p-4">
           <p className="text-center text-sm text-red-700">{error}</p>

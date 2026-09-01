@@ -1,11 +1,17 @@
 'use client'
 
+import { catalogModeToRamp, RAMP_HEX } from '@/lib/indexColorSystem'
+import type { CatalogMapIndexMode } from '@/lib/catalogMapTypes'
+
 interface MapLegendProps {
   show: boolean
+  indexMode?: CatalogMapIndexMode
 }
 
-export default function MapLegend({ show }: MapLegendProps) {
+export default function MapLegend({ show, indexMode = 'homefit' }: MapLegendProps) {
   if (!show) return null
+
+  const ramp = RAMP_HEX[catalogModeToRamp(indexMode)]
 
   return (
     <div
@@ -25,16 +31,16 @@ export default function MapLegend({ show }: MapLegendProps) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-        <span style={{ color: '#5B21B6', fontSize: 14, lineHeight: 1 }}>●</span>
-        <span style={{ color: '#374151' }}>Score 80+</span>
+        <span style={{ color: ramp[400], fontSize: 14, lineHeight: 1 }}>●</span>
+        <span style={{ color: '#374151' }}>Score 75+</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-        <span style={{ color: '#8B5CF6', fontSize: 14, lineHeight: 1 }}>●</span>
-        <span style={{ color: '#374151' }}>Score 65–79</span>
+        <span style={{ color: ramp[200], fontSize: 14, lineHeight: 1 }}>●</span>
+        <span style={{ color: '#374151' }}>Score 50–74</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-        <span style={{ color: '#C4B5FD', fontSize: 14, lineHeight: 1 }}>●</span>
-        <span style={{ color: '#374151' }}>Score &lt;65</span>
+        <span style={{ color: ramp[50], fontSize: 14, lineHeight: 1 }}>●</span>
+        <span style={{ color: '#374151' }}>Score &lt;50</span>
       </div>
       <div style={{ color: '#9ca3af', fontSize: 10, marginTop: 2 }}>Bubble size = score</div>
     </div>
