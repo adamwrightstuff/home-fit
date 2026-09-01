@@ -11,8 +11,8 @@ export type CatalogMapMetro = 'nyc' | 'la' | 'sf'
 
 /** Single canonical file per metro (composites live inside each row's `score`). */
 const METRO_FILES: Record<CatalogMapMetro, readonly string[]> = {
-  nyc: ['nyc_metro_place_catalog_scores_merged.jsonl'],
-  la: ['la_metro_place_catalog_scores_merged.jsonl'],
+  nyc: ['nyc_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
+  la: ['la_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
   sf: ['sf_metro_place_catalog_scores_merged.composites_recomputed.jsonl'],
 }
 
