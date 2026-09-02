@@ -27,7 +27,7 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
   const rw = reweightScoreResponseFromPriorities(place.score, priorities)
   const lp = rw.livability_pillars as unknown as Record<
     string,
-    { score?: number; weight?: number; status?: string }
+    { score?: number; weight?: number; status?: string; data_quality?: { fallback_used?: boolean; reason?: string } }
   >
   return (
     <div className="space-y-1 border-t border-[var(--hf-border)] bg-[var(--hf-bg-subtle)] px-2 py-3">
@@ -37,8 +37,12 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {PILLAR_ORDER.map((k) => {
           const row = lp[k]
+          const isSchoolsDisabled =
+            k === 'quality_education' &&
+            row?.data_quality?.fallback_used === true &&
+            String(row?.data_quality?.reason ?? '').toLowerCase().includes('disabled')
           const score =
-            row && typeof row.score === 'number' && Number.isFinite(row.score) && row.status !== 'failed'
+            !isSchoolsDisabled && row && typeof row.score === 'number' && Number.isFinite(row.score) && row.status !== 'failed'
               ? row.score
               : null
           const w = typeof row?.weight === 'number' && Number.isFinite(row.weight) ? row.weight : 0
@@ -51,10 +55,16 @@ function ExplorerPillarGrid({ place, priorities }: { place: CatalogMapPlace; pri
                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, score)}%`, background: fill }} />
                 )}
               </div>
-              <span className="w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]">
-                {score != null ? score.toFixed(0) : '—'}
-              </span>
-              <span className="w-9 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">{w.toFixed(0)}%</span>
+              {isSchoolsDisabled ? (
+                <span className="w-16 shrink-0 text-right text-[var(--hf-text-tertiary)] uppercase tracking-wide" style={{ fontSize: '0.55rem', fontWeight: 700 }}>Coming soon</span>
+              ) : (
+                <>
+                  <span className="w-7 shrink-0 tabular-nums text-[var(--hf-text-secondary)]">
+                    {score != null ? score.toFixed(0) : '—'}
+                  </span>
+                  <span className="w-9 shrink-0 text-right tabular-nums text-[var(--hf-text-tertiary)]">{w.toFixed(0)}%</span>
+                </>
+              )}
             </div>
           )
         })}
