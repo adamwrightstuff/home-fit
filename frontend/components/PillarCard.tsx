@@ -398,21 +398,23 @@ export default function PillarCard({
               )}
               {isSchoolsNotScored && (
                 <span
+                  className="tr-muted"
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
                     padding: '0.2rem 0.45rem',
                     borderRadius: 6,
                     background: 'var(--hf-bg-subtle)',
-                    color: 'var(--hf-text-secondary)',
                     border: '1px solid var(--hf-border)',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
                   }}
-                  title="School scoring was not run for this location."
+                  title="School scoring is coming soon for this area and is not included in the total score."
                   aria-describedby={`pillar-${pillar_key}-not-scored-desc`}
                 >
-                  Not scored
+                  Coming Soon
                   <span id={`pillar-${pillar_key}-not-scored-desc`} style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-                    School scoring was not run for this location.
+                    School scoring is coming soon for this area and is not included in the total score.
                   </span>
                 </span>
               )}

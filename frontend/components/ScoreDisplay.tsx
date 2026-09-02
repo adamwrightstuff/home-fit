@@ -544,7 +544,7 @@ export default function ScoreDisplay({
               <ul className="tr-muted" style={{ margin: 0, paddingLeft: '1.1rem', display: 'grid', gap: '0.4rem', fontSize: '0.95rem' }}>
                 <li>Pillar scores are 0–100; your total is a weighted blend based on priorities.</li>
                 <li>Higher-priority pillars contribute more to the total score.</li>
-                {schoolsDisabled ? <li>Schools scoring is currently disabled (premium-gated), so “Schools” may be 0.</li> : null}
+                {schoolsDisabled ? <li>School scoring is coming soon for this area and is not included in the total score.</li> : null}
                 {lowConfidencePillars.length ? (
                   <li>
                     Lower-confidence data in:{' '}
