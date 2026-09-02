@@ -7,7 +7,7 @@ where Overpass partially succeeded should be kept.
 import json
 from pathlib import Path
 
-BACKUP = Path("data/sf_metro_place_catalog_scores_merged.bak.20260901-213346")
+BACKUP = Path("data/sf_metro_place_catalog_scores_merged.bak.20260902-161056")
 MERGED = Path("data/sf_metro_place_catalog_scores_merged.jsonl")
 
 def place_name(row):
