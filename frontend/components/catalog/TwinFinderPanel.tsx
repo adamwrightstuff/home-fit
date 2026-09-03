@@ -8,7 +8,9 @@ import type { PillarKey } from '@/lib/pillars'
 import type { TwinMatchResult } from '@/lib/twinSimilarity'
 import TwinResultCard from '@/components/catalog/TwinResultCard'
 import TwinCandidateDetailContent from '@/components/catalog/TwinCandidateDetailContent'
+import VibeTwinResultCard from '@/components/catalog/VibeTwinResultCard'
 import MetroDot from '@/components/catalog/MetroDot'
+import type { VibeTwinResult } from '@/lib/vibeFeatures'
 
 interface TwinFinderPanelProps {
   places: CatalogMapPlaceWithMetro[]
@@ -16,6 +18,8 @@ interface TwinFinderPanelProps {
   twinQueryKey: string | null
   queryPlace: CatalogMapPlace | null
   twinRanked: TwinMatchResult[]
+  vibeRanked: VibeTwinResult[]
+  twinSubMode: 'livability' | 'vibe'
   priorities: PillarPriorities
   selectedPillars: PillarKey[]
   selectedTwinKey: string | null
@@ -29,6 +33,8 @@ export default function TwinFinderPanel({
   twinQueryKey,
   queryPlace,
   twinRanked,
+  vibeRanked,
+  twinSubMode,
   priorities,
   selectedPillars,
   selectedTwinKey,
@@ -51,10 +57,12 @@ export default function TwinFinderPanel({
         <Search className="h-12 w-12 text-[var(--hf-text-tertiary)] opacity-60" strokeWidth={1.25} />
         <div className="max-w-xs space-y-1.5">
           <p className="text-sm font-semibold text-[var(--hf-text-primary)]">
-            Find your neighborhood&apos;s twin
+            {twinSubMode === 'vibe' ? 'Find your neighborhood\'s vibe twin' : 'Find your neighborhood\'s twin'}
           </p>
           <p className="text-xs text-[var(--hf-text-secondary)]">
-            Pick any neighborhood and HomeFit compares it across 13 pillars to surface its closest match in a different metro — same character, different city.
+            {twinSubMode === 'vibe'
+              ? 'Matched on scene density, diversity, education, politics, social cohesion, greenery, and water — same density type and coastal character required.'
+              : 'Pick any neighborhood and HomeFit compares it across 13 pillars to surface its closest match in a different metro — same character, different city.'}
           </p>
         </div>
       </div>
@@ -98,6 +106,30 @@ export default function TwinFinderPanel({
   }
 
   if (!queryPlace) return null
+
+  if (twinSubMode === 'vibe') {
+    if (vibeRanked.length === 0) {
+      return (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 pb-24 text-center">
+          <p className="text-sm text-[var(--hf-text-secondary)]">No vibe twins found — this neighborhood may have a unique area type or water character with no catalog matches.</p>
+        </div>
+      )
+    }
+    return (
+      <div className="min-h-0 flex-1 overflow-auto px-2 pb-28">
+        <div className="mx-auto grid max-w-lg gap-3 sm:max-w-none sm:grid-cols-2">
+          {vibeRanked.map((r) => (
+            <VibeTwinResultCard
+              key={r.key}
+              result={r}
+              selected={selectedTwinKey === r.key}
+              onSelect={() => onSelectTwinResult(selectedTwinKey === r.key ? null : r.key)}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   const selectedMatch = selectedTwinKey ? twinRanked.find((r) => r.key === selectedTwinKey) : null
 

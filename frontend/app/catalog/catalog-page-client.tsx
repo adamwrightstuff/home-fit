@@ -40,6 +40,7 @@ import { applyAoPreferences, applyWaterfrontPreference, type AoPreference, type 
 import { scoreClimateMatch, hasClimatePreferences, type ClimatePreferences } from '@/lib/climatePreferences'
 import { PILLAR_ORDER, PILLAR_META, type PillarKey, HOMEFIT_COPY, LONGEVITY_COPY, HAPPINESS_INDEX_COPY, STATUS_SIGNAL_COPY } from '@/lib/pillars'
 import { rankTwinMatches, defaultTwinPillarSet, type TwinMatchResult } from '@/lib/twinSimilarity'
+import { rankVibeTwins, type VibeTwinResult } from '@/lib/vibeFeatures'
 import { displayArchetypeLabel } from '@/lib/statusSignalArchetype'
 import PlaceValuesGame from '@/components/PlaceValuesGame'
 
@@ -131,6 +132,7 @@ export default function CatalogPageClient({
   const [weightOpen, setWeightOpen] = useState(false)
   const [showQuiz, setShowQuiz] = useState(false)
   const [twinPillarOpen, setTwinPillarOpen] = useState(false)
+  const [twinSubMode, setTwinSubMode] = useState<'livability' | 'vibe'>('livability')
   const [layoutVersion, setLayoutVersion] = useState(0)
   const [twinQueryKey, setTwinQueryKey] = useState<string | null>(null)
   const [twinSearchText, setTwinSearchText] = useState('')
@@ -704,9 +706,14 @@ export default function CatalogPageClient({
   const twinRanked: TwinMatchResult[] = useMemo(() => {
     if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace || twinPillarList.length < 2) return []
     const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
-    // Pure global match% ordering — best matches regardless of city
     return rankTwinMatches(queryPlace, twinCandidatePlaces, twinPillarList, keyFn, 12, twinSameBand)
   }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces, twinPillarList, twinSameBand, twinCrossMetro])
+
+  const vibeRanked: VibeTwinResult[] = useMemo(() => {
+    if (catalogMode !== 'twin' || !twinQueryKey || !queryPlace) return []
+    const keyFn = (pl: CatalogMapPlace) => catalogRowKey(pl.catalog)
+    return rankVibeTwins(queryPlace, twinCandidatePlaces, keyFn, 12)
+  }, [catalogMode, twinQueryKey, queryPlace, twinCandidatePlaces])
 
   const mapPlacesNoTwinQuery = useMemo(() => {
     if (catalogMode !== 'twin') return gatedPlaces
@@ -995,6 +1002,22 @@ export default function CatalogPageClient({
                   Search a neighborhood to start
                 </span>
               )}
+              {/* Sub-mode toggle */}
+              <div className="flex items-center overflow-hidden rounded-full border border-[var(--hf-border)] shrink-0">
+                <button
+                  type="button"
+                  className={`px-2.5 py-0.5 text-[0.65rem] font-bold ${twinSubMode === 'livability' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  style={twinSubMode === 'livability' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+                  onClick={() => setTwinSubMode('livability')}
+                >Livability</button>
+                <button
+                  type="button"
+                  className={`border-l border-[var(--hf-border)] px-2.5 py-0.5 text-[0.65rem] font-bold ${twinSubMode === 'vibe' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  style={twinSubMode === 'vibe' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+                  onClick={() => setTwinSubMode('vibe')}
+                >Vibe</button>
+              </div>
+              <div className="h-3 w-px bg-[var(--hf-border)] shrink-0" />
               <button
                 type="button"
                 disabled={twinControlsLocked}
@@ -1007,21 +1030,25 @@ export default function CatalogPageClient({
                 className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinCrossMetro(false)}
               >Same metro</button>
-              <button
-                type="button"
-                disabled={twinControlsLocked}
-                className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
-                onClick={() => setTwinSameBand((v) => !v)}
-              >Same class</button>
-              <button
-                type="button"
-                disabled={twinControlsLocked}
-                className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-bold disabled:opacity-40"
-                onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
-              >
-                <SlidersHorizontal className="h-3 w-3" />
-                Pillars ({twinPillarList.length})
-              </button>
+              {twinSubMode === 'livability' && (
+                <>
+                  <button
+                    type="button"
+                    disabled={twinControlsLocked}
+                    className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                    onClick={() => setTwinSameBand((v) => !v)}
+                  >Same class</button>
+                  <button
+                    type="button"
+                    disabled={twinControlsLocked}
+                    className="flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-0.5 text-[0.65rem] font-bold disabled:opacity-40"
+                    onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
+                  >
+                    <SlidersHorizontal className="h-3 w-3" />
+                    Pillars ({twinPillarList.length})
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -1210,6 +1237,21 @@ export default function CatalogPageClient({
         {catalogMode === 'twin' && (
           <div className="md:hidden flex flex-col gap-1.5 border-t border-[var(--hf-border)] px-3 py-2">
             <div className="flex items-center gap-1">
+              {/* Sub-mode toggle */}
+              <div className="flex items-center overflow-hidden rounded-full border border-[var(--hf-border)] shrink-0">
+                <button
+                  type="button"
+                  className={`px-2.5 py-1 text-[0.7rem] font-bold ${twinSubMode === 'livability' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  style={twinSubMode === 'livability' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+                  onClick={() => setTwinSubMode('livability')}
+                >Livability</button>
+                <button
+                  type="button"
+                  className={`border-l border-[var(--hf-border)] px-2.5 py-1 text-[0.7rem] font-bold ${twinSubMode === 'vibe' ? 'text-white' : 'bg-[var(--hf-hover-bg)] text-[var(--hf-text-secondary)]'}`}
+                  style={twinSubMode === 'vibe' ? { background: 'linear-gradient(135deg, var(--hf-primary-1), var(--hf-primary-2))' } : {}}
+                  onClick={() => setTwinSubMode('vibe')}
+                >Vibe</button>
+              </div>
               <button
                 type="button"
                 disabled={twinControlsLocked}
@@ -1222,21 +1264,25 @@ export default function CatalogPageClient({
                 className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${!twinCrossMetro ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
                 onClick={() => setTwinCrossMetro(false)}
               >Same metro</button>
-              <button
-                type="button"
-                disabled={twinControlsLocked}
-                className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
-                onClick={() => setTwinSameBand((v) => !v)}
-              >Same class</button>
-              <button
-                type="button"
-                disabled={twinControlsLocked}
-                className="ml-auto flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-[0.7rem] font-bold disabled:opacity-40"
-                onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                Pillars ({twinPillarList.length})
-              </button>
+              {twinSubMode === 'livability' && (
+                <>
+                  <button
+                    type="button"
+                    disabled={twinControlsLocked}
+                    className={`rounded-full px-2.5 py-1 text-[0.7rem] font-bold disabled:opacity-40 ${twinSameBand ? 'bg-[var(--hf-hover-bg)] ring-1 ring-[var(--hf-primary-1)]' : 'bg-[var(--hf-hover-bg)]'}`}
+                    onClick={() => setTwinSameBand((v) => !v)}
+                  >Same class</button>
+                  <button
+                    type="button"
+                    disabled={twinControlsLocked}
+                    className="ml-auto flex items-center gap-1 rounded-lg border border-[var(--hf-border)] px-2 py-1 text-[0.7rem] font-bold disabled:opacity-40"
+                    onClick={() => !twinControlsLocked && setTwinPillarOpen(true)}
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Pillars ({twinPillarList.length})
+                  </button>
+                </>
+              )}
             </div>
             <div className="relative">
               <input
@@ -1465,6 +1511,8 @@ export default function CatalogPageClient({
           twinQueryKey={twinQueryKey}
           queryPlace={queryPlace}
           twinRanked={twinRanked}
+          vibeRanked={vibeRanked}
+          twinSubMode={twinSubMode}
           priorities={priorities}
           selectedPillars={twinPillarList}
           selectedTwinKey={
